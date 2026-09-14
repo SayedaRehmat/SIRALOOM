@@ -1,0 +1,2 @@
+import { SiteShell } from "../../../components/site-shell";
+export default function Terms() { return <SiteShell><main className="content-page legal"><p className="eyebrow">TERMS</p><h1>Use of SIRALOOM</h1><p>SIRALOOM is a genomic workflow and decision-support platform. It is not represented by this software as clinically validated, certified, or a replacement for qualified professional review.</p></main></SiteShell>; }

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siraloom.local/schema/variant/canonical-variant.json",
+  "title": "SIRALOOM Canonical Variant",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["genome_build", "chromosome", "position", "reference", "alternate", "normalization_status"],
+  "properties": {
+    "genome_build": {"type": "string", "enum": ["GRCh38", "GRCh37"]},
+    "chromosome": {"type": "string", "minLength": 1},
+    "position": {"type": "integer", "minimum": 1},
+    "reference": {"type": "string", "pattern": "^[ACGTN]+$"},
+    "alternate": {"type": "string", "pattern": "^[ACGTN]+$"},
+    "normalization_status": {"type": "string", "enum": ["UNNORMALIZED", "NORMALIZED"]},
+    "original_chromosome": {"type": ["string", "null"]},
+    "original_position": {"type": ["integer", "null"], "minimum": 1},
+    "original_reference": {"type": ["string", "null"]},
+    "original_alternate": {"type": ["string", "null"]},
+    "variant_key": {"type": ["string", "null"]}
+  }
+}

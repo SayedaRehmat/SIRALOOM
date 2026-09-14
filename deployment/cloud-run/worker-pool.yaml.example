@@ -1,0 +1,66 @@
+apiVersion: run.googleapis.com/v1
+kind: WorkerPool
+metadata:
+  name: siraloom-worker
+spec:
+  template:
+    spec:
+      containers:
+        - name: worker
+          image: REGION-docker.pkg.dev/PROJECT_ID/siraloom/siraloom-backend:IMAGE_TAG
+          env:
+            - name: APP_ENV
+              value: production
+            - name: LOG_LEVEL
+              value: INFO
+            - name: DATABASE_URL
+              value: "postgresql+psycopg://DB_USER:DB_PASSWORD@DB_HOST:5432/siraloom"
+            - name: REDIS_URL
+              value: "redis://REDIS_HOST:6379/0"
+            - name: FIREBASE_AUTH_REQUIRED
+              value: "true"
+            - name: FIREBASE_PROJECT_ID
+              value: FIREBASE_PROJECT_ID
+            - name: FIREBASE_STORAGE_ENABLED
+              value: "true"
+            - name: FIREBASE_STORAGE_BUCKET
+              value: FIREBASE_STORAGE_BUCKET
+            - name: GENEBE_ENABLED
+              value: "true"
+            - name: GENEBE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: genebe-email
+                  key: latest
+            - name: GENEBE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: genebe-api-key
+                  key: latest
+            - name: GNOMAD_ENABLED
+              value: "true"
+            - name: REFERENCE_FASTA
+              value: /data/references/GRCh38.fa
+            - name: REFERENCE_FAI
+              value: /data/references/GRCh38.fa.fai
+            - name: CELERY_CONCURRENCY
+              value: "2"
+            - name: CELERY_LOG_LEVEL
+              value: INFO
+            - name: CELERY_WORKER_MAX_TASKS_PER_CHILD
+              value: "20"
+            - name: CELERY_WORKER_PREFETCH_MULTIPLIER
+              value: "1"
+            - name: PARTITION_SCHEDULER_CPU_CAPACITY
+              value: "2"
+            - name: PARTITION_SCHEDULER_MEMORY_MB
+              value: "4096"
+            - name: PARTITION_LEASE_SECONDS
+              value: "900"
+            - name: PARTITION_MAX_ATTEMPTS
+              value: "3"
+          command: ["/app/scripts/start_worker.sh"]
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi

@@ -1,0 +1,38 @@
+id: variant-v1
+version: "1.0"
+input:
+  type: VCF
+steps:
+  - id: validate_input
+    type: python
+    provenance_required: true
+  - id: normalize
+    type: boundary
+    provenance_required: true
+    mode: validated-input-boundary
+  - id: annotate
+    type: provider
+    providers: [genebe]
+    provenance_required: true
+  - id: population
+    type: population-engine
+    provenance_required: true
+  - id: build_evidence
+    type: evidence-engine
+    provenance_required: true
+  - id: acmg_assessment
+    type: acmg
+    provenance_required: true
+  - id: review
+    type: human-review
+    provenance_required: true
+  - id: report
+    type: reporting
+    provenance_required: true
+  - id: export_provenance
+    type: export
+    provenance_required: true
+failure_policy:
+  durable_state: true
+  retry_failed_step: true
+  do_not_restart_completed_steps: true

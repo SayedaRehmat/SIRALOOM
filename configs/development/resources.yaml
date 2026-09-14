@@ -1,0 +1,2 @@
+resources: []
+# Add local resources through the Resource Manager instead of hard-coding paths in application code.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siraloom.local/schemas/evidence/evidence-record.json",
+  "title": "SIRALOOM Evidence Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_id", "variant_id", "evidence_type", "statement", "direction", "source_name", "source_version", "payload"],
+  "properties": {
+    "evidence_id": {"type": "string", "format": "uuid"},
+    "variant_id": {"type": "string", "format": "uuid"},
+    "evidence_type": {"type": "string", "enum": ["POPULATION", "CLINICAL_DATABASE", "COMPUTATIONAL", "SPLICING", "CONSEQUENCE", "PROVIDER_ASSERTION"]},
+    "statement": {"type": "string", "minLength": 1},
+    "direction": {"type": "string", "enum": ["SUPPORTS", "REFUTES", "NEUTRAL", "UNKNOWN"]},
+    "source_name": {"type": ["string", "null"]},
+    "source_version": {"type": ["string", "null"]},
+    "observation_ids": {"type": "array", "items": {"type": "string", "format": "uuid"}},
+    "payload": {"type": "object"}
+  }
+}

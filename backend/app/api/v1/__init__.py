@@ -1,0 +1,12 @@
+from .cases import router as cases_router
+from .artifacts import router as artifacts_router
+from .analyses import router as analyses_router
+from .variants import router as variants_router
+from .populations import router as populations_router
+from .review import router as review_router
+from .reports import router as reports_router
+from .audit import router as audit_router
+from .health import router as health_router
+from .evidence import router as evidence_router
+from .acmg import router as acmg_router
+from .auth import router as auth_router

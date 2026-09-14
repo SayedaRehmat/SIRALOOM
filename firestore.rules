@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function membership(orgId) { return get(/databases/$(database)/documents/organizations/$(orgId)/memberships/$(request.auth.uid)); }
+    function activeMember(orgId) { return signedIn() && exists(/databases/$(database)/documents/organizations/$(orgId)/memberships/$(request.auth.uid)) && membership(orgId).data.status == 'ACTIVE'; }
+    function admin(orgId) { return activeMember(orgId) && membership(orgId).data.role in ['platform_admin', 'organization_admin']; }
+    match /organizations/{orgId} {
+      allow read: if activeMember(orgId);
+      allow write: if admin(orgId);
+      match /memberships/{userId} { allow read: if activeMember(orgId); allow write: if admin(orgId); }
+      match /cases/{caseId} { allow read: if activeMember(orgId); allow create, update: if activeMember(orgId); allow delete: if false; }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Genomic artifacts are accessed through the authenticated SIRALOOM API.
+    // The browser is intentionally denied direct object access so PostgreSQL
+    // case/membership authorization remains the single application authority.
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

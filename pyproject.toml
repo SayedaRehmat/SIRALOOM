@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "siraloom"
+version = "0.1.0"
+description = "SIRALOOM Variant Phase 1 foundation"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "pydantic>=2.8,<3",
+  "pydantic-settings>=2.4,<3",
+  "sqlalchemy>=2.0,<3",
+  "psycopg[binary]>=3.2,<4",
+  "alembic>=1.13,<2",
+  "celery>=5.4,<6",
+  "redis>=5.0,<6",
+  "httpx>=0.27,<1",
+  "python-multipart>=0.0.9,<1",
+  "orjson>=3.10,<4",
+  "reportlab>=4.2,<5",
+  "jinja2>=3.1,<4",
+  "weasyprint>=68,<69",
+  "PyYAML>=6.0,<7",
+  "firebase-admin>=6.6,<7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.24,<1",
+  "httpx>=0.27,<1",
+  "ruff>=0.6,<1",
+  "mypy>=1.11,<2",
+]
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"

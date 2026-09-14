@@ -1,0 +1,2 @@
+import { SiteShell } from "../../../components/site-shell";
+export default function Privacy() { return <SiteShell><main className="content-page legal"><p className="eyebrow">PRIVACY</p><h1>Privacy principles</h1><p>SIRALOOM is designed so laboratory data access is tenant-scoped and subject to authenticated authorization. Deploying organizations remain responsible for configuring access, retention, and regulatory obligations appropriate to their use.</p></main></SiteShell>; }

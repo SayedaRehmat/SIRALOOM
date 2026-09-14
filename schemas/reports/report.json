@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SIRALOOMReport",
+  "type": "object",
+  "required": ["report_schema_version", "report_version", "language", "case_id", "analysis_id", "findings", "methodology", "limitations", "final_result"],
+  "properties": {
+    "report_schema_version": {"type": "string"},
+    "report_version": {"type": "integer", "minimum": 1},
+    "language": {"enum": ["en", "ar", "bilingual"]},
+    "case_id": {"type": "string", "format": "uuid"},
+    "analysis_id": {"type": "string", "format": "uuid"},
+    "findings": {"type": "array"},
+    "methodology": {"type": "string"},
+    "limitations": {"type": "string"}
+  },
+  "additionalProperties": true
+}

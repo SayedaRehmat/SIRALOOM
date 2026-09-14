@@ -1,0 +1,2 @@
+import { SiteShell } from "../../../components/site-shell";
+export default function Contact() { return <SiteShell><main className="content-page"><p className="eyebrow">CONTACT</p><h1>Talk with the SIRALOOM team.</h1><p className="lead">For platform, laboratory workflow, and implementation enquiries, contact your SIRALOOM representative.</p><p className="quiet">A contact-delivery service is not configured in this environment; no form submissions are collected here.</p></main></SiteShell>; }
