@@ -1,24 +1,34 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
-echo "Running database migrations..."
+echo "SIRALOOM: running database migrations..."
+
 alembic upgrade head
 
-echo "Starting Celery worker..."
-celery -A app.workers.celery_app worker \
-  --loglevel=INFO \
-  --concurrency="${CELERY_CONCURRENCY:-1}" &
+echo "SIRALOOM: starting Celery worker..."
+
+celery \
+  -A backend.app.infrastructure.queue.celery_app.celery_app \
+  worker \
+  --loglevel="${LOG_LEVEL:-INFO}" \
+  --concurrency="${CELERY_CONCURRENCY:-1}" \
+  --prefetch-multiplier="${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}" \
+  --max-tasks-per-child="${CELERY_WORKER_MAX_TASKS_PER_CHILD:-20}" &
+  
 WORKER_PID=$!
 
 cleanup() {
-    echo "Stopping Celery worker..."
-    kill "$WORKER_PID" 2>/dev/null || true
+    echo "SIRALOOM: stopping Celery worker..."
+    kill "${WORKER_PID}" 2>/dev/null || true
+    wait "${WORKER_PID}" 2>/dev/null || true
 }
 
 trap cleanup EXIT INT TERM
 
-echo "Starting SIRALOOM API..."
+echo "SIRALOOM: starting FastAPI..."
 
-exec uvicorn app.main:app \
+exec uvicorn \
+  backend.app.main:app \
   --host 0.0.0.0 \
   --port "${PORT:-8000}"
