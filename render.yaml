@@ -90,6 +90,9 @@ services:
   - type: keyvalue
     name: siraloom-redis
     plan: free
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all connections
 
 databases:
   - name: siraloom-db
