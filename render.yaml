@@ -3,9 +3,9 @@ services:
     name: siraloom-api
     runtime: docker
     plan: free
-    dockerfilePath: .docker/backend.Dockerfile
-    dockerContext: .
+    dockerfilePath: ./docker/backend.Dockerfile
     healthCheckPath: /api/v1/health
+
     envVars:
       - key: APP_ENV
         value: staging
@@ -60,17 +60,32 @@ services:
       - key: REFERENCE_REMOTE_GRCH37_ENDPOINT
         value: https://grch37.rest.ensembl.org
 
+      - key: REFERENCE_REMOTE_TIMEOUT_SECONDS
+        value: "10"
+
+      - key: REFERENCE_REMOTE_WINDOW_FLANK
+        value: "1000"
+
       - key: CELERY_CONCURRENCY
         value: "1"
 
-      - key: SCHEDULER_LIGHT_CAPACITY
+      - key: CELERY_WORKER_MAX_TASKS_PER_CHILD
+        value: "10"
+
+      - key: CELERY_WORKER_PREFETCH_MULTIPLIER
         value: "1"
 
-      - key: SCHEDULER_STANDARD_CAPACITY
-        value: "1"
+      - key: PARTITION_SCHEDULER_CPU_CAPACITY
+        value: "0.5"
 
-      - key: SCHEDULER_HEAVY_CAPACITY
-        value: "1"
+      - key: PARTITION_SCHEDULER_MEMORY_MB
+        value: "384"
+
+      - key: PARTITION_LEASE_SECONDS
+        value: "900"
+
+      - key: PARTITION_MAX_ATTEMPTS
+        value: "3"
 
   - type: keyvalue
     name: siraloom-redis
