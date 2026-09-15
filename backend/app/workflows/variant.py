@@ -14,7 +14,16 @@ from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
-from backend.app.domain.normalization import NormalizationError, iter_normalized_vcf, normalize_vcf_file
+from backend.app.domain.normalization import (
+    NormalizationError,
+    iter_normalized_vcf,
+    normalize_vcf_file,
+)
+from backend.app.domain.reference import (
+    EnsemblReference,
+    FastaReference,
+    ReferenceError,
+)
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.infrastructure.artifacts.store import ArtifactStore
