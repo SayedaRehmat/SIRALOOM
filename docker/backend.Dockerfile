@@ -16,4 +16,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -e .
 
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN chmod +x scripts/start_api_with_worker.sh
+
+CMD ["./scripts/start_api_with_worker.sh"]
