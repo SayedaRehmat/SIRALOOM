@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     partition_scheduler_memory_mb: int = 4096
     partition_lease_seconds: int = 900
     partition_max_attempts: int = 3
+    reference_remote_enabled: bool = False
+    reference_remote_grch38_endpoint: str = "https://rest.ensembl.org"
+    reference_remote_grch37_endpoint: str = "https://grch37.rest.ensembl.org"
+    reference_remote_timeout_seconds: float = 10.0
+    reference_remote_window_flank: int = 1000
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
