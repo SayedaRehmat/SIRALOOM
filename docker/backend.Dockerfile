@@ -7,6 +7,16 @@ COPY pyproject.toml ./
 COPY backend ./backend
 COPY alembic.ini ./
 COPY migrations ./migrations
+RUN echo "========== MIGRATION DEBUG ==========" \
+    && echo "FILES:" \
+    && find /app/migrations/versions -maxdepth 1 -type f -print | sort \
+    && echo "0007 CONTENT:" \
+    && cat /app/migrations/versions/0007_classification_specification_metadata.py \
+    && echo "ALL REVISIONS:" \
+    && grep -R "^revision =" /app/migrations/versions \
+    && echo "ALL 0007 REFERENCES:" \
+    && grep -R "0007_classification_specification_metadata" /app/migrations/versions \
+    && echo "====================================="
 COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
