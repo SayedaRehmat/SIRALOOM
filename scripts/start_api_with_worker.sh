@@ -3,7 +3,8 @@
 set -euo pipefail
 
 echo "SIRALOOM: running database migrations..."
-psql "$DATABASE_URL" -c "ALTER TABLE IF EXISTS alembic_version ALTER COLUMN version_num TYPE VARCHAR(255);" || true
+psql "$DATABASE_URL" -c "CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(255) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num));" || true
+psql "$DATABASE_URL" -c "ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(255);" || true
 alembic upgrade head
 
 echo "SIRALOOM: starting Celery worker..."
