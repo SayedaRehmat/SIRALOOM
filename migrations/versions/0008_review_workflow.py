@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "0008_review_workflow"
-down_revision = "0007_classification_specification_metadata"
+down_revision = "0007_classification_metadata"
 branch_labels = None
 depends_on = None
 
