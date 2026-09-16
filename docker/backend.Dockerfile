@@ -7,16 +7,22 @@ COPY pyproject.toml ./
 COPY backend ./backend
 COPY alembic.ini ./
 COPY migrations ./migrations
-RUN echo "========== MIGRATION DEBUG ==========" \
-    && echo "FILES:" \
-    && find /app/migrations/versions -maxdepth 1 -type f -print | sort \
-    && echo "0007 CONTENT:" \
+RUN echo "========== SIRALOOM MIGRATION DEBUG ==========" \
+    && echo "PWD:" \
+    && pwd \
+    && echo "MIGRATIONS DIRECTORY:" \
+    && find /app/migrations -maxdepth 3 -type f -print | sort \
+    && echo "VERSIONS DIRECTORY:" \
+    && ls -la /app/migrations/versions \
+    && echo "0007 FILE:" \
     && cat /app/migrations/versions/0007_classification_specification_metadata.py \
-    && echo "ALL REVISIONS:" \
+    && echo "0008 FILE:" \
+    && cat /app/migrations/versions/0008_review_workflow.py \
+    && echo "REVISION DECLARATIONS:" \
     && grep -R "^revision =" /app/migrations/versions \
-    && echo "ALL 0007 REFERENCES:" \
+    && echo "0007 REFERENCES:" \
     && grep -R "0007_classification_specification_metadata" /app/migrations/versions \
-    && echo "====================================="
+    && echo "=============================================="
 COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
