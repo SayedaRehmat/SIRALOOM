@@ -1,3 +1,4 @@
+from enum import StrEnum
 class EntitlementPlan(StrEnum):
     TRIAL = "TRIAL"
     EVALUATION = "EVALUATION"
