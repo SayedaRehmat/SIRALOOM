@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.application.entitlements import effective_max_upload_bytes
 from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.config import settings
@@ -67,6 +68,7 @@ async def upload_artifact(
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_tenant(case, principal)
     require_role(principal, CASE_WRITE_ROLES)
+    max_bytes = effective_max_upload_bytes(db, principal.organization_id, MAX_BYTES)
 
     filename = _safe_filename(file.filename or "")
     kind = classify_filename(filename)
@@ -108,8 +110,8 @@ async def upload_artifact(
             with staged.open("wb") as out:
                 while chunk := await file.read(8 * 1024 * 1024):
                     digest_size += len(chunk)
-                    if digest_size > MAX_BYTES:
-                        raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {MAX_BYTES} bytes")
+                    if digest_size > max_bytes:
+                        raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
                     out.write(chunk)
         finally:
             await file.close()
