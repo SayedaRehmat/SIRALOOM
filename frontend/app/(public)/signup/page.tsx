@@ -2,8 +2,14 @@ import Link from "next/link";
 import { AuthForm } from "../../../components/auth-form";
 import { Brand } from "../../../components/brand";
 
-export default function Signup({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
-  const isOrganizationSignup = searchParams?.mode === "organization";
+export default async function Signup({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const isOrganizationSignup = params?.mode === "organization";
+
   return (
     <main className="auth-page">
       <Brand />
@@ -12,7 +18,9 @@ export default function Signup({ searchParams }: { searchParams: { [key: string]
         {isOrganizationSignup ? (
           <Link href="/signup">Start a free trial instead →</Link>
         ) : (
-          <Link href="/signup?mode=organization">Setting up a production laboratory account instead? →</Link>
+          <Link href="/signup?mode=organization">
+            Setting up a production laboratory account instead? →
+          </Link>
         )}
       </p>
     </main>
