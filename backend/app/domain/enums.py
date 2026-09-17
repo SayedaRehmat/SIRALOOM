@@ -12,8 +12,6 @@ class EntitlementStatus(StrEnum):
     CONVERTED = "CONVERTED"
     CANCELLED = "CANCELLED"
 
-class ArtifactType(StrEnum):
-
 class CaseStatus(StrEnum):
     DRAFT = "DRAFT"
     ACTIVE = "ACTIVE"
