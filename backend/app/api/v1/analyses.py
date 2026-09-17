@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.db.models import Case, Analysis, WorkflowStep, Variant, Annotation, Assay
 from backend.app.application.analysis import create_analysis, enqueue_analysis
+from backend.app.application.entitlements import consume_analysis_quota, require_analysis_quota
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role, get_accessible_analysis
 from backend.app.domain.schemas import AnalysisCreate
@@ -18,7 +19,8 @@ def create(case_id: str, payload: AnalysisCreate, db: Session = Depends(get_db),
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     from backend.app.auth.principal import require_case_tenant
-    require_case_tenant(case, principal); require_role(principal, CASE_WRITE_ROLES)
+        require_case_tenant(case, principal); require_role(principal, CASE_WRITE_ROLES)
+    require_analysis_quota(db, principal.organization_id)
     if payload.assay_id:
         assay = db.get(Assay, payload.assay_id)
         if not assay or assay.organization_id != principal.organization_id:
@@ -27,6 +29,7 @@ def create(case_id: str, payload: AnalysisCreate, db: Session = Depends(get_db),
         analysis = create_analysis(db, case_id=cid, input_artifact_id=payload.input_artifact_id, assay_id=payload.assay_id, analysis_type=payload.analysis_type, workflow_id=payload.workflow_id, workflow_version=payload.workflow_version, reference_build=payload.reference_build, configuration=payload.configuration, created_by=principal.user_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    consume_analysis_quota(db, principal.organization_id)
     return {"analysis_id": str(analysis.id), "case_id": str(cid), "status": analysis.status, "workflow_id": analysis.workflow_id, "workflow_version": analysis.workflow_version, "reference_build": analysis.reference_build, "assay_id": str(analysis.assay_id) if analysis.assay_id else None, "created_at": analysis.created_at}
 
 @router.post("/analyses/{analysis_id}/start")
