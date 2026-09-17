@@ -330,3 +330,7 @@ tbody tr.selected { background: #eff8f5; }
 .assessment-row > span { color:var(--muted); font-size:9px; line-height:1.4; max-width:68%; }
 @media(max-width:900px){.pedigree-grid{grid-template-columns:1fr}}
 @media(max-width:650px){.m10-form-grid{grid-template-columns:1fr}.m10-form-grid button{grid-column:auto}.assessment-row,.segregation-row{align-items:flex-start;flex-direction:column}.assessment-row>span{max-width:none;text-align:left}}
+.button.secondary{background:#fff;color:#27345e;border:1px solid #d4d3eb}.button.secondary:hover{background:#f5f4fc;filter:none}
+.divider{display:flex;align-items:center;gap:10px;color:#9299aa;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:2px 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:#e3e3ef}
+.text-muted{color:#9299aa;font-size:13px;text-align:center;margin:18px 0 0}
