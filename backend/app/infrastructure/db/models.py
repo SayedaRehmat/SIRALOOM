@@ -37,7 +37,28 @@ class OrganizationMembership(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False, default="ACTIVE")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-    __table_args__ = (UniqueConstraint("organization_id", "user_id"),)
+        __table_args__ = (UniqueConstraint("organization_id", "user_id"),)
+
+class OrganizationEntitlement(Base):
+    """Licensing/usage envelope for an organization: TRIAL, EVALUATION, PAID, ENTERPRISE, ON_PREMISE.
+
+    Absence of a row for an organization means no entitlement restrictions are enforced
+    (this keeps existing/paid organizations unaffected). A row is only created explicitly,
+    e.g. by the free-trial onboarding path.
+    """
+    __tablename__ = "organization_entitlements"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False, unique=True)
+    plan: Mapped[str] = mapped_column(Text, nullable=False, default="TRIAL")
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="ACTIVE")
+    max_analyses: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    analyses_used: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_vcf_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    trial_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    trial_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    converted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
 
 class Case(Base):
     __tablename__ = "cases"
