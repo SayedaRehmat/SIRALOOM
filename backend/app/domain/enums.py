@@ -1,4 +1,18 @@
-from enum import StrEnum
+class EntitlementPlan(StrEnum):
+    TRIAL = "TRIAL"
+    EVALUATION = "EVALUATION"
+    PAID = "PAID"
+    ENTERPRISE = "ENTERPRISE"
+    ON_PREMISE = "ON_PREMISE"
+
+class EntitlementStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    EXPIRED = "EXPIRED"
+    EXHAUSTED = "EXHAUSTED"
+    CONVERTED = "CONVERTED"
+    CANCELLED = "CANCELLED"
+
+class ArtifactType(StrEnum):
 
 class CaseStatus(StrEnum):
     DRAFT = "DRAFT"
