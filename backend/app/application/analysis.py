@@ -1,11 +1,18 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Artifact
 from backend.app.infrastructure.queue.celery_app import run_analysis_task
+
+
+router = APIRouter(
+    prefix="/analyses",
+    tags=["analyses"],
+)
 
 
 def create_analysis(
@@ -23,7 +30,7 @@ def create_analysis(
 ):
     artifact = db.get(Artifact, input_artifact_id)
 
-    if not artifact:
+    if artifact is None:
         raise ValueError("Input artifact not found")
 
     if artifact.case_id != case_id:
@@ -68,7 +75,10 @@ def create_analysis(
     return analysis
 
 
-def enqueue_analysis(db: Session, analysis: Analysis):
+def enqueue_analysis(
+    db: Session,
+    analysis: Analysis,
+):
     if (
         analysis.status in {
             AnalysisStatus.QUEUED,
@@ -82,7 +92,9 @@ def enqueue_analysis(db: Session, analysis: Analysis):
 
     db.commit()
 
-    task = run_analysis_task.delay(str(analysis.id))
+    task = run_analysis_task.delay(
+        str(analysis.id)
+    )
 
     analysis.queue_task_id = task.id
 
