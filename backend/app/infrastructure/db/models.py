@@ -37,7 +37,7 @@ class OrganizationMembership(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False, default="ACTIVE")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-        __table_args__ = (UniqueConstraint("organization_id", "user_id"),)
+    __table_args__ = (UniqueConstraint("organization_id", "user_id"),)
 
 class OrganizationEntitlement(Base):
     """Licensing/usage envelope for an organization: TRIAL, EVALUATION, PAID, ENTERPRISE, ON_PREMISE.
