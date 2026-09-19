@@ -64,6 +64,7 @@ def _provision_organization(db: Session, *, subject: str, claims: dict, organiza
             role="organization_admin", status="ACTIVE",
         )
         db.add(user)
+        db.flush()
     else:
         user.organization_id = org.id
         user.role = "organization_admin"
