@@ -208,7 +208,9 @@ export default function Cases() {
         }),
       });
 
-      setSpecimenId(result.specimen_id);
+      const createdSpecimenId = result.specimen_id;
+
+      setSpecimenId(createdSpecimenId);
       setSpecimenIdentifier("");
       setMessage("Specimen registered.");
 
@@ -224,8 +226,17 @@ export default function Cases() {
     }
   };
 
-  const upload = async (selected: File, isIndex = false) => {
+  const upload = async (
+    selected: File,
+    isIndex = false,
+    selectedSpecimenId = specimenId,
+  ) => {
     if (!caseId) return;
+
+    if (!isIndex && !selectedSpecimenId) {
+      setError("Select or register a specimen before uploading the VCF.");
+      return;
+    }
 
     setBusy(true);
     setError("");
@@ -247,7 +258,7 @@ export default function Cases() {
           primaryArtifact!.artifact_id,
         );
       } else {
-        form.append("specimen_id", specimenId);
+        form.append("specimen_id", selectedSpecimenId);
         form.append("genome_build", build);
       }
 
@@ -299,7 +310,7 @@ export default function Cases() {
     setVariantFile(file);
 
     if (file) {
-      upload(file, false);
+      upload(file, false, specimenId);
     }
   };
 
