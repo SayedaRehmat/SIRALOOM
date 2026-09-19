@@ -47,6 +47,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
         created_by=principal.user_id,
     )
     db.add(case)
+    db.flush()
     AuditService(db).record(
         event_type="CASE_CREATED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
         subject_type="CASE", subject_id=str(case.id), operation="CREATE", after_state={"case_identifier": case.case_identifier},
