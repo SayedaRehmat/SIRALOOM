@@ -20,11 +20,15 @@ app = FastAPI(title=f"{settings.app_name} Variant API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    allow_origins=[
+        settings.frontend_origin,
+        "https://siraloom.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 app.include_router(health_router, prefix="/api/v1")
 secured = [Depends(get_current_principal)]
 app.include_router(cases_router, prefix="/api/v1", dependencies=secured)
@@ -40,9 +44,16 @@ app.include_router(acmg_router, prefix="/api/v1", dependencies=secured)
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(clingen_router, prefix="/api/v1", dependencies=secured)
 
+
 @app.get("/")
 def root():
-    return {"platform": "SIRALOOM", "service": "SIRALOOM Variant", "phase": "1", "status": "development"}
+    return {
+        "platform": "SIRALOOM",
+        "service": "SIRALOOM Variant",
+        "phase": "1",
+        "status": "development",
+    }
+
 
 app.include_router(variant_reports_router, prefix="/api/v1", dependencies=secured)
 app.include_router(phenotypes_router, prefix="/api/v1", dependencies=secured)
