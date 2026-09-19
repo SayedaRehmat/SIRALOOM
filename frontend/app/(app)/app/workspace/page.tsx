@@ -148,6 +148,8 @@ export default function Home() {
   const [caseWorkspace, setCaseWorkspace] = useState<CaseWorkspace | null>(null);
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
+  const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
+  const [genomeBuild, setGenomeBuild] = useState("GRCh38");
   const [language, setLanguage] = useState<"en" | "ar" | "bilingual">("en");
   const [indication, setIndication] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -211,6 +213,8 @@ export default function Home() {
       try {
         const data = await apiFetch(`/cases/${caseId}`);
         setCaseWorkspace(data);
+        const specimens = Array.isArray(data?.specimens) ? data.specimens : [];
+        if (specimens.length && !selectedSpecimenId) setSelectedSpecimenId(String(specimens[0].specimen_id));
         const indicationValue = data?.clinical_context?.indication;
         if (typeof indicationValue === "string") setIndication(indicationValue);
       } catch (error) {
@@ -352,13 +356,14 @@ export default function Home() {
     }
     setBusy(true);
     try {
-      await apiFetch(`/cases/${caseId}/specimens`, {
+      const next = await apiFetch(`/cases/${caseId}/specimens`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ specimen_identifier: specimenIdentifier.trim(), specimen_type: specimenType }),
       });
-      const next = await apiFetch(`/cases/${caseId}`);
-      setCaseWorkspace(next);
+      const refreshed = await apiFetch(`/cases/${caseId}`);
+      setCaseWorkspace(refreshed);
+      setSelectedSpecimenId(String(next.specimen_id));
       setSpecimenIdentifier("");
       setMessage("Specimen registered to the case.");
     } catch (error) {
@@ -373,11 +378,17 @@ export default function Home() {
       setMessage("Create/select a case and choose a VCF first.");
       return;
     }
+    if (!selectedSpecimenId) {
+      setMessage("Register or select a specimen before uploading the VCF.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
       const form = new FormData();
       form.append("file", file, file.name);
+      form.append("specimen_id", selectedSpecimenId);
+      form.append("genome_build", genomeBuild);
       const result = await apiFetch(`/cases/${caseId}/artifacts`, { method: "POST", body: form });
       setArtifactId(result.artifact_id);
       setMessage(`Input registered. SHA-256: ${result.sha256}`);
@@ -404,7 +415,7 @@ export default function Home() {
           analysis_type: "VARIANT_INTERPRETATION",
           workflow_id: "variant-v1",
           workflow_version: "1.0",
-          reference_build: "GRCh38",
+          reference_build: genomeBuild,
         }),
       });
       setAnalysisId(created.analysis_id);
@@ -590,19 +601,49 @@ export default function Home() {
           {caseId && <div className="case-context">
             <div className="section-kicker">SPECIMEN</div>
             <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>Blood</option><option>Saliva</option><option>Buccal</option><option>Other</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim()}>Register specimen</button></div>
-            {caseWorkspace?.specimens?.map((specimen, index) => <div className="keyline" key={String(specimen.specimen_id ?? index)}><span>{String(specimen.specimen_type ?? "Specimen")}</span><strong>{String(specimen.specimen_identifier ?? "—")}</strong></div>)}
+            {caseWorkspace?.specimens?.map((specimen, index) => {
+              const id = String(specimen.specimen_id ?? "");
+              const selected = id && id === selectedSpecimenId;
+              return (
+                <button
+                  type="button"
+                  key={id || index}
+                  className={`keyline specimen-row ${selected ? "selected-mini" : ""}`}
+                  onClick={() => id && setSelectedSpecimenId(id)}
+                >
+                  <span>{String(specimen.specimen_type ?? "Specimen")}</span>
+                  <strong>{String(specimen.specimen_identifier ?? "—")}{selected ? " · selected" : ""}</strong>
+                </button>
+              );
+            })}
           </div>}
         </aside>
 
         <section className="panel input-panel">
           <div className="panel-head"><div><div className="section-kicker">INPUT</div><h3>VCF intake</h3></div><span className="badge neutral">Phase 1</span></div>
+          <label>Specimen for this VCF
+            <select value={selectedSpecimenId} onChange={(e) => setSelectedSpecimenId(e.target.value)}>
+              <option value="">Select a registered specimen…</option>
+              {caseWorkspace?.specimens?.map((specimen, index) => (
+                <option key={String(specimen.specimen_id ?? index)} value={String(specimen.specimen_id ?? "")}>
+                  {String(specimen.specimen_identifier ?? "Specimen")} ({String(specimen.specimen_type ?? "—")})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>Reference genome
+            <select value={genomeBuild} onChange={(e) => setGenomeBuild(e.target.value)}>
+              <option value="GRCh38">GRCh38</option>
+              <option value="GRCh37">GRCh37</option>
+            </select>
+          </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
             <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz"}</strong><p>Input is persisted before analysis begins.</p></div>
             <label className="secondary file-button">Choose<input type="file" accept=".vcf,.vcf.gz,.gz" onChange={handleFile} hidden /></label>
           </div>
           <div className="actions-row">
-            <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file}>Register input</button>
+            <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file || !selectedSpecimenId}>Register input</button>
             <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>Start analysis</button>
           </div>
           {artifactId && <div className="keyline"><span>Artifact ID</span><code>{artifactId}</code></div>}
