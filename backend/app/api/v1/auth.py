@@ -57,6 +57,9 @@ def _provision_organization(db: Session, *, subject: str, claims: dict, organiza
     """
     user = _reject_if_already_provisioned(db, subject)
     org = Organization(id=uuid4(), name=organization_name.strip(), external_identifier=None)
+    db.add(org)
+    db.flush()
+
     if not user:
         user = User(
             id=uuid4(), organization_id=org.id, external_subject=subject, email=claims.get("email"),
@@ -69,8 +72,14 @@ def _provision_organization(db: Session, *, subject: str, claims: dict, organiza
         user.organization_id = org.id
         user.role = "organization_admin"
         user.status = "ACTIVE"
-    db.add(org)
-    membership = OrganizationMembership(id=uuid4(), organization_id=org.id, user_id=user.id, role="organization_admin", status="ACTIVE")
+
+    membership = OrganizationMembership(
+        id=uuid4(),
+        organization_id=org.id,
+        user_id=user.id,
+        role="organization_admin",
+        status="ACTIVE",
+    )
     db.add(membership)
     return org, user, membership
 
