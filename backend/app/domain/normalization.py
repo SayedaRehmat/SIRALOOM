@@ -212,6 +212,47 @@ def normalize_vcf_file(input_path: str | Path, output_path: str | Path, *, genom
     }
 
 
+def scan_vcf_regions(input_path: str | Path):
+    """Cheaply scans a VCF for the (chrom, start0, end0) reference interval each record
+    will need during normalization, without touching any reference provider.
+
+    This is the "collect reference regions" step of a batched-prefetch normalization
+    run: call this first, pass the result to `EnsemblReference.prefetch()`, and the
+    actual `normalize_vcf_file()` pass that follows will hit its reference cache almost
+    every time instead of making one live HTTP request per variant.
+
+    Only covers the REF-allele interval each record starts from (pos1-1 .. pos1-1+len(ref)).
+    Left-shifting during normalization can occasionally walk a little further left than
+    that; `EnsemblReference` pads every prefetched window by `window_flank` bases and
+    still self-heals with a live fetch for the rare case that isn't enough, so this scan
+    doesn't need to be exact -- it just needs to cover the common case cheaply.
+    """
+    input_path = Path(input_path)
+    src_open = gzip.open if input_path.suffix == ".gz" else open
+    header_seen = False
+    with src_open(input_path, "rt", encoding="utf-8") as src:
+        for line_no, raw_line in enumerate(src, 1):
+            line = raw_line.rstrip("\n")
+            if not line or line.startswith("##"):
+                continue
+            if line.startswith("#CHROM"):
+                header_seen = True
+                continue
+            if line.startswith("#"):
+                continue
+            if not header_seen:
+                raise NormalizationError(f"VCF data encountered before #CHROM at line {line_no}")
+            fields = line.split("\t")
+            if len(fields) < 5:
+                raise NormalizationError(f"Malformed VCF record at line {line_no}")
+            chrom, pos_s, _vid, ref, _alt = fields[:5]
+            try:
+                pos1 = int(pos_s)
+            except ValueError:
+                continue  # normalize_vcf_file will raise the real, precise error for this line
+            yield (chrom, pos1 - 1, pos1 - 1 + len(ref))
+
+
 def iter_normalized_vcf(path: str | Path, genome_build: str):
     """Yield canonical variants one record at a time from a normalized VCF.
 
