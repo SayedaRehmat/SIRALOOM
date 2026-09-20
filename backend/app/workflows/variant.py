@@ -289,6 +289,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             remote_timeout = float(analysis.configuration.get("reference_remote_timeout_seconds", settings.reference_remote_timeout_seconds))
             remote_flank = int(analysis.configuration.get("reference_remote_window_flank", settings.reference_remote_window_flank))
             remote_endpoint = analysis.configuration.get("reference_remote_endpoint")
+            remote_retry_attempts = int(analysis.configuration.get("reference_remote_retry_attempts", settings.reference_remote_retry_attempts))
+            remote_retry_backoff = float(analysis.configuration.get("reference_remote_retry_backoff_seconds", settings.reference_remote_retry_backoff_seconds))
 
             if not reference_fasta and not remote_enabled:
                 mark_step(db, normalization_step, StepStatus.BLOCKED, error_code="REFERENCE_NOT_CONFIGURED", error_message="A validated local reference FASTA or explicitly enabled online reference provider is required for reference-aware normalization.")
@@ -303,15 +305,31 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 suffix = ".vcf.gz" if input_path.name.endswith(".gz") else ".vcf"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
                     temp_path = Path(temp.name)
+                reference_stats: dict | None = None
                 if reference_fasta:
                     reference = FastaReference(reference_fasta, reference_fai)
                     reference_source = "LOCAL_FASTA"
                 else:
                     endpoint = remote_endpoint or (settings.reference_remote_grch37_endpoint if reference_build == "GRCh37" else settings.reference_remote_grch38_endpoint)
-                    reference = EnsemblReference(reference_build, endpoint=endpoint, timeout_seconds=remote_timeout, window_flank=remote_flank)
+                    reference = EnsemblReference(
+                        reference_build, endpoint=endpoint, timeout_seconds=remote_timeout, window_flank=remote_flank,
+                        retry_attempts=remote_retry_attempts, retry_backoff_seconds=remote_retry_backoff,
+                    )
                     reference_source = "ENSEMBL_REST"
                 with reference:
+                    if reference_source == "ENSEMBL_REST":
+                        # Fail fast if Ensembl itself is unreachable, before spending any
+                        # time on a job that can't finish.
+                        reference.preflight()
+                        # Collect every region the VCF will need and fetch them in batches
+                        # of up to 50 per POST, so the normalization pass below hits the
+                        # reference cache almost every time instead of making one live
+                        # HTTP request per variant.
+                        from backend.app.domain.normalization import scan_vcf_regions
+                        reference.prefetch(scan_vcf_regions(input_path))
                     result = normalize_vcf_file(input_path, temp_path, genome_build=reference_build, reference=reference, collect_variants=False)
+                    if reference_source == "ENSEMBL_REST":
+                        reference_stats = dict(reference.stats)
                 normalized_artifact = artifacts.put_file(
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz" if temp_path.suffix == ".gz" else "normalized.vcf",
@@ -320,11 +338,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "partition_size": partition_size, "reference_source": reference_source, "reference_provider": "Ensembl REST" if reference_source == "ENSEMBL_REST" else "local FASTA"})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "1.1"}, payload={"record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "partition_size": partition_size, "reference_source": reference_source, "reference_provider": "Ensembl REST" if reference_source == "ENSEMBL_REST" else "local FASTA", "reference_request_stats": reference_stats})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "1.1"}, payload={"record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_request_stats": reference_stats})
                 db.commit()
             except (NormalizationError, ReferenceError) as exc:
-                mark_step(db, normalization_step, StepStatus.FAILED, error_code="NORMALIZATION_FAILED", error_message=str(exc))
+                error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
+                mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
+                db.commit()
+                return
+            except Exception as exc:
+                # Catch-all: anything unexpected here (a bug, an artifact-storage failure,
+                # etc.) must still mark *this step* FAILED with a message, or the UI is
+                # left showing "Running" forever while the outer handler only flips
+                # analysis.status. See NORMALIZATION_FAILED/REFERENCE errors above for the
+                # expected-error path; this is the safety net for everything else.
+                mark_step(db, normalization_step, StepStatus.FAILED, error_code="NORMALIZATION_UNEXPECTED_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
                 audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
@@ -607,6 +638,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except Exception as exc:
+                # Safety net -- see the matching comment on the normalization step above.
+                mark_step(db, annotation_step, StepStatus.FAILED, error_code="ANNOTATION_UNEXPECTED_ERROR", error_message=str(exc))
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(
+                    event_type="ANNOTATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SERVICE",
+                    actor_id=provider.provider_id,
+                    reason=str(exc),
+                )
+                db.commit()
+                return
 
         # 4. Population observations: GeneBe-derived global + optional direct gnomAD MID/global.
         population_step = _step(db, analysis.id, "population")
@@ -720,6 +766,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
             except GnomADProviderError as exc:
                 mark_step(db, population_step, StepStatus.FAILED, error_code="GNOMAD_PROVIDER_ERROR", error_message=str(exc))
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(
+                    event_type="POPULATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SERVICE",
+                    actor_id="gnomad",
+                    reason=str(exc),
+                )
+                db.commit()
+                return
+            except Exception as exc:
+                # Safety net -- see the matching comment on the normalization step above.
+                mark_step(db, population_step, StepStatus.FAILED, error_code="POPULATION_UNEXPECTED_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
                 audit.record(
