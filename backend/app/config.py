@@ -51,8 +51,10 @@ class Settings(BaseSettings):
     reference_remote_grch37_endpoint: str = (
         "https://grch37.rest.ensembl.org"
     )
-    reference_remote_timeout_seconds: float = 10.0
+    reference_remote_timeout_seconds: float = 20.0
     reference_remote_window_flank: int = 1000
+    reference_remote_retry_attempts: int = 3
+    reference_remote_retry_backoff_seconds: float = 1.5
 
     public_base_url: str = "http://localhost:8000"
     frontend_origin: str = "http://localhost:3000"
