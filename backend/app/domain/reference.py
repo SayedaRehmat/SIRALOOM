@@ -193,7 +193,7 @@ class EnsemblReference:
         self.retry_backoff_seconds = max(0.0, float(retry_backoff_seconds))
         self.batch_size = max(1, min(int(batch_size), 50))
         self._cache: dict[tuple[str, int, int], str] = {}
-        self.stats = {"single_requests": 0, "batch_requests": 0, "cache_hits": 0, "prefetched_windows": 0}
+        self.stats = {"single_requests": 0, "batch_requests": 0, "cache_hits": 0, "prefetched_windows": 0, "batch_fallback_to_single": 0}
 
     def close(self) -> None:
         self._cache.clear()
@@ -355,9 +355,21 @@ class EnsemblReference:
                 pending[cache_key] = None
         if not pending:
             return
-        regions = [(contig, start0 + 1, end0) for (contig, start0, end0) in pending.keys()]
-        fetched = self._fetch_remote_batch(regions)
-        for (contig, start0, end0) in pending.keys():
+        region_keys = list(pending.keys())
+        regions = [(contig, start0 + 1, end0) for (contig, start0, end0) in region_keys]
+        try:
+            fetched = self._fetch_remote_batch(regions)
+        except ReferenceError:
+            # Batching is a speed optimization, not a correctness requirement: if the POST
+            # endpoint is failing for any reason (an outage, a proxy/WAF issue, whatever),
+            # fall back to fetching every pending window individually via the single-region
+            # GET path, which is the one we know works even when POST doesn't. Slower, but
+            # the job still completes instead of aborting outright.
+            self.stats["batch_fallback_to_single"] = self.stats.get("batch_fallback_to_single", 0) + 1
+            fetched = {}
+            for contig, start1, end1 in regions:
+                fetched[(contig, start1, end1)] = self._fetch_remote(contig, start1, end1)
+        for (contig, start0, end0) in region_keys:
             sequence = fetched.get((contig, start0 + 1, end0))
             if sequence is not None:
                 self._cache[(contig, start0, end0)] = sequence
