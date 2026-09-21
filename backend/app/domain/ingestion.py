@@ -40,7 +40,9 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
     has_fileformat = False
     opener = gzip.open if path.name.lower().endswith((".gz", ".bgz")) else open
     try:
-        with opener(path, "rt", encoding="utf-8") as fh:
+        # utf-8-sig: see the matching comment in domain/vcf.py's open_text -- strips a
+        # leading BOM transparently, no effect on files that don't have one.
+        with opener(path, "rt", encoding="utf-8-sig") as fh:
             for line in fh:
                 line = line.rstrip("\n")
                 if line.startswith("##fileformat="):
@@ -68,12 +70,36 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     try:
         headers, detected_build, has_fileformat = _header_info(p)
         if not has_fileformat:
-            raise VCFValidationError("VCF is missing the required ##fileformat header")
+            raise VCFValidationError(
+                "VCF is missing the required ##fileformat header. If this file looks "
+                "correct when you open it, check for hidden formatting issues -- e.g. "
+                "it was saved as .rtf/.docx instead of plain text, or is HTML/a web-page "
+                "export rather than a raw .vcf file."
+            )
         if len(headers) < 8:
-            raise VCFValidationError("#CHROM header must contain at least the 8 required VCF columns")
+            # A single-element headers list with no tabs at all almost always means the
+            # file uses spaces (or another delimiter) instead of tabs -- give a specific,
+            # actionable diagnosis instead of a generic column-count complaint, since this
+            # is a common result of copy-pasting a VCF from a rendered web page/table
+            # instead of downloading the raw file.
+            if len(headers) == 1 and " " in headers[0]:
+                raise VCFValidationError(
+                    "The #CHROM header uses spaces instead of tabs between columns, which "
+                    "is not valid VCF. This usually happens when a VCF is copy-pasted from "
+                    "a web page instead of downloaded as a raw file. Try downloading/saving "
+                    "the original .vcf file directly (e.g. right-click -> Save As) rather "
+                    "than copying the displayed text."
+                )
+            raise VCFValidationError(
+                f"#CHROM header must contain at least the 8 required VCF columns "
+                f"(tab-separated); found {len(headers)}: {headers!r}"
+            )
         required = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
         if headers[:8] != required:
-            raise VCFValidationError("The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO")
+            raise VCFValidationError(
+                f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
+                f"FILTER, INFO in that exact order; found {headers[:8]!r}"
+            )
         records = 0
         for _ in parse_vcf(str(p)):
             records += 1
