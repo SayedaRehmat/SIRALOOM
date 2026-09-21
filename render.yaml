@@ -76,10 +76,10 @@ services:
         value: "1"
 
       - key: PARTITION_SCHEDULER_CPU_CAPACITY
-        value: "0.5"
+        value: "1.0"
 
       - key: PARTITION_SCHEDULER_MEMORY_MB
-        value: "384"
+        value: "1024"
 
       - key: PARTITION_LEASE_SECONDS
         value: "900"
