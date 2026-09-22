@@ -33,11 +33,16 @@ class ReviewMutation:
     expected_version: int
 
 
+# OrganizationMembership.role is persisted using the lowercase RBAC role
+# vocabulary enforced by backend.app.auth.authorization.REVIEW_ROLES. Keep this
+# service-level gate on that same vocabulary so an authorized organization_admin,
+# reviewer, clinical_geneticist, or lab_director is not rejected a second time.
 _ALLOWED_ROLES = {
-    UserRole.REVIEWER,
-    UserRole.MEDICAL_REVIEWER,
-    UserRole.LAB_MANAGER,
-    UserRole.ADMIN,
+    "platform_admin",
+    "organization_admin",
+    "lab_director",
+    "clinical_geneticist",
+    "reviewer",
 }
 
 
