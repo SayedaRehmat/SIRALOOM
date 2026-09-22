@@ -199,8 +199,13 @@ export default function Home() {
     const storedCase = window.localStorage.getItem("siraloom.case_id") ?? "";
     const storedAnalysis = window.localStorage.getItem("siraloom.analysis_id") ?? "";
     const storedCaseIdentifier = window.localStorage.getItem("siraloom.case_identifier") ?? "";
-    if (storedCase) setCaseId(storedCase);
-    if (storedAnalysis) setAnalysisId(storedAnalysis);
+    if (storedCase) {
+      setCaseId(storedCase);
+    } else if (storedAnalysis) {
+      // An analysis-only deep link remains supported, but the case is authoritative
+      // once a case context exists. The case effect below will reconcile the ID.
+      setAnalysisId(storedAnalysis);
+    }
     if (storedCaseIdentifier) setCaseIdentifier(storedCaseIdentifier);
     apiFetch("/health")
       .then(() => setConnection("online"))
@@ -217,6 +222,20 @@ export default function Home() {
         if (specimens.length && !selectedSpecimenId) setSelectedSpecimenId(String(specimens[0].specimen_id));
         const indicationValue = data?.clinical_context?.indication;
         if (typeof indicationValue === "string") setIndication(indicationValue);
+
+        // The selected case is the source of truth for workspace analysis context.
+        // Never trust a stale analysis ID left in browser storage from another case.
+        const latestAnalysis = Array.isArray(data?.analyses) && data.analyses.length
+          ? data.analyses[0]
+          : null;
+        if (latestAnalysis?.analysis_id) {
+          const nextAnalysisId = String(latestAnalysis.analysis_id);
+          setAnalysisId(nextAnalysisId);
+          window.localStorage.setItem("siraloom.analysis_id", nextAnalysisId);
+        } else {
+          setAnalysisId("");
+          window.localStorage.removeItem("siraloom.analysis_id");
+        }
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Unable to load case.");
       }
