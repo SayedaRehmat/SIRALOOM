@@ -4,6 +4,7 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./docker/backend.Dockerfile
+    dockerCommand: ./scripts/start_api.sh
     healthCheckPath: /api/v1/health
 
     envVars:
@@ -66,20 +67,96 @@ services:
       - key: REFERENCE_REMOTE_WINDOW_FLANK
         value: "1000"
 
+      - key: PARTITION_DEFAULT_RESOURCE_CLASS
+        value: LIGHT
+
+      - key: PARTITION_SCHEDULER_CPU_CAPACITY
+        value: "0.5"
+
+      - key: PARTITION_SCHEDULER_MEMORY_MB
+        value: "512"
+
+      - key: PARTITION_LEASE_SECONDS
+        value: "900"
+
+      - key: PARTITION_MAX_ATTEMPTS
+        value: "3"
+
+  - type: worker
+    name: siraloom-worker
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/backend.Dockerfile
+    dockerCommand: ./scripts/start_worker.sh
+
+    envVars:
+      - key: APP_ENV
+        value: staging
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: siraloom-db
+          property: connectionString
+
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: siraloom-redis
+          property: connectionString
+
+      - key: ARTIFACT_ROOT
+        value: /tmp/siraloom/artifacts
+
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+
+      - key: FIREBASE_CREDENTIALS_PATH
+        value: /etc/secrets/firebase-admin.json
+
+      - key: FIREBASE_AUTH_REQUIRED
+        value: "true"
+
+      - key: FIREBASE_STORAGE_ENABLED
+        value: "false"
+
+      - key: GENEBE_ENABLED
+        value: "true"
+
+      - key: GENEBE_EMAIL
+        sync: false
+
+      - key: GENEBE_API_KEY
+        sync: false
+
+      - key: REFERENCE_REMOTE_ENABLED
+        value: "true"
+
+      - key: REFERENCE_REMOTE_GRCH38_ENDPOINT
+        value: https://rest.ensembl.org
+
+      - key: REFERENCE_REMOTE_GRCH37_ENDPOINT
+        value: https://grch37.rest.ensembl.org
+
+      - key: REFERENCE_REMOTE_TIMEOUT_SECONDS
+        value: "10"
+
+      - key: REFERENCE_REMOTE_WINDOW_FLANK
+        value: "1000"
+
       - key: CELERY_CONCURRENCY
         value: "1"
 
       - key: CELERY_WORKER_MAX_TASKS_PER_CHILD
         value: "10"
 
-      - key: CELERY_WORKER_PREFETCH_MULTIPLIER
-        value: "1"
+      - key: PARTITION_DEFAULT_RESOURCE_CLASS
+        value: LIGHT
 
       - key: PARTITION_SCHEDULER_CPU_CAPACITY
-        value: "1.0"
+        value: "0.5"
 
       - key: PARTITION_SCHEDULER_MEMORY_MB
-        value: "1024"
+        value: "512"
 
       - key: PARTITION_LEASE_SECONDS
         value: "900"
