@@ -201,7 +201,7 @@ export default function Cases() {
     }
   };
 
-  const refreshCase = async (id = caseId) =>
+  const refreshCase = async (id = caseId) => {
     if (!id) return;
 
     const [data, files] = await Promise.all([
