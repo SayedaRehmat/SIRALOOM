@@ -11,8 +11,9 @@ from backend.app.infrastructure.db.models import (
     WorkflowStep,
     Variant,
     Annotation,
+    AnalysisPartition,
     Assay,
-)
+  )
 from backend.app.application.analysis import create_analysis, enqueue_analysis
 from backend.app.application.entitlements import (
     consume_analysis_quota,
@@ -197,17 +198,59 @@ def list_variants(
 
     aid = analysis_id
 
-    rows = db.scalars(
-        select(Variant)
-        .join(
-            Annotation,
-            Annotation.variant_id == Variant.id,
-        )
+    # The normalization manifest is the durable source of truth for which
+    # variants belong to this analysis. Annotation is a downstream enrichment
+    # layer and must not be required merely to render the variant workspace.
+    partitions = db.scalars(
+        select(AnalysisPartition)
         .where(
-            Annotation.analysis_id == aid
+            AnalysisPartition.analysis_id == aid,
+            AnalysisPartition.step_id == "normalize",
         )
-        .distinct()
+        .order_by(AnalysisPartition.ordinal)
     ).all()
+
+    variant_ids: list[UUID] = []
+    seen: set[UUID] = set()
+    for partition in partitions:
+        for raw_id in ((partition.metadata_json or {}).get("variant_ids") or []):
+            try:
+                variant_id = UUID(str(raw_id))
+            except (TypeError, ValueError):
+                continue
+            if variant_id not in seen:
+                seen.add(variant_id)
+                variant_ids.append(variant_id)
+
+    if variant_ids:
+        rows = db.scalars(
+            select(Variant)
+            .where(Variant.id.in_(variant_ids))
+            .order_by(
+                Variant.chromosome,
+                Variant.position,
+                Variant.reference,
+                Variant.alternate,
+            )
+        ).all()
+    else:
+        # Compatibility fallback for analyses created before the partition
+        # manifest carried persisted variant IDs.
+        rows = db.scalars(
+            select(Variant)
+            .join(
+                Annotation,
+                Annotation.variant_id == Variant.id,
+            )
+            .where(Annotation.analysis_id == aid)
+            .distinct()
+            .order_by(
+                Variant.chromosome,
+                Variant.position,
+                Variant.reference,
+                Variant.alternate,
+            )
+        ).all()
 
     return [
         {
