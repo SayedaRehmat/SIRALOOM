@@ -43,11 +43,19 @@ _ALLOWED_ROLES = {
     "lab_director",
     "clinical_geneticist",
     "reviewer",
+    # Legacy User.role values retained for existing provisioned users. The
+    # authoritative tenant role is OrganizationMembership.role, but existing
+    # User rows may still carry the older enum vocabulary.
+    "ADMIN",
+    "REVIEWER",
+    "MEDICAL_REVIEWER",
+    "LAB_MANAGER",
 }
 
 
 def require_reviewer(user: User) -> None:
-    if str(user.role) not in {str(x) for x in _ALLOWED_ROLES}:
+    role = str(user.role)
+    if role not in _ALLOWED_ROLES:
         raise ReviewAuthorizationError("User role is not authorized to perform interpretation review")
     if str(user.status) != "ACTIVE":
         raise ReviewAuthorizationError("User is not active")
