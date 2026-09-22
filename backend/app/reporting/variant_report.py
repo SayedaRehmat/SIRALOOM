@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     PopulationObservation,
     Variant,
     ReportabilityDecision,
+    AnalysisPartition,
 )
 
 
@@ -48,13 +49,51 @@ def _text(value: object | None) -> str:
 
 
 def build_variant_rows(db: Session, analysis_id: UUID) -> list[dict[str, object]]:
-    variants = db.scalars(
-        select(Variant)
-        .join(Annotation, Annotation.variant_id == Variant.id)
-        .where(Annotation.analysis_id == analysis_id)
-        .distinct()
-        .order_by(Variant.chromosome, Variant.position, Variant.reference, Variant.alternate)
+    partitions = db.scalars(
+        select(AnalysisPartition)
+        .where(
+            AnalysisPartition.analysis_id == analysis_id,
+            AnalysisPartition.step_id == "normalize",
+        )
+        .order_by(AnalysisPartition.ordinal)
     ).all()
+
+    variant_ids: list[UUID] = []
+    seen: set[UUID] = set()
+    for partition in partitions:
+        for raw_id in ((partition.metadata_json or {}).get("variant_ids") or []):
+            try:
+                variant_id = UUID(str(raw_id))
+            except (TypeError, ValueError):
+                continue
+            if variant_id not in seen:
+                seen.add(variant_id)
+                variant_ids.append(variant_id)
+
+    if variant_ids:
+        variants = db.scalars(
+            select(Variant)
+            .where(Variant.id.in_(variant_ids))
+            .order_by(
+                Variant.chromosome,
+                Variant.position,
+                Variant.reference,
+                Variant.alternate,
+            )
+        ).all()
+    else:
+        variants = db.scalars(
+            select(Variant)
+            .join(Annotation, Annotation.variant_id == Variant.id)
+            .where(Annotation.analysis_id == analysis_id)
+            .distinct()
+            .order_by(
+                Variant.chromosome,
+                Variant.position,
+                Variant.reference,
+                Variant.alternate,
+            )
+        ).all()
     annotations = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis_id)).all()
     populations = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis_id)).all()
     evidence = db.scalars(select(Evidence).where(Evidence.analysis_id == analysis_id)).all()
