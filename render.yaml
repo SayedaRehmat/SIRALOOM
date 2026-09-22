@@ -75,6 +75,9 @@ services:
       - key: CELERY_WORKER_PREFETCH_MULTIPLIER
         value: "1"
 
+      - key: PARTITION_DEFAULT_RESOURCE_CLASS
+        value: LIGHT
+
       - key: PARTITION_SCHEDULER_CPU_CAPACITY
         value: "1.0"
 
