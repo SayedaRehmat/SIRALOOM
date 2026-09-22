@@ -34,7 +34,31 @@ export default function ReviewQueuePage(){
  const [parentId,setParentId]=useState(""); const [childId,setChildId]=useState("");
  const [segMember,setSegMember]=useState(""); const [segGenotype,setSegGenotype]=useState(""); const [segZygosity,setSegZygosity]=useState(""); const [segPhase,setSegPhase]=useState(""); const [segPhenotype,setSegPhenotype]=useState(""); const [inheritanceModels,setInheritanceModels]=useState<string[]>(["AD","AR","X_LINKED","MITOCHONDRIAL","DE_NOVO"]); const [inheritanceNote,setInheritanceNote]=useState("");
  const [governance,setGovernance]=useState<any>(null); const [confirmationRequired,setConfirmationRequired]=useState(false); const [confirmationStatus,setConfirmationStatus]=useState("PENDING"); const [confirmationMethod,setConfirmationMethod]=useState(""); const [confirmationResult,setConfirmationResult]=useState(""); const [confirmationLab,setConfirmationLab]=useState(""); const [confirmationAccession,setConfirmationAccession]=useState(""); const [confirmationNotes,setConfirmationNotes]=useState(""); const [followAction,setFollowAction]=useState(""); const [followStatus,setFollowStatus]=useState("PLANNED"); const [followDue,setFollowDue]=useState(""); const [followNotes,setFollowNotes]=useState(""); const [secondaryPolicy,setSecondaryPolicy]=useState("LAB_SECONDARY_FINDINGS"); const [secondaryVersion,setSecondaryVersion]=useState("1.0"); const [secondaryConsent,setSecondaryConsent]=useState("NOT_DOCUMENTED"); const [secondaryDisposition,setSecondaryDisposition]=useState("REVIEW"); const [secondaryStatus,setSecondaryStatus]=useState("DRAFT"); const [secondaryRationale,setSecondaryRationale]=useState("");
- useEffect(()=>setAnalysisId(window.localStorage.getItem("siraloom.analysis_id")??""),[]);
+ useEffect(()=>{
+   const bootstrapAnalysis=async()=>{
+    const caseId=window.localStorage.getItem("siraloom.case_id")??"";
+    const storedAnalysis=window.localStorage.getItem("siraloom.analysis_id")??"";
+    try{
+     if(caseId){
+      const caseData=await apiFetch(`/cases/${caseId}`);
+      const latest=Array.isArray(caseData?.analyses)&&caseData.analyses.length?caseData.analyses[0]:null;
+      if(latest?.analysis_id){
+       const id=String(latest.analysis_id);
+       setAnalysisId(id);
+       window.localStorage.setItem("siraloom.analysis_id",id);
+      }else{
+       setAnalysisId("");
+       window.localStorage.removeItem("siraloom.analysis_id");
+      }
+      return;
+     }
+    }catch(e){
+     setMessage(e instanceof Error?e.message:"Unable to resolve the selected case.");
+    }
+    if(storedAnalysis)setAnalysisId(storedAnalysis);
+   };
+   bootstrapAnalysis();
+  },[]);
  const loadQueue=async()=>{if(!analysisId){setMessage("Enter an Analysis ID or open a completed analysis first.");return;}setLoading(true);setMessage("");try{const q=new URLSearchParams();if(status)q.set("status",status);if(classification)q.set("classification",classification);if(reportability)q.set("reportability",reportability);const d=await apiFetch(`/analyses/${analysisId}/review-queue?${q}`);setQueue(d.items??[]);setSelected(c=>c&&(d.items??[]).some((x:QueueItem)=>x.variant_id===c.variant_id)?c:(d.items?.[0]??null));}catch(e){setMessage(e instanceof Error?e.message:"Unable to load review queue.")}finally{setLoading(false)}};
  useEffect(()=>{if(analysisId)loadQueue()},[analysisId]);
  const loadReview=async()=>{if(!selected)return;try{setReview(await apiFetch(`/analyses/${analysisId}/variants/${selected.variant_id}/review`)); setQuality(await apiFetch(`/analyses/${analysisId}/quality`));}catch(e){setMessage(e instanceof Error?e.message:"Unable to load clinical interpretation.")}};
