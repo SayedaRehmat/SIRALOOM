@@ -196,7 +196,7 @@ def _ensure_execution_partitions(db: Session, analysis_id: UUID, source_step: st
             input_artifact_id=src.input_artifact_id,
             metadata_json={"source_partition": str(src.id), "genome_build": (src.metadata_json or {}).get("genome_build")},
         )
-        configure_partition(part, "STANDARD")
+        configure_partition(part, settings.partition_default_resource_class)
         db.add(part)
     db.commit()
 
@@ -955,28 +955,31 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"assessed": batch_assessed, "proposed": batch_proposed, "blocked": batch_blocked})
 
                 if assessed == 0:
+                    # No variant had an approved, automatable ClinGen specification. This is
+                    # not a workflow failure: the case still needs a qualified human reviewer
+                    # to classify manually, so it proceeds to review rather than dead-ending.
                     mark_step(
-                        db, acmg_step, StepStatus.BLOCKED,
+                        db, acmg_step, StepStatus.REQUIRES_REVIEW,
                         error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
                         error_message=(
                             "No variant received a validated, applicable ClinGen specification with "
-                            "supported structured criterion configuration. Human/configuration review is required."
+                            "supported structured criterion configuration. Manual ACMG classification "
+                            "is required for all variants in this case."
                         ),
                         metadata={"disease_context_present": bool(disease), "blocked_variants": blocked_variants},
                     )
-                    analysis.status = AnalysisStatus.BLOCKED
-                    db.commit()
                     audit.record(
-                        event_type="ACMG_ASSESSMENT_BLOCKED",
+                        event_type="ACMG_ASSESSMENT_REQUIRES_MANUAL_REVIEW",
                         case_id=analysis.case_id,
                         analysis_id=analysis.id,
                         actor_type="SERVICE",
                         actor_id="siraloom-acmg-specification-engine",
-                        reason="No safely automatable validated ClinGen specification/context",
+                        reason="No safely automatable validated ClinGen specification/context; routed to human review",
                         payload={"assessed": assessed, "blocked_variants": blocked_variants},
                     )
                     db.commit()
-                    return
+                    # Falls through to the review_step block below instead of returning,
+                    # so the case reaches REQUIRES_REVIEW with the annotated variants visible.
 
                 status = StepStatus.SUCCEEDED if proposed_variants == assessed else StepStatus.SUCCEEDED
                 mark_step(db, acmg_step, status, metadata={
