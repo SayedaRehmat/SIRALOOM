@@ -21,7 +21,7 @@ app = FastAPI(title=f"{settings.app_name} Variant API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        settings.frontend_origin,
+        settings.frontend_origin.rstrip("/"),
         "https://siraloom.vercel.app",
     ],
     allow_credentials=True,
