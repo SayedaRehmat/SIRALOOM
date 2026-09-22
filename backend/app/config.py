@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     celery_worker_max_tasks_per_child: int = 20
     celery_worker_prefetch_multiplier: int = 1
 
+    partition_default_resource_class: str = "LIGHT"
     partition_scheduler_cpu_capacity: float = 2.0
     partition_scheduler_memory_mb: int = 4096
     partition_lease_seconds: int = 900
