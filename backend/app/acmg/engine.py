@@ -124,8 +124,8 @@ class ACMGEngine:
             pathogenic = True; rationale.append("Strong + at least three moderate pathogenic criteria.")
         elif p["STRONG"] >= 1 and p["MODERATE"] >= 2 and p["SUPPORTING"] >= 2:
             pathogenic = True; rationale.append("Strong + at least two moderate + at least two supporting pathogenic criteria.")
-        elif p["STRONG"] >= 1 and p["MODERATE"] >= 1 and p["SUPPORTING"] >= 3:
-            pathogenic = True; rationale.append("Strong + moderate + at least three supporting pathogenic criteria.")
+        elif p["STRONG"] >= 1 and p["MODERATE"] >= 1 and p["SUPPORTING"] >= 4:
+            pathogenic = True; rationale.append("Strong + moderate + at least four supporting pathogenic criteria.")
 
         if not pathogenic:
             if p["VERY_STRONG"] >= 1 and p["MODERATE"] >= 1:
@@ -138,6 +138,10 @@ class ACMGEngine:
                 likely_pathogenic = True; rationale.append("Strong + at least two supporting pathogenic criteria.")
             elif p["MODERATE"] >= 3:
                 likely_pathogenic = True; rationale.append("At least three moderate pathogenic criteria.")
+            elif p["MODERATE"] >= 2 and p["SUPPORTING"] >= 2:
+                likely_pathogenic = True; rationale.append("At least two moderate + at least two supporting pathogenic criteria.")
+            elif p["MODERATE"] >= 1 and p["SUPPORTING"] >= 4:
+                likely_pathogenic = True; rationale.append("At least one moderate + at least four supporting pathogenic criteria.")
 
         classification = "PATHOGENIC" if pathogenic else "LIKELY_PATHOGENIC" if likely_pathogenic else "VUS"
         if not rationale:
