@@ -31,7 +31,33 @@ export default function ReportsPage() {
   const [selected, setSelected] = useState<Decision | null>(null);
   const [disposition, setDisposition] = useState("REPORT");
 
-  useEffect(() => setAnalysisId(window.localStorage.getItem("siraloom.analysis_id") ?? ""), []);
+  useEffect(() => {
+    const bootstrapAnalysis = async () => {
+      const caseId = window.localStorage.getItem("siraloom.case_id") ?? "";
+      const storedAnalysis = window.localStorage.getItem("siraloom.analysis_id") ?? "";
+      try {
+        if (caseId) {
+          const caseData = await apiFetch(`/cases/${caseId}`);
+          const latest = Array.isArray(caseData?.analyses) && caseData.analyses.length
+            ? caseData.analyses[0]
+            : null;
+          if (latest?.analysis_id) {
+            const id = String(latest.analysis_id);
+            setAnalysisId(id);
+            window.localStorage.setItem("siraloom.analysis_id", id);
+          } else {
+            setAnalysisId("");
+            window.localStorage.removeItem("siraloom.analysis_id");
+          }
+          return;
+        }
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "Unable to resolve the selected case.");
+      }
+      if (storedAnalysis) setAnalysisId(storedAnalysis);
+    };
+    bootstrapAnalysis();
+  }, []);
 
   const load = async () => {
     if (!analysisId) { setMessage("Enter or open an Analysis ID first."); return; }
