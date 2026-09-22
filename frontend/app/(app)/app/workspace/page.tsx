@@ -399,6 +399,32 @@ export default function Home() {
     }
   };
 
+  const downloadAuthenticated = async (path: string, filename: string) => {
+    try {
+      const token = await firebaseAuth?.currentUser?.getIdToken();
+      const response = await fetch(`${API_BASE}${path}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        let detail = `HTTP ${response.status}`;
+        try { const parsed = body ? JSON.parse(body) : null; if (parsed?.detail) detail = String(parsed.detail); } catch {}
+        throw new Error(detail);
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setMessage(error instanceof Error ? `Download failed: ${error.message}` : "Download failed.");
+    }
+  };
+
   const createAndStart = async () => {
     if (!caseId || !artifactId) {
       setMessage("Case and uploaded VCF are required.");
@@ -673,7 +699,7 @@ export default function Home() {
 
       <section className="panel complete-report-panel">
         <div className="panel-head"><div><div className="section-kicker">COMPLETE VARIANT REPORT</div><h3>All analyzed variants</h3></div><span className="badge neutral">{completeVariants.length} rows</span></div>
-        <div className="report-toolbar"><p>Inspection layer for the laboratory team. This is separate from the concise clinical report.</p><div className="actions-row"><a className="secondary link-button" href={analysisId ? `${API_BASE}/analyses/${analysisId}/complete-variant-report.csv` : "#"}>Download CSV</a><a className="secondary link-button" href={analysisId ? `${API_BASE}/analyses/${analysisId}/complete-variant-report.json` : "#"}>Download JSON</a></div></div>
+        <div className="report-toolbar"><p>Inspection layer for the laboratory team. This is separate from the concise clinical report.</p><div className="actions-row"><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.csv`, `siraloom-complete-variant-report-${analysisId}.csv`)} disabled={!analysisId}>Download CSV</button><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.json`, `siraloom-complete-variant-report-${analysisId}.json`)} disabled={!analysisId}>Download JSON</button></div></div>
         {completeVariants.length === 0 ? <div className="empty small"><strong>No complete variant dataset yet</strong><p>It becomes available after annotation has produced persistent variant records.</p></div> : <div className="table-wrap"><table><thead><tr>{completeVariantColumns.slice(0, 12).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{completeVariants.slice(0, 100).map((row, index) => <tr key={String(row.variant_id ?? index)} onClick={() => typeof row.variant_id === "string" && setSelectedVariantId(row.variant_id)}>{completeVariantColumns.slice(0, 12).map((column) => <td key={column}><code>{String(row[column] ?? "—")}</code></td>)}</tr>)}</tbody></table>{completeVariants.length > 100 && <p className="table-note">Showing the first 100 rows for interactive inspection. Download the complete CSV/JSON for the full dataset.</p>}</div>}
       </section>
 
@@ -705,8 +731,8 @@ export default function Home() {
       </section>
 
       <section className="bottom-grid">
-        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">REPORT</div><h3>Final report</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>No report generated</strong><p>Report generation is downstream of reviewer-approved interpretation.</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? "Interpretation available in report artifact.")}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>Finalize report</button>{report.artifact_id && <a className="secondary link-button" href={`${API_BASE}/artifacts/${report.artifact_id}/download`} target="_blank" rel="noreferrer">Open PDF</a>}</div></div>}</section>
-        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">AUDIT & PROVENANCE</div><h3>Case timeline</h3></div><span className="badge neutral">{auditEvents.length} events</span></div><div className="audit-callout"><strong>Every important action is reconstructable.</strong><p>Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>No audit events yet</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>Export complete case history</button>{exportId && <><div className="keyline"><span>Export</span><code>{exportId}</code></div><div className="keyline"><span>Status</span><strong>{exportStatus ? prettyStatus(exportStatus) : "Queued"}</strong></div>{exportStatus === "SUCCEEDED" && <a className="secondary link-button full" href={`${API_BASE}/exports/${exportId}/download`} target="_blank" rel="noreferrer">Download case history ZIP</a>}</>}</section>
+        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">REPORT</div><h3>Final report</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>No report generated</strong><p>Report generation is downstream of reviewer-approved interpretation.</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? "Interpretation available in report artifact.")}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>Finalize report</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>Download PDF</button>}</div></div>}</section>
+        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">AUDIT & PROVENANCE</div><h3>Case timeline</h3></div><span className="badge neutral">{auditEvents.length} events</span></div><div className="audit-callout"><strong>Every important action is reconstructable.</strong><p>Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>No audit events yet</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>Export complete case history</button>{exportId && <><div className="keyline"><span>Export</span><code>{exportId}</code></div><div className="keyline"><span>Status</span><strong>{exportStatus ? prettyStatus(exportStatus) : "Queued"}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>Download case history ZIP</button>}</>}</section>
       </section>
 
       <footer className="footer"><span>SIRALOOM Variant v1</span><span>Scientific results remain subject to configured resources, review, validation scope, and laboratory governance.</span></footer>
