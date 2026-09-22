@@ -10,6 +10,17 @@ type CaseSummary = {
   status: string;
   language: string;
   clinical_context: Record<string, unknown>;
+  created_at?: string;
+  updated_at?: string;
+  analyses?: Array<{
+    analysis_id: string;
+    status: string;
+    analysis_type?: string;
+    workflow_id?: string;
+    workflow_version?: string;
+    reference_build?: string;
+    created_at?: string;
+  }>;
   specimens: Array<{
     specimen_id: string;
     specimen_identifier: string;
@@ -93,6 +104,8 @@ function formatBytes(bytes: number) {
 
 export default function Cases() {
   const [step, setStep] = useState(0);
+  const [cases, setCases] = useState<CaseSummary[]>([]);
+  const [loadingCases, setLoadingCases] = useState(false);
   const [caseIdentifier, setCaseIdentifier] = useState("");
   const [indication, setIndication] = useState("");
   const [language, setLanguage] = useState("en");
@@ -121,7 +134,74 @@ export default function Cases() {
     return true;
   }, [step, caseId, specimenId, primaryArtifact]);
 
-  const refreshCase = async (id = caseId) => {
+  const loadCases = async () => {
+    setLoadingCases(true);
+    try {
+      const rows = await apiFetch("/cases");
+      setCases(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load existing cases.");
+    } finally {
+      setLoadingCases(false);
+    }
+  };
+
+  const loadExistingCase = async (id: string) => {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const [data, files] = await Promise.all([
+        apiFetch(`/cases/${id}`),
+        apiFetch(`/cases/${id}/artifacts`),
+      ]);
+      const specimens = Array.isArray(data.specimens) ? data.specimens : [];
+      const artifactRows = Array.isArray(files) ? files : [];
+      const primary = artifactRows.find(
+        (a: Artifact) =>
+          a.artifact_type === "VCF" &&
+          a.validation_status === "VALID",
+      ) ?? null;
+      const index = artifactRows.find(
+        (a: Artifact) =>
+          ["VCF_INDEX_TBI", "VCF_INDEX_CSI"].includes(a.artifact_type),
+      ) ?? null;
+      const latestAnalysis = Array.isArray(data.analyses) && data.analyses.length
+        ? data.analyses[0]
+        : null;
+
+      setCaseId(data.case_id);
+      setCaseIdentifier(data.case_identifier ?? "");
+      setIndication(String(data.clinical_context?.indication ?? ""));
+      setLanguage(data.language ?? "en");
+      setCaseData(data);
+      setArtifacts(artifactRows);
+      setSpecimenId(specimens[0]?.specimen_id ?? "");
+      setPrimaryArtifact(primary);
+      setIndexArtifact(index);
+      setBuild(primary?.genome_build ?? "GRCh38");
+      setVariantFile(null);
+      setIndexFile(null);
+
+      window.localStorage.setItem("siraloom.case_id", data.case_id);
+      window.localStorage.setItem("siraloom.case_identifier", data.case_identifier);
+      if (latestAnalysis?.analysis_id) {
+        window.localStorage.setItem("siraloom.analysis_id", latestAnalysis.analysis_id);
+      }
+
+      if (!specimens.length) setStep(1);
+      else if (!primary) setStep(2);
+      else setStep(4);
+
+      setMessage(`Loaded case ${data.case_identifier}.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to load case.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const refreshCase = async (id = caseId) =>
     if (!id) return;
 
     const [data, files] = await Promise.all([
@@ -138,6 +218,10 @@ export default function Cases() {
       setSpecimenId(specimen.specimen_id);
     }
   };
+
+  useEffect(() => {
+    loadCases();
+  }, []);
 
   useEffect(() => {
     if (caseId) {
@@ -170,6 +254,9 @@ export default function Cases() {
       });
 
       setCaseId(result.case_id);
+      window.localStorage.setItem("siraloom.case_id", result.case_id);
+      window.localStorage.setItem("siraloom.case_identifier", result.case_identifier);
+      window.localStorage.removeItem("siraloom.analysis_id");
 
       setMessage(
         result.created
@@ -177,6 +264,7 @@ export default function Cases() {
           : "Existing case loaded.",
       );
 
+      await loadCases();
       setStep(1);
     } catch (e) {
       setError(
@@ -338,6 +426,47 @@ export default function Cases() {
           Back to dashboard
         </Link>
       </div>
+
+      <section className="panel existing-cases-panel">
+        <div className="panel-head">
+          <div>
+            <p className="eyebrow">CASE REGISTRY</p>
+            <h2>Existing cases</h2>
+            <p className="muted">Select a previously created case to continue its persisted workflow.</p>
+          </div>
+          <button className="secondary" onClick={loadCases} disabled={loadingCases}>
+            {loadingCases ? "Refreshing…" : "Refresh cases"}
+          </button>
+        </div>
+        {!cases.length ? (
+          <div className="empty">
+            <strong>No cases found</strong>
+            <p>Create a case below. Cases are stored server-side in your organization.</p>
+          </div>
+        ) : (
+          <div className="case-registry-list">
+            {cases.map((item) => {
+              const latestAnalysis = item.analyses?.[0];
+              return (
+                <button
+                  key={item.case_id}
+                  className={caseId === item.case_id ? "case-registry-item selected" : "case-registry-item"}
+                  onClick={() => loadExistingCase(item.case_id)}
+                  disabled={busy}
+                >
+                  <span>
+                    <strong>{item.case_identifier}</strong>
+                    <small>{pretty(item.status)} · {item.specimens?.length ?? 0} specimen(s)</small>
+                  </span>
+                  <span>
+                    <small>{latestAnalysis ? `Analysis · ${pretty(latestAnalysis.status)}` : "No analysis yet"}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="wizard-steps">
         {steps.map((label, i) => (
@@ -683,6 +812,16 @@ export default function Cases() {
                 <Link
                   className="primary link-button"
                   href="/app/workspace"
+                  onClick={() => {
+                    if (caseId) {
+                      window.localStorage.setItem("siraloom.case_id", caseId);
+                      window.localStorage.setItem("siraloom.case_identifier", caseData?.case_identifier ?? caseIdentifier);
+                      const latestAnalysis = caseData?.analyses?.[0];
+                      if (latestAnalysis?.analysis_id) {
+                        window.localStorage.setItem("siraloom.analysis_id", latestAnalysis.analysis_id);
+                      }
+                    }
+                  }}
                 >
                   Open Variant workspace
                 </Link>
