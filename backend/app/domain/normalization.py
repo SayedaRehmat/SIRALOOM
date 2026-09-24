@@ -141,76 +141,37 @@ def _split_vcf_alt(alt: str) -> list[str]:
     return [alt]
 
 
-def normalize_vcf_file(input_path: str | Path, output_path: str | Path, *, genome_build: str, reference: FastaReference, collect_variants: bool = True):
-    """Stream-normalize a biallelic VCF without loading it into memory."""
-    input_path = Path(input_path)
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+def normalize_vcf_file(
+    input_path: str | Path,
+    output_path: str | Path,
+    *,
+    genome_build: str,
+    reference: FastaReference,
+    collect_variants: bool = True,
+):
+    """Normalize an ordinary VCF through the established bcftools implementation.
 
-    records = 0
-    changed = 0
-    variants: list[CanonicalVariant] | None = [] if collect_variants else None
-    header_seen = False
+    SIRALOOM deliberately does not reimplement VCF allele normalization here.
+    Multiallelic decomposition, genotype/FORMAT remapping, reference checking,
+    and indel left-alignment are delegated to bcftools norm.
+    """
+    from backend.app.domain.bcftools_normalization import normalize_vcf_with_bcftools
 
-    src_open = gzip.open if input_path.suffix == ".gz" else open
-    dst_open = gzip.open if output_path.suffix == ".gz" else open
-    with src_open(input_path, "rt", encoding="utf-8") as src, dst_open(output_path, "wt", encoding="utf-8", newline="") as dst:
-        injected = False
-        for line_no, raw_line in enumerate(src, 1):
-            line = raw_line.rstrip("\n")
-            if line.startswith("##"):
-                dst.write(raw_line)
-                continue
-            if line.startswith("#CHROM"):
-                if not injected:
-                    dst.write(f"##SIRALOOM_normalization_version=1.0\n")
-                    dst.write(f"##SIRALOOM_reference_build={genome_build}\n")
-                    injected = True
-                dst.write(raw_line)
-                header_seen = True
-                continue
-            if line.startswith("#"):
-                dst.write(raw_line)
-                continue
-            if not header_seen:
-                raise NormalizationError(f"VCF data encountered before #CHROM at line {line_no}")
-
-            fields = line.split("\t")
-            if len(fields) < 5:
-                raise NormalizationError(f"Malformed VCF record at line {line_no}")
-            chrom, pos_s, vid, ref, alt = fields[:5]
-            try:
-                pos1 = int(pos_s)
-            except ValueError as exc:
-                raise NormalizationError(f"Invalid POS at line {line_no}: {pos_s!r}") from exc
-            alts = _split_vcf_alt(alt)
-            for alt_allele in alts:
-                result = normalize_alleles(chrom=chrom, pos1=pos1, ref=ref, alt=alt_allele, reference=reference)
-                v = result.variant.model_copy(update={"genome_build": genome_build})
-                if variants is not None:
-                    variants.append(v)
-                records += 1
-                changed += int(result.changed)
-                new_fields = list(fields)
-                new_fields[0] = v.chromosome
-                new_fields[1] = str(v.position)
-                new_fields[3] = v.reference
-                new_fields[4] = v.alternate
-                # A multi-allelic split is forbidden above; therefore sample/genotype
-                # fields remain semantically aligned here.
-                dst.write("\t".join(new_fields) + "\n")
-
-    if not header_seen:
-        raise NormalizationError("VCF is missing the #CHROM header")
-    if records == 0:
-        raise NormalizationError("VCF contains no supported variant records")
+    result = normalize_vcf_with_bcftools(
+        input_path,
+        output_path,
+        genome_build=genome_build,
+        reference=reference,
+        collect_variants=collect_variants,
+    )
     return {
-        "record_count": records,
-        "changed_count": changed,
-        "variants": variants if variants is not None else None,
-        "output_path": str(output_path),
+        "record_count": result.output_record_count,
+        "input_record_count": result.input_record_count,
+        "changed_count": result.normalized_record_count,
+        "split_record_count": result.split_record_count,
+        "variants": result.variants,
+        "output_path": result.output_path,
     }
-
 
 def scan_vcf_regions(input_path: str | Path):
     """Cheaply scans a VCF for the (chrom, start0, end0) reference interval each record
