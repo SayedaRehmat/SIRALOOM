@@ -11,7 +11,7 @@ COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client\
+    && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client bcftools\
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -e .
 
