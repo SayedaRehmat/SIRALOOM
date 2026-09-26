@@ -310,7 +310,7 @@ class EnsemblReference:
         for i in range(0, len(regions), self.batch_size):
             chunk = regions[i:i + self.batch_size]
             region_strings = [f"{contig}:{start1}..{end1}:1" for contig, start1, end1 in chunk]
-            url = f"{self.endpoint}/sequence/region/human"
+            url = f"{self.endpoint}/sequence/region/human?content-type=application/json"
             body = json.dumps({"regions": region_strings}).encode("utf-8")
             request = Request(
                 url, data=body, method="POST",
