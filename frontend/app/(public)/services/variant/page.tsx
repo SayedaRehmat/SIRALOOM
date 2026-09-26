@@ -1,2 +1,10 @@
-import Link from "next/link"; import { SiteShell } from "../../../../components/site-shell";
-export default function Variant() { return <SiteShell><main className="content-page"><p className="eyebrow">SIRALOOM VARIANT</p><h1>From VCF intake to reviewable, auditable interpretation.</h1><p className="lead">A case-centered service designed to preserve original inputs, workflow context, resource provenance, reviewer decisions, and report history.</p><div className="process"><span>Case</span><span>Validate</span><span>Normalize</span><span>Evidence</span><span>Review</span><span>Report</span></div><p className="quiet">External resources and scientific outputs remain configuration-dependent and require laboratory validation for intended use.</p><Link className="button" href="/signup">Create account</Link></main></SiteShell>; }
+"use client";
+
+import Link from "next/link";
+import { SiteShell } from "../../../../components/site-shell";
+import { useLanguage } from "../../../../lib/i18n";
+
+export default function Variant() {
+  const { t } = useLanguage();
+  return <SiteShell><main className="content-page"><p className="eyebrow">{t("public.variant.eyebrow")}</p><h1>{t("public.variant.title")}</h1><p className="lead">{t("public.variant.lead")}</p><div className="process"><span>{t("public.variant.case")}</span><span>{t("public.variant.validate")}</span><span>{t("public.variant.normalize")}</span><span>{t("public.variant.evidence")}</span><span>{t("public.variant.review")}</span><span>{t("public.variant.report")}</span></div><p className="quiet">{t("public.variant.note")}</p><Link className="button" href="/signup">{t("public.variant.create")}</Link></main></SiteShell>;
+}
