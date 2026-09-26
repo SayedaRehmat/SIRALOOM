@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
+import { useLanguage } from "../../../../lib/i18n";
 
 type CaseSummary = {
   case_id: string;
@@ -103,12 +104,12 @@ function formatBytes(bytes: number) {
 }
 
 export default function Cases() {
+  const { language } = useLanguage();
   const [step, setStep] = useState(0);
   const [cases, setCases] = useState<CaseSummary[]>([]);
   const [loadingCases, setLoadingCases] = useState(false);
   const [caseIdentifier, setCaseIdentifier] = useState("");
   const [indication, setIndication] = useState("");
-  const [language, setLanguage] = useState("en");
   const [caseId, setCaseId] = useState("");
   const [caseData, setCaseData] = useState<CaseSummary | null>(null);
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
@@ -173,7 +174,6 @@ export default function Cases() {
       setCaseId(data.case_id);
       setCaseIdentifier(data.case_identifier ?? "");
       setIndication(String(data.clinical_context?.indication ?? ""));
-      setLanguage(data.language ?? "en");
       setCaseData(data);
       setArtifacts(artifactRows);
       setSpecimenId(specimens[0]?.specimen_id ?? "");
@@ -516,18 +516,6 @@ export default function Cases() {
                   placeholder="e.g. SRL-2026-0001"
                   required
                 />
-              </label>
-
-              <label>
-                Language
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                >
-                  <option value="en">English</option>
-                  <option value="ar">Arabic</option>
-                  <option value="bilingual">Bilingual</option>
-                </select>
               </label>
 
               <label className="span-2">
