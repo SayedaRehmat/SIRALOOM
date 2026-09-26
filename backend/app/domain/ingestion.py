@@ -65,6 +65,22 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
     return headers, detected_build, has_fileformat
 
 
+def _bcftools_validate(path: Path) -> str | None:
+    executable = shutil.which("bcftools")
+    if executable is None:
+        return None
+    completed = subprocess.run(
+        [executable, "view", "-Ov", "-o", "/dev/null", str(path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return (completed.stderr or completed.stdout or "bcftools rejected the VCF").strip()
+    return None
+
+
 def validate_vcf(path: str | Path) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
