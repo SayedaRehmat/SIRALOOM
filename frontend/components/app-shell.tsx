@@ -48,17 +48,23 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Link href="/app/reports">{t("nav.reports")}</Link>
         <Link href="/app/audit">{t("nav.audit")}</Link>
         <Link href="/app/settings">{t("nav.settings")}</Link>
-        <label className="language-control">
-          <span>{t("language.label")}</span>
-          <select value={language} onChange={(event) => changeLanguage(event.target.value)} aria-label={t("language.label")}>
-            <option value="en">{t("language.english")}</option>
-            <option value="ar">{t("language.arabic")}</option>
-            <option value="bilingual">{t("language.bilingual")}</option>
-          </select>
-        </label>
         <button className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth)}>{t("nav.signOut")}</button>
       </aside>
       <main className="app-content">
+        <div className="global-language-bar">
+          <span className="global-language-label">{t("language.label")}</span>
+          <div className="global-language-options" role="group" aria-label={t("language.label")}>
+            <button type="button" className={language === "en" ? "language-option active" : "language-option"} onClick={() => setLanguage("en")} aria-pressed={language === "en"}>
+              {t("language.english")}
+            </button>
+            <button type="button" className={language === "ar" ? "language-option active" : "language-option"} onClick={() => setLanguage("ar")} aria-pressed={language === "ar"}>
+              {t("language.arabic")}
+            </button>
+            <button type="button" className={language === "bilingual" ? "language-option active" : "language-option"} onClick={() => setLanguage("bilingual")} aria-pressed={language === "bilingual"}>
+              {t("language.bilingual")}
+            </button>
+          </div>
+        </div>
         {!firebaseConfigured && <div className="configuration-notice">{t("development.notice")}</div>}
         {children}
       </main>
