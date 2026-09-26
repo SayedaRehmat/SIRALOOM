@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
+import { useLanguage } from "../../../../lib/i18n";
 
-const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
+const {t("settings.api")}_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_{t("settings.api")}_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
 async function apiFetch(path: string) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
-  const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const response = await fetch(`${{t("settings.api")}_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   const text = await response.text();
   let body: any = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
@@ -15,41 +16,42 @@ async function apiFetch(path: string) {
   return body;
 }
 
-export default function SettingsPage() {
+export default function {t("settings.title")}Page() {
+  const { t } = useLanguage();
   const [session, setSession] = useState<any>(null);
-  const [health, setHealth] = useState<any>(null);
+  const [health, set{t("settings.health")}] = useState<any>(null);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     Promise.all([apiFetch("/auth/session"), apiFetch("/health")])
-      .then(([s, h]) => { setSession(s); setHealth(h); })
-      .catch((e) => setMessage(e instanceof Error ? e.message : "Unable to load settings."));
+      .then(([s, h]) => { setSession(s); set{t("settings.health")}(h); })
+      .catch((e) => setMessage(e instanceof Error ? e.message : t("settings.unableToLoad")));
   }, []);
 
   return <main className="settings-page">
     <header className="page-heading">
-      <div><p className="eyebrow">GOVERNANCE · CONFIGURATION</p><h1>Settings</h1><p className="lead">Authenticated workspace identity, entitlement, service connection, and active workflow context.</p></div>
+      <div><p className="eyebrow">{t("settings.eyebrow")}</p><h1>{t("settings.title")}</h1><p className="lead">{t("settings.lead")}</p></div>
     </header>
     {message && <div className="notice error-notice">{message}</div>}
     <div className="feature-grid">
-      <section className="panel"><p className="eyebrow">IDENTITY</p><h2>Current session</h2>
+      <section className="panel"><p className="eyebrow">{t("settings.identity")}</p><h2>{t("settings.currentSession")}</h2>
         {session ? <div className="context-list">
-          <div className="keyline"><span>Email</span><strong>{session.email ?? "—"}</strong></div>
-          <div className="keyline"><span>Role</span><strong>{session.role ?? "—"}</strong></div>
-          <div className="keyline"><span>User ID</span><code>{session.user_id}</code></div>
-          <div className="keyline"><span>Organization</span><code>{session.organization_id}</code></div>
-          <div className="keyline"><span>Entitlement</span><strong>{session.entitlement?.plan ?? "—"} · {session.entitlement?.status ?? "—"}</strong></div>
-        </div> : <p className="muted">Loading authenticated session…</p>}
+          <div className="keyline"><span>{t("settings.email")}</span><strong>{session.email ?? "—"}</strong></div>
+          <div className="keyline"><span>{t("settings.role")}</span><strong>{session.role ?? "—"}</strong></div>
+          <div className="keyline"><span>{t("settings.userId")}</span><code>{session.user_id}</code></div>
+          <div className="keyline"><span>{t("settings.organization")}</span><code>{session.organization_id}</code></div>
+          <div className="keyline"><span>{t("settings.entitlement")}</span><strong>{session.entitlement?.plan ?? "—"} · {session.entitlement?.status ?? "—"}</strong></div>
+        </div> : <p className="muted">{t("settings.loadingSession")}</p>}
       </section>
-      <section className="panel"><p className="eyebrow">SERVICE</p><h2>Backend connection</h2>
-        <div className="keyline"><span>API</span><code>{API_BASE}</code></div>
-        <div className="keyline"><span>Health</span><strong>{health?.status ?? "Checking…"}</strong></div>
-        <p className="muted">Scientific resources and workflow configuration remain server-controlled. This page does not expose unsafe client-side overrides.</p>
+      <section className="panel"><p className="eyebrow">{t("settings.service")}</p><h2>{t("settings.backendConnection")}</h2>
+        <div className="keyline"><span>{t("settings.api")}</span><code>{{t("settings.api")}_BASE}</code></div>
+        <div className="keyline"><span>{t("settings.health")}</span><strong>{health?.status ?? "Checking…"}</strong></div>
+        <p className="muted">{t("settings.serverControlled")}</p>
       </section>
-      <section className="panel"><p className="eyebrow">ACTIVE CONTEXT</p><h2>Browser workflow context</h2>
-        <div className="keyline"><span>Case ID</span><code>{typeof window !== "undefined" ? window.localStorage.getItem("siraloom.case_id") ?? "—" : "—"}</code></div>
-        <div className="keyline"><span>Analysis ID</span><code>{typeof window !== "undefined" ? window.localStorage.getItem("siraloom.analysis_id") ?? "—" : "—"}</code></div>
-        <p className="muted">Selecting a case from the Cases registry updates this context automatically.</p>
+      <section className="panel"><p className="eyebrow">{t("settings.activeContext")}</p><h2>{t("settings.browserContext")}</h2>
+        <div className="keyline"><span>{t("settings.caseId")}</span><code>{typeof window !== "undefined" ? window.localStorage.getItem("siraloom.case_id") ?? "—" : "—"}</code></div>
+        <div className="keyline"><span>{t("settings.analysisId")}</span><code>{typeof window !== "undefined" ? window.localStorage.getItem("siraloom.analysis_id") ?? "—" : "—"}</code></div>
+        <p className="muted">{t("settings.contextNote")}</p>
       </section>
     </div>
   </main>;
