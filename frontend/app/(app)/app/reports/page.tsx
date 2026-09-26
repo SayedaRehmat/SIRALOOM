@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
+import { useLanguage } from "../../../../lib/i18n";
 
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
@@ -27,7 +28,7 @@ export default function ReportsPage() {
   const [message, setMessage] = useState("");
   const [reason, setReason] = useState("");
   const [reportType, setReportType] = useState("CLINICAL_INTERPRETATION");
-  const [language, setLanguage] = useState("en");
+  const { language, setLanguage } = useLanguage();
   const [selected, setSelected] = useState<Decision | null>(null);
   const [disposition, setDisposition] = useState("REPORT");
 
