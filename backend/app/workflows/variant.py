@@ -301,10 +301,42 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 return
 
             temp_path: Path | None = None
+            prepared_path: Path | None = None
             try:
                 suffix = ".vcf.gz" if input_path.name.endswith(".gz") else ".vcf"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
                     temp_path = Path(temp.name)
+
+                # Phase 1 accepts ordinary germline small-variant VCFs. GVCF
+                # reference blocks and symbolic/breakend records belong to their
+                # dedicated workflows and must be reported explicitly rather than
+                # surfacing later as an opaque normalization failure.
+                profile = classify_records(input_path)
+                if profile["gvcf_markers"]:
+                    raise NormalizationError(
+                        "GVCF input detected. Phase 1 requires a genotyped VCF; "
+                        "GVCF reference blocks must first pass the appropriate "
+                        "genotyping/joint-genotyping workflow."
+                    )
+                if profile["symbolic_records"]:
+                    raise NormalizationError(
+                        "Symbolic/breakend variants detected. Phase 1 currently "
+                        "normalizes SNVs and short indels; SV/CNV records require "
+                        "the dedicated structural-variant workflow."
+                    )
+
+                # Multiallelic sites are valid VCF and must not be rejected.
+                # bcftools performs the allele/genotype-aware split; our remote
+                # Ensembl reference provider then performs reference-aware
+                # normalization on the resulting biallelic records.
+                normalization_input = input_path
+                split_stats = None
+                if profile["multiallelic_records"] or has_multiallelic_records(input_path):
+                    with NamedTemporaryFile(prefix="siraloom-biallelic-", suffix=".vcf", delete=False) as prepared:
+                        prepared_path = Path(prepared.name)
+                    split_stats = split_multiallelic_vcf(input_path, prepared_path)
+                    normalization_input = prepared_path
+
                 reference_stats: dict | None = None
                 if reference_fasta:
                     reference = FastaReference(reference_fasta, reference_fai)
@@ -326,8 +358,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         # reference cache almost every time instead of making one live
                         # HTTP request per variant.
                         from backend.app.domain.normalization import scan_vcf_regions
-                        reference.prefetch(scan_vcf_regions(input_path))
-                    result = normalize_vcf_file(input_path, temp_path, genome_build=reference_build, reference=reference, collect_variants=False)
+                        reference.prefetch(scan_vcf_regions(normalization_input))
+                    result = normalize_vcf_file(normalization_input, temp_path, genome_build=reference_build, reference=reference, collect_variants=False)
                     if reference_source == "ENSEMBL_REST":
                         reference_stats = dict(reference.stats)
                 normalized_artifact = artifacts.put_file(
@@ -338,10 +370,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "partition_size": partition_size, "reference_source": reference_source, "reference_provider": "Ensembl REST" if reference_source == "ENSEMBL_REST" else "local FASTA", "reference_request_stats": reference_stats})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "1.1"}, payload={"record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_request_stats": reference_stats})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "partition_size": partition_size, "reference_source": reference_source, "reference_provider": "Ensembl REST" if reference_source == "ENSEMBL_REST" else "local FASTA", "reference_request_stats": reference_stats, "input_preparation": split_stats})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "1.1"}, payload={"record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_request_stats": reference_stats, "input_preparation": split_stats})
                 db.commit()
-            except (NormalizationError, ReferenceError) as exc:
+            except (NormalizationError, ReferenceError, VCFToolError) as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
