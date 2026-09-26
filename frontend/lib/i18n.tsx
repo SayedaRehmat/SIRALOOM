@@ -131,6 +131,7 @@ type TranslationKey =
   | "auth.resetSent"
   | "auth.resetFailed"
   | "auth.googleFailed"
+  | "auth.orgSwitch"
   | "onboarding.secure"
   | "onboarding.trialEyebrow"
   | "onboarding.orgEyebrow"
@@ -284,6 +285,7 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
     "auth.resetSent": "Password-reset email sent.",
     "auth.resetFailed": "Unable to send reset email.",
     "auth.googleFailed": "Google sign-in could not be completed.",
+    "auth.orgSwitch": "Setting up a production laboratory account instead?",
     "onboarding.secure": "SECURE ACCESS REQUIRED",
     "onboarding.trialEyebrow": "SIRALOOM FREE TRIAL",
     "onboarding.orgEyebrow": "ORGANIZATION ONBOARDING",
@@ -436,6 +438,7 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
     "auth.resetSent": "تم إرسال رسالة إعادة تعيين كلمة المرور.",
     "auth.resetFailed": "تعذر إرسال إعادة التعيين.",
     "auth.googleFailed": "تعذر إكمال تسجيل الدخول باستخدام Google.",
+    "auth.orgSwitch": "هل تريد إعداد حساب مختبر إنتاجي بدلاً من ذلك؟",
     "onboarding.secure": "الوصول الآمن مطلوب",
     "onboarding.trialEyebrow": "التجربة المجانية لـ SIRALOOM",
     "onboarding.orgEyebrow": "إعداد المؤسسة",
@@ -588,6 +591,7 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
     "auth.resetSent": "Password-reset email sent. · تم إرسال رسالة إعادة تعيين كلمة المرور.",
     "auth.resetFailed": "Unable to send reset email. · تعذر إرسال إعادة التعيين.",
     "auth.googleFailed": "Google sign-in could not be completed. · تعذر إكمال تسجيل الدخول باستخدام Google.",
+    "auth.orgSwitch": "Setting up a production laboratory account instead? · هل تريد إعداد حساب مختبر إنتاجي بدلاً من ذلك؟",
     "onboarding.secure": "SECURE ACCESS REQUIRED · الوصول الآمن مطلوب",
     "onboarding.trialEyebrow": "SIRALOOM FREE TRIAL · التجربة المجانية لـ SIRALOOM",
     "onboarding.orgEyebrow": "ORGANIZATION ONBOARDING · إعداد المؤسسة",
