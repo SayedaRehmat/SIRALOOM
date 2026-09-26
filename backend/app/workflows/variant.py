@@ -18,6 +18,7 @@ from backend.app.domain.normalization import NormalizationError, iter_normalized
 from backend.app.domain.reference import EnsemblReference, FastaReference, ReferenceError
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
+from backend.app.domain.vcf_tools import VCFToolError, classify_records, has_multiallelic_records, split_multiallelic_vcf
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
