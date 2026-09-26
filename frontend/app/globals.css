@@ -394,3 +394,43 @@ tbody tr.selected { background: #eff8f5; }
     justify-content: flex-end;
   }
 }
+
+
+/* Public and authentication language controls */
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(16,32,47,.05);
+}
+.language-switcher > span {
+  padding: 0 7px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.language-switcher button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+}
+.language-switcher button:hover { background: var(--surface-2); }
+.language-switcher button.active { background: var(--accent); color: #fff; }
+.auth-page > .language-switcher { width: fit-content; margin: 0 0 12px auto; }
+.auth-language-inline { justify-self: end; margin-bottom: 2px; }
+.site-header .language-switcher { box-shadow: none; }
+@media(max-width:900px) {
+  .site-header { flex-wrap: wrap; }
+  .site-header .header-actions { flex-wrap: wrap; justify-content: flex-end; }
+}
