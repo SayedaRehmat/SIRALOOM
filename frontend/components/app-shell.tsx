@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ReactNode, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
-import { useLanguage, type AppLanguage } from "../lib/i18n";
+import { useLanguage } from "../lib/i18n";
 import { Brand } from "./brand";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -28,12 +28,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (!ready) return <main className="loading">{t("session.checking")}</main>;
   if (firebaseConfigured && !signedIn) return null;
-
-  const changeLanguage = (value: string) => {
-    if (value === "en" || value === "ar" || value === "bilingual") {
-      setLanguage(value as AppLanguage);
-    }
-  };
 
   return (
     <div className="app-frame">
