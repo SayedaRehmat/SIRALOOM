@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import gzip
 import re
+import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
