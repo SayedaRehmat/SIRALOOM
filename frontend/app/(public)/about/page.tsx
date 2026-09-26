@@ -1,2 +1,9 @@
+"use client";
+
 import { SiteShell } from "../../../components/site-shell";
-export default function About() { return <SiteShell><main className="content-page"><p className="eyebrow">ABOUT SIRALOOM</p><h1>Infrastructure for thoughtful genomic interpretation.</h1><p className="lead">We are creating an extensible platform for laboratories that need scientific traceability, connected evidence, and durable workflows from case intake through reporting.</p><section className="prose-grid"><div><h2>Platform core first</h2><p>Identity, cases, artifacts, workflow state, evidence, review, reporting, and audit are shared foundations for current and future scientific services.</p></div><div><h2>Human review remains central</h2><p>SIRALOOM supports experts with transparent computational context. It does not replace clinical judgment or make claims of clinical certification.</p></div></section></main></SiteShell>; }
+import { useLanguage } from "../../../lib/i18n";
+
+export default function About() {
+  const { t } = useLanguage();
+  return <SiteShell><main className="content-page"><p className="eyebrow">{t("public.about.eyebrow")}</p><h1>{t("public.about.title")}</h1><p className="lead">{t("public.about.lead")}</p><section className="prose-grid"><div><h2>{t("public.about.core.title")}</h2><p>{t("public.about.core.body")}</p></div><div><h2>{t("public.about.review.title")}</h2><p>{t("public.about.review.body")}</p></div></section></main></SiteShell>;
+}
