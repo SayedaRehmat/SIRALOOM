@@ -1,11 +1,1 @@
-import { AuthForm } from "../../../components/auth-form";
-import { Brand } from "../../../components/brand";
-
-export default function Login() {
-  return (
-    <main className="auth-page">
-      <Brand />
-      <AuthForm mode="login" />
-    </main>
-  );
-}
+"use client"; import { AuthForm } from "../../../components/auth-form"; import { Brand } from "../../../components/brand"; import { LanguageSwitcher } from "../../../components/language-switcher"; export default function Login(){return <main className="auth-page"><div className="auth-language"><LanguageSwitcher /></div><Brand /><AuthForm mode="login" /></main>}
