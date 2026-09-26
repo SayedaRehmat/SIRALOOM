@@ -100,12 +100,54 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
+        bcftools_error = _bcftools_validate(p)
+        if bcftools_error:
+            raise VCFValidationError(
+                "VCF structural validation failed in bcftools/htslib: "
+                + bcftools_error
+            )
+
         records = 0
+        warnings: list[str] = []
+        saw_multiallelic = False
+        saw_symbolic = False
+        saw_gvcf_marker = False
+        opener = gzip.open if p.name.lower().endswith((".gz", ".bgz")) else open
+        with opener(p, "rt", encoding="utf-8-sig") as fh:
+            for raw in fh:
+                line = raw.rstrip("\n")
+                if line.startswith("##GVCFBlock") or "##ALT=<ID=NON_REF" in line:
+                    saw_gvcf_marker = True
+                if line.startswith("#"):
+                    continue
+                fields = line.split("\t")
+                if len(fields) >= 5:
+                    alt = fields[4]
+                    saw_multiallelic = saw_multiallelic or "," in alt
+                    saw_symbolic = saw_symbolic or any(
+                        token.startswith("<") or token.startswith("*") or "[" in token or "]" in token
+                        for token in alt.split(",")
+                    )
         for _ in parse_vcf(str(p)):
             records += 1
         if records == 0:
             raise VCFValidationError("VCF contains no variant records")
-        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], [])
+        if saw_multiallelic:
+            warnings.append(
+                "Multiallelic records detected. SIRALOOM will split them with bcftools "
+                "before reference-aware normalization."
+            )
+        if saw_symbolic:
+            warnings.append(
+                "Symbolic/breakend alleles detected. These records require a structural-"
+                "variant workflow and are not processed by the Phase 1 small-variant normalizer."
+            )
+        if saw_gvcf_marker:
+            warnings.append(
+                "GVCF markers detected. GVCF reference blocks require a genotyping/joint-"
+                "genotyping workflow and are not treated as ordinary Phase 1 variant records."
+            )
+        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings)
     except (VCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [])
 
