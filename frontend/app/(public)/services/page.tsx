@@ -1,2 +1,10 @@
-import Link from "next/link"; import { SiteShell } from "../../../components/site-shell";
-export default function Services() { return <SiteShell><main className="content-page"><p className="eyebrow">SERVICES</p><h1>Scientific services on a shared laboratory platform.</h1><article className="service-card"><p className="eyebrow">SERVICE 01</p><h2>SIRALOOM Variant</h2><p>VCF interpretation workflows with validation, normalization, evidence integration, ACMG-aware assessment, review, reporting, and provenance.</p><Link className="text-link" href="/services/variant">View service →</Link></article><p className="quiet">Future services may cover CNV, SV, RNA, somatic analysis, pharmacogenomics, phenotype, and reanalysis through the same trusted platform core.</p></main></SiteShell>; }
+"use client";
+
+import Link from "next/link";
+import { SiteShell } from "../../../components/site-shell";
+import { useLanguage } from "../../../lib/i18n";
+
+export default function Services() {
+  const { t } = useLanguage();
+  return <SiteShell><main className="content-page"><p className="eyebrow">{t("public.services.eyebrow")}</p><h1>{t("public.services.title")}</h1><article className="service-card"><p className="eyebrow">{t("public.services.variant.eyebrow")}</p><h2>{t("public.services.variant.title")}</h2><p>{t("public.services.variant.body")}</p><Link className="text-link" href="/services/variant">{t("public.services.variant.link")}</Link></article><p className="quiet">{t("public.services.future")}</p></main></SiteShell>;
+}
