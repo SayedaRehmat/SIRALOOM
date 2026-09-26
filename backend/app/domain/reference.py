@@ -284,7 +284,7 @@ class EnsemblReference:
         if start1 < 1 or end1 < start1:
             raise ReferenceError("Invalid 1-based Ensembl reference interval", code="ENSEMBL_INVALID_REGION")
         sequence_contig = self.resolve_contig(contig)
-        url = f"{self.endpoint}/sequence/region/human/{sequence_contig}:{start1}..{end1}:1"
+        url = f"{self.endpoint}/sequence/region/human/{sequence_contig}:{start1}..{end1}:1?content-type=text/plain"
         request = Request(url, headers={"Accept": "text/plain", "User-Agent": "SIRALOOM/1.0"})
         raw = self._request(request)
         self.stats["single_requests"] += 1
@@ -357,18 +357,30 @@ class EnsemblReference:
             return
         region_keys = list(pending.keys())
         regions = [(contig, start0 + 1, end0) for (contig, start0, end0) in region_keys]
-        try:
-            fetched = self._fetch_remote_batch(regions)
-        except ReferenceError:
-            # Batching is a speed optimization, not a correctness requirement: if the POST
-            # endpoint is failing for any reason (an outage, a proxy/WAF issue, whatever),
-            # fall back to fetching every pending window individually via the single-region
-            # GET path, which is the one we know works even when POST doesn't. Slower, but
-            # the job still completes instead of aborting outright.
-            self.stats["batch_fallback_to_single"] = self.stats.get("batch_fallback_to_single", 0) + 1
-            fetched = {}
-            for contig, start1, end1 in regions:
-                fetched[(contig, start1, end1)] = self._fetch_remote(contig, start1, end1)
+        fetched: dict[tuple[str, int, int], str] = {}
+        for i in range(0, len(regions), self.batch_size):
+            chunk = regions[i:i + self.batch_size]
+            try:
+                fetched.update(self._fetch_remote_batch(chunk))
+            except ReferenceError:
+                if len(chunk) == 1:
+                    contig, start1, end1 = chunk[0]
+                    fetched[(contig, start1, end1)] = self._fetch_remote(contig, start1, end1)
+                    self.stats["batch_fallback_to_single"] += 1
+                    continue
+                midpoint = max(1, len(chunk) // 2)
+                for subchunk in (chunk[:midpoint], chunk[midpoint:]):
+                    if not subchunk:
+                        continue
+                    try:
+                        fetched.update(self._fetch_remote_batch(subchunk))
+                    except ReferenceError:
+                        if len(subchunk) == 1:
+                            contig, start1, end1 = subchunk[0]
+                            fetched[(contig, start1, end1)] = self._fetch_remote(contig, start1, end1)
+                            self.stats["batch_fallback_to_single"] += 1
+                        else:
+                            raise
         for (contig, start0, end0) in region_keys:
             sequence = fetched.get((contig, start0 + 1, end0))
             if sequence is not None:
