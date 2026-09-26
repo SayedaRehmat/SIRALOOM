@@ -61,7 +61,7 @@ services:
         value: https://grch37.rest.ensembl.org
 
       - key: REFERENCE_REMOTE_TIMEOUT_SECONDS
-        value: "10"
+        value: "30"
 
       - key: REFERENCE_REMOTE_WINDOW_FLANK
         value: "1000"
