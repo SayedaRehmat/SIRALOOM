@@ -1,3 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { SiteShell } from "../../components/site-shell";
-export default function Home() { return <SiteShell><main><section className="hero"><div><p className="eyebrow">GENOMIC INTELLIGENCE PLATFORM</p><h1>Evidence-connected workflows for genomic laboratories.</h1><p className="lead">SIRALOOM is building extensible infrastructure that connects case intake, genomic evidence, human review, reporting, and transparent computational history.</p><div className="actions"><Link className="button" href="/signup">Start Free Trial</Link><Link className="text-link" href="/services/variant">Explore SIRALOOM Variant →</Link></div></div><div className="molecule" aria-hidden="true"><span /><span /><span /><span /><span /></div></section><section className="feature-grid"><article><b>Traceable by design</b><p>Artifacts, evidence, decisions, resources, and reports preserve their history.</p></article><article><b>Built for review</b><p>Computational observations remain distinct from clinical interpretation.</p></article><article><b>Designed to extend</b><p>Variant is the first service on a stable platform core—not an isolated tool.</p></article></section></main></SiteShell>; }
+import { useLanguage } from "../../lib/i18n";
+
+export default function Home() {
+  const { t } = useLanguage();
+  return <SiteShell><main><section className="hero"><div><p className="eyebrow">{t("public.home.eyebrow")}</p><h1>{t("public.home.title")}</h1><p className="lead">{t("public.home.lead")}</p><div className="actions"><Link className="button" href="/signup">{t("public.startTrial")}</Link><Link className="text-link" href="/services/variant">{t("public.services.variant.link")}</Link></div></div><div className="molecule" aria-hidden="true"><span /><span /><span /><span /><span /></div></section><section className="feature-grid"><article><b>{t("public.home.traceable.title")}</b><p>{t("public.home.traceable.body")}</p></article><article><b>{t("public.home.review.title")}</b><p>{t("public.home.review.body")}</p></article><article><b>{t("public.home.extend.title")}</b><p>{t("public.home.extend.body")}</p></article></section></main></SiteShell>;
+}
