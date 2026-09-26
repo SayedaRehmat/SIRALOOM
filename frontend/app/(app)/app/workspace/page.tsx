@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
+import { useLanguage } from "../../../../lib/i18n";
 
 type Step = {
   step_id: string;
@@ -143,6 +144,7 @@ function formatDate(value?: string | null) {
 }
 
 export default function Home() {
+  const { language } = useLanguage();
   const [caseId, setCaseId] = useState("");
   const [caseIdentifier, setCaseIdentifier] = useState("");
   const [caseWorkspace, setCaseWorkspace] = useState<CaseWorkspace | null>(null);
@@ -150,7 +152,6 @@ export default function Home() {
   const [specimenType, setSpecimenType] = useState("Blood");
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
   const [genomeBuild, setGenomeBuild] = useState("GRCh38");
-  const [language, setLanguage] = useState<"en" | "ar" | "bilingual">("en");
   const [indication, setIndication] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [artifactId, setArtifactId] = useState("");
@@ -639,7 +640,6 @@ export default function Home() {
           <form onSubmit={createCase} className="stack">
             <label>Case identifier<input value={caseIdentifier} onChange={(e: ChangeEvent<HTMLInputElement>) => setCaseIdentifier(e.target.value)} placeholder="LVP-2026-000184" required /></label>
             <label>Clinical indication<input value={indication} onChange={(e: ChangeEvent<HTMLInputElement>) => setIndication(e.target.value)} placeholder="Hereditary cancer evaluation" /></label>
-            <label>Language<select value={language} onChange={(e: ChangeEvent<HTMLSelectElement>) => setLanguage(e.target.value as typeof language)}><option value="en">English</option><option value="ar">العربية</option><option value="bilingual">English + العربية</option></select></label>
             <button className="primary" disabled={busy || !caseIdentifier.trim()}>{caseId ? "Load case" : "Create case"}</button>
           </form>
           {caseId && <div className="keyline"><span>Case ID</span><code>{caseId}</code></div>}
