@@ -1,2 +1,19 @@
 import Link from "next/link";
-export default function Dashboard() { return <><p className="eyebrow">DASHBOARD</p><h1>Laboratory workspace</h1><p className="lead">Start with a case, then use the existing Variant workspace to inspect durable workflow state.</p><div className="feature-grid"><article><b>Cases</b><p>Case-centered intake and longitudinal analysis history.</p><Link href="/app/cases">Open cases →</Link></article><article><b>Variant service</b><p>Existing implementation workspace for analysis, review, reports, and audit.</p><Link href="/app/workspace">Open workspace →</Link></article><article><b>Clinical review</b><p>Prioritized interpretation queue with evidence-linked ACMG review and versioned decisions.</p><Link href="/app/review">Open review queue →</Link></article></div></>; }
+import { useLanguage } from "../../../../lib/i18n";
+
+export default function Dashboard() {
+  const { t } = useLanguage();
+
+  return (
+    <>
+      <p className="eyebrow">{t("dashboard.eyebrow")}</p>
+      <h1>{t("dashboard.title")}</h1>
+      <p className="lead">{t("dashboard.lead")}</p>
+      <div className="feature-grid">
+        <article><b>{t("dashboard.cases.title")}</b><p>{t("dashboard.cases.body")}</p><Link href="/app/cases">{t("dashboard.cases.link")}</Link></article>
+        <article><b>{t("dashboard.variant.title")}</b><p>{t("dashboard.variant.body")}</p><Link href="/app/workspace">{t("dashboard.variant.link")}</Link></article>
+        <article><b>{t("dashboard.review.title")}</b><p>{t("dashboard.review.body")}</p><Link href="/app/review">{t("dashboard.review.link")}</Link></article>
+      </div>
+    </>
+  );
+}
