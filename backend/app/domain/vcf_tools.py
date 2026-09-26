@@ -69,3 +69,39 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
         "command": "bcftools norm -m -any -N",
         "stderr": (completed.stderr or "").strip(),
     }
+
+
+def classify_records(path: str | Path) -> dict:
+    import gzip
+
+    p = Path(path)
+    opener = gzip.open if p.name.lower().endswith((".gz", ".bgz")) else open
+    multiallelic = 0
+    symbolic = 0
+    gvcf_markers = 0
+    records = 0
+    with opener(p, "rt", encoding="utf-8-sig") as fh:
+        for raw in fh:
+            line = raw.rstrip("\n")
+            if line.startswith("##GVCFBlock") or "##ALT=<ID=NON_REF" in line:
+                gvcf_markers += 1
+            if line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            if len(fields) < 5:
+                continue
+            records += 1
+            alts = fields[4].split(",")
+            if len(alts) > 1:
+                multiallelic += 1
+            if any(
+                alt.startswith("<") or alt.startswith("*") or "[" in alt or "]" in alt
+                for alt in alts
+            ):
+                symbolic += 1
+    return {
+        "records": records,
+        "multiallelic_records": multiallelic,
+        "symbolic_records": symbolic,
+        "gvcf_markers": gvcf_markers,
+    }
