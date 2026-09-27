@@ -87,7 +87,7 @@ export default function ReportsPage() {
   };
 
   const generate = async () => {
-    try { await apiFetch(`/analyses/${analysisId}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ report_type: reportType, language, include_full_evidence: reportType === "ANALYTICAL" }) }); await load(); setMessage("Immutable report artifact generated as a draft."); }
+    try { await apiFetch(`/analyses/${analysisId}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ report_type: reportType, language: language === "ar" ? "ar" : "en", include_full_evidence: reportType === "ANALYTICAL" }) }); await load(); setMessage("Immutable report artifact generated as a draft."); }
     catch (e) { setMessage(e instanceof Error ? e.message : "Unable to generate report."); }
   };
 
