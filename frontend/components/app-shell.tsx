@@ -10,7 +10,7 @@ import { Brand } from "./brand";
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!firebaseAuth) {
@@ -45,20 +45,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth)}>{t("nav.signOut")}</button>
       </aside>
       <main className="app-content">
-        <div className="global-language-bar">
-          <span className="global-language-label">{t("language.label")}</span>
-          <div className="global-language-options" role="group" aria-label={t("language.label")}>
-            <button type="button" className={language === "en" ? "language-option active" : "language-option"} onClick={() => setLanguage("en")} aria-pressed={language === "en"}>
-              {t("language.english")}
-            </button>
-            <button type="button" className={language === "ar" ? "language-option active" : "language-option"} onClick={() => setLanguage("ar")} aria-pressed={language === "ar"}>
-              {t("language.arabic")}
-            </button>
-            <button type="button" className={language === "bilingual" ? "language-option active" : "language-option"} onClick={() => setLanguage("bilingual")} aria-pressed={language === "bilingual"}>
-              {t("language.bilingual")}
-            </button>
-          </div>
-        </div>
         {!firebaseConfigured && <div className="configuration-notice">{t("development.notice")}</div>}
         {children}
       </main>
