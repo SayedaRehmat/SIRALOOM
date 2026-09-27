@@ -2899,7 +2899,7 @@ function localizeDom(language: AppLanguage) {
   const sourceAttributes = new WeakMap<Element, Map<string, string>>();
   const lastAppliedAttributes = new WeakMap<Element, Map<string, string>>();
 
-  const ignoredTags = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "TEXTAREA"]);
+  const ignoredTextTags = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "TEXTAREA"]);
   const translatableAttributes = ["placeholder", "title", "aria-label"];
 
   const sourceForText = (node: Text) => {
@@ -2941,7 +2941,7 @@ function localizeDom(language: AppLanguage) {
 
     for (const textNode of textNodes) {
       const parent = textNode.parentElement;
-      if (!parent || ignoredTags.has(parent.tagName)) continue;
+      if (!parent || ignoredTextTags.has(parent.tagName)) continue;
       const source = sourceForText(textNode);
       const translated = localizeUiText(source, language);
       const value = language === "en" ? source : translated;
