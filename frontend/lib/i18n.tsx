@@ -1707,6 +1707,42 @@ const uiArabic: Record<string, string> = Object.fromEntries([
   ]
 ]) as Record<string, string>;
 
+const fallbackLanguage: AppLanguage = "en";
+const storageKey = "siraloom.language";
+
+function isAppLanguage(value: string | null): value is AppLanguage {
+  return value === "en" || value === "ar" || value === "bilingual";
+}
+
+function localizeUiText(value: string, language: AppLanguage): string {
+  const clean = value.replace(/\s+/g, " ").trim();
+  const arabic = uiArabic[clean];
+  if (!arabic) return value;
+  if (language === "ar") return value.replace(clean, arabic);
+  if (language === "bilingual") return value.replace(clean, `${clean} · ${arabic}`);
+  return value;
+}
+
+export function LocalizedContent({ children }: { children: ReactNode }) {
+  const { language } = useLanguage();
+  const localize = (node: ReactNode): ReactNode => {
+    if (typeof node === "string") return localizeUiText(node, language);
+    if (Array.isArray(node)) return Children.map(node, (item) => localize(item));
+    if (!isValidElement(node)) return node;
+    const props: Record<string, unknown> = { ...(node.props as Record<string, unknown>) };
+    if (typeof props.children !== "undefined") {
+      props.children = localize(props.children as ReactNode);
+    }
+    for (const attr of ["placeholder", "title", "aria-label"]) {
+      if (typeof props[attr] === "string") {
+        props[attr] = localizeUiText(props[attr] as string, language);
+      }
+    }
+    return cloneElement(node, props);
+  };
+  return <>{localize(children)}</>;
+}
+
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
