@@ -2913,6 +2913,16 @@ const uiArabic: Record<string, string> = Object.fromEntries([
   ]
 ]) as Record<string, string>;
 
+// Controlled legacy UI translations added from production localization coverage checks.
+  "e.g. SRL-2026-0001": "مثال: SRL-2026-0001",
+  "e.g. SP-0001": "مثال: SP-0001",
+  "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.": "يختلف التحقق البرمجي لـ SIRALOOM عن التحقق المخبري السريري أو الاعتماد أو التفويض التنظيمي. ويظل الإصدار خاضعًا للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
+  "Analysis UUID": "معرّف UUID للتحليل",
+  "Document the laboratory basis for the final reportability decision.": "وثّق الأساس المخبري لقرار قابلية إصدار التقرير النهائي.",
+  "Case-first review: clinical indication, phenotype, inheritance, variant evidence, population context, disease validity, literature, ACMG/ClinGen assessment, reportability and sign-out readiness.": "مراجعة تبدأ بالحالة: الاستطباب السريري، والنمط الظاهري، والتوارث، وأدلة المتغير، والسياق السكاني، وصلاحية المرض، والأدبيات، وتقييم ACMG/ClinGen، وقابلية إصدار التقرير، والاستعداد للاعتماد النهائي.",
+  "Optional phenotype label": "تسمية اختيارية للنمط الظاهري",
+  "Member ID e.g. FATHER": "معرّف العضو، مثل FATHER",
+
 const fallbackLanguage: AppLanguage = "en";
 const storageKey = "siraloom.language";
 const uiArabicNormalized = Object.fromEntries(
