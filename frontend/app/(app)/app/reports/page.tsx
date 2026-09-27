@@ -28,7 +28,7 @@ export default function ReportsPage() {
   const [message, setMessage] = useState("");
   const [reason, setReason] = useState("");
   const [reportType, setReportType] = useState("CLINICAL_INTERPRETATION");
-  const { language, setLanguage } = useLanguage();
+  const { language } = useLanguage();
   const [selected, setSelected] = useState<Decision | null>(null);
   const [disposition, setDisposition] = useState("REPORT");
 
@@ -110,7 +110,7 @@ export default function ReportsPage() {
 
   return <main className="reports-page">
     <header className="reports-header"><div><p className="eyebrow">GOVERNED REPORTING</p><h1>Reports & sign-out</h1><p className="lead compact">Separate reportability from pathogenicity classification, preserve every decision version, and release only an authorized immutable report artifact.</p></div></header>
-    <section className="panel reports-controls"><div className="control-grid reports-control-grid"><label>Analysis ID<input value={analysisId} onChange={e => setAnalysisId(e.target.value.trim())} placeholder="Analysis UUID" /></label><label>Report type<select value={reportType} onChange={e => setReportType(e.target.value)}><option value="CLINICAL_INTERPRETATION">Clinical interpretation</option><option value="ANALYTICAL">Complete analytical</option></select></label><label>Language<select value={language} onChange={e => setLanguage(e.target.value)}><option value="en">English</option><option value="ar">Arabic</option><option value="bilingual">Bilingual</option></select></label></div><div className="actions-row"><button className="primary" onClick={load} disabled={loading}>{loading ? "Loading…" : "Refresh"}</button><button className="secondary" onClick={evaluate} disabled={!analysisId}>Evaluate reportability</button><button className="secondary" onClick={generate} disabled={!analysisId}>Generate draft</button></div>{message && <div className="configuration-notice">{message}</div>}</section>
+    <section className="panel reports-controls"><div className="control-grid reports-control-grid"><label>Analysis ID<input value={analysisId} onChange={e => setAnalysisId(e.target.value.trim())} placeholder="Analysis UUID" /></label><label>Report type<select value={reportType} onChange={e => setReportType(e.target.value)}><option value="CLINICAL_INTERPRETATION">Clinical interpretation</option><option value="ANALYTICAL">Complete analytical</option></select></label></div><div className="actions-row"><button className="primary" onClick={load} disabled={loading}>{loading ? "Loading…" : "Refresh"}</button><button className="secondary" onClick={evaluate} disabled={!analysisId}>Evaluate reportability</button><button className="secondary" onClick={generate} disabled={!analysisId}>Generate draft</button></div>{message && <div className="configuration-notice">{message}</div>}</section>
 
     <div className="reports-grid">
       <section className="panel"><div className="panel-head"><div><div className="section-kicker">REPORTABILITY</div><h3>{decisions.length} decisions · {reportableCount} reportable</h3></div><span className={`badge ${reportabilityReady ? "success" : "active"}`}>{reportabilityReady ? "FINALIZED" : "REVIEW REQUIRED"}</span></div>
