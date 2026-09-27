@@ -664,6 +664,70 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
 
 const uiArabic: Record<string, string> = Object.fromEntries([
   [
+    "Genotype e.g. 0/1, 1/1, 0/0",
+    "النمط الجيني، مثل 0/1 أو 1/1 أو 0/0"
+  ],
+  [
+    "Optional reviewer note on inheritance interpretation",
+    "ملاحظة اختيارية للمراجع حول تفسير نمط التوارث"
+  ],
+  [
+    "Method e.g. Sanger",
+    "الطريقة، مثل Sanger"
+  ],
+  [
+    "Result e.g. CONFIRMED",
+    "النتيجة، مثل CONFIRMED"
+  ],
+  [
+    "Accession / case ID",
+    "معرّف الإيداع / معرّف الحالة"
+  ],
+  [
+    "Confirmation notes",
+    "ملاحظات التأكيد"
+  ],
+  [
+    "Action e.g. genetic counselling",
+    "الإجراء، مثل الاستشارة الوراثية"
+  ],
+  [
+    "Follow-up notes / outcome",
+    "ملاحظات المتابعة / النتيجة"
+  ],
+  [
+    "Policy name",
+    "اسم السياسة"
+  ],
+  [
+    "Policy version",
+    "إصدار السياسة"
+  ],
+  [
+    "Policy-specific rationale",
+    "المبرر الخاص بالسياسة"
+  ],
+  [
+    "Document the classification approval or request-for-evidence rationale.",
+    "وثّق مبرر اعتماد التصنيف أو طلب الأدلة."
+  ],
+  [
+    "Hereditary cancer evaluation",
+    "تقييم السرطان الوراثي"
+  ],
+  [
+    "Specimen ID",
+    "معرّف العينة"
+  ],
+  [
+    "SIRALOOM home",
+    "الصفحة الرئيسية لـ SIRALOOM"
+  ],
+  [
+    "Primary navigation",
+    "التنقل الرئيسي"
+  ],
+  [
     "Enter an Analysis ID or open a completed analysis first.",
     "أدخل معرّف تحليل أو افتح تحليلاً مكتملًا أولاً."
   ],
