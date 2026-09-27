@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # Production/on-prem installations should normally provide these.
     reference_fasta: str | None = None
     reference_fai: str | None = None
+    reference_manifest: str | None = None
 
     # Development/integration fallback.
     #
