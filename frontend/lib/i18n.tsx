@@ -664,6 +664,14 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
 
 const uiArabic: Record<string, string> = Object.fromEntries([
   [
+    "Enter an Analysis ID or open a completed analysis first.",
+    "أدخل معرّف تحليل أو افتح تحليلاً مكتملًا أولاً."
+  ],
+  [
+    "Refresh clinical queue",
+    "تحديث قائمة الانتظار السريرية"
+  ],
+  [
     "New genomic case",
     "حالة جينومية جديدة"
   ],
