@@ -447,3 +447,41 @@ tbody tr.selected { background: #eff8f5; }
     justify-content: stretch;
   }
 }
+
+
+/* Application language control */
+.language-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding: 10px 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.language-control select {
+  min-width: 112px;
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  text-transform: none;
+}
+[dir="rtl"] .language-control {
+  flex-direction: row-reverse;
+}
+[dir="rtl"] .app-nav,
+[dir="rtl"] .app-content {
+  text-align: right;
+}
+[dir="rtl"] .app-nav .text-button {
+  text-align: right;
+}
