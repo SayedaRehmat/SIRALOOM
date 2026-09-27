@@ -97,22 +97,22 @@ if (failures.length === 0) {
   const siteShell = read(siteShellPath);
   const homePage = read(homePagePath);
 
-  if (!/<LanguageSwitcher\\b/.test(siteShell)) {
+  if (!/<LanguageSwitcher\b/.test(siteShell)) {
     failures.push("SiteShell must own the single homepage language selector component.");
   }
-  if ((siteShell.match(/<LanguageSwitcher\\b/g) || []).length !== 1) {
+  if ((siteShell.match(/<LanguageSwitcher\b/g) || []).length !== 1) {
     failures.push("SiteShell must render exactly one LanguageSwitcher instance.");
   }
-  if (!/showLanguageSwitcher\\s*\\??:/.test(siteShell)) {
+  if (!/showLanguageSwitcher\s*\??:/.test(siteShell)) {
     failures.push("SiteShell must expose an explicit showLanguageSwitcher opt-in.");
   }
-  if (!/<SiteShell\\s+showLanguageSwitcher\\b/.test(homePage)) {
+  if (!/<SiteShell\s+showLanguageSwitcher\b/.test(homePage)) {
     failures.push("The public homepage must be the sole page that opts into the language selector.");
   }
 
   const selectorOptInFiles = sourceFiles
     .filter((file) => file.endsWith(".tsx"))
-    .filter((file) => /<SiteShell\\s+showLanguageSwitcher\\b/.test(read(file)))
+    .filter((file) => /<SiteShell\s+showLanguageSwitcher\b/.test(read(file)))
     .map((file) => path.relative(root, file));
 
   if (selectorOptInFiles.length !== 1 || selectorOptInFiles[0] !== "frontend/app/(public)/page.tsx") {
