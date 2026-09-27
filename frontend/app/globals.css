@@ -434,3 +434,16 @@ tbody tr.selected { background: #eff8f5; }
   .site-header { flex-wrap: wrap; }
   .site-header .header-actions { flex-wrap: wrap; justify-content: flex-end; }
 }
+
+
+.homepage-language-selector {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 760px) {
+  .homepage-language-selector {
+    justify-content: stretch;
+  }
+}
