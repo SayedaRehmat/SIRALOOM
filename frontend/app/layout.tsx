@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import { LanguageProvider } from "../lib/i18n";
+import { LanguageProvider, LocalizedContent } from "../lib/i18n";
 
 export const metadata: Metadata = {
   title: "SIRALOOM",
@@ -12,7 +12,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" dir="ltr">
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <LocalizedContent>{children}</LocalizedContent>
+        </LanguageProvider>
       </body>
     </html>
   );
