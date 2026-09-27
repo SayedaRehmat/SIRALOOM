@@ -153,6 +153,9 @@ if (failures.length === 0) {
     if (/^[A-Z0-9_ .·→←/&-]+$/.test(text) && text.length > 32) return false;
     if (/^(https?:\/\/|mailto:|tel:|data:)/i.test(text)) return false;
     if (/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(text)) return false;
+    // Never classify source-code fragments as UI copy.
+    if (/[=>]|\b(?:Record|Array|Promise|ReactNode|unknown|string|number|boolean)\s*[<:(]/.test(text)) return false;
+    if (/^[()[\]{}.,;:+*?!&|<>/=\\-]+/.test(text)) return false;
     return true;
   };
 
