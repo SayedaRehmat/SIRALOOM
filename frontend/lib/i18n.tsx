@@ -2948,7 +2948,7 @@ function localizeDom(language: AppLanguage) {
 
     const elements = root instanceof Element
       ? [root, ...Array.from(root.querySelectorAll("*"))]
-      : Array.from((root as Document).querySelectorAll("*"));
+      : [];
 
     for (const element of elements) {
       if (ignoredTags.has(element.tagName)) continue;
