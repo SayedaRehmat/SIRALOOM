@@ -15,10 +15,11 @@ from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomAD
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.normalization import NormalizationError, iter_normalized_vcf, normalize_vcf_file
-from backend.app.domain.reference import EnsemblReference, FastaReference, ReferenceError
+from backend.app.domain.reference import FastaReference, ReferenceError
+from backend.app.domain.reference_registry import ReferencePackageError, load_reference_package
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
-from backend.app.domain.vcf_tools import VCFToolError, classify_records, has_multiallelic_records, split_multiallelic_vcf
+from backend.app.domain.vcf_tools import classify_records
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
@@ -275,8 +276,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # 2. Reference-aware normalization + bounded-memory variant indexing.
-        # M13 never retains the complete normalized variant set in Python memory.
+        # 2. Standard reference-aware normalization + bounded-memory variant indexing.
+        # The production boundary is bcftools norm with a qualified local reference.
         normalization_step = _step(db, analysis.id, "normalize")
         normalized_artifact = _existing_normalized_artifact(db, analysis.id)
         reference_build = normalize_build(analysis.reference_build)
@@ -286,164 +287,177 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             mark_step(db, normalization_step, StepStatus.RUNNING)
             reference_fasta = analysis.configuration.get("reference_fasta") or settings.reference_fasta
             reference_fai = analysis.configuration.get("reference_fai") or settings.reference_fai
-            remote_enabled = bool(analysis.configuration.get("reference_remote_enabled", settings.reference_remote_enabled))
-            remote_timeout = float(analysis.configuration.get("reference_remote_timeout_seconds", settings.reference_remote_timeout_seconds))
-            remote_flank = int(analysis.configuration.get("reference_remote_window_flank", settings.reference_remote_window_flank))
-            remote_endpoint = analysis.configuration.get("reference_remote_endpoint")
-            remote_retry_attempts = int(analysis.configuration.get("reference_remote_retry_attempts", settings.reference_remote_retry_attempts))
-            remote_retry_backoff = float(analysis.configuration.get("reference_remote_retry_backoff_seconds", settings.reference_remote_retry_backoff_seconds))
+            reference_manifest = analysis.configuration.get("reference_manifest") or settings.reference_manifest
 
-            if not reference_fasta and not remote_enabled:
-                mark_step(db, normalization_step, StepStatus.BLOCKED, error_code="REFERENCE_NOT_CONFIGURED", error_message="A validated local reference FASTA or explicitly enabled online reference provider is required for reference-aware normalization.")
+            if not reference_fasta:
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.BLOCKED,
+                    error_code="REFERENCE_NOT_CONFIGURED",
+                    error_message=(
+                        f"No qualified local {reference_build} reference FASTA is configured. "
+                        "Production normalization does not use a remote reference service."
+                    ),
+                )
                 analysis.status = AnalysisStatus.BLOCKED
                 db.commit()
-                audit.record(event_type="WORKFLOW_BLOCKED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="normalization", reason="No local FASTA and online reference provider is disabled")
+                audit.record(
+                    event_type="WORKFLOW_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="normalization",
+                    reason="No qualified local reference FASTA configured",
+                )
                 db.commit()
                 return
 
             temp_path: Path | None = None
-            prepared_path: Path | None = None
             try:
-                suffix = ".vcf.gz" if input_path.name.endswith(".gz") else ".vcf"
+                package = load_reference_package(
+                    build=reference_build,
+                    fasta_path=reference_fasta,
+                    fai_path=reference_fai,
+                    manifest_path=reference_manifest,
+                )
+                reference = FastaReference(package.fasta, package.fai)
+
+                suffix = ".vcf.gz" if input_path.name.lower().endswith((".gz", ".bgz")) else ".vcf"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
                     temp_path = Path(temp.name)
 
-                # Phase 1 accepts ordinary germline small-variant VCFs. GVCF
-                # reference blocks and symbolic/breakend records belong to their
-                # dedicated workflows and must be reported explicitly rather than
-                # surfacing later as an opaque normalization failure.
                 profile = classify_records(input_path)
                 if profile["gvcf_markers"]:
                     raise NormalizationError(
-                        "GVCF input detected. Phase 1 requires a genotyped VCF; "
-                        "GVCF reference blocks must first pass the appropriate "
-                        "genotyping/joint-genotyping workflow."
+                        "GVCF input detected. This workflow requires a genotyped VCF; "
+                        "GVCF reference blocks require the appropriate genotyping workflow."
                     )
                 if profile["symbolic_records"]:
                     raise NormalizationError(
-                        "Symbolic/breakend variants detected. Phase 1 currently "
-                        "normalizes SNVs and short indels; SV/CNV records require "
+                        "Symbolic/breakend variants detected. This workflow currently "
+                        "normalizes SNVs and short indels; structural variants require "
                         "the dedicated structural-variant workflow."
                     )
 
-                # Multiallelic sites are valid VCF and must not be rejected.
-                # bcftools performs the allele/genotype-aware split; our remote
-                # Ensembl reference provider then performs reference-aware
-                # normalization on the resulting biallelic records.
-                normalization_input = input_path
-                split_stats = None
-                if profile["multiallelic_records"] or has_multiallelic_records(input_path):
-                    with NamedTemporaryFile(prefix="siraloom-biallelic-", suffix=".vcf", delete=False) as prepared:
-                        prepared_path = Path(prepared.name)
-                    split_stats = split_multiallelic_vcf(input_path, prepared_path)
-                    normalization_input = prepared_path
-
-                reference_stats: dict | None = None
-                if reference_fasta:
-                    reference = FastaReference(reference_fasta, reference_fai)
-                    reference_source = "LOCAL_FASTA"
-                else:
-                    endpoint = remote_endpoint or (settings.reference_remote_grch37_endpoint if reference_build == "GRCh37" else settings.reference_remote_grch38_endpoint)
-                    reference = EnsemblReference(
-                        reference_build, endpoint=endpoint, timeout_seconds=remote_timeout, window_flank=remote_flank,
-                        retry_attempts=remote_retry_attempts, retry_backoff_seconds=remote_retry_backoff,
-                    )
-                    reference_source = "ENSEMBL_REST"
                 with reference:
-                    if reference_source == "ENSEMBL_REST":
-                        # Fail fast if Ensembl itself is unreachable, before spending any
-                        # time on a job that can't finish.
-                        reference.preflight()
-                        # Collect every region the VCF will need and fetch them in batches
-                        # of up to 50 per POST, so the normalization pass below hits the
-                        # reference cache almost every time instead of making one live
-                        # HTTP request per variant.
-                        from backend.app.domain.normalization import scan_vcf_regions
-                        reference.prefetch(scan_vcf_regions(normalization_input))
-                    result = normalize_vcf_file(normalization_input, temp_path, genome_build=reference_build, reference=reference, collect_variants=False)
-                    if reference_source == "ENSEMBL_REST":
-                        reference_stats = dict(reference.stats)
+                    result = normalize_vcf_file(
+                        input_path,
+                        temp_path,
+                        genome_build=reference_build,
+                        reference=reference,
+                        collect_variants=False,
+                    )
+
                 normalized_artifact = artifacts.put_file(
-                    db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
+                    db=db,
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    source_path=temp_path,
                     filename="normalized.vcf.gz" if temp_path.suffix == ".gz" else "normalized.vcf",
-                    artifact_type="NORMALIZED_VCF", media_type="application/gzip" if temp_path.suffix == ".gz" else "text/vcf",
-                    genome_build=reference_build, metadata={"normalization_version": "1.0", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_source": reference_source},
+                    artifact_type="NORMALIZED_VCF",
+                    media_type="application/gzip" if temp_path.suffix == ".gz" else "text/vcf",
+                    genome_build=reference_build,
+                    metadata={
+                        "normalization_version": "2.0",
+                        "normalization_engine": "bcftools norm",
+                        "bcftools_version": result["tool_version"],
+                        "bcftools_command": result["command"],
+                        "normalization_policy": result["normalization_policy"],
+                        "record_count": result["record_count"],
+                        "changed_count": result["changed_count"],
+                        "streaming": True,
+                        "reference_source": "PINNED_LOCAL_FASTA",
+                        "reference_manifest": str(package.manifest),
+                        "reference_fasta_sha256": package.fasta_sha256,
+                        "reference_fai_sha256": package.fai_sha256,
+                    },
                 )
+
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "partition_size": partition_size, "reference_source": reference_source, "reference_provider": "Ensembl REST" if reference_source == "ENSEMBL_REST" else "local FASTA", "reference_request_stats": reference_stats, "input_preparation": split_stats})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "1.1"}, payload={"record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_request_stats": reference_stats, "input_preparation": split_stats})
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.SUCCEEDED,
+                    metadata={
+                        "normalization": "BCFTOOLS_NORM",
+                        "normalization_version": "2.0",
+                        "record_count": result["record_count"],
+                        "changed_count": result["changed_count"],
+                        "streaming": True,
+                        "partition_size": partition_size,
+                        "reference_source": "PINNED_LOCAL_FASTA",
+                        "reference_build": reference_build,
+                        "reference_manifest": str(package.manifest),
+                        "reference_fasta_sha256": package.fasta_sha256,
+                        "reference_fai_sha256": package.fai_sha256,
+                        "bcftools_version": result["tool_version"],
+                        "bcftools_command": result["command"],
+                        "normalization_policy": result["normalization_policy"],
+                    },
+                )
+                audit.record(
+                    event_type="NORMALIZATION_COMPLETED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
+                    output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}],
+                    workflow={"step": "normalize", "version": "2.0"},
+                    payload={
+                        "record_count": result["record_count"],
+                        "streaming": True,
+                        "normalization_engine": "bcftools norm",
+                        "bcftools_version": result["tool_version"],
+                        "bcftools_command": result["command"],
+                        "reference_build": reference_build,
+                        "reference_fasta_sha256": package.fasta_sha256,
+                        "reference_fai_sha256": package.fai_sha256,
+                    },
+                )
                 db.commit()
-            except (NormalizationError, ReferenceError, VCFToolError) as exc:
-                error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
+            except (NormalizationError, ReferenceError, ReferencePackageError) as exc:
+                error_code = getattr(exc, "code", None) or (
+                    "REFERENCE_PACKAGE_INVALID" if isinstance(exc, ReferencePackageError) else "NORMALIZATION_FAILED"
+                )
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
-                audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
+                audit.record(
+                    event_type="NORMALIZATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    reason=str(exc),
+                )
                 db.commit()
                 return
             except Exception as exc:
-                # Catch-all: anything unexpected here (a bug, an artifact-storage failure,
-                # etc.) must still mark *this step* FAILED with a message, or the UI is
-                # left showing "Running" forever while the outer handler only flips
-                # analysis.status. See NORMALIZATION_FAILED/REFERENCE errors above for the
-                # expected-error path; this is the safety net for everything else.
-                mark_step(db, normalization_step, StepStatus.FAILED, error_code="NORMALIZATION_UNEXPECTED_ERROR", error_message=str(exc))
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.FAILED,
+                    error_code="NORMALIZATION_UNEXPECTED_ERROR",
+                    error_message=str(exc),
+                )
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
-                audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
+                audit.record(
+                    event_type="NORMALIZATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    reason=str(exc),
+                )
                 db.commit()
                 return
             finally:
                 if temp_path and temp_path.exists():
                     temp_path.unlink()
-        elif normalized_artifact is None:
-            raise RuntimeError("Normalization step is marked complete but normalized artifact is missing")
-
-        normalized_path = Path(normalized_artifact.storage_uri.removeprefix("file://"))
-        if not normalized_path.is_file():
-            raise RuntimeError(f"Normalized artifact path does not exist: {normalized_path}")
-
-        # Build/rebuild a durable logical partition manifest and persist canonical
-        # Variant identities batch-by-batch. This is the memory boundary for all
-        # downstream steps; only one bounded partition is resident at a time.
-        existing_partitions = db.scalars(select(AnalysisPartition).where(AnalysisPartition.analysis_id == analysis.id, AnalysisPartition.step_id == "normalize").order_by(AnalysisPartition.ordinal)).all()
-        if not existing_partitions or sum(p.variant_count for p in existing_partitions) != int((normalization_step.metadata_json or {}).get("record_count", 0) or 0):
-            db.query(AnalysisPartition).filter(AnalysisPartition.analysis_id == analysis.id, AnalysisPartition.step_id == "normalize").delete(synchronize_session=False)
-            db.commit()
-            existing_partitions = []
-
-        ordinal = 0
-        total_variants = 0
-        for start, batch in _iter_variant_batches(normalized_path, reference_build, partition_size):
-            end = start + len(batch)
-            partition_key = _batch_key(start, end)
-            part = db.scalar(select(AnalysisPartition).where(AnalysisPartition.analysis_id == analysis.id, AnalysisPartition.step_id == "normalize", AnalysisPartition.partition_key == partition_key))
-            if part is None:
-                part = AnalysisPartition(id=__import__("uuid").uuid4(), analysis_id=analysis.id, step_id="normalize", partition_key=partition_key, ordinal=ordinal, record_start=start, record_end=end, variant_count=len(batch), status="READY", input_artifact_id=normalized_artifact.id, metadata_json={"genome_build": reference_build})
-                db.add(part)
-            else:
-                part.status = "READY"
-                part.variant_count = len(batch)
-                part.input_artifact_id = normalized_artifact.id
-            rows = []
-            for v in batch:
-                key = canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate)
-                row = db.scalar(select(Variant).where(Variant.canonical_key == key))
-                if row is None:
-                    row = Variant(id=stable_variant_uuid(key), genome_build=reference_build, chromosome=v.chromosome, position=v.position, reference=v.reference, alternate=v.alternate, normalization_status="NORMALIZED", canonical_key=key, identifiers={"canonical_key_sha256": __import__("hashlib").sha256(key.encode()).hexdigest()})
-                    db.add(row)
-                    db.flush()
-                rows.append(row.id)
-            part.metadata_json = {**(part.metadata_json or {}), "variant_ids": [str(x) for x in rows]}
-            total_variants += len(batch)
-            ordinal += 1
-            db.commit()
-
-        normalization_step.metadata_json = {**(normalization_step.metadata_json or {}), "partition_count": ordinal, "record_count": total_variants, "partition_size": partition_size, "streaming": True}
-        normalization_step.last_heartbeat = _now()
-        db.commit()
-        _ensure_execution_partitions(db, analysis.id, "normalize", "annotate")
 
         # 3. GeneBe annotation provider (development/research path).
         # Each batch is durably checkpointed in workflow_steps.metadata_json.
