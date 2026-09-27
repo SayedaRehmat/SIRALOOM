@@ -738,10 +738,6 @@ const uiArabic: Record<string, string> = Object.fromEntries([
     "أخرى"
   ],
   [
-    "Register specimen",
-    "تسجيل العينة"
-  ],
-  [
     "INPUT",
     "المدخل"
   ],
@@ -947,7 +943,7 @@ const uiArabic: Record<string, string> = Object.fromEntries([
   ],
   [
     "REPORT",
-    "التقرير"
+    "إبلاغ"
   ],
   [
     "Final report",
@@ -1072,10 +1068,6 @@ const uiArabic: Record<string, string> = Object.fromEntries([
   [
     "Reportability",
     "قابلية الإبلاغ"
-  ],
-  [
-    "REPORT",
-    "إبلاغ"
   ],
   [
     "REVIEW",
@@ -1676,30 +1668,6 @@ const uiArabic: Record<string, string> = Object.fromEntries([
   [
     "Open workspace",
     "فتح مساحة العمل"
-  ],
-  [
-    "CASE HISTORY",
-    "سجل الحالة"
-  ],
-  [
-    "No cases",
-    "لا توجد حالات"
-  ],
-  [
-    "Open cases",
-    "فتح الحالات"
-  ],
-  [
-    "TIMELINE",
-    "الخط الزمني"
-  ],
-  [
-    "No audit events",
-    "لا توجد أحداث تدقيق"
-  ],
-  [
-    "Select a case with persisted activity.",
-    "اختر حالة لها نشاط محفوظ."
   ],
   [
     "SIRALOOM Variant v1",
