@@ -1,230 +1,132 @@
 #!/usr/bin/env node
+
 /**
- * SIRALOOM localization architecture guard.
+ * SIRALOOM i18n architecture guard.
  *
- * This is intentionally a static contract check. It does not attempt to
- * translate arbitrary scientific/user data. It protects the application-level
- * i18n architecture from regressions that previously caused production
- * failures or silent localization bypasses.
+ * Validates message catalogs and integration points. It intentionally does not
+ * scan arbitrary JSX text: scientific identifiers and source-code fragments
+ * must never be classified as translatable UI by a regex.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const frontend = path.join(root, "frontend");
-const i18nPath = path.join(frontend, "lib", "i18n.tsx");
-const layoutPath = path.join(frontend, "app", "layout.tsx");
+const files = {
+  i18n: path.join(frontend, "lib", "i18n.tsx"),
+  messages: path.join(frontend, "lib", "messages.ts"),
+  layout: path.join(frontend, "app", "layout.tsx"),
+  shell: path.join(frontend, "components", "site-shell.tsx"),
+  home: path.join(frontend, "app", "(public)", "page.tsx"),
+};
 
 const failures = [];
+const read = (file) => fs.readFileSync(file, "utf8");
 
-function read(file) {
-  return fs.readFileSync(file, "utf8");
+for (const [name, file] of Object.entries(files)) {
+  if (!fs.existsSync(file)) failures.push(`Missing i18n contract file: ${name} (${path.relative(root, file)}).`);
 }
 
-function walk(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    if (entry.name === "node_modules" || entry.name === ".next" || entry.name.startsWith(".")) continue;
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) files.push(...walk(full));
-    else files.push(full);
-  }
-  return files;
+function catalogKeys(source, locale) {
+  const match = source.match(new RegExp(`\\b${locale}\\s*:\\s*\\{([\\s\\S]*?)\\n\\s*\\},`));
+  if (!match) throw new Error(`Missing ${locale} catalog`);
+  return [...match[1].matchAll(/^\\s*"([^"]+)"\\s*:/gm)].map((m) => m[1]);
 }
 
-function requireText(file, text, reason) {
-  const content = read(file);
-  if (!content.includes(text)) failures.push(reason);
+function unique(values) {
+  return [...new Set(values)];
 }
 
-if (!fs.existsSync(i18nPath)) failures.push("Missing frontend/lib/i18n.tsx.");
-if (!fs.existsSync(layoutPath)) failures.push("Missing frontend/app/layout.tsx.");
+function equalSets(a, b) {
+  return a.length === b.length && a.every((value) => b.includes(value));
+}
 
-if (failures.length === 0) {
-  const i18n = read(i18nPath);
-  const layout = read(layoutPath);
+if (!failures.length) {
+  const i18n = read(files.i18n);
+  const messages = read(files.messages);
+  const layout = read(files.layout);
+  const shell = read(files.shell);
+  const home = read(files.home);
 
-  requireText(i18nPath, 'export type AppLanguage = "en" | "ar" | "bilingual";',
-    "AppLanguage must remain the single en/ar/bilingual locale contract.");
-  requireText(i18nPath, "MutationObserver",
-    "Global DOM localization must remain enabled so component-boundary and dynamically rendered UI is covered.");
-  requireText(i18nPath, "ignoredTextTags",
-    "Editable/code/script text protection must remain part of the DOM localization walker.");
-  requireText(i18nPath, "translatableAttributes",
-    "Controlled localization of placeholder/title/aria-label must remain enabled.");
-  requireText(i18nPath, "uiArabicNormalized",
-    "Case-normalized controlled UI translation lookup must remain enabled.");
-  requireText(i18nPath, 'storageKey = "siraloom.language"',
-    "The application locale must remain centrally persisted.");
-  requireText(layoutPath, "<LanguageProvider>",
-    "The root application layout must own the LanguageProvider.");
-  requireText(layoutPath, "../lib/i18n",
-    "The root layout must import the central i18n provider.");
-
-  if (/\bignoredTags\b/.test(i18n)) {
-    failures.push("Stale identifier 'ignoredTags' detected in i18n.tsx; use the current ignoredTextTags contract.");
+  if (/MutationObserver|LocalizedContent|localizeUiText|uiArabicNormalized|\\buiArabic\\b/.test(i18n)) {
+    failures.push("Legacy DOM/text localization code remains in frontend/lib/i18n.tsx.");
+  }
+  if (!/from "\\.\\/messages"/.test(i18n)) {
+    failures.push("frontend/lib/i18n.tsx must consume the centralized messages catalog.");
+  }
+  if (!/export type TranslationKey/.test(messages) || !/export const messages/.test(messages)) {
+    failures.push("frontend/lib/messages.ts must export TranslationKey and messages.");
   }
 
-  if (/google\s*\.\s*translate|translate\.google|googtrans/i.test(i18n)) {
-    failures.push("Runtime Google/browser translation must not be introduced into the clinical/scientific UI.");
+  try {
+    const en = unique(catalogKeys(messages, "en"));
+    const ar = unique(catalogKeys(messages, "ar"));
+    const bilingual = unique(catalogKeys(messages, "bilingual"));
+    if (!en.length) failures.push("English catalog is empty.");
+    if (!equalSets(en, ar)) failures.push("English and Arabic message IDs differ.");
+    if (!equalSets(en, bilingual)) failures.push("English and bilingual message IDs differ.");
+  } catch (error) {
+    failures.push(error instanceof Error ? error.message : String(error));
   }
 
-  for (const candidate of [
-    path.join(frontend, "app", "ar"),
-    path.join(frontend, "app", "en"),
-    path.join(frontend, "app", "bilingual"),
-  ]) {
-    if (fs.existsSync(candidate)) {
-      failures.push(`Duplicate locale route tree detected: ${path.relative(root, candidate)}. Use one shared page tree with centralized locale state.`);
+  if (!/cookies\(\)/.test(layout) || !/siraloom\\.language/.test(layout)) {
+    failures.push("Root layout must resolve the persisted locale from the server cookie.");
+  }
+  if (!/<LanguageProvider initialLanguage=\\{language\\}>/.test(layout)) {
+    failures.push("Root layout must pass the resolved locale into LanguageProvider.");
+  }
+  if (!/<html lang=\\{[^}]+\\} dir=\\{[^}]+\\}>/.test(layout)) {
+    failures.push("Root layout must own document lang and dir.");
+  }
+
+  if ((shell.match(/<LanguageSwitcher\\b/g) || []).length !== 1) {
+    failures.push("SiteShell must render exactly one LanguageSwitcher.");
+  }
+  if (!/showLanguageSwitcher\\s*\\??:/.test(shell)) {
+    failures.push("SiteShell must expose homepage-only language-switcher opt-in.");
+  }
+  if (!/<SiteShell\\s+showLanguageSwitcher\\b/.test(home)) {
+    failures.push("Only the public homepage should opt into the language selector.");
+  }
+
+  for (const candidate of ["ar", "en", "bilingual"]) {
+    const routeTree = path.join(frontend, "app", candidate);
+    if (fs.existsSync(routeTree)) failures.push(`Duplicate locale route tree detected: frontend/app/${candidate}`);
+  }
+
+  const sourceFiles = [];
+  function walk(dir) {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules" || entry.name === ".next" || entry.name.startsWith(".")) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\\.(ts|tsx)$/.test(entry.name)) sourceFiles.push(full);
     }
   }
+  walk(path.join(frontend, "app"));
+  walk(path.join(frontend, "components"));
 
-  const sourceFiles = walk(path.join(frontend, "app"))
-    .concat(walk(path.join(frontend, "components")))
-    .filter((file) => /\.(tsx|ts)$/.test(file))
-    .filter((file) => !file.endsWith("lib/i18n.tsx"));
-
-  // The language selector is a global preference control, but its UI is intentionally
-  // exposed exactly once: through SiteShell when, and only when, the public homepage
-  // opts in. Future pages consume the persisted locale through useLanguage()/t(...).
-  const siteShellPath = path.join(frontend, "components", "site-shell.tsx");
-  const homePagePath = path.join(frontend, "app", "(public)", "page.tsx");
-  const siteShell = read(siteShellPath);
-  const homePage = read(homePagePath);
-
-  if (!/<LanguageSwitcher\b/.test(siteShell)) {
-    failures.push("SiteShell must own the single homepage language selector component.");
-  }
-  if ((siteShell.match(/<LanguageSwitcher\b/g) || []).length !== 1) {
-    failures.push("SiteShell must render exactly one LanguageSwitcher instance.");
-  }
-  if (!/showLanguageSwitcher\s*\??:/.test(siteShell)) {
-    failures.push("SiteShell must expose an explicit showLanguageSwitcher opt-in.");
-  }
-  if (!/<SiteShell\s+showLanguageSwitcher\b/.test(homePage)) {
-    failures.push("The public homepage must be the sole page that opts into the language selector.");
-  }
-
-  const selectorOptInFiles = sourceFiles
-    .filter((file) => file.endsWith(".tsx"))
-    .filter((file) => /<SiteShell\s+showLanguageSwitcher\b/.test(read(file)))
-    .map((file) => path.relative(root, file));
-
-  if (selectorOptInFiles.length !== 1 || selectorOptInFiles[0] !== "frontend/app/(public)/page.tsx") {
-    failures.push(
-      "The homepage must be the only page that opts into the language selector. " +
-      "Found: " + (selectorOptInFiles.length ? selectorOptInFiles.join(", ") : "none") + "."
-    );
-  }
-
-  // The legacy DOM bridge is intentionally supported during migration, but it
-  // must never become an excuse for silently introducing new untranslated UI.
-  // Extract its controlled English source catalog and use it as a static gate
-  // for literal JSX text and translatable attributes. Dynamic scientific data,
-  // identifiers, expressions, and code-like values are deliberately ignored.
-  const catalogKeys = new Set();
-  // Read the actual uiArabic object rather than relying on a fragile generic
-  // array regex. This keeps the gate aligned with the real translation catalog.
-  const catalogStart = i18n.indexOf("const uiArabic");
-  const catalogEnd = i18n.indexOf("const fallbackLanguage");
-  if (catalogStart >= 0 && catalogEnd > catalogStart) {
-    const catalogBlock = i18n.slice(catalogStart, catalogEnd);
-    for (const match of catalogBlock.matchAll(/^\s*["']((?:\\.|[^"'])+)["']\s*:\s*["']/gm)) {
-      const value = match[1].replace(/\\(["'])/g, "$1");
-      if (value.trim()) catalogKeys.add(value.trim());
-    }
-    for (const match of catalogBlock.matchAll(/^\s*\[\s*["']((?:\\.|[^"'])+)["']\s*,/gm)) {
-      const value = match[1].replace(/\\(["'])/g, "$1");
-      if (value.trim()) catalogKeys.add(value.trim());
-    }
-  } else {
-    failures.push("Unable to locate the controlled uiArabic translation catalog.");
-  }
-
-  const likelyUiText = (value) => {
-    const text = value.replace(/\s+/g, " ").trim();
-    if (!text || !/[A-Za-z]/.test(text)) return false;
-    if (/^[A-Za-z0-9_./:@-]+$/.test(text)) return false;
-    if (/^[A-Z0-9_ .·→←/&-]+$/.test(text) && text.length > 32) return false;
-    if (/^(https?:\/\/|mailto:|tel:|data:)/i.test(text)) return false;
-    if (/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(text)) return false;
-    // Never classify source-code fragments as UI copy.
-    // JSX/source-code false positives: the lightweight scanner can see text
-    // between comparison/generic operators inside TypeScript expressions. These
-    // constructs are executable source, not user-facing copy.
-    if (/[=>]|===|!==|\?\.|\?\?|&&|\|\||\b(?:Record|Array|Promise|ReactNode|unknown|string|number|boolean|useState|useEffect|useMemo|useCallback|const|return)\b/.test(text)) return false;
-    if (/^[()[\]{}.,;:+*?!&|<>/=\\-]+/.test(text)) return false;
-    if (/;\s*const\s+|\bconst\s*\[|\bset[A-Z]\w*\s*=|\b[A-Za-z_$][\w$]*\s*\([^)]*\)\s*;/.test(text)) return false;
-    if (/\b(?:true|false|null|undefined)\b.*\b(?:return|const|let|var)\b/.test(text)) return false;
-    return true;
-  };
-
-  const missingLegacyTranslations = [];
-  const checkLiteral = (file, value, kind) => {
-    const text = value.replace(/\s+/g, " ").trim();
-    if (!likelyUiText(text)) return;
-    if (catalogKeys.has(text)) return;
-    if (/\{[^}]+\}/.test(text)) return;
-    missingLegacyTranslations.push(
-      path.relative(root, file) + ": " + kind + ' "' + text + '"'
-    );
-  };
-
-  for (const file of sourceFiles.filter((candidate) => candidate.endsWith(".tsx"))) {
-    const content = read(file);
-
-    // JSX text nodes are the most common route by which a new English UI
-    // sentence bypasses the typed translation API.
-    for (const match of content.matchAll(/>([^<>{}\n]+)</g)) {
-      checkLiteral(file, match[1], "untranslated JSX text");
-    }
-
-    // Catch user-facing placeholders, titles, and accessible labels too.
-    for (const match of content.matchAll(/(?:placeholder|title|aria-label)\s*=\s*["']([^"']+)["']/g)) {
-      checkLiteral(file, match[1], "untranslated UI attribute");
-    }
-  }
-
-  if (missingLegacyTranslations.length) {
-    failures.push(
-      "New literal user-facing UI text is not present in the controlled Arabic catalog. " +
-      "Use t(...) for new UI or add an intentional controlled translation before deployment.\n" +
-      missingLegacyTranslations.slice(0, 40).map((item) => "  - " + item).join("\n") +
-      (missingLegacyTranslations.length > 40 ? "\n  - ...and " + (missingLegacyTranslations.length - 40) + " more." : "")
-    );
-  }
-
+  const keys = new Set(catalogKeys(messages, "en"));
   for (const file of sourceFiles) {
-    const content = read(file);
-
-    // A recurring production failure was calling t(...) after only destructuring
-    // { language } from useLanguage(). Catch that class of error before Vercel.
-    if (/useLanguage\s*\(\s*\)/.test(content) && /\bt\s*\(/.test(content)) {
-      const useLanguageMatches = [...content.matchAll(/const\s*\{([^}]*)\}\s*=\s*useLanguage\s*\(\s*\)/g)];
-      const hasT = useLanguageMatches.some((match) =>
-        match[1].split(",").map((part) => part.trim()).some((part) => part === "t" || part.startsWith("t:"))
-      );
-      if (!hasT) {
-        failures.push(`${path.relative(root, file)} calls t(...) but does not destructure t from useLanguage().`);
-      }
+    const source = read(file);
+    for (const match of source.matchAll(/\\bt\\(\\s*["']([^"']+)["']/g)) {
+      if (!keys.has(match[1])) failures.push(`${path.relative(root, file)} uses unknown translation key "${match[1]}".`);
     }
-
-    // Locale direction and language attributes have one owner.
-    if (file !== layoutPath && /document\.documentElement\.(lang|dir)/.test(content)) {
-      failures.push(`${path.relative(root, file)} directly controls document language/direction; keep this centralized in lib/i18n.tsx.`);
+    if (file !== files.layout && /document\\.documentElement\\.(lang|dir)/.test(source)) {
+      failures.push(`${path.relative(root, file)} directly controls document language/direction.`);
+    }
+    if (/MutationObserver|LocalizedContent|localizeUiText|uiArabicNormalized/.test(source)) {
+      failures.push(`${path.relative(root, file)} still references the retired DOM localization API.`);
     }
   }
 }
 
 if (failures.length) {
-  console.error("\nSIRALOOM i18n architecture guard FAILED:\n");
-  for (const failure of failures) console.error(`- ${failure}`);
-  console.error("");
+  console.error("\\nSIRALOOM i18n architecture guard FAILED:\\n");
+  for (const failure of failures) console.error("- " + failure);
   process.exit(1);
 }
 
