@@ -2843,6 +2843,9 @@ const uiArabic: Record<string, string> = Object.fromEntries([
 
 const fallbackLanguage: AppLanguage = "en";
 const storageKey = "siraloom.language";
+const uiArabicNormalized = Object.fromEntries(
+  Object.entries(uiArabic).map(([key, value]) => [key.toLowerCase(), value]),
+) as Record<string, string>;
 
 function isAppLanguage(value: string | null): value is AppLanguage {
   return value === "en" || value === "ar" || value === "bilingual";
@@ -2850,8 +2853,11 @@ function isAppLanguage(value: string | null): value is AppLanguage {
 
 function localizeUiText(value: string, language: AppLanguage): string {
   const clean = value.replace(/\s+/g, " ").trim();
-  const arabic = uiArabic[clean];
+  if (!clean) return value;
+
+  const arabic = uiArabic[clean] ?? uiArabicNormalized[clean.toLowerCase()];
   if (!arabic) return value;
+
   if (language === "ar") return value.replace(clean, arabic);
   if (language === "bilingual") return value.replace(clean, `${clean} · ${arabic}`);
   return value;
