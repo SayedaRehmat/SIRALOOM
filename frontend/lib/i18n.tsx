@@ -2956,7 +2956,7 @@ function localizeDom(language: AppLanguage) {
       : [];
 
     for (const element of elements) {
-      if (ignoredTags.has(element.tagName)) continue;
+      if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(element.tagName)) continue;
       for (const attr of translatableAttributes) {
         if (!element.hasAttribute(attr)) continue;
         const current = element.getAttribute(attr) ?? "";
