@@ -8,9 +8,12 @@
  * failures or silent localization bypasses.
  */
 
-const fs = require("node:fs");
-const path = require("node:path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, "..");
 const frontend = path.join(root, "frontend");
 const i18nPath = path.join(frontend, "lib", "i18n.tsx");
