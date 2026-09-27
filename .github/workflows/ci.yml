@@ -36,6 +36,9 @@ jobs:
       - name: Install frontend
         working-directory: frontend
         run: npm ci
+      - name: Localization architecture guard
+        working-directory: frontend
+        run: npm run validate:i18n
       - name: Production build
         working-directory: frontend
         env:
