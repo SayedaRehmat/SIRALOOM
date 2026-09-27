@@ -93,15 +93,15 @@ type VariantDetail = {
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
 const steps = [
-  ["validate_input", "Input validation"],
-  ["normalize", "Normalization"],
-  ["annotate", "Annotation"],
-  ["population", "Population context"],
-  ["build_evidence", "Evidence"],
-  ["acmg_assessment", "ACMG assessment"],
-  ["review", "Human review"],
-  ["report", "Report"],
-  ["export_provenance", "Case history"],
+  ["validate_input", "workflow.inputValidation"],
+  ["normalize", "workflow.normalization"],
+  ["annotate", "workflow.annotation"],
+  ["population", "workflow.population"],
+  ["build_evidence", "workflow.evidence"],
+  ["acmg_assessment", "workflow.acmg"],
+  ["review", "workflow.humanReview"],
+  ["report", "workflow.report"],
+  ["export_provenance", "workflow.caseHistory"],
 ] as const;
 
 async function apiFetch(path: string, init?: RequestInit) {
@@ -702,7 +702,7 @@ export default function Home() {
               const status = step?.status ?? (index <= currentStepIndex ? "SUCCEEDED" : "PENDING");
               return <div key={id} className={`timeline-row ${statusTone(status)} ${index === currentStepIndex ? "current" : ""}`}>
                 <div className="timeline-mark">{status === "SUCCEEDED" ? "✓" : status === "FAILED" || status === "BLOCKED" ? "!" : index === currentStepIndex ? "•" : "○"}</div>
-                <div className="timeline-label"><strong>{label}</strong><span>{prettyStatus(status)}{step?.attempt ? ` · attempt ${step.attempt}` : ""}</span>{step?.error_message && <small>{step.error_message}</small>}</div>
+                <div className="timeline-label"><strong>{t(label as any)}</strong><span>{prettyStatus(status)}{step?.attempt ? ` · attempt ${step.attempt}` : ""}</span>{step?.error_message && <small>{step.error_message}</small>}</div>
               </div>;
             })}
           </div>
