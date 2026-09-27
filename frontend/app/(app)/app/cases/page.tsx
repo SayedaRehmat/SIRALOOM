@@ -104,7 +104,7 @@ function formatBytes(bytes: number) {
 }
 
 export default function Cases() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [step, setStep] = useState(0);
   const [cases, setCases] = useState<CaseSummary[]>([]);
   const [loadingCases, setLoadingCases] = useState(false);
