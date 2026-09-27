@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, reload, sendEmailVerification, signOut, User } from "firebase/auth";
 import { Brand } from "../../../components/brand";
-import { LanguageSwitcher } from "../../../components/language-switcher";
 import { firebaseAuth, firebaseConfigured } from "../../../lib/firebase";
 import { apiBase } from "../../../lib/session";
 import { useLanguage } from "../../../lib/i18n";
