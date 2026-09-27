@@ -10,7 +10,7 @@ import { Brand } from "./brand";
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
-  const { t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     if (!firebaseAuth) {
@@ -42,6 +42,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Link href="/app/reports">{t("nav.reports")}</Link>
         <Link href="/app/audit">{t("nav.audit")}</Link>
         <Link href="/app/settings">{t("nav.settings")}</Link>
+        <label className="language-control">
+          <span>{t("language.label")}</span>
+          <select
+            value={language}
+            onChange={(event) => setLanguage(event.target.value as typeof language)}
+            aria-label={t("language.label")}
+          >
+            <option value="en">{t("language.english")}</option>
+            <option value="ar">{t("language.arabic")}</option>
+            <option value="bilingual">{t("language.bilingual")}</option>
+          </select>
+        </label>
         <button className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth)}>{t("nav.signOut")}</button>
       </aside>
       <main className="app-content">
