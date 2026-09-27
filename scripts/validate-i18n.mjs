@@ -86,6 +86,62 @@ if (failures.length === 0) {
     .filter((file) => /\.(tsx|ts)$/.test(file))
     .filter((file) => !file.endsWith("lib/i18n.tsx"));
 
+  // The legacy DOM bridge is intentionally supported during migration, but it
+  // must never become an excuse for silently introducing new untranslated UI.
+  // Extract its controlled English source catalog and use it as a static gate
+  // for literal JSX text and translatable attributes. Dynamic scientific data,
+  // identifiers, expressions, and code-like values are deliberately ignored.
+  const catalogKeys = new Set();
+  for (const match of i18n.matchAll(/\[\s*["']((?:\\.|[^"'])+)["']\s*,/g)) {
+    const value = match[1].replace(/\\(["'])/g, "$1");
+    if (value.trim()) catalogKeys.add(value.trim());
+  }
+
+  const likelyUiText = (value) => {
+    const text = value.replace(/\s+/g, " ").trim();
+    if (!text || !/[A-Za-z]/.test(text)) return false;
+    if (/^[A-Za-z0-9_./:@-]+$/.test(text)) return false;
+    if (/^[A-Z0-9_ .·→←/&-]+$/.test(text) && text.length > 32) return false;
+    if (/^(https?:\/\/|mailto:|tel:|data:)/i.test(text)) return false;
+    if (/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(text)) return false;
+    return true;
+  };
+
+  const missingLegacyTranslations = [];
+  const checkLiteral = (file, value, kind) => {
+    const text = value.replace(/\s+/g, " ").trim();
+    if (!likelyUiText(text)) return;
+    if (catalogKeys.has(text)) return;
+    if (/\{[^}]+\}/.test(text)) return;
+    missingLegacyTranslations.push(
+      path.relative(root, file) + ": " + kind + ' "' + text + '"'
+    );
+  };
+
+  for (const file of sourceFiles.filter((candidate) => candidate.endsWith(".tsx"))) {
+    const content = read(file);
+
+    // JSX text nodes are the most common route by which a new English UI
+    // sentence bypasses the typed translation API.
+    for (const match of content.matchAll(/>([^<>{}\n]+)</g)) {
+      checkLiteral(file, match[1], "untranslated JSX text");
+    }
+
+    // Catch user-facing placeholders, titles, and accessible labels too.
+    for (const match of content.matchAll(/(?:placeholder|title|aria-label)\s*=\s*["']([^"']+)["']/g)) {
+      checkLiteral(file, match[1], "untranslated UI attribute");
+    }
+  }
+
+  if (missingLegacyTranslations.length) {
+    failures.push(
+      "New literal user-facing UI text is not present in the controlled Arabic catalog. " +
+      "Use t(...) for new UI or add an intentional controlled translation before deployment.\n" +
+      missingLegacyTranslations.slice(0, 40).map((item) => "  - " + item).join("\n") +
+      (missingLegacyTranslations.length > 40 ? "\n  - ...and " + (missingLegacyTranslations.length - 40) + " more." : "")
+    );
+  }
+
   for (const file of sourceFiles) {
     const content = read(file);
 
