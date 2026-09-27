@@ -47,7 +47,7 @@ const API_BASE = (
   "http://localhost:8000/api/v1"
 ).replace(/\/$/, "");
 
-const steps = ["Case", "Specimen", "Variant file", "Index", "Review"];
+const stepKeys = ["workflow.case", "workflow.specimen", "workflow.variantFile", "workflow.index", "workflow.review"] as const;
 
 async function apiFetch(path: string, init?: RequestInit) {
   const user = firebaseAuth?.currentUser;
@@ -469,15 +469,15 @@ export default function Cases() {
       </section>
 
       <div className="wizard-steps">
-        {steps.map((label, i) => (
+        {stepKeys.map((key, i) => (
           <div
             className={`wizard-step ${
               i === step ? "current" : ""
             } ${i < step ? "done" : ""}`}
-            key={label}
+            key={key}
           >
             <span>{i + 1}</span>
-            <strong>{label}</strong>
+            <strong>{t(key)}</strong>
           </div>
         ))}
       </div>
