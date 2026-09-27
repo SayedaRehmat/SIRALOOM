@@ -144,7 +144,7 @@ function formatDate(value?: string | null) {
 }
 
 export default function Home() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [caseId, setCaseId] = useState("");
   const [caseIdentifier, setCaseIdentifier] = useState("");
   const [caseWorkspace, setCaseWorkspace] = useState<CaseWorkspace | null>(null);
