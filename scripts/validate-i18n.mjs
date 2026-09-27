@@ -154,8 +154,13 @@ if (failures.length === 0) {
     if (/^(https?:\/\/|mailto:|tel:|data:)/i.test(text)) return false;
     if (/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(text)) return false;
     // Never classify source-code fragments as UI copy.
-    if (/[=>]|\b(?:Record|Array|Promise|ReactNode|unknown|string|number|boolean)\s*[<:(]/.test(text)) return false;
+    // JSX/source-code false positives: the lightweight scanner can see text
+    // between comparison/generic operators inside TypeScript expressions. These
+    // constructs are executable source, not user-facing copy.
+    if (/[=>]|===|!==|\?\.|\?\?|&&|\|\||\b(?:Record|Array|Promise|ReactNode|unknown|string|number|boolean|useState|useEffect|useMemo|useCallback|const|return)\b/.test(text)) return false;
     if (/^[()[\]{}.,;:+*?!&|<>/=\\-]+/.test(text)) return false;
+    if (/;\s*const\s+|\bconst\s*\[|\bset[A-Z]\w*\s*=|\b[A-Za-z_$][\w$]*\s*\([^)]*\)\s*;/.test(text)) return false;
+    if (/\b(?:true|false|null|undefined)\b.*\b(?:return|const|let|var)\b/.test(text)) return false;
     return true;
   };
 
