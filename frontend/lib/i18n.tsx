@@ -1711,6 +1711,12 @@ export function LocalizedContent({ children }: { children: ReactNode }) {
   return <>{localize(children)}</>;
 }
 
+type LanguageContextValue = {
+  language: AppLanguage;
+  setLanguage: (language: AppLanguage) => void;
+  t: (key: TranslationKey) => string;
+};
+
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
