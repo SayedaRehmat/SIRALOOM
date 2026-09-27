@@ -1,6 +1,6 @@
 "use client";
 
-import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Children, cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type AppLanguage = "en" | "ar" | "bilingual";
 
@@ -641,7 +641,7 @@ export function LocalizedContent({ children }: { children: ReactNode }) {
   const { language } = useLanguage();
   const localize = (node: ReactNode): ReactNode => {
     if (typeof node === "string") return localizeUiText(node, language);
-    if (Array.isArray(node)) return node.map((item, index) => <span key={index}>{localize(item)}</span>);
+    if (Array.isArray(node)) return Children.map(node, (item) => localize(item));
     if (!isValidElement(node)) return node;
     const props: Record<string, unknown> = { ...(node.props as Record<string, unknown>) };
     if (typeof props.children !== "undefined") props.children = localize(props.children as ReactNode);
