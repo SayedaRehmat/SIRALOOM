@@ -2929,10 +2929,15 @@ function localizeDom(language: AppLanguage) {
   };
 
   const visit = (root: Node) => {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const textNodes: Text[] = [];
-    let node: Node | null;
-    while ((node = walker.nextNode())) textNodes.push(node as Text);
+    const textNodes: Text[] = root instanceof Text
+      ? [root]
+      : (() => {
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+          const nodes: Text[] = [];
+          let node: Node | null;
+          while ((node = walker.nextNode())) nodes.push(node as Text);
+          return nodes;
+        })();
 
     for (const textNode of textNodes) {
       const parent = textNode.parentElement;
