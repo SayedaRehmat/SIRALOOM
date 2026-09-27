@@ -1,3 +1,5 @@
+export type CatalogLanguage = "en" | "ar" | "bilingual";
+
 
 /**
  * SIRALOOM application message catalog.
@@ -174,7 +176,7 @@ export type TranslationKey =
   | "workflow.caseHistory";
 
 
-export const messages: Record<AppLanguage, Partial<Record<TranslationKey, string>>> = {
+export const messages: Record<CatalogLanguage, Partial<Record<TranslationKey, string>>> = {
   en: {
     "app.workspace": "WORKSPACE",
     "app.governance": "GOVERNANCE",
