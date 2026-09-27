@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AuthForm } from "../../../components/auth-form";
 import { Brand } from "../../../components/brand";
 import { useLanguage } from "../../../lib/i18n";
 
 export default function Signup() {
-  const params = useSearchParams();
   const { t } = useLanguage();
-  const isOrganizationSignup = params.get("mode") === "organization";
+  const [isOrganizationSignup, setIsOrganizationSignup] = useState(false);
+
+  useEffect(() => {
+    setIsOrganizationSignup(new URLSearchParams(window.location.search).get("mode") === "organization");
+  }, []);
 
   return (
     <main className="auth-page">
