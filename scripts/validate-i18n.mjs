@@ -84,6 +84,27 @@ if (failures.length === 0) {
     }
   }
 
+  // The language selector is a global preference control, but its UI is intentionally
+  // exposed exactly once: on the public homepage header. Future pages must consume
+  // the persisted locale through useLanguage()/t(...) and must never add another selector.
+  const languageSwitcherFiles = sourceFiles
+    .filter((file) => file.endsWith(".tsx"))
+    .filter((file) => /<LanguageSwitcher\\b/.test(read(file)))
+    .map((file) => path.relative(root, file));
+
+  const allowedLanguageSwitcher = "frontend/app/(public)/page.tsx";
+  if (languageSwitcherFiles.length !== 1 || languageSwitcherFiles[0] !== allowedLanguageSwitcher) {
+    failures.push(
+      "There must be exactly one LanguageSwitcher usage, and it must be on the public homepage only. " +
+      "Found: " + (languageSwitcherFiles.length ? languageSwitcherFiles.join(", ") : "none") + "."
+    );
+  }
+
+  const appShellPath = path.join(frontend, "components", "app-shell.tsx");
+  if (fs.existsSync(appShellPath) && /<LanguageSwitcher\\b|language-control/.test(read(appShellPath))) {
+    failures.push("AppShell must not render a language selector; language selection belongs only to the public homepage.");
+  }
+
   const sourceFiles = walk(path.join(frontend, "app"))
     .concat(walk(path.join(frontend, "components")))
     .filter((file) => /\.(tsx|ts)$/.test(file))
