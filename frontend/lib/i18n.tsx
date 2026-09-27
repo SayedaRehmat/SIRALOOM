@@ -1672,6 +1672,1130 @@ const uiArabic: Record<string, string> = Object.fromEntries([
   [
     "SIRALOOM Variant v1",
     "SIRALOOM Variant الإصدار 1"
+  ],
+  [
+    "SIRALOOM VARIANT · CASE INTAKE",
+    "SIRALOOM VARIANT · استقبال الحالة"
+  ],
+  [
+    "New genomic case",
+    "حالة جينومية جديدة"
+  ],
+  [
+    "Create a traceable case, register its specimen, and validate the variant dataset before scientific analysis begins.",
+    "أنشئ حالة قابلة للتتبع، وسجّل عينتها، وتحقق من صحة بيانات المتغيرات قبل بدء التحليل العلمي."
+  ],
+  [
+    "Back to dashboard",
+    "العودة إلى لوحة المعلومات"
+  ],
+  [
+    "CASE REGISTRY",
+    "سجل الحالات"
+  ],
+  [
+    "Existing cases",
+    "الحالات الموجودة"
+  ],
+  [
+    "Select a previously created case to continue its persisted workflow.",
+    "اختر حالة منشأة مسبقاً لمتابعة سير عملها المحفوظ."
+  ],
+  [
+    "Refresh cases",
+    "تحديث الحالات"
+  ],
+  [
+    "Refreshing…",
+    "جارٍ التحديث…"
+  ],
+  [
+    "No cases found",
+    "لم يتم العثور على حالات"
+  ],
+  [
+    "Create a case below. Cases are stored server-side in your organization.",
+    "أنشئ حالة أدناه. تُحفظ الحالات على الخادم ضمن مؤسستك."
+  ],
+  [
+    "Action could not be completed",
+    "تعذر إكمال الإجراء"
+  ],
+  [
+    "STEP 01",
+    "الخطوة 01"
+  ],
+  [
+    "STEP 02",
+    "الخطوة 02"
+  ],
+  [
+    "STEP 03",
+    "الخطوة 03"
+  ],
+  [
+    "STEP 04 · OPTIONAL INDEX",
+    "الخطوة 04 · فهرس اختياري"
+  ],
+  [
+    "STEP 05 · READY CHECK",
+    "الخطوة 05 · فحص الجاهزية"
+  ],
+  [
+    "Case information",
+    "معلومات الحالة"
+  ],
+  [
+    "The case is created inside your authenticated organization. Organization ownership is determined by the server.",
+    "تُنشأ الحالة داخل مؤسستك الموثقة. ويحدد الخادم ملكية المؤسسة."
+  ],
+  [
+    "Case identifier",
+    "معرّف الحالة"
+  ],
+  [
+    "Clinical question or indication relevant to this analysis",
+    "السؤال السريري أو الاستطباب المرتبط بهذا التحليل"
+  ],
+  [
+    "Register specimen",
+    "تسجيل العينة"
+  ],
+  [
+    "Registered specimens",
+    "العينات المسجلة"
+  ],
+  [
+    "Specimen identifier",
+    "معرّف العينة"
+  ],
+  [
+    "Specimen type",
+    "نوع العينة"
+  ],
+  [
+    "Upload variant dataset",
+    "رفع مجموعة بيانات المتغيرات"
+  ],
+  [
+    "Variant file",
+    "ملف المتغيرات"
+  ],
+  [
+    "Variant file validated successfully.",
+    "تم التحقق من صحة ملف المتغيرات بنجاح."
+  ],
+  [
+    "Variant file was stored but failed validation.",
+    "تم تخزين ملف المتغيرات لكنه فشل في التحقق."
+  ],
+  [
+    "Uploading and validating the variant file…",
+    "جارٍ رفع ملف المتغيرات والتحقق من صحته…"
+  ],
+  [
+    "Uploading index and validating its pairing…",
+    "جارٍ رفع الفهرس والتحقق من اقترانه…"
+  ],
+  [
+    "Select or register a specimen before uploading the VCF.",
+    "اختر عينة أو سجّلها قبل رفع ملف VCF."
+  ],
+  [
+    "Add a tabix/CSI index",
+    "إضافة فهرس Tabix/CSI"
+  ],
+  [
+    "Review ingestion",
+    "مراجعة الإدخال"
+  ],
+  [
+    "Primary validation",
+    "التحقق الأساسي"
+  ],
+  [
+    "Index",
+    "الفهرس"
+  ],
+  [
+    "Case state",
+    "حالة الحالة"
+  ],
+  [
+    "Ready for analysis",
+    "جاهز للتحليل"
+  ],
+  [
+    "Validation diagnostics",
+    "تشخيصات التحقق"
+  ],
+  [
+    "Case",
+    "الحالة"
+  ],
+  [
+    "Specimen",
+    "العينة"
+  ],
+  [
+    "Build",
+    "البنية المرجعية"
+  ],
+  [
+    "New",
+    "جديد"
+  ],
+  [
+    "Created",
+    "تم الإنشاء"
+  ],
+  [
+    "Load case",
+    "تحميل الحالة"
+  ],
+  [
+    "Existing case loaded.",
+    "تم تحميل الحالة الموجودة."
+  ],
+  [
+    "Case created securely in your organization.",
+    "تم إنشاء الحالة بأمان داخل مؤسستك."
+  ],
+  [
+    "Case created.",
+    "تم إنشاء الحالة."
+  ],
+  [
+    "Case creation failed.",
+    "فشل إنشاء الحالة."
+  ],
+  [
+    "Enter a specimen identifier before continuing.",
+    "أدخل معرّف العينة قبل المتابعة."
+  ],
+  [
+    "Specimen registered.",
+    "تم تسجيل العينة."
+  ],
+  [
+    "Specimen registered to the case.",
+    "تم تسجيل العينة ضمن الحالة."
+  ],
+  [
+    "Specimen registration failed.",
+    "فشل تسجيل العينة."
+  ],
+  [
+    "Upload failed.",
+    "فشل الرفع."
+  ],
+  [
+    "Input validation",
+    "التحقق من الإدخال"
+  ],
+  [
+    "Normalization",
+    "التطبيع"
+  ],
+  [
+    "Annotation",
+    "التعليق الجينومي"
+  ],
+  [
+    "Population context",
+    "السياق السكاني"
+  ],
+  [
+    "Evidence",
+    "الأدلة"
+  ],
+  [
+    "ACMG assessment",
+    "تقييم ACMG"
+  ],
+  [
+    "Human review",
+    "المراجعة البشرية"
+  ],
+  [
+    "Report",
+    "التقرير"
+  ],
+  [
+    "Case history",
+    "سجل الحالة"
+  ],
+  [
+    "GENOMIC INTERPRETATION PLATFORM",
+    "منصة التفسير الجينومي"
+  ],
+  [
+    "Variant",
+    "المتغير"
+  ],
+  [
+    "VCF → evidence → review → report",
+    "VCF ← الأدلة ← المراجعة ← التقرير"
+  ],
+  [
+    "Backend connected",
+    "الخادم متصل"
+  ],
+  [
+    "Checking backend…",
+    "جارٍ التحقق من الخادم…"
+  ],
+  [
+    "Reconnecting",
+    "جارٍ إعادة الاتصال"
+  ],
+  [
+    "SERVICE 01",
+    "الخدمة 01"
+  ],
+  [
+    "Explainable variant interpretation, built for long-running laboratory workflows.",
+    "تفسير متغيرات قابل للتفسير، مصمم لسير العمل المخبري طويل الأمد."
+  ],
+  [
+    "Analysis state is persisted server-side. Closing the browser does not stop a running job.",
+    "تُحفظ حالة التحليل على الخادم. إغلاق المتصفح لا يوقف المهمة قيد التنفيذ."
+  ],
+  [
+    "Pipeline",
+    "خط الأنابيب"
+  ],
+  [
+    "Not selected",
+    "لم يتم الاختيار"
+  ],
+  [
+    "Start a case",
+    "بدء حالة"
+  ],
+  [
+    "Clinical indication",
+    "الاستطباب السريري"
+  ],
+  [
+    "Create case",
+    "إنشاء الحالة"
+  ],
+  [
+    "SPECIMEN",
+    "العينة"
+  ],
+  [
+    "INPUT",
+    "الإدخال"
+  ],
+  [
+    "VCF intake",
+    "استقبال VCF"
+  ],
+  [
+    "Phase 1",
+    "المرحلة 1"
+  ],
+  [
+    "Select a registered specimen…",
+    "اختر عينة مسجلة…"
+  ],
+  [
+    "Reference genome",
+    "الجينوم المرجعي"
+  ],
+  [
+    "Input is persisted before analysis begins.",
+    "يُحفظ الإدخال قبل بدء التحليل."
+  ],
+  [
+    "Choose a VCF / .vcf.gz",
+    "اختر VCF / ‎.vcf.gz"
+  ],
+  [
+    "Choose",
+    "اختيار"
+  ],
+  [
+    "Register input",
+    "تسجيل الإدخال"
+  ],
+  [
+    "Start analysis",
+    "بدء التحليل"
+  ],
+  [
+    "Artifact ID",
+    "معرّف القطعة"
+  ],
+  [
+    "EXECUTION",
+    "التنفيذ"
+  ],
+  [
+    "Durable workflow",
+    "سير عمل مستمر ومحفوظ"
+  ],
+  [
+    "Checkpoint state is persisted server-side",
+    "تُحفظ حالة نقاط التحقق على الخادم"
+  ],
+  [
+    "Annotation checkpoints",
+    "نقاط تحقق التعليق الجينومي"
+  ],
+  [
+    "completed",
+    "مكتملة"
+  ],
+  [
+    "Started",
+    "بدأ"
+  ],
+  [
+    "Last state update",
+    "آخر تحديث للحالة"
+  ],
+  [
+    "INTERPRETATION",
+    "التفسير"
+  ],
+  [
+    "Prioritized variants",
+    "المتغيرات ذات الأولوية"
+  ],
+  [
+    "variants",
+    "متغيرات"
+  ],
+  [
+    "Waiting for a completed analysis",
+    "بانتظار اكتمال التحليل"
+  ],
+  [
+    "The table will populate from durable server state once annotation has produced variant records.",
+    "سيتم ملء الجدول من حالة الخادم المحفوظة بعد أن ينتج التعليق الجينومي سجلات المتغيرات."
+  ],
+  [
+    "Position",
+    "الموضع"
+  ],
+  [
+    "Ref / Alt",
+    "المرجع / البديل"
+  ],
+  [
+    "Review",
+    "المراجعة"
+  ],
+  [
+    "Selected",
+    "محدد"
+  ],
+  [
+    "Open",
+    "فتح"
+  ],
+  [
+    "COMPLETE VARIANT REPORT",
+    "تقرير المتغيرات الكامل"
+  ],
+  [
+    "All analyzed variants",
+    "جميع المتغيرات المحللة"
+  ],
+  [
+    "rows",
+    "صفوف"
+  ],
+  [
+    "Inspection layer for the laboratory team. This is separate from the concise clinical report.",
+    "طبقة فحص لفريق المختبر. وهي منفصلة عن التقرير السريري المختصر."
+  ],
+  [
+    "Download CSV",
+    "تنزيل CSV"
+  ],
+  [
+    "Download JSON",
+    "تنزيل JSON"
+  ],
+  [
+    "No complete variant dataset yet",
+    "لا توجد مجموعة بيانات كاملة للمتغيرات بعد"
+  ],
+  [
+    "It becomes available after annotation has produced persistent variant records.",
+    "ستتوفر بعد أن ينتج التعليق الجينومي سجلات متغيرات محفوظة."
+  ],
+  [
+    "Showing the first 100 rows for interactive inspection. Download the complete CSV/JSON for the full dataset.",
+    "يتم عرض أول 100 صف للفحص التفاعلي. نزّل CSV/JSON الكامل للحصول على مجموعة البيانات بأكملها."
+  ],
+  [
+    "Variant evidence",
+    "أدلة المتغير"
+  ],
+  [
+    "No variant selected",
+    "لم يتم تحديد متغير"
+  ],
+  [
+    "Select a variant after analysis completion.",
+    "اختر متغيراً بعد اكتمال التحليل."
+  ],
+  [
+    "Canonical",
+    "التمثيل القياسي"
+  ],
+  [
+    "No evidence records yet",
+    "لا توجد سجلات أدلة بعد"
+  ],
+  [
+    "Population",
+    "السكان"
+  ],
+  [
+    "No data",
+    "لا توجد بيانات"
+  ],
+  [
+    "Unknown source",
+    "مصدر غير معروف"
+  ],
+  [
+    "unversioned",
+    "غير مُصدّر بإصدار"
+  ],
+  [
+    "Human decision workspace",
+    "مساحة قرار المراجع البشري"
+  ],
+  [
+    "Review becomes available after interpretation",
+    "تتوفر المراجعة بعد التفسير"
+  ],
+  [
+    "Automated output remains proposed until a reviewer acts.",
+    "تبقى المخرجات الآلية مقترحة حتى يتخذ المراجع إجراءً."
+  ],
+  [
+    "Proposed / current",
+    "مقترح / حالي"
+  ],
+  [
+    "No classification",
+    "لا يوجد تصنيف"
+  ],
+  [
+    "Start review",
+    "بدء المراجعة"
+  ],
+  [
+    "Accept",
+    "قبول"
+  ],
+  [
+    "Reject",
+    "رفض"
+  ],
+  [
+    "Criterion review reason",
+    "سبب مراجعة المعيار"
+  ],
+  [
+    "Final approval reason",
+    "سبب الاعتماد النهائي"
+  ],
+  [
+    "Why is this criterion accepted/rejected?",
+    "لماذا تم قبول هذا المعيار أو رفضه؟"
+  ],
+  [
+    "Explain the basis for the final reviewer decision.",
+    "اشرح أساس قرار المراجع النهائي."
+  ],
+  [
+    "Approve classification",
+    "اعتماد التصنيف"
+  ],
+  [
+    "Request more evidence",
+    "طلب مزيد من الأدلة"
+  ],
+  [
+    "Generate report",
+    "إنشاء التقرير"
+  ],
+  [
+    "DECISION HISTORY",
+    "سجل القرارات"
+  ],
+  [
+    "No review actions yet.",
+    "لا توجد إجراءات مراجعة بعد."
+  ],
+  [
+    "Final report",
+    "التقرير النهائي"
+  ],
+  [
+    "No report generated",
+    "لم يتم إنشاء تقرير"
+  ],
+  [
+    "Report generation is downstream of reviewer-approved interpretation.",
+    "يأتي إنشاء التقرير بعد التفسير المعتمد من المراجع."
+  ],
+  [
+    "Finalize report",
+    "إتمام التقرير"
+  ],
+  [
+    "Download PDF",
+    "تنزيل PDF"
+  ],
+  [
+    "AUDIT & PROVENANCE",
+    "التدقيق ومصدر البيانات"
+  ],
+  [
+    "Case timeline",
+    "الخط الزمني للحالة"
+  ],
+  [
+    "Every important action is reconstructable.",
+    "يمكن إعادة بناء كل إجراء مهم."
+  ],
+  [
+    "Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.",
+    "تُحفظ الخطوات الحاسوبية والموارد والأدلة وإجراءات المراجعين وأحداث التقارير في سجل الحالة."
+  ],
+  [
+    "No audit events yet",
+    "لا توجد أحداث تدقيق بعد"
+  ],
+  [
+    "Export complete case history",
+    "تصدير سجل الحالة الكامل"
+  ],
+  [
+    "Export",
+    "تصدير"
+  ],
+  [
+    "Status",
+    "الحالة"
+  ],
+  [
+    "Queued",
+    "في قائمة الانتظار"
+  ],
+  [
+    "Download case history ZIP",
+    "تنزيل ملف ZIP لسجل الحالة"
+  ],
+  [
+    "Scientific results remain subject to configured resources, review, validation scope, and laboratory governance.",
+    "تظل النتائج العلمية خاضعة للموارد المهيأة والمراجعة ونطاق التحقق والحوكمة المختبرية."
+  ],
+  [
+    "SIRALOOM Variant v1",
+    "SIRALOOM Variant الإصدار 1"
+  ],
+  [
+    "Clinical interpretation workspace",
+    "مساحة التفسير السريري"
+  ],
+  [
+    "Open variant workspace",
+    "فتح مساحة تحليل المتغيرات"
+  ],
+  [
+    "Analysis ID",
+    "معرّف التحليل"
+  ],
+  [
+    "Review status",
+    "حالة المراجعة"
+  ],
+  [
+    "Clinical queue",
+    "قائمة الانتظار السريرية"
+  ],
+  [
+    "CLINICAL QUEUE",
+    "قائمة الانتظار السريرية"
+  ],
+  [
+    "No review candidates",
+    "لا توجد حالات مرشحة للمراجعة"
+  ],
+  [
+    "Run a completed interpretation and refresh.",
+    "شغّل تفسيراً مكتملًا ثم حدّث الصفحة."
+  ],
+  [
+    "Select a variant",
+    "اختر متغيراً"
+  ],
+  [
+    "The clinical review dossier will appear here.",
+    "سيظهر ملف المراجعة السريرية هنا."
+  ],
+  [
+    "Clinical classification",
+    "التصنيف السريري"
+  ],
+  [
+    "Priority",
+    "الأولوية"
+  ],
+  [
+    "Observed HPO phenotype",
+    "النمط الظاهري HPO المرصود"
+  ],
+  [
+    "No HPO observations recorded for this case.",
+    "لا توجد ملاحظات HPO مسجلة لهذه الحالة."
+  ],
+  [
+    "Phenotype match & gene–disease relationship",
+    "تطابق النمط الظاهري وعلاقة الجين بالمرض"
+  ],
+  [
+    "No gene–disease context evidence attached.",
+    "لا توجد أدلة سياقية مرتبطة بعلاقة الجين بالمرض."
+  ],
+  [
+    "Family structure",
+    "بنية الأسرة"
+  ],
+  [
+    "Record relatives explicitly rather than burying pedigree data in free-text case context.",
+    "سجّل الأقارب بشكل صريح بدلاً من إخفاء بيانات شجرة النسب داخل نص الحالة الحر."
+  ],
+  [
+    "No pedigree members recorded.",
+    "لم يتم تسجيل أفراد شجرة النسب."
+  ],
+  [
+    "Parent–child relationships",
+    "علاقات الوالد–الطفل"
+  ],
+  [
+    "No parent–child relationships recorded.",
+    "لم يتم تسجيل علاقات والد–طفل."
+  ],
+  [
+    "Variant segregation observations",
+    "ملاحظات انفصال المتغير"
+  ],
+  [
+    "No variant-specific family observations recorded.",
+    "لم تُسجل ملاحظات عائلية خاصة بالمتغير."
+  ],
+  [
+    "Inheritance model assessment",
+    "تقييم نموذج الوراثة"
+  ],
+  [
+    "Consistency aid only. It does not assign pathogenicity or an ACMG/ClinGen criterion strength.",
+    "أداة مساعدة للاتساق فقط. لا تحدد الإمراضية ولا قوة معيار ACMG/ClinGen."
+  ],
+  [
+    "Assess selected models",
+    "تقييم النماذج المحددة"
+  ],
+  [
+    "No model assessment has been recorded.",
+    "لم يتم تسجيل تقييم لأي نموذج."
+  ],
+  [
+    "Existing case inheritance context",
+    "سياق الوراثة الحالي للحالة"
+  ],
+  [
+    "No legacy inheritance summary in case context.",
+    "لا يوجد ملخص وراثة سابق في سياق الحالة."
+  ],
+  [
+    "VARIANT, POPULATION & TECHNICAL CONTEXT",
+    "المتغير والسكان والسياق التقني"
+  ],
+  [
+    "Population observations",
+    "ملاحظات السكان"
+  ],
+  [
+    "No population observations.",
+    "لا توجد ملاحظات سكانية."
+  ],
+  [
+    "Technical QC",
+    "ضبط الجودة التقني"
+  ],
+  [
+    "No variant-level QC fields were exposed by the annotation provider.",
+    "لم يوفّر مزود التعليق حقول ضبط جودة على مستوى المتغير."
+  ],
+  [
+    "ASSAY & TECHNICAL QUALITY GATE",
+    "بوابة جودة الاختبار والجودة التقنية"
+  ],
+  [
+    "Assay profile",
+    "ملف الاختبار"
+  ],
+  [
+    "QC thresholds are laboratory/assay-specific. SIRALOOM records the profile and provenance; it does not invent universal clinical cut-offs.",
+    "حدود ضبط الجودة خاصة بالمختبر والاختبار. تسجل SIRALOOM الملف ومصدر البيانات ولا تضع حدوداً سريرية عامة من تلقاء نفسها."
+  ],
+  [
+    "Profile",
+    "الملف"
+  ],
+  [
+    "Version",
+    "الإصدار"
+  ],
+  [
+    "QC gate",
+    "بوابة ضبط الجودة"
+  ],
+  [
+    "Technical QC observations",
+    "ملاحظات ضبط الجودة التقنية"
+  ],
+  [
+    "No technical QC observations recorded for this analysis.",
+    "لم يتم تسجيل ملاحظات ضبط جودة تقنية لهذا التحليل."
+  ],
+  [
+    "No literature or functional/computational context evidence is attached to this variant.",
+    "لا توجد أدلة أدبية أو وظيفية/حسابية سياقية مرتبطة بهذا المتغير."
+  ],
+  [
+    "ACMG / CLINGEN HUMAN ASSESSMENT",
+    "التقييم البشري لـ ACMG / ClinGen"
+  ],
+  [
+    "Link supporting/contradictory evidence",
+    "ربط الأدلة الداعمة أو المتعارضة"
+  ],
+  [
+    "No ACMG criteria persisted.",
+    "لم يتم حفظ معايير ACMG."
+  ],
+  [
+    "CLINICAL RELEVANCE, CONFIRMATION & FOLLOW-UP",
+    "الأهمية السريرية والتأكيد والمتابعة"
+  ],
+  [
+    "Reportability decision",
+    "قرار قابلية الإبلاغ"
+  ],
+  [
+    "No reportability decision has been generated.",
+    "لم يتم إنشاء قرار لقابلية الإبلاغ."
+  ],
+  [
+    "Orthogonal confirmation",
+    "التأكيد المستقل"
+  ],
+  [
+    "Confirmation is an explicit laboratory policy decision. SIRALOOM blocks final release only when a record explicitly marks confirmation as required.",
+    "التأكيد قرار صريح وفق سياسة المختبر. تمنع SIRALOOM الإصدار النهائي فقط عندما يسجل النظام صراحة أن التأكيد مطلوب."
+  ],
+  [
+    "Confirmation required",
+    "التأكيد مطلوب"
+  ],
+  [
+    "Save confirmation",
+    "حفظ التأكيد"
+  ],
+  [
+    "Follow-up plan",
+    "خطة المتابعة"
+  ],
+  [
+    "No variant-specific follow-up actions recorded.",
+    "لم تُسجل إجراءات متابعة خاصة بالمتغير."
+  ],
+  [
+    "Add follow-up",
+    "إضافة متابعة"
+  ],
+  [
+    "Secondary finding governance",
+    "حوكمة النتائج الثانوية"
+  ],
+  [
+    "Secondary findings are a separate policy-controlled workflow. SIRALOOM does not silently apply a gene list or treat secondary findings as primary diagnostic reportability.",
+    "النتائج الثانوية سير عمل منفصل خاضع للسياسة. لا تطبق SIRALOOM قائمة جينات بشكل صامت ولا تعامل النتائج الثانوية كقابلية إبلاغ تشخيصية أولية."
+  ],
+  [
+    "Current",
+    "الحالي"
+  ],
+  [
+    "Save decision",
+    "حفظ القرار"
+  ],
+  [
+    "SIGN-OUT GATE & AUDIT TRAIL",
+    "بوابة الاعتماد النهائي ومسار التدقيق"
+  ],
+  [
+    "Approval remains a human governance action. Report finalization is separately gated by final classifications and final reportability decisions.",
+    "يبقى الاعتماد إجراء حوكمة بشرياً. ويخضع إتمام التقرير بشكل منفصل للتصنيفات النهائية وقرارات قابلية الإبلاغ النهائية."
+  ],
+  [
+    "No reviewer actions yet.",
+    "لا توجد إجراءات للمراجع بعد."
+  ],
+  [
+    "Reports & sign-out",
+    "التقارير والاعتماد النهائي"
+  ],
+  [
+    "Separate reportability from pathogenicity classification, preserve every decision version, and release only an authorized immutable report artifact.",
+    "افصل قابلية الإبلاغ عن تصنيف الإمراضية، واحفظ كل إصدار من القرارات، ولا تُصدر إلا قطعة تقرير غير قابلة للتغيير ومعتمدة."
+  ],
+  [
+    "Report type",
+    "نوع التقرير"
+  ],
+  [
+    "Complete analytical",
+    "تحليلي كامل"
+  ],
+  [
+    "Evaluate reportability",
+    "تقييم قابلية الإبلاغ"
+  ],
+  [
+    "Generate draft",
+    "إنشاء مسودة"
+  ],
+  [
+    "REPORTABILITY",
+    "قابلية الإبلاغ"
+  ],
+  [
+    "No reportability decisions",
+    "لا توجد قرارات لقابلية الإبلاغ"
+  ],
+  [
+    "Evaluate the analysis to create versioned policy proposals.",
+    "قيّم التحليل لإنشاء مقترحات سياسة ذات إصدارات."
+  ],
+  [
+    "HUMAN REPORTABILITY REVIEW",
+    "مراجعة قابلية الإبلاغ البشرية"
+  ],
+  [
+    "No decision selected",
+    "لم يتم تحديد قرار"
+  ],
+  [
+    "Choose a reportability record to review its policy rationale and finalize its disposition.",
+    "اختر سجل قابلية إبلاغ لمراجعة مبررات السياسة وإتمام قراره."
+  ],
+  [
+    "Disposition",
+    "القرار"
+  ],
+  [
+    "Review version",
+    "إصدار المراجعة"
+  ],
+  [
+    "POLICY RATIONALE",
+    "مبررات السياسة"
+  ],
+  [
+    "Final disposition",
+    "القرار النهائي"
+  ],
+  [
+    "Reviewer rationale",
+    "مبررات المراجع"
+  ],
+  [
+    "Finalize reportability",
+    "إتمام قابلية الإبلاغ"
+  ],
+  [
+    "REPORT VERSIONS",
+    "إصدارات التقرير"
+  ],
+  [
+    "Immutable report lineage",
+    "سلسلة نسب التقرير غير القابلة للتغيير"
+  ],
+  [
+    "Generate a clinical or analytical draft after the analysis is available.",
+    "أنشئ مسودة سريرية أو تحليلية بعد توفر التحليل."
+  ],
+  [
+    "Approve / sign out",
+    "اعتماد / توقيع نهائي"
+  ],
+  [
+    "GOVERNED REPORTING",
+    "إعداد التقارير المحكوم"
+  ],
+  [
+    "GOVERNANCE · AUDIT",
+    "الحوكمة · التدقيق"
+  ],
+  [
+    "Audit & provenance",
+    "التدقيق ومصدر البيانات"
+  ],
+  [
+    "Tenant-scoped case history with persisted workflow, evidence, reviewer, report, and provenance events.",
+    "سجل حالة محصور بالمؤسسة مع أحداث سير العمل والأدلة والمراجعين والتقارير ومصدر البيانات المحفوظة."
+  ],
+  [
+    "TIMELINE",
+    "الخط الزمني"
+  ],
+  [
+    "Select a case with persisted activity.",
+    "اختر حالة لها نشاط محفوظ."
+  ],
+  [
+    "PENDING",
+    "قيد الانتظار"
+  ],
+  [
+    "RUNNING",
+    "قيد التشغيل"
+  ],
+  [
+    "SUCCEEDED",
+    "نجح"
+  ],
+  [
+    "FAILED",
+    "فشل"
+  ],
+  [
+    "BLOCKED",
+    "محظور"
+  ],
+  [
+    "CANCELLED",
+    "ملغى"
+  ],
+  [
+    "RETRYING",
+    "إعادة المحاولة"
+  ],
+  [
+    "QUEUED",
+    "في قائمة الانتظار"
+  ],
+  [
+    "IN_REVIEW",
+    "قيد المراجعة"
+  ],
+  [
+    "REQUIRES_REVIEW",
+    "يتطلب مراجعة"
+  ],
+  [
+    "COMPLETED",
+    "مكتمل"
+  ],
+  [
+    "FINAL",
+    "نهائي"
+  ],
+  [
+    "APPROVED",
+    "معتمد"
+  ],
+  [
+    "DRAFT",
+    "مسودة"
+  ],
+  [
+    "PROPOSED",
+    "مقترح"
+  ],
+  [
+    "REVIEW_REQUIRED",
+    "المراجعة مطلوبة"
+  ],
+  [
+    "NOT_STARTED",
+    "لم يبدأ"
+  ],
+  [
+    "READY_FOR_ANALYSIS",
+    "جاهز للتحليل"
+  ],
+  [
+    "Analysis · Failed",
+    "التحليل · فشل"
+  ],
+  [
+    "No analysis yet",
+    "لا يوجد تحليل بعد"
+  ],
+  [
+    "specimen(s)",
+    "عينة/عينات"
+  ],
+  [
+    "attempt",
+    "محاولة"
+  ],
+  [
+    "Blood",
+    "دم"
+  ],
+  [
+    "Saliva",
+    "لعاب"
+  ],
+  [
+    "Buccal",
+    "مسحة فموية"
+  ],
+  [
+    "Tissue",
+    "نسيج"
+  ],
+  [
+    "Other",
+    "أخرى"
+  ],
+  [
+    "selected",
+    "محدد"
+  ],
+  [
+    "Unknown",
+    "غير معروف"
+  ],
+  [
+    "No classification",
+    "لا يوجد تصنيف"
+  ],
+  [
+    "No automated rationale recorded.",
+    "لا توجد مبررات آلية مسجلة."
+  ],
+  [
+    "Interpretation available in report artifact.",
+    "التفسير متاح في قطعة التقرير."
   ]
 ]) as Record<string, string>;
 
