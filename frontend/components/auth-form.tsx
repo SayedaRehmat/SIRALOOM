@@ -58,7 +58,6 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
 
   return (
     <form className="auth-card" onSubmit={submit}>
-      <LanguageSwitcher className="auth-language-inline" />
       <p className="eyebrow">{t("auth.secure")}</p>
       <h1>{mode === "login" ? t("auth.login.title") : trial ? t("auth.signup.trialTitle") : t("auth.signup.orgTitle")}</h1>
       <p>{mode === "login" ? t("auth.login.body") : trial ? t("auth.signup.trialBody") : t("auth.signup.orgBody")}</p>
