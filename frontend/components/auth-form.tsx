@@ -6,7 +6,6 @@ import { createUserWithEmailAndPassword, sendEmailVerification, sendPasswordRese
 import { firebaseAuth, firebaseConfigured, googleProvider } from "../lib/firebase";
 import { resolveSessionDestination } from "../lib/session";
 import { useLanguage } from "../lib/i18n";
-import { LanguageSwitcher } from "./language-switcher";
 
 export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; trial?: boolean }) {
   const { t } = useLanguage();
