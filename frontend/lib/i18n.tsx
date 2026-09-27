@@ -2885,6 +2885,107 @@ type LanguageContextValue = {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
+function localizeDom(language: AppLanguage) {
+  if (typeof document === "undefined") return () => {};
+
+  const sourceText = new WeakMap<Text, string>();
+  const lastAppliedText = new WeakMap<Text, string>();
+  const sourceAttributes = new WeakMap<Element, Map<string, string>>();
+  const lastAppliedAttributes = new WeakMap<Element, Map<string, string>>();
+
+  const ignoredTags = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "TEXTAREA"]);
+  const translatableAttributes = ["placeholder", "title", "aria-label"];
+
+  const sourceForText = (node: Text) => {
+    const current = node.nodeValue ?? "";
+    const previousApplied = lastAppliedText.get(node);
+    if (!sourceText.has(node) || current !== previousApplied) {
+      sourceText.set(node, current);
+    }
+    return sourceText.get(node) ?? current;
+  };
+
+  const sourceForAttribute = (element: Element, attr: string, current: string) => {
+    let sources = sourceAttributes.get(element);
+    let applied = lastAppliedAttributes.get(element);
+    if (!sources) {
+      sources = new Map();
+      sourceAttributes.set(element, sources);
+    }
+    if (!applied) {
+      applied = new Map();
+      lastAppliedAttributes.set(element, applied);
+    }
+    if (!sources.has(attr) || current !== applied.get(attr)) {
+      sources.set(attr, current);
+    }
+    return sources.get(attr) ?? current;
+  };
+
+  const visit = (root: Node) => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    let node: Node | null;
+    while ((node = walker.nextNode())) textNodes.push(node as Text);
+
+    for (const textNode of textNodes) {
+      const parent = textNode.parentElement;
+      if (!parent || ignoredTags.has(parent.tagName)) continue;
+      const source = sourceForText(textNode);
+      const translated = localizeUiText(source, language);
+      const value = language === "en" ? source : translated;
+      if (textNode.nodeValue !== value) {
+        textNode.nodeValue = value;
+      }
+      lastAppliedText.set(textNode, value);
+    }
+
+    const elements = root instanceof Element
+      ? [root, ...Array.from(root.querySelectorAll("*"))]
+      : Array.from((root as Document).querySelectorAll("*"));
+
+    for (const element of elements) {
+      if (ignoredTags.has(element.tagName)) continue;
+      for (const attr of translatableAttributes) {
+        if (!element.hasAttribute(attr)) continue;
+        const current = element.getAttribute(attr) ?? "";
+        const source = sourceForAttribute(element, attr, current);
+        const translated = localizeUiText(source, language);
+        const value = language === "en" ? source : translated;
+        if (current !== value) element.setAttribute(attr, value);
+        let applied = lastAppliedAttributes.get(element);
+        if (!applied) {
+          applied = new Map();
+          lastAppliedAttributes.set(element, applied);
+        }
+        applied.set(attr, value);
+      }
+    }
+  };
+
+  visit(document.body);
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === "childList") {
+        mutation.addedNodes.forEach((node) => visit(node));
+      } else if (mutation.type === "characterData") {
+        visit(mutation.target);
+      } else if (mutation.type === "attributes") {
+        visit(mutation.target);
+      }
+    }
+  });
+  observer.observe(document.body, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: translatableAttributes,
+  });
+
+  return () => observer.disconnect();
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<AppLanguage>(fallbackLanguage);
 
@@ -2897,6 +2998,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language === "ar" ? "ar" : "en";
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     window.localStorage.setItem(storageKey, language);
+    return localizeDom(language);
   }, [language]);
 
   const value = useMemo<LanguageContextValue>(() => ({
