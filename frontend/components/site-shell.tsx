@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { Brand } from "./brand";
-import { LanguageSwitcher } from "./language-switcher";
 import { useLanguage } from "../lib/i18n";
 
 export function SiteShell({ children }: { children: ReactNode }) {
@@ -18,7 +17,6 @@ export function SiteShell({ children }: { children: ReactNode }) {
           <Link href="/contact">{t("public.contact")}</Link>
         </nav>
         <div className="header-actions">
-          <LanguageSwitcher />
           <Link className="text-link" href="/login">{t("public.signIn")}</Link>
           <Link className="button small" href="/signup">{t("public.startTrial")}</Link>
         </div>
