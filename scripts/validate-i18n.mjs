@@ -84,31 +84,43 @@ if (failures.length === 0) {
     }
   }
 
-  // The language selector is a global preference control, but its UI is intentionally
-  // exposed exactly once: on the public homepage header. Future pages must consume
-  // the persisted locale through useLanguage()/t(...) and must never add another selector.
-  const languageSwitcherFiles = sourceFiles
-    .filter((file) => file.endsWith(".tsx"))
-    .filter((file) => /<LanguageSwitcher\\b/.test(read(file)))
-    .map((file) => path.relative(root, file));
-
-  const allowedLanguageSwitcher = "frontend/app/(public)/page.tsx";
-  if (languageSwitcherFiles.length !== 1 || languageSwitcherFiles[0] !== allowedLanguageSwitcher) {
-    failures.push(
-      "There must be exactly one LanguageSwitcher usage, and it must be on the public homepage only. " +
-      "Found: " + (languageSwitcherFiles.length ? languageSwitcherFiles.join(", ") : "none") + "."
-    );
-  }
-
-  const appShellPath = path.join(frontend, "components", "app-shell.tsx");
-  if (fs.existsSync(appShellPath) && /<LanguageSwitcher\\b|language-control/.test(read(appShellPath))) {
-    failures.push("AppShell must not render a language selector; language selection belongs only to the public homepage.");
-  }
-
   const sourceFiles = walk(path.join(frontend, "app"))
     .concat(walk(path.join(frontend, "components")))
     .filter((file) => /\.(tsx|ts)$/.test(file))
     .filter((file) => !file.endsWith("lib/i18n.tsx"));
+
+  // The language selector is a global preference control, but its UI is intentionally
+  // exposed exactly once: through SiteShell when, and only when, the public homepage
+  // opts in. Future pages consume the persisted locale through useLanguage()/t(...).
+  const siteShellPath = path.join(frontend, "components", "site-shell.tsx");
+  const homePagePath = path.join(frontend, "app", "(public)", "page.tsx");
+  const siteShell = read(siteShellPath);
+  const homePage = read(homePagePath);
+
+  if (!/<LanguageSwitcher\\b/.test(siteShell)) {
+    failures.push("SiteShell must own the single homepage language selector component.");
+  }
+  if ((siteShell.match(/<LanguageSwitcher\\b/g) || []).length !== 1) {
+    failures.push("SiteShell must render exactly one LanguageSwitcher instance.");
+  }
+  if (!/showLanguageSwitcher\\s*\\??:/.test(siteShell)) {
+    failures.push("SiteShell must expose an explicit showLanguageSwitcher opt-in.");
+  }
+  if (!/<SiteShell\\s+showLanguageSwitcher\\b/.test(homePage)) {
+    failures.push("The public homepage must be the sole page that opts into the language selector.");
+  }
+
+  const selectorOptInFiles = sourceFiles
+    .filter((file) => file.endsWith(".tsx"))
+    .filter((file) => /<SiteShell\\s+showLanguageSwitcher\\b/.test(read(file)))
+    .map((file) => path.relative(root, file));
+
+  if (selectorOptInFiles.length !== 1 || selectorOptInFiles[0] !== "frontend/app/(public)/page.tsx") {
+    failures.push(
+      "The homepage must be the only page that opts into the language selector. " +
+      "Found: " + (selectorOptInFiles.length ? selectorOptInFiles.join(", ") : "none") + "."
+    );
+  }
 
   // The legacy DOM bridge is intentionally supported during migration, but it
   // must never become an excuse for silently introducing new untranslated UI.
