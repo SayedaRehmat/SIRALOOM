@@ -155,7 +155,21 @@ type TranslationKey =
   | "onboarding.firebaseMissing"
   | "onboarding.verifySent"
   | "onboarding.notVerified"
-  | "onboarding.createFailed";
+  | "onboarding.createFailed"
+  | "workflow.case"
+  | "workflow.specimen"
+  | "workflow.variantFile"
+  | "workflow.index"
+  | "workflow.review"
+  | "workflow.inputValidation"
+  | "workflow.normalization"
+  | "workflow.annotation"
+  | "workflow.population"
+  | "workflow.evidence"
+  | "workflow.acmg"
+  | "workflow.humanReview"
+  | "workflow.report"
+  | "workflow.caseHistory";
 
 const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>> = {
   en: {
@@ -310,6 +324,20 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
     "onboarding.verifySent": "Verification email sent.",
     "onboarding.notVerified": "Your email is not verified yet. Open the Firebase verification email and try again.",
     "onboarding.createFailed": "Unable to create your SIRALOOM workspace.",
+    "workflow.case": "Case",
+    "workflow.specimen": "Specimen",
+    "workflow.variantFile": "Variant file",
+    "workflow.index": "Index",
+    "workflow.review": "Review",
+    "workflow.inputValidation": "Input validation",
+    "workflow.normalization": "Normalization",
+    "workflow.annotation": "Annotation",
+    "workflow.population": "Population context",
+    "workflow.evidence": "Evidence",
+    "workflow.acmg": "ACMG assessment",
+    "workflow.humanReview": "Human review",
+    "workflow.report": "Report",
+    "workflow.caseHistory": "Case history",
   },
   ar: {
     "app.workspace": "مساحة العمل",
@@ -463,6 +491,20 @@ const translations: Record<AppLanguage, Partial<Record<TranslationKey, string>>>
     "onboarding.verifySent": "تم إرسال رسالة التحقق.",
     "onboarding.notVerified": "لم يتم توثيق بريدك الإلكتروني بعد. افتح رسالة التحقق من Firebase وحاول مرة أخرى.",
     "onboarding.createFailed": "تعذر إنشاء مساحة عمل SIRALOOM.",
+    "workflow.case": "الحالة",
+    "workflow.specimen": "العينة",
+    "workflow.variantFile": "ملف المتغيرات",
+    "workflow.index": "الفهرس",
+    "workflow.review": "المراجعة",
+    "workflow.inputValidation": "التحقق من الإدخال",
+    "workflow.normalization": "التطبيع",
+    "workflow.annotation": "التعليق الجينومي",
+    "workflow.population": "السياق السكاني",
+    "workflow.evidence": "الأدلة",
+    "workflow.acmg": "تقييم ACMG",
+    "workflow.humanReview": "المراجعة البشرية",
+    "workflow.report": "التقرير",
+    "workflow.caseHistory": "سجل الحالة",
   },
   bilingual: {
     "app.workspace": "WORKSPACE · مساحة العمل",
