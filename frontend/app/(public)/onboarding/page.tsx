@@ -64,11 +64,11 @@ export default function Onboarding() {
     finally { setBusy(false); }
   };
 
-  if (checking) return <main className="loading"><LanguageSwitcher />{t("onboarding.checking")}</main>;
+  if (checking) return <main className="loading">{t("onboarding.checking")}</main>;
 
   if (!firebaseConfigured || !user) return (
     <main className="auth-page">
-      <LanguageSwitcher />
+      
       <Brand />
       <section className="auth-card">
         <p className="eyebrow">{t("onboarding.secure")}</p>
@@ -81,7 +81,7 @@ export default function Onboarding() {
 
   return (
     <main className="auth-page">
-      <LanguageSwitcher />
+      
       <Brand />
       <section className="auth-card">
         <p className="eyebrow">{isTrial ? t("onboarding.trialEyebrow") : t("onboarding.orgEyebrow")}</p>
