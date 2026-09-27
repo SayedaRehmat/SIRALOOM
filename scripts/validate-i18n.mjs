@@ -128,9 +128,22 @@ if (failures.length === 0) {
   // for literal JSX text and translatable attributes. Dynamic scientific data,
   // identifiers, expressions, and code-like values are deliberately ignored.
   const catalogKeys = new Set();
-  for (const match of i18n.matchAll(/\[\s*["']((?:\\.|[^"'])+)["']\s*,/g)) {
-    const value = match[1].replace(/\\(["'])/g, "$1");
-    if (value.trim()) catalogKeys.add(value.trim());
+  // Read the actual uiArabic object rather than relying on a fragile generic
+  // array regex. This keeps the gate aligned with the real translation catalog.
+  const catalogStart = i18n.indexOf("const uiArabic");
+  const catalogEnd = i18n.indexOf("const fallbackLanguage");
+  if (catalogStart >= 0 && catalogEnd > catalogStart) {
+    const catalogBlock = i18n.slice(catalogStart, catalogEnd);
+    for (const match of catalogBlock.matchAll(/^\s*["']((?:\\.|[^"'])+)["']\s*:\s*["']/gm)) {
+      const value = match[1].replace(/\\(["'])/g, "$1");
+      if (value.trim()) catalogKeys.add(value.trim());
+    }
+    for (const match of catalogBlock.matchAll(/^\s*\[\s*["']((?:\\.|[^"'])+)["']\s*,/gm)) {
+      const value = match[1].replace(/\\(["'])/g, "$1");
+      if (value.trim()) catalogKeys.add(value.trim());
+    }
+  } else {
+    failures.push("Unable to locate the controlled uiArabic translation catalog.");
   }
 
   const likelyUiText = (value) => {
