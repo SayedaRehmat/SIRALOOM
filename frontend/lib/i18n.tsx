@@ -18,10 +18,6 @@ function directionFor(language: AppLanguage): AppDirection {
   return language === "ar" ? "rtl" : "ltr";
 }
 
-function writeLocaleCookie(language: AppLanguage) {
-  document.cookie = `${cookieKey}=${encodeURIComponent(language)}; Path=/; Max-Age=31536000; SameSite=Lax`;
-}
-
 function readInitialLanguage(initialLanguage?: AppLanguage): AppLanguage {
   if (initialLanguage) return initialLanguage;
   if (typeof window === "undefined") return defaultLanguage;
@@ -29,10 +25,12 @@ function readInitialLanguage(initialLanguage?: AppLanguage): AppLanguage {
   return isAppLanguage(stored) ? stored : defaultLanguage;
 }
 
-export function getMessage(
-  language: AppLanguage,
-  key: TranslationKey,
-): string {
+function persistLanguage(language: AppLanguage) {
+  window.localStorage.setItem(storageKey, language);
+  document.cookie = `${cookieKey}=${encodeURIComponent(language)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
+export function getMessage(language: AppLanguage, key: TranslationKey): string {
   const english = messages.en[key] ?? key;
   if (language === "en") return english;
   if (language === "ar") return messages.ar[key] ?? english;
@@ -70,8 +68,7 @@ export function LanguageProvider({
     document.documentElement.dir = direction;
     document.documentElement.dataset.language = language;
     document.documentElement.dataset.direction = direction;
-    window.localStorage.setItem(storageKey, language);
-    writeLocaleCookie(language);
+    persistLanguage(language);
   }, [language]);
 
   const value = useMemo<LanguageContextValue>(
