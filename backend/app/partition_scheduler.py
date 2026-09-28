@@ -72,6 +72,7 @@ class PartitionScheduler:
                 AnalysisPartition.lease_expires_at.is_not(None),
                 AnalysisPartition.lease_expires_at < t,
             )
+            .execution_options(synchronize_session=False)
             .values(status="READY", lease_owner=None, lease_expires_at=None)
         )
         self.db.commit()
