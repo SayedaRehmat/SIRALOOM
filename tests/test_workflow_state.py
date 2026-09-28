@@ -453,10 +453,13 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
         assert received_analysis_id == uuid4_from_string(analysis_id)
         raise transient
 
+    class RetryRequested(BaseException):
+        pass
+
     def fake_retry(*, exc, countdown):
         calls["exc"] = exc
         calls["countdown"] = countdown
-        return "CELERY_RETRY_REQUESTED"
+        raise RetryRequested()
 
     def uuid4_from_string(value):
         from uuid import UUID
@@ -466,9 +469,12 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
     monkeypatch.setattr(celery_module.run_analysis_task, "retry", fake_retry)
 
-    result = celery_module.run_analysis_task.run(analysis_id)
-
-    assert result == "CELERY_RETRY_REQUESTED"
+    try:
+        celery_module.run_analysis_task.run(analysis_id)
+    except RetryRequested:
+        pass
+    else:
+        raise AssertionError("Expected Celery retry to raise its retry control exception")
     assert calls["exc"] is transient
     assert calls["countdown"] == 25
 
