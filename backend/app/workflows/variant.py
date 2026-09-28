@@ -1202,9 +1202,44 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # 9. Persist a standalone provenance manifest for the completed
-        # computational/review workflow. This is separate from the optional
-        # case-export ZIP and is therefore always part of the analysis lineage.
+        # 9. Final report sign-out is the terminal human gate. Provenance is
+        # exported only after the report itself is FINAL, so the terminal
+        # provenance package contains the actual sign-out event and report lineage.
+        report_for_release = db.scalar(
+            select(Report)
+            .where(
+                Report.analysis_id == analysis.id,
+                Report.status == "FINAL",
+            )
+            .order_by(Report.report_version.desc())
+            .limit(1)
+        )
+        if report_for_release is None:
+            provenance_step = _step(db, analysis.id, "export_provenance")
+            if provenance_step.status != StepStatus.REQUIRES_REVIEW:
+                mark_step(
+                    db,
+                    provenance_step,
+                    StepStatus.REQUIRES_REVIEW,
+                    metadata={"reason": "Awaiting final report sign-out.", "next_step": "report_finalization"},
+                )
+            analysis.status = AnalysisStatus.REQUIRES_REVIEW
+            analysis.completed_at = None
+            db.commit()
+            audit.record(
+                event_type="WORKFLOW_AWAITING_REPORT_SIGNOUT",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="workflow",
+                payload={"next_step": "report_finalization"},
+            )
+            db.commit()
+            return
+
+        # Persist a standalone provenance manifest for the fully completed
+        # computational + human-review + report-signout workflow. This is
+        # separate from the optional case-export ZIP.
         provenance_step = _step(db, analysis.id, "export_provenance")
         if provenance_step.status != StepStatus.SUCCEEDED:
             mark_step(db, provenance_step, StepStatus.RUNNING)
@@ -1262,8 +1297,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     StepStatus.SUCCEEDED,
                     metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
                 )
-                analysis.status = AnalysisStatus.REQUIRES_REVIEW
-                analysis.completed_at = None
+                analysis.status = AnalysisStatus.SUCCEEDED
+                analysis.completed_at = _now()
                 audit.record(
                     event_type="PROVENANCE_EXPORT_COMPLETED",
                     case_id=analysis.case_id,
@@ -1271,7 +1306,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     actor_type="SYSTEM",
                     actor_id="provenance",
                     output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
-                    payload={"next_step": "report_finalization"},
+                    payload={"next_step": "analysis_complete"},
                 )
                 db.commit()
             except Exception as exc:
