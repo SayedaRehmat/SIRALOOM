@@ -616,7 +616,7 @@ export default function Home() {
       <header className="topbar">
         <div>
           <div className="eyebrow">{t("workspace.eyebrow")}</div>
-          <h1>SIRALOOM <span>Variant</span></h1>
+          <h1>SIRALOOM <span>{t("workflow.variantFile")}</span></h1>
           <p className="subtitle">{t("workspace.subtitle")}</p>
         </div>
         <div className="connection"><span className={`dot ${connection}`} />{connection === "online" ? t("workspace.backendConnected") : connection === "checking" ? t("workspace.checkingBackend") : t("workspace.reconnecting")}</div>
@@ -624,28 +624,28 @@ export default function Home() {
 
       <section className="hero-grid">
         <div className="hero-card">
-          <div className="hero-kicker">SERVICE 01</div>
+          <div className="hero-kicker">{t("workspace.service")}</div>
           <h2>{t("workspace.title")}</h2>
           <p>{t("workspace.lead")}</p>
         </div>
-        <div className="metric-card"><span>Pipeline</span><strong>{analysis?.status ? prettyStatus(analysis.status) : t("workspace.ready")}</strong></div>
-        <div className="metric-card"><span>Case</span><strong>{caseIdentifier || t("workspace.notSelected")}</strong></div>
+        <div className="metric-card"><span>{t("workspace.pipeline")}</span><strong>{analysis?.status ? prettyStatus(analysis.status) : t("workspace.ready")}</strong></div>
+        <div className="metric-card"><span>{t("workflow.case")}</span><strong>{caseIdentifier || t("workspace.notSelected")}</strong></div>
       </section>
 
       {message && <div className="notice" role="status">{message}</div>}
 
       <section className="workspace-grid">
         <aside className="panel case-panel">
-          <div className="panel-head"><div><div className="section-kicker">CASE</div><h3>{t("workspace.startCase")}</h3></div><span className={`badge ${statusTone(caseId ? "SUCCEEDED" : "READY")}`}>{caseId ? t("workspace.created") : t("workspace.new")}</span></div>
+          <div className="panel-head"><div><div className="section-kicker">{t("workspace.caseSection")}</div><h3>{t("workspace.startCase")}</h3></div><span className={`badge ${statusTone(caseId ? "SUCCEEDED" : "READY")}`}>{caseId ? t("workspace.created") : t("workspace.new")}</span></div>
           <form onSubmit={createCase} className="stack">
             <label>{t("workspace.caseIdentifier")}<input value={caseIdentifier} onChange={(e: ChangeEvent<HTMLInputElement>) => setCaseIdentifier(e.target.value)} placeholder="LVP-2026-000184" required /></label>
             <label>{t("workspace.clinicalIndication")}<input value={indication} onChange={(e: ChangeEvent<HTMLInputElement>) => setIndication(e.target.value)} placeholder="Hereditary cancer evaluation" /></label>
             <button className="primary" disabled={busy || !caseIdentifier.trim()}>{caseId ? "Load case" : "Create case"}</button>
           </form>
-          {caseId && <div className="keyline"><span>Case ID</span><code>{caseId}</code></div>}
+          {caseId && <div className="keyline"><span>{t("workspace.caseId")}</span><code>{caseId}</code></div>}
           {caseId && <div className="case-context">
-            <div className="section-kicker">SPECIMEN</div>
-            <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>Blood</option><option>Saliva</option><option>Buccal</option><option>Other</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim()}>{t("workspace.registerSpecimen")}</button></div>
+            <div className="section-kicker">{t("workspace.specimenSection")}</div>
+            <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>{t("workspace.blood")}</option><option>{t("workspace.saliva")}</option><option>{t("workspace.buccal")}</option><option>{t("workspace.other")}</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim()}>{t("workspace.registerSpecimen")}</button></div>
             {caseWorkspace?.specimens?.map((specimen, index) => {
               const id = String(specimen.specimen_id ?? "");
               const selected = id && id === selectedSpecimenId;
@@ -665,7 +665,7 @@ export default function Home() {
         </aside>
 
         <section className="panel input-panel">
-          <div className="panel-head"><div><div className="section-kicker">INPUT</div><h3>{t("workspace.vcfIntake")}</h3></div><span className="badge neutral">Phase 1</span></div>
+          <div className="panel-head"><div><div className="section-kicker">{t("workspace.inputSection")}</div><h3>{t("workspace.vcfIntake")}</h3></div><span className="badge neutral">{t("workspace.phaseOne")}</span></div>
           <label>Specimen for this VCF
             <select value={selectedSpecimenId} onChange={(e) => setSelectedSpecimenId(e.target.value)}>
               <option value="">{t("workspace.selectSpecimen")}</option>
@@ -685,17 +685,17 @@ export default function Home() {
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
             <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz"}</strong><p>{t("workspace.inputPersisted")}</p></div>
-            <label className="secondary file-button">Choose<input type="file" accept=".vcf,.vcf.gz,.gz" onChange={handleFile} hidden /></label>
+            <label className="secondary file-button">{t("workspace.choose")}<input type="file" accept=".vcf,.vcf.gz,.gz" onChange={handleFile} hidden /></label>
           </div>
           <div className="actions-row">
             <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file || !selectedSpecimenId}>{t("workspace.registerInput")}</button>
             <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>{t("workspace.startAnalysis")}</button>
           </div>
-          {artifactId && <div className="keyline"><span>Artifact ID</span><code>{artifactId}</code></div>}
+          {artifactId && <div className="keyline"><span>{t("workspace.artifactId")}</span><code>{artifactId}</code></div>}
         </section>
 
         <section className="panel workflow-panel">
-          <div className="panel-head"><div><div className="section-kicker">EXECUTION</div><h3>{t("workspace.durableWorkflow")}</h3></div>{analysis?.status && <span className={`badge ${statusTone(analysis.status)}`}>{prettyStatus(analysis.status)}</span>}</div>
+          <div className="panel-head"><div><div className="section-kicker">{t("workspace.executionSection")}</div><h3>{t("workspace.durableWorkflow")}</h3></div>{analysis?.status && <span className={`badge ${statusTone(analysis.status)}`}>{prettyStatus(analysis.status)}</span>}</div>
           <div className="timeline">
             {steps.map(([id, label], index) => {
               const step = (analysis?.steps as Step[] | undefined)?.find((item) => item.step_id === id);
@@ -712,8 +712,8 @@ export default function Home() {
       </section>
 
       <section className="panel variants-panel">
-        <div className="panel-head"><div><div className="section-kicker">INTERPRETATION</div><h3>{t("workspace.prioritizedVariants")}</h3></div><span className="badge neutral">{variants.length} {t("workspace.variantsCount")}</span></div>
-        {variants.length === 0 ? <div className="empty"><strong>{t("workspace.waitingAnalysis")}</strong><p>{t("workspace.variantsWillPopulate")}</p></div> : <div className="table-wrap"><table><thead><tr><th>Variant</th><th>Position</th><th>Ref / Alt</th><th>Build</th><th>Review</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">Selected</span> : <span className="badge neutral">Open</span>}</td></tr>)}</tbody></table></div>}
+        <div className="panel-head"><div><div className="section-kicker">{t("workspace.interpretationSection")}</div><h3>{t("workspace.prioritizedVariants")}</h3></div><span className="badge neutral">{variants.length} {t("workspace.variantsCount")}</span></div>
+        {variants.length === 0 ? <div className="empty"><strong>{t("workspace.waitingAnalysis")}</strong><p>{t("workspace.variantsWillPopulate")}</p></div> : <div className="table-wrap"><table><thead><tr><th>{t("workflow.variantFile")}</th><th>{t("workspace.position")}</th><th>{t("workspace.refAlt")}</th><th>{t("workspace.build")}</th><th>{t("workspace.review")}</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">{t("workspace.selected")}</span> : <span className="badge neutral">{t("workspace.open")}</span>}</td></tr>)}</tbody></table></div>}
       </section>
 
       <section className="panel complete-report-panel">
@@ -724,7 +724,7 @@ export default function Home() {
 
       <section className="detail-grid">
         <section className="panel evidence-panel">
-          <div className="panel-head"><div><div className="section-kicker">EVIDENCE</div><h3>{t("workspace.variantEvidence")}</h3></div></div>
+          <div className="panel-head"><div><div className="section-kicker">{t("workspace.evidenceSection")}</div><h3>{t("workspace.variantEvidence")}</h3></div></div>
           {!variantDetail ? <div className="empty"><strong>{t("workspace.noVariantSelected")}</strong><p>{t("workspace.selectVariantAfterAnalysis")}</p></div> : <div className="evidence-stack">
             <div className="identity-card"><div><span>{t("workspace.canonical")}</span><strong>{String(variantDetail.variant.canonical_key ?? "—")}</strong></div><div><span>{t("workspace.normalization")}</span><strong>{String(variantDetail.variant.normalization_status ?? "—")}</strong></div></div>
             <div className="evidence-list">
@@ -736,7 +736,7 @@ export default function Home() {
         </section>
 
         <section className="panel review-panel">
-          <div className="panel-head"><div><div className="section-kicker">REVIEW</div><h3>{t("workspace.humanDecisionWorkspace")}</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
+          <div className="panel-head"><div><div className="section-kicker">{t("workspace.reviewSection")}</div><h3>{t("workspace.humanDecisionWorkspace")}</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
           {!review ? <div className="empty"><strong>{t("workspace.reviewPending")}</strong><p>{t("workspace.automatedOutputProposed")}</p></div> : <>
             <div className="classification-banner"><span>{t("workspace.proposedCurrent")}</span><strong>{String(review.classification?.result ?? t("workspace.noClassification"))}</strong><small>Review revision {String(review.classification?.review_version ?? 0)}</small></div>
             <div className="actions-row"><button className="secondary" onClick={startReview} disabled={review.review_status === "APPROVED"}>{t("workspace.startReview")}</button></div>
@@ -744,17 +744,17 @@ export default function Home() {
             <label>{t("workspace.criterionReviewReason")}<input value={criterionReason} onChange={(e: ChangeEvent<HTMLInputElement>) => setCriterionReason(e.target.value)} placeholder="Why is this criterion accepted/rejected?" /></label>
             <label>{t("workspace.finalApprovalReason")}<textarea value={reviewReason} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReviewReason(e.target.value)} placeholder="Explain the basis for the final reviewer decision." rows={3} /></label>
             <div className="actions-row"><button className="primary" onClick={approve} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.approveClassification")}</button><button className="secondary" onClick={requestMoreEvidence} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.requestMoreEvidence")}</button><button className="secondary" onClick={generateReport} disabled={!analysisId || review.review_status !== "APPROVED"}>{t("workspace.generateReport")}</button></div>
-            <div className="history"><div className="section-kicker">DECISION HISTORY</div>{review.history.length === 0 ? <p>{t("workspace.noReviewActions")}</p> : review.history.map((item, index) => <div className="history-row" key={`${item.action_type}-${index}`}><span>{formatDate(item.created_at)}</span><strong>{item.action_type}</strong><p>{item.reason}</p></div>)}</div>
+            <div className="history"><div className="section-kicker">{t("workspace.decisionHistory")}</div>{review.history.length === 0 ? <p>{t("workspace.noReviewActions")}</p> : review.history.map((item, index) => <div className="history-row" key={`${item.action_type}-${index}`}><span>{formatDate(item.created_at)}</span><strong>{item.action_type}</strong><p>{item.reason}</p></div>)}</div>
           </>}
         </section>
       </section>
 
       <section className="bottom-grid">
-        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">REPORT</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
-        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">AUDIT & PROVENANCE</div><h3>{t("workspace.caseTimeline")}</h3></div><span className="badge neutral">{auditEvents.length} {t("workspace.eventsCount")}</span></div><div className="audit-callout"><strong>{t("workspace.auditReconstructable")}</strong><p>Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>{t("workspace.noAuditEvents")}</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>{t("workspace.exportHistory")}</button>{exportId && <><div className="keyline"><span>{t("workspace.export")}</span><code>{exportId}</code></div><div className="keyline"><span>{t("workspace.status")}</span><strong>{exportStatus ? prettyStatus(exportStatus) : t("workspace.queued")}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>{t("workspace.downloadHistoryZip")}</button>}</>}</section>
+        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.reportSection")}</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
+        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.auditSection")}</div><h3>{t("workspace.caseTimeline")}</h3></div><span className="badge neutral">{auditEvents.length} {t("workspace.eventsCount")}</span></div><div className="audit-callout"><strong>{t("workspace.auditReconstructable")}</strong><p>{t("workspace.auditLead")}</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>{t("workspace.noAuditEvents")}</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>{t("workspace.exportHistory")}</button>{exportId && <><div className="keyline"><span>{t("workspace.export")}</span><code>{exportId}</code></div><div className="keyline"><span>{t("workspace.status")}</span><strong>{exportStatus ? prettyStatus(exportStatus) : t("workspace.queued")}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>{t("workspace.downloadHistoryZip")}</button>}</>}</section>
       </section>
 
-      <footer className="footer"><span>SIRALOOM Variant v1</span><span>Scientific results remain subject to configured resources, review, validation scope, and laboratory governance.</span></footer>
+      <footer className="footer"><span>SIRALOOM Variant v1</span><span>{t("workspace.footer")}</span></footer>
     </main>
   );
 }
