@@ -172,3 +172,12 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
             AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
         ).one()
         assert audit.payload["recovered_partitions"] == 1
+
+        # A second redelivery/recovery pass must be a no-op: recovery is
+        # idempotent once durable execution state has already been reconciled.
+        recovered_again = recover_interrupted_execution(db, analysis_id)
+        assert recovered_again is False
+        assert db.query(AuditEvent).filter(
+            AuditEvent.analysis_id == analysis_id,
+            AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+        ).count() == 1
