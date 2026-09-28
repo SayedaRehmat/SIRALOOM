@@ -799,3 +799,58 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     assert "recovery" not in events
     assert events.count("run_analysis") == 1
     assert events.index("run_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
+
+
+def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypatch):
+    from uuid import UUID, uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    analysis_id = str(uuid4())
+    events = []
+
+    class RecoveryFailure(RuntimeError):
+        pass
+
+    class FakeRecoverySession:
+        def close(self):
+            events.append("recovery_session_closed")
+
+    def fake_session_local():
+        events.append("recovery_session_opened")
+        return FakeRecoverySession()
+
+    def fake_recover(db, received_analysis_id):
+        assert isinstance(db, FakeRecoverySession)
+        assert received_analysis_id == UUID(analysis_id)
+        events.append("recovery")
+        raise RecoveryFailure("durable recovery failed")
+
+    def fail_if_analysis_resumes(_analysis_id):
+        raise AssertionError("analysis must not resume after recovery failure")
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        fake_session_local,
+    )
+    monkeypatch.setattr(variant_module, "recover_interrupted_execution", fake_recover)
+    monkeypatch.setattr(variant_module, "run_variant_analysis", fail_if_analysis_resumes)
+
+    task = celery_module.run_analysis_task
+    task.push_request(delivery_info={"redelivered": True})
+    try:
+        try:
+            task.run(analysis_id)
+        except RecoveryFailure:
+            pass
+        else:
+            raise AssertionError("Expected durable recovery failure to propagate")
+    finally:
+        task.pop_request()
+
+    assert events == [
+        "recovery_session_opened",
+        "recovery",
+        "recovery_session_closed",
+    ]
