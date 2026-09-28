@@ -141,7 +141,7 @@ export default function Cases() {
       const rows = await apiFetch("/cases");
       setCases(Array.isArray(rows) ? rows : []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to load existing cases.");
+      setError(e instanceof Error ? e.message : t("cases.actionFailed"));
     } finally {
       setLoadingCases(false);
     }
@@ -193,7 +193,7 @@ export default function Cases() {
       else if (!primary) setStep(2);
       else setStep(4);
 
-      setMessage(`Loaded case ${data.case_identifier}.`);
+      setMessage(`${t("cases.existing")}: ${data.case_identifier}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load case.");
     } finally {
@@ -300,7 +300,7 @@ export default function Cases() {
 
       setSpecimenId(createdSpecimenId);
       setSpecimenIdentifier("");
-      setMessage("Specimen registered.");
+      setMessage(t("cases.registered"));
 
       await refreshCase();
 
@@ -322,7 +322,7 @@ export default function Cases() {
     if (!caseId) return;
 
     if (!isIndex && !selectedSpecimenId) {
-      setError("Select or register a specimen before uploading the VCF.");
+      setError(t("cases.specimenHelp"));
       return;
     }
 
@@ -372,8 +372,8 @@ export default function Cases() {
 
       setMessage(
         result.validation_status === "VALID"
-          ? `${isIndex ? "Index" : "Variant file"} validated successfully.`
-          : `${isIndex ? "Index" : "Variant file"} was stored but failed validation.`,
+          ? `${isIndex ? t("cases.indexLabel") : t("cases.upload")} validated successfully.`
+          : `${isIndex ? t("cases.indexLabel") : t("cases.upload")} was stored but failed validation.`,
       );
 
       await refreshCase();
@@ -423,7 +423,7 @@ export default function Cases() {
         </div>
 
         <Link className="link-button" href="/app/dashboard">
-          {t("cases.back")} to dashboard
+          {t("cases.backDashboard")}
         </Link>
       </div>
 
@@ -456,10 +456,10 @@ export default function Cases() {
                 >
                   <span>
                     <strong>{item.case_identifier}</strong>
-                    <small>{pretty(item.status)} · {item.specimens?.length ?? 0} specimen(s)</small>
+                    <small>{pretty(item.status)} · {item.specimens?.length ?? 0} {t("cases.specimenCount")}</small>
                   </span>
                   <span>
-                    <small>{latestAnalysis ? `Analysis · ${pretty(latestAnalysis.status)}` : "No analysis yet"}</small>
+                    <small>{latestAnalysis ? `${t("cases.analysis")} · ${pretty(latestAnalysis.status)}` : t("cases.noAnalysis")}</small>
                   </span>
                 </button>
               );
@@ -498,7 +498,7 @@ export default function Cases() {
       <section className="panel wizard-card">
         {step === 0 && (
           <form onSubmit={createCase}>
-            <p className="eyebrow">STEP 01</p>
+            <p className="eyebrow">{t("cases.phaseOneStep")}</p>
 
             <h2>{t("cases.info")}</h2>
 
@@ -539,7 +539,7 @@ export default function Cases() {
 
         {step === 1 && (
           <div>
-            <p className="eyebrow">STEP 02</p>
+            <p className="eyebrow">{t("cases.phaseTwoStep")}</p>
 
             <h2>{t("cases.specimen")}</h2>
 
@@ -604,7 +604,7 @@ export default function Cases() {
                   >
                     <span>{s.specimen_identifier}</span>
                     <small>
-                      {s.specimen_type || "Type not specified"}
+                      {s.specimen_type || t("cases.specimenNotSpecified")}
                     </small>
                   </button>
                 ))}
@@ -615,7 +615,7 @@ export default function Cases() {
 
         {step === 2 && (
           <div>
-            <p className="eyebrow">STEP 03</p>
+            <p className="eyebrow">{t("cases.phaseThreeStep")}</p>
 
             <h2>{t("cases.upload")}</h2>
 
@@ -687,7 +687,7 @@ export default function Cases() {
 
         {step === 3 && (
           <div>
-            <p className="eyebrow">STEP 04 · OPTIONAL INDEX</p>
+            <p className="eyebrow">{t("cases.phaseFourOptionalIndex")}</p>
 
             <h2>{t("cases.index")}</h2>
 
@@ -727,7 +727,7 @@ export default function Cases() {
 
         {step === 4 && (
           <div>
-            <p className="eyebrow">STEP 05 · READY CHECK</p>
+            <p className="eyebrow">{t("cases.phaseFiveReady")}</p>
 
             <h2>{t("cases.ready")}</h2>
 
