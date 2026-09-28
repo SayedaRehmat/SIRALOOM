@@ -1,4 +1,4 @@
-export type CatalogLanguage = "en" | "ar" | "bilingual";
+export type CatalogLanguage = "en" | "ar";
 
 
 /**
@@ -173,7 +173,8 @@ export type TranslationKey =
   | "workflow.acmg"
   | "workflow.humanReview"
   | "workflow.report"
-  | "workflow.caseHistory";
+  | "workflow.caseHistory"
+  | "reports.validationDisclaimer";
 
 
 export const messages: Record<CatalogLanguage, Partial<Record<TranslationKey, string>>> = {
@@ -343,6 +344,7 @@ export const messages: Record<CatalogLanguage, Partial<Record<TranslationKey, st
     "workflow.humanReview": "Human review",
     "workflow.report": "Report",
     "workflow.caseHistory": "Case history",
+    "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
     "app.workspace": "مساحة العمل",
@@ -663,8 +665,6 @@ export const messages: Record<CatalogLanguage, Partial<Record<TranslationKey, st
     "onboarding.verifySent": "Verification email sent. · تم إرسال رسالة التحقق.",
     "onboarding.notVerified": "Your email is not verified yet. Open the Firebase verification email and try again. · لم يتم توثيق بريدك الإلكتروني بعد. افتح رسالة التحقق من Firebase وحاول مرة أخرى.",
     "onboarding.createFailed": "Unable to create your SIRALOOM workspace. · تعذر إنشاء مساحة عمل SIRALOOM.",
+    "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
   },
 };
-
-
-
