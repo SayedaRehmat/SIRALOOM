@@ -434,3 +434,40 @@ def test_transient_genebe_failure_requeues_annotation_partition_and_checkpoints(
             countdown=min(60, 5 * attempt),
         )
         assert retry_error.countdown == 5
+
+
+def test_celery_task_retries_transient_workflow_error_with_production_countdown(monkeypatch):
+    from uuid import uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    analysis_id = str(uuid4())
+    transient = variant_module.TransientWorkflowError(
+        "temporary annotation provider outage",
+        countdown=25,
+    )
+    calls = {}
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == uuid4_from_string(analysis_id)
+        raise transient
+
+    def fake_retry(*, exc, countdown):
+        calls["exc"] = exc
+        calls["countdown"] = countdown
+        return "CELERY_RETRY_REQUESTED"
+
+    def uuid4_from_string(value):
+        from uuid import UUID
+
+        return UUID(value)
+
+    monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
+    monkeypatch.setattr(celery_module.run_analysis_task, "retry", fake_retry)
+
+    result = celery_module.run_analysis_task.run(analysis_id)
+
+    assert result == "CELERY_RETRY_REQUESTED"
+    assert calls["exc"] is transient
+    assert calls["countdown"] == 25
