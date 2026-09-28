@@ -162,7 +162,7 @@ def get(
     step_payloads = []
     for index, step in enumerate(steps):
         metadata = dict(step.metadata_json or {})
-        if step.status in {"FAILED", "BLOCKED", "REQUIRES_REVIEW"}:
+        if step.status in {"FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}:
             next_step = metadata.get("next_step")
         elif step.status == "SUCCEEDED":
             next_step = steps[index + 1].step_id if index + 1 < len(steps) else "ANALYSIS_COMPLETE"
@@ -186,7 +186,7 @@ def get(
         (
             item
             for item in step_payloads
-            if item["status"] in {"RUNNING", "RETRYING", "FAILED", "BLOCKED", "REQUIRES_REVIEW"}
+            if item["status"] in {"RUNNING", "RETRYING", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}
         ),
         None,
     )
