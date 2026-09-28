@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "npm run validate:i18n && next build",
     "start": "next start",
-    "validate:i18n": "node ../scripts/validate-i18n-contract.mjs"
+    "validate:i18n": "node ../scripts/validate-i18n.mjs"
   },
   "dependencies": {
     "firebase": "11.0.2",
