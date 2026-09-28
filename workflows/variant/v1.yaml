@@ -9,7 +9,7 @@ steps:
   - id: normalize
     type: boundary
     provenance_required: true
-    mode: validated-input-boundary
+    mode: validated-reference-package-boundary
   - id: annotate
     type: provider
     providers: [genebe]
