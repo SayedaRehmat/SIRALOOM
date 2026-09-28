@@ -34,6 +34,8 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
     AnalysisPartition,
+    Report,
+    ReportabilityDecision,
 )
 
 WORKFLOW_STEPS = [
@@ -1329,12 +1331,12 @@ def _review_gate_ready(db: Session, analysis_id: UUID) -> bool:
         if classification.state != "FINAL" or classification.review_status != "APPROVED":
             return False
         decision = db.scalar(
-            select(__import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision)
+            select(ReportabilityDecision)
             .where(
-                __import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision.analysis_id == analysis_id,
-                __import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision.variant_id == variant_id,
+                ReportabilityDecision.analysis_id == analysis_id,
+                ReportabilityDecision.variant_id == variant_id,
             )
-            .order_by(__import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision.version.desc())
+            .order_by(ReportabilityDecision.version.desc())
         )
         if decision is None or decision.status != "FINAL":
             return False
