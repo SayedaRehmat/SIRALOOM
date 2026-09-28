@@ -1053,7 +1053,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "supported structured criterion configuration. Manual ACMG classification "
                             "is required for all variants in this case."
                         ),
-                        metadata={"disease_context_present": bool(disease), "blocked_variants": blocked_variants},
+                        metadata={"disease_context_present": bool(disease), "blocked_variants": blocked_variants, "next_step": "review"},
                     )
                     audit.record(
                         event_type="ACMG_ASSESSMENT_REQUIRES_MANUAL_REVIEW",
@@ -1115,7 +1115,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db,
                     review_step,
                     StepStatus.REQUIRES_REVIEW,
-                    metadata={"reason": "Awaiting required human classification and reportability review."},
+                    metadata={"reason": "Awaiting required human classification and reportability review.", "next_step": "review"},
                 )
             analysis.status = AnalysisStatus.REQUIRES_REVIEW
             analysis.completed_at = None
