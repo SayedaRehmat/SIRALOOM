@@ -177,7 +177,7 @@ export type TranslationKey =
   | "reports.validationDisclaimer";
 
 
-export const messages: Record<CatalogLanguage, Partial<Record<TranslationKey, string>>> = {
+export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
   en: {
     "app.workspace": "WORKSPACE",
     "app.governance": "GOVERNANCE",
@@ -512,5 +512,6 @@ export const messages: Record<CatalogLanguage, Partial<Record<TranslationKey, st
     "workflow.humanReview": "المراجعة البشرية",
     "workflow.report": "التقرير",
     "workflow.caseHistory": "سجل الحالة",
+    "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
   },
 };
