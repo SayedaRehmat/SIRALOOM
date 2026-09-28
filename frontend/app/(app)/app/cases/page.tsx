@@ -823,10 +823,7 @@ export default function Cases() {
 
             <div className="artifact-list">
               {artifacts.map((a) => (
-                <ArtifactCard
-                  key={a.artifact_id}
-                  artifact={a}
-                />
+                <ArtifactCard key={a.artifact_id} artifact={a} t={t} />
               ))}
             </div>
           </div>
