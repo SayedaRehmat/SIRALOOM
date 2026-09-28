@@ -681,7 +681,7 @@ export default function Cases() {
             </label>
 
             {primaryArtifact && (
-              <ArtifactCard artifact={primaryArtifact} />
+              <ArtifactCard artifact={primaryArtifact} t={t} />
             )}
           </div>
         )}
@@ -721,7 +721,7 @@ export default function Cases() {
             </label>
 
             {indexArtifact && (
-              <ArtifactCard artifact={indexArtifact} />
+              <ArtifactCard artifact={indexArtifact} t={t} />
             )}
           </div>
         )}
@@ -877,7 +877,7 @@ export default function Cases() {
   );
 }
 
-function ArtifactCard({ artifact }: { artifact: Artifact }) {\n  const { t } = useLanguage();
+function ArtifactCard({ artifact, t }: { artifact: Artifact; t: ReturnType<typeof useLanguage>["t"] }) {
   const valid = artifact.validation_status === "VALID";
   const validation = artifact.metadata?.validation;
 
