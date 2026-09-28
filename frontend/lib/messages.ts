@@ -174,6 +174,116 @@ export type TranslationKey =
   | "workflow.humanReview"
   | "workflow.report"
   | "workflow.caseHistory"
+  | "workspace.eyebrow"
+  | "workspace.subtitle"
+  | "workspace.title"
+  | "workspace.lead"
+  | "workspace.startCase"
+  | "workspace.caseIdentifier"
+  | "workspace.clinicalIndication"
+  | "workspace.registerSpecimen"
+  | "workspace.vcfIntake"
+  | "workspace.selectSpecimen"
+  | "workspace.inputPersisted"
+  | "workspace.registerInput"
+  | "workspace.startAnalysis"
+  | "workspace.durableWorkflow"
+  | "workspace.checkpointPersisted"
+  | "workspace.prioritizedVariants"
+  | "workspace.waitingAnalysis"
+  | "workspace.variantsWillPopulate"
+  | "workspace.completeReport"
+  | "workspace.allAnalyzedVariants"
+  | "workspace.completeReportLead"
+  | "workspace.downloadCsv"
+  | "workspace.downloadJson"
+  | "workspace.noCompleteDataset"
+  | "workspace.completeDatasetPending"
+  | "workspace.first100Note"
+  | "workspace.variantEvidence"
+  | "workspace.noVariantSelected"
+  | "workspace.selectVariantAfterAnalysis"
+  | "workspace.canonical"
+  | "workspace.normalization"
+  | "workspace.noEvidence"
+  | "workspace.humanDecisionWorkspace"
+  | "workspace.reviewPending"
+  | "workspace.automatedOutputProposed"
+  | "workspace.proposedCurrent"
+  | "workspace.startReview"
+  | "workspace.accept"
+  | "workspace.reject"
+  | "workspace.criterionReviewReason"
+  | "workspace.finalApprovalReason"
+  | "workspace.approveClassification"
+  | "workspace.requestMoreEvidence"
+  | "workspace.generateReport"
+  | "workspace.noReviewActions"
+  | "workspace.finalReport"
+  | "workspace.noReportGenerated"
+  | "workspace.reportPending"
+  | "workspace.finalizeReport"
+  | "workspace.downloadPdf"
+  | "workspace.caseTimeline"
+  | "workspace.auditReconstructable"
+  | "workspace.noAuditEvents"
+  | "workspace.exportHistory"
+  | "workspace.export"
+  | "workspace.status"
+  | "workspace.downloadHistoryZip"
+  | "workspace.ready"
+  | "workspace.notSelected"
+  | "workspace.created"
+  | "workspace.new"
+  | "workspace.loading"
+  | "workspace.checkingBackend"
+  | "workspace.backendConnected"
+  | "workspace.reconnecting"
+  | "workspace.reviewRevision"
+  | "workspace.noClassification"
+  | "workspace.noAutomatedRationale"
+  | "workspace.reportArtifact"
+  | "workspace.queued"
+  | "workspace.caseAndVcfFirst"
+  | "workspace.errorLoadCase"
+  | "workspace.errorCompleteReport"
+  | "workspace.errorExportState"
+  | "workspace.errorVariantDetails"
+  | "workspace.caseCreated"
+  | "workspace.caseLoaded"
+  | "workspace.caseCreationFailed"
+  | "workspace.caseSpecimenRequired"
+  | "workspace.specimenRegistered"
+  | "workspace.specimenRegistrationFailed"
+  | "workspace.specimenRequired"
+  | "workspace.uploadFailed"
+  | "workspace.downloadFailed"
+  | "workspace.caseVcfRequired"
+  | "workspace.analysisQueued"
+  | "workspace.analysisStartFailed"
+  | "workspace.reviewStarted"
+  | "workspace.reviewReasonRequired"
+  | "workspace.reasonRequired"
+  | "workspace.moreEvidenceRequested"
+  | "workspace.approvalReasonRequired"
+  | "workspace.classificationApproved"
+  | "workspace.finalReportApproved"
+  | "workspace.reportFinalized"
+  | "workspace.reportFinalizationFailed"
+  | "workspace.exportQueued"
+  | "workspace.exportFailed"
+  | "workspace.backendReconnectingPrefix"
+  | "workspace.connectionUnavailable"
+  | "workspace.inputRegisteredPrefix"
+  | "workspace.downloadFailedPrefix"
+  | "workspace.variantsCount"
+  | "workspace.rowsCount"
+  | "workspace.eventsCount"
+  | "workspace.unknown"
+  | "workspace.noData"
+  | "workspace.evidence"
+  | "workspace.unknownSource"
+  | "workspace.unversioned"
   | "reports.validationDisclaimer";
 
 
@@ -344,6 +454,116 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workflow.humanReview": "Human review",
     "workflow.report": "Report",
     "workflow.caseHistory": "Case history",
+    "workspace.eyebrow": "GENOMIC INTERPRETATION PLATFORM",
+    "workspace.subtitle": "VCF → evidence → review → report",
+    "workspace.title": "Explainable variant interpretation, built for long-running laboratory workflows.",
+    "workspace.lead": "Analysis state is persisted server-side. Closing the browser does not stop a running job.",
+    "workspace.startCase": "Start a case",
+    "workspace.caseIdentifier": "Case identifier",
+    "workspace.clinicalIndication": "Clinical indication",
+    "workspace.registerSpecimen": "Register specimen",
+    "workspace.vcfIntake": "VCF intake",
+    "workspace.selectSpecimen": "Select a registered specimen…",
+    "workspace.inputPersisted": "Input is persisted before analysis begins.",
+    "workspace.registerInput": "Register input",
+    "workspace.startAnalysis": "Start analysis",
+    "workspace.durableWorkflow": "Durable workflow",
+    "workspace.checkpointPersisted": "Checkpoint state is persisted server-side",
+    "workspace.prioritizedVariants": "Prioritized variants",
+    "workspace.waitingAnalysis": "Waiting for a completed analysis",
+    "workspace.variantsWillPopulate": "The table will populate from durable server state once annotation has produced variant records.",
+    "workspace.completeReport": "COMPLETE VARIANT REPORT",
+    "workspace.allAnalyzedVariants": "All analyzed variants",
+    "workspace.completeReportLead": "Inspection layer for the laboratory team. This is separate from the concise clinical report.",
+    "workspace.downloadCsv": "Download CSV",
+    "workspace.downloadJson": "Download JSON",
+    "workspace.noCompleteDataset": "No complete variant dataset yet",
+    "workspace.completeDatasetPending": "It becomes available after annotation has produced persistent variant records.",
+    "workspace.first100Note": "Showing the first 100 rows for interactive inspection. Download the complete CSV/JSON for the full dataset.",
+    "workspace.variantEvidence": "Variant evidence",
+    "workspace.noVariantSelected": "No variant selected",
+    "workspace.selectVariantAfterAnalysis": "Select a variant after analysis completion.",
+    "workspace.canonical": "Canonical",
+    "workspace.normalization": "Normalization",
+    "workspace.noEvidence": "No evidence records yet",
+    "workspace.humanDecisionWorkspace": "Human decision workspace",
+    "workspace.reviewPending": "Review becomes available after interpretation",
+    "workspace.automatedOutputProposed": "Automated output remains proposed until a reviewer acts.",
+    "workspace.proposedCurrent": "Proposed / current",
+    "workspace.startReview": "Start review",
+    "workspace.accept": "Accept",
+    "workspace.reject": "Reject",
+    "workspace.criterionReviewReason": "Criterion review reason",
+    "workspace.finalApprovalReason": "Final approval reason",
+    "workspace.approveClassification": "Approve classification",
+    "workspace.requestMoreEvidence": "Request more evidence",
+    "workspace.generateReport": "Generate report",
+    "workspace.noReviewActions": "No review actions yet.",
+    "workspace.finalReport": "Final report",
+    "workspace.noReportGenerated": "No report generated",
+    "workspace.reportPending": "Report generation is downstream of reviewer-approved interpretation.",
+    "workspace.finalizeReport": "Finalize report",
+    "workspace.downloadPdf": "Download PDF",
+    "workspace.caseTimeline": "Case timeline",
+    "workspace.auditReconstructable": "Every important action is reconstructable.",
+    "workspace.noAuditEvents": "No audit events yet",
+    "workspace.exportHistory": "Export complete case history",
+    "workspace.export": "Export",
+    "workspace.status": "Status",
+    "workspace.downloadHistoryZip": "Download case history ZIP",
+    "workspace.ready": "Ready",
+    "workspace.notSelected": "Not selected",
+    "workspace.created": "Created",
+    "workspace.new": "New",
+    "workspace.loading": "Loading…",
+    "workspace.checkingBackend": "Checking backend…",
+    "workspace.backendConnected": "Backend connected",
+    "workspace.reconnecting": "Reconnecting",
+    "workspace.reviewRevision": "Review revision",
+    "workspace.noClassification": "No classification",
+    "workspace.noAutomatedRationale": "No automated rationale recorded.",
+    "workspace.reportArtifact": "Interpretation available in report artifact.",
+    "workspace.queued": "Queued",
+    "workspace.caseAndVcfFirst": "Create/select a case and choose a VCF first.",
+    "workspace.errorLoadCase": "Unable to load case.",
+    "workspace.errorCompleteReport": "Unable to load complete variant report.",
+    "workspace.errorExportState": "Unable to read export state.",
+    "workspace.errorVariantDetails": "Unable to load variant details.",
+    "workspace.caseCreated": "Case created.",
+    "workspace.caseLoaded": "Existing case loaded.",
+    "workspace.caseCreationFailed": "Case creation failed.",
+    "workspace.caseSpecimenRequired": "A case and specimen identifier are required.",
+    "workspace.specimenRegistered": "Specimen registered to the case.",
+    "workspace.specimenRegistrationFailed": "Specimen registration failed.",
+    "workspace.specimenRequired": "Register or select a specimen before uploading the VCF.",
+    "workspace.uploadFailed": "Upload failed.",
+    "workspace.downloadFailed": "Download failed.",
+    "workspace.caseVcfRequired": "Case and uploaded VCF are required.",
+    "workspace.analysisQueued": "Analysis queued. You can close the browser; execution is server-side.",
+    "workspace.analysisStartFailed": "Analysis start failed.",
+    "workspace.reviewStarted": "Review started.",
+    "workspace.reviewReasonRequired": "A review reason is required.",
+    "workspace.reasonRequired": "A reason is required.",
+    "workspace.moreEvidenceRequested": "More evidence requested; classification remains pending.",
+    "workspace.approvalReasonRequired": "An approval reason is required.",
+    "workspace.classificationApproved": "Classification approved.",
+    "workspace.finalReportApproved": "Final report approved by reviewer.",
+    "workspace.reportFinalized": "Report finalized.",
+    "workspace.reportFinalizationFailed": "Report finalization failed.",
+    "workspace.exportQueued": "Complete case-history export queued. It is independent of the browser session.",
+    "workspace.exportFailed": "Case export failed.",
+    "workspace.backendReconnectingPrefix": "Backend reconnecting: ",
+    "workspace.connectionUnavailable": "connection unavailable",
+    "workspace.inputRegisteredPrefix": "Input registered. SHA-256: ",
+    "workspace.downloadFailedPrefix": "Download failed: ",
+    "workspace.variantsCount": "variants",
+    "workspace.rowsCount": "rows",
+    "workspace.eventsCount": "events",
+    "workspace.unknown": "Unknown",
+    "workspace.noData": "No data",
+    "workspace.evidence": "Evidence",
+    "workspace.unknownSource": "Unknown source",
+    "workspace.unversioned": "unversioned",
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
@@ -512,6 +732,116 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workflow.humanReview": "المراجعة البشرية",
     "workflow.report": "التقرير",
     "workflow.caseHistory": "سجل الحالة",
+    "workspace.eyebrow": "منصة التفسير الجينومي",
+    "workspace.subtitle": "VCF ← الأدلة ← المراجعة ← التقرير",
+    "workspace.title": "تفسير متغيرات قابل للتفسير، مصمم لسير عمل المختبرات طويل التشغيل.",
+    "workspace.lead": "تُحفظ حالة التحليل على الخادم. إغلاق المتصفح لا يوقف المهمة قيد التنفيذ.",
+    "workspace.startCase": "بدء حالة",
+    "workspace.caseIdentifier": "معرّف الحالة",
+    "workspace.clinicalIndication": "الداعي السريري",
+    "workspace.registerSpecimen": "تسجيل العينة",
+    "workspace.vcfIntake": "إدخال VCF",
+    "workspace.selectSpecimen": "اختر عينة مسجلة…",
+    "workspace.inputPersisted": "يتم حفظ الإدخال قبل بدء التحليل.",
+    "workspace.registerInput": "تسجيل الإدخال",
+    "workspace.startAnalysis": "بدء التحليل",
+    "workspace.durableWorkflow": "سير عمل مستمر",
+    "workspace.checkpointPersisted": "تُحفظ حالة نقاط التحقق على الخادم.",
+    "workspace.prioritizedVariants": "المتغيرات ذات الأولوية",
+    "workspace.waitingAnalysis": "بانتظار اكتمال التحليل",
+    "workspace.variantsWillPopulate": "سيُملأ الجدول من حالة الخادم المستمرة بعد أن ينتج التعليق سجلات المتغيرات.",
+    "workspace.completeReport": "تقرير المتغيرات الكامل",
+    "workspace.allAnalyzedVariants": "جميع المتغيرات المحللة",
+    "workspace.completeReportLead": "طبقة فحص لفريق المختبر. وهي منفصلة عن التقرير السريري المختصر.",
+    "workspace.downloadCsv": "تنزيل CSV",
+    "workspace.downloadJson": "تنزيل JSON",
+    "workspace.noCompleteDataset": "لا توجد مجموعة بيانات كاملة للمتغيرات بعد",
+    "workspace.completeDatasetPending": "ستتوفر بعد أن ينتج التعليق سجلات متغيرات مستمرة.",
+    "workspace.first100Note": "يتم عرض أول 100 صف للفحص التفاعلي. نزّل CSV/JSON الكامل لمجموعة البيانات بأكملها.",
+    "workspace.variantEvidence": "أدلة المتغير",
+    "workspace.noVariantSelected": "لم يتم اختيار متغير",
+    "workspace.selectVariantAfterAnalysis": "اختر متغيرًا بعد اكتمال التحليل.",
+    "workspace.canonical": "قياسي",
+    "workspace.normalization": "التطبيع",
+    "workspace.noEvidence": "لا توجد سجلات أدلة بعد",
+    "workspace.humanDecisionWorkspace": "مساحة قرار المراجع",
+    "workspace.reviewPending": "تتوفر المراجعة بعد اكتمال التفسير",
+    "workspace.automatedOutputProposed": "يبقى الناتج الآلي مقترحًا حتى يتخذ المراجع إجراءً.",
+    "workspace.proposedCurrent": "المقترح / الحالي",
+    "workspace.startReview": "بدء المراجعة",
+    "workspace.accept": "قبول",
+    "workspace.reject": "رفض",
+    "workspace.criterionReviewReason": "سبب مراجعة المعيار",
+    "workspace.finalApprovalReason": "سبب الموافقة النهائية",
+    "workspace.approveClassification": "اعتماد التصنيف",
+    "workspace.requestMoreEvidence": "طلب مزيد من الأدلة",
+    "workspace.generateReport": "إنشاء التقرير",
+    "workspace.noReviewActions": "لا توجد إجراءات مراجعة بعد.",
+    "workspace.finalReport": "التقرير النهائي",
+    "workspace.noReportGenerated": "لم يتم إنشاء تقرير",
+    "workspace.reportPending": "إنشاء التقرير يأتي بعد التفسير المعتمد من المراجع.",
+    "workspace.finalizeReport": "اعتماد التقرير",
+    "workspace.downloadPdf": "تنزيل PDF",
+    "workspace.caseTimeline": "الخط الزمني للحالة",
+    "workspace.auditReconstructable": "يمكن إعادة بناء كل إجراء مهم.",
+    "workspace.noAuditEvents": "لا توجد أحداث تدقيق بعد",
+    "workspace.exportHistory": "تصدير سجل الحالة الكامل",
+    "workspace.export": "التصدير",
+    "workspace.status": "الحالة",
+    "workspace.downloadHistoryZip": "تنزيل ملف ZIP لسجل الحالة",
+    "workspace.ready": "جاهز",
+    "workspace.notSelected": "غير محدد",
+    "workspace.created": "تم الإنشاء",
+    "workspace.new": "جديد",
+    "workspace.loading": "جارٍ التحميل…",
+    "workspace.checkingBackend": "جارٍ فحص الخادم الخلفي…",
+    "workspace.backendConnected": "الخادم الخلفي متصل",
+    "workspace.reconnecting": "جارٍ إعادة الاتصال",
+    "workspace.reviewRevision": "مراجعة الإصدار",
+    "workspace.noClassification": "لا يوجد تصنيف",
+    "workspace.noAutomatedRationale": "لا يوجد تبرير آلي مسجل.",
+    "workspace.reportArtifact": "التفسير متاح في أثر التقرير.",
+    "workspace.queued": "في قائمة الانتظار",
+    "workspace.caseAndVcfFirst": "أنشئ/اختر حالة واختر VCF أولًا.",
+    "workspace.errorLoadCase": "تعذر تحميل الحالة.",
+    "workspace.errorCompleteReport": "تعذر تحميل تقرير المتغيرات الكامل.",
+    "workspace.errorExportState": "تعذر قراءة حالة التصدير.",
+    "workspace.errorVariantDetails": "تعذر تحميل تفاصيل المتغير.",
+    "workspace.caseCreated": "تم إنشاء الحالة.",
+    "workspace.caseLoaded": "تم تحميل الحالة الموجودة.",
+    "workspace.caseCreationFailed": "فشل إنشاء الحالة.",
+    "workspace.caseSpecimenRequired": "يلزم إدخال معرّف الحالة ومعرّف العينة.",
+    "workspace.specimenRegistered": "تم تسجيل العينة للحالة.",
+    "workspace.specimenRegistrationFailed": "فشل تسجيل العينة.",
+    "workspace.specimenRequired": "سجّل عينة أو اخترها قبل رفع VCF.",
+    "workspace.uploadFailed": "فشل الرفع.",
+    "workspace.downloadFailed": "فشل التنزيل.",
+    "workspace.caseVcfRequired": "يلزم وجود حالة وملف VCF مرفوع.",
+    "workspace.analysisQueued": "تم وضع التحليل في قائمة التنفيذ. يمكنك إغلاق المتصفح؛ التنفيذ يتم على الخادم.",
+    "workspace.analysisStartFailed": "فشل بدء التحليل.",
+    "workspace.reviewStarted": "بدأت المراجعة.",
+    "workspace.reviewReasonRequired": "يلزم إدخال سبب للمراجعة.",
+    "workspace.reasonRequired": "يلزم إدخال سبب.",
+    "workspace.moreEvidenceRequested": "تم طلب مزيد من الأدلة؛ يظل التصنيف معلقًا.",
+    "workspace.approvalReasonRequired": "يلزم إدخال سبب للموافقة.",
+    "workspace.classificationApproved": "تم اعتماد التصنيف.",
+    "workspace.finalReportApproved": "اعتمد المراجع التقرير النهائي.",
+    "workspace.reportFinalized": "تم اعتماد التقرير نهائيًا.",
+    "workspace.reportFinalizationFailed": "فشل اعتماد التقرير نهائيًا.",
+    "workspace.exportQueued": "تم وضع تصدير سجل الحالة الكامل في قائمة الانتظار. وهو مستقل عن جلسة المتصفح.",
+    "workspace.exportFailed": "فشل تصدير الحالة.",
+    "workspace.backendReconnectingPrefix": "جارٍ إعادة اتصال الخادم الخلفي: ",
+    "workspace.connectionUnavailable": "الاتصال غير متاح",
+    "workspace.inputRegisteredPrefix": "تم تسجيل الإدخال. SHA-256: ",
+    "workspace.downloadFailedPrefix": "فشل التنزيل: ",
+    "workspace.variantsCount": "متغيرات",
+    "workspace.rowsCount": "صفوف",
+    "workspace.eventsCount": "أحداث",
+    "workspace.unknown": "غير معروف",
+    "workspace.noData": "لا توجد بيانات",
+    "workspace.evidence": "دليل",
+    "workspace.unknownSource": "مصدر غير معروف",
+    "workspace.unversioned": "بدون إصدار",
     "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
   },
 };
