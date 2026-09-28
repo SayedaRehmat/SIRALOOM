@@ -1688,3 +1688,215 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         "finalize",
         "terminal_session_closed",
     ]
+
+def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
+    from uuid import UUID, uuid4
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from sqlalchemy.pool import StaticPool
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        AnalysisPartition,
+        Case,
+        Organization,
+        User,
+        WorkflowStep,
+    )
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__,
+            User.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            WorkflowStep.__table__,
+            AnalysisPartition.__table__,
+        ],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    step_id = uuid4()
+    partition_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(Organization(
+            id=organization_id,
+            name="Successful Retry Test Laboratory",
+            external_identifier=None,
+        ))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject=None,
+            email="successful-retry@test.local",
+            display_name="Successful Retry Test",
+            role="ANALYST",
+            status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id,
+            organization_id=organization_id,
+            case_identifier="SUCCESSFUL-RETRY-001",
+            status="ACTIVE",
+            clinical_context={},
+            language="en",
+            created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=case_id,
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="siraloom.variant",
+            workflow_version="1.0",
+            status=AnalysisStatus.RUNNING,
+            queue_task_id="successful-retry-test",
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=user_id,
+        ))
+        db.add(WorkflowStep(
+            id=step_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            step_order=3,
+            status=StepStatus.RUNNING,
+            attempt=1,
+            input_artifacts=["normalized-artifact"],
+            output_artifacts=[],
+            metadata_json={
+                "batches": {
+                    "0:1": {
+                        "start": 0,
+                        "end": 1,
+                        "status": "RUNNING",
+                        "attempt": 1,
+                    }
+                }
+            },
+        ))
+        db.add(AnalysisPartition(
+            id=partition_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            partition_key="0:1",
+            ordinal=0,
+            record_start=0,
+            record_end=1,
+            variant_count=1,
+            status="RUNNING",
+            input_artifact_id=None,
+            metadata_json={"variant_ids": [str(uuid4())]},
+            resource_class="LIGHT",
+            cpu_request=0.5,
+            memory_mb=512,
+            attempt=1,
+            lease_owner="workflow:successful-retry",
+            lease_expires_at=None,
+        ))
+        db.commit()
+
+    transient = variant_module.TransientWorkflowError(
+        "temporary provider outage",
+        countdown=5,
+    )
+    retry_requested = []
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == analysis_id
+        with Session(engine) as db:
+            step = db.get(WorkflowStep, step_id)
+            partition = db.get(AnalysisPartition, partition_id)
+            if step.metadata_json["batches"]["0:1"]["status"] == "RUNNING":
+                step.status = StepStatus.RETRYING
+                step.error_code = "ANNOTATION_PROVIDER_TRANSIENT"
+                step.error_message = str(transient)
+                step.metadata_json["batches"]["0:1"]["status"] = "RETRYING"
+                partition.status = "READY"
+                partition.lease_owner = None
+                partition.lease_expires_at = None
+                db.commit()
+                raise transient
+
+            assert step.status == StepStatus.RETRYING
+            assert step.metadata_json["batches"]["0:1"]["status"] == "RETRYING"
+            assert partition.status == "READY"
+
+            partition.status = "SUCCEEDED"
+            partition.attempt = 2
+            step.status = StepStatus.SUCCEEDED
+            step.output_artifacts = ["annotation-artifact"]
+            step.metadata_json["batches"]["0:1"]["status"] = "SUCCEEDED"
+            analysis = db.get(Analysis, analysis_id)
+            analysis.status = AnalysisStatus.SUCCEEDED
+            db.commit()
+
+    class RetryRequested(BaseException):
+        pass
+
+    def fake_retry(*, exc, countdown):
+        retry_requested.append((exc, countdown))
+        raise RetryRequested()
+
+    monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
+    monkeypatch.setattr(celery_module.run_analysis_task, "retry", fake_retry)
+
+    task = celery_module.run_analysis_task
+
+    task.push_request(retries=0, delivery_info={})
+    try:
+        try:
+            task.run(str(analysis_id))
+        except RetryRequested:
+            pass
+        else:
+            raise AssertionError("Expected the first transient attempt to schedule a retry")
+    finally:
+        task.pop_request()
+
+    assert retry_requested == [(transient, 5)]
+
+    with Session(engine) as db:
+        assert db.get(WorkflowStep, step_id).status == StepStatus.RETRYING
+        assert db.get(AnalysisPartition, partition_id).status == "READY"
+
+    task.push_request(retries=1, delivery_info={})
+    try:
+        result = task.run(str(analysis_id))
+    finally:
+        task.pop_request()
+
+    assert result == {
+        "analysis_id": str(analysis_id),
+        "status": AnalysisStatus.SUCCEEDED,
+    }
+
+    with Session(engine) as db:
+        step = db.get(WorkflowStep, step_id)
+        partition = db.get(AnalysisPartition, partition_id)
+        analysis = db.get(Analysis, analysis_id)
+        assert step.status == StepStatus.SUCCEEDED
+        assert step.output_artifacts == ["annotation-artifact"]
+        assert step.metadata_json["batches"]["0:1"]["status"] == "SUCCEEDED"
+        assert partition.status == "SUCCEEDED"
+        assert partition.attempt == 2
+        assert partition.lease_owner is None
+        assert analysis.status == AnalysisStatus.SUCCEEDED
