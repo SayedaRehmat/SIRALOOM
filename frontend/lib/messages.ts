@@ -312,11 +312,377 @@ export type TranslationKey =
   | "workspace.auditSection"
   | "workspace.auditLead"
   | "workspace.footer"
+  | "cases.eyebrow"
+  | "cases.title"
+  | "cases.lead"
+  | "cases.back"
+  | "cases.registry"
+  | "cases.existing"
+  | "cases.registryHelp"
+  | "cases.none"
+  | "cases.createHelp"
+  | "cases.actionFailed"
+  | "cases.info"
+  | "cases.identifier"
+  | "cases.indication"
+  | "cases.create"
+  | "cases.specimen"
+  | "cases.specimenIdentifier"
+  | "cases.specimenType"
+  | "cases.registered"
+  | "cases.typeUnspecified"
+  | "cases.upload"
+  | "cases.reference"
+  | "cases.index"
+  | "cases.ready"
+  | "cases.caseState"
+  | "cases.readyAnalysis"
+  | "cases.validationDiagnostics"
+  | "cases.blood"
+  | "cases.saliva"
+  | "cases.buccal"
+  | "cases.tissue"
+  | "cases.other"
+  | "cases.case"
+  | "cases.specimenLabel"
+  | "cases.build"
+  | "cases.primaryValidation"
+  | "cases.indexLabel"
+  | "reports.eyebrow"
+  | "reports.title"
+  | "reports.lead"
+  | "reports.analysisId"
+  | "reports.type"
+  | "reports.clinical"
+  | "reports.analytical"
+  | "reports.evaluate"
+  | "reports.generate"
+  | "reports.section"
+  | "reports.none"
+  | "reports.help"
+  | "reports.human"
+  | "reports.noSelected"
+  | "reports.selectHelp"
+  | "reports.variant"
+  | "reports.disposition"
+  | "reports.priority"
+  | "reports.reviewVersion"
+  | "reports.policy"
+  | "reports.finalDisposition"
+  | "reports.rationale"
+  | "reports.finalize"
+  | "reports.versions"
+  | "reports.lineage"
+  | "reports.noReports"
+  | "reports.reportHelp"
+  | "reports.pdf"
+  | "reports.signout"
+  | "audit.eyebrow"
+  | "audit.title"
+  | "audit.lead"
+  | "audit.open"
+  | "audit.history"
+  | "audit.refresh"
+  | "audit.none"
+  | "audit.help"
+  | "audit.openCases"
+  | "audit.timeline"
+  | "audit.eventsNone"
+  | "audit.selectHelp"
+  | "review.eyebrow"
+  | "review.title"
+  | "review.lead"
+  | "review.open"
+  | "review.analysisId"
+  | "review.status"
+  | "review.classification"
+  | "review.reportability"
+  | "review.refresh"
+  | "review.queue"
+  | "review.none"
+  | "review.refreshHelp"
+  | "review.select"
+  | "review.dossier"
+  | "review.clinicalClassification"
+  | "review.priority"
+  | "review.build"
+  | "review.noIndication"
+  | "review.hpo"
+  | "review.hpoNone"
+  | "review.present"
+  | "review.phenotype"
+  | "review.geneDiseaseNone"
+  | "review.inheritance"
+  | "review.family"
+  | "review.familyHelp"
+  | "review.familyNone"
+  | "review.parentChild"
+  | "review.relationshipNone"
+  | "review.addRelationship"
+  | "review.segregation"
+  | "review.segregationNone"
+  | "review.familyMember"
+  | "review.zygosity"
+  | "review.phase"
+  | "review.phenotypeStatus"
+  | "review.recordObservation"
+  | "review.inheritanceAssessment"
+  | "review.inheritanceHelp"
+  | "review.assessModels"
+  | "review.noModel"
+  | "review.context"
+  | "review.variant"
+  | "review.gene"
+  | "review.population"
+  | "review.populationNone"
+  | "review.qc"
+  | "review.qcNone"
+  | "review.assay"
+  | "review.assayProfile"
+  | "review.assayHelp"
+  | "review.profile"
+  | "review.version"
+  | "review.qcGate"
+  | "review.qcObsNone"
+  | "review.evidence"
+  | "review.evidenceNone"
+  | "review.acmg"
+  | "review.linkEvidence"
+  | "review.accept"
+  | "review.modify"
+  | "review.reject"
+  | "review.criteriaNone"
+  | "review.relevance"
+  | "review.reportabilityNone"
+  | "review.confirmation"
+  | "review.confirmationHelp"
+  | "review.confirmationRequired"
+  | "review.saveConfirmation"
+  | "review.followup"
+  | "review.followupNone"
+  | "review.addFollowup"
+  | "review.secondary"
+  | "review.secondaryHelp"
+  | "review.current"
+  | "review.saveDecision"
+  | "review.signout"
+  | "review.signoutHelp"
+  | "review.start"
+  | "review.approve"
+  | "review.more"
+  | "review.actionsNone"
+  | "cases.identifierPlaceholder"
+  | "cases.indicationPlaceholder"
+  | "cases.specimenPlaceholder"
+  | "cases.refreshing"
+  | "cases.creating"
+  | "cases.registering"
+  | "review.analysisPlaceholder"
+  | "review.hpoLabelPlaceholder"
+  | "review.memberPlaceholder"
+  | "review.genotypePlaceholder"
+  | "review.inheritancePlaceholder"
+  | "review.rationalePlaceholder"
+  | "review.methodPlaceholder"
+  | "review.resultPlaceholder"
+  | "review.laboratoryPlaceholder"
+  | "review.accessionPlaceholder"
+  | "review.confirmationNotesPlaceholder"
+  | "review.followActionPlaceholder"
+  | "review.followNotesPlaceholder"
+  | "review.policyNamePlaceholder"
+  | "review.policyVersionPlaceholder"
+  | "review.policyRationalePlaceholder"
+  | "review.signoutPlaceholder"
+  | "reports.rationalePlaceholder"
   | "reports.validationDisclaimer";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
   en: {
+    "cases.eyebrow": "SIRALOOM VARIANT · CASE INTAKE",
+    "cases.title": "New genomic case",
+    "cases.lead": "Create a traceable case, register its specimen, and validate the variant dataset before scientific analysis begins.",
+    "cases.back": "Back to dashboard",
+    "cases.registry": "CASE REGISTRY",
+    "cases.existing": "Existing cases",
+    "cases.registryHelp": "Select a previously created case to continue its persisted workflow.",
+    "cases.none": "No cases found",
+    "cases.createHelp": "Create a case below. Cases are stored server-side in your organization.",
+    "cases.actionFailed": "Action could not be completed",
+    "cases.info": "Case information",
+    "cases.identifier": "Case identifier",
+    "cases.indication": "Clinical indication",
+    "cases.create": "Create case",
+    "cases.specimen": "Register specimen",
+    "cases.specimenIdentifier": "Specimen identifier",
+    "cases.specimenType": "Specimen type",
+    "cases.registered": "Registered specimens",
+    "cases.typeUnspecified": "Type not specified",
+    "cases.upload": "Upload variant dataset",
+    "cases.reference": "Reference genome",
+    "cases.index": "Add a tabix/CSI index",
+    "cases.ready": "Review ingestion",
+    "cases.caseState": "Case state",
+    "cases.readyAnalysis": "Ready for analysis",
+    "cases.validationDiagnostics": "Validation diagnostics",
+    "cases.blood": "Blood",
+    "cases.saliva": "Saliva",
+    "cases.buccal": "Buccal",
+    "cases.tissue": "Tissue",
+    "cases.other": "Other",
+    "cases.case": "Case",
+    "cases.specimenLabel": "Specimen",
+    "cases.build": "Build",
+    "cases.primaryValidation": "Primary validation",
+    "cases.indexLabel": "Index",
+    "reports.eyebrow": "GOVERNED REPORTING",
+    "reports.title": "Reports & sign-out",
+    "reports.lead": "Separate reportability from pathogenicity classification, preserve every decision version, and release only an authorized immutable report artifact.",
+    "reports.analysisId": "Analysis ID",
+    "reports.type": "Report type",
+    "reports.clinical": "Clinical interpretation",
+    "reports.analytical": "Complete analytical",
+    "reports.evaluate": "Evaluate reportability",
+    "reports.generate": "Generate draft",
+    "reports.section": "REPORTABILITY",
+    "reports.none": "No reportability decisions",
+    "reports.help": "Evaluate the analysis to create versioned policy proposals.",
+    "reports.human": "HUMAN REPORTABILITY REVIEW",
+    "reports.noSelected": "No decision selected",
+    "reports.selectHelp": "Choose a reportability record to review its policy rationale and finalize its disposition.",
+    "reports.variant": "Variant",
+    "reports.disposition": "Disposition",
+    "reports.priority": "Priority",
+    "reports.reviewVersion": "Review version",
+    "reports.policy": "POLICY RATIONALE",
+    "reports.finalDisposition": "Final disposition",
+    "reports.rationale": "Reviewer rationale",
+    "reports.finalize": "Finalize reportability",
+    "reports.versions": "REPORT VERSIONS",
+    "reports.lineage": "Immutable report lineage",
+    "reports.noReports": "No reports generated",
+    "reports.reportHelp": "Generate a clinical or analytical draft after the analysis is available.",
+    "reports.pdf": "PDF",
+    "reports.signout": "Approve / sign out",
+    "audit.eyebrow": "GOVERNANCE · AUDIT",
+    "audit.title": "Audit & provenance",
+    "audit.lead": "Tenant-scoped case history with persisted workflow, evidence, reviewer, report, and provenance events.",
+    "audit.open": "Open workspace",
+    "audit.history": "CASE HISTORY",
+    "audit.refresh": "Refresh",
+    "audit.none": "No cases",
+    "audit.help": "Create or load a case from the Cases page.",
+    "audit.openCases": "Open cases",
+    "audit.timeline": "TIMELINE",
+    "audit.eventsNone": "No audit events",
+    "audit.selectHelp": "Select a case with persisted activity.",
+    "review.eyebrow": "SIRALOOM VARIANT · CLINICAL REVIEW",
+    "review.title": "Clinical interpretation workspace",
+    "review.lead": "Case-first review: clinical indication, phenotype, inheritance, variant evidence, population context, disease validity, literature, ACMG/ClinGen assessment, reportability and sign-out readiness.",
+    "review.open": "Open variant workspace",
+    "review.analysisId": "Analysis ID",
+    "review.status": "Review status",
+    "review.classification": "Classification",
+    "review.reportability": "Reportability",
+    "review.refresh": "Refresh clinical queue",
+    "review.queue": "CLINICAL QUEUE",
+    "review.none": "No review candidates",
+    "review.refreshHelp": "Run a completed interpretation and refresh.",
+    "review.select": "Select a variant",
+    "review.dossier": "The clinical review dossier will appear here.",
+    "review.clinicalClassification": "Clinical classification",
+    "review.priority": "Priority",
+    "review.build": "Build",
+    "review.noIndication": "No clinical indication recorded.",
+    "review.hpo": "Observed HPO phenotype",
+    "review.hpoNone": "No HPO observations recorded for this case.",
+    "review.present": "Present",
+    "review.phenotype": "Phenotype match & gene–disease relationship",
+    "review.geneDiseaseNone": "No gene–disease context evidence attached.",
+    "review.inheritance": "INHERITANCE, PEDIGREE & SEGREGATION",
+    "review.family": "Family structure",
+    "review.familyHelp": "Record relatives explicitly rather than burying pedigree data in free-text case context.",
+    "review.familyNone": "No pedigree members recorded.",
+    "review.parentChild": "Parent–child relationships",
+    "review.relationshipNone": "No parent–child relationships recorded.",
+    "review.addRelationship": "Add relationship",
+    "review.segregation": "Variant segregation observations",
+    "review.segregationNone": "No variant-specific family observations recorded.",
+    "review.familyMember": "Family member",
+    "review.zygosity": "Zygosity",
+    "review.phase": "Phase",
+    "review.phenotypeStatus": "Phenotype status",
+    "review.recordObservation": "Record observation",
+    "review.inheritanceAssessment": "Inheritance model assessment",
+    "review.inheritanceHelp": "Consistency aid only. It does not assign pathogenicity or an ACMG/ClinGen criterion strength.",
+    "review.assessModels": "Assess selected models",
+    "review.noModel": "No model assessment has been recorded.",
+    "review.context": "VARIANT, POPULATION & TECHNICAL CONTEXT",
+    "review.variant": "Variant",
+    "review.gene": "Gene",
+    "review.population": "Population observations",
+    "review.populationNone": "No population observations.",
+    "review.qc": "Technical QC",
+    "review.qcNone": "No variant-level QC fields were exposed by the annotation provider.",
+    "review.assay": "ASSAY & TECHNICAL QUALITY GATE",
+    "review.assayProfile": "Assay profile",
+    "review.assayHelp": "QC thresholds are laboratory/assay-specific. SIRALOOM records the profile and provenance; it does not invent universal clinical cut-offs.",
+    "review.profile": "Profile",
+    "review.version": "Version",
+    "review.qcGate": "QC gate",
+    "review.qcObsNone": "No technical QC observations recorded for this analysis.",
+    "review.evidence": "CLINVAR / CLINGEN / LITERATURE / FUNCTIONAL",
+    "review.evidenceNone": "No literature or functional/computational context evidence is attached to this variant.",
+    "review.acmg": "ACMG / CLINGEN HUMAN ASSESSMENT",
+    "review.linkEvidence": "Link supporting/contradictory evidence",
+    "review.accept": "Accept",
+    "review.modify": "Modify",
+    "review.reject": "Reject",
+    "review.criteriaNone": "No ACMG criteria persisted.",
+    "review.relevance": "CLINICAL RELEVANCE, CONFIRMATION & FOLLOW-UP",
+    "review.reportabilityNone": "No reportability decision has been generated.",
+    "review.confirmation": "Orthogonal confirmation",
+    "review.confirmationHelp": "Confirmation is an explicit laboratory policy decision. SIRALOOM blocks final release only when a record explicitly marks confirmation as required.",
+    "review.confirmationRequired": "Confirmation required",
+    "review.saveConfirmation": "Save confirmation",
+    "review.followup": "Follow-up plan",
+    "review.followupNone": "No variant-specific follow-up actions recorded.",
+    "review.addFollowup": "Add follow-up",
+    "review.secondary": "Secondary finding governance",
+    "review.secondaryHelp": "Secondary findings are a separate policy-controlled workflow. SIRALOOM does not silently apply a gene list or treat secondary findings as primary diagnostic reportability.",
+    "review.current": "Current",
+    "review.saveDecision": "Save decision",
+    "review.signout": "SIGN-OUT GATE & AUDIT TRAIL",
+    "review.signoutHelp": "Approval remains a human governance action. Report finalization is separately gated by final classifications and final reportability decisions.",
+    "review.start": "Start review",
+    "review.approve": "Approve classification",
+    "review.more": "Request more evidence",
+    "review.actionsNone": "No reviewer actions yet.",
+    "cases.identifierPlaceholder": "e.g. SRL-2026-0001",
+    "cases.indicationPlaceholder": "Clinical question or indication relevant to this analysis",
+    "cases.specimenPlaceholder": "e.g. SP-0001",
+    "cases.refreshing": "Refreshing…",
+    "cases.creating": "Creating…",
+    "cases.registering": "Registering…",
+    "review.analysisPlaceholder": "Analysis UUID",
+    "review.hpoLabelPlaceholder": "Optional phenotype label",
+    "review.memberPlaceholder": "Member ID e.g. FATHER",
+    "review.genotypePlaceholder": "Genotype e.g. 0/1, 1/1, 0/0",
+    "review.inheritancePlaceholder": "Optional reviewer note on inheritance interpretation",
+    "review.rationalePlaceholder": "Reviewer rationale",
+    "review.methodPlaceholder": "Method e.g. Sanger",
+    "review.resultPlaceholder": "Result e.g. CONFIRMED",
+    "review.laboratoryPlaceholder": "Laboratory",
+    "review.accessionPlaceholder": "Accession / case ID",
+    "review.confirmationNotesPlaceholder": "Confirmation notes",
+    "review.followActionPlaceholder": "Action e.g. genetic counselling",
+    "review.followNotesPlaceholder": "Follow-up notes / outcome",
+    "review.policyNamePlaceholder": "Policy name",
+    "review.policyVersionPlaceholder": "Policy version",
+    "review.policyRationalePlaceholder": "Policy-specific rationale",
+    "review.signoutPlaceholder": "Document the classification approval or request-for-evidence rationale.",
+    "reports.rationalePlaceholder": "Document the laboratory basis for the final reportability decision.",
     "app.workspace": "WORKSPACE",
     "app.governance": "GOVERNANCE",
     "nav.dashboard": "Dashboard",
@@ -623,6 +989,189 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
+    "cases.eyebrow": "SIRALOOM VARIANT · إدخال الحالة",
+    "cases.title": "حالة جينومية جديدة",
+    "cases.lead": "أنشئ حالة قابلة للتتبع، وسجّل عينتها، وتحقق من صحة مجموعة المتغيرات قبل بدء التحليل العلمي.",
+    "cases.back": "العودة إلى لوحة المعلومات",
+    "cases.registry": "سجل الحالات",
+    "cases.existing": "الحالات الحالية",
+    "cases.registryHelp": "اختر حالة منشأة مسبقًا لمتابعة سير عملها المحفوظ.",
+    "cases.none": "لم يتم العثور على حالات",
+    "cases.createHelp": "أنشئ حالة أدناه. تُحفظ الحالات على الخادم ضمن مؤسستك.",
+    "cases.actionFailed": "تعذر إكمال الإجراء",
+    "cases.info": "معلومات الحالة",
+    "cases.identifier": "معرّف الحالة",
+    "cases.indication": "الداعي السريري",
+    "cases.create": "إنشاء الحالة",
+    "cases.specimen": "تسجيل العينة",
+    "cases.specimenIdentifier": "معرّف العينة",
+    "cases.specimenType": "نوع العينة",
+    "cases.registered": "العينات المسجلة",
+    "cases.typeUnspecified": "النوع غير محدد",
+    "cases.upload": "رفع مجموعة بيانات المتغيرات",
+    "cases.reference": "الجينوم المرجعي",
+    "cases.index": "إضافة فهرس tabix/CSI",
+    "cases.ready": "مراجعة الإدخال",
+    "cases.caseState": "حالة الحالة",
+    "cases.readyAnalysis": "جاهز للتحليل",
+    "cases.validationDiagnostics": "تشخيصات التحقق",
+    "cases.blood": "دم",
+    "cases.saliva": "لعاب",
+    "cases.buccal": "مسحة شدقية",
+    "cases.tissue": "نسيج",
+    "cases.other": "أخرى",
+    "cases.case": "الحالة",
+    "cases.specimenLabel": "العينة",
+    "cases.build": "البناء",
+    "cases.primaryValidation": "التحقق الأساسي",
+    "cases.indexLabel": "الفهرس",
+    "reports.eyebrow": "إصدار التقارير المحكوم",
+    "reports.title": "التقارير والاعتماد النهائي",
+    "reports.lead": "افصل قابلية الإبلاغ عن تصنيف الإمراضية، واحفظ كل إصدار من القرارات، ولا تُصدر إلا أثر تقرير ثابتًا ومصرحًا به.",
+    "reports.analysisId": "معرّف التحليل",
+    "reports.type": "نوع التقرير",
+    "reports.clinical": "التفسير السريري",
+    "reports.analytical": "تحليل كامل",
+    "reports.evaluate": "تقييم قابلية الإبلاغ",
+    "reports.generate": "إنشاء مسودة",
+    "reports.section": "قابلية الإبلاغ",
+    "reports.none": "لا توجد قرارات لقابلية الإبلاغ",
+    "reports.help": "قيّم التحليل لإنشاء مقترحات سياسة ذات إصدارات.",
+    "reports.human": "المراجعة البشرية لقابلية الإبلاغ",
+    "reports.noSelected": "لم يتم تحديد قرار",
+    "reports.selectHelp": "اختر سجل قابلية الإبلاغ لمراجعة مبرره واعتماد تصرفه النهائي.",
+    "reports.variant": "المتغير",
+    "reports.disposition": "التصرف النهائي",
+    "reports.priority": "الأولوية",
+    "reports.reviewVersion": "إصدار المراجعة",
+    "reports.policy": "مبررات السياسة",
+    "reports.finalDisposition": "التصرف النهائي",
+    "reports.rationale": "مبررات المراجع",
+    "reports.finalize": "اعتماد قابلية الإبلاغ نهائيًا",
+    "reports.versions": "إصدارات التقرير",
+    "reports.lineage": "سلسلة نسب التقرير غير القابلة للتغيير",
+    "reports.noReports": "لم يتم إنشاء تقارير",
+    "reports.reportHelp": "أنشئ مسودة سريرية أو تحليلية بعد توفر التحليل.",
+    "reports.pdf": "PDF",
+    "reports.signout": "اعتماد / اعتماد نهائي",
+    "audit.eyebrow": "الحوكمة · التدقيق",
+    "audit.title": "التدقيق وسلسلة المصدر",
+    "audit.lead": "سجل تاريخ الحالات ضمن المؤسسة مع سير العمل المحفوظ، والأدلة، والمراجع، والتقارير، وأحداث سلسلة المصدر.",
+    "audit.open": "فتح مساحة العمل",
+    "audit.history": "سجل الحالات",
+    "audit.refresh": "تحديث",
+    "audit.none": "لا توجد حالات",
+    "audit.help": "أنشئ حالة أو حمّلها من صفحة الحالات.",
+    "audit.openCases": "فتح الحالات",
+    "audit.timeline": "الخط الزمني",
+    "audit.eventsNone": "لا توجد أحداث تدقيق",
+    "audit.selectHelp": "اختر حالة تحتوي على نشاط محفوظ.",
+    "review.eyebrow": "SIRALOOM VARIANT · المراجعة السريرية",
+    "review.title": "مساحة التفسير السريري",
+    "review.lead": "مراجعة تبدأ بالحالة: الداعي السريري، والنمط الظاهري، والوراثة، وأدلة المتغير، والسياق السكاني، وصحة علاقة المرض، والأدبيات، وتقييم ACMG/ClinGen، وقابلية الإبلاغ، والاستعداد للاعتماد النهائي.",
+    "review.open": "فتح مساحة المتغيرات",
+    "review.analysisId": "معرّف التحليل",
+    "review.status": "حالة المراجعة",
+    "review.classification": "التصنيف",
+    "review.reportability": "قابلية الإبلاغ",
+    "review.refresh": "تحديث قائمة المراجعة السريرية",
+    "review.queue": "قائمة المراجعة السريرية",
+    "review.none": "لا توجد متغيرات مرشحة للمراجعة",
+    "review.refreshHelp": "شغّل تفسيرًا مكتملًا ثم حدّث القائمة.",
+    "review.select": "اختر متغيرًا",
+    "review.dossier": "سيظهر ملف المراجعة السريرية هنا.",
+    "review.clinicalClassification": "التصنيف السريري",
+    "review.priority": "الأولوية",
+    "review.build": "البناء",
+    "review.noIndication": "لم يتم تسجيل داعٍ سريري.",
+    "review.hpo": "النمط الظاهري المرصود وفق HPO",
+    "review.hpoNone": "لم تُسجل ملاحظات HPO لهذه الحالة.",
+    "review.present": "موجود",
+    "review.phenotype": "تطابق النمط الظاهري وعلاقة الجين بالمرض",
+    "review.geneDiseaseNone": "لا توجد أدلة سياقية مرفقة لعلاقة الجين بالمرض.",
+    "review.inheritance": "الوراثة، شجرة النسب، والتشارك",
+    "review.family": "بنية الأسرة",
+    "review.familyHelp": "سجّل الأقارب صراحةً بدل دفن بيانات شجرة النسب داخل نص الحالة الحر.",
+    "review.familyNone": "لم يتم تسجيل أفراد في شجرة النسب.",
+    "review.parentChild": "علاقات الوالد–الطفل",
+    "review.relationshipNone": "لم تُسجل علاقات والد–طفل.",
+    "review.addRelationship": "إضافة علاقة",
+    "review.segregation": "ملاحظات تشارك المتغير",
+    "review.segregationNone": "لم تُسجل ملاحظات أسرية خاصة بالمتغير.",
+    "review.familyMember": "فرد الأسرة",
+    "review.zygosity": "الزيجوتية",
+    "review.phase": "الطور",
+    "review.phenotypeStatus": "حالة النمط الظاهري",
+    "review.recordObservation": "تسجيل الملاحظة",
+    "review.inheritanceAssessment": "تقييم نموذج الوراثة",
+    "review.inheritanceHelp": "أداة مساعدة للاتساق فقط. لا تعيّن الإمراضية ولا تحدد قوة معيار ACMG/ClinGen.",
+    "review.assessModels": "تقييم النماذج المحددة",
+    "review.noModel": "لم يتم تسجيل تقييم للنموذج.",
+    "review.context": "سياق المتغير والسكان والجوانب التقنية",
+    "review.variant": "المتغير",
+    "review.gene": "الجين",
+    "review.population": "ملاحظات السكان",
+    "review.populationNone": "لا توجد ملاحظات سكانية.",
+    "review.qc": "ضبط الجودة التقني",
+    "review.qcNone": "لم يوفر مزود التعليق الجينومي حقول ضبط جودة على مستوى المتغير.",
+    "review.assay": "بوابة الفحص والجودة التقنية",
+    "review.assayProfile": "ملف الفحص",
+    "review.assayHelp": "عتبات ضبط الجودة خاصة بالمختبر والفحص. يسجل SIRALOOM الملف وسلسلة المصدر ولا يخترع حدودًا سريرية عامة.",
+    "review.profile": "الملف",
+    "review.version": "الإصدار",
+    "review.qcGate": "بوابة ضبط الجودة",
+    "review.qcObsNone": "لم تُسجل ملاحظات ضبط جودة تقنية لهذا التحليل.",
+    "review.evidence": "ClinVar / ClinGen / الأدبيات / الوظائف",
+    "review.evidenceNone": "لا توجد أدلة سياقية أدبية أو وظيفية/حسابية مرفقة بهذا المتغير.",
+    "review.acmg": "التقييم البشري لـ ACMG / ClinGen",
+    "review.linkEvidence": "ربط الأدلة الداعمة/المتعارضة",
+    "review.accept": "قبول",
+    "review.modify": "تعديل",
+    "review.reject": "رفض",
+    "review.criteriaNone": "لم يتم حفظ معايير ACMG.",
+    "review.relevance": "الصلة السريرية، التأكيد، والمتابعة",
+    "review.reportabilityNone": "لم يتم إنشاء قرار لقابلية الإبلاغ.",
+    "review.confirmation": "التأكيد بوسيلة مستقلة",
+    "review.confirmationHelp": "التأكيد قرار صريح وفق سياسة المختبر. يمنع SIRALOOM الإصدار النهائي فقط عندما يحدد سجل صراحةً أن التأكيد مطلوب.",
+    "review.confirmationRequired": "التأكيد مطلوب",
+    "review.saveConfirmation": "حفظ التأكيد",
+    "review.followup": "خطة المتابعة",
+    "review.followupNone": "لم تُسجل إجراءات متابعة خاصة بالمتغير.",
+    "review.addFollowup": "إضافة متابعة",
+    "review.secondary": "حوكمة النتائج الثانوية",
+    "review.secondaryHelp": "النتائج الثانوية سير عمل منفصل تحكمه السياسة. لا يطبق SIRALOOM قائمة جينات ضمنيًا ولا يعامل النتائج الثانوية كقابلية إبلاغ تشخيصية أساسية.",
+    "review.current": "الحالي",
+    "review.saveDecision": "حفظ القرار",
+    "review.signout": "بوابة الاعتماد النهائي وسجل التدقيق",
+    "review.signoutHelp": "يبقى الاعتماد إجراء حوكمة بشريًا. ويخضع اعتماد التقرير النهائي بشكل منفصل للتصنيفات النهائية وقرارات قابلية الإبلاغ النهائية.",
+    "review.start": "بدء المراجعة",
+    "review.approve": "اعتماد التصنيف",
+    "review.more": "طلب مزيد من الأدلة",
+    "review.actionsNone": "لا توجد إجراءات للمراجع بعد.",
+    "cases.identifierPlaceholder": "مثال: SRL-2026-0001",
+    "cases.indicationPlaceholder": "السؤال السريري أو الداعي ذي الصلة بهذا التحليل",
+    "cases.specimenPlaceholder": "مثال: SP-0001",
+    "cases.refreshing": "جارٍ التحديث…",
+    "cases.creating": "جارٍ الإنشاء…",
+    "cases.registering": "جارٍ التسجيل…",
+    "review.analysisPlaceholder": "معرّف UUID للتحليل",
+    "review.hpoLabelPlaceholder": "تسمية النمط الظاهري اختيارية",
+    "review.memberPlaceholder": "معرّف الفرد، مثال: FATHER",
+    "review.genotypePlaceholder": "النمط الجيني، مثال: 0/1 أو 1/1 أو 0/0",
+    "review.inheritancePlaceholder": "ملاحظة اختيارية للمراجع حول تفسير الوراثة",
+    "review.rationalePlaceholder": "مبررات المراجع",
+    "review.methodPlaceholder": "الطريقة، مثال: Sanger",
+    "review.resultPlaceholder": "النتيجة، مثال: CONFIRMED",
+    "review.laboratoryPlaceholder": "المختبر",
+    "review.accessionPlaceholder": "رقم الإيداع / معرّف الحالة",
+    "review.confirmationNotesPlaceholder": "ملاحظات التأكيد",
+    "review.followActionPlaceholder": "الإجراء، مثال: الاستشارة الوراثية",
+    "review.followNotesPlaceholder": "ملاحظات المتابعة / النتيجة",
+    "review.policyNamePlaceholder": "اسم السياسة",
+    "review.policyVersionPlaceholder": "إصدار السياسة",
+    "review.policyRationalePlaceholder": "مبررات خاصة بالسياسة",
+    "review.signoutPlaceholder": "وثّق مبررات اعتماد التصنيف أو طلب مزيد من الأدلة.",
+    "reports.rationalePlaceholder": "وثّق الأساس المختبري لقرار قابلية الإبلاغ النهائي.",
     "app.workspace": "مساحة العمل",
     "app.governance": "الحوكمة",
     "nav.dashboard": "لوحة المعلومات",
