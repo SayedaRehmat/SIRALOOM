@@ -30,7 +30,7 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
         ("1\t0\t.\tA\tG\t.\tPASS\t.\n", "VCF_POS_INVALID"),
         ("1\t2\t.\tX\tG\t.\tPASS\t.\n", "VCF_REF_INVALID"),
         ("1\t2\t.\tA\tG\t-1\tPASS\t.\n", "VCF_QUAL_INVALID"),
-        ("1\t2\t.\tA\tG\t.\tPASS\tBAD;\n", "VCF_FILTER_INVALID"),
+        ("1\t2\t.\tA\tG\t.\tBAD;\t.\n", "VCF_FILTER_INVALID"),
     ],
 )
 def test_strict_validation_rejects_malformed_records(tmp_path: Path, body: str, code: str):
