@@ -12,11 +12,14 @@ DNA_ALLELES = set("ACGTN")
 
 
 class NormalizationError(ValueError):
-    pass
+    def __init__(self, message: str, *, code: str = "NORMALIZATION_FAILED"):
+        super().__init__(message)
+        self.code = code
 
 
 class UnsupportedVariantError(NormalizationError):
-    pass
+    def __init__(self, message: str, *, code: str = "UNSUPPORTED_VARIANT"):
+        super().__init__(message, code=code)
 
 
 @dataclass(frozen=True)
