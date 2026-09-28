@@ -26,7 +26,7 @@ if Celery is not None:
             TransientWorkflowError,
         )
         from backend.app.infrastructure.db.session import SessionLocal
-        if self.request.delivery_info.get("redelivered"):
+        if (self.request.delivery_info or {}).get("redelivered"):
             recovery_db = SessionLocal()
             try:
                 recover_interrupted_execution(recovery_db, UUID(analysis_id))
