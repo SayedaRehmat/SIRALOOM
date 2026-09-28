@@ -58,12 +58,12 @@ def test_golden_snv_is_reference_checked_and_preserved(tmp_path: Path):
 
 def test_golden_repeat_deletion_is_left_normalized(tmp_path: Path):
     normalized, *_ = normalize(tmp_path, "1\t4\t.\tAA\tA\t.\tPASS\t.\n")
-    assert normalized == [("1", 2, "AA", "A")]
+    assert normalized == [("1", 1, "CA", "C")]
 
 
 def test_golden_repeat_insertion_is_left_normalized(tmp_path: Path):
     normalized, *_ = normalize(tmp_path, "1\t4\t.\tA\tAA\t.\tPASS\t.\n")
-    assert normalized == [("1", 2, "A", "AA")]
+    assert normalized == [("1", 1, "C", "CA")]
 
 
 def test_golden_multiallelic_is_split_without_losing_alleles(tmp_path: Path):
