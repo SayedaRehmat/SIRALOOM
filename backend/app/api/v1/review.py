@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from backend.app.infrastructure.db.models import ACMGAssessment, Annotation, Classification, Evidence, PopulationObservation, User, Variant, ReportabilityDecision
 from backend.app.domain.review import ClassificationReviewRequest, CriterionReviewRequest, ReviewResponse
 from backend.app.infrastructure.db.session import get_db
+from backend.app.infrastructure.queue.celery_app import run_analysis_task
 from backend.app.review.service import (
     ReviewAuthorizationError,
     ReviewConflictError,
@@ -235,6 +236,15 @@ def approve(
             reason=payload.reason,
         )
         db.commit()
+        # A review mutation may complete the final human gate. Re-enqueueing is
+        # safe because every downstream workflow step is idempotent and durable.
+        resume_queued = False
+        if classification.review_status == "APPROVED" and classification.state == "FINAL":
+            try:
+                run_analysis_task.delay(str(analysis_id))
+                resume_queued = True
+            except RuntimeError:
+                resume_queued = False
         return {
             "classification_id": str(classification.id),
             "version": classification.version,
@@ -243,6 +253,7 @@ def approve(
             "review_status": classification.review_status,
             "review_version": classification.review_version,
             "supersedes_classification_id": str(classification.supersedes_classification_id) if classification.supersedes_classification_id else None,
+            "workflow_resume_queued": resume_queued,
         }
     except ReviewConflictError as exc:
         db.rollback()
