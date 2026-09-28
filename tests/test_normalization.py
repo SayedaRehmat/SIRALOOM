@@ -83,3 +83,12 @@ def test_canonical_key_and_stable_id():
     key_b = canonical_key("GRCh38", "1", 1, "CA", "C")
     assert key_a == key_b == "GRCh38:1:1:CA:C"
     assert stable_variant_uuid(key_a) == stable_variant_uuid(key_b)
+
+
+def test_unsupported_variant_errors_have_stable_codes():
+    error = UnsupportedVariantError(
+        "GVCF input is not supported by Phase 1.",
+        code="UNSUPPORTED_GVCF_INPUT",
+    )
+    assert error.code == "UNSUPPORTED_GVCF_INPUT"
+    assert str(error) == "GVCF input is not supported by Phase 1."
