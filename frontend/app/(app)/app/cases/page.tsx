@@ -661,8 +661,7 @@ export default function Cases() {
 
               <div>
                 <strong>
-                  {variantFile?.name ??
-                    "{t("cases.chooseVcf")}"}
+                  {variantFile?.name ?? t("cases.chooseVcf")}
                 </strong>
 
                 <p>
@@ -702,7 +701,7 @@ export default function Cases() {
 
               <div>
                 <strong>
-                  {indexFile?.name ?? "{t("cases.chooseIndex")}"}
+                  {indexFile?.name ?? t("cases.chooseIndex")}
                 </strong>
 
                 <p>
@@ -840,7 +839,7 @@ export default function Cases() {
               {t("cases.back")}
             </button>
 
-            {step < 2 && can{t("cases.continue")} && (
+            {step < 2 && canContinue && (
               <button
                 className="primary"
                 onClick={() => setStep(step + 1)}
