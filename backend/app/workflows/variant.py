@@ -1033,26 +1033,267 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # Computational interpretation is complete; the case now requires human review.
-        # Review/report/provenance are durable downstream states, not workflow failures.
+        # 7. Human-review gate. The workflow remains durable and resumable while
+        # individual variants are reviewed. It advances only when every latest
+        # classification is FINAL+APPROVED and every corresponding reportability
+        # decision is FINAL.
         review_step = _step(db, analysis.id, "review")
-        if review_step.status == StepStatus.PENDING:
-            mark_step(
-                db, review_step, StepStatus.REQUIRES_REVIEW,
-                metadata={"reason": "Automated assessment completed; qualified human review required."},
+        if not _review_gate_ready(db, analysis.id):
+            if review_step.status != StepStatus.REQUIRES_REVIEW:
+                mark_step(
+                    db,
+                    review_step,
+                    StepStatus.REQUIRES_REVIEW,
+                    metadata={"reason": "Awaiting required human classification and reportability review."},
+                )
+            analysis.status = AnalysisStatus.REQUIRES_REVIEW
+            analysis.completed_at = None
+            db.commit()
+            audit.record(
+                event_type="WORKFLOW_REQUIRES_REVIEW",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="workflow",
+                payload={"next_step": "review", "state": "AWAITING_HUMAN_REVIEW"},
             )
-        analysis.status = AnalysisStatus.REQUIRES_REVIEW
-        analysis.completed_at = None
-        db.commit()
-        audit.record(
-            event_type="WORKFLOW_REQUIRES_REVIEW",
-            case_id=analysis.case_id,
-            analysis_id=analysis.id,
-            actor_type="SYSTEM",
-            actor_id="workflow",
-            payload={"status": "REQUIRES_REVIEW"},
-        )
-        db.commit()
+            db.commit()
+            return
+
+        if review_step.status != StepStatus.SUCCEEDED:
+            mark_step(
+                db,
+                review_step,
+                StepStatus.SUCCEEDED,
+                metadata={"review_gate": "PASSED", "next_step": "report"},
+            )
+            audit.record(
+                event_type="REVIEW_GATE_COMPLETED",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="workflow",
+                payload={"next_step": "report"},
+            )
+            db.commit()
+
+        # 8. Generate an immutable report draft once all required review gates
+        # have passed. Final clinical release remains a separate human approval.
+        report_step = _step(db, analysis.id, "report")
+        if report_step.status != StepStatus.SUCCEEDED:
+            mark_step(db, report_step, StepStatus.RUNNING)
+            try:
+                from backend.app.reporting.service import build_report_content, render_pdf
+                from backend.app.infrastructure.db.models import Report
+
+                existing_report = db.scalar(
+                    select(Report)
+                    .where(
+                        Report.analysis_id == analysis.id,
+                        Report.status == "DRAFT",
+                    )
+                    .order_by(Report.report_version.desc())
+                    .limit(1)
+                )
+                if existing_report is None:
+                    content = build_report_content(
+                        db,
+                        analysis,
+                        str(analysis.configuration.get("report_language") or "en"),
+                        report_type=str(
+                            analysis.configuration.get(
+                                "report_type", "CLINICAL_INTERPRETATION"
+                            )
+                        ),
+                        include_full_evidence=bool(
+                            analysis.configuration.get("report_include_full_evidence", False)
+                        ),
+                    )
+                    last_version = db.scalar(
+                        select(func.max(Report.report_version)).where(
+                            Report.case_id == analysis.case_id,
+                            Report.report_type == content["report_type"],
+                        )
+                    ) or 0
+                    version = int(last_version) + 1
+                    content["report_version"] = version
+                    pdf = render_pdf(content)
+                    with NamedTemporaryFile(
+                        prefix="siraloom-report-", suffix=".pdf", delete=False
+                    ) as report_tmp:
+                        report_tmp.write(pdf)
+                        report_tmp_path = Path(report_tmp.name)
+                    try:
+                        artifact = artifacts.put_file(
+                            db=db,
+                            case_id=analysis.case_id,
+                            analysis_id=analysis.id,
+                            source_path=report_tmp_path,
+                            filename=f"report_v{version}.pdf",
+                            artifact_type="REPORT_PDF",
+                            media_type="application/pdf",
+                            genome_build=analysis.reference_build,
+                            metadata={
+                                "rendered_format": "PDF",
+                                "report_schema_version": content["report_schema_version"],
+                                "report_status": "DRAFT",
+                            },
+                        )
+                    finally:
+                        report_tmp_path.unlink(missing_ok=True)
+
+                    report = Report(
+                        id=__import__("uuid").uuid4(),
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        report_version=version,
+                        language=content["language"],
+                        report_type=content["report_type"],
+                        status="DRAFT",
+                        artifact_id=artifact.id,
+                        content_json=content,
+                    )
+                    db.add(report)
+                    db.flush()
+                    audit.record(
+                        event_type="REPORT_GENERATED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="reporting",
+                        subject_type="REPORT",
+                        subject_id=str(report.id),
+                        operation="CREATE",
+                        output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
+                        payload={"draft": True, "next_step": "export_provenance"},
+                    )
+                report_step.output_artifacts = (
+                    [str(existing_report.artifact_id)]
+                    if existing_report is not None and existing_report.artifact_id
+                    else [str(report.artifact_id)]
+                )
+                mark_step(
+                    db,
+                    report_step,
+                    StepStatus.SUCCEEDED,
+                    metadata={"report_status": "DRAFT", "next_step": "export_provenance"},
+                )
+                db.commit()
+            except Exception as exc:
+                mark_step(
+                    db,
+                    report_step,
+                    StepStatus.FAILED,
+                    error_code="REPORT_GENERATION_FAILED",
+                    error_message=str(exc),
+                )
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(
+                    event_type="REPORT_GENERATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="reporting",
+                    reason=str(exc),
+                )
+                db.commit()
+                return
+
+        # 9. Persist a standalone provenance manifest for the completed
+        # computational/review workflow. This is separate from the optional
+        # case-export ZIP and is therefore always part of the analysis lineage.
+        provenance_step = _step(db, analysis.id, "export_provenance")
+        if provenance_step.status != StepStatus.SUCCEEDED:
+            mark_step(db, provenance_step, StepStatus.RUNNING)
+            try:
+                import json
+
+                with NamedTemporaryFile(
+                    prefix="siraloom-provenance-", suffix=".json", mode="w", encoding="utf-8", delete=False
+                ) as provenance_tmp:
+                    provenance_tmp.write(json.dumps({
+                        "schema_version": "1.0.0",
+                        "analysis_id": str(analysis.id),
+                        "case_id": str(analysis.case_id),
+                        "workflow_id": analysis.workflow_id,
+                        "workflow_version": analysis.workflow_version,
+                        "reference_build": analysis.reference_build,
+                        "steps": [
+                            {
+                                "step_id": s.step_id,
+                                "step_order": s.step_order,
+                                "status": s.status,
+                                "attempt": s.attempt,
+                                "input_artifacts": s.input_artifacts,
+                                "output_artifacts": s.output_artifacts,
+                                "metadata": s.metadata_json,
+                                "error_code": s.error_code,
+                                "error_message": s.error_message,
+                            }
+                            for s in db.scalars(
+                                select(WorkflowStep)
+                                .where(WorkflowStep.analysis_id == analysis.id)
+                                .order_by(WorkflowStep.step_order)
+                            )
+                        ],
+                    }, indent=2, ensure_ascii=False))
+                    provenance_tmp_path = Path(provenance_tmp.name)
+                try:
+                    provenance_artifact = artifacts.put_file(
+                        db=db,
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        source_path=provenance_tmp_path,
+                        filename="provenance.json",
+                        artifact_type="JSON",
+                        media_type="application/json",
+                        genome_build=analysis.reference_build,
+                        metadata={"provenance_schema_version": "1.0.0"},
+                    )
+                finally:
+                    provenance_tmp_path.unlink(missing_ok=True)
+                provenance_step.output_artifacts = [str(provenance_artifact.id)]
+                mark_step(
+                    db,
+                    provenance_step,
+                    StepStatus.SUCCEEDED,
+                    metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
+                )
+                analysis.status = AnalysisStatus.REQUIRES_REVIEW
+                analysis.completed_at = None
+                audit.record(
+                    event_type="PROVENANCE_EXPORT_COMPLETED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="provenance",
+                    output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
+                    payload={"next_step": "report_finalization"},
+                )
+                db.commit()
+            except Exception as exc:
+                mark_step(
+                    db,
+                    provenance_step,
+                    StepStatus.FAILED,
+                    error_code="PROVENANCE_EXPORT_FAILED",
+                    error_message=str(exc),
+                )
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(
+                    event_type="PROVENANCE_EXPORT_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="provenance",
+                    reason=str(exc),
+                )
+                db.commit()
+                return
+
+        return
     except TransientWorkflowError:
         db.rollback()
         raise
@@ -1066,6 +1307,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         raise
     finally:
         db.close()
+
+
+def _review_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    """Return True only when every classified variant has passed both human gates."""
+    classifications = list(
+        db.scalars(
+            select(Classification)
+            .where(Classification.analysis_id == analysis_id)
+            .order_by(Classification.variant_id, Classification.version.desc())
+        )
+    )
+    latest: dict[UUID, Classification] = {}
+    for row in classifications:
+        latest.setdefault(row.variant_id, row)
+
+    if not latest:
+        return False
+
+    for variant_id, classification in latest.items():
+        if classification.state != "FINAL" or classification.review_status != "APPROVED":
+            return False
+        decision = db.scalar(
+            select(__import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision)
+            .where(
+                __import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision.analysis_id == analysis_id,
+                __import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision.variant_id == variant_id,
+            )
+            .order_by(__import__("backend.app.infrastructure.db.models", fromlist=["ReportabilityDecision"]).ReportabilityDecision.version.desc())
+        )
+        if decision is None or decision.status != "FINAL":
+            return False
+
+    return True
 
 
 def _iter_variant_batches(path: Path, genome_build: str, batch_size: int):
