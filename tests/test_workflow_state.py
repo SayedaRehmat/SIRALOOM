@@ -633,7 +633,6 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    monkeypatch.setattr(db_session, "SessionLocal", lambda: Session(engine))
     Base.metadata.create_all(
         engine,
         tables=[
@@ -1699,6 +1698,7 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
     from sqlalchemy.pool import StaticPool
 
     from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db import session as db_session
     from backend.app.infrastructure.db.base import Base
     from backend.app.infrastructure.db.models import (
         Analysis,
@@ -1716,6 +1716,7 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    monkeypatch.setattr(db_session, "SessionLocal", lambda: Session(engine))
     Base.metadata.create_all(
         engine,
         tables=[
