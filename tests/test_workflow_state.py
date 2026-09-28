@@ -525,8 +525,11 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
 
     task = celery_module.run_analysis_task
-    with task.push_request(delivery_info={"redelivered": True}):
+    task.push_request(delivery_info={"redelivered": True})
+    try:
         result = task.run(analysis_id)
+    finally:
+        task.pop_request()
 
     assert result == {"analysis_id": analysis_id, "status": "RUNNING"}
     assert events.index("recovery") < events.index("resume_analysis")
