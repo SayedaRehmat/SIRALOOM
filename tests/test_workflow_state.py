@@ -1829,7 +1829,13 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
                 step.status = StepStatus.RETRYING
                 step.error_code = "ANNOTATION_PROVIDER_TRANSIENT"
                 step.error_message = str(transient)
-                step.metadata_json["batches"]["0:1"]["status"] = "RETRYING"
+                metadata = dict(step.metadata_json or {})
+                batches = dict(metadata.get("batches") or {})
+                batch = dict(batches.get("0:1") or {})
+                batch["status"] = "RETRYING"
+                batches["0:1"] = batch
+                metadata["batches"] = batches
+                step.metadata_json = metadata
                 partition.status = "READY"
                 partition.lease_owner = None
                 partition.lease_expires_at = None
