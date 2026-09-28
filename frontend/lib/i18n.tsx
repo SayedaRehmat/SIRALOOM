@@ -34,7 +34,7 @@ export function getMessage(language: AppLanguage, key: TranslationKey): string {
   const english = messages.en[key] ?? key;
   if (language === "en") return english;
   if (language === "ar") return messages.ar[key] ?? english;
-  return messages.bilingual[key] ?? `${english} · ${messages.ar[key] ?? english}`;
+  return `${english} · ${messages.ar[key] ?? english}`;
 }
 
 type LanguageContextValue = {
