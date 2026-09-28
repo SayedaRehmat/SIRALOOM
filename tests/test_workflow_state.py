@@ -842,6 +842,188 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
         assert db.get(Analysis, analysis_id).status == AnalysisStatus.RUNNING
 
 
+def test_celery_recovery_requeues_partition_for_scheduler_resume():
+    from uuid import uuid4
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        AnalysisPartition,
+        AuditEvent,
+        Case,
+        Organization,
+        User,
+        WorkflowStep,
+    )
+    from backend.app.partition_scheduler import PartitionScheduler
+    from backend.app.workflows.variant import recover_interrupted_execution
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__,
+            User.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            WorkflowStep.__table__,
+            AnalysisPartition.__table__,
+            AuditEvent.__table__,
+        ],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    step_id = uuid4()
+    partition_id = uuid4()
+    completed_partition_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(Organization(
+            id=organization_id,
+            name="Recovery Scheduler Test Laboratory",
+            external_identifier=None,
+        ))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject=None,
+            email="recovery-scheduler@test.local",
+            display_name="Recovery Scheduler Test",
+            role="ANALYST",
+            status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id,
+            organization_id=organization_id,
+            case_identifier="RECOVERY-SCHEDULER-001",
+            status="ACTIVE",
+            clinical_context={},
+            language="en",
+            created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=case_id,
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="siraloom.variant",
+            workflow_version="1.0",
+            status=AnalysisStatus.RUNNING,
+            queue_task_id="scheduler-recovery-test",
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=user_id,
+        ))
+        db.add(WorkflowStep(
+            id=step_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            step_order=3,
+            status=StepStatus.RUNNING,
+            attempt=2,
+            input_artifacts=["normalized-artifact"],
+            output_artifacts=[],
+            metadata_json={
+                "next_step": "annotate",
+                "batches": {
+                    "0:10": {
+                        "start": 0,
+                        "end": 10,
+                        "status": "RUNNING",
+                        "attempt": 2,
+                    }
+                },
+            },
+        ))
+        db.add(AnalysisPartition(
+            id=completed_partition_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            partition_key="10:20",
+            ordinal=1,
+            record_start=10,
+            record_end=20,
+            variant_count=10,
+            status="SUCCEEDED",
+            input_artifact_id=None,
+            metadata_json={"variant_ids": ["already-complete"]},
+            resource_class="LIGHT",
+            cpu_request=0.5,
+            memory_mb=512,
+            attempt=4,
+            lease_owner=None,
+            lease_expires_at=None,
+        ))
+        db.add(AnalysisPartition(
+            id=partition_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            partition_key="0:10",
+            ordinal=0,
+            record_start=0,
+            record_end=10,
+            variant_count=10,
+            status="RUNNING",
+            input_artifact_id=None,
+            metadata_json={"variant_ids": ["resumable"]},
+            resource_class="LIGHT",
+            cpu_request=0.5,
+            memory_mb=512,
+            attempt=2,
+            lease_owner="workflow:lost-worker",
+            lease_expires_at=None,
+        ))
+        db.commit()
+
+        assert recover_interrupted_execution(db, analysis_id) is True
+
+        step = db.get(WorkflowStep, step_id)
+        partition = db.get(AnalysisPartition, partition_id)
+        completed = db.get(AnalysisPartition, completed_partition_id)
+        assert step.status == StepStatus.RETRYING
+        assert step.metadata_json["batches"]["0:10"]["status"] == "RUNNING"
+        assert partition.status == "READY"
+        assert partition.lease_owner is None
+
+        scheduler = PartitionScheduler(
+            db,
+            cpu_capacity=0.5,
+            memory_mb=512,
+            lease_seconds=300,
+        )
+        reclaimed = scheduler.claim_next(
+            analysis_id,
+            "annotate",
+            f"workflow:{analysis_id}",
+        )
+
+        assert reclaimed is not None
+        assert reclaimed.id == partition_id
+        assert reclaimed.status == "RUNNING"
+        assert reclaimed.attempt == 3
+        assert reclaimed.lease_owner == f"workflow:{analysis_id}"
+
+        # Recovery must not make already completed scientific work eligible
+        # for execution again.
+        assert completed.status == "SUCCEEDED"
+        assert completed.attempt == 4
+        assert completed.metadata_json["variant_ids"] == ["already-complete"]
+
+        assert db.query(AuditEvent).filter(
+            AuditEvent.analysis_id == analysis_id,
+            AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+        ).count() == 1
+
 def test_partition_scheduler_reports_capacity_exhaustion_without_claiming_work():
     from uuid import uuid4
 
