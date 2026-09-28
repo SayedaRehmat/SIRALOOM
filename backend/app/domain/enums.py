@@ -34,6 +34,7 @@ class AnalysisStatus(StrEnum):
     CANCEL_REQUESTED = "CANCEL_REQUESTED"
     CANCELLED = "CANCELLED"
     BLOCKED = "BLOCKED"
+    RESOURCE_FAILURE = "RESOURCE_FAILURE"
 
 class StepStatus(StrEnum):
     PENDING = "PENDING"
@@ -44,6 +45,7 @@ class StepStatus(StrEnum):
     CANCELLED = "CANCELLED"
     BLOCKED = "BLOCKED"
     REQUIRES_REVIEW = "REQUIRES_REVIEW"
+    RESOURCE_FAILURE = "RESOURCE_FAILURE"
 
 class ArtifactType(StrEnum):
     VCF = "VCF"
