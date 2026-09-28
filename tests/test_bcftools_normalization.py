@@ -25,6 +25,7 @@ def make_reference(tmp_path: Path) -> Path:
 def write_vcf(path: Path, records: str) -> None:
     path.write_text(
         "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         + records,
         encoding="utf-8",
