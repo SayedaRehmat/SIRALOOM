@@ -471,3 +471,121 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     assert result == "CELERY_RETRY_REQUESTED"
     assert calls["exc"] is transient
     assert calls["countdown"] == 25
+
+def test_partition_scheduler_reports_capacity_exhaustion_without_claiming_work():
+    from uuid import uuid4
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import Analysis, AnalysisPartition, Case, Organization, User
+    from backend.app.partition_scheduler import PartitionScheduler
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(
+        engine,
+        tables=[Organization.__table__, User.__table__, Case.__table__, Analysis.__table__, AnalysisPartition.__table__],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Capacity Test Laboratory", external_identifier=None))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject=None,
+            email="capacity@test.local",
+            display_name="Capacity Test",
+            role="ANALYST",
+            status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id,
+            organization_id=organization_id,
+            case_identifier="CAPACITY-001",
+            status="ACTIVE",
+            clinical_context={},
+            language="en",
+            created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=case_id,
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="siraloom.variant",
+            workflow_version="1.0",
+            status=AnalysisStatus.RUNNING,
+            queue_task_id="capacity-test",
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=user_id,
+        ))
+        db.add(AnalysisPartition(
+            id=uuid4(),
+            analysis_id=analysis_id,
+            step_id="annotate",
+            partition_key="0:1",
+            ordinal=0,
+            record_start=0,
+            record_end=1,
+            variant_count=1,
+            status="READY",
+            input_artifact_id=None,
+            metadata_json={},
+            resource_class="STANDARD",
+            cpu_request=1.0,
+            memory_mb=1024,
+            attempt=0,
+        ))
+        db.add(AnalysisPartition(
+            id=uuid4(),
+            analysis_id=analysis_id,
+            step_id="annotate",
+            partition_key="1:2",
+            ordinal=1,
+            record_start=1,
+            record_end=2,
+            variant_count=1,
+            status="READY",
+            input_artifact_id=None,
+            metadata_json={},
+            resource_class="STANDARD",
+            cpu_request=1.0,
+            memory_mb=1024,
+            attempt=0,
+        ))
+        db.commit()
+
+        scheduler = PartitionScheduler(
+            db,
+            cpu_capacity=1.0,
+            memory_mb=1024,
+            lease_seconds=300,
+        )
+        worker_id = f"workflow:{analysis_id}"
+
+        first = scheduler.claim_next(analysis_id, "annotate", worker_id)
+        assert first is not None
+        assert first.status == "RUNNING"
+
+        second = scheduler.claim_next(analysis_id, "annotate", "workflow:other-worker")
+        assert second is None
+
+        remaining = db.query(AnalysisPartition).filter(
+            AnalysisPartition.analysis_id == analysis_id,
+            AnalysisPartition.partition_key == "1:2",
+        ).one()
+        assert remaining.status == "READY"
+        assert remaining.lease_owner is None
+        assert remaining.attempt == 0
+        assert scheduler.capacity()["cpu_used"] == 1.0
+        assert scheduler.capacity()["memory_mb_used"] == 1024
