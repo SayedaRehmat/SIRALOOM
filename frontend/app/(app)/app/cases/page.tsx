@@ -127,7 +127,7 @@ export default function Cases() {
 
   const validPrimary = primaryArtifact?.validation_status === "VALID";
 
-  const canContinue = useMemo(() => {
+  const can{t("cases.continue")} = useMemo(() => {
     if (step === 0) return Boolean(caseId);
     if (step === 1) return Boolean(specimenId);
     if (step === 2) return Boolean(primaryArtifact);
@@ -423,7 +423,7 @@ export default function Cases() {
         </div>
 
         <Link className="link-button" href="/app/dashboard">
-          Back to dashboard
+          {t("cases.back")} to dashboard
         </Link>
       </div>
 
@@ -662,7 +662,7 @@ export default function Cases() {
               <div>
                 <strong>
                   {variantFile?.name ??
-                    "Choose a VCF / VCF.GZ / VCF.BGZ file"}
+                    "{t("cases.chooseVcf")}"}
                 </strong>
 
                 <p>
@@ -702,7 +702,7 @@ export default function Cases() {
 
               <div>
                 <strong>
-                  {indexFile?.name ?? "Choose .tbi or .csi"}
+                  {indexFile?.name ?? "{t("cases.chooseIndex")}"}
                 </strong>
 
                 <p>
@@ -811,7 +811,7 @@ export default function Cases() {
                     }
                   }}
                 >
-                  Open Variant workspace
+                  {t("cases.openWorkspace")}
                 </Link>
               </div>
             ) : (
@@ -840,15 +840,15 @@ export default function Cases() {
                 setStep(Math.max(0, step - 1))
               }
             >
-              Back
+              {t("cases.back")}
             </button>
 
-            {step < 2 && canContinue && (
+            {step < 2 && can{t("cases.continue")} && (
               <button
                 className="primary"
                 onClick={() => setStep(step + 1)}
               >
-                Continue
+                {t("cases.continue")}
               </button>
             )}
 
@@ -858,7 +858,7 @@ export default function Cases() {
                   className="primary"
                   onClick={() => setStep(3)}
                 >
-                  Continue to index
+                  {t("cases.continue")} to index
                 </button>
               )}
 
@@ -867,7 +867,7 @@ export default function Cases() {
                 className="primary"
                 onClick={() => setStep(4)}
               >
-                Skip index & review
+                {t("cases.skipIndex")}
               </button>
             )}
           </div>
@@ -877,7 +877,7 @@ export default function Cases() {
   );
 }
 
-function ArtifactCard({ artifact }: { artifact: Artifact }) {
+function ArtifactCard({ artifact }: { artifact: Artifact }) {\n  const { t } = useLanguage();
   const valid = artifact.validation_status === "VALID";
   const validation = artifact.metadata?.validation;
 
