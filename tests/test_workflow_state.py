@@ -854,3 +854,157 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
         "recovery",
         "recovery_session_closed",
     ]
+
+
+def test_celery_retry_exhaustion_persists_terminal_failure():
+    from uuid import uuid4
+
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import Session
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        AnalysisPartition,
+        AuditEvent,
+        Case,
+        Organization,
+        User,
+        WorkflowStep,
+    )
+    from backend.app.infrastructure.queue import celery_app as celery_module
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__,
+            User.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            WorkflowStep.__table__,
+            AnalysisPartition.__table__,
+            AuditEvent.__table__,
+        ],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(
+            Organization(
+                id=organization_id,
+                name="Retry Exhaustion Test Laboratory",
+                external_identifier=None,
+            )
+        )
+        db.add(
+            User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject="retry-exhaustion-user",
+                email="retry-exhaustion@example.test",
+                display_name="Retry Exhaustion User",
+                role="ANALYST",
+                status="ACTIVE",
+            )
+        )
+        db.add(
+            Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier="retry-exhaustion-case",
+                status="ACTIVE",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            )
+        )
+        db.add(
+            Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT",
+                workflow_id="variant-analysis",
+                workflow_version="v1",
+                status=AnalysisStatus.RUNNING,
+                queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+            )
+        )
+        db.add(
+            WorkflowStep(
+                id=uuid4(),
+                analysis_id=analysis_id,
+                step_id="annotate",
+                step_order=3,
+                status=StepStatus.RETRYING,
+                attempt=3,
+                metadata_json={"next_step": "annotate"},
+            )
+        )
+        db.add(
+            AnalysisPartition(
+                id=uuid4(),
+                analysis_id=analysis_id,
+                step_id="annotate",
+                partition_key="0:1",
+                ordinal=0,
+                record_start=0,
+                record_end=1,
+                variant_count=1,
+                status="READY",
+                input_artifact_id=None,
+                metadata_json={},
+                resource_class="STANDARD",
+                cpu_request=1.0,
+                memory_mb=1024,
+                attempt=3,
+                lease_owner=None,
+                lease_expires_at=None,
+                error_code=None,
+                error_message=None,
+                started_at=None,
+                completed_at=None,
+            )
+        )
+        db.commit()
+
+        assert celery_module._finalize_transient_retry_exhaustion(
+            db,
+            analysis_id,
+            "provider remained unavailable after bounded retries",
+        ) is True
+
+        analysis = db.get(Analysis, analysis_id)
+        step = db.scalar(
+            select(WorkflowStep).where(WorkflowStep.analysis_id == analysis_id)
+        )
+        partition = db.scalar(
+            select(AnalysisPartition).where(AnalysisPartition.analysis_id == analysis_id)
+        )
+        audit = db.scalars(
+            select(AuditEvent).where(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "ANNOTATION_RETRY_EXHAUSTED",
+            )
+        ).all()
+
+        assert analysis.status == AnalysisStatus.FAILED
+        assert analysis.completed_at is not None
+        assert step.status == StepStatus.FAILED
+        assert step.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+        assert step.metadata_json["retry_exhausted"] is True
+        assert partition.status == "FAILED"
+        assert partition.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+        assert audit
