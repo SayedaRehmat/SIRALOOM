@@ -17,7 +17,7 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.queue.celery_app import run_case_export_task
+from backend.app.infrastructure.queue.celery_app import run_analysis_task, run_case_export_task
 
 router = APIRouter(tags=["reports"])
 
@@ -80,7 +80,14 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
     try:
         out = finalize_reportability(db, decision_id=decision_id, reviewer_id=principal.user_id, expected_version=payload.expected_version, disposition=payload.disposition, reason=payload.reason)
         db.commit()
-        return {"decision_id": str(out.id), "analysis_id": str(analysis.id), "variant_id": str(out.variant_id), "version": out.version, "review_version": out.review_version, "status": out.status, "disposition": out.disposition, "priority_score": out.priority_score, "priority_band": out.priority_band, "reviewed_by": str(out.reviewed_by), "approved_at": out.approved_at.isoformat() if out.approved_at else None}
+        resume_queued = False
+        if out.status == "FINAL":
+            try:
+                run_analysis_task.delay(str(analysis.id))
+                resume_queued = True
+            except RuntimeError:
+                resume_queued = False
+        return {"decision_id": str(out.id), "analysis_id": str(analysis.id), "variant_id": str(out.variant_id), "version": out.version, "review_version": out.review_version, "status": out.status, "disposition": out.disposition, "priority_score": out.priority_score, "priority_band": out.priority_band, "reviewed_by": str(out.reviewed_by), "approved_at": out.approved_at.isoformat() if out.approved_at else None, "workflow_resume_queued": resume_queued}
     except ValueError as exc:
         db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc
 
