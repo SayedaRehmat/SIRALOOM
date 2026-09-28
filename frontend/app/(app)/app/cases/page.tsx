@@ -414,8 +414,8 @@ export default function Cases() {
     <div className="case-wizard-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">SIRALOOM VARIANT · CASE INTAKE</p>
-          <h1>New genomic case</h1>
+          <p className="eyebrow">{t("cases.eyebrow")}</p>
+          <h1>{t("cases.title")}</h1>
           <p className="lead">
             Create a traceable case, register its specimen, and validate the
             variant dataset before scientific analysis begins.
@@ -430,18 +430,18 @@ export default function Cases() {
       <section className="panel existing-cases-panel">
         <div className="panel-head">
           <div>
-            <p className="eyebrow">CASE REGISTRY</p>
-            <h2>Existing cases</h2>
-            <p className="muted">Select a previously created case to continue its persisted workflow.</p>
+            <p className="eyebrow">{t("cases.registry")}</p>
+            <h2>{t("cases.existing")}</h2>
+            <p className="muted">{t("cases.registryHelp")}</p>
           </div>
           <button className="secondary" onClick={loadCases} disabled={loadingCases}>
-            {loadingCases ? "Refreshing…" : "Refresh cases"}
+            {loadingCases ? t("cases.refreshing") : t("cases.refresh")}
           </button>
         </div>
         {!cases.length ? (
           <div className="empty">
-            <strong>No cases found</strong>
-            <p>Create a case below. Cases are stored server-side in your organization.</p>
+            <strong>{t("cases.none")}</strong>
+            <p>{t("cases.createHelp")}</p>
           </div>
         ) : (
           <div className="case-registry-list">
@@ -490,7 +490,7 @@ export default function Cases() {
 
       {error && (
         <div className="notice error-notice">
-          <strong>Action could not be completed</strong>
+          <strong>{t("cases.actionFailed")}</strong>
           <span>{error}</span>
         </div>
       )}
@@ -500,7 +500,7 @@ export default function Cases() {
           <form onSubmit={createCase}>
             <p className="eyebrow">STEP 01</p>
 
-            <h2>Case information</h2>
+            <h2>{t("cases.info")}</h2>
 
             <p className="muted">
               The case is created inside your authenticated organization.
@@ -513,7 +513,7 @@ export default function Cases() {
                 <input
                   value={caseIdentifier}
                   onChange={(e) => setCaseIdentifier(e.target.value)}
-                  placeholder="e.g. SRL-2026-0001"
+                  placeholder={t("cases.identifierPlaceholder")}
                   required
                 />
               </label>
@@ -524,14 +524,14 @@ export default function Cases() {
                   value={indication}
                   onChange={(e) => setIndication(e.target.value)}
                   rows={4}
-                  placeholder="Clinical question or indication relevant to this analysis"
+                  placeholder={t("cases.indicationPlaceholder")}
                 />
               </label>
             </div>
 
             <div className="actions-row">
               <button className="primary" disabled={busy}>
-                {busy ? "Creating…" : "Create case"}
+                {busy ? t("cases.creating") : t("cases.create")}
               </button>
             </div>
           </form>
@@ -541,7 +541,7 @@ export default function Cases() {
           <div>
             <p className="eyebrow">STEP 02</p>
 
-            <h2>Register specimen</h2>
+            <h2>{t("cases.specimen")}</h2>
 
             <p className="muted">
               A variant file must be associated with a specimen before it can
@@ -556,7 +556,7 @@ export default function Cases() {
                   onChange={(e) =>
                     setSpecimenIdentifier(e.target.value)
                   }
-                  placeholder="e.g. SP-0001"
+                  placeholder={t("cases.specimenPlaceholder")}
                 />
               </label>
 
@@ -566,11 +566,11 @@ export default function Cases() {
                   value={specimenType}
                   onChange={(e) => setSpecimenType(e.target.value)}
                 >
-                  <option>Blood</option>
-                  <option>Saliva</option>
-                  <option>Buccal</option>
-                  <option>Tissue</option>
-                  <option>Other</option>
+                  <option>{t("cases.blood")}</option>
+                  <option>{t("cases.saliva")}</option>
+                  <option>{t("cases.buccal")}</option>
+                  <option>{t("cases.tissue")}</option>
+                  <option>{t("cases.other")}</option>
                 </select>
               </label>
             </div>
@@ -581,13 +581,13 @@ export default function Cases() {
                 onClick={createSpecimen}
                 disabled={busy}
               >
-                {busy ? "Registering…" : "Register specimen"}
+                {busy ? t("cases.registering") : t("cases.specimen")}
               </button>
             </div>
 
             {caseData?.specimens?.length ? (
               <div className="mini-list">
-                <strong>Registered specimens</strong>
+                <strong>{t("cases.registered")}</strong>
 
                 {caseData.specimens.map((s) => (
                   <button
@@ -617,7 +617,7 @@ export default function Cases() {
           <div>
             <p className="eyebrow">STEP 03</p>
 
-            <h2>Upload variant dataset</h2>
+            <h2>{t("cases.upload")}</h2>
 
             <p className="muted">
               Supported: <strong>.vcf</strong>,{" "}
@@ -690,7 +690,7 @@ export default function Cases() {
           <div>
             <p className="eyebrow">STEP 04 · OPTIONAL INDEX</p>
 
-            <h2>Add a tabix/CSI index</h2>
+            <h2>{t("cases.index")}</h2>
 
             <p className="muted">
               Indexes are associated with the validated primary VCF. An index
@@ -730,7 +730,7 @@ export default function Cases() {
           <div>
             <p className="eyebrow">STEP 05 · READY CHECK</p>
 
-            <h2>Review ingestion</h2>
+            <h2>{t("cases.ready")}</h2>
 
             <p className="muted">
               Confirm the case is internally consistent before starting
@@ -739,14 +739,14 @@ export default function Cases() {
 
             <div className="review-grid">
               <div>
-                <span>Case</span>
+                <span>{t("cases.case")}</span>
                 <strong>
                   {caseData?.case_identifier ?? caseIdentifier}
                 </strong>
               </div>
 
               <div>
-                <span>Specimen</span>
+                <span>{t("cases.specimenLabel")}</span>
                 <strong>
                   {caseData?.specimens.find(
                     (s) => s.specimen_id === specimenId,
@@ -755,14 +755,14 @@ export default function Cases() {
               </div>
 
               <div>
-                <span>Build</span>
+                <span>{t("cases.build")}</span>
                 <strong>
                   {primaryArtifact?.genome_build ?? build}
                 </strong>
               </div>
 
               <div>
-                <span>Primary validation</span>
+                <span>{t("cases.primaryValidation")}</span>
                 <strong>
                   {pretty(
                     primaryArtifact?.validation_status ?? "PENDING",
@@ -771,7 +771,7 @@ export default function Cases() {
               </div>
 
               <div>
-                <span>Index</span>
+                <span>{t("cases.indexLabel")}</span>
                 <strong>
                   {indexArtifact
                     ? `${indexArtifact.filename} · ${pretty(
@@ -782,14 +782,14 @@ export default function Cases() {
               </div>
 
               <div>
-                <span>Case state</span>
+                <span>{t("cases.caseState")}</span>
                 <strong>{caseData?.status ?? "—"}</strong>
               </div>
             </div>
 
             {validPrimary ? (
               <div className="ready-callout">
-                <strong>Ready for analysis</strong>
+                <strong>{t("cases.readyAnalysis")}</strong>
 
                 <p>
                   The primary VCF passed structural validation and has an
@@ -908,7 +908,7 @@ function ArtifactCard({ artifact }: { artifact: Artifact }) {
 
       {validation !== undefined && (
         <details>
-          <summary>Validation diagnostics</summary>
+          <summary>{t("cases.validationDiagnostics")}</summary>
 
           <pre>
             {JSON.stringify(validation, null, 2)}
