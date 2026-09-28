@@ -557,11 +557,53 @@ export type TranslationKey =
   | "reports.messageErrorEvaluate"
   | "reports.messageErrorGenerate"
   | "reports.messageErrorFinalize"
+  | "review.all"
+  | "review.loading"
+  | "review.refreshQueue"
+  | "review.visibleVariants"
+  | "review.evidenceCount"
+  | "review.criteriaCount"
+  | "review.populationCount"
+  | "review.priorityLabel"
+  | "review.noAnalysisFirst"
+  | "review.loadQueueFailed"
+  | "review.loadClinicalFailed"
+  | "review.resolveCaseFailed"
+  | "review.startMessage"
+  | "review.pedigreeMemberAdded"
+  | "review.pedigreeRelationshipAdded"
+  | "review.segregationRecorded"
+  | "review.inheritanceRecorded"
+  | "review.phenotypeAdded"
+  | "review.confirmationVersioned"
+  | "review.followupRecorded"
+  | "review.secondaryVersioned"
   | "reports.validationDisclaimer";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
   en: {
+    "review.all": "All",
+    "review.loading": "Loading…",
+    "review.refreshQueue": "Refresh clinical queue",
+    "review.visibleVariants": "visible variants",
+    "review.evidenceCount": "evidence",
+    "review.criteriaCount": "criteria",
+    "review.populationCount": "population",
+    "review.priorityLabel": "Priority",
+    "review.noAnalysisFirst": "Enter an Analysis ID or open a completed analysis first.",
+    "review.loadQueueFailed": "Unable to load review queue.",
+    "review.loadClinicalFailed": "Unable to load clinical interpretation.",
+    "review.resolveCaseFailed": "Unable to resolve the selected case.",
+    "review.startMessage": "Human review started.",
+    "review.pedigreeMemberAdded": "Pedigree member added.",
+    "review.pedigreeRelationshipAdded": "Pedigree relationship added.",
+    "review.segregationRecorded": "Segregation observation recorded.",
+    "review.inheritanceRecorded": "Inheritance assessment recorded as review context; no ACMG strength was assigned automatically.",
+    "review.phenotypeAdded": "Phenotype observation added to the case context.",
+    "review.confirmationVersioned": "Confirmation record versioned.",
+    "review.followupRecorded": "Follow-up plan recorded.",
+    "review.secondaryVersioned": "Secondary-finding decision versioned.",
     "cases.backDashboard": "Back to dashboard",
     "cases.caseIdentifier": "Case identifier",
     "cases.clinicalIndication": "Clinical indication",
@@ -1113,6 +1155,27 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
+    "review.all": "الكل",
+    "review.loading": "جارٍ التحميل…",
+    "review.refreshQueue": "تحديث قائمة المراجعة السريرية",
+    "review.visibleVariants": "متغيرات ظاهرة",
+    "review.evidenceCount": "أدلة",
+    "review.criteriaCount": "معايير",
+    "review.populationCount": "سكان",
+    "review.priorityLabel": "الأولوية",
+    "review.noAnalysisFirst": "أدخل معرّف تحليل أو افتح تحليلًا مكتملًا أولًا.",
+    "review.loadQueueFailed": "تعذر تحميل قائمة المراجعة.",
+    "review.loadClinicalFailed": "تعذر تحميل التفسير السريري.",
+    "review.resolveCaseFailed": "تعذر تحديد الحالة المحددة.",
+    "review.startMessage": "بدأت المراجعة البشرية.",
+    "review.pedigreeMemberAdded": "تمت إضافة فرد إلى شجرة النسب.",
+    "review.pedigreeRelationshipAdded": "تمت إضافة علاقة النسب.",
+    "review.segregationRecorded": "تم تسجيل ملاحظة الانفصال الوراثي.",
+    "review.inheritanceRecorded": "تم تسجيل تقييم نمط الوراثة كسياق للمراجعة؛ ولم تُسند قوة ACMG تلقائيًا.",
+    "review.phenotypeAdded": "تمت إضافة ملاحظة النمط الظاهري إلى سياق الحالة.",
+    "review.confirmationVersioned": "تم إنشاء إصدار لسجل التأكيد.",
+    "review.followupRecorded": "تم تسجيل خطة المتابعة.",
+    "review.secondaryVersioned": "تم إنشاء إصدار لقرار النتائج الثانوية.",
     "cases.backDashboard": "العودة إلى لوحة المعلومات",
     "cases.caseIdentifier": "معرّف الحالة",
     "cases.clinicalIndication": "الاستطباب السريري",
