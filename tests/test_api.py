@@ -4,6 +4,6 @@ def test_health(client):
     assert response.json()["status"] == "ok"
 
 def test_evidence_routes_registered(client):
-    paths = {route.path for route in client.app.routes}
+    paths = set(client.app.openapi().get("paths", {}))
     assert "/api/v1/analyses/{analysis_id}/evidence" in paths
     assert "/api/v1/evidence/{evidence_id}" in paths
