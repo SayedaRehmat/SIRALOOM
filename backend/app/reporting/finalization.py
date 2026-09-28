@@ -39,8 +39,6 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
             after_state={"status": REPORT_STATUS_SUPERSEDED},
             reason="A newer report version was finalized.",
         )
-    analysis = db.get(Analysis, report.analysis_id)
-    if analysis and analysis.status == "REQUIRES_REVIEW": analysis.status = "SUCCEEDED"
     after = {"status": report.status, "approved_by": str(report.approved_by), "approved_at": report.approved_at.isoformat(), "supersedes_report_id": str(report.supersedes_report_id) if report.supersedes_report_id else None}
     AuditService(db).record(event_type="REPORT_APPROVED", case_id=report.case_id, analysis_id=report.analysis_id, actor_type="HUMAN", actor_id=str(approver_id), subject_type="REPORT", subject_id=str(report.id), operation="APPROVE", before_state=before, after_state=after, reason=reason.strip())
     db.flush(); return report
