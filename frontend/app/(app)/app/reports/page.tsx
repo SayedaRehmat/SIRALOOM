@@ -28,7 +28,7 @@ export default function ReportsPage() {
   const [message, setMessage] = useState("");
   const [reason, setReason] = useState("");
   const [reportType, setReportType] = useState("CLINICAL_INTERPRETATION");
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [selected, setSelected] = useState<Decision | null>(null);
   const [disposition, setDisposition] = useState("REPORT");
 
@@ -121,6 +121,6 @@ export default function ReportsPage() {
     </div>
 
     <section className="panel reports-list-panel"><div className="panel-head"><div><div className="section-kicker">REPORT VERSIONS</div><h3>Immutable report lineage</h3></div></div>{!reports.length ? <div className="empty"><strong>No reports generated</strong><p>Generate a clinical or analytical draft after the analysis is available.</p></div> : <div className="report-version-list">{reports.map(r => <article className="report-version" key={r.report_id}><div><strong>Version {r.version} · {pretty(r.report_type)}</strong><span>{pretty(r.status)} · {r.language} · {r.created_at ? new Date(r.created_at).toLocaleString() : "—"}</span>{r.supersedes_report_id && <small>Supersedes {r.supersedes_report_id}</small>}</div><div className="actions-row"><span className={`badge ${badgeClass(r.status)}`}>{pretty(r.status)}</span>{r.artifact_id && <button className="secondary" onClick={() => download(r.artifact_id)}>PDF</button>}{r.status === "DRAFT" && <button className="primary" disabled={!reportabilityReady} onClick={() => finalize(r)}>Approve / sign out</button>}</div></article>)}</div>}</section>
-    <p className="reports-footnote">SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.</p>
+<p className="reports-footnote">{t("reports.validationDisclaimer")}</p>
   </main>;
 }
