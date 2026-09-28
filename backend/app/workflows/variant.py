@@ -14,11 +14,11 @@ from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
-from backend.app.domain.normalization import NormalizationError, iter_normalized_vcf, normalize_vcf_file
-from backend.app.domain.reference import EnsemblReference, FastaReference, ReferenceError
+from backend.app.domain.normalization import NormalizationError, iter_normalized_vcf
+from backend.app.domain.reference import ReferenceError
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
-from backend.app.domain.vcf_tools import VCFToolError, classify_records, has_multiallelic_records, split_multiallelic_vcf
+from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
@@ -285,33 +285,48 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
             reference_fasta = analysis.configuration.get("reference_fasta") or settings.reference_fasta
-            reference_fai = analysis.configuration.get("reference_fai") or settings.reference_fai
-            remote_enabled = bool(analysis.configuration.get("reference_remote_enabled", settings.reference_remote_enabled))
-            remote_timeout = float(analysis.configuration.get("reference_remote_timeout_seconds", settings.reference_remote_timeout_seconds))
-            remote_flank = int(analysis.configuration.get("reference_remote_window_flank", settings.reference_remote_window_flank))
-            remote_endpoint = analysis.configuration.get("reference_remote_endpoint")
-            remote_retry_attempts = int(analysis.configuration.get("reference_remote_retry_attempts", settings.reference_remote_retry_attempts))
-            remote_retry_backoff = float(analysis.configuration.get("reference_remote_retry_backoff_seconds", settings.reference_remote_retry_backoff_seconds))
 
-            if not reference_fasta and not remote_enabled:
-                mark_step(db, normalization_step, StepStatus.BLOCKED, error_code="REFERENCE_NOT_CONFIGURED", error_message="A validated local reference FASTA or explicitly enabled online reference provider is required for reference-aware normalization.")
+            if not reference_fasta:
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.BLOCKED,
+                    error_code="REFERENCE_NOT_CONFIGURED",
+                    error_message=(
+                        "A validated local reference FASTA is required for production "
+                        "reference-aware normalization. Ensembl REST is not used as a "
+                        "normalization dependency."
+                    ),
+                )
                 analysis.status = AnalysisStatus.BLOCKED
                 db.commit()
-                audit.record(event_type="WORKFLOW_BLOCKED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="normalization", reason="No local FASTA and online reference provider is disabled")
+                audit.record(
+                    event_type="WORKFLOW_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="normalization",
+                    reason="No local reference FASTA is configured",
+                )
                 db.commit()
                 return
 
+            reference_fasta_path = Path(reference_fasta)
+            reference_fai_path = Path(f"{reference_fasta_path}.fai")
+            if not reference_fasta_path.is_file():
+                raise VCFToolError(f"Reference FASTA does not exist: {reference_fasta_path}")
+            if not reference_fai_path.is_file():
+                raise VCFToolError(
+                    f"Reference FASTA index (.fai) does not exist: {reference_fai_path}. "
+                    "The reference package must be validated and indexed before use."
+                )
+
             temp_path: Path | None = None
-            prepared_path: Path | None = None
             try:
                 suffix = ".vcf.gz" if input_path.name.endswith(".gz") else ".vcf"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
                     temp_path = Path(temp.name)
 
-                # Phase 1 accepts ordinary germline small-variant VCFs. GVCF
-                # reference blocks and symbolic/breakend records belong to their
-                # dedicated workflows and must be reported explicitly rather than
-                # surfacing later as an opaque normalization failure.
                 profile = classify_records(input_path)
                 if profile["gvcf_markers"]:
                     raise NormalizationError(
@@ -326,53 +341,22 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "the dedicated structural-variant workflow."
                     )
 
-                # Multiallelic sites are valid VCF and must not be rejected.
-                # bcftools performs the allele/genotype-aware split; our remote
-                # Ensembl reference provider then performs reference-aware
-                # normalization on the resulting biallelic records.
-                normalization_input = input_path
-                split_stats = None
-                if profile["multiallelic_records"] or has_multiallelic_records(input_path):
-                    with NamedTemporaryFile(prefix="siraloom-biallelic-", suffix=".vcf", delete=False) as prepared:
-                        prepared_path = Path(prepared.name)
-                    split_stats = split_multiallelic_vcf(input_path, prepared_path)
-                    normalization_input = prepared_path
+                normalization_stats = normalize_vcf_with_bcftools(
+                    input_path,
+                    temp_path,
+                    reference_fasta=reference_fasta_path,
+                )
 
-                reference_stats: dict | None = None
-                if reference_fasta:
-                    reference = FastaReference(reference_fasta, reference_fai)
-                    reference_source = "LOCAL_FASTA"
-                else:
-                    endpoint = remote_endpoint or (settings.reference_remote_grch37_endpoint if reference_build == "GRCh37" else settings.reference_remote_grch38_endpoint)
-                    reference = EnsemblReference(
-                        reference_build, endpoint=endpoint, timeout_seconds=remote_timeout, window_flank=remote_flank,
-                        retry_attempts=remote_retry_attempts, retry_backoff_seconds=remote_retry_backoff,
-                    )
-                    reference_source = "ENSEMBL_REST"
-                with reference:
-                    if reference_source == "ENSEMBL_REST":
-                        # Fail fast if Ensembl itself is unreachable, before spending any
-                        # time on a job that can't finish.
-                        reference.preflight()
-                        # Collect every region the VCF will need and fetch them in batches
-                        # of up to 50 per POST, so the normalization pass below hits the
-                        # reference cache almost every time instead of making one live
-                        # HTTP request per variant.
-                        from backend.app.domain.normalization import scan_vcf_regions
-                        reference.prefetch(scan_vcf_regions(normalization_input))
-                    result = normalize_vcf_file(normalization_input, temp_path, genome_build=reference_build, reference=reference, collect_variants=False)
-                    if reference_source == "ENSEMBL_REST":
-                        reference_stats = dict(reference.stats)
                 normalized_artifact = artifacts.put_file(
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz" if temp_path.suffix == ".gz" else "normalized.vcf",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip" if temp_path.suffix == ".gz" else "text/vcf",
-                    genome_build=reference_build, metadata={"normalization_version": "1.0", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_source": reference_source},
+                    genome_build=reference_build, metadata={"normalization_version": "2.0", "record_count": profile["records"], "streaming": True, "reference_source": "LOCAL_FASTA", "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"]},
                 )
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "partition_size": partition_size, "reference_source": reference_source, "reference_provider": "Ensembl REST" if reference_source == "ENSEMBL_REST" else "local FASTA", "reference_request_stats": reference_stats, "input_preparation": split_stats})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "1.1"}, payload={"record_count": result["record_count"], "changed_count": result["changed_count"], "streaming": True, "reference_request_stats": reference_stats, "input_preparation": split_stats})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "LOCAL_FASTA", "reference_provider": "pinned local FASTA", "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.0"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "LOCAL_FASTA", "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
                 db.commit()
             except (NormalizationError, ReferenceError, VCFToolError) as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
