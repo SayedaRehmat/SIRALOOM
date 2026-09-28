@@ -1853,7 +1853,13 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
             partition.attempt = 2
             step.status = StepStatus.SUCCEEDED
             step.output_artifacts = ["annotation-artifact"]
-            step.metadata_json["batches"]["0:1"]["status"] = "SUCCEEDED"
+            metadata = dict(step.metadata_json or {})
+            batches = dict(metadata.get("batches") or {})
+            batch = dict(batches.get("0:1") or {})
+            batch["status"] = "SUCCEEDED"
+            batches["0:1"] = batch
+            metadata["batches"] = batches
+            step.metadata_json = metadata
             analysis = db.get(Analysis, analysis_id)
             analysis.status = AnalysisStatus.SUCCEEDED
             db.commit()
