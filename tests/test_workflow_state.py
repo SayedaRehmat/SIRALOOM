@@ -517,7 +517,10 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
         assert received_analysis_id == UUID(analysis_id)
         events.append("resume_analysis")
 
-    monkeypatch.setattr(celery_module, "SessionLocal", fake_session_local, raising=False)
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        fake_session_local,
+    )
     monkeypatch.setattr(variant_module, "recover_interrupted_execution", fake_recover)
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
 
