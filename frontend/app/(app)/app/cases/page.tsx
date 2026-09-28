@@ -127,7 +127,7 @@ export default function Cases() {
 
   const validPrimary = primaryArtifact?.validation_status === "VALID";
 
-  const can{t("cases.continue")} = useMemo(() => {
+  const canContinue = useMemo(() => {
     if (step === 0) return Boolean(caseId);
     if (step === 1) return Boolean(specimenId);
     if (step === 2) return Boolean(primaryArtifact);
