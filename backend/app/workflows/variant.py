@@ -206,6 +206,80 @@ def _ensure_execution_partitions(db: Session, analysis_id: UUID, source_step: st
     db.commit()
 
 
+def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
+    """Recover durable execution state after Celery redelivery of a lost worker task.
+
+    A late-acknowledged task can be redelivered after an abrupt worker loss. The
+    database may still contain RUNNING workflow steps and partition leases owned
+    by the lost execution. Those leases must be released before the redelivered
+    task resumes; otherwise the scheduler can see stale capacity and the workflow
+    can remain falsely RUNNING.
+    """
+    analysis = db.get(Analysis, analysis_id)
+    if not analysis:
+        return False
+
+    running_steps = db.scalars(
+        select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis_id,
+            WorkflowStep.status == StepStatus.RUNNING,
+        )
+    ).all()
+    running_partitions = db.scalars(
+        select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == analysis_id,
+            AnalysisPartition.status == "RUNNING",
+        )
+    ).all()
+
+    if not running_steps and not running_partitions:
+        return False
+
+    recovery_time = _now()
+    for step in running_steps:
+        step.status = StepStatus.RETRYING
+        step.error_code = "WORKER_INTERRUPTED"
+        step.error_message = "Previous worker execution was interrupted; durable state is being resumed."
+        step.metadata_json = {
+            **(step.metadata_json or {}),
+            "next_step": step.step_id,
+            "recovery": "CELERY_REDELIVERY",
+            "recovered_at": recovery_time.isoformat(),
+        }
+        step.updated_at = recovery_time
+        step.last_heartbeat = recovery_time
+        db.add(step)
+
+    for partition in running_partitions:
+        partition.status = "READY"
+        partition.lease_owner = None
+        partition.lease_expires_at = None
+        partition.error_code = "WORKER_INTERRUPTED"
+        partition.error_message = "Previous worker execution was interrupted; partition returned to durable scheduler queue."
+        partition.updated_at = recovery_time
+        db.add(partition)
+
+    analysis.status = AnalysisStatus.RUNNING
+    analysis.completed_at = None
+    db.add(analysis)
+
+    AuditService(db).record(
+        event_type="WORKFLOW_WORKER_RECOVERY",
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        actor_type="SYSTEM",
+        actor_id="workflow-recovery",
+        reason="Celery redelivery detected interrupted worker execution",
+        payload={
+            "recovered_steps": [step.step_id for step in running_steps],
+            "recovered_partitions": len(running_partitions),
+            "next_step": running_steps[0].step_id if running_steps else None,
+        },
+    )
+    db.commit()
+    return True
+
+
 def run_variant_analysis(analysis_id: UUID) -> None:
     from backend.app.infrastructure.db.session import SessionLocal
 
