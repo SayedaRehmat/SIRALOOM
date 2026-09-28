@@ -508,6 +508,7 @@ def test_transient_genebe_failure_requeues_annotation_partition_and_checkpoints(
 def test_celery_task_retries_transient_workflow_error_with_production_countdown(monkeypatch):
     from uuid import uuid4
 
+    from backend.app.infrastructure.db import session as db_session
     from backend.app.infrastructure.queue import celery_app as celery_module
     from backend.app.workflows import variant as variant_module
 
@@ -632,6 +633,7 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    monkeypatch.setattr(db_session, "SessionLocal", lambda: Session(engine))
     Base.metadata.create_all(
         engine,
         tables=[
