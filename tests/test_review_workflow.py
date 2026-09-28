@@ -102,7 +102,7 @@ def test_start_review_creates_auditable_state_transition():
 
 
 def test_review_api_paths_exist(client):
-    paths = {route.path for route in client.app.routes}
+    paths = set(client.app.openapi().get("paths", {}))
     assert "/api/v1/analyses/{analysis_id}/variants/{variant_id}/review" in paths
     assert "/api/v1/analyses/{analysis_id}/variants/{variant_id}/review/start" in paths
     assert "/api/v1/analyses/{analysis_id}/variants/{variant_id}/review/approve" in paths
