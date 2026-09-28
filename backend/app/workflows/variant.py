@@ -16,6 +16,8 @@ from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.normalization import NormalizationError, iter_normalized_vcf
 from backend.app.domain.reference import ReferenceError
+from backend.app.domain.reference_package import ReferencePackageError, load_reference_package
+from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
@@ -244,13 +246,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if validation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, validation_step, StepStatus.RUNNING)
             try:
-                from backend.app.domain.vcf import parse_vcf
-                count = sum(1 for _ in parse_vcf(str(input_path)))
-                if count == 0:
-                    raise ValueError("VCF contains no variant records")
+                profile = validate_vcf_strict(str(input_path))
                 validation_step.input_artifacts = [str(input_artifact.id)]
                 validation_step.output_artifacts = [str(input_artifact.id)]
-                mark_step(db, validation_step, StepStatus.SUCCEEDED, metadata={"variant_count": count, "validation": "PASS"})
+                mark_step(
+                    db,
+                    validation_step,
+                    StepStatus.SUCCEEDED,
+                    metadata={"variant_count": profile["records"], "validation": "PASS", "validation_profile": profile},
+                )
                 audit.record(
                     event_type="ARTIFACT_VALIDATED",
                     case_id=analysis.case_id,
@@ -260,10 +264,26 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     subject_type="ARTIFACT",
                     subject_id=str(input_artifact.id),
                     input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
+                    payload={"validation_profile": profile},
                 )
                 db.commit()
+            except StrictVCFValidationError as exc:
+                mark_step(db, validation_step, StepStatus.FAILED, error_code=exc.code, error_message=str(exc))
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(
+                    event_type="WORKFLOW_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="vcf-validator",
+                    reason=str(exc),
+                    payload={"error_code": exc.code},
+                )
+                db.commit()
+                return
             except Exception as exc:
-                mark_step(db, validation_step, StepStatus.FAILED, error_code="VCF_INVALID", error_message=str(exc))
+                mark_step(db, validation_step, StepStatus.FAILED, error_code="VCF_VALIDATION_UNEXPECTED_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
                 audit.record(
@@ -282,23 +302,33 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         normalization_step = _step(db, analysis.id, "normalize")
         normalized_artifact = _existing_normalized_artifact(db, analysis.id)
         reference_build = normalize_build(analysis.reference_build)
+        reference_resource_id = analysis.configuration.get("reference_resource_id")
         partition_size = min(max(1, int(analysis.configuration.get("partition_size", 500) or 500)), 1000)
 
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
-            reference_fasta = analysis.configuration.get("reference_fasta") or settings.reference_fasta
+            try:
+                reference_package = load_reference_package(
+                    db,
+                    resource_id=reference_resource_id,
+                    expected_genome_build=reference_build,
+                )
+                reference_fasta_path = Path(reference_package["fasta_path"])
+                reference_contigs = {item["name"] for item in reference_package["contigs"]}
 
-            if not reference_fasta:
+                # Re-validate against the selected package so build/contig compatibility
+                # is established before bcftools is allowed to transform the VCF.
+                package_profile = validate_vcf_strict(
+                    str(input_path),
+                    reference_contigs=reference_contigs,
+                )
+            except ReferencePackageError as exc:
                 mark_step(
                     db,
                     normalization_step,
                     StepStatus.BLOCKED,
-                    error_code="REFERENCE_NOT_CONFIGURED",
-                    error_message=(
-                        "A validated local reference FASTA is required for production "
-                        "reference-aware normalization. Ensembl REST is not used as a "
-                        "normalization dependency."
-                    ),
+                    error_code=exc.code,
+                    error_message=str(exc),
                 )
                 analysis.status = AnalysisStatus.BLOCKED
                 db.commit()
@@ -307,21 +337,33 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
-                    actor_id="normalization",
-                    reason="No local reference FASTA is configured",
+                    actor_id="reference-package",
+                    reason=str(exc),
+                    payload={"error_code": exc.code, "reference_build": reference_build},
                 )
                 db.commit()
                 return
-
-            reference_fasta_path = Path(reference_fasta)
-            reference_fai_path = Path(f"{reference_fasta_path}.fai")
-            if not reference_fasta_path.is_file():
-                raise VCFToolError(f"Reference FASTA does not exist: {reference_fasta_path}")
-            if not reference_fai_path.is_file():
-                raise VCFToolError(
-                    f"Reference FASTA index (.fai) does not exist: {reference_fai_path}. "
-                    "The reference package must be validated and indexed before use."
+            except StrictVCFValidationError as exc:
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.FAILED,
+                    error_code=exc.code,
+                    error_message=str(exc),
                 )
+                analysis.status = AnalysisStatus.FAILED
+                db.commit()
+                audit.record(
+                    event_type="NORMALIZATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="vcf-validator",
+                    reason=str(exc),
+                    payload={"error_code": exc.code, "reference_build": reference_build},
+                )
+                db.commit()
+                return
 
             temp_path: Path | None = None
             try:
@@ -353,14 +395,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz" if temp_path.suffix == ".gz" else "normalized.vcf",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip" if temp_path.suffix == ".gz" else "text/vcf",
-                    genome_build=reference_build, metadata={"normalization_version": "2.0", "record_count": profile["records"], "streaming": True, "reference_source": "LOCAL_FASTA", "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"]},
+                    genome_build=reference_build, metadata={"normalization_version": "2.1", "record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"]},
                 )
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "LOCAL_FASTA", "reference_provider": "pinned local FASTA", "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.0"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "LOCAL_FASTA", "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.1"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
                 db.commit()
-            except (NormalizationError, ReferenceError, VCFToolError) as exc:
+            except (NormalizationError, ReferenceError, ReferencePackageError, VCFToolError) as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
