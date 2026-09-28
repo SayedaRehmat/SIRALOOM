@@ -606,6 +606,242 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
     assert events.count("recovery") == 1
     assert events.count("resume_analysis") == 1
 
+def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
+    from uuid import UUID, uuid4
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from sqlalchemy.pool import StaticPool
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        AnalysisPartition,
+        AuditEvent,
+        Case,
+        Organization,
+        User,
+        WorkflowStep,
+    )
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__,
+            User.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            WorkflowStep.__table__,
+            AnalysisPartition.__table__,
+            AuditEvent.__table__,
+        ],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    running_step_id = uuid4()
+    completed_step_id = uuid4()
+    running_partition_id = uuid4()
+    completed_partition_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(
+            Organization(
+                id=organization_id,
+                name="Celery Durable Recovery Test Laboratory",
+                external_identifier=None,
+            )
+        )
+        db.add(
+            User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=None,
+                email="celery-recovery@test.local",
+                display_name="Celery Recovery Test",
+                role="ANALYST",
+                status="ACTIVE",
+            )
+        )
+        db.add(
+            Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier="CELERY-RECOVERY-001",
+                status="ACTIVE",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            )
+        )
+        db.add(
+            Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="siraloom.variant",
+                workflow_version="1.0",
+                status=AnalysisStatus.RUNNING,
+                queue_task_id="redelivered-worker-task",
+                reference_build="GRCh38",
+                configuration={"input_artifact_id": str(uuid4())},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+            )
+        )
+        db.add(
+            WorkflowStep(
+                id=completed_step_id,
+                analysis_id=analysis_id,
+                step_id="validate_input",
+                step_order=1,
+                status=StepStatus.SUCCEEDED,
+                attempt=2,
+                input_artifacts=["input-artifact"],
+                output_artifacts=["validated-artifact"],
+                metadata_json={"next_step": "normalize", "preserved": True},
+            )
+        )
+        db.add(
+            WorkflowStep(
+                id=running_step_id,
+                analysis_id=analysis_id,
+                step_id="annotate",
+                step_order=3,
+                status=StepStatus.RUNNING,
+                attempt=1,
+                input_artifacts=["normalized-artifact"],
+                output_artifacts=[],
+                metadata_json={"next_step": "annotate"},
+            )
+        )
+        db.add(
+            AnalysisPartition(
+                id=completed_partition_id,
+                analysis_id=analysis_id,
+                step_id="annotate",
+                partition_key="10:20",
+                ordinal=1,
+                record_start=10,
+                record_end=20,
+                variant_count=10,
+                status="SUCCEEDED",
+                input_artifact_id=None,
+                metadata_json={"variant_ids": ["completed-variant"]},
+                resource_class="LIGHT",
+                cpu_request=0.5,
+                memory_mb=512,
+                attempt=3,
+                lease_owner=None,
+                lease_expires_at=None,
+            )
+        )
+        db.add(
+            AnalysisPartition(
+                id=running_partition_id,
+                analysis_id=analysis_id,
+                step_id="annotate",
+                partition_key="0:10",
+                ordinal=0,
+                record_start=0,
+                record_end=10,
+                variant_count=10,
+                status="RUNNING",
+                input_artifact_id=None,
+                metadata_json={},
+                resource_class="LIGHT",
+                cpu_request=0.5,
+                memory_mb=512,
+                attempt=1,
+                lease_owner="workflow:lost-worker",
+                lease_expires_at=None,
+            )
+        )
+        db.commit()
+
+    sessions = iter([Session(engine), Session(engine)])
+
+    def fake_session_local():
+        return next(sessions)
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == analysis_id
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            running_step = db.get(WorkflowStep, running_step_id)
+            completed_step = db.get(WorkflowStep, completed_step_id)
+            running_partition = db.get(AnalysisPartition, running_partition_id)
+            completed_partition = db.get(AnalysisPartition, completed_partition_id)
+
+            # This assertion is deliberately inside the resumed worker call:
+            # Celery redelivery must recover durable state before scientific
+            # execution is allowed to continue.
+            assert analysis.status == AnalysisStatus.RUNNING
+            assert running_step.status == StepStatus.RETRYING
+            assert running_step.error_code == "WORKER_INTERRUPTED"
+            assert running_step.metadata_json["next_step"] == "annotate"
+            assert running_partition.status == "READY"
+            assert running_partition.lease_owner is None
+
+            # Completed scientific work is not replayed or mutated.
+            assert completed_step.status == StepStatus.SUCCEEDED
+            assert completed_step.attempt == 2
+            assert completed_step.output_artifacts == ["validated-artifact"]
+            assert completed_step.metadata_json["preserved"] is True
+            assert completed_partition.status == "SUCCEEDED"
+            assert completed_partition.attempt == 3
+            assert completed_partition.metadata_json["variant_ids"] == ["completed-variant"]
+            assert completed_partition.lease_owner is None
+
+            assert db.query(AuditEvent).filter(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+            ).count() == 1
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        fake_session_local,
+    )
+    monkeypatch.setattr(
+        variant_module,
+        "run_variant_analysis",
+        fake_run_variant_analysis,
+    )
+
+    task = celery_module.run_analysis_task
+    task.push_request(delivery_info={"redelivered": True})
+    try:
+        result = task.run(str(analysis_id))
+    finally:
+        task.pop_request()
+
+    assert result == {
+        "analysis_id": str(analysis_id),
+        "status": AnalysisStatus.RUNNING,
+    }
+
+    # The task's recovery session and final status session were both closed.
+    # Re-open independently to verify the durable state after the task returns.
+    with Session(engine) as db:
+        assert db.get(WorkflowStep, running_step_id).status == StepStatus.RETRYING
+        assert db.get(AnalysisPartition, running_partition_id).status == "READY"
+        assert db.get(Analysis, analysis_id).status == AnalysisStatus.RUNNING
+
+
 def test_partition_scheduler_reports_capacity_exhaustion_without_claiming_work():
     from uuid import uuid4
 
