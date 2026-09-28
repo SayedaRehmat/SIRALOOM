@@ -1006,6 +1006,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 existing_classifications = db.scalars(select(Classification).where(Classification.analysis_id == analysis.id)).all()
                 assessed = len(existing_assessment_variant_ids)
                 blocked_variants = 0
+                acmg_requires_human_review = False
                 proposed_variants = sum(1 for c in existing_classifications if c.state == "PROPOSED")
                 batch_size = int(analysis.configuration.get("acmg_batch_size", 250) or 250)
                 completed_batches = _completed_batch_keys(acmg_step)
@@ -1043,6 +1044,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     # No variant had an approved, automatable ClinGen specification. This is
                     # not a workflow failure: the case still needs a qualified human reviewer
                     # to classify manually, so it proceeds to review rather than dead-ending.
+                    acmg_requires_human_review = True
                     mark_step(
                         db, acmg_step, StepStatus.REQUIRES_REVIEW,
                         error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
@@ -1066,14 +1068,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     # Falls through to the review_step block below instead of returning,
                     # so the case reaches REQUIRES_REVIEW with the annotated variants visible.
 
-                status = StepStatus.SUCCEEDED if proposed_variants == assessed else StepStatus.SUCCEEDED
-                mark_step(db, acmg_step, status, metadata={
+                if not acmg_requires_human_review:
+                    mark_step(db, acmg_step, StepStatus.SUCCEEDED, metadata={
                     "assessed_variants": assessed,
                     "proposed_variants": proposed_variants,
                     "blocked_variants": blocked_variants,
                     "disease_context_present": bool(disease),
                 })
-                audit.record(
+                if not acmg_requires_human_review:
+                    audit.record(
                     event_type="ACMG_ASSESSMENT_COMPLETED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
@@ -1084,7 +1087,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "proposed_variants": proposed_variants,
                         "blocked_variants": blocked_variants,
                     },
-                )
+                    )
                 db.commit()
             except Exception as exc:
                 mark_step(db, acmg_step, StepStatus.FAILED, error_code="ACMG_ASSESSMENT_FAILED", error_message=str(exc))
