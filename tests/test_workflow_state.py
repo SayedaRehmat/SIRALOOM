@@ -67,6 +67,8 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
     analysis_id = uuid4()
     step_id = uuid4()
     partition_id = uuid4()
+    completed_step_id = uuid4()
+    completed_partition_id = uuid4()
     stale_time = datetime.now(timezone.utc) - timedelta(minutes=5)
 
     with Session(engine) as db:
@@ -136,6 +138,47 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
             )
         )
         db.add(
+            WorkflowStep(
+                id=completed_step_id,
+                analysis_id=analysis_id,
+                step_id="validate_input",
+                step_order=1,
+                status=StepStatus.SUCCEEDED,
+                attempt=2,
+                last_heartbeat=stale_time,
+                started_at=stale_time,
+                completed_at=stale_time,
+                input_artifacts=["input-artifact"],
+                output_artifacts=["validated-artifact"],
+                error_code=None,
+                error_message=None,
+                metadata_json={"next_step": "normalize", "preserved": True},
+            )
+        )
+        db.add(
+            AnalysisPartition(
+                id=completed_partition_id,
+                analysis_id=analysis_id,
+                step_id="annotate",
+                partition_key="10:20",
+                ordinal=1,
+                record_start=10,
+                record_end=20,
+                variant_count=10,
+                status="SUCCEEDED",
+                input_artifact_id=None,
+                metadata_json={"variant_ids": ["completed-variant"]},
+                resource_class="LIGHT",
+                cpu_request=0.5,
+                memory_mb=512,
+                attempt=3,
+                lease_owner=None,
+                lease_expires_at=None,
+                started_at=stale_time,
+                completed_at=stale_time,
+            )
+        )
+        db.add(
             AnalysisPartition(
                 id=partition_id,
                 analysis_id=analysis_id,
@@ -160,6 +203,18 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
         )
         db.commit()
 
+        completed_step_before = db.get(WorkflowStep, completed_step_id)
+        completed_partition_before = db.get(AnalysisPartition, completed_partition_id)
+        assert completed_step_before.status == StepStatus.SUCCEEDED
+        assert completed_step_before.attempt == 2
+        assert completed_step_before.output_artifacts == ["validated-artifact"]
+        assert completed_step_before.metadata_json["preserved"] is True
+        assert completed_partition_before.status == "SUCCEEDED"
+        assert completed_partition_before.attempt == 3
+        assert completed_partition_before.metadata_json["variant_ids"] == ["completed-variant"]
+        assert completed_partition_before.lease_owner is None
+        assert completed_partition_before.lease_expires_at is None
+
         recovered = recover_interrupted_execution(db, analysis_id)
 
         assert recovered is True
@@ -174,6 +229,20 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
         assert partition.lease_owner is None
         assert partition.lease_expires_at is None
         assert analysis.status == AnalysisStatus.RUNNING
+
+        # Completed scientific work must remain immutable across worker recovery:
+        # only RUNNING state is reconciled after a lost worker.
+        completed_step_after = db.get(WorkflowStep, completed_step_id)
+        completed_partition_after = db.get(AnalysisPartition, completed_partition_id)
+        assert completed_step_after.status == StepStatus.SUCCEEDED
+        assert completed_step_after.attempt == 2
+        assert completed_step_after.output_artifacts == ["validated-artifact"]
+        assert completed_step_after.metadata_json["preserved"] is True
+        assert completed_partition_after.status == "SUCCEEDED"
+        assert completed_partition_after.attempt == 3
+        assert completed_partition_after.metadata_json["variant_ids"] == ["completed-variant"]
+        assert completed_partition_after.lease_owner is None
+        assert completed_partition_after.lease_expires_at is None
 
         audit = db.query(AuditEvent).filter(
             AuditEvent.analysis_id == analysis_id,
