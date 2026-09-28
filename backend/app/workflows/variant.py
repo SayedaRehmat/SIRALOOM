@@ -342,17 +342,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except StrictVCFValidationError as exc:
-                mark_step(db, validation_step, StepStatus.FAILED, error_code=exc.code, error_message=str(exc))
-                analysis.status = AnalysisStatus.FAILED
+                mark_step(
+                    db,
+                    validation_step,
+                    StepStatus.BLOCKED,
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    metadata={"next_step": "VALID_VCF_REQUIRED"},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
                 db.commit()
                 audit.record(
-                    event_type="WORKFLOW_FAILED",
+                    event_type="WORKFLOW_BLOCKED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
                     actor_id="vcf-validator",
                     reason=str(exc),
-                    payload={"error_code": exc.code},
+                    payload={"error_code": exc.code, "next_step": "VALID_VCF_REQUIRED"},
                 )
                 db.commit()
                 return
@@ -421,20 +428,25 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 mark_step(
                     db,
                     normalization_step,
-                    StepStatus.FAILED,
+                    StepStatus.BLOCKED,
                     error_code=exc.code,
                     error_message=str(exc),
+                    metadata={"next_step": "VALID_VCF_REQUIRED"},
                 )
-                analysis.status = AnalysisStatus.FAILED
+                analysis.status = AnalysisStatus.BLOCKED
                 db.commit()
                 audit.record(
-                    event_type="NORMALIZATION_FAILED",
+                    event_type="NORMALIZATION_BLOCKED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
                     actor_id="vcf-validator",
                     reason=str(exc),
-                    payload={"error_code": exc.code, "reference_build": reference_build},
+                    payload={
+                        "error_code": exc.code,
+                        "reference_build": reference_build,
+                        "next_step": "VALID_VCF_REQUIRED",
+                    },
                 )
                 db.commit()
                 return
