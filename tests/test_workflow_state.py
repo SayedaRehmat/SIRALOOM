@@ -478,6 +478,59 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     assert calls["exc"] is transient
     assert calls["countdown"] == 25
 
+
+def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
+    from uuid import UUID, uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    analysis_id = str(uuid4())
+    events = []
+
+    class FakeRecoverySession:
+        def close(self):
+            events.append("recovery_session_closed")
+
+    class FakeAnalysisSession:
+        class Analysis:
+            status = "RUNNING"
+
+        def get(self, model, received_analysis_id):
+            events.append(("analysis_lookup", model.__name__, received_analysis_id))
+            return self.Analysis()
+
+        def close(self):
+            events.append("analysis_session_closed")
+
+    sessions = iter([FakeRecoverySession(), FakeAnalysisSession()])
+
+    def fake_session_local():
+        return next(sessions)
+
+    def fake_recover(db, received_analysis_id):
+        assert isinstance(db, FakeRecoverySession)
+        assert received_analysis_id == UUID(analysis_id)
+        events.append("recovery")
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == UUID(analysis_id)
+        events.append("resume_analysis")
+
+    monkeypatch.setattr(celery_module, "SessionLocal", fake_session_local, raising=False)
+    monkeypatch.setattr(variant_module, "recover_interrupted_execution", fake_recover)
+    monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
+
+    task = celery_module.run_analysis_task
+    with task.push_request(delivery_info={"redelivered": True}):
+        result = task.run(analysis_id)
+
+    assert result == {"analysis_id": analysis_id, "status": "RUNNING"}
+    assert events.index("recovery") < events.index("resume_analysis")
+    assert events.index("resume_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
+    assert events.count("recovery") == 1
+    assert events.count("resume_analysis") == 1
+
 def test_partition_scheduler_reports_capacity_exhaustion_without_claiming_work():
     from uuid import uuid4
 
