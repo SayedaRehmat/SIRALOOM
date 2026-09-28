@@ -33,4 +33,4 @@ def test_alembic_replays_to_head_on_sqlite(tmp_path):
         timeout=30,
     )
     assert current.returncode == 0, current.stderr
-    assert "0019_partition_scheduler_resources" in current.stdout + current.stderr
+    assert "(head)" in current.stdout + current.stderr
