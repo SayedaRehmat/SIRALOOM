@@ -731,6 +731,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except PartitionCapacityError as exc:
+                mark_step(
+                    db,
+                    annotation_step,
+                    StepStatus.RESOURCE_FAILURE,
+                    error_code="ANNOTATION_RESOURCE_CAPACITY_EXHAUSTED",
+                    error_message=str(exc),
+                    metadata={"next_step": "annotate"},
+                )
+                analysis.status = AnalysisStatus.RESOURCE_FAILURE
+                db.commit()
+                audit.record(
+                    event_type="ANNOTATION_RESOURCE_FAILURE",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="partition-scheduler",
+                    reason=str(exc),
+                    payload={"error_code": "ANNOTATION_RESOURCE_CAPACITY_EXHAUSTED", "next_step": "annotate"},
+                )
+                db.commit()
+                return
             except GeneBeError as exc:
                 mark_step(db, annotation_step, StepStatus.FAILED, error_code="ANNOTATION_PROVIDER_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
