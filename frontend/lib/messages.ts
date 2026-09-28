@@ -284,6 +284,34 @@ export type TranslationKey =
   | "workspace.evidence"
   | "workspace.unknownSource"
   | "workspace.unversioned"
+  | "workspace.service"
+  | "workspace.pipeline"
+  | "workspace.caseSection"
+  | "workspace.caseId"
+  | "workspace.specimenSection"
+  | "workspace.blood"
+  | "workspace.saliva"
+  | "workspace.buccal"
+  | "workspace.other"
+  | "workspace.inputSection"
+  | "workspace.phaseOne"
+  | "workspace.choose"
+  | "workspace.artifactId"
+  | "workspace.executionSection"
+  | "workspace.interpretationSection"
+  | "workspace.position"
+  | "workspace.refAlt"
+  | "workspace.build"
+  | "workspace.review"
+  | "workspace.selected"
+  | "workspace.open"
+  | "workspace.evidenceSection"
+  | "workspace.reviewSection"
+  | "workspace.decisionHistory"
+  | "workspace.reportSection"
+  | "workspace.auditSection"
+  | "workspace.auditLead"
+  | "workspace.footer"
   | "reports.validationDisclaimer";
 
 
@@ -564,6 +592,34 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.evidence": "Evidence",
     "workspace.unknownSource": "Unknown source",
     "workspace.unversioned": "unversioned",
+    "workspace.service": "SERVICE 01",
+    "workspace.pipeline": "Pipeline",
+    "workspace.caseSection": "CASE",
+    "workspace.caseId": "Case ID",
+    "workspace.specimenSection": "SPECIMEN",
+    "workspace.blood": "Blood",
+    "workspace.saliva": "Saliva",
+    "workspace.buccal": "Buccal",
+    "workspace.other": "Other",
+    "workspace.inputSection": "INPUT",
+    "workspace.phaseOne": "Phase 1",
+    "workspace.choose": "Choose",
+    "workspace.artifactId": "Artifact ID",
+    "workspace.executionSection": "EXECUTION",
+    "workspace.interpretationSection": "INTERPRETATION",
+    "workspace.position": "Position",
+    "workspace.refAlt": "Ref / Alt",
+    "workspace.build": "Build",
+    "workspace.review": "Review",
+    "workspace.selected": "Selected",
+    "workspace.open": "Open",
+    "workspace.evidenceSection": "EVIDENCE",
+    "workspace.reviewSection": "REVIEW",
+    "workspace.decisionHistory": "DECISION HISTORY",
+    "workspace.reportSection": "REPORT",
+    "workspace.auditSection": "AUDIT & PROVENANCE",
+    "workspace.auditLead": "Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.",
+    "workspace.footer": "Scientific results remain subject to configured resources, review, validation scope, and laboratory governance.",
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
@@ -842,6 +898,34 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.evidence": "دليل",
     "workspace.unknownSource": "مصدر غير معروف",
     "workspace.unversioned": "بدون إصدار",
+    "workspace.service": "الخدمة 01",
+    "workspace.pipeline": "خط المعالجة",
+    "workspace.caseSection": "الحالة",
+    "workspace.caseId": "معرّف الحالة",
+    "workspace.specimenSection": "العينة",
+    "workspace.blood": "دم",
+    "workspace.saliva": "لعاب",
+    "workspace.buccal": "مسحة شدقية",
+    "workspace.other": "أخرى",
+    "workspace.inputSection": "الإدخال",
+    "workspace.phaseOne": "المرحلة 1",
+    "workspace.choose": "اختيار",
+    "workspace.artifactId": "معرّف الأثر",
+    "workspace.executionSection": "التنفيذ",
+    "workspace.interpretationSection": "التفسير",
+    "workspace.position": "الموضع",
+    "workspace.refAlt": "المرجع / البديل",
+    "workspace.build": "البناء",
+    "workspace.review": "المراجعة",
+    "workspace.selected": "محدد",
+    "workspace.open": "فتح",
+    "workspace.evidenceSection": "الأدلة",
+    "workspace.reviewSection": "المراجعة",
+    "workspace.decisionHistory": "سجل القرارات",
+    "workspace.reportSection": "التقرير",
+    "workspace.auditSection": "التدقيق وسلسلة المصدر",
+    "workspace.auditLead": "تُحفظ الخطوات الحاسوبية والموارد والأدلة وإجراءات المراجعين وأحداث التقارير في سجل الحالة.",
+    "workspace.footer": "تظل النتائج العلمية خاضعة للموارد المهيأة والمراجعة ونطاق التحقق وحوكمة المختبر.",
     "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
   },
 };
