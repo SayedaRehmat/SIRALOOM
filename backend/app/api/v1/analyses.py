@@ -159,6 +159,47 @@ def get(
         .order_by(WorkflowStep.step_order)
     ).all()
 
+    step_payloads = []
+    for index, step in enumerate(steps):
+        metadata = dict(step.metadata_json or {})
+        if step.status in {"FAILED", "BLOCKED", "REQUIRES_REVIEW"}:
+            next_step = metadata.get("next_step")
+        elif step.status == "SUCCEEDED":
+            next_step = steps[index + 1].step_id if index + 1 < len(steps) else "ANALYSIS_COMPLETE"
+        else:
+            next_step = step.step_id
+
+        step_payloads.append(
+            {
+                "step_id": step.step_id,
+                "status": step.status,
+                "attempt": step.attempt,
+                "last_heartbeat": step.last_heartbeat,
+                "error_code": step.error_code,
+                "error_message": step.error_message,
+                "metadata": metadata,
+                "next_step": next_step,
+            }
+        )
+
+    active_step = next(
+        (
+            item
+            for item in step_payloads
+            if item["status"] in {"RUNNING", "RETRYING", "FAILED", "BLOCKED", "REQUIRES_REVIEW"}
+        ),
+        None,
+    )
+    workflow_next_step = (
+        active_step["next_step"]
+        if active_step is not None
+        else (
+            "ANALYSIS_COMPLETE"
+            if step_payloads and all(item["status"] == "SUCCEEDED" for item in step_payloads)
+            else None
+        )
+    )
+
     return {
         "analysis_id": str(analysis.id),
         "case_id": str(analysis.case_id),
@@ -169,18 +210,8 @@ def get(
         "queue_task_id": analysis.queue_task_id,
         "started_at": analysis.started_at,
         "completed_at": analysis.completed_at,
-        "steps": [
-            {
-                "step_id": s.step_id,
-                "status": s.status,
-                "attempt": s.attempt,
-                "last_heartbeat": s.last_heartbeat,
-                "error_code": s.error_code,
-                "error_message": s.error_message,
-                "metadata": s.metadata_json,
-            }
-            for s in steps
-        ],
+        "next_step": workflow_next_step,
+        "steps": step_payloads,
     }
 
 
