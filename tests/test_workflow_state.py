@@ -1008,3 +1008,81 @@ def test_celery_retry_exhaustion_persists_terminal_failure():
         assert partition.status == "FAILED"
         assert partition.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
         assert audit
+
+
+def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypatch):
+    from uuid import UUID, uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    analysis_id = str(uuid4())
+    transient = variant_module.TransientWorkflowError(
+        "provider remained unavailable",
+        countdown=60,
+    )
+    events = []
+
+    class FakeTerminalSession:
+        def close(self):
+            events.append("terminal_session_closed")
+
+    def fake_session_local():
+        events.append("terminal_session_opened")
+        return FakeTerminalSession()
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == UUID(analysis_id)
+        events.append("run_analysis")
+        raise transient
+
+    def fake_finalize(db, received_analysis_id, error_message):
+        assert isinstance(db, FakeTerminalSession)
+        assert received_analysis_id == UUID(analysis_id)
+        assert error_message == str(transient)
+        events.append("finalize")
+
+    def fail_if_retry_called(*_args, **_kwargs):
+        raise AssertionError("Celery retry must not be scheduled after max_retries")
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        fake_session_local,
+    )
+    monkeypatch.setattr(
+        celery_module,
+        "_finalize_transient_retry_exhaustion",
+        fake_finalize,
+    )
+    monkeypatch.setattr(
+        variant_module,
+        "run_variant_analysis",
+        fake_run_variant_analysis,
+    )
+    monkeypatch.setattr(
+        celery_module.run_analysis_task,
+        "retry",
+        fail_if_retry_called,
+    )
+
+    task = celery_module.run_analysis_task
+    task.push_request(
+        retries=task.max_retries,
+        delivery_info={},
+    )
+    try:
+        try:
+            task.run(analysis_id)
+        except variant_module.TransientWorkflowError as exc:
+            assert exc is transient
+        else:
+            raise AssertionError("Expected exhausted transient error to propagate")
+    finally:
+        task.pop_request()
+
+    assert events == [
+        "run_analysis",
+        "terminal_session_opened",
+        "finalize",
+        "terminal_session_closed",
+    ]
