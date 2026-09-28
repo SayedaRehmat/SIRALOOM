@@ -1169,6 +1169,190 @@ def test_worker_recovery_returns_false_when_analysis_is_missing():
     assert db.commit_calls == 0
 
 
+def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monkeypatch):
+    from uuid import uuid4
+
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import Session
+    from sqlalchemy.pool import StaticPool
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        AnalysisPartition,
+        AuditEvent,
+        Case,
+        Organization,
+        User,
+        WorkflowStep,
+    )
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__,
+            User.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            WorkflowStep.__table__,
+            AnalysisPartition.__table__,
+            AuditEvent.__table__,
+        ],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    step_id = uuid4()
+    partition_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(Organization(
+            id=organization_id,
+            name="Redelivery Exhaustion Test Laboratory",
+            external_identifier=None,
+        ))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject=None,
+            email="redelivery-exhaustion@test.local",
+            display_name="Redelivery Exhaustion Test",
+            role="ANALYST",
+            status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id,
+            organization_id=organization_id,
+            case_identifier="REDELIVERY-EXHAUSTION-001",
+            status="ACTIVE",
+            clinical_context={},
+            language="en",
+            created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=case_id,
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="siraloom.variant",
+            workflow_version="1.0",
+            status=AnalysisStatus.RUNNING,
+            queue_task_id="redelivery-exhaustion-test",
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=user_id,
+        ))
+        db.add(WorkflowStep(
+            id=step_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            step_order=3,
+            status=StepStatus.RUNNING,
+            attempt=2,
+            input_artifacts=["normalized-artifact"],
+            output_artifacts=[],
+            metadata_json={"next_step": "annotate"},
+        ))
+        db.add(AnalysisPartition(
+            id=partition_id,
+            analysis_id=analysis_id,
+            step_id="annotate",
+            partition_key="0:10",
+            ordinal=0,
+            record_start=0,
+            record_end=10,
+            variant_count=10,
+            status="RUNNING",
+            input_artifact_id=None,
+            metadata_json={},
+            resource_class="LIGHT",
+            cpu_request=0.5,
+            memory_mb=512,
+            attempt=2,
+            lease_owner="workflow:lost-worker",
+            lease_expires_at=None,
+        ))
+        db.commit()
+
+    sessions = iter([Session(engine), Session(engine)])
+
+    def fake_session_local():
+        return next(sessions)
+
+    transient = variant_module.TransientWorkflowError(
+        "provider remained unavailable after recovery",
+        countdown=60,
+    )
+
+    def fail_after_recovery(received_analysis_id):
+        assert received_analysis_id == analysis_id
+        with Session(engine) as db:
+            assert db.get(WorkflowStep, step_id).status == StepStatus.RETRYING
+            assert db.get(AnalysisPartition, partition_id).status == "READY"
+        raise transient
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        fake_session_local,
+    )
+    monkeypatch.setattr(
+        variant_module,
+        "run_variant_analysis",
+        fail_after_recovery,
+    )
+
+    task = celery_module.run_analysis_task
+    task.push_request(
+        retries=task.max_retries,
+        delivery_info={"redelivered": True},
+    )
+    try:
+        try:
+            task.run(str(analysis_id))
+        except variant_module.TransientWorkflowError as exc:
+            assert exc is transient
+        else:
+            raise AssertionError("Expected exhausted transient error to propagate")
+    finally:
+        task.pop_request()
+
+    with Session(engine) as db:
+        analysis = db.get(Analysis, analysis_id)
+        step = db.get(WorkflowStep, step_id)
+        partition = db.get(AnalysisPartition, partition_id)
+        recovery_audit = db.scalars(select(AuditEvent).where(
+            AuditEvent.analysis_id == analysis_id,
+            AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+        )).all()
+        exhaustion_audit = db.scalars(select(AuditEvent).where(
+            AuditEvent.analysis_id == analysis_id,
+            AuditEvent.event_type == "ANNOTATION_RETRY_EXHAUSTED",
+        )).all()
+
+        assert analysis.status == AnalysisStatus.FAILED
+        assert analysis.completed_at is not None
+        assert step.status == StepStatus.FAILED
+        assert step.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+        assert step.metadata_json["retry_exhausted"] is True
+        assert partition.status == "FAILED"
+        assert partition.lease_owner is None
+        assert partition.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+        assert len(recovery_audit) == 1
+        assert len(exhaustion_audit) == 1
+
 def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     from uuid import UUID, uuid4
 
