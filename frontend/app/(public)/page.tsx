@@ -21,10 +21,6 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-wordmark" aria-label="SIRALOOM">
-            <span>SIRALOOM</span>
-            <small>Turning complexity into coherence.</small>
-          </div>
         </section>
 
         <section className="home-section home-lifecycle" aria-labelledby="lifecycle-title">
