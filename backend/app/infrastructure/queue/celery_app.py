@@ -20,10 +20,7 @@ if Celery is not None:
     @celery_app.task(bind=True, autoretry_for=(), acks_late=True, max_retries=3)
     def run_analysis_task(self, analysis_id: str):
         from uuid import UUID
-        from backend.app.workflows.variant import run_variant_analysis, TransientWorkflowError
-        try:
-            run_variant_analysis(UUID(analysis_id))
-        except TransientWorkflowError as exc:
+        from backend.app.workflows.variant import (\n            recover_interrupted_execution,\n            run_variant_analysis,\n            TransientWorkflowError,\n        )\n        from backend.app.infrastructure.db.session import SessionLocal\n        if self.request.delivery_info.get("redelivered"):\n            recovery_db = SessionLocal()\n            try:\n                recover_interrupted_execution(recovery_db, UUID(analysis_id))\n            finally:\n                recovery_db.close()\n        try:\n            run_variant_analysis(UUID(analysis_id))\n        except TransientWorkflowError as exc:
             raise self.retry(exc=exc, countdown=exc.countdown)
         from backend.app.infrastructure.db.session import SessionLocal
         from backend.app.infrastructure.db.models import Analysis
