@@ -512,11 +512,101 @@ export type TranslationKey =
   | "cases.chooseIndex"
   | "cases.expectedPairing"
   | "cases.validationPassed"
+  | "cases.backDashboard"
+  | "cases.caseIdentifier"
+  | "cases.clinicalIndication"
+  | "cases.phaseOneStep"
+  | "cases.phaseTwoStep"
+  | "cases.phaseThreeStep"
+  | "cases.phaseFourOptionalIndex"
+  | "cases.phaseFiveReady"
+  | "cases.specimenNotSpecified"
+  | "cases.specimenCount"
+  | "cases.analysis"
+  | "cases.noAnalysis"
+  | "cases.referenceGenome"
+  | "cases.validationUploadHelp"
+  | "cases.supportedFiles"
+  | "cases.originalArtifact"
+  | "cases.indexPairing"
+  | "cases.indexExtension"
+  | "cases.readyCheckHelp"
+  | "cases.readyDetailText"
+  | "cases.invalidPrimaryText"
+  | "reports.loading"
+  | "reports.refresh"
+  | "reports.finalized"
+  | "reports.reviewRequired"
+  | "reports.decisions"
+  | "reports.reportable"
+  | "reports.selectedDecision"
+  | "reports.selectDecision"
+  | "reports.priorityLabel"
+  | "reports.versionLabel"
+  | "reports.supersedes"
+  | "reports.downloadFailed"
+  | "reports.messageLoadCase"
+  | "reports.messageAnalysisRequired"
+  | "reports.messageLoad"
+  | "reports.messageEvaluate"
+  | "reports.messageReason"
+  | "reports.messageFinalized"
+  | "reports.messageGenerate"
+  | "reports.messageFinalize"
+  | "reports.messageSignoutReason"
+  | "reports.messageErrorEvaluate"
+  | "reports.messageErrorGenerate"
+  | "reports.messageErrorFinalize"
   | "reports.validationDisclaimer";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
   en: {
+    "cases.backDashboard": "Back to dashboard",
+    "cases.caseIdentifier": "Case identifier",
+    "cases.clinicalIndication": "Clinical indication",
+    "cases.phaseOneStep": "STEP 01",
+    "cases.phaseTwoStep": "STEP 02",
+    "cases.phaseThreeStep": "STEP 03",
+    "cases.phaseFourOptionalIndex": "STEP 04 · OPTIONAL INDEX",
+    "cases.phaseFiveReady": "STEP 05 · READY CHECK",
+    "cases.specimenNotSpecified": "Type not specified",
+    "cases.specimenCount": "specimen(s)",
+    "cases.analysis": "Analysis",
+    "cases.noAnalysis": "No analysis yet",
+    "cases.referenceGenome": "Reference genome",
+    "cases.validationUploadHelp": "Validation runs against the actual uploaded content. No mock variant data is generated.",
+    "cases.supportedFiles": "Supported:",
+    "cases.originalArtifact": "The original artifact is preserved and SHA-256 is calculated from the uploaded content.",
+    "cases.indexPairing": "Expected pairing:",
+    "cases.indexExtension": ".tbi or .csi",
+    "cases.readyCheckHelp": "Confirm the case is internally consistent before starting scientific analysis.",
+    "cases.readyDetailText": "The primary VCF passed structural validation and has an explicit genome build. You can proceed to the existing Variant workflow.",
+    "cases.invalidPrimaryText": "The primary variant artifact is not valid. Resolve the validation failure before starting analysis.",
+    "reports.loading": "Loading…",
+    "reports.refresh": "Refresh",
+    "reports.finalized": "FINALIZED",
+    "reports.reviewRequired": "REVIEW REQUIRED",
+    "reports.decisions": "decisions",
+    "reports.reportable": "reportable",
+    "reports.selectedDecision": "Selected decision",
+    "reports.selectDecision": "Select a decision",
+    "reports.priorityLabel": "Priority",
+    "reports.versionLabel": "Version",
+    "reports.supersedes": "Supersedes",
+    "reports.downloadFailed": "Download failed",
+    "reports.messageLoadCase": "Unable to resolve the selected case.",
+    "reports.messageAnalysisRequired": "Enter or open an Analysis ID first.",
+    "reports.messageLoad": "Unable to load reporting workspace.",
+    "reports.messageEvaluate": "Reportability proposals evaluated. Final dispositions still require authorized human review.",
+    "reports.messageReason": "A reportability review reason is required.",
+    "reports.messageFinalized": "Reportability disposition finalized and audited.",
+    "reports.messageGenerate": "Immutable report artifact generated as a draft.",
+    "reports.messageFinalize": "Report approved/sign-out recorded. A newer final report supersedes the prior final version.",
+    "reports.messageSignoutReason": "Use the review reason field for report sign-out.",
+    "reports.messageErrorEvaluate": "Unable to evaluate reportability.",
+    "reports.messageErrorGenerate": "Unable to generate report.",
+    "reports.messageErrorFinalize": "Report finalization failed.",
     "cases.refresh": "Refresh cases",
     "cases.orgHelp": "The case is created inside your authenticated organization. Organization ownership is determined by the server.",
     "cases.specimenHelp": "A variant file must be associated with a specimen before it can enter the Phase 1 workflow.",
@@ -1023,6 +1113,51 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
+    "cases.backDashboard": "العودة إلى لوحة المعلومات",
+    "cases.caseIdentifier": "معرّف الحالة",
+    "cases.clinicalIndication": "الاستطباب السريري",
+    "cases.phaseOneStep": "الخطوة 01",
+    "cases.phaseTwoStep": "الخطوة 02",
+    "cases.phaseThreeStep": "الخطوة 03",
+    "cases.phaseFourOptionalIndex": "الخطوة 04 · الفهرس اختياري",
+    "cases.phaseFiveReady": "الخطوة 05 · فحص الجاهزية",
+    "cases.specimenNotSpecified": "النوع غير محدد",
+    "cases.specimenCount": "عينة",
+    "cases.analysis": "التحليل",
+    "cases.noAnalysis": "لا يوجد تحليل بعد",
+    "cases.referenceGenome": "الجينوم المرجعي",
+    "cases.validationUploadHelp": "يُجرى التحقق على المحتوى المرفوع فعليًا. لا يتم إنشاء بيانات متغيرات وهمية.",
+    "cases.supportedFiles": "المدعوم:",
+    "cases.originalArtifact": "يتم الاحتفاظ بالملف الأصلي وحساب SHA-256 من المحتوى المرفوع.",
+    "cases.indexPairing": "الاقتران المتوقع:",
+    "cases.indexExtension": ".tbi أو .csi",
+    "cases.readyCheckHelp": "أكد اتساق الحالة داخليًا قبل بدء التحليل العلمي.",
+    "cases.readyDetailText": "اجتاز ملف VCF الأساسي التحقق البنيوي وله إصدار جينوم مرجعي محدد. يمكنك المتابعة إلى سير عمل المتغيرات الحالي.",
+    "cases.invalidPrimaryText": "ملف المتغير الأساسي غير صالح. عالج فشل التحقق قبل بدء التحليل.",
+    "reports.loading": "جارٍ التحميل…",
+    "reports.refresh": "تحديث",
+    "reports.finalized": "نهائي",
+    "reports.reviewRequired": "تتطلب المراجعة",
+    "reports.decisions": "قرارات",
+    "reports.reportable": "قابلة للإبلاغ",
+    "reports.selectedDecision": "القرار المحدد",
+    "reports.selectDecision": "حدد قرارًا",
+    "reports.priorityLabel": "الأولوية",
+    "reports.versionLabel": "الإصدار",
+    "reports.supersedes": "يحل محل",
+    "reports.downloadFailed": "فشل التنزيل",
+    "reports.messageLoadCase": "تعذر تحديد الحالة المحددة.",
+    "reports.messageAnalysisRequired": "أدخل معرّف تحليل أو افتح تحليلًا أولًا.",
+    "reports.messageLoad": "تعذر تحميل مساحة إعداد التقارير.",
+    "reports.messageEvaluate": "تم تقييم مقترحات قابلية الإبلاغ. ولا تزال القرارات النهائية تتطلب مراجعة بشرية مخولة.",
+    "reports.messageReason": "سبب مراجعة قابلية الإبلاغ مطلوب.",
+    "reports.messageFinalized": "تم اعتماد قرار قابلية الإبلاغ وتسجيله في سجل التدقيق.",
+    "reports.messageGenerate": "تم إنشاء أثر تقرير غير قابل للتغيير كمسودة.",
+    "reports.messageFinalize": "تم تسجيل اعتماد التقرير والتوقيع النهائي. يحل التقرير النهائي الأحدث محل الإصدار النهائي السابق.",
+    "reports.messageSignoutReason": "استخدم حقل سبب المراجعة لتوقيع التقرير.",
+    "reports.messageErrorEvaluate": "تعذر تقييم قابلية الإبلاغ.",
+    "reports.messageErrorGenerate": "تعذر إنشاء التقرير.",
+    "reports.messageErrorFinalize": "فشل اعتماد التقرير النهائي.",
     "cases.refresh": "تحديث الحالات",
     "cases.orgHelp": "تُنشأ الحالة داخل مؤسستك الموثقة. ويحدد الخادم ملكية المؤسسة.",
     "cases.specimenHelp": "يجب ربط ملف المتغير بعينة قبل أن يدخل سير عمل المرحلة 1.",
