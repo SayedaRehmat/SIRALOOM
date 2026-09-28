@@ -749,3 +749,53 @@ def test_worker_recovery_returns_false_when_analysis_is_missing():
     assert recover_interrupted_execution(db, requested_id) is False
     assert db.get_calls == 1
     assert db.commit_calls == 0
+
+
+def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
+    from uuid import UUID, uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    analysis_id = str(uuid4())
+    events = []
+
+    class FakeAnalysis:
+        status = "RUNNING"
+
+    class FakeSession:
+        def get(self, model, received_analysis_id):
+            events.append(("analysis_lookup", model.__name__, received_analysis_id))
+            return FakeAnalysis()
+
+        def close(self):
+            events.append("analysis_session_closed")
+
+    def fake_session_local():
+        return FakeSession()
+
+    def fake_recover(*_args):
+        events.append("recovery")
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == UUID(analysis_id)
+        events.append("run_analysis")
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        fake_session_local,
+    )
+    monkeypatch.setattr(variant_module, "recover_interrupted_execution", fake_recover)
+    monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
+
+    task = celery_module.run_analysis_task
+    task.push_request(delivery_info={})
+    try:
+        result = task.run(analysis_id)
+    finally:
+        task.pop_request()
+
+    assert result == {"analysis_id": analysis_id, "status": "RUNNING"}
+    assert "recovery" not in events
+    assert events.count("run_analysis") == 1
+    assert events.index("run_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
