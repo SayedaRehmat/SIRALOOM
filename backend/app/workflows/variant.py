@@ -14,7 +14,7 @@ from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
-from backend.app.domain.normalization import NormalizationError, iter_normalized_vcf
+from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf
 from backend.app.domain.reference import ReferenceError
 from backend.app.domain.reference_package import ReferencePackageError, load_reference_package
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
@@ -373,16 +373,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 profile = classify_records(input_path)
                 if profile["gvcf_markers"]:
-                    raise NormalizationError(
+                    raise UnsupportedVariantError(
                         "GVCF input detected. Phase 1 requires a genotyped VCF; "
                         "GVCF reference blocks must first pass the appropriate "
-                        "genotyping/joint-genotyping workflow."
+                        "genotyping/joint-genotyping workflow.",
+                        code="UNSUPPORTED_GVCF_INPUT",
                     )
                 if profile["symbolic_records"]:
-                    raise NormalizationError(
+                    raise UnsupportedVariantError(
                         "Symbolic/breakend variants detected. Phase 1 currently "
                         "normalizes SNVs and short indels; SV/CNV records require "
-                        "the dedicated structural-variant workflow."
+                        "the dedicated structural-variant workflow.",
+                        code="UNSUPPORTED_STRUCTURAL_VARIANT",
                     )
 
                 normalization_stats = normalize_vcf_with_bcftools(
@@ -402,6 +404,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
                 audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.1"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
                 db.commit()
+            except UnsupportedVariantError as exc:
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.BLOCKED,
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    metadata={"next_step": "SUPPORTED_INPUT_REQUIRED"},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                db.commit()
+                audit.record(
+                    event_type="NORMALIZATION_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    reason=str(exc),
+                    payload={"error_code": exc.code, "next_step": "SUPPORTED_INPUT_REQUIRED"},
+                )
+                db.commit()
+                return
             except (NormalizationError, ReferenceError, ReferencePackageError, VCFToolError) as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
