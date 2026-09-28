@@ -238,7 +238,7 @@ export default function Home() {
           window.localStorage.removeItem("siraloom.analysis_id");
         }
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Unable to load case.");
+        setMessage(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
       }
     };
     loadCase();
@@ -255,7 +255,7 @@ export default function Home() {
         setCompleteVariants(data.variants ?? []);
         setCompleteVariantColumns(data.columns ?? []);
       })
-      .catch((error) => setMessage(error instanceof Error ? error.message : "Unable to load complete variant report."));
+      .catch((error) => setMessage(error instanceof Error ? error.message : t("workspace.errorCompleteReport")));
   }, [analysisId, analysis?.status]);
 
   useEffect(() => {
@@ -296,7 +296,7 @@ export default function Home() {
         }
       } catch (error) {
         setConnection("offline");
-        setMessage(`Backend reconnecting: ${error instanceof Error ? error.message : "connection unavailable"}`);
+        setMessage(`${t("workspace.backendReconnectingPrefix")}${error instanceof Error ? error.message : t("workspace.connectionUnavailable")}`);
       }
     };
     poll();
@@ -319,7 +319,7 @@ export default function Home() {
           timer = null;
         }
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Unable to read export state.");
+        setMessage(error instanceof Error ? error.message : t("workspace.errorExportState"));
       }
     };
     pollExport();
@@ -338,7 +338,7 @@ export default function Home() {
         setVariantDetail(detail);
         setReview(reviewBundle);
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Unable to load variant details.");
+        setMessage(error instanceof Error ? error.message : t("workspace.errorVariantDetails"));
       }
     };
     load();
@@ -361,9 +361,9 @@ export default function Home() {
       setCaseId(result.case_id);
       window.localStorage.setItem("siraloom.case_id", result.case_id);
       window.localStorage.setItem("siraloom.case_identifier", result.case_identifier);
-      setMessage(result.created ? "Case created." : "Existing case loaded.");
+      setMessage(result.created ? t("workspace.caseCreated") : t("workspace.caseLoaded"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Case creation failed.");
+      setMessage(error instanceof Error ? error.message : t("workspace.caseCreationFailed"));
     } finally {
       setBusy(false);
     }
@@ -371,7 +371,7 @@ export default function Home() {
 
   const registerSpecimen = async () => {
     if (!caseId || !specimenIdentifier.trim()) {
-      setMessage("A case and specimen identifier are required.");
+      setMessage(t("workspace.caseSpecimenRequired"));
       return;
     }
     setBusy(true);
@@ -385,9 +385,9 @@ export default function Home() {
       setCaseWorkspace(refreshed);
       setSelectedSpecimenId(String(next.specimen_id));
       setSpecimenIdentifier("");
-      setMessage("Specimen registered to the case.");
+      setMessage(t("workspace.specimenRegistered"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Specimen registration failed.");
+      setMessage(error instanceof Error ? error.message : t("workspace.specimenRegistrationFailed"));
     } finally {
       setBusy(false);
     }
@@ -395,11 +395,11 @@ export default function Home() {
 
   const uploadFile = async () => {
     if (!caseId || !file) {
-      setMessage("Create/select a case and choose a VCF first.");
+      setMessage(t("workspace.caseAndVcfFirst"));
       return;
     }
     if (!selectedSpecimenId) {
-      setMessage("Register or select a specimen before uploading the VCF.");
+      setMessage(t("workspace.specimenRequired"));
       return;
     }
     setBusy(true);
@@ -411,9 +411,9 @@ export default function Home() {
       form.append("genome_build", genomeBuild);
       const result = await apiFetch(`/cases/${caseId}/artifacts`, { method: "POST", body: form });
       setArtifactId(result.artifact_id);
-      setMessage(`Input registered. SHA-256: ${result.sha256}`);
+      setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Upload failed.");
+      setMessage(error instanceof Error ? error.message : t("workspace.uploadFailed"));
     } finally {
       setBusy(false);
     }
@@ -441,13 +441,13 @@ export default function Home() {
       anchor.remove();
       URL.revokeObjectURL(url);
     } catch (error) {
-      setMessage(error instanceof Error ? `Download failed: ${error.message}` : "Download failed.");
+      setMessage(error instanceof Error ? `Download failed: ${error.message}` : t("workspace.downloadFailed"));
     }
   };
 
   const createAndStart = async () => {
     if (!caseId || !artifactId) {
-      setMessage("Case and uploaded VCF are required.");
+      setMessage(t("workspace.caseVcfRequired"));
       return;
     }
     setBusy(true);
@@ -467,9 +467,9 @@ export default function Home() {
       setAnalysisId(created.analysis_id);
       window.localStorage.setItem("siraloom.analysis_id", created.analysis_id);
       await apiFetch(`/analyses/${created.analysis_id}/start`, { method: "POST" });
-      setMessage("Analysis queued. You can close the browser; execution is server-side.");
+      setMessage(t("workspace.analysisQueued"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Analysis start failed.");
+      setMessage(error instanceof Error ? error.message : t("workspace.analysisStartFailed"));
     } finally {
       setBusy(false);
     }
@@ -481,7 +481,7 @@ export default function Home() {
       await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review/start`, { method: "POST" });
       const next = await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`);
       setReview(next);
-      setMessage("Review started.");
+      setMessage(t("workspace.reviewStarted"));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to start review.");
     }
@@ -491,7 +491,7 @@ export default function Home() {
     const current = review?.criteria.find((item) => item.criterion === criterion);
     const expectedVersion = Number((current as any)?.review_version ?? 0);
     if (!analysisId || !selectedVariantId || !criterionReason.trim()) {
-      setMessage("A review reason is required.");
+      setMessage(t("workspace.reviewReasonRequired"));
       return;
     }
     try {
@@ -517,7 +517,7 @@ export default function Home() {
   const requestMoreEvidence = async () => {
     const version = Number(review?.classification?.review_version ?? 0);
     if (!analysisId || !selectedVariantId || !reviewReason.trim()) {
-      setMessage("A reason is required.");
+      setMessage(t("workspace.reasonRequired"));
       return;
     }
     try {
@@ -529,7 +529,7 @@ export default function Home() {
       const next = await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`);
       setReview(next);
       setReviewReason("");
-      setMessage("More evidence requested; classification remains pending.");
+      setMessage(t("workspace.moreEvidenceRequested"));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Request for more evidence failed.");
     }
@@ -538,7 +538,7 @@ export default function Home() {
   const approve = async () => {
     const version = Number(review?.classification?.review_version ?? 0);
     if (!analysisId || !selectedVariantId || !reviewReason.trim()) {
-      setMessage("An approval reason is required.");
+      setMessage(t("workspace.approvalReasonRequired"));
       return;
     }
     try {
@@ -550,7 +550,7 @@ export default function Home() {
       const next = await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`);
       setReview(next);
       setReviewReason("");
-      setMessage("Classification approved.");
+      setMessage(t("workspace.classificationApproved"));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Approval failed.");
     }
@@ -582,13 +582,13 @@ export default function Home() {
       await apiFetch(`/reports/${reportId}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expected_version: 0, reason: reviewReason || "Final report approved by reviewer." }),
+        body: JSON.stringify({ expected_version: 0, reason: reviewReason || t("workspace.finalReportApproved") }),
       });
       const next = await apiFetch(`/reports/${reportId}`);
       setReport(next);
-      setMessage("Report finalized.");
+      setMessage(t("workspace.reportFinalized"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Report finalization failed.");
+      setMessage(error instanceof Error ? error.message : t("workspace.reportFinalizationFailed"));
     }
   };
 
@@ -601,9 +601,9 @@ export default function Home() {
         body: JSON.stringify({ include_artifacts: true, include_reports: true, include_evidence: true, include_audit: true, include_provenance: true }),
       });
       setExportId(result.export_id);
-      setMessage("Complete case-history export queued. It is independent of the browser session.");
+      setMessage(t("workspace.exportQueued"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Case export failed.");
+      setMessage(error instanceof Error ? error.message : t("workspace.exportFailed"));
     }
   };
 
@@ -615,37 +615,37 @@ export default function Home() {
     <main className="shell">
       <header className="topbar">
         <div>
-          <div className="eyebrow">GENOMIC INTERPRETATION PLATFORM</div>
+          <div className="eyebrow">{t("workspace.eyebrow")}</div>
           <h1>SIRALOOM <span>Variant</span></h1>
-          <p className="subtitle">VCF → evidence → review → report</p>
+          <p className="subtitle">{t("workspace.subtitle")}</p>
         </div>
-        <div className="connection"><span className={`dot ${connection}`} />{connection === "online" ? "Backend connected" : connection === "checking" ? "Checking backend…" : "Reconnecting"}</div>
+        <div className="connection"><span className={`dot ${connection}`} />{connection === "online" ? t("workspace.backendConnected") : connection === "checking" ? t("workspace.checkingBackend") : t("workspace.reconnecting")}</div>
       </header>
 
       <section className="hero-grid">
         <div className="hero-card">
           <div className="hero-kicker">SERVICE 01</div>
-          <h2>Explainable variant interpretation, built for long-running laboratory workflows.</h2>
-          <p>Analysis state is persisted server-side. Closing the browser does not stop a running job.</p>
+          <h2>{t("workspace.title")}</h2>
+          <p>{t("workspace.lead")}</p>
         </div>
-        <div className="metric-card"><span>Pipeline</span><strong>{analysis?.status ? prettyStatus(analysis.status) : "Ready"}</strong></div>
-        <div className="metric-card"><span>Case</span><strong>{caseIdentifier || "Not selected"}</strong></div>
+        <div className="metric-card"><span>Pipeline</span><strong>{analysis?.status ? prettyStatus(analysis.status) : t("workspace.ready")}</strong></div>
+        <div className="metric-card"><span>Case</span><strong>{caseIdentifier || t("workspace.notSelected")}</strong></div>
       </section>
 
       {message && <div className="notice" role="status">{message}</div>}
 
       <section className="workspace-grid">
         <aside className="panel case-panel">
-          <div className="panel-head"><div><div className="section-kicker">CASE</div><h3>Start a case</h3></div><span className={`badge ${statusTone(caseId ? "SUCCEEDED" : "READY")}`}>{caseId ? "Created" : "New"}</span></div>
+          <div className="panel-head"><div><div className="section-kicker">CASE</div><h3>{t("workspace.startCase")}</h3></div><span className={`badge ${statusTone(caseId ? "SUCCEEDED" : "READY")}`}>{caseId ? t("workspace.created") : t("workspace.new")}</span></div>
           <form onSubmit={createCase} className="stack">
-            <label>Case identifier<input value={caseIdentifier} onChange={(e: ChangeEvent<HTMLInputElement>) => setCaseIdentifier(e.target.value)} placeholder="LVP-2026-000184" required /></label>
-            <label>Clinical indication<input value={indication} onChange={(e: ChangeEvent<HTMLInputElement>) => setIndication(e.target.value)} placeholder="Hereditary cancer evaluation" /></label>
+            <label>{t("workspace.caseIdentifier")}<input value={caseIdentifier} onChange={(e: ChangeEvent<HTMLInputElement>) => setCaseIdentifier(e.target.value)} placeholder="LVP-2026-000184" required /></label>
+            <label>{t("workspace.clinicalIndication")}<input value={indication} onChange={(e: ChangeEvent<HTMLInputElement>) => setIndication(e.target.value)} placeholder="Hereditary cancer evaluation" /></label>
             <button className="primary" disabled={busy || !caseIdentifier.trim()}>{caseId ? "Load case" : "Create case"}</button>
           </form>
           {caseId && <div className="keyline"><span>Case ID</span><code>{caseId}</code></div>}
           {caseId && <div className="case-context">
             <div className="section-kicker">SPECIMEN</div>
-            <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>Blood</option><option>Saliva</option><option>Buccal</option><option>Other</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim()}>Register specimen</button></div>
+            <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>Blood</option><option>Saliva</option><option>Buccal</option><option>Other</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim()}>{t("workspace.registerSpecimen")}</button></div>
             {caseWorkspace?.specimens?.map((specimen, index) => {
               const id = String(specimen.specimen_id ?? "");
               const selected = id && id === selectedSpecimenId;
@@ -665,10 +665,10 @@ export default function Home() {
         </aside>
 
         <section className="panel input-panel">
-          <div className="panel-head"><div><div className="section-kicker">INPUT</div><h3>VCF intake</h3></div><span className="badge neutral">Phase 1</span></div>
+          <div className="panel-head"><div><div className="section-kicker">INPUT</div><h3>{t("workspace.vcfIntake")}</h3></div><span className="badge neutral">Phase 1</span></div>
           <label>Specimen for this VCF
             <select value={selectedSpecimenId} onChange={(e) => setSelectedSpecimenId(e.target.value)}>
-              <option value="">Select a registered specimen…</option>
+              <option value="">{t("workspace.selectSpecimen")}</option>
               {caseWorkspace?.specimens?.map((specimen, index) => (
                 <option key={String(specimen.specimen_id ?? index)} value={String(specimen.specimen_id ?? "")}>
                   {String(specimen.specimen_identifier ?? "Specimen")} ({String(specimen.specimen_type ?? "—")})
@@ -684,18 +684,18 @@ export default function Home() {
           </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
-            <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz"}</strong><p>Input is persisted before analysis begins.</p></div>
+            <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz"}</strong><p>{t("workspace.inputPersisted")}</p></div>
             <label className="secondary file-button">Choose<input type="file" accept=".vcf,.vcf.gz,.gz" onChange={handleFile} hidden /></label>
           </div>
           <div className="actions-row">
-            <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file || !selectedSpecimenId}>Register input</button>
-            <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>Start analysis</button>
+            <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file || !selectedSpecimenId}>{t("workspace.registerInput")}</button>
+            <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>{t("workspace.startAnalysis")}</button>
           </div>
           {artifactId && <div className="keyline"><span>Artifact ID</span><code>{artifactId}</code></div>}
         </section>
 
         <section className="panel workflow-panel">
-          <div className="panel-head"><div><div className="section-kicker">EXECUTION</div><h3>Durable workflow</h3></div>{analysis?.status && <span className={`badge ${statusTone(analysis.status)}`}>{prettyStatus(analysis.status)}</span>}</div>
+          <div className="panel-head"><div><div className="section-kicker">EXECUTION</div><h3>{t("workspace.durableWorkflow")}</h3></div>{analysis?.status && <span className={`badge ${statusTone(analysis.status)}`}>{prettyStatus(analysis.status)}</span>}</div>
           <div className="timeline">
             {steps.map(([id, label], index) => {
               const step = (analysis?.steps as Step[] | undefined)?.find((item) => item.step_id === id);
@@ -706,52 +706,52 @@ export default function Home() {
               </div>;
             })}
           </div>
-          {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>Checkpoint state is persisted server-side</span></div>}
+          {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>{t("workspace.checkpointPersisted")}</span></div>}
           {analysis?.started_at && <div className="run-meta"><span>Started {formatDate(analysis.started_at)}</span><span>Last state update {formatDate(analysis.completed_at ?? analysis.started_at)}</span></div>}
         </section>
       </section>
 
       <section className="panel variants-panel">
-        <div className="panel-head"><div><div className="section-kicker">INTERPRETATION</div><h3>Prioritized variants</h3></div><span className="badge neutral">{variants.length} variants</span></div>
-        {variants.length === 0 ? <div className="empty"><strong>Waiting for a completed analysis</strong><p>The table will populate from durable server state once annotation has produced variant records.</p></div> : <div className="table-wrap"><table><thead><tr><th>Variant</th><th>Position</th><th>Ref / Alt</th><th>Build</th><th>Review</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">Selected</span> : <span className="badge neutral">Open</span>}</td></tr>)}</tbody></table></div>}
+        <div className="panel-head"><div><div className="section-kicker">INTERPRETATION</div><h3>{t("workspace.prioritizedVariants")}</h3></div><span className="badge neutral">{variants.length} {t("workspace.variantsCount")}</span></div>
+        {variants.length === 0 ? <div className="empty"><strong>{t("workspace.waitingAnalysis")}</strong><p>{t("workspace.variantsWillPopulate")}</p></div> : <div className="table-wrap"><table><thead><tr><th>Variant</th><th>Position</th><th>Ref / Alt</th><th>Build</th><th>Review</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">Selected</span> : <span className="badge neutral">Open</span>}</td></tr>)}</tbody></table></div>}
       </section>
 
       <section className="panel complete-report-panel">
-        <div className="panel-head"><div><div className="section-kicker">COMPLETE VARIANT REPORT</div><h3>All analyzed variants</h3></div><span className="badge neutral">{completeVariants.length} rows</span></div>
-        <div className="report-toolbar"><p>Inspection layer for the laboratory team. This is separate from the concise clinical report.</p><div className="actions-row"><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.csv`, `siraloom-complete-variant-report-${analysisId}.csv`)} disabled={!analysisId}>Download CSV</button><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.json`, `siraloom-complete-variant-report-${analysisId}.json`)} disabled={!analysisId}>Download JSON</button></div></div>
-        {completeVariants.length === 0 ? <div className="empty small"><strong>No complete variant dataset yet</strong><p>It becomes available after annotation has produced persistent variant records.</p></div> : <div className="table-wrap"><table><thead><tr>{completeVariantColumns.slice(0, 12).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{completeVariants.slice(0, 100).map((row, index) => <tr key={String(row.variant_id ?? index)} onClick={() => typeof row.variant_id === "string" && setSelectedVariantId(row.variant_id)}>{completeVariantColumns.slice(0, 12).map((column) => <td key={column}><code>{String(row[column] ?? "—")}</code></td>)}</tr>)}</tbody></table>{completeVariants.length > 100 && <p className="table-note">Showing the first 100 rows for interactive inspection. Download the complete CSV/JSON for the full dataset.</p>}</div>}
+        <div className="panel-head"><div><div className="section-kicker">{t("workspace.completeReport")}</div><h3>{t("workspace.allAnalyzedVariants")}</h3></div><span className="badge neutral">{completeVariants.length} {t("workspace.rowsCount")}</span></div>
+        <div className="report-toolbar"><p>{t("workspace.completeReportLead")}</p><div className="actions-row"><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.csv`, `siraloom-complete-variant-report-${analysisId}.csv`)} disabled={!analysisId}>{t("workspace.downloadCsv")}</button><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.json`, `siraloom-complete-variant-report-${analysisId}.json`)} disabled={!analysisId}>{t("workspace.downloadJson")}</button></div></div>
+        {completeVariants.length === 0 ? <div className="empty small"><strong>{t("workspace.noCompleteDataset")}</strong><p>{t("workspace.completeDatasetPending")}</p></div> : <div className="table-wrap"><table><thead><tr>{completeVariantColumns.slice(0, 12).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{completeVariants.slice(0, 100).map((row, index) => <tr key={String(row.variant_id ?? index)} onClick={() => typeof row.variant_id === "string" && setSelectedVariantId(row.variant_id)}>{completeVariantColumns.slice(0, 12).map((column) => <td key={column}><code>{String(row[column] ?? "—")}</code></td>)}</tr>)}</tbody></table>{completeVariants.length > 100 && <p className="table-note">{t("workspace.first100Note")}</p>}</div>}
       </section>
 
       <section className="detail-grid">
         <section className="panel evidence-panel">
-          <div className="panel-head"><div><div className="section-kicker">EVIDENCE</div><h3>Variant evidence</h3></div></div>
-          {!variantDetail ? <div className="empty"><strong>No variant selected</strong><p>Select a variant after analysis completion.</p></div> : <div className="evidence-stack">
-            <div className="identity-card"><div><span>Canonical</span><strong>{String(variantDetail.variant.canonical_key ?? "—")}</strong></div><div><span>Normalization</span><strong>{String(variantDetail.variant.normalization_status ?? "—")}</strong></div></div>
+          <div className="panel-head"><div><div className="section-kicker">EVIDENCE</div><h3>{t("workspace.variantEvidence")}</h3></div></div>
+          {!variantDetail ? <div className="empty"><strong>{t("workspace.noVariantSelected")}</strong><p>{t("workspace.selectVariantAfterAnalysis")}</p></div> : <div className="evidence-stack">
+            <div className="identity-card"><div><span>{t("workspace.canonical")}</span><strong>{String(variantDetail.variant.canonical_key ?? "—")}</strong></div><div><span>{t("workspace.normalization")}</span><strong>{String(variantDetail.variant.normalization_status ?? "—")}</strong></div></div>
             <div className="evidence-list">
-              {variantDetail.population.map((item, index) => <div className="evidence-item" key={`pop-${index}`}><div><strong>Population · {String(item.label ?? item.population ?? "Unknown")}</strong><span>{String(item.availability ?? "—")}</span></div><code>{item.af == null ? "No data" : String(item.af)}</code></div>)}
-              {variantDetail.evidence.map((item, index) => { const key = `ev-${index}`; const open = expandedEvidence === key; return <div className="evidence-item evidence-click" key={key} onClick={() => setExpandedEvidence(open ? null : key)}><div><strong>{String(item.type ?? "Evidence")}</strong><span>{String(item.source ?? "Unknown source")} · {String(item.source_version ?? "unversioned")}</span></div><span>{open ? "−" : "+"}</span>{open && <pre className="evidence-json">{JSON.stringify(item.payload ?? item.statement ?? {}, null, 2)}</pre>}</div>; })}
-              {variantDetail.evidence.length === 0 && variantDetail.population.length === 0 && <div className="empty small"><strong>No evidence records yet</strong></div>}
+              {variantDetail.population.map((item, index) => <div className="evidence-item" key={`pop-${index}`}><div><strong>Population · {String(item.label ?? item.population ?? t("workspace.unknown"))}</strong><span>{String(item.availability ?? "—")}</span></div><code>{item.af == null ? t("workspace.noData") : String(item.af)}</code></div>)}
+              {variantDetail.evidence.map((item, index) => { const key = `ev-${index}`; const open = expandedEvidence === key; return <div className="evidence-item evidence-click" key={key} onClick={() => setExpandedEvidence(open ? null : key)}><div><strong>{String(item.type ?? t("workspace.evidence"))}</strong><span>{String(item.source ?? t("workspace.unknownSource"))} · {String(item.source_version ?? t("workspace.unversioned"))}</span></div><span>{open ? "−" : "+"}</span>{open && <pre className="evidence-json">{JSON.stringify(item.payload ?? item.statement ?? {}, null, 2)}</pre>}</div>; })}
+              {variantDetail.evidence.length === 0 && variantDetail.population.length === 0 && <div className="empty small"><strong>{t("workspace.noEvidence")}</strong></div>}
             </div>
           </div>}
         </section>
 
         <section className="panel review-panel">
-          <div className="panel-head"><div><div className="section-kicker">REVIEW</div><h3>Human decision workspace</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
-          {!review ? <div className="empty"><strong>Review becomes available after interpretation</strong><p>Automated output remains proposed until a reviewer acts.</p></div> : <>
-            <div className="classification-banner"><span>Proposed / current</span><strong>{String(review.classification?.result ?? "No classification")}</strong><small>Review revision {String(review.classification?.review_version ?? 0)}</small></div>
-            <div className="actions-row"><button className="secondary" onClick={startReview} disabled={review.review_status === "APPROVED"}>Start review</button></div>
-            <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String((item.automated as any)?.reason ?? "No automated rationale recorded.")}</p><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">Accept</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">Reject</button></div></div>)}</div>
-            <label>Criterion review reason<input value={criterionReason} onChange={(e: ChangeEvent<HTMLInputElement>) => setCriterionReason(e.target.value)} placeholder="Why is this criterion accepted/rejected?" /></label>
-            <label>Final approval reason<textarea value={reviewReason} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReviewReason(e.target.value)} placeholder="Explain the basis for the final reviewer decision." rows={3} /></label>
-            <div className="actions-row"><button className="primary" onClick={approve} disabled={review.review_status !== "IN_REVIEW"}>Approve classification</button><button className="secondary" onClick={requestMoreEvidence} disabled={review.review_status !== "IN_REVIEW"}>Request more evidence</button><button className="secondary" onClick={generateReport} disabled={!analysisId || review.review_status !== "APPROVED"}>Generate report</button></div>
-            <div className="history"><div className="section-kicker">DECISION HISTORY</div>{review.history.length === 0 ? <p>No review actions yet.</p> : review.history.map((item, index) => <div className="history-row" key={`${item.action_type}-${index}`}><span>{formatDate(item.created_at)}</span><strong>{item.action_type}</strong><p>{item.reason}</p></div>)}</div>
+          <div className="panel-head"><div><div className="section-kicker">REVIEW</div><h3>{t("workspace.humanDecisionWorkspace")}</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
+          {!review ? <div className="empty"><strong>{t("workspace.reviewPending")}</strong><p>{t("workspace.automatedOutputProposed")}</p></div> : <>
+            <div className="classification-banner"><span>{t("workspace.proposedCurrent")}</span><strong>{String(review.classification?.result ?? t("workspace.noClassification"))}</strong><small>Review revision {String(review.classification?.review_version ?? 0)}</small></div>
+            <div className="actions-row"><button className="secondary" onClick={startReview} disabled={review.review_status === "APPROVED"}>{t("workspace.startReview")}</button></div>
+            <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String((item.automated as any)?.reason ?? t("workspace.noAutomatedRationale"))}</p><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">{t("workspace.accept")}</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">{t("workspace.reject")}</button></div></div>)}</div>
+            <label>{t("workspace.criterionReviewReason")}<input value={criterionReason} onChange={(e: ChangeEvent<HTMLInputElement>) => setCriterionReason(e.target.value)} placeholder="Why is this criterion accepted/rejected?" /></label>
+            <label>{t("workspace.finalApprovalReason")}<textarea value={reviewReason} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReviewReason(e.target.value)} placeholder="Explain the basis for the final reviewer decision." rows={3} /></label>
+            <div className="actions-row"><button className="primary" onClick={approve} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.approveClassification")}</button><button className="secondary" onClick={requestMoreEvidence} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.requestMoreEvidence")}</button><button className="secondary" onClick={generateReport} disabled={!analysisId || review.review_status !== "APPROVED"}>{t("workspace.generateReport")}</button></div>
+            <div className="history"><div className="section-kicker">DECISION HISTORY</div>{review.history.length === 0 ? <p>{t("workspace.noReviewActions")}</p> : review.history.map((item, index) => <div className="history-row" key={`${item.action_type}-${index}`}><span>{formatDate(item.created_at)}</span><strong>{item.action_type}</strong><p>{item.reason}</p></div>)}</div>
           </>}
         </section>
       </section>
 
       <section className="bottom-grid">
-        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">REPORT</div><h3>Final report</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>No report generated</strong><p>Report generation is downstream of reviewer-approved interpretation.</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? "Interpretation available in report artifact.")}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>Finalize report</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>Download PDF</button>}</div></div>}</section>
-        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">AUDIT & PROVENANCE</div><h3>Case timeline</h3></div><span className="badge neutral">{auditEvents.length} events</span></div><div className="audit-callout"><strong>Every important action is reconstructable.</strong><p>Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>No audit events yet</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>Export complete case history</button>{exportId && <><div className="keyline"><span>Export</span><code>{exportId}</code></div><div className="keyline"><span>Status</span><strong>{exportStatus ? prettyStatus(exportStatus) : "Queued"}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>Download case history ZIP</button>}</>}</section>
+        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">REPORT</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
+        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">AUDIT & PROVENANCE</div><h3>{t("workspace.caseTimeline")}</h3></div><span className="badge neutral">{auditEvents.length} {t("workspace.eventsCount")}</span></div><div className="audit-callout"><strong>{t("workspace.auditReconstructable")}</strong><p>Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>{t("workspace.noAuditEvents")}</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>{t("workspace.exportHistory")}</button>{exportId && <><div className="keyline"><span>{t("workspace.export")}</span><code>{exportId}</code></div><div className="keyline"><span>{t("workspace.status")}</span><strong>{exportStatus ? prettyStatus(exportStatus) : t("workspace.queued")}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>{t("workspace.downloadHistoryZip")}</button>}</>}</section>
       </section>
 
       <footer className="footer"><span>SIRALOOM Variant v1</span><span>Scientific results remain subject to configured resources, review, validation scope, and laboratory governance.</span></footer>
