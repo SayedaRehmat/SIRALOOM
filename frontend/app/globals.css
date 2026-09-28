@@ -441,3 +441,19 @@ tbody tr.selected { background: #eff8f5; }
 [dir="rtl"] .app-nav .text-button {
   text-align: right;
 }
+
+
+/* SIRALOOM public platform presentation */
+.hero-wordmark { width: min(420px, 100%); min-height: 360px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; border:1px solid #dedfed; border-radius:28px; background:linear-gradient(145deg,#ffffff,#f6f3fa); box-shadow:0 24px 60px rgba(39,52,94,.08); }
+.hero-wordmark span { color:#27345e; font-size:clamp(42px,6vw,70px); font-weight:800; letter-spacing:.08em; line-height:1; }
+.hero-wordmark small { margin-top:16px; color:#667188; font-size:13px; letter-spacing:.04em; }
+.home-section { width:min(1180px,calc(100% - 40px)); margin:0 auto 90px; }
+.home-section h2 { margin:8px 0 14px; color:#27345e; font-size:clamp(28px,4vw,46px); line-height:1.08; letter-spacing:-.045em; }
+.home-section > p:not(.section-kicker), .product-panel p { color:#667188; line-height:1.65; max-width:760px; }
+.workflow-strip { display:flex; flex-wrap:wrap; gap:8px; margin-top:28px; }
+.workflow-strip span { padding:9px 12px; border:1px solid #d4d3eb; border-radius:999px; background:#fff; color:#475272; font-size:11px; font-weight:700; letter-spacing:.03em; }
+.home-platform { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr); gap:50px; align-items:start; }
+.product-panel { padding:26px; border:1px solid #e0e0ef; border-radius:18px; background:#fff; box-shadow:0 14px 38px rgba(50,53,106,.045); }
+.product-panel h3 { margin:7px 0 10px; color:#27345e; font-size:24px; letter-spacing:-.025em; }
+.product-panel .text-link { display:inline-flex; margin-top:8px; }
+@media(max-width:760px){ .hero-wordmark{min-height:270px;width:100%;}.home-platform{grid-template-columns:1fr;gap:24px}.home-section{margin-bottom:64px}.workflow-strip span{font-size:10px} }
