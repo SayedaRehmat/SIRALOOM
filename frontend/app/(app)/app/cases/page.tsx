@@ -416,10 +416,7 @@ export default function Cases() {
         <div>
           <p className="eyebrow">{t("cases.eyebrow")}</p>
           <h1>{t("cases.title")}</h1>
-          <p className="lead">
-            Create a traceable case, register its specimen, and validate the
-            variant dataset before scientific analysis begins.
-          </p>
+          <p className="lead">{t("cases.lead")}</p>
         </div>
 
         <Link className="link-button" href="/app/dashboard">
@@ -502,10 +499,7 @@ export default function Cases() {
 
             <h2>{t("cases.info")}</h2>
 
-            <p className="muted">
-              The case is created inside your authenticated organization.
-              Organization ownership is determined by the server.
-            </p>
+            <p className="muted">{t("cases.orgHelp")}</p>
 
             <div className="form-grid">
               <label>
