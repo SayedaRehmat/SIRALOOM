@@ -723,3 +723,29 @@ def test_partition_scheduler_reports_capacity_exhaustion_without_claiming_work()
         assert remaining.attempt == 0
         assert scheduler.capacity()["cpu_used"] == 1.0
         assert scheduler.capacity()["memory_mb_used"] == 1024
+
+
+def test_worker_recovery_returns_false_when_analysis_is_missing():
+    from uuid import uuid4
+
+    from backend.app.workflows.variant import recover_interrupted_execution
+
+    class MissingAnalysisSession:
+        def __init__(self):
+            self.get_calls = 0
+            self.commit_calls = 0
+
+        def get(self, model, analysis_id):
+            self.get_calls += 1
+            assert analysis_id == requested_id
+            return None
+
+        def commit(self):
+            self.commit_calls += 1
+
+    requested_id = uuid4()
+    db = MissingAnalysisSession()
+
+    assert recover_interrupted_execution(db, requested_id) is False
+    assert db.get_calls == 1
+    assert db.commit_calls == 0
