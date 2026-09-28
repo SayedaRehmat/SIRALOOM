@@ -53,7 +53,7 @@ export default function ReportsPage() {
           return;
         }
       } catch (e) {
-        setMessage(e instanceof Error ? e.message : "Unable to resolve the selected case.");
+        setMessage(e instanceof Error ? e.message : t("reports.messageLoadCase"));
       }
       if (storedAnalysis) setAnalysisId(storedAnalysis);
     };
@@ -61,40 +61,40 @@ export default function ReportsPage() {
   }, []);
 
   const load = async () => {
-    if (!analysisId) { setMessage("Enter or open an Analysis ID first."); return; }
+    if (!analysisId) { setMessage(t("reports.messageAnalysisRequired")); return; }
     setLoading(true); setMessage("");
     try {
       const [r, d] = await Promise.all([apiFetch(`/analyses/${analysisId}/reports`), apiFetch(`/analyses/${analysisId}/reportability`)]);
       setReports(r.items ?? []); setDecisions(d.items ?? []);
       setSelected((cur) => cur && (d.items ?? []).some((x: Decision) => x.decision_id === cur.decision_id) ? cur : (d.items?.[0] ?? null));
-    } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to load reporting workspace."); }
+    } catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageLoad")); }
     finally { setLoading(false); }
   };
 
   useEffect(() => { if (analysisId) load(); }, [analysisId]);
 
   const evaluate = async () => {
-    try { await apiFetch(`/analyses/${analysisId}/reportability/evaluate`, { method: "POST" }); await load(); setMessage("Reportability proposals evaluated. Final dispositions still require authorized human review."); }
-    catch (e) { setMessage(e instanceof Error ? e.message : "Unable to evaluate reportability."); }
+    try { await apiFetch(`/analyses/${analysisId}/reportability/evaluate`, { method: "POST" }); await load(); setMessage(t("reports.messageEvaluate")); }
+    catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorEvaluate")); }
   };
 
   const finalizeDecision = async () => {
-    if (!selected || !reason.trim()) { setMessage("A reportability review reason is required."); return; }
+    if (!selected || !reason.trim()) { setMessage(t("reports.messageReason")); return; }
     try {
       await apiFetch(`/reportability/${selected.decision_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disposition, expected_version: selected.review_version, reason: reason.trim() }) });
-      setReason(""); await load(); setMessage("Reportability disposition finalized and audited.");
+      setReason(""); await load(); setMessage(t("reports.messageFinalized"));
     } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to finalize reportability."); }
   };
 
   const generate = async () => {
-    try { await apiFetch(`/analyses/${analysisId}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ report_type: reportType, language: language === "ar" ? "ar" : "en", include_full_evidence: reportType === "ANALYTICAL" }) }); await load(); setMessage("Immutable report artifact generated as a draft."); }
-    catch (e) { setMessage(e instanceof Error ? e.message : "Unable to generate report."); }
+    try { await apiFetch(`/analyses/${analysisId}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ report_type: reportType, language: language === "ar" ? "ar" : "en", include_full_evidence: reportType === "ANALYTICAL" }) }); await load(); setMessage(t("reports.messageGenerate")); }
+    catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorGenerate")); }
   };
 
   const finalize = async (report: Report) => {
-    if (!reason.trim()) { setMessage("Use the review reason field for report sign-out."); return; }
-    try { await apiFetch(`/reports/${report.report_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_version: 0, reason: reason.trim() }) }); setReason(""); await load(); setMessage("Report approved/sign-out recorded. A newer final report supersedes the prior final version."); }
-    catch (e) { setMessage(e instanceof Error ? e.message : "Report finalization failed."); }
+    if (!reason.trim()) { setMessage(t("reports.messageSignoutReason")); return; }
+    try { await apiFetch(`/reports/${report.report_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_version: 0, reason: reason.trim() }) }); setReason(""); await load(); setMessage(t("reports.messageFinalize")); }
+    catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorFinalize")); }
   };
 
   const download = async (artifactId?: string | null) => {
@@ -110,17 +110,17 @@ export default function ReportsPage() {
 
   return <main className="reports-page">
     <header className="reports-header"><div><p className="eyebrow">{t("reports.eyebrow")}</p><h1>{t("reports.title")}</h1><p className="lead compact">{t("reports.lead")}</p></div></header>
-    <section className="panel reports-controls"><div className="control-grid reports-control-grid"><label>{t("reports.analysisId")}<input value={analysisId} onChange={e => setAnalysisId(e.target.value.trim())} placeholder={t("reports.analysisId")} /></label><label>{t("reports.type")}<select value={reportType} onChange={e => setReportType(e.target.value)}><option value="CLINICAL_INTERPRETATION">{t("reports.clinical")}</option><option value="ANALYTICAL">{t("reports.analytical")}</option></select></label></div><div className="actions-row"><button className="primary" onClick={load} disabled={loading}>{loading ? "Loading…" : "Refresh"}</button><button className="secondary" onClick={evaluate} disabled={!analysisId}>{t("reports.evaluate")}</button><button className="secondary" onClick={generate} disabled={!analysisId}>{t("reports.generate")}</button></div>{message && <div className="configuration-notice">{message}</div>}</section>
+    <section className="panel reports-controls"><div className="control-grid reports-control-grid"><label>{t("reports.analysisId")}<input value={analysisId} onChange={e => setAnalysisId(e.target.value.trim())} placeholder={t("reports.analysisId")} /></label><label>{t("reports.type")}<select value={reportType} onChange={e => setReportType(e.target.value)}><option value="CLINICAL_INTERPRETATION">{t("reports.clinical")}</option><option value="ANALYTICAL">{t("reports.analytical")}</option></select></label></div><div className="actions-row"><button className="primary" onClick={load} disabled={loading}>{loading ? t("reports.loading") : t("reports.refresh")}</button><button className="secondary" onClick={evaluate} disabled={!analysisId}>{t("reports.evaluate")}</button><button className="secondary" onClick={generate} disabled={!analysisId}>{t("reports.generate")}</button></div>{message && <div className="configuration-notice">{message}</div>}</section>
 
     <div className="reports-grid">
-      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.section")}</div><h3>{decisions.length} decisions · {reportableCount} reportable</h3></div><span className={`badge ${reportabilityReady ? "success" : "active"}`}>{reportabilityReady ? "FINALIZED" : "REVIEW REQUIRED"}</span></div>
+      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.section")}</div><h3>{decisions.length} {t("reports.decisions")} · {reportableCount} {t("reports.reportable")}</h3></div><span className={`badge ${reportabilityReady ? "success" : "active"}`}>{reportabilityReady ? t("reports.finalized") : t("reports.reviewRequired")}</span></div>
         {!decisions.length ? <div className="empty"><strong>{t("reports.none")}</strong><p>{t("reports.help")}</p></div> : <div className="decision-list">{decisions.map(d => <button className={`decision-item ${selected?.decision_id === d.decision_id ? "selected" : ""}`} key={d.decision_id} onClick={() => { setSelected(d); setDisposition(d.disposition); }}><div><strong>{d.variant_id}</strong><span>Priority {d.priority_score} · {pretty(d.priority_band)}</span></div><div><span className={`badge ${badgeClass(d.status)}`}>{pretty(d.status)}</span><span className={`badge ${badgeClass(d.disposition)}`}>{pretty(d.disposition)}</span></div></button>)}</div>}
       </section>
 
-      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.human")}</div><h3>{selected ? "Selected decision" : "Select a decision"}</h3></div></div>{!selected ? <div className="empty"><strong>{t("reports.noSelected")}</strong><p>{t("reports.selectHelp")}</p></div> : <><div className="review-summary-grid"><div><span>{t("reports.variant")}</span><strong>{selected.variant_id}</strong></div><div><span>{t("reports.disposition")}</span><strong>{pretty(selected.disposition)}</strong></div><div><span>{t("reports.priority")}</span><strong>{selected.priority_score} · {pretty(selected.priority_band)}</strong></div><div><span>{t("reports.reviewVersion")}</span><strong>{selected.review_version}</strong></div></div><div className="context-section"><div className="section-kicker">{t("reports.policy")}</div><ul>{selected.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul></div><div className="form-grid"><label>{t("reports.finalDisposition")}<select value={disposition} disabled={selected.status === "FINAL"} onChange={e => setDisposition(e.target.value)}><option>REPORT</option><option>REVIEW</option><option>DO_NOT_REPORT</option></select></label><label className="span-2">{t("reports.rationale")}<textarea value={reason} disabled={selected.status === "FINAL"} onChange={e => setReason(e.target.value)} rows={4} placeholder={t("reports.rationalePlaceholder")} /></label></div>{selected.status !== "FINAL" && <button className="primary" onClick={finalizeDecision}>{t("reports.finalize")}</button>}</>}</section>
+      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.human")}</div><h3>{selected ? t("reports.selectedDecision") : t("reports.selectDecision")}</h3></div></div>{!selected ? <div className="empty"><strong>{t("reports.noSelected")}</strong><p>{t("reports.selectHelp")}</p></div> : <><div className="review-summary-grid"><div><span>{t("reports.variant")}</span><strong>{selected.variant_id}</strong></div><div><span>{t("reports.disposition")}</span><strong>{pretty(selected.disposition)}</strong></div><div><span>{t("reports.priority")}</span><strong>{selected.priority_score} · {pretty(selected.priority_band)}</strong></div><div><span>{t("reports.reviewVersion")}</span><strong>{selected.review_version}</strong></div></div><div className="context-section"><div className="section-kicker">{t("reports.policy")}</div><ul>{selected.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul></div><div className="form-grid"><label>{t("reports.finalDisposition")}<select value={disposition} disabled={selected.status === "FINAL"} onChange={e => setDisposition(e.target.value)}><option>REPORT</option><option>REVIEW</option><option>DO_NOT_REPORT</option></select></label><label className="span-2">{t("reports.rationale")}<textarea value={reason} disabled={selected.status === "FINAL"} onChange={e => setReason(e.target.value)} rows={4} placeholder={t("reports.rationalePlaceholder")} /></label></div>{selected.status !== "FINAL" && <button className="primary" onClick={finalizeDecision}>{t("reports.finalize")}</button>}</>}</section>
     </div>
 
-    <section className="panel reports-list-panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.versions")}</div><h3>{t("reports.lineage")}</h3></div></div>{!reports.length ? <div className="empty"><strong>{t("reports.noReports")}</strong><p>{t("reports.reportHelp")}</p></div> : <div className="report-version-list">{reports.map(r => <article className="report-version" key={r.report_id}><div><strong>Version {r.version} · {pretty(r.report_type)}</strong><span>{pretty(r.status)} · {r.language} · {r.created_at ? new Date(r.created_at).toLocaleString() : "—"}</span>{r.supersedes_report_id && <small>Supersedes {r.supersedes_report_id}</small>}</div><div className="actions-row"><span className={`badge ${badgeClass(r.status)}`}>{pretty(r.status)}</span>{r.artifact_id && <button className="secondary" onClick={() => download(r.artifact_id)}>{t("reports.pdf")}</button>}{r.status === "DRAFT" && <button className="primary" disabled={!reportabilityReady} onClick={() => finalize(r)}>{t("reports.signout")}</button>}</div></article>)}</div>}</section>
+    <section className="panel reports-list-panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.versions")}</div><h3>{t("reports.lineage")}</h3></div></div>{!reports.length ? <div className="empty"><strong>{t("reports.noReports")}</strong><p>{t("reports.reportHelp")}</p></div> : <div className="report-version-list">{reports.map(r => <article className="report-version" key={r.report_id}><div><strong>{t("reports.versionLabel")} {r.version} · {pretty(r.report_type)}</strong><span>{pretty(r.status)} · {r.language} · {r.created_at ? new Date(r.created_at).toLocaleString() : "—"}</span>{r.supersedes_report_id && <small>{t("reports.supersedes")} {r.supersedes_report_id}</small>}</div><div className="actions-row"><span className={`badge ${badgeClass(r.status)}`}>{pretty(r.status)}</span>{r.artifact_id && <button className="secondary" onClick={() => download(r.artifact_id)}>{t("reports.pdf")}</button>}{r.status === "DRAFT" && <button className="primary" disabled={!reportabilityReady} onClick={() => finalize(r)}>{t("reports.signout")}</button>}</div></article>)}</div>}</section>
 <p className="reports-footnote">{t("reports.validationDisclaimer")}</p>
   </main>;
 }
