@@ -495,11 +495,45 @@ export type TranslationKey =
   | "review.policyRationalePlaceholder"
   | "review.signoutPlaceholder"
   | "reports.rationalePlaceholder"
+  | "cases.refresh"
+  | "cases.orgHelp"
+  | "cases.specimenHelp"
+  | "cases.uploadHelp"
+  | "cases.validationHelp"
+  | "cases.indexHelp"
+  | "cases.continue"
+  | "cases.continueIndex"
+  | "cases.skipIndex"
+  | "cases.openWorkspace"
+  | "cases.readyHelp"
+  | "cases.readyDetail"
+  | "cases.invalidPrimary"
+  | "cases.chooseVcf"
+  | "cases.chooseIndex"
+  | "cases.expectedPairing"
+  | "cases.validationPassed"
   | "reports.validationDisclaimer";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
   en: {
+    "cases.refresh": "Refresh cases",
+    "cases.orgHelp": "The case is created inside your authenticated organization. Organization ownership is determined by the server.",
+    "cases.specimenHelp": "A variant file must be associated with a specimen before it can enter the Phase 1 workflow.",
+    "cases.uploadHelp": "Supported: .vcf, .vcf.gz, and .vcf.bgz. The original artifact is preserved and SHA-256 is calculated from the uploaded content.",
+    "cases.validationHelp": "Validation runs against the actual uploaded content. No mock variant data is generated.",
+    "cases.indexHelp": "Indexes are associated with the validated primary VCF. An index file alone is never treated as a variant dataset.",
+    "cases.continue": "Continue",
+    "cases.continueIndex": "Continue to index",
+    "cases.skipIndex": "Skip index & review",
+    "cases.openWorkspace": "Open Variant workspace",
+    "cases.readyHelp": "Confirm the case is internally consistent before starting scientific analysis.",
+    "cases.readyDetail": "The primary VCF passed structural validation and has an explicit genome build. You can proceed to the existing Variant workflow.",
+    "cases.invalidPrimary": "The primary variant artifact is not valid. Resolve the validation failure before starting analysis.",
+    "cases.chooseVcf": "Choose a VCF / VCF.GZ / VCF.BGZ file",
+    "cases.chooseIndex": "Choose .tbi or .csi",
+    "cases.expectedPairing": "Expected pairing: ",
+    "cases.validationPassed": "The primary VCF passed structural validation and has an explicit genome build. You can proceed to the existing Variant workflow.",
     "cases.eyebrow": "SIRALOOM VARIANT · CASE INTAKE",
     "cases.title": "New genomic case",
     "cases.lead": "Create a traceable case, register its specimen, and validate the variant dataset before scientific analysis begins.",
@@ -989,6 +1023,23 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
+    "cases.refresh": "تحديث الحالات",
+    "cases.orgHelp": "تُنشأ الحالة داخل مؤسستك الموثقة. ويحدد الخادم ملكية المؤسسة.",
+    "cases.specimenHelp": "يجب ربط ملف المتغير بعينة قبل أن يدخل سير عمل المرحلة 1.",
+    "cases.uploadHelp": "المدعوم: ‎.vcf و‎.vcf.gz و‎.vcf.bgz. يُحفظ الأثر الأصلي ويُحسب SHA-256 من المحتوى المرفوع.",
+    "cases.validationHelp": "يُجرى التحقق من صحة المحتوى المرفوع فعليًا. لا يتم إنشاء بيانات متغيرات وهمية.",
+    "cases.indexHelp": "تُربط الفهارس بملف VCF الأساسي الذي تم التحقق منه. ولا يُعامل ملف الفهرس وحده كمجموعة بيانات متغيرات.",
+    "cases.continue": "متابعة",
+    "cases.continueIndex": "المتابعة إلى الفهرس",
+    "cases.skipIndex": "تخطي الفهرس والمراجعة",
+    "cases.openWorkspace": "فتح مساحة المتغيرات",
+    "cases.readyHelp": "تأكد من اتساق الحالة داخليًا قبل بدء التحليل العلمي.",
+    "cases.readyDetail": "اجتاز ملف VCF الأساسي التحقق البنيوي وله بناء جينومي محدد. يمكنك المتابعة إلى سير عمل المتغيرات الحالي.",
+    "cases.invalidPrimary": "أثر المتغير الأساسي غير صالح. عالج فشل التحقق قبل بدء التحليل.",
+    "cases.chooseVcf": "اختر ملف VCF / VCF.GZ / VCF.BGZ",
+    "cases.chooseIndex": "اختر ‎.tbi أو ‎.csi",
+    "cases.expectedPairing": "الاقتران المتوقع: ",
+    "cases.validationPassed": "اجتاز ملف VCF الأساسي التحقق البنيوي وله بناء جينومي محدد. يمكنك المتابعة إلى سير عمل المتغيرات الحالي.",
     "cases.eyebrow": "SIRALOOM VARIANT · إدخال الحالة",
     "cases.title": "حالة جينومية جديدة",
     "cases.lead": "أنشئ حالة قابلة للتتبع، وسجّل عينتها، وتحقق من صحة مجموعة المتغيرات قبل بدء التحليل العلمي.",
