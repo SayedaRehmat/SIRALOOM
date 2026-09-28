@@ -578,11 +578,37 @@ export type TranslationKey =
   | "review.confirmationVersioned"
   | "review.followupRecorded"
   | "review.secondaryVersioned"
+  | "review.pending"
+  | "review.inReview"
+  | "review.moreEvidence"
+  | "review.approved"
+  | "review.pathogenic"
+  | "review.likelyPathogenic"
+  | "review.vus"
+  | "review.likelyBenign"
+  | "review.benign"
+  | "review.report"
+  | "review.reviewDisposition"
+  | "review.doNotReport"
+  | "review.notDetermined"
   | "reports.validationDisclaimer";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
   en: {
+    "review.pending": "PENDING",
+    "review.inReview": "IN_REVIEW",
+    "review.moreEvidence": "MORE_EVIDENCE",
+    "review.approved": "APPROVED",
+    "review.pathogenic": "PATHOGENIC",
+    "review.likelyPathogenic": "LIKELY_PATHOGENIC",
+    "review.vus": "VUS",
+    "review.likelyBenign": "LIKELY_BENIGN",
+    "review.benign": "BENIGN",
+    "review.report": "REPORT",
+    "review.reviewDisposition": "REVIEW",
+    "review.doNotReport": "DO_NOT_REPORT",
+    "review.notDetermined": "NOT_DETERMINED",
     "review.all": "All",
     "review.loading": "Loading…",
     "review.refreshQueue": "Refresh clinical queue",
@@ -1155,6 +1181,19 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
+    "review.pending": "قيد الانتظار",
+    "review.inReview": "قيد المراجعة",
+    "review.moreEvidence": "مزيد من الأدلة",
+    "review.approved": "معتمد",
+    "review.pathogenic": "مُمرض",
+    "review.likelyPathogenic": "مرجح الإمراضية",
+    "review.vus": "متغير غير محدد الأهمية",
+    "review.likelyBenign": "مرجح الحميدة",
+    "review.benign": "حميد",
+    "review.report": "إبلاغ",
+    "review.reviewDisposition": "مراجعة",
+    "review.doNotReport": "عدم الإبلاغ",
+    "review.notDetermined": "غير محدد",
     "review.all": "الكل",
     "review.loading": "جارٍ التحميل…",
     "review.refreshQueue": "تحديث قائمة المراجعة السريرية",
