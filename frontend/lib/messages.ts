@@ -70,6 +70,16 @@ export type TranslationKey =
   | "public.home.title"
   | "public.home.lead"
   | "public.home.traceable.title"
+  | "public.home.platform.eyebrow"
+  | "public.home.platform.title"
+  | "public.home.platform.body"
+  | "public.home.lifecycle.eyebrow"
+  | "public.home.lifecycle.title"
+  | "public.home.lifecycle.body"
+  | "public.home.lifecycle.steps"
+  | "public.home.product.eyebrow"
+  | "public.home.product.title"
+  | "public.home.product.body"
   | "public.home.traceable.body"
   | "public.home.review.title"
   | "public.home.review.body"
@@ -935,6 +945,16 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.home.eyebrow": "GENOMIC INTELLIGENCE PLATFORM",
     "public.home.title": "Evidence-connected workflows for genomic laboratories.",
     "public.home.lead": "SIRALOOM is building extensible infrastructure that connects case intake, genomic evidence, human review, reporting, and transparent computational history.",
+    "public.home.platform.eyebrow": "THE SIRALOOM PLATFORM",
+    "public.home.platform.title": "Built to bring the genomic laboratory together.",
+    "public.home.platform.body": "SIRALOOM is a software platform for the work surrounding genomic analysis, interpretation, review, reporting, and what follows.",
+    "public.home.lifecycle.eyebrow": "THE LIFECYCLE",
+    "public.home.lifecycle.title": "From case to reanalysis.",
+    "public.home.lifecycle.body": "A continuous record that carries the case through analysis, interpretation, review, reporting, and back into reanalysis as knowledge and clinical context change.",
+    "public.home.lifecycle.steps": "CASE · ANALYSIS · ANNOTATION · EVIDENCE · CLASSIFICATION · REVIEW · REPORT · REANALYSIS",
+    "public.home.product.eyebrow": "THE FIRST PRODUCT",
+    "public.home.product.title": "SIRALOOM Variant",
+    "public.home.product.body": "The first SIRALOOM product, built around the variant lifecycle from case intake and analysis through annotation, evidence, classification, review, reporting, and reanalysis.",
     "public.home.traceable.title": "Traceable by design",
     "public.home.traceable.body": "Artifacts, evidence, decisions, resources, and reports preserve their history.",
     "public.home.review.title": "Built for review",
@@ -1520,12 +1540,22 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.home.eyebrow": "منصة الذكاء الجينومي",
     "public.home.title": "سير عمل متصل بالأدلة للمختبرات الجينومية.",
     "public.home.lead": "تبني SIRALOOM بنية قابلة للتوسع تربط استقبال الحالات والأدلة الجينومية والمراجعة البشرية وإعداد التقارير والسجل الحسابي الشفاف.",
+    "public.home.platform.eyebrow": "منصة SIRALOOM",
+    "public.home.platform.title": "مصممة لجمع العمل الجينومي في صورة متماسكة.",
+    "public.home.platform.body": "SIRALOOM منصة برمجية للعمل المحيط بالتحليل الجينومي والتفسير والمراجعة وإعداد التقارير وما يأتي بعدها.",
+    "public.home.lifecycle.eyebrow": "دورة العمل",
+    "public.home.lifecycle.title": "من الحالة إلى إعادة التحليل.",
+    "public.home.lifecycle.body": "سجل مستمر يحمل الحالة عبر التحليل والتفسير والمراجعة وإعداد التقارير، ثم يعيدها إلى إعادة التحليل مع تغير المعرفة والسياق السريري.",
+    "public.home.lifecycle.steps": "الحالة · التحليل · التعليق الجينومي · الأدلة · التصنيف · المراجعة · التقرير · إعادة التحليل",
+    "public.home.product.eyebrow": "المنتج الأول",
+    "public.home.product.title": "SIRALOOM Variant",
+    "public.home.product.body": "أول منتجات SIRALOOM، ومبني حول دورة المتغير من استقبال الحالة والتحليل إلى التعليق الجينومي والأدلة والتصنيف والمراجعة وإعداد التقارير وإعادة التحليل.",
     "public.home.traceable.title": "قابل للتتبع منذ التصميم",
     "public.home.traceable.body": "تحافظ القطع والأدلة والقرارات والموارد والتقارير على سجلها التاريخي.",
     "public.home.review.title": "مصمم للمراجعة",
     "public.home.review.body": "تبقى الملاحظات الحاسوبية منفصلة عن التفسير السريري.",
     "public.home.extend.title": "مصمم للتوسع",
-    "public.home.extend.body": "Variant هي أول خدمة على نواة منصة مستقرة وليست أداة معزولة.",
+    "public.home.extend.body": "SIRALOOM Variant هو المنتج الأول على منصة مصممة للتوسع إلى ما هو أبعد من سير عمل أو نمط واحد.",
     "public.about.eyebrow": "عن SIRALOOM",
     "public.about.title": "بنية تحتية لتفسير جينومي مدروس.",
     "public.about.lead": "ننشئ منصة قابلة للتوسع للمختبرات التي تحتاج إلى التتبع العلمي والأدلة المترابطة وسير العمل المستمر من استقبال الحالة حتى إعداد التقرير.",
