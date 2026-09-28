@@ -1,5 +1,5 @@
 def test_case_routes_registered(client):
-    paths = {route.path for route in client.app.routes}
+    paths = set(client.app.openapi().get("paths", {}))
     assert "/api/v1/cases" in paths
     assert "/api/v1/cases/{case_id}" in paths
     assert "/api/v1/cases/{case_id}/specimens" in paths
