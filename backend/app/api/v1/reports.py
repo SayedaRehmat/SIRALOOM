@@ -51,7 +51,15 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
     get_accessible_report(report_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
     try:
         r=finalize_report(db, report_id=report_id, approver_id=principal.user_id, reason=payload.reason)
-        db.commit(); return {"report_id":str(r.id),"version":r.report_version,"status":r.status,"approved_by":str(r.approved_by),"approved_at":r.approved_at.isoformat() if r.approved_at else None,"supersedes_report_id":str(r.supersedes_report_id) if r.supersedes_report_id else None}
+        db.commit()
+        resume_queued = False
+        if r.status == "FINAL":
+            try:
+                run_analysis_task.delay(str(r.analysis_id))
+                resume_queued = True
+            except RuntimeError:
+                resume_queued = False
+        return {"report_id":str(r.id),"version":r.report_version,"status":r.status,"approved_by":str(r.approved_by),"approved_at":r.approved_at.isoformat() if r.approved_at else None,"supersedes_report_id":str(r.supersedes_report_id) if r.supersedes_report_id else None,"workflow_resume_queued":resume_queued}
     except ReportFinalizationError as exc:
         db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc
 
