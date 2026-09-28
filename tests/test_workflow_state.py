@@ -20,6 +20,14 @@ def test_worker_recovery_preserves_explicit_retry_state_contract():
     assert StepStatus.RUNNING.value == "RUNNING"
 
 
+def test_transient_provider_error_preserves_bounded_retry_contract():
+    from backend.app.workflows.variant import TransientWorkflowError
+
+    assert TransientWorkflowError("temporary provider outage", countdown=0).countdown == 1
+    assert TransientWorkflowError("temporary provider outage", countdown=5).countdown == 5
+    assert TransientWorkflowError("temporary provider outage", countdown=10_000).countdown == 10_000
+
+
 def test_interrupted_worker_recovery_requeues_running_step_and_partition():
     from datetime import datetime, timedelta, timezone
     from uuid import uuid4
