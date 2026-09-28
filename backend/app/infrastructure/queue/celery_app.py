@@ -17,6 +17,59 @@ if Celery is not None:
         task_reject_on_worker_lost=True,
     )
 
+    def _finalize_transient_retry_exhaustion(db, analysis_id, error_message):
+        from datetime import datetime, timezone
+        from sqlalchemy import select
+        from backend.app.domain.enums import AnalysisStatus, StepStatus
+        from backend.app.infrastructure.audit.service import AuditService
+        from backend.app.infrastructure.db.models import Analysis, AnalysisPartition, WorkflowStep
+
+        analysis = db.get(Analysis, analysis_id)
+        if analysis is None:
+            return False
+
+        retrying_steps = list(db.scalars(
+            select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.status == StepStatus.RETRYING,
+            )
+        ))
+        for step in retrying_steps:
+            metadata = dict(step.metadata_json or {})
+            metadata["retry_exhausted"] = True
+            step.status = StepStatus.FAILED
+            step.error_code = "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+            step.error_message = error_message
+            step.metadata_json = metadata
+
+        unfinished_partitions = list(db.scalars(
+            select(AnalysisPartition).where(
+                AnalysisPartition.analysis_id == analysis_id,
+                AnalysisPartition.step_id == "annotate",
+                AnalysisPartition.status.in_(("READY", "RUNNING")),
+            )
+        ))
+        for partition in unfinished_partitions:
+            partition.status = "FAILED"
+            partition.lease_owner = None
+            partition.lease_expires_at = None
+            partition.error_code = "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+            partition.error_message = error_message
+
+        analysis.status = AnalysisStatus.FAILED
+        analysis.completed_at = datetime.now(timezone.utc)
+        AuditService(db).record(
+            event_type="ANNOTATION_RETRY_EXHAUSTED",
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            actor_type="SYSTEM",
+            actor_id="celery",
+            reason=error_message,
+            payload={"error_code": "ANNOTATION_PROVIDER_RETRY_EXHAUSTED", "max_retries": 3},
+        )
+        db.commit()
+        return True
+
     @celery_app.task(bind=True, autoretry_for=(), acks_late=True, max_retries=3)
     def run_analysis_task(self, analysis_id: str):
         from uuid import UUID
@@ -35,6 +88,17 @@ if Celery is not None:
         try:
             run_variant_analysis(UUID(analysis_id))
         except TransientWorkflowError as exc:
+            if self.request.retries >= self.max_retries:
+                terminal_db = SessionLocal()
+                try:
+                    _finalize_transient_retry_exhaustion(
+                        terminal_db,
+                        UUID(analysis_id),
+                        str(exc),
+                    )
+                finally:
+                    terminal_db.close()
+                raise
             raise self.retry(exc=exc, countdown=exc.countdown)
         from backend.app.infrastructure.db.models import Analysis
         from backend.app.infrastructure.db.session import SessionLocal
