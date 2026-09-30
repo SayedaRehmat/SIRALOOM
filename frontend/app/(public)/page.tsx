@@ -28,20 +28,29 @@ export default function Home() {
                 <span>{t("public.home.product.eyebrow")}</span>
                 <span className="workflow-status">{t("public.home.review.title")}</span>
               </div>
+
               <div className="workflow-case">
-                <span>{steps[0]}</span>
+                <div className="workflow-case-meta">
+                  <span>{steps[0] ?? "CASE"}</span>
+                  <span>GRCh38</span>
+                </div>
                 <strong>{t("public.home.platform.caseTitle")}</strong>
                 <small>{t("public.home.platform.caseBody")}</small>
               </div>
-              <div className="workflow-line" aria-hidden="true" />
-              <div className="workflow-node-grid">
-                <div><span>{steps[1]}</span><strong>{t("public.home.platform.workflowTitle")}</strong></div>
-                <div><span>{steps[6]}</span><strong>{t("public.home.platform.governanceTitle")}</strong></div>
-                <div><span>{steps[8]}</span><strong>{t("public.home.review.title")}</strong></div>
-                <div><span>{steps[9]}</span><strong>{t("public.home.product.title")}</strong></div>
+
+              <div className="workflow-track" aria-hidden="true">
+                <span /><span /><span /><span />
               </div>
+
+              <div className="workflow-node-grid">
+                <div className="workflow-node"><span>{steps[1] ?? "ANALYSIS"}</span><strong>{t("public.home.platform.workflowTitle")}</strong></div>
+                <div className="workflow-node"><span>{steps[3] ?? "EVIDENCE"}</span><strong>{t("public.home.platform.governanceTitle")}</strong></div>
+                <div className="workflow-node"><span>{steps[5] ?? "REVIEW"}</span><strong>{t("public.home.review.title")}</strong></div>
+                <div className="workflow-node"><span>{steps[6] ?? "REPORT"}</span><strong>{t("public.home.product.title")}</strong></div>
+              </div>
+
               <div className="workflow-reanalysis">
-                <span>{steps[steps.length - 1]}</span>
+                <span>{steps[steps.length - 1] ?? "REANALYSIS"}</span>
                 <strong>{t("public.home.lifecycle.title")}</strong>
               </div>
             </div>
@@ -55,21 +64,9 @@ export default function Home() {
             <p>{t("public.home.platform.body")}</p>
           </div>
           <div className="platform-principles">
-            <article>
-              <span>01</span>
-              <h3>{t("public.platform.caseTitle")}</h3>
-              <p>{t("public.platform.caseBody")}</p>
-            </article>
-            <article>
-              <span>02</span>
-              <h3>{t("public.platform.workflowTitle")}</h3>
-              <p>{t("public.platform.workflowBody")}</p>
-            </article>
-            <article>
-              <span>03</span>
-              <h3>{t("public.platform.governanceTitle")}</h3>
-              <p>{t("public.platform.governanceBody")}</p>
-            </article>
+            <article><span>01</span><h3>{t("public.platform.caseTitle")}</h3><p>{t("public.platform.caseBody")}</p></article>
+            <article><span>02</span><h3>{t("public.platform.workflowTitle")}</h3><p>{t("public.platform.workflowBody")}</p></article>
+            <article><span>03</span><h3>{t("public.platform.governanceTitle")}</h3><p>{t("public.platform.governanceBody")}</p></article>
           </div>
         </section>
 
