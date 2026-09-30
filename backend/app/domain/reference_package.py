@@ -108,9 +108,9 @@ def validate_reference_package(
             f"Resource {resource.id} is not a reference package.",
             code="REFERENCE_PACKAGE_INVALID",
         )
-    if resource.status != REFERENCE_PACKAGE_STATUS:
+    if resource.status not in {"ACTIVE", "SUPERSEDED"}:
         raise ReferencePackageError(
-            f"Reference package {resource.name!r} is not ACTIVE (status={resource.status!r}).",
+            f"Reference package {resource.name!r} is not consumable (status={resource.status!r}).",
             code="REFERENCE_PACKAGE_NOT_ACTIVE",
         )
     if resource.genome_build != expected_genome_build:
