@@ -43,6 +43,10 @@ def make_package(tmp_path: Path):
         checksum=checksum,
         metadata_json={
             "schema_version": REFERENCE_PACKAGE_SCHEMA_VERSION,
+            "assembly_name": "GRCh38",
+            "assembly_accession": "GCA_TEST_GRCH38",
+            "reference_source": "TEST_FIXTURE",
+            "sequence_scope": "TEST_CONTIG_SET",
             "contig_policy": CONTIG_POLICY_EXACT,
             "fasta_path": str(fasta),
             "fai_path": str(fai),
@@ -83,3 +87,30 @@ def test_reference_package_allows_explicitly_pinned_superseded_version(tmp_path:
     resource.status = "SUPERSEDED"
     package = validate_reference_package(resource, expected_genome_build="GRCh38")
     assert package["package_checksum"] == resource.checksum
+
+
+def test_reference_package_supports_explicit_grch37_identity(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    resource.genome_build = "GRCh37"
+    resource.metadata_json["assembly_name"] = "GRCh37"
+    resource.metadata_json["assembly_accession"] = "GCA_TEST_GRCH37"
+    resource.metadata_json["reference_source"] = "TEST_FIXTURE"
+    resource.metadata_json["sequence_scope"] = "TEST_CONTIG_SET"
+    resource.checksum = package_checksum(
+        genome_build="GRCh37",
+        version=resource.version,
+        fasta_sha256=resource.metadata_json["fasta_sha256"],
+        fai_sha256=resource.metadata_json["fai_sha256"],
+        contigs_sha256=resource.metadata_json["contigs_sha256"],
+    )
+    package = validate_reference_package(resource, expected_genome_build="GRCh37")
+    assert package["assembly_name"] == "GRCh37"
+    assert package["genome_build"] == "GRCh37"
+
+
+def test_reference_package_rejects_missing_assembly_identity(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    del resource.metadata_json["assembly_accession"]
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_ASSEMBLY_IDENTITY_MISSING"
