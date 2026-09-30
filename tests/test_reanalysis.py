@@ -328,3 +328,54 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             AnalysisResourceSnapshot.analysis_id == analysis_id,
         ).count() == 1
         assert db.get(Analysis, analysis_id).status == "SUCCEEDED"
+
+def test_change_event_identity_is_stable_across_old_versions_and_checksum_only_updates():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[Organization.__table__, ReanalysisChangeEvent.__table__],
+    )
+    organization_id = uuid4()
+
+    with Session(engine) as db:
+        first = create_change_event(
+            db,
+            organization_id=organization_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="gnomAD",
+            previous_version="v3.1.2",
+            previous_checksum="old-a",
+            new_version="v4.1",
+            new_checksum="new",
+        )
+        db.commit()
+
+        same_release_from_older_snapshot = create_change_event(
+            db,
+            organization_id=organization_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="gnomAD",
+            previous_version="v3.0",
+            previous_checksum="old-b",
+            new_version="v4.1",
+            new_checksum="new",
+        )
+        assert same_release_from_older_snapshot.id == first.id
+        assert db.query(ReanalysisChangeEvent).count() == 1
+
+        checksum_only = create_change_event(
+            db,
+            organization_id=organization_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="gnomAD",
+            previous_version="v4.1",
+            previous_checksum="new",
+            new_version="v4.1",
+            new_checksum="newer",
+        )
+        assert checksum_only.id != first.id
+        assert db.query(ReanalysisChangeEvent).count() == 2
+
