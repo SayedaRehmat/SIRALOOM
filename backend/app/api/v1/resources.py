@@ -32,6 +32,11 @@ def list_resources(
         query = query.where(Resource.resource_type == resource_type.strip().upper())
     if status:
         query = query.where(Resource.status == status.strip().upper())
+    if principal.role != "platform_admin":
+        query = query.where(
+            (Resource.organization_id.is_(None)) |
+            (Resource.organization_id == principal.organization_id)
+        )
     rows = db.scalars(query.limit(500)).all()
     return [{
         "resource_id": str(row.id),
@@ -45,6 +50,7 @@ def list_resources(
         "location": row.location,
         "status": row.status,
         "population_definition": row.population_definition,
+        "organization_id": str(row.organization_id) if row.organization_id else None,
         "metadata": row.metadata_json,
         "created_at": row.created_at,
     } for row in rows]
@@ -56,7 +62,10 @@ def register_resource(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    require_role(principal, frozenset({"platform_admin"}))
+    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director", "bioinformatician"}))
+    requested_status = str(payload.get("status") or "CANDIDATE").strip().upper()
+    if principal.role != "platform_admin" and requested_status != "CANDIDATE":
+        raise HTTPException(status_code=403, detail="Lab-managed resources must enter as CANDIDATE")
     try:
         resource, created = register_resource_version(
             db,
@@ -71,6 +80,10 @@ def register_resource(
             location=payload.get("location"),
             population_definition=payload.get("population_definition"),
             metadata_json=payload.get("metadata"),
+            organization_id=principal.organization_id if principal.role != "platform_admin" else (
+                UUID(str(payload["organization_id"])) if payload.get("organization_id") else None
+            ),
+            initial_status=requested_status,
         )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -99,6 +112,7 @@ def register_resource(
         "resource_type": resource.resource_type,
         "version": resource.version,
         "genome_build": resource.genome_build,
+        "organization_id": str(resource.organization_id) if resource.organization_id else None,
         "checksum": resource.checksum,
         "reanalysis_scan_queued": scan_queued,
     }
@@ -116,7 +130,11 @@ def get_resource(
         "lab_scientist", "read_only",
     }))
     row = db.get(Resource, resource_id)
-    if not row:
+    if not row or (
+        principal.role != "platform_admin"
+        and row.organization_id is not None
+        and row.organization_id != principal.organization_id
+    ):
         raise HTTPException(status_code=404, detail="Resource not found")
     return {
         "resource_id": str(row.id),
@@ -130,6 +148,68 @@ def get_resource(
         "location": row.location,
         "status": row.status,
         "population_definition": row.population_definition,
+        "organization_id": str(row.organization_id) if row.organization_id else None,
         "metadata": row.metadata_json,
         "created_at": row.created_at,
+    }
+
+
+
+@router.post("/{resource_id}/qualify")
+def qualify_resource(
+    resource_id: UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "lab_director", "bioinformatician"}))
+    row = db.get(Resource, resource_id)
+    if not row or (row.organization_id and row.organization_id != principal.organization_id):
+        raise HTTPException(status_code=404, detail="Resource not found")
+    try:
+        from backend.app.domain.resources import qualify_resource_version
+        qualification = qualify_resource_version(
+            db,
+            resource_id=resource_id,
+            qualification_version=str(payload.get("qualification_version") or ""),
+            checks=payload.get("checks") or {},
+            qualified_by=principal.user_id,
+        )
+    except ResourceRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.commit()
+    return {
+        "resource_id": str(resource_id),
+        "status": row.status,
+        "qualification_id": str(qualification.id),
+        "qualification_version": qualification.qualification_version,
+    }
+
+
+@router.post("/{resource_id}/activate")
+def activate_resource(
+    resource_id: UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "lab_director"}))
+    row = db.get(Resource, resource_id)
+    if not row or (row.organization_id and row.organization_id != principal.organization_id):
+        raise HTTPException(status_code=404, detail="Resource not found")
+    try:
+        from backend.app.domain.resources import activate_resource_version
+        row = activate_resource_version(
+            db,
+            resource_id=resource_id,
+            qualification_version=str(payload.get("qualification_version") or ""),
+        )
+    except ResourceRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.commit()
+    return {
+        "resource_id": str(row.id),
+        "organization_id": str(row.organization_id) if row.organization_id else None,
+        "status": row.status,
+        "version": row.version,
     }
