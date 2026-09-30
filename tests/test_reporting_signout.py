@@ -244,6 +244,8 @@ def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
 
 def test_signed_report_requires_draft_artifact():
     db, reviewer, analysis, report = seed_finalizable_report()
+    report.artifact_id = None
+    db.commit()
     from backend.app.reporting.finalization import ReportFinalizationError
 
     try:
