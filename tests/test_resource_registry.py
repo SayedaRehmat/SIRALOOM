@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.resources import (
@@ -274,7 +274,7 @@ def test_organization_approval_is_distinct_from_technical_qualification():
         assert resource.status == "QUALIFIED"
         assert approval.status == "PENDING"
         assert approval.version == 1
-        assert db.scalar(select_binding := __import__("sqlalchemy").select(OrganizationResourceBinding).where(
+        assert db.scalar(select(OrganizationResourceBinding).where(
             OrganizationResourceBinding.organization_id == org.id
         )) is None
 
