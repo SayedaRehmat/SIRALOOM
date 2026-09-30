@@ -5,6 +5,7 @@ import hashlib
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import (
@@ -235,8 +236,19 @@ def create_change_event(
         new_checksum=new_checksum,
         metadata_json={},
     )
-    db.add(event)
-    db.flush()
+    try:
+        with db.begin_nested():
+            db.add(event)
+            db.flush()
+    except IntegrityError:
+        existing = db.scalar(
+            select(ReanalysisChangeEvent).where(
+                ReanalysisChangeEvent.change_fingerprint == fingerprint,
+            )
+        )
+        if existing is None:
+            raise
+        return existing
     return event
 
 
@@ -312,35 +324,49 @@ def detect_change(
             ),
             status="PENDING",
         )
-        db.add(candidate)
-        db.flush()
-
-        users = db.scalars(
-            select(OrganizationMembership.user_id).where(
-                OrganizationMembership.organization_id == organization_id,
-                OrganizationMembership.status == "ACTIVE",
+        created_candidate = False
+        try:
+            with db.begin_nested():
+                db.add(candidate)
+                db.flush()
+            created_candidate = True
+        except IntegrityError:
+            candidate = db.scalar(
+                select(ReanalysisCandidate).where(
+                    ReanalysisCandidate.parent_analysis_id == parent.id,
+                    ReanalysisCandidate.change_event_id == event.id,
+                )
             )
-        ).all()
-        for user_id in users:
-            db.add(Notification(
-                id=uuid4(), organization_id=organization_id, user_id=user_id,
-                notification_type="REANALYSIS_CANDIDATE",
-                status="UNREAD",
-                title="Case reanalysis may be required",
-                body=candidate.reason,
-                case_id=parent.case_id,
-                analysis_id=parent.id,
-                candidate_id=candidate.id,
-                metadata_json={
-                    "trigger_type": trigger_type,
-                    "resource_kind": resource_kind,
-                    "resource_name": resource_name,
-                    "previous_version": snapshot.version,
-                    "new_version": new_version,
-                    "earliest_affected_step": candidate.earliest_affected_step,
-                },
-            ))
-        candidates.append(candidate)
+            if candidate is None:
+                raise
+
+        if created_candidate:
+            users = db.scalars(
+                select(OrganizationMembership.user_id).where(
+                    OrganizationMembership.organization_id == organization_id,
+                    OrganizationMembership.status == "ACTIVE",
+                )
+            ).all()
+            for user_id in users:
+                db.add(Notification(
+                    id=uuid4(), organization_id=organization_id, user_id=user_id,
+                    notification_type="REANALYSIS_CANDIDATE",
+                    status="UNREAD",
+                    title="Case reanalysis may be required",
+                    body=candidate.reason,
+                    case_id=parent.case_id,
+                    analysis_id=parent.id,
+                    candidate_id=candidate.id,
+                    metadata_json={
+                        "trigger_type": trigger_type,
+                        "resource_kind": resource_kind,
+                        "resource_name": resource_name,
+                        "previous_version": snapshot.version,
+                        "new_version": new_version,
+                        "earliest_affected_step": candidate.earliest_affected_step,
+                    },
+                ))
+            candidates.append(candidate)
 
     db.commit()
     return candidates
