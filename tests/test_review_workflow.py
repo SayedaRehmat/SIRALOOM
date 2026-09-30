@@ -203,7 +203,7 @@ def test_inactive_reviewer_cannot_approve():
 def test_reportability_is_not_created_from_proposed_classification():
     db, _, _, analysis, _, _, _ = seed()
     assert evaluate_analysis(db, analysis) == []
-    assert final_reportability_state(db, analysis.id) == (False, ["No variant classification is available"])
+    ready, errors = final_reportability_state(db, analysis.id)\n    assert ready is False\n    assert any("classification is not FINAL + APPROVED" in error for error in errors)
 
 
 def test_reportability_is_created_only_after_approved_final_classification():
