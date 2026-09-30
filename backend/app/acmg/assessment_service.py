@@ -342,6 +342,11 @@ def _resolve_evidence_ids(
     resolved: list[UUID] = []
     unresolved = set(normalized)
     for row in rows:
+        # The SQL predicate is the primary boundary. Re-check the ownership
+        # fields defensively as well so an alternate DB adapter, test double,
+        # or future query change cannot accidentally cross analysis/variant scope.
+        if row.analysis_id != analysis_id or row.variant_id != variant_id:
+            continue
         observation_ids = {str(x) for x in (row.observation_ids or [])}
         if observation_ids & normalized:
             resolved.append(row.id)
