@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+import hashlib
+import json
 
 import httpx
 
@@ -25,6 +27,9 @@ class CSpecEntity:
     content: dict[str, Any]
     modified: str | None
     raw: dict[str, Any]
+    request_fingerprint: str | None = None
+    response_sha256: str | None = None
+    request_metadata: dict[str, Any] | None = None
 
 
 class CSpecClientError(RuntimeError):
@@ -53,11 +58,19 @@ class CSpecClient:
         self._validate_type(entity_type)
         if detail not in {"low", "med", "high"}:
             raise ValueError("detail must be low, med, or high")
-        payload = self._get(f"/{entity_type}/id/{entity_id}", params={"detail": detail})
+        params = {"detail": detail}
+        payload = self._get(f"/{entity_type}/id/{entity_id}", params=params)
+        request_fingerprint = hashlib.sha256(json.dumps({"path": f"/{entity_type}/id/{entity_id}", "params": params}, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+        response_sha256 = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")).hexdigest()
         data = payload.get("data") if isinstance(payload, dict) else None
         if not isinstance(data, dict):
             raise CSpecClientError("CSpec response does not contain a data object")
-        return self._parse_entity(data, fallback_type=entity_type, fallback_id=entity_id)
+        entity = self._parse_entity(data, fallback_type=entity_type, fallback_id=entity_id)
+        return CSpecEntity(
+            **{**entity.__dict__, "request_fingerprint": request_fingerprint, "response_sha256": response_sha256,
+               "request_metadata": {"provider": "ClinGen", "endpoint": self.base_url, "entity_type": entity_type,
+                                    "entity_id": entity_id, "detail": detail}}
+        )
 
     def list_entities(
         self,

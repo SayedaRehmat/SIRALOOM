@@ -1201,12 +1201,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             gene_disease_records=gene_disease_records, literature_records=literature_records,
                         ))
                         for record in records:
+                            provenance = {
+                                "resource_id": ann.resource_id,
+                                "source_record_id": None,
+                                "request_fingerprint": ann.request_fingerprint,
+                                "response_sha256": ann.response_sha256,
+                                "request_metadata": ann.request_metadata or {},
+                                "observed_at": ann.observed_at,
+                                "source_name": record.source_name,
+                                "source_version": record.source_version,
+                            }
+                            if len(record.observation_ids) == 1:
+                                obs = next((o for o in population_rows if o.id == record.observation_ids[0]), None)
+                                if obs is not None:
+                                    resource = resource_rows.get(obs.resource_id)
+                                    provenance = {
+                                        "resource_id": obs.resource_id,
+                                        "source_record_id": obs.source_record_id,
+                                        "request_fingerprint": obs.request_fingerprint,
+                                        "response_sha256": obs.response_sha256,
+                                        "request_metadata": obs.request_metadata or {},
+                                        "observed_at": obs.observed_at,
+                                        "source_name": resource.name if resource else record.source_name,
+                                        "source_version": resource.version if resource else record.source_version,
+                                    }
                             fp = evidence_fingerprint(
                                 variant_id=record.variant_id, analysis_id=analysis.id,
                                 evidence_type=record.evidence_type, statement=record.statement,
-                                direction=record.direction, source_name=record.source_name,
-                                source_version=record.source_version, observation_ids=record.observation_ids,
-                                payload=record.payload,
+                                direction=record.direction, source_name=provenance["source_name"],
+                                source_version=provenance["source_version"], observation_ids=record.observation_ids,
+                                payload=record.payload, resource_id=provenance["resource_id"],
+                                source_record_id=provenance["source_record_id"],
+                                request_fingerprint=provenance["request_fingerprint"],
+                                response_sha256=provenance["response_sha256"],
                             )
                             exists = db.scalar(select(Evidence).where(Evidence.analysis_id == analysis.id, Evidence.evidence_fingerprint == fp))
                             if exists:
@@ -1214,7 +1241,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db.add(Evidence(
                                 id=record.evidence_id, variant_id=record.variant_id, analysis_id=analysis.id,
                                 evidence_type=record.evidence_type, statement=record.statement, direction=record.direction,
-                                source_name=record.source_name, source_version=record.source_version, source_record_id=None,
+                                source_name=provenance["source_name"], source_version=provenance["source_version"],
+                                resource_id=provenance["resource_id"], source_record_id=provenance["source_record_id"],
+                                request_fingerprint=provenance["request_fingerprint"], response_sha256=provenance["response_sha256"],
+                                request_metadata=provenance["request_metadata"], observed_at=provenance["observed_at"],
                                 observation_ids=[str(x) for x in record.observation_ids], payload=record.payload,
                                 created_by_type="SYSTEM", created_by_id=engine.engine_id, evidence_fingerprint=fp,
                             ))
