@@ -179,7 +179,8 @@ export default function Home() {
   const [report, setReport] = useState<any>(null);
   const [exportId, setExportId] = useState("");
   const [exportStatus, setExportStatus] = useState("");
-  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);\n  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
   const [connection, setConnection] = useState<"checking" | "online" | "offline">("checking");
