@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { SiteShell } from "../../components/site-shell";
-import { useLanguage } from "../../lib/i18n";
+import { SiteShell } from "../../../components/site-shell";
+import { useLanguage } from "../../../lib/i18n";
 
 export default function Pricing() {
   const { t } = useLanguage();
