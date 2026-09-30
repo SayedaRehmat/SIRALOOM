@@ -27,6 +27,9 @@ class ClinGenSpecificationSnapshot:
     criteria: dict[str, dict[str, Any]]
     raw_entity: dict[str, Any]
     retrieved_at: str
+    request_fingerprint: str | None = None
+    response_sha256: str | None = None
+    request_metadata: dict[str, Any] | None = None
 
     def to_criterion_specification(self) -> CriterionSpecification:
         return CriterionSpecification(
@@ -67,6 +70,9 @@ def snapshot_ruleset(entity: CSpecEntity) -> ClinGenSpecificationSnapshot:
         criteria=criteria,
         raw_entity=entity.raw,
         retrieved_at=datetime.now(timezone.utc).isoformat(),
+        request_fingerprint=entity.request_fingerprint,
+        response_sha256=entity.response_sha256,
+        request_metadata=entity.request_metadata,
     )
 
 
