@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import type { ReactNode } from "react";
 import "./globals.css";
+import "./public-theme.css";
 import { LanguageProvider, type AppLanguage } from "../lib/i18n";
 
 export const metadata: Metadata = {
