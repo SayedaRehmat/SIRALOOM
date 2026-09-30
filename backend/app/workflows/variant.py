@@ -21,6 +21,7 @@ from backend.app.domain.vcf_validation import StrictVCFValidationError, validate
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+from backend.app.domain.reanalysis import snapshot_analysis_resources
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
@@ -120,6 +121,82 @@ def _chunk_ranges(length: int, size: int = 250):
     size = max(1, size)
     for start in range(0, length, size):
         yield start, min(length, start + size)
+
+
+def _apply_reanalysis_reuse(db: Session, analysis: Analysis) -> None:
+    config = analysis.configuration or {}
+    reanalysis = config.get("reanalysis") or {}
+    reuse_through = reanalysis.get("reuse_through_step")
+    if not reuse_through or reanalysis.get("reuse_applied"):
+        return
+
+    max_order = STEP_ORDER[reuse_through]
+    parent_id = UUID(str(reanalysis["parent_analysis_id"]))
+    parent = db.get(Analysis, parent_id)
+    if not parent:
+        raise RuntimeError("Reanalysis parent analysis not found.")
+
+    parent_steps = {s.step_id: s for s in db.scalars(select(WorkflowStep).where(WorkflowStep.analysis_id == parent_id)).all()}
+    child_steps = {s.step_id: s for s in db.scalars(select(WorkflowStep).where(WorkflowStep.analysis_id == analysis.id)).all()}
+    from uuid import uuid4
+
+    for step_id, order in WORKFLOW_STEPS:
+        if order > max_order:
+            continue
+        source, target = parent_steps.get(step_id), child_steps.get(step_id)
+        if not source or not target or source.status != StepStatus.SUCCEEDED:
+            continue
+        target.status = StepStatus.SUCCEEDED
+        target.attempt = source.attempt
+        target.started_at = source.started_at
+        target.completed_at = source.completed_at
+        target.last_heartbeat = _now()
+        target.input_artifacts = list(source.input_artifacts or [])
+        target.output_artifacts = list(source.output_artifacts or [])
+        target.metadata_json = {**(source.metadata_json or {}), "reused_from_analysis_id": str(parent_id), "reanalysis_reuse": True}
+        target.error_code = None
+        target.error_message = None
+        db.add(target)
+
+    if max_order >= STEP_ORDER["normalize"]:
+        parent_normalized = _existing_normalized_artifact(db, parent_id)
+        if parent_normalized and _existing_normalized_artifact(db, analysis.id) is None:
+            db.add(Artifact(
+                id=uuid4(), analysis_id=analysis.id, case_id=analysis.case_id,
+                artifact_type=parent_normalized.artifact_type, filename=parent_normalized.filename,
+                media_type=parent_normalized.media_type, size_bytes=parent_normalized.size_bytes,
+                sha256=parent_normalized.sha256, storage_uri=parent_normalized.storage_uri,
+                genome_build=parent_normalized.genome_build, specimen_id=parent_normalized.specimen_id,
+                paired_artifact_id=parent_normalized.paired_artifact_id,
+                validation_status=parent_normalized.validation_status,
+                metadata_json={**(parent_normalized.metadata_json or {}), "reused_from_analysis_id": str(parent_id)},
+            ))
+        for src in db.scalars(select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == parent_id,
+            AnalysisPartition.step_id == "normalize",
+        ).order_by(AnalysisPartition.ordinal)).all():
+            exists = db.scalar(select(AnalysisPartition.id).where(
+                AnalysisPartition.analysis_id == analysis.id,
+                AnalysisPartition.step_id == "normalize",
+                AnalysisPartition.partition_key == src.partition_key,
+            ))
+            if not exists:
+                db.add(AnalysisPartition(
+                    id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+                    partition_key=src.partition_key, ordinal=src.ordinal,
+                    record_start=src.record_start, record_end=src.record_end,
+                    variant_count=src.variant_count, status="SUCCEEDED",
+                    input_artifact_id=src.input_artifact_id,
+                    metadata_json={**(src.metadata_json or {}), "reused_from_analysis_id": str(parent_id)},
+                    resource_class=src.resource_class, cpu_request=src.cpu_request,
+                    memory_mb=src.memory_mb, attempt=src.attempt,
+                ))
+
+    reanalysis["reuse_applied"] = True
+    config["reanalysis"] = reanalysis
+    analysis.configuration = config
+    db.add(analysis)
+    db.commit()
 
 
 def ensure_steps(db: Session, analysis_id: UUID) -> None:
@@ -294,6 +371,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         audit = AuditService(db)
         ctx = WorkflowContext(db=db, artifacts=artifacts, audit=audit)
         ensure_steps(db, analysis_id)
+        _apply_reanalysis_reuse(db, analysis)
 
         input_artifact_id = analysis.configuration["input_artifact_id"]
         input_artifact = db.get(Artifact, UUID(str(input_artifact_id)))
@@ -1586,6 +1664,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     StepStatus.SUCCEEDED,
                     metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
                 )
+                snapshot_analysis_resources(db, analysis)
                 analysis.status = AnalysisStatus.SUCCEEDED
                 analysis.completed_at = _now()
                 audit.record(
