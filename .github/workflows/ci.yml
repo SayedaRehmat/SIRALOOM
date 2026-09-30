@@ -27,6 +27,8 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: pytest -q
+      - name: Validate process startup scripts
+        run: sh -n scripts/start_worker.sh scripts/start_beat.sh
       - name: Compile Python
         run: python -m compileall backend scripts
 
