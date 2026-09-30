@@ -66,6 +66,7 @@ export type TranslationKey =
   | "public.startTrial"
   | "public.privacy"
   | "public.terms"
+  | "public.brand.tagline"
   | "public.home.eyebrow"
   | "public.home.title"
   | "public.home.lead"
@@ -949,9 +950,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.startTrial": "Start Free Trial",
     "public.privacy": "Privacy",
     "public.terms": "Terms",
+    "public.brand.tagline": "Turning complexity into coherence.",
     "public.home.eyebrow": "GENOMIC PLATFORM",
-    "public.home.title": "Turning complexity into coherence.",
-    "public.home.lead": "A software platform for genomic laboratory work, with SIRALOOM Variant as its first product.",
+    "public.home.title": "A connected platform for genomic laboratory work.",
+    "public.home.lead": "A structured environment for the work surrounding genomic analysis, interpretation, review, reporting, and reanalysis.",
     "public.home.platform.eyebrow": "THE SIRALOOM PLATFORM",
     "public.home.platform.title": "Built to bring the genomic laboratory together.",
     "public.home.platform.body": "SIRALOOM is a software platform for the work surrounding genomic analysis, interpretation, review, reporting, and what follows.",
@@ -1551,9 +1553,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.startTrial": "ابدأ التجربة المجانية",
     "public.privacy": "الخصوصية",
     "public.terms": "الشروط",
+    "public.brand.tagline": "تحويل التعقيد إلى ترابط متماسك.",
     "public.home.eyebrow": "منصة جينومية",
-    "public.home.title": "تحويل التعقيد إلى ترابط متماسك.",
-    "public.home.lead": "منصة برمجية للعمل الجينومي في المختبرات، مع SIRALOOM Variant كأول منتجاتها.",
+    "public.home.title": "منصة مترابطة للعمل الجينومي في المختبرات.",
+    "public.home.lead": "بيئة منظمة للعمل المحيط بالتحليل الجينومي والتفسير والمراجعة وإعداد التقارير وإعادة التحليل.",
     "public.home.platform.eyebrow": "منصة SIRALOOM",
     "public.home.platform.title": "مصممة لجمع العمل الجينومي في صورة متماسكة.",
     "public.home.platform.body": "SIRALOOM منصة برمجية للعمل المحيط بالتحليل الجينومي والتفسير والمراجعة وإعداد التقارير وما يأتي بعدها.",
