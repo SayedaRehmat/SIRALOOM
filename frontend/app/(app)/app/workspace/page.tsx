@@ -740,7 +740,7 @@ export default function Home() {
                   <div>
                     <strong>{item.title}</strong>
                     <div>{item.body}</div>
-                    {affected && <small>{t("workspace.reanalysisAffected")}: {prettyStatus(String(affected))}</small>}
+                    {affected && <small>{String(t("workspace.reanalysisAffected"))}: {prettyStatus(String(affected))}</small>}
                     <small>{formatDate(item.created_at)}</small>
                   </div>
                   <div className="actions-row">
