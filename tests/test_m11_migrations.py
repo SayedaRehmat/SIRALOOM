@@ -24,3 +24,11 @@ def test_m11_full_sqlite_upgrade_reaches_qc_head(tmp_path, monkeypatch):
         "observed_at",
         "retry_count",
     }.issubset(annotation_cols)
+    population_cols = {c["name"] for c in inspector.get_columns("population_observations")}
+    assert {
+        "source_record_id",
+        "request_fingerprint",
+        "response_sha256",
+        "request_metadata",
+        "observed_at",
+    }.issubset(population_cols)
