@@ -366,6 +366,25 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const data = await apiFetch("/notifications");
+        if (!cancelled) setNotifications(Array.isArray(data) ? data : []);
+      } catch {
+        // Notifications are durable advisory state; a temporary read failure
+        // must not alter or mask the authoritative analysis workflow state.
+      }
+    };
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
   const requestReanalysis = async () => {
     if (!analysisId || analysis?.status !== "SUCCEEDED") return;
     setBusy(true);
