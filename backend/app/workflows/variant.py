@@ -73,6 +73,13 @@ class TransientWorkflowError(RuntimeError):
         self.countdown = max(1, countdown)
 
 
+class ResourceConsumptionError(RuntimeError):
+    """Signals that a workflow resource is not governed or is incompatible."""
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
+
+
 def _batch_key(start: int, end: int) -> str:
     return f"{start}:{end}"
 
@@ -997,16 +1004,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if population_step.status != StepStatus.SUCCEEDED:
             mark_step(db, population_step, StepStatus.RUNNING)
             try:
-                geneBe_resource = _get_or_create_resource(
+                geneBe_resource = _require_registered_resource(
                     db,
-                    name="gnomAD total via GeneBe",
-                    provider="GeneBe",
-                    resource_type="POPULATION_FREQUENCY",
-                    version=settings.genebe_gnomad_resource_version,
-                    genome_build=normalize_build(analysis.reference_build),
-                    access_method="API_PROVIDER_DERIVED",
-                    status="AVAILABLE",
-                    population_definition={"level": "GLOBAL", "code": "GLOBAL", "label": "Global"},
+                    resource_id=(analysis.configuration or {}).get("population_resource_id"),
+                    expected_type="POPULATION",
+                    expected_build=normalize_build(analysis.reference_build),
+                    expected_provider="GeneBe",
                 )
 
                 created = 0
@@ -1038,22 +1041,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         dataset_id=settings.gnomad_dataset_id,
                         delay_seconds=settings.gnomad_graphql_delay_seconds,
                     )
-                    resource = _get_or_create_resource(
+                    resource = _require_registered_resource(
                         db,
-                        name="gnomAD GraphQL",
-                        provider="gnomAD",
-                        resource_type="POPULATION_FREQUENCY",
-                        version=settings.gnomad_dataset_id,
-                        genome_build=normalize_build(analysis.reference_build),
-                        access_method="API",
-                        status="AVAILABLE",
-                        population_definition={"level": "ANCESTRY", "code": "MID", "label": "Middle Eastern"},
-                        metadata_json={
-                            "version_semantics": "API_DATASET_SELECTOR",
-                            "dataset_selector": settings.gnomad_dataset_id,
-                            "release_version_not_asserted": True,
-                            "provider_version": gnomad.provider_version,
-                        },
+                        resource_id=(analysis.configuration or {}).get("gnomad_resource_id"),
+                        expected_type="POPULATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider="gnomAD",
                     )
                     for variant in iter_normalized_vcf(normalized_path, reference_build):
                         obs_list = gnomad.query_variant(variant)
@@ -1117,6 +1110,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     payload={"gene_be_global_observations": created, "direct_gnomad_observations": direct_count},
                 )
                 db.commit()
+            except ResourceConsumptionError as exc:
+                mark_step(
+                    db,
+                    population_step,
+                    StepStatus.BLOCKED,
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    metadata={"next_step": "RESOURCE_REQUIRED"},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                db.commit()
+                audit.record(
+                    event_type="WORKFLOW_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="population",
+                    actor_id="resource-registry",
+                    reason=str(exc),
+                    payload={"error_code": exc.code, "next_step": "RESOURCE_REQUIRED"},
+                )
+                db.commit()
+                return
             except GnomADProviderError as exc:
                 mark_step(db, population_step, StepStatus.FAILED, error_code="GNOMAD_PROVIDER_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
@@ -1873,47 +1888,61 @@ def _safe_float(value: object) -> float | None:
         return None
 
 
-def _get_or_create_resource(
+def _require_registered_resource(
     db: Session,
     *,
-    name: str,
-    provider: str,
-    resource_type: str,
-    version: str,
-    genome_build: str,
-    access_method: str,
-    status: str,
-    population_definition: dict,
-    metadata_json: dict | None = None,
+    resource_id: object,
+    expected_type: str,
+    expected_build: str,
+    expected_provider: str | None = None,
 ) -> Resource:
-    row = db.scalar(
-        select(Resource).where(
-            Resource.name == name,
-            Resource.provider == provider,
-            Resource.version == version,
-            Resource.genome_build == genome_build,
+    """Consume only an explicitly registered resource version.
+
+    Workflow execution never creates scientific resources. The analysis pins a
+    registry UUID; the registry row supplies the provider/version/build identity
+    used by the downstream observation provenance. SUPERSEDED resources remain
+    consumable when explicitly pinned by an existing analysis so historical
+    analyses remain reproducible; unregistered resources are never synthesized.
+    """
+    if not resource_id:
+        raise ResourceConsumptionError(
+            "RESOURCE_REQUIRED",
+            f"Analysis must explicitly select a registered {expected_type} resource before population processing.",
         )
-    )
-    if row:
-        return row
-    from uuid import uuid4
-    row = Resource(
-        id=uuid4(),
-        name=name,
-        provider=provider,
-        resource_type=resource_type,
-        version=version,
-        genome_build=genome_build,
-        access_method=access_method,
-        license_text=None,
-        checksum=None,
-        location=None,
-        status=status,
-        population_definition=population_definition,
-        metadata_json=metadata_json or {},
-    )
-    db.add(row)
-    db.flush()
+    try:
+        rid = UUID(str(resource_id))
+    except (TypeError, ValueError) as exc:
+        raise ResourceConsumptionError(
+            "RESOURCE_REQUIRED",
+            f"Configured resource ID is not a valid UUID: {resource_id}",
+        ) from exc
+
+    row = db.get(Resource, rid)
+    if row is None:
+        raise ResourceConsumptionError(
+            "RESOURCE_NOT_FOUND",
+            f"Registered resource {rid} was not found.",
+        )
+    if row.resource_type != expected_type:
+        raise ResourceConsumptionError(
+            "RESOURCE_TYPE_MISMATCH",
+            f"Resource {rid} is {row.resource_type}, expected {expected_type}.",
+        )
+    if row.genome_build and normalize_build(row.genome_build) != normalize_build(expected_build):
+        raise ResourceConsumptionError(
+            "RESOURCE_BUILD_MISMATCH",
+            f"Resource {rid} is registered for {row.genome_build}, not {expected_build}.",
+        )
+    if expected_provider and row.provider != expected_provider:
+        raise ResourceConsumptionError(
+            "RESOURCE_PROVIDER_MISMATCH",
+            f"Resource {rid} is provided by {row.provider}, expected {expected_provider}.",
+        )
+    if row.status not in {"ACTIVE", "SUPERSEDED"}:
+        raise ResourceConsumptionError(
+            "RESOURCE_UNAVAILABLE",
+            f"Resource {rid} has registry status {row.status} and cannot be consumed.",
+        )
     return row
 
 
