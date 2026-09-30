@@ -338,13 +338,14 @@ class OrganizationResourceBinding(Base):
     provider: Mapped[str] = mapped_column(Text, nullable=False)
     resource_type: Mapped[str] = mapped_column(Text, nullable=False)
     genome_build: Mapped[str | None] = mapped_column(Text)
+    identity_key: Mapped[str] = mapped_column(Text, nullable=False)
     bound_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     bound_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     previous_resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     __table_args__ = (
-        UniqueConstraint("organization_id", "resource_name", "provider", "resource_type", "genome_build"),
+        UniqueConstraint("organization_id", "identity_key"),
     )
 
 
