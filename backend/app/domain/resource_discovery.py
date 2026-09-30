@@ -8,7 +8,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from backend.app.domain.resources import register_resource_version, ResourceRegistryError
+from backend.app.domain.resources import register_resource_version
 
 RESOURCE_PROVIDER_GROUP = "siraloom.resource_providers"
 
@@ -58,8 +58,10 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                     initial_status="CANDIDATE",
                 )
                 discovered_count += 1
-        except (ResourceRegistryError, Exception):
+        except Exception:
             db.rollback()
             failed_providers += 1
+        else:
+            db.commit()
     db.commit()
     return {"candidates_discovered": discovered_count, "providers_failed": failed_providers}
