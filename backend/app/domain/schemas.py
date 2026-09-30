@@ -34,7 +34,7 @@ class AnalysisCreate(BaseModel):
     input_artifact_id: UUID
     assay_id: UUID | None = None
     workflow_id: str = "variant-v1"
-    workflow_version: str = "1.0"
+    workflow_version: str = "2.1"
     reference_build: str = "GRCh38"
     configuration: dict[str, Any] = Field(default_factory=dict)
 
