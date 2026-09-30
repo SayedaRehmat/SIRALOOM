@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
@@ -134,7 +135,7 @@ function prettyStatus(status: string) {
 
 function statusTone(status: string) {
   if (["SUCCEEDED", "FINAL", "APPROVED", "COMPLETED"].includes(status)) return "success";
-  if (["FAILED", "BLOCKED", "CANCELLED"].includes(status)) return "danger";
+  if (["FAILED", "BLOCKED", "CANCELLED", "RESOURCE_FAILURE"].includes(status)) return "danger";
   if (["RUNNING", "QUEUED", "RETRYING", "IN_REVIEW", "PENDING"].includes(status)) return "active";
   return "neutral";
 }
@@ -143,6 +144,14 @@ function formatDate(value?: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
 }
+
+function nextActionHref(nextStep?: string | null) {
+  if (nextStep === "review") return "/app/review";
+  if (nextStep === "reportability" || nextStep === "report_finalization") return "/app/reports";
+  if (nextStep === "VALID_VCF_REQUIRED" || nextStep === "SUPPORTED_INPUT_REQUIRED") return "/app/cases";
+  return null;
+}
+
 
 export default function Home() {
   const { language, t } = useLanguage();
@@ -709,6 +718,17 @@ export default function Home() {
           </div>
           {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>{t("workspace.checkpointPersisted")}</span></div>}
           {analysis?.started_at && <div className="run-meta"><span>Started {formatDate(analysis.started_at)}</span><span>Last state update {formatDate(analysis.completed_at ?? analysis.started_at)}</span></div>}
+          {analysis?.next_step && analysis?.status === "REQUIRES_REVIEW" && (
+            <div className="ready-callout">
+              <strong>Next required action</strong>
+              <p>The backend workflow is waiting at <strong>{prettyStatus(String(analysis.next_step))}</strong>. Complete that action before expecting the pipeline to advance.</p>
+              {nextActionHref(String(analysis.next_step)) && (
+                <Link className="secondary link-button" href={nextActionHref(String(analysis.next_step)) as string}>
+                  Open next step
+                </Link>
+              )}
+            </div>
+          )}
         </section>
       </section>
 
