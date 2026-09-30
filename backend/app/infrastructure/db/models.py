@@ -289,6 +289,66 @@ class ResourceQualification(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("resource_id", "qualification_version"),)
 
+class ResourceApproval(Base):
+    """Organization-scoped adoption decision for a technically qualified resource."""
+    __tablename__ = "resource_approvals"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    qualification_id: Mapped[UUID] = mapped_column(ForeignKey("resource_qualifications.id"), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decided_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        UniqueConstraint("resource_id", "organization_id", "qualification_id"),
+    )
+
+
+class ResourceApprovalAction(Base):
+    """Append-only audit trail for organization resource adoption decisions."""
+    __tablename__ = "resource_approval_actions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    approval_id: Mapped[UUID] = mapped_column(ForeignKey("resource_approvals.id"), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    actor_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    before_status: Mapped[str] = mapped_column(Text, nullable=False)
+    after_status: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    resulting_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("approval_id", "resulting_version"),
+    )
+
+
+class OrganizationResourceBinding(Base):
+    """The resource version currently adopted for one laboratory organization."""
+    __tablename__ = "organization_resource_bindings"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    resource_name: Mapped[str] = mapped_column(Text, nullable=False)
+    provider: Mapped[str] = mapped_column(Text, nullable=False)
+    resource_type: Mapped[str] = mapped_column(Text, nullable=False)
+    genome_build: Mapped[str | None] = mapped_column(Text)
+    identity_key: Mapped[str] = mapped_column(Text, nullable=False)
+    bound_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    bound_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    previous_resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"), nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "identity_key"),
+    )
+
+
 class PopulationObservation(Base):
     __tablename__ = "population_observations"
     id: Mapped[UUID] = mapped_column(primary_key=True)

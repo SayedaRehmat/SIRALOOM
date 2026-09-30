@@ -4,10 +4,16 @@ import re
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import select, update, update
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.db.models import Resource, ResourceQualification
+from backend.app.infrastructure.db.models import (
+    OrganizationResourceBinding,
+    Resource,
+    ResourceApproval,
+    ResourceApprovalAction,
+    ResourceQualification,
+)
 
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _ALLOWED_TYPES = frozenset({
@@ -233,3 +239,316 @@ def activate_resource_version(
     resource.status = "ACTIVE"
     db.flush()
     return resource
+
+
+APPROVAL_STATUSES = frozenset({"PENDING", "APPROVED", "REJECTED", "DEFERRED"})
+
+
+def request_resource_approval(
+    db: Session,
+    *,
+    resource_id: UUID,
+    organization_id: UUID,
+    qualification_version: str,
+) -> ResourceApproval:
+    """Create an organization-specific approval request after technical qualification."""
+    resource = db.get(Resource, resource_id)
+    if resource is None:
+        raise ResourceRegistryError("resource not found")
+    if resource.organization_id is not None and resource.organization_id != organization_id:
+        raise ResourceRegistryError("resource is owned by another organization")
+    qualification = db.scalar(
+        select(ResourceQualification).where(
+            ResourceQualification.resource_id == resource_id,
+            ResourceQualification.qualification_version == qualification_version.strip(),
+            ResourceQualification.status == "QUALIFIED",
+        )
+    )
+    if qualification is None:
+        raise ResourceRegistryError(
+            "matching successful qualification is required before approval"
+        )
+    existing = db.scalar(
+        select(ResourceApproval).where(
+            ResourceApproval.resource_id == resource_id,
+            ResourceApproval.organization_id == organization_id,
+            ResourceApproval.qualification_id == qualification.id,
+        )
+    )
+    if existing:
+        return existing
+    approval = ResourceApproval(
+        id=uuid4(),
+        resource_id=resource_id,
+        organization_id=organization_id,
+        qualification_id=qualification.id,
+        status="PENDING",
+        version=1,
+    )
+    db.add(approval)
+    db.flush()
+    return approval
+
+
+def decide_resource_approval(
+    db: Session,
+    *,
+    approval_id: UUID,
+    organization_id: UUID,
+    actor_id: UUID,
+    decision: str,
+    expected_version: int,
+    reason: str | None,
+) -> ResourceApproval:
+    """Apply one lab decision with optimistic concurrency and append-only audit."""
+    decision = decision.strip().upper()
+    if decision not in {"APPROVED", "REJECTED", "DEFERRED"}:
+        raise ResourceRegistryError("decision must be APPROVED, REJECTED, or DEFERRED")
+    approval = db.scalar(
+        select(ResourceApproval).where(
+            ResourceApproval.id == approval_id,
+            ResourceApproval.organization_id == organization_id,
+        )
+    )
+    if approval is None:
+        raise ResourceRegistryError("approval request not found")
+    if approval.status != "PENDING":
+        raise ResourceRegistryError(
+            f"approval request is already {approval.status}"
+        )
+    if approval.version != expected_version:
+        raise ResourceRegistryError(
+            "approval request changed; refresh before deciding"
+        )
+
+    resource = db.get(Resource, approval.resource_id)
+    if resource is None:
+        raise ResourceRegistryError("resource not found")
+    qualification = db.get(ResourceQualification, approval.qualification_id)
+    if qualification is None or qualification.status != "QUALIFIED":
+        raise ResourceRegistryError(
+            "approval requires a successful technical qualification"
+        )
+
+    before = approval.status
+    next_version = expected_version + 1
+    result = db.execute(
+        update(ResourceApproval)
+        .where(
+            ResourceApproval.id == approval_id,
+            ResourceApproval.organization_id == organization_id,
+            ResourceApproval.status == "PENDING",
+            ResourceApproval.version == expected_version,
+        )
+        .values(
+            status=decision,
+            version=next_version,
+            decided_at=datetime.now(timezone.utc),
+            decided_by=actor_id,
+            reason=reason,
+        )
+    )
+    if result.rowcount != 1:
+        raise ResourceRegistryError(
+            "approval request changed concurrently; refresh before deciding"
+        )
+
+    action = ResourceApprovalAction(
+        id=uuid4(),
+        approval_id=approval_id,
+        organization_id=organization_id,
+        actor_id=actor_id,
+        action="DECIDE",
+        before_status=before,
+        after_status=decision,
+        expected_version=expected_version,
+        resulting_version=next_version,
+        reason=reason,
+    )
+    db.add(action)
+
+    if decision == "APPROVED":
+        binding = db.scalar(
+            select(OrganizationResourceBinding).where(
+                OrganizationResourceBinding.organization_id == organization_id,
+                OrganizationResourceBinding.resource_name == resource.name,
+                OrganizationResourceBinding.provider == resource.provider,
+                OrganizationResourceBinding.resource_type == resource.resource_type,
+                OrganizationResourceBinding.genome_build == resource.genome_build,
+            )
+        )
+        previous_resource_id = binding.resource_id if binding else None
+        if binding is None:
+            binding = OrganizationResourceBinding(
+                id=uuid4(),
+                organization_id=organization_id,
+                resource_id=resource.id,
+                resource_name=resource.name,
+                provider=resource.provider,
+                resource_type=resource.resource_type,
+                genome_build=resource.genome_build,
+                bound_by=actor_id,
+                previous_resource_id=None,
+                reason=reason,
+                version=1,
+            )
+            db.add(binding)
+        else:
+            binding.previous_resource_id = previous_resource_id
+            binding.resource_id = resource.id
+            binding.bound_by = actor_id
+            binding.bound_at = datetime.now(timezone.utc)
+            binding.reason = reason
+            binding.version += 1
+        db.flush()
+
+    db.flush()
+    db.refresh(approval)
+    return approval
+
+
+def get_active_resource_for_organization(
+    db: Session,
+    *,
+    organization_id: UUID,
+    name: str,
+    provider: str,
+    resource_type: str,
+    genome_build: str | None,
+) -> Resource | None:
+    """Resolve the lab's adopted version without mutating global resource history."""
+    binding = db.scalar(
+        select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == organization_id,
+            OrganizationResourceBinding.resource_name == name,
+            OrganizationResourceBinding.provider == provider,
+            OrganizationResourceBinding.resource_type == resource_type,
+            OrganizationResourceBinding.genome_build == genome_build,
+        )
+    )
+    if binding:
+        return db.get(Resource, binding.resource_id)
+    return db.scalar(
+        select(Resource).where(
+            Resource.organization_id.is_(None),
+            Resource.name == name,
+            Resource.provider == provider,
+            Resource.resource_type == resource_type,
+            Resource.genome_build == genome_build,
+            Resource.status == "ACTIVE",
+        )
+    )
+
+
+APPROVAL_STATUSES = frozenset({"PENDING", "APPROVED", "REJECTED", "DEFERRED"})
+
+
+def request_resource_approval(db: Session, *, resource_id: UUID, organization_id: UUID, qualification_version: str) -> ResourceApproval:
+    resource = db.get(Resource, resource_id)
+    if resource is None:
+        raise ResourceRegistryError("resource not found")
+    if resource.organization_id is not None and resource.organization_id != organization_id:
+        raise ResourceRegistryError("resource is owned by another organization")
+    qualification = db.scalar(select(ResourceQualification).where(
+        ResourceQualification.resource_id == resource_id,
+        ResourceQualification.qualification_version == qualification_version.strip(),
+        ResourceQualification.status == "QUALIFIED",
+    ))
+    if qualification is None:
+        raise ResourceRegistryError("matching successful qualification is required before approval")
+    existing = db.scalar(select(ResourceApproval).where(
+        ResourceApproval.resource_id == resource_id,
+        ResourceApproval.organization_id == organization_id,
+        ResourceApproval.qualification_id == qualification.id,
+    ))
+    if existing:
+        return existing
+    approval = ResourceApproval(id=uuid4(), resource_id=resource_id, organization_id=organization_id,
+                               qualification_id=qualification.id, status="PENDING", version=1)
+    db.add(approval)
+    db.flush()
+    return approval
+
+
+def decide_resource_approval(
+    db: Session, *, approval_id: UUID, organization_id: UUID, actor_id: UUID,
+    decision: str, expected_version: int, reason: str | None,
+) -> ResourceApproval:
+    decision = decision.strip().upper()
+    if decision not in {"APPROVED", "REJECTED", "DEFERRED"}:
+        raise ResourceRegistryError("decision must be APPROVED, REJECTED, or DEFERRED")
+    approval = db.scalar(select(ResourceApproval).where(
+        ResourceApproval.id == approval_id, ResourceApproval.organization_id == organization_id,
+    ))
+    if approval is None:
+        raise ResourceRegistryError("approval request not found")
+    if approval.status != "PENDING":
+        raise ResourceRegistryError(f"approval request is already {approval.status}")
+    if approval.version != expected_version:
+        raise ResourceRegistryError("approval request changed; refresh before deciding")
+    resource = db.get(Resource, approval.resource_id)
+    qualification = db.get(ResourceQualification, approval.qualification_id)
+    if resource is None:
+        raise ResourceRegistryError("resource not found")
+    if qualification is None or qualification.status != "QUALIFIED":
+        raise ResourceRegistryError("approval requires a successful technical qualification")
+
+    next_version = expected_version + 1
+    result = db.execute(update(ResourceApproval).where(
+        ResourceApproval.id == approval_id,
+        ResourceApproval.organization_id == organization_id,
+        ResourceApproval.status == "PENDING",
+        ResourceApproval.version == expected_version,
+    ).values(
+        status=decision, version=next_version, decided_at=datetime.now(timezone.utc),
+        decided_by=actor_id, reason=reason,
+    ))
+    if result.rowcount != 1:
+        raise ResourceRegistryError("approval request changed concurrently; refresh before deciding")
+
+    db.add(ResourceApprovalAction(
+        id=uuid4(), approval_id=approval_id, organization_id=organization_id, actor_id=actor_id,
+        action="DECIDE", before_status="PENDING", after_status=decision,
+        expected_version=expected_version, resulting_version=next_version, reason=reason,
+    ))
+
+    if decision == "APPROVED":
+        resource_identity_key = "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"])
+        binding = db.scalar(select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == organization_id,
+            OrganizationResourceBinding.identity_key == resource_identity_key,
+        ))
+        previous_resource_id = binding.resource_id if binding else None
+        if binding is None:
+            db.add(OrganizationResourceBinding(
+                id=uuid4(), organization_id=organization_id, resource_id=resource.id,
+                resource_name=resource.name, provider=resource.provider, resource_type=resource.resource_type,
+                genome_build=resource.genome_build, identity_key=resource_identity_key, bound_by=actor_id, reason=reason, version=1,
+            ))
+        else:
+            binding.previous_resource_id = previous_resource_id
+            binding.resource_id = resource.id
+            binding.bound_by = actor_id
+            binding.bound_at = datetime.now(timezone.utc)
+            binding.reason = reason
+            binding.version += 1
+    db.flush()
+    db.refresh(approval)
+    return approval
+
+
+def get_active_resource_for_organization(
+    db: Session, *, organization_id: UUID, name: str, provider: str,
+    resource_type: str, genome_build: str | None,
+) -> Resource | None:
+    binding = db.scalar(select(OrganizationResourceBinding).where(
+        OrganizationResourceBinding.organization_id == organization_id,
+        OrganizationResourceBinding.identity_key == "|".join([name, provider, resource_type, genome_build or "UNSPECIFIED"]),
+    ))
+    if binding:
+        return db.get(Resource, binding.resource_id)
+    return db.scalar(select(Resource).where(
+        Resource.organization_id.is_(None), Resource.name == name, Resource.provider == provider,
+        Resource.resource_type == resource_type, Resource.genome_build == genome_build,
+        Resource.status == "ACTIVE",
+    ))
