@@ -61,6 +61,25 @@ Run the worker separately from the API:
 
 The worker must share the same database, Redis, artifact store, reference resources, application code/version, and secrets as the API.
 
+## Celery Beat
+
+Run exactly one Celery Beat scheduler for the deployment:
+
+```bash
+./scripts/start_beat.sh
+```
+
+Beat publishes the durable resource-change scan task on the configured schedule. It does not perform the scan itself; the Celery worker executes `siraloom.scan_reanalysis_resources`. Do not run multiple Beat instances against the same deployment unless an external scheduler/leader-election mechanism is explicitly in place.
+
+The current application schedule is daily at 00:00 UTC:
+
+```text
+scan-reanalysis-resources-daily
+→ siraloom.scan_reanalysis_resources
+→ scan active registered resources
+→ create durable reanalysis candidates/notifications
+```
+
 ## Environment
 
 Copy `.env.production.example` to a secret-managed environment. Do not commit `.env`.
@@ -97,11 +116,12 @@ curl https://YOUR-API-DOMAIN/api/v1/ready
 2. Start PostgreSQL and Redis.
 3. Start API; migration-safe startup applies Alembic migrations.
 4. Start worker.
-5. Verify `/health` and `/ready`.
-6. Deploy frontend with production API/Firebase variables.
-7. Add frontend domain to Firebase Authorized Domains.
-8. Run the live VCF validation runbook.
-9. Record deployment revision and validation evidence.
+5. Start exactly one Celery Beat scheduler.
+6. Verify `/health` and `/ready`.
+7. Deploy frontend with production API/Firebase variables.
+8. Add frontend domain to Firebase Authorized Domains.
+9. Run the live VCF validation runbook.
+10. Record deployment revision and validation evidence.
 
 ## Important
 
