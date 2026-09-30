@@ -157,6 +157,25 @@ class ACMGSpecificationAssessmentService:
                 # A specification that declares a criterion without enough structured
                 # configuration cannot be safely automated.
                 continue
+            if result.status == "PROPOSED" and result.evidence_ids:
+                resolved_ids = _resolve_evidence_ids(
+                    db, analysis_id=analysis.id, variant_id=variant.id,
+                    observation_ids=result.evidence_ids,
+                )
+                if not resolved_ids:
+                    result = EvaluatorResult(
+                        result.criterion, result.applicable, None, result.direction,
+                        "REQUIRES_REVIEW",
+                        "Criterion inputs were observed, but no persisted Evidence record could be bound to those observations.",
+                        evidence_ids=(),
+                        metadata={**(result.metadata or {}), "unresolved_observation_ids": list(result.evidence_ids)},
+                    )
+                else:
+                    result = EvaluatorResult(
+                        result.criterion, result.applicable, result.strength, result.direction,
+                        result.status, result.reason, evidence_ids=resolved_ids,
+                        metadata={**(result.metadata or {}), "source_observation_ids": list(result.evidence_ids)},
+                    )
             evaluator_results.append(result)
 
         proposed_assessments = [
@@ -170,7 +189,7 @@ class ACMGSpecificationAssessmentService:
                 metadata=r.metadata or {},
             )
             for r in evaluator_results
-            if r.applicable and r.strength is not None and r.status == "PROPOSED"
+            if r.applicable and r.strength is not None and r.status == "PROPOSED" and r.evidence_ids
         ]
 
         if not proposed_assessments:
@@ -302,3 +321,27 @@ def _population_dict(obs: PopulationObservation, resource: Resource | None) -> d
         "resource_name": resource.name if resource else None,
         "resource_version": resource.version if resource else None,
     }
+
+
+def _resolve_evidence_ids(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    variant_id: UUID,
+    observation_ids: tuple[str, ...],
+) -> tuple[str, ...]:
+    """Resolve source observation IDs to persisted Evidence IDs."""
+    if not observation_ids:
+        return ()
+    rows = db.scalars(
+        select(Evidence).where(
+            Evidence.analysis_id == analysis_id,
+            Evidence.variant_id == variant_id,
+        )
+    ).all()
+    wanted = {str(x) for x in observation_ids}
+    return tuple(
+        str(row.id)
+        for row in rows
+        if wanted.intersection(str(x) for x in (row.observation_ids or []))
+    )
