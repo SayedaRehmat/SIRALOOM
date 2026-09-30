@@ -66,3 +66,4 @@ app.include_router(quality_router, prefix="/api/v1", dependencies=secured)
 app.include_router(clinical_followup_router, prefix="/api/v1", dependencies=secured)
 
 app.include_router(reanalysis_router, prefix="/api/v1", dependencies=secured)
+app.include_router(resources_router, prefix="/api/v1", dependencies=secured)
