@@ -54,7 +54,7 @@ def _now():
     return datetime.now(timezone.utc)
 
 
-def earliest_affected_step(trigger_type: str) -> str:
+def affected_step_for_trigger(trigger_type: str) -> str:
     try:
         return CHANGE_STEP[trigger_type]
     except KeyError:
@@ -267,7 +267,7 @@ def detect_change(
             parent_analysis_id=parent.id,
             change_event_id=event.id,
             trigger_type=trigger_type,
-            earliest_affected_step=earliest_affected_step(trigger_type),
+            earliest_affected_step=affected_step_for_trigger(trigger_type),
             reason=(
                 f"{resource_kind} resource '{resource_name}' changed from "
                 f"{snapshot.version or 'unversioned'} to {new_version or 'unversioned'}."
@@ -370,7 +370,7 @@ def create_reanalysis(
     if parent.status != "SUCCEEDED":
         raise ValueError("Only a successfully completed analysis can be reanalyzed.")
 
-    earliest = affected_step or globals()["earliest_affected_step"](trigger_type)
+    earliest = affected_step or affected_step_for_trigger(trigger_type)
     next_version = (parent.analysis_version or 1) + 1
 
     duplicate = db.scalar(
