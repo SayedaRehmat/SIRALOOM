@@ -60,7 +60,9 @@ type CaseWorkspace = {
   analyses: Array<Record<string, unknown>>;
 };
 
-type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };\n\ntype AuditEvent = {
+type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
+
+type AuditEvent = {
   event_id: string;
   event_type: string;
   analysis_id?: string | null;
