@@ -65,3 +65,9 @@ def test_genebe_does_not_retry_non_transient_http_error(monkeypatch):
         GeneBeProvider().annotate([variant()], {"genome": "hg38"})
     assert exc.value.retryable is False
     assert FakeClient.calls == 1
+
+
+def test_genebe_declares_build_native_support_only_for_grch38():
+    provider = GeneBeProvider()
+    assert provider.supports_build("GRCh38") is True
+    assert provider.supports_build("GRCh37") is False
