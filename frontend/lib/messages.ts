@@ -182,6 +182,7 @@ export type TranslationKey =
   | "workflow.evidence"
   | "workflow.acmg"
   | "workflow.humanReview"
+  | "workflow.reportability"
   | "workflow.report"
   | "workflow.caseHistory"
   | "workspace.eyebrow"
@@ -1058,6 +1059,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workflow.evidence": "Evidence",
     "workflow.acmg": "ACMG assessment",
     "workflow.humanReview": "Human review",
+    "workflow.reportability": "Reportability",
     "workflow.report": "Report",
     "workflow.caseHistory": "Case history",
     "workspace.eyebrow": "GENOMIC INTERPRETATION PLATFORM",
@@ -1653,6 +1655,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workflow.evidence": "الأدلة",
     "workflow.acmg": "تقييم ACMG",
     "workflow.humanReview": "المراجعة البشرية",
+    "workflow.reportability": "قابلية الإبلاغ",
     "workflow.report": "التقرير",
     "workflow.caseHistory": "سجل الحالة",
     "workspace.eyebrow": "منصة التفسير الجينومي",
