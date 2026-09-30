@@ -4,7 +4,7 @@ import shutil
 import pytest
 
 from backend.app.domain.vcf import parse_vcf
-from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, VCFToolError
+from backend.app.domain.vcf_tools import MNV_POLICY, MULTIALLELIC_POLICY, normalize_vcf_with_bcftools, VCFToolError
 
 
 pytestmark = pytest.mark.skipif(shutil.which("bcftools") is None, reason="bcftools is required for production normalization golden tests")
@@ -48,6 +48,8 @@ def normalize(tmp_path: Path, records_text: str):
     assert output.is_file()
     assert stats["tool"] == "bcftools"
     assert stats["operation"] == "reference_aware_normalization"
+    assert stats["multiallelic_mode"] == MULTIALLELIC_POLICY
+    assert stats["mnv_policy"] == MNV_POLICY
     return records(output), reference, source, output
 
 
