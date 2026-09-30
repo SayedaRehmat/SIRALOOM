@@ -17,6 +17,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends bcftools
+          test "$(bcftools --version | head -n1)" = "bcftools 1.19"
       - name: Install backend
         run: pip install -e . pytest
       - name: Backend tests

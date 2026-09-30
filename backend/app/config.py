@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     redis_url: str
 
     artifact_root: str = "/data/siraloom/artifacts"
+    bcftools_version: str = "1.19"
 
     genebe_enabled: bool = False
     genebe_email: str | None = None

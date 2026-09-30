@@ -80,6 +80,7 @@ def normalize_vcf_with_bcftools(
     output_path: str | Path,
     *,
     reference_fasta: str | Path,
+    expected_bcftools_version: str | None = None,
     timeout_seconds: int = 1800,
 ) -> dict:
     """
@@ -123,6 +124,12 @@ def normalize_vcf_with_bcftools(
         "unknown",
     )
 
+    detected_version = version_line.split()[1] if len(version_line.split()) > 1 and version_line.split()[0] == "bcftools" else None
+    if expected_bcftools_version and detected_version != expected_bcftools_version:
+        raise VCFToolError(
+            f"bcftools version mismatch: expected {expected_bcftools_version}, found {detected_version or version_line}"
+        )
+
     output_type = "z" if output_path.name.lower().endswith((".gz", ".bgz")) else "v"
     command = [
         "bcftools",
@@ -159,6 +166,7 @@ def normalize_vcf_with_bcftools(
     return {
         "tool": "bcftools",
         "tool_version": version_line,
+        "expected_tool_version": expected_bcftools_version,
         "operation": "reference_aware_normalization",
         "command": " ".join(command),
         "reference_fasta": str(reference_fasta),
