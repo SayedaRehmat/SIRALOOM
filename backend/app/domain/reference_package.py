@@ -11,6 +11,7 @@ REFERENCE_PACKAGE_SCHEMA_VERSION = "1.0"
 REFERENCE_PACKAGE_RESOURCE_TYPE = "REFERENCE_PACKAGE"
 REFERENCE_PACKAGE_STATUS = "ACTIVE"
 CONTIG_POLICY_EXACT = "EXACT"
+REFERENCE_ASSEMBLY_METADATA_FIELDS = ("assembly_name", "assembly_accession", "reference_source", "sequence_scope")
 
 
 class ReferencePackageError(ValueError):
@@ -130,6 +131,13 @@ def validate_reference_package(
             f"Unsupported reference package schema: {metadata.get('schema_version')!r}.",
             code="REFERENCE_PACKAGE_INVALID",
         )
+    missing_identity = [field for field in REFERENCE_ASSEMBLY_METADATA_FIELDS if not metadata.get(field)]
+    if missing_identity:
+        raise ReferencePackageError(
+            "Reference package is missing assembly identity metadata: " + ", ".join(missing_identity),
+            code="REFERENCE_ASSEMBLY_IDENTITY_MISSING",
+        )
+
     if metadata.get("contig_policy") != CONTIG_POLICY_EXACT:
         raise ReferencePackageError(
             "Reference package must declare contig_policy=EXACT; implicit contig aliases are forbidden.",
@@ -199,6 +207,10 @@ def validate_reference_package(
         "provider": resource.provider,
         "version": resource.version,
         "genome_build": resource.genome_build,
+        "assembly_name": metadata["assembly_name"],
+        "assembly_accession": metadata["assembly_accession"],
+        "reference_source": metadata["reference_source"],
+        "sequence_scope": metadata["sequence_scope"],
         "fasta_path": str(fasta_path),
         "fai_path": str(fai_path),
         "fasta_sha256": actual_fasta_sha,
