@@ -718,10 +718,10 @@ export default function Home() {
           </div>
           {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>{t("workspace.checkpointPersisted")}</span></div>}
           {analysis?.started_at && <div className="run-meta"><span>Started {formatDate(analysis.started_at)}</span><span>Last state update {formatDate(analysis.completed_at ?? analysis.started_at)}</span></div>}
-          {analysis?.next_step && analysis?.status === "REQUIRES_REVIEW" && (
+          {analysis?.next_step && ["REQUIRES_REVIEW", "BLOCKED", "FAILED", "RESOURCE_FAILURE"].includes(String(analysis?.status)) && (
             <div className="ready-callout">
               <strong>Next required action</strong>
-              <p>The backend workflow is waiting at <strong>{prettyStatus(String(analysis.next_step))}</strong>. Complete that action before expecting the pipeline to advance.</p>
+              <p>The backend workflow reports <strong>{prettyStatus(String(analysis.status))}</strong> at <strong>{prettyStatus(String(analysis.next_step))}</strong>. Follow the stated next action; scientific prerequisites are never bypassed automatically.</p>
               {nextActionHref(String(analysis.next_step)) && (
                 <Link className="secondary link-button" href={nextActionHref(String(analysis.next_step)) as string}>
                   Open next step
