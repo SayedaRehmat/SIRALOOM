@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -165,6 +166,32 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis) -> int:
     return count
 
 
+def _change_fingerprint(
+    *,
+    organization_id: UUID,
+    trigger_type: str,
+    resource_kind: str,
+    resource_name: str,
+    new_version: str | None,
+    new_checksum: str | None,
+) -> str:
+    """Return a stable identity for one organization/resource release event.
+
+    The fingerprint intentionally excludes the previous snapshot version:
+    one newly registered resource release is one change event, even when
+    different historical analyses used different older releases.
+    """
+    material = "\\x1f".join([
+        str(organization_id),
+        trigger_type,
+        resource_kind,
+        resource_name,
+        new_version or "",
+        new_checksum or "",
+    ])
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
 def create_change_event(
     db: Session,
     *,
@@ -178,24 +205,35 @@ def create_change_event(
     previous_checksum: str | None = None,
     resource_id: UUID | None = None,
 ) -> ReanalysisChangeEvent:
+    fingerprint = _change_fingerprint(
+        organization_id=organization_id,
+        trigger_type=trigger_type,
+        resource_kind=resource_kind,
+        resource_name=resource_name,
+        new_version=new_version,
+        new_checksum=new_checksum,
+    )
     existing = db.scalar(
         select(ReanalysisChangeEvent).where(
-            ReanalysisChangeEvent.organization_id == organization_id,
-            ReanalysisChangeEvent.resource_kind == resource_kind,
-            ReanalysisChangeEvent.resource_name == resource_name,
-            ReanalysisChangeEvent.new_version == new_version,
-            ReanalysisChangeEvent.new_checksum == new_checksum,
-        ).order_by(ReanalysisChangeEvent.detected_at.desc())
+            ReanalysisChangeEvent.change_fingerprint == fingerprint,
+        )
     )
     if existing:
         return existing
 
     event = ReanalysisChangeEvent(
-        id=uuid4(), organization_id=organization_id, resource_id=resource_id,
-        trigger_type=trigger_type, resource_kind=resource_kind,
-        resource_name=resource_name, previous_version=previous_version,
-        new_version=new_version, previous_checksum=previous_checksum,
-        new_checksum=new_checksum, metadata_json={},
+        id=uuid4(),
+        change_fingerprint=fingerprint,
+        organization_id=organization_id,
+        resource_id=resource_id,
+        trigger_type=trigger_type,
+        resource_kind=resource_kind,
+        resource_name=resource_name,
+        previous_version=previous_version,
+        new_version=new_version,
+        previous_checksum=previous_checksum,
+        new_checksum=new_checksum,
+        metadata_json={},
     )
     db.add(event)
     db.flush()
