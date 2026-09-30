@@ -513,19 +513,17 @@ def decide_resource_approval(
     ))
 
     if decision == "APPROVED":
+        resource_identity_key = "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"])
         binding = db.scalar(select(OrganizationResourceBinding).where(
             OrganizationResourceBinding.organization_id == organization_id,
-            OrganizationResourceBinding.resource_name == resource.name,
-            OrganizationResourceBinding.provider == resource.provider,
-            OrganizationResourceBinding.resource_type == resource.resource_type,
-            OrganizationResourceBinding.genome_build == resource.genome_build,
+            OrganizationResourceBinding.identity_key == resource_identity_key,
         ))
         previous_resource_id = binding.resource_id if binding else None
         if binding is None:
             db.add(OrganizationResourceBinding(
                 id=uuid4(), organization_id=organization_id, resource_id=resource.id,
                 resource_name=resource.name, provider=resource.provider, resource_type=resource.resource_type,
-                genome_build=resource.genome_build, bound_by=actor_id, reason=reason, version=1,
+                genome_build=resource.genome_build, identity_key=resource_identity_key, bound_by=actor_id, reason=reason, version=1,
             ))
         else:
             binding.previous_resource_id = previous_resource_id
@@ -545,10 +543,7 @@ def get_active_resource_for_organization(
 ) -> Resource | None:
     binding = db.scalar(select(OrganizationResourceBinding).where(
         OrganizationResourceBinding.organization_id == organization_id,
-        OrganizationResourceBinding.resource_name == name,
-        OrganizationResourceBinding.provider == provider,
-        OrganizationResourceBinding.resource_type == resource_type,
-        OrganizationResourceBinding.genome_build == genome_build,
+        OrganizationResourceBinding.identity_key == "|".join([name, provider, resource_type, genome_build or "UNSPECIFIED"]),
     ))
     if binding:
         return db.get(Resource, binding.resource_id)
