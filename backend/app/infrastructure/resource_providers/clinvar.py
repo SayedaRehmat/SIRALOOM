@@ -86,6 +86,18 @@ class ClinVarReleaseProvider:
             "access_method": "NCBI_FTP_HTTPS",
             "location": url,
             "checksum": None,
+            "source_contract": {
+                "publisher": "NCBI ClinVar",
+                "canonical_source_url": "https://www.ncbi.nlm.nih.gov/clinvar/",
+                "artifact_url": url,
+                "release_identity": filename,
+                "access_mode": "PUBLIC",
+                "license_status": "REVIEW_REQUIRED",
+                "license_url": null,
+                "terms_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
+                "checksum_status": "NOT_PUBLISHED",
+                "authority_evidence_url": "https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/",
+            },
             "metadata": {
                 "release_channel": "MONTHLY_ARCHIVED",
                 "release_identity": filename,
