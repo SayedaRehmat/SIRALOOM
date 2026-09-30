@@ -32,6 +32,11 @@ def list_resources(
         query = query.where(Resource.resource_type == resource_type.strip().upper())
     if status:
         query = query.where(Resource.status == status.strip().upper())
+    if principal.role != "platform_admin":
+        query = query.where(
+            (Resource.organization_id.is_(None)) |
+            (Resource.organization_id == principal.organization_id)
+        )
     rows = db.scalars(query.limit(500)).all()
     return [{
         "resource_id": str(row.id),
@@ -121,7 +126,11 @@ def get_resource(
         "lab_scientist", "read_only",
     }))
     row = db.get(Resource, resource_id)
-    if not row:
+    if not row or (
+        principal.role != "platform_admin"
+        and row.organization_id is not None
+        and row.organization_id != principal.organization_id
+    ):
         raise HTTPException(status_code=404, detail="Resource not found")
     return {
         "resource_id": str(row.id),
