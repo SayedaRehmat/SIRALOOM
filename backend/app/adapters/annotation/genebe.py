@@ -15,7 +15,7 @@ class GeneBeError(RuntimeError):
 
 
 class GeneBeProvider:
-    provider_id = "genebe"
+    provider_id = "GeneBe"
     provider_version = "api-public-v1"
     supported_builds = {"GRCH38"}
 
