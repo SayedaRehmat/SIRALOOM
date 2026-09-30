@@ -15,8 +15,8 @@ export default function Signup() {
   }, []);
 
   return (
-    <main className="auth-page">
-      <Brand />
+    <main className="auth-page siraloom-auth">
+      <div className="auth-brand"><Brand /></div>
       <AuthForm mode="signup" trial={!isOrganizationSignup} />
       <p className="text-muted">
         {isOrganizationSignup
