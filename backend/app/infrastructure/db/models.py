@@ -290,6 +290,11 @@ class PopulationObservation(Base):
     homozygote_count: Mapped[int | None] = mapped_column(BigInteger)
     availability: Mapped[str] = mapped_column(Text)
     quality_status: Mapped[str | None] = mapped_column(Text)
+    source_record_id: Mapped[str | None] = mapped_column(Text)
+    request_fingerprint: Mapped[str | None] = mapped_column(Text)
+    response_sha256: Mapped[str | None] = mapped_column(Text)
+    request_metadata: Mapped[dict] = mapped_column("request_metadata", JSON, default=dict)
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("analysis_id", "variant_id", "resource_id", "population_code"),)
 
