@@ -45,6 +45,7 @@ def list_resources(
         "location": row.location,
         "status": row.status,
         "population_definition": row.population_definition,
+        "organization_id": str(row.organization_id) if row.organization_id else None,
         "metadata": row.metadata_json,
         "created_at": row.created_at,
     } for row in rows]
@@ -71,6 +72,10 @@ def register_resource(
             location=payload.get("location"),
             population_definition=payload.get("population_definition"),
             metadata_json=payload.get("metadata"),
+            organization_id=principal.organization_id if principal.role != "platform_admin" else (
+                UUID(str(payload["organization_id"])) if payload.get("organization_id") else None
+            ),
+            initial_status=str(payload.get("status") or ("CANDIDATE" if payload.get("discovered") else "ACTIVE")),
         )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -132,4 +137,65 @@ def get_resource(
         "population_definition": row.population_definition,
         "metadata": row.metadata_json,
         "created_at": row.created_at,
+    }
+
+
+
+@router.post("/{resource_id}/qualify")
+def qualify_resource(
+    resource_id: UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "lab_director", "bioinformatician"}))
+    row = db.get(Resource, resource_id)
+    if not row or (row.organization_id and row.organization_id != principal.organization_id):
+        raise HTTPException(status_code=404, detail="Resource not found")
+    try:
+        from backend.app.domain.resources import qualify_resource_version
+        qualification = qualify_resource_version(
+            db,
+            resource_id=resource_id,
+            qualification_version=str(payload.get("qualification_version") or ""),
+            checks=payload.get("checks") or {},
+            qualified_by=principal.user_id,
+        )
+    except ResourceRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.commit()
+    return {
+        "resource_id": str(resource_id),
+        "status": row.status,
+        "qualification_id": str(qualification.id),
+        "qualification_version": qualification.qualification_version,
+    }
+
+
+@router.post("/{resource_id}/activate")
+def activate_resource(
+    resource_id: UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "lab_director"}))
+    row = db.get(Resource, resource_id)
+    if not row or (row.organization_id and row.organization_id != principal.organization_id):
+        raise HTTPException(status_code=404, detail="Resource not found")
+    try:
+        from backend.app.domain.resources import activate_resource_version
+        row = activate_resource_version(
+            db,
+            resource_id=resource_id,
+            qualification_version=str(payload.get("qualification_version") or ""),
+        )
+    except ResourceRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.commit()
+    return {
+        "resource_id": str(row.id),
+        "organization_id": str(row.organization_id) if row.organization_id else None,
+        "status": row.status,
+        "version": row.version,
     }
