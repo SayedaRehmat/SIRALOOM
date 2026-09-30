@@ -15,6 +15,12 @@ class EvidenceRecord:
     source_version: str | None
     observation_ids: tuple[UUID, ...]
     payload: dict[str, Any]
+    resource_id: UUID | None = None
+    source_record_id: str | None = None
+    request_fingerprint: str | None = None
+    response_sha256: str | None = None
+    request_metadata: dict[str, Any] | None = None
+    observed_at: str | None = None
 
 
 def evidence_fingerprint(
