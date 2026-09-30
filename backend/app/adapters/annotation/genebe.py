@@ -14,7 +14,7 @@ class GeneBeError(RuntimeError):
 class GeneBeProvider:
     provider_id = "genebe"
     provider_version = "api-public-v1"
-    supported_builds = {"GRCh38"}
+    supported_builds = {"GRCH38"}
 
     def capabilities(self) -> set[str]:
         return {"ANNOTATION", "ACMG_CRITERIA_SUPPORT"}
