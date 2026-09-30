@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import time
@@ -27,6 +28,10 @@ class PopulationObservationData:
     availability: str = "AVAILABLE"
     quality_status: str = "PASS"
     source_record_id: str | None = None
+    request_fingerprint: str | None = None
+    response_sha256: str | None = None
+    request_metadata: dict[str, Any] | None = None
+    observed_at: str | None = None
 
 
 class GnomADGraphQLProvider:
@@ -76,6 +81,23 @@ class GnomADGraphQLProvider:
         }
         """
         variables = {"variantId": variant_id, "dataset": self.dataset_id}
+        request_metadata = {
+            "provider": self.provider_id,
+            "provider_version": self.provider_version,
+            "endpoint": self.endpoint,
+            "dataset_selector": self.dataset_id,
+            "variant_id": variant_id,
+            "genome_build": variant.genome_build,
+        }
+        request_fingerprint = hashlib.sha256(
+            json.dumps(
+                {"query": query, "variables": variables},
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        from datetime import datetime, timezone
+        observed_at = datetime.now(timezone.utc).isoformat()
         try:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(self.endpoint, json={"query": query, "variables": variables})
@@ -86,6 +108,9 @@ class GnomADGraphQLProvider:
 
         if body.get("errors"):
             raise GnomADProviderError(f"gnoMAD GraphQL errors: {body['errors']}")
+        response_sha256 = hashlib.sha256(
+            json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
         details = (body.get("data") or {}).get("variant")
         if details is None:
             return []
@@ -105,6 +130,14 @@ class GnomADGraphQLProvider:
                         allele_frequency=_af(ac, an),
                         homozygote_count=_int_or_none(pop.get("ac_hom")),
                         source_record_id=details.get("variantId"),
+                    request_fingerprint=request_fingerprint,
+                    response_sha256=response_sha256,
+                    request_metadata=request_metadata,
+                    observed_at=observed_at,
+                        request_fingerprint=request_fingerprint,
+                        response_sha256=response_sha256,
+                        request_metadata=request_metadata,
+                        observed_at=observed_at,
                     )
                 )
 
