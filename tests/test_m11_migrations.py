@@ -15,3 +15,12 @@ def test_m11_full_sqlite_upgrade_reaches_qc_head(tmp_path, monkeypatch):
     assert "qc_assessments" in inspector.get_table_names()
     analysis_cols = {c["name"] for c in inspector.get_columns("analyses")}
     assert "assay_id" in analysis_cols
+    annotation_cols = {c["name"] for c in inspector.get_columns("annotations")}
+    assert {
+        "resource_id",
+        "request_fingerprint",
+        "response_sha256",
+        "request_metadata",
+        "observed_at",
+        "retry_count",
+    }.issubset(annotation_cols)
