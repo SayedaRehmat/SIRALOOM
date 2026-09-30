@@ -56,6 +56,10 @@ def upgrade():
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("organization_id", sa.Uuid(), nullable=False),
         sa.Column("resource_id", sa.Uuid(), nullable=False),
+        sa.Column("resource_name", sa.Text(), nullable=False),
+        sa.Column("provider", sa.Text(), nullable=False),
+        sa.Column("resource_type", sa.Text(), nullable=False),
+        sa.Column("genome_build", sa.Text(), nullable=True),
         sa.Column("bound_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("bound_by", sa.Uuid(), nullable=True),
         sa.Column("previous_resource_id", sa.Uuid(), nullable=True),
@@ -71,7 +75,7 @@ def upgrade():
     op.create_index(
         "uq_org_resource_binding_active",
         "organization_resource_bindings",
-        ["organization_id"],
+        ["organization_id", "resource_name", "provider", "resource_type", "genome_build"],
         unique=True,
     )
 
