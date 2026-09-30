@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain import resource_discovery
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Resource
+from backend.app.infrastructure.db.models import Organization, Resource
 
 
 class FakeEntryPoint:
@@ -34,7 +34,7 @@ class FakeProvider:
 
 def test_provider_discovery_registers_candidates_without_activation(monkeypatch):
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine, tables=[Resource.__table__])
+    Base.metadata.create_all(engine, tables=[Organization.__table__, Resource.__table__])
     monkeypatch.setattr(resource_discovery, "entry_points", lambda: FakeEntryPoints())
 
     with Session(engine) as db:
