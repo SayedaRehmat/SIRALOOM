@@ -1048,6 +1048,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         access_method="API",
                         status="AVAILABLE",
                         population_definition={"level": "ANCESTRY", "code": "MID", "label": "Middle Eastern"},
+                        metadata_json={
+                            "version_semantics": "API_DATASET_SELECTOR",
+                            "dataset_selector": settings.gnomad_dataset_id,
+                            "release_version_not_asserted": True,
+                            "provider_version": gnomad.provider_version,
+                        },
                     )
                     for variant in iter_normalized_vcf(normalized_path, reference_build):
                         obs_list = gnomad.query_variant(variant)
@@ -1082,6 +1088,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     homozygote_count=obs.homozygote_count,
                                     availability=obs.availability,
                                     quality_status=obs.quality_status,
+                                    source_record_id=obs.source_record_id,
+                                    request_fingerprint=obs.request_fingerprint,
+                                    response_sha256=obs.response_sha256,
+                                    request_metadata=obs.request_metadata or {},
+                                    observed_at=(
+                                        datetime.fromisoformat(obs.observed_at)
+                                        if obs.observed_at
+                                        else None
+                                    ),
                                 )
                             )
                             direct_count += 1
