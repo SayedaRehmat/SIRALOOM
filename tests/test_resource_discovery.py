@@ -29,6 +29,16 @@ class FakeProvider:
             "checksum": "a" * 64,
             "location": "blob://future/2026.10",
             "metadata": {"release_channel": "stable"},
+            "source_contract": {
+                "publisher": "FutureProvider",
+                "canonical_source_url": "https://example.org/resource",
+                "artifact_url": "https://example.org/resource/2026.10",
+                "release_identity": "2026.10",
+                "access_mode": "PUBLIC",
+                "license_status": "NOT_REQUIRED",
+                "checksum_status": "PUBLISHED_AND_VERIFIED",
+                "authority_evidence_url": "https://example.org/resource/docs",
+            },
         }]
 
 
