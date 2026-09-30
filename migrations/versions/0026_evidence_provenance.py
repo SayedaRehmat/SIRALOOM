@@ -19,9 +19,9 @@ def upgrade():
     op.add_column("evidence", sa.Column("response_sha256", sa.Text(), nullable=True))
     op.add_column("evidence", sa.Column("request_metadata", sa.JSON(), nullable=True))
     op.add_column("evidence", sa.Column("observed_at", sa.DateTime(timezone=True), nullable=True))
-    op.create_foreign_key("fk_evidence_resource_id", "evidence", "resources", ["resource_id"], ["id"])
     op.execute(sa.text("UPDATE evidence SET request_metadata = '{}' WHERE request_metadata IS NULL"))
     with op.batch_alter_table("evidence") as batch_op:
+        batch_op.create_foreign_key("fk_evidence_resource_id", "resources", ["resource_id"], ["id"])
         batch_op.alter_column("request_metadata", existing_type=sa.JSON(), nullable=False)
 
     op.add_column("clingen_specifications", sa.Column("request_fingerprint", sa.Text(), nullable=True))
@@ -36,7 +36,8 @@ def downgrade():
     op.drop_column("clingen_specifications", "request_metadata")
     op.drop_column("clingen_specifications", "response_sha256")
     op.drop_column("clingen_specifications", "request_fingerprint")
-    op.drop_constraint("fk_evidence_resource_id", "evidence", type_="foreignkey")
+    with op.batch_alter_table("evidence") as batch_op:
+        batch_op.drop_constraint("fk_evidence_resource_id", type_="foreignkey")
     op.drop_column("evidence", "observed_at")
     op.drop_column("evidence", "request_metadata")
     op.drop_column("evidence", "response_sha256")
