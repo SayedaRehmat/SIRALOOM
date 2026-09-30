@@ -100,6 +100,7 @@ const steps = [
   ["build_evidence", "workflow.evidence"],
   ["acmg_assessment", "workflow.acmg"],
   ["review", "workflow.humanReview"],
+  ["reportability", "workflow.reportability"],
   ["report", "workflow.report"],
   ["export_provenance", "workflow.caseHistory"],
 ] as const;
@@ -182,7 +183,7 @@ export default function Home() {
     let last = -1;
     steps.forEach(([id], index) => {
       const current = stepsFromApi.find((step) => step.step_id === id);
-      if (current && ["SUCCEEDED", "RUNNING", "REQUIRES_REVIEW"].includes(current.status)) last = index;
+      if (current && ["SUCCEEDED", "RUNNING", "REQUIRES_REVIEW", "FAILED", "BLOCKED", "RESOURCE_FAILURE"].includes(current.status)) last = index;
     });
     return last;
   }, [analysis]);
@@ -460,7 +461,7 @@ export default function Home() {
           input_artifact_id: artifactId,
           analysis_type: "VARIANT_INTERPRETATION",
           workflow_id: "variant-v1",
-          workflow_version: "1.0",
+          workflow_version: "2.1",
           reference_build: genomeBuild,
         }),
       });
