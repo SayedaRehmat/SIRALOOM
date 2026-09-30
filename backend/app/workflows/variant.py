@@ -48,8 +48,9 @@ WORKFLOW_STEPS = [
     ("build_evidence", 5),
     ("acmg_assessment", 6),
     ("review", 7),
-    ("report", 8),
-    ("export_provenance", 9),
+    ("reportability", 8),
+    ("report", 9),
+    ("export_provenance", 10),
 ]
 
 
@@ -1212,18 +1213,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # 7. Human-review gate. The workflow remains durable and resumable while
-        # individual variants are reviewed. It advances only when every latest
-        # classification is FINAL+APPROVED and every corresponding reportability
-        # decision is FINAL.
+        # 7. Human-review gate. Classification approval is distinct from
+        # reportability disposition so the workflow can route the reviewer to
+        # the exact next clinical action instead of dead-ending at review.
         review_step = _step(db, analysis.id, "review")
-        if not _review_gate_ready(db, analysis.id):
+        if not _classification_review_gate_ready(db, analysis.id):
             if review_step.status != StepStatus.REQUIRES_REVIEW:
                 mark_step(
                     db,
                     review_step,
                     StepStatus.REQUIRES_REVIEW,
-                    metadata={"reason": "Awaiting required human classification and reportability review.", "next_step": "review"},
+                    metadata={"reason": "Awaiting required human classification review.", "next_step": "review"},
                 )
             analysis.status = AnalysisStatus.REQUIRES_REVIEW
             analysis.completed_at = None
@@ -1234,7 +1234,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 analysis_id=analysis.id,
                 actor_type="SYSTEM",
                 actor_id="workflow",
-                payload={"next_step": "review", "state": "AWAITING_HUMAN_REVIEW"},
+                payload={"next_step": "review", "state": "AWAITING_HUMAN_CLASSIFICATION"},
             )
             db.commit()
             return
@@ -1244,7 +1244,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db,
                 review_step,
                 StepStatus.SUCCEEDED,
-                metadata={"review_gate": "PASSED", "next_step": "report"},
+                metadata={"review_gate": "PASSED", "next_step": "reportability"},
             )
             audit.record(
                 event_type="REVIEW_GATE_COMPLETED",
@@ -1252,11 +1252,88 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 analysis_id=analysis.id,
                 actor_type="SYSTEM",
                 actor_id="workflow",
-                payload={"next_step": "report"},
+                payload={"next_step": "reportability"},
             )
             db.commit()
 
-        # 8. Generate an immutable report draft once all required review gates
+        # 8. Reportability is an explicit human gate. Proposed decisions are
+        # created automatically, but release cannot proceed until each latest
+        # decision is explicitly finalized by an authorized reviewer.
+        reportability_step = _step(db, analysis.id, "reportability")
+        if reportability_step.status != StepStatus.SUCCEEDED:
+            mark_step(db, reportability_step, StepStatus.RUNNING)
+            try:
+                from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
+
+                evaluate_analysis(db, analysis)
+                reportability_ready, reportability_errors = final_reportability_state(db, analysis.id)
+                if not reportability_ready:
+                    mark_step(
+                        db,
+                        reportability_step,
+                        StepStatus.REQUIRES_REVIEW,
+                        metadata={
+                            "reason": "Awaiting final reportability disposition for all classified variants.",
+                            "next_step": "reportability",
+                            "errors": reportability_errors,
+                        },
+                    )
+                    analysis.status = AnalysisStatus.REQUIRES_REVIEW
+                    analysis.completed_at = None
+                    audit.record(
+                        event_type="WORKFLOW_AWAITING_REPORTABILITY",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="workflow",
+                        reason="Final reportability disposition is required before report generation.",
+                        payload={"next_step": "reportability", "errors": reportability_errors},
+                    )
+                    db.commit()
+                    return
+
+                mark_step(
+                    db,
+                    reportability_step,
+                    StepStatus.SUCCEEDED,
+                    metadata={"reportability_gate": "PASSED", "next_step": "report"},
+                )
+                audit.record(
+                    event_type="REPORTABILITY_GATE_COMPLETED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="workflow",
+                    payload={"next_step": "report"},
+                )
+                db.commit()
+            except Exception as exc:
+                mark_step(
+                    db,
+                    reportability_step,
+                    StepStatus.FAILED,
+                    error_code="REPORTABILITY_EVALUATION_FAILED",
+                    error_message=str(exc),
+                    metadata={"next_step": "reportability"},
+                )
+                analysis.status = AnalysisStatus.FAILED
+                analysis.completed_at = _now()
+                audit.record(
+                    event_type="REPORTABILITY_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="workflow",
+                    reason=str(exc),
+                    payload={"error_code": "REPORTABILITY_EVALUATION_FAILED", "next_step": "reportability"},
+                )
+                db.commit()
+                return
+
+        # 9. Generate an immutable report draft after classification and
+        # reportability gates have passed. Final clinical release remains a
+        # separate human approval.
+        # 9. Generate an immutable report draft once all required review gates
         # have passed. Final clinical release remains a separate human approval.
         report_step = _step(db, analysis.id, "report")
         if report_step.status != StepStatus.SUCCEEDED:
@@ -1523,8 +1600,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         db.close()
 
 
-def _review_gate_ready(db: Session, analysis_id: UUID) -> bool:
-    """Return True only when every classified variant has passed both human gates."""
+def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    """Return True only when every classified variant has a final approved classification."""
     classifications = list(
         db.scalars(
             select(Classification)
@@ -1539,9 +1616,30 @@ def _review_gate_ready(db: Session, analysis_id: UUID) -> bool:
     if not latest:
         return False
 
-    for variant_id, classification in latest.items():
-        if classification.state != "FINAL" or classification.review_status != "APPROVED":
-            return False
+    return all(
+        classification.state == "FINAL"
+        and classification.review_status == "APPROVED"
+        for classification in latest.values()
+    )
+
+
+def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    """Return True only when every latest reportability decision is FINAL."""
+    classifications = list(
+        db.scalars(
+            select(Classification)
+            .where(Classification.analysis_id == analysis_id)
+            .order_by(Classification.variant_id, Classification.version.desc())
+        )
+    )
+    latest: dict[UUID, Classification] = {}
+    for row in classifications:
+        latest.setdefault(row.variant_id, row)
+
+    if not latest:
+        return False
+
+    for variant_id in latest:
         decision = db.scalar(
             select(ReportabilityDecision)
             .where(
@@ -1554,7 +1652,6 @@ def _review_gate_ready(db: Session, analysis_id: UUID) -> bool:
             return False
 
     return True
-
 
 def _iter_variant_batches(path: Path, genome_build: str, batch_size: int):
     """Yield (zero-based record start, bounded list) from a normalized VCF."""
