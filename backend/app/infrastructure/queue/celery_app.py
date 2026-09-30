@@ -15,6 +15,13 @@ if Celery is not None:
         worker_concurrency=max(1, settings.celery_concurrency),
         worker_max_tasks_per_child=max(1, settings.celery_worker_max_tasks_per_child),
         task_reject_on_worker_lost=True,
+        timezone="UTC",
+        beat_schedule={
+            "scan-reanalysis-resources-daily": {
+                "task": "siraloom.scan_reanalysis_resources",
+                "schedule": 86400.0,
+            },
+        },
     )
 
     def _finalize_transient_retry_exhaustion(db, analysis_id, error_message):
@@ -106,6 +113,18 @@ if Celery is not None:
         try:
             analysis = db.get(Analysis, UUID(analysis_id))
             return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
+        finally:
+            db.close()
+
+    @celery_app.task(name="siraloom.scan_reanalysis_resources", autoretry_for=(), acks_late=True)
+    def scan_reanalysis_resources():
+        from backend.app.domain.reanalysis import scan_active_resources_for_reanalysis
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            candidates_created = scan_active_resources_for_reanalysis(db)
+            return {"candidates_created": candidates_created}
         finally:
             db.close()
 
