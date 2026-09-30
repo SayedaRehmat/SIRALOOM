@@ -206,6 +206,8 @@ def get(
         "analysis_id": str(analysis.id),
         "case_id": str(analysis.case_id),
         "status": analysis.status,
+        "analysis_version": analysis.analysis_version,
+        "parent_analysis_id": str(analysis.parent_analysis_id) if analysis.parent_analysis_id else None,
         "workflow_id": analysis.workflow_id,
         "workflow_version": analysis.workflow_version,
         "reference_build": analysis.reference_build,
