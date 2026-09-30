@@ -50,7 +50,7 @@ def _persist_pdf_artifact(
             filename=filename,
             artifact_type="REPORT_PDF",
             media_type="application/pdf",
-            genome_build=None,
+            genome_build=db.get(Analysis, report.analysis_id).reference_build,
             metadata={
                 "rendered_format": "PDF",
                 "report_schema_version": content["report_schema_version"],
