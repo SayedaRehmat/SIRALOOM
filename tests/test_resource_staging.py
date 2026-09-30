@@ -24,13 +24,13 @@ class FakeStager:
         )()
 
 
-def test_stage_and_verify_requires_expected_integrity():
+def test_stage_and_verify_requires_expected_integrity(tmp_path):
     payload = b"SIRALOOM resource"
     expected = sha256(payload).hexdigest()
     result = stage_and_verify(
         FakeStager(payload),
         {"version": "2026.09"},
-        __import__("pathlib").Path("staged-resource.bin"),
+        tmp_path / "staged-resource.bin",
         expected,
     )
     assert result.sha256 == expected
