@@ -142,3 +142,57 @@ def test_review_rejects_evidence_from_another_variant_or_analysis():
     db.add_all([foreign_variant, evidence]); db.commit()
     with pytest.raises(ReviewError, match="Every selected evidence record"):
         review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("ACCEPT", "MODERATE", "Invalid evidence link", (evidence.id,), 0), reviewer=reviewer)
+
+
+
+def test_approval_cannot_bypass_more_evidence_gate():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    request_more_evidence(
+        db,
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        reviewer=reviewer,
+        expected_version=0,
+        reason="Additional evidence is required",
+    )
+    with pytest.raises(ReviewError, match="active review"):
+        approve_classification(
+            db,
+            analysis_id=analysis.id,
+            variant_id=variant.id,
+            reviewer=reviewer,
+            expected_version=1,
+            reason="Approve without resolving evidence request",
+        )
+
+
+def test_approved_classification_cannot_be_reopened():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    approved = approve_classification(
+        db,
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        reviewer=reviewer,
+        expected_version=0,
+        reason="Evidence reviewed and approved",
+    )
+    with pytest.raises(ReviewError, match="cannot be reopened"):
+        from backend.app.review.service import start_review
+        start_review(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer)
+    assert approved.review_status == ReviewStatus.APPROVED
+    assert approved.state == "FINAL"
+
+
+def test_inactive_reviewer_cannot_approve():
+    db, reviewer, _, analysis, variant, _, _ = seed()
+    reviewer.status = "INACTIVE"
+    db.commit()
+    with pytest.raises(ReviewAuthorizationError, match="not active"):
+        approve_classification(
+            db,
+            analysis_id=analysis.id,
+            variant_id=variant.id,
+            reviewer=reviewer,
+            expected_version=0,
+            reason="Should be blocked",
+        )
