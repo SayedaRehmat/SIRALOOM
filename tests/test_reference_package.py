@@ -76,3 +76,10 @@ def test_reference_package_rejects_checksum_change(tmp_path: Path):
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
+
+
+def test_reference_package_allows_explicitly_pinned_superseded_version(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    resource.status = "SUPERSEDED"
+    package = validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert package["package_checksum"] == resource.checksum

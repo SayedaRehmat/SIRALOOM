@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.models import Resource
 
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
-_ALLOWED_TYPES = frozenset({"REFERENCE", "POPULATION", "ANNOTATION", "EVIDENCE", "ACMG_RULE"})
+_ALLOWED_TYPES = frozenset({"REFERENCE", "REFERENCE_PACKAGE", "POPULATION", "ANNOTATION", "EVIDENCE", "ACMG_RULE"})
 
 
 class ResourceRegistryError(ValueError):
