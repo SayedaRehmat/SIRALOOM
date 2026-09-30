@@ -71,6 +71,8 @@ Run exactly one Celery Beat scheduler for the deployment:
 
 Beat publishes the durable resource-change scan task on the configured schedule. It does not perform the scan itself; the Celery worker executes `siraloom.scan_reanalysis_resources`. Do not run multiple Beat instances against the same deployment unless an external scheduler/leader-election mechanism is explicitly in place.
 
+A newly registered scientific resource also triggers a best-effort immediate scan after the registry transaction commits. If the queue is temporarily unavailable, the resource registration remains successful and the daily Beat scan is the recovery mechanism. Resource registration never silently mutates completed analyses.
+
 The current application schedule is daily at 00:00 UTC:
 
 ```text
