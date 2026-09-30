@@ -66,6 +66,11 @@ def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDeci
 
     created: list[ReportabilityDecision] = []
     for variant_id, cls in latest_cls.items():
+        # Reportability is downstream of the human classification gate. Never
+        # create or refresh a reportability decision from a proposed/unapproved
+        # classification; the workflow must remain blocked at human review.
+        if cls.state != "FINAL" or cls.review_status != "APPROVED":
+            continue
         current = latest_decision(db, analysis.id, variant_id)
         if current and current.classification_id == cls.id and current.status == "FINAL":
             continue
