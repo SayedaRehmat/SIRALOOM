@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    Artifact,
     Case,
     Classification,
     Organization,
@@ -97,6 +98,20 @@ def seed_finalizable_report():
         review_version=1,
         reviewed_by=reviewer.id,
     )
+    draft_artifact = Artifact(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        case_id=case.id,
+        artifact_type="REPORT_PDF",
+        filename="report_v1_draft.pdf",
+        media_type="application/pdf",
+        size_bytes=12,
+        sha256="a" * 64,
+        storage_uri="file:///tmp/siraloom-tests/report_v1_draft.pdf",
+        genome_build="GRCh38",
+        validation_status="VALID",
+        metadata_json={"report_state": "DRAFT"},
+    )
     report = Report(
         id=uuid4(),
         case_id=case.id,
@@ -105,6 +120,7 @@ def seed_finalizable_report():
         language="en",
         report_type="CLINICAL_INTERPRETATION",
         status="DRAFT",
+        artifact_id=draft_artifact.id,
         content_json={
             "report_schema_version": "1.1.0",
             "report_version": 1,
@@ -115,7 +131,7 @@ def seed_finalizable_report():
             },
         },
     )
-    db.add_all([org, reviewer, case, analysis, variant, classification, decision, report])
+    db.add_all([org, reviewer, case, analysis, variant, classification, decision, draft_artifact, report])
     db.commit()
     return db, reviewer, analysis, report
 
