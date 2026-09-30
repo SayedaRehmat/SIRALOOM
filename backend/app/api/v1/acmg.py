@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from backend.app.acmg.engine import ACMGEngine, CriterionAssessment
 from backend.app.acmg.rules import CriterionDirection
 from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Variant
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Variant, Evidence
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, require_role
 from backend.app.infrastructure.audit.service import AuditService
@@ -35,6 +35,36 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
     variant = db.get(Variant, variant_id)
     if not analysis or not variant:
         raise HTTPException(status_code=404, detail="Analysis or variant not found")
+    requested_evidence_ids = {str(e) for item in payload.criteria for e in item.evidence_ids}
+    evidence_rows = db.scalars(
+        select(Evidence).where(
+            Evidence.analysis_id == analysis_id,
+            Evidence.variant_id == variant_id,
+            Evidence.id.in_(list(requested_evidence_ids) or [UUID(int=0)]),
+        )
+    ).all()
+    persisted_evidence_ids = {str(row.id) for row in evidence_rows}
+    missing_evidence_ids = sorted(requested_evidence_ids - persisted_evidence_ids)
+    if missing_evidence_ids:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "ACMG_EVIDENCE_NOT_FOUND",
+                "message": "Every ACMG criterion evidence_id must reference persisted Evidence for this analysis and variant.",
+                "missing_evidence_ids": missing_evidence_ids,
+            },
+        )
+    criteria_without_evidence = [x.criterion for x in payload.criteria if not x.evidence_ids]
+    if criteria_without_evidence:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "ACMG_EVIDENCE_REQUIRED",
+                "message": "An ACMG criterion cannot be proposed without persisted Evidence.",
+                "criteria": criteria_without_evidence,
+            },
+        )
+
     engine = ACMGEngine()
     try:
         assessments = [

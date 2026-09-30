@@ -10,6 +10,7 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     Annotation,
     ClinGenSpecification,
+    Evidence,
     PopulationObservation,
     Resource,
     Variant,
@@ -69,11 +70,22 @@ def test_selection_and_evaluation_use_selected_clingen_specification():
             population_definition={"level": "ANCESTRY", "code": "MID"}, metadata_json={}
         )
         db.add(resource); db.flush()
+        observation_id = uuid4()
         db.add(PopulationObservation(
-            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, resource_id=resource.id,
+            id=observation_id, analysis_id=analysis.id, variant_id=variant.id, resource_id=resource.id,
             population_level="ANCESTRY", population_code="MID", population_label="Middle Eastern",
             allele_count=0, allele_number=5000, allele_frequency=0.0, homozygote_count=0,
             availability="AVAILABLE", quality_status="PASS"
+        ))
+        db.add(Evidence(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            evidence_type="POPULATION_FREQUENCY",
+            statement="Configured population observation supports PM2 rarity assessment.",
+            direction="PATHOGENIC", source_name="gnomAD", source_version="4.x",
+            resource_id=resource.id, source_record_id="test-observation",
+            observation_ids=[str(observation_id)], payload={},
+            created_by_type="TEST", created_by_id="test",
+            evidence_fingerprint=str(uuid4()),
         ))
         db.commit()
 
