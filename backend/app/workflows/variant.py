@@ -730,6 +730,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 batch_limit = min(max(1, settings.genebe_max_batch), 1000)
+                annotation_resource = None
+                configured_resource_id = (analysis.configuration or {}).get("annotation_resource_id")
+                if configured_resource_id:
+                    try:
+                        annotation_resource = db.get(Resource, UUID(str(configured_resource_id)))
+                    except ValueError as exc:
+                        raise GeneBeError("Configured annotation_resource_id is not a valid UUID") from exc
+                    if annotation_resource is None:
+                        raise GeneBeError("Configured annotation_resource_id does not exist")
+                    if annotation_resource.resource_type != "ANNOTATION":
+                        raise GeneBeError("Configured annotation_resource_id is not an ANNOTATION resource")
+                    if annotation_resource.genome_build and normalize_build(annotation_resource.genome_build) != normalize_build(analysis.reference_build):
+                        raise GeneBeError("Configured annotation resource genome build does not match the analysis")
                 # One streamed iterator drives all annotation batches; no repeated file scans.
                 genome = "hg38" if normalize_build(analysis.reference_build) == "GRCh38" else "hg19"
                 expected_count = int((normalization_step.metadata_json or {}).get("record_count", 0) or 0)
@@ -848,6 +861,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if str(row_id) in existing_by_variant:
                             continue
                         payload = payloads_by_key[canonical]
+                        provenance = dict(payload.pop("_siraloom_annotation_provenance", {}) or {})
                         normalized = normalize_gene_be_variant(payload)
                         db.add(
                             Annotation(
@@ -856,8 +870,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 analysis_id=analysis.id,
                                 provider_name=provider.provider_id,
                                 provider_version=provider.provider_version,
-                                resource_name="GeneBe",
-                                resource_version=None,
+                                resource_id=annotation_resource.id if annotation_resource else None,
+                                resource_name=annotation_resource.name if annotation_resource else "GeneBe",
+                                resource_version=annotation_resource.version if annotation_resource else None,
+                                request_fingerprint=provenance.get("request_fingerprint"),
+                                response_sha256=provenance.get("response_sha256"),
+                                request_metadata={
+                                    "endpoint": provenance.get("endpoint"),
+                                    "genome": provenance.get("genome"),
+                                    "provider": provenance.get("provider"),
+                                    "provider_version": provenance.get("provider_version"),
+                                },
+                                observed_at=(
+                                    datetime.fromisoformat(provenance["observed_at"])
+                                    if provenance.get("observed_at")
+                                    else None
+                                ),
+                                retry_count=int(provenance.get("retry_count", 0) or 0),
                                 payload={"raw": payload, "normalized": normalized},
                             )
                         )

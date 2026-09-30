@@ -1,5 +1,8 @@
 from __future__ import annotations
 from typing import Any
+from datetime import datetime, timezone
+import hashlib
+import json
 import httpx
 import time
 from backend.app.config import settings
@@ -40,8 +43,19 @@ class GeneBeProvider:
             for v in variants
         ]
         url = f"{settings.genebe_base_url.rstrip('/')}/variants"
+        request_material = {
+            "provider": self.provider_id,
+            "provider_version": self.provider_version,
+            "endpoint": url,
+            "genome": genome,
+            "variants": payload,
+        }
+        request_fingerprint = hashlib.sha256(
+            json.dumps(request_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
         last_error: GeneBeError | None = None
         attempts = max(1, settings.genebe_retry_attempts)
+        retry_count = 0
         for attempt in range(1, attempts + 1):
             response = None
             try:
@@ -72,6 +86,7 @@ class GeneBeProvider:
                 retry_after = float(response.headers.get("Retry-After")) if response is not None else None
             except (TypeError, ValueError):
                 retry_after = None
+            retry_count += 1
             delay = retry_after if retry_after is not None else min(
                 settings.genebe_retry_max_backoff_seconds,
                 settings.genebe_retry_backoff_seconds * (2 ** (attempt - 1)),
@@ -79,8 +94,22 @@ class GeneBeProvider:
             time.sleep(max(0.0, delay))
         else:
             raise last_error or GeneBeError("GeneBe request failed")
+        response_sha256 = hashlib.sha256(
+            json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        observed_at = datetime.now(timezone.utc).isoformat()
+        provenance = {
+            "provider": self.provider_id,
+            "provider_version": self.provider_version,
+            "endpoint": url,
+            "genome": genome,
+            "request_fingerprint": request_fingerprint,
+            "response_sha256": response_sha256,
+            "observed_at": observed_at,
+            "retry_count": retry_count,
+        }
         if isinstance(data, dict) and isinstance(data.get("variants"), list):
-            return data["variants"]
+            return [{**item, "_siraloom_annotation_provenance": provenance} for item in data["variants"]]
         if isinstance(data, list):
-            return data
+            return [{**item, "_siraloom_annotation_provenance": provenance} for item in data]
         raise GeneBeError("Unexpected GeneBe response: expected object with variants[]")

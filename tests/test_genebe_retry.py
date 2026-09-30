@@ -48,6 +48,14 @@ def test_genebe_retries_transient_http_error(monkeypatch):
     result = GeneBeProvider().annotate([variant()], {"genome": "hg38"})
     assert FakeClient.calls == 2
     assert result[0]["pos"] == 100
+    provenance = result[0]["_siraloom_annotation_provenance"]
+    assert provenance["provider"] == "genebe"
+    assert provenance["provider_version"] == "api-public-v1"
+    assert provenance["genome"] == "hg38"
+    assert provenance["retry_count"] == 1
+    assert len(provenance["request_fingerprint"]) == 64
+    assert len(provenance["response_sha256"]) == 64
+    assert provenance["observed_at"].endswith("+00:00")
 
 
 def test_genebe_does_not_retry_non_transient_http_error(monkeypatch):
