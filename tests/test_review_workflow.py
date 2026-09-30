@@ -9,6 +9,7 @@ from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Case, Classification, Organization, ReviewAction, User, Variant
 from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, review_criterion, request_more_evidence
+from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
 
 
 def make_db():
@@ -196,3 +197,23 @@ def test_inactive_reviewer_cannot_approve():
             expected_version=0,
             reason="Should be blocked",
         )
+
+
+
+def test_reportability_is_not_created_from_proposed_classification():
+    db, _, _, analysis, _, _, _ = seed()
+    assert evaluate_analysis(db, analysis) == []
+    assert final_reportability_state(db, analysis.id) == (False, ["No variant classification is available"])
+
+
+def test_reportability_is_created_only_after_approved_final_classification():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    approved = approve_classification(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer, expected_version=0, reason="Evidence reviewed and approved")
+    decisions = evaluate_analysis(db, analysis)
+    db.commit()
+    assert len(decisions) == 1
+    assert decisions[0].classification_id == approved.id
+    assert decisions[0].status == "PROPOSED"
+    ready, errors = final_reportability_state(db, analysis.id)
+    assert ready is False
+    assert any("reportability is not FINAL" in error for error in errors)
