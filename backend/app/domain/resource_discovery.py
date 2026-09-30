@@ -9,6 +9,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend.app.domain.resources import register_resource_version
+from backend.app.domain.resource_source_contract import validate_source_contract
 
 RESOURCE_PROVIDER_GROUP = "siraloom.resource_providers"
 
@@ -38,6 +39,7 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
         try:
             candidates: Iterable[dict[str, Any]] = provider.discover()
             for candidate in candidates:
+                source_contract = validate_source_contract(dict(candidate.get("source_contract") or {}))
                 register_resource_version(
                     db,
                     name=str(candidate.get("name") or ""),
@@ -52,6 +54,7 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                     population_definition=candidate.get("population_definition"),
                     metadata_json={
                         **dict(candidate.get("metadata") or {}),
+                        "source_contract": source_contract.as_dict(),
                         "discovery_provider": provider.__class__.__module__ + "." + provider.__class__.__name__,
                     },
                     organization_id=UUID(str(candidate["organization_id"])) if candidate.get("organization_id") else None,
