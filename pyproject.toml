@@ -45,3 +45,6 @@ line-length = 100
 [tool.pytest.ini_options]
 pythonpath = ["."]
 asyncio_mode = "auto"
+
+[project.entry-points."siraloom.resource_providers"]
+clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"
