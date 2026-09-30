@@ -1037,7 +1037,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
 
                 created = 0
-                annotation_count = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "genebe")) or 0
+                annotation_count = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "GeneBe")) or 0
                 pop_batch_size = int(analysis.configuration.get("population_batch_size", partition_size) or partition_size)
                 for pop_start, pop_end in _chunk_ranges(annotation_count, pop_batch_size):
                     annotations = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "genebe").order_by(Annotation.created_at, Annotation.id).offset(pop_start).limit(pop_end - pop_start)).all()
