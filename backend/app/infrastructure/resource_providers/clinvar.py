@@ -15,7 +15,7 @@ import httpx
 
 CLINVAR_XML_INDEX = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/"
 MONTHLY_FILE_RE = re.compile(
-    r'href="(ClinVarVCVRelease_[^"]+\.xml\.gz)"', re.IGNORECASE
+    r'href="(ClinVarVCVRelease_\\d{4}-\\d{2}\.xml\.gz)"', re.IGNORECASE
 )
 
 
@@ -37,6 +37,7 @@ class ClinVarReleaseProvider:
         # a semantic database version from the filename; retain the exact URL
         # and filename as the resource identity.
         filename = sorted(set(matches))[-1]
+        release = filename.removeprefix("ClinVarVCVRelease_").removesuffix(".xml.gz")
         url = self.index_url + filename
         return [{
             "name": "ClinVar VCV XML",
