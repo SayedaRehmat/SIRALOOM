@@ -737,13 +737,43 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 batch_limit = min(max(1, settings.genebe_max_batch), 1000)
-                annotation_resource = _require_registered_resource(
-                    db,
-                    resource_id=(analysis.configuration or {}).get("annotation_resource_id"),
-                    expected_type="ANNOTATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=provider.provider_id,
-                )
+                try:
+                    annotation_resource = _require_registered_resource(
+                        db,
+                        resource_id=(analysis.configuration or {}).get("annotation_resource_id"),
+                        expected_type="ANNOTATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider=provider.provider_id,
+                    )
+                except ResourceConsumptionError as exc:
+                    mark_step(
+                        db,
+                        annotation_step,
+                        StepStatus.BLOCKED,
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        metadata={"next_step": "ANNOTATION_PROVIDER_REQUIRED"},
+                    )
+                    analysis.status = AnalysisStatus.BLOCKED
+                    analysis.completed_at = None
+                    db.commit()
+                    audit.record(
+                        event_type="ANNOTATION_RESOURCE_REQUIRED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="resource-registry",
+                        reason=str(exc),
+                        payload={
+                            "error_code": exc.code,
+                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
+                            "provider": provider.provider_id,
+                            "reference_build": normalize_build(analysis.reference_build),
+                        },
+                    )
+                    db.commit()
+                    return
+
                 # One streamed iterator drives all annotation batches; no repeated file scans.
                 genome = "hg38" if normalize_build(analysis.reference_build) == "GRCh38" else "hg19"
                 expected_count = int((normalization_step.metadata_json or {}).get("record_count", 0) or 0)
@@ -814,34 +844,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         scheduler.heartbeat(partition.id, worker_id)
                         payloads = provider.annotate(batch, {"genome": genome})
                         scheduler.heartbeat(partition.id, worker_id)
-                    except ResourceConsumptionError as exc:
-                mark_step(
-                    db,
-                    annotation_step,
-                    StepStatus.BLOCKED,
-                    error_code=exc.code,
-                    error_message=str(exc),
-                    metadata={"next_step": "ANNOTATION_PROVIDER_REQUIRED"},
-                )
-                analysis.status = AnalysisStatus.BLOCKED
-                analysis.completed_at = None
-                db.commit()
-                audit.record(
-                    event_type="ANNOTATION_RESOURCE_REQUIRED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="resource-registry",
-                    reason=str(exc),
-                    payload={
-                        "error_code": exc.code,
-                        "next_step": "ANNOTATION_PROVIDER_REQUIRED",
-                        "provider": provider.provider_id,
-                        "reference_build": normalize_build(analysis.reference_build),
-                    },
-                )
-                db.commit()
-                return
             except GeneBeError as exc:
                         if exc.retryable:
                             if partition.status == "RUNNING" and partition.lease_owner == worker_id:
