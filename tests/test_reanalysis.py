@@ -166,3 +166,12 @@ def test_active_resource_scanner_detects_registered_resource_changes():
         assert scan_active_resources_for_reanalysis(db) == 0
         assert db.query(ReanalysisCandidate).count() == 1
         assert db.query(Notification).count() == 1
+
+
+def test_celery_reanalysis_scan_is_registered_on_daily_utc_schedule():
+    from backend.app.infrastructure.queue.celery_app import celery_app
+
+    entry = celery_app.conf.beat_schedule["scan-reanalysis-resources-daily"]
+    assert entry["task"] == "siraloom.scan_reanalysis_resources"
+    assert entry["schedule"] == 86400.0
+    assert celery_app.conf.timezone == "UTC"
