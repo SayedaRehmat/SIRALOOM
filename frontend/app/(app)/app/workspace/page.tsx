@@ -148,9 +148,16 @@ function formatDate(value?: string | null) {
 }
 
 function nextActionHref(nextStep?: string | null) {
-  if (nextStep === "review") return "/app/review";
-  if (nextStep === "reportability" || nextStep === "report_finalization") return "/app/reports";
-  if (nextStep === "VALID_VCF_REQUIRED" || nextStep === "SUPPORTED_INPUT_REQUIRED") return "/app/cases";
+  if (nextStep === "review" || nextStep === "HUMAN_REVIEW_REQUIRED") return "/app/review";
+  if (nextStep === "reportability" || nextStep === "report_finalization" || nextStep === "REPORTABILITY_REQUIRED") return "/app/reports";
+  if (
+    nextStep === "VALID_VCF_REQUIRED" ||
+    nextStep === "SUPPORTED_INPUT_REQUIRED" ||
+    nextStep === "REFERENCE_REQUIRED" ||
+    nextStep === "REFERENCE_PACKAGE_REQUIRED" ||
+    nextStep === "ANNOTATION_PROVIDER_REQUIRED" ||
+    nextStep === "POPULATION_RESOURCE_REQUIRED"
+  ) return "/app/cases";
   return null;
 }
 
@@ -293,8 +300,8 @@ export default function Home() {
         const next = await apiFetch(`/analyses/${analysisId}`);
         setAnalysis(next);
         setConnection("online");
-        const completed = ["SUCCEEDED", "FAILED", "BLOCKED"].includes(next.status);
-        if (completed && pollingRef.current) {
+        const terminal = ["SUCCEEDED", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"].includes(next.status);
+        if (terminal && pollingRef.current) {
           clearInterval(pollingRef.current);
           pollingRef.current = null;
         }
