@@ -8,13 +8,15 @@ import { LanguageSwitcher } from "./language-switcher";
 
 export function SiteShell({ children, showLanguageSwitcher = false }: { children: ReactNode; showLanguageSwitcher?: boolean }) {
   const { t } = useLanguage();
+
   return (
-    <>
+    <div className="public-site">
       <header className="site-header">
         <Brand />
         <nav aria-label="Primary navigation">
           <Link href="/about">{t("public.about")}</Link>
           <Link href="/services">{t("public.services")}</Link>
+          <Link href="/pricing">{t("public.pricing")}</Link>
           <Link href="/contact">{t("public.contact")}</Link>
         </nav>
         <div className="header-actions">
@@ -27,8 +29,11 @@ export function SiteShell({ children, showLanguageSwitcher = false }: { children
       <footer className="site-footer">
         <Brand />
         <p>{t("public.home.lead")}</p>
-        <div><Link href="/privacy">{t("public.privacy")}</Link><Link href="/terms">{t("public.terms")}</Link></div>
+        <div>
+          <Link href="/privacy">{t("public.privacy")}</Link>
+          <Link href="/terms">{t("public.terms")}</Link>
+        </div>
       </footer>
-    </>
+    </div>
   );
 }
