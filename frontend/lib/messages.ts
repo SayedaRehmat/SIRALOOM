@@ -323,6 +323,12 @@ export type TranslationKey =
   | "workspace.auditSection"
   | "workspace.auditLead"
   | "workspace.footer"
+  | "workspace.reanalysisTitle"
+  | "workspace.reanalysisLead"
+  | "workspace.reanalysisRequest"
+  | "workspace.reanalysisNotification"
+  | "workspace.reanalysisAffected"
+  | "workspace.markRead"
   | "cases.eyebrow"
   | "cases.title"
   | "cases.lead"
@@ -1200,6 +1206,12 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.auditSection": "AUDIT & PROVENANCE",
     "workspace.auditLead": "Computational steps, resources, evidence, reviewer actions and report events are persisted to the case history.",
     "workspace.footer": "Scientific results remain subject to configured resources, review, validation scope, and laboratory governance.",
+    "workspace.reanalysisTitle": "Reanalysis",
+    "workspace.reanalysisLead": "A completed analysis remains immutable. A new analysis is created as a child and returns through the required review and sign-out gates.",
+    "workspace.reanalysisRequest": "Request reanalysis",
+    "workspace.reanalysisNotification": "A resource update may affect a completed case.",
+    "workspace.reanalysisAffected": "Earliest affected stage",
+    "workspace.markRead": "Mark read",
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
   },
   ar: {
@@ -1796,6 +1808,12 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.auditSection": "التدقيق وسلسلة المصدر",
     "workspace.auditLead": "تُحفظ الخطوات الحاسوبية والموارد والأدلة وإجراءات المراجعين وأحداث التقارير في سجل الحالة.",
     "workspace.footer": "تظل النتائج العلمية خاضعة للموارد المهيأة والمراجعة ونطاق التحقق وحوكمة المختبر.",
+    "workspace.reanalysisTitle": "إعادة التحليل",
+    "workspace.reanalysisLead": "يبقى التحليل المكتمل غير قابل للتغيير. يُنشأ تحليل جديد كتحليل فرعي ويعود عبر بوابات المراجعة والاعتماد المطلوبة.",
+    "workspace.reanalysisRequest": "طلب إعادة التحليل",
+    "workspace.reanalysisNotification": "قد يؤثر تحديث مورد علمي في حالة مكتملة.",
+    "workspace.reanalysisAffected": "أول مرحلة متأثرة",
+    "workspace.markRead": "تحديد كمقروء",
     "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
   },
 };

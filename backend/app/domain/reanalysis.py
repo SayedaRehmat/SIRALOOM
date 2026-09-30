@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import (
@@ -165,6 +167,32 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis) -> int:
     return count
 
 
+def _change_fingerprint(
+    *,
+    organization_id: UUID,
+    trigger_type: str,
+    resource_kind: str,
+    resource_name: str,
+    new_version: str | None,
+    new_checksum: str | None,
+) -> str:
+    """Return a stable identity for one organization/resource release event.
+
+    The fingerprint intentionally excludes the previous snapshot version:
+    one newly registered resource release is one change event, even when
+    different historical analyses used different older releases.
+    """
+    material = "\\x1f".join([
+        str(organization_id),
+        trigger_type,
+        resource_kind,
+        resource_name,
+        new_version or "",
+        new_checksum or "",
+    ])
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
 def create_change_event(
     db: Session,
     *,
@@ -178,27 +206,49 @@ def create_change_event(
     previous_checksum: str | None = None,
     resource_id: UUID | None = None,
 ) -> ReanalysisChangeEvent:
+    fingerprint = _change_fingerprint(
+        organization_id=organization_id,
+        trigger_type=trigger_type,
+        resource_kind=resource_kind,
+        resource_name=resource_name,
+        new_version=new_version,
+        new_checksum=new_checksum,
+    )
     existing = db.scalar(
         select(ReanalysisChangeEvent).where(
-            ReanalysisChangeEvent.organization_id == organization_id,
-            ReanalysisChangeEvent.resource_kind == resource_kind,
-            ReanalysisChangeEvent.resource_name == resource_name,
-            ReanalysisChangeEvent.new_version == new_version,
-            ReanalysisChangeEvent.new_checksum == new_checksum,
-        ).order_by(ReanalysisChangeEvent.detected_at.desc())
+            ReanalysisChangeEvent.change_fingerprint == fingerprint,
+        )
     )
     if existing:
         return existing
 
     event = ReanalysisChangeEvent(
-        id=uuid4(), organization_id=organization_id, resource_id=resource_id,
-        trigger_type=trigger_type, resource_kind=resource_kind,
-        resource_name=resource_name, previous_version=previous_version,
-        new_version=new_version, previous_checksum=previous_checksum,
-        new_checksum=new_checksum, metadata_json={},
+        id=uuid4(),
+        change_fingerprint=fingerprint,
+        organization_id=organization_id,
+        resource_id=resource_id,
+        trigger_type=trigger_type,
+        resource_kind=resource_kind,
+        resource_name=resource_name,
+        previous_version=previous_version,
+        new_version=new_version,
+        previous_checksum=previous_checksum,
+        new_checksum=new_checksum,
+        metadata_json={},
     )
-    db.add(event)
-    db.flush()
+    try:
+        with db.begin_nested():
+            db.add(event)
+            db.flush()
+    except IntegrityError:
+        existing = db.scalar(
+            select(ReanalysisChangeEvent).where(
+                ReanalysisChangeEvent.change_fingerprint == fingerprint,
+            )
+        )
+        if existing is None:
+            raise
+        return existing
     return event
 
 
@@ -274,35 +324,49 @@ def detect_change(
             ),
             status="PENDING",
         )
-        db.add(candidate)
-        db.flush()
-
-        users = db.scalars(
-            select(OrganizationMembership.user_id).where(
-                OrganizationMembership.organization_id == organization_id,
-                OrganizationMembership.status == "ACTIVE",
+        created_candidate = False
+        try:
+            with db.begin_nested():
+                db.add(candidate)
+                db.flush()
+            created_candidate = True
+        except IntegrityError:
+            candidate = db.scalar(
+                select(ReanalysisCandidate).where(
+                    ReanalysisCandidate.parent_analysis_id == parent.id,
+                    ReanalysisCandidate.change_event_id == event.id,
+                )
             )
-        ).all()
-        for user_id in users:
-            db.add(Notification(
-                id=uuid4(), organization_id=organization_id, user_id=user_id,
-                notification_type="REANALYSIS_CANDIDATE",
-                status="UNREAD",
-                title="Case reanalysis may be required",
-                body=candidate.reason,
-                case_id=parent.case_id,
-                analysis_id=parent.id,
-                candidate_id=candidate.id,
-                metadata_json={
-                    "trigger_type": trigger_type,
-                    "resource_kind": resource_kind,
-                    "resource_name": resource_name,
-                    "previous_version": snapshot.version,
-                    "new_version": new_version,
-                    "earliest_affected_step": candidate.earliest_affected_step,
-                },
-            ))
-        candidates.append(candidate)
+            if candidate is None:
+                raise
+
+        if created_candidate:
+            users = db.scalars(
+                select(OrganizationMembership.user_id).where(
+                    OrganizationMembership.organization_id == organization_id,
+                    OrganizationMembership.status == "ACTIVE",
+                )
+            ).all()
+            for user_id in users:
+                db.add(Notification(
+                    id=uuid4(), organization_id=organization_id, user_id=user_id,
+                    notification_type="REANALYSIS_CANDIDATE",
+                    status="UNREAD",
+                    title="Case reanalysis may be required",
+                    body=candidate.reason,
+                    case_id=parent.case_id,
+                    analysis_id=parent.id,
+                    candidate_id=candidate.id,
+                    metadata_json={
+                        "trigger_type": trigger_type,
+                        "resource_kind": resource_kind,
+                        "resource_name": resource_name,
+                        "previous_version": snapshot.version,
+                        "new_version": new_version,
+                        "earliest_affected_step": candidate.earliest_affected_step,
+                    },
+                ))
+            candidates.append(candidate)
 
     db.commit()
     return candidates

@@ -130,6 +130,47 @@ def request_reanalysis(
     }
 
 
+@router.post("/reanalysis/candidates/{candidate_id}/execute")
+def execute_reanalysis_candidate(
+    candidate_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Turn one reviewed change candidate into an immutable child analysis."""
+    require_role(principal, CASE_WRITE_ROLES)
+    candidate = db.get(ReanalysisCandidate, candidate_id)
+    if not candidate or candidate.organization_id != principal.organization_id:
+        raise HTTPException(status_code=404, detail="Reanalysis candidate not found")
+
+    parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal)
+    if parent.status != "SUCCEEDED":
+        raise HTTPException(status_code=409, detail="Only a successfully completed parent analysis can be reanalyzed.")
+
+    try:
+        child, linked_candidate = create_reanalysis(
+            db,
+            parent=parent,
+            trigger_type=candidate.trigger_type,
+            requested_by=principal.user_id,
+            reason=candidate.reason,
+            change_event_id=candidate.change_event_id,
+            affected_step=candidate.earliest_affected_step,
+        )
+        task_id = enqueue_analysis(db, child)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "analysis_id": str(child.id),
+        "parent_analysis_id": str(parent.id),
+        "analysis_version": child.analysis_version,
+        "status": child.status,
+        "task_id": task_id,
+        "candidate_id": str(linked_candidate.id) if linked_candidate else str(candidate.id),
+        "earliest_affected_step": candidate.earliest_affected_step,
+    }
+
+
 @router.post("/reanalysis/change-events")
 def register_change(
     payload: dict,

@@ -3,6 +3,7 @@ from uuid import uuid4
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.resources import register_resource_version
 from backend.app.domain.reanalysis import (
     affected_step_for_trigger,
     create_change_event,
@@ -328,3 +329,136 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             AnalysisResourceSnapshot.analysis_id == analysis_id,
         ).count() == 1
         assert db.get(Analysis, analysis_id).status == "SUCCEEDED"
+
+def test_change_event_identity_is_stable_across_old_versions_and_checksum_only_updates():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[Organization.__table__, ReanalysisChangeEvent.__table__],
+    )
+    organization_id = uuid4()
+
+    with Session(engine) as db:
+        first = create_change_event(
+            db,
+            organization_id=organization_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="gnomAD",
+            previous_version="v3.1.2",
+            previous_checksum="old-a",
+            new_version="v4.1",
+            new_checksum="new",
+        )
+        db.commit()
+
+        same_release_from_older_snapshot = create_change_event(
+            db,
+            organization_id=organization_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="gnomAD",
+            previous_version="v3.0",
+            previous_checksum="old-b",
+            new_version="v4.1",
+            new_checksum="new",
+        )
+        assert same_release_from_older_snapshot.id == first.id
+        assert db.query(ReanalysisChangeEvent).count() == 1
+
+        checksum_only = create_change_event(
+            db,
+            organization_id=organization_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="gnomAD",
+            previous_version="v4.1",
+            previous_checksum="new",
+            new_version="v4.1",
+            new_checksum="newer",
+        )
+        assert checksum_only.id != first.id
+        assert db.query(ReanalysisChangeEvent).count() == 2
+
+def test_registered_resource_release_drives_change_aware_candidate():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            Resource.__table__,
+        ],
+    )
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Release Test Lab", external_identifier=None))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject=None,
+            email="release@test.local", display_name="Release", role="ANALYST", status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(), organization_id=organization_id, user_id=user_id,
+            role="ANALYST", status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="REL-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+
+        old_resource, created = register_resource_version(
+            db,
+            name="gnomAD",
+            provider="gnomAD",
+            resource_type="POPULATION",
+            version="v3.1.2",
+            genome_build="GRCh38",
+            access_method="OBJECT_STORAGE",
+            license_text=None,
+            checksum="a" * 64,
+            location="blob://gnomad/v3.1.2",
+            population_definition={"scope": "global"},
+        )
+        assert created is True
+
+        db.add(Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user_id, analysis_version=1,
+        ))
+        db.add(AnalysisResourceSnapshot(
+            id=uuid4(), analysis_id=analysis_id, resource_id=old_resource.id,
+            resource_kind="POPULATION", resource_name="gnomAD", provider="gnomAD",
+            version="v3.1.2", checksum="a" * 64, genome_build="GRCh38", metadata_json={},
+        ))
+        db.commit()
+
+        new_resource, created = register_resource_version(
+            db,
+            name="gnomAD",
+            provider="gnomAD",
+            resource_type="POPULATION",
+            version="v4.1",
+            genome_build="GRCh38",
+            access_method="OBJECT_STORAGE",
+            license_text=None,
+            checksum="b" * 64,
+            location="blob://gnomad/v4.1",
+            population_definition={"scope": "global"},
+        )
+        assert created is True
+        db.commit()
+
+        assert scan_active_resources_for_reanalysis(db) == 1
+        candidate = db.query(ReanalysisCandidate).one()
+        assert candidate.parent_analysis_id == analysis_id
+        assert candidate.earliest_affected_step == "population"
+        assert candidate.status == "PENDING"
+        notification = db.query(Notification).one()
+        assert notification.candidate_id == candidate.id
+        assert notification.metadata_json["new_version"] == "v4.1"
+
