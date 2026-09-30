@@ -42,7 +42,7 @@ class ClinVarReleaseProvider:
             "name": "ClinVar VCV XML",
             "provider": self.name,
             "resource_type": "EVIDENCE",
-            "version": filename,
+            "version": release,
             "genome_build": None,
             "access_method": "NCBI_FTP_HTTPS",
             "location": url,
@@ -50,6 +50,7 @@ class ClinVarReleaseProvider:
             "metadata": {
                 "release_channel": "MONTHLY_ARCHIVED",
                 "release_identity": filename,
+                "release_month": release,
                 "discovered_at": datetime.now(timezone.utc).isoformat(),
                 "source_index": self.index_url,
                 "integrity_status": "SOURCE_CHECKSUM_NOT_PUBLISHED_BY_ADAPTER",
