@@ -62,7 +62,10 @@ def register_resource(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    require_role(principal, frozenset({"platform_admin"}))
+    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director", "bioinformatician"}))
+    requested_status = str(payload.get("status") or "CANDIDATE").strip().upper()
+    if principal.role != "platform_admin" and requested_status != "CANDIDATE":
+        raise HTTPException(status_code=403, detail="Lab-managed resources must enter as CANDIDATE")
     try:
         resource, created = register_resource_version(
             db,
@@ -80,7 +83,7 @@ def register_resource(
             organization_id=principal.organization_id if principal.role != "platform_admin" else (
                 UUID(str(payload["organization_id"])) if payload.get("organization_id") else None
             ),
-            initial_status=str(payload.get("status") or ("CANDIDATE" if payload.get("discovered") else "ACTIVE")),
+            initial_status=requested_status,
         )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -109,6 +112,7 @@ def register_resource(
         "resource_type": resource.resource_type,
         "version": resource.version,
         "genome_build": resource.genome_build,
+        "organization_id": str(resource.organization_id) if resource.organization_id else None,
         "checksum": resource.checksum,
         "reanalysis_scan_queued": scan_queued,
     }
@@ -144,6 +148,7 @@ def get_resource(
         "location": row.location,
         "status": row.status,
         "population_definition": row.population_definition,
+        "organization_id": str(row.organization_id) if row.organization_id else None,
         "metadata": row.metadata_json,
         "created_at": row.created_at,
     }
