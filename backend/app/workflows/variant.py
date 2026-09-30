@@ -1854,6 +1854,7 @@ def _get_or_create_resource(
     access_method: str,
     status: str,
     population_definition: dict,
+    metadata_json: dict | None = None,
 ) -> Resource:
     row = db.scalar(
         select(Resource).where(
@@ -1879,7 +1880,7 @@ def _get_or_create_resource(
         location=None,
         status=status,
         population_definition=population_definition,
-        metadata_json={},
+        metadata_json=metadata_json or {},
     )
     db.add(row)
     db.flush()
