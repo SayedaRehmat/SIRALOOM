@@ -175,3 +175,156 @@ def test_celery_reanalysis_scan_is_registered_on_daily_utc_schedule():
     assert entry["task"] == "siraloom.scan_reanalysis_resources"
     assert entry["schedule"] == 86400.0
     assert celery_app.conf.timezone == "UTC"
+
+
+def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
+    from unittest.mock import patch
+
+    from backend.app.domain.reanalysis import create_reanalysis
+    from backend.app.infrastructure.db.models import (
+        AnalysisPartition,
+        Annotation,
+        Artifact,
+        Variant,
+        WorkflowStep,
+    )
+    from backend.app.workflows.variant import _apply_reanalysis_reuse, ensure_steps
+
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Case.__table__, Analysis.__table__, WorkflowStep.__table__,
+            Artifact.__table__, AnalysisPartition.__table__, Variant.__table__,
+            Annotation.__table__, AnalysisResourceSnapshot.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+        ],
+    )
+
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    variant_id, normalized_artifact_id = uuid4(), uuid4()
+
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Lifecycle Test Lab", external_identifier=None))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject=None,
+            email="lifecycle@test.local", display_name="Lifecycle", role="ANALYST", status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(), organization_id=organization_id, user_id=user_id,
+            role="ANALYST", status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="LIFE-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+            reference_build="GRCh38",
+            configuration={"input_artifact_id": str(uuid4()), "reference_resource_id": str(uuid4())},
+            started_at=None, completed_at=None, created_by=user_id, analysis_version=1,
+        ))
+
+        for step_id, order in (
+            ("validate_input", 1), ("normalize", 2), ("annotate", 3),
+            ("population", 4), ("build_evidence", 5),
+        ):
+            db.add(WorkflowStep(
+                id=uuid4(), analysis_id=analysis_id, step_id=step_id, step_order=order,
+                status="SUCCEEDED" if order <= 3 else "PENDING",
+                attempt=1 if order <= 3 else 0,
+                input_artifacts=[], output_artifacts=[],
+                metadata_json={},
+            ))
+
+        db.add(Variant(
+            id=variant_id, genome_build="GRCh38", chromosome="1", position=100,
+            reference="A", alternate="G", normalization_status="NORMALIZED",
+            canonical_key="GRCh38:1-100-A-G", identifiers={},
+        ))
+        db.add(Annotation(
+            id=uuid4(), variant_id=variant_id, analysis_id=analysis_id,
+            provider_name="GeneBe", provider_version="api-public-v1",
+            resource_name="GeneBe", resource_version="api-public-v1", payload={"gene": "TEST"},
+        ))
+        db.add(Artifact(
+            id=normalized_artifact_id, analysis_id=analysis_id, case_id=case_id,
+            artifact_type="NORMALIZED_VCF", filename="normalized.vcf.gz",
+            media_type="application/gzip", size_bytes=10, sha256="normalized-sha",
+            storage_uri="file:///immutable/normalized.vcf.gz", genome_build="GRCh38",
+            validation_status="VALIDATED", metadata_json={},
+        ))
+        db.add(AnalysisPartition(
+            id=uuid4(), analysis_id=analysis_id, step_id="normalize",
+            partition_key="part-0001", ordinal=0, record_start=1, record_end=1,
+            variant_count=1, status="SUCCEEDED", input_artifact_id=None,
+            metadata_json={}, resource_class="LIGHT", cpu_request=0.1,
+            memory_mb=128, attempt=1,
+        ))
+        db.add(AnalysisResourceSnapshot(
+            id=uuid4(), analysis_id=analysis_id, resource_id=None,
+            resource_kind="POPULATION", resource_name="gnomAD",
+            provider="gnomAD", version="v3.1.2", checksum="old",
+            genome_build="GRCh38", metadata_json={},
+        ))
+        db.commit()
+
+        candidates = detect_change(
+            db, organization_id=organization_id, trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION", resource_name="gnomAD",
+            new_version="v4.1", new_checksum="new",
+        )
+        candidate = candidates[0]
+
+        with patch(
+            "backend.app.application.entitlements.require_analysis_quota",
+            return_value=None,
+        ), patch(
+            "backend.app.application.entitlements.consume_analysis_quota",
+            return_value=None,
+        ):
+            child, linked_candidate = create_reanalysis(
+                db,
+                parent=db.get(Analysis, analysis_id),
+                trigger_type="POPULATION_UPDATE",
+                requested_by=user_id,
+                reason="Population resource update.",
+                change_event_id=candidate.change_event_id,
+                affected_step="population",
+            )
+
+        assert child.parent_analysis_id == analysis_id
+        assert child.analysis_version == 2
+        assert linked_candidate is not None
+        assert linked_candidate.child_analysis_id == child.id
+        assert linked_candidate.status == "STARTED"
+
+        ensure_steps(db, child.id)
+        _apply_reanalysis_reuse(db, child)
+
+        child_validation = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == child.id, WorkflowStep.step_id == "validate_input",
+        ))
+        child_normalize = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == child.id, WorkflowStep.step_id == "normalize",
+        ))
+        child_annotation = db.scalars(select(Annotation).where(
+            Annotation.analysis_id == child.id,
+        )).all()
+
+        assert child_validation.status == "SUCCEEDED"
+        assert child_normalize.status == "SUCCEEDED"
+        assert child_annotation and child_annotation[0].payload == {"gene": "TEST"}
+
+        # Population is the first affected stage, so its output is not inherited.
+        assert db.query(AnalysisPartition).filter(
+            AnalysisPartition.analysis_id == child.id,
+            AnalysisPartition.step_id == "normalize",
+        ).count() == 1
+        assert db.query(AnalysisResourceSnapshot).filter(
+            AnalysisResourceSnapshot.analysis_id == analysis_id,
+        ).count() == 1
+        assert db.get(Analysis, analysis_id).status == "SUCCEEDED"
