@@ -365,12 +365,12 @@ def create_reanalysis(
     requested_by: UUID,
     reason: str,
     change_event_id: UUID | None = None,
-    earliest_affected_step: str | None = None,
+    affected_step: str | None = None,
 ) -> tuple[Analysis, ReanalysisCandidate | None]:
     if parent.status != "SUCCEEDED":
         raise ValueError("Only a successfully completed analysis can be reanalyzed.")
 
-    earliest = earliest_affected_step or earliest_affected_step(trigger_type)
+    earliest = affected_step or globals()["earliest_affected_step"](trigger_type)
     next_version = (parent.analysis_version or 1) + 1
 
     duplicate = db.scalar(
