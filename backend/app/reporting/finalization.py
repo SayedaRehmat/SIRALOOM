@@ -12,7 +12,7 @@ from backend.app.config import settings
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Artifact, Report
+from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Report
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
     REPORT_STATUS_SUPERSEDED,
@@ -50,7 +50,7 @@ def _persist_pdf_artifact(
             filename=filename,
             artifact_type="REPORT_PDF",
             media_type="application/pdf",
-            genome_build=db.get(Analysis, report.analysis_id).reference_build,
+            genome_build=analysis.reference_build,
             metadata={
                 "rendered_format": "PDF",
                 "report_schema_version": content["report_schema_version"],
@@ -98,7 +98,26 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
         "artifact_id": str(report.artifact_id),
     }
 
-    signed_content = dict(report.content_json or {})
+    analysis = db.get(Analysis, report.analysis_id)
+    if analysis is None:
+        raise ReportFinalizationError("Report analysis not found")
+    case = db.get(Case, report.case_id)
+    signed_content = {
+        "report_schema_version": "1.1.0",
+        "report_version": report.report_version,
+        "report_status": "DRAFT",
+        "report_type": report.report_type,
+        "language": report.language,
+        "case_id": str(report.case_id),
+        "case_identifier": case.case_identifier if case else str(report.case_id),
+        "analysis_id": str(report.analysis_id),
+        "reference_build": analysis.reference_build,
+        "findings": [],
+        "methodology": "SIRALOOM Variant interpretation report.",
+        "limitations": "Clinical use requires laboratory-specific validation and qualified sign-out.",
+        "references": [],
+        **dict(report.content_json or {}),
+    }
     signed_result = dict(signed_content.get("final_result") or {})
     signed_result["status"] = "FINAL"
     signed_result["release_state"] = "CLINICALLY_RELEASED"
