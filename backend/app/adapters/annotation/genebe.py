@@ -14,9 +14,13 @@ class GeneBeError(RuntimeError):
 class GeneBeProvider:
     provider_id = "genebe"
     provider_version = "api-public-v1"
+    supported_builds = {"GRCh38"}
 
     def capabilities(self) -> set[str]:
         return {"ANNOTATION", "ACMG_CRITERIA_SUPPORT"}
+
+    def supports_build(self, genome_build: str) -> bool:
+        return genome_build.upper() in self.supported_builds
 
     def _headers(self) -> dict[str, str]:
         return {"Accept": "application/json", "Content-Type": "application/json"}
