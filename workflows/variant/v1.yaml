@@ -26,6 +26,9 @@ steps:
   - id: review
     type: human-review
     provenance_required: true
+  - id: reportability
+    type: human-review
+    provenance_required: true
   - id: report
     type: reporting
     provenance_required: true
