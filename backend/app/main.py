@@ -6,7 +6,7 @@ from backend.app.api.v1 import (
     cases_router, artifacts_router, analyses_router, variants_router,
     populations_router, review_router, reports_router, audit_router,
     health_router, evidence_router, acmg_router,
-    auth_router,
+    auth_router, resources_router,
 )
 from backend.app.api.v1.phenotypes import router as phenotypes_router
 from backend.app.api.v1.evidence_context import router as evidence_context_router
