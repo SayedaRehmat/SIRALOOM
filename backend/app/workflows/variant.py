@@ -614,6 +614,43 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     return
 
+                if not provider.supports_build(normalize_build(analysis.reference_build)):
+                    mark_step(
+                        db,
+                        annotation_step,
+                        StepStatus.BLOCKED,
+                        error_code="ANNOTATION_BUILD_UNSUPPORTED",
+                        error_message=(
+                            f"GeneBe annotation is not build-native for {normalize_build(analysis.reference_build)}; "
+                            "a provider that annotates the selected assembly without implicit liftover is required."
+                        ),
+                        metadata={
+                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
+                            "provider": provider.provider_id,
+                            "provider_supported_builds": sorted(provider.supported_builds),
+                            "analysis_reference_build": normalize_build(analysis.reference_build),
+                        },
+                    )
+                    analysis.status = AnalysisStatus.BLOCKED
+                    analysis.completed_at = None
+                    db.commit()
+                    audit.record(
+                        event_type="ANNOTATION_BUILD_UNSUPPORTED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="annotation",
+                        reason="Selected genome build is not supported natively by the configured annotation provider.",
+                        payload={
+                            "provider": provider.provider_id,
+                            "provider_supported_builds": sorted(provider.supported_builds),
+                            "analysis_reference_build": normalize_build(analysis.reference_build),
+                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
+                        },
+                    )
+                    db.commit()
+                    return
+
                 batch_limit = min(max(1, settings.genebe_max_batch), 1000)
                 # One streamed iterator drives all annotation batches; no repeated file scans.
                 genome = "hg38" if normalize_build(analysis.reference_build) == "GRCh38" else "hg19"
