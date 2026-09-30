@@ -60,6 +60,8 @@ type CaseWorkspace = {
   analyses: Array<Record<string, unknown>>;
 };
 
+type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
+
 type AuditEvent = {
   event_id: string;
   event_type: string;
@@ -178,6 +180,7 @@ export default function Home() {
   const [exportId, setExportId] = useState("");
   const [exportStatus, setExportStatus] = useState("");
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
   const [connection, setConnection] = useState<"checking" | "online" | "offline">("checking");
@@ -353,6 +356,47 @@ export default function Home() {
     };
     load();
   }, [analysisId, selectedVariantId]);
+
+  const loadNotifications = async () => {
+    try {
+      const data = await apiFetch("/notifications");
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch {
+      // Notification polling is observational; workflow state remains authoritative.
+    }
+  };
+
+  const requestReanalysis = async () => {
+    if (!analysisId || analysis?.status !== "SUCCEEDED") return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await apiFetch(`/analyses/${analysisId}/reanalysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trigger_type: "MANUAL",
+          reason: "Laboratory-requested case-level reanalysis.",
+        }),
+      });
+      setAnalysisId(result.analysis_id);
+      window.localStorage.setItem("siraloom.analysis_id", result.analysis_id);
+      setMessage(`Reanalysis v${result.analysis_version} queued from the completed parent analysis.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to start reanalysis.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const markNotificationRead = async (notificationId: string) => {
+    try {
+      await apiFetch(`/notifications/${notificationId}/read`, { method: "POST" });
+      setNotifications((current) => current.map((item) => item.notification_id === notificationId ? { ...item, status: "READ" } : item));
+    } catch {
+      // Keep the notification visible if the read operation fails.
+    }
+  };
 
   const createCase = async (event: FormEvent) => {
     event.preventDefault();
@@ -643,6 +687,40 @@ export default function Home() {
       </section>
 
       {message && <div className="notice" role="status">{message}</div>}
+
+      {notifications.length > 0 && (
+        <section className="panel">
+          <div className="panel-head">
+            <div><div className="section-kicker">Change-aware analysis</div><h3>Reanalysis notifications</h3></div>
+            <span className="badge neutral">{notifications.filter((item) => item.status === "UNREAD").length} unread</span>
+          </div>
+          <div className="stack">
+            {notifications.slice(0, 8).map((item) => (
+              <div key={item.notification_id} className="keyline">
+                <div>
+                  <strong>{item.title}</strong>
+                  <div>{item.body}</div>
+                  <small>{formatDate(item.created_at)}</small>
+                </div>
+                {item.status === "UNREAD" && (
+                  <button className="secondary" onClick={() => markNotificationRead(item.notification_id)}>Mark read</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {analysis?.status === "SUCCEEDED" && (
+        <section className="panel">
+          <div className="panel-head">
+            <div><div className="section-kicker">Case lifecycle</div><h3>Reanalysis</h3></div>
+            <span className="badge success">Analysis v{String(analysis?.analysis_version ?? "1")}</span>
+          </div>
+          <p>A new reanalysis creates an immutable child analysis. The completed parent result is preserved.</p>
+          <button className="primary" onClick={requestReanalysis} disabled={busy}>Request case reanalysis</button>
+        </section>
+      )}
 
       <section className="workspace-grid">
         <aside className="panel case-panel">

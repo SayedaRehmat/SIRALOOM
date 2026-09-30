@@ -35,6 +35,25 @@ steps:
   - id: export_provenance
     type: export
     provenance_required: true
+reanalysis:
+  enabled: true
+  model: immutable-child-analysis
+  preserve_parent_analysis: true
+  triggers:
+    - MANUAL
+    - ANNOTATION_UPDATE
+    - POPULATION_UPDATE
+    - EVIDENCE_UPDATE
+    - ACMG_RULE_UPDATE
+    - PHENOTYPE_UPDATE
+    - BIOINFORMATICS_UPDATE
+    - REFERENCE_UPDATE
+    - PERIODIC
+  change_detection: version-and-checksum-aware
+  notification_required: true
+  idempotent_candidate_detection: true
+  dependency_aware_reuse: true
+  human_review_required_for_interpretation_change: true
 failure_policy:
   durable_state: true
   retry_failed_step: true
