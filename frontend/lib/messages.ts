@@ -144,6 +144,7 @@ export type TranslationKey =
   | "public.pricing.enterpriseBody"
   | "public.pricing.enterpriseCta"
   | "public.pricing.note"
+  | "auth.workspaceContext"
   | "auth.secure"
   | "auth.login.title"
   | "auth.signup.trialTitle"
@@ -1051,6 +1052,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.pricing.enterpriseBody": "للمؤسسات التي تتطلب نشراً مؤسسياً أو بنية تحتية محكومة أو نموذج تشغيل محلي.",
     "public.pricing.enterpriseCta": "اتصل بـ SIRALOOM",
     "public.pricing.note": "تعتمد الأسعار وشروط النشر على نموذج الخدمة المختار ومتطلبات البنية التحتية ونطاق المؤسسة.",
+    "auth.workspaceContext": "Genomic laboratory workspace",
     "auth.secure": "SECURE ACCESS",
     "auth.login.title": "Sign in to your workspace",
     "auth.signup.trialTitle": "Start your SIRALOOM trial",
