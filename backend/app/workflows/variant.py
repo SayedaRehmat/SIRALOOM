@@ -1333,8 +1333,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         # 9. Generate an immutable report draft after classification and
         # reportability gates have passed. Final clinical release remains a
         # separate human approval.
-        # 9. Generate an immutable report draft once all required review gates
-        # have passed. Final clinical release remains a separate human approval.
         report_step = _step(db, analysis.id, "report")
         if report_step.status != StepStatus.SUCCEEDED:
             mark_step(db, report_step, StepStatus.RUNNING)
