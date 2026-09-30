@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (firebaseConfigured && !signedIn) return null;
 
   return (
-    <div className="app-frame">
+    <div className="app-frame siraloom-workspace">
       <aside className="app-nav">
         <Brand />
         <span className="nav-label">{t("app.workspace")}</span>
