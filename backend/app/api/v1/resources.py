@@ -121,6 +121,89 @@ def register_resource(
     }
 
 
+@router.post("/{resource_id}/approval-request")
+def create_resource_approval_request(
+    resource_id: UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director", "bioinformatician"}))
+    try:
+        approval = request_resource_approval(
+            db,
+            resource_id=resource_id,
+            organization_id=principal.organization_id,
+            qualification_version=str(payload.get("qualification_version") or ""),
+        )
+    except ResourceRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.commit()
+    return {
+        "approval_id": str(approval.id),
+        "resource_id": str(approval.resource_id),
+        "organization_id": str(approval.organization_id),
+        "qualification_id": str(approval.qualification_id),
+        "status": approval.status,
+        "version": approval.version,
+    }
+
+
+@router.get("/approvals/pending")
+def list_pending_resource_approvals(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director", "bioinformatician", "read_only"}))
+    rows = db.scalars(
+        select(ResourceApproval).where(
+            ResourceApproval.organization_id == principal.organization_id,
+            ResourceApproval.status == "PENDING",
+        ).order_by(ResourceApproval.requested_at)
+    ).all()
+    return [{
+        "approval_id": str(row.id),
+        "resource_id": str(row.resource_id),
+        "organization_id": str(row.organization_id),
+        "qualification_id": str(row.qualification_id),
+        "status": row.status,
+        "version": row.version,
+        "requested_at": row.requested_at,
+    } for row in rows]
+
+
+@router.post("/approvals/{approval_id}/decision")
+def decide_resource_approval_endpoint(
+    approval_id: UUID,
+    payload: dict,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director"}))
+    try:
+        approval = decide_resource_approval(
+            db,
+            approval_id=approval_id,
+            organization_id=principal.organization_id,
+            actor_id=principal.user_id,
+            decision=str(payload.get("decision") or ""),
+            expected_version=int(payload.get("expected_version") or 0),
+            reason=str(payload.get("reason")) if payload.get("reason") is not None else None,
+        )
+    except (ResourceRegistryError, ValueError) as exc:
+        raise HTTPException(status_code=409 if "changed" in str(exc).lower() else 400, detail=str(exc)) from exc
+    db.commit()
+    return {
+        "approval_id": str(approval.id),
+        "resource_id": str(approval.resource_id),
+        "organization_id": str(approval.organization_id),
+        "status": approval.status,
+        "version": approval.version,
+        "decided_by": str(approval.decided_by) if approval.decided_by else None,
+        "decided_at": approval.decided_at,
+    }
+
+
 @router.get("/{resource_id}")
 def get_resource(
     resource_id: UUID,
@@ -215,87 +298,4 @@ def activate_resource(
         "organization_id": str(row.organization_id) if row.organization_id else None,
         "status": row.status,
         "version": row.version,
-    }
-
-
-@router.post("/{resource_id}/approval-request")
-def create_resource_approval_request(
-    resource_id: UUID,
-    payload: dict,
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
-):
-    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director", "bioinformatician"}))
-    try:
-        approval = request_resource_approval(
-            db,
-            resource_id=resource_id,
-            organization_id=principal.organization_id,
-            qualification_version=str(payload.get("qualification_version") or ""),
-        )
-    except ResourceRegistryError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    db.commit()
-    return {
-        "approval_id": str(approval.id),
-        "resource_id": str(approval.resource_id),
-        "organization_id": str(approval.organization_id),
-        "qualification_id": str(approval.qualification_id),
-        "status": approval.status,
-        "version": approval.version,
-    }
-
-
-@router.get("/approvals/pending")
-def list_pending_resource_approvals(
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
-):
-    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director", "bioinformatician", "read_only"}))
-    rows = db.scalars(
-        select(ResourceApproval).where(
-            ResourceApproval.organization_id == principal.organization_id,
-            ResourceApproval.status == "PENDING",
-        ).order_by(ResourceApproval.requested_at)
-    ).all()
-    return [{
-        "approval_id": str(row.id),
-        "resource_id": str(row.resource_id),
-        "organization_id": str(row.organization_id),
-        "qualification_id": str(row.qualification_id),
-        "status": row.status,
-        "version": row.version,
-        "requested_at": row.requested_at,
-    } for row in rows]
-
-
-@router.post("/approvals/{approval_id}/decision")
-def decide_resource_approval_endpoint(
-    approval_id: UUID,
-    payload: dict,
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
-):
-    require_role(principal, frozenset({"platform_admin", "organization_admin", "lab_director"}))
-    try:
-        approval = decide_resource_approval(
-            db,
-            approval_id=approval_id,
-            organization_id=principal.organization_id,
-            actor_id=principal.user_id,
-            decision=str(payload.get("decision") or ""),
-            expected_version=int(payload.get("expected_version") or 0),
-            reason=str(payload.get("reason")) if payload.get("reason") is not None else None,
-        )
-    except (ResourceRegistryError, ValueError) as exc:
-        raise HTTPException(status_code=409 if "changed" in str(exc).lower() else 400, detail=str(exc)) from exc
-    db.commit()
-    return {
-        "approval_id": str(approval.id),
-        "resource_id": str(approval.resource_id),
-        "organization_id": str(approval.organization_id),
-        "status": approval.status,
-        "version": approval.version,
-        "decided_by": str(approval.decided_by) if approval.decided_by else None,
-        "decided_at": approval.decided_at,
     }
