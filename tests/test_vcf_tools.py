@@ -37,9 +37,12 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
+        expected_bcftools_version="1.19",
     )
 
     assert result["tool"] == "bcftools"
+    assert result["tool_version"] == "bcftools 1.19"
+    assert result["expected_tool_version"] == "1.19"
     assert result["reference_check"] == "error"
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
     lines = [
@@ -69,4 +72,27 @@ def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
+            expected_bcftools_version="1.19",
+        )
+
+
+def test_bcftools_version_pin_rejects_mismatch(tmp_path: Path):
+    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
+        pytest.skip("bcftools is not installed outside CI")
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "input.vcf"
+    output_vcf = tmp_path / "normalized.vcf"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t4\t.\tAA\tA\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(VCFToolError, match="version mismatch"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            output_vcf,
+            reference_fasta=fasta,
+            expected_bcftools_version="0.0.0",
         )
