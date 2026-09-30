@@ -261,6 +261,7 @@ class Annotation(Base):
 class Resource(Base):
     __tablename__ = "resources"
     id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID | None] = mapped_column(ForeignKey("organizations.id"), nullable=True)
     name: Mapped[str] = mapped_column(Text)
     provider: Mapped[str] = mapped_column(Text)
     resource_type: Mapped[str] = mapped_column(Text)
@@ -274,6 +275,19 @@ class Resource(Base):
     population_definition: Mapped[dict | None] = mapped_column(JSON)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ResourceQualification(Base):
+    __tablename__ = "resource_qualifications"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    qualification_version: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    checks_json: Mapped[dict] = mapped_column("checks", JSON, default=dict)
+    qualified_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    qualified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (UniqueConstraint("resource_id", "qualification_version"),)
 
 class PopulationObservation(Base):
     __tablename__ = "population_observations"
