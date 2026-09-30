@@ -44,7 +44,7 @@ services:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
-    command: celery -A backend.app.infrastructure.queue.celery_app.celery_app worker --loglevel=INFO --concurrency=2
+    command: ./scripts/start_worker.sh
     env_file: .env
     depends_on:
       postgres:
@@ -53,6 +53,18 @@ services:
         condition: service_healthy
     volumes:
       - artifact_data:/data/siraloom/artifacts
+
+  beat:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: ./scripts/start_beat.sh
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     image: node:22-alpine
