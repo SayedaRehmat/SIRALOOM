@@ -111,6 +111,7 @@ class Analysis(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    analysis_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 class Artifact(Base):
@@ -636,3 +637,73 @@ class LicenseEntitlement(Base):
     signed_payload: Mapped[dict] = mapped_column(JSON, default=dict)
     signature: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class AnalysisResourceSnapshot(Base):
+    __tablename__ = "analysis_resource_snapshots"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"), nullable=True)
+    resource_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    resource_name: Mapped[str] = mapped_column(Text, nullable=False)
+    provider: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[str | None] = mapped_column(Text)
+    checksum: Mapped[str | None] = mapped_column(Text)
+    genome_build: Mapped[str | None] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "resource_kind", "resource_name", "version", "checksum"),
+    )
+
+
+class ReanalysisChangeEvent(Base):
+    __tablename__ = "reanalysis_change_events"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
+    trigger_type: Mapped[str] = mapped_column(Text, nullable=False)
+    resource_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    resource_name: Mapped[str] = mapped_column(Text, nullable=False)
+    previous_version: Mapped[str | None] = mapped_column(Text)
+    new_version: Mapped[str | None] = mapped_column(Text)
+    previous_checksum: Mapped[str | None] = mapped_column(Text)
+    new_checksum: Mapped[str | None] = mapped_column(Text)
+    detected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+
+
+class ReanalysisCandidate(Base):
+    __tablename__ = "reanalysis_candidates"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    parent_analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    change_event_id: Mapped[UUID | None] = mapped_column(ForeignKey("reanalysis_change_events.id"))
+    trigger_type: Mapped[str] = mapped_column(Text, nullable=False)
+    earliest_affected_step: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    child_analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    acted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    __table_args__ = (
+        UniqueConstraint("parent_analysis_id", "change_event_id"),
+    )
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    notification_type: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="UNREAD")
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    case_id: Mapped[UUID | None] = mapped_column(ForeignKey("cases.id"))
+    analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"))
+    candidate_id: Mapped[UUID | None] = mapped_column(ForeignKey("reanalysis_candidates.id"))
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
