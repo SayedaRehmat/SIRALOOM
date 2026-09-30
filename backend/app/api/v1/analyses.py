@@ -35,6 +35,29 @@ from backend.app.domain.schemas import AnalysisCreate
 router = APIRouter(tags=["analyses"])
 
 
+def _resolve_workflow_next_step(step_payloads: list[dict]) -> str | None:
+    """Resolve the authoritative next workflow action from durable step state.
+
+    A workflow can legitimately be RUNNING between two step transactions. In
+    that interval there may be no RUNNING row yet, so the API must derive the
+    next step from the first non-terminal step rather than returning null.
+    This keeps the backend state machine and frontend workflow display aligned
+    across worker crashes, retries, and normal step-to-step transitions.
+    """
+    terminal = {"SUCCEEDED"}
+    active = {"RUNNING", "RETRYING", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}
+
+    current = next((item for item in step_payloads if item["status"] in active), None)
+    if current is not None:
+        return current["next_step"]
+
+    pending = next((item for item in step_payloads if item["status"] not in terminal), None)
+    if pending is not None:
+        return pending["step_id"]
+
+    return "ANALYSIS_COMPLETE" if step_payloads else None
+
+
 @router.post("/cases/{case_id}/analyses", status_code=201)
 def create(
     case_id: str,
@@ -165,7 +188,9 @@ def get(
     for index, step in enumerate(steps):
         metadata = dict(step.metadata_json or {})
         if step.status in {"FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}:
-            next_step = metadata.get("next_step")
+            next_step = metadata.get("next_step") or step.step_id
+        elif step.status in {"RUNNING", "RETRYING"}:
+            next_step = step.step_id
         elif step.status == "SUCCEEDED":
             next_step = steps[index + 1].step_id if index + 1 < len(steps) else "ANALYSIS_COMPLETE"
         else:
@@ -184,23 +209,7 @@ def get(
             }
         )
 
-    active_step = next(
-        (
-            item
-            for item in step_payloads
-            if item["status"] in {"RUNNING", "RETRYING", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}
-        ),
-        None,
-    )
-    workflow_next_step = (
-        active_step["next_step"]
-        if active_step is not None
-        else (
-            "ANALYSIS_COMPLETE"
-            if step_payloads and all(item["status"] == "SUCCEEDED" for item in step_payloads)
-            else None
-        )
-    )
+    workflow_next_step = _resolve_workflow_next_step(step_payloads)
 
     return {
         "analysis_id": str(analysis.id),

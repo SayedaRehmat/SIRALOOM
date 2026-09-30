@@ -1915,3 +1915,46 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
         assert partition.attempt == 2
         assert partition.lease_owner is None
         assert analysis.status == AnalysisStatus.SUCCEEDED
+
+
+def test_workflow_next_step_never_goes_null_between_successful_and_pending_steps():
+    from backend.app.api.v1.analyses import _resolve_workflow_next_step
+
+    steps = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "SUCCEEDED", "next_step": "annotate"},
+        {"step_id": "annotate", "status": "PENDING", "next_step": "annotate"},
+        {"step_id": "population", "status": "PENDING", "next_step": "population"},
+    ]
+
+    assert _resolve_workflow_next_step(steps) == "annotate"
+
+
+def test_workflow_next_step_prefers_durable_retry_or_failure_action():
+    from backend.app.api.v1.analyses import _resolve_workflow_next_step
+
+    retrying = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "RETRYING", "next_step": "normalize"},
+        {"step_id": "annotate", "status": "PENDING", "next_step": "annotate"},
+    ]
+    blocked = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "BLOCKED", "next_step": "VALID_VCF_REQUIRED"},
+        {"step_id": "annotate", "status": "PENDING", "next_step": "annotate"},
+    ]
+
+    assert _resolve_workflow_next_step(retrying) == "normalize"
+    assert _resolve_workflow_next_step(blocked) == "VALID_VCF_REQUIRED"
+
+
+def test_workflow_next_step_reports_completion_only_when_all_steps_succeed():
+    from backend.app.api.v1.analyses import _resolve_workflow_next_step
+
+    steps = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "SUCCEEDED", "next_step": "annotate"},
+    ]
+
+    assert _resolve_workflow_next_step(steps) == "ANALYSIS_COMPLETE"
+    assert _resolve_workflow_next_step([]) is None
