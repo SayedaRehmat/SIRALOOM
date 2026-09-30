@@ -67,7 +67,8 @@ def upgrade():
             ))
         )
 
-    op.alter_column("reanalysis_change_events", "change_fingerprint", nullable=False)
+    with op.batch_alter_table("reanalysis_change_events") as batch_op:
+        batch_op.alter_column("change_fingerprint", nullable=False)
     op.create_index(
         "uq_reanalysis_change_events_fingerprint",
         "reanalysis_change_events",
