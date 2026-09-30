@@ -111,3 +111,9 @@ def test_annotation_resource_allows_explicitly_pinned_superseded_version():
     )
 
     assert result.status == "SUPERSEDED"
+
+
+def test_genebe_provider_identity_matches_registered_resource_identity():
+    from backend.app.adapters.annotation.genebe import GeneBeProvider
+
+    assert GeneBeProvider.provider_id == "GeneBe"
