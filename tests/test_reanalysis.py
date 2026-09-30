@@ -3,7 +3,12 @@ from uuid import uuid4
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from backend.app.domain.reanalysis import affected_step_for_trigger, create_change_event, detect_change
+from backend.app.domain.reanalysis import (
+    affected_step_for_trigger,
+    create_change_event,
+    detect_change,
+    scan_active_resources_for_reanalysis,
+)
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -14,6 +19,7 @@ from backend.app.infrastructure.db.models import (
     OrganizationMembership,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
+    Resource,
     User,
 )
 
@@ -99,3 +105,64 @@ def test_change_detector_creates_durable_candidate_and_notifications_idempotentl
         assert db.query(ReanalysisCandidate).count() == 1
         assert db.query(Notification).count() == 1
         assert db.query(ReanalysisChangeEvent).count() == 1
+
+
+def test_active_resource_scanner_detects_registered_resource_changes():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            Resource.__table__,
+        ],
+    )
+
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Scanner Test Lab", external_identifier=None))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject=None,
+            email="scanner@test.local", display_name="Scanner", role="ANALYST", status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(), organization_id=organization_id, user_id=user_id,
+            role="ANALYST", status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="SCAN-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user_id, analysis_version=1,
+        ))
+        db.add(AnalysisResourceSnapshot(
+            id=uuid4(), analysis_id=analysis_id, resource_id=None,
+            resource_kind="POPULATION", resource_name="gnomAD",
+            provider="gnomAD", version="v3.1.2", checksum="old",
+            genome_build="GRCh38", metadata_json={},
+        ))
+        db.add(Resource(
+            id=uuid4(), name="gnomAD", provider="gnomAD", resource_type="POPULATION",
+            version="v4.1", genome_build="GRCh38", access_method="GRAPHQL",
+            license_text=None, checksum="new", location=None, status="ACTIVE",
+            population_definition={}, metadata_json={},
+        ))
+        db.commit()
+
+        created = scan_active_resources_for_reanalysis(db)
+        assert created == 1
+        assert db.query(ReanalysisCandidate).count() == 1
+        candidate = db.query(ReanalysisCandidate).one()
+        assert candidate.trigger_type == "POPULATION_UPDATE"
+        assert candidate.earliest_affected_step == "population"
+        assert db.query(Notification).count() == 1
+
+        assert scan_active_resources_for_reanalysis(db) == 0
+        assert db.query(ReanalysisCandidate).count() == 1
+        assert db.query(Notification).count() == 1
