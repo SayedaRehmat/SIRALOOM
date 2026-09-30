@@ -85,6 +85,10 @@ def package_checksum(
     fasta_sha256: str,
     fai_sha256: str,
     contigs_sha256: str,
+    assembly_name: str,
+    assembly_accession: str,
+    reference_source: str,
+    sequence_scope: str,
 ) -> str:
     manifest = {
         "schema_version": REFERENCE_PACKAGE_SCHEMA_VERSION,
@@ -94,6 +98,10 @@ def package_checksum(
         "fai_sha256": fai_sha256,
         "contigs_sha256": contigs_sha256,
         "contig_policy": CONTIG_POLICY_EXACT,
+        "assembly_name": assembly_name,
+        "assembly_accession": assembly_accession,
+        "reference_source": reference_source,
+        "sequence_scope": sequence_scope,
     }
     payload = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
@@ -187,6 +195,10 @@ def validate_reference_package(
         fasta_sha256=actual_fasta_sha,
         fai_sha256=actual_fai_sha,
         contigs_sha256=actual_contigs_sha,
+        assembly_name=str(metadata["assembly_name"]),
+        assembly_accession=str(metadata["assembly_accession"]),
+        reference_source=str(metadata["reference_source"]),
+        sequence_scope=str(metadata["sequence_scope"]),
     )
     if not resource.checksum or resource.checksum != expected_package_checksum:
         raise ReferencePackageError(
