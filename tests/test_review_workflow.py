@@ -203,12 +203,21 @@ def test_inactive_reviewer_cannot_approve():
 def test_reportability_is_not_created_from_proposed_classification():
     db, _, _, analysis, _, _, _ = seed()
     assert evaluate_analysis(db, analysis) == []
-    ready, errors = final_reportability_state(db, analysis.id)\n    assert ready is False\n    assert any("classification is not FINAL + APPROVED" in error for error in errors)
+    ready, errors = final_reportability_state(db, analysis.id)
+    assert ready is False
+    assert any("classification is not FINAL + APPROVED" in error for error in errors)
 
 
 def test_reportability_is_created_only_after_approved_final_classification():
-    db, reviewer, _, analysis, variant, _, classification = seed()
-    approved = approve_classification(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer, expected_version=0, reason="Evidence reviewed and approved")
+    db, reviewer, _, analysis, variant, _, _ = seed()
+    approved = approve_classification(
+        db,
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        reviewer=reviewer,
+        expected_version=0,
+        reason="Evidence reviewed and approved",
+    )
     decisions = evaluate_analysis(db, analysis)
     db.commit()
     assert len(decisions) == 1
