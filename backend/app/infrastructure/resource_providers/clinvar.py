@@ -8,6 +8,8 @@ are synchronization feeds and are not silently treated as immutable releases.
 from __future__ import annotations
 
 import re
+from hashlib import sha256
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any
 
@@ -24,6 +26,42 @@ class ClinVarReleaseProvider:
 
     name = "ClinVar"
     index_url = CLINVAR_XML_INDEX
+
+    def stage(self, descriptor: dict[str, object], destination: Path) -> dict[str, object]:
+        """Stream the exact discovered release and return its transport digest.
+
+        The digest is computed from the bytes received by SIRALOOM. It is not
+        presented as an NCBI-published checksum. Production qualification must
+        additionally establish source-integrity evidence before activation.
+        """
+        location = descriptor.get("location")
+        if not isinstance(location, str) or not location.startswith(self.index_url):
+            raise ValueError("ClinVar staging requires an official NCBI ClinVar URL")
+
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        digest = sha256()
+        size = 0
+        with httpx.stream("GET", location, timeout=120.0, follow_redirects=True) as response:
+            response.raise_for_status()
+            with destination.open("wb") as handle:
+                for chunk in response.iter_bytes(1024 * 1024):
+                    if not chunk:
+                        continue
+                    handle.write(chunk)
+                    digest.update(chunk)
+                    size += len(chunk)
+
+        return {
+            "source": location,
+            "local_path": str(destination),
+            "sha256": digest.hexdigest(),
+            "size_bytes": size,
+            "metadata": {
+                "integrity": "TRANSPORT_DIGEST_ONLY",
+                "source_checksum_verified": False,
+                "release_identity": descriptor.get("version"),
+            },
+        }
 
     def discover(self) -> list[dict[str, Any]]:
         response = httpx.get(self.index_url, timeout=30.0, follow_redirects=True)
