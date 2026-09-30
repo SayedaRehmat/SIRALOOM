@@ -35,6 +35,9 @@ def import_specification(payload: ClinGenImportRequest, db: Session = Depends(ge
     row.modified_at = snapshot.modified_at; row.gene_scope = list(snapshot.gene_scope); row.disease_scope = list(snapshot.disease_scope)
     row.criteria = snapshot.criteria; row.raw_payload = snapshot.raw_entity
     row.retrieved_at = datetime.now(timezone.utc)
+    row.request_fingerprint = snapshot.request_fingerprint
+    row.response_sha256 = snapshot.response_sha256
+    row.request_metadata = snapshot.request_metadata or {}
     row.validated_for_automation = False
     row.validation_status = "UNVALIDATED"
     db.add(row)
