@@ -1,4 +1,6 @@
 from uuid import UUID, uuid4
+from pathlib import Path
+import tempfile
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy import select, func
@@ -9,7 +11,7 @@ from backend.app.domain.schemas import ReportCreate, ExportCreate, Reportability
 from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.db.models import Analysis, Report, CaseExport, Case
-from backend.app.reporting.service import build_report_content, render_pdf, render_html
+from backend.app.reporting.service import build_report_content, render_pdf, render_html, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
 from backend.app.reporting.export_task import run_case_export
@@ -23,28 +25,97 @@ router = APIRouter(tags=["reports"])
 
 @router.post("/analyses/{analysis_id}/reports", status_code=201)
 def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, CASE_WRITE_ROLES)
-    content = build_report_content(db, analysis, payload.language, report_type=payload.report_type, include_full_evidence=payload.include_full_evidence)
-    last = db.scalar(select(func.max(Report.report_version)).where(Report.case_id == analysis.case_id, Report.report_type == payload.report_type)) or 0
-    version = int(last) + 1; content["report_version"] = version
+    analysis = get_accessible_analysis(analysis_id, db, principal)
+    require_role(principal, CASE_WRITE_ROLES)
+    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+    if not eligible:
+        raise HTTPException(status_code=409, detail="Report generation is blocked until classification review and reportability are finalized: " + "; ".join(errors))
+
+    content = build_report_content(
+        db,
+        analysis,
+        payload.language,
+        report_type=payload.report_type,
+        include_full_evidence=payload.include_full_evidence,
+    )
+    last = db.scalar(
+        select(func.max(Report.report_version)).where(
+            Report.case_id == analysis.case_id,
+            Report.report_type == payload.report_type,
+        )
+    ) or 0
+    version = int(last) + 1
+    content["report_version"] = version
     pdf = render_pdf(content)
     store = FirebaseArtifactStore(settings.firebase_storage_bucket) if settings.firebase_storage_enabled else ArtifactStore(settings.artifact_root)
-    artifact = store.put_bytes(db=db, case_id=analysis.case_id, analysis_id=analysis.id, data=pdf, filename=f"report_v{version}.pdf", artifact_type="REPORT_PDF", media_type="application/pdf", genome_build=analysis.reference_build, metadata={"rendered_format":"PDF","report_schema_version":content["report_schema_version"]})
-    report = Report(id=uuid4(), case_id=analysis.case_id, analysis_id=analysis.id, report_version=version, language=payload.language, report_type=payload.report_type, status="DRAFT", artifact_id=artifact.id, content_json=content)
+
+    with tempfile.NamedTemporaryFile(prefix="siraloom-report-draft-", suffix=".pdf", delete=False) as tmp:
+        tmp.write(pdf)
+        draft_path = Path(tmp.name)
+    try:
+        artifact = store.put_file(
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            source_path=draft_path,
+            filename=f"report_v{version}_draft.pdf",
+            artifact_type="REPORT_PDF",
+            media_type="application/pdf",
+            genome_build=analysis.reference_build,
+            metadata={
+                "rendered_format": "PDF",
+                "report_schema_version": content["report_schema_version"],
+                "report_state": "DRAFT",
+            },
+            validation_status="VALID",
+        )
+    finally:
+        draft_path.unlink(missing_ok=True)
+
+    report = Report(
+        id=uuid4(),
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        report_version=version,
+        language=payload.language,
+        report_type=payload.report_type,
+        status="DRAFT",
+        artifact_id=artifact.id,
+        content_json=content,
+    )
     db.add(report)
-    AuditService(db).record(event_type="REPORT_GENERATED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="reporting", subject_type="REPORT", subject_id=str(report.id), operation="CREATE", output_artifacts=[{"artifact_id":str(artifact.id),"sha256":artifact.sha256}], payload={"draft":True})
-    db.commit(); return {"report_id":str(report.id),"version":version,"artifact_id":str(artifact.id),"status":report.status}
+    AuditService(db).record(
+        event_type="REPORT_GENERATED",
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        actor_type="SYSTEM",
+        actor_id="reporting",
+        subject_type="REPORT",
+        subject_id=str(report.id),
+        operation="CREATE",
+        output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
+        payload={"draft": True, "reportability_final": True},
+    )
+    db.commit()
+    return {
+        "report_id": str(report.id),
+        "version": version,
+        "artifact_id": str(artifact.id),
+        "status": report.status,
+        "signed_artifact_id": None,
+        "signed_sha256": None,
+    }
 
 @router.get("/analyses/{analysis_id}/reports")
 def list_reports(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal)
     rows = list(db.scalars(select(Report).where(Report.analysis_id == analysis.id).order_by(Report.report_version.desc())))
-    return {"analysis_id": str(analysis_id), "items": [{"report_id": str(r.id), "case_id": str(r.case_id), "version": r.report_version, "status": r.status, "language": r.language, "report_type": r.report_type, "artifact_id": str(r.artifact_id) if r.artifact_id else None, "approved_by": str(r.approved_by) if r.approved_by else None, "approved_at": r.approved_at.isoformat() if r.approved_at else None, "supersedes_report_id": str(r.supersedes_report_id) if r.supersedes_report_id else None, "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]}
+    return {"analysis_id": str(analysis_id), "items": [{"report_id": str(r.id), "case_id": str(r.case_id), "version": r.report_version, "status": r.status, "language": r.language, "report_type": r.report_type, "artifact_id": str(r.artifact_id) if r.artifact_id else None, "signed_artifact_id": str(r.signed_artifact_id) if r.signed_artifact_id else None, "signed_sha256": r.signed_sha256, "signout_reason": r.signout_reason, "approved_by": str(r.approved_by) if r.approved_by else None, "approved_at": r.approved_at.isoformat() if r.approved_at else None, "supersedes_report_id": str(r.supersedes_report_id) if r.supersedes_report_id else None, "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]}
 
 @router.get("/reports/{report_id}")
 def get_report(report_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     report=get_accessible_report(report_id, db, principal)
-    return {"report_id":str(report.id),"case_id":str(report.case_id),"analysis_id":str(report.analysis_id),"version":report.report_version,"status":report.status,"language":report.language,"report_type":report.report_type,"artifact_id":str(report.artifact_id) if report.artifact_id else None,"approved_by":str(report.approved_by) if report.approved_by else None,"approved_at":report.approved_at.isoformat() if report.approved_at else None,"content":report.content_json}
+    return {"report_id":str(report.id),"case_id":str(report.case_id),"analysis_id":str(report.analysis_id),"version":report.report_version,"status":report.status,"language":report.language,"report_type":report.report_type,"artifact_id":str(report.artifact_id) if report.artifact_id else None,"signed_artifact_id":str(report.signed_artifact_id) if report.signed_artifact_id else None,"signed_sha256":report.signed_sha256,"signout_reason":report.signout_reason,"approved_by":str(report.approved_by) if report.approved_by else None,"approved_at":report.approved_at.isoformat() if report.approved_at else None,"content":report.content_json}
 
 @router.post("/reports/{report_id}/finalize")
 def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
