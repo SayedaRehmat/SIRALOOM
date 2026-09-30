@@ -6,12 +6,13 @@ import { useLanguage } from "../../lib/i18n";
 
 export default function Home() {
   const { t } = useLanguage();
+  const steps = t("public.home.lifecycle.steps").split(" · ");
 
   return (
     <SiteShell showLanguageSwitcher>
       <main>
-        <section className="hero">
-          <div>
+        <section className="hero public-hero">
+          <div className="hero-copy">
             <p className="eyebrow">{t("public.home.eyebrow")}</p>
             <h1>{t("public.home.title")}</h1>
             <p className="lead">{t("public.home.lead")}</p>
@@ -21,46 +22,85 @@ export default function Home() {
             </div>
           </div>
 
-        </section>
-
-        <section className="home-section home-lifecycle" aria-labelledby="lifecycle-title">
-          <p className="section-kicker">{t("public.home.lifecycle.eyebrow")}</p>
-          <h2 id="lifecycle-title">{t("public.home.lifecycle.title")}</h2>
-          <p>{t("public.home.lifecycle.body")}</p>
-          <div className="workflow-strip" aria-label={t("public.home.lifecycle.steps")}>
-            {t("public.home.lifecycle.steps").split(" · ").map((step) => (
-              <span key={step}>{step}</span>
-            ))}
+          <div className="hero-visual" aria-label={t("public.home.product.title")}>
+            <div className="workflow-board">
+              <div className="workflow-board-top">
+                <span>{t("public.home.product.eyebrow")}</span>
+                <span className="workflow-status">{t("public.home.review.title")}</span>
+              </div>
+              <div className="workflow-case">
+                <span>{steps[0]}</span>
+                <strong>{t("public.home.platform.caseTitle")}</strong>
+                <small>{t("public.home.platform.caseBody")}</small>
+              </div>
+              <div className="workflow-line" aria-hidden="true" />
+              <div className="workflow-node-grid">
+                <div><span>{steps[1]}</span><strong>{t("public.home.platform.workflowTitle")}</strong></div>
+                <div><span>{steps[6]}</span><strong>{t("public.home.platform.governanceTitle")}</strong></div>
+                <div><span>{steps[8]}</span><strong>{t("public.home.review.title")}</strong></div>
+                <div><span>{steps[9]}</span><strong>{t("public.home.product.title")}</strong></div>
+              </div>
+              <div className="workflow-reanalysis">
+                <span>{steps[steps.length - 1]}</span>
+                <strong>{t("public.home.lifecycle.title")}</strong>
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="home-section home-platform" aria-labelledby="platform-title">
-          <div>
+          <div className="section-intro">
             <p className="section-kicker">{t("public.home.platform.eyebrow")}</p>
             <h2 id="platform-title">{t("public.home.platform.title")}</h2>
             <p>{t("public.home.platform.body")}</p>
           </div>
-          <div className="product-panel">
-            <p className="section-kicker">{t("public.home.product.eyebrow")}</p>
-            <h3>{t("public.home.product.title")}</h3>
-            <p>{t("public.home.product.body")}</p>
-            <Link className="text-link" href="/services/variant">{t("public.services.variant.link")}</Link>
+          <div className="platform-principles">
+            <article>
+              <span>01</span>
+              <h3>{t("public.platform.caseTitle")}</h3>
+              <p>{t("public.platform.caseBody")}</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>{t("public.platform.workflowTitle")}</h3>
+              <p>{t("public.platform.workflowBody")}</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>{t("public.platform.governanceTitle")}</h3>
+              <p>{t("public.platform.governanceBody")}</p>
+            </article>
           </div>
         </section>
 
-        <section className="feature-grid">
-          <article>
-            <b>{t("public.home.traceable.title")}</b>
-            <p>{t("public.home.traceable.body")}</p>
-          </article>
-          <article>
-            <b>{t("public.home.review.title")}</b>
-            <p>{t("public.home.review.body")}</p>
-          </article>
-          <article>
-            <b>{t("public.home.extend.title")}</b>
-            <p>{t("public.home.extend.body")}</p>
-          </article>
+        <section className="home-section home-product" aria-labelledby="product-title">
+          <div className="product-panel product-panel-large">
+            <div>
+              <p className="section-kicker">{t("public.home.product.eyebrow")}</p>
+              <h2 id="product-title">{t("public.home.product.title")}</h2>
+              <p>{t("public.home.product.body")}</p>
+            </div>
+            <Link className="button secondary" href="/services/variant">{t("public.services.variant.link")}</Link>
+          </div>
+        </section>
+
+        <section className="home-section home-lifecycle" aria-labelledby="lifecycle-title">
+          <div className="section-intro">
+            <p className="section-kicker">{t("public.home.lifecycle.eyebrow")}</p>
+            <h2 id="lifecycle-title">{t("public.home.lifecycle.title")}</h2>
+            <p>{t("public.home.lifecycle.body")}</p>
+          </div>
+          <div className="workflow-strip" aria-label={t("public.home.lifecycle.steps")}>
+            {steps.map((step, index) => (
+              <span key={step}><b>{String(index + 1).padStart(2, "0")}</b>{step}</span>
+            ))}
+          </div>
+        </section>
+
+        <section className="feature-grid public-principles">
+          <article><span>01</span><b>{t("public.home.traceable.title")}</b><p>{t("public.home.traceable.body")}</p></article>
+          <article><span>02</span><b>{t("public.home.review.title")}</b><p>{t("public.home.review.body")}</p></article>
+          <article><span>03</span><b>{t("public.home.extend.title")}</b><p>{t("public.home.extend.body")}</p></article>
         </section>
       </main>
     </SiteShell>
