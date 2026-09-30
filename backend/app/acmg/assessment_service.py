@@ -159,6 +159,60 @@ class ACMGSpecificationAssessmentService:
                 continue
             evaluator_results.append(result)
 
+        # Evaluators may identify upstream observations, but ACMG criteria must
+        # reference persisted Evidence records. Never place PopulationObservation
+        # identifiers directly into CriterionAssessment.evidence_ids.
+        bound_results: list[EvaluatorResult] = []
+        for evaluated in evaluator_results:
+            if evaluated.status != "PROPOSED" or not evaluated.applicable:
+                bound_results.append(evaluated)
+                continue
+            if not evaluated.evidence_ids:
+                bound_results.append(EvaluatorResult(
+                    evaluated.criterion,
+                    evaluated.applicable,
+                    None,
+                    evaluated.direction,
+                    "REQUIRES_REVIEW",
+                    "The evaluator produced a proposed criterion without persisted Evidence identifiers; human review is required.",
+                    evidence_ids=(),
+                    metadata={**(evaluated.metadata or {}), "evidence_binding": "MISSING"},
+                ))
+                continue
+            evidence_ids, unresolved = _resolve_evidence_ids(
+                db,
+                analysis_id=analysis.id,
+                variant_id=variant.id,
+                source_ids=evaluated.evidence_ids,
+            )
+            if unresolved:
+                bound_results.append(EvaluatorResult(
+                    evaluated.criterion,
+                    evaluated.applicable,
+                    None,
+                    evaluated.direction,
+                    "REQUIRES_REVIEW",
+                    "One or more evaluator source identifiers could not be resolved to persisted Evidence records; criterion cannot be proposed.",
+                    evidence_ids=tuple(str(x) for x in evidence_ids),
+                    metadata={
+                        **(evaluated.metadata or {}),
+                        "evidence_binding": "UNRESOLVED",
+                        "unresolved_source_ids": list(unresolved),
+                    },
+                ))
+                continue
+            bound_results.append(EvaluatorResult(
+                evaluated.criterion,
+                evaluated.applicable,
+                evaluated.strength,
+                evaluated.direction,
+                evaluated.status,
+                evaluated.reason,
+                evidence_ids=tuple(str(x) for x in evidence_ids),
+                metadata={**(evaluated.metadata or {}), "evidence_binding": "RESOLVED"},
+            ))
+
+        evaluator_results = bound_results
         proposed_assessments = [
             CriterionAssessment(
                 criterion=r.criterion,
@@ -170,7 +224,7 @@ class ACMGSpecificationAssessmentService:
                 metadata=r.metadata or {},
             )
             for r in evaluator_results
-            if r.applicable and r.strength is not None and r.status == "PROPOSED"
+            if r.applicable and r.strength is not None and r.status == "PROPOSED" and r.evidence_ids
         ]
 
         if not proposed_assessments:
@@ -260,6 +314,39 @@ class ACMGSpecificationAssessmentService:
                     )
                 )
         db.flush()
+
+
+def _resolve_evidence_ids(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    variant_id: UUID,
+    source_ids: tuple[str, ...],
+) -> tuple[tuple[UUID, ...], tuple[str, ...]]:
+    """Resolve evaluator source identifiers to persisted Evidence IDs.
+
+    Population evaluators currently emit PopulationObservation IDs. This helper
+    performs the only legal crossing into the ACMG evidence namespace. Evidence
+    must belong to the same analysis and variant; cross-analysis/cross-variant
+    evidence is never accepted.
+    """
+    if not source_ids:
+        return (), ()
+    normalized = {str(x) for x in source_ids}
+    rows = db.scalars(
+        select(Evidence).where(
+            Evidence.analysis_id == analysis_id,
+            Evidence.variant_id == variant_id,
+        )
+    ).all()
+    resolved: list[UUID] = []
+    unresolved = set(normalized)
+    for row in rows:
+        observation_ids = {str(x) for x in (row.observation_ids or [])}
+        if observation_ids & normalized:
+            resolved.append(row.id)
+            unresolved -= observation_ids & normalized
+    return tuple(dict.fromkeys(resolved)), tuple(sorted(unresolved))
 
 
 def _has_alternative_combination(profile: dict[str, Any]) -> bool:
