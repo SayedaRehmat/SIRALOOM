@@ -1915,3 +1915,37 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
         assert partition.attempt == 2
         assert partition.lease_owner is None
         assert analysis.status == AnalysisStatus.SUCCEEDED
+
+def test_workflow_next_step_prefers_active_execution_over_older_failure():
+    from backend.app.api.v1.analyses import _resolve_workflow_next_step
+
+    steps = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "FAILED", "next_step": "VALID_VCF_REQUIRED"},
+        {"step_id": "annotate", "status": "RUNNING", "next_step": "annotate"},
+    ]
+
+    assert _resolve_workflow_next_step(steps) == "annotate"
+
+
+def test_workflow_next_step_preserves_explicit_blocker_when_no_active_step():
+    from backend.app.api.v1.analyses import _resolve_workflow_next_step
+
+    steps = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "BLOCKED", "next_step": "REFERENCE_REQUIRED"},
+        {"step_id": "annotate", "status": "PENDING", "next_step": "annotate"},
+    ]
+
+    assert _resolve_workflow_next_step(steps) == "REFERENCE_REQUIRED"
+
+
+def test_workflow_next_step_reports_completion_only_when_every_step_succeeded():
+    from backend.app.api.v1.analyses import _resolve_workflow_next_step
+
+    steps = [
+        {"step_id": "validate_input", "status": "SUCCEEDED", "next_step": "normalize"},
+        {"step_id": "normalize", "status": "SUCCEEDED", "next_step": "annotate"},
+    ]
+
+    assert _resolve_workflow_next_step(steps) == "ANALYSIS_COMPLETE"
