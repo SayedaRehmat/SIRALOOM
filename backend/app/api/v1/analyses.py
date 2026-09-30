@@ -34,6 +34,36 @@ from backend.app.domain.schemas import AnalysisCreate
 
 router = APIRouter(tags=["analyses"])
 
+TERMINAL_ANALYSIS_STATUSES = {
+    "SUCCEEDED",
+    "FAILED",
+    "BLOCKED",
+    "REQUIRES_REVIEW",
+    "RESOURCE_FAILURE",
+}
+
+def _resolve_workflow_next_step(step_payloads: list[dict]) -> str | None:
+    """Resolve the durable next action without allowing an older failure to mask active work."""
+    for status in ("RUNNING", "RETRYING"):
+        active = next((item for item in step_payloads if item["status"] == status), None)
+        if active is not None:
+            return active.get("next_step") or active["step_id"]
+
+    for item in step_payloads:
+        if item["status"] in {"FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}:
+            return item.get("next_step")
+
+    pending = next(
+        (item for item in step_payloads if item["status"] not in {"SUCCEEDED", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}),
+        None,
+    )
+    if pending is not None:
+        return pending["step_id"]
+
+    if step_payloads and all(item["status"] == "SUCCEEDED" for item in step_payloads):
+        return "ANALYSIS_COMPLETE"
+    return None
+
 
 @router.post("/cases/{case_id}/analyses", status_code=201)
 def create(
@@ -184,23 +214,7 @@ def get(
             }
         )
 
-    active_step = next(
-        (
-            item
-            for item in step_payloads
-            if item["status"] in {"RUNNING", "RETRYING", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"}
-        ),
-        None,
-    )
-    workflow_next_step = (
-        active_step["next_step"]
-        if active_step is not None
-        else (
-            "ANALYSIS_COMPLETE"
-            if step_payloads and all(item["status"] == "SUCCEEDED" for item in step_payloads)
-            else None
-        )
-    )
+    workflow_next_step = _resolve_workflow_next_step(step_payloads)
 
     return {
         "analysis_id": str(analysis.id),
