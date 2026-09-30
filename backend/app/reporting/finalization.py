@@ -37,6 +37,9 @@ def _persist_pdf_artifact(
     filename: str,
 ) -> Artifact:
     pdf = render_pdf(content)
+    analysis = db.get(Analysis, report.analysis_id)
+    if analysis is None:
+        raise ReportFinalizationError("Report analysis not found")
     store = _artifact_store()
     with tempfile.NamedTemporaryFile(prefix="siraloom-signed-report-", suffix=".pdf", delete=False) as tmp:
         tmp.write(pdf)
