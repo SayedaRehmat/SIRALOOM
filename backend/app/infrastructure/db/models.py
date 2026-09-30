@@ -660,6 +660,7 @@ class AnalysisResourceSnapshot(Base):
 class ReanalysisChangeEvent(Base):
     __tablename__ = "reanalysis_change_events"
     id: Mapped[UUID] = mapped_column(primary_key=True)
+    change_fingerprint: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
     trigger_type: Mapped[str] = mapped_column(Text, nullable=False)
