@@ -5,6 +5,10 @@ import subprocess
 from pathlib import Path
 
 
+MNV_POLICY = "PRESERVE"
+MULTIALLELIC_POLICY = "SPLIT_WITH_BCFTOOLS"
+
+
 class VCFToolError(RuntimeError):
     pass
 
@@ -159,7 +163,8 @@ def normalize_vcf_with_bcftools(
         "command": " ".join(command),
         "reference_fasta": str(reference_fasta),
         "reference_check": "error",
-        "multiallelic_mode": "split",
+        "multiallelic_mode": MULTIALLELIC_POLICY,
+        "mnv_policy": MNV_POLICY,
         "stderr": (completed.stderr or "").strip(),
     }
 
