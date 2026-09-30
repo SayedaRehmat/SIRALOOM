@@ -34,8 +34,8 @@ export default function Home() {
                   <span>{steps[0] ?? "CASE"}</span>
                   <span>GRCh38</span>
                 </div>
-                <strong>{t("public.home.platform.caseTitle")}</strong>
-                <small>{t("public.home.platform.caseBody")}</small>
+                <strong>{t("public.platform.caseTitle")}</strong>
+                <small>{t("public.platform.caseBody")}</small>
               </div>
 
               <div className="workflow-track" aria-hidden="true">
@@ -43,8 +43,8 @@ export default function Home() {
               </div>
 
               <div className="workflow-node-grid">
-                <div className="workflow-node"><span>{steps[1] ?? "ANALYSIS"}</span><strong>{t("public.home.platform.workflowTitle")}</strong></div>
-                <div className="workflow-node"><span>{steps[3] ?? "EVIDENCE"}</span><strong>{t("public.home.platform.governanceTitle")}</strong></div>
+                <div className="workflow-node"><span>{steps[1] ?? "ANALYSIS"}</span><strong>{t("public.platform.workflowTitle")}</strong></div>
+                <div className="workflow-node"><span>{steps[3] ?? "EVIDENCE"}</span><strong>{t("public.platform.governanceTitle")}</strong></div>
                 <div className="workflow-node"><span>{steps[5] ?? "REVIEW"}</span><strong>{t("public.home.review.title")}</strong></div>
                 <div className="workflow-node"><span>{steps[6] ?? "REPORT"}</span><strong>{t("public.home.product.title")}</strong></div>
               </div>
