@@ -49,7 +49,7 @@ def test_genebe_retries_transient_http_error(monkeypatch):
     assert FakeClient.calls == 2
     assert result[0]["pos"] == 100
     provenance = result[0]["_siraloom_annotation_provenance"]
-    assert provenance["provider"] == "genebe"
+    assert provenance["provider"] == "GeneBe"
     assert provenance["provider_version"] == "api-public-v1"
     assert provenance["genome"] == "hg38"
     assert provenance["retry_count"] == 1
