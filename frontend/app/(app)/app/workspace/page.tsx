@@ -408,6 +408,25 @@ export default function Home() {
     }
   };
 
+  const executeCandidateReanalysis = async (item: NotificationItem) => {
+    if (!item.candidate_id) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await apiFetch(`/reanalysis/candidates/${item.candidate_id}/execute`, {
+        method: "POST",
+      });
+      setAnalysisId(result.analysis_id);
+      window.localStorage.setItem("siraloom.analysis_id", result.analysis_id);
+      await markNotificationRead(item.notification_id);
+      setMessage(`Reanalysis v${result.analysis_version} queued from the completed parent analysis.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to start change-aware reanalysis.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const markNotificationRead = async (notificationId: string) => {
     try {
       await apiFetch(`/notifications/${notificationId}/read`, { method: "POST" });
@@ -710,22 +729,35 @@ export default function Home() {
       {notifications.length > 0 && (
         <section className="panel">
           <div className="panel-head">
-            <div><div className="section-kicker">Change-aware analysis</div><h3>Reanalysis notifications</h3></div>
+            <div><div className="section-kicker">{t("workspace.reanalysisTitle")}</div><h3>{t("workspace.reanalysisNotification")}</h3></div>
             <span className="badge neutral">{notifications.filter((item) => item.status === "UNREAD").length} unread</span>
           </div>
           <div className="stack">
-            {notifications.slice(0, 8).map((item) => (
-              <div key={item.notification_id} className="keyline">
-                <div>
-                  <strong>{item.title}</strong>
-                  <div>{item.body}</div>
-                  <small>{formatDate(item.created_at)}</small>
+            {notifications.slice(0, 8).map((item) => {
+              const affected = item.metadata?.earliest_affected_step;
+              return (
+                <div key={item.notification_id} className="keyline">
+                  <div>
+                    <strong>{item.title}</strong>
+                    <div>{item.body}</div>
+                    {affected && <small>{t("workspace.reanalysisAffected")}: {prettyStatus(String(affected))}</small>}
+                    <small>{formatDate(item.created_at)}</small>
+                  </div>
+                  <div className="actions-row">
+                    {item.candidate_id && (
+                      <button className="primary" onClick={() => executeCandidateReanalysis(item)} disabled={busy}>
+                        {t("workspace.reanalysisRequest")}
+                      </button>
+                    )}
+                    {item.status === "UNREAD" && (
+                      <button className="secondary" onClick={() => markNotificationRead(item.notification_id)} disabled={busy}>
+                        {t("workspace.markRead")}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {item.status === "UNREAD" && (
-                  <button className="secondary" onClick={() => markNotificationRead(item.notification_id)}>Mark read</button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -733,11 +765,11 @@ export default function Home() {
       {analysis?.status === "SUCCEEDED" && (
         <section className="panel">
           <div className="panel-head">
-            <div><div className="section-kicker">Case lifecycle</div><h3>Reanalysis</h3></div>
+            <div><div className="section-kicker">{t("workspace.reanalysisTitle")}</div><h3>{t("workspace.reanalysisTitle")}</h3></div>
             <span className="badge success">Analysis v{String(analysis?.analysis_version ?? "1")}</span>
           </div>
-          <p>A new reanalysis creates an immutable child analysis. The completed parent result is preserved.</p>
-          <button className="primary" onClick={requestReanalysis} disabled={busy}>Request case reanalysis</button>
+          <p>{t("workspace.reanalysisLead")}</p>
+          <button className="primary" onClick={requestReanalysis} disabled={busy}>{t("workspace.reanalysisRequest")}</button>
         </section>
       )}
 
