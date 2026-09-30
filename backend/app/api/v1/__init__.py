@@ -10,3 +10,5 @@ from .health import router as health_router
 from .evidence import router as evidence_router
 from .acmg import router as acmg_router
 from .auth import router as auth_router
+
+from .resources import router as resources_router
