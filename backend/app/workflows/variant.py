@@ -844,7 +844,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         scheduler.heartbeat(partition.id, worker_id)
                         payloads = provider.annotate(batch, {"genome": genome})
                         scheduler.heartbeat(partition.id, worker_id)
-            except GeneBeError as exc:
+                    except GeneBeError as exc:
                         if exc.retryable:
                             if partition.status == "RUNNING" and partition.lease_owner == worker_id:
                                 scheduler.fail(partition.id, worker_id, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
