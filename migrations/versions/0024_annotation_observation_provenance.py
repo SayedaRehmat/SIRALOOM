@@ -38,13 +38,6 @@ def upgrade():
         "annotations",
         sa.Column("retry_count", sa.Integer(), nullable=True),
     )
-    op.create_foreign_key(
-        "fk_annotations_resource_id_resources",
-        "annotations",
-        "resources",
-        ["resource_id"],
-        ["id"],
-    )
     op.execute(sa.text(
         "UPDATE annotations "
         "SET request_metadata = '{}' "
@@ -56,6 +49,12 @@ def upgrade():
         "WHERE retry_count IS NULL"
     ))
     with op.batch_alter_table("annotations") as batch_op:
+        batch_op.create_foreign_key(
+            "fk_annotations_resource_id_resources",
+            "resources",
+            ["resource_id"],
+            ["id"],
+        )
         batch_op.alter_column(
             "request_metadata",
             existing_type=sa.JSON(),
@@ -69,11 +68,11 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_constraint(
-        "fk_annotations_resource_id_resources",
-        "annotations",
-        type_="foreignkey",
-    )
+    with op.batch_alter_table("annotations") as batch_op:
+        batch_op.drop_constraint(
+            "fk_annotations_resource_id_resources",
+            type_="foreignkey",
+        )
     op.drop_column("annotations", "retry_count")
     op.drop_column("annotations", "observed_at")
     op.drop_column("annotations", "request_metadata")
