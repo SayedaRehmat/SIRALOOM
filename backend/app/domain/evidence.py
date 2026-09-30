@@ -34,6 +34,10 @@ def evidence_fingerprint(
     source_version: str | None,
     observation_ids: tuple[UUID, ...],
     payload: dict[str, Any],
+    resource_id: UUID | None = None,
+    source_record_id: str | None = None,
+    request_fingerprint: str | None = None,
+    response_sha256: str | None = None,
 ) -> str:
     canonical = {
         "variant_id": str(variant_id),
@@ -45,6 +49,10 @@ def evidence_fingerprint(
         "source_version": source_version,
         "observation_ids": [str(x) for x in sorted(observation_ids, key=str)],
         "payload": payload,
+        "resource_id": str(resource_id) if resource_id else None,
+        "source_record_id": source_record_id,
+        "request_fingerprint": request_fingerprint,
+        "response_sha256": response_sha256,
     }
     blob = json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
     return hashlib.sha256(blob).hexdigest()
