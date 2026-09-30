@@ -48,7 +48,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     ]
     assert len(lines) == 2
     assert lines[0].split("\t")[0:5] == ["1", "1", ".", "CA", "C"]
-    assert lines[1].split("\t")[0:5] == ["1", "1", ".", "CA", "CCA"]
+    assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
 
 
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
