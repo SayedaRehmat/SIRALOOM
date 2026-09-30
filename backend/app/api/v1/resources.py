@@ -76,6 +76,20 @@ def register_resource(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     db.commit()
+
+    # Resource registration is durable first. The scan is advisory and must
+    # never make a successful registry write look failed if the queue is
+    # temporarily unavailable; the daily Beat schedule remains the recovery
+    # path.
+    scan_queued = False
+    if created:
+        try:
+            from backend.app.infrastructure.queue.celery_app import scan_reanalysis_resources
+            scan_reanalysis_resources.delay()
+            scan_queued = True
+        except Exception:
+            scan_queued = False
+
     return {
         "resource_id": str(resource.id),
         "created": created,
@@ -86,6 +100,7 @@ def register_resource(
         "version": resource.version,
         "genome_build": resource.genome_build,
         "checksum": resource.checksum,
+        "reanalysis_scan_queued": scan_queued,
     }
 
 
