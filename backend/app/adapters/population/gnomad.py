@@ -130,10 +130,6 @@ class GnomADGraphQLProvider:
                         allele_frequency=_af(ac, an),
                         homozygote_count=_int_or_none(pop.get("ac_hom")),
                         source_record_id=details.get("variantId"),
-                    request_fingerprint=request_fingerprint,
-                    response_sha256=response_sha256,
-                    request_metadata=request_metadata,
-                    observed_at=observed_at,
                         request_fingerprint=request_fingerprint,
                         response_sha256=response_sha256,
                         request_metadata=request_metadata,
@@ -156,6 +152,10 @@ class GnomADGraphQLProvider:
                     allele_frequency=_af(ac, an),
                     homozygote_count=None,
                     source_record_id=details.get("variantId"),
+                    request_fingerprint=request_fingerprint,
+                    response_sha256=response_sha256,
+                    request_metadata=request_metadata,
+                    observed_at=observed_at,
                 ),
             )
         if self.delay_seconds:
