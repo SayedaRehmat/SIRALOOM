@@ -27,6 +27,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     output_vcf = tmp_path / "normalized.vcf"
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t4\t.\tAA\tA,C\t.\tPASS\t.\n",
         encoding="utf-8",
