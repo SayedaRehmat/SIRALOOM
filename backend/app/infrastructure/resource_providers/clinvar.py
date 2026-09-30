@@ -15,7 +15,7 @@ import httpx
 
 CLINVAR_XML_INDEX = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/"
 MONTHLY_FILE_RE = re.compile(
-    r'href="(ClinVarVCVRelease_\\d{4}-\\d{2}\.xml\.gz)"', re.IGNORECASE
+    r'href="(ClinVarVCVRelease_\d{4}-\d{2}\.xml\.gz)"', re.IGNORECASE
 )
 
 
