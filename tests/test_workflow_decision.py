@@ -65,44 +65,57 @@ def test_unknown_outcome_is_terminal_and_visible():
     assert decision.code == "WORKFLOW_OUTCOME_UNCLASSIFIED"
 
 
-def test_all_ten_steps_have_explicit_limitation_policy():
+
+def test_every_step_has_explicit_scientific_limitation_policy():
     from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS, STEP_LIMITATION_ACTION
 
     assert len(WORKFLOW_STEP_IDS) == 10
-    assert set(WORKFLOW_STEP_IDS) == set(STEP_LIMITATION_ACTION)
-
-
-def test_no_data_continues_as_a_limitation_at_non_human_steps():
-    from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS
-
     for step_id in WORKFLOW_STEP_IDS:
-        decision = decide_step_outcome(step_id, OutcomeKind.NO_DATA)
-        if step_id in {"review", "reportability"}:
-            assert decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
-        else:
+        assert (step_id, OutcomeKind.NO_DATA) in STEP_LIMITATION_ACTION
+        assert (step_id, OutcomeKind.INSUFFICIENT_EVIDENCE) in STEP_LIMITATION_ACTION
+
+
+def test_population_evidence_and_acmg_limitations_do_not_fail_pipeline():
+    for step_id in ("population", "build_evidence"):
+        for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+            decision = decide_step_outcome(step_id, outcome)
             assert decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION
-        assert decision.action is not WorkflowAction.TERMINAL_FAILURE
-        assert decision.action is not WorkflowAction.BLOCK
+
+    for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+        decision = decide_step_outcome("acmg_assessment", outcome)
+        assert decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
 
 
-def test_insufficient_evidence_reaches_human_gate_after_acmg():
-    for step_id in (
-        "validate_input",
-        "normalize",
-        "annotate",
-        "population",
-        "build_evidence",
-        "acmg_assessment",
-    ):
-        decision = decide_step_outcome(step_id, OutcomeKind.INSUFFICIENT_EVIDENCE)
+def test_annotation_limitation_continues_to_downstream_interpretation():
+    for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+        decision = decide_step_outcome("annotate", outcome)
         assert decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION
 
-    assert decide_step_outcome(
-        "review", OutcomeKind.INSUFFICIENT_EVIDENCE
-    ).action is WorkflowAction.REQUIRE_HUMAN_REVIEW
-    assert decide_step_outcome(
-        "reportability", OutcomeKind.INSUFFICIENT_EVIDENCE
-    ).action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+
+def test_validation_and_normalization_limitation_blocks_unsafe_downstream_processing():
+    for step_id in ("validate_input", "normalize"):
+        for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+            decision = decide_step_outcome(step_id, outcome)
+            assert decision.action is WorkflowAction.BLOCK
+
+
+def test_human_gates_do_not_auto_continue_on_limitation():
+    for step_id in ("review", "reportability"):
+        for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+            decision = decide_step_outcome(step_id, outcome)
+            assert decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+
+
+def test_report_can_be_generated_with_a_scientific_limitation():
+    for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+        decision = decide_step_outcome("report", outcome)
+        assert decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION
+
+
+def test_provenance_requires_an_actual_provenance_result():
+    for outcome in (OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE):
+        decision = decide_step_outcome("export_provenance", outcome)
+        assert decision.action is WorkflowAction.BLOCK
 
 
 def test_input_invalid_blocks_at_every_workflow_step():
