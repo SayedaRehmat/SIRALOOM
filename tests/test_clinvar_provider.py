@@ -80,10 +80,10 @@ def test_clinvar_stage_streams_exact_official_url(monkeypatch, tmp_path):
     result = ClinVarReleaseProvider().stage(descriptor, destination)
 
     assert destination.read_bytes() == b"clinvar-release-bytes"
-    assert result["size_bytes"] == len(b"clinvar-release-bytes")
-    assert result["sha256"] == "5a08150b23f8ed27cb106d2863cef271dd02ff327caf00f1b908d8bf313c5108"
-    assert result["metadata"]["integrity"] == "TRANSPORT_DIGEST_ONLY"
-    assert result["metadata"]["source_checksum_verified"] is False
+    assert result.size_bytes == len(b"clinvar-release-bytes")
+    assert result.sha256 == "5a08150b23f8ed27cb106d286041dd02ff327caf00f1b908d8bf313c5108"
+    assert result.metadata["integrity"] == "TRANSPORT_DIGEST_ONLY"
+    assert result.metadata["source_checksum_verified"] is False
 
 
 def test_clinvar_stage_rejects_non_ncbi_location(tmp_path):
