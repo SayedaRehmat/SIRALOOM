@@ -253,12 +253,18 @@ def qualify_resource(
     if not row or (row.organization_id and row.organization_id != principal.organization_id):
         raise HTTPException(status_code=404, detail="Resource not found")
     try:
+        from backend.app.domain.resource_qualification import qualify_resource as run_qualification
         from backend.app.domain.resources import qualify_resource_version
+
+        qualification_version = str(
+            payload.get("qualification_version") or "siraloom-resource-qualification-v1"
+        )
+        result = run_qualification(row, qualification_version=qualification_version)
         qualification = qualify_resource_version(
             db,
             resource_id=resource_id,
-            qualification_version=str(payload.get("qualification_version") or ""),
-            checks=payload.get("checks") or {},
+            qualification_version=result.qualification_version,
+            checks=result.checks,
             qualified_by=principal.user_id,
         )
     except ResourceRegistryError as exc:
@@ -269,6 +275,10 @@ def qualify_resource(
         "status": row.status,
         "qualification_id": str(qualification.id),
         "qualification_version": qualification.qualification_version,
+        "passed": result.passed,
+        "outcome": result.checks.get("qualification_outcome"),
+        "activation_blockers": result.blockers,
+        "checks": result.checks,
     }
 
 

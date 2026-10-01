@@ -169,11 +169,11 @@ def qualify_resource_version(
         )
     if not qualification_version.strip():
         raise ResourceRegistryError("qualification_version is required")
-    if not isinstance(checks, dict) or not checks.get("passed"):
-        raise ResourceRegistryError(
-            "qualification requires checks.passed=true"
-        )
+    if not isinstance(checks, dict) or not isinstance(checks.get("passed"), bool):
+        raise ResourceRegistryError("qualification result must contain boolean checks.passed")
 
+    passed = bool(checks["passed"])
+    qualification_status = "QUALIFIED" if passed else "BLOCKED"
     qualification = db.scalar(
         select(ResourceQualification).where(
             ResourceQualification.resource_id == resource_id,
@@ -185,19 +185,22 @@ def qualify_resource_version(
             id=uuid4(),
             resource_id=resource_id,
             qualification_version=qualification_version.strip(),
-            status="QUALIFIED",
+            status=qualification_status,
             checks_json=checks,
             qualified_by=qualified_by,
             qualified_at=datetime.now(timezone.utc),
         )
         db.add(qualification)
     else:
-        qualification.status = "QUALIFIED"
+        qualification.status = qualification_status
         qualification.checks_json = checks
         qualification.qualified_by = qualified_by
         qualification.qualified_at = datetime.now(timezone.utc)
 
-    resource.status = "QUALIFIED"
+    if passed:
+        resource.status = "QUALIFIED"
+    elif resource.status == "QUALIFIED":
+        resource.status = "CANDIDATE"
     db.flush()
     return qualification
 
