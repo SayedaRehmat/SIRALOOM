@@ -6,7 +6,6 @@ import { messages, type TranslationKey } from "./messages";
 export type AppLanguage = "en" | "ar" | "bilingual";
 export type AppDirection = "ltr" | "rtl";
 
-const storageKey = "siraloom.language";
 const cookieKey = "siraloom.language";
 const defaultLanguage: AppLanguage = "en";
 
@@ -20,13 +19,10 @@ function directionFor(language: AppLanguage): AppDirection {
 
 function readInitialLanguage(initialLanguage?: AppLanguage): AppLanguage {
   if (initialLanguage) return initialLanguage;
-  if (typeof window === "undefined") return defaultLanguage;
-  const stored = window.localStorage.getItem(storageKey);
-  return isAppLanguage(stored) ? stored : defaultLanguage;
+  return defaultLanguage;
 }
 
 function persistLanguage(language: AppLanguage) {
-  window.localStorage.setItem(storageKey, language);
   document.cookie = `${cookieKey}=${encodeURIComponent(language)}; Path=/; Max-Age=31536000; SameSite=Lax`;
 }
 
@@ -56,11 +52,6 @@ export function LanguageProvider({
   const [language, setLanguageState] = useState<AppLanguage>(() =>
     readInitialLanguage(initialLanguage),
   );
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(storageKey);
-    if (isAppLanguage(stored)) setLanguageState(stored);
-  }, []);
 
   useEffect(() => {
     const direction = directionFor(language);
