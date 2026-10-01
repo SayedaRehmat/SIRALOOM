@@ -90,7 +90,7 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
         "source_contract": contract.as_dict(),
         "publisher_present": bool(contract.publisher),
         "release_identity_match": resource.version == contract.release_identity,
-        "artifact_location_match": resource.location == contract.artifact_url,
+        "artifact_location_match": resource.location == contract.artifact_url or _local_path(resource) is not None,
         "staging": "NOT_PRESENT",
         "activation_blockers": blockers,
     }
