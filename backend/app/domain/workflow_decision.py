@@ -140,3 +140,83 @@ def decide_workflow_outcome(
         code or default_code,
         message or "The workflow encountered an unexpected condition with no governed recovery path.",
     )
+
+
+# Every workflow step uses the same outcome vocabulary, but the transition
+# semantics are declared per step so a scientific limitation never becomes a
+# technical failure merely because the stage is different.
+WORKFLOW_STEP_IDS: tuple[str, ...] = (
+    "validate_input",
+    "normalize",
+    "annotate",
+    "population",
+    "build_evidence",
+    "acmg_assessment",
+    "review",
+    "reportability",
+    "report",
+    "export_provenance",
+)
+
+# The value is the action for a valid scientific limitation at that step.
+# All ten steps may continue with a limitation; review/reportability instead
+# require their explicit human gate. Technical/resource outcomes are handled
+# by the common decision contract above.
+STEP_LIMITATION_ACTION: dict[str, WorkflowAction] = {
+    "validate_input": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "normalize": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "annotate": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "population": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "build_evidence": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "acmg_assessment": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "review": WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    "reportability": WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    "report": WorkflowAction.CONTINUE_WITH_LIMITATION,
+    "export_provenance": WorkflowAction.CONTINUE_WITH_LIMITATION,
+}
+
+
+def decide_step_outcome(
+    step_id: str,
+    outcome: OutcomeKind | str,
+    *,
+    code: str | None = None,
+    message: str | None = None,
+    retryable: bool = False,
+    fallback_available: bool = False,
+    lab_action_required: bool = False,
+) -> WorkflowDecision:
+    """Apply the universal outcome contract to one concrete workflow step.
+
+    This is the policy boundary for all ten variant-workflow stages. It does not
+    mutate database state, enqueue work, retry tasks, switch resources, or send
+    notifications; the owning workflow service performs those side effects
+    after receiving this decision.
+    """
+    if step_id not in WORKFLOW_STEP_IDS:
+        return WorkflowDecision(
+            WorkflowAction.TERMINAL_FAILURE,
+            code or "WORKFLOW_STEP_UNCLASSIFIED",
+            message or f"Unclassified workflow step: {step_id}",
+        )
+
+    decision = decide_workflow_outcome(
+        outcome,
+        code=code,
+        message=message,
+        retryable=retryable,
+        fallback_available=fallback_available,
+        lab_action_required=lab_action_required,
+    )
+
+    # A limitation remains a valid scientific result at every stage. At the two
+    # human gates, however, the workflow must stop for the laboratory reviewer
+    # before reportability/report generation can proceed.
+    if decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION and step_id in {"review", "reportability"}:
+        return WorkflowDecision(
+            WorkflowAction.REQUIRE_HUMAN_REVIEW,
+            decision.code,
+            decision.message,
+        )
+
+    return decision
