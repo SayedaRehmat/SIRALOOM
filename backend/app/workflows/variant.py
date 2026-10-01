@@ -21,6 +21,7 @@ from backend.app.domain.vcf_validation import StrictVCFValidationError, validate
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
@@ -253,6 +254,42 @@ def mark_step(
     step.error_message = error_message
     db.add(step)
     db.commit()
+
+
+def _apply_scientific_limitation(
+    db: Session,
+    step: WorkflowStep,
+    *,
+    outcome: OutcomeKind,
+    code: str,
+    message: str,
+    metadata: dict | None = None,
+) -> None:
+    """Persist a governed scientific limitation without turning it into failure.
+
+    The decision contract is consulted before persistence. A limitation that is
+    not safe to continue from at this stage is rejected here so callers cannot
+    accidentally mark an unsafe stage as successful.
+    """
+    decision = decide_step_outcome(step.step_id, outcome, code=code, message=message)
+    if decision.action is not WorkflowAction.CONTINUE_WITH_LIMITATION:
+        raise RuntimeError(
+            f"Scientific limitation {outcome.value} is not continuation-safe for step "
+            f"{step.step_id}: {decision.action.value}"
+        )
+    mark_step(
+        db,
+        step,
+        StepStatus.SUCCEEDED,
+        error_code=decision.code,
+        error_message=decision.message,
+        metadata={
+            **(metadata or {}),
+            "scientific_outcome": outcome.value,
+            "workflow_action": decision.action.value,
+            "scientific_limitation": True,
+        },
+    )
 
 
 def _ensure_execution_partitions(db: Session, analysis_id: UUID, source_step: str, target_step: str) -> None:
