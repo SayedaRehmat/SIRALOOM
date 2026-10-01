@@ -2,6 +2,7 @@ from backend.app.domain.workflow_decision import (
     OutcomeKind,
     WorkflowAction,
     decide_workflow_outcome,
+    decide_step_outcome,
 )
 
 
