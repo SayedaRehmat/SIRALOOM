@@ -1347,11 +1347,26 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     _save_batch_checkpoint(db, evidence_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"created_evidence": batch_created})
                 db.commit()
                 evidence_step.input_artifacts = [str(normalized_artifact.id)] if normalized_artifact else []
-                mark_step(db, evidence_step, StepStatus.SUCCEEDED, metadata={
+                evidence_metadata = {
                     "engine": engine.engine_id,
                     "engine_version": engine.engine_version,
                     "created_evidence": created,
-                })
+                }
+                if created == 0:
+                    _apply_scientific_limitation(
+                        db,
+                        evidence_step,
+                        outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                        code="EVIDENCE_INSUFFICIENT",
+                        message=(
+                            "Evidence collection completed, but no reportable evidence records were "
+                            "established from the available annotation, population, phenotype, gene-disease, "
+                            "or literature context."
+                        ),
+                        metadata=evidence_metadata,
+                    )
+                else:
+                    mark_step(db, evidence_step, StepStatus.SUCCEEDED, metadata=evidence_metadata)
                 audit.record(
                     event_type="EVIDENCE_COMPLETED",
                     case_id=analysis.case_id,
