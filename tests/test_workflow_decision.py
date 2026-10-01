@@ -63,3 +63,77 @@ def test_unknown_outcome_is_terminal_and_visible():
     decision = decide_workflow_outcome("A_NEW_UNCLASSIFIED_STATE")
     assert decision.action is WorkflowAction.TERMINAL_FAILURE
     assert decision.code == "WORKFLOW_OUTCOME_UNCLASSIFIED"
+
+
+def test_all_ten_steps_have_explicit_limitation_policy():
+    from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS, STEP_LIMITATION_ACTION
+
+    assert len(WORKFLOW_STEP_IDS) == 10
+    assert set(WORKFLOW_STEP_IDS) == set(STEP_LIMITATION_ACTION)
+
+
+def test_no_data_continues_as_a_limitation_at_non_human_steps():
+    from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS
+
+    for step_id in WORKFLOW_STEP_IDS:
+        decision = decide_step_outcome(step_id, OutcomeKind.NO_DATA)
+        if step_id in {"review", "reportability"}:
+            assert decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+        else:
+            assert decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION
+        assert decision.action is not WorkflowAction.TERMINAL_FAILURE
+        assert decision.action is not WorkflowAction.BLOCK
+
+
+def test_insufficient_evidence_reaches_human_gate_after_acmg():
+    for step_id in (
+        "validate_input",
+        "normalize",
+        "annotate",
+        "population",
+        "build_evidence",
+        "acmg_assessment",
+    ):
+        decision = decide_step_outcome(step_id, OutcomeKind.INSUFFICIENT_EVIDENCE)
+        assert decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION
+
+    assert decide_step_outcome(
+        "review", OutcomeKind.INSUFFICIENT_EVIDENCE
+    ).action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+    assert decide_step_outcome(
+        "reportability", OutcomeKind.INSUFFICIENT_EVIDENCE
+    ).action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+
+
+def test_input_invalid_blocks_at_every_workflow_step():
+    from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS
+
+    for step_id in WORKFLOW_STEP_IDS:
+        decision = decide_step_outcome(step_id, OutcomeKind.INPUT_INVALID, retryable=True)
+        assert decision.action is WorkflowAction.BLOCK
+        assert decision.retryable is False
+
+
+def test_resource_invalid_requires_lab_action_at_every_workflow_step():
+    from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS
+
+    for step_id in WORKFLOW_STEP_IDS:
+        decision = decide_step_outcome(step_id, OutcomeKind.RESOURCE_INVALID)
+        assert decision.action is WorkflowAction.REQUEST_LAB_ACTION
+        assert decision.lab_action_required is True
+
+
+def test_retryable_failure_retries_at_every_workflow_step_when_explicitly_retryable():
+    from backend.app.domain.workflow_decision import WORKFLOW_STEP_IDS
+
+    for step_id in WORKFLOW_STEP_IDS:
+        decision = decide_step_outcome(
+            step_id, OutcomeKind.RETRYABLE_FAILURE, retryable=True
+        )
+        assert decision.action is WorkflowAction.RETRY
+
+
+def test_unclassified_step_fails_closed():
+    decision = decide_step_outcome("future_step", OutcomeKind.NO_DATA)
+    assert decision.action is WorkflowAction.TERMINAL_FAILURE
+    assert decision.code == "WORKFLOW_STEP_UNCLASSIFIED"
