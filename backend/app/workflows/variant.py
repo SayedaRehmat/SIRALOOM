@@ -1157,12 +1157,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             direct_count += 1
                     db.commit()
 
-                mark_step(
-                    db,
-                    population_step,
-                    StepStatus.SUCCEEDED,
-                    metadata={"gene_be_global_observations": created, "direct_gnomad_observations": direct_count},
-                )
+                population_metadata = {
+                    "gene_be_global_observations": created,
+                    "direct_gnomad_observations": direct_count,
+                }
+                if created == 0 and direct_count == 0:
+                    _apply_scientific_limitation(
+                        db,
+                        population_step,
+                        outcome=OutcomeKind.NO_DATA,
+                        code="POPULATION_NO_DATA",
+                        message=(
+                            "Population resources completed without an available population observation "
+                            "for the analyzed variants; downstream evidence and clinical review may still proceed."
+                        ),
+                        metadata=population_metadata,
+                    )
+                else:
+                    mark_step(
+                        db,
+                        population_step,
+                        StepStatus.SUCCEEDED,
+                        metadata=population_metadata,
+                    )
                 audit.record(
                     event_type="POPULATION_COMPLETED",
                     case_id=analysis.case_id,
