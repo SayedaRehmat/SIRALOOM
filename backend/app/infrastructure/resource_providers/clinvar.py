@@ -93,7 +93,7 @@ class ClinVarReleaseProvider:
                 "release_identity": filename,
                 "access_mode": "PUBLIC",
                 "license_status": "REVIEW_REQUIRED",
-                "license_url": null,
+                "license_url": None,
                 "terms_url": "https://www.ncbi.nlm.nih.gov/home/about/policies/",
                 "checksum_status": "NOT_PUBLISHED",
                 "authority_evidence_url": "https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/",
