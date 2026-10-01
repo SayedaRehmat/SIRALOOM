@@ -142,9 +142,11 @@ def decide_workflow_outcome(
     )
 
 
-# Every workflow step uses the same outcome vocabulary, but the transition
-# semantics are declared per step so a scientific limitation never becomes a
-# technical failure merely because the stage is different.
+# Each workflow stage has an explicit interpretation for scientific limitations.
+# This is intentionally stricter than one global "NO_DATA => continue" rule:
+# some stages cannot safely produce a downstream result without their required
+# input (for example an empty/invalid validation or normalization result), while
+# absence of population/evidence data is a legitimate scientific limitation.
 WORKFLOW_STEP_IDS: tuple[str, ...] = (
     "validate_input",
     "normalize",
@@ -158,21 +160,31 @@ WORKFLOW_STEP_IDS: tuple[str, ...] = (
     "export_provenance",
 )
 
-# The value is the action for a valid scientific limitation at that step.
-# All ten steps may continue with a limitation; review/reportability instead
-# require their explicit human gate. Technical/resource outcomes are handled
-# by the common decision contract above.
-STEP_LIMITATION_ACTION: dict[str, WorkflowAction] = {
-    "validate_input": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "normalize": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "annotate": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "population": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "build_evidence": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "acmg_assessment": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "review": WorkflowAction.REQUIRE_HUMAN_REVIEW,
-    "reportability": WorkflowAction.REQUIRE_HUMAN_REVIEW,
-    "report": WorkflowAction.CONTINUE_WITH_LIMITATION,
-    "export_provenance": WorkflowAction.CONTINUE_WITH_LIMITATION,
+# (step, outcome) -> action. The common decision contract remains the default
+# for technical/resource outcomes; this matrix governs the two scientific
+# limitation outcomes whose meaning depends on where they occur.
+STEP_LIMITATION_ACTION: dict[tuple[str, OutcomeKind], WorkflowAction] = {
+    ("validate_input", OutcomeKind.NO_DATA): WorkflowAction.BLOCK,
+    ("normalize", OutcomeKind.NO_DATA): WorkflowAction.BLOCK,
+    ("annotate", OutcomeKind.NO_DATA): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("population", OutcomeKind.NO_DATA): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("build_evidence", OutcomeKind.NO_DATA): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("acmg_assessment", OutcomeKind.NO_DATA): WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    ("review", OutcomeKind.NO_DATA): WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    ("reportability", OutcomeKind.NO_DATA): WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    ("report", OutcomeKind.NO_DATA): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("export_provenance", OutcomeKind.NO_DATA): WorkflowAction.BLOCK,
+
+    ("validate_input", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.BLOCK,
+    ("normalize", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.BLOCK,
+    ("annotate", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("population", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("build_evidence", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("acmg_assessment", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    ("review", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    ("reportability", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.REQUIRE_HUMAN_REVIEW,
+    ("report", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.CONTINUE_WITH_LIMITATION,
+    ("export_provenance", OutcomeKind.INSUFFICIENT_EVIDENCE): WorkflowAction.BLOCK,
 }
 
 
@@ -186,12 +198,11 @@ def decide_step_outcome(
     fallback_available: bool = False,
     lab_action_required: bool = False,
 ) -> WorkflowDecision:
-    """Apply the universal outcome contract to one concrete workflow step.
+    """Apply the outcome contract to one concrete workflow step.
 
-    This is the policy boundary for all ten variant-workflow stages. It does not
-    mutate database state, enqueue work, retry tasks, switch resources, or send
-    notifications; the owning workflow service performs those side effects
-    after receiving this decision.
+    This function is side-effect free. Persistence, retries, resource switching,
+    notifications and human-gate transitions remain in the owning workflow.
+    Unknown steps/outcomes fail closed.
     """
     if step_id not in WORKFLOW_STEP_IDS:
         return WorkflowDecision(
@@ -200,23 +211,29 @@ def decide_step_outcome(
             message or f"Unclassified workflow step: {step_id}",
         )
 
-    decision = decide_workflow_outcome(
-        outcome,
+    try:
+        kind = outcome if isinstance(outcome, OutcomeKind) else OutcomeKind(str(outcome).upper())
+    except ValueError:
+        return WorkflowDecision(
+            WorkflowAction.TERMINAL_FAILURE,
+            code or "WORKFLOW_OUTCOME_UNCLASSIFIED",
+            message or f"Unclassified workflow outcome: {outcome}",
+        )
+
+    if kind in {OutcomeKind.NO_DATA, OutcomeKind.INSUFFICIENT_EVIDENCE}:
+        action = STEP_LIMITATION_ACTION[(step_id, kind)]
+        return WorkflowDecision(
+            action,
+            code or kind.value,
+            message or "Scientific result is limited at this workflow stage; this is not automatically a technical failure.",
+            lab_action_required=action is WorkflowAction.REQUEST_LAB_ACTION,
+        )
+
+    return decide_workflow_outcome(
+        kind,
         code=code,
         message=message,
         retryable=retryable,
         fallback_available=fallback_available,
         lab_action_required=lab_action_required,
     )
-
-    # A limitation remains a valid scientific result at every stage. At the two
-    # human gates, however, the workflow must stop for the laboratory reviewer
-    # before reportability/report generation can proceed.
-    if decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION and step_id in {"review", "reportability"}:
-        return WorkflowDecision(
-            WorkflowAction.REQUIRE_HUMAN_REVIEW,
-            decision.code,
-            decision.message,
-        )
-
-    return decision
