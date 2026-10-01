@@ -13,6 +13,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any
 
+from backend.app.domain.resource_staging import StagedResource
+
 import httpx
 
 CLINVAR_XML_INDEX = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/"
@@ -27,7 +29,7 @@ class ClinVarReleaseProvider:
     name = "ClinVar"
     index_url = CLINVAR_XML_INDEX
 
-    def stage(self, descriptor: dict[str, object], destination: Path) -> dict[str, object]:
+    def stage(self, descriptor: dict[str, object], destination: Path) -> StagedResource:
         """Stream the exact discovered release and return its transport digest.
 
         The digest is computed from the bytes received by SIRALOOM. It is not
@@ -51,17 +53,17 @@ class ClinVarReleaseProvider:
                     digest.update(chunk)
                     size += len(chunk)
 
-        return {
-            "source": location,
-            "local_path": str(destination),
-            "sha256": digest.hexdigest(),
-            "size_bytes": size,
-            "metadata": {
+        return StagedResource(
+            source=location,
+            local_path=str(destination),
+            sha256=digest.hexdigest(),
+            size_bytes=size,
+            metadata={
                 "integrity": "TRANSPORT_DIGEST_ONLY",
                 "source_checksum_verified": False,
                 "release_identity": descriptor.get("version"),
             },
-        }
+        )
 
     def discover(self) -> list[dict[str, Any]]:
         response = httpx.get(self.index_url, timeout=30.0, follow_redirects=True)
