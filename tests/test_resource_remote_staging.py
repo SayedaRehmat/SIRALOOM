@@ -74,6 +74,7 @@ def _row(db, tmp_path: Path, payload: bytes, checksum: str | None = None, size: 
     resource = _resource()
     db.add(resource)
     db.flush()
+    (tmp_path / "staged").mkdir(parents=True, exist_ok=True)
     return create_staging_candidate(
         db,
         resource=resource,
