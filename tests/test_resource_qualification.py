@@ -1,8 +1,9 @@
 from gzip import open as gzip_open
 from pathlib import Path
+from uuid import uuid4
 
 from backend.app.domain.resource_qualification import qualify_resource
-from backend.app.infrastructure.db.models import Resource
+from backend.app.infrastructure.db.models import Resource, ResourceStaging
 
 
 def _resource(tmp_path: Path, *, checksum: str | None, license_status: str = "NOT_REQUIRED", checksum_status: str = "PUBLISHED_AND_VERIFIED"):
@@ -30,8 +31,25 @@ def _resource(tmp_path: Path, *, checksum: str | None, license_status: str = "NO
     )
 
 
+def _staging(resource: Resource, *, status: str = "STAGED") -> ResourceStaging:
+    return ResourceStaging(
+        id=uuid4(),
+        resource_id=resource.id,
+        resource_version=resource.version,
+        staging_key=f"test:{resource.version}",
+        source_uri="test-source",
+        destination_uri=str(resource.location),
+        storage_backend="LOCAL_FILESYSTEM",
+        status=status,
+        expected_sha256=resource.checksum,
+        expected_size_bytes=None,
+        metadata_json={},
+    )
+
+
 def test_qualification_computes_integrity_and_structure(tmp_path):
-    result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
+    resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.passed is False
     assert "AUTHORITATIVE_CHECKSUM_UNVERIFIED" in result.blockers
     assert result.checks["artifact_validation"] == "GZIP_XML_WELL_FORMED"
@@ -39,13 +57,15 @@ def test_qualification_computes_integrity_and_structure(tmp_path):
 
 
 def test_published_checksum_mismatch_is_blocking(tmp_path):
-    result = qualify_resource(_resource(tmp_path, checksum="0" * 64))
+    resource = _resource(tmp_path, checksum="0" * 64)
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.passed is False
     assert "CHECKSUM_MISMATCH" in result.blockers
 
 
 def test_license_review_is_blocking(tmp_path):
-    result = qualify_resource(_resource(tmp_path, checksum=None, license_status="REVIEW_REQUIRED", checksum_status="NOT_PUBLISHED"))
+    resource = _resource(tmp_path, checksum=None, license_status="REVIEW_REQUIRED", checksum_status="NOT_PUBLISHED")
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.passed is False
     assert "LICENSE_REVIEW_REQUIRED" in result.blockers
 
@@ -53,7 +73,7 @@ def test_license_review_is_blocking(tmp_path):
 def test_missing_staging_is_actionable(tmp_path):
     resource = _resource(tmp_path, checksum="1" * 64)
     resource.location = "/var/lib/siraloom/staged/missing.xml.gz"
-    result = qualify_resource(resource)
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.passed is False
     assert "STAGED_ARTIFACT_MISSING" in result.blockers
     assert result.checks["qualification_outcome"] == "BLOCKED"
@@ -61,13 +81,14 @@ def test_missing_staging_is_actionable(tmp_path):
 def test_qualification_requires_execution_contract(tmp_path):
     resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
     resource.metadata_json.pop("execution")
-    result = qualify_resource(resource)
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.passed is False
     assert "EXECUTION_CONTRACT_INVALID" in result.blockers
 
 
 def test_qualification_records_execution_contract(tmp_path):
-    result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
+    resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.checks["execution_contract"]["provider_id"] == "NCBI ClinVar"
 
 
@@ -82,7 +103,7 @@ def test_clinvar_qualification_validates_beyond_first_megabyte(tmp_path):
     with gzip_open(artifact, "wb") as handle:
         handle.write(payload)
 
-    result = qualify_resource(resource)
+    result = qualify_resource(resource, staging=_staging(resource))
 
     assert result.passed is False
     assert result.checks["artifact_validation"].startswith("INVALID:")
@@ -127,15 +148,29 @@ def _reference_resource(tmp_path: Path, *, toolchain):
 
 
 def test_reference_qualification_requires_governed_bcftools_version(tmp_path):
-    result = qualify_resource(_reference_resource(tmp_path, toolchain=None))
+    resource = _reference_resource(tmp_path, toolchain=None)
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.passed is False
     assert "BCFTOOLS_TOOLCHAIN_NOT_DECLARED" in result.blockers
 
 
 def test_reference_qualification_records_governed_bcftools_version(tmp_path):
-    result = qualify_resource(
-        _reference_resource(tmp_path, toolchain={"bcftools": {"version": "1.19"}})
-    )
+    resource = _reference_resource(tmp_path, toolchain={"bcftools": {"version": "1.19"}})
+    result = qualify_resource(resource, staging=_staging(resource))
     assert result.checks["bcftools_tool"] == "bcftools"
     assert result.checks["bcftools_version"] == "1.19"
     assert result.checks["bcftools_execution"] == "GOVERNED"
+
+
+def test_qualification_blocks_without_durable_staging_record(tmp_path):
+    resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
+    result = qualify_resource(resource)
+    assert result.passed is False
+    assert "STAGING_RECORD_REQUIRED" in result.blockers
+
+
+def test_qualification_blocks_unverified_staging(tmp_path):
+    resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
+    result = qualify_resource(resource, staging=_staging(resource, status="INTEGRITY_FAILED"))
+    assert result.passed is False
+    assert "STAGING_NOT_VERIFIED" in result.blockers
