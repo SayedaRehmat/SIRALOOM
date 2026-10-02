@@ -135,6 +135,7 @@ def test_clinvar_index_is_invalidated_when_authoritative_release_changes(tmp_pat
     assert len(provider.query_variant(
         chromosome="1", position=100, reference="A", alternate="G"
     )) == 3
+    initial_sha256 = provider.source_sha256
 
     with gzip.open(path, "wb") as handle:
         handle.write(
@@ -149,6 +150,7 @@ def test_clinvar_index_is_invalidated_when_authoritative_release_changes(tmp_pat
     assert provider.query_variant(
         chromosome="1", position=100, reference="A", alternate="G"
     ) == []
+    assert provider.source_sha256 != initial_sha256
     assert len(provider.query_variant(
         chromosome="1", position=200, reference="C", alternate="T"
     )) == 1
