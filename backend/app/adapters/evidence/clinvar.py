@@ -352,8 +352,15 @@ def _rows_from_variation_archive(
         node for node in element.iter()
         if _local_name(node.tag) == "ClinicalAssertion"
     ]
-    if not assertions:
-        assertions = [None]
+
+    aggregate_classification = _text_at(
+        element,
+        "ClassifiedRecord/Classifications/GermlineClassification/Description",
+    )
+    aggregate_review_status = _text_at(
+        element,
+        "ClassifiedRecord/Classifications/GermlineClassification/ReviewStatus",
+    )
 
     rows: list[tuple[Any, ...]] = []
     for location in locations:
@@ -367,8 +374,45 @@ def _rows_from_variation_archive(
             location.attrib.get("alternateAlleleVCF")
             or location.attrib["alternateAllele"]
         )
+        aggregate_payload = {
+            "vcv": {
+                "accession": vcv_accession,
+                "version": vcv_version,
+                "variation_id": variation_id,
+            },
+            "rcv_accessions": list(rcv_accessions),
+            "genome_build": genome_build,
+            "location": dict(location.attrib),
+            "classification": aggregate_classification,
+            "review_status": aggregate_review_status,
+            "interpretive_use": "VCV_AGGREGATE_EVIDENCE_REQUIRES_REVIEW",
+        }
+        aggregate_xml = ET.tostring(element, encoding="utf-8")
+        rows.append(
+            (
+                _variant_key(genome_build, chromosome, position, reference, alternate),
+                "VCV",
+                vcv_accession,
+                vcv_version,
+                variation_id,
+                json.dumps(rcv_accessions, separators=(",", ":")),
+                genome_build,
+                chromosome,
+                position,
+                reference,
+                alternate,
+                aggregate_classification,
+                aggregate_review_status,
+                None,
+                None,
+                None,
+                hashlib.sha256(aggregate_xml).hexdigest(),
+                json.dumps(aggregate_payload, sort_keys=True, separators=(",", ":")),
+            )
+        )
+
         for assertion in assertions:
-            classification = _text_at(assertion, "Classification/GermlineClassification/Description") if assertion is not None else None
+            classification = _text_at(assertion, "Classification/GermlineClassification/Description")
             review_status = _text_at(assertion, "Classification/GermlineClassification/ReviewStatus") if assertion is not None else None
             condition = _first_descendant_text(
                 assertion,
