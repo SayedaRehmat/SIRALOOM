@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.variant_identity import normalize_build
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
+from backend.app.domain.resource_deployment import ResourceDeploymentPolicy, resolve_resource_deployment_policy
 from backend.app.domain.workflow_decision import (
     OutcomeKind,
     WorkflowAction,
@@ -140,6 +141,50 @@ def _find_approved_active_binding(
     return resource
 
 
+def _find_siraloom_managed_global_resource(
+    db: Session,
+    *,
+    name: str,
+    provider: str,
+    resource_type: str,
+    genome_build: str | None,
+    expected_provider_version: str | None = None,
+) -> Resource | None:
+    """Resolve a SIRALOOM-managed global resource for the public trial profile.
+
+    This is intentionally separate from organization approval. A global resource
+    can be a trial default only when the deployment profile explicitly permits
+    SIRALOOM-managed resources. It must still be qualified and execution-bound.
+    """
+    candidates = db.scalars(
+        select(Resource).where(
+            Resource.organization_id.is_(None),
+            Resource.name == name,
+            Resource.provider == provider,
+            Resource.resource_type == resource_type,
+            Resource.genome_build == genome_build,
+            Resource.status == "ACTIVE",
+        ).order_by(Resource.version.desc())
+    ).all()
+    for resource in candidates:
+        qualified = db.scalar(
+            select(ResourceQualification.id).where(
+                ResourceQualification.resource_id == resource.id,
+                ResourceQualification.status == "QUALIFIED",
+            ).limit(1)
+        )
+        if qualified is None:
+            continue
+        try:
+            execution = resolve_resource_execution(db, resource=resource)
+        except ResourceExecutionError:
+            continue
+        if expected_provider_version is not None and execution.contract.provider_version != expected_provider_version:
+            continue
+        return resource
+    return None
+
+
 def resolve_resource_with_fallback(
     db: Session,
     *,
@@ -151,6 +196,7 @@ def resolve_resource_with_fallback(
     expected_provider_version: str | None = None,
     fallback_outcome: OutcomeKind = OutcomeKind.RESOURCE_UNAVAILABLE,
     lab_action_required_without_fallback: bool = False,
+    deployment_policy: ResourceDeploymentPolicy | None = None,
 ) -> ResourceResolution:
     """Resolve a requested resource or the lab's approved active replacement.
 
@@ -159,6 +205,10 @@ def resolve_resource_with_fallback(
     scientific identity (name/provider/type/build). This function never creates,
     approves, activates, supersedes, or mutates a resource binding.
     """
+    deployment_policy = deployment_policy or resolve_resource_deployment_policy(
+        db, organization_id=organization_id
+    )
+
     requested_id: UUID | None = None
     try:
         if requested_resource_id:
@@ -242,6 +292,19 @@ def resolve_resource_with_fallback(
         genome_build=genome_build,
         expected_provider_version=expected_provider_version,
     )
+
+    # Trial/evaluation organizations may use the SIRALOOM-managed global
+    # resource set. Laboratory organizations may not silently fall back to
+    # global resources; they require an organization-approved binding.
+    if fallback is None and deployment_policy.allow_siraloom_managed_global_resources:
+        fallback = _find_siraloom_managed_global_resource(
+            db,
+            name=name,
+            provider=provider,
+            resource_type=resource_type,
+            genome_build=genome_build,
+            expected_provider_version=expected_provider_version,
+        )
     decision = decide_workflow_outcome(
         fallback_outcome,
         fallback_available=fallback is not None,

@@ -48,11 +48,16 @@ def test_evidence_engine_builds_traceable_facts_without_final_classification():
     )
 
     types = {r.evidence_type for r in records}
-    assert {"POPULATION", "CLINICAL_DATABASE", "COMPUTATIONAL", "SPLICING", "CONSEQUENCE", "PROVIDER_ASSERTION"} <= types
+    assert {"POPULATION", "PROVIDER_ASSERTION", "COMPUTATIONAL", "SPLICING", "CONSEQUENCE"} <= types
     assert any(r.source_name == "gnomAD" and r.source_version == "4.x" for r in records)
     assert any(str(observation_id) in {str(x) for x in r.observation_ids} for r in records)
     assert all(r.direction in {"SUPPORTS", "REFUTES", "NEUTRAL", "UNKNOWN"} for r in records)
     assert all(r.payload for r in records)
+    clinvar_records = [r for r in records if r.payload.get("upstream_source") == "ClinVar"]
+    assert len(clinvar_records) == 1
+    assert clinvar_records[0].evidence_type == "PROVIDER_ASSERTION"
+    assert clinvar_records[0].source_name == "GeneBe"
+    assert clinvar_records[0].payload["direct_resource_execution"] is False
 
 
 def test_conflicting_clinvar_is_neutral():
@@ -67,7 +72,10 @@ def test_conflicting_clinvar_is_neutral():
         context=EvidenceContext(analysis_id=uuid4()),
     )
     assert len(records) == 1
-    assert records[0].evidence_type == "CLINICAL_DATABASE"
+    assert records[0].evidence_type == "PROVIDER_ASSERTION"
+    assert records[0].source_name == "ClinVar via GeneBe"
+    assert records[0].payload["upstream_source"] == "ClinVar"
+    assert records[0].payload["direct_resource_execution"] is False
     assert records[0].direction == "NEUTRAL"
 
 
@@ -86,3 +94,52 @@ def test_evidence_fingerprint_is_deterministic():
         payload={"af": 0.1, "population": "MID"},
     )
     assert evidence_fingerprint(**kwargs) == evidence_fingerprint(**kwargs)
+
+
+def test_direct_clinvar_evidence_preserves_release_scv_and_rcv_identity():
+    from types import SimpleNamespace
+
+    engine = EvidenceEngine()
+    assertion = SimpleNamespace(
+        record_type="SCV",
+        accession="SCV000000001",
+        version="4",
+        variation_id="12345",
+        rcv_accessions=("RCV000000001.2", "RCV000000002.7"),
+        genome_build="GRCh38",
+        chromosome="1",
+        position=100,
+        reference="A",
+        alternate="G",
+        classification="Pathogenic",
+        review_status="criteria provided, single submitter",
+        condition="Example disease",
+        submitter="Example submitter",
+        assertion_method="Example criteria",
+        record_sha256="b" * 64,
+        payload={"vcv": {"accession": "VCV000000001", "version": "3", "variation_id": "12345"}},
+    )
+    resource_id = uuid4()
+    records = engine.build_from_clinvar_assertions(
+        variant_id=uuid4(),
+        assertions=[assertion],
+        resource_id=resource_id,
+        resource_name="ClinVar VCV Release",
+        resource_version="2026-09",
+        request_fingerprint="c" * 64,
+        execution_metadata={"contract_hash": "d" * 64},
+    )
+
+    assert len(records) == 1
+    record = records[0]
+    assert record.evidence_type == "CLINICAL_DATABASE"
+    assert record.source_name == "ClinVar VCV Release"
+    assert record.source_version == "2026-09"
+    assert record.resource_id == resource_id
+    assert record.source_record_id == "SCV:SCV000000001.4"
+    assert record.request_fingerprint == "c" * 64
+    assert record.response_sha256 == "b" * 64
+    assert record.payload["variation_id"] == "12345"
+    assert record.payload["rcv_accessions"] == ["RCV000000001.2", "RCV000000002.7"]
+    assert record.payload["vcv"]["accession"] == "VCV000000001"
+    assert record.payload["interpretive_use"] == "DIRECT_CLINVAR_RELEASE_EVIDENCE_REQUIRES_REVIEW"

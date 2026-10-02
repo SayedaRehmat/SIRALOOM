@@ -60,12 +60,23 @@ def _qualify_clinvar(resource: Resource, path: Path | None, checks: dict[str, An
         checks["artifact_validation"] = "MISSING_OR_EMPTY"
         return
     try:
+        # Validate the complete decompressed XML stream without materializing a
+        # large ClinVar release in memory. This proves XML well-formedness only;
+        # it is not XSD validation or scientific-content validation.
+        element_count = 0
+        root_tag: str | None = None
         with gzip.open(path, "rb") as handle:
-            payload = handle.read(1024 * 1024)
-        if not payload.lstrip().startswith(b"<"):
-            raise ValueError("gzip payload does not begin with XML")
-        ET.fromstring(payload)
-        checks["artifact_validation"] = "GZIP_XML_PREFIX_VALID"
+            for event, element in ET.iterparse(handle, events=("start", "end")):
+                if event == "start" and root_tag is None:
+                    root_tag = str(element.tag)
+                elif event == "end":
+                    element_count += 1
+                    element.clear()
+        if root_tag is None or element_count == 0:
+            raise ValueError("gzip payload contained no XML elements")
+        checks["artifact_validation"] = "GZIP_XML_WELL_FORMED"
+        checks["xml_root_tag"] = root_tag
+        checks["xml_element_count"] = element_count
     except (OSError, EOFError, ET.ParseError, ValueError) as exc:
         checks["artifact_validation"] = f"INVALID: {exc}"
 
@@ -139,7 +150,7 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
     if resource.provider == "NCBI ClinVar":
         _qualify_clinvar(resource, path, checks)
     passed = all(bool(checks.get(name)) for name in ("publisher_present", "release_identity_match", "artifact_location_match")) and not blockers
-    if resource.provider == "NCBI ClinVar" and checks.get("artifact_validation") != "GZIP_XML_PREFIX_VALID":
+    if resource.provider == "NCBI ClinVar" and checks.get("artifact_validation") != "GZIP_XML_WELL_FORMED":
         passed = False
         if "ARTIFACT_STRUCTURE_NOT_VALIDATED" not in blockers:
             blockers.append("ARTIFACT_STRUCTURE_NOT_VALIDATED")

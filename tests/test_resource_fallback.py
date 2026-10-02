@@ -9,6 +9,8 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Organization,
     OrganizationResourceBinding,
+    ResourceDeploymentProfile,
+    OrganizationEntitlement,
     Resource,
     ResourceQualification,
 )
@@ -20,6 +22,8 @@ def _db():
         engine,
         tables=[
             Organization.__table__,
+            ResourceDeploymentProfile.__table__,
+            OrganizationEntitlement.__table__,
             Resource.__table__,
             ResourceQualification.__table__,
             OrganizationResourceBinding.__table__,

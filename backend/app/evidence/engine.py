@@ -114,6 +114,87 @@ class EvidenceEngine:
         )
         return evidence
 
+    def build_from_clinvar_assertions(
+        self,
+        *,
+        variant_id: UUID,
+        assertions: Iterable[Any],
+        resource_id: UUID,
+        resource_name: str,
+        resource_version: str,
+        request_fingerprint: str,
+        execution_metadata: dict[str, Any],
+    ) -> list[EvidenceRecord]:
+        """Convert directly queried, release-pinned ClinVar assertions into evidence.
+
+        The returned records retain SCV/VCV/RCV identities and the exact resource
+        execution context. They are evidence inputs only; they are never final
+        classifications.
+        """
+        out: list[EvidenceRecord] = []
+        for assertion in assertions:
+            classification = _normalize_text(getattr(assertion, "classification", None))
+            low = (classification or "").lower()
+            if "pathogenic" in low and "likely pathogenic" not in low:
+                direction = "SUPPORTS"
+            elif "likely pathogenic" in low:
+                direction = "SUPPORTS"
+            elif "benign" in low:
+                direction = "REFUTES"
+            else:
+                direction = "NEUTRAL"
+            accession = str(getattr(assertion, "accession", "") or "")
+            version = _normalize_text(getattr(assertion, "version", None))
+            record_type = str(getattr(assertion, "record_type", "") or "")
+            source_record_id = f"{record_type}:{accession}.{version}" if version else f"{record_type}:{accession}"
+            payload = {
+                "record_type": record_type,
+                "accession": accession,
+                "accession_version": version,
+                "variation_id": getattr(assertion, "variation_id", None),
+                "vcv": (getattr(assertion, "payload", {}) or {}).get("vcv"),
+                "rcv_accessions": list(getattr(assertion, "rcv_accessions", ()) or ()),
+                "genome_build": getattr(assertion, "genome_build", None),
+                "chromosome": getattr(assertion, "chromosome", None),
+                "position": getattr(assertion, "position", None),
+                "reference": getattr(assertion, "reference", None),
+                "alternate": getattr(assertion, "alternate", None),
+                "classification": classification,
+                "review_status": getattr(assertion, "review_status", None),
+                "condition": getattr(assertion, "condition", None),
+                "submitter": getattr(assertion, "submitter", None),
+                "assertion_method": getattr(assertion, "assertion_method", None),
+                "record_sha256": getattr(assertion, "record_sha256", None),
+                "release_provenance": execution_metadata,
+                "interpretive_use": "DIRECT_CLINVAR_RELEASE_EVIDENCE_REQUIRES_REVIEW",
+            }
+            out.append(
+                self._record(
+                    variant_id=variant_id,
+                    evidence_type="CLINICAL_DATABASE",
+                    statement=(
+                        f"Direct ClinVar {record_type or 'record'} {source_record_id} was retrieved "
+                        "from the governed release and preserved as clinical database evidence."
+                    ),
+                    direction=direction,
+                    source_name=resource_name,
+                    source_version=resource_version,
+                    payload=payload,
+                )
+            )
+            record = out[-1]
+            out[-1] = EvidenceRecord(
+                **{
+                    **record.__dict__,
+                    "resource_id": resource_id,
+                    "source_record_id": source_record_id,
+                    "request_fingerprint": request_fingerprint,
+                    "response_sha256": getattr(assertion, "record_sha256", None),
+                    "request_metadata": execution_metadata,
+                }
+            )
+        return out
+
     def build_case_context_evidence(
         self, *, variant_id: UUID, case_hpo_terms: list[dict[str, Any]], gene: str | None,
         gene_disease_records: list[dict[str, Any]] = (), literature_records: list[dict[str, Any]] = (),
@@ -292,20 +373,25 @@ class EvidenceEngine:
             direction = "REFUTES"
         else:
             direction = "NEUTRAL"
+        # These fields are returned inside the GeneBe annotation payload. They are
+        # ClinVar-derived provider output, not a direct ClinVar resource execution.
         return [
             self._record(
                 variant_id=variant_id,
-                evidence_type="CLINICAL_DATABASE",
-                statement="ClinVar provides an existing clinical significance assertion for this variant; the assertion is preserved as source evidence and is not treated as an automatic final SIRALOOM classification.",
+                evidence_type="PROVIDER_ASSERTION",
+                statement="The annotation provider returned a ClinVar-derived clinical significance assertion for this variant; it is preserved as provider output and requires source-specific review before clinical use.",
                 direction=direction,
-                source_name=resource_name or "ClinVar via provider",
+                source_name=resource_name or provider_name,
                 source_version=resource_version or provider_version,
                 payload={
+                    "upstream_source": "ClinVar",
                     "clinical_significance": clinical.get("clinvar_classification"),
                     "disease": clinical.get("clinvar_disease"),
                     "review_status": clinical.get("clinvar_review_status"),
                     "submissions_summary": clinical.get("clinvar_submissions_summary"),
+                    "direct_resource_execution": False,
                     "requires_review": True,
+                    "interpretive_use": "PROVIDER_OUTPUT_NOT_DIRECT_CLINVAR_EVIDENCE",
                 },
             )
         ]
