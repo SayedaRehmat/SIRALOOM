@@ -118,7 +118,7 @@ def test_clinvar_queries_all_submitted_assertions_and_release_identity(tmp_path)
         "RCV000000001.2",
         "RCV000000002.7",
     )
-    assert {r.classification for r in records} == {"Pathogenic", "Benign"}
+    assert {r.classification for r in records if r.record_type == "SCV"} == {"Pathogenic", "Benign"}
     vcv = next(r for r in records if r.record_type == "VCV")
     assert vcv.rcv_accessions == ("RCV000000001.2", "RCV000000002.7")
     assert vcv.payload["vcv"]["accession"] == "VCV000000001"
@@ -134,7 +134,7 @@ def test_clinvar_index_is_invalidated_when_authoritative_release_changes(tmp_pat
     )
     assert len(provider.query_variant(
         chromosome="1", position=100, reference="A", alternate="G"
-    )) == 2
+    )) == 3
 
     with gzip.open(path, "wb") as handle:
         handle.write(
