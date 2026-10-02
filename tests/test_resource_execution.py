@@ -183,3 +183,33 @@ def test_resolver_fails_closed_when_local_execution_location_disagrees_with_regi
     finally:
         db.close()
         engine.dispose()
+
+
+def test_local_gnomad_adapter_requires_qualified_local_contract():
+    from backend.app.adapters.population.gnomad import LocalGnomADTabixProvider, GnomADProviderError
+
+    contract = ResourceExecutionContract(
+        provider_id="gnomad-local-tabix",
+        provider_version="vcf-tabix",
+        access_method="LOCAL",
+        endpoint=None,
+        location="/qualified/gnomad.vcf.gz",
+        dataset=None,
+        execution_scope="ORGANIZATION_MANAGED",
+    )
+    provider = LocalGnomADTabixProvider.from_execution_contract(contract)
+    assert provider.vcf_path == "/qualified/gnomad.vcf.gz"
+    assert provider.execution_scope == "ORGANIZATION_MANAGED"
+
+    with pytest.raises(GnomADProviderError, match="LOCAL"):
+        LocalGnomADTabixProvider.from_execution_contract(
+            ResourceExecutionContract(
+                provider_id="gnomad-local-tabix",
+                provider_version="vcf-tabix",
+                access_method="API",
+                endpoint="https://example.org/gnomad",
+                location=None,
+                dataset=None,
+                execution_scope="ORGANIZATION_MANAGED",
+            )
+        )
