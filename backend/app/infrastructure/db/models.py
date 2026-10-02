@@ -296,6 +296,36 @@ class Resource(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class ResourceStaging(Base):
+    """Durable staging/integrity state for a concrete resource release artifact."""
+
+    __tablename__ = "resource_stagings"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    resource_version: Mapped[str] = mapped_column(Text, nullable=False)
+    staging_key: Mapped[str] = mapped_column(Text, nullable=False)
+    source_uri: Mapped[str] = mapped_column(Text, nullable=False)
+    destination_uri: Mapped[str] = mapped_column(Text, nullable=False)
+    storage_backend: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="DISCOVERED")
+    expected_sha256: Mapped[str | None] = mapped_column(Text)
+    observed_sha256: Mapped[str | None] = mapped_column(Text)
+    expected_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    observed_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_code: Mapped[str | None] = mapped_column(Text)
+    error_message: Mapped[str | None] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+    __table_args__ = (
+        UniqueConstraint("resource_id", "resource_version", "staging_key"),
+    )
+
+
 class ResourceExecutionRecord(Base):
     """Immutable runtime snapshot of a governed resource execution."""
 
