@@ -23,7 +23,7 @@ def _db():
     return engine
 
 
-def _local_resource() -> Resource:
+def _local_resource(*, checksum: str) -> Resource:
     return Resource(
         id=uuid4(),
         organization_id=None,
@@ -82,7 +82,7 @@ def test_lifecycle_advances_candidate_to_staged_and_qualified(tmp_path):
 
     engine = _db()
     with Session(engine) as db:
-        resource = _local_resource()
+        resource = _local_resource(checksum=sha256(payload).hexdigest())
         db.add(resource)
         db.flush()
         row = _create_staging(
@@ -161,13 +161,13 @@ def test_lifecycle_does_not_activate_or_replace_existing_active_release(tmp_path
 
     engine = _db()
     with Session(engine) as db:
-        active = _local_resource()
+        active = _local_resource(checksum=sha256(payload).hexdigest())
         active.id = uuid4()
         active.version = "GRCh38-2025.4"
         active.status = "ACTIVE"
         active.location = str(tmp_path / "existing.fa")
 
-        candidate = _local_resource()
+        candidate = _local_resource(checksum=sha256(payload).hexdigest())
         db.add_all([active, candidate])
         db.flush()
         _create_staging(
