@@ -11,13 +11,13 @@ from backend.app.domain.resources import (
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    AuditEvent,
-    Organization,
+    Analysis, AnalysisResourceSnapshot, AuditEvent, Case, Notification,
+    Organization, OrganizationMembership,
     OrganizationResourceBinding,
     Resource,
     ResourceApproval,
     ResourceApprovalAction,
-    ResourceQualification,
+    ResourceQualification, ReanalysisChangeEvent, ReanalysisCandidate,
     User,
 )
 
@@ -34,6 +34,13 @@ def _engine():
             ResourceApproval.__table__,
             ResourceApprovalAction.__table__,
             OrganizationResourceBinding.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            AnalysisResourceSnapshot.__table__,
+            OrganizationMembership.__table__,
+            Notification.__table__,
+            ReanalysisChangeEvent.__table__,
+            ReanalysisCandidate.__table__,
             AuditEvent.__table__,
         ],
     )
