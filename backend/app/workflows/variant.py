@@ -21,7 +21,7 @@ from backend.app.domain.vcf_validation import StrictVCFValidationError, validate
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
-from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
+from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome\nfrom backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
@@ -272,6 +272,15 @@ def _apply_scientific_limitation(
     accidentally mark an unsafe stage as successful.
     """
     decision = decide_step_outcome(step.step_id, outcome, code=code, message=message)
+    record_workflow_decision(
+        db,
+        analysis_id=step.analysis_id,
+        step_id=step.step_id,
+        attempt=step.attempt,
+        outcome=outcome,
+        decision=decision,
+        metadata=metadata,
+    )
     if decision.action is not WorkflowAction.CONTINUE_WITH_LIMITATION:
         raise RuntimeError(
             f"Scientific limitation {outcome.value} is not continuation-safe for step "
