@@ -11,14 +11,20 @@ from backend.app.domain.resources import (
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, AnalysisResourceSnapshot, ReanalysisCandidate,
-    Analysis, AnalysisResourceSnapshot, AuditEvent, Case, Notification,
-    Organization, OrganizationMembership,
+    Analysis,
+    AnalysisResourceSnapshot,
+    AuditEvent,
+    Case,
+    Notification,
+    Organization,
+    OrganizationMembership,
     OrganizationResourceBinding,
+    ReanalysisCandidate,
+    ReanalysisChangeEvent,
     Resource,
     ResourceApproval,
     ResourceApprovalAction,
-    ResourceQualification, ReanalysisChangeEvent, ReanalysisCandidate,
+    ResourceQualification,
     User,
 )
 
@@ -248,3 +254,66 @@ def test_approved_release_creates_reanalysis_candidate_for_historical_analysis()
         assert candidate.trigger_type == "EVIDENCE_UPDATE"
         assert candidate.earliest_affected_step == "build_evidence"
         assert candidate.status == "PENDING"
+
+
+def test_multiple_rejected_releases_leave_bound_release_and_reanalysis_history_unchanged():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab Rejection", external_identifier=None)
+        user = User(
+            id=uuid4(), organization_id=org.id, display_name="Director",
+            role="lab_director", status="ACTIVE",
+        )
+        case = Case(
+            id=uuid4(), organization_id=org.id, case_identifier="REJECT-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user.id,
+        )
+        db.add_all([org, user, case])
+        db.flush()
+
+        baseline = _qualified(db, name="FutureDB", version="1", checksum="1" * 64)
+        baseline_approval = request_resource_approval(
+            db, resource_id=baseline.id, organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+        decide_resource_approval(
+            db, approval_id=baseline_approval.id, organization_id=org.id,
+            actor_id=user.id, decision="APPROVED", expected_version=1,
+            reason="Baseline",
+        )
+
+        analysis = Analysis(
+            id=uuid4(), case_id=case.id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user.id, analysis_version=1,
+        )
+        db.add(analysis)
+        db.add(AnalysisResourceSnapshot(
+            id=uuid4(), analysis_id=analysis.id, resource_id=baseline.id,
+            resource_kind="EVIDENCE", resource_name="FutureDB", provider="FutureProvider",
+            version="1", checksum="1" * 64, genome_build="GRCh38", metadata_json={},
+        ))
+        db.commit()
+
+        for version, checksum in (("2", "2" * 64), ("3", "3" * 64)):
+            candidate = _qualified(db, name="FutureDB", version=version, checksum=checksum)
+            approval = request_resource_approval(
+                db, resource_id=candidate.id, organization_id=org.id,
+                qualification_version="qualification-v1",
+            )
+            decide_resource_approval(
+                db, approval_id=approval.id, organization_id=org.id,
+                actor_id=user.id, decision="REJECTED", expected_version=1,
+                reason=f"Reject release {version}",
+            )
+
+        binding = db.scalar(select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == org.id,
+            OrganizationResourceBinding.identity_key == "FutureDB|FutureProvider|EVIDENCE|GRCh38",
+        ))
+        assert binding is not None
+        assert binding.resource_id == baseline.id
+        assert db.query(ReanalysisCandidate).count() == 0
+        assert db.query(ReanalysisChangeEvent).count() == 0
