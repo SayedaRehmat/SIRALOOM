@@ -2,6 +2,7 @@ import pytest
 
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
+    validate_execution_contract,
     validate_source_contract,
 )
 
@@ -56,3 +57,35 @@ def test_restricted_source_can_be_discovered_but_not_misrepresented():
     value["license_status"] = "RESTRICTED"
     result = validate_source_contract(value)
     assert result.license_status == "RESTRICTED"
+
+
+def test_execution_contract_requires_runtime_identity():
+    execution = {
+        "provider_id": "Example Publisher", "provider_version": "v1",
+        "access_method": "HTTPS", "endpoint": "https://example.org/source/release.gz",
+    }
+    result = validate_execution_contract(
+        execution, resource_provider="Example Publisher",
+        resource_access_method="HTTPS", resource_location=None,
+    )
+    assert result.provider_version == "v1"
+
+
+def test_execution_contract_rejects_provider_mismatch():
+    with pytest.raises(ResourceSourceContractError, match="provider_id"):
+        validate_execution_contract(
+            {"provider_id": "Other", "provider_version": "v1",
+             "access_method": "HTTPS", "endpoint": "https://example.org/x"},
+            resource_provider="Example Publisher",
+            resource_access_method="HTTPS", resource_location=None,
+        )
+
+
+def test_execution_contract_rejects_missing_remote_endpoint():
+    with pytest.raises(ResourceSourceContractError, match="requires endpoint"):
+        validate_execution_contract(
+            {"provider_id": "Example Publisher", "provider_version": "v1",
+             "access_method": "HTTPS"},
+            resource_provider="Example Publisher",
+            resource_access_method="HTTPS", resource_location=None,
+        )
