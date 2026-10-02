@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from uuid import UUID
-from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Integer, Text, JSON, UniqueConstraint
+from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, Integer, Text, JSON, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 from backend.app.infrastructure.db.base import Base
 
@@ -132,6 +132,16 @@ class Analysis(Base):
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
     analysis_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        Index(
+            "uq_analyses_parent_version",
+            "parent_analysis_id",
+            "analysis_version",
+            unique=True,
+            sqlite_where=text("parent_analysis_id IS NOT NULL"),
+            postgresql_where=text("parent_analysis_id IS NOT NULL"),
+        ),
+    )
 
 class Artifact(Base):
     __tablename__ = "artifacts"

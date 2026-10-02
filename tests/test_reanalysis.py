@@ -1,3 +1,4 @@
+import pytest
 from uuid import uuid4
 
 from sqlalchemy import create_engine, select
@@ -13,6 +14,7 @@ from backend.app.domain.reanalysis import (
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AuditEvent,
     AnalysisResourceSnapshot,
     Case,
     Notification,
@@ -23,6 +25,64 @@ from backend.app.infrastructure.db.models import (
     Resource,
     User,
 )
+
+
+def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
+    from backend.app.application.entitlements import TRIAL_MAX_ANALYSES
+    from backend.app.domain.reanalysis import create_reanalysis
+    from backend.app.infrastructure.db.models import AuditEvent, OrganizationEntitlement
+
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, Case.__table__, Analysis.__table__,
+            OrganizationEntitlement.__table__, AuditEvent.__table__,
+        ],
+    )
+
+    organization_id, case_id, parent_id, user_id = uuid4(), uuid4(), uuid4(), uuid4()
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Reanalysis Safety Lab", external_identifier=None))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="SAFETY-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(OrganizationEntitlement(
+            id=uuid4(), organization_id=organization_id, plan="TRIAL", status="ACTIVE",
+            max_analyses=TRIAL_MAX_ANALYSES, analyses_used=0,
+        ))
+        db.add(Analysis(
+            id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user_id, analysis_version=1,
+        ))
+        db.commit()
+
+        parent = db.get(Analysis, parent_id)
+        first, first_candidate = create_reanalysis(
+            db, parent=parent, trigger_type="MANUAL", requested_by=user_id,
+            reason="Laboratory-requested repeat analysis.",
+        )
+        entitlement = db.scalar(select(OrganizationEntitlement).where(OrganizationEntitlement.organization_id == organization_id))
+        assert first.analysis_version == 2
+        assert first.parent_analysis_id == parent_id
+        assert first_candidate is None
+        assert entitlement.analyses_used == 1
+        assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
+
+        second, second_candidate = create_reanalysis(
+            db, parent=parent, trigger_type="MANUAL", requested_by=user_id,
+            reason="Duplicate laboratory request.",
+        )
+        entitlement = db.scalar(select(OrganizationEntitlement).where(OrganizationEntitlement.organization_id == organization_id))
+        assert second.id == first.id
+        assert second_candidate is None
+        assert entitlement.analyses_used == 1
+        assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
+        assert db.get(Analysis, parent_id).status == "SUCCEEDED"
 
 
 def test_reanalysis_trigger_dependency_contract():
@@ -45,7 +105,7 @@ def test_change_detector_creates_durable_candidate_and_notifications_idempotentl
         tables=[
             Organization.__table__, User.__table__, OrganizationMembership.__table__,
             Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
-            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__, AuditEvent.__table__,
         ],
     )
 
@@ -183,9 +243,11 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
 
     from backend.app.domain.reanalysis import create_reanalysis
     from backend.app.infrastructure.db.models import (
+        AuditEvent,
         AnalysisPartition,
         Annotation,
         Artifact,
+        AuditEvent,
         Variant,
         WorkflowStep,
     )
@@ -199,7 +261,7 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             Case.__table__, Analysis.__table__, WorkflowStep.__table__,
             Artifact.__table__, AnalysisPartition.__table__, Variant.__table__,
             Annotation.__table__, AnalysisResourceSnapshot.__table__,
-            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__, AuditEvent.__table__,
         ],
     )
 

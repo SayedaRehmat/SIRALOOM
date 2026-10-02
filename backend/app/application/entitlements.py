@@ -123,7 +123,7 @@ def require_analysis_quota(db: Session, organization_id: UUID) -> None:
         raise HTTPException(status_code=402, detail="This trial workspace is no longer active.")
 
 
-def consume_analysis_quota(db: Session, organization_id: UUID) -> None:
+def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool = True) -> None:
     """Increments trial usage after an analysis has actually been created.
 
     Call this only after `require_analysis_quota` has passed and the analysis was
@@ -134,7 +134,8 @@ def consume_analysis_quota(db: Session, organization_id: UUID) -> None:
         return
     entitlement.analyses_used += 1
     db.add(entitlement)
-    db.commit()
+    if commit:
+        db.commit()
 
 
 def effective_max_upload_bytes(db: Session, organization_id: UUID, default_max_bytes: int) -> int:

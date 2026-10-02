@@ -17,6 +17,7 @@ from backend.app.infrastructure.db.models import (
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.application.analysis import enqueue_analysis
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.domain.reanalysis import (
     create_reanalysis,
     detect_change,
@@ -124,9 +125,47 @@ def request_reanalysis(
             change_event_id=None,
             affected_step=None,
         )
-        task_id = enqueue_analysis(db, child)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # Manual requests are idempotent for the same parent/version. Never enqueue
+    # an already active or completed child a second time.
+    if str(child.status) in {"QUEUED", "RUNNING", "SUCCEEDED"}:
+        return {
+            "analysis_id": str(child.id),
+            "parent_analysis_id": str(parent.id),
+            "analysis_version": child.analysis_version,
+            "status": child.status,
+            "task_id": child.queue_task_id,
+            "candidate_id": str(candidate.id) if candidate else None,
+        }
+
+    try:
+        task_id = enqueue_analysis(db, child)
+    except Exception as exc:
+        AuditService(db).record(
+            event_type="REANALYSIS_QUEUE_FAILURE",
+            case_id=child.case_id,
+            analysis_id=child.id,
+            actor_type="SYSTEM",
+            actor_id="api",
+            operation="QUEUE_REANALYSIS",
+            reason=str(exc),
+            after_state={
+                "analysis_status": str(child.status),
+                "queue_task_id": child.queue_task_id,
+            },
+            payload={"error_type": type(exc).__name__},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "message": "Reanalysis was created but could not be queued. Retry the request.",
+                "analysis_id": str(child.id),
+            },
+        ) from exc
+
     return {
         "analysis_id": str(child.id),
         "parent_analysis_id": str(parent.id),

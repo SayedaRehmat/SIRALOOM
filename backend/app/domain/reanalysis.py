@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -431,6 +432,7 @@ def create_reanalysis(
     change_event_id: UUID | None = None,
     affected_step: str | None = None,
 ) -> tuple[Analysis, ReanalysisCandidate | None]:
+    """Create one immutable child analysis with concurrency-safe lineage."""
     if parent.status != "SUCCEEDED":
         raise ValueError("Only a successfully completed analysis can be reanalyzed.")
 
@@ -445,11 +447,19 @@ def create_reanalysis(
         )
     )
     if duplicate:
-        return duplicate, None
+        candidate = None
+        if change_event_id:
+            candidate = db.scalar(select(ReanalysisCandidate).where(
+                ReanalysisCandidate.parent_analysis_id == parent.id,
+                ReanalysisCandidate.change_event_id == change_event_id,
+            ))
+        return duplicate, candidate
 
     from backend.app.application.entitlements import require_analysis_quota, consume_analysis_quota
 
     case = db.get(Case, parent.case_id)
+    if case is None:
+        raise ValueError("Parent analysis case not found.")
     require_analysis_quota(db, case.organization_id)
 
     child = Analysis(
@@ -470,23 +480,80 @@ def create_reanalysis(
         started_at=None, completed_at=None, created_by=requested_by,
         analysis_version=next_version,
     )
-    db.add(child)
-    db.flush()
 
-    _copy_rows(db, parent.id, child.id, earliest)
+    try:
+        with db.begin_nested():
+            db.add(child)
+            db.flush()
+            _copy_rows(db, parent.id, child.id, earliest)
 
-    candidate = None
-    if change_event_id:
-        candidate = db.scalar(select(ReanalysisCandidate).where(
-            ReanalysisCandidate.parent_analysis_id == parent.id,
-            ReanalysisCandidate.change_event_id == change_event_id,
-        ))
-        if candidate:
-            candidate.child_analysis_id = child.id
-            candidate.status = "STARTED"
-            candidate.acted_at = _now()
+            candidate = None
+            if change_event_id:
+                candidate = db.scalar(select(ReanalysisCandidate).where(
+                    ReanalysisCandidate.parent_analysis_id == parent.id,
+                    ReanalysisCandidate.change_event_id == change_event_id,
+                ))
+                if candidate:
+                    candidate.child_analysis_id = child.id
+                    candidate.status = "STARTED"
+                    candidate.acted_at = _now()
 
-    consume_analysis_quota(db, case.organization_id)
+            # Reserve exactly one quota unit with the child transaction.
+            consume_analysis_quota(db, case.organization_id, commit=False)
+
+            AuditService(db).record(
+                event_type="REANALYSIS_REQUESTED",
+                case_id=parent.case_id,
+                analysis_id=child.id,
+                actor_type="USER",
+                actor_id=str(requested_by),
+                subject_type="ANALYSIS",
+                subject_id=str(child.id),
+                operation="CREATE_REANALYSIS",
+                before_state={
+                    "parent_analysis_id": str(parent.id),
+                    "parent_status": str(parent.status),
+                    "parent_analysis_version": parent.analysis_version,
+                },
+                after_state={
+                    "child_analysis_id": str(child.id),
+                    "child_status": str(child.status),
+                    "child_analysis_version": child.analysis_version,
+                    "trigger_type": trigger_type,
+                    "earliest_affected_step": earliest,
+                },
+                reason=reason,
+                workflow={
+                    "workflow_id": child.workflow_id,
+                    "workflow_version": child.workflow_version,
+                    "reuse_through_step": _previous_step(earliest),
+                },
+                payload={
+                    "parent_analysis_id": str(parent.id),
+                    "child_analysis_id": str(child.id),
+                    "analysis_version": child.analysis_version,
+                    "trigger_type": trigger_type,
+                    "change_event_id": str(change_event_id) if change_event_id else None,
+                },
+            )
+    except IntegrityError:
+        duplicate = db.scalar(
+            select(Analysis).where(
+                Analysis.case_id == parent.case_id,
+                Analysis.parent_analysis_id == parent.id,
+                Analysis.analysis_version == next_version,
+            )
+        )
+        if duplicate is None:
+            raise
+        candidate = None
+        if change_event_id:
+            candidate = db.scalar(select(ReanalysisCandidate).where(
+                ReanalysisCandidate.parent_analysis_id == parent.id,
+                ReanalysisCandidate.change_event_id == change_event_id,
+            ))
+        return duplicate, candidate
+
     db.commit()
     return child, candidate
 
