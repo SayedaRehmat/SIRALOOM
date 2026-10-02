@@ -360,21 +360,13 @@ def _rows_from_variation_archive(
         for assertion in assertions:
             classification = _text_at(assertion, "Classification/GermlineClassification/Description") if assertion is not None else None
             review_status = _text_at(assertion, "Classification/GermlineClassification/ReviewStatus") if assertion is not None else None
-            condition = _first_text(
+            condition = _first_descendant_text(
                 assertion,
-                (
-                    ".//Trait/Name/ElementValue",
-                    ".//Trait/Name",
-                    ".//Condition/Name/ElementValue",
-                ),
+                {"Trait", "Condition"},
             ) if assertion is not None else None
-            submitter = _first_text(
+            submitter = _first_descendant_text(
                 assertion,
-                (
-                    ".//SubmitterName",
-                    ".//Submitter/Name",
-                    ".//Organization/Name",
-                ),
+                {"SubmitterName", "Submitter", "Organization"},
             ) if assertion is not None else None
             assertion_method = _attribute_value(
                 assertion,
@@ -479,13 +471,22 @@ def _text_at(element: ET.Element | None, path: str) -> str | None:
     return _normalize_text(current.text if current is not None else None)
 
 
-def _first_text(element: ET.Element | None, paths: tuple[str, ...]) -> str | None:
+def _first_descendant_text(
+    element: ET.Element | None,
+    names: set[str],
+) -> str | None:
     if element is None:
         return None
-    for path in paths:
-        value = _text_at(element, path)
-        if value:
-            return value
+    for node in element.iter():
+        if _local_name(node.tag) not in names:
+            continue
+        text = _normalize_text(node.text)
+        if text:
+            return text
+        for child in node:
+            child_text = _normalize_text(child.text)
+            if child_text:
+                return child_text
     return None
 
 
