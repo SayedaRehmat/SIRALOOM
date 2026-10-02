@@ -111,13 +111,17 @@ def validate_reference_package(
     resource: Resource,
     *,
     expected_genome_build: str,
+    allow_approved_qualified: bool = False,
 ) -> dict:
     if resource.resource_type != REFERENCE_PACKAGE_RESOURCE_TYPE:
         raise ReferencePackageError(
             f"Resource {resource.id} is not a reference package.",
             code="REFERENCE_PACKAGE_INVALID",
         )
-    if resource.status not in {"ACTIVE", "SUPERSEDED"}:
+    allowed_statuses = {"ACTIVE", "SUPERSEDED"}
+    if allow_approved_qualified:
+        allowed_statuses.add("QUALIFIED")
+    if resource.status not in allowed_statuses:
         raise ReferencePackageError(
             f"Reference package {resource.name!r} is not consumable (status={resource.status!r}).",
             code="REFERENCE_PACKAGE_NOT_ACTIVE",
@@ -239,6 +243,7 @@ def load_reference_package(
     *,
     resource_id: str | UUID | None,
     expected_genome_build: str,
+    allow_approved_qualified: bool = False,
 ) -> dict:
     if not resource_id:
         raise ReferencePackageError(
@@ -258,4 +263,8 @@ def load_reference_package(
             f"Reference package resource not found: {resource_id}.",
             code="REFERENCE_PACKAGE_NOT_FOUND",
         )
-    return validate_reference_package(resource, expected_genome_build=expected_genome_build)
+    return validate_reference_package(
+        resource,
+        expected_genome_build=expected_genome_build,
+        allow_approved_qualified=allow_approved_qualified,
+    )
