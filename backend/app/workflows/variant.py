@@ -524,10 +524,88 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
             try:
+                case = db.get(Case, analysis.case_id)
+                if case is None:
+                    raise ReferencePackageError(
+                        "Analysis case was not found while resolving the organization-approved reference package.",
+                        code="CASE_NOT_FOUND",
+                    )
+                requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
+                if requested_reference is None:
+                    raise ReferencePackageError(
+                        "The configured reference package resource was not found.",
+                        code="REFERENCE_PACKAGE_NOT_FOUND",
+                    )
+                resolution = resolve_resource_with_fallback(
+                    db,
+                    organization_id=case.organization_id,
+                    requested_resource_id=reference_resource_id,
+                    expected_type="REFERENCE_PACKAGE",
+                    expected_build=reference_build,
+                    expected_provider=requested_reference.provider,
+                )
+                record_workflow_decision(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    attempt=normalization_step.attempt,
+                    outcome=OutcomeKind.RESOURCE_UNAVAILABLE if resolution.used_fallback or resolution.resource is None else OutcomeKind.SUCCESS,
+                    decision=resolution.decision,
+                    resource_id=resolution.requested_resource_id,
+                    fallback_resource_id=resolution.fallback_resource_id,
+                    metadata={
+                        "resource_type": "REFERENCE_PACKAGE",
+                        "reference_build": reference_build,
+                        "fallback_used": resolution.used_fallback,
+                    },
+                )
+                db.commit()
+                if resolution.resource is None:
+                    status = (
+                        StepStatus.REQUIRES_REVIEW
+                        if resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+                        else StepStatus.RESOURCE_FAILURE
+                    )
+                    mark_step(
+                        db,
+                        normalization_step,
+                        status,
+                        error_code=resolution.decision.code,
+                        error_message=resolution.decision.message,
+                        metadata={
+                            "next_action": resolution.decision.action.value,
+                            "requested_resource_id": str(reference_resource_id),
+                        },
+                    )
+                    analysis.status = (
+                        AnalysisStatus.REQUIRES_REVIEW
+                        if status is StepStatus.REQUIRES_REVIEW
+                        else AnalysisStatus.RESOURCE_FAILURE
+                    )
+                    analysis.completed_at = None
+                    db.commit()
+                    audit.record(
+                        event_type="NORMALIZATION_RESOURCE_DECISION",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="reference-resource",
+                        reason=resolution.decision.message,
+                        payload={
+                            "action": resolution.decision.action.value,
+                            "code": resolution.decision.code,
+                            "requested_resource_id": str(reference_resource_id),
+                        },
+                    )
+                    db.commit()
+                    return
+
+                selected_reference_resource = resolution.resource
                 reference_package = load_reference_package(
                     db,
-                    resource_id=reference_resource_id,
+                    resource_id=selected_reference_resource.id,
                     expected_genome_build=reference_build,
+                    allow_approved_qualified=resolution.used_fallback,
                 )
                 reference_fasta_path = Path(reference_package["fasta_path"])
                 reference_contigs = {item["name"] for item in reference_package["contigs"]}
@@ -623,7 +701,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
+                fallback_metadata = {
+                    "requested_resource_id": str(resolution.requested_resource_id),
+                    "selected_resource_id": str(selected_reference_resource.id),
+                    "fallback_used": resolution.used_fallback,
+                    "decision_action": resolution.decision.action.value,
+                }
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "resource_resolution": fallback_metadata, "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
                 audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.1"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
