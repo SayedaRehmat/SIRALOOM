@@ -118,7 +118,7 @@ def test_prepare_staging_records_storage_preflight(tmp_path: Path):
         db.flush()
         row = create_staging_candidate(
             db, resource=resource, source_uri="/incoming/GRCh38.fa",
-            destination_uri=str(tmp_path / "staged" / "GRCh38.fa"), expected_size_bytes=4,
+            destination_uri=str(tmp_path / "GRCh38.fa"), expected_size_bytes=4,
         )
         assert prepare_staging(db, row).status == "READY_TO_STAGE"
         assert row.metadata_json["storage_preflight"]["passed"] is True
@@ -132,7 +132,7 @@ def test_local_staging_is_atomic_and_checksum_verified(tmp_path: Path):
     try:
         source = tmp_path / "incoming.fa"
         source.write_bytes(b">1\\nACGT\\n")
-        destination = tmp_path / "staged" / "GRCh38.fa"
+        destination = tmp_path / "GRCh38.fa"
         checksum = sha256(source.read_bytes()).hexdigest()
         resource = _resource()
         db.add(resource)
