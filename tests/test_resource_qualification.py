@@ -34,7 +34,8 @@ def test_qualification_computes_integrity_and_structure(tmp_path):
     result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
     assert result.passed is False
     assert "AUTHORITATIVE_CHECKSUM_UNVERIFIED" in result.blockers
-    assert result.checks["artifact_validation"] == "GZIP_XML_PREFIX_VALID"
+    assert result.checks["artifact_validation"] == "GZIP_XML_WELL_FORMED"
+    assert result.checks["xml_element_count"] == 2
 
 
 def test_published_checksum_mismatch_is_blocking(tmp_path):
@@ -68,3 +69,16 @@ def test_qualification_requires_execution_contract(tmp_path):
 def test_qualification_records_execution_contract(tmp_path):
     result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
     assert result.checks["execution_contract"]["provider_id"] == "NCBI ClinVar"
+
+
+def test_clinvar_qualification_validates_beyond_first_megabyte(tmp_path):
+    artifact = tmp_path / "ClinVarVCVRelease_2026-09.xml.gz"
+    payload = b"<Release><ClinVarVariationRelease>" + (b"x" * (1024 * 1024 + 128)) + b"</broken>"
+    with gzip_open(artifact, "wb") as handle:
+        handle.write(payload)
+
+    result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
+
+    assert result.passed is False
+    assert result.checks["artifact_validation"].startswith("INVALID:")
+    assert "ARTIFACT_STRUCTURE_NOT_VALIDATED" in result.blockers
