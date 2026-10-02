@@ -21,6 +21,7 @@ from backend.app.domain.vcf_validation import StrictVCFValidationError, validate
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
@@ -39,6 +40,7 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
     AnalysisPartition,
+    Case,
     Report,
     ReportabilityDecision,
 )
@@ -785,42 +787,120 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 batch_limit = min(max(1, settings.genebe_max_batch), 1000)
-                try:
-                    annotation_resource = _require_registered_resource(
-                        db,
-                        resource_id=(analysis.configuration or {}).get("annotation_resource_id"),
-                        expected_type="ANNOTATION",
-                        expected_build=normalize_build(analysis.reference_build),
-                        expected_provider=provider.provider_id,
-                    )
-                except ResourceConsumptionError as exc:
+                requested_annotation_resource_id = (analysis.configuration or {}).get("annotation_resource_id")
+                case = db.get(Case, analysis.case_id)
+                if case is None:
                     mark_step(
                         db,
                         annotation_step,
-                        StepStatus.BLOCKED,
-                        error_code=exc.code,
-                        error_message=str(exc),
-                        metadata={"next_step": "ANNOTATION_PROVIDER_REQUIRED"},
+                        StepStatus.FAILED,
+                        error_code="CASE_NOT_FOUND",
+                        error_message="Analysis case was not found while resolving the organization-approved annotation resource.",
                     )
-                    analysis.status = AnalysisStatus.BLOCKED
+                    analysis.status = AnalysisStatus.FAILED
+                    db.commit()
+                    return
+
+                resolution = resolve_resource_with_fallback(
+                    db,
+                    organization_id=case.organization_id,
+                    requested_resource_id=requested_annotation_resource_id,
+                    expected_type="ANNOTATION",
+                    expected_build=normalize_build(analysis.reference_build),
+                    expected_provider=provider.provider_id,
+                )
+                record_workflow_decision(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="annotate",
+                    attempt=annotation_step.attempt,
+                    outcome=(
+                        OutcomeKind.RESOURCE_UNAVAILABLE
+                        if resolution.used_fallback or resolution.resource is None
+                        else OutcomeKind.SUCCESS
+                    ),
+                    decision=resolution.decision,
+                    resource_id=resolution.requested_resource_id,
+                    fallback_resource_id=resolution.fallback_resource_id,
+                    metadata={
+                        "provider": provider.provider_id,
+                        "reference_build": normalize_build(analysis.reference_build),
+                        "fallback_used": resolution.used_fallback,
+                    },
+                )
+                db.commit()
+
+                if resolution.resource is None:
+                    status = (
+                        StepStatus.REQUIRES_REVIEW
+                        if resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+                        else StepStatus.RESOURCE_FAILURE
+                    )
+                    mark_step(
+                        db,
+                        annotation_step,
+                        status,
+                        error_code=resolution.decision.code,
+                        error_message=resolution.decision.message,
+                        metadata={
+                            "next_action": resolution.decision.action.value,
+                            "requested_resource_id": str(resolution.requested_resource_id)
+                            if resolution.requested_resource_id
+                            else None,
+                        },
+                    )
+                    analysis.status = (
+                        AnalysisStatus.REQUIRES_REVIEW
+                        if status is StepStatus.REQUIRES_REVIEW
+                        else AnalysisStatus.RESOURCE_FAILURE
+                    )
                     analysis.completed_at = None
                     db.commit()
                     audit.record(
-                        event_type="ANNOTATION_RESOURCE_REQUIRED",
+                        event_type="ANNOTATION_RESOURCE_DECISION",
                         case_id=analysis.case_id,
                         analysis_id=analysis.id,
                         actor_type="SYSTEM",
                         actor_id="resource-registry",
-                        reason=str(exc),
+                        reason=resolution.decision.message,
                         payload={
-                            "error_code": exc.code,
-                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
+                            "action": resolution.decision.action.value,
+                            "code": resolution.decision.code,
+                            "requested_resource_id": str(resolution.requested_resource_id)
+                            if resolution.requested_resource_id
+                            else None,
+                        },
+                    )
+                    db.commit()
+                    return
+
+                annotation_resource = resolution.resource
+                if resolution.used_fallback:
+                    annotation_step.metadata_json = {
+                        **(annotation_step.metadata_json or {}),
+                        "resource_fallback": {
+                            "requested_resource_id": str(resolution.requested_resource_id),
+                            "fallback_resource_id": str(resolution.fallback_resource_id),
+                            "action": resolution.decision.action.value,
+                        },
+                    }
+                    db.add(annotation_step)
+                    db.commit()
+                    audit.record(
+                        event_type="ANNOTATION_RESOURCE_FALLBACK",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="resource-registry",
+                        reason=resolution.decision.message,
+                        payload={
+                            "requested_resource_id": str(resolution.requested_resource_id),
+                            "fallback_resource_id": str(resolution.fallback_resource_id),
                             "provider": provider.provider_id,
                             "reference_build": normalize_build(analysis.reference_build),
                         },
                     )
                     db.commit()
-                    return
 
                 # One streamed iterator drives all annotation batches; no repeated file scans.
                 genome = "hg38" if normalize_build(analysis.reference_build) == "GRCh38" else "hg19"
