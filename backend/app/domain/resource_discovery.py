@@ -6,10 +6,13 @@ from importlib.metadata import entry_points
 from typing import Any, Iterable
 from uuid import UUID, uuid4
 
-from sqlalchemy import select\nfrom sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from backend.app.domain.resources import register_resource_version
-from backend.app.domain.resource_source_contract import validate_source_contract\nfrom backend.app.domain.resource_staging import create_staging_candidate\nfrom backend.app.infrastructure.db.models import ResourceDiscovery, ResourceStaging
+from backend.app.domain.resource_source_contract import validate_source_contract
+from backend.app.domain.resource_staging import create_staging_candidate
+from backend.app.infrastructure.db.models import ResourceDiscovery, ResourceStaging
 
 RESOURCE_PROVIDER_GROUP = "siraloom.resource_providers"
 
