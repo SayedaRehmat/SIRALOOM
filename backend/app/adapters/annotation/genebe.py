@@ -20,8 +20,10 @@ class GeneBeProvider:
     provider_version = "api-public-v1"
     supported_builds = {"GRCH38"}
 
-    def __init__(self, *, endpoint: str):
-        self.endpoint = endpoint.rstrip("/")
+    def __init__(self, *, endpoint: str | None = None):
+        # Direct construction remains available for isolated adapter tests/tooling.
+        # Workflow execution MUST use from_execution_contract().
+        self.endpoint = (endpoint or settings.genebe_base_url).rstrip("/")
 
     @classmethod
     def from_execution_contract(cls, contract: ResourceExecutionContract) -> "GeneBeProvider":
