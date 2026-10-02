@@ -117,7 +117,7 @@ def test_direct_clinvar_evidence_preserves_release_scv_and_rcv_identity():
         submitter="Example submitter",
         assertion_method="Example criteria",
         record_sha256="b" * 64,
-        payload={},
+        payload={"vcv": {"accession": "VCV000000001", "version": "3", "variation_id": "12345"}},
     )
     resource_id = uuid4()
     records = engine.build_from_clinvar_assertions(
