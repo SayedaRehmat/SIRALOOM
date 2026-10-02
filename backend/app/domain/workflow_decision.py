@@ -160,6 +160,65 @@ WORKFLOW_STEP_IDS: tuple[str, ...] = (
     "export_provenance",
 )
 
+# Resource recovery is deliberately stage-specific. A resource fallback can change
+# the scientific inputs available to a stage; it is therefore safe to automate only
+# before clinical classification/review gates. Later stages must stop or require
+# human action rather than silently switching evidence context.
+RESOURCE_RECOVERY_ALLOWED_STEPS: frozenset[str] = frozenset({
+    "normalize",
+    "annotate",
+    "population",
+})
+
+RESOURCE_RECOVERY_REVIEW_STEPS: frozenset[str] = frozenset({
+    "acmg_assessment",
+    "review",
+    "reportability",
+})
+
+
+def _decide_stage_resource_outcome(
+    step_id: str,
+    kind: OutcomeKind,
+    *,
+    code: str | None,
+    message: str | None,
+    fallback_available: bool,
+    lab_action_required: bool,
+) -> WorkflowDecision:
+    """Apply the governed resource-recovery policy for a concrete workflow stage."""
+    if step_id in RESOURCE_RECOVERY_ALLOWED_STEPS:
+        return decide_workflow_outcome(
+            kind,
+            code=code,
+            message=message,
+            fallback_available=fallback_available,
+            lab_action_required=lab_action_required,
+        )
+
+    if step_id in RESOURCE_RECOVERY_REVIEW_STEPS:
+        return WorkflowDecision(
+            WorkflowAction.REQUIRE_HUMAN_REVIEW,
+            code or kind.value,
+            message or "A resource condition occurred at a clinical decision gate; human review is required before continuing.",
+            lab_action_required=True,
+        )
+
+    if lab_action_required:
+        return WorkflowDecision(
+            WorkflowAction.REQUEST_LAB_ACTION,
+            code or kind.value,
+            message or "A required resource condition needs explicit laboratory action before this workflow stage can continue.",
+            lab_action_required=True,
+        )
+
+    return WorkflowDecision(
+        WorkflowAction.WAIT_FOR_RESOURCE,
+        code or kind.value,
+        message or "The required resource is unavailable and this workflow stage does not permit automatic fallback.",
+    )
+
+
 # (step, outcome) -> action. The common decision contract remains the default
 # for technical/resource outcomes; this matrix governs the two scientific
 # limitation outcomes whose meaning depends on where they occur.
@@ -227,6 +286,16 @@ def decide_step_outcome(
             code or kind.value,
             message or "Scientific result is limited at this workflow stage; this is not automatically a technical failure.",
             lab_action_required=action is WorkflowAction.REQUEST_LAB_ACTION,
+        )
+
+    if kind in {OutcomeKind.RESOURCE_UNAVAILABLE, OutcomeKind.RESOURCE_REJECTED}:
+        return _decide_stage_resource_outcome(
+            step_id,
+            kind,
+            code=code,
+            message=message,
+            fallback_available=fallback_available,
+            lab_action_required=lab_action_required,
         )
 
     return decide_workflow_outcome(

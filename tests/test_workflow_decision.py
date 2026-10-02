@@ -151,3 +151,61 @@ def test_unclassified_step_fails_closed():
     decision = decide_step_outcome("future_step", OutcomeKind.NO_DATA)
     assert decision.action is WorkflowAction.TERMINAL_FAILURE
     assert decision.code == "WORKFLOW_STEP_UNCLASSIFIED"
+
+
+def test_resource_fallback_is_allowed_only_before_clinical_decision_gates():
+    from backend.app.domain.workflow_decision import RESOURCE_RECOVERY_ALLOWED_STEPS
+
+    for step_id in ("normalize", "annotate", "population"):
+        decision = decide_step_outcome(
+            step_id,
+            OutcomeKind.RESOURCE_UNAVAILABLE,
+            fallback_available=True,
+        )
+        assert step_id in RESOURCE_RECOVERY_ALLOWED_STEPS
+        assert decision.action is WorkflowAction.FALLBACK_TO_ACTIVE_RESOURCE
+        assert decision.fallback_allowed is True
+
+
+def test_acmg_resource_failure_requires_human_review_even_with_fallback():
+    decision = decide_step_outcome(
+        "acmg_assessment",
+        OutcomeKind.RESOURCE_UNAVAILABLE,
+        fallback_available=True,
+    )
+    assert decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+    assert decision.fallback_allowed is False
+    assert decision.lab_action_required is True
+
+
+def test_review_and_reportability_resource_failure_cannot_auto_fallback():
+    for step_id in ("review", "reportability"):
+        decision = decide_step_outcome(
+            step_id,
+            OutcomeKind.RESOURCE_REJECTED,
+            fallback_available=True,
+        )
+        assert decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
+        assert decision.fallback_allowed is False
+
+
+def test_non_resource_consuming_terminal_stages_wait_without_fallback():
+    for step_id in ("validate_input", "build_evidence", "report", "export_provenance"):
+        decision = decide_step_outcome(
+            step_id,
+            OutcomeKind.RESOURCE_UNAVAILABLE,
+            fallback_available=True,
+        )
+        assert decision.action is WorkflowAction.WAIT_FOR_RESOURCE
+        assert decision.fallback_allowed is False
+
+
+def test_stage_specific_resource_policy_preserves_explicit_lab_action():
+    decision = decide_step_outcome(
+        "normalize",
+        OutcomeKind.RESOURCE_INVALID,
+        lab_action_required=True,
+    )
+    assert decision.action is WorkflowAction.REQUEST_LAB_ACTION
+    assert decision.lab_action_required is True
+    assert decision.fallback_allowed is False
