@@ -98,7 +98,6 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
             "engine": "siraloom.resource_qualification.v1",
             "passed": False,
             "source_contract": contract.as_dict(),
-        "execution_contract": execution.as_dict(),
             "execution_contract": "INVALID",
             "activation_blockers": ["EXECUTION_CONTRACT_INVALID"],
             "errors": [str(exc)],
@@ -107,6 +106,7 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
     checks: dict[str, Any] = {
         "engine": "siraloom.resource_qualification.v1",
         "source_contract": contract.as_dict(),
+        "execution_contract": execution.as_dict(),
         "publisher_present": bool(contract.publisher),
         "release_identity_match": resource.version == contract.release_identity,
         "artifact_location_match": resource.location == contract.artifact_url or _local_path(resource) is not None,
