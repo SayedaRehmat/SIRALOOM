@@ -277,6 +277,39 @@ class Resource(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class ResourceExecutionRecord(Base):
+    """Immutable runtime snapshot of a governed resource execution."""
+
+    __tablename__ = "resource_execution_records"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    step_id: Mapped[str] = mapped_column(Text, nullable=False)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    batch_key: Mapped[str | None] = mapped_column(Text)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    requested_resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
+    fallback_resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
+    qualification_id: Mapped[UUID] = mapped_column(ForeignKey("resource_qualifications.id"), nullable=False)
+    qualification_version: Mapped[str] = mapped_column(Text, nullable=False)
+    resource_version: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_id: Mapped[str] = mapped_column(Text, nullable=False)
+    provider_version: Mapped[str] = mapped_column(Text, nullable=False)
+    access_method: Mapped[str] = mapped_column(Text, nullable=False)
+    endpoint: Mapped[str | None] = mapped_column(Text)
+    location: Mapped[str | None] = mapped_column(Text)
+    dataset: Mapped[str | None] = mapped_column(Text)
+    contract_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    contract_json: Mapped[dict] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="STARTED")
+    request_fingerprint: Mapped[str | None] = mapped_column(Text)
+    response_sha256: Mapped[str | None] = mapped_column(Text)
+    error_code: Mapped[str | None] = mapped_column(Text)
+    error_message: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
 class ResourceQualification(Base):
     __tablename__ = "resource_qualifications"
     id: Mapped[UUID] = mapped_column(primary_key=True)
