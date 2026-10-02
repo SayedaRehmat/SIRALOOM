@@ -1362,11 +1362,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 if settings.gnomad_enabled:
                     if normalize_build(analysis.reference_build) != "GRCh38":
                         raise GnomADProviderError("Configured gnomAD v4 GraphQL dataset is supported here only for GRCh38")
-                    gnomad = GnomADGraphQLProvider(
-                        endpoint=settings.gnomad_graphql_endpoint,
-                        dataset_id=settings.gnomad_dataset_id,
-                        delay_seconds=settings.gnomad_graphql_delay_seconds,
-                    )
+                    gnomad = None
                     gnomad_resource_id = (analysis.configuration or {}).get("gnomad_resource_id")
                     try:
                         requested_gnomad = db.get(Resource, UUID(str(gnomad_resource_id))) if gnomad_resource_id else None
@@ -1438,8 +1434,48 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         db.commit()
                         return
                     resource = gnomad_resolution.resource
+                    try:
+                        gnomad_execution = resolve_resource_execution(db, resource=resource)
+                        gnomad = GnomADGraphQLProvider.from_execution_contract(
+                            gnomad_execution.contract,
+                            delay_seconds=settings.gnomad_graphql_delay_seconds,
+                        )
+                    except (ResourceExecutionError, GnomADProviderError) as exc:
+                        raise ResourceConsumptionError("GNOMAD_EXECUTION_CONTRACT_INVALID", str(exc)) from exc
                     for variant in iter_normalized_vcf(normalized_path, reference_build):
-                        obs_list = gnomad.query_variant(variant)
+                        execution_record = start_resource_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="population",
+                            attempt=population_step.attempt,
+                            resolved=gnomad_execution,
+                            requested_resource_id=gnomad_resolution.requested_resource_id,
+                            fallback_resource_id=gnomad_resolution.fallback_resource_id,
+                            batch_key=f"gnomad:{variant.chromosome}:{variant.position}:{variant.reference}:{variant.alternate}",
+                            metadata={"provider": gnomad.provider_id, "dataset": gnomad.dataset_id},
+                        )
+                        db.commit()
+                        try:
+                            obs_list = gnomad.query_variant(variant)
+                            sample = next(iter(obs_list), None)
+                            complete_resource_execution(
+                                db,
+                                execution_record,
+                                status="SUCCEEDED",
+                                request_fingerprint=sample.request_fingerprint if sample else None,
+                                response_sha256=sample.response_sha256 if sample else None,
+                            )
+                            db.commit()
+                        except GnomADProviderError as exc:
+                            complete_resource_execution(
+                                db,
+                                execution_record,
+                                status="FAILED",
+                                error_code="GNOMAD_PROVIDER_ERROR",
+                                error_message=str(exc),
+                            )
+                            db.commit()
+                            raise
                         row = db.get(Variant, stable_variant_uuid(canonical_key(variant.genome_build, variant.chromosome, variant.position, variant.reference, variant.alternate)))
                         if row is None:
                             raise RuntimeError("Canonical variant row missing during population processing")
