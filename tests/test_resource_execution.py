@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from backend.app.adapters.annotation.genebe import GeneBeProvider
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider
@@ -87,6 +88,7 @@ def test_resolver_fails_closed_when_qualified_contract_disagrees_with_registry()
         resource = _resource(db)
         qualification = db.query(ResourceQualification).filter_by(resource_id=resource.id).one()
         qualification.checks_json["execution_contract"]["provider_id"] = "OTHER"
+        flag_modified(qualification, "checks_json")
         db.commit()
         with pytest.raises(ResourceExecutionError, match="invalid"):
             resolve_resource_execution(db, resource=resource)
