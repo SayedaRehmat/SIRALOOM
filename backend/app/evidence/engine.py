@@ -152,6 +152,7 @@ class EvidenceEngine:
                 "accession": accession,
                 "accession_version": version,
                 "variation_id": getattr(assertion, "variation_id", None),
+                "vcv": (getattr(assertion, "payload", {}) or {}).get("vcv"),
                 "rcv_accessions": list(getattr(assertion, "rcv_accessions", ()) or ()),
                 "genome_build": getattr(assertion, "genome_build", None),
                 "chromosome": getattr(assertion, "chromosome", None),
