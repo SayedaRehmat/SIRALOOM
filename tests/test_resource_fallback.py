@@ -288,3 +288,136 @@ def test_explicitly_pinned_superseded_resource_is_consumed_without_fallback():
     finally:
         db.close()
         engine.dispose()
+
+
+def test_requested_identity_mismatch_fails_closed_without_using_other_binding():
+    engine, db = _db()
+    try:
+        org_id = uuid4()
+        db.add(Organization(id=org_id, name="Lab", external_identifier=None))
+        requested = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER-A",
+            resource_type="ANNOTATION",
+            version="rejected-v1",
+            status="REJECTED",
+        )
+        other = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER-B",
+            resource_type="ANNOTATION",
+            version="approved-v1",
+            status="QUALIFIED",
+        )
+        _qualify(db, other)
+        _bind(db, organization_id=org_id, resource=other)
+        db.commit()
+
+        result = resolve_resource_with_fallback(
+            db,
+            organization_id=org_id,
+            requested_resource_id=requested.id,
+            expected_type="ANNOTATION",
+            expected_build="GRCh38",
+            expected_provider="PROVIDER-B",
+        )
+
+        assert result.resource is None
+        assert result.used_fallback is False
+        assert result.decision.action is WorkflowAction.REQUEST_LAB_ACTION
+        assert result.decision.code == "RESOURCE_IDENTITY_MISMATCH"
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_fallback_requires_qualification_even_when_binding_exists():
+    engine, db = _db()
+    try:
+        org_id = uuid4()
+        db.add(Organization(id=org_id, name="Lab", external_identifier=None))
+        requested = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER",
+            resource_type="ANNOTATION",
+            version="rejected-v1",
+            status="REJECTED",
+        )
+        fallback = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER",
+            resource_type="ANNOTATION",
+            version="approved-v2",
+            status="QUALIFIED",
+        )
+        _bind(db, organization_id=org_id, resource=fallback)
+        db.commit()
+
+        result = resolve_resource_with_fallback(
+            db,
+            organization_id=org_id,
+            requested_resource_id=requested.id,
+            expected_type="ANNOTATION",
+            expected_build="GRCh38",
+            expected_provider="PROVIDER",
+        )
+
+        assert result.resource is None
+        assert result.used_fallback is False
+        assert result.decision.action is WorkflowAction.WAIT_FOR_RESOURCE
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_fallback_rejects_binding_to_wrong_build():
+    engine, db = _db()
+    try:
+        org_id = uuid4()
+        db.add(Organization(id=org_id, name="Lab", external_identifier=None))
+        requested = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER",
+            resource_type="ANNOTATION",
+            version="rejected-v1",
+            status="REJECTED",
+        )
+        fallback = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER",
+            resource_type="ANNOTATION",
+            version="approved-grch37",
+            status="QUALIFIED",
+        )
+        fallback.genome_build = "GRCh37"
+        _qualify(db, fallback)
+        _bind(db, organization_id=org_id, resource=fallback)
+        db.commit()
+
+        result = resolve_resource_with_fallback(
+            db,
+            organization_id=org_id,
+            requested_resource_id=requested.id,
+            expected_type="ANNOTATION",
+            expected_build="GRCh38",
+            expected_provider="PROVIDER",
+        )
+
+        assert result.resource is None
+        assert result.used_fallback is False
+        assert result.decision.action is WorkflowAction.WAIT_FOR_RESOURCE
+    finally:
+        db.close()
+        engine.dispose()
