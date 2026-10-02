@@ -317,18 +317,22 @@ def decide_resource_approval(
         expected_version=expected_version, resulting_version=next_version, reason=reason,
     ))
 
+    resource_identity_key = "|".join([
+        resource.name, resource.provider, resource.resource_type,
+        resource.genome_build or "UNSPECIFIED",
+    ])
+    binding = db.scalar(select(OrganizationResourceBinding).where(
+        OrganizationResourceBinding.organization_id == organization_id,
+        OrganizationResourceBinding.identity_key == resource_identity_key,
+    ))
+    previous_resource_id = binding.resource_id if binding else None
+    previous_binding_version = binding.version if binding else None
+    previous_resource = db.get(Resource, previous_resource_id) if previous_resource_id else None
+
     if decision == "REJECTED":
         resource.status = "REJECTED"
 
     if decision == "APPROVED":
-        resource_identity_key = "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"])
-        binding = db.scalar(select(OrganizationResourceBinding).where(
-            OrganizationResourceBinding.organization_id == organization_id,
-            OrganizationResourceBinding.identity_key == resource_identity_key,
-        ))
-        previous_resource_id = binding.resource_id if binding else None
-        previous_binding_version = binding.version if binding else None
-        previous_resource = db.get(Resource, previous_resource_id) if previous_resource_id else None
         if binding is None:
             db.add(OrganizationResourceBinding(
                 id=uuid4(), organization_id=organization_id, resource_id=resource.id,
@@ -347,7 +351,7 @@ def decide_resource_approval(
     if decision == "APPROVED":
         resulting_binding = db.scalar(select(OrganizationResourceBinding).where(
             OrganizationResourceBinding.organization_id == organization_id,
-            OrganizationResourceBinding.identity_key == "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"]),
+            OrganizationResourceBinding.identity_key == resource_identity_key,
         ))
     _record_resource_adoption_audit(
         db,
@@ -363,6 +367,23 @@ def decide_resource_approval(
         previous_binding_version=previous_binding_version,
     )
     db.flush()
+
+    if decision == "APPROVED" and previous_resource is not None and previous_resource.id != resource.id:
+        from backend.app.domain.reanalysis import RESOURCE_TRIGGER_TYPE, detect_change
+
+        trigger_type = RESOURCE_TRIGGER_TYPE.get(str(resource.resource_type).upper())
+        if trigger_type is not None:
+            detect_change(
+                db,
+                organization_id=organization_id,
+                trigger_type=trigger_type,
+                resource_kind=str(resource.resource_type).upper(),
+                resource_name=resource.name,
+                new_version=resource.version,
+                new_checksum=resource.checksum,
+                resource_id=resource.id,
+            )
+
     db.refresh(approval)
     return approval
 
@@ -436,7 +457,7 @@ def _record_resource_adoption_audit(
         },
         reason=reason,
         software={},
-        workflow={"domain": "resource_registry", "approval_id": str(approval.id), "approval_version": approval.version},
+        workflow={"domain": "resource_registry", "organization_id": str(organization_id), "approval_id": str(approval.id), "approval_version": approval.version},
         resource_versions={
             "requested": {"resource_id": str(resource.id), "version": resource.version, "checksum": resource.checksum},
             "previous": before_binding,

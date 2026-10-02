@@ -11,13 +11,14 @@ from backend.app.domain.resources import (
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    AuditEvent,
-    Organization,
+    Analysis, AnalysisResourceSnapshot, ReanalysisCandidate,
+    Analysis, AnalysisResourceSnapshot, AuditEvent, Case, Notification,
+    Organization, OrganizationMembership,
     OrganizationResourceBinding,
     Resource,
     ResourceApproval,
     ResourceApprovalAction,
-    ResourceQualification,
+    ResourceQualification, ReanalysisChangeEvent, ReanalysisCandidate,
     User,
 )
 
@@ -34,6 +35,13 @@ def _engine():
             ResourceApproval.__table__,
             ResourceApprovalAction.__table__,
             OrganizationResourceBinding.__table__,
+            Case.__table__,
+            Analysis.__table__,
+            AnalysisResourceSnapshot.__table__,
+            OrganizationMembership.__table__,
+            Notification.__table__,
+            ReanalysisChangeEvent.__table__,
+            ReanalysisCandidate.__table__,
             AuditEvent.__table__,
         ],
     )
@@ -177,3 +185,66 @@ def test_rejection_records_release_decision_without_changing_existing_binding():
         assert event.resource_versions["previous"]["version"] == "1"
         assert event.resource_versions["resulting"] is None
         assert event.after_state["resource_status"] == "REJECTED"
+
+
+def test_approved_release_creates_reanalysis_candidate_for_historical_analysis():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab Reanalysis", external_identifier=None)
+        user = User(
+            id=uuid4(), organization_id=org.id, display_name="Director",
+            role="lab_director", status="ACTIVE",
+        )
+        case = Case(
+            id=uuid4(), organization_id=org.id, case_identifier="REAN-ADOPT-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user.id,
+        )
+        db.add_all([org, user])
+        db.flush()
+        db.add(case)
+        db.flush()
+
+        old = _qualified(db, name="FutureDB", version="1", checksum="e" * 64)
+        old_approval = request_resource_approval(
+            db, resource_id=old.id, organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+        decide_resource_approval(
+            db, approval_id=old_approval.id, organization_id=org.id,
+            actor_id=user.id, decision="APPROVED", expected_version=1,
+            reason="Baseline",
+        )
+
+        analysis = Analysis(
+            id=uuid4(), case_id=case.id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user.id, analysis_version=1,
+        )
+        db.add(analysis)
+        db.add(AnalysisResourceSnapshot(
+            id=uuid4(), analysis_id=analysis.id, resource_id=old.id,
+            resource_kind="EVIDENCE", resource_name="FutureDB", provider="FutureProvider",
+            version="1", checksum="e" * 64, genome_build="GRCh38", metadata_json={},
+        ))
+        db.commit()
+
+        new = _qualified(db, name="FutureDB", version="2", checksum="f" * 64)
+        approval = request_resource_approval(
+            db, resource_id=new.id, organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+        decide_resource_approval(
+            db, approval_id=approval.id, organization_id=org.id,
+            actor_id=user.id, decision="APPROVED", expected_version=1,
+            reason="Adopt validated release",
+        )
+
+        candidate = db.scalar(select(ReanalysisCandidate).where(
+            ReanalysisCandidate.parent_analysis_id == analysis.id,
+        ))
+        assert candidate is not None
+        assert candidate.trigger_type == "EVIDENCE_UPDATE"
+        assert candidate.earliest_affected_step == "build_evidence"
+        assert candidate.status == "PENDING"
