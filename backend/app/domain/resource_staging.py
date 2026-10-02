@@ -310,3 +310,72 @@ def stage_local_artifact(
             error_message=str(exc),
         )
         raise
+
+
+def stage_resource_release(
+    db: Session,
+    row: ResourceStaging,
+    *,
+    local_source_path: str | Path | None = None,
+    max_remote_bytes: int = 5 * 1024 * 1024 * 1024,
+    timeout_seconds: float = 30.0,
+) -> ResourceStaging:
+    """Execute the governed staging path selected by the registered resource.
+
+    Remote acquisition is permitted only for a validated PUBLIC source contract
+    with an HTTPS artifact and a published SHA-256. Authenticated, licensed, or
+    local-only resources require their provider-specific execution path.
+    """
+    resource = db.get(Resource, row.resource_id)
+    if resource is None:
+        raise ResourceStagingError("staging resource does not exist")
+    if row.resource_version != resource.version:
+        raise ResourceStagingError("staging resource version does not match registered resource")
+
+    access_method = str(resource.access_method or "").strip().upper()
+    if local_source_path is not None:
+        if access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+            raise ResourceStagingError(
+                f"local source staging is not permitted for access_method {access_method!r}"
+            )
+        return stage_local_artifact(db, row, source_path=local_source_path)
+
+    if access_method != "HTTPS":
+        raise ResourceStagingError(
+            f"generic remote staging supports HTTPS resources only; got {access_method!r}"
+        )
+
+    contract = dict((resource.metadata_json or {}).get("source_contract") or {})
+    if str(contract.get("access_mode") or "").upper() != "PUBLIC":
+        raise ResourceStagingError(
+            "generic remote staging requires a PUBLIC source contract; "
+            "authenticated or license-controlled resources require a provider-specific adapter"
+        )
+    artifact_url = str(contract.get("artifact_url") or "").strip()
+    if artifact_url != row.source_uri:
+        raise ResourceStagingError(
+            "staging source does not match the registered source contract artifact"
+        )
+    if str(contract.get("checksum_status") or "").upper() != "PUBLISHED_AND_VERIFIED":
+        raise ResourceStagingError(
+            "generic remote staging requires a published and verified source checksum"
+        )
+    if not row.expected_sha256:
+        raise ResourceStagingError(
+            "generic remote staging requires the concrete release SHA-256"
+        )
+
+    from backend.app.domain.resource_remote_staging import stage_remote_artifact
+
+    from urllib.parse import urlparse
+    parsed = urlparse(artifact_url)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ResourceStagingError("source contract artifact must be an absolute HTTPS URL")
+    allowed_hosts = {parsed.hostname.lower().rstrip(".")}
+    return stage_remote_artifact(
+        db,
+        row,
+        allowed_hosts=allowed_hosts,
+        max_bytes=max_remote_bytes,
+        timeout_seconds=timeout_seconds,
+    )
