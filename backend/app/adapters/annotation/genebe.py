@@ -7,6 +7,7 @@ import httpx
 import time
 from backend.app.config import settings
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.resource_source_contract import ResourceExecutionContract
 
 class GeneBeError(RuntimeError):
     def __init__(self, message: str, *, retryable: bool = False):
@@ -18,6 +19,25 @@ class GeneBeProvider:
     provider_id = "GeneBe"
     provider_version = "api-public-v1"
     supported_builds = {"GRCH38"}
+
+    def __init__(self, *, endpoint: str):
+        self.endpoint = endpoint.rstrip("/")
+
+    @classmethod
+    def from_execution_contract(cls, contract: ResourceExecutionContract) -> "GeneBeProvider":
+        if contract.provider_id != cls.provider_id:
+            raise GeneBeError(f"Execution provider {contract.provider_id!r} does not match GeneBe.")
+        if contract.provider_version != cls.provider_version:
+            raise GeneBeError(
+                f"Execution provider version {contract.provider_version!r} does not match GeneBe {cls.provider_version!r}."
+            )
+        if contract.access_method not in {"API", "HTTPS", "HTTP", "GRAPHQL"}:
+            raise GeneBeError(
+                f"GeneBe requires an API/HTTP execution contract, got {contract.access_method!r}."
+            )
+        if not contract.endpoint:
+            raise GeneBeError("GeneBe execution contract does not contain an endpoint.")
+        return cls(endpoint=contract.endpoint)
 
     def capabilities(self) -> set[str]:
         return {"ANNOTATION", "ACMG_CRITERIA_SUPPORT"}
@@ -42,7 +62,7 @@ class GeneBeProvider:
             {"chr": v.chromosome.removeprefix("chr"), "pos": v.position, "ref": v.reference, "alt": v.alternate}
             for v in variants
         ]
-        url = f"{settings.genebe_base_url.rstrip('/')}/variants"
+        url = f"{self.endpoint}/variants"
         request_material = {
             "provider": self.provider_id,
             "provider_version": self.provider_version,
