@@ -60,6 +60,25 @@ class OrganizationEntitlement(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
 
+class ResourceDeploymentProfile(Base):
+    """Organization-level policy selecting the governed resource environment.
+
+    The workflow is shared by trial and laboratory deployments. This record
+    selects how resource identities are resolved; it does not itself approve
+    scientific resources.
+    """
+    __tablename__ = "resource_deployment_profiles"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id"), nullable=False, unique=True
+    )
+    profile_type: Mapped[str] = mapped_column(Text, nullable=False)
+    profile_version: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="ACTIVE")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+
 class Case(Base):
     __tablename__ = "cases"
     id: Mapped[UUID] = mapped_column(primary_key=True)
