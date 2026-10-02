@@ -320,15 +320,16 @@ def decide_resource_approval(
     if decision == "REJECTED":
         resource.status = "REJECTED"
 
+    resource_identity_key = "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"])
+    binding = db.scalar(select(OrganizationResourceBinding).where(
+        OrganizationResourceBinding.organization_id == organization_id,
+        OrganizationResourceBinding.identity_key == resource_identity_key,
+    ))
+    previous_resource_id = binding.resource_id if binding else None
+    previous_binding_version = binding.version if binding else None
+    previous_resource = db.get(Resource, previous_resource_id) if previous_resource_id else None
+
     if decision == "APPROVED":
-        resource_identity_key = "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"])
-        binding = db.scalar(select(OrganizationResourceBinding).where(
-            OrganizationResourceBinding.organization_id == organization_id,
-            OrganizationResourceBinding.identity_key == resource_identity_key,
-        ))
-        previous_resource_id = binding.resource_id if binding else None
-        previous_binding_version = binding.version if binding else None
-        previous_resource = db.get(Resource, previous_resource_id) if previous_resource_id else None
         if binding is None:
             db.add(OrganizationResourceBinding(
                 id=uuid4(), organization_id=organization_id, resource_id=resource.id,
