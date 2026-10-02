@@ -355,6 +355,26 @@ class ResourceStaging(Base):
     )
 
 
+
+class ResourceChangeImpact(Base):
+    """Immutable identification of historical analyses affected by a release change."""
+
+    __tablename__ = "resource_change_impacts"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    adoption_event_id: Mapped[UUID] = mapped_column(ForeignKey("audit_events.id"), nullable=False)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    previous_resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    previous_resource_version: Mapped[str] = mapped_column(Text, nullable=False)
+    adopted_resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    adopted_resource_version: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING_REANALYSIS")
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("adoption_event_id", "analysis_id", name="uq_resource_change_impact_event_analysis"),
+    )
+
 class ResourceExecutionRecord(Base):
     """Immutable runtime snapshot of a governed resource execution."""
 
