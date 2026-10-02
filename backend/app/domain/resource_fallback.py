@@ -156,6 +156,28 @@ def resolve_resource_with_fallback(
         requested_id = None
 
     requested = db.get(Resource, requested_id) if requested_id else None
+    if requested is not None:
+        identity_matches = (
+            requested.resource_type == expected_type
+            and (not requested.genome_build or normalize_build(requested.genome_build) == normalize_build(expected_build))
+            and (not expected_provider or requested.provider == expected_provider)
+            and requested.organization_id in {None, organization_id}
+        )
+        if not identity_matches:
+            decision = decide_workflow_outcome(
+                OutcomeKind.RESOURCE_INVALID,
+                code="RESOURCE_IDENTITY_MISMATCH",
+                message="The requested resource does not match the workflow's required provider, type, build, or organization.",
+                lab_action_required=True,
+            )
+            return ResourceResolution(
+                resource=None,
+                requested_resource_id=requested.id,
+                fallback_resource_id=None,
+                decision=decision,
+                used_fallback=False,
+            )
+
     if requested is not None and _is_requested_resource_consumable(
         requested,
         expected_type=expected_type,
