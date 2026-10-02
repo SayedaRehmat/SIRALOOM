@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from backend.app.domain.variant_identity import normalize_build
 from backend.app.domain.workflow_decision import (
     OutcomeKind,
+    WorkflowAction,
     WorkflowDecision,
     decide_workflow_outcome,
 )
