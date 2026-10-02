@@ -52,6 +52,7 @@ class GnomADGraphQLProvider:
         self.endpoint = endpoint or self.default_endpoint
         self.dataset_id = dataset_id
         self.delay_seconds = max(0.0, delay_seconds)
+        self.execution_scope = "UNSPECIFIED"
 
     @classmethod
     def from_execution_contract(
@@ -76,7 +77,9 @@ class GnomADGraphQLProvider:
             raise GnomADProviderError("gNOMAD execution contract does not contain an endpoint.")
         if not contract.dataset:
             raise GnomADProviderError("gNOMAD execution contract does not contain a dataset.")
-        provider = cls(endpoint=contract.endpoint, dataset_id=contract.dataset, delay_seconds=delay_seconds)\n        provider.execution_scope = contract.execution_scope\n        return provider
+        provider = cls(endpoint=contract.endpoint, dataset_id=contract.dataset, delay_seconds=delay_seconds)
+        provider.execution_scope = contract.execution_scope
+        return provider
 
     def query_variant(self, variant: CanonicalVariant) -> list[PopulationObservationData]:
         variant_id = f"{variant.chromosome.removeprefix('chr')}:{variant.position}:{variant.reference}:{variant.alternate}"
@@ -113,7 +116,8 @@ class GnomADGraphQLProvider:
             "endpoint": self.endpoint,
             "dataset_selector": self.dataset_id,
             "variant_id": variant_id,
-            "genome_build": variant.genome_build,\n            "execution_scope": self.execution_scope,
+            "genome_build": variant.genome_build,
+            "execution_scope": self.execution_scope,
         }
         request_fingerprint = hashlib.sha256(
             json.dumps(
@@ -225,6 +229,27 @@ class LocalGnomADTabixProvider:
 
     def __init__(self, vcf_path: str):
         self.vcf_path = vcf_path
+        self.execution_scope = "UNSPECIFIED"
+
+    @classmethod
+    def from_execution_contract(cls, contract: ResourceExecutionContract) -> "LocalGnomADTabixProvider":
+        if contract.provider_id != cls.provider_id:
+            raise GnomADProviderError(
+                f"Execution provider {contract.provider_id!r} does not match local gnomAD."
+            )
+        if contract.provider_version != cls.provider_version:
+            raise GnomADProviderError(
+                f"Execution provider version {contract.provider_version!r} does not match local gnomAD {cls.provider_version!r}."
+            )
+        if contract.access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+            raise GnomADProviderError(
+                f"Local gnomAD requires a LOCAL/FILE execution contract, got {contract.access_method!r}."
+            )
+        if not contract.location:
+            raise GnomADProviderError("Local gnomAD execution contract does not contain a location.")
+        provider = cls(contract.location)
+        provider.execution_scope = contract.execution_scope
+        return provider
 
     def query_variant(self, variant: CanonicalVariant) -> list[PopulationObservationData]:
         chrom = variant.chromosome
