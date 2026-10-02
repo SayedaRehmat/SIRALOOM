@@ -178,6 +178,7 @@ def test_clinvar_rejects_non_local_execution_contract(tmp_path):
             resolved=resolved,
             resource_location=str(path),
             genome_build="GRCh38",
+            index_root=str(path.parent / "cache"),
         )
     except ClinVarProviderError as exc:
         assert "LOCAL_ONLY" in str(exc)
@@ -194,6 +195,7 @@ def test_clinvar_rejects_location_mismatch(tmp_path):
             resolved=_resolved(path),
             resource_location=str(other),
             genome_build="GRCh38",
+            index_root=str(path.parent / "cache"),
         )
     except ClinVarProviderError as exc:
         assert "location" in str(exc).lower()
