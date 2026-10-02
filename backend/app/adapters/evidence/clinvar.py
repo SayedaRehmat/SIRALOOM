@@ -71,7 +71,14 @@ class ClinVarVCVProvider:
         self.qualification_version = qualification_version
         self.contract_hash = contract_hash
         self.genome_build = genome_build
-        self.index_path = (\n            Path(index_root)\n            / "clinvar"\n            / str(resource_id)\n            / resource_version\n            / genome_build\n            / "index.sqlite3"\n        )
+        self.index_path = (
+            Path(index_root)
+            / "clinvar"
+            / str(resource_id)
+            / resource_version
+            / genome_build
+            / "index.sqlite3"
+        )
         self._validate_inputs()
 
     @classmethod
