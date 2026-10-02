@@ -1,5 +1,6 @@
 from hashlib import sha256
 from pathlib import Path
+from urllib.error import HTTPError
 from uuid import uuid4
 
 import pytest
@@ -10,6 +11,7 @@ from backend.app.domain.resource_staging import (
     ResourceStagingError,
     create_staging_candidate,
     stage_resource_release,
+    staging_recovery_decision,
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Resource, ResourceStaging
@@ -150,6 +152,98 @@ def test_orchestrator_rejects_source_contract_artifact_mismatch(tmp_path):
         )
         with pytest.raises(ResourceStagingError, match="does not match the registered source contract"):
             stage_resource_release(db, row)
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_checksum_failure_produces_explicit_lab_action_and_preserves_active_release(
+    monkeypatch, tmp_path
+):
+    payload = b"tampered release"
+    opener = FakeOpener(FakeResponse(payload))
+    monkeypatch.setattr(
+        "backend.app.domain.resource_remote_staging.build_opener",
+        lambda *_: opener,
+    )
+    (tmp_path / "staged").mkdir()
+
+    engine, db = _db()
+    try:
+        active = _remote_resource()
+        active.id = uuid4()
+        active.version = "2025-12"
+        active.status = "ACTIVE"
+        active.metadata_json = {}
+        candidate = _remote_resource()
+        db.add_all([active, candidate])
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=candidate,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/clinvar/release.xml.gz",
+            destination_uri=str(tmp_path / "staged" / "release.xml.gz"),
+            expected_sha256="0" * 64,
+            expected_size_bytes=len(payload),
+        )
+
+        result = stage_resource_release(db, row, max_remote_bytes=1024)
+        decision = staging_recovery_decision(result)
+
+        assert result.status == "INTEGRITY_FAILED"
+        assert result.error_code == "CHECKSUM_MISMATCH"
+        assert decision.action.value == "REQUEST_LAB_ACTION"
+        assert decision.lab_action_required is True
+        assert db.get(Resource, active.id).status == "ACTIVE"
+        assert not Path(result.destination_uri).exists()
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_transient_remote_failure_is_retryable_without_touching_active_release(
+    monkeypatch, tmp_path
+):
+    (tmp_path / "staged").mkdir()
+
+    class FailingOpener:
+        def open(self, request, timeout):
+            raise HTTPError(request.full_url, 503, "temporary unavailable", {}, None)
+
+    monkeypatch.setattr(
+        "backend.app.domain.resource_remote_staging.build_opener",
+        lambda *_: FailingOpener(),
+    )
+
+    engine, db = _db()
+    try:
+        active = _remote_resource()
+        active.id = uuid4()
+        active.version = "2025-12"
+        active.status = "ACTIVE"
+        active.metadata_json = {}
+        candidate = _remote_resource()
+        db.add_all([active, candidate])
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=candidate,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/clinvar/release.xml.gz",
+            destination_uri=str(tmp_path / "staged" / "release.xml.gz"),
+            expected_sha256="0" * 64,
+        )
+
+        with pytest.raises(ResourceStagingError) as exc_info:
+            stage_resource_release(db, row, max_remote_bytes=1024)
+
+        decision = staging_recovery_decision(row)
+
+        assert exc_info.value.retryable is True
+        assert row.error_code == "REMOTE_HTTP_RETRYABLE"
+        assert row.metadata_json["recovery_outcome"] == "RETRYABLE_FAILURE"
+        assert decision.action.value == "RETRY"
+        assert decision.retryable is True
+        assert db.get(Resource, active.id).status == "ACTIVE"
     finally:
         db.close()
         engine.dispose()
