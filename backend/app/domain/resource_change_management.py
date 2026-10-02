@@ -81,24 +81,23 @@ def identify_resource_change_impacts(
     if previous_resource is None or adopted_resource is None:
         raise ValueError("adoption event references an unknown resource release")
 
+    organization_id = UUID(str(event.workflow["organization_id"])) if isinstance(event.workflow, dict) and event.workflow.get("organization_id") else None
+    if organization_id is None:
+        raise ValueError("adoption event is missing organization identity")
+
     rows = db.execute(
         select(ResourceExecutionRecord, Analysis, Case)
         .join(Analysis, Analysis.id == ResourceExecutionRecord.analysis_id)
         .join(Case, Case.id == Analysis.case_id)
         .where(
             ResourceExecutionRecord.resource_id == previous_id,
-            Case.organization_id == event.workflow.get("organization_id")
-            if isinstance(event.workflow, dict) and event.workflow.get("organization_id")
-            else True,
+            Case.organization_id == organization_id,
         )
     ).all()
 
     impacted: list[UUID] = []
     created: list[UUID] = []
     for execution, analysis, case in rows:
-        if case.organization_id != UUID(str(event.workflow["organization_id"])):
-            continue
-
         if analysis.id not in impacted:
             impacted.append(analysis.id)
 
