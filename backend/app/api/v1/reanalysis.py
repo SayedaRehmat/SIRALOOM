@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -23,6 +24,13 @@ from backend.app.domain.reanalysis import (
 )
 
 router = APIRouter(tags=["reanalysis"])
+
+
+class ManualReanalysisRequest(BaseModel):
+    """Explicit request contract for a laboratory-initiated full reanalysis."""
+
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(default="Laboratory-requested case reanalysis.", min_length=1, max_length=2000)
 
 
 @router.get("/notifications")
@@ -99,23 +107,22 @@ def list_candidates(
 @router.post("/analyses/{analysis_id}/reanalysis")
 def request_reanalysis(
     analysis_id: UUID,
-    payload: dict,
+    payload: ManualReanalysisRequest,
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
     parent = get_accessible_analysis(analysis_id, db, principal)
     require_role(principal, CASE_WRITE_ROLES)
-    trigger_type = str(payload.get("trigger_type") or "MANUAL").upper()
-    reason = str(payload.get("reason") or "Laboratory-requested case reanalysis.")
+    reason = payload.reason
     try:
         child, candidate = create_reanalysis(
             db,
             parent=parent,
-            trigger_type=trigger_type,
+            trigger_type="MANUAL",
             requested_by=principal.user_id,
             reason=reason,
-            change_event_id=UUID(str(payload["change_event_id"])) if payload.get("change_event_id") else None,
-            affected_step=str(payload["earliest_affected_step"]) if payload.get("earliest_affected_step") else None,
+            change_event_id=None,
+            affected_step=None,
         )
         task_id = enqueue_analysis(db, child)
     except ValueError as exc:
@@ -141,6 +148,8 @@ def execute_reanalysis_candidate(
     candidate = db.get(ReanalysisCandidate, candidate_id)
     if not candidate or candidate.organization_id != principal.organization_id:
         raise HTTPException(status_code=404, detail="Reanalysis candidate not found")
+    if candidate.status != "PENDING":
+        raise HTTPException(status_code=409, detail="This reanalysis candidate has already been acted on.")
 
     parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal)
     if parent.status != "SUCCEEDED":

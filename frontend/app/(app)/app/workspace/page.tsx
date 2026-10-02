@@ -401,7 +401,6 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          trigger_type: "MANUAL",
           reason: "Laboratory-requested case-level reanalysis.",
         }),
       });
