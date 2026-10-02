@@ -93,6 +93,7 @@ def test_clinvar_queries_all_submitted_assertions_and_release_identity(tmp_path)
         resolved=_resolved(path),
         resource_location=str(path),
         genome_build="GRCh38",
+        index_root=str(path.parent / "cache"),
     )
 
     records = provider.query_variant(
