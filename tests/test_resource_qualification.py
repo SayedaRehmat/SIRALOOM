@@ -87,3 +87,55 @@ def test_clinvar_qualification_validates_beyond_first_megabyte(tmp_path):
     assert result.passed is False
     assert result.checks["artifact_validation"].startswith("INVALID:")
     assert "ARTIFACT_STRUCTURE_NOT_VALIDATED" in result.blockers
+
+
+def _reference_resource(tmp_path: Path, *, toolchain):
+    fasta = tmp_path / "GRCh38.fa"
+    fasta.write_text(">1\nCAAAAAC\n", encoding="utf-8")
+    return Resource(
+        name="GRCh38 reference",
+        provider="ReferenceProvider",
+        resource_type="REFERENCE_PACKAGE",
+        version="GRCh38-v1",
+        genome_build="GRCh38",
+        access_method="LOCAL",
+        license_text=None,
+        checksum=None,
+        location=str(fasta),
+        population_definition=None,
+        organization_id=None,
+        metadata_json={
+            "source_contract": {
+                "publisher": "Reference Authority",
+                "canonical_source_url": "https://example.org/reference",
+                "artifact_url": "https://example.org/reference/GRCh38.fa",
+                "release_identity": "GRCh38-v1",
+                "access_mode": "PUBLIC",
+                "license_status": "NOT_REQUIRED",
+                "checksum_status": "NOT_PUBLISHED",
+                "authority_evidence_url": "https://example.org/reference/docs",
+            },
+            "execution": {
+                "provider_id": "ReferenceProvider",
+                "provider_version": "reference-v1",
+                "access_method": "LOCAL",
+                "location": str(fasta),
+                "toolchain": toolchain,
+            },
+        },
+    )
+
+
+def test_reference_qualification_requires_governed_bcftools_version(tmp_path):
+    result = qualify_resource(_reference_resource(tmp_path, toolchain=None))
+    assert result.passed is False
+    assert "BCFTOOLS_TOOLCHAIN_NOT_DECLARED" in result.blockers
+
+
+def test_reference_qualification_records_governed_bcftools_version(tmp_path):
+    result = qualify_resource(
+        _reference_resource(tmp_path, toolchain={"bcftools": {"version": "1.19"}})
+    )
+    assert result.checks["bcftools_tool"] == "bcftools"
+    assert result.checks["bcftools_version"] == "1.19"
+    assert result.checks["bcftools_execution"] == "GOVERNED"
