@@ -1081,6 +1081,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                         db.commit()
                     except GeneBeError as exc:
+                        complete_resource_execution(
+                            db,
+                            execution_record,
+                            status="FAILED",
+                            error_code="ANNOTATION_PROVIDER_TRANSIENT" if exc.retryable else "ANNOTATION_PROVIDER_ERROR",
+                            error_message=str(exc),
+                        )
+                        db.commit()
                         if exc.retryable:
                             if partition.status == "RUNNING" and partition.lease_owner == worker_id:
                                 scheduler.fail(partition.id, worker_id, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
