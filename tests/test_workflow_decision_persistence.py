@@ -1,12 +1,19 @@
 from uuid import uuid4
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.workflow_decision import OutcomeKind
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Analysis, Case, Organization, User, WorkflowStep
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Case,
+    Organization,
+    User,
+    WorkflowDecisionRecord,
+    WorkflowStep,
+)
 from backend.app.workflows.variant import _apply_scientific_limitation
 
 
@@ -20,6 +27,7 @@ def _fixture():
             Case.__table__,
             Analysis.__table__,
             WorkflowStep.__table__,
+            WorkflowDecisionRecord.__table__,
         ],
     )
     organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
@@ -90,6 +98,51 @@ def test_limitation_helper_fails_closed_when_stage_requires_review():
         persisted = db.get(WorkflowStep, step.id)
         assert persisted.status == StepStatus.RUNNING
         assert persisted.error_code is None
+    finally:
+        db.close()
+        engine.dispose()
+
+
+from backend.app.domain.workflow_decision import WorkflowAction, WorkflowDecision
+from backend.app.domain.workflow_decision_persistence import record_workflow_decision
+from backend.app.infrastructure.db.models import WorkflowDecisionRecord
+
+
+def test_workflow_decision_is_persisted_as_immutable_history():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    WorkflowDecisionRecord.__table__.create(engine)
+    db = Session(engine)
+    try:
+        analysis_id = uuid4()
+        decision = WorkflowDecision(
+            action=WorkflowAction.CONTINUE_WITH_LIMITATION,
+            code="POPULATION_NO_DATA",
+            message="No population observation is available.",
+        )
+        record = record_workflow_decision(
+            db,
+            analysis_id=analysis_id,
+            step_id="population",
+            attempt=2,
+            outcome=OutcomeKind.NO_DATA,
+            decision=decision,
+            metadata={"scientific_limitation": True},
+        )
+        db.commit()
+
+        rows = db.scalars(
+            select(WorkflowDecisionRecord).where(
+                WorkflowDecisionRecord.analysis_id == analysis_id
+            )
+        ).all()
+        assert len(rows) == 1
+        assert rows[0].id == record.id
+        assert rows[0].step_id == "population"
+        assert rows[0].attempt == 2
+        assert rows[0].outcome_kind == "NO_DATA"
+        assert rows[0].action == "CONTINUE_WITH_LIMITATION"
+        assert rows[0].code == "POPULATION_NO_DATA"
+        assert rows[0].metadata_json["scientific_limitation"] is True
     finally:
         db.close()
         engine.dispose()
