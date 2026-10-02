@@ -133,3 +133,53 @@ def test_gnomad_adapter_uses_only_contract_endpoint_and_dataset():
     provider = GnomADGraphQLProvider.from_execution_contract(contract)
     assert provider.endpoint == "https://qualified.example/gnomad"
     assert provider.dataset_id == "gnomad_r4"
+
+
+def test_resolver_fails_closed_when_local_execution_location_disagrees_with_registry():
+    engine, db = _db()
+    try:
+        resource = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="GRCh38 reference",
+            provider="ReferenceProvider",
+            resource_type="REFERENCE_PACKAGE",
+            version="reference-v1",
+            genome_build="GRCh38",
+            access_method="LOCAL",
+            license_text=None,
+            checksum="b" * 64,
+            location="/qualified/reference.fa",
+            status="ACTIVE",
+            population_definition=None,
+            metadata_json={},
+        )
+        db.add(resource)
+        db.flush()
+        db.add(
+            ResourceQualification(
+                id=uuid4(),
+                resource_id=resource.id,
+                qualification_version="qualification-v1",
+                status="QUALIFIED",
+                checks_json={
+                    "passed": True,
+                    "execution_contract": {
+                        "provider_id": "ReferenceProvider",
+                        "provider_version": "reference-v1",
+                        "access_method": "LOCAL",
+                        "endpoint": None,
+                        "location": "/other/reference.fa",
+                        "dataset": None,
+                    },
+                },
+                qualified_by=None,
+            )
+        )
+        db.commit()
+
+        with pytest.raises(ResourceExecutionError, match="location"):
+            resolve_resource_execution(db, resource=resource)
+    finally:
+        db.close()
+        engine.dispose()
