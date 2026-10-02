@@ -117,3 +117,38 @@ def test_execution_scope_rejects_mismatch_with_resource_ownership():
             resource_access_method="HTTPS", resource_location=None,
             resource_organization_id="org-1",
         )
+
+
+def test_execution_contract_preserves_governed_toolchain():
+    execution = {
+        "provider_id": "ReferenceProvider",
+        "provider_version": "reference-v1",
+        "access_method": "LOCAL",
+        "location": "/qualified/GRCh38.fa",
+        "toolchain": {"bcftools": {"version": "1.19"}},
+    }
+    result = validate_execution_contract(
+        execution,
+        resource_provider="ReferenceProvider",
+        resource_access_method="LOCAL",
+        resource_location="/qualified/GRCh38.fa",
+    )
+    assert result.toolchain == {"bcftools": {"version": "1.19"}}
+    assert result.as_dict()["toolchain"]["bcftools"]["version"] == "1.19"
+
+
+def test_execution_contract_rejects_non_object_toolchain():
+    execution = {
+        "provider_id": "ReferenceProvider",
+        "provider_version": "reference-v1",
+        "access_method": "LOCAL",
+        "location": "/qualified/GRCh38.fa",
+        "toolchain": "bcftools-1.19",
+    }
+    with pytest.raises(ResourceSourceContractError, match="toolchain"):
+        validate_execution_contract(
+            execution,
+            resource_provider="ReferenceProvider",
+            resource_access_method="LOCAL",
+            resource_location="/qualified/GRCh38.fa",
+        )
