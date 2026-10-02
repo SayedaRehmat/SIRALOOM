@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+import hashlib
+import json
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
@@ -13,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     ResourceApproval,
     ResourceApprovalAction,
     ResourceQualification,
+    AuditEvent,
 )
 
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -324,6 +327,8 @@ def decide_resource_approval(
             OrganizationResourceBinding.identity_key == resource_identity_key,
         ))
         previous_resource_id = binding.resource_id if binding else None
+        previous_binding_version = binding.version if binding else None
+        previous_resource = db.get(Resource, previous_resource_id) if previous_resource_id else None
         if binding is None:
             db.add(OrganizationResourceBinding(
                 id=uuid4(), organization_id=organization_id, resource_id=resource.id,
@@ -337,10 +342,111 @@ def decide_resource_approval(
             binding.bound_at = datetime.now(timezone.utc)
             binding.reason = reason
             binding.version += 1
+
+    resulting_binding = None
+    if decision == "APPROVED":
+        resulting_binding = db.scalar(select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == organization_id,
+            OrganizationResourceBinding.identity_key == "|".join([resource.name, resource.provider, resource.resource_type, resource.genome_build or "UNSPECIFIED"]),
+        ))
+    _record_resource_adoption_audit(
+        db,
+        approval=approval,
+        resource=resource,
+        qualification=qualification,
+        organization_id=organization_id,
+        actor_id=actor_id,
+        decision=decision,
+        reason=reason,
+        previous_resource=previous_resource,
+        binding=resulting_binding,
+        previous_binding_version=previous_binding_version,
+    )
     db.flush()
     db.refresh(approval)
     return approval
 
+
+
+def _record_resource_adoption_audit(
+    db: Session,
+    *,
+    approval: ResourceApproval,
+    resource: Resource,
+    qualification: ResourceQualification,
+    organization_id: UUID,
+    actor_id: UUID,
+    decision: str,
+    reason: str | None,
+    previous_resource: Resource | None,
+    binding: OrganizationResourceBinding | None,
+    previous_binding_version: int | None,
+) -> AuditEvent:
+    """Persist immutable provenance for one organization release decision."""
+    before_binding = None
+    if previous_resource is not None:
+        before_binding = {
+            "resource_id": str(previous_resource.id),
+            "version": previous_resource.version,
+            "checksum": previous_resource.checksum,
+            "binding_version": previous_binding_version,
+        }
+    after_binding = None
+    if binding is not None and decision == "APPROVED":
+        after_binding = {
+            "binding_id": str(binding.id),
+            "resource_id": str(binding.resource_id),
+            "version": resource.version,
+            "checksum": resource.checksum,
+            "binding_version": binding.version,
+        }
+    payload = {
+        "approval_id": str(approval.id),
+        "approval_version": approval.version,
+        "qualification_id": str(qualification.id),
+        "qualification_version": qualification.qualification_version,
+        "decision": decision,
+        "reason": reason,
+        "previous_binding": before_binding,
+        "resulting_binding": after_binding,
+    }
+    event_hash = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, default=str, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    event = AuditEvent(
+        id=uuid4(),
+        event_version="1",
+        event_type="RESOURCE_ADOPTION_DECISION",
+        actor_type="USER",
+        actor_id=str(actor_id),
+        subject_type="RESOURCE",
+        subject_id=str(resource.id),
+        operation=decision,
+        before_state={
+            "resource_id": str(resource.id),
+            "resource_version": resource.version,
+            "resource_status": "QUALIFIED" if decision != "REJECTED" else resource.status,
+            "binding": before_binding,
+        },
+        after_state={
+            "resource_id": str(resource.id),
+            "resource_version": resource.version,
+            "resource_status": resource.status,
+            "binding": after_binding,
+        },
+        reason=reason,
+        software={},
+        workflow={"domain": "resource_registry", "approval_id": str(approval.id), "approval_version": approval.version},
+        resource_versions={
+            "requested": {"resource_id": str(resource.id), "version": resource.version, "checksum": resource.checksum},
+            "previous": before_binding,
+            "resulting": after_binding,
+        },
+        payload=payload,
+        event_hash=event_hash,
+    )
+    db.add(event)
+    return event
 
 def get_active_resource_for_organization(
     db: Session, *, organization_id: UUID, name: str, provider: str,
