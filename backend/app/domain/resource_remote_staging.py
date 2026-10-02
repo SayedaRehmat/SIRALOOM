@@ -70,8 +70,6 @@ def stage_remote_artifact(
         raise ResourceStagingError(
             "remote staging requires a published expected SHA-256 checksum"
         )
-    _validate_remote_source(row.source_uri, allowed_hosts)
-
     destination = Path(row.destination_uri)
     if row.status == "DISCOVERED":
         prepare_staging(db, row)
@@ -81,6 +79,7 @@ def stage_remote_artifact(
     transition_staging(db, row, "STAGING")
     temporary: Path | None = None
     try:
+        _validate_remote_source(row.source_uri, allowed_hosts)
         request = Request(
             row.source_uri,
             headers={
