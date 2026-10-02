@@ -78,6 +78,7 @@ def _find_approved_active_binding(
     provider: str,
     resource_type: str,
     genome_build: str | None,
+    expected_provider_version: str | None = None,
 ) -> Resource | None:
     identity_key = _resource_identity_key(
         name=name,
