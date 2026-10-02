@@ -134,7 +134,8 @@ def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool =
         return
     entitlement.analyses_used += 1
     db.add(entitlement)
-    db.commit()
+    if commit:
+        db.commit()
 
 
 def effective_max_upload_bytes(db: Session, organization_id: UUID, default_max_bytes: int) -> int:
