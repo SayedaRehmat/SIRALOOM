@@ -48,8 +48,8 @@ class GnomADGraphQLProvider:
     provider_version = "graphql"
     default_endpoint = "https://gnomad.broadinstitute.org/api"
 
-    def __init__(self, endpoint: str, dataset_id: str, delay_seconds: float = 0.0):
-        self.endpoint = endpoint
+    def __init__(self, endpoint: str | None = None, dataset_id: str = "gnomad_r4", delay_seconds: float = 0.0):
+        self.endpoint = endpoint or self.default_endpoint
         self.dataset_id = dataset_id
         self.delay_seconds = max(0.0, delay_seconds)
 
