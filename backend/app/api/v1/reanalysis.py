@@ -148,6 +148,8 @@ def execute_reanalysis_candidate(
     candidate = db.get(ReanalysisCandidate, candidate_id)
     if not candidate or candidate.organization_id != principal.organization_id:
         raise HTTPException(status_code=404, detail="Reanalysis candidate not found")
+    if candidate.status != "PENDING":
+        raise HTTPException(status_code=409, detail="This reanalysis candidate has already been acted on.")
 
     parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal)
     if parent.status != "SUCCEEDED":
