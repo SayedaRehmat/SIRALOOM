@@ -76,7 +76,7 @@ class GnomADGraphQLProvider:
             raise GnomADProviderError("gNOMAD execution contract does not contain an endpoint.")
         if not contract.dataset:
             raise GnomADProviderError("gNOMAD execution contract does not contain a dataset.")
-        return cls(endpoint=contract.endpoint, dataset_id=contract.dataset, delay_seconds=delay_seconds)
+        provider = cls(endpoint=contract.endpoint, dataset_id=contract.dataset, delay_seconds=delay_seconds)\n        provider.execution_scope = contract.execution_scope\n        return provider
 
     def query_variant(self, variant: CanonicalVariant) -> list[PopulationObservationData]:
         variant_id = f"{variant.chromosome.removeprefix('chr')}:{variant.position}:{variant.reference}:{variant.alternate}"
@@ -113,7 +113,7 @@ class GnomADGraphQLProvider:
             "endpoint": self.endpoint,
             "dataset_selector": self.dataset_id,
             "variant_id": variant_id,
-            "genome_build": variant.genome_build,
+            "genome_build": variant.genome_build,\n            "execution_scope": self.execution_scope,
         }
         request_fingerprint = hashlib.sha256(
             json.dumps(
