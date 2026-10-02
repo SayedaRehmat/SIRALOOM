@@ -257,6 +257,35 @@ def resolve_resource_with_fallback(
             used_fallback=False,
         )
 
+    if requested is not None and requested.status == "QUALIFIED":
+        # A laboratory-approved binding is the adoption boundary for an
+        # organization-owned release. Such a release remains QUALIFIED in the
+        # global registry; the binding makes that exact version directly
+        # consumable for this organization. Do not report this normal selection
+        # as a fallback, otherwise every newly approved laboratory release
+        # would appear to have recovered from failure.
+        approved_binding = _find_approved_active_binding(
+            db,
+            organization_id=organization_id,
+            name=requested.name,
+            provider=requested.provider,
+            resource_type=requested.resource_type,
+            genome_build=requested.genome_build or expected_build,
+            expected_provider_version=expected_provider_version,
+        )
+        if approved_binding is not None and approved_binding.id == requested.id:
+            return ResourceResolution(
+                resource=requested,
+                requested_resource_id=requested.id,
+                fallback_resource_id=None,
+                decision=WorkflowDecision(
+                    action=WorkflowAction.CONTINUE,
+                    code="RESOURCE_APPROVED_BINDING_SELECTED",
+                    message="Requested qualified resource is the organization's approved binding.",
+                ),
+                used_fallback=False,
+            )
+
     if requested is not None:
         identity = requested
         name = identity.name
