@@ -104,7 +104,7 @@ def test_change_detector_creates_durable_candidate_and_notifications_idempotentl
         tables=[
             Organization.__table__, User.__table__, OrganizationMembership.__table__,
             Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
-            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__, AuditEvent.__table__,
         ],
     )
 
@@ -245,6 +245,7 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         AnalysisPartition,
         Annotation,
         Artifact,
+        AuditEvent,
         Variant,
         WorkflowStep,
     )
