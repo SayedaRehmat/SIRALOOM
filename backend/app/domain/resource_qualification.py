@@ -81,6 +81,22 @@ def _qualify_clinvar(resource: Resource, path: Path | None, checks: dict[str, An
         checks["artifact_validation"] = f"INVALID: {exc}"
 
 
+def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
+    """Require the exact normalization toolchain for governed reference execution."""
+    toolchain = dict(execution.toolchain or {})
+    bcftools = toolchain.get("bcftools")
+    if not isinstance(bcftools, dict):
+        blockers.append("BCFTOOLS_TOOLCHAIN_NOT_DECLARED")
+        return
+    version = str(bcftools.get("version") or "").strip()
+    if not version:
+        blockers.append("BCFTOOLS_VERSION_NOT_DECLARED")
+        return
+    checks["bcftools_version"] = version
+    checks["bcftools_tool"] = "bcftools"
+    checks["bcftools_execution"] = "GOVERNED"
+
+
 def qualify_resource(resource: Resource, *, qualification_version: str = "siraloom-resource-qualification-v1") -> QualificationResult:
     if not qualification_version.strip():
         raise ValueError("qualification_version is required")
@@ -125,6 +141,8 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
         "staging": "NOT_PRESENT",
         "activation_blockers": blockers,
     }
+    if resource.resource_type == "REFERENCE_PACKAGE":
+        _qualify_reference_toolchain(resource, execution, blockers, checks)
     path = _local_path(resource)
     if path is not None and path.is_file() and path.stat().st_size > 0:
         actual = _sha256(path)
