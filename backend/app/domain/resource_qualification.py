@@ -103,6 +103,7 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
             resource_provider=resource.provider,
             resource_access_method=resource.access_method,
             resource_location=resource.location,
+            resource_organization_id=resource.organization_id,
         )
     except ResourceSourceContractError as exc:
         return QualificationResult(qualification_version, False, {
