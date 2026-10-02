@@ -338,6 +338,21 @@ def decide_resource_approval(
             binding.reason = reason
             binding.version += 1
     db.flush()
+
+    if decision == "APPROVED":
+        # Adoption is the change-management boundary. Impact identification is
+        # performed immediately after the immutable adoption event exists; it
+        # never rewrites historical analyses and only creates PENDING_REANALYSIS
+        # records for analyses that actually used the replaced release.
+        from backend.app.domain.resource_change_management import (
+            identify_resource_change_impacts,
+        )
+
+        identify_resource_change_impacts(
+            db,
+            adoption_event_id=adoption_event.id,
+        )
+
     db.refresh(approval)
     return approval
 
