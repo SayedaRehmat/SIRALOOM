@@ -77,7 +77,12 @@ def test_clinvar_qualification_validates_beyond_first_megabyte(tmp_path):
     with gzip_open(artifact, "wb") as handle:
         handle.write(payload)
 
-    result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
+    resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
+    artifact = Path(resource.location)
+    with gzip_open(artifact, "wb") as handle:
+        handle.write(payload)
+
+    result = qualify_resource(resource)
 
     assert result.passed is False
     assert result.checks["artifact_validation"].startswith("INVALID:")
