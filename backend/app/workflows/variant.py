@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
+from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
 from backend.app.config import settings
@@ -1727,6 +1728,41 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
                 resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
 
+                # ClinVar is consumed here as direct clinical-database evidence,
+                # not as an annotation-stage side effect. The analysis must pin a
+                # registered resource version; runtime execution then resolves the
+                # exact qualified contract and reads only the staged authoritative
+                # release through the governed adapter.
+                clinvar_resource = None
+                clinvar_provider = None
+                clinvar_resource_id = (analysis.configuration or {}).get("clinvar_resource_id")
+                if clinvar_resource_id:
+                    clinvar_resource = _require_registered_resource(
+                        db,
+                        resource_id=clinvar_resource_id,
+                        expected_type="EVIDENCE",
+                        expected_build=analysis.reference_build,
+                        expected_provider="NCBI ClinVar",
+                    )
+                    clinvar_execution = resolve_resource_execution(
+                        db,
+                        resource=clinvar_resource,
+                    )
+                    clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                        resolved=clinvar_execution,
+                        resource_location=clinvar_resource.location,
+                        genome_build=analysis.reference_build,
+                    )
+                    clinvar_execution_metadata = {
+                        **clinvar_execution.snapshot,
+                        "resource_name": clinvar_resource.name,
+                        "resource_checksum": clinvar_resource.checksum,
+                        "execution_dataset": clinvar_execution.contract.dataset,
+                    }
+                else:
+                    clinvar_execution = None
+                    clinvar_execution_metadata = None
+
                 from backend.app.infrastructure.db.models import Case, PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
@@ -1769,17 +1805,112 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             variant_id=row.id, case_hpo_terms=case_hpo_terms, gene=gene_symbol,
                             gene_disease_records=gene_disease_records, literature_records=literature_records,
                         ))
-                        for record in records:
-                            provenance = {
-                                "resource_id": ann.resource_id,
-                                "source_record_id": None,
-                                "request_fingerprint": ann.request_fingerprint,
-                                "response_sha256": ann.response_sha256,
-                                "request_metadata": ann.request_metadata or {},
-                                "observed_at": ann.observed_at,
-                                "source_name": record.source_name,
-                                "source_version": record.source_version,
+
+                        if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
+                            query_material = {
+                                "analysis_id": str(analysis.id),
+                                "variant_id": str(row.id),
+                                "genome_build": row.genome_build,
+                                "chromosome": row.chromosome,
+                                "position": row.position,
+                                "reference": row.reference,
+                                "alternate": row.alternate,
+                                "resource_id": str(clinvar_execution.resource_id),
+                                "resource_version": clinvar_execution.resource_version,
+                                "contract_hash": clinvar_execution.contract_hash,
                             }
+                            request_fingerprint = hashlib.sha256(
+                                json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                            ).hexdigest()
+                            execution_row = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="build_evidence",
+                                attempt=attempt,
+                                batch_key=key,
+                                resolved=clinvar_execution,
+                                requested_resource_id=clinvar_resource.id,
+                                fallback_resource_id=None,
+                                metadata={
+                                    "execution_kind": "CLINVAR_VARIANT_QUERY",
+                                    "query": query_material,
+                                },
+                            )
+                            try:
+                                assertions = clinvar_provider.query_variant(
+                                    chromosome=row.chromosome,
+                                    position=row.position,
+                                    reference=row.reference,
+                                    alternate=row.alternate,
+                                )
+                                response_material = [
+                                    {
+                                        "record_type": x.record_type,
+                                        "accession": x.accession,
+                                        "version": x.version,
+                                        "record_sha256": x.record_sha256,
+                                    }
+                                    for x in assertions
+                                ]
+                                response_sha256 = hashlib.sha256(
+                                    json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                                ).hexdigest()
+                                complete_resource_execution(
+                                    db,
+                                    execution_row,
+                                    status="SUCCESS" if assertions else "NO_DATA",
+                                    request_fingerprint=request_fingerprint,
+                                    response_sha256=response_sha256,
+                                )
+                                records.extend(
+                                    engine.build_from_clinvar_assertions(
+                                        variant_id=row.id,
+                                        assertions=assertions,
+                                        resource_id=clinvar_execution.resource_id,
+                                        resource_name=clinvar_resource.name,
+                                        resource_version=clinvar_resource.version,
+                                        request_fingerprint=request_fingerprint,
+                                        execution_metadata={
+                                            **clinvar_execution_metadata,
+                                            "query": query_material,
+                                            "response_sha256": response_sha256,
+                                        },
+                                    )
+                                )
+                            except Exception as exc:
+                                complete_resource_execution(
+                                    db,
+                                    execution_row,
+                                    status="FAILED",
+                                    request_fingerprint=request_fingerprint,
+                                    error_code="CLINVAR_QUERY_FAILED",
+                                    error_message=str(exc),
+                                )
+                                raise
+
+                        for record in records:
+                            if record.resource_id is not None:
+                                provenance = {
+                                    "resource_id": record.resource_id,
+                                    "source_record_id": record.source_record_id,
+                                    "request_fingerprint": record.request_fingerprint,
+                                    "response_sha256": record.response_sha256,
+                                    "request_metadata": record.request_metadata or {},
+                                    "observed_at": record.observed_at,
+                                    "source_name": record.source_name,
+                                    "source_version": record.source_version,
+                                }
+                            else:
+                                provenance = {
+                                    "resource_id": ann.resource_id,
+                                    "source_record_id": None,
+                                    "request_fingerprint": ann.request_fingerprint,
+                                    "response_sha256": ann.response_sha256,
+                                    "request_metadata": ann.request_metadata or {},
+                                    "observed_at": ann.observed_at,
+                                    "source_name": record.source_name,
+                                    "source_version": record.source_version,
+                                }
                             if len(record.observation_ids) == 1:
                                 obs = next((o for o in population_rows if o.id == record.observation_ids[0]), None)
                                 if obs is not None:
@@ -1851,6 +1982,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     payload={"created_evidence": created, "engine_version": engine.engine_version},
                 )
                 db.commit()
+            except (ResourceConsumptionError, ResourceExecutionError, ClinVarProviderError) as exc:
+                code = getattr(exc, "code", None) or "CLINVAR_RESOURCE_UNAVAILABLE"
+                mark_step(
+                    db,
+                    evidence_step,
+                    StepStatus.BLOCKED,
+                    error_code=code,
+                    error_message=str(exc),
+                    metadata={"next_step": "RESOURCE_REQUIRED", "automatic_fallback": False},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                db.commit()
+                audit.record(
+                    event_type="EVIDENCE_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SERVICE",
+                    actor_id="clinvar-resource",
+                    reason=str(exc),
+                    payload={"error_code": code, "automatic_fallback": False},
+                )
+                db.commit()
+                return
             except Exception as exc:
                 mark_step(db, evidence_step, StepStatus.FAILED, error_code="EVIDENCE_BUILD_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
