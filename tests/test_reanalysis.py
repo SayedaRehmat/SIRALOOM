@@ -66,7 +66,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
             db, parent=parent, trigger_type="MANUAL", requested_by=user_id,
             reason="Laboratory-requested repeat analysis.",
         )
-        entitlement = db.get(OrganizationEntitlement, organization_id)
+        entitlement = db.scalar(select(OrganizationEntitlement).where(OrganizationEntitlement.organization_id == organization_id))
         assert first.analysis_version == 2
         assert first.parent_analysis_id == parent_id
         assert first_candidate is None
@@ -77,7 +77,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
             db, parent=parent, trigger_type="MANUAL", requested_by=user_id,
             reason="Duplicate laboratory request.",
         )
-        entitlement = db.get(OrganizationEntitlement, organization_id)
+        entitlement = db.scalar(select(OrganizationEntitlement).where(OrganizationEntitlement.organization_id == organization_id))
         assert second.id == first.id
         assert second_candidate is None
         assert entitlement.analyses_used == 1
