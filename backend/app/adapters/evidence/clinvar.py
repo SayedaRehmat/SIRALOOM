@@ -62,6 +62,7 @@ class ClinVarVCVProvider:
         qualification_version: str,
         contract_hash: str,
         genome_build: str,
+        index_root: str,
     ) -> None:
         self.xml_path = Path(xml_path)
         self.resource_id = resource_id
@@ -70,7 +71,7 @@ class ClinVarVCVProvider:
         self.qualification_version = qualification_version
         self.contract_hash = contract_hash
         self.genome_build = genome_build
-        self.index_path = self.xml_path.with_suffix(self.xml_path.suffix + ".siraloom.sqlite3")
+        self.index_path = (\n            Path(index_root)\n            / "clinvar"\n            / str(resource_id)\n            / resource_version\n            / genome_build\n            / "index.sqlite3"\n        )
         self._validate_inputs()
 
     @classmethod
@@ -80,6 +81,7 @@ class ClinVarVCVProvider:
         resolved: ResolvedResourceExecution,
         resource_location: str | None,
         genome_build: str,
+        index_root: str,
     ) -> "ClinVarVCVProvider":
         contract = resolved.contract
         if contract.provider_id != cls.provider_id:
@@ -108,6 +110,7 @@ class ClinVarVCVProvider:
             qualification_version=resolved.qualification_version,
             contract_hash=resolved.contract_hash,
             genome_build=genome_build,
+            index_root=index_root,
         )
 
     def query_variant(
