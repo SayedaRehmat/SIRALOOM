@@ -15,7 +15,7 @@ from backend.app.domain.resources import (
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Organization, OrganizationResourceBinding, Resource, ResourceApproval,
-    ResourceApprovalAction, ResourceQualification, User,
+    ResourceApprovalAction, ResourceQualification, User, AuditEvent,
 )
 
 
@@ -31,6 +31,7 @@ def _engine():
             ResourceApproval.__table__,
             ResourceApprovalAction.__table__,
             OrganizationResourceBinding.__table__,
+            AuditEvent.__table__,
         ],
     )
     return engine
