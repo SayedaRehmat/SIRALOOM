@@ -52,6 +52,8 @@ def _qualify_clinvar(resource: Resource, path: Path | None, checks: dict[str, An
     checks["provider"] = "ClinVarReleaseProvider"
     checks["release_filename"] = expected_name
     checks["artifact_filename_match"] = artifact_url.endswith(expected_name)
+    if not checks["artifact_filename_match"]:
+        checks["activation_blockers"].append("ARTIFACT_RELEASE_FILENAME_MISMATCH")
     if path is None:
         checks["artifact_validation"] = "STAGING_REQUIRED"
         return

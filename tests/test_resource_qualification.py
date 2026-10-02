@@ -50,3 +50,17 @@ def test_missing_staging_is_actionable(tmp_path):
     assert result.passed is False
     assert "STAGED_ARTIFACT_MISSING" in result.blockers
     assert result.checks["qualification_outcome"] == "BLOCKED"
+
+def test_clinvar_release_filename_mismatch_blocks_qualification(tmp_path):
+    resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
+    metadata = dict(resource.metadata_json or {})
+    contract = dict(metadata["source_contract"])
+    contract["artifact_url"] = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_2026-08.xml.gz"
+    metadata["source_contract"] = contract
+    resource.metadata_json = metadata
+
+    result = qualify_resource(resource)
+
+    assert result.passed is False
+    assert result.checks["artifact_filename_match"] is False
+    assert "ARTIFACT_RELEASE_FILENAME_MISMATCH" in result.blockers
