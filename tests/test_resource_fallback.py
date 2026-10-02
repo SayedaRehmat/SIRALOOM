@@ -462,3 +462,43 @@ def test_fallback_is_rejected_when_runtime_provider_version_is_not_proven():
         assert result.decision.action is WorkflowAction.WAIT_FOR_RESOURCE
     finally:
         db.close(); engine.dispose()
+
+def test_approved_qualified_lab_binding_is_selected_directly_without_fallback():
+    engine, db = _db()
+    try:
+        org_id = uuid4()
+        db.add(Organization(id=org_id, name="Lab", external_identifier=None))
+        approved = _resource(
+            db,
+            organization_id=None,
+            name="AnnotationDB",
+            provider="PROVIDER",
+            resource_type="ANNOTATION",
+            version="approved-v2",
+            status="QUALIFIED",
+            metadata_json={"execution": {"provider_version": "v2"}},
+        )
+        _qualify(db, approved)
+        _bind(db, organization_id=org_id, resource=approved)
+        db.commit()
+
+        result = resolve_resource_with_fallback(
+            db,
+            organization_id=org_id,
+            requested_resource_id=approved.id,
+            expected_type="ANNOTATION",
+            expected_build="GRCh38",
+            expected_provider="PROVIDER",
+            expected_provider_version="v2",
+        )
+
+        assert result.resource is not None
+        assert result.resource.id == approved.id
+        assert result.requested_resource_id == approved.id
+        assert result.fallback_resource_id is None
+        assert result.used_fallback is False
+        assert result.decision.action is WorkflowAction.CONTINUE
+        assert result.decision.code == "RESOURCE_APPROVED_BINDING_SELECTED"
+    finally:
+        db.close()
+        engine.dispose()
