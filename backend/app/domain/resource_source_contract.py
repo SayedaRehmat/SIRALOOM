@@ -105,3 +105,89 @@ def validate_source_contract(value: dict[str, object]) -> ResourceSourceContract
             "LICENSE_REQUIRED resources require a verified license before qualification"
         )
     return contract
+
+
+@dataclass(frozen=True)
+class ResourceExecutionContract:
+    """Exact runtime binding required to execute a governed resource."""
+
+    provider_id: str
+    provider_version: str
+    access_method: str
+    endpoint: str | None
+    location: str | None
+    dataset: str | None
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "provider_id": self.provider_id,
+            "provider_version": self.provider_version,
+            "access_method": self.access_method,
+            "endpoint": self.endpoint,
+            "location": self.location,
+            "dataset": self.dataset,
+        }
+
+
+def validate_execution_contract(
+    value: dict[str, object],
+    *,
+    resource_provider: str,
+    resource_access_method: str,
+    resource_location: str | None,
+) -> ResourceExecutionContract:
+    """Validate the runtime binding against immutable registry identity."""
+    if not isinstance(value, dict):
+        raise ResourceSourceContractError("execution contract must be an object")
+    required = ("provider_id", "provider_version", "access_method")
+    missing = [key for key in required if not str(value.get(key) or "").strip()]
+    if missing:
+        raise ResourceSourceContractError(
+            "execution contract missing required fields: " + ", ".join(missing)
+        )
+    provider_id = str(value["provider_id"]).strip()
+    provider_version = str(value["provider_version"]).strip()
+    access_method = str(value["access_method"]).strip().upper()
+    registered_access_method = str(resource_access_method or "").strip().upper()
+    if provider_id != resource_provider:
+        raise ResourceSourceContractError(
+            f"execution provider_id {provider_id!r} does not match registered provider {resource_provider!r}"
+        )
+    if access_method != registered_access_method:
+        raise ResourceSourceContractError(
+            f"execution access_method {access_method!r} does not match registered access_method {registered_access_method!r}"
+        )
+    endpoint = str(value.get("endpoint") or "").strip() or None
+    location = str(value.get("location") or "").strip() or None
+    dataset = str(value.get("dataset") or "").strip() or None
+    if access_method in {"HTTPS", "HTTP", "GRAPHQL", "API"}:
+        if not endpoint:
+            raise ResourceSourceContractError(
+                f"execution access_method {access_method!r} requires endpoint"
+            )
+        parsed = urlparse(endpoint)
+        if parsed.scheme not in {"https", "http"} or not parsed.netloc:
+            raise ResourceSourceContractError(
+                "execution endpoint must be an absolute HTTP(S) URL"
+            )
+    elif access_method in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+        if not location:
+            raise ResourceSourceContractError(
+                f"execution access_method {access_method!r} requires location"
+            )
+        if resource_location and location != str(resource_location):
+            raise ResourceSourceContractError(
+                "execution location does not match registered resource location"
+            )
+    elif not endpoint and not location:
+        raise ResourceSourceContractError(
+            f"execution access_method {access_method!r} requires endpoint or location"
+        )
+    return ResourceExecutionContract(
+        provider_id=provider_id,
+        provider_version=provider_version,
+        access_method=access_method,
+        endpoint=endpoint,
+        location=location,
+        dataset=dataset,
+    )
