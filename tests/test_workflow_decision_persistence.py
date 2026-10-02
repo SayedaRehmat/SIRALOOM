@@ -27,6 +27,7 @@ def _fixture():
             Case.__table__,
             Analysis.__table__,
             WorkflowStep.__table__,
+            WorkflowDecisionRecord.__table__,
         ],
     )
     organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
