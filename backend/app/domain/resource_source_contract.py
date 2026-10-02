@@ -157,7 +157,7 @@ def validate_execution_contract(
         raise ResourceSourceContractError(
             f"execution access_method {access_method!r} does not match registered access_method {registered_access_method!r}"
         )
-    endpoint = str(value.get("endpoint") or "").strip() or None
+    endpoint = str(value.get("endpoint") or "").strip() or None\n    declared_scope = str(value.get("execution_scope") or "").strip().upper() or None\n    expected_scope = "ORGANIZATION_MANAGED" if resource_organization_id is not None else "SIRALOOM_MANAGED"\n    if declared_scope is not None and declared_scope not in {"SIRALOOM_MANAGED", "ORGANIZATION_MANAGED"}:\n        raise ResourceSourceContractError(\n            f"unsupported execution_scope {declared_scope!r}"\n        )\n    if declared_scope is not None and declared_scope != expected_scope:\n        raise ResourceSourceContractError(\n            f"execution scope {declared_scope!r} does not match resource ownership scope {expected_scope!r}"\n        )
     location = str(value.get("location") or "").strip() or None
     dataset = str(value.get("dataset") or "").strip() or None
     if access_method in {"HTTPS", "HTTP", "GRAPHQL", "API"}:
