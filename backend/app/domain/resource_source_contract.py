@@ -117,6 +117,8 @@ class ResourceExecutionContract:
     endpoint: str | None
     location: str | None
     dataset: str | None
+    execution_scope: str = "UNSPECIFIED"
+    toolchain: dict[str, object] | None = None
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -126,6 +128,8 @@ class ResourceExecutionContract:
             "endpoint": self.endpoint,
             "location": self.location,
             "dataset": self.dataset,
+            "execution_scope": self.execution_scope,
+            "toolchain": self.toolchain,
         }
 
 
@@ -135,6 +139,7 @@ def validate_execution_contract(
     resource_provider: str,
     resource_access_method: str,
     resource_location: str | None,
+    resource_organization_id: object | None = None,
 ) -> ResourceExecutionContract:
     """Validate the runtime binding against immutable registry identity."""
     if not isinstance(value, dict):
@@ -157,9 +162,25 @@ def validate_execution_contract(
         raise ResourceSourceContractError(
             f"execution access_method {access_method!r} does not match registered access_method {registered_access_method!r}"
         )
-    endpoint = str(value.get("endpoint") or "").strip() or None\n    declared_scope = str(value.get("execution_scope") or "").strip().upper() or None\n    expected_scope = "ORGANIZATION_MANAGED" if resource_organization_id is not None else "SIRALOOM_MANAGED"\n    if declared_scope is not None and declared_scope not in {"SIRALOOM_MANAGED", "ORGANIZATION_MANAGED"}:\n        raise ResourceSourceContractError(\n            f"unsupported execution_scope {declared_scope!r}"\n        )\n    if declared_scope is not None and declared_scope != expected_scope:\n        raise ResourceSourceContractError(\n            f"execution scope {declared_scope!r} does not match resource ownership scope {expected_scope!r}"\n        )
+
+    endpoint = str(value.get("endpoint") or "").strip() or None
     location = str(value.get("location") or "").strip() or None
     dataset = str(value.get("dataset") or "").strip() or None
+
+    declared_scope = str(value.get("execution_scope") or "").strip().upper() or None
+    expected_scope = "ORGANIZATION_MANAGED" if resource_organization_id is not None else "SIRALOOM_MANAGED"
+    if declared_scope is not None and declared_scope not in {"SIRALOOM_MANAGED", "ORGANIZATION_MANAGED"}:
+        raise ResourceSourceContractError(f"unsupported execution_scope {declared_scope!r}")
+    if declared_scope is not None and declared_scope != expected_scope:
+        raise ResourceSourceContractError(
+            f"execution scope {declared_scope!r} does not match resource ownership scope {expected_scope!r}"
+        )
+
+    raw_toolchain = value.get("toolchain")
+    if raw_toolchain is not None and not isinstance(raw_toolchain, dict):
+        raise ResourceSourceContractError("execution toolchain must be an object")
+    toolchain = dict(raw_toolchain) if isinstance(raw_toolchain, dict) else None
+
     if access_method in {"HTTPS", "HTTP", "GRAPHQL", "API"}:
         if not endpoint:
             raise ResourceSourceContractError(
@@ -183,6 +204,7 @@ def validate_execution_contract(
         raise ResourceSourceContractError(
             f"execution access_method {access_method!r} requires endpoint or location"
         )
+
     return ResourceExecutionContract(
         provider_id=provider_id,
         provider_version=provider_version,
@@ -190,4 +212,6 @@ def validate_execution_contract(
         endpoint=endpoint,
         location=location,
         dataset=dataset,
+        execution_scope=expected_scope,
+        toolchain=toolchain,
     )
