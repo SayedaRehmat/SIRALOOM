@@ -103,10 +103,11 @@ def test_clinvar_queries_all_submitted_assertions_and_release_identity(tmp_path)
         alternate="g",
     )
 
-    assert {record.record_type for record in records} == {"SCV"}
-    assert {(r.accession, r.version) for r in records} == {
-        ("SCV000000001", "4"),
-        ("SCV000000002", "1"),
+    assert {record.record_type for record in records} == {"SCV", "VCV"}
+    assert {(r.record_type, r.accession, r.version) for r in records} == {
+        ("VCV", "VCV000000001", "3"),
+        ("SCV", "SCV000000001", "4"),
+        ("SCV", "SCV000000002", "1"),
     }
     assert records[0].payload["vcv"] == {
         "accession": "VCV000000001",
@@ -118,6 +119,9 @@ def test_clinvar_queries_all_submitted_assertions_and_release_identity(tmp_path)
         "RCV000000002.7",
     )
     assert {r.classification for r in records} == {"Pathogenic", "Benign"}
+    vcv = next(r for r in records if r.record_type == "VCV")
+    assert vcv.rcv_accessions == ("RCV000000001.2", "RCV000000002.7")
+    assert vcv.payload["vcv"]["accession"] == "VCV000000001"
 
 
 def test_clinvar_index_is_invalidated_when_authoritative_release_changes(tmp_path):
