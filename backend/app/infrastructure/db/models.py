@@ -296,6 +296,35 @@ class Resource(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class ResourceDiscovery(Base):
+    """Durable identity and provenance for a discovered resource release."""
+
+    __tablename__ = "resource_discoveries"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    publisher: Mapped[str] = mapped_column(Text, nullable=False)
+    canonical_source_url: Mapped[str] = mapped_column(Text, nullable=False)
+    artifact_url: Mapped[str] = mapped_column(Text, nullable=False)
+    release_identity: Mapped[str] = mapped_column(Text, nullable=False)
+    access_mode: Mapped[str] = mapped_column(Text, nullable=False)
+    license_status: Mapped[str] = mapped_column(Text, nullable=False)
+    license_url: Mapped[str | None] = mapped_column(Text)
+    terms_url: Mapped[str | None] = mapped_column(Text)
+    checksum_status: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_sha256: Mapped[str | None] = mapped_column(Text)
+    expected_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    authority_evidence_url: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="DISCOVERED")
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+    __table_args__ = (
+        UniqueConstraint("resource_id", "release_identity", "artifact_url"),
+    )
+
+
 class ResourceStaging(Base):
     """Durable staging/integrity state for a concrete resource release artifact."""
 

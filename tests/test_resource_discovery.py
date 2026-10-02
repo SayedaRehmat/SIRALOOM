@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain import resource_discovery
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, Resource
+from backend.app.infrastructure.db.models import Organization, Resource, ResourceDiscovery, ResourceStaging
 
 
 class FakeEntryPoint:
@@ -44,7 +44,7 @@ class FakeProvider:
 
 def test_provider_discovery_registers_candidates_without_activation(monkeypatch):
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine, tables=[Organization.__table__, Resource.__table__])
+    Base.metadata.create_all(engine, tables=[Organization.__table__, Resource.__table__, ResourceDiscovery.__table__, ResourceStaging.__table__])
     monkeypatch.setattr(resource_discovery, "entry_points", lambda: FakeEntryPoints())
 
     with Session(engine) as db:
@@ -54,3 +54,19 @@ def test_provider_discovery_registers_candidates_without_activation(monkeypatch)
         assert resource.status == "CANDIDATE"
         assert resource.metadata_json["release_channel"] == "stable"
         assert resource.metadata_json["discovery_provider"].endswith(".FakeProvider")
+
+
+def test_provider_discovery_persists_source_identity_and_never_activates(monkeypatch):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[Organization.__table__, Resource.__table__, ResourceDiscovery.__table__, ResourceStaging.__table__])
+    monkeypatch.setattr(resource_discovery, "entry_points", lambda: FakeEntryPoints())
+
+    with Session(engine) as db:
+        resource_discovery.discover_resource_candidates(db)
+        discovery = db.query(ResourceDiscovery).one()
+        assert discovery.publisher == "FutureProvider"
+        assert discovery.release_identity == "2026.10"
+        assert discovery.status == "DISCOVERED"
+        assert discovery.authority_evidence_url == "https://example.org/resource/docs"
+        assert db.query(ResourceStaging).count() == 0
+        assert db.query(Resource).one().status == "CANDIDATE"
