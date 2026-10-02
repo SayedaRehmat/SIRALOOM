@@ -126,6 +126,7 @@ def test_clinvar_index_is_invalidated_when_authoritative_release_changes(tmp_pat
         resolved=_resolved(path),
         resource_location=str(path),
         genome_build="GRCh38",
+        index_root=str(path.parent / "cache"),
     )
     assert len(provider.query_variant(
         chromosome="1", position=100, reference="A", alternate="G"
