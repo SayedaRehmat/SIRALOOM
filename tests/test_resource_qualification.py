@@ -20,6 +20,12 @@ def _resource(tmp_path: Path, *, checksum: str | None, license_status: str = "NO
             "release_identity": "2026-09", "access_mode": "PUBLIC",
             "license_status": license_status, "checksum_status": checksum_status,
             "authority_evidence_url": "https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/",
+        }, "execution": {
+            "provider_id": "NCBI ClinVar",
+            "provider_version": "release-xml-v1",
+            "access_method": "HTTPS",
+            "endpoint": "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_2026-09.xml.gz",
+            "dataset": "ClinVar VCV XML",
         }},
     )
 
@@ -51,16 +57,14 @@ def test_missing_staging_is_actionable(tmp_path):
     assert "STAGED_ARTIFACT_MISSING" in result.blockers
     assert result.checks["qualification_outcome"] == "BLOCKED"
 
-def test_clinvar_release_filename_mismatch_blocks_qualification(tmp_path):
+def test_qualification_requires_execution_contract(tmp_path):
     resource = _resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED")
-    metadata = dict(resource.metadata_json or {})
-    contract = dict(metadata["source_contract"])
-    contract["artifact_url"] = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_2026-08.xml.gz"
-    metadata["source_contract"] = contract
-    resource.metadata_json = metadata
-
+    resource.metadata_json.pop("execution")
     result = qualify_resource(resource)
-
     assert result.passed is False
-    assert result.checks["artifact_filename_match"] is False
-    assert "ARTIFACT_RELEASE_FILENAME_MISMATCH" in result.blockers
+    assert "EXECUTION_CONTRACT_INVALID" in result.blockers
+
+
+def test_qualification_records_execution_contract(tmp_path):
+    result = qualify_resource(_resource(tmp_path, checksum=None, checksum_status="NOT_PUBLISHED"))
+    assert result.checks["execution_contract"]["provider_id"] == "NCBI ClinVar"
