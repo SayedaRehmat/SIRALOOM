@@ -804,3 +804,23 @@ class Notification(Base):
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WorkflowDecisionRecord(Base):
+    """Immutable durable record of the decision taken for one workflow outcome."""
+    __tablename__ = "workflow_decision_records"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    step_id: Mapped[str] = mapped_column(Text, nullable=False)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    outcome_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    code: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    retryable: Mapped[bool] = mapped_column(nullable=False, default=False)
+    fallback_allowed: Mapped[bool] = mapped_column(nullable=False, default=False)
+    lab_action_required: Mapped[bool] = mapped_column(nullable=False, default=False)
+    resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
+    fallback_resource_id: Mapped[UUID | None] = mapped_column(ForeignKey("resources.id"))
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
