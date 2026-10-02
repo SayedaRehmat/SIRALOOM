@@ -692,6 +692,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except ResourceExecutionError as exc:
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.RESOURCE_FAILURE,
+                    error_code="REFERENCE_EXECUTION_CONTRACT_INVALID",
+                    error_message=str(exc),
+                    metadata={
+                        "resource_id": str(selected_reference_resource.id),
+                        "requested_resource_id": str(reference_resource_id),
+                        "fallback_used": resolution.used_fallback,
+                        "next_action": WorkflowAction.REQUEST_LAB_ACTION.value,
+                    },
+                )
+                analysis.status = AnalysisStatus.RESOURCE_FAILURE
+                analysis.completed_at = None
+                db.commit()
+                audit.record(
+                    event_type="NORMALIZATION_RESOURCE_EXECUTION_INVALID",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="reference-resource",
+                    reason=str(exc),
+                    payload={
+                        "error_code": "REFERENCE_EXECUTION_CONTRACT_INVALID",
+                        "resource_id": str(selected_reference_resource.id),
+                        "requested_resource_id": str(reference_resource_id),
+                        "fallback_used": resolution.used_fallback,
+                    },
+                )
+                db.commit()
+                return
 
             temp_path: Path | None = None
             try:
