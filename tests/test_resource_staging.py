@@ -156,6 +156,7 @@ def test_checksum_mismatch_never_activates_destination(tmp_path: Path):
         source = tmp_path / "incoming.fa"
         source.write_bytes(b">1\\nACGT\\n")
         destination = tmp_path / "staged" / "GRCh38.fa"
+        destination.parent.mkdir()
         resource = _resource()
         db.add(resource)
         db.flush()
