@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from importlib.metadata import entry_points
 from typing import Any, Iterable
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select\nfrom sqlalchemy.orm import Session
 
