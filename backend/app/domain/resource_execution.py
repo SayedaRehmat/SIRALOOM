@@ -78,6 +78,7 @@ def resolve_resource_execution(
             resource_provider=resource.provider,
             resource_access_method=resource.access_method,
             resource_location=resource.location,
+            resource_organization_id=resource.organization_id,
         )
     except ResourceSourceContractError as exc:
         raise ResourceExecutionError(
