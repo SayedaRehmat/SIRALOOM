@@ -80,6 +80,7 @@ class ClinVarVCVProvider:
             / "index.sqlite3"
         )
         self._validate_inputs()
+        self.source_sha256 = _sha256_file(self.xml_path)
 
     @classmethod
     def from_execution_contract(
@@ -146,11 +147,10 @@ class ClinVarVCVProvider:
         return [_row_to_assertion(row) for row in rows]
 
     def execution_metadata(self) -> dict[str, Any]:
-        source_sha256 = _sha256_file(self.xml_path)
         index_sha256 = _sha256_file(self.index_path) if self.index_path.exists() else None
         return {
             "authoritative_artifact": str(self.xml_path),
-            "authoritative_artifact_sha256": source_sha256,
+            "authoritative_artifact_sha256": self.source_sha256,
             "derived_index": str(self.index_path),
             "derived_index_sha256": index_sha256,
             "index_schema_version": "1",
@@ -172,7 +172,7 @@ class ClinVarVCVProvider:
             raise ClinVarProviderError(f"Unsupported ClinVar genome build: {self.genome_build}")
 
     def _ensure_index(self) -> None:
-        source_sha256 = _sha256_file(self.xml_path)
+        source_sha256 = self.source_sha256
         if _index_is_current(self.index_path, source_sha256, self.resource_version, self.genome_build):
             return
         _build_index(
