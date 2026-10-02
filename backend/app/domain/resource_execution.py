@@ -98,3 +98,72 @@ def resolve_resource_execution(
         contract=contract,
         contract_hash=contract_hash,
     )
+
+
+def start_resource_execution(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    attempt: int,
+    resolved: ResolvedResourceExecution,
+    requested_resource_id: UUID | None,
+    fallback_resource_id: UUID | None,
+    batch_key: str | None = None,
+    metadata: dict | None = None,
+):
+    from datetime import datetime, timezone
+    from uuid import uuid4
+    from backend.app.infrastructure.db.models import ResourceExecutionRecord
+
+    contract = resolved.contract
+    row = ResourceExecutionRecord(
+        id=uuid4(),
+        analysis_id=analysis_id,
+        step_id=step_id,
+        attempt=attempt,
+        batch_key=batch_key,
+        resource_id=resolved.resource_id,
+        requested_resource_id=requested_resource_id,
+        fallback_resource_id=fallback_resource_id,
+        qualification_id=resolved.qualification_id,
+        qualification_version=resolved.qualification_version,
+        resource_version=resolved.resource_version,
+        provider_id=contract.provider_id,
+        provider_version=contract.provider_version,
+        access_method=contract.access_method,
+        endpoint=contract.endpoint,
+        location=contract.location,
+        dataset=contract.dataset,
+        contract_hash=resolved.contract_hash,
+        contract_json=contract.as_dict(),
+        status="STARTED",
+        metadata_json=metadata or {},
+        started_at=datetime.now(timezone.utc),
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(row)
+    db.flush()
+    return row
+
+
+def complete_resource_execution(
+    db: Session,
+    row,
+    *,
+    status: str,
+    request_fingerprint: str | None = None,
+    response_sha256: str | None = None,
+    error_code: str | None = None,
+    error_message: str | None = None,
+):
+    from datetime import datetime, timezone
+
+    row.status = status
+    row.request_fingerprint = request_fingerprint
+    row.response_sha256 = response_sha256
+    row.error_code = error_code
+    row.error_message = error_message
+    row.completed_at = datetime.now(timezone.utc)
+    db.add(row)
+    db.flush()
