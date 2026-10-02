@@ -172,7 +172,11 @@ class ClinVarVCVProvider:
             raise ClinVarProviderError(f"Unsupported ClinVar genome build: {self.genome_build}")
 
     def _ensure_index(self) -> None:
-        source_sha256 = self.source_sha256
+        # Re-read the authoritative artifact digest at execution time. A long-lived
+        # provider instance must not trust the checksum captured at construction,
+        # otherwise a replaced release could leave the derived index stale.
+        source_sha256 = _sha256_file(self.xml_path)
+        self.source_sha256 = source_sha256
         if _index_is_current(self.index_path, source_sha256, self.resource_version, self.genome_build):
             return
         _build_index(
