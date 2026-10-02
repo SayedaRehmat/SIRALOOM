@@ -48,11 +48,16 @@ def test_evidence_engine_builds_traceable_facts_without_final_classification():
     )
 
     types = {r.evidence_type for r in records}
-    assert {"POPULATION", "CLINICAL_DATABASE", "COMPUTATIONAL", "SPLICING", "CONSEQUENCE", "PROVIDER_ASSERTION"} <= types
+    assert {"POPULATION", "PROVIDER_ASSERTION", "COMPUTATIONAL", "SPLICING", "CONSEQUENCE"} <= types
     assert any(r.source_name == "gnomAD" and r.source_version == "4.x" for r in records)
     assert any(str(observation_id) in {str(x) for x in r.observation_ids} for r in records)
     assert all(r.direction in {"SUPPORTS", "REFUTES", "NEUTRAL", "UNKNOWN"} for r in records)
     assert all(r.payload for r in records)
+    clinvar_records = [r for r in records if r.payload.get("upstream_source") == "ClinVar"]
+    assert len(clinvar_records) == 1
+    assert clinvar_records[0].evidence_type == "PROVIDER_ASSERTION"
+    assert clinvar_records[0].source_name == "GeneBe"
+    assert clinvar_records[0].payload["direct_resource_execution"] is False
 
 
 def test_conflicting_clinvar_is_neutral():
@@ -67,7 +72,10 @@ def test_conflicting_clinvar_is_neutral():
         context=EvidenceContext(analysis_id=uuid4()),
     )
     assert len(records) == 1
-    assert records[0].evidence_type == "CLINICAL_DATABASE"
+    assert records[0].evidence_type == "PROVIDER_ASSERTION"
+    assert records[0].source_name == "ClinVar via GeneBe"
+    assert records[0].payload["upstream_source"] == "ClinVar"
+    assert records[0].payload["direct_resource_execution"] is False
     assert records[0].direction == "NEUTRAL"
 
 
