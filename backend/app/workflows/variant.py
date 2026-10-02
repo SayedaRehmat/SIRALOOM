@@ -530,7 +530,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "Analysis case was not found while resolving the organization-approved reference package.",
                         code="CASE_NOT_FOUND",
                     )
-                requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
+                try:
+                    requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
+                except (TypeError, ValueError) as exc:
+                    raise ReferencePackageError(
+                        f"Invalid reference package resource ID: {reference_resource_id!r}.",
+                        code="REFERENCE_PACKAGE_INVALID",
+                    ) from exc
                 if requested_reference is None:
                     raise ReferencePackageError(
                         "The configured reference package resource was not found.",
@@ -1244,7 +1250,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 if case is None:
                     raise ResourceConsumptionError("CASE_NOT_FOUND", "Analysis case was not found during population resource resolution.")
                 population_resource_id = (analysis.configuration or {}).get("population_resource_id")
-                requested_population = db.get(Resource, UUID(str(population_resource_id))) if population_resource_id else None
+                try:
+                    requested_population = db.get(Resource, UUID(str(population_resource_id))) if population_resource_id else None
+                except (TypeError, ValueError) as exc:
+                    raise ResourceConsumptionError(
+                        "RESOURCE_REQUIRED",
+                        f"Configured population resource ID is not a valid UUID: {population_resource_id}",
+                    ) from exc
                 if requested_population is None:
                     raise ResourceConsumptionError(
                         "RESOURCE_REQUIRED",
@@ -1338,7 +1350,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         delay_seconds=settings.gnomad_graphql_delay_seconds,
                     )
                     gnomad_resource_id = (analysis.configuration or {}).get("gnomad_resource_id")
-                    requested_gnomad = db.get(Resource, UUID(str(gnomad_resource_id))) if gnomad_resource_id else None
+                    try:
+                        requested_gnomad = db.get(Resource, UUID(str(gnomad_resource_id))) if gnomad_resource_id else None
+                    except (TypeError, ValueError) as exc:
+                        raise ResourceConsumptionError(
+                            "RESOURCE_REQUIRED",
+                            f"Configured gnomAD resource ID is not a valid UUID: {gnomad_resource_id}",
+                        ) from exc
                     if requested_gnomad is None:
                         raise ResourceConsumptionError(
                             "RESOURCE_REQUIRED",
