@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,7 +18,7 @@ from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf
 from backend.app.domain.reference import ReferenceError
-from backend.app.domain.reference_package import ReferencePackageError, load_reference_package
+from backend.app.domain.reference_package import ReferencePackageError, load_reference_package, sha256_file
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
@@ -615,6 +617,26 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     allow_approved_qualified=resolution.used_fallback,
                 )
                 reference_fasta_path = Path(reference_package["fasta_path"])
+
+                # The reference package is a governed executable resource. The
+                # runtime contract must be the same contract that technical
+                # qualification approved; workflow settings may not reconstruct
+                # provider identity or local resource location.
+                reference_execution = resolve_resource_execution(
+                    db,
+                    resource=selected_reference_resource,
+                )
+                if reference_execution.contract.access_method in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+                    contract_location = reference_execution.contract.location or ""
+                    normalized_contract_location = str(Path(contract_location.removeprefix("file://")).resolve())
+                    normalized_reference_location = str(reference_fasta_path.resolve())
+                    if normalized_contract_location != normalized_reference_location:
+                        raise ResourceExecutionError(
+                            "Qualified reference execution location does not match the "
+                            f"validated FASTA location: {contract_location!r} != "
+                            f"{str(reference_fasta_path)!r}."
+                        )
+
                 reference_contigs = {item["name"] for item in reference_package["contigs"]}
 
                 # Re-validate against the selected package so build/contig compatibility
@@ -693,18 +715,66 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         code="UNSUPPORTED_STRUCTURAL_VARIANT",
                     )
 
-                normalization_stats = normalize_vcf_with_bcftools(
-                    input_path,
-                    temp_path,
-                    reference_fasta=reference_fasta_path,
-                    expected_bcftools_version=settings.bcftools_version,
+                request_material = {
+                    "input_artifact_sha256": input_artifact.sha256,
+                    "reference_package_checksum": reference_package["package_checksum"],
+                    "reference_fasta_sha256": reference_package["fasta_sha256"],
+                    "bcftools_version": settings.bcftools_version,
+                    "execution_contract_hash": reference_execution.contract_hash,
+                }
+                request_fingerprint = hashlib.sha256(
+                    json.dumps(request_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest()
+
+                execution_record = start_resource_execution(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    attempt=normalization_step.attempt,
+                    resolved=reference_execution,
+                    requested_resource_id=resolution.requested_resource_id,
+                    fallback_resource_id=resolution.fallback_resource_id,
+                    batch_key="reference-vcf",
+                    metadata={
+                        "resource_type": "REFERENCE_PACKAGE",
+                        "genome_build": reference_build,
+                        "request_material": request_material,
+                    },
                 )
+                db.commit()
+
+                try:
+                    normalization_stats = normalize_vcf_with_bcftools(
+                        input_path,
+                        temp_path,
+                        reference_fasta=reference_fasta_path,
+                        expected_bcftools_version=settings.bcftools_version,
+                    )
+                    response_sha256 = sha256_file(temp_path)
+                    complete_resource_execution(
+                        db,
+                        execution_record,
+                        status="SUCCEEDED",
+                        request_fingerprint=request_fingerprint,
+                        response_sha256=response_sha256,
+                    )
+                    db.commit()
+                except Exception as exc:
+                    complete_resource_execution(
+                        db,
+                        execution_record,
+                        status="FAILED",
+                        error_code=getattr(exc, "code", None) or "REFERENCE_NORMALIZATION_EXECUTION_FAILED",
+                        error_message=str(exc),
+                    )
+                    db.commit()
+                    raise
 
                 normalized_artifact = artifacts.put_file(
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz" if temp_path.suffix == ".gz" else "normalized.vcf",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip" if temp_path.suffix == ".gz" else "text/vcf",
-                    genome_build=reference_build, metadata={"normalization_version": "2.1", "record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"]},
+                    genome_build=reference_build, metadata={"normalization_version": "2.1", "record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash},
                 )
                 normalization_step.input_artifacts = [str(input_artifact.id)]
                 normalization_step.output_artifacts = [str(normalized_artifact.id)]
@@ -714,8 +784,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "resource_resolution": fallback_metadata, "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.1"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "resource_resolution": fallback_metadata, "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.1"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
                 mark_step(
