@@ -123,7 +123,7 @@ def require_analysis_quota(db: Session, organization_id: UUID) -> None:
         raise HTTPException(status_code=402, detail="This trial workspace is no longer active.")
 
 
-def consume_analysis_quota(db: Session, organization_id: UUID) -> None:
+def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool = True) -> None:
     """Increments trial usage after an analysis has actually been created.
 
     Call this only after `require_analysis_quota` has passed and the analysis was
