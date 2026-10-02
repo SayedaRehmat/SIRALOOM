@@ -22,6 +22,7 @@ from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
+from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
@@ -814,7 +815,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         # Annotation rows are committed before the batch checkpoint is marked
         # successful, so a worker crash can safely resume by inspecting persisted rows.
         annotation_step = _step(db, analysis.id, "annotate")
-        provider = GeneBeProvider()
+        provider = None
         if annotation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, annotation_step, StepStatus.RUNNING)
             try:
@@ -839,7 +840,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     return
 
-                if not provider.supports_build(normalize_build(analysis.reference_build)):
+                if normalize_build(analysis.reference_build) not in GeneBeProvider.supported_builds:
                     mark_step(
                         db,
                         annotation_step,
@@ -851,8 +852,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         ),
                         metadata={
                             "next_step": "ANNOTATION_PROVIDER_REQUIRED",
-                            "provider": provider.provider_id,
-                            "provider_supported_builds": sorted(provider.supported_builds),
+                            "provider": GeneBeProvider.provider_id,
+                            "provider_supported_builds": sorted(GeneBeProvider.supported_builds),
                             "analysis_reference_build": normalize_build(analysis.reference_build),
                         },
                     )
@@ -966,6 +967,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 annotation_resource = resolution.resource
+                try:
+                    annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
+                    provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                except (ResourceExecutionError, GeneBeError) as exc:
+                    mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
+                    analysis.status = AnalysisStatus.RESOURCE_FAILURE
+                    db.commit()
+                    audit.record(event_type="ANNOTATION_EXECUTION_CONTRACT_INVALID", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="resource-registry", reason=str(exc), payload={"resource_id": str(annotation_resource.id)})
+                    db.commit()
+                    return
+
                 if resolution.used_fallback:
                     annotation_step.metadata_json = {
                         **(annotation_step.metadata_json or {}),
@@ -1059,10 +1071,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         db, annotation_step, start, end, status="RUNNING", attempt=attempt,
                         metadata={"provider": provider.provider_id, "variant_count": len(batch)},
                     )
+                    execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={"provider": provider.provider_id, "genome": genome})
+                    db.commit()
                     try:
                         scheduler.heartbeat(partition.id, worker_id)
                         payloads = provider.annotate(batch, {"genome": genome})
                         scheduler.heartbeat(partition.id, worker_id)
+                        sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                        complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                        db.commit()
                     except GeneBeError as exc:
                         if exc.retryable:
                             if partition.status == "RUNNING" and partition.lease_owner == worker_id:
