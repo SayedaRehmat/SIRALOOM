@@ -14,6 +14,7 @@ from backend.app.domain.reanalysis import (
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AuditEvent,
     AnalysisResourceSnapshot,
     Case,
     Notification,
@@ -242,6 +243,7 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
 
     from backend.app.domain.reanalysis import create_reanalysis
     from backend.app.infrastructure.db.models import (
+        AuditEvent,
         AnalysisPartition,
         Annotation,
         Artifact,
@@ -259,7 +261,7 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             Case.__table__, Analysis.__table__, WorkflowStep.__table__,
             Artifact.__table__, AnalysisPartition.__table__, Variant.__table__,
             Annotation.__table__, AnalysisResourceSnapshot.__table__,
-            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__, AuditEvent.__table__,
         ],
     )
 
