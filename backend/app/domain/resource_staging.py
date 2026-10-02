@@ -149,6 +149,14 @@ def create_staging_candidate(
         raise ResourceStagingError(
             "organization-managed resources require organization-managed staging storage"
         )
+    if resource.location and str(resource.location) != destination_uri:
+        raise ResourceStagingError(
+            "staging destination does not match the resource execution location"
+        )
+    if resource.access_method.upper() in {"LOCAL", "FILE", "LOCAL_ONLY"} and not resource.location:
+        resource.location = destination_uri
+        db.add(resource)
+        db.flush()
     key = staging_key or f"{resource.provider}:{resource.version}:{destination_uri}"
     existing = db.scalar(
         select(ResourceStaging).where(
