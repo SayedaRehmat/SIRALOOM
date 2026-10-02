@@ -373,20 +373,25 @@ class EvidenceEngine:
             direction = "REFUTES"
         else:
             direction = "NEUTRAL"
+        # These fields are returned inside the GeneBe annotation payload. They are
+        # ClinVar-derived provider output, not a direct ClinVar resource execution.
         return [
             self._record(
                 variant_id=variant_id,
-                evidence_type="CLINICAL_DATABASE",
-                statement="ClinVar provides an existing clinical significance assertion for this variant; the assertion is preserved as source evidence and is not treated as an automatic final SIRALOOM classification.",
+                evidence_type="PROVIDER_ASSERTION",
+                statement="The annotation provider returned a ClinVar-derived clinical significance assertion for this variant; it is preserved as provider output and requires source-specific review before clinical use.",
                 direction=direction,
-                source_name=resource_name or "ClinVar via provider",
+                source_name=resource_name or provider_name,
                 source_version=resource_version or provider_version,
                 payload={
+                    "upstream_source": "ClinVar",
                     "clinical_significance": clinical.get("clinvar_classification"),
                     "disease": clinical.get("clinvar_disease"),
                     "review_status": clinical.get("clinvar_review_status"),
                     "submissions_summary": clinical.get("clinvar_submissions_summary"),
+                    "direct_resource_execution": False,
                     "requires_review": True,
+                    "interpretive_use": "PROVIDER_OUTPUT_NOT_DIRECT_CLINVAR_EVIDENCE",
                 },
             )
         ]
