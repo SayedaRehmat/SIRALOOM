@@ -14,6 +14,7 @@ from typing import Any
 
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
+    validate_execution_contract,
     validate_source_contract,
 )
 from backend.app.infrastructure.db.models import Resource
@@ -52,8 +53,6 @@ def _qualify_clinvar(resource: Resource, path: Path | None, checks: dict[str, An
     checks["provider"] = "ClinVarReleaseProvider"
     checks["release_filename"] = expected_name
     checks["artifact_filename_match"] = artifact_url.endswith(expected_name)
-    if not checks["artifact_filename_match"]:
-        checks["activation_blockers"].append("ARTIFACT_RELEASE_FILENAME_MISMATCH")
     if path is None:
         checks["artifact_validation"] = "STAGING_REQUIRED"
         return
@@ -87,9 +86,27 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
         })
 
     blockers: list[str] = []
+    try:
+        execution = validate_execution_contract(
+            dict(metadata.get("execution") or {}),
+            resource_provider=resource.provider,
+            resource_access_method=resource.access_method,
+            resource_location=resource.location,
+        )
+    except ResourceSourceContractError as exc:
+        return QualificationResult(qualification_version, False, {
+            "engine": "siraloom.resource_qualification.v1",
+            "passed": False,
+            "source_contract": contract.as_dict(),
+            "execution_contract": "INVALID",
+            "activation_blockers": ["EXECUTION_CONTRACT_INVALID"],
+            "errors": [str(exc)],
+        })
+
     checks: dict[str, Any] = {
         "engine": "siraloom.resource_qualification.v1",
         "source_contract": contract.as_dict(),
+        "execution_contract": execution.as_dict(),
         "publisher_present": bool(contract.publisher),
         "release_identity_match": resource.version == contract.release_identity,
         "artifact_location_match": resource.location == contract.artifact_url or _local_path(resource) is not None,
