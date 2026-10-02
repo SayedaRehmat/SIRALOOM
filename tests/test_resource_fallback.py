@@ -10,6 +10,7 @@ from backend.app.infrastructure.db.models import (
     Organization,
     OrganizationResourceBinding,
     ResourceDeploymentProfile,
+    OrganizationEntitlement,
     Resource,
     ResourceQualification,
 )
@@ -22,6 +23,7 @@ def _db():
         tables=[
             Organization.__table__,
             ResourceDeploymentProfile.__table__,
+            OrganizationEntitlement.__table__,
             Resource.__table__,
             ResourceQualification.__table__,
             OrganizationResourceBinding.__table__,
