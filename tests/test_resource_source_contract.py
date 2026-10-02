@@ -89,3 +89,31 @@ def test_execution_contract_rejects_missing_remote_endpoint():
             resource_provider="Example Publisher",
             resource_access_method="HTTPS", resource_location=None,
         )
+
+
+def test_execution_scope_is_derived_from_resource_ownership():
+    execution = {
+        "provider_id": "Example Publisher", "provider_version": "v1",
+        "access_method": "HTTPS", "endpoint": "https://example.org/source/release.gz",
+    }
+    result = validate_execution_contract(
+        execution, resource_provider="Example Publisher",
+        resource_access_method="HTTPS", resource_location=None,
+        resource_organization_id="org-1",
+    )
+    assert result.execution_scope == "ORGANIZATION_MANAGED"
+    assert result.as_dict()["execution_scope"] == "ORGANIZATION_MANAGED"
+
+
+def test_execution_scope_rejects_mismatch_with_resource_ownership():
+    execution = {
+        "provider_id": "Example Publisher", "provider_version": "v1",
+        "access_method": "HTTPS", "endpoint": "https://example.org/source/release.gz",
+        "execution_scope": "SIRALOOM_MANAGED",
+    }
+    with pytest.raises(ResourceSourceContractError, match="ownership scope"):
+        validate_execution_contract(
+            execution, resource_provider="Example Publisher",
+            resource_access_method="HTTPS", resource_location=None,
+            resource_organization_id="org-1",
+        )
