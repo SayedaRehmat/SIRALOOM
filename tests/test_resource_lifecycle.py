@@ -10,6 +10,10 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
 
 
+_TEST_REFERENCE_PAYLOAD = b">1\\nCAAAAAC\\n"
+_TEST_REFERENCE_CHECKSUM = sha256(_TEST_REFERENCE_PAYLOAD).hexdigest()
+
+
 def _db():
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(
@@ -23,7 +27,7 @@ def _db():
     return engine
 
 
-def _local_resource(*, checksum: str) -> Resource:
+def _local_resource(*, checksum: str = _TEST_REFERENCE_CHECKSUM) -> Resource:
     return Resource(
         id=uuid4(),
         organization_id=None,
@@ -34,7 +38,7 @@ def _local_resource(*, checksum: str) -> Resource:
         genome_build="GRCh38",
         access_method="LOCAL",
         license_text=None,
-        checksum=None,
+        checksum=checksum,
         location=None,
         status="CANDIDATE",
         population_definition=None,
@@ -69,32 +73,30 @@ def _create_staging(db: Session, resource: Resource, destination: Path, checksum
         destination_uri=str(destination),
         storage_backend="LOCAL_FILESYSTEM",
         expected_sha256=checksum,
-        expected_size_bytes=len(b">1\\nCAAAAAC\\n"),
+        expected_size_bytes=len(_TEST_REFERENCE_PAYLOAD),
     )
 
 
 def test_lifecycle_advances_candidate_to_staged_and_qualified(tmp_path):
     source = tmp_path / "source.fa"
-    payload = b">1\\nCAAAAAC\\n"
-    source.write_bytes(payload)
+    source.write_bytes(_TEST_REFERENCE_PAYLOAD)
     destination_dir = tmp_path / "staged"
     destination_dir.mkdir()
 
     engine = _db()
     with Session(engine) as db:
-        resource = _local_resource(checksum=sha256(payload).hexdigest())
+        resource = _local_resource()
         db.add(resource)
         db.flush()
         row = _create_staging(
             db,
             resource,
             destination_dir / "GRCh38-2026.1.fa",
-            sha256(payload).hexdigest(),
+            _TEST_REFERENCE_CHECKSUM,
         )
-        # The execution contract must name the concrete local execution path
-        # before technical qualification. Staging creates that same governed
-        # destination and the coordinator binds it only after STAGED.
-        resource.metadata_json["execution"]["location"] = str(destination_dir / "GRCh38-2026.1.fa")
+        resource.metadata_json["execution"]["location"] = str(
+            destination_dir / "GRCh38-2026.1.fa"
+        )
 
         result = run_resource_lifecycle(
             db,
@@ -114,8 +116,7 @@ def test_lifecycle_advances_candidate_to_staged_and_qualified(tmp_path):
 
 def test_lifecycle_is_idempotent_after_qualification(tmp_path):
     source = tmp_path / "source.fa"
-    payload = b">1\\nCAAAAAC\\n"
-    source.write_bytes(payload)
+    source.write_bytes(_TEST_REFERENCE_PAYLOAD)
     destination_dir = tmp_path / "staged"
     destination_dir.mkdir()
 
@@ -128,9 +129,11 @@ def test_lifecycle_is_idempotent_after_qualification(tmp_path):
             db,
             resource,
             destination_dir / "GRCh38-2026.1.fa",
-            sha256(payload).hexdigest(),
+            _TEST_REFERENCE_CHECKSUM,
         )
-        resource.metadata_json["execution"]["location"] = str(destination_dir / "GRCh38-2026.1.fa")
+        resource.metadata_json["execution"]["location"] = str(
+            destination_dir / "GRCh38-2026.1.fa"
+        )
 
         first = run_resource_lifecycle(
             db,
@@ -154,29 +157,30 @@ def test_lifecycle_is_idempotent_after_qualification(tmp_path):
 
 def test_lifecycle_does_not_activate_or_replace_existing_active_release(tmp_path):
     source = tmp_path / "source.fa"
-    payload = b">1\\nCAAAAAC\\n"
-    source.write_bytes(payload)
+    source.write_bytes(_TEST_REFERENCE_PAYLOAD)
     destination_dir = tmp_path / "staged"
     destination_dir.mkdir()
 
     engine = _db()
     with Session(engine) as db:
-        active = _local_resource(checksum=sha256(payload).hexdigest())
+        active = _local_resource()
         active.id = uuid4()
         active.version = "GRCh38-2025.4"
         active.status = "ACTIVE"
         active.location = str(tmp_path / "existing.fa")
 
-        candidate = _local_resource(checksum=sha256(payload).hexdigest())
+        candidate = _local_resource()
         db.add_all([active, candidate])
         db.flush()
         _create_staging(
             db,
             candidate,
             destination_dir / "GRCh38-2026.1.fa",
-            sha256(payload).hexdigest(),
+            _TEST_REFERENCE_CHECKSUM,
         )
-        candidate.metadata_json["execution"]["location"] = str(destination_dir / "GRCh38-2026.1.fa")
+        candidate.metadata_json["execution"]["location"] = str(
+            destination_dir / "GRCh38-2026.1.fa"
+        )
 
         result = run_resource_lifecycle(
             db,
