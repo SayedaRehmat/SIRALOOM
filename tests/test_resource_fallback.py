@@ -67,7 +67,20 @@ def _qualify(db, resource):
             resource_id=resource.id,
             qualification_version="qualification-1",
             status="QUALIFIED",
-            checks_json={"passed": True},
+            checks_json={
+                "passed": True,
+                "execution_contract": {
+                    "provider_id": resource.provider,
+                    "provider_version": (
+                        (resource.metadata_json or {}).get("execution", {}).get("provider_version")
+                        or "v1"
+                    ),
+                    "access_method": resource.access_method,
+                    "endpoint": None,
+                    "location": resource.location,
+                    "dataset": None,
+                },
+            },
             qualified_by=None,
             qualified_at=None,
         )

@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.variant_identity import normalize_build
+from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
 from backend.app.domain.workflow_decision import (
     OutcomeKind,
     WorkflowAction,
@@ -121,6 +122,10 @@ def _find_approved_active_binding(
     )
     if qualified is None:
         return None
+    try:
+        execution = resolve_resource_execution(db, resource=resource)
+    except ResourceExecutionError:
+        return None
 
     # Organization approval is the active adoption boundary. The resource
     # registry's global status may be QUALIFIED because the version is lab-
@@ -129,10 +134,8 @@ def _find_approved_active_binding(
     if resource.status not in {"ACTIVE", "QUALIFIED", "SUPERSEDED"}:
         return None
 
-    if expected_provider_version is not None:
-        execution = (resource.metadata_json or {}).get("execution") or {}
-        if execution.get("provider_version") != expected_provider_version:
-            return None
+    if expected_provider_version is not None and execution.contract.provider_version != expected_provider_version:
+        return None
 
     return resource
 

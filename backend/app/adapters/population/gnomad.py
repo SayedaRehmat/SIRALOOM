@@ -10,6 +10,7 @@ from typing import Any, Iterable
 import httpx
 
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.resource_source_contract import ResourceExecutionContract
 
 
 class GnomADProviderError(RuntimeError):
@@ -47,10 +48,35 @@ class GnomADGraphQLProvider:
     provider_version = "graphql"
     default_endpoint = "https://gnomad.broadinstitute.org/api"
 
-    def __init__(self, endpoint: str = default_endpoint, dataset_id: str = "gnomad_r4", delay_seconds: float = 0.0):
-        self.endpoint = endpoint
+    def __init__(self, endpoint: str | None = None, dataset_id: str = "gnomad_r4", delay_seconds: float = 0.0):
+        self.endpoint = endpoint or self.default_endpoint
         self.dataset_id = dataset_id
         self.delay_seconds = max(0.0, delay_seconds)
+
+    @classmethod
+    def from_execution_contract(
+        cls,
+        contract: ResourceExecutionContract,
+        *,
+        delay_seconds: float = 0.0,
+    ) -> "GnomADGraphQLProvider":
+        if contract.provider_id != "gnomAD":
+            raise GnomADProviderError(
+                f"Execution provider {contract.provider_id!r} does not match gnomAD."
+            )
+        if contract.provider_version != cls.provider_version:
+            raise GnomADProviderError(
+                f"Execution provider version {contract.provider_version!r} does not match gnomAD {cls.provider_version!r}."
+            )
+        if contract.access_method not in {"API", "HTTPS", "HTTP", "GRAPHQL"}:
+            raise GnomADProviderError(
+                f"gNOMAD requires an API/HTTP execution contract, got {contract.access_method!r}."
+            )
+        if not contract.endpoint:
+            raise GnomADProviderError("gNOMAD execution contract does not contain an endpoint.")
+        if not contract.dataset:
+            raise GnomADProviderError("gNOMAD execution contract does not contain a dataset.")
+        return cls(endpoint=contract.endpoint, dataset_id=contract.dataset, delay_seconds=delay_seconds)
 
     def query_variant(self, variant: CanonicalVariant) -> list[PopulationObservationData]:
         variant_id = f"{variant.chromosome.removeprefix('chr')}:{variant.position}:{variant.reference}:{variant.alternate}"
