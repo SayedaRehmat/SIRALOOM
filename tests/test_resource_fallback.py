@@ -37,6 +37,7 @@ def _resource(
     resource_type,
     version,
     status,
+    metadata_json=None,
 ):
     row = Resource(
         id=uuid4(),
@@ -52,7 +53,7 @@ def _resource(
         location=f"/resources/{version}",
         status=status,
         population_definition=None,
-        metadata_json={},
+        metadata_json=metadata_json or {},
     )
     db.add(row)
     db.flush()
@@ -122,6 +123,7 @@ def test_rejected_requested_resource_falls_back_to_org_approved_binding_without_
             resource_type="ANNOTATION",
             version="approved-v1",
             status="QUALIFIED",
+            metadata_json={"execution": {"provider_version": "api-public-v1"}},
         )
         _qualify(db, fallback)
         _bind(db, organization_id=org_id, resource=fallback)
@@ -134,6 +136,7 @@ def test_rejected_requested_resource_falls_back_to_org_approved_binding_without_
             expected_type="ANNOTATION",
             expected_build="GRCh38",
             expected_provider="GENEBE",
+            expected_provider_version="api-public-v1",
         )
 
         assert result.used_fallback is True
@@ -183,6 +186,7 @@ def test_laboratories_keep_independent_active_bindings():
             resource_type="ANNOTATION",
             version="v1",
             status="QUALIFIED",
+            metadata_json={"execution": {"provider_version": "v1"}},
         )
         b_v2 = _resource(
             db,
@@ -192,6 +196,7 @@ def test_laboratories_keep_independent_active_bindings():
             resource_type="ANNOTATION",
             version="v2",
             status="QUALIFIED",
+            metadata_json={"execution": {"provider_version": "v2"}},
         )
         _qualify(db, a_v1)
         _qualify(db, b_v2)
@@ -206,6 +211,7 @@ def test_laboratories_keep_independent_active_bindings():
             expected_type="ANNOTATION",
             expected_build="GRCh38",
             expected_provider="PROVIDER",
+            expected_provider_version="v1",
         )
         b_result = resolve_resource_with_fallback(
             db,
@@ -421,3 +427,21 @@ def test_fallback_rejects_binding_to_wrong_build():
     finally:
         db.close()
         engine.dispose()
+
+
+def test_fallback_is_rejected_when_runtime_provider_version_is_not_proven():
+    engine, db = _db()
+    try:
+        org_id = uuid4()
+        db.add(Organization(id=org_id, name="Lab", external_identifier=None))
+        requested = _resource(db, organization_id=None, name="GeneBe", provider="GENEBE", resource_type="ANNOTATION", version="rejected-v2", status="REJECTED")
+        fallback = _resource(db, organization_id=None, name="GeneBe", provider="GENEBE", resource_type="ANNOTATION", version="approved-v1", status="QUALIFIED")
+        _qualify(db, fallback)
+        _bind(db, organization_id=org_id, resource=fallback)
+        db.commit()
+        result = resolve_resource_with_fallback(db, organization_id=org_id, requested_resource_id=requested.id, expected_type="ANNOTATION", expected_build="GRCh38", expected_provider="GENEBE", expected_provider_version="api-public-v1")
+        assert result.resource is None
+        assert result.used_fallback is False
+        assert result.decision.action is WorkflowAction.WAIT_FOR_RESOURCE
+    finally:
+        db.close(); engine.dispose()

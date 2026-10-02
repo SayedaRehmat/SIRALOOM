@@ -898,6 +898,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     expected_type="ANNOTATION",
                     expected_build=normalize_build(analysis.reference_build),
                     expected_provider=provider.provider_id,
+                    expected_provider_version=provider.provider_version,
                 )
                 record_workflow_decision(
                     db,
@@ -1369,6 +1370,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         expected_type="POPULATION",
                         expected_build=normalize_build(analysis.reference_build),
                         expected_provider="gnomAD",
+                        expected_provider_version=gnomad.provider_version,
                     )
                     record_workflow_decision(
                         db,

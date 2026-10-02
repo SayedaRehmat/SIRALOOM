@@ -78,6 +78,7 @@ def _find_approved_active_binding(
     provider: str,
     resource_type: str,
     genome_build: str | None,
+    expected_provider_version: str | None = None,
 ) -> Resource | None:
     identity_key = _resource_identity_key(
         name=name,
@@ -128,6 +129,11 @@ def _find_approved_active_binding(
     if resource.status not in {"ACTIVE", "QUALIFIED", "SUPERSEDED"}:
         return None
 
+    if expected_provider_version is not None:
+        execution = (resource.metadata_json or {}).get("execution") or {}
+        if execution.get("provider_version") != expected_provider_version:
+            return None
+
     return resource
 
 
@@ -139,6 +145,7 @@ def resolve_resource_with_fallback(
     expected_type: str,
     expected_build: str,
     expected_provider: str,
+    expected_provider_version: str | None = None,
     fallback_outcome: OutcomeKind = OutcomeKind.RESOURCE_UNAVAILABLE,
     lab_action_required_without_fallback: bool = False,
 ) -> ResourceResolution:
@@ -230,6 +237,7 @@ def resolve_resource_with_fallback(
         provider=provider,
         resource_type=resource_type,
         genome_build=genome_build,
+        expected_provider_version=expected_provider_version,
     )
     decision = decide_workflow_outcome(
         fallback_outcome,
