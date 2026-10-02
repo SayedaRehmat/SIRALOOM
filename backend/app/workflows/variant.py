@@ -1752,6 +1752,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         resolved=clinvar_execution,
                         resource_location=clinvar_resource.location,
                         genome_build=analysis.reference_build,
+                        index_root=settings.resource_cache_root,
                     )
                     clinvar_execution_metadata = {
                         **clinvar_execution.snapshot,
