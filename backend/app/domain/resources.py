@@ -425,7 +425,7 @@ def _record_resource_adoption_audit(
         before_state={
             "resource_id": str(resource.id),
             "resource_version": resource.version,
-            "resource_status": "QUALIFIED" if decision != "REJECTED" else resource.status,
+            "resource_status": "QUALIFIED",
             "binding": before_binding,
         },
         after_state={
