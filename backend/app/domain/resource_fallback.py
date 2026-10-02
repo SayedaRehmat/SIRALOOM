@@ -167,7 +167,7 @@ def resolve_resource_with_fallback(
             requested_resource_id=requested.id,
             fallback_resource_id=None,
             decision=WorkflowDecision(
-                action=__import__("backend.app.domain.workflow_decision", fromlist=["WorkflowAction"]).WorkflowAction.CONTINUE,
+                action=WorkflowAction.CONTINUE,
                 code="RESOURCE_SELECTED",
                 message="Requested governed resource is consumable.",
             ),
