@@ -36,17 +36,42 @@ def _normalized_hosts(allowed_hosts: set[str] | frozenset[str]) -> set[str]:
     return {host.strip().lower().rstrip(".") for host in allowed_hosts if host.strip()}
 
 
+def _failure(
+    db: Session,
+    row: ResourceStaging,
+    *,
+    code: str,
+    message: str,
+    outcome: str,
+    retryable: bool = False,
+) -> ResourceStaging:
+    row.metadata_json = {
+        **dict(row.metadata_json or {}),
+        "recovery_outcome": outcome,
+        "retryable": retryable,
+    }
+    return transition_staging(
+        db,
+        row,
+        "INTEGRITY_FAILED",
+        error_code=code,
+        error_message=message,
+    )
+
+
 def _validate_remote_source(source_uri: str, allowed_hosts: set[str] | frozenset[str]) -> str:
     parsed = urlparse(source_uri)
     if parsed.scheme != "https" or not parsed.hostname:
-        raise ResourceStagingError("remote staging requires an absolute HTTPS artifact URL")
+        raise ResourceStagingError("remote staging requires an absolute HTTPS artifact URL", code="SOURCE_POLICY_REJECTED", outcome="RESOURCE_REJECTED")
     hostname = parsed.hostname.lower().rstrip(".")
     if hostname not in _normalized_hosts(allowed_hosts):
         raise ResourceStagingError(
-            f"remote artifact host {hostname!r} is not in the governed publisher allow-list"
+            f"remote artifact host {hostname!r} is not in the governed publisher allow-list",
+            code="PUBLISHER_HOST_REJECTED",
+            outcome="RESOURCE_REJECTED",
         )
     if parsed.username or parsed.password:
-        raise ResourceStagingError("remote artifact URLs must not contain embedded credentials")
+        raise ResourceStagingError("remote artifact URLs must not contain embedded credentials", code="EMBEDDED_CREDENTIALS_REJECTED", outcome="RESOURCE_REJECTED")
     return hostname
 
 
@@ -141,22 +166,20 @@ def stage_remote_artifact(
                 row.expected_size_bytes is not None
                 and observed_size != row.expected_size_bytes
             ):
-                return transition_staging(
+                return _failure(
                     db,
                     row,
-                    "INTEGRITY_FAILED",
-                    error_code="SIZE_MISMATCH",
-                    error_message=(
-                        f"expected {row.expected_size_bytes} bytes, observed {observed_size}"
-                    ),
+                    code="SIZE_MISMATCH",
+                    message=f"expected {row.expected_size_bytes} bytes, observed {observed_size}",
+                    outcome="RESOURCE_INVALID",
                 )
             if observed_sha256 != row.expected_sha256.lower():
-                return transition_staging(
+                return _failure(
                     db,
                     row,
-                    "INTEGRITY_FAILED",
-                    error_code="CHECKSUM_MISMATCH",
-                    error_message="remote artifact SHA-256 does not match the declared release checksum",
+                    code="CHECKSUM_MISMATCH",
+                    message="remote artifact SHA-256 does not match the declared release checksum",
+                    outcome="RESOURCE_INVALID",
                 )
 
             os.replace(temporary, destination)
@@ -170,44 +193,36 @@ def stage_remote_artifact(
             return transition_staging(db, row, "STAGED")
     except HTTPError as exc:
         if exc.code in {301, 302, 303, 307, 308}:
-            code = "REDIRECT_REJECTED"
+            code, outcome, retryable = "REDIRECT_REJECTED", "RESOURCE_REJECTED", False
+        elif exc.code in {404, 410}:
+            code, outcome, retryable = "RELEASE_NOT_AVAILABLE", "RESOURCE_UNAVAILABLE", False
+        elif exc.code == 429 or 500 <= exc.code <= 599:
+            code, outcome, retryable = "REMOTE_HTTP_RETRYABLE", "RETRYABLE_FAILURE", True
         else:
-            code = "HTTP_ERROR"
-        transition_staging(
-            db,
-            row,
-            "INTEGRITY_FAILED",
-            error_code=code,
-            error_message=f"remote acquisition failed with HTTP {exc.code}",
-        )
-        raise ResourceStagingError(f"remote acquisition failed with HTTP {exc.code}") from exc
+            code, outcome, retryable = "REMOTE_HTTP_ERROR", "UNEXPECTED", False
+        message = f"remote acquisition failed with HTTP {exc.code}"
+        _failure(db, row, code=code, message=message, outcome=outcome, retryable=retryable)
+        raise ResourceStagingError(message, code=code, outcome=outcome, retryable=retryable) from exc
     except URLError as exc:
-        transition_staging(
-            db,
-            row,
-            "INTEGRITY_FAILED",
-            error_code="NETWORK_ERROR",
-            error_message=str(exc.reason),
-        )
-        raise ResourceStagingError(f"remote acquisition failed: {exc.reason}") from exc
+        message = f"remote acquisition failed: {exc.reason}"
+        _failure(db, row, code="NETWORK_ERROR", message=message, outcome="RETRYABLE_FAILURE", retryable=True)
+        raise ResourceStagingError(
+            message, code="NETWORK_ERROR", outcome="RETRYABLE_FAILURE", retryable=True
+        ) from exc
     except ResourceStagingError as exc:
-        transition_staging(
+        _failure(
             db,
             row,
-            "INTEGRITY_FAILED",
-            error_code="REMOTE_ACQUISITION_REJECTED",
-            error_message=str(exc),
+            code=exc.code,
+            message=str(exc),
+            outcome=exc.outcome,
+            retryable=exc.retryable,
         )
         raise
     except Exception as exc:
-        transition_staging(
-            db,
-            row,
-            "INTEGRITY_FAILED",
-            error_code="REMOTE_ACQUISITION_FAILED",
-            error_message=str(exc),
-        )
-        raise ResourceStagingError(f"remote acquisition failed: {exc}") from exc
+        message = f"remote acquisition failed: {exc}"
+        _failure(db, row, code="REMOTE_ACQUISITION_FAILED", message=message, outcome="UNEXPECTED")
+        raise ResourceStagingError(message, code="REMOTE_ACQUISITION_FAILED", outcome="UNEXPECTED") from exc
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
