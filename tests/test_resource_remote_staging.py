@@ -93,7 +93,7 @@ def test_remote_staging_requires_allowlisted_publisher(monkeypatch, tmp_path):
         with pytest.raises(ResourceStagingError, match="not in the governed publisher allow-list"):
             stage_remote_artifact(db, row, allowed_hosts={"example.org"}, max_bytes=1024)
         assert row.status == "INTEGRITY_FAILED"
-        assert row.error_code == "REMOTE_ACQUISITION_REJECTED"
+        assert row.error_code == "PUBLISHER_HOST_REJECTED"
         assert not Path(row.destination_uri).exists()
     finally:
         db.close()

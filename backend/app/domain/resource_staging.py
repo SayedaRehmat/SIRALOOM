@@ -23,7 +23,48 @@ from backend.app.infrastructure.db.models import Resource, ResourceStaging
 
 
 class ResourceStagingError(RuntimeError):
-    pass
+    """A governed staging failure with an explicit recovery classification."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "STAGING_FAILED",
+        outcome: str = "RESOURCE_INVALID",
+        retryable: bool = False,
+    ):
+        super().__init__(message)
+        self.code = code
+        self.outcome = outcome
+        self.retryable = retryable
+
+
+def staging_recovery_decision(
+    row: ResourceStaging,
+    *,
+    fallback_available: bool = False,
+    lab_action_required: bool = False,
+):
+    """Return the existing workflow decision contract for a staging failure.
+
+    Staging is resource lifecycle infrastructure rather than an analysis step, so
+    this helper does not persist a workflow decision or perform fallback itself.
+    It gives the owning orchestrator one explicit, governed next action.
+    """
+    from backend.app.domain.workflow_decision import (
+        OutcomeKind,
+        decide_workflow_outcome,
+    )
+
+    outcome = OutcomeKind(str(row.metadata_json.get("recovery_outcome", "RESOURCE_INVALID")).upper())
+    return decide_workflow_outcome(
+        outcome,
+        code=row.error_code or "STAGING_FAILED",
+        message=row.error_message or "Resource staging failed.",
+        retryable=bool(row.metadata_json.get("retryable", False)),
+        fallback_available=fallback_available,
+        lab_action_required=lab_action_required,
+    )
 
 
 @dataclass(frozen=True)
