@@ -92,6 +92,20 @@ def test_reference_package_allows_explicitly_pinned_superseded_version(tmp_path:
     package = validate_reference_package(resource, expected_genome_build="GRCh38")
     assert package["package_checksum"] == resource.checksum
 
+def test_reference_package_allows_qualified_status_only_when_governed_fallback_is_explicit(tmp_path: Path):
+    resource, _fasta, _fai = make_package(tmp_path)
+    resource.status = "QUALIFIED"
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_PACKAGE_NOT_ACTIVE"
+
+    package = validate_reference_package(
+        resource,
+        expected_genome_build="GRCh38",
+        allow_approved_qualified=True,
+    )
+    assert package["package_checksum"] == resource.checksum
+
 
 def test_reference_package_supports_explicit_grch37_identity(tmp_path: Path):
     resource, _fasta, _fai = make_package(tmp_path)
