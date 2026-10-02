@@ -6,7 +6,14 @@ from sqlalchemy.orm import Session
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.workflow_decision import OutcomeKind
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import (\n    Analysis,\n    Case,\n    Organization,\n    User,\n    WorkflowDecisionRecord,\n    WorkflowStep,\n)
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Case,
+    Organization,
+    User,
+    WorkflowDecisionRecord,
+    WorkflowStep,
+)
 from backend.app.workflows.variant import _apply_scientific_limitation
 
 
