@@ -14,7 +14,7 @@ from backend.app.domain.resources import (
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    ACMGAssessment, Analysis, AnalysisResourceSnapshot, Case, Notification,
+    ACMGAssessment, Analysis, AnalysisResourceSnapshot, AuditEvent, Case, Notification,
     Organization, OrganizationMembership, OrganizationResourceBinding, Resource, ResourceApproval,
     ResourceApprovalAction, ResourceQualification, ReanalysisCandidate, ReanalysisChangeEvent, User,
 )
@@ -34,6 +34,7 @@ def _engine():
             Notification.__table__,
             ReanalysisChangeEvent.__table__,
             ReanalysisCandidate.__table__,
+            AuditEvent.__table__,
             Resource.__table__,
             ResourceQualification.__table__,
             ResourceApproval.__table__,
