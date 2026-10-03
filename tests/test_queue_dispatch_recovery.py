@@ -518,3 +518,105 @@ def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execut
     )()
     assert module._claim_analysis_execution(worker_db, analysis_id) is True
     assert module._claim_analysis_execution(worker_db, analysis_id) is False
+
+
+def test_concurrent_relay_workers_serialize_on_dispatch_row_lock(monkeypatch):
+    """Two relay workers must publish one dispatch only when row locking serializes them."""
+    import threading
+
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": None},
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PENDING",
+            "task_id": None,
+            "attempts": 0,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    row_lock = threading.RLock()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            row_lock.acquire()
+            if row_id == dispatch_id:
+                return dispatch
+            return analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            row_lock.release()
+
+        def close(self):
+            # The production transaction releases the row lock on commit.
+            # Keep this idempotent for paths that return without committing.
+            try:
+                row_lock.release()
+            except RuntimeError:
+                pass
+
+    publish_calls = {"count": 0}
+    publish_started = threading.Event()
+    allow_publish = threading.Event()
+
+    class FakeTask:
+        id = str(dispatch_id)
+
+    def publish(**_kwargs):
+        publish_calls["count"] += 1
+        publish_started.set()
+        allow_publish.wait(timeout=2)
+        return FakeTask()
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+    monkeypatch.setattr(
+        module.celery_app,
+        "AsyncResult",
+        lambda _id: type("Result", (), {"state": "PENDING"})(),
+    )
+
+    results = []
+    errors = []
+
+    def relay():
+        try:
+            results.append(module.publish_analysis_dispatch(dispatch_id))
+        except Exception as exc:
+            errors.append(exc)
+
+    first = threading.Thread(target=relay)
+    second = threading.Thread(target=relay)
+    first.start()
+    assert publish_started.wait(timeout=2)
+    second.start()
+
+    allow_publish.set()
+    first.join(timeout=2)
+    second.join(timeout=2)
+
+    assert not errors
+    assert not first.is_alive()
+    assert not second.is_alive()
+    assert results.count(str(dispatch_id)) == 2
+    assert publish_calls["count"] == 1
+    assert dispatch.status == "PUBLISHED"
+    assert analysis.queue_task_id == str(dispatch_id)
