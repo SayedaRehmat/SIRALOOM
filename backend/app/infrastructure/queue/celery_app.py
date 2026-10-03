@@ -81,6 +81,31 @@ if Celery is not None:
         db.commit()
         return True
 
+    def _claim_analysis_execution(db, analysis_id, *, allow_running: bool = False) -> bool:
+        """Atomically claim one persisted analysis for one Celery execution.
+
+        Duplicate broker deliveries are possible around queue publication/recovery.
+        The analysis row is the durable execution fence: only the first worker may
+        move QUEUED/CREATED to RUNNING. A redelivery or Celery retry may resume an
+        already-RUNNING analysis because those executions are continuations of the
+        same durable workflow, not a second laboratory analysis.
+        """
+        from backend.app.domain.enums import AnalysisStatus
+        from backend.app.infrastructure.db.models import Analysis
+
+        analysis = db.get(Analysis, analysis_id, with_for_update=True)
+        if analysis is None:
+            return False
+        if analysis.status == AnalysisStatus.RUNNING:
+            return allow_running
+        if analysis.status not in {AnalysisStatus.CREATED, AnalysisStatus.QUEUED}:
+            return False
+
+        analysis.status = AnalysisStatus.RUNNING
+        db.add(analysis)
+        db.commit()
+        return True
+
     @celery_app.task(bind=True, autoretry_for=(), acks_late=True, max_retries=3)
     def run_analysis_task(self, analysis_id: str):
         from uuid import UUID
@@ -90,7 +115,23 @@ if Celery is not None:
             TransientWorkflowError,
         )
         from backend.app.infrastructure.db.session import SessionLocal
-        if (self.request.delivery_info or {}).get("redelivered"):
+
+        redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
+        is_retry = self.request.retries > 0
+        claim_db = SessionLocal()
+        try:
+            claimed = _claim_analysis_execution(
+                claim_db,
+                UUID(analysis_id),
+                allow_running=redelivered or is_retry,
+            )
+        finally:
+            claim_db.close()
+
+        if not claimed:
+            return {"analysis_id": analysis_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
+
+        if redelivered:
             recovery_db = SessionLocal()
             try:
                 recover_interrupted_execution(recovery_db, UUID(analysis_id))

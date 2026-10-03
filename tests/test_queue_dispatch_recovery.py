@@ -55,3 +55,36 @@ def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypat
     monkeypatch.setattr(module.run_analysis_task, "delay", lambda _id: (_ for _ in ()).throw(AssertionError("must not dispatch")))
 
     assert module.recover_orphaned_analysis_dispatches() == {"inspected": 1, "recovered": 0}
+
+
+def test_analysis_execution_claim_fences_duplicate_worker():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    from backend.app.domain.enums import AnalysisStatus
+    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.QUEUED})()
+    class FakeDB:
+        def __init__(self): self.commits = 0
+        def get(self, model, analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert analysis_id == analysis.id
+            return analysis
+        def add(self, row): assert row is analysis
+        def commit(self): self.commits += 1
+    db = FakeDB()
+    assert module._claim_analysis_execution(db, analysis.id) is True
+    assert analysis.status == AnalysisStatus.RUNNING
+    assert db.commits == 1
+    assert module._claim_analysis_execution(db, analysis.id) is False
+    assert db.commits == 1
+
+
+def test_analysis_execution_claim_allows_continuation_of_running_work():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    from backend.app.domain.enums import AnalysisStatus
+    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.RUNNING})()
+    class FakeDB:
+        def get(self, model, analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
+    db = FakeDB()
+    assert module._claim_analysis_execution(db, analysis.id, allow_running=True) is True
+    assert module._claim_analysis_execution(db, analysis.id, allow_running=False) is False
