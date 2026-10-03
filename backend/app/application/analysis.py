@@ -79,6 +79,12 @@ def enqueue_analysis(
     if locked is None:
         raise ValueError("Analysis not found")
 
+    # The caller may already have loaded this Analysis into its identity map
+    # before waiting on the row lock. Session.get() can then return that stale
+    # instance without issuing a SELECT, which would defeat the serialization
+    # boundary. Refresh while the row lock is held so the status and queue
+    # pointer reflect the committed state of the winner.
+    db.refresh(locked, with_for_update=True)
     analysis = locked
     if analysis.status == AnalysisStatus.QUEUED:
         return analysis.queue_task_id
