@@ -336,7 +336,7 @@ def test_published_dispatch_definitive_failure_does_not_recurse_on_immediate_rep
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": "old-task"})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)})()
     dispatch = type(
         "AnalysisDispatch",
         (),
