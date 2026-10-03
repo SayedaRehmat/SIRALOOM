@@ -57,7 +57,7 @@ if Celery is not None:
             select(AnalysisPartition).where(
                 AnalysisPartition.analysis_id == analysis_id,
                 AnalysisPartition.step_id == "annotate",
-                AnalysisPartition.status.in(("READY", "RUNNING")),
+                AnalysisPartition.status.in_(("READY", "RUNNING")),
             )
         ))
         for partition in unfinished_partitions:
