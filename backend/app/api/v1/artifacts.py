@@ -22,7 +22,10 @@ from backend.app.infrastructure.db.models import Artifact, Case, Specimen
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["artifacts"])
-MAX_BYTES = 512 * 1024 * 1024
+# Trial entitlements provide the deliberate application-level upload ceiling.
+# Unrestricted/laboratory organizations pass None so their deployment capacity,
+# rather than a SIRALOOM file-size constant, determines what can be ingested.
+MAX_BYTES: int | None = None
 
 
 def _store():
@@ -110,7 +113,7 @@ async def upload_artifact(
             with staged.open("wb") as out:
                 while chunk := await file.read(8 * 1024 * 1024):
                     digest_size += len(chunk)
-                    if digest_size > max_bytes:
+                    if max_bytes is not None and digest_size > max_bytes:
                         raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
                     out.write(chunk)
         finally:
