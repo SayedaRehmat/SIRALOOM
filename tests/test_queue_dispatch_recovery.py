@@ -414,3 +414,105 @@ def test_published_dispatch_is_idempotent_when_relay_runs_again(monkeypatch):
 
     assert module.publish_analysis_dispatch(dispatch_id) == "live-dispatch-task"
     assert publish_calls["count"] == 1
+
+
+def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execution_fence(monkeypatch):
+    """A broker publication before DB commit failure must not create a second execution."""
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": None,
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PENDING",
+            "task_id": None,
+            "attempts": 0,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def __init__(self):
+            self.commit_calls = 0
+
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return dispatch if row_id == dispatch_id else analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            self.commit_calls += 1
+            if self.commit_calls == 1:
+                raise RuntimeError("database commit failed after broker publication")
+
+        def close(self):
+            pass
+
+    class FakeTask:
+        id = str(dispatch_id)
+
+    publish_calls = {"count": 0}
+
+    def publish(**kwargs):
+        publish_calls["count"] += 1
+        assert kwargs["task_id"] == str(dispatch_id)
+        return FakeTask()
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+
+    try:
+        module.publish_analysis_dispatch(dispatch_id)
+    except RuntimeError as exc:
+        assert str(exc) == "database commit failed after broker publication"
+    else:
+        raise AssertionError("commit failure must propagate")
+
+    assert publish_calls["count"] == 1
+    assert dispatch.status == "PUBLISHED"
+    assert dispatch.task_id == str(dispatch_id)
+    assert analysis.queue_task_id == str(dispatch_id)
+
+    # A later relay may observe the durable intent again. If the broker reports
+    # the original task as live/unknown, it must not publish a second task.
+    monkeypatch.setattr(
+        module.celery_app,
+        "AsyncResult",
+        lambda _id: type("Result", (), {"state": "PENDING"})(),
+    )
+    assert module.publish_analysis_dispatch(dispatch_id) == str(dispatch_id)
+    assert publish_calls["count"] == 1
+
+    # The consumer-side execution fence is the authoritative protection if a
+    # duplicate broker delivery nevertheless exists.
+    worker_db = type(
+        "WorkerDB",
+        (),
+        {
+            "get": lambda self, model, row_id, **kwargs: (
+                type("WorkerAnalysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED})()
+            ),
+            "add": lambda self, row: None,
+            "commit": lambda self: None,
+        },
+    )()
+    assert module._claim_analysis_execution(worker_db, analysis_id) is True
+    assert module._claim_analysis_execution(worker_db, analysis_id) is False
