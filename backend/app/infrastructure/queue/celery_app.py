@@ -21,6 +21,10 @@ if Celery is not None:
                 "task": "siraloom.scan_reanalysis_resources",
                 "schedule": 86400.0,
             },
+            "recover-analysis-dispatch-outbox": {
+                "task": "siraloom.dispatch_pending_analysis_outbox",
+                "schedule": 30.0,
+            },
             "recover-orphaned-analysis-dispatches": {
                 "task": "siraloom.recover_orphaned_analysis_dispatches",
                 "schedule": 300.0,
@@ -91,7 +95,7 @@ if Celery is not None:
         same durable workflow, not a second laboratory analysis.
         """
         from backend.app.domain.enums import AnalysisStatus
-        from backend.app.infrastructure.db.models import Analysis
+        from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch
 
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
@@ -105,6 +109,62 @@ if Celery is not None:
         db.add(analysis)
         db.commit()
         return True
+
+    def publish_analysis_dispatch(dispatch_id):
+        """Publish one durable analysis dispatch intent.
+
+        The dispatch row is locked so multiple relay workers cannot publish the
+        same pending intent concurrently. A crash after broker publication but
+        before the DB commit may cause a later duplicate publication; the
+        analysis execution fence is the authoritative protection against a
+        second scientific execution.
+        """
+        from datetime import datetime, timezone
+        from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            dispatch = db.get(AnalysisDispatch, dispatch_id, with_for_update=True)
+            if dispatch is None:
+                return None
+            if dispatch.status == "PUBLISHED" and dispatch.task_id:
+                return dispatch.task_id
+
+            analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
+            if analysis is None:
+                dispatch.status = "SUPERSEDED"
+                db.commit()
+                return None
+            if str(analysis.status) != "QUEUED":
+                dispatch.status = "SUPERSEDED"
+                db.commit()
+                return analysis.queue_task_id
+
+            dispatch.attempts += 1
+            try:
+                task = run_analysis_task.apply_async(
+                    args=[str(analysis.id)],
+                    task_id=str(dispatch.id),
+                )
+            except Exception as exc:
+                dispatch.last_error = str(exc)
+                db.add(dispatch)
+                db.commit()
+                return None
+
+            dispatch.status = "PUBLISHED"
+            dispatch.task_id = task.id
+            dispatch.last_error = None
+            dispatch.published_at = datetime.now(timezone.utc)
+            analysis.queue_task_id = task.id
+            db.add(dispatch)
+            db.add(analysis)
+            db.commit()
+            return task.id
+        finally:
+            db.close()
+
 
     @celery_app.task(bind=True, autoretry_for=(), acks_late=True, max_retries=3)
     def run_analysis_task(self, analysis_id: str):
@@ -173,6 +233,30 @@ if Celery is not None:
         finally:
             db.close()
 
+    @celery_app.task(name="siraloom.dispatch_pending_analysis_outbox", autoretry_for=(), acks_late=True)
+    def dispatch_pending_analysis_outbox():
+        """Relay durable analysis dispatch intents to Celery."""
+        from sqlalchemy import select
+        from backend.app.infrastructure.db.models import AnalysisDispatch
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            pending_ids = list(db.scalars(
+                select(AnalysisDispatch.id).where(
+                    AnalysisDispatch.status == "PENDING",
+                )
+            ))
+        finally:
+            db.close()
+
+        dispatched = 0
+        for dispatch_id in pending_ids:
+            if publish_analysis_dispatch(dispatch_id):
+                dispatched += 1
+        return {"inspected": len(pending_ids), "dispatched": dispatched}
+
+
     @celery_app.task(name="siraloom.recover_orphaned_analysis_dispatches", autoretry_for=(), acks_late=True)
     def recover_orphaned_analysis_dispatches():
         """Recover only definitively failed/revoked Celery dispatches.
@@ -204,6 +288,10 @@ if Celery is not None:
             for analysis_id in queued_ids:
                 analysis = db.get(Analysis, analysis_id, with_for_update=True)
                 if analysis is None:
+                    continue
+                # New dispatches are owned by the durable outbox relay. The
+                # legacy scanner remains only for analyses created before 0036.
+                if db.scalar(select(AnalysisDispatch.id).where(AnalysisDispatch.analysis_id == analysis.id)) is not None:
                     continue
                 if (
                     analysis.status != AnalysisStatus.QUEUED
