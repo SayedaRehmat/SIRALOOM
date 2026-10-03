@@ -149,6 +149,11 @@ def reserve_analysis_quota(db: Session, organization_id: UUID, *, commit: bool =
         db.commit()
 
 
+def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool = True) -> None:
+    """Compatibility wrapper for existing reanalysis callers."""
+    reserve_analysis_quota(db, organization_id, commit=commit)
+
+
 def effective_max_upload_bytes(db: Session, organization_id: UUID, default_max_bytes: int) -> int:
     """Returns the smaller of the platform-wide upload limit and any trial-specific limit."""
     entitlement = get_entitlement(db, organization_id)
