@@ -10,7 +10,17 @@ def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatc
     class FakeDB:
         def scalars(self, stmt):
             assert getattr(stmt, "_for_update_arg", None) is None
-            return type("ScalarRows", (), {"first": lambda self: analysis.id})()
+            class ScalarRows:
+                def __iter__(self):
+                    class ScalarRows:
+                def __iter__(self):
+                    return iter([analysis.id])
+                def first(self):
+                    return None
+            return ScalarRows()
+                def first(self):
+                    return analysis.id
+            return ScalarRows()
 
         def get(self, model, analysis_id, **kwargs):
             assert kwargs == {"with_for_update": True}
