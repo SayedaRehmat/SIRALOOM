@@ -132,17 +132,18 @@ if Celery is not None:
         finally:
             db.close()
 
-
-
     @celery_app.task(name="siraloom.recover_orphaned_analysis_dispatches", autoretry_for=(), acks_late=True)
     def recover_orphaned_analysis_dispatches():
         """Recover only definitively failed/revoked Celery dispatches.
+
+        Each candidate analysis is row-locked before its Celery state is inspected
+        and replacement dispatch is attempted. This prevents two scheduler
+        instances from concurrently replacing the same failed queue task.
 
         A QUEUED task whose broker/backend state is PENDING is deliberately left
         untouched because PENDING does not prove that the task is absent. This
         prevents a scheduler from creating duplicate laboratory analyses.
         """
-        from uuid import UUID
         from sqlalchemy import select
         from backend.app.domain.enums import AnalysisStatus
         from backend.app.infrastructure.audit.service import AuditService
@@ -153,19 +154,28 @@ if Celery is not None:
         recovered = 0
         inspected = 0
         try:
-            queued = list(db.scalars(
-                select(Analysis).where(
+            queued_ids = list(db.scalars(
+                select(Analysis.id).where(
                     Analysis.status == AnalysisStatus.QUEUED,
                     Analysis.queue_task_id.is_not(None),
                 )
             ))
-            for analysis in queued:
+            for analysis_id in queued_ids:
+                analysis = db.get(Analysis, analysis_id, with_for_update=True)
+                if analysis is None:
+                    continue
+                if (
+                    analysis.status != AnalysisStatus.QUEUED
+                    or analysis.queue_task_id is None
+                ):
+                    continue
+
                 inspected += 1
-                task_state = celery_app.AsyncResult(str(analysis.queue_task_id)).state
+                previous_task_id = str(analysis.queue_task_id)
+                task_state = celery_app.AsyncResult(previous_task_id).state
                 if task_state not in {"FAILURE", "REVOKED"}:
                     continue
 
-                previous_task_id = str(analysis.queue_task_id)
                 try:
                     task = run_analysis_task.delay(str(analysis.id))
                 except Exception as exc:
