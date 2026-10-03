@@ -23,12 +23,18 @@ def test_postgres_concurrent_analysis_start_creates_one_dispatch_generation(monk
     case_id = uuid4()
     analysis_id = uuid4()
 
+    # Persist the dependency graph in separate transactions. This keeps the
+    # concurrency test focused on Analysis row locking rather than relying on
+    # SQLAlchemy's unit-of-work ordering for unrelated model instances.
     with Session(engine) as db:
         db.add(Organization(
             id=organization_id,
             name=f"integration-{organization_id}",
             external_identifier=str(organization_id),
         ))
+        db.commit()
+
+    with Session(engine) as db:
         db.add(User(
             id=user_id,
             organization_id=organization_id,
@@ -38,6 +44,9 @@ def test_postgres_concurrent_analysis_start_creates_one_dispatch_generation(monk
             role="LAB_DIRECTOR",
             status="ACTIVE",
         ))
+        db.commit()
+
+    with Session(engine) as db:
         db.add(Case(
             id=case_id,
             organization_id=organization_id,
@@ -47,6 +56,9 @@ def test_postgres_concurrent_analysis_start_creates_one_dispatch_generation(monk
             language="en",
             created_by=user_id,
         ))
+        db.commit()
+
+    with Session(engine) as db:
         db.add(Analysis(
             id=analysis_id,
             case_id=case_id,
