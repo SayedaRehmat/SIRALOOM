@@ -20,6 +20,10 @@ def test_enqueue_analysis_commits_dispatch_intent_before_publication(monkeypatch
             self.rows = []
             self.commits = 0
 
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
+
         def scalar(self, _stmt):
             return 0
 
@@ -63,6 +67,10 @@ def test_enqueue_analysis_uses_new_dispatch_generation_for_retry(monkeypatch):
         def __init__(self):
             self.rows = []
             self.commits = 0
+
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
 
         def scalar(self, _stmt):
             return 4

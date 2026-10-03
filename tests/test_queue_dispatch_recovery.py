@@ -620,3 +620,124 @@ def test_concurrent_relay_workers_serialize_on_dispatch_row_lock(monkeypatch):
     assert publish_calls["count"] == 1
     assert dispatch.status == "PUBLISHED"
     assert analysis.queue_task_id == str(dispatch_id)
+
+
+def test_enqueue_analysis_locks_row_and_reuses_existing_queue(monkeypatch):
+    """Concurrent start callers must serialize on the analysis row."""
+    module = importlib.import_module("backend.app.application.analysis")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.CREATED,
+            "queue_task_id": None,
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": uuid4(),
+            "analysis_id": analysis_id,
+            "dispatch_generation": 1,
+            "status": "PUBLISHED",
+            "task_id": "dispatch-task-1",
+        },
+    )()
+
+    class FakeScalar:
+        def __init__(self, value):
+            self.value = value
+        def __bool__(self):
+            return bool(self.value)
+
+    class FakeDB:
+        def __init__(self):
+            self.get_calls = 0
+            self.commits = 0
+            self.added = []
+
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert row_id == analysis_id
+            self.get_calls += 1
+            return analysis
+
+        def scalar(self, statement):
+            return 0
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.commits += 1
+
+        def refresh(self, row):
+            if row is analysis:
+                assert analysis.status == AnalysisStatus.QUEUED
+
+    db = FakeDB()
+    publish_calls = {"count": 0}
+
+    def publish(_dispatch_id):
+        publish_calls["count"] += 1
+        analysis.queue_task_id = "dispatch-task-1"
+        return "dispatch-task-1"
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
+        publish,
+    )
+
+    assert module.enqueue_analysis(db, analysis) == "dispatch-task-1"
+    assert analysis.status == AnalysisStatus.QUEUED
+    assert analysis.queue_task_id == "dispatch-task-1"
+    assert publish_calls["count"] == 1
+    assert db.get_calls == 1
+    assert db.commits == 1
+
+    # A second caller, even with the same object identity, sees the durable
+    # QUEUED state under the row lock and reuses the existing queue pointer.
+    assert module.enqueue_analysis(db, analysis) == "dispatch-task-1"
+    assert publish_calls["count"] == 1
+    assert db.get_calls == 2
+    assert db.commits == 1
+
+
+def test_enqueue_analysis_does_not_create_second_dispatch_for_queued_analysis():
+    module = importlib.import_module("backend.app.application.analysis")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": "existing-task",
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
+
+        def scalar(self, _statement):
+            raise AssertionError("queued analysis must not allocate a dispatch generation")
+
+        def add(self, _row):
+            raise AssertionError("queued analysis must not create another dispatch")
+
+        def commit(self):
+            raise AssertionError("queued analysis must not commit")
+
+        def refresh(self, _row):
+            raise AssertionError("queued analysis must not refresh")
+
+    assert module.enqueue_analysis(FakeDB(), analysis) == "existing-task"
