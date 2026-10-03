@@ -291,7 +291,7 @@ if Celery is not None:
         from sqlalchemy import select
         from backend.app.domain.enums import AnalysisStatus
         from backend.app.infrastructure.audit.service import AuditService
-        from backend.app.infrastructure.db.models import Analysis
+        from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch
         from backend.app.infrastructure.db.session import SessionLocal
 
         db = SessionLocal()
