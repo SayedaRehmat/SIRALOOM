@@ -144,6 +144,14 @@ if Celery is not None:
                     return None
                 if str(analysis.status) != "QUEUED":
                     return dispatch.task_id
+                if analysis.queue_task_id != str(dispatch.id):
+                    dispatch.status = "SUPERSEDED"
+                    dispatch.last_error = (
+                        "Dispatch generation is no longer current for this analysis."
+                    )
+                    db.add(dispatch)
+                    db.commit()
+                    return analysis.queue_task_id
                 task_state = celery_app.AsyncResult(dispatch.task_id).state
                 if task_state not in {"FAILURE", "REVOKED"}:
                     return dispatch.task_id
@@ -156,10 +164,7 @@ if Celery is not None:
                 dispatch.status = "PENDING"
                 dispatch.task_id = None
                 dispatch.last_error = None
-                analysis.queue_task_id = None
-                db.add(dispatch)
-                db.add(analysis)
-                db.commit()
+                # Keep the durable generation pointer on this dispatch while\n                # its broker publication is retried. Clearing it would make the\n                # current dispatch look stale to the generation fence below.\n                analysis.queue_task_id = str(dispatch.id)\n                db.add(dispatch)\n                db.add(analysis)\n                db.commit()
 
             analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
             if analysis is None:
@@ -168,6 +173,19 @@ if Celery is not None:
                 return None
             if str(analysis.status) != "QUEUED":
                 dispatch.status = "SUPERSEDED"
+                db.commit()
+                return analysis.queue_task_id
+
+            # A retry creates a new dispatch generation and moves the durable
+            # queue pointer to that generation before publication. Older
+            # PENDING/PUBLISHED intents must never reclaim ownership of the
+            # analysis when the outbox relay revisits them.
+            if analysis.queue_task_id != str(dispatch.id):
+                dispatch.status = "SUPERSEDED"
+                dispatch.last_error = (
+                    "Dispatch generation is no longer current for this analysis."
+                )
+                db.add(dispatch)
                 db.commit()
                 return analysis.queue_task_id
 
