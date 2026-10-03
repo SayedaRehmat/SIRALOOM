@@ -154,9 +154,23 @@ def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool =
     reserve_analysis_quota(db, organization_id, commit=commit)
 
 
-def effective_max_upload_bytes(db: Session, organization_id: UUID, default_max_bytes: int) -> int:
-    """Returns the smaller of the platform-wide upload limit and any trial-specific limit."""
+def effective_max_upload_bytes(
+    db: Session,
+    organization_id: UUID,
+    default_max_bytes: int | None = None,
+) -> int | None:
+    """Return the applicable upload ceiling.
+
+    Trial entitlements retain their explicit VCF-size ceiling. Organizations with
+    no entitlement row, or with an unrestricted plan, have no SIRALOOM application
+    upload ceiling; their effective capacity is determined by the configured
+    storage/ingress infrastructure instead.
+    """
     entitlement = get_entitlement(db, organization_id)
-    if entitlement is None or entitlement.max_vcf_size_bytes is None:
+    if entitlement is None or entitlement.plan in _UNRESTRICTED_PLANS:
         return default_max_bytes
+    if entitlement.max_vcf_size_bytes is None:
+        return default_max_bytes
+    if default_max_bytes is None:
+        return entitlement.max_vcf_size_bytes
     return min(default_max_bytes, entitlement.max_vcf_size_bytes)
