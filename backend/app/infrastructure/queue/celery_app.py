@@ -95,7 +95,7 @@ if Celery is not None:
         same durable workflow, not a second laboratory analysis.
         """
         from backend.app.domain.enums import AnalysisStatus
-        from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch
+        from backend.app.infrastructure.db.models import Analysis
 
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
@@ -129,7 +129,26 @@ if Celery is not None:
             if dispatch is None:
                 return None
             if dispatch.status == "PUBLISHED" and dispatch.task_id:
-                return dispatch.task_id
+                analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
+                if analysis is None:
+                    dispatch.status = "SUPERSEDED"
+                    db.commit()
+                    return None
+                if str(analysis.status) != "QUEUED":
+                    return dispatch.task_id
+                task_state = celery_app.AsyncResult(dispatch.task_id).state
+                if task_state not in {"FAILURE", "REVOKED"}:
+                    return dispatch.task_id
+                # The previous publication is definitively dead and the
+                # analysis is still QUEUED, so this durable intent is retryable.
+                dispatch.status = "PENDING"
+                dispatch.task_id = None
+                dispatch.last_error = None
+                analysis.queue_task_id = None
+                db.add(dispatch)
+                db.add(analysis)
+                db.commit()
+                return publish_analysis_dispatch(dispatch.id)
 
             analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
             if analysis is None:
@@ -244,7 +263,7 @@ if Celery is not None:
         try:
             pending_ids = list(db.scalars(
                 select(AnalysisDispatch.id).where(
-                    AnalysisDispatch.status == "PENDING",
+                    AnalysisDispatch.status.in_(("PENDING", "PUBLISHED")),
                 )
             ))
         finally:
