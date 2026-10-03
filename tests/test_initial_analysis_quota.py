@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from backend.app.application.analysis import create_analysis
-from backend.app.application.entitlements import reserve_analysis_quota
+from backend.app.application.entitlements import effective_max_upload_bytes, reserve_analysis_quota
 from backend.app.domain.enums import AnalysisStatus, EntitlementPlan, EntitlementStatus
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
@@ -266,3 +266,51 @@ def test_unrestricted_plan_does_not_consume_usage():
             raise AssertionError("unrestricted plans must not commit")
 
     reserve_analysis_quota(FakeDB(), organization_id)
+
+
+def test_trial_upload_limit_is_preserved():
+    organization_id = uuid4()
+    entitlement = type(
+        "Entitlement",
+        (),
+        {
+            "organization_id": organization_id,
+            "plan": EntitlementPlan.TRIAL,
+            "max_vcf_size_bytes": 50 * 1024 * 1024,
+        },
+    )()
+
+    class FakeDB:
+        def scalar(self, _statement):
+            return entitlement
+
+    assert effective_max_upload_bytes(FakeDB(), organization_id) == 50 * 1024 * 1024
+
+
+def test_unrestricted_laboratory_upload_has_no_siraloom_application_ceiling():
+    organization_id = uuid4()
+    entitlement = type(
+        "Entitlement",
+        (),
+        {
+            "organization_id": organization_id,
+            "plan": EntitlementPlan.PAID,
+            "max_vcf_size_bytes": 50 * 1024 * 1024,
+        },
+    )()
+
+    class FakeDB:
+        def scalar(self, _statement):
+            return entitlement
+
+    assert effective_max_upload_bytes(FakeDB()) is None
+
+
+def test_organization_without_entitlement_has_no_siraloom_application_ceiling():
+    organization_id = uuid4()
+
+    class FakeDB:
+        def scalar(self, _statement):
+            return None
+
+    assert effective_max_upload_bytes(FakeDB(), organization_id) is None
