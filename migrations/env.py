@@ -4,7 +4,7 @@ import os
 import sys
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, inspect, text
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -52,6 +52,35 @@ def get_url() -> str:
     return url
 
 
+def ensure_postgresql_alembic_version_capacity(connection) -> None:
+    """Allow PostgreSQL to store the repository's full Alembic revision IDs.
+
+    Alembic's default version table uses VARCHAR(32). SIRALOOM has historical
+    revision IDs longer than 32 characters, so PostgreSQL must widen the
+    version column before Alembic advances to those revisions.
+    """
+    if connection.dialect.name != "postgresql":
+        return
+
+    inspector = inspect(connection)
+    if inspector.has_table("alembic_version"):
+        connection.execute(
+            text(
+                "ALTER TABLE alembic_version "
+                "ALTER COLUMN version_num TYPE VARCHAR(255)"
+            )
+        )
+        return
+
+    connection.execute(
+        text(
+            "CREATE TABLE alembic_version ("
+            "version_num VARCHAR(255) NOT NULL PRIMARY KEY"
+            ")"
+        )
+    )
+
+
 def run_migrations_offline() -> None:
     """Run Alembic migrations without creating a database connection."""
     context.configure(
@@ -87,6 +116,7 @@ def run_migrations_online() -> None:
         )
 
         with context.begin_transaction():
+            ensure_postgresql_alembic_version_capacity(connection)
             context.run_migrations()
 
 
