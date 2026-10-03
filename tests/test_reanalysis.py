@@ -110,7 +110,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         from backend.app.application.analysis import enqueue_analysis
 
         with patch(
-            "backend.app.application.analysis.publish_analysis_dispatch",
+            "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
             return_value="retry-task-001",
         ):
             task_id = enqueue_analysis(db, retry)
