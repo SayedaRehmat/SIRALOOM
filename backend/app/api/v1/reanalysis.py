@@ -142,6 +142,15 @@ def request_reanalysis(
 
     try:
         task_id = enqueue_analysis(db, child)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "This reanalysis child is not in a retryable execution state.",
+                "analysis_id": str(child.id),
+                "status": child.status,
+            },
+        ) from exc
     except Exception as exc:
         AuditService(db).record(
             event_type="REANALYSIS_QUEUE_FAILURE",
@@ -227,6 +236,16 @@ def execute_reanalysis_candidate(
 
     try:
         task_id = enqueue_analysis(db, child)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "This reanalysis child is not in a retryable execution state.",
+                "analysis_id": str(child.id),
+                "candidate_id": str(candidate.id),
+                "status": child.status,
+            },
+        ) from exc
     except Exception as exc:
         candidate.status = "PENDING"
         candidate.acted_at = None
