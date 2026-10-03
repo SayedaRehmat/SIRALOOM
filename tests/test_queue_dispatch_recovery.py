@@ -47,11 +47,12 @@ def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypat
         def scalars(self, stmt):
             assert getattr(stmt, "_for_update_arg", None) is None
             self.scalar_calls = getattr(self, "scalar_calls", 0) + 1
+            call_no = self.scalar_calls
             class ScalarRows:
                 def __iter__(self):
-                    return iter([analysis.id]) if self.scalar_calls == 1 else iter([])
+                    return iter([analysis.id]) if call_no == 1 else iter([])
                 def first(self):
-                    return analysis.id if self.scalar_calls == 1 else None
+                    return analysis.id if call_no == 1 else None
             return ScalarRows()
 
         def get(self, model, analysis_id, **kwargs):
