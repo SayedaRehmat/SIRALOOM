@@ -182,31 +182,78 @@ def execute_reanalysis_candidate(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    """Turn one reviewed change candidate into an immutable child analysis."""
+    """Execute one reviewed change candidate without stranding it on queue failure."""
     require_role(principal, CASE_WRITE_ROLES)
     candidate = db.get(ReanalysisCandidate, candidate_id)
     if not candidate or candidate.organization_id != principal.organization_id:
         raise HTTPException(status_code=404, detail="Reanalysis candidate not found")
-    if candidate.status != "PENDING":
-        raise HTTPException(status_code=409, detail="This reanalysis candidate has already been acted on.")
+    if candidate.status not in {"PENDING", "STARTED"}:
+        raise HTTPException(status_code=409, detail="This reanalysis candidate has already been completed.")
 
     parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal)
     if parent.status != "SUCCEEDED":
         raise HTTPException(status_code=409, detail="Only a successfully completed parent analysis can be reanalyzed.")
 
+    child = db.get(Analysis, candidate.child_analysis_id) if candidate.child_analysis_id else None
+
+    if child is None:
+        try:
+            child, linked_candidate = create_reanalysis(
+                db,
+                parent=parent,
+                trigger_type=candidate.trigger_type,
+                requested_by=principal.user_id,
+                reason=candidate.reason,
+                change_event_id=candidate.change_event_id,
+                affected_step=candidate.earliest_affected_step,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        candidate = linked_candidate or candidate
+
+    # A candidate can be retried after queue infrastructure failure. Once the
+    # child is queued/running/completed, return its durable state instead of
+    # dispatching a second task.
+    if str(child.status) in {"QUEUED", "RUNNING", "SUCCEEDED"}:
+        return {
+            "analysis_id": str(child.id),
+            "parent_analysis_id": str(parent.id),
+            "analysis_version": child.analysis_version,
+            "status": child.status,
+            "task_id": child.queue_task_id,
+            "candidate_id": str(candidate.id),
+            "earliest_affected_step": candidate.earliest_affected_step,
+        }
+
     try:
-        child, linked_candidate = create_reanalysis(
-            db,
-            parent=parent,
-            trigger_type=candidate.trigger_type,
-            requested_by=principal.user_id,
-            reason=candidate.reason,
-            change_event_id=candidate.change_event_id,
-            affected_step=candidate.earliest_affected_step,
-        )
         task_id = enqueue_analysis(db, child)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        candidate.status = "PENDING"
+        candidate.acted_at = None
+        db.add(candidate)
+        AuditService(db).record(
+            event_type="REANALYSIS_QUEUE_FAILURE",
+            case_id=child.case_id,
+            analysis_id=child.id,
+            actor_type="SYSTEM",
+            actor_id="api",
+            operation="QUEUE_REANALYSIS_CANDIDATE",
+            reason=str(exc),
+            payload={
+                "candidate_id": str(candidate.id),
+                "child_analysis_id": str(child.id),
+                "error_type": type(exc).__name__,
+            },
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "message": "Reanalysis was created but could not be queued. The candidate remains pending for retry.",
+                "analysis_id": str(child.id),
+                "candidate_id": str(candidate.id),
+            },
+        ) from exc
 
     return {
         "analysis_id": str(child.id),
@@ -214,7 +261,7 @@ def execute_reanalysis_candidate(
         "analysis_version": child.analysis_version,
         "status": child.status,
         "task_id": task_id,
-        "candidate_id": str(linked_candidate.id) if linked_candidate else str(candidate.id),
+        "candidate_id": str(candidate.id),
         "earliest_affected_step": candidate.earliest_affected_step,
     }
 
