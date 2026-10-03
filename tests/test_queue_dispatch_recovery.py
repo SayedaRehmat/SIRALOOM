@@ -381,7 +381,7 @@ def test_published_dispatch_definitive_failure_does_not_recurse_on_immediate_rep
     assert dispatch.task_id is None
     assert dispatch.attempts == 2
     assert dispatch.last_error == "broker unavailable"
-    assert analysis.queue_task_id is None
+    assert analysis.queue_task_id == str(dispatch_id)
 
 
 def test_published_dispatch_is_idempotent_when_relay_runs_again(monkeypatch):
