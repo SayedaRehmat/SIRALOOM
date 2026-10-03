@@ -536,6 +536,25 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
 
         return UUID(value)
 
+    class FakeClaimSession:
+        def get(self, model, received_analysis_id, **kwargs):
+            from backend.app.domain.enums import AnalysisStatus
+            assert kwargs == {"with_for_update": True}
+            return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED})()
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        lambda: FakeClaimSession(),
+    )
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
     monkeypatch.setattr(celery_module.run_analysis_task, "retry", fake_retry)
 
@@ -558,6 +577,24 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
     analysis_id = str(uuid4())
     events = []
 
+    class FakeClaimSession:
+        class Analysis:
+            from backend.app.domain.enums import AnalysisStatus
+            status = AnalysisStatus.QUEUED
+
+        def get(self, model, received_analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return self.Analysis()
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            events.append("claim_session_closed")
+
     class FakeRecoverySession:
         def close(self):
             events.append("recovery_session_closed")
@@ -573,7 +610,7 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
         def close(self):
             events.append("analysis_session_closed")
 
-    sessions = iter([FakeRecoverySession(), FakeAnalysisSession()])
+    sessions = iter([FakeClaimSession(), FakeRecoverySession(), FakeAnalysisSession()])
 
     def fake_session_local():
         return next(sessions)
@@ -773,7 +810,7 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
         )
         db.commit()
 
-    sessions = iter([Session(engine), Session(engine)])
+    sessions = iter([Session(engine), Session(engine), Session(engine)])
 
     def fake_session_local():
         return next(sessions)
@@ -1363,13 +1400,25 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     analysis_id = str(uuid4())
     events = []
 
+    from backend.app.domain.enums import AnalysisStatus
+
     class FakeAnalysis:
-        status = "RUNNING"
+        status = AnalysisStatus.QUEUED
 
     class FakeSession:
-        def get(self, model, received_analysis_id):
-            events.append(("analysis_lookup", model.__name__, received_analysis_id))
+        def get(self, model, received_analysis_id, **kwargs):
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
+                events.append("claim_lookup")
+            else:
+                events.append(("analysis_lookup", model.__name__, received_analysis_id))
             return FakeAnalysis()
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
 
         def close(self):
             events.append("analysis_session_closed")
@@ -1416,13 +1465,33 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
     class RecoveryFailure(RuntimeError):
         pass
 
+    from backend.app.domain.enums import AnalysisStatus
+
+    class FakeClaimSession:
+        class Analysis:
+            status = AnalysisStatus.QUEUED
+
+        def get(self, model, received_analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return self.Analysis()
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            events.append("claim_session_closed")
+
     class FakeRecoverySession:
         def close(self):
             events.append("recovery_session_closed")
 
+    sessions = iter([FakeClaimSession(), FakeRecoverySession()])
+
     def fake_session_local():
-        events.append("recovery_session_opened")
-        return FakeRecoverySession()
+        return next(sessions)
 
     def fake_recover(db, received_analysis_id):
         assert isinstance(db, FakeRecoverySession)
@@ -1453,7 +1522,7 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
         task.pop_request()
 
     assert events == [
-        "recovery_session_opened",
+        "claim_session_closed",
         "recovery",
         "recovery_session_closed",
     ]
@@ -1626,13 +1695,33 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
     )
     events = []
 
+    from backend.app.domain.enums import AnalysisStatus
+
+    class FakeClaimSession:
+        class Analysis:
+            status = AnalysisStatus.QUEUED
+
+        def get(self, model, received_analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return self.Analysis()
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            events.append("claim_session_closed")
+
     class FakeTerminalSession:
         def close(self):
             events.append("terminal_session_closed")
 
+    sessions = iter([FakeClaimSession(), FakeTerminalSession()])
+
     def fake_session_local():
-        events.append("terminal_session_opened")
-        return FakeTerminalSession()
+        return next(sessions)
 
     def fake_run_variant_analysis(received_analysis_id):
         assert received_analysis_id == UUID(analysis_id)
@@ -1768,7 +1857,7 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
             analysis_type="VARIANT_INTERPRETATION",
             workflow_id="siraloom.variant",
             workflow_version="1.0",
-            status=AnalysisStatus.RUNNING,
+            status=AnalysisStatus.QUEUED,
             queue_task_id="successful-retry-test",
             reference_build="GRCh38",
             configuration={},
