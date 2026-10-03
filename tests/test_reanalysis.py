@@ -84,6 +84,26 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
         assert db.get(Analysis, parent_id).status == "SUCCEEDED"
 
+        # A terminal child failure is retryable without creating a new lineage
+        # version or consuming another analysis entitlement.
+        first.status = "FAILED"
+        db.add(first)
+        db.commit()
+
+        retry, retry_candidate = create_reanalysis(
+            db, parent=parent, trigger_type="MANUAL", requested_by=user_id,
+            reason="Retry the failed laboratory reanalysis.",
+        )
+        entitlement = db.scalar(select(OrganizationEntitlement).where(
+            OrganizationEntitlement.organization_id == organization_id
+        ))
+        assert retry.id == first.id
+        assert retry.analysis_version == first.analysis_version
+        assert retry.status == "FAILED"
+        assert retry_candidate is None
+        assert entitlement.analyses_used == 1
+        assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
+
 
 def test_reanalysis_trigger_dependency_contract():
     assert affected_step_for_trigger("ANNOTATION_UPDATE") == "annotate"
