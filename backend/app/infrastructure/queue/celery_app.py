@@ -21,6 +21,10 @@ if Celery is not None:
                 "task": "siraloom.scan_reanalysis_resources",
                 "schedule": 86400.0,
             },
+            "recover-orphaned-analysis-dispatches": {
+                "task": "siraloom.recover_orphaned_analysis_dispatches",
+                "schedule": 300.0,
+            },
         },
     )
 
@@ -125,6 +129,81 @@ if Celery is not None:
         try:
             candidates_created = scan_active_resources_for_reanalysis(db)
             return {"candidates_created": candidates_created}
+        finally:
+            db.close()
+
+
+
+    @celery_app.task(name="siraloom.recover_orphaned_analysis_dispatches", autoretry_for=(), acks_late=True)
+    def recover_orphaned_analysis_dispatches():
+        """Recover only definitively failed/revoked Celery dispatches.
+
+        A QUEUED task whose broker/backend state is PENDING is deliberately left
+        untouched because PENDING does not prove that the task is absent. This
+        prevents a scheduler from creating duplicate laboratory analyses.
+        """
+        from uuid import UUID
+        from sqlalchemy import select
+        from backend.app.domain.enums import AnalysisStatus
+        from backend.app.infrastructure.audit.service import AuditService
+        from backend.app.infrastructure.db.models import Analysis
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        recovered = 0
+        inspected = 0
+        try:
+            queued = list(db.scalars(
+                select(Analysis).where(
+                    Analysis.status == AnalysisStatus.QUEUED,
+                    Analysis.queue_task_id.is_not(None),
+                )
+            ))
+            for analysis in queued:
+                inspected += 1
+                task_state = celery_app.AsyncResult(str(analysis.queue_task_id)).state
+                if task_state not in {"FAILURE", "REVOKED"}:
+                    continue
+
+                previous_task_id = str(analysis.queue_task_id)
+                try:
+                    task = run_analysis_task.delay(str(analysis.id))
+                except Exception as exc:
+                    AuditService(db).record(
+                        event_type="ANALYSIS_DISPATCH_RECOVERY_FAILURE",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="celery-recovery",
+                        operation="RECOVER_QUEUED_DISPATCH",
+                        reason=str(exc),
+                        payload={
+                            "previous_task_id": previous_task_id,
+                            "celery_state": task_state,
+                            "error_type": type(exc).__name__,
+                        },
+                    )
+                    continue
+
+                analysis.queue_task_id = task.id
+                db.add(analysis)
+                AuditService(db).record(
+                    event_type="ANALYSIS_DISPATCH_RECOVERED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="celery-recovery",
+                    operation="RECOVER_QUEUED_DISPATCH",
+                    payload={
+                        "previous_task_id": previous_task_id,
+                        "replacement_task_id": task.id,
+                        "celery_state": task_state,
+                    },
+                )
+                recovered += 1
+
+            db.commit()
+            return {"inspected": inspected, "recovered": recovered}
         finally:
             db.close()
 
