@@ -310,7 +310,12 @@ if Celery is not None:
                     continue
                 # New dispatches are owned by the durable outbox relay. The
                 # legacy scanner remains only for analyses created before 0036.
-                if db.scalar(select(AnalysisDispatch.id).where(AnalysisDispatch.analysis_id == analysis.id)) is not None:
+                dispatch_exists = db.scalars(
+                    select(AnalysisDispatch.id).where(
+                        AnalysisDispatch.analysis_id == analysis.id
+                    )
+                ).first()
+                if dispatch_exists is not None:
                     continue
                 if (
                     analysis.status != AnalysisStatus.QUEUED
