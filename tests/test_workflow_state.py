@@ -2042,3 +2042,154 @@ def test_workflow_next_step_reports_completion_only_when_every_step_succeeded():
     ]
 
     assert _resolve_workflow_next_step(steps) == "ANALYSIS_COMPLETE"
+
+
+def test_worker_loss_after_execution_claim_resumes_on_redelivery(monkeypatch):
+    """A worker lost after the durable RUNNING claim must resume the same analysis.
+
+    The first delivery proves the execution fence commits RUNNING before workflow
+    execution. The simulated worker loss then leaves that durable state intact.
+    A Celery redelivery is allowed to continue RUNNING, invokes the recovery hook,
+    and resumes the same analysis instead of being fenced as a duplicate.
+    """
+    from uuid import uuid4
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from backend.app.domain.enums import AnalysisStatus
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import Analysis, Case, Organization, User
+    from backend.app.infrastructure.db import session as db_session
+    from backend.app.infrastructure.queue import celery_app as celery_module
+    from backend.app.workflows import variant as variant_module
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__,
+            User.__table__,
+            Case.__table__,
+            Analysis.__table__,
+        ],
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+
+    with Session(engine) as db:
+        db.add(
+            Organization(
+                id=organization_id,
+                name="Worker Loss Test Laboratory",
+                external_identifier=None,
+            )
+        )
+        db.add(
+            User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=None,
+                email="worker-loss@test.local",
+                display_name="Worker Loss Test",
+                role="ANALYST",
+                status="ACTIVE",
+            )
+        )
+        db.add(
+            Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier="WORKER-LOSS-001",
+                status="ACTIVE",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            )
+        )
+        db.add(
+            Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="siraloom.variant",
+                workflow_version="1.0",
+                status=AnalysisStatus.QUEUED,
+                queue_task_id="worker-loss-task",
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+            )
+        )
+        db.commit()
+
+    monkeypatch.setattr(db_session, "SessionLocal", lambda: Session(engine))
+
+    events = []
+
+    def fake_recover(db, received_analysis_id):
+        assert received_analysis_id == analysis_id
+        events.append("recovery")
+
+    class WorkerLost(BaseException):
+        pass
+
+    def fake_run_variant_analysis(received_analysis_id):
+        assert received_analysis_id == analysis_id
+        events.append("run")
+        if events.count("run") == 1:
+            raise WorkerLost("worker process lost after execution claim")
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            analysis.status = AnalysisStatus.SUCCEEDED
+            db.commit()
+
+    monkeypatch.setattr(
+        variant_module,
+        "recover_interrupted_execution",
+        fake_recover,
+    )
+    monkeypatch.setattr(
+        variant_module,
+        "run_variant_analysis",
+        fake_run_variant_analysis,
+    )
+
+    task = celery_module.run_analysis_task
+
+    task.push_request(retries=0, delivery_info={})
+    try:
+        try:
+            task.run(str(analysis_id))
+        except WorkerLost:
+            pass
+        else:
+            raise AssertionError("Expected simulated worker loss")
+    finally:
+        task.pop_request()
+
+    with Session(engine) as db:
+        analysis = db.get(Analysis, analysis_id)
+        assert analysis.status == AnalysisStatus.RUNNING
+
+    assert events == ["run"]
+
+    task.push_request(retries=0, delivery_info={"redelivered": True})
+    try:
+        result = task.run(str(analysis_id))
+    finally:
+        task.pop_request()
+
+    assert result == {
+        "analysis_id": str(analysis_id),
+        "status": AnalysisStatus.SUCCEEDED,
+    }
+    assert events == ["run", "recovery", "run"]
