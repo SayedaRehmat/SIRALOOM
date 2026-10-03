@@ -155,7 +155,7 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": None})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)})()
     dispatch = type(
         "AnalysisDispatch",
         (),
@@ -207,7 +207,7 @@ def test_publish_analysis_dispatch_keeps_intent_pending_when_broker_publish_fail
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": None})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)})()
     dispatch = type(
         "AnalysisDispatch",
         (),
@@ -577,7 +577,7 @@ def test_concurrent_relay_workers_serialize_on_dispatch_row_lock(monkeypatch):
     analysis = type(
         "Analysis",
         (),
-        {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": None},
+        {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)},
     )()
     dispatch = type(
         "AnalysisDispatch",
