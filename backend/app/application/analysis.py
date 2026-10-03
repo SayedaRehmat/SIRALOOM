@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 from uuid import UUID, uuid4
+from types import SimpleNamespace
+
+# Backward-compatible patch seam for existing application tests and callers.
+# The actual publisher is resolved lazily by enqueue_analysis.
+run_analysis_task = SimpleNamespace(delay=lambda analysis_id: None)
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
