@@ -136,7 +136,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         db.commit()
 
         with patch(
-            "backend.app.application.analysis.publish_analysis_dispatch",
+            "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
             return_value="resource-retry-002",
         ):
             resource_retry_task = enqueue_analysis(db, retry)
