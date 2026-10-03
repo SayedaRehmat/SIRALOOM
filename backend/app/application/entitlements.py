@@ -123,19 +123,35 @@ def require_analysis_quota(db: Session, organization_id: UUID) -> None:
         raise HTTPException(status_code=402, detail="This trial workspace is no longer active.")
 
 
-def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool = True) -> None:
+def reserve_analysis_quota(db: Session, organization_id: UUID, *, commit: bool = True) -> None:
     """Increments trial usage after an analysis has actually been created.
 
     Call this only after `require_analysis_quota` has passed and the analysis was
     successfully persisted, so a failed request never burns a trial credit.
     """
-    entitlement = get_entitlement(db, organization_id)
+    entitlement = db.scalar(
+        select(OrganizationEntitlement)
+        .where(OrganizationEntitlement.organization_id == organization_id)
+        .with_for_update()
+    )
     if entitlement is None or entitlement.plan in _UNRESTRICTED_PLANS:
         return
+    status = _effective_status(entitlement)
+    if status == EntitlementStatus.EXPIRED:
+        raise HTTPException(status_code=402, detail="Your SIRALOOM trial has expired. Upgrade to continue running analyses.")
+    if status == EntitlementStatus.EXHAUSTED:
+        raise HTTPException(status_code=402, detail=f"Your SIRALOOM trial has used all {entitlement.max_analyses} included analyses. Upgrade to continue.")
+    if status in (EntitlementStatus.CONVERTED, EntitlementStatus.CANCELLED):
+        raise HTTPException(status_code=402, detail="This trial workspace is no longer active.")
     entitlement.analyses_used += 1
     db.add(entitlement)
     if commit:
         db.commit()
+
+
+def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool = True) -> None:
+    """Compatibility wrapper for existing reanalysis callers."""
+    reserve_analysis_quota(db, organization_id, commit=commit)
 
 
 def effective_max_upload_bytes(db: Session, organization_id: UUID, default_max_bytes: int) -> int:

@@ -16,7 +16,7 @@ from backend.app.infrastructure.db.models import (
   )
 from backend.app.application.analysis import create_analysis, enqueue_analysis
 from backend.app.application.entitlements import (
-    consume_analysis_quota,
+    reserve_analysis_quota,
     require_analysis_quota,
 )
 from backend.app.auth.principal import (
@@ -114,17 +114,22 @@ def create(
             reference_build=payload.reference_build,
             configuration=payload.configuration,
             created_by=principal.user_id,
+            commit=False,
         )
     except ValueError as exc:
+        db.rollback()
         raise HTTPException(
             status_code=400,
             detail=str(exc),
         )
 
-    consume_analysis_quota(
-        db,
-        principal.organization_id,
-    )
+    try:
+        reserve_analysis_quota(db, principal.organization_id, commit=False)
+        db.commit()
+        db.refresh(analysis)
+    except HTTPException:
+        db.rollback()
+        raise
 
     return {
         "analysis_id": str(analysis.id),
