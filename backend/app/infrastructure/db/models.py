@@ -143,6 +143,31 @@ class Analysis(Base):
         ),
     )
 
+class AnalysisDispatch(Base):
+    """Durable publication intent for an analysis execution.
+
+    The row is created in the same transaction that moves an analysis to
+    QUEUED. Publication to Celery is deliberately outside that transaction;
+    the dispatcher can retry a durable PENDING intent without creating another
+    Analysis row. The execution fence remains authoritative at the worker.
+    """
+    __tablename__ = "analysis_dispatches"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    dispatch_generation: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    task_id: Mapped[str | None] = mapped_column(Text)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "dispatch_generation"),
+        Index("ix_analysis_dispatches_status", "status"),
+    )
+
+
 class Artifact(Base):
     __tablename__ = "artifacts"
     id: Mapped[UUID] = mapped_column(primary_key=True)

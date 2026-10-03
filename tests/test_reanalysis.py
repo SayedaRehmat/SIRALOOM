@@ -16,6 +16,7 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     AuditEvent,
     AnalysisResourceSnapshot,
+    AnalysisDispatch,
     Case,
     Notification,
     Organization,
@@ -37,7 +38,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         engine,
         tables=[
             Organization.__table__, Case.__table__, Analysis.__table__,
-            OrganizationEntitlement.__table__, AuditEvent.__table__,
+            AnalysisDispatch.__table__, OrganizationEntitlement.__table__, AuditEvent.__table__,
         ],
     )
 
@@ -105,12 +106,18 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
 
         from unittest.mock import patch
-        from types import SimpleNamespace
         from backend.app.application.analysis import enqueue_analysis
 
+        def publish_retry(dispatch_id):
+            dispatch = db.get(AnalysisDispatch, dispatch_id)
+            dispatch.status = "PUBLISHED"
+            dispatch.task_id = "retry-task-001"
+            retry.queue_task_id = "retry-task-001"
+            return "retry-task-001"
+
         with patch(
-            "backend.app.application.analysis.run_analysis_task",
-            SimpleNamespace(delay=lambda analysis_id: SimpleNamespace(id="retry-task-001")),
+            "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
+            side_effect=publish_retry,
         ):
             task_id = enqueue_analysis(db, retry)
 
@@ -129,8 +136,8 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         db.commit()
 
         with patch(
-            "backend.app.application.analysis.run_analysis_task",
-            SimpleNamespace(delay=lambda analysis_id: SimpleNamespace(id="resource-retry-002")),
+            "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
+            return_value="resource-retry-002",
         ):
             resource_retry_task = enqueue_analysis(db, retry)
 

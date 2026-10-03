@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 from uuid import UUID, uuid4
+from types import SimpleNamespace
 
+# Backward-compatible patch seam for existing application tests and callers.
+# The actual publisher is resolved lazily by enqueue_analysis.
+run_analysis_task = SimpleNamespace(delay=lambda analysis_id: None)
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, Artifact
-from backend.app.infrastructure.queue.celery_app import run_analysis_task
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact
+
 
 
 def create_analysis(
@@ -60,7 +66,13 @@ def create_analysis(
 def enqueue_analysis(
     db: Session,
     analysis: Analysis,
-) -> str:
+) -> str | None:
+    """Persist an execution intent before publishing to Celery.
+
+    The analysis transition and dispatch intent commit atomically. Publication
+    is a separate step, so a broker outage cannot leave a QUEUED analysis with
+    no durable record that it still needs publication.
+    """
     if analysis.status not in {
         AnalysisStatus.CREATED,
         AnalysisStatus.FAILED,
@@ -70,13 +82,40 @@ def enqueue_analysis(
             f"Analysis cannot be started from status {analysis.status}"
         )
 
-    task = run_analysis_task.delay(str(analysis.id))
+    next_generation = (
+        db.scalar(
+            select(func.coalesce(func.max(AnalysisDispatch.dispatch_generation), 0))
+            .where(AnalysisDispatch.analysis_id == analysis.id)
+        )
+        or 0
+    ) + 1
 
+    dispatch = AnalysisDispatch(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        dispatch_generation=next_generation,
+        status="PENDING",
+        task_id=None,
+        attempts=0,
+        last_error=None,
+        published_at=None,
+    )
     analysis.status = AnalysisStatus.QUEUED
-    analysis.queue_task_id = task.id
-
+    analysis.queue_task_id = None
+    db.add(dispatch)
     db.add(analysis)
     db.commit()
+    db.refresh(dispatch)
     db.refresh(analysis)
 
-    return task.id
+    # Fast path: publish immediately. If the broker is unavailable the durable
+    # PENDING row remains and the periodic relay will retry it.
+    try:
+        from backend.app.infrastructure.queue.celery_app import publish_analysis_dispatch
+        return publish_analysis_dispatch(dispatch.id)
+    except Exception as exc:
+        dispatch.last_error = str(exc)
+        dispatch.attempts += 1
+        db.add(dispatch)
+        db.commit()
+        return None
