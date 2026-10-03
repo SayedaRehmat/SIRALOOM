@@ -284,3 +284,57 @@ def test_published_dispatch_is_not_replaced_while_celery_state_is_unknown(monkey
     monkeypatch.setattr(module.celery_app, "AsyncResult", lambda _id: type("Result", (), {"state": "PENDING"})())
 
     assert module.publish_analysis_dispatch(dispatch_id) == "pending-task"
+
+
+def test_published_dispatch_definitive_failure_does_not_recurse_on_immediate_republish_failure(monkeypatch):
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    dispatch_id = uuid4()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": "old-task"})()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PUBLISHED",
+            "task_id": "old-task",
+            "attempts": 1,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def __init__(self):
+            self.commits = 0
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return dispatch if row_id == dispatch_id else analysis
+        def add(self, _row):
+            pass
+        def commit(self):
+            self.commits += 1
+        def close(self):
+            pass
+
+    calls = {"publish": 0}
+
+    def fail_publish(**_kwargs):
+        calls["publish"] += 1
+        raise RuntimeError("broker unavailable")
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.celery_app, "AsyncResult", lambda _id: type("Result", (), {"state": "FAILURE"})())
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", fail_publish)
+
+    assert module.publish_analysis_dispatch(dispatch_id) is None
+    assert calls["publish"] == 1
+    assert dispatch.status == "PENDING"
+    assert dispatch.task_id is None
+    assert dispatch.attempts == 2
+    assert dispatch.last_error == "broker unavailable"
+    assert analysis.queue_task_id is None

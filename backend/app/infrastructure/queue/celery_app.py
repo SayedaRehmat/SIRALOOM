@@ -141,6 +141,10 @@ if Celery is not None:
                     return dispatch.task_id
                 # The previous publication is definitively dead and the
                 # analysis is still QUEUED, so this durable intent is retryable.
+                # Reset the durable intent in this transaction and continue
+                # with one bounded publication attempt. Do not recurse: a
+                # broker that immediately reports definitive failure must not
+                # turn the relay into unbounded Python recursion.
                 dispatch.status = "PENDING"
                 dispatch.task_id = None
                 dispatch.last_error = None
@@ -148,7 +152,6 @@ if Celery is not None:
                 db.add(dispatch)
                 db.add(analysis)
                 db.commit()
-                return publish_analysis_dispatch(dispatch.id)
 
             analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
             if analysis is None:
