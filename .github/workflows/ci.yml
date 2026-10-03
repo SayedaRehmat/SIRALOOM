@@ -33,6 +33,42 @@ jobs:
       - name: Compile Python
         run: python -m compileall backend scripts
 
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: siraloom
+          POSTGRES_PASSWORD: siraloom
+          POSTGRES_DB: siraloom
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U siraloom -d siraloom"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend
+        run: pip install -e . pytest
+      - name: Apply database migrations
+        env:
+          DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom
+        run: alembic upgrade head
+      - name: PostgreSQL concurrency tests
+        env:
+          DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: pytest -q tests/integration/test_analysis_dispatch_postgres.py
+
   frontend:
     runs-on: ubuntu-latest
     steps:
