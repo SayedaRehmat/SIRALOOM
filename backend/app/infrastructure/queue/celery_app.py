@@ -144,6 +144,14 @@ if Celery is not None:
                     return None
                 if str(analysis.status) != "QUEUED":
                     return dispatch.task_id
+                if analysis.queue_task_id != str(dispatch.id):
+                    dispatch.status = "SUPERSEDED"
+                    dispatch.last_error = (
+                        "Dispatch generation is no longer current for this analysis."
+                    )
+                    db.add(dispatch)
+                    db.commit()
+                    return analysis.queue_task_id
                 task_state = celery_app.AsyncResult(dispatch.task_id).state
                 if task_state not in {"FAILURE", "REVOKED"}:
                     return dispatch.task_id
