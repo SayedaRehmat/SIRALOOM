@@ -122,6 +122,26 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         ))
         assert entitlement.analyses_used == 1
 
+        # Resource outages are recoverable operational failures: the same
+        # child/version must be resumable after the resource is restored.
+        retry.status = "RESOURCE_FAILURE"
+        db.add(retry)
+        db.commit()
+
+        with patch(
+            "backend.app.application.analysis.run_analysis_task",
+            SimpleNamespace(delay=lambda analysis_id: SimpleNamespace(id="resource-retry-002")),
+        ):
+            resource_retry_task = enqueue_analysis(db, retry)
+
+        assert resource_retry_task == "resource-retry-002"
+        assert retry.status == "QUEUED"
+        assert retry.analysis_version == first.analysis_version
+        entitlement = db.scalar(select(OrganizationEntitlement).where(
+            OrganizationEntitlement.organization_id == organization_id
+        ))
+        assert entitlement.analyses_used == 1
+
 
 def test_reanalysis_trigger_dependency_contract():
     assert affected_step_for_trigger("ANNOTATION_UPDATE") == "annotate"

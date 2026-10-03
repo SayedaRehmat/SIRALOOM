@@ -64,6 +64,7 @@ def enqueue_analysis(
     if analysis.status not in {
         AnalysisStatus.CREATED,
         AnalysisStatus.FAILED,
+        AnalysisStatus.RESOURCE_FAILURE,
     }:
         raise ValueError(
             f"Analysis cannot be started from status {analysis.status}"
