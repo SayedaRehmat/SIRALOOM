@@ -4,6 +4,7 @@ from uuid import uuid4
 
 def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatch):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
     analysis = type("Analysis", (), {"id": uuid4(), "case_id": uuid4(), "status": "QUEUED", "queue_task_id": "old-task"})()
 
     class FakeDB:
@@ -12,7 +13,7 @@ def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatc
         def commit(self): pass
         def close(self): pass
 
-    monkeypatch.setattr(module, "SessionLocal", FakeDB, raising=False)
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
     monkeypatch.setattr(module.celery_app, "AsyncResult", lambda _id: type("Result", (), {"state": "FAILURE"})())
     monkeypatch.setattr(module.run_analysis_task, "delay", lambda _id: type("Task", (), {"id": "replacement-task"})())
 
@@ -22,6 +23,7 @@ def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatc
 
 def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypatch):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
     analysis = type("Analysis", (), {"id": uuid4(), "case_id": uuid4(), "status": "QUEUED", "queue_task_id": "unknown-task"})()
 
     class FakeDB:
@@ -30,7 +32,7 @@ def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypat
         def commit(self): pass
         def close(self): pass
 
-    monkeypatch.setattr(module, "SessionLocal", FakeDB, raising=False)
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
     monkeypatch.setattr(module.celery_app, "AsyncResult", lambda _id: type("Result", (), {"state": "PENDING"})())
     monkeypatch.setattr(module.run_analysis_task, "delay", lambda _id: (_ for _ in ()).throw(AssertionError("must not dispatch")))
 
