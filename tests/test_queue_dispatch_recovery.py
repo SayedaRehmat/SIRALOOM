@@ -199,7 +199,6 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
     assert dispatch.attempts == 1
     assert db_session.SessionLocal is FakeDB
 
-
 def test_publish_analysis_dispatch_keeps_intent_pending_when_broker_publish_fails(monkeypatch):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     db_session = importlib.import_module("backend.app.infrastructure.db.session")
@@ -217,7 +216,8 @@ def test_publish_analysis_dispatch_keeps_intent_pending_when_broker_publish_fail
             "status": "PENDING",
             "task_id": None,
             "attempts": 0,
-            "last_error": None,            "published_at": None,
+            "last_error": None,
+            "published_at": None,
         },
     )()
 
@@ -336,7 +336,7 @@ def test_published_dispatch_definitive_failure_does_not_recurse_on_immediate_rep
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": "old-task"})()
     dispatch = type(
         "AnalysisDispatch",
         (),
@@ -396,8 +396,7 @@ def test_published_dispatch_is_idempotent_when_relay_runs_again(monkeypatch):
         (),
         {
             "id": analysis_id,
-            "status": AnalysisStatus.QUEUED,
-            "queue_task_id": str(dispatch_id),
+            "status": AnalysisStatus.QUEUED,            "queue_task_id": str(dispatch_id),
         },
     )()
     dispatch = type(
@@ -436,6 +435,7 @@ def test_published_dispatch_is_idempotent_when_relay_runs_again(monkeypatch):
 
     class FakeTask:
         id = "live-dispatch-task"
+
     publish_calls = {"count": 0}
 
     def publish(**_kwargs):
@@ -595,8 +595,7 @@ def test_concurrent_relay_workers_serialize_on_dispatch_row_lock(monkeypatch):
 
     class FakeDB:
         def get(self, model, row_id, **kwargs):
-            assert kwargs == {"with_for_update": True}
-            row_lock.acquire()
+            assert kwargs == {"with_for_update": True}            row_lock.acquire()
             if row_id == dispatch_id:
                 return dispatch
             return analysis
@@ -696,3 +695,216 @@ def test_enqueue_analysis_locks_row_and_reuses_existing_queue(monkeypatch):
             self.value = value
         def __bool__(self):
             return bool(self.value)
+
+    class FakeDB:
+        def __init__(self):
+            self.get_calls = 0
+            self.commits = 0
+            self.added = []
+
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert row_id == analysis_id
+            self.get_calls += 1
+            return analysis
+
+        def scalar(self, statement):
+            return 0
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.commits += 1
+
+        def refresh(self, row):
+            if row is analysis:
+                assert analysis.status == AnalysisStatus.QUEUED
+
+    db = FakeDB()
+    publish_calls = {"count": 0}
+
+    def publish(_dispatch_id):
+        publish_calls["count"] += 1
+        analysis.queue_task_id = "dispatch-task-1"
+        return "dispatch-task-1"
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
+        publish,
+    )
+
+    assert module.enqueue_analysis(db, analysis) == "dispatch-task-1"
+    assert analysis.status == AnalysisStatus.QUEUED
+    assert analysis.queue_task_id == "dispatch-task-1"
+    assert publish_calls["count"] == 1
+    assert db.get_calls == 1
+    assert db.commits == 1
+
+    # A second caller, even with the same object identity, sees the durable
+    # QUEUED state under the row lock and reuses the existing queue pointer.
+    assert module.enqueue_analysis(db, analysis) == "dispatch-task-1"
+    assert publish_calls["count"] == 1
+    assert db.get_calls == 2
+    assert db.commits == 1
+
+
+def test_enqueue_analysis_does_not_create_second_dispatch_for_queued_analysis():
+    module = importlib.import_module("backend.app.application.analysis")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": "existing-task",
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
+
+        def scalar(self, _statement):
+            raise AssertionError("queued analysis must not allocate a dispatch generation")
+
+        def add(self, _row):
+            raise AssertionError("queued analysis must not create another dispatch")
+
+        def commit(self):
+            raise AssertionError("queued analysis must not commit")
+
+        def refresh(self, _row):
+            raise AssertionError("queued analysis must not refresh")
+
+    assert module.enqueue_analysis(FakeDB(), analysis) == "existing-task"
+
+
+def test_stale_pending_dispatch_is_superseded_without_reclaiming_analysis(monkeypatch):
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    old_dispatch_id = uuid4()
+    new_dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": str(new_dispatch_id),
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": old_dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PENDING",
+            "task_id": None,
+            "attempts": 1,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return dispatch if row_id == old_dispatch_id else analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            pass
+
+    publish_calls = {"count": 0}
+
+    def publish(**_kwargs):
+        publish_calls["count"] += 1
+        raise AssertionError("stale dispatch must never be published")
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+
+    assert module.publish_analysis_dispatch(old_dispatch_id) == str(new_dispatch_id)
+    assert dispatch.status == "SUPERSEDED"
+    assert publish_calls["count"] == 0
+    assert analysis.queue_task_id == str(new_dispatch_id)
+
+
+def test_stale_published_dispatch_cannot_reclaim_analysis_after_retry(monkeypatch):
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    old_dispatch_id = uuid4()
+    new_dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": str(new_dispatch_id),
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": old_dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PUBLISHED",
+            "task_id": str(old_dispatch_id),
+            "attempts": 1,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return dispatch if row_id == old_dispatch_id else analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            pass
+
+    publish_calls = {"count": 0}
+    async_result_calls = {"count": 0}
+
+    def publish(**_kwargs):
+        publish_calls["count"] += 1
+        raise AssertionError("stale published dispatch must not be republished")
+
+    def async_result(_task_id):
+        async_result_calls["count"] += 1
+        raise AssertionError("stale dispatch must be fenced before broker-state inspection")
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+    monkeypatch.setattr(module.celery_app, "AsyncResult", async_result)
+
+    assert module.publish_analysis_dispatch(old_dispatch_id) == str(new_dispatch_id)
+    assert dispatch.status == "SUPERSEDED"
+    assert publish_calls["count"] == 0
+    assert async_result_calls["count"] == 0
+    assert analysis.queue_task_id == str(new_dispatch_id)
