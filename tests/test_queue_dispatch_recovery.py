@@ -448,8 +448,7 @@ def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execut
     )()
 
     class FakeDB:
-        def __init__(self):
-            self.commit_calls = 0
+        commit_calls = 0
 
         def get(self, model, row_id, **kwargs):
             assert kwargs == {"with_for_update": True}
@@ -459,8 +458,8 @@ def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execut
             pass
 
         def commit(self):
-            self.commit_calls += 1
-            if self.commit_calls == 1:
+            type(self).commit_calls += 1
+            if type(self).commit_calls == 1:
                 raise RuntimeError("database commit failed after broker publication")
 
         def close(self):
@@ -503,13 +502,16 @@ def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execut
 
     # The consumer-side execution fence is the authoritative protection if a
     # duplicate broker delivery nevertheless exists.
+    worker_analysis = type(
+        "WorkerAnalysis",
+        (),
+        {"id": analysis_id, "status": AnalysisStatus.QUEUED},
+    )()
     worker_db = type(
         "WorkerDB",
         (),
         {
-            "get": lambda self, model, row_id, **kwargs: (
-                type("WorkerAnalysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED})()
-            ),
+            "get": lambda self, model, row_id, **kwargs: worker_analysis,
             "add": lambda self, row: None,
             "commit": lambda self: None,
         },
