@@ -104,6 +104,24 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         assert entitlement.analyses_used == 1
         assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
 
+        from unittest.mock import patch
+        from types import SimpleNamespace
+        from backend.app.application.analysis import enqueue_analysis
+
+        with patch(
+            "backend.app.application.analysis.run_analysis_task",
+            SimpleNamespace(delay=lambda analysis_id: SimpleNamespace(id="retry-task-001")),
+        ):
+            task_id = enqueue_analysis(db, retry)
+
+        assert task_id == "retry-task-001"
+        assert retry.status == "QUEUED"
+        assert retry.queue_task_id == "retry-task-001"
+        entitlement = db.scalar(select(OrganizationEntitlement).where(
+            OrganizationEntitlement.organization_id == organization_id
+        ))
+        assert entitlement.analyses_used == 1
+
 
 def test_reanalysis_trigger_dependency_contract():
     assert affected_step_for_trigger("ANNOTATION_UPDATE") == "annotate"
