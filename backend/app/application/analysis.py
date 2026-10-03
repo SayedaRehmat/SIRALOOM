@@ -113,7 +113,10 @@ def enqueue_analysis(
         published_at=None,
     )
     analysis.status = AnalysisStatus.QUEUED
-    analysis.queue_task_id = None
+    # Reserve the deterministic Celery task identity before publication. This
+    # lets the worker reject any stale task from an older retry generation even
+    # if that broker message arrives after a newer retry has been queued.
+    analysis.queue_task_id = str(dispatch.id)
     db.add(dispatch)
     db.add(analysis)
     db.commit()

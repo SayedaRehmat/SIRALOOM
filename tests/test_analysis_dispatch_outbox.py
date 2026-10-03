@@ -49,6 +49,7 @@ def test_enqueue_analysis_commits_dispatch_intent_before_publication(monkeypatch
     assert dispatches[0].analysis_id == analysis.id
     assert dispatches[0].dispatch_generation == 1
     assert dispatches[0].status == "PENDING"
+    assert analysis.queue_task_id == str(dispatches[0].id)
     assert db.commits == 1
 
 
@@ -94,4 +95,4 @@ def test_enqueue_analysis_uses_new_dispatch_generation_for_retry(monkeypatch):
     assert analysis.status == AnalysisStatus.QUEUED
     dispatch = next(row for row in db.rows if row.__class__.__name__ == "AnalysisDispatch")
     assert dispatch.dispatch_generation == 5
-    assert analysis.queue_task_id is None
+    assert analysis.queue_task_id == str(dispatch.id)

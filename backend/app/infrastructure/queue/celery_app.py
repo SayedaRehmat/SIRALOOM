@@ -85,20 +85,28 @@ if Celery is not None:
         db.commit()
         return True
 
-    def _claim_analysis_execution(db, analysis_id, *, allow_running: bool = False) -> bool:
+    def _claim_analysis_execution(
+        db,
+        analysis_id,
+        *,
+        task_id: str | None = None,
+        allow_running: bool = False,
+    ) -> bool:
         """Atomically claim one persisted analysis for one Celery execution.
 
-        Duplicate broker deliveries are possible around queue publication/recovery.
-        The analysis row is the durable execution fence: only the first worker may
-        move QUEUED/CREATED to RUNNING. A redelivery or Celery retry may resume an
-        already-RUNNING analysis because those executions are continuations of the
-        same durable workflow, not a second laboratory analysis.
+        The queue task ID is the durable dispatch-generation fence. A task from
+        an older retry generation must not be allowed to claim an analysis that
+        has since been queued with a newer dispatch intent. The pointer is
+        persisted before broker publication, so this check also closes the
+        publication-before-commit race.
         """
         from backend.app.domain.enums import AnalysisStatus
         from backend.app.infrastructure.db.models import Analysis
 
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
+            return False
+        if task_id is not None and analysis.queue_task_id != task_id:
             return False
         if analysis.status == AnalysisStatus.RUNNING:
             return allow_running
@@ -164,6 +172,11 @@ if Celery is not None:
                 return analysis.queue_task_id
 
             dispatch.attempts += 1
+            # Persist the current dispatch generation before broker publication.
+            # A stale broker message can therefore be fenced by the worker even
+            # if publication and the following DB update are not atomic.
+            analysis.queue_task_id = str(dispatch.id)
+            db.add(analysis)
             try:
                 task = run_analysis_task.apply_async(
                     args=[str(analysis.id)],
@@ -205,6 +218,7 @@ if Celery is not None:
             claimed = _claim_analysis_execution(
                 claim_db,
                 UUID(analysis_id),
+                task_id=self.request.id,
                 allow_running=redelivered or is_retry,
             )
         finally:
