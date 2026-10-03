@@ -69,12 +69,22 @@ def enqueue_analysis(
     db: Session,
     analysis: Analysis,
 ) -> str | None:
-    """Persist an execution intent before publishing to Celery.
+    """Serialize start requests and persist one execution intent per start.
 
-    The analysis transition and dispatch intent commit atomically. Publication
-    is a separate step, so a broker outage cannot leave a QUEUED analysis with
-    no durable record that it still needs publication.
+    The analysis row is the serialization point for concurrent callers. A
+    caller that arrives after another caller has already queued the analysis
+    reuses the durable queue pointer instead of creating a second dispatch.
     """
+    locked = db.get(Analysis, analysis.id, with_for_update=True)
+    if locked is None:
+        raise ValueError("Analysis not found")
+
+    analysis = locked
+    if analysis.status == AnalysisStatus.QUEUED:
+        return analysis.queue_task_id
+    if analysis.status == AnalysisStatus.RUNNING:
+        return analysis.queue_task_id
+
     if analysis.status not in {
         AnalysisStatus.CREATED,
         AnalysisStatus.FAILED,
@@ -110,8 +120,6 @@ def enqueue_analysis(
     db.refresh(dispatch)
     db.refresh(analysis)
 
-    # Fast path: publish immediately. If the broker is unavailable the durable
-    # PENDING row remains and the periodic relay will retry it.
     try:
         from backend.app.infrastructure.queue.celery_app import publish_analysis_dispatch
         return publish_analysis_dispatch(dispatch.id)
