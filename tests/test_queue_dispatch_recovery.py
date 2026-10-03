@@ -338,3 +338,79 @@ def test_published_dispatch_definitive_failure_does_not_recurse_on_immediate_rep
     assert dispatch.attempts == 2
     assert dispatch.last_error == "broker unavailable"
     assert analysis.queue_task_id is None
+
+
+def test_published_dispatch_is_idempotent_when_relay_runs_again(monkeypatch):
+    """A second relay observation must reuse the live publication."""
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": None,
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PENDING",
+            "task_id": None,
+            "attempts": 0,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def __init__(self):
+            self.commits = 0
+
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            if row_id == dispatch_id:
+                return dispatch
+            assert row_id == analysis_id
+            return analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            self.commits += 1
+
+        def close(self):
+            pass
+
+    class FakeTask:
+        id = "live-dispatch-task"
+
+    publish_calls = {"count": 0}
+
+    def publish(**_kwargs):
+        publish_calls["count"] += 1
+        return FakeTask()
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+    monkeypatch.setattr(
+        module.celery_app,
+        "AsyncResult",
+        lambda _id: type("Result", (), {"state": "PENDING"})(),
+    )
+
+    assert module.publish_analysis_dispatch(dispatch_id) == "live-dispatch-task"
+    assert dispatch.status == "PUBLISHED"
+    assert analysis.queue_task_id == "live-dispatch-task"
+
+    assert module.publish_analysis_dispatch(dispatch_id) == "live-dispatch-task"
+    assert publish_calls["count"] == 1
