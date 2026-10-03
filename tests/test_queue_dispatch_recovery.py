@@ -398,7 +398,7 @@ def test_published_dispatch_is_idempotent_when_relay_runs_again(monkeypatch):
         {
             "id": analysis_id,
             "status": AnalysisStatus.QUEUED,
-            "queue_task_id": None,
+            "queue_task_id": str(dispatch_id),
         },
     )()
     dispatch = type(
