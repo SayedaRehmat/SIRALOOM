@@ -719,7 +719,10 @@ def test_enqueue_analysis_locks_row_and_reuses_existing_queue(monkeypatch):
             self.commits += 1
 
         def refresh(self, row, **kwargs):
-            assert kwargs == {"with_for_update": True}
+            if row is analysis:
+                assert kwargs == {"with_for_update": True}
+            else:
+                assert kwargs == {}
 
     db = FakeDB()
     publish_calls = {"count": 0}
