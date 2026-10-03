@@ -718,9 +718,9 @@ def test_enqueue_analysis_locks_row_and_reuses_existing_queue(monkeypatch):
         def commit(self):
             self.commits += 1
 
-        def refresh(self, row):
-            if row is analysis:
-                assert analysis.status == AnalysisStatus.QUEUED
+        def refresh(self, row, **kwargs):
+            self.refresh_calls = getattr(self, "refresh_calls", 0) + 1
+
 
     db = FakeDB()
     publish_calls = {"count": 0}
@@ -779,8 +779,8 @@ def test_enqueue_analysis_does_not_create_second_dispatch_for_queued_analysis():
         def commit(self):
             raise AssertionError("queued analysis must not commit")
 
-        def refresh(self, _row):
-            raise AssertionError("queued analysis must not refresh")
+        def refresh(self, _row, **kwargs):
+            assert kwargs == {"with_for_update": True}
 
     assert module.enqueue_analysis(FakeDB(), analysis) == "existing-task"
 

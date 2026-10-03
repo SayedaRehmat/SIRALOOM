@@ -33,8 +33,9 @@ def test_enqueue_analysis_commits_dispatch_intent_before_publication(monkeypatch
         def commit(self):
             self.commits += 1
 
-        def refresh(self, _row):
-            pass
+        def refresh(self, _row, **kwargs):
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
 
     db = FakeDB()
     monkeypatch.setattr(
@@ -82,8 +83,9 @@ def test_enqueue_analysis_uses_new_dispatch_generation_for_retry(monkeypatch):
         def commit(self):
             self.commits += 1
 
-        def refresh(self, _row):
-            pass
+        def refresh(self, _row, **kwargs):
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
 
     db = FakeDB()
     monkeypatch.setattr(
