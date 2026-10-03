@@ -91,6 +91,50 @@ def test_analysis_execution_claim_fences_duplicate_worker():
     assert db.commits == 1
 
 
+def test_analysis_execution_claim_rejects_stale_dispatch_generation():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": uuid4(),
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": "new-dispatch",
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
+
+        def add(self, row):
+            assert row is analysis
+
+        def commit(self):
+            pass
+
+    db = FakeDB()
+
+    # A delayed broker message from the previous retry generation must not
+    # claim the newly queued execution.
+    assert module._claim_analysis_execution(
+        db,
+        analysis.id,
+        task_id="old-dispatch",
+    ) is False
+    assert analysis.status == AnalysisStatus.QUEUED
+
+    # Only the current durable dispatch generation may claim the analysis.
+    assert module._claim_analysis_execution(
+        db,
+        analysis.id,
+        task_id="new-dispatch",
+    ) is True
+    assert analysis.status == AnalysisStatus.RUNNING
+
 def test_analysis_execution_claim_allows_continuation_of_running_work():
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     from backend.app.domain.enums import AnalysisStatus
@@ -199,7 +243,7 @@ def test_publish_analysis_dispatch_keeps_intent_pending_when_broker_publish_fail
     assert dispatch.status == "PENDING"
     assert dispatch.attempts == 1
     assert dispatch.last_error == "broker unavailable"
-    assert analysis.queue_task_id is None
+    assert analysis.queue_task_id == str(dispatch_id)
 
 
 def test_published_dispatch_is_retried_only_after_definitive_celery_failure(monkeypatch):
