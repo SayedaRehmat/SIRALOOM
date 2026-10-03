@@ -171,6 +171,19 @@ if Celery is not None:
                 db.commit()
                 return analysis.queue_task_id
 
+            # A retry creates a new dispatch generation and moves the durable
+            # queue pointer to that generation before publication. Older
+            # PENDING/PUBLISHED intents must never reclaim ownership of the
+            # analysis when the outbox relay revisits them.
+            if analysis.queue_task_id != str(dispatch.id):
+                dispatch.status = "SUPERSEDED"
+                dispatch.last_error = (
+                    "Dispatch generation is no longer current for this analysis."
+                )
+                db.add(dispatch)
+                db.commit()
+                return analysis.queue_task_id
+
             dispatch.attempts += 1
             # Persist the current dispatch generation before broker publication.
             # A stale broker message can therefore be fenced by the worker even
