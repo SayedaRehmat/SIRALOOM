@@ -177,7 +177,6 @@ if Celery is not None:
             # if publication and the following DB update are not atomic.
             analysis.queue_task_id = str(dispatch.id)
             db.add(analysis)
-            db.commit()
             try:
                 task = run_analysis_task.apply_async(
                     args=[str(analysis.id)],
