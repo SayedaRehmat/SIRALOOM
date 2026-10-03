@@ -785,3 +785,130 @@ def test_enqueue_analysis_does_not_create_second_dispatch_for_queued_analysis():
             raise AssertionError("queued analysis must not refresh")
 
     assert module.enqueue_analysis(FakeDB(), analysis) == "existing-task"
+
+
+def test_stale_pending_dispatch_is_superseded_without_reclaiming_analysis(monkeypatch):
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    old_dispatch_id = uuid4()
+    new_dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": str(new_dispatch_id),
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": old_dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PENDING",
+            "task_id": None,
+            "attempts": 1,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return dispatch if row_id == old_dispatch_id else analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            pass
+
+    publish_calls = {"count": 0}
+
+    def publish(**_kwargs):
+        publish_calls["count"] += 1
+        raise AssertionError("stale dispatch must never be published")
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+
+    assert module.publish_analysis_dispatch(old_dispatch_id) == str(new_dispatch_id)
+    assert dispatch.status == "SUPERSEDED"
+    assert publish_calls["count"] == 0
+    assert analysis.queue_task_id == str(new_dispatch_id)
+
+
+def test_stale_published_dispatch_cannot_reclaim_analysis_after_retry(monkeypatch):
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis_id = uuid4()
+    old_dispatch_id = uuid4()
+    new_dispatch_id = uuid4()
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": analysis_id,
+            "status": AnalysisStatus.QUEUED,
+            "queue_task_id": str(new_dispatch_id),
+        },
+    )()
+    dispatch = type(
+        "AnalysisDispatch",
+        (),
+        {
+            "id": old_dispatch_id,
+            "analysis_id": analysis_id,
+            "status": "PUBLISHED",
+            "task_id": str(old_dispatch_id),
+            "attempts": 1,
+            "last_error": None,
+            "published_at": None,
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return dispatch if row_id == old_dispatch_id else analysis
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+        def close(self):
+            pass
+
+    publish_calls = {"count": 0}
+    async_result_calls = {"count": 0}
+
+    def publish(**_kwargs):
+        publish_calls["count"] += 1
+        raise AssertionError("stale published dispatch must not be republished")
+
+    def async_result(_task_id):
+        async_result_calls["count"] += 1
+        raise AssertionError("stale dispatch must be fenced before broker-state inspection")
+
+    monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
+    monkeypatch.setattr(module.run_analysis_task, "apply_async", publish)
+    monkeypatch.setattr(module.celery_app, "AsyncResult", async_result)
+
+    assert module.publish_analysis_dispatch(old_dispatch_id) == str(new_dispatch_id)
+    assert dispatch.status == "SUPERSEDED"
+    assert publish_calls["count"] == 0
+    assert async_result_calls["count"] == 0
+    assert analysis.queue_task_id == str(new_dispatch_id)
