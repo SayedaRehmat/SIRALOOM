@@ -9,7 +9,9 @@ def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatc
 
     class FakeDB:
         def scalars(self, _stmt): return iter([analysis])
+        def scalar(self, _stmt): return None
         def add(self, _row): pass
+        def flush(self): pass
         def commit(self): pass
         def close(self): pass
 
