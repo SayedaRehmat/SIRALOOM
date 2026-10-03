@@ -595,7 +595,8 @@ def test_concurrent_relay_workers_serialize_on_dispatch_row_lock(monkeypatch):
 
     class FakeDB:
         def get(self, model, row_id, **kwargs):
-            assert kwargs == {"with_for_update": True}\n            row_lock.acquire()
+            assert kwargs == {"with_for_update": True}
+            row_lock.acquire()
             if row_id == dispatch_id:
                 return dispatch
             return analysis
