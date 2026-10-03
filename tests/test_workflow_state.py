@@ -1325,7 +1325,7 @@ def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monk
         ))
         db.commit()
 
-    sessions = iter([Session(engine), Session(engine)])
+    sessions = iter([Session(engine), Session(engine), Session(engine)])
 
     def fake_session_local():
         return next(sessions)
@@ -1403,16 +1403,19 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     from backend.app.domain.enums import AnalysisStatus
 
     class FakeAnalysis:
-        status = AnalysisStatus.QUEUED
+        def __init__(self):
+            self.status = AnalysisStatus.QUEUED
+
+    fake_analysis = FakeAnalysis()
 
     class FakeSession:
         def get(self, model, received_analysis_id, **kwargs):
             if kwargs:
                 assert kwargs == {"with_for_update": True}
                 events.append("claim_lookup")
-            else:
-                events.append(("analysis_lookup", model.__name__, received_analysis_id))
-            return FakeAnalysis()
+                return fake_analysis
+            events.append(("analysis_lookup", model.__name__, received_analysis_id))
+            return fake_analysis
 
         def add(self, _row):
             pass
@@ -1448,6 +1451,7 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
         task.pop_request()
 
     assert result == {"analysis_id": analysis_id, "status": "RUNNING"}
+    assert fake_analysis.status == AnalysisStatus.RUNNING
     assert "recovery" not in events
     assert events.count("run_analysis") == 1
     assert events.index("run_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
@@ -1773,8 +1777,8 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         task.pop_request()
 
     assert events == [
+        "claim_session_closed",
         "run_analysis",
-        "terminal_session_opened",
         "finalize",
         "terminal_session_closed",
     ]
