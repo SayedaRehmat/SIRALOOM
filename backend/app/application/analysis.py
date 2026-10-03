@@ -27,6 +27,7 @@ def create_analysis(
     reference_build: str,
     configuration: dict,
     created_by: UUID | None,
+    commit: bool = True,
 ) -> Analysis:
     artifact = db.get(Artifact, input_artifact_id)
 
@@ -57,8 +58,9 @@ def create_analysis(
     )
 
     db.add(analysis)
-    db.commit()
-    db.refresh(analysis)
+    if commit:
+        db.commit()
+        db.refresh(analysis)
 
     return analysis
 
