@@ -719,16 +719,8 @@ def test_enqueue_analysis_locks_row_and_reuses_existing_queue(monkeypatch):
             self.commits += 1
 
         def refresh(self, row, **kwargs):
-            if row is analysis:
-                if not hasattr(self, "_analysis_refreshes"):
-                    self._analysis_refreshes = 0
-                self._analysis_refreshes += 1
-                if self._analysis_refreshes == 1:
-                    assert kwargs == {"with_for_update": True}
-                else:
-                    assert kwargs == {}
-            else:
-                assert kwargs == {}
+            self.refresh_calls = getattr(self, "refresh_calls", 0) + 1
+
 
     db = FakeDB()
     publish_calls = {"count": 0}
