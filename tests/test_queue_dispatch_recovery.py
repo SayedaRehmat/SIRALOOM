@@ -8,7 +8,15 @@ def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatc
     analysis = type("Analysis", (), {"id": uuid4(), "case_id": uuid4(), "status": "QUEUED", "queue_task_id": "old-task"})()
 
     class FakeDB:
-        def scalars(self, _stmt): return iter([analysis])
+        def scalars(self, stmt):
+            assert getattr(stmt, "_for_update_arg", None) is None
+            return iter([analysis.id])
+
+        def get(self, model, analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert analysis_id == analysis.id
+            return analysis
+
         def scalar(self, _stmt): return None
         def add(self, _row): pass
         def flush(self): pass
@@ -29,7 +37,15 @@ def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypat
     analysis = type("Analysis", (), {"id": uuid4(), "case_id": uuid4(), "status": "QUEUED", "queue_task_id": "unknown-task"})()
 
     class FakeDB:
-        def scalars(self, _stmt): return iter([analysis])
+        def scalars(self, stmt):
+            assert getattr(stmt, "_for_update_arg", None) is None
+            return iter([analysis.id])
+
+        def get(self, model, analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert analysis_id == analysis.id
+            return analysis
+
         def add(self, _row): raise AssertionError("PENDING task must not be replaced")
         def commit(self): pass
         def close(self): pass
