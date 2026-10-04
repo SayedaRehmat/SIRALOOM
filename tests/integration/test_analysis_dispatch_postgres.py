@@ -558,7 +558,7 @@ def test_postgres_concurrent_worker_recovery_is_serialized(monkeypatch):
     partition_id = uuid4()
 
     try:
-        from backend.app.infrastructure.db.models import AnalysisPartition, WorkflowStep
+        from backend.app.infrastructure.db.models import AnalysisPartition, AuditEvent, WorkflowStep
         from backend.app.workflows import variant as variant_module
 
         with Session(engine) as db:
@@ -694,6 +694,9 @@ def test_postgres_concurrent_worker_recovery_is_serialized(monkeypatch):
             ).delete()
             db.query(WorkflowStep).filter(
                 WorkflowStep.analysis_id == analysis_id
+            ).delete()
+            db.query(AuditEvent).filter(
+                AuditEvent.analysis_id == analysis_id
             ).delete()
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
