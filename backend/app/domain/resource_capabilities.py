@@ -235,6 +235,89 @@ _RESOURCE_CAPABILITIES: Final[dict[str, ResourceCapability]] = {
 }
 
 
+@dataclass(frozen=True)
+class ScientificProvider:
+    """Known provider identity and its canonical SIRALOOM resource class."""
+
+    provider_id: str
+    resource_type: str
+    access_methods: tuple[str, ...]
+    requires_organization_license: bool
+    description: str
+
+
+_SCIENTIFIC_PROVIDERS: Final[dict[str, ScientificProvider]] = {
+    "VEP": ScientificProvider(
+        "VEP", ANNOTATION_ENGINE, ("LOCAL", "API", "HTTPS"), False,
+        "Ensembl Variant Effect Predictor; consequence/transcript annotation.",
+    ),
+    "GENEBE": ScientificProvider(
+        "GENEBE", ANNOTATION_ENGINE, ("API", "HTTPS"), False,
+        "GeneBe annotation/evidence service; provider-specific output must be normalized into SIRALOOM evidence.",
+    ),
+    "CLINVAR": ScientificProvider(
+        "CLINVAR", CLINICAL_DATABASE, ("LOCAL", "API", "HTTPS"), False,
+        "NCBI ClinVar clinical variant assertions and submissions.",
+    ),
+    "GNOMAD": ScientificProvider(
+        "GNOMAD", POPULATION, ("LOCAL", "API", "HTTPS"), False,
+        "gnomAD population allele-frequency data; local indexed or approved query execution.",
+    ),
+    "CLINGEN": ScientificProvider(
+        "CLINGEN", ACMG_RULE_SPECIFICATION, ("LOCAL", "API", "HTTPS"), False,
+        "ClinGen curated gene/disease and variant-classification specifications.",
+    ),
+    "HPO": ScientificProvider(
+        "HPO", PHENOTYPE_ONTOLOGY, ("LOCAL", "API", "HTTPS"), False,
+        "Human Phenotype Ontology terminology and phenotype relationships.",
+    ),
+    "PUBMED": ScientificProvider(
+        "PUBMED", LITERATURE_PROVIDER, ("API", "HTTPS"), False,
+        "NCBI PubMed literature search/retrieval provider.",
+    ),
+    "PMC": ScientificProvider(
+        "PMC", LITERATURE_PROVIDER, ("API", "HTTPS"), False,
+        "NCBI PubMed Central content provider; access and reuse remain source/license controlled.",
+    ),
+    "OMIM": ScientificProvider(
+        "OMIM", GENE_DISEASE, ("LOCAL", "API", "HTTPS"), True,
+        "OMIM gene/phenotype knowledge; use only under the laboratory's licensed access terms.",
+    ),
+    "SPLICEAI": ScientificProvider(
+        "SPLICEAI", SPLICING_PREDICTOR, ("LOCAL", "API", "HTTPS"), True,
+        "SpliceAI splice-impact prediction; deployment/license terms must be qualified.",
+    ),
+    "DBNSFP": ScientificProvider(
+        "DBNSFP", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE"), False,
+        "dbNSFP aggregated functional-prediction annotations.",
+    ),
+    "CADD": ScientificProvider(
+        "CADD", COMPUTATIONAL_PREDICTOR, ("LOCAL", "API", "HTTPS"), False,
+        "CADD deleteriousness prediction; score provenance and release are retained.",
+    ),
+    "REVEL": ScientificProvider(
+        "REVEL", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE"), False,
+        "REVEL ensemble missense prediction.",
+    ),
+    "ALPHAMISSENSE": ScientificProvider(
+        "ALPHAMISSENSE", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE", "API", "HTTPS"), False,
+        "AlphaMissense missense prediction resource; score/model release is retained.",
+    ),
+}
+
+
+def get_scientific_provider(provider_id: str) -> ScientificProvider:
+    key = str(provider_id or "").strip().upper()
+    try:
+        return _SCIENTIFIC_PROVIDERS[key]
+    except KeyError as exc:
+        raise ResourceCapabilityError(f"unsupported scientific provider: {provider_id!r}") from exc
+
+
+def supported_scientific_providers() -> tuple[str, ...]:
+    return tuple(sorted(_SCIENTIFIC_PROVIDERS))
+
+
 def get_resource_capability(resource_type: str) -> ResourceCapability:
     key = str(resource_type or "").strip().upper()
     try:
