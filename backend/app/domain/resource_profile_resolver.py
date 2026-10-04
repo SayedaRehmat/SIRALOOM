@@ -188,37 +188,39 @@ def _matches_known_provider(resource: Resource, capability: str) -> bool:
 
 
 def _select_candidate(
-    candidates: list[Resource],
+    candidates: list[tuple[Resource, ResolvedResourceExecution]],
     requirement: ProfileResourceRequirement,
-) -> tuple[Resource | None, int, str | None]:
+) -> tuple[tuple[Resource, ResolvedResourceExecution] | None, int, str | None]:
     eligible = [
-        resource for resource in candidates
-        if _matches_known_provider(resource, requirement.capability)
-        and _license_is_sufficient(resource, requirement)
+        pair for pair in candidates
+        if _matches_known_provider(pair[0], requirement.capability)
+        and _license_is_sufficient(pair[0], requirement)
     ]
     if not eligible:
         return None, 0, "RESOURCE_UNAVAILABLE"
 
     ranked = sorted(
         eligible,
-        key=lambda r: (
-            _provider_rank(r.provider, requirement.preferred_providers),
-            r.provider.upper(),
-            r.name,
-            r.version,
-            r.checksum or "",
-            str(r.id),
+        key=lambda pair: (
+            _provider_rank(pair[0].provider, requirement.preferred_providers),
+            pair[0].provider.upper(),
+            pair[0].name,
+            pair[0].version,
+            pair[0].checksum or "",
+            str(pair[0].id),
         ),
     )
-    best_rank = _provider_rank(ranked[0].provider, requirement.preferred_providers)
-    best = [r for r in ranked if _provider_rank(r.provider, requirement.preferred_providers) == best_rank]
+    best_rank = _provider_rank(ranked[0][0].provider, requirement.preferred_providers)
+    best = [
+        pair for pair in ranked
+        if _provider_rank(pair[0].provider, requirement.preferred_providers) == best_rank
+    ]
 
     # A profile may express provider preference, but it must never silently pick
     # between two equally preferred releases. The lab must make that choice.
     if len(best) != 1:
         return None, best_rank, "RESOURCE_AMBIGUOUS"
     return best[0], best_rank, None
-
 
 def _plan_hash(payload: dict[str, object]) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
@@ -248,9 +250,19 @@ def resolve_analysis_resource_profile(
             allow_global=policy.allow_siraloom_managed_global_resources,
             require_binding=policy.require_organization_binding_for_lab_resources,
         )
-        resource, provider_rank, selection_error = _select_candidate(
-            candidates, requirement
+        qualified_candidates: list[tuple[Resource, ResolvedResourceExecution]] = []
+        for candidate in candidates:
+            try:
+                execution = resolve_resource_execution(db, resource=candidate)
+            except ResourceExecutionError:
+                continue
+            qualified_candidates.append((candidate, execution))
+
+        selected_pair, provider_rank, selection_error = _select_candidate(
+            qualified_candidates, requirement
         )
+        resource = selected_pair[0] if selected_pair is not None else None
+        execution = selected_pair[1] if selected_pair is not None else None
 
         if resource is None:
             code = selection_error or "RESOURCE_UNAVAILABLE"
@@ -269,21 +281,11 @@ def resolve_analysis_resource_profile(
                     f"for profile {profile.profile_id}."
                 )
             issues.append(ResourceResolutionIssue(
-                requirement.capability, requirement.required, code, message, len(candidates)
+                requirement.capability, requirement.required, code, message, len(qualified_candidates)
             ))
             continue
 
-        try:
-            execution = resolve_resource_execution(db, resource=resource)
-        except ResourceExecutionError as exc:
-            issues.append(ResourceResolutionIssue(
-                requirement.capability,
-                requirement.required,
-                "RESOURCE_INVALID",
-                str(exc),
-                len(candidates),
-            ))
-            continue
+        assert execution is not None
 
         selected.append(
             ResolvedProfileResource(
