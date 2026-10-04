@@ -88,6 +88,65 @@ class ResourceConsumptionError(RuntimeError):
         self.code = code
 
 
+
+def _governed_profile_resource(
+    db: Session,
+    analysis: Analysis,
+    *,
+    capability: str,
+):
+    """Return the exact resource/execution contract captured by preflight."""
+    profile_id = str((analysis.configuration or {}).get("resource_profile_id") or "").strip()
+    if not profile_id:
+        return None
+    plan = dict((analysis.configuration or {}).get("resource_plan") or {})
+    if plan.get("status") not in {"READY", "READY_WITH_LIMITATIONS"}:
+        raise ResourceConsumptionError(
+            "RESOURCE_PLAN_NOT_READY",
+            "The governed analysis resource plan is not ready for execution.",
+        )
+    selected = next(
+        (item for item in plan.get("selected", [])
+         if str(item.get("capability") or "") == capability),
+        None,
+    )
+    if selected is None or not selected.get("resource_id"):
+        raise ResourceConsumptionError(
+            "RESOURCE_NOT_SELECTED",
+            f"No governed resource was selected for {capability}.",
+        )
+    try:
+        resource = db.get(Resource, UUID(str(selected["resource_id"])))
+    except (TypeError, ValueError) as exc:
+        raise ResourceConsumptionError(
+            "RESOURCE_PLAN_INVALID",
+            f"Invalid governed resource ID for {capability}.",
+        ) from exc
+    if resource is None:
+        raise ResourceConsumptionError(
+            "RESOURCE_NOT_FOUND",
+            f"Governed resource {selected['resource_id']} for {capability} no longer exists.",
+        )
+    try:
+        execution = resolve_resource_execution(db, resource=resource)
+    except ResourceExecutionError as exc:
+        raise ResourceConsumptionError(
+            "RESOURCE_EXECUTION_CONTRACT_INVALID",
+            str(exc),
+        ) from exc
+    expected = dict(selected.get("execution") or {})
+    if (
+        str(expected.get("resource_version") or "") != execution.resource_version
+        or str(expected.get("qualification_id") or "") != str(execution.qualification_id)
+        or str(expected.get("qualification_version") or "") != execution.qualification_version
+        or str(expected.get("contract_hash") or "") != execution.contract_hash
+    ):
+        raise ResourceConsumptionError(
+            "RESOURCE_PLAN_STALE",
+            f"Governed execution contract for {capability} no longer matches preflight; rerun resource preflight.",
+        )
+    return resource, execution
+
 def _batch_key(start: int, end: int) -> str:
     return f"{start}:{end}"
 
@@ -581,7 +640,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     },
                 )
                 db.commit()
-                if resolution.resource is None:
+                if governed_annotation is None and resolution.resource is None:
                     status = (
                         StepStatus.REQUIRES_REVIEW
                         if resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
@@ -1029,7 +1088,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 batch_limit = min(max(1, settings.genebe_max_batch), 1000)
-                requested_annotation_resource_id = (analysis.configuration or {}).get("annotation_resource_id")
+                governed_annotation = _governed_profile_resource(
+                    db, analysis, capability="ANNOTATION_ENGINE"
+                )
+                requested_annotation_resource_id = (
+                    str(governed_annotation[0].id)
+                    if governed_annotation is not None
+                    else (analysis.configuration or {}).get("annotation_resource_id")
+                )
                 case = db.get(Case, analysis.case_id)
                 if case is None:
                     mark_step(
@@ -1043,15 +1109,25 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     return
 
-                resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=requested_annotation_resource_id,
-                    expected_type="ANNOTATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=provider.provider_id,
-                    expected_provider_version=provider.provider_version,
-                )
+                if governed_annotation is not None:
+                    annotation_resource, annotation_execution = governed_annotation
+                    if annotation_resource.provider.upper() != provider.provider_id.upper():
+                        raise ResourceConsumptionError(
+                            "RESOURCE_PROVIDER_MISMATCH",
+                            f"Preflight selected {annotation_resource.provider}, but runtime selected {provider.provider_id}.",
+                        )
+                    provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                    resolution = None
+                else:
+                    resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=requested_annotation_resource_id,
+                        expected_type="ANNOTATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider=provider.provider_id,
+                        expected_provider_version=provider.provider_version,
+                    )
                 record_workflow_decision(
                     db,
                     analysis_id=analysis.id,
@@ -1117,10 +1193,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     return
 
-                annotation_resource = resolution.resource
-                try:
-                    annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
-                    provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                if governed_annotation is None:
+                    annotation_resource = resolution.resource
+                    try:
+                        annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
+                        provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
                 except (ResourceExecutionError, GeneBeError) as exc:
                     mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
                     analysis.status = AnalysisStatus.RESOURCE_FAILURE
@@ -1426,7 +1503,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 case = db.get(Case, analysis.case_id)
                 if case is None:
                     raise ResourceConsumptionError("CASE_NOT_FOUND", "Analysis case was not found during population resource resolution.")
-                population_resource_id = (analysis.configuration or {}).get("population_resource_id")
+                governed_population = _governed_profile_resource(
+                    db, analysis, capability="POPULATION"
+                )
+                population_resource_id = (
+                    str(governed_population[0].id)
+                    if governed_population is not None
+                    else (analysis.configuration or {}).get("population_resource_id")
+                )
                 try:
                     requested_population = db.get(Resource, UUID(str(population_resource_id))) if population_resource_id else None
                 except (TypeError, ValueError) as exc:
@@ -1439,21 +1523,36 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "RESOURCE_REQUIRED",
                         "Analysis must explicitly select a registered GeneBe population resource.",
                     )
-                population_resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=population_resource_id,
-                    expected_type="POPULATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider="GeneBe",
-                )
-                record_workflow_decision(
-                    db,
-                    analysis_id=analysis.id,
-                    step_id="population",
-                    attempt=population_step.attempt,
-                    outcome=OutcomeKind.RESOURCE_UNAVAILABLE if population_resolution.used_fallback or population_resolution.resource is None else OutcomeKind.SUCCESS,
-                    decision=population_resolution.decision,
+                if governed_population is not None:
+                    population_resource, population_execution = governed_population
+                    if population_resource.provider.upper() != "GNOMAD":
+                        raise ResourceConsumptionError(
+                            "RESOURCE_PROVIDER_MISMATCH",
+                            f"Preflight selected population provider {population_resource.provider}; WES/WGS standard requires gNOMAD.",
+                        )
+                    population_resolution = None
+                else:
+                    population_resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=population_resource_id,
+                        expected_type="POPULATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider="GeneBe",
+                    )
+                if governed_population is not None:
+                    population_resource = governed_population[0]
+                    geneBe_resource = population_resource
+                    population_resolution = None
+                else:
+                    geneBe_resource = None
+                    record_workflow_decision(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="population",
+                        attempt=population_step.attempt,
+                        outcome=OutcomeKind.RESOURCE_UNAVAILABLE if population_resolution.used_fallback or population_resolution.resource is None else OutcomeKind.SUCCESS,
+                        decision=population_resolution.decision,
                     resource_id=population_resolution.requested_resource_id,
                     fallback_resource_id=population_resolution.fallback_resource_id,
                     metadata={
@@ -1464,7 +1563,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     },
                 )
                 db.commit()
-                if population_resolution.resource is None:
+                if governed_population is None and population_resolution.resource is None:
                     status = StepStatus.REQUIRES_REVIEW if population_resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW else StepStatus.RESOURCE_FAILURE
                     mark_step(
                         db,
@@ -1495,7 +1594,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     )
                     db.commit()
                     return
-                geneBe_resource = population_resolution.resource
+                if governed_population is None:
+                    geneBe_resource = population_resolution.resource
 
                 created = 0
                 annotation_count = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "GeneBe")) or 0
