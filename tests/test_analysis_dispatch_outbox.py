@@ -120,8 +120,7 @@ def test_dispatch_outbox_relay_only_scans_queued_analyses(monkeypatch):
 
     db = FakeDB()
     monkeypatch.setattr(
-        module,
-        "SessionLocal",
+        "backend.app.infrastructure.db.session.SessionLocal",
         lambda: db,
     )
 
