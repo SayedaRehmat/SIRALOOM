@@ -41,6 +41,15 @@ class ResolvedProfileResource:
     provider_rank: int
 
     @property
+    def execution_for(self, capability: str) -> ResolvedProfileResource:
+        """Return the exact preflight-selected resource for a workflow capability."""
+        for item in self.selected:
+            if item.capability == capability:
+                return item
+        raise ResourceProfileResolutionError(
+            f"No selected resource exists for required capability {capability}."
+        )
+
     def snapshot(self) -> dict[str, object]:
         return {
             "capability": self.capability,
