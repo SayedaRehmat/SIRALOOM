@@ -413,3 +413,129 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_stale_worker_generation_cannot_claim_after_retry(monkeypatch):
+    """An old Celery task must be fenced after a newer retry generation owns the analysis."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    old_dispatch_id = uuid4()
+    new_dispatch_id = uuid4()
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"stale-worker-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Stale Worker Test",
+                role="LAB_DIRECTOR",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=str(case_id),
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="GERMLINE",
+                workflow_id="integration",
+                workflow_version="1",
+                status=AnalysisStatus.QUEUED,
+                queue_task_id=str(new_dispatch_id),
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=2,
+            ))
+            db.add(AnalysisDispatch(
+                id=old_dispatch_id,
+                analysis_id=analysis_id,
+                dispatch_generation=1,
+                status="SUPERSEDED",
+                task_id=str(old_dispatch_id),
+                attempts=1,
+            ))
+            db.add(AnalysisDispatch(
+                id=new_dispatch_id,
+                analysis_id=analysis_id,
+                dispatch_generation=2,
+                status="PENDING",
+                task_id=None,
+                attempts=0,
+            ))
+            db.commit()
+
+        import importlib
+        celery_module = importlib.import_module(
+            "backend.app.infrastructure.queue.celery_app"
+        )
+
+        with Session(engine) as db:
+            claimed = celery_module._claim_analysis_execution(
+                db,
+                analysis_id,
+                task_id=str(old_dispatch_id),
+            )
+            assert claimed is False
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            assert analysis.status == AnalysisStatus.QUEUED
+            assert analysis.queue_task_id == str(new_dispatch_id)
+
+            claimed = celery_module._claim_analysis_execution(
+                db,
+                analysis_id,
+                task_id=str(new_dispatch_id),
+            )
+            assert claimed is True
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            assert analysis.status == AnalysisStatus.RUNNING
+            assert analysis.queue_task_id == str(new_dispatch_id)
+    finally:
+        with Session(engine) as db:
+            db.query(AnalysisDispatch).filter(
+                AnalysisDispatch.analysis_id == analysis_id
+            ).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(Case).filter(Case.id == case_id).delete()
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
