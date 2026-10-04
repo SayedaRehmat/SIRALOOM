@@ -85,3 +85,84 @@ def test_analysis_create_keeps_resource_profile_optional_for_legacy_callers():
 
     payload = AnalysisCreate(input_artifact_id=uuid4())
     assert payload.resource_profile_id is None
+
+
+def test_workflow_stage_resource_projection_is_deterministic_and_actionable():
+    from backend.app.domain.resource_profile_resolver import (
+        AnalysisResourcePlan,
+        ResourceResolutionIssue,
+        build_workflow_stage_resource_plan,
+    )
+
+    plan = AnalysisResourcePlan(
+        profile_id="WES_GRCh38_STANDARD",
+        profile_version="1",
+        genome_build="GRCh38",
+        deployment_profile_type="LABORATORY",
+        deployment_profile_version="1",
+        status="READY_WITH_LIMITATIONS",
+        selected=(),
+        issues=(
+            ResourceResolutionIssue(
+                capability=CLINICAL_DATABASE,
+                required=False,
+                code="RESOURCE_UNAVAILABLE",
+                message="ClinVar is unavailable",
+                candidate_count=0,
+            ),
+        ),
+        plan_hash="test",
+    )
+
+    stages = build_workflow_stage_resource_plan(plan)
+    assert [stage["step_id"] for stage in stages] == [
+        "validate_input",
+        "normalize",
+        "annotate",
+        "population",
+        "build_evidence",
+        "acmg_assessment",
+        "review",
+        "reportability",
+        "report",
+        "export_provenance",
+    ]
+    assert stages[0]["status"] == "READY"
+    evidence = next(stage for stage in stages if stage["step_id"] == "build_evidence")
+    assert evidence["status"] == "READY_WITH_LIMITATIONS"
+    assert evidence["issues"][0]["capability"] == CLINICAL_DATABASE
+    assert next(stage for stage in stages if stage["step_id"] == "normalize")["status"] == "READY"
+
+
+def test_workflow_stage_resource_projection_blocks_only_stages_with_required_issues():
+    from backend.app.domain.resource_profile_resolver import (
+        AnalysisResourcePlan,
+        ResourceResolutionIssue,
+        build_workflow_stage_resource_plan,
+    )
+
+    plan = AnalysisResourcePlan(
+        profile_id="WES_GRCh38_STANDARD",
+        profile_version="1",
+        genome_build="GRCh38",
+        deployment_profile_type="LABORATORY",
+        deployment_profile_version="1",
+        status="BLOCKED",
+        selected=(),
+        issues=(
+            ResourceResolutionIssue(
+                capability=REFERENCE_PACKAGE,
+                required=True,
+                code="RESOURCE_UNAVAILABLE",
+                message="Reference package is unavailable",
+                candidate_count=0,
+            ),
+        ),
+        plan_hash="test",
+    )
+
+    stages = build_workflow_stage_resource_plan(plan)
+    normalize = next(stage for stage in stages if stage["step_id"] == "normalize")
+    assert normalize["status"] == "BLOCKED"
+    assert normalize["issues"][0]["required"] is True
+    assert next(stage for stage in stages if stage["step_id"] == "validate_input")["status"] == "READY"
