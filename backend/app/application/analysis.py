@@ -14,6 +14,7 @@ from backend.app.domain.enums import AnalysisStatus
 from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact
 from backend.app.domain.resource_profile_resolver import (
     AnalysisResourcePlan,
+    build_workflow_stage_resource_plan,
     resolve_analysis_resource_profile,
 )
 
@@ -100,6 +101,7 @@ def preflight_analysis_resources(
         analysis_reference_build=analysis.reference_build,
     )
     configuration["resource_plan"] = plan.snapshot()
+    configuration["resource_stage_plan"] = build_workflow_stage_resource_plan(plan)
     analysis.configuration = configuration
 
     if not plan.is_ready:
