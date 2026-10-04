@@ -129,10 +129,16 @@ def enqueue_analysis(
     if analysis.status == AnalysisStatus.RUNNING:
         return analysis.queue_task_id
 
-    if analysis.status not in {
+    if analysis.status == AnalysisStatus.BLOCKED:
+        configuration = dict(analysis.configuration or {})
+        resource_plan = configuration.get("resource_plan") or {}
+        if not configuration.get("resource_profile_id") or resource_plan.get("status") != "BLOCKED":
+            raise ValueError(
+                f"Analysis cannot be started from status {analysis.status}"
+            )
+    elif analysis.status not in {
         AnalysisStatus.CREATED,
         AnalysisStatus.FAILED,
-        AnalysisStatus.BLOCKED,
         AnalysisStatus.RESOURCE_FAILURE,
     }:
         raise ValueError(
