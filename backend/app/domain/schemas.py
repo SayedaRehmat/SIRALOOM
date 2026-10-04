@@ -36,6 +36,7 @@ class AnalysisCreate(BaseModel):
     workflow_id: str = "variant-v1"
     workflow_version: str = "2.1"
     reference_build: str = "GRCh38"
+    resource_profile_id: str | None = Field(default=None, min_length=1, max_length=200)
     configuration: dict[str, Any] = Field(default_factory=dict)
 
 class AnalysisResponse(BaseModel):
