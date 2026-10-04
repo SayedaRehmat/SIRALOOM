@@ -1,4 +1,5 @@
 from pathlib import Path
+import gzip
 import shutil
 
 import pytest
@@ -42,7 +43,7 @@ def records(path: Path):
 def normalize(tmp_path: Path, records_text: str):
     reference = make_reference(tmp_path)
     source = tmp_path / "input.vcf"
-    output = tmp_path / "normalized.vcf"
+    output = tmp_path / "normalized.vcf.gz"
     write_vcf(source, records_text)
     stats = normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
     assert output.is_file()
@@ -81,7 +82,7 @@ def test_golden_mnv_is_not_atomized(tmp_path: Path):
 def test_golden_ref_mismatch_fails_closed(tmp_path: Path):
     reference = make_reference(tmp_path)
     source = tmp_path / "bad.vcf"
-    output = tmp_path / "normalized.vcf"
+    output = tmp_path / "normalized.vcf.gz"
     write_vcf(source, "1\t2\t.\tC\tG\t.\tPASS\t.\n")
     with pytest.raises(VCFToolError, match="reference-aware normalization failed"):
         normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
@@ -90,7 +91,7 @@ def test_golden_ref_mismatch_fails_closed(tmp_path: Path):
 def test_golden_unknown_contig_fails_bcftools(tmp_path: Path):
     reference = make_reference(tmp_path)
     source = tmp_path / "bad.vcf"
-    output = tmp_path / "normalized.vcf"
+    output = tmp_path / "normalized.vcf.gz"
     write_vcf(source, "2\t2\t.\tA\tG\t.\tPASS\t.\n")
     with pytest.raises(VCFToolError):
         normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
@@ -99,8 +100,8 @@ def test_golden_unknown_contig_fails_bcftools(tmp_path: Path):
 def test_golden_normalization_is_idempotent_at_variant_representation_level(tmp_path: Path):
     reference = make_reference(tmp_path)
     source = tmp_path / "input.vcf"
-    first = tmp_path / "first.vcf"
-    second = tmp_path / "second.vcf"
+    first = tmp_path / "first.vcf.gz"
+    second = tmp_path / "second.vcf.gz"
     write_vcf(source, "1\t4\t.\tAA\tA\t.\tPASS\t.\n")
     normalize_vcf_with_bcftools(source, first, reference_fasta=reference)
     normalize_vcf_with_bcftools(first, second, reference_fasta=reference)
