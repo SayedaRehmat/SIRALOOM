@@ -147,6 +147,7 @@ def create(
         "reference_build": analysis.reference_build,
         "resource_profile_id": dict(analysis.configuration or {}).get("resource_profile_id"),
         "resource_preflight": dict(analysis.configuration or {}).get("resource_plan"),
+        "resource_stage_plan": dict(analysis.configuration or {}).get("resource_stage_plan"),
         "assay_id": (
             str(analysis.assay_id)
             if analysis.assay_id
@@ -187,6 +188,7 @@ def start(
                 "status": analysis.status,
                 "task_id": None,
                 "resource_preflight": resource_plan.snapshot(),
+                "resource_stage_plan": dict(analysis.configuration or {}).get("resource_stage_plan"),
             }
 
         task_id = enqueue_analysis(
@@ -203,6 +205,9 @@ def start(
         "task_id": task_id,
         "resource_preflight": (
             dict(analysis.configuration or {}).get("resource_plan")
+        ),
+        "resource_stage_plan": (
+            dict(analysis.configuration or {}).get("resource_stage_plan")
         ),
     }
 
@@ -263,6 +268,9 @@ def get(
         "started_at": analysis.started_at,
         "completed_at": analysis.completed_at,
         "next_step": workflow_next_step,
+        "resource_profile_id": dict(analysis.configuration or {}).get("resource_profile_id"),
+        "resource_preflight": dict(analysis.configuration or {}).get("resource_plan"),
+        "resource_stage_plan": dict(analysis.configuration or {}).get("resource_stage_plan"),
         "steps": step_payloads,
     }
 
