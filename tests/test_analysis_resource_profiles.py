@@ -166,3 +166,98 @@ def test_workflow_stage_resource_projection_blocks_only_stages_with_required_iss
     assert normalize["status"] == "BLOCKED"
     assert normalize["issues"][0]["required"] is True
     assert next(stage for stage in stages if stage["step_id"] == "validate_input")["status"] == "READY"
+
+
+def test_preflight_persists_analysis_and_stage_resource_state_on_block():
+    from types import SimpleNamespace
+    from uuid import uuid4
+    import backend.app.application.analysis as analysis_module
+    from backend.app.domain.resource_profile_resolver import AnalysisResourcePlan, ResourceResolutionIssue
+    from backend.app.infrastructure.db.models import Analysis
+
+    plan = AnalysisResourcePlan(
+        profile_id="WES_GRCh38_STANDARD",
+        profile_version="1",
+        genome_build="GRCh38",
+        deployment_profile_type="LABORATORY",
+        deployment_profile_version="1",
+        status="BLOCKED",
+        selected=(),
+        issues=(ResourceResolutionIssue(
+            capability=REFERENCE_PACKAGE,
+            required=True,
+            code="RESOURCE_UNAVAILABLE",
+            message="Reference package unavailable",
+        ),),
+        plan_hash="blocked-plan",
+    )
+    db = SimpleNamespace(add=lambda _x: None, flush=lambda: None)
+    analysis = Analysis(
+        id=uuid4(), case_id=uuid4(), parent_analysis_id=None, assay_id=None,
+        analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
+        status="CREATED", queue_task_id=None, reference_build="GRCh38",
+        configuration={"resource_profile_id": "WES_GRCh38_STANDARD"},
+        started_at=None, completed_at=None, created_by=None,
+    )
+    original = analysis_module.resolve_analysis_resource_profile
+    try:
+        analysis_module.resolve_analysis_resource_profile = lambda *args, **kwargs: plan
+        result = analysis_module.preflight_analysis_resources(
+            db, analysis=analysis, organization_id=uuid4()
+        )
+    finally:
+        analysis_module.resolve_analysis_resource_profile = original
+
+    assert result is plan
+    assert analysis.status == "BLOCKED"
+    assert analysis.configuration["resource_plan"]["status"] == "BLOCKED"
+    normalize = next(x for x in analysis.configuration["resource_stage_plan"] if x["step_id"] == "normalize")
+    assert normalize["status"] == "BLOCKED"
+    assert normalize["issues"][0]["code"] == "RESOURCE_UNAVAILABLE"
+
+
+def test_preflight_persists_ready_with_limitations_without_blocking_analysis():
+    from types import SimpleNamespace
+    from uuid import uuid4
+    import backend.app.application.analysis as analysis_module
+    from backend.app.domain.resource_profile_resolver import AnalysisResourcePlan, ResourceResolutionIssue
+    from backend.app.infrastructure.db.models import Analysis
+
+    plan = AnalysisResourcePlan(
+        profile_id="WES_GRCh38_STANDARD",
+        profile_version="1",
+        genome_build="GRCh38",
+        deployment_profile_type="LABORATORY",
+        deployment_profile_version="1",
+        status="READY_WITH_LIMITATIONS",
+        selected=(),
+        issues=(ResourceResolutionIssue(
+            capability=CLINICAL_DATABASE,
+            required=False,
+            code="RESOURCE_UNAVAILABLE",
+            message="ClinVar unavailable",
+        ),),
+        plan_hash="limited-plan",
+    )
+    db = SimpleNamespace(add=lambda _x: None, flush=lambda: None)
+    analysis = Analysis(
+        id=uuid4(), case_id=uuid4(), parent_analysis_id=None, assay_id=None,
+        analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
+        status="CREATED", queue_task_id=None, reference_build="GRCh38",
+        configuration={"resource_profile_id": "WES_GRCh38_STANDARD"},
+        started_at=None, completed_at=None, created_by=None,
+    )
+    original = analysis_module.resolve_analysis_resource_profile
+    try:
+        analysis_module.resolve_analysis_resource_profile = lambda *args, **kwargs: plan
+        result = analysis_module.preflight_analysis_resources(
+            db, analysis=analysis, organization_id=uuid4()
+        )
+    finally:
+        analysis_module.resolve_analysis_resource_profile = original
+
+    assert result is plan
+    assert analysis.status == "CREATED"
+    evidence = next(x for x in analysis.configuration["resource_stage_plan"] if x["step_id"] == "build_evidence")
+    assert evidence["status"] == "READY_WITH_LIMITATIONS"
+    assert evidence["issues"][0]["required"] is False
