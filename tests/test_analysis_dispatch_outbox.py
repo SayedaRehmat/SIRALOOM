@@ -98,3 +98,41 @@ def test_enqueue_analysis_uses_new_dispatch_generation_for_retry(monkeypatch):
     dispatch = next(row for row in db.rows if row.__class__.__name__ == "AnalysisDispatch")
     assert dispatch.dispatch_generation == 5
     assert analysis.queue_task_id == str(dispatch.id)
+
+
+def test_dispatch_outbox_relay_only_scans_queued_analyses(monkeypatch):
+    import importlib
+    from types import SimpleNamespace
+
+    module = importlib.import_module(
+        "backend.app.infrastructure.queue.celery_app"
+    )
+
+    class FakeDB:
+        def __init__(self):
+            self.closed = False
+
+        def scalars(self, _stmt):
+            return iter(["queued-dispatch"])
+
+        def close(self):
+            self.closed = True
+
+    db = FakeDB()
+    monkeypatch.setattr(
+        "backend.app.infrastructure.db.session.SessionLocal",
+        lambda: db,
+    )
+
+    published = []
+    monkeypatch.setattr(
+        module,
+        "publish_analysis_dispatch",
+        lambda dispatch_id: published.append(dispatch_id) or dispatch_id,
+    )
+
+    result = module.dispatch_pending_analysis_outbox()
+
+    assert result == {"inspected": 1, "dispatched": 1}
+    assert published == ["queued-dispatch"]
+    assert db.closed

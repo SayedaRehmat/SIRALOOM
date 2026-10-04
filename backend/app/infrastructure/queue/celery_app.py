@@ -291,13 +291,22 @@ if Celery is not None:
     def dispatch_pending_analysis_outbox():
         """Relay durable analysis dispatch intents to Celery."""
         from sqlalchemy import select
-        from backend.app.infrastructure.db.models import AnalysisDispatch
+        from backend.app.domain.enums import AnalysisStatus
+        from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch
         from backend.app.infrastructure.db.session import SessionLocal
 
         db = SessionLocal()
         try:
+            # Only analyses that are currently QUEUED have an active broker
+            # execution intent. A retry moves the analysis back to QUEUED before
+            # creating its new generation, so this remains safe for retries while
+            # preventing the periodic relay from repeatedly touching historical
+            # dispatches after an analysis reaches RUNNING or a terminal state.
             pending_ids = list(db.scalars(
-                select(AnalysisDispatch.id).where(
+                select(AnalysisDispatch.id)
+                .join(Analysis, Analysis.id == AnalysisDispatch.analysis_id)
+                .where(
+                    Analysis.status == AnalysisStatus.QUEUED,
                     AnalysisDispatch.status.in_(("PENDING", "PUBLISHED")),
                 )
             ))
