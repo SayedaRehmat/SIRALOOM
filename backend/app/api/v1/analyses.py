@@ -117,6 +117,7 @@ def create(
             workflow_version=payload.workflow_version,
             reference_build=payload.reference_build,
             configuration=payload.configuration,
+            resource_profile_id=payload.resource_profile_id,
             created_by=principal.user_id,
             commit=False,
         )
@@ -144,6 +145,8 @@ def create(
         "workflow_id": analysis.workflow_id,
         "workflow_version": analysis.workflow_version,
         "reference_build": analysis.reference_build,
+        "resource_profile_id": dict(analysis.configuration or {}).get("resource_profile_id"),
+        "resource_preflight": dict(analysis.configuration or {}).get("resource_plan"),
         "assay_id": (
             str(analysis.assay_id)
             if analysis.assay_id
