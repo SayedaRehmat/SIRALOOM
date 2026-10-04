@@ -2183,7 +2183,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
                 disease = analysis.configuration.get("disease") or case_context.get("disease")
-                assessment_service = ACMGSpecificationAssessmentService()
+                governed_acmg = _governed_profile_resource(
+                    db, analysis, capability="ACMG_RULE_SPECIFICATION"
+                )
+                if governed_acmg is not None:
+                    acmg_resource, acmg_execution = governed_acmg
+                    if acmg_resource.provider.upper() != "CLINGEN":
+                        raise ResourceConsumptionError(
+                            "RESOURCE_PROVIDER_MISMATCH",
+                            f"Preflight selected ACMG provider {acmg_resource.provider}; the automation engine requires ClinGen.",
+                        )
+                else:
+                    acmg_resource = None
+                assessment_service = ACMGSpecificationAssessmentService(
+                    governed_resource=acmg_resource
+                )
                 resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
                 existing_assessment_variant_ids = set(db.scalars(select(ACMGAssessment.variant_id).where(ACMGAssessment.analysis_id == analysis.id)).all())
