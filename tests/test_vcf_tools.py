@@ -62,7 +62,7 @@ def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
         pytest.skip("bcftools is not installed outside CI")
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "bad.vcf"
-    output_vcf = tmp_path / "normalized.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
@@ -84,7 +84,7 @@ def test_bcftools_version_pin_rejects_mismatch(tmp_path: Path):
         pytest.skip("bcftools is not installed outside CI")
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "input.vcf"
-    output_vcf = tmp_path / "normalized.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
