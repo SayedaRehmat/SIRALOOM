@@ -83,98 +83,80 @@ def normalize_vcf_with_bcftools(
     expected_bcftools_version: str | None = None,
     timeout_seconds: int = 1800,
 ) -> dict:
-    """
-    Perform reference-aware VCF normalization with pinned local reference data.
-
-    This is the production normalization boundary for SIRALOOM. bcftools handles
-    allele-aware multiallelic splitting and reference-aware left normalization in
-    one operation, so Python does not reimplement normalization semantics.
-    """
+    """Normalize, sort, and CSI-index a canonical VCF using pinned bcftools."""
     if not bcftools_available():
-        raise VCFToolError(
-            "bcftools is required for SIRALOOM reference-aware VCF normalization."
-        )
-
+        raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
     input_path = Path(input_path)
     output_path = Path(output_path)
     reference_fasta = Path(reference_fasta)
-
     if not input_path.is_file():
         raise VCFToolError(f"VCF input does not exist: {input_path}")
     if not reference_fasta.is_file():
         raise VCFToolError(f"Reference FASTA does not exist: {reference_fasta}")
-
+    if output_path.suffixes[-2:] != [".vcf", ".gz"]:
+        raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    if output_path.exists():
-        output_path.unlink()
+    index_path = Path(str(output_path) + ".csi")
+    output_path.unlink(missing_ok=True)
+    index_path.unlink(missing_ok=True)
 
-    version_result = subprocess.run(
-        ["bcftools", "--version"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-    )
+    version_result = subprocess.run(["bcftools", "--version"], capture_output=True, text=True, timeout=30, check=False)
     if version_result.returncode != 0:
         detail = (version_result.stderr or version_result.stdout or "unknown bcftools error").strip()
         raise VCFToolError(f"Unable to determine bcftools version: {detail}")
-
-    version_line = next(
-        (line.strip() for line in version_result.stdout.splitlines() if line.strip()),
-        "unknown",
-    )
-
+    version_line = next((line.strip() for line in version_result.stdout.splitlines() if line.strip()), "unknown")
     detected_version = version_line.split()[1] if len(version_line.split()) > 1 and version_line.split()[0] == "bcftools" else None
     if expected_bcftools_version and detected_version != expected_bcftools_version:
-        raise VCFToolError(
-            f"bcftools version mismatch: expected {expected_bcftools_version}, found {detected_version or version_line}"
-        )
+        raise VCFToolError(f"bcftools version mismatch: expected {expected_bcftools_version}, found {detected_version or version_line}")
 
-    output_type = "z" if output_path.name.lower().endswith((".gz", ".bgz")) else "v"
-    command = [
-        "bcftools",
-        "norm",
-        "-f",
-        str(reference_fasta),
-        "-c",
-        "e",
-        "-m",
-        "-any",
-        f"-O{output_type}",
-        "-o",
-        str(output_path),
-        str(input_path),
-    ]
+    normalized_path = output_path.with_name(output_path.name + ".normalized")
+    sorted_path = output_path.with_name(output_path.name + ".sorted")
+    normalized_path.unlink(missing_ok=True)
+    sorted_path.unlink(missing_ok=True)
+    try:
+        normalize_command = ["bcftools", "norm", "-f", str(reference_fasta), "-c", "e", "-m", "-any", "-Oz", "-o", str(normalized_path), str(input_path)]
+        completed = subprocess.run(normalize_command, capture_output=True, text=True, timeout=max(1, int(timeout_seconds)), check=False)
+        if completed.returncode != 0:
+            detail = (completed.stderr or completed.stdout or "unknown bcftools normalization error").strip()
+            raise VCFToolError(f"bcftools reference-aware normalization failed (exit {completed.returncode}): {detail}")
+        if not normalized_path.is_file() or normalized_path.stat().st_size == 0:
+            raise VCFToolError("bcftools reported success but produced no normalized VCF.")
 
-    completed = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        timeout=max(1, int(timeout_seconds)),
-        check=False,
-    )
-    if completed.returncode != 0:
-        detail = (completed.stderr or completed.stdout or "unknown bcftools normalization error").strip()
-        raise VCFToolError(
-            f"bcftools reference-aware normalization failed "
-            f"(exit {completed.returncode}): {detail}"
-        )
+        sort_command = ["bcftools", "sort", "-Oz", "-o", str(sorted_path), str(normalized_path)]
+        sorted_result = subprocess.run(sort_command, capture_output=True, text=True, timeout=max(1, int(timeout_seconds)), check=False)
+        if sorted_result.returncode != 0:
+            detail = (sorted_result.stderr or sorted_result.stdout or "unknown bcftools sort error").strip()
+            raise VCFToolError(f"bcftools sorting of normalized VCF failed (exit {sorted_result.returncode}): {detail}")
+        if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
+            raise VCFToolError("bcftools reported success but produced no sorted VCF.")
+        sorted_path.replace(output_path)
 
-    if not output_path.is_file() or output_path.stat().st_size == 0:
-        raise VCFToolError("bcftools reported success but produced no normalized VCF.")
+        index_command = ["bcftools", "index", "--csi", "--force", str(output_path)]
+        indexed_result = subprocess.run(index_command, capture_output=True, text=True, timeout=120, check=False)
+        if indexed_result.returncode != 0:
+            detail = (indexed_result.stderr or indexed_result.stdout or "unknown bcftools index error").strip()
+            raise VCFToolError(f"bcftools CSI indexing failed (exit {indexed_result.returncode}): {detail}")
+        if not index_path.is_file() or index_path.stat().st_size == 0:
+            raise VCFToolError("bcftools reported success but produced no CSI index.")
 
-    return {
-        "tool": "bcftools",
-        "tool_version": version_line,
-        "expected_tool_version": expected_bcftools_version,
-        "operation": "reference_aware_normalization",
-        "command": " ".join(command),
-        "reference_fasta": str(reference_fasta),
-        "reference_check": "error",
-        "multiallelic_mode": MULTIALLELIC_POLICY,
-        "mnv_policy": MNV_POLICY,
-        "stderr": (completed.stderr or "").strip(),
-    }
+        return {
+            "tool": "bcftools",
+            "tool_version": version_line,
+            "expected_tool_version": expected_bcftools_version,
+            "operation": "reference_aware_normalization_sort_index",
+            "command": " && ".join([" ".join(normalize_command), " ".join(sort_command), " ".join(index_command)]),
+            "reference_fasta": str(reference_fasta),
+            "reference_check": "error",
+            "multiallelic_mode": MULTIALLELIC_POLICY,
+            "mnv_policy": MNV_POLICY,
+            "compression": "BGZF",
+            "index": "CSI",
+            "index_path": str(index_path),
+            "stderr": "\n".join(x for x in ((completed.stderr or "").strip(), (sorted_result.stderr or "").strip(), (indexed_result.stderr or "").strip()) if x),
+        }
+    finally:
+        normalized_path.unlink(missing_ok=True)
+        sorted_path.unlink(missing_ok=True)
 
 
 def classify_records(path: str | Path) -> dict:
