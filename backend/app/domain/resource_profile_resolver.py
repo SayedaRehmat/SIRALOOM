@@ -21,6 +21,7 @@ from backend.app.domain.resource_execution import (
     ResolvedResourceExecution,
     resolve_resource_execution,
 )
+from backend.app.domain.workflow_resource_contracts import WORKFLOW_STAGE_CONTRACTS
 from backend.app.infrastructure.db.models import (
     OrganizationResourceBinding,
     Resource,
