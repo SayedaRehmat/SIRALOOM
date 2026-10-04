@@ -348,3 +348,67 @@ def test_preflight_resumes_previously_resource_blocked_analysis_when_resources_r
     assert "resource_blocked" not in blocked_step.metadata_json
     assert "next_step" not in blocked_step.metadata_json
     assert "workflow_action" not in blocked_step.metadata_json
+
+
+def test_preflight_created_workflow_steps_are_idempotent_with_runtime_initialization():
+    """Resource preflight may create durable steps before the worker starts.
+
+    The runtime initializer must observe those rows rather than attempting
+    duplicate inserts against the analysis_id/step_id uniqueness boundary.
+    """
+    from uuid import uuid4
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import Session
+
+    from backend.app.infrastructure.db.models import Analysis, Base, WorkflowStep
+    from backend.app.workflows.variant import WORKFLOW_STEPS, ensure_steps
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    analysis_id = uuid4()
+    with Session(engine) as db:
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=uuid4(),
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="GERMLINE",
+            workflow_id="variant",
+            workflow_version="1",
+            status="CREATED",
+            queue_task_id=None,
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=None,
+        ))
+        db.flush()
+
+        # This mirrors the durable rows created by resource preflight.
+        for step_id, order in WORKFLOW_STEPS:
+            db.add(WorkflowStep(
+                id=uuid4(),
+                analysis_id=analysis_id,
+                step_id=step_id,
+                step_order=order,
+                status="BLOCKED" if step_id == "normalize" else "PENDING",
+                attempt=0,
+                input_artifacts=[],
+                output_artifacts=[],
+                metadata_json={},
+            ))
+        db.commit()
+
+        ensure_steps(db, analysis_id)
+
+        rows = db.scalars(
+            select(WorkflowStep)
+            .where(WorkflowStep.analysis_id == analysis_id)
+            .order_by(WorkflowStep.step_order)
+        ).all()
+        assert len(rows) == len(WORKFLOW_STEPS)
+        assert rows[1].status == "BLOCKED"
+
+    engine.dispose()
