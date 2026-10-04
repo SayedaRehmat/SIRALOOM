@@ -48,7 +48,10 @@ def normalize(tmp_path: Path, records_text: str):
     stats = normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
     assert output.is_file()
     assert stats["tool"] == "bcftools"
-    assert stats["operation"] == "reference_aware_normalization"
+    assert stats["operation"] == "reference_aware_normalization_sort_index"
+    assert stats["compression"] == "BGZF"
+    assert stats["index"] == "CSI"
+    assert Path(str(output) + ".csi").is_file()
     assert stats["multiallelic_mode"] == MULTIALLELIC_POLICY
     assert stats["mnv_policy"] == MNV_POLICY
     return records(output), reference, source, output
