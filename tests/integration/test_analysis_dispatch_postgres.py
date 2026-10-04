@@ -504,9 +504,6 @@ def test_postgres_stale_worker_generation_cannot_claim_after_retry(monkeypatch):
             "backend.app.infrastructure.queue.celery_app"
         )
 
-        from backend.app.domain.enums import AnalysisStatus
-        from backend.app.infrastructure.db.session import SessionLocal
-
         with Session(engine) as db:
             claimed = celery_module._claim_analysis_execution(
                 db,
