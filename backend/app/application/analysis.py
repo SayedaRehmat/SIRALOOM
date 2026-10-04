@@ -132,6 +132,7 @@ def enqueue_analysis(
     if analysis.status not in {
         AnalysisStatus.CREATED,
         AnalysisStatus.FAILED,
+        AnalysisStatus.BLOCKED,
         AnalysisStatus.RESOURCE_FAILURE,
     }:
         raise ValueError(
