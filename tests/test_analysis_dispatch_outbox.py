@@ -136,3 +136,13 @@ def test_dispatch_outbox_relay_only_scans_queued_analyses(monkeypatch):
     assert result == {"inspected": 1, "dispatched": 1}
     assert published == ["queued-dispatch"]
     assert db.closed
+
+
+def test_enqueue_analysis_does_not_duplicate_queued_dispatch():
+    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.QUEUED, "queue_task_id": "existing-dispatch"})()
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            return analysis
+        def refresh(self, row, **kwargs):
+            return None
+    assert enqueue_analysis(FakeDB(), analysis) == "existing-dispatch"
