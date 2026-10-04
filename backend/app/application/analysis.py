@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, WorkflowStep
 from backend.app.domain.resource_profile_resolver import (
     AnalysisResourcePlan,
     build_workflow_stage_resource_plan,
@@ -100,9 +100,47 @@ def preflight_analysis_resources(
         profile_id=str(profile_id),
         analysis_reference_build=analysis.reference_build,
     )
+    stage_plan = build_workflow_stage_resource_plan(plan)
     configuration["resource_plan"] = plan.snapshot()
-    configuration["resource_stage_plan"] = build_workflow_stage_resource_plan(plan)
+    configuration["resource_stage_plan"] = stage_plan
     analysis.configuration = configuration
+
+    # Mirror the preflight projection into the durable workflow-step records.
+    # The resource plan remains the authoritative selection snapshot; this
+    # projection makes the blocked/limited stage visible to the same workflow
+    # APIs that expose execution state, without replacing an already-running
+    # or completed step.
+    existing_steps = {
+        step.step_id: step
+        for step in db.scalars(
+            select(WorkflowStep).where(WorkflowStep.analysis_id == analysis.id)
+        ).all()
+    }
+    for stage in stage_plan:
+        step = existing_steps.get(str(stage["step_id"]))
+        if step is None:
+            step = WorkflowStep(
+                id=uuid4(),
+                analysis_id=analysis.id,
+                step_id=str(stage["step_id"]),
+                step_order=int(stage["order"]),
+                status="PENDING",
+                attempt=0,
+                input_artifacts=[],
+                output_artifacts=[],
+                metadata_json={},
+            )
+            db.add(step)
+        metadata = dict(step.metadata_json or {})
+        metadata["resource_readiness"] = stage
+        if stage["status"] == "BLOCKED" and step.status in {"PENDING", "BLOCKED"}:
+            step.status = "BLOCKED"
+            metadata["next_step"] = "resource_setup"
+            metadata["workflow_action"] = "WAIT_FOR_RESOURCE"
+            metadata["resource_blocked"] = True
+        step.metadata_json = metadata
+        db.add(step)
+    db.flush()
 
     if not plan.is_ready:
         analysis.status = AnalysisStatus.BLOCKED
