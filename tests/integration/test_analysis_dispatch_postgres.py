@@ -539,3 +539,165 @@ def test_postgres_stale_worker_generation_cannot_claim_after_retry(monkeypatch):
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_concurrent_worker_recovery_is_serialized(monkeypatch):
+    """Concurrent redeliveries recover one RUNNING execution exactly once."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    step_id = uuid4()
+    partition_id = uuid4()
+
+    try:
+        from backend.app.infrastructure.db.models import AnalysisPartition, WorkflowStep
+        from backend.app.workflows import variant as variant_module
+
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"worker-recovery-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Worker Recovery Test",
+                role="LAB_DIRECTOR",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=str(case_id),
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="GERMLINE",
+                workflow_id="integration",
+                workflow_version="1",
+                status=AnalysisStatus.RUNNING,
+                queue_task_id=str(uuid4()),
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.add(WorkflowStep(
+                id=step_id,
+                analysis_id=analysis_id,
+                step_id="validate_input",
+                step_order=1,
+                status="RUNNING",
+                attempt=1,
+                metadata_json={"worker": "lost"},
+            ))
+            db.add(AnalysisPartition(
+                id=partition_id,
+                analysis_id=analysis_id,
+                step_id="annotate",
+                partition_key="partition-1",
+                ordinal=0,
+                record_start=1,
+                record_end=10,
+                variant_count=10,
+                status="RUNNING",
+                metadata_json={},
+                resource_class="STANDARD",
+                cpu_request=1.0,
+                memory_mb=1024,
+                attempt=1,
+                lease_owner="lost-worker",
+                lease_expires_at=None,
+            ))
+            db.commit()
+
+        audit_calls = {"count": 0}
+        audit_lock = threading.Lock()
+        original_record = variant_module.AuditService.record
+
+        def counted_record(self, **kwargs):
+            if kwargs.get("event_type") == "WORKFLOW_WORKER_RECOVERY":
+                with audit_lock:
+                    audit_calls["count"] += 1
+            return original_record(self, **kwargs)
+
+        monkeypatch.setattr(variant_module.AuditService, "record", counted_record)
+
+        barrier = threading.Barrier(2)
+        results = []
+        errors = []
+
+        def recover_one():
+            try:
+                with Session(engine) as db:
+                    barrier.wait(timeout=10)
+                    results.append(
+                        variant_module.recover_interrupted_execution(db, analysis_id)
+                    )
+            except Exception as exc:
+                errors.append(exc)
+
+        threads = [threading.Thread(target=recover_one) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=20)
+
+        assert not errors
+        assert sorted(results) == [False, True]
+        assert audit_calls["count"] == 1
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            step = db.get(WorkflowStep, step_id)
+            partition = db.get(AnalysisPartition, partition_id)
+            assert analysis.status == AnalysisStatus.RUNNING
+            assert step.status == "RETRYING"
+            assert step.error_code == "WORKER_INTERRUPTED"
+            assert partition.status == "READY"
+            assert partition.lease_owner is None
+            assert partition.lease_expires_at is None
+            assert partition.error_code == "WORKER_INTERRUPTED"
+    finally:
+        with Session(engine) as db:
+            db.query(AnalysisPartition).filter(
+                AnalysisPartition.analysis_id == analysis_id
+            ).delete()
+            db.query(WorkflowStep).filter(
+                WorkflowStep.analysis_id == analysis_id
+            ).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(Case).filter(Case.id == case_id).delete()
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
