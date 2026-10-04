@@ -66,3 +66,22 @@ def test_optional_resource_limitations_do_not_make_plan_unrunnable():
         plan_hash="test",
     )
     assert plan.is_ready is True
+
+
+def test_analysis_create_exposes_resource_profile_as_first_class_configuration():
+    from uuid import uuid4
+    from backend.app.domain.schemas import AnalysisCreate
+
+    payload = AnalysisCreate(
+        input_artifact_id=uuid4(),
+        resource_profile_id="WES_GRCh38_STANDARD",
+    )
+    assert payload.resource_profile_id == "WES_GRCh38_STANDARD"
+
+
+def test_analysis_create_keeps_resource_profile_optional_for_legacy_callers():
+    from uuid import uuid4
+    from backend.app.domain.schemas import AnalysisCreate
+
+    payload = AnalysisCreate(input_artifact_id=uuid4())
+    assert payload.resource_profile_id is None
