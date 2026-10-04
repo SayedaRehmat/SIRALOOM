@@ -77,7 +77,7 @@ class AnalysisResourcePlan:
 
     @property
     def is_ready(self) -> bool:
-        return self.status == "READY"
+        return self.status in {"READY", "READY_WITH_LIMITATIONS"}
 
     @property
     def required_issues(self) -> tuple[ResourceResolutionIssue, ...]:
