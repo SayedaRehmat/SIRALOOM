@@ -740,7 +740,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
             temp_path: Path | None = None
             try:
-                suffix = ".vcf.gz" if input_path.name.endswith(".gz") else ".vcf"
+                suffix = ".vcf.gz"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
                     temp_path = Path(temp.name)
 
@@ -817,12 +817,48 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 normalized_artifact = artifacts.put_file(
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
-                    filename="normalized.vcf.gz" if temp_path.suffix == ".gz" else "normalized.vcf",
-                    artifact_type="NORMALIZED_VCF", media_type="application/gzip" if temp_path.suffix == ".gz" else "text/vcf",
-                    genome_build=reference_build, metadata={"normalization_version": "2.1", "record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash},
+                    filename="normalized.vcf.gz",
+                    artifact_type="NORMALIZED_VCF", media_type="application/gzip",
+                    genome_build=reference_build,
+                    metadata={
+                        "normalization_version": "2.2",
+                        "record_count": profile["records"],
+                        "streaming": True,
+                        "reference_source": "PINNED_REFERENCE_PACKAGE",
+                        "reference_package_id": reference_package["resource_id"],
+                        "reference_package_version": reference_package["version"],
+                        "reference_package_checksum": reference_package["package_checksum"],
+                        "reference_fasta_sha256": reference_package["fasta_sha256"],
+                        "reference_fai_sha256": reference_package["fai_sha256"],
+                        "reference_contigs_sha256": reference_package["contigs_sha256"],
+                        "normalization_tool": normalization_stats["tool"],
+                        "normalization_tool_version": normalization_stats["tool_version"],
+                        "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
+                        "normalization_command": normalization_stats["command"],
+                        "compression": normalization_stats["compression"],
+                        "index": normalization_stats["index"],
+                        "execution_contract": reference_execution.snapshot,
+                        "execution_contract_hash": reference_execution.contract_hash,
+                    },
                 )
+                index_path = Path(normalization_stats["index_path"])
+                index_artifact = artifacts.put_file(
+                    db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=index_path,
+                    filename="normalized.vcf.gz.csi",
+                    artifact_type="VCF_INDEX", media_type="application/octet-stream",
+                    genome_build=reference_build, paired_artifact_id=normalized_artifact.id,
+                    metadata={
+                        "index_type": normalization_stats["index"],
+                        "indexed_artifact_id": str(normalized_artifact.id),
+                        "normalization_tool": normalization_stats["tool"],
+                        "normalization_tool_version": normalization_stats["tool_version"],
+                        "reference_package_checksum": reference_package["package_checksum"],
+                    },
+                )
+                normalized_artifact.paired_artifact_id = index_artifact.id
+                db.add(normalized_artifact)
                 normalization_step.input_artifacts = [str(input_artifact.id)]
-                normalization_step.output_artifacts = [str(normalized_artifact.id)]
+                normalization_step.output_artifacts = [str(normalized_artifact.id), str(index_artifact.id)]
                 fallback_metadata = {
                     "requested_resource_id": str(resolution.requested_resource_id),
                     "selected_resource_id": str(selected_reference_resource.id),
