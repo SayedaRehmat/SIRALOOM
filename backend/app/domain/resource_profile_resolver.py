@@ -232,8 +232,15 @@ def resolve_analysis_resource_profile(
     *,
     organization_id: UUID,
     profile_id: str,
+    analysis_reference_build: str | None = None,
 ) -> AnalysisResourcePlan:
     profile: AnalysisResourceProfile = get_analysis_resource_profile(profile_id)
+    if analysis_reference_build and analysis_reference_build != profile.genome_build:
+        raise ResourceProfileResolutionError(
+            f"resource profile {profile.profile_id} requires {profile.genome_build}, "
+            f"but analysis reference_build is {analysis_reference_build}"
+        )
+
     policy = resolve_resource_deployment_policy(
         db, organization_id=organization_id
     )
