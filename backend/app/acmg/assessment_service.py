@@ -72,8 +72,14 @@ class SpecificationBindingError(ValueError):
 class ACMGSpecificationAssessmentService:
     """Resolve a validated ClinGen specification and evaluate supported criteria."""
 
-    def __init__(self, selector: ClinGenSpecificationSelector | None = None):
+    def __init__(
+        self,
+        selector: ClinGenSpecificationSelector | None = None,
+        *,
+        governed_resource: Resource | None = None,
+    ):
         self.selector = selector or ClinGenSpecificationSelector()
+        self.governed_resource = governed_resource
 
     def bind(self, db: Session, *, gene: str, disease: str | None = None) -> tuple[SpecificationBinding, ClinGenSpecification | None]:
         selection = self.selector.select(db, gene=gene, disease=disease)
@@ -91,6 +97,19 @@ class ACMGSpecificationAssessmentService:
         row = db.get(ClinGenSpecification, UUID(selection.selected.id))
         if row is None:
             raise SpecificationBindingError("Selected ClinGen specification disappeared before assessment")
+
+        if self.governed_resource is not None:
+            metadata = dict(self.governed_resource.metadata_json or {})
+            expected_id = str(metadata.get("specification_id") or "").strip()
+            expected_version = str(metadata.get("specification_version") or "").strip()
+            if not expected_id or not expected_version:
+                raise SpecificationBindingError(
+                    "Governed ACMG resource is missing specification_id/specification_version metadata"
+                )
+            if row.specification_id != expected_id or row.version != expected_version:
+                raise SpecificationBindingError(
+                    "Selected ClinGen specification does not match the governed ACMG resource"
+                )
         if not row.validated_for_automation or row.validation_status != "APPROVED_FOR_AUTOMATION":
             raise SpecificationBindingError("Selected specification is not approved for automation")
         return (
