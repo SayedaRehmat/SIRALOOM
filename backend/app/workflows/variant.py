@@ -353,21 +353,32 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
     task resumes; otherwise the scheduler can see stale capacity and the workflow
     can remain falsely RUNNING.
     """
-    analysis = db.get(Analysis, analysis_id)
+    # Serialize recovery itself. Multiple Celery redeliveries can enter this
+    # function after the execution fence has already admitted RUNNING retries.
+    # The analysis row is the durable recovery mutex: once the first recovery
+    # commits the affected steps/partitions, a concurrent redelivery must see
+    # the recovered state and become a no-op rather than recording duplicate
+    # recovery events or mutating the same leases twice.
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if not analysis:
         return False
+    db.refresh(analysis, with_for_update=True)
 
     running_steps = db.scalars(
-        select(WorkflowStep).where(
+        select(WorkflowStep)
+        .where(
             WorkflowStep.analysis_id == analysis_id,
             WorkflowStep.status == StepStatus.RUNNING,
         )
+        .with_for_update()
     ).all()
     running_partitions = db.scalars(
-        select(AnalysisPartition).where(
+        select(AnalysisPartition)
+        .where(
             AnalysisPartition.analysis_id == analysis_id,
             AnalysisPartition.status == "RUNNING",
         )
+        .with_for_update()
     ).all()
 
     if not running_steps and not running_partitions:
