@@ -281,3 +281,70 @@ def test_preflight_persists_ready_with_limitations_without_blocking_analysis():
     evidence = next(x for x in analysis.configuration["resource_stage_plan"] if x["step_id"] == "build_evidence")
     assert evidence["status"] == "READY_WITH_LIMITATIONS"
     assert evidence["issues"][0]["required"] is False
+
+
+def test_preflight_resumes_previously_resource_blocked_analysis_when_resources_recover():
+    from uuid import uuid4
+    import backend.app.application.analysis as analysis_module
+    from backend.app.domain.resource_profile_resolver import AnalysisResourcePlan
+    from backend.app.infrastructure.db.models import Analysis, WorkflowStep
+
+    analysis = Analysis(
+        id=uuid4(), case_id=uuid4(), parent_analysis_id=None, assay_id=None,
+        analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
+        status="BLOCKED", queue_task_id=None, reference_build="GRCh38",
+        configuration={
+            "resource_profile_id": "WES_GRCh38_STANDARD",
+            "resource_plan": {"status": "BLOCKED"},
+        },
+        started_at=None, completed_at=None, created_by=None,
+    )
+    blocked_step = WorkflowStep(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        step_id="normalize",
+        step_order=2,
+        status="BLOCKED",
+        attempt=0,
+        input_artifacts=[],
+        output_artifacts=[],
+        metadata_json={
+            "next_step": "resource_setup",
+            "workflow_action": "WAIT_FOR_RESOURCE",
+            "resource_blocked": True,
+        },
+    )
+
+    ready_plan = AnalysisResourcePlan(
+        profile_id="WES_GRCh38_STANDARD",
+        profile_version="1",
+        genome_build="GRCh38",
+        deployment_profile_type="LABORATORY",
+        deployment_profile_version="1",
+        status="READY",
+        selected=(),
+        issues=(),
+        plan_hash="ready-plan",
+    )
+    db = type("_DB", (), {
+        "scalars": lambda self, _query: type("_Rows", (), {"all": lambda self: [blocked_step]})(),
+        "add": lambda self, _value: None,
+        "flush": lambda self: None,
+    })()
+
+    original = analysis_module.resolve_analysis_resource_profile
+    try:
+        analysis_module.resolve_analysis_resource_profile = lambda *args, **kwargs: ready_plan
+        result = analysis_module.preflight_analysis_resources(
+            db, analysis=analysis, organization_id=uuid4()
+        )
+    finally:
+        analysis_module.resolve_analysis_resource_profile = original
+
+    assert result is ready_plan
+    assert analysis.status == "CREATED"
+    assert blocked_step.status == "PENDING"
+    assert blocked_step.metadata_json["resource_readiness"]["status"] == "READY"
+    assert "resource_blocked" not in blocked_step.metadata_json
+    assert "next_step" not in blocked_step.metadata_json
+    assert "workflow_action" not in blocked_step.metadata_json
