@@ -190,7 +190,7 @@ def start(
             db,
             analysis,
         )
-    except ValueError as exc:
+    except (ValueError, KeyError) as exc:
         db.rollback()
         raise HTTPException(status_code=400, detail=str(exc))
 
