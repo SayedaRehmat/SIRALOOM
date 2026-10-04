@@ -360,13 +360,14 @@ def test_postgres_retry_supersedes_old_dispatch_while_legacy_relay_runs(monkeypa
         lambda _task_id: SimpleNamespace(state="PENDING"),
     )
 
-    # Keep the enqueue fast path deterministic: the integration assertion is
-    # about generation ownership, while publication itself is covered by the
-    # dedicated relay integration test above.
+    # Let the real publisher run, but keep the broker side deterministic.
+    # The test is about retry-generation ownership, not external Celery.
     monkeypatch.setattr(
         celery_module,
-        "publish_analysis_dispatch",
-        lambda _dispatch_id: None,
+        "run_analysis_task",
+        SimpleNamespace(
+            apply_async=lambda *, args, task_id: SimpleNamespace(id=task_id)
+        ),
     )
 
     barrier = threading.Barrier(2)
