@@ -49,3 +49,20 @@ def test_unknown_profile_is_rejected():
         pass
     else:
         raise AssertionError("unknown profile must be rejected")
+
+
+def test_optional_resource_limitations_do_not_make_plan_unrunnable():
+    from backend.app.domain.resource_profile_resolver import AnalysisResourcePlan
+
+    plan = AnalysisResourcePlan(
+        profile_id="WES_GRCh38_STANDARD",
+        profile_version="1",
+        genome_build="GRCh38",
+        deployment_profile_type="LABORATORY",
+        deployment_profile_version="1",
+        status="READY_WITH_LIMITATIONS",
+        selected=(),
+        issues=(),
+        plan_hash="test",
+    )
+    assert plan.is_ready is True
