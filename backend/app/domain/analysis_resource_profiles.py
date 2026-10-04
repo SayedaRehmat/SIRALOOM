@@ -109,12 +109,14 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
 
 
 def get_analysis_resource_profile(profile_id: str) -> AnalysisResourceProfile:
-    key = str(profile_id or "").strip().upper()
+    key = str(profile_id or "").strip()
     try:
         return ANALYSIS_RESOURCE_PROFILES[key]
     except KeyError as exc:
+        normalized = key.casefold()
+        for profile_key, profile in ANALYSIS_RESOURCE_PROFILES.items():
+            if profile_key.casefold() == normalized:
+                return profile
         raise KeyError(f"unknown analysis resource profile: {profile_id!r}") from exc
-
-
 def supported_analysis_resource_profiles() -> tuple[str, ...]:
     return tuple(sorted(ANALYSIS_RESOURCE_PROFILES))
