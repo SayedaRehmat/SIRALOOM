@@ -109,6 +109,52 @@ class AnalysisResourcePlan:
         }
 
 
+def build_workflow_stage_resource_plan(plan: AnalysisResourcePlan) -> list[dict[str, object]]:
+    """Project the resolved analysis resource plan onto the canonical workflow stages.
+
+    This is a deterministic derived snapshot: it never selects a different resource
+    and it never changes the analysis-level readiness decision.
+    """
+    selected_by_capability = {item.capability: item for item in plan.selected}
+    issues_by_capability = {item.capability: item for item in plan.issues}
+    stage_plan: list[dict[str, object]] = []
+
+    for contract in WORKFLOW_STAGE_CONTRACTS:
+        capabilities = tuple(dict.fromkeys((*contract.required_resources, *contract.optional_resources)))
+        stage_issues = [issues_by_capability[c] for c in capabilities if c in issues_by_capability]
+        required_blocked = any(issue.required for issue in stage_issues)
+        stage_plan.append({
+            "step_id": contract.step_id,
+            "order": contract.order,
+            "purpose": contract.purpose,
+            "status": (
+                "BLOCKED"
+                if required_blocked
+                else "READY_WITH_LIMITATIONS"
+                if stage_issues
+                else "READY"
+            ),
+            "required_resources": list(contract.required_resources),
+            "optional_resources": list(contract.optional_resources),
+            "selected": [
+                selected_by_capability[c].snapshot
+                for c in capabilities
+                if c in selected_by_capability
+            ],
+            "issues": [
+                {
+                    "capability": issue.capability,
+                    "required": issue.required,
+                    "code": issue.code,
+                    "message": issue.message,
+                    "candidate_count": issue.candidate_count,
+                }
+                for issue in stage_issues
+            ],
+        })
+    return stage_plan
+
+
 def _identity_key(resource: Resource) -> str:
     return "|".join(
         [
