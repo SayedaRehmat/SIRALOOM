@@ -1191,8 +1191,9 @@ def test_worker_recovery_returns_false_when_analysis_is_missing():
             self.get_calls = 0
             self.commit_calls = 0
 
-        def get(self, model, analysis_id):
+        def get(self, model, analysis_id, **kwargs):
             self.get_calls += 1
+            assert kwargs == {"with_for_update": True}
             assert analysis_id == requested_id
             return None
 
