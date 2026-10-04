@@ -12,6 +12,10 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
 from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact
+from backend.app.domain.resource_profile_resolver import (
+    AnalysisResourcePlan,
+    resolve_analysis_resource_profile,
+)
 
 
 
@@ -64,6 +68,40 @@ def create_analysis(
 
     return analysis
 
+
+
+def preflight_analysis_resources(
+    db: Session,
+    *,
+    analysis: Analysis,
+    organization_id: UUID,
+) -> AnalysisResourcePlan | None:
+    """Resolve and persist the governed resource plan before queueing.
+
+    Existing callers that do not declare a resource profile retain the legacy
+    behavior. New laboratory/trial analyses opt into the governed contract by
+    setting configuration.resource_profile_id.
+    """
+    configuration = dict(analysis.configuration or {})
+    profile_id = configuration.get("resource_profile_id")
+    if not profile_id:
+        return None
+
+    plan = resolve_analysis_resource_profile(
+        db,
+        organization_id=organization_id,
+        profile_id=str(profile_id),
+    )
+    configuration["resource_plan"] = plan.snapshot()
+    analysis.configuration = configuration
+
+    if not plan.is_ready:
+        analysis.status = AnalysisStatus.BLOCKED
+        analysis.completed_at = None
+        db.add(analysis)
+        db.flush()
+
+    return plan
 
 def enqueue_analysis(
     db: Session,
