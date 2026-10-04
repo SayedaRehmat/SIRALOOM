@@ -14,7 +14,11 @@ from backend.app.infrastructure.db.models import (
     AnalysisPartition,
     Assay,
   )
-from backend.app.application.analysis import create_analysis, enqueue_analysis
+from backend.app.application.analysis import (
+    create_analysis,
+    enqueue_analysis,
+    preflight_analysis_resources,
+)
 from backend.app.application.entitlements import (
     reserve_analysis_quota,
     require_analysis_quota,
@@ -166,15 +170,37 @@ def start(
         CASE_WRITE_ROLES,
     )
 
-    task_id = enqueue_analysis(
-        db,
-        analysis,
-    )
+    try:
+        resource_plan = preflight_analysis_resources(
+            db,
+            analysis=analysis,
+            organization_id=principal.organization_id,
+        )
+        if resource_plan is not None and not resource_plan.is_ready:
+            db.commit()
+            db.refresh(analysis)
+            return {
+                "analysis_id": str(analysis_id),
+                "status": analysis.status,
+                "task_id": None,
+                "resource_preflight": resource_plan.snapshot(),
+            }
+
+        task_id = enqueue_analysis(
+            db,
+            analysis,
+        )
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc))
 
     return {
         "analysis_id": str(analysis_id),
         "status": analysis.status,
         "task_id": task_id,
+        "resource_preflight": (
+            dict(analysis.configuration or {}).get("resource_plan")
+        ),
     }
 
 
