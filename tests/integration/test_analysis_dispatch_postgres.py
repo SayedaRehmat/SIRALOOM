@@ -270,3 +270,146 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeypatch):
+    """A retry generation must remain the sole queue owner when an old relay runs afterward."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    old_dispatch_id = uuid4()
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"retry-race-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Retry Race Test",
+                role="LAB_DIRECTOR",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=str(case_id),
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="GERMLINE",
+                workflow_id="integration",
+                workflow_version="1",
+                status=AnalysisStatus.FAILED,
+                queue_task_id=str(old_dispatch_id),
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.add(AnalysisDispatch(
+                id=old_dispatch_id,
+                analysis_id=analysis_id,
+                dispatch_generation=1,
+                status="PUBLISHED",
+                task_id=str(old_dispatch_id),
+                attempts=1,
+                last_error=None,
+                published_at=None,
+            ))
+            db.commit()
+
+        import importlib
+        from types import SimpleNamespace
+
+        celery_module = importlib.import_module(
+            "backend.app.infrastructure.queue.celery_app"
+        )
+        monkeypatch.setattr(
+            celery_module.celery_app,
+            "AsyncResult",
+            lambda _task_id: SimpleNamespace(state="PENDING"),
+        )
+        monkeypatch.setattr(
+            celery_module,
+            "run_analysis_task",
+            SimpleNamespace(
+                apply_async=lambda *, args, task_id: SimpleNamespace(id=task_id)
+            ),
+        )
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            enqueue_analysis(db, analysis)
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            dispatches = db.scalars(
+                select(AnalysisDispatch)
+                .where(AnalysisDispatch.analysis_id == analysis_id)
+                .order_by(AnalysisDispatch.dispatch_generation)
+            ).all()
+            assert analysis.status == AnalysisStatus.QUEUED
+            assert len(dispatches) == 2
+            assert analysis.queue_task_id == str(dispatches[1].id)
+
+        # The old relay now runs after the retry generation has taken ownership.
+        celery_module.publish_analysis_dispatch(old_dispatch_id)
+
+        with Session(engine) as db:
+            analysis = db.get(Analysis, analysis_id)
+            dispatches = db.scalars(
+                select(AnalysisDispatch)
+                .where(AnalysisDispatch.analysis_id == analysis_id)
+                .order_by(AnalysisDispatch.dispatch_generation)
+            ).all()
+
+            assert analysis is not None
+            assert analysis.status == AnalysisStatus.QUEUED
+            assert len(dispatches) == 2
+            old_dispatch, new_dispatch = dispatches
+            assert old_dispatch.status == "SUPERSEDED"
+            assert new_dispatch.dispatch_generation == 2
+            assert new_dispatch.status == "PUBLISHED"
+            assert analysis.queue_task_id == str(new_dispatch.id)
+    finally:
+        with Session(engine) as db:
+            db.query(AnalysisDispatch).filter(
+                AnalysisDispatch.analysis_id == analysis_id
+            ).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(Case).filter(Case.id == case_id).delete()
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
