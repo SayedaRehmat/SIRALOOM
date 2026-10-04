@@ -191,7 +191,18 @@ def test_preflight_persists_analysis_and_stage_resource_state_on_block():
         ),),
         plan_hash="blocked-plan",
     )
-    db = SimpleNamespace(add=lambda _x: None, flush=lambda: None)
+    added = []
+    class _ScalarResult:
+        def all(self):
+            return []
+    class _DB:
+        def scalars(self, _query):
+            return _ScalarResult()
+        def add(self, value):
+            added.append(value)
+        def flush(self):
+            return None
+    db = _DB()
     analysis = Analysis(
         id=uuid4(), case_id=uuid4(), parent_analysis_id=None, assay_id=None,
         analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
@@ -214,6 +225,11 @@ def test_preflight_persists_analysis_and_stage_resource_state_on_block():
     normalize = next(x for x in analysis.configuration["resource_stage_plan"] if x["step_id"] == "normalize")
     assert normalize["status"] == "BLOCKED"
     assert normalize["issues"][0]["code"] == "RESOURCE_UNAVAILABLE"
+    normalize_step = next(step for step in added if step.step_id == "normalize")
+    assert normalize_step.status == "BLOCKED"
+    assert normalize_step.metadata_json["next_step"] == "resource_setup"
+    assert normalize_step.metadata_json["workflow_action"] == "WAIT_FOR_RESOURCE"
+    assert normalize_step.metadata_json["resource_readiness"]["status"] == "BLOCKED"
 
 
 def test_preflight_persists_ready_with_limitations_without_blocking_analysis():
@@ -239,7 +255,11 @@ def test_preflight_persists_ready_with_limitations_without_blocking_analysis():
         ),),
         plan_hash="limited-plan",
     )
-    db = SimpleNamespace(add=lambda _x: None, flush=lambda: None)
+    db = SimpleNamespace(
+        scalars=lambda _query: SimpleNamespace(all=lambda: []),
+        add=lambda _x: None,
+        flush=lambda: None,
+    )
     analysis = Analysis(
         id=uuid4(), case_id=uuid4(), parent_analysis_id=None, assay_id=None,
         analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
