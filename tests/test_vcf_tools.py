@@ -24,7 +24,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
         pytest.skip("bcftools is not installed outside CI")
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "input.vcf"
-    output_vcf = tmp_path / "normalized.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
@@ -45,10 +45,13 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert result["expected_tool_version"] == "1.19"
     assert result["reference_check"] == "error"
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
-    lines = [
-        line for line in output_vcf.read_text(encoding="utf-8").splitlines()
-        if line and not line.startswith("#")
-    ]
+    import gzip
+    assert Path(str(output_vcf) + ".csi").is_file()
+    with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
+        lines = [
+            line for line in handle.read().splitlines()
+            if line and not line.startswith("#")
+        ]
     assert len(lines) == 2
     assert lines[0].split("\t")[0:5] == ["1", "1", ".", "CA", "C"]
     assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
