@@ -68,7 +68,7 @@ _RESOURCE_CAPABILITIES: Final[dict[str, ResourceCapability]] = {
         ("input_variant",),
         ("reference_sequence", "contig_manifest", "reference_identity"),
         ("LOCAL", "FILE", "LOCAL_ONLY"),
-        ("LOCAL"),
+        ("LOCAL",),
         True, True, True, (), (),
         ("REFERENCE_CONTEXT",), False, True, False,
     ),
