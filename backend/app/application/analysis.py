@@ -100,6 +100,7 @@ def preflight_analysis_resources(
         profile_id=str(profile_id),
         analysis_reference_build=analysis.reference_build,
     )
+    previous_resource_plan = configuration.get("resource_plan") or {}
     stage_plan = build_workflow_stage_resource_plan(plan)
     configuration["resource_plan"] = plan.snapshot()
     configuration["resource_stage_plan"] = stage_plan
@@ -138,12 +139,36 @@ def preflight_analysis_resources(
             metadata["next_step"] = "resource_setup"
             metadata["workflow_action"] = "WAIT_FOR_RESOURCE"
             metadata["resource_blocked"] = True
+        elif (
+            stage["status"] != "BLOCKED"
+            and step.status == "BLOCKED"
+            and metadata.get("resource_blocked") is True
+        ):
+            # A previously resource-blocked stage becomes runnable only after
+            # a fresh preflight proves that its required resource is ready.
+            # Do not alter failures/review states that were not caused by
+            # resource preflight.
+            step.status = "PENDING"
+            metadata.pop("next_step", None)
+            metadata.pop("workflow_action", None)
+            metadata.pop("resource_blocked", None)
         step.metadata_json = metadata
         db.add(step)
     db.flush()
 
     if not plan.is_ready:
         analysis.status = AnalysisStatus.BLOCKED
+        analysis.completed_at = None
+        db.add(analysis)
+        db.flush()
+    elif (
+        analysis.status == AnalysisStatus.BLOCKED
+        and previous_resource_plan.get("status") == "BLOCKED"
+    ):
+        # Resource recovery is a resumable state transition, not a new
+        # analysis. Once required resources qualify, return the analysis to
+        # CREATED so the normal start path can create exactly one dispatch.
+        analysis.status = AnalysisStatus.CREATED
         analysis.completed_at = None
         db.add(analysis)
         db.flush()
