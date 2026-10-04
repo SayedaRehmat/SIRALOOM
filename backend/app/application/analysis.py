@@ -18,7 +18,6 @@ from backend.app.domain.resource_profile_resolver import (
 )
 
 
-
 def create_analysis(
     db: Session,
     *,
@@ -31,6 +30,7 @@ def create_analysis(
     reference_build: str,
     configuration: dict,
     created_by: UUID | None,
+    resource_profile_id: str | None = None,
     commit: bool = True,
 ) -> Analysis:
     artifact = db.get(Artifact, input_artifact_id)
@@ -42,6 +42,13 @@ def create_analysis(
         raise ValueError("Input artifact does not belong to this case")
 
     analysis_configuration = dict(configuration or {})
+    configured_profile_id = analysis_configuration.get("resource_profile_id")
+    if resource_profile_id and configured_profile_id and str(resource_profile_id) != str(configured_profile_id):
+        raise ValueError(
+            "resource_profile_id conflicts with configuration.resource_profile_id"
+        )
+    if resource_profile_id:
+        analysis_configuration["resource_profile_id"] = str(resource_profile_id)
     analysis_configuration["input_artifact_id"] = str(input_artifact_id)
 
     analysis = Analysis(
@@ -69,7 +76,6 @@ def create_analysis(
     return analysis
 
 
-
 def preflight_analysis_resources(
     db: Session,
     *,
@@ -91,6 +97,7 @@ def preflight_analysis_resources(
         db,
         organization_id=organization_id,
         profile_id=str(profile_id),
+        analysis_reference_build=analysis.reference_build,
     )
     configuration["resource_plan"] = plan.snapshot()
     analysis.configuration = configuration
@@ -102,6 +109,7 @@ def preflight_analysis_resources(
         db.flush()
 
     return plan
+
 
 def enqueue_analysis(
     db: Session,
@@ -117,11 +125,6 @@ def enqueue_analysis(
     if locked is None:
         raise ValueError("Analysis not found")
 
-    # The caller may already have loaded this Analysis into its identity map
-    # before waiting on the row lock. Session.get() can then return that stale
-    # instance without issuing a SELECT, which would defeat the serialization
-    # boundary. Refresh while the row lock is held so the status and queue
-    # pointer reflect the committed state of the winner.
     db.refresh(locked, with_for_update=True)
     analysis = locked
     if analysis.status == AnalysisStatus.QUEUED:
@@ -164,9 +167,6 @@ def enqueue_analysis(
         published_at=None,
     )
     analysis.status = AnalysisStatus.QUEUED
-    # Reserve the deterministic Celery task identity before publication. This
-    # lets the worker reject any stale task from an older retry generation even
-    # if that broker message arrives after a newer retry has been queued.
     analysis.queue_task_id = str(dispatch.id)
     db.add(dispatch)
     db.add(analysis)
