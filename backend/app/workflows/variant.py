@@ -26,6 +26,7 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
+from backend.app.domain.profile_runtime_resources import ProfileRuntimeResourceError, resolve_profile_runtime_resource
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
@@ -1426,76 +1427,89 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 case = db.get(Case, analysis.case_id)
                 if case is None:
                     raise ResourceConsumptionError("CASE_NOT_FOUND", "Analysis case was not found during population resource resolution.")
-                population_resource_id = (analysis.configuration or {}).get("population_resource_id")
-                try:
-                    requested_population = db.get(Resource, UUID(str(population_resource_id))) if population_resource_id else None
-                except (TypeError, ValueError) as exc:
-                    raise ResourceConsumptionError(
-                        "RESOURCE_REQUIRED",
-                        f"Configured population resource ID is not a valid UUID: {population_resource_id}",
-                    ) from exc
-                if requested_population is None:
-                    raise ResourceConsumptionError(
-                        "RESOURCE_REQUIRED",
-                        "Analysis must explicitly select a registered GeneBe population resource.",
-                    )
-                population_resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=population_resource_id,
-                    expected_type="POPULATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider="GeneBe",
-                )
-                record_workflow_decision(
-                    db,
-                    analysis_id=analysis.id,
-                    step_id="population",
-                    attempt=population_step.attempt,
-                    outcome=OutcomeKind.RESOURCE_UNAVAILABLE if population_resolution.used_fallback or population_resolution.resource is None else OutcomeKind.SUCCESS,
-                    decision=population_resolution.decision,
-                    resource_id=population_resolution.requested_resource_id,
-                    fallback_resource_id=population_resolution.fallback_resource_id,
-                    metadata={
-                        "resource_type": "POPULATION",
-                        "provider": "GeneBe",
-                        "reference_build": normalize_build(analysis.reference_build),
-                        "fallback_used": population_resolution.used_fallback,
-                    },
-                )
-                db.commit()
-                if population_resolution.resource is None:
-                    status = StepStatus.REQUIRES_REVIEW if population_resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW else StepStatus.RESOURCE_FAILURE
-                    mark_step(
-                        db,
-                        population_step,
-                        status,
-                        error_code=population_resolution.decision.code,
-                        error_message=population_resolution.decision.message,
-                        metadata={
-                            "next_action": population_resolution.decision.action.value,
-                            "requested_resource_id": str(population_resource_id),
-                        },
-                    )
-                    analysis.status = AnalysisStatus.REQUIRES_REVIEW if status is StepStatus.REQUIRES_REVIEW else AnalysisStatus.RESOURCE_FAILURE
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="POPULATION_RESOURCE_DECISION",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="population-resource",
-                        reason=population_resolution.decision.message,
-                        payload={
-                            "action": population_resolution.decision.action.value,
-                            "code": population_resolution.decision.code,
-                            "requested_resource_id": str(population_resource_id),
-                        },
-                    )
-                    db.commit()
-                    return
-                geneBe_resource = population_resolution.resource
+                profile_runtime_population = None
+                if (analysis.configuration or {}).get("resource_profile_id"):
+                    try:
+                        profile_runtime_population = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="POPULATION",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+
+                if profile_runtime_population is None:
+                                population_resource_id = (analysis.configuration or {}).get("population_resource_id")
+                                try:
+                                    requested_population = db.get(Resource, UUID(str(population_resource_id))) if population_resource_id else None
+                                except (TypeError, ValueError) as exc:
+                                    raise ResourceConsumptionError(
+                                        "RESOURCE_REQUIRED",
+                                        f"Configured population resource ID is not a valid UUID: {population_resource_id}",
+                                    ) from exc
+                                if requested_population is None:
+                                    raise ResourceConsumptionError(
+                                        "RESOURCE_REQUIRED",
+                                        "Analysis must explicitly select a registered GeneBe population resource.",
+                                    )
+                                population_resolution = resolve_resource_with_fallback(
+                                    db,
+                                    organization_id=case.organization_id,
+                                    requested_resource_id=population_resource_id,
+                                    expected_type="POPULATION",
+                                    expected_build=normalize_build(analysis.reference_build),
+                                    expected_provider="GeneBe",
+                                )
+                                record_workflow_decision(
+                                    db,
+                                    analysis_id=analysis.id,
+                                    step_id="population",
+                                    attempt=population_step.attempt,
+                                    outcome=OutcomeKind.RESOURCE_UNAVAILABLE if population_resolution.used_fallback or population_resolution.resource is None else OutcomeKind.SUCCESS,
+                                    decision=population_resolution.decision,
+                                    resource_id=population_resolution.requested_resource_id,
+                                    fallback_resource_id=population_resolution.fallback_resource_id,
+                                    metadata={
+                                        "resource_type": "POPULATION",
+                                        "provider": "GeneBe",
+                                        "reference_build": normalize_build(analysis.reference_build),
+                                        "fallback_used": population_resolution.used_fallback,
+                                    },
+                                )
+                                db.commit()
+                                if population_resolution.resource is None:
+                                    status = StepStatus.REQUIRES_REVIEW if population_resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW else StepStatus.RESOURCE_FAILURE
+                                    mark_step(
+                                        db,
+                                        population_step,
+                                        status,
+                                        error_code=population_resolution.decision.code,
+                                        error_message=population_resolution.decision.message,
+                                        metadata={
+                                            "next_action": population_resolution.decision.action.value,
+                                            "requested_resource_id": str(population_resource_id),
+                                        },
+                                    )
+                                    analysis.status = AnalysisStatus.REQUIRES_REVIEW if status is StepStatus.REQUIRES_REVIEW else AnalysisStatus.RESOURCE_FAILURE
+                                    analysis.completed_at = None
+                                    db.commit()
+                                    audit.record(
+                                        event_type="POPULATION_RESOURCE_DECISION",
+                                        case_id=analysis.case_id,
+                                        analysis_id=analysis.id,
+                                        actor_type="SYSTEM",
+                                        actor_id="population-resource",
+                                        reason=population_resolution.decision.message,
+                                        payload={
+                                            "action": population_resolution.decision.action.value,
+                                            "code": population_resolution.decision.code,
+                                            "requested_resource_id": str(population_resource_id),
+                                        },
+                                    )
+                                    db.commit()
+                                    return
+                                geneBe_resource = population_resolution.resource
+
 
                 created = 0
                 annotation_count = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "GeneBe")) or 0
@@ -1518,18 +1532,50 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
 
                 direct_count = 0
-                if settings.gnomad_enabled:
+                if settings.gnomad_enabled or profile_runtime_population is not None:
                     if normalize_build(analysis.reference_build) != "GRCh38":
                         raise GnomADProviderError("Configured gnomAD v4 GraphQL dataset is supported here only for GRCh38")
                     gnomad = None
-                    gnomad_resource_id = (analysis.configuration or {}).get("gnomad_resource_id")
-                    try:
-                        requested_gnomad = db.get(Resource, UUID(str(gnomad_resource_id))) if gnomad_resource_id else None
-                    except (TypeError, ValueError) as exc:
-                        raise ResourceConsumptionError(
-                            "RESOURCE_REQUIRED",
-                            f"Configured gnomAD resource ID is not a valid UUID: {gnomad_resource_id}",
-                        ) from exc
+                    gnomad_resource_id = (
+                        profile_runtime_population.resource.id
+                        if profile_runtime_population is not None
+                        else (analysis.configuration or {}).get("gnomad_resource_id")
+                    )
+                    if profile_runtime_population is not None:
+                        resource = profile_runtime_population.resource
+                        gnomad_execution = profile_runtime_population.execution
+                        gnomad_resolution = None
+                        record_workflow_decision(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="population",
+                            attempt=population_step.attempt,
+                            outcome=OutcomeKind.SUCCESS,
+                            decision=decide_step_outcome(
+                                "population",
+                                OutcomeKind.SUCCESS,
+                                code="PROFILE_RESOURCE_SELECTED",
+                                message="Population execution is bound to the exact resource selected during analysis preflight.",
+                            ),
+                            resource_id=resource.id,
+                            metadata={
+                                "resource_type": "POPULATION",
+                                "provider": resource.provider,
+                                "reference_build": normalize_build(analysis.reference_build),
+                                "profile_bound": True,
+                                "qualification_id": str(gnomad_execution.qualification_id),
+                                "contract_hash": gnomad_execution.contract_hash,
+                            },
+                        )
+                        db.commit()
+                    else:
+                        try:
+                            requested_gnomad = db.get(Resource, UUID(str(gnomad_resource_id))) if gnomad_resource_id else None
+                        except (TypeError, ValueError) as exc:
+                            raise ResourceConsumptionError(
+                                "RESOURCE_REQUIRED",
+                                f"Configured gnomAD resource ID is not a valid UUID: {gnomad_resource_id}",
+                            ) from exc
                     if requested_gnomad is None:
                         raise ResourceConsumptionError(
                             "RESOURCE_REQUIRED",
@@ -1592,15 +1638,27 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         )
                         db.commit()
                         return
-                    resource = gnomad_resolution.resource
+                    if profile_runtime_population is None:
+                        resource = gnomad_resolution.resource
+                        try:
+                            gnomad_execution = resolve_resource_execution(db, resource=resource)
+                        except (ResourceExecutionError, GnomADProviderError) as exc:
+                            raise ResourceConsumptionError("GNOMAD_EXECUTION_CONTRACT_INVALID", str(exc)) from exc
+                    else:
+                        resource = profile_runtime_population.resource
+                        gnomad_execution = profile_runtime_population.execution
                     try:
-                        gnomad_execution = resolve_resource_execution(db, resource=resource)
                         gnomad = GnomADGraphQLProvider.from_execution_contract(
                             gnomad_execution.contract,
                             delay_seconds=settings.gnomad_graphql_delay_seconds,
                         )
                     except (ResourceExecutionError, GnomADProviderError) as exc:
                         raise ResourceConsumptionError("GNOMAD_EXECUTION_CONTRACT_INVALID", str(exc)) from exc
+                        gnomad = GnomADGraphQLProvider.from_execution_contract(
+                            gnomad_execution.contract,
+                            delay_seconds=settings.gnomad_graphql_delay_seconds,
+                        )
+                    for variant in iter_normalized_vcf(normalized_path, reference_build):
                     for variant in iter_normalized_vcf(normalized_path, reference_build):
                         execution_record = start_resource_execution(
                             db,
@@ -1608,8 +1666,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             step_id="population",
                             attempt=population_step.attempt,
                             resolved=gnomad_execution,
-                            requested_resource_id=gnomad_resolution.requested_resource_id,
-                            fallback_resource_id=gnomad_resolution.fallback_resource_id,
+                            requested_resource_id=(
+                                str(profile_runtime_population.resource.id)
+                                if profile_runtime_population is not None
+                                else gnomad_resolution.requested_resource_id
+                            ),
+                            fallback_resource_id=(
+                                None
+                                if profile_runtime_population is not None
+                                else gnomad_resolution.fallback_resource_id
+                            ),
                             batch_key=f"gnomad:{variant.chromosome}:{variant.position}:{variant.reference}:{variant.alternate}",
                             metadata={"provider": gnomad.provider_id, "dataset": gnomad.dataset_id},
                         )
