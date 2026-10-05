@@ -70,7 +70,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh38",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
-            ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("GENEBE", "VEP"), True),
+            ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP", "GENEBE"), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement(ACMG_RULE_SPECIFICATION, True, ("CLINGEN",), False),
             *_COMMON_OPTIONAL,
