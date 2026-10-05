@@ -94,8 +94,8 @@ class VEPProvider:
         if not variants:
             return []
         genome = str(context.get("genome") or "").strip().upper()
-        build = {"HG38": "GRCH38", "HG19": "GRCH37"}.get(genome, genome)
-        if build not in self.supported_builds:
+        build = {"HG38": "GRCh38", "HG19": "GRCh37", "GRCH38": "GRCh38", "GRCH37": "GRCh37"}.get(genome)
+        if build is None:
             raise VEPError(f"VEP does not support analysis build {genome!r}.")
 
         with tempfile.TemporaryDirectory(prefix="siraloom-vep-") as tmp:
