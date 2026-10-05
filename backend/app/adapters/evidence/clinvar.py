@@ -48,7 +48,7 @@ class ClinVarVCVProvider:
     The adapter never queries a rolling/current ClinVar API.
     """
 
-    provider_id = "NCBI ClinVar"
+    provider_id = "CLINVAR"
     provider_version = "release-xml-v1"
     dataset = "ClinVar VCV XML"
 
@@ -92,7 +92,7 @@ class ClinVarVCVProvider:
         index_root: str,
     ) -> "ClinVarVCVProvider":
         contract = resolved.contract
-        if contract.provider_id != cls.provider_id:
+        if str(contract.provider_id).strip().upper() not in {"CLINVAR", "NCBI CLINVAR"}:
             raise ClinVarProviderError(
                 f"ClinVar provider mismatch: {contract.provider_id!r}"
             )
