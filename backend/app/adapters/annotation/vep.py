@@ -53,6 +53,12 @@ class VEPProvider:
         toolchain = dict(contract.toolchain or {})
         executable = str(toolchain.get("executable") or "vep").strip()
         cache_dir = str(toolchain.get("cache_dir") or contract.location).strip()
+        cache_version = str(toolchain.get("cache_version") or "").strip()
+        if cache_version != contract.provider_version:
+            raise VEPError(
+                "VEP cache_version must exactly match the qualified VEP provider_version; "
+                f"got cache_version={cache_version!r}, provider_version={contract.provider_version!r}."
+            )
         raw_extra_args = toolchain.get("extra_args") or ()
         if not isinstance(raw_extra_args, (list, tuple)) or not all(
             isinstance(item, str) and item.strip() for item in raw_extra_args
