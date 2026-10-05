@@ -38,6 +38,45 @@ def test_reads_alt_specific_fields(monkeypatch):
     assert (obs.allele_count, obs.allele_number, obs.allele_frequency, obs.homozygote_count) == (4, 100, 0.04, 1)
 
 
+def test_contig_matching_is_exact_by_default(monkeypatch):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AF": "AF"},
+    ))
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stderr="",
+            stdout="chr1	100	rs1	A	G	.	PASS	AF=0.02\n",
+        ),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+    assert provider.query_variant(variant) == []
+
+
+def test_contig_aliasing_requires_explicit_contract_policy(monkeypatch):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AF": "AF"},
+        contig_policy="CHR_PREFIX",
+    ))
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stderr="",
+            stdout="chr1	100	rs1	A	G	.	PASS	AF=0.02\n",
+        ),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+    assert provider.query_variant(variant)[0].allele_frequency == 0.02
+
+
+def test_rejects_unknown_contig_policy():
+    with pytest.raises(SecondaryPopulationProviderError, match="contig_policy"):
+        LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+            info_fields={"AF": "AF"},
+            contig_policy="SILENT_ALIAS",
+        ))
+
+
 def test_rejects_remote_execution():
     from backend.app.domain.resource_source_contract import ResourceExecutionContract
     c = ResourceExecutionContract(
