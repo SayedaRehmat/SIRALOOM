@@ -15,7 +15,7 @@ from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
 )
-from backend.app.infrastructure.db.models import Resource, ResourceQualification
+from backend.app.infrastructure.db.models import Analysis, Resource, ResourceQualification
 
 
 class ResourceExecutionError(RuntimeError):
@@ -101,6 +101,93 @@ def resolve_resource_execution(
     )
 
 
+_STEP_REQUIRED_CAPABILITY = {
+    "normalize": "REFERENCE_PACKAGE",
+    "annotate": "ANNOTATION_ENGINE",
+    "population": "POPULATION",
+    "acmg_assessment": "ACMG_RULE_SPECIFICATION",
+}
+
+
+def _validate_profile_runtime_binding(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    resolved: ResolvedResourceExecution,
+) -> None:
+    """Fail closed if a profile-governed analysis is about to consume another resource.
+
+    Preflight persists an immutable resource-plan snapshot in Analysis.configuration.
+    The workflow may still resolve a concrete Resource through a legacy adapter path;
+    this boundary is therefore the final runtime guard. It verifies resource identity,
+    qualification identity/version, and the qualified execution-contract hash before
+    a ResourceExecutionRecord is created.
+
+    Analyses without a resource profile retain the established legacy execution path.
+    """
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        raise ResourceExecutionError(
+            f"Analysis {analysis_id} was not found while binding resource execution."
+        )
+
+    configuration = dict(analysis.configuration or {})
+    profile_id = configuration.get("resource_profile_id")
+    if not profile_id:
+        return
+
+    plan = dict(configuration.get("resource_plan") or {})
+    status = plan.get("status")
+    if status not in {"READY", "READY_WITH_LIMITATIONS"}:
+        raise ResourceExecutionError(
+            f"RESOURCE_PLAN_NOT_READY: analysis {analysis_id} has resource plan status {status!r}."
+        )
+
+    selected = list(plan.get("selected") or [])
+    selected_by_id = {
+        str(item.get("resource_id")): item
+        for item in selected
+        if item.get("resource_id")
+    }
+    selected_item = selected_by_id.get(str(resolved.resource_id))
+    if selected_item is None:
+        raise ResourceExecutionError(
+            f"RESOURCE_NOT_SELECTED: resource {resolved.resource_id} is not part of "
+            f"analysis profile {profile_id!r} preflight plan."
+        )
+
+    required_capability = _STEP_REQUIRED_CAPABILITY.get(step_id)
+    if required_capability and selected_item.get("capability") != required_capability:
+        raise ResourceExecutionError(
+            f"RESOURCE_CAPABILITY_MISMATCH: step {step_id!r} requires {required_capability!r}, "
+            f"but preflight selected capability {selected_item.get('capability')!r} for resource "
+            f"{resolved.resource_id}."
+        )
+
+    snapshot = dict(selected_item.get("execution") or {})
+    expected = {
+        "resource_id": str(resolved.resource_id),
+        "resource_version": resolved.resource_version,
+        "qualification_id": str(resolved.qualification_id),
+        "qualification_version": resolved.qualification_version,
+        "contract_hash": resolved.contract_hash,
+    }
+    actual = {
+        "resource_id": str(snapshot.get("resource_id")),
+        "resource_version": snapshot.get("resource_version"),
+        "qualification_id": str(snapshot.get("qualification_id")),
+        "qualification_version": snapshot.get("qualification_version"),
+        "contract_hash": snapshot.get("contract_hash"),
+    }
+    if actual != expected:
+        raise ResourceExecutionError(
+            "RESOURCE_PLAN_STALE: the qualified runtime contract no longer matches "
+            f"the preflight snapshot for resource {resolved.resource_id}; "
+            f"expected={expected}, actual={actual}."
+        )
+
+
 def start_resource_execution(
     db: Session,
     *,
@@ -116,6 +203,13 @@ def start_resource_execution(
     from datetime import datetime, timezone
     from uuid import uuid4
     from backend.app.infrastructure.db.models import ResourceExecutionRecord
+
+    _validate_profile_runtime_binding(
+        db,
+        analysis_id=analysis_id,
+        step_id=step_id,
+        resolved=resolved,
+    )
 
     contract = resolved.contract
     row = ResourceExecutionRecord(
