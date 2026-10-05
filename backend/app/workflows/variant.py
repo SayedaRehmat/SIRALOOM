@@ -2118,41 +2118,78 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
                 resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
 
-                # ClinVar is consumed here as direct clinical-database evidence,
-                # not as an annotation-stage side effect. The analysis must pin a
-                # registered resource version; runtime execution then resolves the
-                # exact qualified contract and reads only the staged authoritative
-                # release through the governed adapter.
+                # ClinVar is an optional evidence capability. For governed profile
+                # analyses, only the exact resource selected during preflight may be
+                # executed. If the laboratory did not register/select ClinVar, there
+                # is no limitation: that capability is simply not applicable to this
+                # analysis. Legacy analyses retain their explicit configuration path.
                 clinvar_resource = None
                 clinvar_provider = None
-                clinvar_resource_id = (analysis.configuration or {}).get("clinvar_resource_id")
-                if clinvar_resource_id:
-                    clinvar_resource = _require_registered_resource(
-                        db,
-                        resource_id=clinvar_resource_id,
-                        expected_type="EVIDENCE",
-                        expected_build=analysis.reference_build,
-                        expected_provider="NCBI ClinVar",
-                    )
-                    clinvar_execution = resolve_resource_execution(
-                        db,
-                        resource=clinvar_resource,
-                    )
-                    clinvar_provider = ClinVarVCVProvider.from_execution_contract(
-                        resolved=clinvar_execution,
-                        resource_location=clinvar_resource.location,
-                        genome_build=analysis.reference_build,
-                        index_root=settings.resource_cache_root,
-                    )
-                    clinvar_execution_metadata = {
-                        **clinvar_execution.snapshot,
-                        "resource_name": clinvar_resource.name,
-                        "resource_checksum": clinvar_resource.checksum,
-                        "execution_dataset": clinvar_execution.contract.dataset,
-                    }
+                clinvar_execution = None
+                clinvar_execution_metadata = None
+                clinvar_profile_managed = bool((analysis.configuration or {}).get("resource_profile_id"))
+                clinvar_limitations: list[dict[str, object]] = []
+
+                if clinvar_profile_managed:
+                    selected_clinvar = [
+                        item for item in ((analysis.configuration or {}).get("resource_plan") or {}).get("selected", [])
+                        if item.get("capability") == "CLINICAL_DATABASE"
+                    ]
+                    if selected_clinvar:
+                        try:
+                            resolved_clinvar = resolve_profile_runtime_resource(
+                                db, analysis.id, "CLINICAL_DATABASE"
+                            )
+                            clinvar_resource = resolved_clinvar.resource
+                            clinvar_execution = resolved_clinvar.execution
+                            clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                                resolved=clinvar_execution,
+                                resource_location=clinvar_resource.location,
+                                genome_build=analysis.reference_build,
+                                index_root=settings.resource_cache_root,
+                            )
+                            clinvar_execution_metadata = {
+                                **clinvar_execution.snapshot,
+                                "resource_name": clinvar_resource.name,
+                                "resource_checksum": clinvar_resource.checksum,
+                                "execution_dataset": clinvar_execution.contract.dataset,
+                            }
+                        except (ProfileRuntimeResourceError, ResourceExecutionError, ClinVarProviderError) as exc:
+                            code = getattr(exc, "code", None) or "CLINVAR_RESOURCE_UNAVAILABLE"
+                            clinvar_limitations.append({
+                                "code": code,
+                                "message": str(exc),
+                                "resource_capability": "CLINICAL_DATABASE",
+                            })
+                    # No selected CLINICAL_DATABASE resource means the laboratory
+                    # deliberately did not register/use ClinVar. Do not manufacture
+                    # a limitation or warning for an opt-in capability.
                 else:
-                    clinvar_execution = None
-                    clinvar_execution_metadata = None
+                    clinvar_resource_id = (analysis.configuration or {}).get("clinvar_resource_id")
+                    if clinvar_resource_id:
+                        clinvar_resource = _require_registered_resource(
+                            db,
+                            resource_id=clinvar_resource_id,
+                            expected_type="EVIDENCE",
+                            expected_build=analysis.reference_build,
+                            expected_provider="NCBI ClinVar",
+                        )
+                        clinvar_execution = resolve_resource_execution(
+                            db,
+                            resource=clinvar_resource,
+                        )
+                        clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                            resolved=clinvar_execution,
+                            resource_location=clinvar_resource.location,
+                            genome_build=analysis.reference_build,
+                            index_root=settings.resource_cache_root,
+                        )
+                        clinvar_execution_metadata = {
+                            **clinvar_execution.snapshot,
+                            "resource_name": clinvar_resource.name,
+                            "resource_checksum": clinvar_resource.checksum,
+                            "execution_dataset": clinvar_execution.contract.dataset,
+                        }
 
                 from backend.app.infrastructure.db.models import Case, PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
@@ -2277,6 +2314,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     error_code="CLINVAR_QUERY_FAILED",
                                     error_message=str(exc),
                                 )
+                                if clinvar_profile_managed:
+                                    clinvar_limitations.append({
+                                        "code": "CLINVAR_QUERY_FAILED",
+                                        "message": str(exc),
+                                        "resource_capability": "CLINICAL_DATABASE",
+                                        "variant_id": str(row.id),
+                                    })
+                                    continue
                                 raise
 
                         for record in records:
@@ -2349,6 +2394,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "engine_version": engine.engine_version,
                     "created_evidence": created,
                 }
+                if clinvar_limitations:
+                    evidence_metadata["clinvar_limitations"] = clinvar_limitations
                 if created == 0:
                     _apply_scientific_limitation(
                         db,
@@ -2359,6 +2406,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "Evidence collection completed, but no reportable evidence records were "
                             "established from the available annotation, population, phenotype, gene-disease, "
                             "or literature context."
+                        ),
+                        metadata=evidence_metadata,
+                    )
+                elif clinvar_limitations:
+                    _apply_scientific_limitation(
+                        db,
+                        evidence_step,
+                        outcome=OutcomeKind.NO_DATA,
+                        code="CLINVAR_OPTIONAL_RESOURCE_LIMITATION",
+                        message=(
+                            "The laboratory-selected ClinVar resource could not be fully consumed. "
+                            "Evidence from ClinVar is unavailable for the affected execution; "
+                            "the analysis continued using the remaining configured evidence sources."
                         ),
                         metadata=evidence_metadata,
                     )
