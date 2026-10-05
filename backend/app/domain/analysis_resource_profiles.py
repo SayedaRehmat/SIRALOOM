@@ -70,8 +70,9 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh38",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
-            ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP", "GENEBE"), True),
+            ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
+    ProfileResourceRequirement("POPULATION_SECONDARY", False, ("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"), True),
             ProfileResourceRequirement(ACMG_RULE_SPECIFICATION, True, ("CLINGEN",), False),
             *_COMMON_OPTIONAL,
         ),
@@ -84,8 +85,9 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh38",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
-            ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("GENEBE", "VEP"), True),
+            ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
+            ProfileResourceRequirement("POPULATION_SECONDARY", False, ("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"), True),
             ProfileResourceRequirement(ACMG_RULE_SPECIFICATION, True, ("CLINGEN",), False),
             *_COMMON_OPTIONAL,
         ),
