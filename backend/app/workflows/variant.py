@@ -2244,13 +2244,56 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if acmg_step.status != StepStatus.SUCCEEDED:
             mark_step(db, acmg_step, StepStatus.RUNNING)
             try:
-                from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
+                from backend.app.acmg.assessment_service import (
+                    ACMGSpecificationAssessmentService,
+                    SpecificationBindingError,
+                )
                 from backend.app.infrastructure.db.models import Case
 
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
                 disease = analysis.configuration.get("disease") or case_context.get("disease")
                 assessment_service = ACMGSpecificationAssessmentService()
+
+                acmg_runtime_resource = None
+                acmg_runtime_execution = None
+                if (analysis.configuration or {}).get("resource_profile_id"):
+                    try:
+                        profile_runtime_acmg = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="ACMG_RULE_SPECIFICATION",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    acmg_runtime_resource = profile_runtime_acmg.resource
+                    acmg_runtime_execution = profile_runtime_acmg.execution
+                    if acmg_runtime_resource.provider.strip().upper() != "CLINGEN":
+                        raise ResourceConsumptionError(
+                            "ACMG_ADAPTER_UNSUPPORTED",
+                            f"Governed ACMG specification provider {acmg_runtime_resource.provider!r} is not supported by the Phase 1 ClinGen specification engine.",
+                        )
+                    record_workflow_decision(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="acmg_assessment",
+                        attempt=acmg_step.attempt,
+                        outcome=OutcomeKind.SUCCESS,
+                        decision=decide_step_outcome(
+                            "acmg_assessment",
+                            OutcomeKind.SUCCESS,
+                            code="PROFILE_RESOURCE_SELECTED",
+                            message="ACMG assessment is bound to the exact qualified specification resource selected during analysis preflight.",
+                        ),
+                        resource_id=acmg_runtime_resource.id,
+                        metadata={
+                            "provider": acmg_runtime_resource.provider,
+                            "profile_bound": True,
+                            "qualification_id": str(acmg_runtime_execution.qualification_id),
+                            "contract_hash": acmg_runtime_execution.contract_hash,
+                        },
+                    )
+                    db.commit()
                 resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
                 existing_assessment_variant_ids = set(db.scalars(select(ACMGAssessment.variant_id).where(ACMGAssessment.analysis_id == analysis.id)).all())
@@ -2281,7 +2324,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if variant_row is None:
                             blocked_variants += 1; batch_blocked += 1; continue
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
-                        result = assessment_service.assess_variant(db, analysis=analysis, variant=variant_row, annotation=ann, population_rows=population_rows_for_variant, resource_rows=resource_rows, gene=gene, disease=disease)
+                        try:
+                            result = assessment_service.assess_variant(
+                                db,
+                                analysis=analysis,
+                                variant=variant_row,
+                                annotation=ann,
+                                population_rows=population_rows_for_variant,
+                                resource_rows=resource_rows,
+                                gene=gene,
+                                disease=disease,
+                                specification_resource=acmg_runtime_resource,
+                            )
+                        except SpecificationBindingError as exc:
+                            raise ResourceConsumptionError(
+                                "ACMG_SPECIFICATION_BINDING_INVALID",
+                                str(exc),
+                            ) from exc
                         if result.status in {"PROPOSED", "REQUIRES_REVIEW"} and result.binding.status == "SELECTED":
                             assessment_service.persist(db, analysis=analysis, variant=variant_row, result=result)
                             assessed += 1; batch_assessed += 1
@@ -2340,6 +2399,33 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     },
                     )
                 db.commit()
+            except (ResourceConsumptionError, ResourceExecutionError) as exc:
+                code = getattr(exc, "code", None) or "ACMG_RESOURCE_UNAVAILABLE"
+                mark_step(
+                    db,
+                    acmg_step,
+                    StepStatus.BLOCKED,
+                    error_code=code,
+                    error_message=str(exc),
+                    metadata={
+                        "next_step": "resource_setup",
+                        "workflow_action": WorkflowAction.WAIT_FOR_RESOURCE.value,
+                    },
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                analysis.completed_at = None
+                db.commit()
+                audit.record(
+                    event_type="ACMG_RESOURCE_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SERVICE",
+                    actor_id="acmg-resource",
+                    reason=str(exc),
+                    payload={"error_code": code, "next_step": "resource_setup"},
+                )
+                db.commit()
+                return
             except Exception as exc:
                 mark_step(db, acmg_step, StepStatus.FAILED, error_code="ACMG_ASSESSMENT_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
