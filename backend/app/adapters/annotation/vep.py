@@ -21,7 +21,8 @@ class VEPProvider:
     """Laboratory-local Ensembl VEP adapter using a governed offline cache."""
 
     provider_id = "VEP"
-    provider_version = "112"
+    # Runtime version is bound from the qualified resource execution contract.
+    provider_version = None
     supported_builds = {"GRCH37", "GRCH38"}
 
     def __init__(
