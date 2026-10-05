@@ -23,6 +23,8 @@ def test_clinvar_provider_uses_archived_monthly_release(monkeypatch):
     assert len(result) == 1
     candidate = result[0]
     assert candidate["version"] == "2026-09"
+    assert candidate["provider"] == "CLINVAR"
+    assert candidate["resource_type"] == "CLINICAL_DATABASE"
     assert candidate["metadata"]["release_channel"] == "MONTHLY_ARCHIVED"
     assert candidate["metadata"]["release_month"] == "2026-09"
     assert candidate["location"].endswith("ClinVarVCVRelease_2026-09.xml.gz")
