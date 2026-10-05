@@ -146,3 +146,48 @@ def test_enqueue_analysis_does_not_duplicate_queued_dispatch():
         def refresh(self, row, **kwargs):
             return None
     assert enqueue_analysis(FakeDB(), analysis) == "existing-dispatch"
+
+def test_enqueue_analysis_resumes_a_human_review_gate(monkeypatch):
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": uuid4(),
+            "status": AnalysisStatus.REQUIRES_REVIEW,
+            "queue_task_id": None,
+        },
+    )()
+
+    class FakeDB:
+        def __init__(self):
+            self.rows = []
+            self.commits = 0
+
+        def get(self, model, row_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            return analysis
+
+        def scalar(self, _stmt):
+            return 7
+
+        def add(self, row):
+            self.rows.append(row)
+
+        def commit(self):
+            self.commits += 1
+
+        def refresh(self, _row, **kwargs):
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
+
+    db = FakeDB()
+    monkeypatch.setattr(
+        "backend.app.infrastructure.queue.celery_app.publish_analysis_dispatch",
+        lambda _dispatch_id: None,
+    )
+
+    assert enqueue_analysis(db, analysis) is None
+    assert analysis.status == AnalysisStatus.QUEUED
+    dispatch = next(row for row in db.rows if row.__class__.__name__ == "AnalysisDispatch")
+    assert dispatch.dispatch_generation == 8
+    assert analysis.queue_task_id == str(dispatch.id)
