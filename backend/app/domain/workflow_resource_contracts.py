@@ -24,6 +24,7 @@ from backend.app.domain.resource_capabilities import (
     LITERATURE_PROVIDER,
     PHENOTYPE_ONTOLOGY,
     POPULATION,
+    POPULATION_SECONDARY,
     REFERENCE_PACKAGE,
     SPLICING_PREDICTOR,
 )
@@ -70,7 +71,7 @@ WORKFLOW_STAGE_CONTRACTS: Final[tuple[WorkflowStageContract, ...]] = (
     WorkflowStageContract(
         "population", 4,
         "Acquire population allele-frequency/count evidence with population context.",
-        (POPULATION,), (),
+        (POPULATION,), (POPULATION_SECONDARY,),
         ("normalized_variant",),
         ("population_evidence",),
         False, False,
