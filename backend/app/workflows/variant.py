@@ -3174,3 +3174,10 @@ def _step(db: Session, analysis_id: UUID, step_id: str) -> WorkflowStep:
         ensure_steps(db, analysis_id)
         step = db.scalar(
             select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == step_id,
+            )
+        )
+    if step is None:
+        raise RuntimeError(f"Workflow step missing: {step_id}")
+    return step
