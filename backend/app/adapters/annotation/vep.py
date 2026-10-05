@@ -24,9 +24,17 @@ class VEPProvider:
     provider_version = "112"
     supported_builds = {"GRCH37", "GRCH38"}
 
-    def __init__(self, *, executable: str, cache_dir: str, extra_args: tuple[str, ...] = ()):
+    def __init__(
+        self,
+        *,
+        executable: str,
+        cache_dir: str,
+        provider_version: str,
+        extra_args: tuple[str, ...] = (),
+    ):
         self.executable = executable
         self.cache_dir = cache_dir
+        self.provider_version = provider_version
         self.extra_args = extra_args
 
     @classmethod
@@ -50,7 +58,12 @@ class VEPProvider:
             isinstance(item, str) and item.strip() for item in raw_extra_args
         ):
             raise VEPError("VEP execution contract toolchain.extra_args must be a list of strings.")
-        return cls(executable=executable, cache_dir=cache_dir, extra_args=tuple(raw_extra_args))
+        return cls(
+            executable=executable,
+            cache_dir=cache_dir,
+            provider_version=contract.provider_version,
+            extra_args=tuple(raw_extra_args),
+        )
 
     def capabilities(self) -> set[str]:
         return {"ANNOTATION"}
