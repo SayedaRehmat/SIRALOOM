@@ -19,6 +19,7 @@ from backend.app.domain.resource_capabilities import (
     LITERATURE_PROVIDER,
     PHENOTYPE_ONTOLOGY,
     POPULATION,
+    POPULATION_SECONDARY,
     REFERENCE_PACKAGE,
     SPLICING_PREDICTOR,
 )
@@ -72,7 +73,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
-    ProfileResourceRequirement("POPULATION_SECONDARY", False, ("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"), True),
+    ProfileResourceRequirement(POPULATION_SECONDARY, False, ("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"), True),
             ProfileResourceRequirement(ACMG_RULE_SPECIFICATION, True, ("CLINGEN",), False),
             *_COMMON_OPTIONAL,
         ),
