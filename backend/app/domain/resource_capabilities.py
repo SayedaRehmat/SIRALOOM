@@ -25,6 +25,7 @@ REFERENCE_PACKAGE: Final = "REFERENCE_PACKAGE"
 ANNOTATION_ENGINE: Final = "ANNOTATION_ENGINE"
 ANNOTATION_CACHE: Final = "ANNOTATION_CACHE"
 POPULATION: Final = "POPULATION"
+POPULATION_SECONDARY: Final = "POPULATION_SECONDARY"
 CLINICAL_DATABASE: Final = "CLINICAL_DATABASE"
 GENE_DISEASE: Final = "GENE_DISEASE"
 PHENOTYPE_ONTOLOGY: Final = "PHENOTYPE_ONTOLOGY"
@@ -101,6 +102,16 @@ _RESOURCE_CAPABILITIES: Final[dict[str, ResourceCapability]] = {
         ("LOCAL", "REMOTE_API"),
         True, True, False, (REFERENCE_PACKAGE,), (),
         ("POPULATION",), False, True, True,
+    ),
+    POPULATION_SECONDARY: ResourceCapability(
+        POPULATION_SECONDARY,
+        "Secondary population-frequency context used to refine interpretation; never replaces the primary gnomAD population resource.",
+        ("normalized_variant",),
+        ("allele_frequency", "allele_count", "allele_number", "population_context"),
+        ("LOCAL", "FILE", "API", "HTTPS"),
+        ("LOCAL", "REMOTE_API"),
+        True, True, True, (REFERENCE_PACKAGE,), (),
+        ("POPULATION_SECONDARY",), False, True, True,
     ),
     CLINICAL_DATABASE: ResourceCapability(
         CLINICAL_DATABASE,
