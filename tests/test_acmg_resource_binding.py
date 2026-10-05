@@ -4,8 +4,7 @@ from uuid import uuid4
 import pytest
 
 from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService, SpecificationBindingError
-from backend.app.acmg.specification_selection import SelectionResult, SpecificationCandidate
-from backend.app.infrastructure.db.models import Resource
+from backend.app.acmg.specification_selection import SelectionResult
 
 
 class _Selector:
