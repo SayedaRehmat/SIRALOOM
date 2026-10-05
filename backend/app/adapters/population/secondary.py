@@ -29,13 +29,14 @@ class LocalTabixSecondaryPopulationProvider:
 
     supported_providers = frozenset({"1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"})
 
-    def __init__(self, provider_id, vcf_path, info_fields, population_code, population_label, executable="tabix"):
+    def __init__(self, provider_id, vcf_path, info_fields, population_code, population_label, executable="tabix", contig_policy="EXACT"):
         self.provider_id = provider_id
         self.vcf_path = vcf_path
         self.info_fields = dict(info_fields)
         self.population_code = population_code
         self.population_label = population_label
         self.executable = executable
+        self.contig_policy = contig_policy
 
     @classmethod
     def from_execution_contract(cls, contract: ResourceExecutionContract):
@@ -53,6 +54,11 @@ class LocalTabixSecondaryPopulationProvider:
         if not isinstance(fields, dict):
             raise SecondaryPopulationProviderError(f"{provider} execution contract must declare toolchain.info_fields.")
         fields = {str(k): str(v) for k, v in fields.items() if v not in (None, "")}
+        contig_policy = str(toolchain.get("contig_policy") or "EXACT").upper()
+        if contig_policy not in {"EXACT", "CHR_PREFIX"}:
+            raise SecondaryPopulationProviderError(
+                f"{provider} execution contract declares unsupported contig_policy {contig_policy!r}."
+            )
         if not fields.get("AF") and not (fields.get("AC") and fields.get("AN")):
             raise SecondaryPopulationProviderError(f"{provider} execution contract must map AF or both AC and AN.")
         return cls(
@@ -62,6 +68,7 @@ class LocalTabixSecondaryPopulationProvider:
             str(toolchain.get("population_code") or "GLOBAL"),
             str(toolchain.get("population_label") or provider),
             str(toolchain.get("tabix_executable") or "tabix"),
+            contig_policy,
         )
 
     def query_variant(self, variant):
@@ -78,7 +85,7 @@ class LocalTabixSecondaryPopulationProvider:
             if len(fields) < 8:
                 continue
             chrom, pos, record_id, ref, alt = fields[:5]
-            if chrom.removeprefix("chr") != variant.chromosome.removeprefix("chr") or ref.upper() != variant.reference.upper():
+            if not _contigs_match(chrom, variant.chromosome, self.contig_policy) or ref.upper() != variant.reference.upper():
                 continue
             try:
                 if int(pos) != variant.position:
@@ -142,3 +149,13 @@ def _scalar_int(value):
         return int(value)
     except ValueError:
         return None
+
+
+def _contigs_match(resource_contig, variant_contig, policy):
+    if policy == "EXACT":
+        return resource_contig == variant_contig
+    if policy == "CHR_PREFIX":
+        def canonical(value):
+            return value[3:] if value.lower().startswith("chr") else value
+        return canonical(resource_contig) == canonical(variant_contig)
+    raise SecondaryPopulationProviderError(f"Unsupported contig policy {policy!r}.")
