@@ -100,6 +100,52 @@ def test_optional_resource_limitations_do_not_make_plan_unrunnable():
     assert plan.is_ready is True
 
 
+def test_unregistered_optional_resources_are_not_reported_as_limitations():
+    """Optional capabilities are opt-in; absence means not applicable."""
+    from types import SimpleNamespace
+    from uuid import uuid4
+    from backend.app.domain.resource_profile_resolver import resolve_analysis_resource_profile
+
+    class _Scalar:
+        def all(self):
+            return []
+
+    class _DB:
+        def scalars(self, _query):
+            return _Scalar()
+
+    class _Policy:
+        profile_type = "LABORATORY"
+        profile_version = "1"
+        allow_siraloom_managed_global_resources = False
+        require_organization_binding_for_lab_resources = True
+
+    import backend.app.domain.resource_profile_resolver as resolver_module
+    original_policy = resolver_module.resolve_resource_deployment_policy
+    try:
+        resolver_module.resolve_resource_deployment_policy = lambda *args, **kwargs: _Policy()
+        plan = resolve_analysis_resource_profile(
+            _DB(),
+            organization_id=uuid4(),
+            profile_id="WES_GRCh38_STANDARD",
+        )
+    finally:
+        resolver_module.resolve_resource_deployment_policy = original_policy
+
+    assert plan.status == "BLOCKED"
+    assert all(issue.required for issue in plan.issues)
+    assert all(issue.capability not in {
+        "CLINICAL_DATABASE",
+        "GENE_DISEASE",
+        "PHENOTYPE_ONTOLOGY",
+        "COMPUTATIONAL_PREDICTOR",
+        "SPLICING_PREDICTOR",
+        "LITERATURE_PROVIDER",
+        "INTERNAL_LAB_EVIDENCE",
+        "POPULATION_SECONDARY",
+    } for issue in plan.issues)
+
+
 def test_analysis_create_exposes_resource_profile_as_first_class_configuration():
     from uuid import uuid4
     from backend.app.domain.schemas import AnalysisCreate
