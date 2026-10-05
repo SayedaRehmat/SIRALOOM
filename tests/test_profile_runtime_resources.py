@@ -83,7 +83,7 @@ def test_resolver_rejects_missing_selected_resource():
     analysis = _analysis(resource_id, execution)
     db = FakeDB(analysis)
 
-    with pytest.raises(runtime.ProfileRuntimeResourceError, match="RESOURCE_NOT_FOUND"):
+    with pytest.raises(runtime.ProfileRuntimeResourceError, match="Preflight-selected resource .* no longer exists"):
         runtime.resolve_profile_runtime_resource(
             db,
             analysis_id=analysis.id,
@@ -104,7 +104,7 @@ def test_resolver_rejects_stale_execution_contract(monkeypatch):
     db = FakeDB(analysis, {resource_id: resource})
     monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: current_execution)
 
-    with pytest.raises(runtime.ProfileRuntimeResourceError, match="RESOURCE_PLAN_STALE"):
+    with pytest.raises(runtime.ProfileRuntimeResourceError, match="Preflight resource contract no longer matches runtime qualification"):
         runtime.resolve_profile_runtime_resource(
             db,
             analysis_id=analysis.id,
