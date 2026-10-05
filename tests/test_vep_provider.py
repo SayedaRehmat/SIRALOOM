@@ -1,5 +1,4 @@
-import json
-from unittest.mock import patch
+import pytest
 
 from backend.app.adapters.annotation.vep import VEPProvider, VEPError
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
