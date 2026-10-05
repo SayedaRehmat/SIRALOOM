@@ -10,7 +10,8 @@ from sqlalchemy import func, select
 from backend.app.infrastructure.db.models import ACMGAssessment, Annotation, Classification, Evidence, PopulationObservation, User, Variant, ReportabilityDecision
 from backend.app.domain.review import ClassificationReviewRequest, CriterionReviewRequest, ReviewResponse
 from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.queue.celery_app import run_analysis_task
+from backend.app.application.analysis import enqueue_analysis
+from backend.app.infrastructure.db.models import Analysis
 from backend.app.review.service import (
     ReviewAuthorizationError,
     ReviewConflictError,
@@ -236,15 +237,14 @@ def approve(
             reason=payload.reason,
         )
         db.commit()
-        # A review mutation may complete the final human gate. Re-enqueueing is
-        # safe because every downstream workflow step is idempotent and durable.
+        # A human gate is a durable pause, not a terminal state. Once a
+        # classification is finally approved, create a new durable dispatch
+        # generation. The worker resumes from the first unfinished workflow step.
         resume_queued = False
         if classification.review_status == "APPROVED" and classification.state == "FINAL":
-            try:
-                run_analysis_task.delay(str(analysis_id))
-                resume_queued = True
-            except RuntimeError:
-                resume_queued = False
+            analysis = db.get(Analysis, analysis_id)
+            if analysis is not None:
+                resume_queued = enqueue_analysis(db, analysis) is not None or analysis.status == "QUEUED"
         return {
             "classification_id": str(classification.id),
             "version": classification.version,
