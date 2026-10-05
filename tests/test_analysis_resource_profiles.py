@@ -41,6 +41,38 @@ def test_provider_preference_is_deterministic():
     assert _provider_rank("VEP", ("GENEBE", "VEP")) == 1
     assert _provider_rank("CUSTOM", ("GENEBE", "VEP")) == 2
 
+def test_annotation_provider_policy_is_deployment_specific():
+    from backend.app.domain.resource_profile_resolver import _effective_preferred_providers
+
+    profile = get_analysis_resource_profile("WES_GRCh38_STANDARD")
+    annotation = next(
+        requirement
+        for requirement in profile.requirements
+        if requirement.capability == ANNOTATION_ENGINE
+    )
+
+    assert _effective_preferred_providers(
+        annotation, deployment_profile_type="TRIAL_PUBLIC"
+    ) == ("GENEBE",)
+    assert _effective_preferred_providers(
+        annotation, deployment_profile_type="LABORATORY"
+    ) == ("VEP",)
+
+
+def test_non_annotation_resources_keep_profile_provider_preferences():
+    from backend.app.domain.resource_profile_resolver import _effective_preferred_providers
+
+    profile = get_analysis_resource_profile("WES_GRCh38_STANDARD")
+    population = next(
+        requirement
+        for requirement in profile.requirements
+        if requirement.capability == POPULATION
+    )
+
+    assert _effective_preferred_providers(
+        population, deployment_profile_type="LABORATORY"
+    ) == ("GNOMAD",)
+
 
 def test_unknown_profile_is_rejected():
     try:
