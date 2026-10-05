@@ -19,7 +19,7 @@ def _contract(**toolchain):
 
 
 def test_vep_provider_binds_exact_local_execution_contract():
-    provider = VEPProvider.from_execution_contract(_contract(executable="vep-bin"))
+    provider = VEPProvider.from_execution_contract(_contract(executable="vep-bin", cache_version="112"))
     assert provider.executable == "vep-bin"
     assert provider.cache_dir == "/resources/vep/112"
     assert provider.provider_version == "112"
