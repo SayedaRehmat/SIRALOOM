@@ -81,8 +81,8 @@ class ClinVarReleaseProvider:
         url = self.index_url + filename
         return [{
             "name": "ClinVar VCV XML",
-            "provider": self.name,
-            "resource_type": "EVIDENCE",
+            "provider": "CLINVAR",
+            "resource_type": "CLINICAL_DATABASE",
             "version": release,
             "genome_build": None,
             "access_method": "NCBI_FTP_HTTPS",
