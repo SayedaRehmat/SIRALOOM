@@ -384,13 +384,18 @@ def resolve_analysis_resource_profile(
                 preferred_providers=preferred_providers,
             )
             if not secondary:
-                issues.append(ResourceResolutionIssue(
-                    requirement.capability, requirement.required,
-                    "RESOURCE_UNAVAILABLE",
-                    f"No active secondary population resource satisfies {requirement.capability} "
-                    f"for profile {profile.profile_id}.",
-                    len(qualified_candidates),
-                ))
+                # An optional resource that the laboratory has not registered is
+                # intentionally absent, not a limitation. A limitation is raised
+                # only when the lab has registered/configured a candidate that is
+                # unavailable, unqualified, ambiguous, or otherwise unusable.
+                if requirement.required or candidates:
+                    issues.append(ResourceResolutionIssue(
+                        requirement.capability, requirement.required,
+                        "RESOURCE_UNAVAILABLE",
+                        f"No active secondary population resource satisfies {requirement.capability} "
+                        f"for profile {profile.profile_id}.",
+                        len(candidates),
+                    ))
                 continue
             for resource, execution, provider_rank in secondary:
                 selected.append(
@@ -413,6 +418,11 @@ def resolve_analysis_resource_profile(
         execution = selected_pair[1] if selected_pair is not None else None
 
         if resource is None:
+            # Optional resources are opt-in. No registered candidate means the
+            # laboratory deliberately does not use this capability; do not turn
+            # that absence into READY_WITH_LIMITATIONS or a workflow alert.
+            if not requirement.required and not candidates:
+                continue
             code = selection_error or "RESOURCE_UNAVAILABLE"
             if code == "RESOURCE_AMBIGUOUS":
                 message = (
