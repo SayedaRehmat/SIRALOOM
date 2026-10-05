@@ -208,6 +208,10 @@ def enqueue_analysis(
         AnalysisStatus.CREATED,
         AnalysisStatus.FAILED,
         AnalysisStatus.RESOURCE_FAILURE,
+        # Human gates are durable workflow pauses, not terminal analysis states.
+        # A completed human action creates a new dispatch generation so the
+        # worker resumes from the first unfinished workflow step.
+        AnalysisStatus.REQUIRES_REVIEW,
     }:
         raise ValueError(
             f"Analysis cannot be started from status {analysis.status}"
