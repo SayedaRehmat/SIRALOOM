@@ -75,8 +75,40 @@ class ACMGSpecificationAssessmentService:
     def __init__(self, selector: ClinGenSpecificationSelector | None = None):
         self.selector = selector or ClinGenSpecificationSelector()
 
-    def bind(self, db: Session, *, gene: str, disease: str | None = None) -> tuple[SpecificationBinding, ClinGenSpecification | None]:
-        selection = self.selector.select(db, gene=gene, disease=disease)
+    def bind(
+        self,
+        db: Session,
+        *,
+        gene: str,
+        disease: str | None = None,
+        specification_resource: Resource | None = None,
+    ) -> tuple[SpecificationBinding, ClinGenSpecification | None]:
+        specification_id = None
+        specification_version = None
+        if specification_resource is not None:
+            if specification_resource.resource_type != "ACMG_RULE_SPECIFICATION":
+                raise SpecificationBindingError(
+                    "Selected ACMG runtime resource is not an ACMG_RULE_SPECIFICATION."
+                )
+            if specification_resource.provider.strip().upper() != "CLINGEN":
+                raise SpecificationBindingError(
+                    f"Selected ACMG runtime provider {specification_resource.provider!r} is not ClinGen."
+                )
+            metadata = dict(specification_resource.metadata_json or {})
+            specification_id = str(metadata.get("specification_id") or "").strip()
+            specification_version = str(metadata.get("specification_version") or "").strip()
+            if not specification_id or not specification_version:
+                raise SpecificationBindingError(
+                    "Qualified ClinGen resource must declare specification_id and specification_version in metadata."
+                )
+
+        selection = self.selector.select(
+            db,
+            gene=gene,
+            disease=disease,
+            specification_id=specification_id,
+            specification_version=specification_version,
+        )
         if selection.status != "SELECTED" or selection.selected is None:
             return (
                 SpecificationBinding(
@@ -115,8 +147,14 @@ class ACMGSpecificationAssessmentService:
         resource_rows: dict[UUID, Resource],
         gene: str,
         disease: str | None = None,
+        specification_resource: Resource | None = None,
     ) -> AutomatedAssessmentResult:
-        binding, row = self.bind(db, gene=gene, disease=disease)
+        binding, row = self.bind(
+            db,
+            gene=gene,
+            disease=disease,
+            specification_resource=specification_resource,
+        )
         if binding.status != "SELECTED" or row is None:
             return AutomatedAssessmentResult(binding.status, binding, tuple(), None)
 
