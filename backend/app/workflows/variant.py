@@ -2273,6 +2273,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "ACMG_ADAPTER_UNSUPPORTED",
                             f"Governed ACMG specification provider {acmg_runtime_resource.provider!r} is not supported by the Phase 1 ClinGen specification engine.",
                         )
+                    acmg_metadata = dict(acmg_runtime_resource.metadata_json or {})
+                    if not str(acmg_metadata.get("specification_id") or "").strip() or not str(
+                        acmg_metadata.get("specification_version") or ""
+                    ).strip():
+                        raise ResourceConsumptionError(
+                            "ACMG_SPECIFICATION_IDENTITY_MISSING",
+                            "Qualified ClinGen ACMG resource must declare specification_id and specification_version in resource metadata.",
+                        )
                     record_workflow_decision(
                         db,
                         analysis_id=analysis.id,
