@@ -1563,7 +1563,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     except (ResourceExecutionError, GnomADProviderError) as exc:
                         raise ResourceConsumptionError("GNOMAD_EXECUTION_CONTRACT_INVALID", str(exc)) from exc
                     for variant in iter_normalized_vcf(normalized_path, reference_build):
-                    for variant in iter_normalized_vcf(normalized_path, reference_build):
                         execution_record = start_resource_execution(
                             db,
                             analysis_id=analysis.id,
