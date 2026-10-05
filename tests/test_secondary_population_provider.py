@@ -47,3 +47,14 @@ def test_rejects_remote_execution():
     )
     with pytest.raises(SecondaryPopulationProviderError, match="LOCAL/FILE"):
         LocalTabixSecondaryPopulationProvider.from_execution_contract(c)
+
+
+def test_secondary_population_no_data_is_a_limitation_not_pipeline_failure():
+    from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
+
+    decision = decide_step_outcome(
+        "population",
+        OutcomeKind.NO_DATA,
+        code="SECONDARY_POPULATION_NO_DATA",
+    )
+    assert decision.action is WorkflowAction.CONTINUE_WITH_LIMITATION
