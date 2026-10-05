@@ -1030,6 +1030,27 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 batch_limit = min(max(1, settings.genebe_max_batch), 1000)
+                profile_runtime_annotation = None
+                if (analysis.configuration or {}).get("resource_profile_id"):
+                    try:
+                        profile_runtime_annotation = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="ANNOTATION_ENGINE",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    if profile_runtime_annotation.resource.provider.casefold() != "genebe":
+                        raise ResourceConsumptionError(
+                            "ANNOTATION_ADAPTER_UNSUPPORTED",
+                            f"Governed annotation resource provider {profile_runtime_annotation.resource.provider!r} has no Phase 1 runtime adapter; GeneBe is the only implemented annotation adapter.",
+                        )
+                    annotation_resource = profile_runtime_annotation.resource
+                    annotation_execution = profile_runtime_annotation.execution
+                    try:
+                        provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                    except (ResourceExecutionError, GeneBeError) as exc:
+                        raise ResourceConsumptionError("ANNOTATION_EXECUTION_CONTRACT_INVALID", str(exc)) from exc
                 requested_annotation_resource_id = (analysis.configuration or {}).get("annotation_resource_id")
                 case = db.get(Case, analysis.case_id)
                 if case is None:
@@ -1044,35 +1065,67 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     return
 
-                resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=requested_annotation_resource_id,
-                    expected_type="ANNOTATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=provider.provider_id,
-                    expected_provider_version=provider.provider_version,
-                )
-                record_workflow_decision(
-                    db,
-                    analysis_id=analysis.id,
-                    step_id="annotate",
-                    attempt=annotation_step.attempt,
-                    outcome=(
-                        OutcomeKind.RESOURCE_UNAVAILABLE
-                        if resolution.used_fallback or resolution.resource is None
-                        else OutcomeKind.SUCCESS
-                    ),
-                    decision=resolution.decision,
-                    resource_id=resolution.requested_resource_id,
-                    fallback_resource_id=resolution.fallback_resource_id,
-                    metadata={
-                        "provider": provider.provider_id,
-                        "reference_build": normalize_build(analysis.reference_build),
-                        "fallback_used": resolution.used_fallback,
-                    },
-                )
-                db.commit()
+                if profile_runtime_annotation is None:
+                    resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=requested_annotation_resource_id,
+                        expected_type="ANNOTATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider=provider.provider_id,
+                        expected_provider_version=provider.provider_version,
+                    )
+                    record_workflow_decision(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="annotate",
+                        attempt=annotation_step.attempt,
+                        outcome=(
+                            OutcomeKind.RESOURCE_UNAVAILABLE
+                            if resolution.used_fallback or resolution.resource is None
+                            else OutcomeKind.SUCCESS
+                        ),
+                        decision=resolution.decision,
+                        resource_id=resolution.requested_resource_id,
+                        fallback_resource_id=resolution.fallback_resource_id,
+                        metadata={
+                            "provider": provider.provider_id,
+                            "reference_build": normalize_build(analysis.reference_build),
+                            "fallback_used": resolution.used_fallback,
+                        },
+                    )
+                    db.commit()
+
+                else:
+                    resolution = SimpleNamespace(
+                        resource=annotation_resource,
+                        used_fallback=False,
+                        requested_resource_id=annotation_resource.id,
+                        fallback_resource_id=None,
+                        decision=decide_step_outcome(
+                            "annotate",
+                            OutcomeKind.SUCCESS,
+                            code="PROFILE_RESOURCE_SELECTED",
+                            message="Annotation execution is bound to the exact resource selected during analysis preflight.",
+                        ),
+                    )
+                    record_workflow_decision(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="annotate",
+                        attempt=annotation_step.attempt,
+                        outcome=OutcomeKind.SUCCESS,
+                        decision=resolution.decision,
+                        resource_id=annotation_resource.id,
+                        metadata={
+                            "provider": annotation_resource.provider,
+                            "reference_build": normalize_build(analysis.reference_build),
+                            "profile_bound": True,
+                            "qualification_id": str(annotation_execution.qualification_id),
+                            "contract_hash": annotation_execution.contract_hash,
+                        },
+                    )
+                    db.commit()
 
                 if resolution.resource is None:
                     status = (
@@ -1119,16 +1172,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     return
 
                 annotation_resource = resolution.resource
-                try:
-                    annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
-                    provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
-                except (ResourceExecutionError, GeneBeError) as exc:
-                    mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
-                    analysis.status = AnalysisStatus.RESOURCE_FAILURE
-                    db.commit()
-                    audit.record(event_type="ANNOTATION_EXECUTION_CONTRACT_INVALID", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="resource-registry", reason=str(exc), payload={"resource_id": str(annotation_resource.id)})
-                    db.commit()
-                    return
+                if profile_runtime_annotation is None:
+                    try:
+                        annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
+                        provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                    except (ResourceExecutionError, GeneBeError) as exc:
+                        mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
+                        analysis.status = AnalysisStatus.RESOURCE_FAILURE
+                        db.commit()
+                        audit.record(event_type="ANNOTATION_EXECUTION_CONTRACT_INVALID", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="resource-registry", reason=str(exc), payload={"resource_id": str(annotation_resource.id)})
+                        db.commit()
+                        return
 
                 if resolution.used_fallback:
                     annotation_step.metadata_json = {
