@@ -243,14 +243,41 @@ def _matches_known_provider(resource: Resource, capability: str) -> bool:
     return provider.resource_type == capability
 
 
+def _effective_preferred_providers(
+    requirement: ProfileResourceRequirement,
+    *,
+    deployment_profile_type: str,
+) -> tuple[str, ...]:
+    """Resolve deployment-specific provider policy for the capability.
+
+    GeneBe is the SIRALOOM-managed/public trial annotation service. Laboratory
+    deployments must use a laboratory-governed annotation engine such as VEP.
+    This is a policy constraint, not merely a preference, so a laboratory cannot
+    silently fall back to GeneBe when VEP is unavailable.
+    """
+    if requirement.capability == "ANNOTATION_ENGINE":
+        if deployment_profile_type == "LABORATORY":
+            return ("VEP",)
+        if deployment_profile_type == "TRIAL_PUBLIC":
+            return ("GENEBE",)
+    return requirement.preferred_providers
+
+
 def _select_candidate(
     candidates: list[tuple[Resource, ResolvedResourceExecution]],
     requirement: ProfileResourceRequirement,
+    *,
+    preferred_providers: tuple[str, ...] | None = None,
 ) -> tuple[tuple[Resource, ResolvedResourceExecution] | None, int, str | None]:
+    preferred = requirement.preferred_providers if preferred_providers is None else preferred_providers
     eligible = [
         pair for pair in candidates
         if _matches_known_provider(pair[0], requirement.capability)
         and _license_is_sufficient(pair[0], requirement)
+        and (
+            not preferred
+            or pair[0].provider.strip().upper() in {value.upper() for value in preferred}
+        )
     ]
     if not eligible:
         return None, 0, "RESOURCE_UNAVAILABLE"
@@ -258,7 +285,7 @@ def _select_candidate(
     ranked = sorted(
         eligible,
         key=lambda pair: (
-            _provider_rank(pair[0].provider, requirement.preferred_providers),
+            _provider_rank(pair[0].provider, preferred),
             pair[0].provider.upper(),
             pair[0].name,
             pair[0].version,
@@ -266,10 +293,10 @@ def _select_candidate(
             str(pair[0].id),
         ),
     )
-    best_rank = _provider_rank(ranked[0][0].provider, requirement.preferred_providers)
+    best_rank = _provider_rank(ranked[0][0].provider, preferred)
     best = [
         pair for pair in ranked
-        if _provider_rank(pair[0].provider, requirement.preferred_providers) == best_rank
+        if _provider_rank(pair[0].provider, preferred) == best_rank
     ]
 
     # A profile may express provider preference, but it must never silently pick
@@ -321,8 +348,14 @@ def resolve_analysis_resource_profile(
                 continue
             qualified_candidates.append((candidate, execution))
 
+        preferred_providers = _effective_preferred_providers(
+            requirement,
+            deployment_profile_type=policy.profile_type,
+        )
         selected_pair, provider_rank, selection_error = _select_candidate(
-            qualified_candidates, requirement
+            qualified_candidates,
+            requirement,
+            preferred_providers=preferred_providers,
         )
         resource = selected_pair[0] if selected_pair is not None else None
         execution = selected_pair[1] if selected_pair is not None else None
