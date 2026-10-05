@@ -444,3 +444,45 @@ def test_preflight_created_workflow_steps_are_idempotent_with_runtime_initializa
         assert rows[1].status == "BLOCKED"
 
     engine.dispose()
+
+def test_secondary_population_selection_keeps_all_qualified_providers():
+    from types import SimpleNamespace
+    from backend.app.domain.resource_profile_resolver import _select_all_candidates
+    from backend.app.domain.resource_capabilities import POPULATION_SECONDARY
+
+    requirement = SimpleNamespace(
+        capability=POPULATION_SECONDARY,
+        preferred_providers=("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"),
+        license_required=False,
+    )
+
+    def resource(provider, name):
+        return SimpleNamespace(
+            provider=provider,
+            name=name,
+            resource_type=POPULATION_SECONDARY,
+            genome_build="GRCh38",
+            version="1",
+            checksum=name,
+            id=name,
+            license_text=None,
+        )
+
+    candidates = [
+        (resource("TOPMED", "topmed"), SimpleNamespace()),
+        (resource("1000GENOMES", "1000g"), SimpleNamespace()),
+        (resource("MIDDLE_EAST", "me"), SimpleNamespace()),
+    ]
+
+    selected = _select_all_candidates(
+        candidates,
+        requirement,
+        preferred_providers=requirement.preferred_providers,
+    )
+
+    assert [item[0].provider for item in selected] == [
+        "1000GENOMES",
+        "TOPMED",
+        "MIDDLE_EAST",
+    ]
+    assert len(selected) == 3
