@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from types import SimpleNamespace
 from uuid import UUID
 
 from sqlalchemy import func, select
