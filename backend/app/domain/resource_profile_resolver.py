@@ -40,16 +40,6 @@ class ResolvedProfileResource:
     execution: ResolvedResourceExecution
     provider_rank: int
 
-    @property
-    def execution_for(self, capability: str) -> ResolvedProfileResource:
-        """Return the exact preflight-selected resource for a workflow capability."""
-        for item in self.selected:
-            if item.capability == capability:
-                return item
-        raise ResourceProfileResolutionError(
-            f"No selected resource exists for required capability {capability}."
-        )
-
     def snapshot(self) -> dict[str, object]:
         return {
             "capability": self.capability,
@@ -124,7 +114,9 @@ def build_workflow_stage_resource_plan(plan: AnalysisResourcePlan) -> list[dict[
     This is a deterministic derived snapshot: it never selects a different resource
     and it never changes the analysis-level readiness decision.
     """
-    selected_by_capability = {item.capability: item for item in plan.selected}
+    selected_by_capability: dict[str, list[ResolvedProfileResource]] = {}
+    for item in plan.selected:
+        selected_by_capability.setdefault(item.capability, []).append(item)
     issues_by_capability = {item.capability: item for item in plan.issues}
     stage_plan: list[dict[str, object]] = []
 
@@ -146,9 +138,9 @@ def build_workflow_stage_resource_plan(plan: AnalysisResourcePlan) -> list[dict[
             "required_resources": list(contract.required_resources),
             "optional_resources": list(contract.optional_resources),
             "selected": [
-                selected_by_capability[c].snapshot
+                item.snapshot
                 for c in capabilities
-                if c in selected_by_capability
+                for item in selected_by_capability.get(c, [])
             ],
             "issues": [
                 {
@@ -263,6 +255,39 @@ def _effective_preferred_providers(
     return requirement.preferred_providers
 
 
+def _select_all_candidates(
+    candidates: list[tuple[Resource, ResolvedResourceExecution]],
+    requirement: ProfileResourceRequirement,
+    *,
+    preferred_providers: tuple[str, ...] | None = None,
+) -> list[tuple[Resource, ResolvedResourceExecution, int]]:
+    """Select every qualified optional secondary-population resource deterministically."""
+    preferred = requirement.preferred_providers if preferred_providers is None else preferred_providers
+    eligible = [
+        pair for pair in candidates
+        if _matches_known_provider(pair[0], requirement.capability)
+        and _license_is_sufficient(pair[0], requirement)
+        and (
+            not preferred
+            or pair[0].provider.strip().upper() in {value.upper() for value in preferred}
+        )
+    ]
+    ranked = sorted(
+        eligible,
+        key=lambda pair: (
+            _provider_rank(pair[0].provider, preferred),
+            pair[0].provider.upper(),
+            pair[0].name,
+            pair[0].version,
+            pair[0].checksum or "",
+            str(pair[0].id),
+        ),
+    )
+    return [
+        (resource, execution, _provider_rank(resource.provider, preferred))
+        for resource, execution in ranked
+    ]
+
 def _select_candidate(
     candidates: list[tuple[Resource, ResolvedResourceExecution]],
     requirement: ProfileResourceRequirement,
@@ -352,6 +377,33 @@ def resolve_analysis_resource_profile(
             requirement,
             deployment_profile_type=policy.profile_type,
         )
+        if requirement.capability == "POPULATION_SECONDARY":
+            secondary = _select_all_candidates(
+                qualified_candidates,
+                requirement,
+                preferred_providers=preferred_providers,
+            )
+            if not secondary:
+                issues.append(ResourceResolutionIssue(
+                    requirement.capability, requirement.required,
+                    "RESOURCE_UNAVAILABLE",
+                    f"No active secondary population resource satisfies {requirement.capability} "
+                    f"for profile {profile.profile_id}.",
+                    len(qualified_candidates),
+                ))
+                continue
+            for resource, execution, provider_rank in secondary:
+                selected.append(
+                    ResolvedProfileResource(
+                        capability=requirement.capability,
+                        required=requirement.required,
+                        resource=resource,
+                        execution=execution,
+                        provider_rank=provider_rank,
+                    )
+                )
+            continue
+
         selected_pair, provider_rank, selection_error = _select_candidate(
             qualified_candidates,
             requirement,
