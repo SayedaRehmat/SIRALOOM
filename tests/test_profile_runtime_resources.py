@@ -110,3 +110,84 @@ def test_resolver_rejects_stale_execution_contract(monkeypatch):
             analysis_id=analysis.id,
             capability="POPULATION",
         )
+
+
+
+def test_plural_resolver_returns_all_selected_secondary_resources(monkeypatch):
+    resource_ids = [uuid4(), uuid4(), uuid4()]
+    executions = [_resolved(rid, contract_hash=f"hash-{index}") for index, rid in enumerate(resource_ids)]
+    resources = {
+        rid: SimpleNamespace(id=rid, provider=provider, version="1")
+        for rid, provider in zip(resource_ids, ("1000GENOMES", "TOPMED", "MIDDLE_EAST"))
+    }
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        configuration={
+            "resource_profile_id": "WES_GRCh38_STANDARD",
+            "resource_plan": {
+                "status": "READY",
+                "selected": [
+                    {
+                        "capability": "POPULATION_SECONDARY",
+                        "required": False,
+                        "resource_id": str(execution.resource_id),
+                        "version": execution.resource_version,
+                        "execution": execution.snapshot,
+                    }
+                    for execution in executions
+                ],
+            },
+        },
+    )
+    db = FakeDB(analysis, resources)
+    monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: executions[resource_ids.index(resource.id)])
+
+    resolved = runtime.resolve_profile_runtime_resources(
+        db,
+        analysis_id=analysis.id,
+        capability="POPULATION_SECONDARY",
+    )
+
+    assert [item.resource.provider for item in resolved] == [
+        "1000GENOMES", "TOPMED", "MIDDLE_EAST"
+    ]
+
+
+def test_plural_resolver_rejects_one_stale_selected_secondary_resource(monkeypatch):
+    resource_ids = [uuid4(), uuid4()]
+    selected = [_resolved(resource_ids[0], contract_hash="hash-a"), _resolved(resource_ids[1], contract_hash="hash-b")]
+    current = [_resolved(resource_ids[0], qualification_id=selected[0].qualification_id, contract_hash="hash-a"),
+               _resolved(resource_ids[1], qualification_id=selected[1].qualification_id, contract_hash="hash-changed")]
+    resources = {rid: SimpleNamespace(id=rid, provider="SECONDARY", version="1") for rid in resource_ids}
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        configuration={
+            "resource_profile_id": "WES_GRCh38_STANDARD",
+            "resource_plan": {
+                "status": "READY_WITH_LIMITATIONS",
+                "selected": [
+                    {"capability": "POPULATION_SECONDARY", "resource_id": str(ex.resource_id), "execution": ex.snapshot}
+                    for ex in selected
+                ],
+            },
+        },
+    )
+    db = FakeDB(analysis, resources)
+    monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: current[resource_ids.index(resource.id)])
+
+    with pytest.raises(runtime.ProfileRuntimeResourceError, match="Preflight resource contract no longer matches runtime qualification"):
+        runtime.resolve_profile_runtime_resources(db, analysis_id=analysis.id, capability="POPULATION_SECONDARY")
+
+
+def test_plural_resolver_rejects_missing_secondary_selection():
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        configuration={
+            "resource_profile_id": "WES_GRCh38_STANDARD",
+            "resource_plan": {"status": "READY", "selected": []},
+        },
+    )
+    db = FakeDB(analysis)
+
+    with pytest.raises(runtime.ProfileRuntimeResourceError, match="selected no resources"):
+        runtime.resolve_profile_runtime_resources(db, analysis_id=analysis.id, capability="POPULATION_SECONDARY")
