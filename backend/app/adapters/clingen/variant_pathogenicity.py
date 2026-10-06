@@ -349,7 +349,12 @@ class ClinGenVariantPathogenicityProvider:
                         out.extend(all_texts(child, keys))
             elif isinstance(value, list):
                 for child in value:
-                    out.extend(all_texts(child, keys))
+                    if isinstance(child, (str, int, float)):
+                        text = str(child).strip()
+                        if text:
+                            out.append(text)
+                    else:
+                        out.extend(all_texts(child, keys))
             return tuple(dict.fromkeys(out))
 
         def normalize_status(value: str) -> str:
