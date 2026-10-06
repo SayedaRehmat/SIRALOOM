@@ -78,7 +78,7 @@ class ClinGenVariantPathogenicityProvider:
         timeout_seconds: float = 30.0,
     ) -> None:
         self.path = Path(resource_path) if resource_path else None
-        self.delimiter = delimiter
+        self.delimiter = "\t" if delimiter == "\\t" else delimiter
         self.api_base_url = (api_base_url or "").rstrip("/")
         self.timeout_seconds = timeout_seconds
 
@@ -271,8 +271,14 @@ class ClinGenVariantPathogenicityProvider:
             elif value:
                 hgvs_values.extend(cls._split_list(str(value)))
 
-        met = cls._split_codes(first("met_codes", "met_criteria"))
-        unmet = cls._split_codes(first("unmet_codes", "unmet_criteria"))
+        met_value = flat.get("met_codes") or flat.get("met_criteria")
+        unmet_value = flat.get("unmet_codes") or flat.get("unmet_criteria")
+        met = cls._split_codes(
+            "|".join(str(x) for x in met_value) if isinstance(met_value, list) else met_value
+        )
+        unmet = cls._split_codes(
+            "|".join(str(x) for x in unmet_value) if isinstance(unmet_value, list) else unmet_value
+        )
         criteria = list(cls._extract_criterion_assertions(document))
         known = {(item.code, item.status) for item in criteria}
         for code in met:
