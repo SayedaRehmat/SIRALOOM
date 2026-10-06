@@ -84,6 +84,20 @@ def snapshot_ruleset(entity: CSpecEntity) -> ClinGenSpecificationSnapshot:
     )
 
 
+def fetch_sequence_variant_interpretation(
+    client: CSpecClient,
+    specification_id: str,
+    version: str,
+) -> ClinGenSpecificationSnapshot:
+    return snapshot_sequence_variant_interpretation(
+        client.get_sequence_variant_interpretation_version(
+            specification_id,
+            version,
+            detail="high",
+        )
+    )
+
+
 def fetch_ruleset(client: CSpecClient, ruleset_id: str) -> ClinGenSpecificationSnapshot:
     return snapshot_ruleset(client.get_entity("RuleSet", ruleset_id, detail="high"))
 
@@ -265,6 +279,12 @@ def _extract_criteria(content: dict[str, Any]) -> dict[str, dict[str, Any]]:
     cannot be activated for automated criterion assessment.
     """
     candidates = content.get("criteria") or content.get("criteriaSpecifications") or content.get("criteriaCode")
+    if isinstance(candidates, dict):
+        candidates = [
+            {"criterion": code, **item}
+            for code, item in candidates.items()
+            if isinstance(item, dict)
+        ]
     if not isinstance(candidates, list):
         return {}
     result: dict[str, dict[str, Any]] = {}
