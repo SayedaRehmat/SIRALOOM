@@ -1,15 +1,37 @@
+from datetime import datetime, timedelta, timezone
+import hashlib
+import secrets
 from uuid import uuid4
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
+
 from backend.app.application.entitlements import create_trial_entitlement, get_entitlement, summarize
 from backend.app.auth.principal import Principal, _verify_firebase_token, get_current_principal
 from backend.app.config import settings
 from backend.app.infrastructure.db.models import Organization, OrganizationMembership, User
+from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+VALID_INVITATION_ROLES = frozenset({
+    "organization_admin", "lab_director", "clinical_geneticist", "reviewer",
+    "bioinformatician", "lab_scientist", "read_only",
+})
+
+INVITATION_ROLE_ORDER = {
+    "read_only": 1,
+    "lab_scientist": 2,
+    "bioinformatician": 3,
+    "reviewer": 4,
+    "clinical_geneticist": 5,
+    "lab_director": 6,
+    "organization_admin": 7,
+}
 
 
 @router.get("/session")
@@ -33,6 +55,36 @@ def _authenticate_bearer(authorization: str | None) -> tuple[str, dict]:
     return subject, claims
 
 
+def _normalize_email(email: str | None) -> str:
+    normalized = (email or "").strip().casefold()
+    if not normalized or "@" not in normalized:
+        raise HTTPException(status_code=403, detail="A verified Firebase email is required")
+    return normalized
+
+
+def _hash_invitation_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _invitation_roles_for(principal_role: str) -> frozenset[str]:
+    if principal_role == "organization_admin":
+        return VALID_INVITATION_ROLES
+    if principal_role == "lab_director":
+        return frozenset({"lab_director", "clinical_geneticist", "reviewer", "bioinformatician", "lab_scientist", "read_only"})
+    if principal_role == "clinical_geneticist":
+        return frozenset({"clinical_geneticist", "reviewer", "bioinformatician", "lab_scientist", "read_only"})
+    if principal_role == "reviewer":
+        return frozenset({"reviewer", "read_only"})
+    return frozenset()
+
+
+def _require_invitation_role(principal: Principal, role: str) -> None:
+    if role not in VALID_INVITATION_ROLES or role not in _invitation_roles_for(principal.role):
+        raise HTTPException(status_code=403, detail="Your organization role is not authorized to assign this role")
+    if role == "platform_admin":
+        raise HTTPException(status_code=403, detail="Platform administrator access cannot be granted through an organization invitation")
+
+
 def _reject_if_already_provisioned(db: Session, subject: str) -> User | None:
     """Looks up an existing SIRALOOM user for this identity and rejects re-onboarding if
     it already has an active organization membership. Returns the existing user (if any,
@@ -50,12 +102,7 @@ def _reject_if_already_provisioned(db: Session, subject: str) -> User | None:
 def _provision_organization(db: Session, *, subject: str, claims: dict, organization_name: str) -> tuple[Organization, User, OrganizationMembership]:
     """Creates an Organization, its owning User, and the organization_admin membership
     for a verified Firebase identity. The privileged initial role is assigned here on the
-    server, never accepted from the client.
-
-    The organization is an implementation detail of onboarding, not something the person
-    has to think about: both normal signup and free-trial signup call this, they just
-    choose a different `organization_name` and add different entitlements afterwards.
-    """
+    server, never accepted from the client."""
     user = _reject_if_already_provisioned(db, subject)
     org = Organization(id=uuid4(), name=organization_name.strip(), external_identifier=None)
     db.add(org)
@@ -75,33 +122,19 @@ def _provision_organization(db: Session, *, subject: str, claims: dict, organiza
         user.status = "ACTIVE"
 
     membership = OrganizationMembership(
-        id=uuid4(),
-        organization_id=org.id,
-        user_id=user.id,
-        role="organization_admin",
-        status="ACTIVE",
+        id=uuid4(), organization_id=org.id, user_id=user.id,
+        role="organization_admin", status="ACTIVE",
     )
     db.add(membership)
     return org, user, membership
 
 
 def _first_organization_bootstrap_is_available(db: Session) -> bool:
-    """Returns whether this deployment is still in its one-time lab bootstrap state.
-
-    A production laboratory keeps this policy enabled only during initial provisioning.
-    Once the first organization exists, the endpoint is closed and later users must enter
-    through the invitation/membership lifecycle instead of self-assigning admin.
-    """
+    """Returns whether this deployment is still in its one-time lab bootstrap state."""
     if not settings.organization_first_bootstrap_enabled:
         return False
-
-    # PostgreSQL is the production database. The transaction advisory lock prevents two
-    # simultaneous first visitors from both observing an empty tenant table and becoming
-    # competing organization administrators. SQLite/test databases simply evaluate the
-    # same invariant without the PostgreSQL-only lock primitive.
     if db.bind is not None and db.bind.dialect.name == "postgresql":
         db.execute(text("SELECT pg_advisory_xact_lock(73120491)"))
-
     return db.scalar(select(func.count()).select_from(Organization)) == 0
 
 
@@ -111,15 +144,7 @@ class OrganizationOnboarding(BaseModel):
 
 @router.post("/onboarding/organization", status_code=201)
 def create_first_organization(payload: OrganizationOnboarding, authorization: str | None = Header(default=None), db: Session = Depends(get_db)):
-    """Creates an organization for either an explicitly enabled SaaS self-signup flow
-    or the one-time first-laboratory bootstrap flow.
-
-    In a fresh laboratory deployment, no SIRALOOM user exists yet. That is intentional:
-    this endpoint authenticates the verified Firebase identity first, then creates the
-    initial Organization + User + organization_admin membership atomically. After that
-    first organization exists, this bootstrap path closes permanently and subsequent users
-    must be provisioned through membership/invitations.
-    """
+    """Creates an organization for explicitly enabled SaaS self-signup or first-lab bootstrap."""
     first_bootstrap = _first_organization_bootstrap_is_available(db)
     if not settings.organization_self_signup_enabled and not first_bootstrap:
         raise HTTPException(
@@ -127,28 +152,21 @@ def create_first_organization(payload: OrganizationOnboarding, authorization: st
             detail="Organization self-signup is disabled for this deployment; a laboratory bootstrap is not available",
         )
     subject, claims = _authenticate_bearer(authorization)
-    org, user, membership = _provision_organization(db, subject=subject, claims=claims, organization_name=payload.organization_name)
+    org, user, membership = _provision_organization(
+        db, subject=subject, claims=claims, organization_name=payload.organization_name
+    )
     db.commit()
     return {"organization_id": str(org.id), "membership_id": str(membership.id), "role": membership.role}
 
 
 class TrialOnboarding(BaseModel):
-    """Everything here is optional: a Lab Director should be able to start a trial with
-    nothing more than a verified Google/email identity."""
     display_name: str | None = Field(default=None, max_length=200)
     laboratory_name: str | None = Field(default=None, max_length=200)
 
 
 @router.post("/onboarding/trial", status_code=201)
 def start_free_trial(payload: TrialOnboarding, authorization: str | None = Header(default=None), db: Session = Depends(get_db)):
-    """Creates a time-boxed, usage-capped Trial Workspace for a verified Firebase identity.
-
-    No payment method, no billing account, no administrator provisioning step. Internally
-    this still creates a real Organization/User/Membership (organization remains the
-    tenant boundary everywhere else in the system) plus a TRIAL entitlement -- the
-    organization is just not something the person has to name or manage themselves unless
-    they want to.
-    """
+    """Creates a time-boxed, usage-capped Trial Workspace for a verified Firebase identity."""
     subject, claims = _authenticate_bearer(authorization)
     owner_label = (payload.display_name or claims.get("name") or claims.get("email") or "Your").strip()
     org_name = payload.laboratory_name.strip() if payload.laboratory_name else f"{owner_label}'s SIRALOOM Trial"
@@ -156,8 +174,196 @@ def start_free_trial(payload: TrialOnboarding, authorization: str | None = Heade
     entitlement = create_trial_entitlement(db, org.id)
     db.commit()
     return {
-        "organization_id": str(org.id),
+        "organization_id": str(org.id), "membership_id": str(membership.id),
+        "role": membership.role, "entitlement": summarize(entitlement).as_dict(),
+    }
+
+
+class OrganizationInvitationCreate(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    role: str
+    expires_in_days: int = Field(default=7, ge=1, le=30)
+
+
+@router.post("/invitations", status_code=201)
+def create_organization_invitation(
+    payload: OrganizationInvitationCreate,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    """Creates a tenant-scoped, single-use invitation for a verified Firebase email.
+
+    The raw bearer token is returned once so a trusted UI/email-delivery layer can turn it
+    into an invitation link. Only its SHA-256 hash is persisted in the database.
+    """
+    _require_invitation_role(principal, payload.role)
+    email = _normalize_email(payload.email)
+
+    existing = db.scalar(select(User).where(func.lower(User.email) == email))
+    if existing and existing.organization_id != principal.organization_id:
+        raise HTTPException(status_code=409, detail="This email is already associated with another SIRALOOM organization")
+    if existing:
+        active = db.scalar(select(OrganizationMembership).where(
+            OrganizationMembership.user_id == existing.id,
+            OrganizationMembership.organization_id == principal.organization_id,
+            OrganizationMembership.status == "ACTIVE",
+        ))
+        if active:
+            raise HTTPException(status_code=409, detail="This user is already an active organization member")
+
+    pending = db.scalar(select(OrganizationInvitation).where(
+        OrganizationInvitation.organization_id == principal.organization_id,
+        func.lower(OrganizationInvitation.email) == email,
+        OrganizationInvitation.status == "PENDING",
+    ))
+    if pending and pending.expires_at > datetime.now(timezone.utc):
+        raise HTTPException(status_code=409, detail="A pending invitation already exists for this email")
+    if pending:
+        pending.status = "EXPIRED"
+
+    token = secrets.token_urlsafe(32)
+    invitation = OrganizationInvitation(
+        id=uuid4(), organization_id=principal.organization_id, email=email,
+        role=payload.role, token_hash=_hash_invitation_token(token), status="PENDING",
+        invited_by=principal.user_id,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=payload.expires_in_days),
+    )
+    db.add(invitation)
+    db.commit()
+    return {
+        "invitation_id": str(invitation.id),
+        "email": invitation.email,
+        "role": invitation.role,
+        "status": invitation.status,
+        "expires_at": invitation.expires_at,
+        "invitation_token": token,
+    }
+
+
+class InvitationAcceptance(BaseModel):
+    token: str = Field(min_length=20, max_length=256)
+
+
+@router.post("/invitations/accept", status_code=200)
+def accept_organization_invitation(
+    payload: InvitationAcceptance,
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """Accepts an invitation only when the verified Firebase email exactly matches it."""
+    subject, claims = _authenticate_bearer(authorization)
+    email = _normalize_email(claims.get("email"))
+    invitation = db.scalar(select(OrganizationInvitation).where(
+        OrganizationInvitation.token_hash == _hash_invitation_token(payload.token),
+    ))
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    if invitation.status != "PENDING":
+        raise HTTPException(status_code=409, detail=f"Invitation is {invitation.status.lower()} and cannot be accepted")
+    now = datetime.now(timezone.utc)
+    if invitation.expires_at <= now:
+        invitation.status = "EXPIRED"
+        db.commit()
+        raise HTTPException(status_code=410, detail="Invitation has expired")
+    if email != invitation.email.casefold():
+        raise HTTPException(status_code=403, detail="The authenticated Firebase email does not match this invitation")
+
+    user = db.scalar(select(User).where(User.external_subject == subject))
+    if user:
+        if user.organization_id != invitation.organization_id:
+            raise HTTPException(status_code=409, detail="This identity already belongs to another SIRALOOM organization")
+        membership = db.scalar(select(OrganizationMembership).where(
+            OrganizationMembership.user_id == user.id,
+            OrganizationMembership.organization_id == invitation.organization_id,
+        ))
+        if membership and membership.status == "ACTIVE":
+            raise HTTPException(status_code=409, detail="This identity is already an active organization member")
+        if membership:
+            membership.role = invitation.role
+            membership.status = "ACTIVE"
+        else:
+            membership = OrganizationMembership(
+                id=uuid4(), organization_id=invitation.organization_id,
+                user_id=user.id, role=invitation.role, status="ACTIVE",
+            )
+            db.add(membership)
+        user.role = invitation.role
+        user.status = "ACTIVE"
+    else:
+        user = User(
+            id=uuid4(), organization_id=invitation.organization_id,
+            external_subject=subject, email=claims.get("email"),
+            display_name=str(claims.get("name") or claims.get("email") or "SIRALOOM user"),
+            role=invitation.role, status="ACTIVE",
+        )
+        db.add(user)
+        db.flush()
+        membership = OrganizationMembership(
+            id=uuid4(), organization_id=invitation.organization_id,
+            user_id=user.id, role=invitation.role, status="ACTIVE",
+        )
+        db.add(membership)
+
+    invitation.status = "ACCEPTED"
+    invitation.accepted_by_user_id = user.id
+    invitation.accepted_at = now
+    db.commit()
+    return {
+        "organization_id": str(invitation.organization_id),
         "membership_id": str(membership.id),
         "role": membership.role,
-        "entitlement": summarize(entitlement).as_dict(),
+        "status": membership.status,
     }
+
+
+class MembershipUpdate(BaseModel):
+    status: str | None = Field(default=None)
+    role: str | None = Field(default=None)
+
+
+@router.patch("/memberships/{membership_id}")
+def update_organization_membership(
+    membership_id: str,
+    payload: MembershipUpdate,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    """Suspends, revokes, or changes the role of a tenant member without permitting self-escalation."""
+    try:
+        membership_uuid = __import__("uuid").UUID(membership_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid membership id") from exc
+
+    target = db.get(OrganizationMembership, membership_uuid)
+    if not target or target.organization_id != principal.organization_id:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    if target.user_id == principal.user_id and payload.status in {"SUSPENDED", "REVOKED"}:
+        raise HTTPException(status_code=409, detail="You cannot suspend or revoke your own active membership")
+    if principal.role not in {"organization_admin", "lab_director"}:
+        raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
+
+    if payload.role is not None:
+        _require_invitation_role(principal, payload.role)
+        target.role = payload.role
+        user = db.get(User, target.user_id)
+        if user:
+            user.role = payload.role
+
+    if payload.status is not None:
+        if payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
+            raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
+        if target.status == "ACTIVE" and payload.status in {"SUSPENDED", "REVOKED"} and target.role == "organization_admin":
+            admin_count = db.scalar(select(func.count()).select_from(OrganizationMembership).where(
+                OrganizationMembership.organization_id == principal.organization_id,
+                OrganizationMembership.role == "organization_admin",
+                OrganizationMembership.status == "ACTIVE",
+            )) or 0
+            if admin_count <= 1:
+                raise HTTPException(status_code=409, detail="The organization must retain at least one active organization administrator")
+        target.status = payload.status
+        user = db.get(User, target.user_id)
+        if user:
+            user.status = "ACTIVE" if payload.status == "ACTIVE" else "INACTIVE"
+
+    db.commit()
+    return {"membership_id": str(target.id), "role": target.role, "status": target.status}
