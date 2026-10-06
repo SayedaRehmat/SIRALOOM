@@ -15,6 +15,8 @@ from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
 from backend.app.adapters.annotation.vep import VEPProviderError
 from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
+from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
+from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
 from backend.app.config import settings
