@@ -1736,15 +1736,40 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 # release through the governed adapter.
                 clinvar_resource = None
                 clinvar_provider = None
-                clinvar_resource_id = (analysis.configuration or {}).get("clinvar_resource_id")
-                if clinvar_resource_id:
+                clinvar_execution = None
+                clinvar_execution_metadata = None
+                configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
+
+                # ClinVar is an optional clinical-variant evidence capability.
+                # If the laboratory has adopted a qualified ClinVar release, use
+                # it automatically. An explicit analysis resource ID remains a
+                # hard pin and is validated rather than silently substituted.
+                if configured_clinvar_id:
                     clinvar_resource = _require_registered_resource(
                         db,
-                        resource_id=clinvar_resource_id,
+                        resource_id=configured_clinvar_id,
                         expected_type="EVIDENCE",
                         expected_build=analysis.reference_build,
                         expected_provider="NCBI ClinVar",
                     )
+                else:
+                    case_for_resources = db.get(Case, analysis.case_id)
+                    if case_for_resources is not None:
+                        clinvar_plan = build_resource_execution_plan(
+                            db,
+                            organization_id=case_for_resources.organization_id,
+                            requirements=(
+                                CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
+                            ),
+                        )
+                        clinvar_candidates = [
+                            item for item in clinvar_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
+                            if item.resource.provider == "NCBI ClinVar"
+                        ]
+                        if clinvar_candidates:
+                            clinvar_resource = clinvar_candidates[0].resource
+
+                if clinvar_resource is not None:
                     clinvar_execution = resolve_resource_execution(
                         db,
                         resource=clinvar_resource,
@@ -1761,9 +1786,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "resource_checksum": clinvar_resource.checksum,
                         "execution_dataset": clinvar_execution.contract.dataset,
                     }
-                else:
-                    clinvar_execution = None
-                    clinvar_execution_metadata = None
 
                 from backend.app.infrastructure.db.models import Case, PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
