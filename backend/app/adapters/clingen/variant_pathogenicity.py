@@ -302,46 +302,106 @@ class ClinGenVariantPathogenicityProvider:
 
     @classmethod
     def _extract_criterion_assertions(cls, document: Any) -> tuple[ClinGenCriterionAssertion, ...]:
-        """Extract criterion code/status plus narrative, PMIDs and strength when present."""
-        code_keys = {"code", "criterion", "criterion_code", "acmg_code", "acmg_amp_code", "evidence_code"}
-        status_keys = {"status", "outcome", "evaluation", "evaluation_status", "label"}
-        rationale_keys = {"explanation", "rationale", "summary", "narrative", "comment", "notes", "text", "description"}
-        pmid_keys = {"pmid", "pmids", "pubmed_id", "pubmed_ids", "publications"}
-        strength_keys = {"strength", "modified_strength", "criterion_strength", "evidence_strength"}
+        """Extract criterion assessments from the published ERepo SEPIO structure."""
         found: list[ClinGenCriterionAssertion] = []
         seen: set[tuple[str, str, str | None, tuple[str, ...], str | None]] = set()
 
-        def strings(value: Any) -> tuple[str, ...]:
-            if value is None:
-                return ()
-            if isinstance(value, (list, tuple, set)):
-                out: list[str] = []
-                for item in value:
-                    out.extend(strings(item))
-                return tuple(dict.fromkeys(x for x in out if x))
+        def text_at(value: Any, keys: set[str]) -> str | None:
             if isinstance(value, dict):
-                out: list[str] = []
                 for key, child in value.items():
-                    if str(key).lower() in pmid_keys:
-                        out.extend(strings(child))
-                return tuple(dict.fromkeys(x for x in out if x))
-            text = str(value).strip()
-            return (text,) if text else ()
+                    if str(key).lower() in keys and isinstance(child, (str, int, float)):
+                        text = str(child).strip()
+                        if text:
+                            return text
+                for child in value.values():
+                    result = text_at(child, keys)
+                    if result:
+                        return result
+            elif isinstance(value, list):
+                for child in value:
+                    result = text_at(child, keys)
+                    if result:
+                        return result
+            return None
+
+        def all_texts(value: Any, keys: set[str]) -> tuple[str, ...]:
+            out: list[str] = []
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    if str(key).lower() in keys:
+                        if isinstance(child, (str, int, float)):
+                            text = str(child).strip()
+                            if text:
+                                out.append(text)
+                        else:
+                            out.extend(all_texts(child, keys))
+                    else:
+                        out.extend(all_texts(child, keys))
+            elif isinstance(value, list):
+                for child in value:
+                    out.extend(all_texts(child, keys))
+            return tuple(dict.fromkeys(out))
+
+        def normalize_status(value: str) -> str:
+            status = value.strip().upper().replace(" ", "_")
+            if status in {"MET", "APPLIED", "TRUE", "PASS", "SUPPORTED"}:
+                return "MET"
+            if status in {"NOT_MET", "UNMET", "FALSE", "FAIL", "REFUTED"}:
+                return "NOT_MET"
+            return status
 
         def walk(value: Any) -> None:
             if isinstance(value, dict):
-                lowered = {str(k).lower(): v for k, v in value.items()}
-                code = next((str(lowered[k]).strip() for k in code_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
-                status = next((str(lowered[k]).strip().upper().replace(" ", "_") for k in status_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
-                if code and status:
-                    normalized_status = "MET" if status in {"MET", "APPLIED", "TRUE", "PASS", "SUPPORTED"} else "NOT_MET" if status in {"NOT_MET", "UNMET", "FALSE", "FAIL", "REFUTED"} else status
-                    rationale = next((str(lowered[k]).strip() for k in rationale_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
-                    pmids: tuple[str, ...] = ()
-                    for key in pmid_keys:
-                        if key in lowered:
-                            pmids = tuple(dict.fromkeys((*pmids, *strings(lowered[key]))))
-                    strength = next((str(lowered[k]).strip() for k in strength_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
-                    item = ClinGenCriterionAssertion(code=code, status=normalized_status, source="ClinGen ERepo classification API", rationale=rationale, pmids=pmids, strength=strength)
+                criterion = value.get("criterion")
+                outcome = value.get("statementOutcome")
+                if isinstance(criterion, dict) and isinstance(outcome, dict):
+                    code = (
+                        criterion.get("label")
+                        or criterion.get("code")
+                        or criterion.get("id")
+                    )
+                    status = outcome.get("label") or outcome.get("status")
+                    if code and status:
+                        strength = None
+                        default_strength = criterion.get("defaultStrength")
+                        if isinstance(default_strength, dict):
+                            strength = default_strength.get("label") or default_strength.get("id")
+                        rationale = text_at(
+                            value,
+                            {"comments", "explanation", "rationale", "summary", "narrative", "notes", "text"},
+                        )
+                        pmids = all_texts(
+                            value,
+                            {"pmid", "pmids", "pubmed_id", "pubmed_ids"},
+                        )
+                        item = ClinGenCriterionAssertion(
+                            code=str(code).strip(),
+                            status=normalize_status(str(status)),
+                            source="ClinGen ERepo classification API",
+                            rationale=rationale,
+                            pmids=pmids,
+                            strength=str(strength).strip() if strength else None,
+                        )
+                        identity = (item.code, item.status, item.rationale, item.pmids, item.strength)
+                        if identity not in seen:
+                            seen.add(identity)
+                            found.append(item)
+                # Also support compact API/test representations such as
+                # {"code": "PS3", "status": "Met", "explanation": "..."}.
+                code = value.get("code") or value.get("criterion_code") or value.get("acmg_code")
+                status = value.get("status") or value.get("outcome")
+                if code and status and not isinstance(code, (dict, list)) and not isinstance(status, (dict, list)):
+                    rationale = text_at(value, {"explanation", "rationale", "summary", "narrative", "comments", "notes", "text"})
+                    pmids = all_texts(value, {"pmid", "pmids", "pubmed_id", "pubmed_ids"})
+                    strength = text_at(value, {"strength", "modified_strength", "criterion_strength", "evidence_strength"})
+                    item = ClinGenCriterionAssertion(
+                        code=str(code).strip(),
+                        status=normalize_status(str(status)),
+                        source="ClinGen ERepo classification API",
+                        rationale=rationale,
+                        pmids=pmids,
+                        strength=strength,
+                    )
                     identity = (item.code, item.status, item.rationale, item.pmids, item.strength)
                     if identity not in seen:
                         seen.add(identity)
@@ -349,8 +409,8 @@ class ClinGenVariantPathogenicityProvider:
                 for child in value.values():
                     walk(child)
             elif isinstance(value, list):
-                for item in value:
-                    walk(item)
+                for child in value:
+                    walk(child)
 
         walk(document)
         return tuple(found)
