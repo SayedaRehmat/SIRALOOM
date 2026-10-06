@@ -2,6 +2,7 @@ from pathlib import Path
 
 from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
+from backend.app.adapters.clingen.cspec_provider import ClinGenCSpecProvider
 from backend.app.domain.provider_registry import register_builtin_providers
 
 
@@ -18,6 +19,12 @@ def test_clingen_providers_are_distinct_and_registered():
     ).descriptor.capabilities
     assert registry.resolve(
         provider_id="ClinGen Gene-Disease Validity", provider_version="GeneValidity"
+    ).descriptor.capabilities
+    assert registry.resolve(
+        provider_id=ClinGenCSpecProvider.provider_id, provider_version="CSpec"
+    ) is not None
+    assert registry.resolve(
+        provider_id=ClinGenCSpecProvider.provider_id, provider_version="CSpec"
     ).descriptor.capabilities
 
 
