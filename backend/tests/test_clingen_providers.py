@@ -102,7 +102,7 @@ def test_clingen_variant_pathogenicity_parses_current_erepo_summary_columns_and_
     assert row.inheritance == "Autosomal dominant inheritance"
     assert row.caid == "CA397843917"
     assert row.clinvar_id == "934410"
-    assert row.mondo_id if hasattr(row, "mondo_id") else True
+    assert row.payload["mondo_id"] == "MONDO:0018875"
     assert row.met_codes == (
         "PM1_Supporting",
         "PM2_Supporting",
@@ -148,7 +148,7 @@ def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
         "version": "2.0",
         "publishedOn": "2026-09-01",
         "criteria": [
-            {"code": "PS3", "status": "Met", "explanation": "Functional assay supports the classification."}
+            {"code": "PS3", "status": "Met", "explanation": "Functional assay supports the classification.", "pmids": ["12345678"], "strength": "Strong"}
         ],
     }
     normalized = ClinGenVariantPathogenicityProvider._normalize_api_document(document)
@@ -159,4 +159,9 @@ def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
     assert normalized["hgvs"] == ("NM_000546.6:c.215C>G",)
     assert normalized["met_codes"] == ("PS3", "PM2_Supporting")
     assert normalized["unmet_codes"] == ("BS1",)
+    criterion = next(item for item in normalized["criterion_assertions"] if item.code == "PS3")
+    assert criterion.status == "MET"
+    assert criterion.rationale == "Functional assay supports the classification."
+    assert criterion.pmids == ("12345678",)
+    assert criterion.strength == "Strong"
     assert normalized["raw"] == document
