@@ -36,6 +36,7 @@ from backend.app.domain.provider_registry import register_builtin_providers
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
+from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
@@ -2020,7 +2021,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             exists = db.scalar(select(Evidence).where(Evidence.analysis_id == analysis.id, Evidence.evidence_fingerprint == fp))
                             if exists:
                                 continue
-                            db.add(Evidence(
+                            evidence_row = Evidence(
                                 id=record.evidence_id, variant_id=record.variant_id, analysis_id=analysis.id,
                                 evidence_type=record.evidence_type, statement=record.statement, direction=record.direction,
                                 source_name=provenance["source_name"], source_version=provenance["source_version"],
@@ -2029,7 +2030,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 request_metadata=provenance["request_metadata"], observed_at=provenance["observed_at"],
                                 observation_ids=[str(x) for x in record.observation_ids], payload=record.payload,
                                 created_by_type="SYSTEM", created_by_id=engine.engine_id, evidence_fingerprint=fp,
-                            ))
+                            )
+                            db.add(evidence_row)
+                            # ClinGen criterion assertions are a separate source-assertion
+                            # layer. They remain bound to this Evidence row and never
+                            # become a SIRALOOM classification by ingestion alone.
+                            persist_clingen_source_assertions(db, evidence=evidence_row)
                             created += 1; batch_created += 1
                     db.commit()
                     _save_batch_checkpoint(db, evidence_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"created_evidence": batch_created})
