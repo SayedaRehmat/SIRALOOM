@@ -47,6 +47,14 @@ class ClinGenSpecificationSnapshot:
         )
 
 
+def snapshot_sequence_variant_interpretation(entity: CSpecEntity) -> ClinGenSpecificationSnapshot:
+    if entity.ent_type != "SequenceVariantInterpretation":
+        raise ValueError(
+            f"Expected SequenceVariantInterpretation entity, got {entity.ent_type}"
+        )
+    return _snapshot_entity(entity)
+
+
 def snapshot_ruleset(entity: CSpecEntity) -> ClinGenSpecificationSnapshot:
     if entity.ent_type != "RuleSet":
         raise ValueError(f"Expected RuleSet entity, got {entity.ent_type}")
@@ -80,6 +88,69 @@ def fetch_ruleset(client: CSpecClient, ruleset_id: str) -> ClinGenSpecificationS
     return snapshot_ruleset(client.get_entity("RuleSet", ruleset_id, detail="high"))
 
 
+def fetch_current_sequence_variant_interpretation(
+    client: CSpecClient,
+    *,
+    gene_id: str | None = None,
+    disease_id: str | None = None,
+) -> ClinGenSpecificationSnapshot:
+    entities = client.list_sequence_variant_interpretation_versions(
+        gene_id=gene_id,
+        disease_id=disease_id,
+        detail="low",
+    )
+    selected = select_current_released_version(entities)
+    if selected is None:
+        raise ValueError(
+            "No current Released ClinGen SequenceVariantInterpretation remains "
+            "after legacy/supersession filtering"
+        )
+    version = _version_from_entity(selected)
+    if not version:
+        raise ValueError("Selected CSpec entity has no version")
+    return fetch_sequence_variant_interpretation(client, selected.ent_id, version)
+
+
+def select_current_released_version(
+    entities: list[CSpecEntity],
+) -> CSpecEntity | None:
+    candidates: list[tuple[CSpecEntity, str]] = []
+    for entity in entities:
+        if entity.ent_type != "SequenceVariantInterpretation":
+            continue
+        state = _first_text(
+            entity.content,
+            "state",
+            "status",
+            "cspecStatus",
+            "specificationStatus",
+        )
+        if not state or state.casefold() != "released":
+            continue
+        if _truthy(entity.content.get("legacyReplaced")):
+            continue
+        if (
+            "legacyFullySuperseded" in entity.content
+            and entity.content.get("legacyFullySuperseded") is False
+        ):
+            continue
+        version = _version_from_entity(entity)
+        if version:
+            candidates.append((entity, version))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: _version_key(item[1]), reverse=True)
+    highest = candidates[0][1]
+    tied = [entity for entity, version in candidates if version == highest]
+    if len(tied) != 1:
+        raise ValueError(
+            f"Multiple current Released CSpec specifications share version {highest}"
+        )
+    return tied[0]
+
+
 def _first_text(data: dict[str, Any], *keys: str) -> str | None:
     for key in keys:
         value = data.get(key)
@@ -106,6 +177,83 @@ def _extract_labels(value: Any) -> list[str]:
                     labels.append(v)
                     break
     return labels
+
+
+def _snapshot_entity(entity: CSpecEntity) -> ClinGenSpecificationSnapshot:
+    content = entity.content
+    version = _version_from_entity(entity)
+    if not version:
+        raise ValueError("ClinGen CSpec specification is missing a version")
+    framework = _first_text(
+        content, "framework", "frameworkName", "ruleSetType", "type"
+    ) or "ACMG/AMP"
+    genes = tuple(_extract_scope_values(content, ("genes", "gene", "geneScope")))
+    diseases = tuple(
+        _extract_scope_values(content, ("diseases", "disease", "diseaseScope"))
+    )
+    return ClinGenSpecificationSnapshot(
+        specification_id=entity.ent_id,
+        version=version,
+        provider="ClinGen",
+        framework=framework,
+        source_iri=entity.ent_iri,
+        modified_at=entity.modified,
+        gene_scope=genes,
+        disease_scope=diseases,
+        criteria=_extract_criteria(content),
+        raw_entity=entity.raw,
+        retrieved_at=datetime.now(timezone.utc).isoformat(),
+        request_fingerprint=entity.request_fingerprint,
+        response_sha256=entity.response_sha256,
+        request_metadata=entity.request_metadata,
+    )
+
+
+def _version_from_entity(entity: CSpecEntity) -> str | None:
+    return _first_text(
+        entity.content, "version", "versionString", "versionNumber", "release"
+    ) or _first_text(entity.raw, "version", "versionString")
+
+
+def _extract_scope_values(content: dict[str, Any], keys: tuple[str, ...]) -> list[str]:
+    for key in keys:
+        values = _extract_labels(content.get(key))
+        if values:
+            return values
+    return []
+
+
+def _extract_labels(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value.strip()] if value.strip() else []
+    if isinstance(value, dict):
+        for key in ("label", "symbol", "name", "entId", "id", "curie"):
+            item = value.get(key)
+            if isinstance(item, str) and item.strip():
+                return [item.strip()]
+        return []
+    if not isinstance(value, list):
+        return []
+    result: list[str] = []
+    for item in value:
+        result.extend(_extract_labels(item))
+    return list(dict.fromkeys(result))
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().casefold() in {"true", "yes", "1"}
+    return bool(value)
+
+
+def _version_key(version: str) -> tuple[int, ...]:
+    result: list[int] = []
+    for token in version.split("."):
+        digits = "".join(ch for ch in token if ch.isdigit())
+        result.append(int(digits or 0))
+    return tuple(result)
 
 
 def _extract_criteria(content: dict[str, Any]) -> dict[str, dict[str, Any]]:
