@@ -112,10 +112,11 @@ def infer_capabilities(
         ("ClinVar", "EVIDENCE"): {
             ResourceCapability.CLINICAL_VARIANT,
         },
-        ("ClinGen", "EVIDENCE"): {
+        ("ClinGen Variant Pathogenicity", "EVIDENCE"): {
             ResourceCapability.CLINICAL_VARIANT,
+        },
+        ("ClinGen Gene-Disease Validity", "EVIDENCE"): {
             ResourceCapability.GENE_DISEASE,
-            ResourceCapability.ACMG_SPECIFICATION,
         },
     }
     return frozenset(mapping.get((p, r), set()))
