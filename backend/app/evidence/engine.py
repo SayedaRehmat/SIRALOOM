@@ -236,12 +236,15 @@ class EvidenceEngine:
                         "status": getattr(item, "status", None),
                         "source": getattr(item, "source", None),
                         "rationale": getattr(item, "rationale", None),
+                        "pmids": list(getattr(item, "pmids", ()) or ()),
+                        "strength": getattr(item, "strength", None),
                     }
                     for item in (getattr(assertion, "criterion_assertions", ()) or ())
                 ],
                 "criterion_detail_available": bool(
                     (getattr(assertion, "payload", {}) or {}).get("criterion_detail_available")
                 ),
+                "criterion_detail_note": (getattr(assertion, "payload", {}) or {}).get("criterion_detail_note"),
                 "preferred_variant_title": (getattr(assertion, "payload", {}) or {}).get(
                     "preferred_variant_title"
                 ),
