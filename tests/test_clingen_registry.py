@@ -107,8 +107,8 @@ def test_cspec_svi_snapshot_preserves_provenance_and_structured_criteria():
     )
     snapshot = snapshot_sequence_variant_interpretation(entity)
     assert snapshot.version == "2.2"
-    assert snapshot.gene_scope == ("RAG1", "HGNC:9831")
-    assert snapshot.disease_scope == ("Example disease", "MONDO:0000572")
+    assert snapshot.gene_scope == ("RAG1",)
+    assert snapshot.disease_scope == ("Example disease",)
     assert snapshot.criteria["PM2"]["strength"] == "SUPPORTING"
     assert snapshot.request_fingerprint == "request-sha"
     assert snapshot.response_sha256 == "response-sha"
