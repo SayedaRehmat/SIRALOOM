@@ -131,3 +131,32 @@ def test_clingen_variant_pathogenicity_parses_current_erepo_summary_columns_and_
         item.code for item in row.criterion_assertions if item.status == "NOT_MET"
     } == set(row.unmet_codes)
     assert row.payload["criterion_detail_available"] is False
+
+
+def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
+    document = {
+        "@id": "https://erepo.genome.network/evrepo/api/classification/abc-123",
+        "classification": "Pathogenic",
+        "condition": {"label": "Example disease", "mondo_id": "MONDO:0000001"},
+        "gene": "TP53",
+        "caId": "CA123",
+        "cvId": "456789",
+        "expertPanel": "Example VCEP",
+        "hgvs": ["NM_000546.6:c.215C>G"],
+        "metCodes": ["PS3", "PM2_Supporting"],
+        "unmetCodes": ["BS1"],
+        "version": "2.0",
+        "publishedOn": "2026-09-01",
+        "criteria": [
+            {"code": "PS3", "status": "Met", "explanation": "Functional assay supports the classification."}
+        ],
+    }
+    normalized = ClinGenVariantPathogenicityProvider._normalize_api_document(document)
+    assert normalized["classification"] == "Pathogenic"
+    assert normalized["gene"] == "TP53"
+    assert normalized["caid"] == "CA123"
+    assert normalized["clinvar_id"] == "456789"
+    assert normalized["hgvs"] == ("NM_000546.6:c.215C>G",)
+    assert normalized["met_codes"] == ("PS3", "PM2_Supporting")
+    assert normalized["unmet_codes"] == ("BS1",)
+    assert normalized["raw"] == document
