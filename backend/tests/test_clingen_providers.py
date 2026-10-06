@@ -137,7 +137,7 @@ def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
     document = {
         "@id": "https://erepo.genome.network/evrepo/api/classification/abc-123",
         "classification": "Pathogenic",
-        "condition": {"label": "Example disease", "mondo_id": "MONDO:0000001"},
+        "condition": "Example disease",
         "gene": "TP53",
         "caId": "CA123",
         "cvId": "456789",
