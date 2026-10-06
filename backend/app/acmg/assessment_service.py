@@ -284,6 +284,28 @@ class ACMGSpecificationAssessmentService:
             "specification_version": row.version,
         }
 
+        unresolved_criteria = _unresolved_specification_criteria(
+            profile=profile,
+            evaluator_results=evaluator_results,
+            source_results=source_results,
+        )
+        if unresolved_criteria:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "SPECIFICATION_CRITERION_NOT_EXECUTABLE",
+                    "unresolved_criteria": list(unresolved_criteria),
+                },
+            )
+
         if merge_error:
             return AutomatedAssessmentResult(
                 "REQUIRES_REVIEW",
@@ -473,6 +495,48 @@ class ACMGSpecificationAssessmentService:
                     )
                 )
         db.flush()
+
+
+def _unresolved_specification_criteria(
+    *,
+    profile: dict[str, Any],
+    evaluator_results: list[EvaluatorResult],
+    source_results: tuple[SourceCriterionAssessment, ...],
+) -> tuple[str, ...]:
+    """Identify configured criteria for which SIRALOOM has no assessment.
+
+    A specification may define many ACMG/AMP criteria while SIRALOOM currently
+    has automated evaluators for only a subset. A final combination from the
+    subset would be unsafe because an unassessed criterion could materially
+    change the classification. A criterion is considered accounted for when an
+    evaluator or governed ClinGen source assessment produced a result, including
+    an explicit non-applicable outcome.
+    """
+    configured = {
+        str(key).upper()
+        for key in profile
+        if _looks_like_acmg_criterion(key)
+    }
+    if not configured:
+        return ()
+
+    assessed = {str(result.criterion).upper() for result in evaluator_results}
+    assessed.update(str(result.criterion).upper() for result in source_results)
+    return tuple(sorted(configured - assessed))
+
+
+def _looks_like_acmg_criterion(value: object) -> bool:
+    """Return True for canonical ACMG/AMP-style criterion keys only."""
+    if not isinstance(value, str):
+        return False
+    import re
+
+    return bool(
+        re.fullmatch(
+            r"(?:PVS1|PS[1-4]|PM[1-6]|PP[1-5]|BA1|BS[1-4]|BP[1-7])(?:_[A-Z]+)?",
+            value.upper(),
+        )
+    )
 
 def _merge_criterion_assessments(
     evaluator_assessments: list[CriterionAssessment],
