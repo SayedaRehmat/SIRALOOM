@@ -24,10 +24,15 @@ from backend.app.acmg.evaluators import (
     evaluate_pvs1,
 )
 from backend.app.acmg.specification_selection import ClinGenSpecificationSelector
+from backend.app.acmg.source_assessment import (
+    SourceCriterionAssessment,
+    assess_source_assertions,
+)
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
     Annotation,
+    ACMGSourceAssertion,
     Classification,
     ClinGenSpecification,
     Evidence,
@@ -63,6 +68,8 @@ class AutomatedAssessmentResult:
     binding: SpecificationBinding
     evaluator_results: tuple[EvaluatorResult, ...]
     classification: ClassificationResult | None
+    criterion_assessments: tuple[CriterionAssessment, ...] = ()
+    source_assessments: tuple[SourceCriterionAssessment, ...] = ()
 
 
 class SpecificationBindingError(ValueError):
@@ -213,10 +220,10 @@ class ACMGSpecificationAssessmentService:
             ))
 
         evaluator_results = bound_results
-        proposed_assessments = [
+        evaluator_assessments = [
             CriterionAssessment(
                 criterion=r.criterion,
-                strength=r.strength or "SUPPORTING" if r.criterion != "BA1" else "STANDALONE",
+                strength=r.strength or ("SUPPORTING" if r.criterion != "BA1" else "STANDALONE"),
                 direction=r.direction,
                 status=r.status,
                 evidence_ids=r.evidence_ids,
@@ -227,11 +234,128 @@ class ACMGSpecificationAssessmentService:
             if r.applicable and r.strength is not None and r.status == "PROPOSED" and r.evidence_ids
         ]
 
-        if not proposed_assessments:
-            return AutomatedAssessmentResult("REQUIRES_REVIEW", binding, tuple(evaluator_results), None)
+        source_rows = db.scalars(
+            select(ACMGSourceAssertion).where(
+                ACMGSourceAssertion.analysis_id == analysis.id,
+                ACMGSourceAssertion.variant_id == variant.id,
+            ).order_by(ACMGSourceAssertion.criterion.asc(), ACMGSourceAssertion.created_at.asc())
+        ).all()
+        source_results = assess_source_assertions(source_rows, row) if source_rows else ()
 
-        classification = ACMGEngine().classify(proposed_assessments)
-        return AutomatedAssessmentResult("PROPOSED", binding, tuple(evaluator_results), classification)
+        source_assessments: list[CriterionAssessment] = []
+        for source_result in source_results:
+            if (
+                source_result.status != "PROPOSED"
+                or not source_result.applicable
+                or source_result.strength is None
+            ):
+                continue
+            source_assessments.append(
+                CriterionAssessment(
+                    # The existing baseline engine combines canonical ACMG codes.
+                    # CSpec strength modifications are retained in metadata and
+                    # represented by the governed strength value; they are not
+                    # invented as new engine criterion codes.
+                    criterion=source_result.criterion,
+                    strength=source_result.strength,
+                    direction=source_result.direction,
+                    status="PROPOSED",
+                    evidence_ids=tuple(source_result.source_assertion_ids),
+                    reason=source_result.rationale,
+                    metadata={
+                        "assessment_origin": "CLINGEN_SOURCE_ASSERTION",
+                        "effective_criterion": source_result.effective_criterion,
+                        "source_assertion_ids": list(source_result.source_assertion_ids),
+                        "specification_id": source_result.specification_id,
+                        "specification_version": source_result.specification_version,
+                        **(source_result.metadata or {}),
+                    },
+                )
+            )
+
+        merged, merge_error = _merge_criterion_assessments(
+            evaluator_assessments,
+            source_assessments,
+        )
+        if merge_error:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+            )
+
+        if not merged:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                (),
+                tuple(source_results),
+            )
+
+        classification = ACMGEngine().classify(merged)
+        return AutomatedAssessmentResult(
+            "PROPOSED",
+            binding,
+            tuple(evaluator_results),
+            classification,
+            tuple(merged),
+            tuple(source_results),
+        )
+
+def _merge_criterion_assessments(
+    evaluator_assessments: list[CriterionAssessment],
+    source_assessments: list[CriterionAssessment],
+) -> tuple[list[CriterionAssessment], str | None]:
+    """Merge local evaluator and ClinGen source proposals deterministically.
+
+    A canonical ACMG criterion may occur from both paths. Compatible proposals
+    are deduplicated; conflicting strength, direction, or evidence are never
+    silently resolved. The caller must route such a conflict to human review.
+    """
+    merged: dict[str, CriterionAssessment] = {}
+    conflicts: list[str] = []
+
+    for assessment in [*evaluator_assessments, *source_assessments]:
+        key = assessment.criterion
+        existing = merged.get(key)
+        if existing is None:
+            merged[key] = assessment
+            continue
+
+        compatible = (
+            existing.strength == assessment.strength
+            and existing.direction == assessment.direction
+        )
+        if not compatible:
+            conflicts.append(
+                f"{key}: existing={existing.strength}/{existing.direction}, "
+                f"incoming={assessment.strength}/{assessment.direction}"
+            )
+            continue
+
+        merged[key] = CriterionAssessment(
+            criterion=key,
+            strength=existing.strength,
+            direction=existing.direction,
+            status="PROPOSED",
+            evidence_ids=tuple(dict.fromkeys((*existing.evidence_ids, *assessment.evidence_ids))),
+            reason="Compatible criterion proposals were deduplicated across evidence sources.",
+            metadata={
+                **existing.metadata,
+                "merge": "DEDUPLICATED_COMPATIBLE_PROPOSALS",
+                "merged_metadata": [existing.metadata, assessment.metadata],
+            },
+        )
+
+    if conflicts:
+        return list(merged.values()), "Conflicting criterion proposals require human review: " + "; ".join(conflicts)
+    return list(merged.values()), None
+
 
     def persist(
         self,
@@ -244,6 +368,8 @@ class ACMGSpecificationAssessmentService:
         if result.binding.status != "SELECTED":
             return
         classification = result.classification
+        persisted_criteria = {item.criterion: item for item in result.criterion_assessments}
+
         for evaluated in result.evaluator_results:
             existing = db.scalar(
                 select(ACMGAssessment).where(
@@ -277,6 +403,45 @@ class ACMGSpecificationAssessmentService:
                 "metadata": evaluated.metadata or {},
             }
             row.state = evaluated.status
+            db.add(row)
+
+        # Persist source-derived proposed criteria that were not already represented
+        # by an evaluator row. Source assertions remain the provenance authority;
+        # this ACMGAssessment is only the reconciled criterion proposal.
+        for assessed in result.criterion_assessments:
+            if assessed.criterion in {
+                item.criterion for item in result.evaluator_results
+            }:
+                continue
+            existing = db.scalar(
+                select(ACMGAssessment).where(
+                    ACMGAssessment.variant_id == variant.id,
+                    ACMGAssessment.analysis_id == analysis.id,
+                    ACMGAssessment.criterion == assessed.criterion,
+                )
+            )
+            row = existing or ACMGAssessment(
+                id=uuid4(),
+                variant_id=variant.id,
+                analysis_id=analysis.id,
+                framework_name="ACMG/AMP",
+                framework_version="2015",
+                specification_provider="ClinGen",
+                specification_id=result.binding.specification_id,
+                specification_version=result.binding.specification_version,
+                criterion=assessed.criterion,
+                state=assessed.status,
+            )
+            row.automated_assessment = {
+                "applicable": True,
+                "strength": assessed.strength,
+                "direction": assessed.direction,
+                "status": assessed.status,
+                "evidence_ids": list(assessed.evidence_ids),
+                "reason": assessed.reason,
+                "metadata": assessed.metadata,
+            }
+            row.state = assessed.status
             db.add(row)
 
         if classification is not None:
