@@ -195,6 +195,112 @@ class EvidenceEngine:
             )
         return out
 
+    def build_from_clingen_variant_assertions(
+        self,
+        *,
+        variant_id: UUID,
+        assertions: Iterable[Any],
+        resource_id: UUID,
+        resource_name: str,
+        resource_version: str,
+        request_fingerprint: str,
+        execution_metadata: dict[str, Any],
+    ) -> list[EvidenceRecord]:
+        out: list[EvidenceRecord] = []
+        for assertion in assertions:
+            classification = _normalize_text(getattr(assertion, "classification", None))
+            low = (classification or "").lower()
+            direction = "SUPPORTS" if "pathogenic" in low else "REFUTES" if "benign" in low else "NEUTRAL"
+            source_record_id = str(getattr(assertion, "source_record_id", "") or "")
+            payload = {
+                "classification": classification,
+                "condition": getattr(assertion, "condition", None),
+                "inheritance": getattr(assertion, "inheritance", None),
+                "gene": getattr(assertion, "gene", None),
+                "hgvs": list(getattr(assertion, "hgvs", ()) or ()),
+                "caid": getattr(assertion, "caid", None),
+                "clinvar_id": getattr(assertion, "clinvar_id", None),
+                "expert_panel": getattr(assertion, "expert_panel", None),
+                "met_codes": list(getattr(assertion, "met_codes", ()) or ()),
+                "unmet_codes": list(getattr(assertion, "unmet_codes", ()) or ()),
+                "version": getattr(assertion, "version", None),
+                "published_date": getattr(assertion, "published_date", None),
+                "record_sha256": getattr(assertion, "record_sha256", None),
+                "interpretive_use": "CLINGEN_VCEP_ASSERTION_REQUIRES_DISEASE_AND_CRITERION_REVIEW",
+                "release_provenance": execution_metadata,
+            }
+            record = self._record(
+                variant_id=variant_id,
+                evidence_type="CLINICAL_DATABASE",
+                statement="ClinGen VCEP evidence repository contains an expert-curated variant-disease pathogenicity assertion; it is preserved as source evidence and is not a SIRALOOM final classification.",
+                direction=direction,
+                source_name=resource_name,
+                source_version=resource_version,
+                payload=payload,
+            )
+            out.append(EvidenceRecord(
+                **{
+                    **record.__dict__,
+                    "resource_id": resource_id,
+                    "source_record_id": source_record_id,
+                    "request_fingerprint": request_fingerprint,
+                    "response_sha256": getattr(assertion, "record_sha256", None),
+                    "request_metadata": execution_metadata,
+                }
+            ))
+        return out
+
+    def build_from_clingen_gene_disease_assertions(
+        self,
+        *,
+        variant_id: UUID,
+        assertions: Iterable[Any],
+        resource_id: UUID,
+        resource_name: str,
+        resource_version: str,
+        request_fingerprint: str,
+        execution_metadata: dict[str, Any],
+    ) -> list[EvidenceRecord]:
+        out: list[EvidenceRecord] = []
+        for assertion in assertions:
+            classification = _normalize_text(getattr(assertion, "classification", None))
+            source_record_id = str(getattr(assertion, "source_record_id", "") or "")
+            payload = {
+                "gene": getattr(assertion, "gene", None),
+                "hgnc_id": getattr(assertion, "hgnc_id", None),
+                "disease": getattr(assertion, "disease", None),
+                "mondo_id": getattr(assertion, "mondo_id", None),
+                "moi": getattr(assertion, "moi", None),
+                "sop": getattr(assertion, "sop", None),
+                "classification": classification,
+                "online_report": getattr(assertion, "online_report", None),
+                "classification_date": getattr(assertion, "classification_date", None),
+                "expert_panel": getattr(assertion, "expert_panel", None),
+                "record_sha256": getattr(assertion, "record_sha256", None),
+                "interpretive_use": "GENE_DISEASE_VALIDITY_CONTEXT_NOT_VARIANT_PATHOGENICITY",
+                "release_provenance": execution_metadata,
+            }
+            record = self._record(
+                variant_id=variant_id,
+                evidence_type="GENE_DISEASE",
+                statement="ClinGen Gene-Disease Validity provides a curated validity assessment for the annotated gene-disease pair; it is contextual evidence and does not classify the variant.",
+                direction="NEUTRAL",
+                source_name=resource_name,
+                source_version=resource_version,
+                payload=payload,
+            )
+            out.append(EvidenceRecord(
+                **{
+                    **record.__dict__,
+                    "resource_id": resource_id,
+                    "source_record_id": source_record_id,
+                    "request_fingerprint": request_fingerprint,
+                    "response_sha256": getattr(assertion, "record_sha256", None),
+                    "request_metadata": execution_metadata,
+                }
+            ))
+        return out
+
     def build_case_context_evidence(
         self, *, variant_id: UUID, case_hpo_terms: list[dict[str, Any]], gene: str | None,
         gene_disease_records: list[dict[str, Any]] = (), literature_records: list[dict[str, Any]] = (),
