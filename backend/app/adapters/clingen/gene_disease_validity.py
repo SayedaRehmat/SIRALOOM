@@ -69,7 +69,7 @@ class ClinGenGeneDiseaseValidityProvider:
         out: list[GeneDiseaseAssertion] = []
         raw_text = self.path.read_text(encoding="utf-8-sig")
         # Some governed transfers preserve newline characters as the literal two-character sequence \\n        # Normalize that transport artifact before CSV parsing.
-        raw_text = raw_text.replace("\\\\n", "\n")
+        raw_text = raw_text.replace("\\n", "\n")
         from io import StringIO
         sample = raw_text[:8192]
         delimiter = self.delimiter or ("\t" if "\t" in sample and sample.count("\t") >= sample.count(",") else ",")
