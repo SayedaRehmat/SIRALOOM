@@ -2130,6 +2130,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 existing_classifications = db.scalars(select(Classification).where(Classification.analysis_id == analysis.id)).all()
                 assessed = len(existing_assessment_variant_ids)
                 blocked_variants = 0
+                review_variants = 0
                 acmg_requires_human_review = False
                 proposed_variants = sum(1 for c in existing_classifications if c.state == "PROPOSED")
                 batch_size = int(analysis.configuration.get("acmg_batch_size", 250) or 250)
@@ -2144,6 +2145,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="RUNNING", attempt=attempt)
                     batch_assessed = 0
                     batch_proposed = 0
+                    batch_review = 0
                     batch_blocked = 0
                     for ann in rows:
                         normalized = (ann.payload or {}).get("normalized") or {}
@@ -2156,28 +2158,78 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
                         result = assessment_service.assess_variant(db, analysis=analysis, variant=variant_row, annotation=ann, population_rows=population_rows_for_variant, resource_rows=resource_rows, gene=gene, disease=disease)
                         if result.status in {"PROPOSED", "REQUIRES_REVIEW"} and result.binding.status == "SELECTED":
+                            # Evidence and criterion assessments are persisted even
+                            # when final combination is not automatable. Only the
+                            # classification decision is routed to human review.
                             assessment_service.persist(db, analysis=analysis, variant=variant_row, result=result)
-                            assessed += 1; batch_assessed += 1
-                            if result.status == "PROPOSED": proposed_variants += 1; batch_proposed += 1
+                            assessed += 1
+                            batch_assessed += 1
+                            if result.status == "PROPOSED":
+                                proposed_variants += 1
+                                batch_proposed += 1
+                            else:
+                                review_variants += 1
+                                batch_review += 1
                         else:
-                            blocked_variants += 1; batch_blocked += 1
+                            blocked_variants += 1
+                            batch_blocked += 1
                     db.commit()
-                    _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"assessed": batch_assessed, "proposed": batch_proposed, "blocked": batch_blocked})
+                    _save_batch_checkpoint(
+                        db,
+                        acmg_step,
+                        start_i,
+                        end_i,
+                        status="SUCCEEDED",
+                        attempt=attempt,
+                        metadata={
+                            "assessed": batch_assessed,
+                            "proposed": batch_proposed,
+                            "requires_review": batch_review,
+                            "blocked": batch_blocked,
+                        },
+                    )
 
-                if assessed == 0:
-                    # No variant had an approved, automatable ClinGen specification. This is
-                    # not a workflow failure: the case still needs a qualified human reviewer
-                    # to classify manually, so it proceeds to review rather than dead-ending.
+                if assessed == 0 or review_variants > 0 or blocked_variants > 0:
+                    # The analysis itself is not failed. Evidence generation and
+                    # criterion persistence have completed for the variants that
+                    # could be assessed, while classification automation is
+                    # explicitly routed to human review where required.
                     acmg_requires_human_review = True
+                    if assessed == 0:
+                        review_code = "NO_AUTOMATABLE_CLINGEN_CONTEXT"
+                        review_message = (
+                            "No variant received a validated, applicable ClinGen specification "
+                            "with supported structured criterion configuration. Manual ACMG "
+                            "classification is required for all variants in this case."
+                        )
+                    elif review_variants > 0:
+                        review_code = "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"
+                        review_message = (
+                            "Criterion evidence was collected and persisted, but one or more "
+                            "variants use a ClinGen combination method without a validated "
+                            "SIRALOOM combination engine. Human classification review is required."
+                        )
+                    else:
+                        review_code = "ACMG_VARIANTS_REQUIRE_REVIEW"
+                        review_message = (
+                            "One or more variants could not be safely automated and require "
+                            "human ACMG classification review."
+                        )
                     mark_step(
-                        db, acmg_step, StepStatus.REQUIRES_REVIEW,
-                        error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
-                        error_message=(
-                            "No variant received a validated, applicable ClinGen specification with "
-                            "supported structured criterion configuration. Manual ACMG classification "
-                            "is required for all variants in this case."
-                        ),
-                        metadata={"disease_context_present": bool(disease), "blocked_variants": blocked_variants, "next_step": "review"},
+                        db,
+                        acmg_step,
+                        StepStatus.REQUIRES_REVIEW,
+                        error_code=review_code,
+                        error_message=review_message,
+                        metadata={
+                            "disease_context_present": bool(disease),
+                            "assessed_variants": assessed,
+                            "proposed_variants": proposed_variants,
+                            "classification_review_variants": review_variants,
+                            "blocked_variants": blocked_variants,
+                            "classification_automation": "PARTIAL_OR_REVIEW_REQUIRED",
+                            "next_step": "review",
+                        },
                     )
                     audit.record(
                         event_type="ACMG_ASSESSMENT_REQUIRES_MANUAL_REVIEW",
@@ -2185,32 +2237,40 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         analysis_id=analysis.id,
                         actor_type="SERVICE",
                         actor_id="siraloom-acmg-specification-engine",
-                        reason="No safely automatable validated ClinGen specification/context; routed to human review",
-                        payload={"assessed": assessed, "blocked_variants": blocked_variants},
+                        reason=review_message,
+                        payload={
+                            "assessed": assessed,
+                            "proposed_variants": proposed_variants,
+                            "classification_review_variants": review_variants,
+                            "blocked_variants": blocked_variants,
+                        },
                     )
                     db.commit()
-                    # Falls through to the review_step block below instead of returning,
-                    # so the case reaches REQUIRES_REVIEW with the annotated variants visible.
-
-                if not acmg_requires_human_review:
-                    mark_step(db, acmg_step, StepStatus.SUCCEEDED, metadata={
-                    "assessed_variants": assessed,
-                    "proposed_variants": proposed_variants,
-                    "blocked_variants": blocked_variants,
-                    "disease_context_present": bool(disease),
-                })
-                if not acmg_requires_human_review:
+                else:
+                    mark_step(
+                        db,
+                        acmg_step,
+                        StepStatus.SUCCEEDED,
+                        metadata={
+                            "assessed_variants": assessed,
+                            "proposed_variants": proposed_variants,
+                            "classification_review_variants": 0,
+                            "blocked_variants": blocked_variants,
+                            "classification_automation": "PROPOSED",
+                            "disease_context_present": bool(disease),
+                        },
+                    )
                     audit.record(
-                    event_type="ACMG_ASSESSMENT_COMPLETED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SERVICE",
-                    actor_id="siraloom-acmg-specification-engine",
-                    payload={
-                        "assessed_variants": assessed,
-                        "proposed_variants": proposed_variants,
-                        "blocked_variants": blocked_variants,
-                    },
+                        event_type="ACMG_ASSESSMENT_COMPLETED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SERVICE",
+                        actor_id="siraloom-acmg-specification-engine",
+                        payload={
+                            "assessed_variants": assessed,
+                            "proposed_variants": proposed_variants,
+                            "blocked_variants": blocked_variants,
+                        },
                     )
                 db.commit()
             except Exception as exc:
