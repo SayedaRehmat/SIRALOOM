@@ -97,6 +97,7 @@ def register_builtin_providers() -> ProviderRegistry:
     from backend.app.adapters.annotation.vep import VEPProvider
     from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
     from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
+    from backend.app.adapters.clingen.cspec_provider import ClinGenCSpecProvider
 
     from backend.app.domain.resource_capabilities import ResourceCapability
 
@@ -151,6 +152,16 @@ def register_builtin_providers() -> ProviderRegistry:
         descriptor=ProviderCapability(
             provider_id=ClinGenGeneDiseaseValidityProvider.provider_id,
             capabilities=frozenset({ResourceCapability.GENE_DISEASE}),
+            supported_builds=frozenset({"GRCh37", "GRCh38"}),
+        ),
+    )
+    registry.register(
+        provider_id=ClinGenCSpecProvider.provider_id,
+        provider_version="*",
+        factory=ClinGenCSpecProvider.from_execution_contract,
+        descriptor=ProviderCapability(
+            provider_id=ClinGenCSpecProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.ACMG_SPECIFICATION}),
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
     )
