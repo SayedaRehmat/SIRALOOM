@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     firebase_storage_enabled: bool = False
     firebase_storage_bucket: str | None = None
 
+    # Production tenant provisioning must be explicitly enabled. This prevents
+    # any verified Firebase identity from becoming an organization administrator
+    # merely by calling the public organization-onboarding endpoint.
+    organization_self_signup_enabled: bool = False
+
     celery_concurrency: int = 2
     celery_worker_max_tasks_per_child: int = 20
     celery_worker_prefetch_multiplier: int = 1
