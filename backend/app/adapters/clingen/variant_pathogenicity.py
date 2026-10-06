@@ -251,9 +251,9 @@ class ClinGenVariantPathogenicityProvider:
                     walk(item)
         walk(document)
         def first(*keys: str) -> str | None:
-            for key in keys:
-                value = flat.get(key.lower())
-                if value not in (None, "") and not isinstance(value, list):
+            wanted = {key.lower().replace("_", "") for key in keys}
+            for key, value in flat.items():
+                if key.lower().replace("_", "") in wanted and value not in (None, "") and not isinstance(value, list):
                     return str(value).strip()
             return None
         hgvs_values: list[str] = []
