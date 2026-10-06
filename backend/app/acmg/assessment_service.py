@@ -14,11 +14,9 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID, uuid4
 
-from backend.app.acmg.engine import ACMGEngine, ClassificationResult, CriterionAssessment
-from backend.app.acmg.combination_method import (
-    STANDARD_ACMG,
-    detect_combination_method,
-)
+from backend.app.acmg.engine import ClassificationResult, CriterionAssessment
+from backend.app.acmg.classification_engine import ClassificationEngineRouter
+from backend.app.acmg.combination_method import STANDARD_ACMG
 from backend.app.acmg.evaluators import (
     EvaluatorConfigurationError,
     EvaluatorResult,
@@ -130,7 +128,8 @@ class ACMGSpecificationAssessmentService:
         # selected specification uses a method that SIRALOOM cannot execute yet.
         # This preserves all scientific evidence and routes only the
         # classification-combination decision to human review.
-        combination = detect_combination_method(row)
+        engine_selection = ClassificationEngineRouter().select(row)
+        combination = engine_selection.decision
 
         normalized = (annotation.payload or {}).get("normalized") or {}
         variant_context = _variant_context(normalized)
@@ -321,7 +320,7 @@ class ACMGSpecificationAssessmentService:
         # Unsupported/alternative combination methods do not invalidate the
         # evidence or criterion assessments. They only prevent SIRALOOM from
         # making an automated final combination until a validated executor exists.
-        if not combination.executable:
+        if engine_selection.engine is None:
             return AutomatedAssessmentResult(
                 "REQUIRES_REVIEW",
                 binding,
@@ -334,10 +333,11 @@ class ACMGSpecificationAssessmentService:
                     **combination_metadata,
                     "classification_automation": "REQUIRES_REVIEW",
                     "review_reason": "COMBINATION_ENGINE_NOT_AVAILABLE",
+                    "engine_selection_reason": engine_selection.reason,
                 },
             )
 
-        classification = ACMGEngine().classify(merged)
+        classification = engine_selection.engine.classify(merged)
         return AutomatedAssessmentResult(
             "PROPOSED",
             binding,
@@ -351,55 +351,6 @@ class ACMGSpecificationAssessmentService:
                 "classification_automation": "PROPOSED",
             },
         )
-
-def _merge_criterion_assessments(
-    evaluator_assessments: list[CriterionAssessment],
-    source_assessments: list[CriterionAssessment],
-) -> tuple[list[CriterionAssessment], str | None]:
-    """Merge local evaluator and ClinGen source proposals deterministically.
-
-    A canonical ACMG criterion may occur from both paths. Compatible proposals
-    are deduplicated; conflicting strength, direction, or evidence are never
-    silently resolved. The caller must route such a conflict to human review.
-    """
-    merged: dict[str, CriterionAssessment] = {}
-    conflicts: list[str] = []
-
-    for assessment in [*evaluator_assessments, *source_assessments]:
-        key = assessment.criterion
-        existing = merged.get(key)
-        if existing is None:
-            merged[key] = assessment
-            continue
-
-        compatible = (
-            existing.strength == assessment.strength
-            and existing.direction == assessment.direction
-        )
-        if not compatible:
-            conflicts.append(
-                f"{key}: existing={existing.strength}/{existing.direction}, "
-                f"incoming={assessment.strength}/{assessment.direction}"
-            )
-            continue
-
-        merged[key] = CriterionAssessment(
-            criterion=key,
-            strength=existing.strength,
-            direction=existing.direction,
-            status="PROPOSED",
-            evidence_ids=tuple(dict.fromkeys((*existing.evidence_ids, *assessment.evidence_ids))),
-            reason="Compatible criterion proposals were deduplicated across evidence sources.",
-            metadata={
-                **existing.metadata,
-                "merge": "DEDUPLICATED_COMPATIBLE_PROPOSALS",
-                "merged_metadata": [existing.metadata, assessment.metadata],
-            },
-        )
-
-    if conflicts:
-        return list(merged.values()), "Conflicting criterion proposals require human review: " + "; ".join(conflicts)
-    return list(merged.values()), None
 
 
     def persist(
@@ -522,6 +473,55 @@ def _merge_criterion_assessments(
                     )
                 )
         db.flush()
+
+def _merge_criterion_assessments(
+    evaluator_assessments: list[CriterionAssessment],
+    source_assessments: list[CriterionAssessment],
+) -> tuple[list[CriterionAssessment], str | None]:
+    """Merge local evaluator and ClinGen source proposals deterministically.
+
+    A canonical ACMG criterion may occur from both paths. Compatible proposals
+    are deduplicated; conflicting strength, direction, or evidence are never
+    silently resolved. The caller must route such a conflict to human review.
+    """
+    merged: dict[str, CriterionAssessment] = {}
+    conflicts: list[str] = []
+
+    for assessment in [*evaluator_assessments, *source_assessments]:
+        key = assessment.criterion
+        existing = merged.get(key)
+        if existing is None:
+            merged[key] = assessment
+            continue
+
+        compatible = (
+            existing.strength == assessment.strength
+            and existing.direction == assessment.direction
+        )
+        if not compatible:
+            conflicts.append(
+                f"{key}: existing={existing.strength}/{existing.direction}, "
+                f"incoming={assessment.strength}/{assessment.direction}"
+            )
+            continue
+
+        merged[key] = CriterionAssessment(
+            criterion=key,
+            strength=existing.strength,
+            direction=existing.direction,
+            status="PROPOSED",
+            evidence_ids=tuple(dict.fromkeys((*existing.evidence_ids, *assessment.evidence_ids))),
+            reason="Compatible criterion proposals were deduplicated across evidence sources.",
+            metadata={
+                **existing.metadata,
+                "merge": "DEDUPLICATED_COMPATIBLE_PROPOSALS",
+                "merged_metadata": [existing.metadata, assessment.metadata],
+            },
+        )
+
+    if conflicts:
+        return list(merged.values()), "Conflicting criterion proposals require human review: " + "; ".join(conflicts)
+    return list(merged.values()), None
 
 
 def _resolve_evidence_ids(
