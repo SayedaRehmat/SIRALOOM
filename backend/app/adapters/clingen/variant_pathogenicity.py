@@ -620,17 +620,28 @@ class ClinGenVariantPathogenicityProvider:
         ]
 
     @classmethod
-    def _split_codes(cls, value: str | None) -> tuple[str, ...]:
-        if not value:
+    def _split_codes(cls, value: Any) -> tuple[str, ...]:
+        if value is None or value == "":
             return ()
-        if value.startswith("[") and value.endswith("]"):
-            values = cls._split_list(value)
+        if isinstance(value, (list, tuple, set)):
+            values: list[str] = []
+            for item in value:
+                if isinstance(item, (list, tuple, set)):
+                    values.extend(str(x).strip() for x in item if str(x).strip())
+                elif str(item).strip():
+                    values.append(str(item).strip())
         else:
-            values = [
-                item.strip()
-                for item in value.replace(";", ",").split(",")
-                if item.strip()
-            ]
+            text = str(value).strip()
+            if not text:
+                return ()
+            if text.startswith("[") and text.endswith("]"):
+                values = cls._split_list(text)
+            else:
+                values = [
+                    item.strip()
+                    for item in text.replace(";", ",").replace("|", ",").split(",")
+                    if item.strip()
+                ]
         return tuple(dict.fromkeys(values))
 
     @staticmethod
