@@ -321,7 +321,7 @@ def _effective_code(criterion: str, strength: str, allowed: tuple[str, ...]) -> 
         return criterion
     if strength == STANDALONE:
         return criterion
-    return f"{criterion}_{strength.title().replace('_', '')}"
+    return f"{criterion}_{strength.title()}"
 
 
 __all__ = [
