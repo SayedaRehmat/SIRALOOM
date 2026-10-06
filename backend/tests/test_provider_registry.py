@@ -4,6 +4,7 @@ from backend.app.domain.provider_registry import register_builtin_providers
 def test_builtin_registry_contains_only_real_implementations():
     registry = register_builtin_providers()
     ids = {(item.provider_id, item.provider_version) for item in registry.list()}
+    assert ("VEP", "*") in ids
     assert ("GeneBe", "api-public-v1") in ids
     assert ("gnomad-graphql", "graphql") in ids
     assert ("gnomad-local-tabix", "vcf-tabix") in ids
