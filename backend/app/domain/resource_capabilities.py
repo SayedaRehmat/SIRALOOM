@@ -91,6 +91,9 @@ def infer_capabilities(
         ("GeneBe", "ANNOTATION"): {
             ResourceCapability.ANNOTATION,
         },
+        ("VEP", "ANNOTATION"): {
+            ResourceCapability.ANNOTATION,
+        },
         ("GeneBe", "POPULATION"): {
             ResourceCapability.POPULATION_FREQUENCY,
         },
