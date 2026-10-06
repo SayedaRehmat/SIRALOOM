@@ -159,7 +159,7 @@ def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
                         },
                         "statementOutcome": {"label": "Met"},
                         "contribution": [
-                            {"comments": "Functional assay supports the classification.", "pmids": ["12345678"]}
+                            {"comments": "Functional assay supports the classification.", "pmids": ["https://pubmed.ncbi.nlm.nih.gov/12345678/"]}
                         ]
                     }
                 ]
@@ -179,4 +179,6 @@ def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
     assert criterion.rationale == "Functional assay supports the classification."
     assert criterion.pmids == ("12345678",)
     assert criterion.strength == "Strong"
+    assert criterion.pmids == ("12345678",)
+    assert normalized["source_record_id"].endswith("abc-123")
     assert normalized["raw"] == document
