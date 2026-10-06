@@ -72,6 +72,13 @@ class ProviderRegistry:
 
 registry = ProviderRegistry()
 
+# Some providers require governed resource identity/qualification metadata in addition
+# to the execution contract, so their workflow adapter constructs them directly.
+SPECIALIZED_PROVIDER_IMPLEMENTATIONS = frozenset({"NCBI ClinVar"})
+
+def provider_implementation_exists(provider_id: str, provider_version: str) -> bool:
+    return registry.resolve(provider_id=provider_id, provider_version=provider_version) is not None or provider_id in SPECIALIZED_PROVIDER_IMPLEMENTATIONS
+
 
 def register_builtin_providers() -> ProviderRegistry:
     """Register providers that are actually implemented in this repository.
