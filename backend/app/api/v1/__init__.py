@@ -4,6 +4,7 @@ from .analyses import router as analyses_router
 from .variants import router as variants_router
 from .populations import router as populations_router
 from .review import router as review_router
+from .workflow import router as workflow_router
 from .reports import router as reports_router
 from .audit import router as audit_router
 from .health import router as health_router
