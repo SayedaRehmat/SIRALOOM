@@ -125,21 +125,12 @@ class ACMGSpecificationAssessmentService:
             return AutomatedAssessmentResult(binding.status, binding, tuple(), None)
 
         profile = dict(row.criteria or {})
+        # Combination-method detection governs only the final combination stage.
+        # Evidence evaluators and source assertions must still run when the
+        # selected specification uses a method that SIRALOOM cannot execute yet.
+        # This preserves all scientific evidence and routes only the
+        # classification-combination decision to human review.
         combination = detect_combination_method(row)
-        if not combination.executable:
-            return AutomatedAssessmentResult(
-                "REQUIRES_REVIEW",
-                binding,
-                tuple(),
-                None,
-                combination_method=combination.method,
-                combination_metadata={
-                    **combination.metadata,
-                    "reason": combination.reason,
-                    "specification_id": row.specification_id,
-                    "specification_version": row.version,
-                },
-            )
 
         normalized = (annotation.payload or {}).get("normalized") or {}
         variant_context = _variant_context(normalized)
@@ -287,6 +278,13 @@ class ACMGSpecificationAssessmentService:
             evaluator_assessments,
             source_assessments,
         )
+        combination_metadata = {
+            **combination.metadata,
+            "reason": combination.reason,
+            "specification_id": row.specification_id,
+            "specification_version": row.version,
+        }
+
         if merge_error:
             return AutomatedAssessmentResult(
                 "REQUIRES_REVIEW",
@@ -295,6 +293,13 @@ class ACMGSpecificationAssessmentService:
                 None,
                 tuple(merged),
                 tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "CONFLICTING_CRITERION_PROPOSALS",
+                    "merge_error": merge_error,
+                },
             )
 
         if not merged:
@@ -305,6 +310,31 @@ class ACMGSpecificationAssessmentService:
                 None,
                 (),
                 tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "NO_PROPOSED_CRITERIA",
+                },
+            )
+
+        # Unsupported/alternative combination methods do not invalidate the
+        # evidence or criterion assessments. They only prevent SIRALOOM from
+        # making an automated final combination until a validated executor exists.
+        if not combination.executable:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "COMBINATION_ENGINE_NOT_AVAILABLE",
+                },
             )
 
         classification = ACMGEngine().classify(merged)
@@ -317,10 +347,8 @@ class ACMGSpecificationAssessmentService:
             tuple(source_results),
             combination_method=combination.method,
             combination_metadata={
-                **combination.metadata,
-                "reason": combination.reason,
-                "specification_id": row.specification_id,
-                "specification_version": row.version,
+                **combination_metadata,
+                "classification_automation": "PROPOSED",
             },
         )
 
