@@ -298,6 +298,9 @@ class ClinGenVariantPathogenicityProvider:
             "published_date": first("published_on", "published_date", "approved_on"),
             "preferred_variant_title": first("preferred_variant_title"),
             "mondo_id": first("mondo", "mondo_id"),
+            "source_record_id": cls._find_string(
+                document, "@id", "uuid", "classification_uuid", "classification_id", "id"
+            ),
             "raw": document,
         }
 
@@ -371,9 +374,8 @@ class ClinGenVariantPathogenicityProvider:
                             value,
                             {"comments", "explanation", "rationale", "summary", "narrative", "notes", "text"},
                         )
-                        pmids = all_texts(
-                            value,
-                            {"pmid", "pmids", "pubmed_id", "pubmed_ids"},
+                        pmids = cls._normalize_pmids(
+                            all_texts(value, {"pmid", "pmids", "pubmed_id", "pubmed_ids"})
                         )
                         item = ClinGenCriterionAssertion(
                             code=str(code).strip(),
@@ -393,7 +395,9 @@ class ClinGenVariantPathogenicityProvider:
                 status = value.get("status") or value.get("outcome")
                 if code and status and not isinstance(code, (dict, list)) and not isinstance(status, (dict, list)):
                     rationale = text_at(value, {"explanation", "rationale", "summary", "narrative", "comments", "notes", "text"})
-                    pmids = all_texts(value, {"pmid", "pmids", "pubmed_id", "pubmed_ids"})
+                    pmids = cls._normalize_pmids(
+                        all_texts(value, {"pmid", "pmids", "pubmed_id", "pubmed_ids"})
+                    )
                     strength = text_at(value, {"strength", "modified_strength", "criterion_strength", "evidence_strength"})
                     item = ClinGenCriterionAssertion(
                         code=str(code).strip(),
@@ -565,10 +569,29 @@ class ClinGenVariantPathogenicityProvider:
             criterion_assertions=normalized.get("criterion_assertions", ()),
             version=normalized.get("version"),
             published_date=normalized.get("published_date"),
-            source_record_id=f"ERepo:{record_id}",
+            source_record_id=(
+                f"ERepo:{normalized.get('source_record_id')}"
+                if normalized.get("source_record_id")
+                else f"ERepo:{record_id}"
+            ),
             payload=payload,
             record_sha256=digest,
         )
+
+    @staticmethod
+    def _normalize_pmids(values: Iterable[str]) -> tuple[str, ...]:
+        """Normalize PMID literals and PubMed URLs to stable numeric identifiers."""
+        out: list[str] = []
+        for value in values:
+            text = str(value).strip()
+            if not text:
+                continue
+            candidate = text.rstrip("/").rsplit("/", 1)[-1] if "://" in text else text
+            if candidate.lower().startswith("pmid:"):
+                candidate = candidate.split(":", 1)[1].strip()
+            if candidate.isdigit():
+                out.append(candidate)
+        return tuple(dict.fromkeys(out))
 
     @staticmethod
     def _split_list(value: str | None) -> list[str]:
