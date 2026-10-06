@@ -210,7 +210,14 @@ class EvidenceEngine:
         for assertion in assertions:
             classification = _normalize_text(getattr(assertion, "classification", None))
             low = (classification or "").lower()
-            direction = "SUPPORTS" if "pathogenic" in low else "REFUTES" if "benign" in low else "NEUTRAL"
+            if "conflict" in low or "uncertain" in low:
+                direction = "NEUTRAL"
+            elif "pathogenic" in low:
+                direction = "SUPPORTS"
+            elif "benign" in low:
+                direction = "REFUTES"
+            else:
+                direction = "NEUTRAL"
             source_record_id = str(getattr(assertion, "source_record_id", "") or "")
             payload = {
                 "classification": classification,
@@ -223,6 +230,22 @@ class EvidenceEngine:
                 "expert_panel": getattr(assertion, "expert_panel", None),
                 "met_codes": list(getattr(assertion, "met_codes", ()) or ()),
                 "unmet_codes": list(getattr(assertion, "unmet_codes", ()) or ()),
+                "criterion_assertions": [
+                    {
+                        "code": getattr(item, "code", None),
+                        "status": getattr(item, "status", None),
+                        "source": getattr(item, "source", None),
+                        "rationale": getattr(item, "rationale", None),
+                    }
+                    for item in (getattr(assertion, "criterion_assertions", ()) or ())
+                ],
+                "criterion_detail_available": bool(
+                    (getattr(assertion, "payload", {}) or {}).get("criterion_detail_available")
+                ),
+                "preferred_variant_title": (getattr(assertion, "payload", {}) or {}).get(
+                    "preferred_variant_title"
+                ),
+                "mondo_id": (getattr(assertion, "payload", {}) or {}).get("mondo_id"),
                 "version": getattr(assertion, "version", None),
                 "published_date": getattr(assertion, "published_date", None),
                 "record_sha256": getattr(assertion, "record_sha256", None),
