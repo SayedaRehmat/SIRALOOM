@@ -58,3 +58,9 @@ def test_distinct_criteria_are_preserved():
 
     assert error is None
     assert {item.criterion for item in merged} == {"PS3", "PM2"}
+
+
+def test_assessment_service_exposes_persist_as_public_method():
+    from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
+
+    assert callable(getattr(ACMGSpecificationAssessmentService, "persist", None))
