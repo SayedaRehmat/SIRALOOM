@@ -305,9 +305,17 @@ def _normalize_strength(value: Any) -> str | None:
 
 
 def _effective_code(criterion: str, strength: str, allowed: tuple[str, ...], rule: dict[str, Any]) -> str | None:
-    # ClinGen guidance recommends renaming a criterion when its strength is
-    # modified. Keep the baseline code unchanged when it is used at baseline
-    # strength, and expose the modified code for downstream review otherwise.
+    # A renamed ACMG code is appropriate only when the active CSpec rule
+    # explicitly declares a strength modification. A plain structured
+    # strength field is the rule's allowed strength, not evidence that the
+    # code itself was renamed.
+    modification_type = str(
+        rule.get("modification_type")
+        or rule.get("modificationType")
+        or ""
+    ).strip().casefold().replace("-", "_").replace(" ", "_")
+    if modification_type != "strength":
+        return criterion
     baseline = {
         "PVS1": "VERY_STRONG",
         "BA1": "STANDALONE",
