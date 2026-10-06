@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db import models  # noqa: F401
+from backend.app.infrastructure.db import organization_invitations  # noqa: F401
 
 
 config = context.config
