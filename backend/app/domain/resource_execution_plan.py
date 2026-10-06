@@ -54,11 +54,12 @@ class ResourceExecutionPlan:
     optional: tuple[PlannedResource, ...]
     unavailable_optional: tuple[PlannedResource, ...]
     unavailable_required: tuple[PlannedResource, ...]
+    unavailable_required_capabilities: tuple[ResourceCapability, ...]
     selected: tuple[PlannedResource, ...]
 
     @property
     def can_continue(self) -> bool:
-        return not self.unavailable_required
+        return not self.unavailable_required and not self.unavailable_required_capabilities
 
     def for_capability(self, capability: ResourceCapability) -> tuple[PlannedResource, ...]:
         return tuple(item for item in self.selected if item.capability == capability)
@@ -104,6 +105,7 @@ def build_resource_execution_plan(
     optional: list[PlannedResource] = []
     unavailable_optional: list[PlannedResource] = []
     unavailable_required: list[PlannedResource] = []
+    unavailable_required_capabilities: list[ResourceCapability] = []
     selected: list[PlannedResource] = []
 
     for requirement in requirements:
@@ -180,6 +182,7 @@ def build_resource_execution_plan(
             unavailable = matches or []
             if requirement.required:
                 unavailable_required.extend(unavailable)
+                unavailable_required_capabilities.append(requirement.capability)
             else:
                 unavailable_optional.extend(unavailable)
 
@@ -194,5 +197,6 @@ def build_resource_execution_plan(
         optional=tuple(optional),
         unavailable_optional=tuple(unavailable_optional),
         unavailable_required=tuple(unavailable_required),
+        unavailable_required_capabilities=tuple(dict.fromkeys(unavailable_required_capabilities)),
         selected=tuple(selected),
     )
