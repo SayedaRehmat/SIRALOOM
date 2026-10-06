@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -84,7 +85,7 @@ def persist_clingen_source_assertions(
             continue
 
         row = ACMGSourceAssertion(
-            id=__import__("uuid").uuid4(),
+            id=uuid4(),
             analysis_id=evidence.analysis_id,
             variant_id=evidence.variant_id,
             evidence_id=evidence.id,
