@@ -12,6 +12,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
+from backend.app.adapters.annotation.vep import VEPProviderError
+from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
@@ -26,6 +28,9 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
+from backend.app.domain.resource_capabilities import ResourceCapability, CapabilityRequirement
+from backend.app.domain.resource_execution_plan import build_resource_execution_plan
+from backend.app.domain.provider_registry import register_builtin_providers
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
@@ -961,87 +966,73 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         db.commit()
         _ensure_execution_partitions(db, analysis.id, "normalize", "annotate")
 
-        # 3. GeneBe annotation provider (development/research path).
-        # Each batch is durably checkpointed in workflow_steps.metadata_json.
-        # Annotation rows are committed before the batch checkpoint is marked
-        # successful, so a worker crash can safely resume by inspecting persisted rows.
+        # 3. Annotation is selected from the governed execution plan.
+        # GeneBe is a SIRALOOM trial provider only. Laboratory deployments use
+        # only organization-approved annotation resources with real provider
+        # implementations (for example, VEP).
         annotation_step = _step(db, analysis.id, "annotate")
         provider = None
+        annotation_resource = None
         if annotation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, annotation_step, StepStatus.RUNNING)
             try:
-                if not settings.genebe_enabled:
-                    mark_step(
-                        db,
-                        annotation_step,
-                        StepStatus.BLOCKED,
-                        error_code="ANNOTATION_PROVIDER_DISABLED",
-                        error_message="GeneBe development provider is disabled and no alternative Phase 1 provider is configured.",
-                    )
-                    analysis.status = AnalysisStatus.BLOCKED
-                    db.commit()
-                    audit.record(
-                        event_type="WORKFLOW_BLOCKED",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="annotation",
-                        reason="No Phase 1 annotation provider enabled",
-                    )
-                    db.commit()
-                    return
-
-                if normalize_build(analysis.reference_build) not in GeneBeProvider.supported_builds:
-                    mark_step(
-                        db,
-                        annotation_step,
-                        StepStatus.BLOCKED,
-                        error_code="ANNOTATION_BUILD_UNSUPPORTED",
-                        error_message=(
-                            f"GeneBe annotation is not build-native for {normalize_build(analysis.reference_build)}; "
-                            "a provider that annotates the selected assembly without implicit liftover is required."
-                        ),
-                        metadata={
-                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
-                            "provider": GeneBeProvider.provider_id,
-                            "provider_supported_builds": sorted(GeneBeProvider.supported_builds),
-                            "analysis_reference_build": normalize_build(analysis.reference_build),
-                        },
-                    )
-                    analysis.status = AnalysisStatus.BLOCKED
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="ANNOTATION_BUILD_UNSUPPORTED",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="annotation",
-                        reason="Selected genome build is not supported natively by the configured annotation provider.",
-                        payload={
-                            "provider": provider.provider_id,
-                            "provider_supported_builds": sorted(provider.supported_builds),
-                            "analysis_reference_build": normalize_build(analysis.reference_build),
-                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
-                        },
-                    )
-                    db.commit()
-                    return
-
-                batch_limit = min(max(1, settings.genebe_max_batch), 1000)
-                requested_annotation_resource_id = (analysis.configuration or {}).get("annotation_resource_id")
                 case = db.get(Case, analysis.case_id)
                 if case is None:
-                    mark_step(
-                        db,
-                        annotation_step,
-                        StepStatus.FAILED,
-                        error_code="CASE_NOT_FOUND",
-                        error_message="Analysis case was not found while resolving the organization-approved annotation resource.",
+                    raise ResourceConsumptionError(
+                        "CASE_NOT_FOUND",
+                        "Analysis case was not found while resolving the annotation resource.",
                     )
-                    analysis.status = AnalysisStatus.FAILED
-                    db.commit()
-                    return
+
+                registry = register_builtin_providers()
+                plan = build_resource_execution_plan(
+                    db,
+                    organization_id=case.organization_id,
+                    requirements=(
+                        CapabilityRequirement(ResourceCapability.ANNOTATION, required=True),
+                    ),
+                )
+                candidates = plan.for_capability(ResourceCapability.ANNOTATION)
+                if not candidates:
+                    raise ResourceConsumptionError(
+                        "ANNOTATION_PROVIDER_UNAVAILABLE",
+                        "No executable annotation provider is registered for this deployment.",
+                    )
+
+                requested_annotation_resource_id = (analysis.configuration or {}).get(
+                    "annotation_resource_id"
+                )
+                selected = None
+                if requested_annotation_resource_id:
+                    for candidate in candidates:
+                        if str(candidate.resource.id) == str(requested_annotation_resource_id):
+                            selected = candidate
+                            break
+                if selected is None:
+                    selected = candidates[0]
+
+                annotation_resource = selected.resource
+                annotation_execution = resolve_resource_execution(
+                    db,
+                    resource=annotation_resource,
+                )
+                implementation = registry.require(
+                    provider_id=annotation_execution.contract.provider_id,
+                    provider_version=annotation_execution.contract.provider_version,
+                )
+                provider = implementation.factory(annotation_execution.contract)
+
+                if not hasattr(provider, "annotate"):
+                    raise ResourceConsumptionError(
+                        "ANNOTATION_PROVIDER_NOT_EXECUTABLE",
+                        f"Provider {annotation_execution.contract.provider_id} has no batch annotation operation.",
+                    )
+
+                batch_limit = (
+                    min(max(1, settings.genebe_max_batch), 1000)
+                    if provider.provider_id == "GeneBe"
+                    else 250
+                )
+                requested_annotation_resource_id = str(annotation_resource.id)
 
                 resolution = resolve_resource_with_fallback(
                     db,
@@ -1049,8 +1040,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     requested_resource_id=requested_annotation_resource_id,
                     expected_type="ANNOTATION",
                     expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=provider.provider_id,
-                    expected_provider_version=provider.provider_version,
+                    expected_provider=annotation_resource.provider,
+                    expected_provider_version=annotation_execution.contract.provider_version,
                 )
                 record_workflow_decision(
                     db,
@@ -1066,61 +1057,56 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     resource_id=resolution.requested_resource_id,
                     fallback_resource_id=resolution.fallback_resource_id,
                     metadata={
-                        "provider": provider.provider_id,
+                        "capability": ResourceCapability.ANNOTATION.value,
+                        "provider": annotation_resource.provider,
+                        "provider_version": annotation_execution.contract.provider_version,
                         "reference_build": normalize_build(analysis.reference_build),
-                        "fallback_used": resolution.used_fallback,
+                        "deployment_profile": plan.profile_type,
                     },
                 )
                 db.commit()
 
                 if resolution.resource is None:
-                    status = (
-                        StepStatus.REQUIRES_REVIEW
-                        if resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
-                        else StepStatus.RESOURCE_FAILURE
+                    raise ResourceConsumptionError(
+                        resolution.decision.code,
+                        resolution.decision.message,
                     )
-                    mark_step(
-                        db,
-                        annotation_step,
-                        status,
-                        error_code=resolution.decision.code,
-                        error_message=resolution.decision.message,
-                        metadata={
-                            "next_action": resolution.decision.action.value,
-                            "requested_resource_id": str(resolution.requested_resource_id)
-                            if resolution.requested_resource_id
-                            else None,
-                        },
-                    )
-                    analysis.status = (
-                        AnalysisStatus.REQUIRES_REVIEW
-                        if status is StepStatus.REQUIRES_REVIEW
-                        else AnalysisStatus.RESOURCE_FAILURE
-                    )
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="ANNOTATION_RESOURCE_DECISION",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="resource-registry",
-                        reason=resolution.decision.message,
-                        payload={
-                            "action": resolution.decision.action.value,
-                            "code": resolution.decision.code,
-                            "requested_resource_id": str(resolution.requested_resource_id)
-                            if resolution.requested_resource_id
-                            else None,
-                        },
-                    )
-                    db.commit()
-                    return
+                annotation_resource = resolution.resource
+                annotation_execution = resolve_resource_execution(
+                    db,
+                    resource=annotation_resource,
+                )
+                implementation = registry.require(
+                    provider_id=annotation_execution.contract.provider_id,
+                    provider_version=annotation_execution.contract.provider_version,
+                )
+                provider = implementation.factory(annotation_execution.contract)
+            except (ResourceConsumptionError, ResourceExecutionError) as exc:
+                mark_step(
+                    db,
+                    annotation_step,
+                    StepStatus.BLOCKED,
+                    error_code=getattr(exc, "code", "ANNOTATION_RESOURCE_UNAVAILABLE"),
+                    error_message=str(exc),
+                    metadata={"next_step": "RESOURCE_REQUIRED"},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                db.commit()
+                audit.record(
+                    event_type="ANNOTATION_RESOURCE_DECISION",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="resource-registry",
+                    reason=str(exc),
+                )
+                db.commit()
+                return
 
                 annotation_resource = resolution.resource
                 try:
                     annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
-                    provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                    provider = registry.require(provider_id=annotation_execution.contract.provider_id, provider_version=annotation_execution.contract.provider_version).factory(annotation_execution.contract)
                 except (ResourceExecutionError, GeneBeError) as exc:
                     mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
                     analysis.status = AnalysisStatus.RESOURCE_FAILURE
@@ -1231,7 +1217,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                         complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                         db.commit()
-                    except GeneBeError as exc:
+                    except (GeneBeError, VEPProviderError) as exc:
                         complete_resource_execution(
                             db,
                             execution_record,
@@ -1288,7 +1274,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             continue
                         payload = payloads_by_key[canonical]
                         provenance = dict(payload.pop("_siraloom_annotation_provenance", {}) or {})
-                        normalized = normalize_gene_be_variant(payload)
+                        normalized = normalize_annotation_payload(provider.provider_id, payload)
                         db.add(
                             Annotation(
                                 id=__import__("uuid").uuid4(),
@@ -1418,7 +1404,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # 4. Population observations: GeneBe-derived global + optional direct gnomAD MID/global.
+        # 4. Population observations are executed only for resources adopted by the deployment profile.
         population_step = _step(db, analysis.id, "population")
         if population_step.status != StepStatus.SUCCEEDED:
             mark_step(db, population_step, StepStatus.RUNNING)
