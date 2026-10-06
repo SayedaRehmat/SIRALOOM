@@ -67,12 +67,14 @@ class ClinGenGeneDiseaseValidityProvider:
             raise ClinGenGeneDiseaseValidityError(f"ClinGen Gene-Disease Validity file not found: {self.path}")
 
         out: list[GeneDiseaseAssertion] = []
-        with self.path.open("r", encoding="utf-8-sig", newline="") as handle:
-            sample = handle.read(8192)
-            handle.seek(0)
-            delimiter = self.delimiter or ("\t" if "\t" in sample and sample.count("\t") >= sample.count(",") else ",")
-            reader = csv.reader(handle, delimiter=delimiter)
-            rows = list(reader)
+        raw_text = self.path.read_text(encoding="utf-8-sig")
+        # Some governed transfers preserve newline characters as the literal two-character sequence \\n        # Normalize that transport artifact before CSV parsing.
+        raw_text = raw_text.replace("\\\\n", "\n")
+        from io import StringIO
+        sample = raw_text[:8192]
+        delimiter = self.delimiter or ("\t" if "\t" in sample and sample.count("\t") >= sample.count(",") else ",")
+        reader = csv.reader(StringIO(raw_text), delimiter=delimiter)
+        rows = list(reader)
 
         # Some exported fixtures/pipeline transfers encode line breaks literally
         # as the two characters \\n. Normalize those before header detection so
