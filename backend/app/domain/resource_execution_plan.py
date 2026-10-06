@@ -20,9 +20,10 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.provider_registry import register_builtin_providers
+from backend.app.domain.provider_registry import provider_implementation_exists, register_builtin_providers
 from backend.app.domain.resource_capabilities import (
     CapabilityRequirement,
+    ProviderCapability,
     ResourceCapability,
     ResourceExecutionAvailability,
     infer_capabilities,
@@ -135,7 +136,10 @@ def build_resource_execution_plan(
                 provider_id=execution.contract.provider_id,
                 provider_version=execution.contract.provider_version,
             )
-            if implementation is None:
+            if implementation is None and not provider_implementation_exists(
+                execution.contract.provider_id,
+                execution.contract.provider_version,
+            ):
                 matches.append(
                     PlannedResource(
                         resource=resource,
@@ -147,7 +151,11 @@ def build_resource_execution_plan(
                 )
                 continue
 
-            descriptor = implementation.descriptor
+            descriptor = implementation.descriptor if implementation is not None else ProviderCapability(
+                provider_id=execution.contract.provider_id,
+                capabilities=frozenset({requirement.capability}),
+                supported_builds=frozenset({resource.genome_build}) if resource.genome_build else frozenset(),
+            )
             if (
                 descriptor.supported_builds
                 and resource.genome_build
