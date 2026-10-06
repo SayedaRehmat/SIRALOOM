@@ -6,11 +6,12 @@ VCEP classification, condition, inheritance, variant identity, criterion-level
 met/not-met codes, version and expert-panel provenance as source evidence. It
 never converts a ClinGen assertion into a SIRALOOM final classification.
 
-The ERepo summary export is intentionally treated as a summary-level contract:
-it exposes ACMG/AMP criterion codes but not the per-code narrative comments
-shown on individual ERepo classification pages. SIRALOOM therefore stores the
-codes as structured criterion observations and does not invent criterion
-rationales that are absent from the governed export.
+The ERepo summary export is a summary-level contract: it exposes ACMG/AMP
+criterion codes but not the per-code narrative comments shown on individual
+classification records. The governed ERepo classification API is a separate
+detail contract and, when selected by the resource execution contract,
+SIRALOOM preserves the published SEPIO criterion assessment, outcome,
+strength, curator comments and PMIDs when those fields are present.
 """
 from __future__ import annotations
 
