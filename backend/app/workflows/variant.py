@@ -1857,6 +1857,37 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             gene_disease_records=gene_disease_records, literature_records=literature_records,
                         ))
 
+                        gene = ((ann.payload or {}).get("gene") or {}).get("symbol") or (ann.payload or {}).get("gene_symbol")
+                        hgvs_values = list((ann.payload or {}).get("hgvs_consequences") or [])
+                        if (ann.payload or {}).get("hgvs"):
+                            hgvs_values.append((ann.payload or {}).get("hgvs"))
+                        if clingen_vp_provider is not None and clingen_vp_resource is not None and clingen_vp_execution is not None and gene:
+                            query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "hgvs": hgvs_values, "resource_id": str(clingen_vp_execution.resource_id), "resource_version": clingen_vp_execution.resource_version, "contract_hash": clingen_vp_execution.contract_hash}
+                            request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                            execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_vp_execution, requested_resource_id=clingen_vp_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_VARIANT_PATHOGENICITY_QUERY", "query": query_material})
+                            try:
+                                assertions = clingen_vp_provider.query_variant(gene=gene, hgvs=hgvs_values)
+                                response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
+                                response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                                complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
+                                records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
+                            except Exception as exc:
+                                complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
+                                raise
+
+                        if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
+                            query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
+                            request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                            execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_gdv_execution, requested_resource_id=clingen_gdv_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY", "query": query_material})
+                            try:
+                                assertions = clingen_gdv_provider.query_gene(gene=gene)
+                                response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
+                                response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                                complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
+                                records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
+                            except Exception as exc:
+                                complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
+                                raise
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
