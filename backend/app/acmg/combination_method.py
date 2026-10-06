@@ -39,6 +39,30 @@ def detect_combination_method(specification: Any) -> CombinationMethodDecision:
 
     explicit = _collect_explicit_values(criteria, raw_payload)
     combined_text = " ".join(explicit).casefold()
+    keyed_methods = _collect_keyed_method_values(criteria, raw_payload)
+    if keyed_methods:
+        method_text = " ".join(keyed_methods).casefold()
+        if not _contains_any(method_text, (
+            "acmg/amp",
+            "acmg amp",
+            "richards",
+            "standard",
+            "baseline",
+            "point",
+            "bayes",
+            "modified",
+            "combining rules",
+            "combination rules",
+        )):
+            return CombinationMethodDecision(
+                UNSUPPORTED,
+                False,
+                "The active ClinGen specification declares a combination method that SIRALOOM does not recognize; human review is required.",
+                {
+                    "detection_basis": "UNKNOWN_EXPLICIT_COMBINATION_METHOD",
+                    "declared_methods": keyed_methods,
+                },
+            )
 
     # Strongest signals first. A specification that explicitly says to use a
     # point attachment must never be sent through the ordinary ACMG engine.
@@ -160,6 +184,27 @@ def _collect_explicit_values(criteria: dict[str, Any], raw_payload: dict[str, An
     walk(raw_payload)
     return values
 
+
+def _collect_keyed_method_values(criteria: dict[str, Any], raw_payload: dict[str, Any]) -> list[str]:
+    values: list[str] = []
+
+    def walk(value: Any, *, key: str | None = None) -> None:
+        if isinstance(value, str):
+            normalized_key = (key or "").casefold()
+            if "combiningmethod" in normalized_key or "combinationmethod" in normalized_key:
+                values.append(value)
+            return
+        if isinstance(value, dict):
+            for child_key, child_value in value.items():
+                walk(child_value, key=str(child_key))
+            return
+        if isinstance(value, (list, tuple, set)):
+            for child in value:
+                walk(child, key=key)
+
+    walk(criteria)
+    walk(raw_payload)
+    return values
 
 def _contains_any(text: str, needles: tuple[str, ...]) -> bool:
     return any(needle in text for needle in needles)
