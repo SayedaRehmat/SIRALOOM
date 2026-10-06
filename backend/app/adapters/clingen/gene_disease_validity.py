@@ -80,7 +80,7 @@ class ClinGenGeneDiseaseValidityProvider:
         expanded: list[list[str]] = []
         for row in rows:
             if len(row) == 1 and "\\n" in row[0]:
-                expanded.extend([[part] for part in row[0].split("\\n")])
+                expanded.extend(list(csv.reader(row[0].split("\\n"), delimiter=delimiter)))
             else:
                 expanded.append(row)
         rows = expanded
