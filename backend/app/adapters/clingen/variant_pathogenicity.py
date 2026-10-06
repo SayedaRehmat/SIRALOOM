@@ -17,6 +17,8 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from urllib.parse import quote, urlencode
+from urllib.request import Request, urlopen
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -64,16 +66,25 @@ class ClinGenVariantPathogenicityProvider:
     # not by this provider descriptor.
     supported_builds = frozenset({"GRCh37", "GRCh38"})
 
-    def __init__(self, *, resource_path: str, delimiter: str | None = None) -> None:
-        self.path = Path(resource_path)
+    def __init__(
+        self,
+        *,
+        resource_path: str | None = None,
+        delimiter: str | None = None,
+        api_base_url: str | None = None,
+        timeout_seconds: float = 30.0,
+    ) -> None:
+        self.path = Path(resource_path) if resource_path else None
         self.delimiter = delimiter
+        self.api_base_url = (api_base_url or "").rstrip("/")
+        self.timeout_seconds = timeout_seconds
 
     @classmethod
     def from_execution_contract(cls, resolved: Any):
         contract = resolved.contract
-        if contract.access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+        if contract.access_method not in {"LOCAL", "FILE", "LOCAL_ONLY", "HTTP_API", "API", "REMOTE_API"}:
             raise ClinGenVariantPathogenicityError(
-                "ClinGen Variant Pathogenicity requires the governed official CSV/TSV download as a local/file resource"
+                "ClinGen Variant Pathogenicity supports governed official CSV/TSV files or the official ERepo REST API"
             )
         if not contract.location:
             raise ClinGenVariantPathogenicityError(
@@ -96,7 +107,9 @@ class ClinGenVariantPathogenicityProvider:
         caid: str | None = None,
         clinvar_id: str | None = None,
     ) -> list[ClinGenVariantAssertion]:
-        if not self.path.is_file():
+        if self.api_base_url:
+            return self._query_api(gene=gene, hgvs=hgvs, caid=caid, clinvar_id=clinvar_id)
+        if self.path is None or not self.path.is_file():
             raise ClinGenVariantPathogenicityError(
                 f"ClinGen Variant Pathogenicity file not found: {self.path}"
             )
@@ -126,6 +139,151 @@ class ClinGenVariantPathogenicityProvider:
                 out.append(self._to_assertion(normalized, row))
 
         return out
+
+    def _query_api(self, *, gene: str | None, hgvs: Iterable[str], caid: str | None, clinvar_id: str | None) -> list[ClinGenVariantAssertion]:
+        """Use the documented ERepo summary-search API followed by full classification retrieval."""
+        if caid:
+            columns, values = "caId", caid
+        elif clinvar_id:
+            columns, values = "cvId", clinvar_id
+        elif gene:
+            columns, values = "gene", gene
+        else:
+            raise ClinGenVariantPathogenicityError("ERepo API query requires CAID, ClinVar Variation ID, or gene")
+        params = [
+            ("columns", columns),
+            ("values", values),
+            ("matchTypes", "exact"),
+            ("matchMode", "and"),
+            ("pgSize", "100"),
+            ("pg", "1"),
+        ]
+        summary = self._api_get_json("/evrepo/api/summary/classifications", params)
+        candidates = self._collect_records(summary)
+        wanted_hgvs = {self._norm_hgvs(x) for x in hgvs if x}
+        wanted_caid = self._norm_id(caid)
+        wanted_cv = self._norm_id(clinvar_id)
+        wanted_gene = (gene or "").strip().upper()
+        out: list[ClinGenVariantAssertion] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            uuid = self._find_string(candidate, "uuid", "classification_uuid")
+            if not uuid or uuid in seen:
+                continue
+            seen.add(uuid)
+            document = self._api_get_json(f"/evrepo/api/classification/{quote(uuid, safe='')}", [])
+            normalized = self._normalize_api_document(document)
+            row_caid = self._norm_id(normalized.get("caid"))
+            row_cv = self._norm_id(normalized.get("clinvar_id"))
+            row_gene = (normalized.get("gene") or "").upper()
+            row_hgvs = {self._norm_hgvs(x) for x in normalized.get("hgvs", ())}
+            identifier_match = bool((wanted_caid and row_caid == wanted_caid) or (wanted_cv and row_cv == wanted_cv))
+            gene_match = bool(wanted_gene and row_gene == wanted_gene)
+            hgvs_match = bool(wanted_hgvs.intersection(row_hgvs))
+            if identifier_match or (gene_match and (not wanted_hgvs or hgvs_match)):
+                out.append(self._to_assertion(normalized, normalized["raw"]))
+        return out
+
+    def _api_get_json(self, path: str, params: list[tuple[str, str]]) -> Any:
+        url = f"{self.api_base_url}{path}"
+        if params:
+            url = f"{url}?{urlencode(params)}"
+        request = Request(url, headers={"Accept": "application/json", "User-Agent": "SIRALOOM/1.0"}, method="GET")
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                body = response.read()
+        except Exception as exc:
+            raise ClinGenVariantPathogenicityError(f"ClinGen ERepo API request failed: {url}: {exc}") from exc
+        try:
+            return json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ClinGenVariantPathogenicityError(f"ClinGen ERepo API returned non-JSON content: {url}") from exc
+
+    @classmethod
+    def _collect_records(cls, value: Any) -> list[dict[str, Any]]:
+        if isinstance(value, dict):
+            records = [value] if any(k in value for k in ("uuid", "classification_uuid")) else []
+            for child in value.values():
+                records.extend(cls._collect_records(child))
+            return records
+        if isinstance(value, list):
+            records: list[dict[str, Any]] = []
+            for child in value:
+                records.extend(cls._collect_records(child))
+            return records
+        return []
+
+    @classmethod
+    def _find_string(cls, value: dict[str, Any], *keys: str) -> str | None:
+        wanted = {key.lower() for key in keys}
+        stack: list[Any] = [value]
+        while stack:
+            current = stack.pop()
+            if isinstance(current, dict):
+                for key, child in current.items():
+                    if str(key).lower() in wanted and isinstance(child, str) and child:
+                        return child.rsplit("/", 1)[-1]
+                    if isinstance(child, (dict, list)):
+                        stack.append(child)
+            elif isinstance(current, list):
+                stack.extend(current)
+        return None
+
+    @classmethod
+    def _normalize_api_document(cls, document: Any) -> dict[str, Any]:
+        flat: dict[str, Any] = {}
+        def walk(value: Any) -> None:
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    lk = str(key).lower()
+                    if isinstance(child, (str, int, float, bool)):
+                        flat.setdefault(lk, str(child))
+                    elif isinstance(child, list):
+                        if all(isinstance(item, (str, int, float)) for item in child):
+                            flat.setdefault(lk, [str(item) for item in child])
+                        else:
+                            for item in child:
+                                walk(item)
+                    else:
+                        walk(child)
+            elif isinstance(value, list):
+                for item in value:
+                    walk(item)
+        walk(document)
+        def first(*keys: str) -> str | None:
+            for key in keys:
+                value = flat.get(key.lower())
+                if value not in (None, "") and not isinstance(value, list):
+                    return str(value).strip()
+            return None
+        hgvs_values: list[str] = []
+        for key in ("hgvs", "hgvs_expression", "hgvs_expressions"):
+            value = flat.get(key)
+            if isinstance(value, list):
+                hgvs_values.extend(str(item).strip() for item in value if str(item).strip())
+            elif value:
+                hgvs_values.extend(cls._split_list(str(value)))
+        met = cls._split_codes(first("met_codes", "met_criteria"))
+        unmet = cls._split_codes(first("unmet_codes", "unmet_criteria"))
+        criteria = tuple([ClinGenCriterionAssertion(code=x, status="MET") for x in met] + [ClinGenCriterionAssertion(code=x, status="NOT_MET") for x in unmet])
+        return {
+            "classification": first("classification", "assertion"),
+            "condition": first("condition", "disease"),
+            "inheritance": first("moi", "inheritance", "inheritance_mode"),
+            "gene": first("gene", "gene_symbol"),
+            "hgvs": tuple(dict.fromkeys(hgvs_values)),
+            "caid": first("caid", "ca_id"),
+            "clinvar_id": first("cvid", "clinvar_id", "clinvar_variation_id"),
+            "expert_panel": first("expert_panel", "vcep"),
+            "met_codes": met,
+            "unmet_codes": unmet,
+            "criterion_assertions": criteria,
+            "version": first("version", "guideline_version"),
+            "published_date": first("published_on", "published_date", "approved_on"),
+            "preferred_variant_title": first("preferred_variant_title"),
+            "mondo_id": first("mondo", "mondo_id"),
+            "raw": document,
+        }
 
     def _read_rows(self):
         with self.path.open("r", encoding="utf-8-sig", newline="") as handle:
