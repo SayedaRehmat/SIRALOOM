@@ -52,7 +52,7 @@ class ProviderRegistry:
         )
 
     def resolve(self, *, provider_id: str, provider_version: str) -> RegisteredProvider | None:
-        return self._providers.get((provider_id, provider_version))
+        return self._providers.get((provider_id, provider_version)) or self._providers.get((provider_id, "*"))
 
     def require(self, *, provider_id: str, provider_version: str) -> RegisteredProvider:
         result = self.resolve(provider_id=provider_id, provider_version=provider_version)
@@ -87,9 +87,20 @@ def register_builtin_providers() -> ProviderRegistry:
         GnomADGraphQLProvider,
         LocalGnomADTabixProvider,
     )
+    from backend.app.adapters.annotation.vep import VEPProvider
 
     from backend.app.domain.resource_capabilities import ResourceCapability
 
+    registry.register(
+        provider_id=VEPProvider.provider_id,
+        provider_version="*",
+        factory=VEPProvider.from_execution_contract,
+        descriptor=ProviderCapability(
+            provider_id=VEPProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.ANNOTATION}),
+            supported_builds=frozenset({"GRCh37", "GRCh38"}),
+        ),
+    )
     registry.register(
         provider_id=GeneBeProvider.provider_id,
         provider_version=GeneBeProvider.provider_version,
