@@ -1789,6 +1789,31 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "execution_dataset": clinvar_execution.contract.dataset,
                     }
 
+                # ClinGen evidence activities are optional and independently governed.
+                clingen_vp_resource = None
+                clingen_vp_provider = None
+                clingen_vp_execution = None
+                clingen_vp_metadata = None
+                clingen_gdv_resource = None
+                clingen_gdv_provider = None
+                clingen_gdv_execution = None
+                clingen_gdv_metadata = None
+                case_for_clingen = db.get(Case, analysis.case_id)
+                if case_for_clingen is not None:
+                    vp_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),))
+                    vp_candidates = [x for x in vp_plan.for_capability(ResourceCapability.CLINICAL_VARIANT) if x.resource.provider == ClinGenVariantPathogenicityProvider.provider_id]
+                    if vp_candidates:
+                        clingen_vp_resource = vp_candidates[0].resource
+                        clingen_vp_execution = resolve_resource_execution(db, resource=clingen_vp_resource)
+                        clingen_vp_provider = ClinGenVariantPathogenicityProvider.from_execution_contract(resolved=clingen_vp_execution)
+                        clingen_vp_metadata = {**clingen_vp_execution.snapshot, "resource_name": clingen_vp_resource.name, "resource_checksum": clingen_vp_resource.checksum}
+                    gdv_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.GENE_DISEASE),))
+                    gdv_candidates = [x for x in gdv_plan.for_capability(ResourceCapability.GENE_DISEASE) if x.resource.provider == ClinGenGeneDiseaseValidityProvider.provider_id]
+                    if gdv_candidates:
+                        clingen_gdv_resource = gdv_candidates[0].resource
+                        clingen_gdv_execution = resolve_resource_execution(db, resource=clingen_gdv_resource)
+                        clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
+                        clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
                 from backend.app.infrastructure.db.models import Case, PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
