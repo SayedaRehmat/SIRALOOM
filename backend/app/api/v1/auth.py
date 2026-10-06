@@ -1,7 +1,7 @@
 from uuid import uuid4
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 from backend.app.application.entitlements import create_trial_entitlement, get_entitlement, summarize
 from backend.app.auth.principal import Principal, _verify_firebase_token, get_current_principal
@@ -85,20 +85,47 @@ def _provision_organization(db: Session, *, subject: str, claims: dict, organiza
     return org, user, membership
 
 
+def _first_organization_bootstrap_is_available(db: Session) -> bool:
+    """Returns whether this deployment is still in its one-time lab bootstrap state.
+
+    A production laboratory keeps this policy enabled only during initial provisioning.
+    Once the first organization exists, the endpoint is closed and later users must enter
+    through the invitation/membership lifecycle instead of self-assigning admin.
+    """
+    if not settings.organization_first_bootstrap_enabled:
+        return False
+
+    # PostgreSQL is the production database. The transaction advisory lock prevents two
+    # simultaneous first visitors from both observing an empty tenant table and becoming
+    # competing organization administrators. SQLite/test databases simply evaluate the
+    # same invariant without the PostgreSQL-only lock primitive.
+    if db.bind is not None and db.bind.dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(73120491)"))
+
+    return db.scalar(select(func.count()).select_from(Organization)) == 0
+
+
 class OrganizationOnboarding(BaseModel):
     organization_name: str = Field(min_length=2, max_length=200)
 
 
 @router.post("/onboarding/organization", status_code=201)
 def create_first_organization(payload: OrganizationOnboarding, authorization: str | None = Header(default=None), db: Session = Depends(get_db)):
-    """Creates a production organization only when self-signup is explicitly enabled.
+    """Creates an organization for either an explicitly enabled SaaS self-signup flow
+    or the one-time first-laboratory bootstrap flow.
 
-    This endpoint grants the initial organization_admin role, so production deployments
-    must opt into it deliberately. Laboratory deployments that disable public self-signup
-    must provision their first organization through the controlled bootstrap process.
+    In a fresh laboratory deployment, no SIRALOOM user exists yet. That is intentional:
+    this endpoint authenticates the verified Firebase identity first, then creates the
+    initial Organization + User + organization_admin membership atomically. After that
+    first organization exists, this bootstrap path closes permanently and subsequent users
+    must be provisioned through membership/invitations.
     """
-    if not settings.organization_self_signup_enabled:
-        raise HTTPException(status_code=403, detail="Organization self-signup is disabled for this deployment")
+    first_bootstrap = _first_organization_bootstrap_is_available(db)
+    if not settings.organization_self_signup_enabled and not first_bootstrap:
+        raise HTTPException(
+            status_code=403,
+            detail="Organization self-signup is disabled for this deployment; a laboratory bootstrap is not available",
+        )
     subject, claims = _authenticate_bearer(authorization)
     org, user, membership = _provision_organization(db, subject=subject, claims=claims, organization_name=payload.organization_name)
     db.commit()
