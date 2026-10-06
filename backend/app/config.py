@@ -36,23 +36,11 @@ class Settings(BaseSettings):
     gnomad_dataset_id: str = "gnomad_r4"
     gnomad_graphql_delay_seconds: float = 0.0
 
-    # Optional local reference resources.
-    #
-    # Production/on-prem installations should normally provide these.
     reference_fasta: str | None = None
     reference_fai: str | None = None
-
-    # Development/integration fallback.
-    #
-    # When enabled, SIRALOOM can use Ensembl REST for reference sequence
-    # retrieval instead of requiring a local FASTA/FAI.
     reference_remote_enabled: bool = False
-    reference_remote_grch38_endpoint: str = (
-        "https://rest.ensembl.org"
-    )
-    reference_remote_grch37_endpoint: str = (
-        "https://grch37.rest.ensembl.org"
-    )
+    reference_remote_grch38_endpoint: str = "https://rest.ensembl.org"
+    reference_remote_grch37_endpoint: str = "https://grch37.rest.ensembl.org"
     reference_remote_timeout_seconds: float = 20.0
     reference_remote_window_flank: int = 1000
     reference_remote_retry_attempts: int = 3
@@ -68,10 +56,8 @@ class Settings(BaseSettings):
     firebase_storage_enabled: bool = False
     firebase_storage_bucket: str | None = None
 
-    # Production tenant provisioning must be explicitly enabled. This prevents
-    # any verified Firebase identity from becoming an organization administrator
-    # merely by calling the public organization-onboarding endpoint.
     organization_self_signup_enabled: bool = False
+    organization_first_bootstrap_enabled: bool = False
 
     celery_concurrency: int = 2
     celery_worker_max_tasks_per_child: int = 20
