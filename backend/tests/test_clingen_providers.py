@@ -54,3 +54,18 @@ def test_clingen_gene_disease_validity_matches_gene(tmp_path: Path):
     assert rows[0].classification == "Definitive"
     assert rows[0].mondo_id == "MONDO:0800406"
     assert rows[0].expert_panel == "Retina Gene Curation Expert Panel"
+
+
+def test_clingen_gene_disease_validity_accepts_current_official_header_shape(tmp_path: Path):
+    path = tmp_path / "official-current.csv"
+    path.write_text(
+        '"CLINGEN GENE DISEASE VALIDITY CURATIONS","","","","","","","","",""\\n'
+        '"FILE CREATED: 2026-10-06","","","","","","","","",""\\n'
+        '"GENE SYMBOL","GENE ID (HGNC)","DISEASE LABEL","DISEASE ID (MONDO)","MOI","SOP","CLASSIFICATION","ONLINE REPORT","CLASSIFICATION DATE","GCEP"\\n'
+        '"ABCA4","HGNC:34","ABCA4-related retinopathy","MONDO:0800406","AR","SOP9","Definitive","https://search.clinicalgenome.org/kb/gene-validity/CGGV:assertion_38729563-bf36-48ae-929e-fa69a225de39-2022-10-06T160000.000Z","2022-10-06T16:00:00.000Z","Retina Gene Curation Expert Panel"\\n',
+        encoding="utf-8",
+    )
+    rows = ClinGenGeneDiseaseValidityProvider(resource_path=str(path)).query_gene(gene="ABCA4")
+    assert len(rows) == 1
+    assert rows[0].source_record_id.startswith("ClinGen-GDV:CGGV:assertion_")
+    assert rows[0].sop == "SOP9"
