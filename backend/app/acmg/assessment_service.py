@@ -242,6 +242,7 @@ class ACMGSpecificationAssessmentService:
         ).all()
         source_results = assess_source_assertions(source_rows, row) if source_rows else ()
 
+        source_by_id = {str(item.id): item for item in source_rows}
         source_assessments: list[CriterionAssessment] = []
         for source_result in source_results:
             if (
@@ -260,7 +261,11 @@ class ACMGSpecificationAssessmentService:
                     strength=source_result.strength,
                     direction=source_result.direction,
                     status="PROPOSED",
-                    evidence_ids=tuple(source_result.source_assertion_ids),
+                    evidence_ids=tuple(
+                        str(source_by_id[source_id].evidence_id)
+                        for source_id in source_result.source_assertion_ids
+                        if source_id in source_by_id
+                    ),
                     reason=source_result.rationale,
                     metadata={
                         "assessment_origin": "CLINGEN_SOURCE_ASSERTION",
@@ -368,8 +373,6 @@ def _merge_criterion_assessments(
         if result.binding.status != "SELECTED":
             return
         classification = result.classification
-        persisted_criteria = {item.criterion: item for item in result.criterion_assessments}
-
         for evaluated in result.evaluator_results:
             existing = db.scalar(
                 select(ACMGAssessment).where(
