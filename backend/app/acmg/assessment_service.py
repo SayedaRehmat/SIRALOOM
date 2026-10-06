@@ -15,6 +15,10 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from backend.app.acmg.engine import ACMGEngine, ClassificationResult, CriterionAssessment
+from backend.app.acmg.combination_method import (
+    STANDARD_ACMG,
+    detect_combination_method,
+)
 from backend.app.acmg.evaluators import (
     EvaluatorConfigurationError,
     EvaluatorResult,
@@ -44,15 +48,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 SUPPORTED_AUTOMATED_CRITERIA = {"PM2", "BA1", "BS1", "PP3", "BP4", "PVS1"}
-ALTERNATIVE_COMBINATION_KEYS = {
-    "combining_method",
-    "combiningMethod",
-    "point_based",
-    "pointBased",
-    "points",
-}
-
-
 @dataclass(frozen=True)
 class SpecificationBinding:
     status: str
@@ -70,6 +65,8 @@ class AutomatedAssessmentResult:
     classification: ClassificationResult | None
     criterion_assessments: tuple[CriterionAssessment, ...] = ()
     source_assessments: tuple[SourceCriterionAssessment, ...] = ()
+    combination_method: str = STANDARD_ACMG
+    combination_metadata: dict[str, Any] | None = None
 
 
 class SpecificationBindingError(ValueError):
@@ -128,12 +125,20 @@ class ACMGSpecificationAssessmentService:
             return AutomatedAssessmentResult(binding.status, binding, tuple(), None)
 
         profile = dict(row.criteria or {})
-        if _has_alternative_combination(profile):
+        combination = detect_combination_method(row)
+        if not combination.executable:
             return AutomatedAssessmentResult(
                 "REQUIRES_REVIEW",
                 binding,
                 tuple(),
                 None,
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination.metadata,
+                    "reason": combination.reason,
+                    "specification_id": row.specification_id,
+                    "specification_version": row.version,
+                },
             )
 
         normalized = (annotation.payload or {}).get("normalized") or {}
@@ -310,6 +315,13 @@ class ACMGSpecificationAssessmentService:
             classification,
             tuple(merged),
             tuple(source_results),
+            combination_method=combination.method,
+            combination_metadata={
+                **combination.metadata,
+                "reason": combination.reason,
+                "specification_id": row.specification_id,
+                "specification_version": row.version,
+            },
         )
 
 def _merge_criterion_assessments(
@@ -520,17 +532,6 @@ def _resolve_evidence_ids(
             resolved.append(row.id)
             unresolved -= observation_ids & normalized
     return tuple(dict.fromkeys(resolved)), tuple(sorted(unresolved))
-
-
-def _has_alternative_combination(profile: dict[str, Any]) -> bool:
-    for key in ALTERNATIVE_COMBINATION_KEYS:
-        if key not in profile:
-            continue
-        value = profile.get(key)
-        if value in (None, "", False, "STANDARD_ACMG_AMP_2015", "BASELINE_ACMG_AMP_2015"):
-            continue
-        return True
-    return False
 
 
 def _variant_context(normalized: dict[str, Any]) -> dict[str, Any]:
