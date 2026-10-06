@@ -16,3 +16,8 @@ def test_unknown_provider_is_not_executable():
         provider_id="FutureProvider",
         provider_version="1",
     ) is None
+
+
+def test_specialized_clinvar_provider_is_known_to_orchestrator():
+    from backend.app.domain.provider_registry import provider_implementation_exists
+    assert provider_implementation_exists("NCBI ClinVar", "release-xml-v1")
