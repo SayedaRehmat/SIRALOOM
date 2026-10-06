@@ -271,8 +271,8 @@ class ClinGenVariantPathogenicityProvider:
             elif value:
                 hgvs_values.extend(cls._split_list(str(value)))
 
-        met_value = flat.get("met_codes") or flat.get("met_criteria")
-        unmet_value = flat.get("unmet_codes") or flat.get("unmet_criteria")
+        met_value = flat.get("met_codes") or flat.get("metcodes") or flat.get("met_criteria") or flat.get("metcriteria")
+        unmet_value = flat.get("unmet_codes") or flat.get("unmetcodes") or flat.get("unmet_criteria") or flat.get("unmetcriteria")
         met = cls._split_codes(
             "|".join(str(x) for x in met_value) if isinstance(met_value, list) else met_value
         )
