@@ -92,3 +92,12 @@ def test_modified_combination_prose_is_not_silently_treated_as_baseline():
     )
     assert decision.method == MODIFIED_ACMG
     assert decision.executable is False
+
+
+def test_unknown_explicit_combination_method_requires_review():
+    decision = detect_combination_method(
+        spec(raw_payload={"combiningMethod": "Proprietary scoring framework"})
+    )
+    assert decision.method == "UNSUPPORTED"
+    assert decision.executable is False
+    assert decision.metadata["detection_basis"] == "UNKNOWN_EXPLICIT_COMBINATION_METHOD"
