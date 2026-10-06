@@ -69,3 +69,65 @@ def test_clingen_gene_disease_validity_accepts_current_official_header_shape(tmp
     assert len(rows) == 1
     assert rows[0].source_record_id.startswith("ClinGen-GDV:CGGV:assertion_")
     assert rows[0].sop == "SOP9"
+
+
+def test_clingen_variant_pathogenicity_parses_current_erepo_summary_columns_and_criteria(
+    tmp_path: Path,
+):
+    path = tmp_path / "erepo-current.tsv"
+    path.write_text(
+        "Preferred Variant Title\tClassification\tCondition\tMOI\tPublished Date\t"
+        "Met Codes\tVersion\tClinVar Id\tCAID\tExpert Panel\tGene\tMONDO\t"
+        "Unmet Codes\tHGVS\n"
+        "NM_000546.6(TP53):c.379T>C (p.Ser127Pro)\tLikely Pathogenic\t"
+        "Li-Fraumeni syndrome\tAutosomal dominant inheritance\t2026-04-22\t"
+        "PM1_Supporting, PM2_Supporting, PS3, PP4, PP3_Moderate\t1.0\t934410\t"
+        "CA397843917\tTP53 VCEP\tTP53\tMONDO:0018875\t"
+        "PM5, BS2, BS4, BS3, BS1, BP4, PS4, PS1, PS2, BA1, PP1\t"
+        "NM_000546.6:c.379T>C|NM_000546.6(TP53):c.379T>C (p.Ser127Pro)\n",
+        encoding="utf-8",
+    )
+    provider = ClinGenVariantPathogenicityProvider(
+        resource_path=str(path), delimiter="\\t"
+    )
+    rows = provider.query_variant(
+        gene="TP53",
+        hgvs=["NM_000546.6:c.379T>C"],
+        caid="CA397843917",
+    )
+    assert len(rows) == 1
+    row = rows[0]
+    assert row.classification == "Likely Pathogenic"
+    assert row.condition == "Li-Fraumeni syndrome"
+    assert row.inheritance == "Autosomal dominant inheritance"
+    assert row.caid == "CA397843917"
+    assert row.clinvar_id == "934410"
+    assert row.mondo_id if hasattr(row, "mondo_id") else True
+    assert row.met_codes == (
+        "PM1_Supporting",
+        "PM2_Supporting",
+        "PS3",
+        "PP4",
+        "PP3_Moderate",
+    )
+    assert row.unmet_codes == (
+        "PM5",
+        "BS2",
+        "BS4",
+        "BS3",
+        "BS1",
+        "BP4",
+        "PS4",
+        "PS1",
+        "PS2",
+        "BA1",
+        "PP1",
+    )
+    assert {item.status for item in row.criterion_assertions} == {"MET", "NOT_MET"}
+    assert {
+        item.code for item in row.criterion_assertions if item.status == "MET"
+    } == set(row.met_codes)
+    assert {
+        item.code for item in row.criterion_assertions if item.status == "NOT_MET"
+    } == set(row.unmet_codes)
+    assert row.payload["criterion_detail_available"] is False
