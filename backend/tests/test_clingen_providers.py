@@ -147,8 +147,23 @@ def test_clingen_variant_pathogenicity_normalizes_full_erepo_api_document():
         "unmetCodes": ["BS1"],
         "version": "2.0",
         "publishedOn": "2026-09-01",
-        "criteria": [
-            {"code": "PS3", "status": "Met", "explanation": "Functional assay supports the classification.", "pmids": ["12345678"], "strength": "Strong"}
+        "evidenceLine": [
+            {
+                "evidenceItem": [
+                    {
+                        "type": "CriterionAssessment",
+                        "criterion": {
+                            "id": "0087",
+                            "label": "PS3",
+                            "defaultStrength": {"label": "Strong"}
+                        },
+                        "statementOutcome": {"label": "Met"},
+                        "contribution": [
+                            {"comments": "Functional assay supports the classification.", "pmids": ["12345678"]}
+                        ]
+                    }
+                ]
+            }
         ],
     }
     normalized = ClinGenVariantPathogenicityProvider._normalize_api_document(document)
