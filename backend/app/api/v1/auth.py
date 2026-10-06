@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from backend.app.application.entitlements import create_trial_entitlement, get_entitlement, summarize
 from backend.app.auth.principal import Principal, _verify_firebase_token, get_current_principal
+from backend.app.config import settings
 from backend.app.infrastructure.db.models import Organization, OrganizationMembership, User
 from backend.app.infrastructure.db.session import get_db
 
@@ -90,11 +91,14 @@ class OrganizationOnboarding(BaseModel):
 
 @router.post("/onboarding/organization", status_code=201)
 def create_first_organization(payload: OrganizationOnboarding, authorization: str | None = Header(default=None), db: Session = Depends(get_db)):
-    """A verified Firebase identity can create only its own first (production) organization.
+    """Creates a production organization only when self-signup is explicitly enabled.
 
-    This path carries no entitlement restrictions: it is the normal, full-access SaaS
-    signup, distinct from the free-trial path below.
+    This endpoint grants the initial organization_admin role, so production deployments
+    must opt into it deliberately. Laboratory deployments that disable public self-signup
+    must provision their first organization through the controlled bootstrap process.
     """
+    if not settings.organization_self_signup_enabled:
+        raise HTTPException(status_code=403, detail="Organization self-signup is disabled for this deployment")
     subject, claims = _authenticate_bearer(authorization)
     org, user, membership = _provision_organization(db, subject=subject, claims=claims, organization_name=payload.organization_name)
     db.commit()
