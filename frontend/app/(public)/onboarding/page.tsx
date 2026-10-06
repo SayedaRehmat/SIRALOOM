@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, reload, sendEmailVerification, signOut, User } from "firebase/auth";
 import { Brand } from "../../../components/brand";
 import { firebaseAuth, firebaseConfigured } from "../../../lib/firebase";
-import { apiBase } from "../../../lib/session";
+import { apiBase, resolveSessionDestination } from "../../../lib/session";
 import { useLanguage } from "../../../lib/i18n";
 
 export default function Onboarding() {
@@ -42,7 +42,16 @@ export default function Onboarding() {
       const endpoint = isTrial ? "/auth/onboarding/trial" : "/auth/onboarding/organization";
       const body = isTrial ? JSON.stringify({ laboratory_name: name || undefined }) : JSON.stringify({ organization_name: name });
       const response = await fetch(apiBase + endpoint, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body });
-      if (response.ok || response.status === 409) { window.location.assign("/app/dashboard"); return; }
+      if (response.ok) { window.location.assign("/app/dashboard"); return; }
+
+      // A 409 means this Firebase identity is already provisioned. Do not blindly
+      // redirect: confirm that the identity actually has a usable SIRALOOM session.
+      // This prevents a failed second onboarding attempt from masquerading as success.
+      if (response.status === 409) {
+        const destination = await resolveSessionDestination(token, "/onboarding");
+        if (destination === "/app/dashboard") { window.location.assign(destination); return; }
+      }
+
       const responseBody = await response.json().catch(() => null);
       setMessage(responseBody?.detail || t("onboarding.createFailed"));
     } catch (error) { setMessage(error instanceof Error ? error.message : t("onboarding.createFailed")); }
@@ -68,7 +77,6 @@ export default function Onboarding() {
 
   if (!firebaseConfigured || !user) return (
     <main className="auth-page">
-      
       <Brand />
       <section className="auth-card">
         <p className="eyebrow">{t("onboarding.secure")}</p>
@@ -81,7 +89,6 @@ export default function Onboarding() {
 
   return (
     <main className="auth-page">
-      
       <Brand />
       <section className="auth-card">
         <p className="eyebrow">{isTrial ? t("onboarding.trialEyebrow") : t("onboarding.orgEyebrow")}</p>
