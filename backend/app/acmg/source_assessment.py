@@ -147,7 +147,7 @@ def assess_source_assertion(
         )
 
     if source_strength in allowed_strengths:
-        effective = _effective_code(criterion, source_strength, allowed_strengths)
+        effective = _effective_code(criterion, source_strength, allowed_strengths, rule)
         return _assessment(
             assertion,
             specification,
@@ -166,7 +166,7 @@ def assess_source_assertion(
 
     if len(allowed_strengths) == 1:
         adjusted = allowed_strengths[0]
-        effective = _effective_code(criterion, adjusted, allowed_strengths)
+        effective = _effective_code(criterion, adjusted, allowed_strengths, rule)
         return _assessment(
             assertion,
             specification,
@@ -304,7 +304,7 @@ def _normalize_strength(value: Any) -> str | None:
     )
 
 
-def _effective_code(criterion: str, strength: str, allowed: tuple[str, ...]) -> str | None:
+def _effective_code(criterion: str, strength: str, allowed: tuple[str, ...], rule: dict[str, Any]) -> str | None:
     # ClinGen guidance recommends renaming a criterion when its strength is
     # modified. Keep the baseline code unchanged when it is used at baseline
     # strength, and expose the modified code for downstream review otherwise.
