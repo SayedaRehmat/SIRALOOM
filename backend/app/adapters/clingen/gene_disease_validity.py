@@ -74,7 +74,23 @@ class ClinGenGeneDiseaseValidityProvider:
             reader = csv.reader(handle, delimiter=delimiter)
             rows = list(reader)
 
-        header_index = next((i for i, row in enumerate(rows) if row and "GENE SYMBOL" in row[0].upper()), None)
+        # Some exported fixtures/pipeline transfers encode line breaks literally
+        # as the two characters \\n. Normalize those before header detection so
+        # the parser remains tolerant without changing the official field names.
+        expanded: list[list[str]] = []
+        for row in rows:
+            if len(row) == 1 and "\\n" in row[0]:
+                expanded.extend([[part] for part in row[0].split("\\n")])
+            else:
+                expanded.append(row)
+        rows = expanded
+
+        header_index = next(
+            (i for i, row in enumerate(rows) if row and any(
+                "GENE SYMBOL" == cell.strip().upper() for cell in row
+            )),
+            None,
+        )
         if header_index is None:
             raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity header not found")
 
