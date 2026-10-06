@@ -34,6 +34,8 @@ class ClinGenCriterionAssertion:
     status: str
     source: str = "ClinGen ERepo Variant Pathogenicity summary export"
     rationale: str | None = None
+    pmids: tuple[str, ...] = ()
+    strength: str | None = None
 
 
 @dataclass(frozen=True)
@@ -94,10 +96,9 @@ class ClinGenVariantPathogenicityProvider:
         delimiter = toolchain.get("delimiter")
         if delimiter not in {None, ",", "\t"}:
             raise ClinGenVariantPathogenicityError("delimiter must be ',' or '\\t'")
-        return cls(
-            resource_path=contract.location,
-            delimiter="\t" if delimiter == "\t" else delimiter,
-        )
+        if contract.access_method in {"HTTP_API", "API", "REMOTE_API"}:
+            return cls(api_base_url=str(contract.location).rstrip("/"), timeout_seconds=float(toolchain.get("timeout_seconds", 30.0)))
+        return cls(resource_path=contract.location, delimiter="\t" if delimiter == "\t" else delimiter)
 
     def query_variant(
         self,
@@ -167,7 +168,7 @@ class ClinGenVariantPathogenicityProvider:
         out: list[ClinGenVariantAssertion] = []
         seen: set[str] = set()
         for candidate in candidates:
-            uuid = self._find_string(candidate, "uuid", "classification_uuid")
+            uuid = self._find_string(candidate, "uuid", "classification_uuid", "classification_id", "id", "@id")
             if not uuid or uuid in seen:
                 continue
             seen.add(uuid)
@@ -202,7 +203,7 @@ class ClinGenVariantPathogenicityProvider:
     @classmethod
     def _collect_records(cls, value: Any) -> list[dict[str, Any]]:
         if isinstance(value, dict):
-            records = [value] if any(k in value for k in ("uuid", "classification_uuid")) else []
+            records = [value] if any(str(k).lower() in {"uuid", "classification_uuid", "classification_id", "id", "@id"} for k in value) else []
             for child in value.values():
                 records.extend(cls._collect_records(child))
             return records
@@ -231,7 +232,9 @@ class ClinGenVariantPathogenicityProvider:
 
     @classmethod
     def _normalize_api_document(cls, document: Any) -> dict[str, Any]:
+        """Normalize ERepo JSON while preserving nested criterion evidence."""
         flat: dict[str, Any] = {}
+
         def walk(value: Any) -> None:
             if isinstance(value, dict):
                 for key, child in value.items():
@@ -239,7 +242,7 @@ class ClinGenVariantPathogenicityProvider:
                     if isinstance(child, (str, int, float, bool)):
                         flat.setdefault(lk, str(child))
                     elif isinstance(child, list):
-                        if all(isinstance(item, (str, int, float)) for item in child):
+                        if all(isinstance(item, (str, int, float, bool)) for item in child):
                             flat.setdefault(lk, [str(item) for item in child])
                         else:
                             for item in child:
@@ -249,13 +252,16 @@ class ClinGenVariantPathogenicityProvider:
             elif isinstance(value, list):
                 for item in value:
                     walk(item)
+
         walk(document)
+
         def first(*keys: str) -> str | None:
             wanted = {key.lower().replace("_", "") for key in keys}
             for key, value in flat.items():
                 if key.lower().replace("_", "") in wanted and value not in (None, "") and not isinstance(value, list):
                     return str(value).strip()
             return None
+
         hgvs_values: list[str] = []
         for key in ("hgvs", "hgvs_expression", "hgvs_expressions"):
             value = flat.get(key)
@@ -263,9 +269,18 @@ class ClinGenVariantPathogenicityProvider:
                 hgvs_values.extend(str(item).strip() for item in value if str(item).strip())
             elif value:
                 hgvs_values.extend(cls._split_list(str(value)))
+
         met = cls._split_codes(first("met_codes", "met_criteria"))
         unmet = cls._split_codes(first("unmet_codes", "unmet_criteria"))
-        criteria = tuple([ClinGenCriterionAssertion(code=x, status="MET") for x in met] + [ClinGenCriterionAssertion(code=x, status="NOT_MET") for x in unmet])
+        criteria = list(cls._extract_criterion_assertions(document))
+        known = {(item.code, item.status) for item in criteria}
+        for code in met:
+            if (code, "MET") not in known:
+                criteria.append(ClinGenCriterionAssertion(code=code, status="MET"))
+        for code in unmet:
+            if (code, "NOT_MET") not in known:
+                criteria.append(ClinGenCriterionAssertion(code=code, status="NOT_MET"))
+
         return {
             "classification": first("classification", "assertion"),
             "condition": first("condition", "disease"),
@@ -277,13 +292,68 @@ class ClinGenVariantPathogenicityProvider:
             "expert_panel": first("expert_panel", "vcep"),
             "met_codes": met,
             "unmet_codes": unmet,
-            "criterion_assertions": criteria,
+            "criterion_assertions": tuple(criteria),
             "version": first("version", "guideline_version"),
             "published_date": first("published_on", "published_date", "approved_on"),
             "preferred_variant_title": first("preferred_variant_title"),
             "mondo_id": first("mondo", "mondo_id"),
             "raw": document,
         }
+
+    @classmethod
+    def _extract_criterion_assertions(cls, document: Any) -> tuple[ClinGenCriterionAssertion, ...]:
+        """Extract criterion code/status plus narrative, PMIDs and strength when present."""
+        code_keys = {"code", "criterion", "criterion_code", "acmg_code", "acmg_amp_code", "evidence_code"}
+        status_keys = {"status", "outcome", "evaluation", "evaluation_status", "label"}
+        rationale_keys = {"explanation", "rationale", "summary", "narrative", "comment", "notes", "text", "description"}
+        pmid_keys = {"pmid", "pmids", "pubmed_id", "pubmed_ids", "publications"}
+        strength_keys = {"strength", "modified_strength", "criterion_strength", "evidence_strength"}
+        found: list[ClinGenCriterionAssertion] = []
+        seen: set[tuple[str, str, str | None, tuple[str, ...], str | None]] = set()
+
+        def strings(value: Any) -> tuple[str, ...]:
+            if value is None:
+                return ()
+            if isinstance(value, (list, tuple, set)):
+                out: list[str] = []
+                for item in value:
+                    out.extend(strings(item))
+                return tuple(dict.fromkeys(x for x in out if x))
+            if isinstance(value, dict):
+                out: list[str] = []
+                for key, child in value.items():
+                    if str(key).lower() in pmid_keys:
+                        out.extend(strings(child))
+                return tuple(dict.fromkeys(x for x in out if x))
+            text = str(value).strip()
+            return (text,) if text else ()
+
+        def walk(value: Any) -> None:
+            if isinstance(value, dict):
+                lowered = {str(k).lower(): v for k, v in value.items()}
+                code = next((str(lowered[k]).strip() for k in code_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
+                status = next((str(lowered[k]).strip().upper().replace(" ", "_") for k in status_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
+                if code and status:
+                    normalized_status = "MET" if status in {"MET", "APPLIED", "TRUE", "PASS", "SUPPORTED"} else "NOT_MET" if status in {"NOT_MET", "UNMET", "FALSE", "FAIL", "REFUTED"} else status
+                    rationale = next((str(lowered[k]).strip() for k in rationale_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
+                    pmids: tuple[str, ...] = ()
+                    for key in pmid_keys:
+                        if key in lowered:
+                            pmids = tuple(dict.fromkeys((*pmids, *strings(lowered[key]))))
+                    strength = next((str(lowered[k]).strip() for k in strength_keys if k in lowered and lowered[k] not in (None, "") and not isinstance(lowered[k], (dict, list))), None)
+                    item = ClinGenCriterionAssertion(code=code, status=normalized_status, source="ClinGen ERepo classification API", rationale=rationale, pmids=pmids, strength=strength)
+                    identity = (item.code, item.status, item.rationale, item.pmids, item.strength)
+                    if identity not in seen:
+                        seen.add(identity)
+                        found.append(item)
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for item in value:
+                    walk(item)
+
+        walk(document)
+        return tuple(found)
 
     def _read_rows(self):
         with self.path.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -410,15 +480,13 @@ class ClinGenVariantPathogenicityProvider:
                         "status": item.status,
                         "source": item.source,
                         "rationale": item.rationale,
+                        "pmids": list(item.pmids),
+                        "strength": item.strength,
                     }
                     for item in normalized.get("criterion_assertions", ())
                 ],
-                "criterion_detail_available": False,
-                "criterion_detail_note": (
-                    "The governed ERepo summary export supplies met/not-met codes. "
-                    "Per-code narrative evidence is available on individual ERepo "
-                    "classification records but is not fabricated here."
-                ),
+                "criterion_detail_available": any(item.rationale or item.pmids or item.strength for item in normalized.get("criterion_assertions", ())),
+                "criterion_detail_note": "Criterion codes come from the ERepo summary; governed classification API detail is preserved when returned.",
             }
         )
 
