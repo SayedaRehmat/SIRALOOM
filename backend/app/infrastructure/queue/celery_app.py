@@ -351,7 +351,6 @@ if Celery is not None:
 
 
     def publish_case_export_dispatch(dispatch_id):
-        """Publish one durable case-export dispatch intent."""
         from datetime import datetime, timezone
         from backend.app.infrastructure.db.models import CaseExport, CaseExportDispatch
         from backend.app.infrastructure.db.session import SessionLocal
@@ -361,7 +360,6 @@ if Celery is not None:
             dispatch = db.get(CaseExportDispatch, dispatch_id, with_for_update=True)
             if dispatch is None:
                 return None
-
             export = db.get(CaseExport, dispatch.case_export_id, with_for_update=True)
             if export is None:
                 dispatch.status = "SUPERSEDED"
@@ -414,6 +412,94 @@ if Celery is not None:
             db.add(export)
             db.commit()
             return task.id
+        finally:
+            db.close()
+
+
+    @celery_app.task(name="siraloom.dispatch_pending_case_export_outbox", autoretry_for=(), acks_late=True)
+    def dispatch_pending_case_export_outbox():
+        from sqlalchemy import select
+        from backend.app.infrastructure.db.models import CaseExport, CaseExportDispatch
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            pending_ids = list(db.scalars(
+                select(CaseExportDispatch.id)
+                .join(CaseExport, CaseExport.id == CaseExportDispatch.case_export_id)
+                .where(
+                    CaseExport.status == "QUEUED",
+                    CaseExportDispatch.status.in_(("PENDING", "PUBLISHED")),
+                )
+            ))
+        finally:
+            db.close()
+
+        dispatched = 0
+        for dispatch_id in pending_ids:
+            if publish_case_export_dispatch(dispatch_id):
+                dispatched += 1
+        return {"inspected": len(pending_ids), "dispatched": dispatched}
+
+
+    @celery_app.task(name="siraloom.recover_orphaned_case_export_dispatches", autoretry_for=(), acks_late=True)
+    def recover_orphaned_case_export_dispatches():
+        from sqlalchemy import select, func
+        from uuid import uuid4
+        from backend.app.infrastructure.audit.service import AuditService
+        from backend.app.infrastructure.db.models import CaseExport, CaseExportDispatch
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        inspected = 0
+        recovered = 0
+        try:
+            export_ids = list(db.scalars(
+                select(CaseExport.id).where(
+                    CaseExport.status == "QUEUED",
+                    CaseExport.queue_task_id.is_(None),
+                )
+            ))
+            for export_id in export_ids:
+                export = db.get(CaseExport, export_id, with_for_update=True)
+                if export is None or export.status != "QUEUED" or export.queue_task_id is not None:
+                    continue
+                inspected += 1
+                generation = (
+                    db.scalar(
+                        select(func.coalesce(func.max(CaseExportDispatch.dispatch_generation), 0))
+                        .where(CaseExportDispatch.case_export_id == export.id)
+                    )
+                    or 0
+                ) + 1
+                dispatch = CaseExportDispatch(
+                    id=uuid4(),
+                    case_export_id=export.id,
+                    dispatch_generation=generation,
+                    status="PENDING",
+                    task_id=None,
+                    attempts=0,
+                )
+                export.queue_task_id = str(dispatch.id)
+                db.add(dispatch)
+                db.add(export)
+                AuditService(db).record(
+                    event_type="CASE_EXPORT_DISPATCH_RECOVERED",
+                    case_id=export.case_id,
+                    analysis_id=None,
+                    actor_type="SYSTEM",
+                    actor_id="case-export-recovery",
+                    operation="RECOVER_QUEUED_EXPORT",
+                    payload={
+                        "replacement_dispatch_id": str(dispatch.id),
+                        "dispatch_generation": generation,
+                        "recovery_mode": "LEGACY_TO_DURABLE_OUTBOX",
+                    },
+                )
+                db.commit()
+                if publish_case_export_dispatch(dispatch.id):
+                    recovered += 1
+            return {"inspected": inspected, "recovered": recovered}
         finally:
             db.close()
 
@@ -586,5 +672,49 @@ if Celery is not None:
 
             db.commit()
             return {"inspected": inspected, "recovered": recovered}
+        finally:
+            db.close()
+
+    @celery_app.task(bind=True, autoretry_for=(), acks_late=True)
+    def run_case_export_task(self, export_id: str):
+        from uuid import UUID
+        from backend.app.infrastructure.db.session import SessionLocal
+        from backend.app.reporting.export_task import run_case_export
+
+        redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
+        is_retry = self.request.retries > 0
+        claim_db = SessionLocal()
+        try:
+            claimed = _claim_case_export_execution(
+                claim_db,
+                UUID(export_id),
+                task_id=self.request.id,
+                allow_running=redelivered or is_retry,
+            )
+            if not claimed:
+                return {"export_id": export_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
+            run_case_export(UUID(export_id))
+            return {"export_id": export_id, "status": "completed"}
+        finally:
+            claim_db.close()
+else:
+    class _UnavailableTask:
+        def delay(self, *_args, **_kwargs):
+            raise RuntimeError("Celery is not installed. Install production dependencies before starting background jobs.")
+    class _UnavailableCeleryApp:
+        pass
+    celery_app = _UnavailableCeleryApp()
+    run_analysis_task = _UnavailableTask()
+    run_case_export_task = _UnavailableTask()
+
+
+    @celery_app.task(name="siraloom.discover_scientific_resources", autoretry_for=(), acks_late=True)
+    def discover_scientific_resources():
+        from backend.app.domain.resource_discovery import discover_resource_candidates
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            return discover_resource_candidates(db)
         finally:
             db.close()
