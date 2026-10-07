@@ -497,7 +497,6 @@ def test_transient_genebe_failure_requeues_annotation_partition_and_checkpoints(
         assert reclaimed.id == partition_id
         assert reclaimed.status == "RUNNING"
         assert reclaimed.attempt == 2
-
         retry_error = TransientWorkflowError(
             str(provider_error),
             countdown=min(60, 5 * attempt),
@@ -582,9 +581,15 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
             from backend.app.domain.enums import AnalysisStatus
             status = AnalysisStatus.QUEUED
 
+        def __init__(self):
+            self.analysis = self.Analysis()
+
         def get(self, model, received_analysis_id, **kwargs):
-            assert kwargs == {"with_for_update": True}
-            return self.Analysis()
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
+                return self.analysis
+            events.append(("analysis_lookup", model.__name__, received_analysis_id))
+            return self.analysis
 
         def add(self, _row):
             pass
@@ -997,8 +1002,7 @@ def test_celery_recovery_requeues_partition_for_scheduler_resume():
             metadata_json={"variant_ids": ["already-complete"]},
             resource_class="LIGHT",
             cpu_request=0.5,
-            memory_mb=512,
-            attempt=4,
+            memory_mb=512,            attempt=4,
             lease_owner=None,
             lease_expires_at=None,
         ))
@@ -1497,7 +1501,6 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
 
     def fake_session_local():
         return next(sessions)
-
     def fake_recover(db, received_analysis_id):
         assert isinstance(db, FakeRecoverySession)
         assert received_analysis_id == UUID(analysis_id)
@@ -1527,9 +1530,9 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
         task.pop_request()
 
     assert events == [
-        "claim_session_closed",
         "recovery",
         "recovery_session_closed",
+        "claim_session_closed",
     ]
 
 
@@ -1778,10 +1781,10 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         task.pop_request()
 
     assert events == [
-        "claim_session_closed",
         "run_analysis",
         "finalize",
         "terminal_session_closed",
+        "claim_session_closed",
     ]
 
 def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
@@ -1997,7 +2000,6 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
         "analysis_id": str(analysis_id),
         "status": AnalysisStatus.SUCCEEDED,
     }
-
     with Session(engine) as db:
         step = db.get(WorkflowStep, step_id)
         partition = db.get(AnalysisPartition, partition_id)
