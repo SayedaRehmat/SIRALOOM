@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import hashlib
 import secrets
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -89,6 +89,21 @@ def _ensure_membership_admin_hierarchy(principal_role: str, target_role: str) ->
     """Only organization administrators may manage an existing organization administrator."""
     if target_role == "organization_admin" and principal_role != "organization_admin":
         raise HTTPException(status_code=403, detail="Only an organization administrator can manage another organization administrator")
+
+
+def _lock_organization_membership_mutations(db: Session, organization_id) -> None:
+    """Serializes membership mutations for one tenant on PostgreSQL.
+
+    The active-admin invariant is a cross-row invariant. A plain COUNT followed by an
+    UPDATE is otherwise vulnerable to two concurrent administrators both observing the
+    same pre-mutation count. The transaction-scoped advisory lock makes the invariant
+    decision and mutation one serialized critical section without adding schema state.
+    """
+    if db.bind is None or db.bind.dialect.name != "postgresql":
+        return
+    organization_uuid = organization_id if isinstance(organization_id, UUID) else UUID(str(organization_id))
+    lock_key = int.from_bytes(organization_uuid.bytes[:8], byteorder="big", signed=True)
+    db.execute(text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
 
 
 def _ensure_active_admin_invariant(
@@ -359,7 +374,7 @@ def update_organization_membership(
 ):
     """Suspends, revokes, or changes the role of a tenant member without permitting self-escalation."""
     try:
-        membership_uuid = __import__("uuid").UUID(membership_id)
+        membership_uuid = UUID(membership_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="Invalid membership id") from exc
 
@@ -371,6 +386,7 @@ def update_organization_membership(
     if principal.role not in {"organization_admin", "lab_director"}:
         raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
     _ensure_membership_admin_hierarchy(principal.role, target.role)
+    _lock_organization_membership_mutations(db, principal.organization_id)
 
     if payload.status is not None and payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
         raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
