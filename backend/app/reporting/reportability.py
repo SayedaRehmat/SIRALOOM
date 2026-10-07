@@ -58,6 +58,7 @@ def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDeci
             select(Classification)
             .where(Classification.analysis_id == analysis.id)
             .order_by(Classification.variant_id, Classification.version.desc())
+            .with_for_update()
         )
     )
     latest_cls: dict[UUID, Classification] = {}
@@ -108,7 +109,11 @@ def finalize_reportability(
         raise ValueError("Unsupported reportability disposition")
     if not reason.strip():
         raise ValueError("Reportability review reason is required")
-    decision = db.get(ReportabilityDecision, decision_id)
+    # Serialize concurrent reportability sign-off attempts for this decision.
+    # The review-version check is optimistic concurrency protection, but the
+    # row lock is required to prevent two workers from both observing PROPOSED
+    # and creating conflicting FINAL mutations in the same transaction window.
+    decision = db.get(ReportabilityDecision, decision_id, with_for_update=True)
     if decision is None:
         raise ValueError("Reportability decision not found")
     if decision.status == "FINAL":
