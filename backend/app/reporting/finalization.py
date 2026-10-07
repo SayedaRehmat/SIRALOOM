@@ -71,7 +71,11 @@ def _persist_pdf_artifact(
 def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: str) -> Report:
     if not reason.strip():
         raise ReportFinalizationError("Approval reason is required")
-    report = db.get(Report, report_id)
+    # Serialize concurrent sign-out attempts for the same report. PostgreSQL
+    # must lock the draft row before eligibility evaluation or signed-artifact
+    # creation; otherwise two workers can both observe DRAFT and emit distinct
+    # signed artifacts for the same report version.
+    report = db.get(Report, report_id, with_for_update=True)
     if report is None:
         raise ReportFinalizationError("Report not found")
     if report.status == REPORT_STATUS_FINAL:
