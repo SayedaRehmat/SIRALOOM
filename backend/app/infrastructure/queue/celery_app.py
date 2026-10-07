@@ -1,5 +1,7 @@
 from backend.app.config import settings
 
+import hashlib
+
 try:
     from celery import Celery
 except ImportError:  # test/dev environments without queue dependencies installed
@@ -102,6 +104,33 @@ if Celery is not None:
         """
         from backend.app.domain.enums import AnalysisStatus
         from backend.app.infrastructure.db.models import Analysis
+
+        from backend.app.domain.enums import AnalysisStatus
+        from backend.app.infrastructure.db.models import Analysis
+        from sqlalchemy import text
+
+        # A PostgreSQL session-scoped advisory lock is the execution ownership
+        # fence. Unlike a row lock, it remains held for the entire Celery task
+        # because the claim session stays open until the task exits. If a worker
+        # dies, PostgreSQL releases the lock with the connection, allowing the
+        # broker-redelivered task to recover RUNNING state. A duplicate delivery
+        # while the original worker is alive cannot acquire the lock and is
+        # therefore fenced before it can touch workflow state.
+        bind = db.get_bind()
+        if bind.dialect.name == "postgresql":
+            lock_key = int.from_bytes(
+                hashlib.sha256(str(analysis_id).encode("utf-8")).digest()[:8],
+                byteorder="big",
+                signed=True,
+            )
+            acquired = bool(
+                db.scalar(
+                    text("SELECT pg_try_advisory_lock(:lock_key)"),
+                    {"lock_key": lock_key},
+                )
+            )
+            if not acquired:
+                return False
 
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
@@ -231,6 +260,10 @@ if Celery is not None:
 
         redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
         is_retry = self.request.retries > 0
+        # Keep the claim session open for the complete task. The PostgreSQL
+        # advisory lock acquired by _claim_analysis_execution is session-scoped;
+        # closing this session here would release the only execution fence and
+        # allow a duplicate/redelivered task to overlap the live worker.
         claim_db = SessionLocal()
         try:
             claimed = _claim_analysis_execution(
@@ -239,41 +272,36 @@ if Celery is not None:
                 task_id=self.request.id,
                 allow_running=redelivered or is_retry,
             )
+            if not claimed:
+                return {"analysis_id": analysis_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
+
+            if redelivered:
+                recovery_db = SessionLocal()
+                try:
+                    recover_interrupted_execution(recovery_db, UUID(analysis_id))
+                finally:
+                    recovery_db.close()
+            try:
+                run_variant_analysis(UUID(analysis_id))
+            except TransientWorkflowError as exc:
+                if self.request.retries >= self.max_retries:
+                    terminal_db = SessionLocal()
+                    try:
+                        _finalize_transient_retry_exhaustion(
+                            terminal_db,
+                            UUID(analysis_id),
+                            str(exc),
+                        )
+                    finally:
+                        terminal_db.close()
+                    raise
+                raise self.retry(exc=exc, countdown=exc.countdown)
+            from backend.app.infrastructure.db.models import Analysis
+            analysis = claim_db.get(Analysis, UUID(analysis_id))
+            return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
         finally:
             claim_db.close()
 
-        if not claimed:
-            return {"analysis_id": analysis_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
-
-        if redelivered:
-            recovery_db = SessionLocal()
-            try:
-                recover_interrupted_execution(recovery_db, UUID(analysis_id))
-            finally:
-                recovery_db.close()
-        try:
-            run_variant_analysis(UUID(analysis_id))
-        except TransientWorkflowError as exc:
-            if self.request.retries >= self.max_retries:
-                terminal_db = SessionLocal()
-                try:
-                    _finalize_transient_retry_exhaustion(
-                        terminal_db,
-                        UUID(analysis_id),
-                        str(exc),
-                    )
-                finally:
-                    terminal_db.close()
-                raise
-            raise self.retry(exc=exc, countdown=exc.countdown)
-        from backend.app.infrastructure.db.models import Analysis
-        from backend.app.infrastructure.db.session import SessionLocal
-        db = SessionLocal()
-        try:
-            analysis = db.get(Analysis, UUID(analysis_id))
-            return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
-        finally:
-            db.close()
 
     @celery_app.task(name="siraloom.scan_reanalysis_resources", autoretry_for=(), acks_late=True)
     def scan_reanalysis_resources():
