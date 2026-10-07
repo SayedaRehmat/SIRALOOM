@@ -32,10 +32,17 @@ def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatc
 
     monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
     monkeypatch.setattr(module.celery_app, "AsyncResult", lambda _id: type("Result", (), {"state": "FAILURE"})())
-    monkeypatch.setattr(module.run_analysis_task, "delay", lambda _id: type("Task", (), {"id": "replacement-task"})())
+    published = {"dispatch_id": None}
+
+    def publish(dispatch_id):
+        published["dispatch_id"] = str(dispatch_id)
+        return str(dispatch_id)
+
+    monkeypatch.setattr(module, "publish_analysis_dispatch", publish)
 
     assert module.recover_orphaned_analysis_dispatches() == {"inspected": 1, "recovered": 1}
-    assert analysis.queue_task_id == "replacement-task"
+    assert published["dispatch_id"] is not None
+    assert analysis.queue_task_id == published["dispatch_id"]
 
 
 def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypatch):

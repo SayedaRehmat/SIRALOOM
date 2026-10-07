@@ -373,8 +373,53 @@ if Celery is not None:
                 if task_state not in {"FAILURE", "REVOKED"}:
                     continue
 
+                # Legacy analyses predate AnalysisDispatch. Convert the
+                # orphaned queue ownership into the same durable outbox used by
+                # every current analysis instead of publishing a task directly.
+                # The old task is already definitively dead, so a new dispatch
+                # generation can safely take ownership under this row lock.
+                from uuid import uuid4
+                from sqlalchemy import func
+
+                next_generation = (
+                    db.scalar(
+                        select(func.coalesce(func.max(AnalysisDispatch.dispatch_generation), 0))
+                        .where(AnalysisDispatch.analysis_id == analysis.id)
+                    )
+                    or 0
+                ) + 1
+                dispatch = AnalysisDispatch(
+                    id=uuid4(),
+                    analysis_id=analysis.id,
+                    dispatch_generation=next_generation,
+                    status="PENDING",
+                    task_id=None,
+                    attempts=0,
+                    last_error=None,
+                    published_at=None,
+                )
+                analysis.queue_task_id = str(dispatch.id)
+                db.add(dispatch)
+                db.add(analysis)
+                AuditService(db).record(
+                    event_type="ANALYSIS_DISPATCH_RECOVERED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="celery-recovery",
+                    operation="RECOVER_QUEUED_DISPATCH",
+                    payload={
+                        "previous_task_id": previous_task_id,
+                        "replacement_dispatch_id": str(dispatch.id),
+                        "dispatch_generation": next_generation,
+                        "celery_state": task_state,
+                        "recovery_mode": "LEGACY_TO_DURABLE_OUTBOX",
+                    },
+                )
+                db.commit()
+
                 try:
-                    task = run_analysis_task.delay(str(analysis.id))
+                    published_task_id = publish_analysis_dispatch(dispatch.id)
                 except Exception as exc:
                     AuditService(db).record(
                         event_type="ANALYSIS_DISPATCH_RECOVERY_FAILURE",
@@ -386,28 +431,15 @@ if Celery is not None:
                         reason=str(exc),
                         payload={
                             "previous_task_id": previous_task_id,
+                            "replacement_dispatch_id": str(dispatch.id),
                             "celery_state": task_state,
                             "error_type": type(exc).__name__,
                         },
                     )
                     continue
 
-                analysis.queue_task_id = task.id
-                db.add(analysis)
-                AuditService(db).record(
-                    event_type="ANALYSIS_DISPATCH_RECOVERED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="celery-recovery",
-                    operation="RECOVER_QUEUED_DISPATCH",
-                    payload={
-                        "previous_task_id": previous_task_id,
-                        "replacement_task_id": task.id,
-                        "celery_state": task_state,
-                    },
-                )
-                recovered += 1
+                if published_task_id:
+                    recovered += 1
 
             db.commit()
             return {"inspected": inspected, "recovered": recovered}
