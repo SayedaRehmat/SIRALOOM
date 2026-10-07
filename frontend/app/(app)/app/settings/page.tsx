@@ -108,16 +108,17 @@ export default function SettingsPage() {
             {members.length === 0 && <p className="muted">No organization members were returned.</p>}
             {members.map((member) => {
               const isSelf = member.user_id === session?.user_id;
+              const isProtectedAdmin = member.role === ADMIN_ROLE && !canAssignAdmin;
               const updating = updatingMembershipId === member.membership_id;
               return (
                 <div className="keyline" key={member.membership_id}>
                   <span>{member.email ?? member.display_name ?? "—"}</span>
                   <div>
                     <strong>{member.role} · {member.status}</strong>
-                    <div className="form-stack" style={{ marginTop: 8 }}>
-                      <label>Role<select value={member.role} disabled={updating || (member.role === ADMIN_ROLE && !canAssignAdmin)} onChange={(e) => updateMember(member.membership_id, e.target.value, member.status)}>{memberRoleOptions.map((role) => <option key={role} value={role}>{role}</option>)}</select></label>
+                    {!isProtectedAdmin ? <div className="form-stack" style={{ marginTop: 8 }}>
+                      <label>Role<select value={member.role} disabled={updating} onChange={(e) => updateMember(member.membership_id, e.target.value, member.status)}>{memberRoleOptions.map((role) => <option key={role} value={role}>{role}</option>)}</select></label>
                       <label>Status<select value={member.status} disabled={updating || isSelf} onChange={(e) => updateMember(member.membership_id, member.role, e.target.value)}><option value="ACTIVE">ACTIVE</option><option value="SUSPENDED">SUSPENDED</option><option value="REVOKED">REVOKED</option></select></label>
-                    </div>
+                    </div> : <p className="muted">Organization administrator access can only be managed by another organization administrator.</p>}
                   </div>
                 </div>
               );
