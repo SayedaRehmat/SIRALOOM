@@ -109,7 +109,7 @@ def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
 
     assert dispatch_id == export.queue_task_id
     assert events[-1][0] == "publish"
-    assert events[-1][1] == dispatch_id
+    assert str(events[-1][1]) == dispatch_id
     commit_index = next(i for i, event in enumerate(events) if event[0] == "commit")
     publish_index = next(i for i, event in enumerate(events) if event[0] == "publish")
     assert commit_index < publish_index
