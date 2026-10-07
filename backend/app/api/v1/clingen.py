@@ -6,7 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.clingen.cspec import CSpecClient, CSpecClientError
-from backend.app.acmg.clingen_registry import fetch_ruleset
+from backend.app.acmg.clingen_registry import (
+    fetch_current_sequence_variant_interpretation,
+    fetch_ruleset,
+    fetch_sequence_variant_interpretation,
+)
 from backend.app.acmg.specification_selection import ClinGenSpecificationSelector, validate_snapshot_for_automation
 from backend.app.infrastructure.db.models import ClinGenSpecification
 from backend.app.infrastructure.db.session import get_db
@@ -15,7 +19,14 @@ from backend.app.infrastructure.audit.service import AuditService
 router = APIRouter(tags=["clingen"])
 
 class ClinGenImportRequest(BaseModel):
-    ruleset_id: str = Field(min_length=1)
+    # ruleset_id is retained for backward compatibility with the original
+    # importer. New imports should use the official SequenceVariantInterpretation
+    # identity/version or governed gene/disease resolution.
+    ruleset_id: str | None = None
+    specification_id: str | None = None
+    version: str | None = None
+    gene_id: str | None = None
+    disease_id: str | None = None
     activate_for_automation: bool = False
 
 class ClinGenValidationRequest(BaseModel):
@@ -25,8 +36,56 @@ class ClinGenValidationRequest(BaseModel):
 
 @router.post("/clingen/specifications/import")
 def import_specification(payload: ClinGenImportRequest, db: Session = Depends(get_db)):
+    selectors = sum(
+        bool(x)
+        for x in (
+            payload.ruleset_id,
+            payload.specification_id,
+            payload.gene_id,
+            payload.disease_id,
+        )
+    )
+    if selectors != 1:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Provide exactly one specification selector: ruleset_id for the "
+                "legacy importer, specification_id with version, or gene_id/disease_id "
+                "for current Released SVI resolution."
+            ),
+        )
+    if payload.specification_id and not payload.version:
+        raise HTTPException(
+            status_code=422,
+            detail="version is required with specification_id",
+        )
+    if payload.version and not payload.specification_id:
+        raise HTTPException(
+            status_code=422,
+            detail="specification_id is required with version",
+        )
+    if payload.gene_id and payload.disease_id:
+        raise HTTPException(
+            status_code=422,
+            detail="gene_id and disease_id are mutually exclusive",
+        )
+
     try:
-        snapshot = fetch_ruleset(CSpecClient(), payload.ruleset_id)
+        client = CSpecClient()
+        if payload.ruleset_id:
+            snapshot = fetch_ruleset(client, payload.ruleset_id)
+        elif payload.specification_id:
+            snapshot = fetch_sequence_variant_interpretation(
+                client,
+                payload.specification_id,
+                payload.version or "",
+            )
+        else:
+            snapshot = fetch_current_sequence_variant_interpretation(
+                client,
+                gene_id=payload.gene_id,
+                disease_id=payload.disease_id,
+            )
     except (CSpecClientError, ValueError) as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     existing = db.scalar(select(ClinGenSpecification).where(ClinGenSpecification.specification_id == snapshot.specification_id, ClinGenSpecification.version == snapshot.version))

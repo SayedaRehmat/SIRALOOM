@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote
 import hashlib
 import json
 
@@ -72,6 +73,52 @@ class CSpecClient:
                                     "entity_id": entity_id, "detail": detail}}
         )
 
+    def get_sequence_variant_interpretation_version(self, specification_id: str, version: str, *, detail: str = "high") -> CSpecEntity:
+        self._validate_detail(detail)
+        path = f"/SequenceVariantInterpretation/id/{quote(specification_id, safe='')}/version/{quote(version, safe='')}"
+        params = {"detail": detail}
+        payload = self._get(path, params=params)
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, dict):
+            raise CSpecClientError("CSpec response does not contain a data object")
+        entity = self._parse_entity(data, fallback_type="SequenceVariantInterpretation", fallback_id=specification_id)
+        return CSpecEntity(
+            **{
+                **entity.__dict__,
+                "request_fingerprint": self._request_fingerprint(path, params),
+                "response_sha256": self._response_sha256(payload),
+                "request_metadata": {"provider": "ClinGen CSpec", "endpoint": self.base_url, "path": path, "params": params},
+            }
+        )
+
+    def list_sequence_variant_interpretation_versions(self, *, gene_id: str | None = None, disease_id: str | None = None, page: int = 1, page_size: int = 250, detail: str = "low") -> list[CSpecEntity]:
+        if bool(gene_id) == bool(disease_id):
+            raise ValueError("exactly one of gene_id or disease_id is required")
+        self._validate_page(page, page_size)
+        self._validate_detail(detail)
+        if gene_id:
+            path = f"/Gene/id/{quote(gene_id, safe='')}/SequenceVariantInterpretation/version"
+        else:
+            path = f"/Disease/id/{quote(str(disease_id), safe='')}/SequenceVariantInterpretation/version"
+        params = {"pg": page, "pgSize": page_size, "detail": detail}
+        payload = self._get(path, params=params)
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, list):
+            raise CSpecClientError("CSpec version-list response does not contain a data list")
+        request_fingerprint = self._request_fingerprint(path, params)
+        response_sha256 = self._response_sha256(payload)
+        metadata = {"provider": "ClinGen CSpec", "endpoint": self.base_url, "path": path, "params": params}
+        return [
+            self._parse_entity(
+                item,
+                fallback_type="SequenceVariantInterpretation",
+                request_fingerprint=request_fingerprint,
+                response_sha256=response_sha256,
+                request_metadata=metadata,
+            )
+            for item in data if isinstance(item, dict)
+        ]
+
     def list_entities(
         self,
         entity_type: str,
@@ -96,6 +143,26 @@ class CSpecClient:
             # closed rather than interpreting an unknown representation.
             raise CSpecClientError("CSpec list response does not contain a data list")
         return [self._parse_entity(item, fallback_type=entity_type) for item in data if isinstance(item, dict)]
+
+    @staticmethod
+    def _request_fingerprint(path: str, params: dict[str, Any]) -> str:
+        canonical = json.dumps({"path": path, "params": params}, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return hashlib.sha256(canonical).hexdigest()
+
+    @staticmethod
+    def _response_sha256(payload: dict[str, Any]) -> str:
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+        return hashlib.sha256(canonical).hexdigest()
+
+    @staticmethod
+    def _validate_detail(detail: str) -> None:
+        if detail not in {"low", "med", "high"}:
+            raise ValueError("detail must be low, med, or high")
+
+    @staticmethod
+    def _validate_page(page: int, page_size: int) -> None:
+        if page < 1 or not 1 <= page_size <= 250:
+            raise ValueError("page must be >= 1 and page_size must be between 1 and 250")
 
     def _get(self, path: str, *, params: dict[str, Any] | None = None) -> dict[str, Any]:
         client = self._get_client()

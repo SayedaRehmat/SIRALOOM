@@ -14,7 +14,9 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID, uuid4
 
-from backend.app.acmg.engine import ACMGEngine, ClassificationResult, CriterionAssessment
+from backend.app.acmg.engine import ClassificationResult, CriterionAssessment
+from backend.app.acmg.classification_engine import ClassificationEngineRouter
+from backend.app.acmg.combination_method import STANDARD_ACMG
 from backend.app.acmg.evaluators import (
     EvaluatorConfigurationError,
     EvaluatorResult,
@@ -24,10 +26,15 @@ from backend.app.acmg.evaluators import (
     evaluate_pvs1,
 )
 from backend.app.acmg.specification_selection import ClinGenSpecificationSelector
+from backend.app.acmg.source_assessment import (
+    SourceCriterionAssessment,
+    assess_source_assertions,
+)
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
     Annotation,
+    ACMGSourceAssertion,
     Classification,
     ClinGenSpecification,
     Evidence,
@@ -39,15 +46,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 SUPPORTED_AUTOMATED_CRITERIA = {"PM2", "BA1", "BS1", "PP3", "BP4", "PVS1"}
-ALTERNATIVE_COMBINATION_KEYS = {
-    "combining_method",
-    "combiningMethod",
-    "point_based",
-    "pointBased",
-    "points",
-}
-
-
 @dataclass(frozen=True)
 class SpecificationBinding:
     status: str
@@ -63,6 +61,10 @@ class AutomatedAssessmentResult:
     binding: SpecificationBinding
     evaluator_results: tuple[EvaluatorResult, ...]
     classification: ClassificationResult | None
+    criterion_assessments: tuple[CriterionAssessment, ...] = ()
+    source_assessments: tuple[SourceCriterionAssessment, ...] = ()
+    combination_method: str = STANDARD_ACMG
+    combination_metadata: dict[str, Any] | None = None
 
 
 class SpecificationBindingError(ValueError):
@@ -121,13 +123,13 @@ class ACMGSpecificationAssessmentService:
             return AutomatedAssessmentResult(binding.status, binding, tuple(), None)
 
         profile = dict(row.criteria or {})
-        if _has_alternative_combination(profile):
-            return AutomatedAssessmentResult(
-                "REQUIRES_REVIEW",
-                binding,
-                tuple(),
-                None,
-            )
+        # Combination-method detection governs only the final combination stage.
+        # Evidence evaluators and source assertions must still run when the
+        # selected specification uses a method that SIRALOOM cannot execute yet.
+        # This preserves all scientific evidence and routes only the
+        # classification-combination decision to human review.
+        engine_selection = ClassificationEngineRouter().select(row)
+        combination = engine_selection.decision
 
         normalized = (annotation.payload or {}).get("normalized") or {}
         variant_context = _variant_context(normalized)
@@ -213,10 +215,10 @@ class ACMGSpecificationAssessmentService:
             ))
 
         evaluator_results = bound_results
-        proposed_assessments = [
+        evaluator_assessments = [
             CriterionAssessment(
                 criterion=r.criterion,
-                strength=r.strength or "SUPPORTING" if r.criterion != "BA1" else "STANDALONE",
+                strength=r.strength or ("SUPPORTING" if r.criterion != "BA1" else "STANDALONE"),
                 direction=r.direction,
                 status=r.status,
                 evidence_ids=r.evidence_ids,
@@ -227,11 +229,151 @@ class ACMGSpecificationAssessmentService:
             if r.applicable and r.strength is not None and r.status == "PROPOSED" and r.evidence_ids
         ]
 
-        if not proposed_assessments:
-            return AutomatedAssessmentResult("REQUIRES_REVIEW", binding, tuple(evaluator_results), None)
+        source_rows = db.scalars(
+            select(ACMGSourceAssertion).where(
+                ACMGSourceAssertion.analysis_id == analysis.id,
+                ACMGSourceAssertion.variant_id == variant.id,
+            ).order_by(ACMGSourceAssertion.criterion.asc(), ACMGSourceAssertion.created_at.asc())
+        ).all()
+        source_results = assess_source_assertions(source_rows, row) if source_rows else ()
 
-        classification = ACMGEngine().classify(proposed_assessments)
-        return AutomatedAssessmentResult("PROPOSED", binding, tuple(evaluator_results), classification)
+        source_by_id = {str(item.id): item for item in source_rows}
+        source_assessments: list[CriterionAssessment] = []
+        for source_result in source_results:
+            if (
+                source_result.status != "PROPOSED"
+                or not source_result.applicable
+                or source_result.strength is None
+            ):
+                continue
+            source_assessments.append(
+                CriterionAssessment(
+                    # The existing baseline engine combines canonical ACMG codes.
+                    # CSpec strength modifications are retained in metadata and
+                    # represented by the governed strength value; they are not
+                    # invented as new engine criterion codes.
+                    criterion=source_result.criterion,
+                    strength=source_result.strength,
+                    direction=source_result.direction,
+                    status="PROPOSED",
+                    evidence_ids=tuple(
+                        str(source_by_id[source_id].evidence_id)
+                        for source_id in source_result.source_assertion_ids
+                        if source_id in source_by_id
+                    ),
+                    reason=source_result.rationale,
+                    metadata={
+                        "assessment_origin": "CLINGEN_SOURCE_ASSERTION",
+                        "effective_criterion": source_result.effective_criterion,
+                        "source_assertion_ids": list(source_result.source_assertion_ids),
+                        "specification_id": source_result.specification_id,
+                        "specification_version": source_result.specification_version,
+                        **(source_result.metadata or {}),
+                    },
+                )
+            )
+
+        merged, merge_error = _merge_criterion_assessments(
+            evaluator_assessments,
+            source_assessments,
+        )
+        combination_metadata = {
+            **combination.metadata,
+            "reason": combination.reason,
+            "specification_id": row.specification_id,
+            "specification_version": row.version,
+        }
+
+        unresolved_criteria = _unresolved_specification_criteria(
+            profile=profile,
+            evaluator_results=evaluator_results,
+            source_results=source_results,
+        )
+        if unresolved_criteria:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "SPECIFICATION_CRITERION_NOT_EXECUTABLE",
+                    "unresolved_criteria": list(unresolved_criteria),
+                },
+            )
+
+        if merge_error:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "CONFLICTING_CRITERION_PROPOSALS",
+                    "merge_error": merge_error,
+                },
+            )
+
+        if not merged:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                (),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "NO_PROPOSED_CRITERIA",
+                },
+            )
+
+        # Unsupported/alternative combination methods do not invalidate the
+        # evidence or criterion assessments. They only prevent SIRALOOM from
+        # making an automated final combination until a validated executor exists.
+        if engine_selection.engine is None:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "COMBINATION_ENGINE_NOT_AVAILABLE",
+                    "engine_selection_reason": engine_selection.reason,
+                },
+            )
+
+        classification = engine_selection.engine.classify(merged)
+        return AutomatedAssessmentResult(
+            "PROPOSED",
+            binding,
+            tuple(evaluator_results),
+            classification,
+            tuple(merged),
+            tuple(source_results),
+            combination_method=combination.method,
+            combination_metadata={
+                **combination_metadata,
+                "classification_automation": "PROPOSED",
+            },
+        )
+
 
     def persist(
         self,
@@ -279,6 +421,45 @@ class ACMGSpecificationAssessmentService:
             row.state = evaluated.status
             db.add(row)
 
+        # Persist source-derived proposed criteria that were not already represented
+        # by an evaluator row. Source assertions remain the provenance authority;
+        # this ACMGAssessment is only the reconciled criterion proposal.
+        for assessed in result.criterion_assessments:
+            if assessed.criterion in {
+                item.criterion for item in result.evaluator_results
+            }:
+                continue
+            existing = db.scalar(
+                select(ACMGAssessment).where(
+                    ACMGAssessment.variant_id == variant.id,
+                    ACMGAssessment.analysis_id == analysis.id,
+                    ACMGAssessment.criterion == assessed.criterion,
+                )
+            )
+            row = existing or ACMGAssessment(
+                id=uuid4(),
+                variant_id=variant.id,
+                analysis_id=analysis.id,
+                framework_name="ACMG/AMP",
+                framework_version="2015",
+                specification_provider="ClinGen",
+                specification_id=result.binding.specification_id,
+                specification_version=result.binding.specification_version,
+                criterion=assessed.criterion,
+                state=assessed.status,
+            )
+            row.automated_assessment = {
+                "applicable": True,
+                "strength": assessed.strength,
+                "direction": assessed.direction,
+                "status": assessed.status,
+                "evidence_ids": list(assessed.evidence_ids),
+                "reason": assessed.reason,
+                "metadata": assessed.metadata,
+            }
+            row.state = assessed.status
+            db.add(row)
+
         if classification is not None:
             criterion_ids: list[str] = []
             for assessed in classification.criteria:
@@ -314,6 +495,97 @@ class ACMGSpecificationAssessmentService:
                     )
                 )
         db.flush()
+
+
+def _unresolved_specification_criteria(
+    *,
+    profile: dict[str, Any],
+    evaluator_results: list[EvaluatorResult],
+    source_results: tuple[SourceCriterionAssessment, ...],
+) -> tuple[str, ...]:
+    """Identify configured criteria for which SIRALOOM has no assessment.
+
+    A specification may define many ACMG/AMP criteria while SIRALOOM currently
+    has automated evaluators for only a subset. A final combination from the
+    subset would be unsafe because an unassessed criterion could materially
+    change the classification. A criterion is considered accounted for when an
+    evaluator or governed ClinGen source assessment produced a result, including
+    an explicit non-applicable outcome.
+    """
+    configured = {
+        str(key).upper()
+        for key in profile
+        if _looks_like_acmg_criterion(key)
+    }
+    if not configured:
+        return ()
+
+    assessed = {str(result.criterion).upper() for result in evaluator_results}
+    assessed.update(str(result.criterion).upper() for result in source_results)
+    return tuple(sorted(configured - assessed))
+
+
+def _looks_like_acmg_criterion(value: object) -> bool:
+    """Return True for canonical ACMG/AMP-style criterion keys only."""
+    if not isinstance(value, str):
+        return False
+    import re
+
+    return bool(
+        re.fullmatch(
+            r"(?:PVS1|PS[1-4]|PM[1-6]|PP[1-5]|BA1|BS[1-4]|BP[1-7])(?:_[A-Z]+)?",
+            value.upper(),
+        )
+    )
+
+def _merge_criterion_assessments(
+    evaluator_assessments: list[CriterionAssessment],
+    source_assessments: list[CriterionAssessment],
+) -> tuple[list[CriterionAssessment], str | None]:
+    """Merge local evaluator and ClinGen source proposals deterministically.
+
+    A canonical ACMG criterion may occur from both paths. Compatible proposals
+    are deduplicated; conflicting strength, direction, or evidence are never
+    silently resolved. The caller must route such a conflict to human review.
+    """
+    merged: dict[str, CriterionAssessment] = {}
+    conflicts: list[str] = []
+
+    for assessment in [*evaluator_assessments, *source_assessments]:
+        key = assessment.criterion
+        existing = merged.get(key)
+        if existing is None:
+            merged[key] = assessment
+            continue
+
+        compatible = (
+            existing.strength == assessment.strength
+            and existing.direction == assessment.direction
+        )
+        if not compatible:
+            conflicts.append(
+                f"{key}: existing={existing.strength}/{existing.direction}, "
+                f"incoming={assessment.strength}/{assessment.direction}"
+            )
+            continue
+
+        merged[key] = CriterionAssessment(
+            criterion=key,
+            strength=existing.strength,
+            direction=existing.direction,
+            status="PROPOSED",
+            evidence_ids=tuple(dict.fromkeys((*existing.evidence_ids, *assessment.evidence_ids))),
+            reason="Compatible criterion proposals were deduplicated across evidence sources.",
+            metadata={
+                **existing.metadata,
+                "merge": "DEDUPLICATED_COMPATIBLE_PROPOSALS",
+                "merged_metadata": [existing.metadata, assessment.metadata],
+            },
+        )
+
+    if conflicts:
+        return list(merged.values()), "Conflicting criterion proposals require human review: " + "; ".join(conflicts)
+    return list(merged.values()), None
 
 
 def _resolve_evidence_ids(
@@ -352,17 +624,6 @@ def _resolve_evidence_ids(
             resolved.append(row.id)
             unresolved -= observation_ids & normalized
     return tuple(dict.fromkeys(resolved)), tuple(sorted(unresolved))
-
-
-def _has_alternative_combination(profile: dict[str, Any]) -> bool:
-    for key in ALTERNATIVE_COMBINATION_KEYS:
-        if key not in profile:
-            continue
-        value = profile.get(key)
-        if value in (None, "", False, "STANDARD_ACMG_AMP_2015", "BASELINE_ACMG_AMP_2015"):
-            continue
-        return True
-    return False
 
 
 def _variant_context(normalized: dict[str, Any]) -> dict[str, Any]:
