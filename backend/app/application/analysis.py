@@ -155,6 +155,59 @@ def preflight_analysis_resources(
     return plan
 
 
+def _create_dispatch_locked(
+    db: Session,
+    analysis: Analysis,
+) -> AnalysisDispatch:
+    """Create the next durable execution intent while the analysis row is locked."""
+    next_generation = (
+        db.scalar(
+            select(func.coalesce(func.max(AnalysisDispatch.dispatch_generation), 0))
+            .where(AnalysisDispatch.analysis_id == analysis.id)
+        )
+        or 0
+    ) + 1
+
+    dispatch = AnalysisDispatch(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        dispatch_generation=next_generation,
+        status="PENDING",
+        task_id=None,
+        attempts=0,
+        last_error=None,
+        published_at=None,
+    )
+    analysis.status = AnalysisStatus.QUEUED
+    # Reserve the deterministic Celery task identity before publication. This
+    # lets the worker reject any stale task from an older retry generation even
+    # if that broker message arrives after a newer retry has been queued.
+    analysis.queue_task_id = str(dispatch.id)
+    db.add(dispatch)
+    db.add(analysis)
+    return dispatch
+
+
+def _publish_dispatch_after_commit(
+    db: Session,
+    dispatch: AnalysisDispatch,
+) -> str | None:
+    db.commit()
+    db.refresh(dispatch)
+    try:
+        from backend.app.infrastructure.queue.celery_app import publish_analysis_dispatch
+        return publish_analysis_dispatch(dispatch.id)
+    except Exception as exc:
+        # The dispatch remains a durable PENDING intent. The periodic outbox
+        # relay can retry publication without requiring the human/API caller
+        # to remain alive after the database transaction commits.
+        dispatch.last_error = str(exc)
+        dispatch.attempts += 1
+        db.add(dispatch)
+        db.commit()
+        return None
+
+
 def enqueue_analysis(
     db: Session,
     analysis: Analysis,
@@ -190,41 +243,38 @@ def enqueue_analysis(
             f"Analysis cannot be started from status {analysis.status}"
         )
 
-    next_generation = (
-        db.scalar(
-            select(func.coalesce(func.max(AnalysisDispatch.dispatch_generation), 0))
-            .where(AnalysisDispatch.analysis_id == analysis.id)
+    dispatch = _create_dispatch_locked(db, analysis)
+    return _publish_dispatch_after_commit(db, dispatch)
+
+
+def resume_analysis(
+    db: Session,
+    analysis: Analysis | UUID,
+) -> str | None:
+    """Resume an analysis after a completed human gate using the durable outbox.
+
+    Human-gate completion commonly leaves the analysis in REQUIRES_REVIEW.
+    The row lock makes repeated/concurrent resume requests idempotent, while
+    the dispatch row closes the DB-commit-to-broker-publication crash window.
+    Callers must invoke this only after their gate-specific validation has
+    established that resumption is authorized.
+    """
+    analysis_id = analysis.id if isinstance(analysis, Analysis) else analysis
+    locked = db.get(Analysis, analysis_id, with_for_update=True)
+    if locked is None:
+        raise ValueError("Analysis not found")
+
+    # Force a fresh read after acquiring the lock because the caller may have
+    # loaded the analysis before another worker completed the same human gate.
+    db.refresh(locked, with_for_update=True)
+
+    if locked.status in {AnalysisStatus.QUEUED, AnalysisStatus.RUNNING}:
+        return locked.queue_task_id
+
+    if locked.status != AnalysisStatus.REQUIRES_REVIEW:
+        raise ValueError(
+            f"Analysis cannot be resumed from status {locked.status}"
         )
-        or 0
-    ) + 1
 
-    dispatch = AnalysisDispatch(
-        id=uuid4(),
-        analysis_id=analysis.id,
-        dispatch_generation=next_generation,
-        status="PENDING",
-        task_id=None,
-        attempts=0,
-        last_error=None,
-        published_at=None,
-    )
-    analysis.status = AnalysisStatus.QUEUED
-    # Reserve the deterministic Celery task identity before publication. This
-    # lets the worker reject any stale task from an older retry generation even
-    # if that broker message arrives after a newer retry has been queued.
-    analysis.queue_task_id = str(dispatch.id)
-    db.add(dispatch)
-    db.add(analysis)
-    db.commit()
-    db.refresh(dispatch)
-    db.refresh(analysis)
-
-    try:
-        from backend.app.infrastructure.queue.celery_app import publish_analysis_dispatch
-        return publish_analysis_dispatch(dispatch.id)
-    except Exception as exc:
-        dispatch.last_error = str(exc)
-        dispatch.attempts += 1
-        db.add(dispatch)
-        db.commit()
-        return None
+    dispatch = _create_dispatch_locked(db, locked)
+    return _publish_dispatch_after_commit(db, dispatch)
