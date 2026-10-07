@@ -114,6 +114,7 @@ def _save_batch_checkpoint(
     status: str,
     attempt: int | None = None,
     metadata: dict | None = None,
+    commit: bool = True,
 ) -> None:
     current = dict(step.metadata_json or {})
     batches = dict(current.get("batches") or {})
@@ -133,7 +134,8 @@ def _save_batch_checkpoint(
     step.last_heartbeat = _now()
     step.updated_at = _now()
     db.add(step)
-    db.commit()
+    if commit:
+        db.commit()
 
 
 def _completed_batch_keys(step: WorkflowStep) -> set[str]:
@@ -1208,6 +1210,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db, annotation_step, start, end, status="SUCCEEDED",
                             attempt=int(checkpoint.get("attempt", 0)),
                             metadata={"provider": provider.provider_id, "recovered_existing_rows": True, "variant_count": len(batch)},
+                            commit=False,
                         )
                         if partition.status == "RUNNING" and partition.lease_owner == worker_id:
                             scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
@@ -1317,9 +1320,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     _save_batch_checkpoint(
                         db, annotation_step, start, end, status="SUCCEEDED", attempt=attempt,
                         metadata={"provider": provider.provider_id, "new_annotation_rows": new_count, "returned_rows": len(payloads_by_key)},
+                        commit=False,
                     )
                     if partition.status == "RUNNING" and partition.lease_owner == worker_id:
                         scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "variant_count": len(batch)})
+                    else:
+                        raise PartitionLeaseError(
+                            f"Annotation partition {partition.id} lost its lease before result persistence"
+                        )
                     audit.record(
                         event_type="ANNOTATION_BATCH_COMPLETED",
                         case_id=analysis.case_id,
