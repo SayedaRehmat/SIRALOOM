@@ -146,7 +146,6 @@ class VEPProvider(ScientificResourceProvider):
                 # process running indefinitely after SIRALOOM has abandoned it.
                 completed = subprocess.Popen(
                     cmd,
-                    check=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
