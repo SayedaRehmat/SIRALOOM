@@ -62,3 +62,30 @@ def test_scheduler_lease_recovery_and_retry_limit(tmp_path):
         assert recovered and recovered.lease_owner == "w2" and recovered.attempt == 2
         scheduler.fail(recovered.id, "w2", recovered.lease_token, error_code="TEMP", error_message="retry")
         assert db.get(AnalysisPartition, recovered.id).status == "READY"
+
+
+def test_save_batch_checkpoint_can_stage_without_commit():
+    """Result checkpoints can share the partition-fenced transaction."""
+    from unittest.mock import Mock
+
+    from backend.app.workflows.variant import _save_batch_checkpoint
+
+    db = Mock()
+    step = Mock()
+    step.metadata_json = {}
+    step.last_heartbeat = None
+    step.updated_at = None
+
+    _save_batch_checkpoint(
+        db,
+        step,
+        0,
+        10,
+        status="SUCCEEDED",
+        metadata={"provider": "GeneBe"},
+        commit=False,
+    )
+
+    db.add.assert_called_once_with(step)
+    db.commit.assert_not_called()
+    assert step.metadata_json["batches"]["0:10"]["status"] == "SUCCEEDED"
