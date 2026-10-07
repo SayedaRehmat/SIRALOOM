@@ -85,6 +85,12 @@ def _require_invitation_role(principal: Principal, role: str) -> None:
         raise HTTPException(status_code=403, detail="Platform administrator access cannot be granted through an organization invitation")
 
 
+def _ensure_membership_admin_hierarchy(principal_role: str, target_role: str) -> None:
+    """Only organization administrators may manage an existing organization administrator."""
+    if target_role == "organization_admin" and principal_role != "organization_admin":
+        raise HTTPException(status_code=403, detail="Only an organization administrator can manage another organization administrator")
+
+
 def _ensure_active_admin_invariant(
     db: Session,
     organization_id,
@@ -364,8 +370,7 @@ def update_organization_membership(
         raise HTTPException(status_code=409, detail="You cannot suspend or revoke your own active membership")
     if principal.role not in {"organization_admin", "lab_director"}:
         raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
-    if target.role == "organization_admin" and principal.role != "organization_admin":
-        raise HTTPException(status_code=403, detail="Only an organization administrator can manage another organization administrator")
+    _ensure_membership_admin_hierarchy(principal.role, target.role)
 
     if payload.status is not None and payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
         raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
