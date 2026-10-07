@@ -259,7 +259,20 @@ def qualify_resource(
         qualification_version = str(
             payload.get("qualification_version") or "siraloom-resource-qualification-v1"
         )
-        result = run_qualification(row, qualification_version=qualification_version)
+        staging = db.scalar(
+            select(ResourceStaging)
+            .where(
+                ResourceStaging.resource_id == row.id,
+                ResourceStaging.resource_version == row.version,
+            )
+            .order_by(ResourceStaging.updated_at.desc(), ResourceStaging.created_at.desc())
+            .limit(1)
+        )
+        result = run_qualification(
+            row,
+            staging=staging,
+            qualification_version=qualification_version,
+        )
         qualification = qualify_resource_version(
             db,
             resource_id=resource_id,
