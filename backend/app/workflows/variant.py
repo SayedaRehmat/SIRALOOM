@@ -8,7 +8,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
@@ -1177,13 +1177,45 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         for v in batch
                     }
                     key = _batch_key(start, end)
+                    # Reuse is allowed only for the exact governed observation
+                    # identity. A row from another resource release must never be
+                    # mistaken for the current annotation result.
                     existing_rows = db.scalars(
                         select(Annotation).where(
                             Annotation.analysis_id == analysis.id,
                             Annotation.provider_name == provider.provider_id,
+                            Annotation.provider_version == provider.provider_version,
+                            Annotation.resource_id == annotation_resource.id,
+                            Annotation.resource_version == annotation_resource.version,
                             Annotation.variant_id.in_(list(variant_ids.values())),
                         )
                     ).all()
+
+                    # Legacy/unbound or resource-drifted observations are unsafe to
+                    # merge into the current governed result set. Fail closed rather
+                    # than allowing the same analysis to contain scientifically
+                    # ambiguous annotation releases.
+                    conflicting_rows = db.scalars(
+                        select(Annotation).where(
+                            Annotation.analysis_id == analysis.id,
+                            Annotation.provider_name == provider.provider_id,
+                            Annotation.variant_id.in_(list(variant_ids.values())),
+                            or_(
+                                Annotation.provider_version != provider.provider_version,
+                                Annotation.resource_id.is_(None),
+                                Annotation.resource_id != annotation_resource.id,
+                                Annotation.resource_version.is_(None),
+                                Annotation.resource_version != annotation_resource.version,
+                            ),
+                        )
+                    ).all()
+                    if conflicting_rows:
+                        raise ResourceConsumptionError(
+                            "ANNOTATION_OBSERVATION_IDENTITY_CONFLICT",
+                            "Existing annotation observations for this analysis use a different "
+                            "provider/resource identity; the analysis cannot silently mix annotation releases.",
+                        )
+
                     existing_variant_rows = {
                         row.id: row for row in db.scalars(
                             select(Variant).where(Variant.id.in_(list(variant_ids.values())))
