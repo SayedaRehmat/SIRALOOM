@@ -21,8 +21,8 @@ def upgrade() -> None:
     )
     op.create_table(
         "case_export_dispatches",
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("case_export_id", sa.UUID(), nullable=False),
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column("case_export_id", sa.Uuid(), nullable=False),
         sa.Column("dispatch_generation", sa.Integer(), nullable=False),
         sa.Column("status", sa.Text(), nullable=False, server_default="PENDING"),
         sa.Column("task_id", sa.Text(), nullable=True),
