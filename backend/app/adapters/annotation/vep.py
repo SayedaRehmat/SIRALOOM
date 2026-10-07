@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import signal
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -139,13 +140,27 @@ class VEPProvider(ScientificResourceProvider):
             cmd.extend(self.extra_args)
 
             try:
-                completed = subprocess.run(
+                # Start VEP in its own process group so a timeout can terminate
+                # the entire local toolchain, not merely the immediate process.
+                # This prevents an expired workflow lease from leaving a child VEP
+                # process running indefinitely after SIRALOOM has abandoned it.
+                completed = subprocess.Popen(
                     cmd,
                     check=False,
-                    capture_output=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     text=True,
-                    timeout=300,
+                    start_new_session=True,
                 )
+                try:
+                    stdout, stderr = completed.communicate(timeout=300)
+                except subprocess.TimeoutExpired as exc:
+                    try:
+                        os.killpg(completed.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    completed.wait()
+                    raise VEPProviderError("VEP execution timed out and its process group was terminated.", retryable=True) from exc
             except FileNotFoundError as exc:
                 raise VEPProviderError(
                     f"VEP executable was not found: {self.binary}",
@@ -155,7 +170,7 @@ class VEPProvider(ScientificResourceProvider):
                 raise VEPProviderError("VEP execution timed out.", retryable=True) from exc
 
             if completed.returncode != 0:
-                message = (completed.stderr or completed.stdout or "VEP failed").strip()[-4000:]
+                message = (stderr or stdout or "VEP failed").strip()[-4000:]
                 raise VEPProviderError(
                     f"VEP exited with code {completed.returncode}: {message}",
                     retryable=completed.returncode in {137, 143},
