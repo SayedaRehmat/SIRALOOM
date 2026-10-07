@@ -104,9 +104,6 @@ if Celery is not None:
         """
         from backend.app.domain.enums import AnalysisStatus
         from backend.app.infrastructure.db.models import Analysis
-
-        from backend.app.domain.enums import AnalysisStatus
-        from backend.app.infrastructure.db.models import Analysis
         from sqlalchemy import text
 
         # A PostgreSQL session-scoped advisory lock is the execution ownership
@@ -116,8 +113,9 @@ if Celery is not None:
         # broker-redelivered task to recover RUNNING state. A duplicate delivery
         # while the original worker is alive cannot acquire the lock and is
         # therefore fenced before it can touch workflow state.
-        bind = db.get_bind()
-        if bind.dialect.name == "postgresql":
+        get_bind = getattr(db, "get_bind", None)
+        bind = get_bind() if callable(get_bind) else None
+        if bind is not None and bind.dialect.name == "postgresql":
             lock_key = int.from_bytes(
                 hashlib.sha256(str(analysis_id).encode("utf-8")).digest()[:8],
                 byteorder="big",
