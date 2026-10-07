@@ -7,6 +7,7 @@ from backend.app.api.v1.auth import (
     InvitationAcceptance,
     OrganizationInvitationCreate,
     _ensure_active_admin_invariant,
+    _ensure_membership_admin_hierarchy,
     _hash_invitation_token,
     _invitation_roles_for,
     _normalize_email,
@@ -118,3 +119,13 @@ def test_non_admin_transition_does_not_require_another_admin():
         current_role="reviewer", current_status="ACTIVE",
         effective_role="read_only", effective_status="SUSPENDED",
     )
+
+
+def test_only_organization_admin_can_manage_existing_organization_admin():
+    with pytest.raises(Exception) as exc:
+        _ensure_membership_admin_hierarchy("lab_director", "organization_admin")
+    assert getattr(exc.value, "status_code", None) == 403
+
+
+def test_organization_admin_can_manage_existing_organization_admin():
+    _ensure_membership_admin_hierarchy("organization_admin", "organization_admin")
