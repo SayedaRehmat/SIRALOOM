@@ -12,7 +12,7 @@ from backend.app.domain.resources import (
     ResourceRegistryError, decide_resource_approval, register_resource_version,
     request_resource_approval,
 )
-from backend.app.infrastructure.db.models import Resource, ResourceApproval, ResourceQualification
+from backend.app.infrastructure.db.models import Resource, ResourceApproval, ResourceQualification, ResourceStaging
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/resources", tags=["resources"])
@@ -259,7 +259,20 @@ def qualify_resource(
         qualification_version = str(
             payload.get("qualification_version") or "siraloom-resource-qualification-v1"
         )
-        result = run_qualification(row, qualification_version=qualification_version)
+        staging = db.scalar(
+            select(ResourceStaging)
+            .where(
+                ResourceStaging.resource_id == row.id,
+                ResourceStaging.resource_version == row.version,
+            )
+            .order_by(ResourceStaging.updated_at.desc(), ResourceStaging.created_at.desc())
+            .limit(1)
+        )
+        result = run_qualification(
+            row,
+            staging=staging,
+            qualification_version=qualification_version,
+        )
         qualification = qualify_resource_version(
             db,
             resource_id=resource_id,
