@@ -180,6 +180,119 @@ DOSAGE_SENSITIVITY = "DOSAGE_SENSITIVITY"
 
 
 @dataclass(frozen=True)
+class ScientificResourceCapability:
+    resource_type: str
+    role: str
+    required_inputs: tuple[str, ...] = ()
+    produced_outputs: tuple[str, ...] = ()
+    preferred_access_methods: tuple[str, ...] = ()
+    supported_execution_modes: tuple[str, ...] = ()
+    requires_genome_build: bool = False
+    requires_version: bool = True
+    requires_checksum_for_local_artifact: bool = False
+    required_dependency_types: tuple[str, ...] = ()
+    optional_dependency_types: tuple[str, ...] = ()
+    evidence_types: tuple[str, ...] = ()
+    clinical_interpretation: bool = False
+    bulk_local_preferred: bool = True
+    online_service_supported: bool = True
+
+
+_RESOURCE_PROFILE_CAPABILITIES = {
+    REFERENCE_PACKAGE: ScientificResourceCapability(
+        REFERENCE_PACKAGE,
+        "Authoritative reference assembly for representation and normalization.",
+        ("input_variant",), ("reference_sequence", "contig_manifest", "reference_identity"),
+        ("LOCAL", "FILE", "LOCAL_ONLY"), ("LOCAL",), True, True, True,
+        (), (), ("REFERENCE_CONTEXT",), False, True, False,
+    ),
+    ANNOTATION_ENGINE: ScientificResourceCapability(
+        ANNOTATION_ENGINE,
+        "Standardized consequence, transcript and HGVS annotation.",
+        ("normalized_variant", "reference_package"),
+        ("gene", "transcript", "consequence", "hgvs"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), True, True, False,
+        (REFERENCE_PACKAGE,), (ANNOTATION_CACHE,), ("CONSEQUENCE",), False, True, True,
+    ),
+    POPULATION: ScientificResourceCapability(
+        POPULATION,
+        "Population allele-frequency and count evidence.",
+        ("normalized_variant",),
+        ("allele_frequency", "allele_count", "allele_number", "population_context"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), True, True, False,
+        (REFERENCE_PACKAGE,), (), ("POPULATION",), False, True, True,
+    ),
+    POPULATION_SECONDARY: ScientificResourceCapability(
+        POPULATION_SECONDARY,
+        "Secondary population context; never a silent replacement for primary population evidence.",
+        ("normalized_variant",),
+        ("allele_frequency", "allele_count", "allele_number", "population_context"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), True, True, True,
+        (REFERENCE_PACKAGE,), (), ("POPULATION_SECONDARY",), False, True, True,
+    ),
+    CLINICAL_DATABASE: ScientificResourceCapability(
+        CLINICAL_DATABASE,
+        "Structured clinical variant assertions and submissions.",
+        ("normalized_variant",),
+        ("clinical_assertion", "condition", "review_status", "submitter"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), True, True, False,
+        (), (), ("CLINICAL_DATABASE",), True, True, True,
+    ),
+    GENE_DISEASE: ScientificResourceCapability(
+        GENE_DISEASE,
+        "Curated gene-disease validity.",
+        ("gene", "disease"), ("gene_disease_validity", "curation_metadata"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), False, True, False,
+        (), (), ("GENE_DISEASE",), True, True, True,
+    ),
+    PHENOTYPE_ONTOLOGY: ScientificResourceCapability(
+        PHENOTYPE_ONTOLOGY,
+        "Controlled phenotype terminology and relationships.",
+        ("phenotype_term",), ("phenotype_identity", "phenotype_relationship"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), False, True, False,
+        (), (), ("PHENOTYPE",), False, True, True,
+    ),
+    COMPUTATIONAL_PREDICTOR: ScientificResourceCapability(
+        COMPUTATIONAL_PREDICTOR,
+        "Calibrated computational evidence.",
+        ("normalized_variant", "annotation"), ("prediction_score", "prediction_metadata"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), True, True, False,
+        (REFERENCE_PACKAGE,), (ANNOTATION_ENGINE,), ("COMPUTATIONAL",), True, True, True,
+    ),
+    SPLICING_PREDICTOR: ScientificResourceCapability(
+        SPLICING_PREDICTOR,
+        "Splicing-impact prediction requiring criterion-specific interpretation.",
+        ("normalized_variant", "reference_package"), ("splicing_score", "splicing_metadata"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), True, True, False,
+        (REFERENCE_PACKAGE,), (ANNOTATION_ENGINE,), ("SPLICING",), True, True, True,
+    ),
+    FUNCTIONAL_EVIDENCE: ScientificResourceCapability(
+        FUNCTIONAL_EVIDENCE, "Structured functional observations.", ("variant",),
+        ("functional_observation", "assay_metadata"), ("LOCAL", "API", "HTTPS"),
+        ("LOCAL", "REMOTE_API"), False, True, False, (), (), ("FUNCTIONAL",), True, True, True,
+    ),
+    LITERATURE_PROVIDER: ScientificResourceCapability(
+        LITERATURE_PROVIDER, "Scientific publication search provider.",
+        ("variant", "gene", "disease"), ("publication", "literature_evidence_candidate", "citation"),
+        ("API", "HTTPS", "LOCAL"), ("REMOTE_API", "LOCAL"), False, True, False,
+        (), (), ("LITERATURE",), True, False, True,
+    ),
+    ACMG_RULE_SPECIFICATION: ScientificResourceCapability(
+        ACMG_RULE_SPECIFICATION, "Versioned ACMG/AMP and ClinGen rule specifications.",
+        ("evidence_set", "gene", "disease"), ("criterion_assessment", "classification"),
+        ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), False, True, True,
+        (), (GENE_DISEASE,), ("ACMG_CRITERION",), True, True, True,
+    ),
+    INTERNAL_LAB_EVIDENCE: ScientificResourceCapability(
+        INTERNAL_LAB_EVIDENCE, "Organization-controlled evidence.",
+        ("variant",), ("internal_observation", "internal_classification", "internal_frequency"),
+        ("LOCAL", "API"), ("LOCAL", "REMOTE_API"), False, True, True,
+        (), (), ("INTERNAL_LAB",), True, True, True,
+    ),
+}
+
+
+@dataclass(frozen=True)
 class ScientificProvider:
     provider_id: str
     resource_type: str
@@ -220,17 +333,12 @@ def supported_scientific_providers() -> tuple[str, ...]:
     return tuple(sorted(_SCIENTIFIC_PROVIDERS))
 
 
-def get_resource_capability(resource_type: str) -> object:
+def get_resource_capability(resource_type: str):
     key = str(resource_type or "").strip().upper()
-    if key in {
-        REFERENCE_PACKAGE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
-        POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, PHENOTYPE_ONTOLOGY,
-        COMPUTATIONAL_PREDICTOR, SPLICING_PREDICTOR, FUNCTIONAL_EVIDENCE,
-        LITERATURE_PROVIDER, ACMG_RULE_SPECIFICATION, VARIANT_IDENTITY,
-        INTERNAL_LAB_EVIDENCE, DISEASE_ONTOLOGY, GENE_PANEL, DOSAGE_SENSITIVITY,
-    }:
-        return key
-    raise ValueError(f"unsupported resource type: {resource_type!r}")
+    try:
+        return _RESOURCE_PROFILE_CAPABILITIES[key]
+    except KeyError as exc:
+        raise ValueError(f"unsupported resource type: {resource_type!r}") from exc
 
 
 def supported_resource_types() -> tuple[str, ...]:
