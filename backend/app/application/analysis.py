@@ -8,7 +8,6 @@ from types import SimpleNamespace
 run_analysis_task = SimpleNamespace(delay=lambda analysis_id: None)
 
 from sqlalchemy import func, select
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
