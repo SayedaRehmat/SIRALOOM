@@ -108,5 +108,8 @@ def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
     dispatch_id = module.enqueue_case_export(FakeDB(), export)
 
     assert dispatch_id == export.queue_task_id
-    assert events[-1] == ("publish", uuid4() if False else events[-1][1])
-    assert any(event[0] == "commit" and event[1] == dispatch_id for event in events)
+    assert events[-1] == ("publish", dispatch_id)
+    commit_index = next(i for i, event in enumerate(events) if event[0] == "commit")
+    publish_index = next(i for i, event in enumerate(events) if event[0] == "publish")
+    assert commit_index < publish_index
+    assert events[commit_index][1] == dispatch_id
