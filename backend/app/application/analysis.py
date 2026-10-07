@@ -33,6 +33,7 @@ def create_analysis(
     reference_build: str,
     configuration: dict,
     created_by: UUID | None,
+    resource_profile_id: str | None = None,
     commit: bool = True,
 ) -> Analysis:
     artifact = db.get(Artifact, input_artifact_id)
@@ -44,6 +45,11 @@ def create_analysis(
         raise ValueError("Input artifact does not belong to this case")
 
     analysis_configuration = dict(configuration or {})
+    configured_profile_id = analysis_configuration.get("resource_profile_id")
+    if resource_profile_id and configured_profile_id and str(resource_profile_id) != str(configured_profile_id):
+        raise ValueError("resource_profile_id conflicts with configuration.resource_profile_id")
+    if resource_profile_id:
+        analysis_configuration["resource_profile_id"] = str(resource_profile_id)
     analysis_configuration["input_artifact_id"] = str(input_artifact_id)
 
     analysis = Analysis(
