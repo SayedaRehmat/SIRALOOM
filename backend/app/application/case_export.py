@@ -45,7 +45,12 @@ def enqueue_case_export(db: Session, export: CaseExport) -> str:
 
     try:
         publish_case_export_dispatch(dispatch.id)
-    except Exception:
+    except (ImportError, RuntimeError):
         # The durable PENDING intent remains recoverable by the outbox relay.
+        pass
+    except Exception:
+        # Broker publication is deliberately outside the DB transaction. Any
+        # unexpected publication failure leaves the committed PENDING intent
+        # recoverable rather than rolling back the user's export request.
         pass
     return str(dispatch.id)
