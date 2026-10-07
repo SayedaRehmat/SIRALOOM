@@ -315,6 +315,25 @@ class Annotation(Base):
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     payload: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        # A governed annotation observation is unique for one analysis, canonical
+        # variant, provider implementation, and exact registered resource release.
+        # The partial predicate preserves compatibility with legacy observations
+        # that predate resource provenance and have resource_id=NULL; new workflow
+        # writes always carry a governed resource_id.
+        Index(
+            "uq_annotations_observation_identity",
+            "analysis_id",
+            "variant_id",
+            "provider_name",
+            "provider_version",
+            "resource_id",
+            "resource_version",
+            unique=True,
+            sqlite_where=text("resource_id IS NOT NULL"),
+            postgresql_where=text("resource_id IS NOT NULL"),
+        ),
+    )
 
 class Resource(Base):
     __tablename__ = "resources"
