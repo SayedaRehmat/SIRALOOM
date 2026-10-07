@@ -179,6 +179,11 @@ def build_case_export(db: Session, *, export: CaseExport, store: ArtifactStore) 
                 if path.is_file() and path != archive:
                     zf.write(path, path.relative_to(root).as_posix())
 
+        # Bind the artifact identity to the durable export request. The export
+        # worker may be redelivered after the broker acknowledged a task but
+        # before the export transaction committed. Reusing the same artifact ID
+        # makes the file/database write idempotent across that recovery path
+        # instead of creating a second audit package for one export request.
         return store.put_file(
             db=db,
             case_id=case.id,
@@ -189,4 +194,5 @@ def build_case_export(db: Session, *, export: CaseExport, store: ArtifactStore) 
             media_type="application/zip",
             genome_build=None,
             metadata={"export_id": str(export.id), "schema_version": "1.0.0"},
+            artifact_id=export.id,
         )
