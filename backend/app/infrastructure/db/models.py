@@ -841,8 +841,31 @@ class CaseExport(Base):
     artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
     error_code: Mapped[str | None] = mapped_column(Text)
     error_message: Mapped[str | None] = mapped_column(Text)
+    queue_task_id: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class CaseExportDispatch(Base):
+    """Durable publication intent for one case-export execution."""
+    __tablename__ = "case_export_dispatches"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_export_id: Mapped[UUID] = mapped_column(
+        ForeignKey("case_exports.id"), nullable=False
+    )
+    dispatch_generation: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    task_id: Mapped[str | None] = mapped_column(Text)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        UniqueConstraint("case_export_id", "dispatch_generation"),
+        Index("ix_case_export_dispatches_status", "status"),
+    )
+
 
 class AuditEvent(Base):
     __tablename__ = "audit_events"
