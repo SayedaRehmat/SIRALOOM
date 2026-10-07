@@ -163,7 +163,11 @@ class PartitionScheduler:
         worker_id: str,
         lease_token: str,
     ) -> AnalysisPartition:
-        part = self.db.get(AnalysisPartition, partition_id)
+        part = self.db.scalar(
+            select(AnalysisPartition)
+            .where(AnalysisPartition.id == partition_id)
+            .with_for_update()
+        )
         if (
             not part
             or part.status != "RUNNING"
