@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 from uuid import UUID
+import hashlib
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import func, or_, select, text, update
 from sqlalchemy.orm import Session
 
 from backend.app.config import settings
@@ -61,6 +62,26 @@ class PartitionScheduler:
         self.memory_capacity = int(memory_mb if memory_mb is not None else settings.partition_scheduler_memory_mb)
         self.lease_seconds = int(lease_seconds if lease_seconds is not None else settings.partition_lease_seconds)
 
+    def _lock_capacity_claims(self) -> None:
+        """Serialize capacity check + lease acquisition on PostgreSQL.
+
+        Capacity is a global resource envelope. Without a transaction-scoped
+        lock, concurrent workers can both observe the same free capacity and
+        commit leases that collectively exceed the CPU or memory budget.
+        """
+        bind = self.db.get_bind()
+        if bind.dialect.name != "postgresql":
+            return
+        lock_key = int.from_bytes(
+            hashlib.sha256(b"siraloom:partition-capacity-claims").digest()[:8],
+            byteorder="big",
+            signed=True,
+        )
+        self.db.execute(
+            text("SELECT pg_advisory_xact_lock(:lock_key)"),
+            {"lock_key": lock_key},
+        )
+
     def _requeue_expired(self, analysis_id: UUID, step_id: str) -> int:
         t = now()
         result = self.db.execute(
@@ -75,22 +96,20 @@ class PartitionScheduler:
             .execution_options(synchronize_session=False)
             .values(status="READY", lease_owner=None, lease_expires_at=None)
         )
-        self.db.commit()
         return int(result.rowcount or 0)
 
-    def capacity(self) -> dict[str, float | int]:
-        t = now()
-        rows = self.db.execute(
-            select(func.coalesce(func.sum(AnalysisPartition.cpu_request), 0.0), func.coalesce(func.sum(AnalysisPartition.memory_mb), 0))
-            .where(AnalysisPartition.status == "RUNNING", AnalysisPartition.lease_expires_at > t)
-        ).one()
-        return {"cpu_used": float(rows[0] or 0), "memory_mb_used": int(rows[1] or 0), "cpu_capacity": self.cpu_capacity, "memory_mb_capacity": self.memory_capacity}
-
     def claim_next(self, analysis_id: UUID, step_id: str, worker_id: str) -> AnalysisPartition | None:
+        # Serialize the global capacity check and lease acquisition in one
+        # transaction. This closes the over-capacity race between workers.
+        self._lock_capacity_claims()
         self._requeue_expired(analysis_id, step_id)
         candidates = self.db.scalars(
             select(AnalysisPartition)
-            .where(AnalysisPartition.analysis_id == analysis_id, AnalysisPartition.step_id == step_id, AnalysisPartition.status == "READY")
+            .where(
+                AnalysisPartition.analysis_id == analysis_id,
+                AnalysisPartition.step_id == step_id,
+                AnalysisPartition.status == "READY",
+            )
             .order_by(AnalysisPartition.ordinal)
         ).all()
         active = self.capacity()
@@ -98,7 +117,7 @@ class PartitionScheduler:
             if part.attempt >= settings.partition_max_attempts:
                 part.status = "FAILED"
                 part.error_code = "MAX_ATTEMPTS_EXCEEDED"
-                self.db.commit()
+                part.updated_at = now()
                 continue
             if active["cpu_used"] + float(part.cpu_request) > self.cpu_capacity:
                 continue
@@ -113,6 +132,7 @@ class PartitionScheduler:
             part.updated_at = t
             self.db.commit()
             return part
+        self.db.commit()
         return None
 
     def heartbeat(self, partition_id: UUID, worker_id: str) -> AnalysisPartition:
