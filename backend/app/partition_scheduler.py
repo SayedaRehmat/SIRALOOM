@@ -98,6 +98,25 @@ class PartitionScheduler:
         )
         return int(result.rowcount or 0)
 
+    def capacity(self) -> dict[str, float | int]:
+        t = now()
+        rows = self.db.execute(
+            select(
+                func.coalesce(func.sum(AnalysisPartition.cpu_request), 0.0),
+                func.coalesce(func.sum(AnalysisPartition.memory_mb), 0),
+            )
+            .where(
+                AnalysisPartition.status == "RUNNING",
+                AnalysisPartition.lease_expires_at > t,
+            )
+        ).one()
+        return {
+            "cpu_used": float(rows[0] or 0),
+            "memory_mb_used": int(rows[1] or 0),
+            "cpu_capacity": self.cpu_capacity,
+            "memory_mb_capacity": self.memory_capacity,
+        }
+
     def claim_next(self, analysis_id: UUID, step_id: str, worker_id: str) -> AnalysisPartition | None:
         # Serialize the global capacity check and lease acquisition in one
         # transaction. This closes the over-capacity race between workers.
