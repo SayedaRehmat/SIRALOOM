@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import signal
 import subprocess
 import time
 from dataclasses import dataclass
@@ -255,20 +257,29 @@ class LocalGnomADTabixProvider:
         chrom = variant.chromosome
         region = f"{chrom}:{variant.position}-{variant.position}"
         try:
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 ["tabix", self.vcf_path, region],
-                check=False,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                timeout=30,
+                start_new_session=True,
             )
-        except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
-            raise GnomADProviderError("tabix is not available or timed out") from exc
+            try:
+                stdout, stderr = proc.communicate(timeout=30)
+            except subprocess.TimeoutExpired as exc:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                proc.wait()
+                raise GnomADProviderError("tabix timed out and its process group was terminated") from exc
+        except FileNotFoundError as exc:
+            raise GnomADProviderError("tabix executable is not available") from exc
         if proc.returncode not in (0, 1):
-            raise GnomADProviderError(proc.stderr.strip() or f"tabix failed with code {proc.returncode}")
+            raise GnomADProviderError((stderr or "").strip() or f"tabix failed with code {proc.returncode}")
 
         best: dict[str, Any] | None = None
-        for line in proc.stdout.splitlines():
+        for line in stdout.splitlines():
             fields = line.split("\t")
             if len(fields) < 8:
                 continue
