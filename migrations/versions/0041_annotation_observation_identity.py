@@ -5,6 +5,7 @@ Revises: 0040_partition_lease_fencing
 """
 
 from alembic import op
+import sqlalchemy as sa
 
 revision = "0041_annotation_observation_identity"
 down_revision = "0040_partition_lease_fencing"
@@ -29,7 +30,7 @@ def upgrade():
             "resource_version",
         ],
         unique=True,
-        postgresql_where=__import__("sqlalchemy").text("resource_id IS NOT NULL"),
+        postgresql_where=sa.text("resource_id IS NOT NULL"),
         sqlite_where=__import__("sqlalchemy").text("resource_id IS NOT NULL"),
     )
 
