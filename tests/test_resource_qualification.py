@@ -156,3 +156,19 @@ def test_reference_qualification_records_governed_bcftools_version(tmp_path):
     assert result.checks["bcftools_tool"] == "bcftools"
     assert result.checks["bcftools_version"] == "1.19"
     assert result.checks["bcftools_execution"] == "GOVERNED"
+
+
+def test_qualification_blocks_unverified_staging(tmp_path):
+    resource = _resource(tmp_path, checksum="1" * 64)
+    result = qualify_resource(resource, staging=_staging(resource, status="INTEGRITY_FAILED"))
+    assert result.passed is False
+    assert "STAGING_NOT_VERIFIED" in result.blockers
+
+
+def test_qualification_blocks_staging_identity_mismatch(tmp_path):
+    resource = _resource(tmp_path, checksum="1" * 64)
+    staging = _staging(resource)
+    staging.resource_version = "different-version"
+    result = qualify_resource(resource, staging=staging)
+    assert result.passed is False
+    assert "STAGING_RESOURCE_IDENTITY_MISMATCH" in result.blockers
