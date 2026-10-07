@@ -17,3 +17,49 @@ def test_case_export_contains_core_manifests(tmp_path):
     assert artifact.artifact_type == "AUDIT_PACKAGE"
     data=Path(artifact.storage_uri.removeprefix("file://")).read_bytes()
     assert data[:2] == b"PK"
+
+
+def test_case_export_uses_durable_export_id_as_artifact_identity(tmp_path):
+    e = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(e)
+    db = Session(e)
+
+    org = Organization(id=uuid4(), name="Lab")
+    user = User(
+        id=uuid4(),
+        organization_id=org.id,
+        display_name="Auditor",
+        role="AUDITOR",
+        status="ACTIVE",
+    )
+    case = Case(
+        id=uuid4(),
+        organization_id=org.id,
+        case_identifier="CASE-IDEMPOTENT",
+        status="ACTIVE",
+        clinical_context={},
+        language="en",
+        created_by=user.id,
+    )
+    export = CaseExport(
+        id=uuid4(),
+        case_id=case.id,
+        requested_by=user.id,
+        status="RUNNING",
+        include_artifacts=False,
+        include_reports=False,
+        include_evidence=True,
+        include_audit=True,
+        include_provenance=True,
+    )
+    db.add_all([org, user, case, export])
+    db.commit()
+
+    artifact = build_case_export(
+        db,
+        export=export,
+        store=ArtifactStore(str(tmp_path)),
+    )
+
+    assert artifact.id == export.id
+    assert artifact.metadata_json["export_id"] == str(export.id)
