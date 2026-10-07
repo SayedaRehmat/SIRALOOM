@@ -410,6 +410,7 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
     for partition in running_partitions:
         partition.status = "READY"
         partition.lease_owner = None
+        partition.lease_token = None
         partition.lease_expires_at = None
         partition.error_code = "WORKER_INTERRUPTED"
         partition.error_message = "Previous worker execution was interrupted; partition returned to durable scheduler queue."
