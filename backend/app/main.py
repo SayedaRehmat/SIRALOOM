@@ -16,6 +16,7 @@ from backend.app.api.v1.pedigree import router as pedigree_router
 from backend.app.api.v1.quality import router as quality_router
 from backend.app.api.v1.clinical_followup import router as clinical_followup_router
 from backend.app.api.v1.reanalysis import router as reanalysis_router
+from backend.app.api.v1.membership import router as membership_router
 
 app = FastAPI(title=f"{settings.app_name} Variant API", version="0.1.0")
 
@@ -43,6 +44,7 @@ app.include_router(audit_router, prefix="/api/v1", dependencies=secured)
 app.include_router(evidence_router, prefix="/api/v1", dependencies=secured)
 app.include_router(acmg_router, prefix="/api/v1", dependencies=secured)
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(membership_router, prefix="/api/v1")
 app.include_router(clingen_router, prefix="/api/v1", dependencies=secured)
 
 
