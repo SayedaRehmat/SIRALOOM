@@ -85,6 +85,29 @@ def _require_invitation_role(principal: Principal, role: str) -> None:
         raise HTTPException(status_code=403, detail="Platform administrator access cannot be granted through an organization invitation")
 
 
+def _ensure_active_admin_invariant(
+    db: Session,
+    organization_id,
+    *,
+    current_role: str,
+    current_status: str,
+    effective_role: str,
+    effective_status: str,
+) -> None:
+    """Rejects a transition that would leave a tenant without an active organization admin."""
+    if current_role != "organization_admin" or current_status != "ACTIVE":
+        return
+    if effective_role == "organization_admin" and effective_status not in {"SUSPENDED", "REVOKED"}:
+        return
+    admin_count = db.scalar(select(func.count()).select_from(OrganizationMembership).where(
+        OrganizationMembership.organization_id == organization_id,
+        OrganizationMembership.role == "organization_admin",
+        OrganizationMembership.status == "ACTIVE",
+    )) or 0
+    if admin_count <= 1:
+        raise HTTPException(status_code=409, detail="The organization must retain at least one active organization administrator")
+
+
 def _reject_if_already_provisioned(db: Session, subject: str) -> User | None:
     """Looks up an existing SIRALOOM user for this identity and rejects re-onboarding if
     it already has an active organization membership. Returns the existing user (if any,
@@ -347,14 +370,14 @@ def update_organization_membership(
 
     effective_role = payload.role if payload.role is not None else target.role
     effective_status = payload.status if payload.status is not None else target.status
-    if target.role == "organization_admin" and target.status == "ACTIVE":
-        admin_count = db.scalar(select(func.count()).select_from(OrganizationMembership).where(
-            OrganizationMembership.organization_id == principal.organization_id,
-            OrganizationMembership.role == "organization_admin",
-            OrganizationMembership.status == "ACTIVE",
-        )) or 0
-        if admin_count <= 1 and (effective_role != "organization_admin" or effective_status in {"SUSPENDED", "REVOKED"}):
-            raise HTTPException(status_code=409, detail="The organization must retain at least one active organization administrator")
+    _ensure_active_admin_invariant(
+        db,
+        principal.organization_id,
+        current_role=target.role,
+        current_status=target.status,
+        effective_role=effective_role,
+        effective_status=effective_status,
+    )
 
     if payload.role is not None:
         _require_invitation_role(principal, payload.role)
