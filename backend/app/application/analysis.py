@@ -99,6 +99,7 @@ def preflight_analysis_resources(
         profile_id=str(profile_id),
         analysis_reference_build=analysis.reference_build,
     )
+    previous_resource_plan = dict(configuration.get("resource_plan") or {})
     configuration["resource_plan"] = plan.snapshot()
     configuration["resource_stage_plan"] = build_workflow_stage_resource_plan(plan)
     analysis.configuration = configuration
@@ -140,6 +141,18 @@ def preflight_analysis_resources(
         db.add(step)
 
     db.flush()
+
+    if not plan.is_ready:
+        analysis.status = AnalysisStatus.BLOCKED
+        analysis.completed_at = None
+        db.add(analysis)
+        db.flush()
+    elif analysis.status == AnalysisStatus.BLOCKED and previous_resource_plan.get("status") == "BLOCKED":
+        analysis.status = AnalysisStatus.CREATED
+        analysis.completed_at = None
+        db.add(analysis)
+        db.flush()
+
     return plan
 
 
