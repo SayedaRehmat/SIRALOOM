@@ -17,7 +17,7 @@ from backend.app.domain.resource_source_contract import (
     validate_execution_contract,
     validate_source_contract,
 )
-from backend.app.infrastructure.db.models import Resource
+from backend.app.infrastructure.db.models import Resource, ResourceStaging
 
 
 @dataclass(frozen=True)
@@ -97,7 +97,12 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_execution"] = "GOVERNED"
 
 
-def qualify_resource(resource: Resource, *, qualification_version: str = "siraloom-resource-qualification-v1") -> QualificationResult:
+def qualify_resource(
+    resource: Resource,
+    *,
+    staging: ResourceStaging | None = None,
+    qualification_version: str = "siraloom-resource-qualification-v1",
+) -> QualificationResult:
     if not qualification_version.strip():
         raise ValueError("qualification_version is required")
     metadata = dict(resource.metadata_json or {})
@@ -113,6 +118,14 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
         })
 
     blockers: list[str] = []
+    if staging is None:
+        blockers.append("STAGING_RECORD_REQUIRED")
+    elif staging.resource_id != resource.id or staging.resource_version != resource.version:
+        blockers.append("STAGING_RESOURCE_IDENTITY_MISMATCH")
+    elif staging.status != "STAGED":
+        blockers.append("STAGING_NOT_VERIFIED")
+    elif staging.destination_uri != resource.location:
+        blockers.append("STAGING_LOCATION_MISMATCH")
     try:
         execution = validate_execution_contract(
             dict(metadata.get("execution") or {}),
@@ -138,13 +151,25 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
         "publisher_present": bool(contract.publisher),
         "release_identity_match": resource.version == contract.release_identity,
         "artifact_location_match": resource.location == contract.artifact_url or _local_path(resource) is not None,
-        "staging": "NOT_PRESENT",
+        "staging": (
+            "VERIFIED"
+            if staging is not None and staging.status == "STAGED"
+            else "NOT_PRESENT"
+        ),
+        "staging_record_id": str(staging.id) if staging is not None else None,
         "activation_blockers": blockers,
     }
     if resource.resource_type == "REFERENCE_PACKAGE":
         _qualify_reference_toolchain(resource, execution, blockers, checks)
     path = _local_path(resource)
-    if path is not None and path.is_file() and path.stat().st_size > 0:
+    if (
+        staging is not None
+        and staging.status == "STAGED"
+        and staging.destination_uri == resource.location
+        and path is not None
+        and path.is_file()
+        and path.stat().st_size > 0
+    ):
         actual = _sha256(path)
         checks["staging"] = "PRESENT"
         checks["staged_sha256"] = actual
@@ -155,6 +180,10 @@ def qualify_resource(resource: Resource, *, qualification_version: str = "siralo
                 blockers.append("CHECKSUM_MISMATCH")
         elif contract.checksum_status == "PUBLISHED_AND_VERIFIED":
             blockers.append("PUBLISHED_CHECKSUM_MISSING")
+    elif staging is None:
+        blockers.append("STAGING_RECORD_REQUIRED")
+    elif staging.status != "STAGED":
+        blockers.append("STAGING_NOT_VERIFIED")
     elif path is not None:
         checks["staging"] = "MISSING"
         blockers.append("STAGED_ARTIFACT_MISSING")
