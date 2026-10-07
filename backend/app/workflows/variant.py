@@ -1210,7 +1210,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             metadata={"provider": provider.provider_id, "recovered_existing_rows": True, "variant_count": len(batch)},
                         )
                         if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                            scheduler.succeed(partition.id, worker_id, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
+                            scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
                         continue
 
                     attempt = int(checkpoint.get("attempt", 0)) + 1
