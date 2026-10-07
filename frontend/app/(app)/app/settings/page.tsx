@@ -6,6 +6,7 @@ import { useLanguage } from "../../../../lib/i18n";
 
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 const INVITATION_ROLES = ["lab_director", "clinical_geneticist", "reviewer", "bioinformatician", "lab_scientist", "read_only"] as const;
+const ADMIN_ROLE = "organization_admin";
 
 async function apiFetch(path: string, init: RequestInit = {}) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
@@ -31,17 +32,29 @@ export default function SettingsPage() {
   const [inviteDays, setInviteDays] = useState(7);
   const [invitationLink, setInvitationLink] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [updatingMembershipId, setUpdatingMembershipId] = useState<string | null>(null);
+
+  async function loadMembers() {
+    const result = await apiFetch("/auth/memberships");
+    setMembers(result.members ?? []);
+  }
 
   useEffect(() => {
     Promise.all([apiFetch("/auth/session"), apiFetch("/health")])
       .then(async ([s, h]) => {
         setSession(s); setHealth(h);
-        try { const m = await apiFetch("/auth/memberships"); setMembers(m.members ?? []); } catch {}
+        try {
+          await loadMembers();
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "Unable to load organization members.");
+        }
       })
       .catch((e) => setMessage(e instanceof Error ? e.message : t("settings.unableToLoad")));
   }, [t]);
 
   const canManageMembers = session?.role === "organization_admin" || session?.role === "lab_director";
+  const canAssignAdmin = session?.role === "organization_admin";
+  const memberRoleOptions = canAssignAdmin ? [ADMIN_ROLE, ...INVITATION_ROLES] : [...INVITATION_ROLES];
 
   async function inviteMember() {
     setMessage(""); setInvitationLink("");
@@ -53,14 +66,30 @@ export default function SettingsPage() {
       setInvitationLink(link);
       setMessage("Invitation created. Share the secure invitation link with the intended recipient.");
       setInviteEmail("");
+      await loadMembers();
     } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to create invitation."); }
     finally { setInviting(false); }
+  }
+
+  async function updateMember(membershipId: string, role: string, status: string) {
+    setMessage(""); setUpdatingMembershipId(membershipId);
+    try {
+      await apiFetch(`/auth/memberships/${encodeURIComponent(membershipId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ role, status }),
+      });
+      await loadMembers();
+      setMessage("Organization membership updated.");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Unable to update organization membership.");
+      try { await loadMembers(); } catch (refreshError) { setMessage(refreshError instanceof Error ? refreshError.message : "Unable to refresh organization members."); }
+    } finally { setUpdatingMembershipId(null); }
   }
 
   return (
     <main className="settings-page">
       <header className="page-heading"><div><p className="eyebrow">{t("settings.eyebrow")}</p><h1>{t("settings.title")}</h1><p className="lead">{t("settings.lead")}</p></div></header>
-      {message && <div className="notice error-notice">{message}</div>}
+      {message && <div className="notice error-notice" role="status">{message}</div>}
       <div className="feature-grid">
         <section className="panel">
           <p className="eyebrow">{t("settings.identity")}</p><h2>{t("settings.currentSession")}</h2>
@@ -75,7 +104,25 @@ export default function SettingsPage() {
 
         {canManageMembers && <section className="panel">
           <p className="eyebrow">Organization access</p><h2>Laboratory members</h2>
-          <div className="context-list">{members.map((member) => <div className="keyline" key={member.membership_id}><span>{member.email ?? member.display_name ?? "—"}</span><strong>{member.role} · {member.status}</strong></div>)}</div>
+          <div className="context-list">
+            {members.length === 0 && <p className="muted">No organization members were returned.</p>}
+            {members.map((member) => {
+              const isSelf = member.user_id === session?.user_id;
+              const updating = updatingMembershipId === member.membership_id;
+              return (
+                <div className="keyline" key={member.membership_id}>
+                  <span>{member.email ?? member.display_name ?? "—"}</span>
+                  <div>
+                    <strong>{member.role} · {member.status}</strong>
+                    <div className="form-stack" style={{ marginTop: 8 }}>
+                      <label>Role<select value={member.role} disabled={updating || (member.role === ADMIN_ROLE && !canAssignAdmin)} onChange={(e) => updateMember(member.membership_id, e.target.value, member.status)}>{memberRoleOptions.map((role) => <option key={role} value={role}>{role}</option>)}</select></label>
+                      <label>Status<select value={member.status} disabled={updating || isSelf} onChange={(e) => updateMember(member.membership_id, member.role, e.target.value)}><option value="ACTIVE">ACTIVE</option><option value="SUSPENDED">SUSPENDED</option><option value="REVOKED">REVOKED</option></select></label>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <h3 style={{ marginTop: 24 }}>Invite staff</h3>
           <p className="muted">The recipient must authenticate with the exact invited Firebase email.</p>
           <div className="form-stack">
