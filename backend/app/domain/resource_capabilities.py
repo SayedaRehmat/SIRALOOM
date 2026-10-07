@@ -154,3 +154,90 @@ def requirements_for_workflow(
         CapabilityRequirement(ResourceCapability.ACMG_SPECIFICATION),
     ]
     return tuple(requirements)
+
+
+# Stable resource-profile vocabulary. These identifiers are intentionally kept
+# separate from the older ResourceCapability enum above so existing workflow
+# capability checks remain backward-compatible while profile resolution can
+# express concrete scientific resource classes.
+REFERENCE_PACKAGE = "REFERENCE_PACKAGE"
+ANNOTATION_ENGINE = "ANNOTATION_ENGINE"
+ANNOTATION_CACHE = "ANNOTATION_CACHE"
+POPULATION = "POPULATION"
+POPULATION_SECONDARY = "POPULATION_SECONDARY"
+CLINICAL_DATABASE = "CLINICAL_DATABASE"
+PHENOTYPE_ONTOLOGY = "PHENOTYPE_ONTOLOGY"
+COMPUTATIONAL_PREDICTOR = "COMPUTATIONAL_PREDICTOR"
+SPLICING_PREDICTOR = "SPLICING_PREDICTOR"
+FUNCTIONAL_EVIDENCE = "FUNCTIONAL_EVIDENCE"
+LITERATURE_PROVIDER = "LITERATURE_PROVIDER"
+ACMG_RULE_SPECIFICATION = "ACMG_RULE_SPECIFICATION"
+VARIANT_IDENTITY = "VARIANT_IDENTITY"
+INTERNAL_LAB_EVIDENCE = "INTERNAL_LAB_EVIDENCE"
+DISEASE_ONTOLOGY = "DISEASE_ONTOLOGY"
+GENE_PANEL = "GENE_PANEL"
+DOSAGE_SENSITIVITY = "DOSAGE_SENSITIVITY"
+
+
+@dataclass(frozen=True)
+class ScientificProvider:
+    provider_id: str
+    resource_type: str
+    access_methods: tuple[str, ...] = ()
+    requires_organization_license: bool = False
+    description: str = ""
+
+
+_SCIENTIFIC_PROVIDERS = {
+    "VEP": ScientificProvider("VEP", ANNOTATION_ENGINE, ("LOCAL", "API", "HTTPS")),
+    "GENEBE": ScientificProvider("GENEBE", ANNOTATION_ENGINE, ("API", "HTTPS")),
+    "CLINVAR": ScientificProvider("CLINVAR", CLINICAL_DATABASE, ("LOCAL", "API", "HTTPS")),
+    "NCBI CLINVAR": ScientificProvider("NCBI CLINVAR", CLINICAL_DATABASE, ("LOCAL", "API", "HTTPS")),
+    "GNOMAD": ScientificProvider("GNOMAD", POPULATION, ("LOCAL", "API", "HTTPS")),
+    "GNOMAD-GRAPHL": ScientificProvider("GNOMAD-GRAPHL", POPULATION, ("LOCAL", "API", "HTTPS")),
+    "CLINGEN": ScientificProvider("CLINGEN", ACMG_RULE_SPECIFICATION, ("LOCAL", "API", "HTTPS")),
+    "HPO": ScientificProvider("HPO", PHENOTYPE_ONTOLOGY, ("LOCAL", "API", "HTTPS")),
+    "PUBMED": ScientificProvider("PUBMED", LITERATURE_PROVIDER, ("API", "HTTPS")),
+    "PMC": ScientificProvider("PMC", LITERATURE_PROVIDER, ("API", "HTTPS")),
+    "OMIM": ScientificProvider("OMIM", GENE_DISEASE, ("LOCAL", "API", "HTTPS"), True),
+    "SPLICEAI": ScientificProvider("SPLICEAI", SPLICING_PREDICTOR, ("LOCAL", "API", "HTTPS"), True),
+    "DBNSFP": ScientificProvider("DBNSFP", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE")),
+    "CADD": ScientificProvider("CADD", COMPUTATIONAL_PREDICTOR, ("LOCAL", "API", "HTTPS")),
+    "REVEL": ScientificProvider("REVEL", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE")),
+    "ALPHAMISSENSE": ScientificProvider("ALPHAMISSENSE", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE", "API", "HTTPS")),
+}
+
+
+def get_scientific_provider(provider_id: str) -> ScientificProvider:
+    key = str(provider_id or "").strip().upper()
+    try:
+        return _SCIENTIFIC_PROVIDERS[key]
+    except KeyError as exc:
+        raise ValueError(f"unsupported scientific provider: {provider_id!r}") from exc
+
+
+def supported_scientific_providers() -> tuple[str, ...]:
+    return tuple(sorted(_SCIENTIFIC_PROVIDERS))
+
+
+def get_resource_capability(resource_type: str) -> object:
+    key = str(resource_type or "").strip().upper()
+    if key in {
+        REFERENCE_PACKAGE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
+        POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, PHENOTYPE_ONTOLOGY,
+        COMPUTATIONAL_PREDICTOR, SPLICING_PREDICTOR, FUNCTIONAL_EVIDENCE,
+        LITERATURE_PROVIDER, ACMG_RULE_SPECIFICATION, VARIANT_IDENTITY,
+        INTERNAL_LAB_EVIDENCE, DISEASE_ONTOLOGY, GENE_PANEL, DOSAGE_SENSITIVITY,
+    }:
+        return key
+    raise ValueError(f"unsupported resource type: {resource_type!r}")
+
+
+def supported_resource_types() -> tuple[str, ...]:
+    return tuple(sorted({
+        REFERENCE_PACKAGE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
+        POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, PHENOTYPE_ONTOLOGY,
+        COMPUTATIONAL_PREDICTOR, SPLICING_PREDICTOR, FUNCTIONAL_EVIDENCE,
+        LITERATURE_PROVIDER, ACMG_RULE_SPECIFICATION, VARIANT_IDENTITY,
+        INTERNAL_LAB_EVIDENCE, DISEASE_ONTOLOGY, GENE_PANEL, DOSAGE_SENSITIVITY,
+    }))
