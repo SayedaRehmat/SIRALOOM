@@ -180,6 +180,7 @@ def run_resource_lifecycle(
 
     result = qualify_resource(
         resource,
+        staging=staging,
         qualification_version=qualification_version,
     )
     qualification = _persist_qualification(
