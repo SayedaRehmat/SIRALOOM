@@ -6,6 +6,7 @@ import pytest
 from backend.app.api.v1.auth import (
     InvitationAcceptance,
     OrganizationInvitationCreate,
+    _ensure_active_admin_invariant,
     _hash_invitation_token,
     _invitation_roles_for,
     _normalize_email,
@@ -73,3 +74,47 @@ def test_invitation_expiry_window_is_time_bounded():
     expires = now + timedelta(days=7)
     assert expires > now
     assert expires <= now + timedelta(days=30)
+
+
+class _CountDb:
+    def __init__(self, active_admin_count: int):
+        self.active_admin_count = active_admin_count
+
+    def scalar(self, _statement):
+        return self.active_admin_count
+
+
+def test_last_active_admin_cannot_be_demoted():
+    with pytest.raises(Exception) as exc:
+        _ensure_active_admin_invariant(
+            _CountDb(1), uuid4(),
+            current_role="organization_admin", current_status="ACTIVE",
+            effective_role="lab_director", effective_status="ACTIVE",
+        )
+    assert getattr(exc.value, "status_code", None) == 409
+
+
+def test_last_active_admin_cannot_be_demoted_and_suspended_together():
+    with pytest.raises(Exception) as exc:
+        _ensure_active_admin_invariant(
+            _CountDb(1), uuid4(),
+            current_role="organization_admin", current_status="ACTIVE",
+            effective_role="reviewer", effective_status="SUSPENDED",
+        )
+    assert getattr(exc.value, "status_code", None) == 409
+
+
+def test_two_active_admins_allow_one_admin_to_be_demoted():
+    _ensure_active_admin_invariant(
+        _CountDb(2), uuid4(),
+        current_role="organization_admin", current_status="ACTIVE",
+        effective_role="lab_director", effective_status="ACTIVE",
+    )
+
+
+def test_non_admin_transition_does_not_require_another_admin():
+    _ensure_active_admin_invariant(
+        _CountDb(0), uuid4(),
+        current_role="reviewer", current_status="ACTIVE",
+        effective_role="read_only", effective_status="SUSPENDED",
+    )
