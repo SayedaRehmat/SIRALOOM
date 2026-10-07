@@ -11,9 +11,15 @@ from backend.app.reporting.export_service import build_case_export
 def run_case_export(export_id: UUID) -> None:
     db = SessionLocal()
     try:
-        export = db.get(CaseExport, export_id)
-        if export is None: return
-        export.status = "RUNNING"; db.commit()
+        export = db.get(CaseExport, export_id, with_for_update=True)
+        if export is None:
+            return
+        if export.status == "SUCCEEDED" and export.artifact_id:
+            return
+        if export.status != "RUNNING":
+            export.status = "RUNNING"
+            db.add(export)
+            db.commit()
         artifact = build_case_export(db, export=export, store=ArtifactStore(settings.artifact_root))
         export.artifact_id = artifact.id; export.status = "SUCCEEDED"; export.completed_at = datetime.now(timezone.utc); db.flush()
         AuditService(db).record(event_type="CASE_EXPORT_COMPLETED", case_id=export.case_id, analysis_id=None, actor_type="SYSTEM", actor_id="siraloom-export", subject_type="CASE_EXPORT", subject_id=str(export.id), operation="CREATE", output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}])

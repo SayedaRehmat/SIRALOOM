@@ -14,13 +14,12 @@ from backend.app.infrastructure.db.models import Analysis, Report, CaseExport, C
 from backend.app.reporting.service import build_report_content, render_pdf, render_html, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
-from backend.app.reporting.export_task import run_case_export
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.queue.celery_app import run_case_export_task
 from backend.app.application.analysis import resume_analysis
+from backend.app.application.case_export import enqueue_case_export
 
 router = APIRouter(tags=["reports"])
 
@@ -183,11 +182,20 @@ def create_case_export(case_id: UUID, payload: ExportCreate, db: Session = Depen
     if not case: raise HTTPException(status_code=404, detail="Case not found")
     require_case_tenant(case, principal); require_role(principal, CASE_WRITE_ROLES)
     exp=CaseExport(id=uuid4(), case_id=case_id, requested_by=principal.user_id, status="QUEUED", include_artifacts=payload.include_artifacts, include_reports=payload.include_reports, include_evidence=payload.include_evidence, include_audit=payload.include_audit, include_provenance=payload.include_provenance)
-    db.add(exp); AuditService(db).record(event_type="CASE_EXPORT_REQUESTED", case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="CASE_EXPORT", subject_id=str(exp.id), operation="CREATE"); db.commit()
-    try: task=run_case_export_task.delay(str(exp.id));
-    except RuntimeError:
-        return {"export_id":str(exp.id),"status":"QUEUED","executor":"not_available_in_current_environment"}
-    return {"export_id":str(exp.id),"status":"QUEUED","task_id":task.id}
+    db.add(exp)
+    AuditService(db).record(
+        event_type="CASE_EXPORT_REQUESTED",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE_EXPORT",
+        subject_id=str(exp.id),
+        operation="CREATE",
+    )
+    db.commit()
+    dispatch_id = enqueue_case_export(db, exp)
+    return {"export_id": str(exp.id), "status": "QUEUED", "task_id": dispatch_id}
 
 @router.get("/exports/{export_id}")
 def get_export(export_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
