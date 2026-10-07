@@ -8,10 +8,16 @@ from types import SimpleNamespace
 run_analysis_task = SimpleNamespace(delay=lambda analysis_id: None)
 
 from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, WorkflowStep
+from backend.app.domain.resource_profile_resolver import (
+    AnalysisResourcePlan,
+    build_workflow_stage_resource_plan,
+    resolve_analysis_resource_profile,
+)
 
 
 
@@ -63,6 +69,72 @@ def create_analysis(
         db.refresh(analysis)
 
     return analysis
+
+
+def preflight_analysis_resources(
+    db: Session,
+    *,
+    analysis: Analysis,
+    organization_id: UUID,
+) -> AnalysisResourcePlan | None:
+    """Resolve and persist an immutable scientific resource plan before dispatch.
+
+    Analyses without a resource_profile_id retain legacy behavior. Profile-bound
+    analyses must resolve required resources before they are runnable.
+    """
+    configuration = dict(analysis.configuration or {})
+    profile_id = configuration.get("resource_profile_id")
+    if not profile_id:
+        return None
+
+    plan = resolve_analysis_resource_profile(
+        db,
+        organization_id=organization_id,
+        profile_id=str(profile_id),
+        analysis_reference_build=analysis.reference_build,
+    )
+    configuration["resource_plan"] = plan.snapshot()
+    configuration["resource_stage_plan"] = build_workflow_stage_resource_plan(plan)
+    analysis.configuration = configuration
+
+    existing_steps = {
+        step.step_id: step
+        for step in db.scalars(
+            select(WorkflowStep).where(WorkflowStep.analysis_id == analysis.id)
+        ).all()
+    }
+    for stage in configuration["resource_stage_plan"]:
+        step = existing_steps.get(str(stage["step_id"]))
+        if step is None:
+            step = WorkflowStep(
+                id=uuid4(),
+                analysis_id=analysis.id,
+                step_id=str(stage["step_id"]),
+                step_order=int(stage["order"]),
+                status="PENDING",
+                attempt=0,
+                input_artifacts=[],
+                output_artifacts=[],
+                metadata_json={},
+            )
+            db.add(step)
+        metadata = dict(step.metadata_json or {})
+        metadata["resource_readiness"] = stage
+        if stage["status"] == "BLOCKED" and step.status in {"PENDING", "BLOCKED"}:
+            step.status = "BLOCKED"
+            metadata["resource_blocked"] = True
+            metadata["next_step"] = "resource_setup"
+            metadata["workflow_action"] = "WAIT_FOR_RESOURCE"
+        elif stage["status"] != "BLOCKED" and step.status == "BLOCKED" and metadata.get("resource_blocked"):
+            step.status = "PENDING"
+            metadata.pop("resource_blocked", None)
+            metadata.pop("next_step", None)
+            metadata.pop("workflow_action", None)
+        step.metadata_json = metadata
+        db.add(step)
+
+    db.flush()
+    return plan
 
 
 def enqueue_analysis(
