@@ -342,6 +342,20 @@ def update_organization_membership(
     if principal.role not in {"organization_admin", "lab_director"}:
         raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
 
+    if payload.status is not None and payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
+        raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
+
+    effective_role = payload.role if payload.role is not None else target.role
+    effective_status = payload.status if payload.status is not None else target.status
+    if target.role == "organization_admin" and target.status == "ACTIVE":
+        admin_count = db.scalar(select(func.count()).select_from(OrganizationMembership).where(
+            OrganizationMembership.organization_id == principal.organization_id,
+            OrganizationMembership.role == "organization_admin",
+            OrganizationMembership.status == "ACTIVE",
+        )) or 0
+        if admin_count <= 1 and (effective_role != "organization_admin" or effective_status in {"SUSPENDED", "REVOKED"}):
+            raise HTTPException(status_code=409, detail="The organization must retain at least one active organization administrator")
+
     if payload.role is not None:
         _require_invitation_role(principal, payload.role)
         target.role = payload.role
@@ -350,16 +364,6 @@ def update_organization_membership(
             user.role = payload.role
 
     if payload.status is not None:
-        if payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
-            raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
-        if target.status == "ACTIVE" and payload.status in {"SUSPENDED", "REVOKED"} and target.role == "organization_admin":
-            admin_count = db.scalar(select(func.count()).select_from(OrganizationMembership).where(
-                OrganizationMembership.organization_id == principal.organization_id,
-                OrganizationMembership.role == "organization_admin",
-                OrganizationMembership.status == "ACTIVE",
-            )) or 0
-            if admin_count <= 1:
-                raise HTTPException(status_code=409, detail="The organization must retain at least one active organization administrator")
         target.status = payload.status
         user = db.get(User, target.user_id)
         if user:
