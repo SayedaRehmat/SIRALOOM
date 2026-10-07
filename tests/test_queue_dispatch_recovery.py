@@ -916,3 +916,71 @@ def test_stale_published_dispatch_cannot_reclaim_analysis_after_retry(monkeypatc
     assert publish_calls["count"] == 0
     assert async_result_calls["count"] == 0
     assert analysis.queue_task_id == str(new_dispatch_id)
+
+
+def test_analysis_execution_claim_uses_postgresql_session_advisory_lock():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": uuid4(),
+            "status": AnalysisStatus.RUNNING,
+            "queue_task_id": "live-task",
+        },
+    )()
+
+    class Dialect:
+        name = "postgresql"
+
+    class Bind:
+        dialect = Dialect()
+
+    class FakeDB:
+        def __init__(self, acquired):
+            self.acquired = acquired
+            self.scalar_calls = 0
+
+        def get_bind(self):
+            return Bind()
+
+        def scalar(self, statement, params):
+            self.scalar_calls += 1
+            assert "pg_try_advisory_lock" in str(statement)
+            assert "lock_key" in params
+            return self.acquired
+
+        def get(self, model, analysis_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert analysis_id == analysis.id
+            return analysis
+
+        def add(self, row):
+            assert row is analysis
+
+        def commit(self):
+            pass
+
+    # A live worker owns the session-scoped advisory lock, so a redelivered
+    # duplicate must be fenced before it can reclaim RUNNING execution.
+    duplicate_db = FakeDB(acquired=False)
+    assert module._claim_analysis_execution(
+        duplicate_db,
+        analysis.id,
+        task_id="live-task",
+        allow_running=True,
+    ) is False
+    assert duplicate_db.scalar_calls == 1
+
+    # After the original worker's PostgreSQL session disappears, the advisory
+    # lock becomes acquirable and the redelivered task may recover RUNNING state.
+    recovery_db = FakeDB(acquired=True)
+    assert module._claim_analysis_execution(
+        recovery_db,
+        analysis.id,
+        task_id="live-task",
+        allow_running=True,
+    ) is True
+    assert recovery_db.scalar_calls == 1
