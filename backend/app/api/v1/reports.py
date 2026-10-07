@@ -19,7 +19,8 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.queue.celery_app import run_analysis_task, run_case_export_task
+from backend.app.infrastructure.queue.celery_app import run_case_export_task
+from backend.app.application.analysis import resume_analysis
 
 router = APIRouter(tags=["reports"])
 
@@ -122,14 +123,17 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
     get_accessible_report(report_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
     try:
         r=finalize_report(db, report_id=report_id, approver_id=principal.user_id, reason=payload.reason)
-        db.commit()
         resume_queued = False
         if r.status == "FINAL":
             try:
-                run_analysis_task.delay(str(r.analysis_id))
-                resume_queued = True
-            except RuntimeError:
-                resume_queued = False
+                # Persist the sign-out mutation and durable resume intent together;
+                # broker publication is handled by the analysis outbox.
+                resume_queued = resume_analysis(db, r.analysis_id) is not None
+            except ValueError as exc:
+                db.rollback()
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+        else:
+            db.commit()
         return {"report_id":str(r.id),"version":r.report_version,"status":r.status,"approved_by":str(r.approved_by),"approved_at":r.approved_at.isoformat() if r.approved_at else None,"supersedes_report_id":str(r.supersedes_report_id) if r.supersedes_report_id else None,"workflow_resume_queued":resume_queued}
     except ReportFinalizationError as exc:
         db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -158,14 +162,17 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
     analysis = get_accessible_analysis(decision.analysis_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
     try:
         out = finalize_reportability(db, decision_id=decision_id, reviewer_id=principal.user_id, expected_version=payload.expected_version, disposition=payload.disposition, reason=payload.reason)
-        db.commit()
         resume_queued = False
         if out.status == "FINAL":
             try:
-                run_analysis_task.delay(str(analysis.id))
-                resume_queued = True
-            except RuntimeError:
-                resume_queued = False
+                # Persist reportability sign-off and durable resume intent in the
+                # same transaction; the outbox closes the post-commit publish gap.
+                resume_queued = resume_analysis(db, analysis.id) is not None
+            except ValueError as exc:
+                db.rollback()
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+        else:
+            db.commit()
         return {"decision_id": str(out.id), "analysis_id": str(analysis.id), "variant_id": str(out.variant_id), "version": out.version, "review_version": out.review_version, "status": out.status, "disposition": out.disposition, "priority_score": out.priority_score, "priority_band": out.priority_band, "reviewed_by": str(out.reviewed_by), "approved_at": out.approved_at.isoformat() if out.approved_at else None, "workflow_resume_queued": resume_queued}
     except ValueError as exc:
         db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc
