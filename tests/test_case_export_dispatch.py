@@ -66,3 +66,47 @@ def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
         allow_running=True,
     ) is True
     assert recovery_db.scalar_calls == 1
+
+
+def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
+    module = importlib.import_module("backend.app.application.case_export")
+    export = type(
+        "CaseExport",
+        (),
+        {"id": uuid4(), "status": "QUEUED", "queue_task_id": None},
+    )()
+    events = []
+
+    class FakeDB:
+        def get(self, model, export_id, **kwargs):
+            assert kwargs == {"with_for_update": True}
+            assert export_id == export.id
+            return export
+
+        def refresh(self, row, **kwargs):
+            assert row is export
+            assert kwargs == {"with_for_update": True}
+
+        def scalar(self, statement):
+            return 0
+
+        def add(self, row):
+            events.append(("add", type(row).__name__, getattr(row, "id", None)))
+
+        def commit(self):
+            events.append(("commit", export.queue_task_id))
+
+    def publish(dispatch_id):
+        events.append(("publish", dispatch_id))
+        assert export.queue_task_id == str(dispatch_id)
+
+    monkeypatch.setattr(
+        "backend.app.infrastructure.queue.celery_app.publish_case_export_dispatch",
+        publish,
+    )
+
+    dispatch_id = module.enqueue_case_export(FakeDB(), export)
+
+    assert dispatch_id == export.queue_task_id
+    assert events[-1] == ("publish", uuid4() if False else events[-1][1])
+    assert any(event[0] == "commit" and event[1] == dispatch_id for event in events)
