@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from backend.app.infrastructure.db.models import ACMGAssessment, Annotation, Classification, Evidence, PopulationObservation, User, Variant, ReportabilityDecision
 from backend.app.domain.review import ClassificationReviewRequest, CriterionReviewRequest, ReviewResponse
 from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.queue.celery_app import run_analysis_task
+from backend.app.application.analysis import resume_analysis
 from backend.app.review.service import (
     ReviewAuthorizationError,
     ReviewConflictError,
@@ -235,16 +235,18 @@ def approve(
             expected_version=payload.expected_version,
             reason=payload.reason,
         )
-        db.commit()
-        # A review mutation may complete the final human gate. Re-enqueueing is
-        # safe because every downstream workflow step is idempotent and durable.
         resume_queued = False
         if classification.review_status == "APPROVED" and classification.state == "FINAL":
+            # Keep the final human-gate mutation and durable dispatch intent in
+            # one DB transaction. resume_analysis commits before publication,
+            # so a broker outage cannot strand the workflow after sign-off.
             try:
-                run_analysis_task.delay(str(analysis_id))
-                resume_queued = True
-            except RuntimeError:
-                resume_queued = False
+                resume_queued = resume_analysis(db, analysis_id) is not None
+            except ValueError as exc:
+                db.rollback()
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+        else:
+            db.commit()
         return {
             "classification_id": str(classification.id),
             "version": classification.version,
