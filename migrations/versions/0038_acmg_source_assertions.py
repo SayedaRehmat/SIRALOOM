@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "0038_acmg_source_assertions"
-down_revision = "0037_merge_organization_invitation_branch"
+down_revision = "0037_merge_organization_invitations"
 branch_labels = None
 depends_on = None
 
