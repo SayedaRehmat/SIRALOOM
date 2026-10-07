@@ -616,6 +616,32 @@ class Evidence(Base):
     __table_args__ = (UniqueConstraint("analysis_id", "evidence_fingerprint"),)
 
 
+class ACMGSourceAssertion(Base):
+    """Source-level ACMG/ClinGen criterion assertion preserved separately from SIRALOOM classification."""
+    __tablename__ = "acmg_source_assertions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    variant_id: Mapped[UUID] = mapped_column(ForeignKey("variants.id"), nullable=False)
+    evidence_id: Mapped[UUID] = mapped_column(ForeignKey("evidence.id"), nullable=False)
+    criterion: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    strength: Mapped[str | None] = mapped_column(Text)
+    source_name: Mapped[str | None] = mapped_column(Text)
+    source_version: Mapped[str | None] = mapped_column(Text)
+    source_record_id: Mapped[str | None] = mapped_column(Text)
+    source_classification: Mapped[str | None] = mapped_column(Text)
+    condition: Mapped[str | None] = mapped_column(Text)
+    gene: Mapped[str | None] = mapped_column(Text)
+    mondo_id: Mapped[str | None] = mapped_column(Text)
+    expert_panel: Mapped[str | None] = mapped_column(Text)
+    rationale: Mapped[str | None] = mapped_column(Text)
+    pmids: Mapped[list] = mapped_column(JSON, default=list)
+    source_payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    assertion_fingerprint: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (UniqueConstraint("analysis_id", "evidence_id", "criterion"),)
+
+
 class ClinGenSpecification(Base):
     __tablename__ = "clingen_specifications"
     id: Mapped[UUID] = mapped_column(primary_key=True)

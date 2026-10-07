@@ -12,7 +12,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
+from backend.app.adapters.annotation.vep import VEPProviderError
+from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
+from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
+from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
 from backend.app.config import settings
@@ -26,9 +30,13 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
+from backend.app.domain.resource_capabilities import ResourceCapability, CapabilityRequirement
+from backend.app.domain.resource_execution_plan import build_resource_execution_plan
+from backend.app.domain.provider_registry import register_builtin_providers
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
+from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
@@ -961,87 +969,73 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         db.commit()
         _ensure_execution_partitions(db, analysis.id, "normalize", "annotate")
 
-        # 3. GeneBe annotation provider (development/research path).
-        # Each batch is durably checkpointed in workflow_steps.metadata_json.
-        # Annotation rows are committed before the batch checkpoint is marked
-        # successful, so a worker crash can safely resume by inspecting persisted rows.
+        # 3. Annotation is selected from the governed execution plan.
+        # GeneBe is a SIRALOOM trial provider only. Laboratory deployments use
+        # only organization-approved annotation resources with real provider
+        # implementations (for example, VEP).
         annotation_step = _step(db, analysis.id, "annotate")
         provider = None
+        annotation_resource = None
         if annotation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, annotation_step, StepStatus.RUNNING)
             try:
-                if not settings.genebe_enabled:
-                    mark_step(
-                        db,
-                        annotation_step,
-                        StepStatus.BLOCKED,
-                        error_code="ANNOTATION_PROVIDER_DISABLED",
-                        error_message="GeneBe development provider is disabled and no alternative Phase 1 provider is configured.",
-                    )
-                    analysis.status = AnalysisStatus.BLOCKED
-                    db.commit()
-                    audit.record(
-                        event_type="WORKFLOW_BLOCKED",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="annotation",
-                        reason="No Phase 1 annotation provider enabled",
-                    )
-                    db.commit()
-                    return
-
-                if normalize_build(analysis.reference_build) not in GeneBeProvider.supported_builds:
-                    mark_step(
-                        db,
-                        annotation_step,
-                        StepStatus.BLOCKED,
-                        error_code="ANNOTATION_BUILD_UNSUPPORTED",
-                        error_message=(
-                            f"GeneBe annotation is not build-native for {normalize_build(analysis.reference_build)}; "
-                            "a provider that annotates the selected assembly without implicit liftover is required."
-                        ),
-                        metadata={
-                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
-                            "provider": GeneBeProvider.provider_id,
-                            "provider_supported_builds": sorted(GeneBeProvider.supported_builds),
-                            "analysis_reference_build": normalize_build(analysis.reference_build),
-                        },
-                    )
-                    analysis.status = AnalysisStatus.BLOCKED
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="ANNOTATION_BUILD_UNSUPPORTED",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="annotation",
-                        reason="Selected genome build is not supported natively by the configured annotation provider.",
-                        payload={
-                            "provider": provider.provider_id,
-                            "provider_supported_builds": sorted(provider.supported_builds),
-                            "analysis_reference_build": normalize_build(analysis.reference_build),
-                            "next_step": "ANNOTATION_PROVIDER_REQUIRED",
-                        },
-                    )
-                    db.commit()
-                    return
-
-                batch_limit = min(max(1, settings.genebe_max_batch), 1000)
-                requested_annotation_resource_id = (analysis.configuration or {}).get("annotation_resource_id")
                 case = db.get(Case, analysis.case_id)
                 if case is None:
-                    mark_step(
-                        db,
-                        annotation_step,
-                        StepStatus.FAILED,
-                        error_code="CASE_NOT_FOUND",
-                        error_message="Analysis case was not found while resolving the organization-approved annotation resource.",
+                    raise ResourceConsumptionError(
+                        "CASE_NOT_FOUND",
+                        "Analysis case was not found while resolving the annotation resource.",
                     )
-                    analysis.status = AnalysisStatus.FAILED
-                    db.commit()
-                    return
+
+                registry = register_builtin_providers()
+                plan = build_resource_execution_plan(
+                    db,
+                    organization_id=case.organization_id,
+                    requirements=(
+                        CapabilityRequirement(ResourceCapability.ANNOTATION, required=True),
+                    ),
+                )
+                candidates = plan.for_capability(ResourceCapability.ANNOTATION)
+                if not candidates:
+                    raise ResourceConsumptionError(
+                        "ANNOTATION_PROVIDER_UNAVAILABLE",
+                        "No executable annotation provider is registered for this deployment.",
+                    )
+
+                requested_annotation_resource_id = (analysis.configuration or {}).get(
+                    "annotation_resource_id"
+                )
+                selected = None
+                if requested_annotation_resource_id:
+                    for candidate in candidates:
+                        if str(candidate.resource.id) == str(requested_annotation_resource_id):
+                            selected = candidate
+                            break
+                if selected is None:
+                    selected = candidates[0]
+
+                annotation_resource = selected.resource
+                annotation_execution = resolve_resource_execution(
+                    db,
+                    resource=annotation_resource,
+                )
+                implementation = registry.require(
+                    provider_id=annotation_execution.contract.provider_id,
+                    provider_version=annotation_execution.contract.provider_version,
+                )
+                provider = implementation.factory(annotation_execution.contract)
+
+                if not hasattr(provider, "annotate"):
+                    raise ResourceConsumptionError(
+                        "ANNOTATION_PROVIDER_NOT_EXECUTABLE",
+                        f"Provider {annotation_execution.contract.provider_id} has no batch annotation operation.",
+                    )
+
+                batch_limit = (
+                    min(max(1, settings.genebe_max_batch), 1000)
+                    if provider.provider_id == "GeneBe"
+                    else 250
+                )
+                requested_annotation_resource_id = str(annotation_resource.id)
 
                 resolution = resolve_resource_with_fallback(
                     db,
@@ -1049,8 +1043,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     requested_resource_id=requested_annotation_resource_id,
                     expected_type="ANNOTATION",
                     expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=provider.provider_id,
-                    expected_provider_version=provider.provider_version,
+                    expected_provider=annotation_resource.provider,
+                    expected_provider_version=annotation_execution.contract.provider_version,
                 )
                 record_workflow_decision(
                     db,
@@ -1066,61 +1060,56 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     resource_id=resolution.requested_resource_id,
                     fallback_resource_id=resolution.fallback_resource_id,
                     metadata={
-                        "provider": provider.provider_id,
+                        "capability": ResourceCapability.ANNOTATION.value,
+                        "provider": annotation_resource.provider,
+                        "provider_version": annotation_execution.contract.provider_version,
                         "reference_build": normalize_build(analysis.reference_build),
-                        "fallback_used": resolution.used_fallback,
+                        "deployment_profile": plan.profile_type,
                     },
                 )
                 db.commit()
 
                 if resolution.resource is None:
-                    status = (
-                        StepStatus.REQUIRES_REVIEW
-                        if resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
-                        else StepStatus.RESOURCE_FAILURE
+                    raise ResourceConsumptionError(
+                        resolution.decision.code,
+                        resolution.decision.message,
                     )
-                    mark_step(
-                        db,
-                        annotation_step,
-                        status,
-                        error_code=resolution.decision.code,
-                        error_message=resolution.decision.message,
-                        metadata={
-                            "next_action": resolution.decision.action.value,
-                            "requested_resource_id": str(resolution.requested_resource_id)
-                            if resolution.requested_resource_id
-                            else None,
-                        },
-                    )
-                    analysis.status = (
-                        AnalysisStatus.REQUIRES_REVIEW
-                        if status is StepStatus.REQUIRES_REVIEW
-                        else AnalysisStatus.RESOURCE_FAILURE
-                    )
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="ANNOTATION_RESOURCE_DECISION",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="resource-registry",
-                        reason=resolution.decision.message,
-                        payload={
-                            "action": resolution.decision.action.value,
-                            "code": resolution.decision.code,
-                            "requested_resource_id": str(resolution.requested_resource_id)
-                            if resolution.requested_resource_id
-                            else None,
-                        },
-                    )
-                    db.commit()
-                    return
+                annotation_resource = resolution.resource
+                annotation_execution = resolve_resource_execution(
+                    db,
+                    resource=annotation_resource,
+                )
+                implementation = registry.require(
+                    provider_id=annotation_execution.contract.provider_id,
+                    provider_version=annotation_execution.contract.provider_version,
+                )
+                provider = implementation.factory(annotation_execution.contract)
+            except (ResourceConsumptionError, ResourceExecutionError) as exc:
+                mark_step(
+                    db,
+                    annotation_step,
+                    StepStatus.BLOCKED,
+                    error_code=getattr(exc, "code", "ANNOTATION_RESOURCE_UNAVAILABLE"),
+                    error_message=str(exc),
+                    metadata={"next_step": "RESOURCE_REQUIRED"},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                db.commit()
+                audit.record(
+                    event_type="ANNOTATION_RESOURCE_DECISION",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="resource-registry",
+                    reason=str(exc),
+                )
+                db.commit()
+                return
 
                 annotation_resource = resolution.resource
                 try:
                     annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
-                    provider = GeneBeProvider.from_execution_contract(annotation_execution.contract)
+                    provider = registry.require(provider_id=annotation_execution.contract.provider_id, provider_version=annotation_execution.contract.provider_version).factory(annotation_execution.contract)
                 except (ResourceExecutionError, GeneBeError) as exc:
                     mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
                     analysis.status = AnalysisStatus.RESOURCE_FAILURE
@@ -1231,7 +1220,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                         complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                         db.commit()
-                    except GeneBeError as exc:
+                    except (GeneBeError, VEPProviderError) as exc:
                         complete_resource_execution(
                             db,
                             execution_record,
@@ -1288,7 +1277,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             continue
                         payload = payloads_by_key[canonical]
                         provenance = dict(payload.pop("_siraloom_annotation_provenance", {}) or {})
-                        normalized = normalize_gene_be_variant(payload)
+                        normalized = normalize_annotation_payload(provider.provider_id, payload)
                         db.add(
                             Annotation(
                                 id=__import__("uuid").uuid4(),
@@ -1418,211 +1407,173 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # 4. Population observations: GeneBe-derived global + optional direct gnomAD MID/global.
+        # 4. Population evidence is capability-driven.
+        # Only resources that are actually executable in this deployment are run.
+        # GeneBe population data is available only in the SIRALOOM trial profile.
         population_step = _step(db, analysis.id, "population")
         if population_step.status != StepStatus.SUCCEEDED:
             mark_step(db, population_step, StepStatus.RUNNING)
             try:
                 case = db.get(Case, analysis.case_id)
                 if case is None:
-                    raise ResourceConsumptionError("CASE_NOT_FOUND", "Analysis case was not found during population resource resolution.")
-                population_resource_id = (analysis.configuration or {}).get("population_resource_id")
-                try:
-                    requested_population = db.get(Resource, UUID(str(population_resource_id))) if population_resource_id else None
-                except (TypeError, ValueError) as exc:
                     raise ResourceConsumptionError(
-                        "RESOURCE_REQUIRED",
-                        f"Configured population resource ID is not a valid UUID: {population_resource_id}",
-                    ) from exc
-                if requested_population is None:
-                    raise ResourceConsumptionError(
-                        "RESOURCE_REQUIRED",
-                        "Analysis must explicitly select a registered GeneBe population resource.",
+                        "CASE_NOT_FOUND",
+                        "Analysis case was not found during population resource planning.",
                     )
-                population_resolution = resolve_resource_with_fallback(
+
+                plan = build_resource_execution_plan(
                     db,
                     organization_id=case.organization_id,
-                    requested_resource_id=population_resource_id,
-                    expected_type="POPULATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider="GeneBe",
+                    requirements=(
+                        CapabilityRequirement(
+                            ResourceCapability.POPULATION_FREQUENCY,
+                            required=False,
+                        ),
+                    ),
                 )
-                record_workflow_decision(
-                    db,
-                    analysis_id=analysis.id,
-                    step_id="population",
-                    attempt=population_step.attempt,
-                    outcome=OutcomeKind.RESOURCE_UNAVAILABLE if population_resolution.used_fallback or population_resolution.resource is None else OutcomeKind.SUCCESS,
-                    decision=population_resolution.decision,
-                    resource_id=population_resolution.requested_resource_id,
-                    fallback_resource_id=population_resolution.fallback_resource_id,
-                    metadata={
-                        "resource_type": "POPULATION",
-                        "provider": "GeneBe",
-                        "reference_build": normalize_build(analysis.reference_build),
-                        "fallback_used": population_resolution.used_fallback,
-                    },
+                population_candidates = plan.for_capability(
+                    ResourceCapability.POPULATION_FREQUENCY
                 )
-                db.commit()
-                if population_resolution.resource is None:
-                    status = StepStatus.REQUIRES_REVIEW if population_resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW else StepStatus.RESOURCE_FAILURE
-                    mark_step(
-                        db,
-                        population_step,
-                        status,
-                        error_code=population_resolution.decision.code,
-                        error_message=population_resolution.decision.message,
-                        metadata={
-                            "next_action": population_resolution.decision.action.value,
-                            "requested_resource_id": str(population_resource_id),
-                        },
-                    )
-                    analysis.status = AnalysisStatus.REQUIRES_REVIEW if status is StepStatus.REQUIRES_REVIEW else AnalysisStatus.RESOURCE_FAILURE
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="POPULATION_RESOURCE_DECISION",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="population-resource",
-                        reason=population_resolution.decision.message,
-                        payload={
-                            "action": population_resolution.decision.action.value,
-                            "code": population_resolution.decision.code,
-                            "requested_resource_id": str(population_resource_id),
-                        },
-                    )
-                    db.commit()
-                    return
-                geneBe_resource = population_resolution.resource
 
                 created = 0
-                annotation_count = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "GeneBe")) or 0
-                pop_batch_size = int(analysis.configuration.get("population_batch_size", partition_size) or partition_size)
-                for pop_start, pop_end in _chunk_ranges(annotation_count, pop_batch_size):
-                    annotations = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id, Annotation.provider_name == "genebe").order_by(Annotation.created_at, Annotation.id).offset(pop_start).limit(pop_end - pop_start)).all()
-                    for ann in annotations:
-                        payload = ann.payload.get("normalized", {})
-                        pop = payload.get("population", {})
-                        if pop.get("reference_population_af") is None and pop.get("reference_population_ac") is None:
-                            continue
-                        existing = db.scalar(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id, PopulationObservation.resource_id == geneBe_resource.id, PopulationObservation.population_code == "GLOBAL"))
-                        if existing:
-                            continue
-                        ac = _safe_int(pop.get("reference_population_ac"))
-                        hom = _safe_int(pop.get("reference_population_hom"))
-                        af = _safe_float(pop.get("reference_population_af"))
-                        db.add(PopulationObservation(id=__import__("uuid").uuid4(), analysis_id=analysis.id, variant_id=ann.variant_id, resource_id=geneBe_resource.id, population_level="GLOBAL", population_code="GLOBAL", population_label="Global", allele_count=ac, allele_number=None, allele_frequency=af, homozygote_count=hom, availability="AVAILABLE", quality_status="PROVIDER_DERIVED"))
-                        created += 1
-                    db.commit()
-
                 direct_count = 0
-                if settings.gnomad_enabled:
-                    if normalize_build(analysis.reference_build) != "GRCh38":
-                        raise GnomADProviderError("Configured gnomAD v4 GraphQL dataset is supported here only for GRCh38")
-                    gnomad = None
-                    gnomad_resource_id = (analysis.configuration or {}).get("gnomad_resource_id")
-                    try:
-                        requested_gnomad = db.get(Resource, UUID(str(gnomad_resource_id))) if gnomad_resource_id else None
-                    except (TypeError, ValueError) as exc:
-                        raise ResourceConsumptionError(
-                            "RESOURCE_REQUIRED",
-                            f"Configured gnomAD resource ID is not a valid UUID: {gnomad_resource_id}",
-                        ) from exc
-                    if requested_gnomad is None:
-                        raise ResourceConsumptionError(
-                            "RESOURCE_REQUIRED",
-                            "gNOMAD is enabled but no registered gnomAD population resource is configured.",
-                        )
-                    gnomad_resolution = resolve_resource_with_fallback(
-                        db,
-                        organization_id=case.organization_id,
-                        requested_resource_id=gnomad_resource_id,
-                        expected_type="POPULATION",
-                        expected_build=normalize_build(analysis.reference_build),
-                        expected_provider="gnomAD",
-                        expected_provider_version=gnomad.provider_version,
+                executed_resources: list[dict[str, str]] = []
+                registry = register_builtin_providers()
+
+                for candidate in population_candidates:
+                    resource = candidate.resource
+                    execution = resolve_resource_execution(db, resource=resource)
+                    implementation = registry.resolve(
+                        provider_id=execution.contract.provider_id,
+                        provider_version=execution.contract.provider_version,
                     )
-                    record_workflow_decision(
-                        db,
-                        analysis_id=analysis.id,
-                        step_id="population",
-                        attempt=population_step.attempt,
-                        outcome=OutcomeKind.RESOURCE_UNAVAILABLE if gnomad_resolution.used_fallback or gnomad_resolution.resource is None else OutcomeKind.SUCCESS,
-                        decision=gnomad_resolution.decision,
-                        resource_id=gnomad_resolution.requested_resource_id,
-                        fallback_resource_id=gnomad_resolution.fallback_resource_id,
-                        metadata={
-                            "resource_type": "POPULATION",
-                            "provider": "gnomAD",
-                            "reference_build": normalize_build(analysis.reference_build),
-                            "fallback_used": gnomad_resolution.used_fallback,
-                        },
-                    )
-                    db.commit()
-                    if gnomad_resolution.resource is None:
-                        status = StepStatus.REQUIRES_REVIEW if gnomad_resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW else StepStatus.RESOURCE_FAILURE
-                        mark_step(
-                            db,
-                            population_step,
-                            status,
-                            error_code=gnomad_resolution.decision.code,
-                            error_message=gnomad_resolution.decision.message,
-                            metadata={
-                                "next_action": gnomad_resolution.decision.action.value,
-                                "requested_resource_id": str(gnomad_resource_id),
-                            },
+                    if implementation is None:
+                        continue
+
+                    provider = implementation.factory(execution.contract)
+                    executed_resources.append({
+                        "resource_id": str(resource.id),
+                        "resource_name": resource.name,
+                        "provider": execution.contract.provider_id,
+                        "provider_version": execution.contract.provider_version,
+                    })
+
+                    # GeneBe exposes population observations as part of its
+                    # annotation response. It is deliberately a trial-only
+                    # source and is never used for laboratory execution.
+                    if provider.provider_id == "GeneBe":
+                        if not plan.profile_type == "TRIAL_PUBLIC":
+                            continue
+                        annotation_count = db.scalar(
+                            select(func.count(Annotation.id)).where(
+                                Annotation.analysis_id == analysis.id,
+                                Annotation.provider_name == "GeneBe",
+                            )
+                        ) or 0
+                        pop_batch_size = int(
+                            analysis.configuration.get("population_batch_size", partition_size)
+                            or partition_size
                         )
-                        analysis.status = AnalysisStatus.REQUIRES_REVIEW if status is StepStatus.REQUIRES_REVIEW else AnalysisStatus.RESOURCE_FAILURE
-                        analysis.completed_at = None
+                        for pop_start, pop_end in _chunk_ranges(
+                            annotation_count, pop_batch_size
+                        ):
+                            annotations = db.scalars(
+                                select(Annotation)
+                                .where(
+                                    Annotation.analysis_id == analysis.id,
+                                    Annotation.provider_name == "GeneBe",
+                                )
+                                .order_by(Annotation.created_at, Annotation.id)
+                                .offset(pop_start)
+                                .limit(pop_end - pop_start)
+                            ).all()
+                            for ann in annotations:
+                                payload = (ann.payload or {}).get("normalized", {})
+                                pop = payload.get("population", {})
+                                if (
+                                    pop.get("reference_population_af") is None
+                                    and pop.get("reference_population_ac") is None
+                                ):
+                                    continue
+                                existing = db.scalar(
+                                    select(PopulationObservation).where(
+                                        PopulationObservation.analysis_id == analysis.id,
+                                        PopulationObservation.variant_id == ann.variant_id,
+                                        PopulationObservation.resource_id == resource.id,
+                                        PopulationObservation.population_code == "GLOBAL",
+                                    )
+                                )
+                                if existing:
+                                    continue
+                                db.add(
+                                    PopulationObservation(
+                                        id=__import__("uuid").uuid4(),
+                                        analysis_id=analysis.id,
+                                        variant_id=ann.variant_id,
+                                        resource_id=resource.id,
+                                        population_level="GLOBAL",
+                                        population_code="GLOBAL",
+                                        population_label="Global",
+                                        allele_count=_safe_int(
+                                            pop.get("reference_population_ac")
+                                        ),
+                                        allele_number=None,
+                                        allele_frequency=_safe_float(
+                                            pop.get("reference_population_af")
+                                        ),
+                                        homozygote_count=_safe_int(
+                                            pop.get("reference_population_hom")
+                                        ),
+                                        availability="AVAILABLE",
+                                        quality_status="PROVIDER_DERIVED",
+                                    )
+                                )
+                                created += 1
                         db.commit()
-                        audit.record(
-                            event_type="POPULATION_RESOURCE_DECISION",
-                            case_id=analysis.case_id,
-                            analysis_id=analysis.id,
-                            actor_type="SYSTEM",
-                            actor_id="population-resource",
-                            reason=gnomad_resolution.decision.message,
-                            payload={
-                                "action": gnomad_resolution.decision.action.value,
-                                "code": gnomad_resolution.decision.code,
-                                "requested_resource_id": str(gnomad_resource_id),
-                            },
-                        )
-                        db.commit()
-                        return
-                    resource = gnomad_resolution.resource
-                    try:
-                        gnomad_execution = resolve_resource_execution(db, resource=resource)
-                        gnomad = GnomADGraphQLProvider.from_execution_contract(
-                            gnomad_execution.contract,
-                            delay_seconds=settings.gnomad_graphql_delay_seconds,
-                        )
-                    except (ResourceExecutionError, GnomADProviderError) as exc:
-                        raise ResourceConsumptionError("GNOMAD_EXECUTION_CONTRACT_INVALID", str(exc)) from exc
-                    for variant in iter_normalized_vcf(normalized_path, reference_build):
+                        continue
+
+                    # Direct population providers expose query_variant() and
+                    # return SIRALOOM population observations. This is the
+                    # provider execution contract used by the current gnomAD
+                    # GraphQL and local tabix implementations.
+                    query_variant = getattr(provider, "query_variant", None)
+                    if query_variant is None:
+                        continue
+
+                    for variant in iter_normalized_vcf(
+                        normalized_path, reference_build
+                    ):
                         execution_record = start_resource_execution(
                             db,
                             analysis_id=analysis.id,
                             step_id="population",
                             attempt=population_step.attempt,
-                            resolved=gnomad_execution,
-                            requested_resource_id=gnomad_resolution.requested_resource_id,
-                            fallback_resource_id=gnomad_resolution.fallback_resource_id,
-                            batch_key=f"gnomad:{variant.chromosome}:{variant.position}:{variant.reference}:{variant.alternate}",
-                            metadata={"provider": gnomad.provider_id, "dataset": gnomad.dataset_id},
+                            resolved=execution,
+                            requested_resource_id=resource.id,
+                            fallback_resource_id=None,
+                            batch_key=(
+                                f"{provider.provider_id}:{variant.chromosome}:"
+                                f"{variant.position}:{variant.reference}:{variant.alternate}"
+                            ),
+                            metadata={
+                                "provider": provider.provider_id,
+                                "resource_id": str(resource.id),
+                            },
                         )
                         db.commit()
                         try:
-                            obs_list = gnomad.query_variant(variant)
+                            obs_list = query_variant(variant)
                             sample = next(iter(obs_list), None)
                             complete_resource_execution(
                                 db,
                                 execution_record,
                                 status="SUCCEEDED",
-                                request_fingerprint=sample.request_fingerprint if sample else None,
-                                response_sha256=sample.response_sha256 if sample else None,
+                                request_fingerprint=(
+                                    sample.request_fingerprint if sample else None
+                                ),
+                                response_sha256=(
+                                    sample.response_sha256 if sample else None
+                                ),
                             )
                             db.commit()
                         except GnomADProviderError as exc:
@@ -1630,17 +1581,30 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 db,
                                 execution_record,
                                 status="FAILED",
-                                error_code="GNOMAD_PROVIDER_ERROR",
+                                error_code="POPULATION_PROVIDER_ERROR",
                                 error_message=str(exc),
                             )
                             db.commit()
                             raise
-                        row = db.get(Variant, stable_variant_uuid(canonical_key(variant.genome_build, variant.chromosome, variant.position, variant.reference, variant.alternate)))
+
+                        row = db.get(
+                            Variant,
+                            stable_variant_uuid(
+                                canonical_key(
+                                    variant.genome_build,
+                                    variant.chromosome,
+                                    variant.position,
+                                    variant.reference,
+                                    variant.alternate,
+                                )
+                            ),
+                        )
                         if row is None:
-                            raise RuntimeError("Canonical variant row missing during population processing")
+                            raise RuntimeError(
+                                "Canonical variant row missing during population processing"
+                            )
+
                         for obs in obs_list:
-                            if obs.population_code != "MID":
-                                continue
                             existing = db.scalar(
                                 select(PopulationObservation).where(
                                     PopulationObservation.analysis_id == analysis.id,
@@ -1678,38 +1642,31 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 )
                             )
                             direct_count += 1
-                    db.commit()
+                        db.commit()
 
                 population_metadata = {
+                    "executed_resources": executed_resources,
+                    "profile_type": plan.profile_type,
+                    "profile_version": plan.profile_version,
                     "gene_be_global_observations": created,
-                    "direct_gnomad_observations": direct_count,
+                    "direct_population_observations": direct_count,
+                    "optional_resources_not_selected": len(plan.unavailable_optional),
                 }
-                if created == 0 and direct_count == 0:
-                    _apply_scientific_limitation(
-                        db,
-                        population_step,
-                        outcome=OutcomeKind.NO_DATA,
-                        code="POPULATION_NO_DATA",
-                        message=(
-                            "Population resources completed without an available population observation "
-                            "for the analyzed variants; downstream evidence and clinical review may still proceed."
-                        ),
-                        metadata=population_metadata,
-                    )
-                else:
-                    mark_step(
-                        db,
-                        population_step,
-                        StepStatus.SUCCEEDED,
-                        metadata=population_metadata,
-                    )
+                # Absence of an optional population resource is not a workflow
+                # failure and is not converted into a user-facing limitation.
+                mark_step(
+                    db,
+                    population_step,
+                    StepStatus.SUCCEEDED,
+                    metadata=population_metadata,
+                )
                 audit.record(
                     event_type="POPULATION_COMPLETED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
                     actor_id="population-engine",
-                    payload={"gene_be_global_observations": created, "direct_gnomad_observations": direct_count},
+                    payload=population_metadata,
                 )
                 db.commit()
             except ResourceConsumptionError as exc:
@@ -1782,15 +1739,40 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 # release through the governed adapter.
                 clinvar_resource = None
                 clinvar_provider = None
-                clinvar_resource_id = (analysis.configuration or {}).get("clinvar_resource_id")
-                if clinvar_resource_id:
+                clinvar_execution = None
+                clinvar_execution_metadata = None
+                configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
+
+                # ClinVar is an optional clinical-variant evidence capability.
+                # If the laboratory has adopted a qualified ClinVar release, use
+                # it automatically. An explicit analysis resource ID remains a
+                # hard pin and is validated rather than silently substituted.
+                if configured_clinvar_id:
                     clinvar_resource = _require_registered_resource(
                         db,
-                        resource_id=clinvar_resource_id,
+                        resource_id=configured_clinvar_id,
                         expected_type="EVIDENCE",
                         expected_build=analysis.reference_build,
                         expected_provider="NCBI ClinVar",
                     )
+                else:
+                    case_for_resources = db.get(Case, analysis.case_id)
+                    if case_for_resources is not None:
+                        clinvar_plan = build_resource_execution_plan(
+                            db,
+                            organization_id=case_for_resources.organization_id,
+                            requirements=(
+                                CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
+                            ),
+                        )
+                        clinvar_candidates = [
+                            item for item in clinvar_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
+                            if item.resource.provider == "NCBI ClinVar"
+                        ]
+                        if clinvar_candidates:
+                            clinvar_resource = clinvar_candidates[0].resource
+
+                if clinvar_resource is not None:
                     clinvar_execution = resolve_resource_execution(
                         db,
                         resource=clinvar_resource,
@@ -1807,10 +1789,32 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "resource_checksum": clinvar_resource.checksum,
                         "execution_dataset": clinvar_execution.contract.dataset,
                     }
-                else:
-                    clinvar_execution = None
-                    clinvar_execution_metadata = None
 
+                # ClinGen evidence activities are optional and independently governed.
+                clingen_vp_resource = None
+                clingen_vp_provider = None
+                clingen_vp_execution = None
+                clingen_vp_metadata = None
+                clingen_gdv_resource = None
+                clingen_gdv_provider = None
+                clingen_gdv_execution = None
+                clingen_gdv_metadata = None
+                case_for_clingen = db.get(Case, analysis.case_id)
+                if case_for_clingen is not None:
+                    vp_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),))
+                    vp_candidates = [x for x in vp_plan.for_capability(ResourceCapability.CLINICAL_VARIANT) if x.resource.provider == ClinGenVariantPathogenicityProvider.provider_id]
+                    if vp_candidates:
+                        clingen_vp_resource = vp_candidates[0].resource
+                        clingen_vp_execution = resolve_resource_execution(db, resource=clingen_vp_resource)
+                        clingen_vp_provider = ClinGenVariantPathogenicityProvider.from_execution_contract(resolved=clingen_vp_execution)
+                        clingen_vp_metadata = {**clingen_vp_execution.snapshot, "resource_name": clingen_vp_resource.name, "resource_checksum": clingen_vp_resource.checksum}
+                    gdv_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.GENE_DISEASE),))
+                    gdv_candidates = [x for x in gdv_plan.for_capability(ResourceCapability.GENE_DISEASE) if x.resource.provider == ClinGenGeneDiseaseValidityProvider.provider_id]
+                    if gdv_candidates:
+                        clingen_gdv_resource = gdv_candidates[0].resource
+                        clingen_gdv_execution = resolve_resource_execution(db, resource=clingen_gdv_resource)
+                        clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
+                        clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
                 from backend.app.infrastructure.db.models import Case, PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
@@ -1854,6 +1858,37 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             gene_disease_records=gene_disease_records, literature_records=literature_records,
                         ))
 
+                        gene = ((ann.payload or {}).get("gene") or {}).get("symbol") or (ann.payload or {}).get("gene_symbol")
+                        hgvs_values = list((ann.payload or {}).get("hgvs_consequences") or [])
+                        if (ann.payload or {}).get("hgvs"):
+                            hgvs_values.append((ann.payload or {}).get("hgvs"))
+                        if clingen_vp_provider is not None and clingen_vp_resource is not None and clingen_vp_execution is not None and gene:
+                            query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "hgvs": hgvs_values, "resource_id": str(clingen_vp_execution.resource_id), "resource_version": clingen_vp_execution.resource_version, "contract_hash": clingen_vp_execution.contract_hash}
+                            request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                            execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_vp_execution, requested_resource_id=clingen_vp_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_VARIANT_PATHOGENICITY_QUERY", "query": query_material})
+                            try:
+                                assertions = clingen_vp_provider.query_variant(gene=gene, hgvs=hgvs_values)
+                                response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
+                                response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                                complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
+                                records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
+                            except Exception as exc:
+                                complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
+                                raise
+
+                        if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
+                            query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
+                            request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                            execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_gdv_execution, requested_resource_id=clingen_gdv_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY", "query": query_material})
+                            try:
+                                assertions = clingen_gdv_provider.query_gene(gene=gene)
+                                response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
+                                response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                                complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
+                                records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
+                            except Exception as exc:
+                                complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
+                                raise
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
@@ -1986,7 +2021,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             exists = db.scalar(select(Evidence).where(Evidence.analysis_id == analysis.id, Evidence.evidence_fingerprint == fp))
                             if exists:
                                 continue
-                            db.add(Evidence(
+                            evidence_row = Evidence(
                                 id=record.evidence_id, variant_id=record.variant_id, analysis_id=analysis.id,
                                 evidence_type=record.evidence_type, statement=record.statement, direction=record.direction,
                                 source_name=provenance["source_name"], source_version=provenance["source_version"],
@@ -1995,7 +2030,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 request_metadata=provenance["request_metadata"], observed_at=provenance["observed_at"],
                                 observation_ids=[str(x) for x in record.observation_ids], payload=record.payload,
                                 created_by_type="SYSTEM", created_by_id=engine.engine_id, evidence_fingerprint=fp,
-                            ))
+                            )
+                            db.add(evidence_row)
+                            # ClinGen criterion assertions are a separate source-assertion
+                            # layer. They remain bound to this Evidence row and never
+                            # become a SIRALOOM classification by ingestion alone.
+                            persist_clingen_source_assertions(db, evidence=evidence_row)
                             created += 1; batch_created += 1
                     db.commit()
                     _save_batch_checkpoint(db, evidence_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"created_evidence": batch_created})
@@ -2090,6 +2130,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 existing_classifications = db.scalars(select(Classification).where(Classification.analysis_id == analysis.id)).all()
                 assessed = len(existing_assessment_variant_ids)
                 blocked_variants = 0
+                review_variants = 0
                 acmg_requires_human_review = False
                 proposed_variants = sum(1 for c in existing_classifications if c.state == "PROPOSED")
                 batch_size = int(analysis.configuration.get("acmg_batch_size", 250) or 250)
@@ -2104,6 +2145,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="RUNNING", attempt=attempt)
                     batch_assessed = 0
                     batch_proposed = 0
+                    batch_review = 0
                     batch_blocked = 0
                     for ann in rows:
                         normalized = (ann.payload or {}).get("normalized") or {}
@@ -2116,28 +2158,78 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
                         result = assessment_service.assess_variant(db, analysis=analysis, variant=variant_row, annotation=ann, population_rows=population_rows_for_variant, resource_rows=resource_rows, gene=gene, disease=disease)
                         if result.status in {"PROPOSED", "REQUIRES_REVIEW"} and result.binding.status == "SELECTED":
+                            # Evidence and criterion assessments are persisted even
+                            # when final combination is not automatable. Only the
+                            # classification decision is routed to human review.
                             assessment_service.persist(db, analysis=analysis, variant=variant_row, result=result)
-                            assessed += 1; batch_assessed += 1
-                            if result.status == "PROPOSED": proposed_variants += 1; batch_proposed += 1
+                            assessed += 1
+                            batch_assessed += 1
+                            if result.status == "PROPOSED":
+                                proposed_variants += 1
+                                batch_proposed += 1
+                            else:
+                                review_variants += 1
+                                batch_review += 1
                         else:
-                            blocked_variants += 1; batch_blocked += 1
+                            blocked_variants += 1
+                            batch_blocked += 1
                     db.commit()
-                    _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"assessed": batch_assessed, "proposed": batch_proposed, "blocked": batch_blocked})
+                    _save_batch_checkpoint(
+                        db,
+                        acmg_step,
+                        start_i,
+                        end_i,
+                        status="SUCCEEDED",
+                        attempt=attempt,
+                        metadata={
+                            "assessed": batch_assessed,
+                            "proposed": batch_proposed,
+                            "requires_review": batch_review,
+                            "blocked": batch_blocked,
+                        },
+                    )
 
-                if assessed == 0:
-                    # No variant had an approved, automatable ClinGen specification. This is
-                    # not a workflow failure: the case still needs a qualified human reviewer
-                    # to classify manually, so it proceeds to review rather than dead-ending.
+                if assessed == 0 or review_variants > 0 or blocked_variants > 0:
+                    # The analysis itself is not failed. Evidence generation and
+                    # criterion persistence have completed for the variants that
+                    # could be assessed, while classification automation is
+                    # explicitly routed to human review where required.
                     acmg_requires_human_review = True
+                    if assessed == 0:
+                        review_code = "NO_AUTOMATABLE_CLINGEN_CONTEXT"
+                        review_message = (
+                            "No variant received a validated, applicable ClinGen specification "
+                            "with supported structured criterion configuration. Manual ACMG "
+                            "classification is required for all variants in this case."
+                        )
+                    elif review_variants > 0:
+                        review_code = "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"
+                        review_message = (
+                            "Criterion evidence was collected and persisted, but one or more "
+                            "variants use a ClinGen combination method without a validated "
+                            "SIRALOOM combination engine. Human classification review is required."
+                        )
+                    else:
+                        review_code = "ACMG_VARIANTS_REQUIRE_REVIEW"
+                        review_message = (
+                            "One or more variants could not be safely automated and require "
+                            "human ACMG classification review."
+                        )
                     mark_step(
-                        db, acmg_step, StepStatus.REQUIRES_REVIEW,
-                        error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
-                        error_message=(
-                            "No variant received a validated, applicable ClinGen specification with "
-                            "supported structured criterion configuration. Manual ACMG classification "
-                            "is required for all variants in this case."
-                        ),
-                        metadata={"disease_context_present": bool(disease), "blocked_variants": blocked_variants, "next_step": "review"},
+                        db,
+                        acmg_step,
+                        StepStatus.REQUIRES_REVIEW,
+                        error_code=review_code,
+                        error_message=review_message,
+                        metadata={
+                            "disease_context_present": bool(disease),
+                            "assessed_variants": assessed,
+                            "proposed_variants": proposed_variants,
+                            "classification_review_variants": review_variants,
+                            "blocked_variants": blocked_variants,
+                            "classification_automation": "PARTIAL_OR_REVIEW_REQUIRED",
+                            "next_step": "review",
+                        },
                     )
                     audit.record(
                         event_type="ACMG_ASSESSMENT_REQUIRES_MANUAL_REVIEW",
@@ -2145,32 +2237,40 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         analysis_id=analysis.id,
                         actor_type="SERVICE",
                         actor_id="siraloom-acmg-specification-engine",
-                        reason="No safely automatable validated ClinGen specification/context; routed to human review",
-                        payload={"assessed": assessed, "blocked_variants": blocked_variants},
+                        reason=review_message,
+                        payload={
+                            "assessed": assessed,
+                            "proposed_variants": proposed_variants,
+                            "classification_review_variants": review_variants,
+                            "blocked_variants": blocked_variants,
+                        },
                     )
                     db.commit()
-                    # Falls through to the review_step block below instead of returning,
-                    # so the case reaches REQUIRES_REVIEW with the annotated variants visible.
-
-                if not acmg_requires_human_review:
-                    mark_step(db, acmg_step, StepStatus.SUCCEEDED, metadata={
-                    "assessed_variants": assessed,
-                    "proposed_variants": proposed_variants,
-                    "blocked_variants": blocked_variants,
-                    "disease_context_present": bool(disease),
-                })
-                if not acmg_requires_human_review:
+                else:
+                    mark_step(
+                        db,
+                        acmg_step,
+                        StepStatus.SUCCEEDED,
+                        metadata={
+                            "assessed_variants": assessed,
+                            "proposed_variants": proposed_variants,
+                            "classification_review_variants": 0,
+                            "blocked_variants": blocked_variants,
+                            "classification_automation": "PROPOSED",
+                            "disease_context_present": bool(disease),
+                        },
+                    )
                     audit.record(
-                    event_type="ACMG_ASSESSMENT_COMPLETED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SERVICE",
-                    actor_id="siraloom-acmg-specification-engine",
-                    payload={
-                        "assessed_variants": assessed,
-                        "proposed_variants": proposed_variants,
-                        "blocked_variants": blocked_variants,
-                    },
+                        event_type="ACMG_ASSESSMENT_COMPLETED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SERVICE",
+                        actor_id="siraloom-acmg-specification-engine",
+                        payload={
+                            "assessed_variants": assessed,
+                            "proposed_variants": proposed_variants,
+                            "blocked_variants": blocked_variants,
+                        },
                     )
                 db.commit()
             except Exception as exc:
