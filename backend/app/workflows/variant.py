@@ -8,7 +8,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
@@ -1200,10 +1200,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             Annotation.analysis_id == analysis.id,
                             Annotation.provider_name == provider.provider_id,
                             Annotation.variant_id.in_(list(variant_ids.values())),
-                            ~(
-                                (Annotation.provider_version == provider.provider_version)
-                                & (Annotation.resource_id == annotation_resource.id)
-                                & (Annotation.resource_version == annotation_resource.version)
+                            or_(
+                                Annotation.provider_version != provider.provider_version,
+                                Annotation.resource_id.is_(None),
+                                Annotation.resource_id != annotation_resource.id,
+                                Annotation.resource_version.is_(None),
+                                Annotation.resource_version != annotation_resource.version,
                             ),
                         )
                     ).all()
