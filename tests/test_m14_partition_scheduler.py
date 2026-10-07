@@ -60,5 +60,5 @@ def test_scheduler_lease_recovery_and_retry_limit(tmp_path):
         db.commit()
         recovered = scheduler.claim_next(aid, "annotate", "w2")
         assert recovered and recovered.lease_owner == "w2" and recovered.attempt == 2
-        scheduler.fail(recovered.id, "w2", error_code="TEMP", error_message="retry")
+        scheduler.fail(recovered.id, "w2", recovered.lease_token, error_code="TEMP", error_message="retry")
         assert db.get(AnalysisPartition, recovered.id).status == "READY"

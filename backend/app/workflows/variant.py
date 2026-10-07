@@ -39,7 +39,7 @@ from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resource
 from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.partition_scheduler import PartitionCapacityError, PartitionScheduler, configure_partition
+from backend.app.partition_scheduler import PartitionCapacityError, PartitionLeaseError, PartitionScheduler, configure_partition
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -410,6 +410,7 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
     for partition in running_partitions:
         partition.status = "READY"
         partition.lease_owner = None
+        partition.lease_token = None
         partition.lease_expires_at = None
         partition.error_code = "WORKER_INTERRUPTED"
         partition.error_message = "Previous worker execution was interrupted; partition returned to durable scheduler queue."
@@ -1163,6 +1164,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         claimed = scheduler.claim_next(analysis.id, "annotate", worker_id)
                         if claimed is None or claimed.id != partition.id:
                             raise PartitionCapacityError("No resource capacity available for the next annotation partition")
+                    # The lease token is the fencing generation. A worker may
+                    # keep the stable workflow identity across retries, but every
+                    # successful claim receives a new token.
+                    lease_token = claimed.lease_token if partition.status == "RUNNING" else None
+                    if partition.status == "RUNNING" and not lease_token:
+                        raise PartitionLeaseError("Claimed annotation partition has no lease fencing token")
                     variant_ids = {
                         canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate): stable_variant_uuid(canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate))
                         for v in batch
@@ -1194,7 +1201,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     checkpoint = _batch_checkpoint(annotation_step, start, end)
                     if checkpoint.get("status") == "SUCCEEDED" and all(k in existing_keys for k in variant_ids):
                         if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                            scheduler.succeed(partition.id, worker_id, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
+                            scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
                         continue
                     if all(k in existing_keys for k in variant_ids):
                         _save_batch_checkpoint(
@@ -1203,7 +1210,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             metadata={"provider": provider.provider_id, "recovered_existing_rows": True, "variant_count": len(batch)},
                         )
                         if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                            scheduler.succeed(partition.id, worker_id, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
+                            scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
                         continue
 
                     attempt = int(checkpoint.get("attempt", 0)) + 1
@@ -1214,9 +1221,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={"provider": provider.provider_id, "genome": genome})
                     db.commit()
                     try:
-                        scheduler.heartbeat(partition.id, worker_id)
+                        scheduler.heartbeat(partition.id, worker_id, lease_token)
                         payloads = provider.annotate(batch, {"genome": genome})
-                        scheduler.heartbeat(partition.id, worker_id)
+                        scheduler.heartbeat(partition.id, worker_id, lease_token)
                         sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                         complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                         db.commit()
@@ -1231,7 +1238,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         db.commit()
                         if exc.retryable:
                             if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                                scheduler.fail(partition.id, worker_id, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
+                                scheduler.fail(partition.id, worker_id, lease_token, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
                             _save_batch_checkpoint(
                                 db, annotation_step, start, end, status="RETRYING", attempt=attempt,
                                 metadata={"error": str(exc)},
@@ -1239,7 +1246,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             mark_step(db, annotation_step, StepStatus.RETRYING, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
                             raise TransientWorkflowError(str(exc), countdown=min(60, 5 * attempt)) from exc
                         if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                            scheduler.fail(partition.id, worker_id, error_code="ANNOTATION_PROVIDER_ERROR", error_message=str(exc))
+                            scheduler.fail(partition.id, worker_id, lease_token, error_code="ANNOTATION_PROVIDER_ERROR", error_message=str(exc))
                         _save_batch_checkpoint(
                             db, annotation_step, start, end, status="FAILED", attempt=attempt,
                             metadata={"error": str(exc)},
@@ -1312,7 +1319,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         metadata={"provider": provider.provider_id, "new_annotation_rows": new_count, "returned_rows": len(payloads_by_key)},
                     )
                     if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                        scheduler.succeed(partition.id, worker_id, metadata={"provider": provider.provider_id, "variant_count": len(batch)})
+                        scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "variant_count": len(batch)})
                     audit.record(
                         event_type="ANNOTATION_BATCH_COMPLETED",
                         case_id=analysis.case_id,

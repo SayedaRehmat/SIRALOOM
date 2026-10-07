@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.application.analysis import enqueue_analysis, resume_analysis
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Case, Organization, User
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, AnalysisPartition, Case, Organization, User
+from backend.app.partition_scheduler import PartitionLeaseError, PartitionScheduler, configure_partition
 
 
 @pytest.mark.integration
@@ -955,6 +956,167 @@ def test_postgres_partition_capacity_claims_are_serialized():
                 synchronize_session=False
             )
             db.query(Case).filter(Case.id.in_(case_ids)).delete(
+                synchronize_session=False
+            )
+            db.query(User).filter(User.id == user_id).delete(
+                synchronize_session=False
+            )
+            db.query(Organization).filter(
+                Organization.id == organization_id
+            ).delete(synchronize_session=False)
+            db.commit()
+        engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_partition_lease_fencing_rejects_stale_worker_generation():
+    """An expired lease reclaimed by the same worker identity fences the old token."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    partition_id = uuid4()
+    worker_id = f"workflow:{analysis_id}"
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"lease-fencing-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Lease Fencing Test",
+                role="LAB_DIRECTOR",
+                status="ACTIVE",
+            ))
+            db.commit()
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=str(case_id),
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.commit()
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="GERMLINE",
+                workflow_id="integration",
+                workflow_version="1",
+                status=AnalysisStatus.RUNNING,
+                queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.commit()
+
+            partition = AnalysisPartition(
+                id=partition_id,
+                analysis_id=analysis_id,
+                step_id="annotate",
+                partition_key="partition-1",
+                ordinal=0,
+                record_start=0,
+                record_end=10,
+                variant_count=10,
+                status="READY",
+                metadata_json={},
+            )
+            configure_partition(partition, "STANDARD")
+            db.add(partition)
+            db.commit()
+
+        with Session(engine) as first_db:
+            first_scheduler = PartitionScheduler(
+                first_db,
+                cpu_capacity=1.0,
+                memory_mb=1024,
+                lease_seconds=60,
+            )
+            first_claim = first_scheduler.claim_next(
+                analysis_id, "annotate", worker_id
+            )
+            assert first_claim is not None
+            old_token = first_claim.lease_token
+            assert old_token
+
+        # Simulate the first worker disappearing after its lease expires.
+        with Session(engine) as db:
+            partition = db.get(AnalysisPartition, partition_id)
+            partition.lease_expires_at = partition.lease_expires_at.replace(
+                year=2000
+            )
+            db.commit()
+
+        with Session(engine) as second_db:
+            second_scheduler = PartitionScheduler(
+                second_db,
+                cpu_capacity=1.0,
+                memory_mb=1024,
+                lease_seconds=60,
+            )
+            second_claim = second_scheduler.claim_next(
+                analysis_id, "annotate", worker_id
+            )
+            assert second_claim is not None
+            new_token = second_claim.lease_token
+            assert new_token
+            assert new_token != old_token
+
+        with Session(engine) as stale_db:
+            stale_scheduler = PartitionScheduler(stale_db)
+            with pytest.raises(PartitionLeaseError):
+                stale_scheduler.heartbeat(
+                    partition_id, worker_id, old_token
+                )
+            with pytest.raises(PartitionLeaseError):
+                stale_scheduler.succeed(
+                    partition_id, worker_id, old_token
+                )
+            with pytest.raises(PartitionLeaseError):
+                stale_scheduler.fail(
+                    partition_id,
+                    worker_id,
+                    old_token,
+                    error_code="STALE_WORKER",
+                    error_message="stale worker must be fenced",
+                )
+
+        with Session(engine) as db:
+            partition = db.get(AnalysisPartition, partition_id)
+            assert partition.status == "RUNNING"
+            assert partition.lease_owner == worker_id
+            assert partition.lease_token == new_token
+            assert partition.lease_expires_at is not None
+    finally:
+        with Session(engine) as db:
+            db.query(AnalysisPartition).filter(
+                AnalysisPartition.id == partition_id
+            ).delete(synchronize_session=False)
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete(
+                synchronize_session=False
+            )
+            db.query(Case).filter(Case.id == case_id).delete(
                 synchronize_session=False
             )
             db.query(User).filter(User.id == user_id).delete(

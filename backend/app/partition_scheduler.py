@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 import hashlib
 
 from sqlalchemy import func, or_, select, text, update
@@ -146,6 +146,9 @@ class PartitionScheduler:
             part.status = "RUNNING"
             part.attempt += 1
             part.lease_owner = worker_id
+            # A fresh token is generated for every lease generation. The token,
+            # not the stable worker identity, is the fencing authority.
+            part.lease_token = str(uuid4())
             part.lease_expires_at = t + timedelta(seconds=self.lease_seconds)
             part.started_at = part.started_at or t
             part.updated_at = t
@@ -154,19 +157,37 @@ class PartitionScheduler:
         self.db.commit()
         return None
 
-    def heartbeat(self, partition_id: UUID, worker_id: str) -> AnalysisPartition:
+    def heartbeat(
+        self,
+        partition_id: UUID,
+        worker_id: str,
+        lease_token: str,
+    ) -> AnalysisPartition:
         part = self.db.get(AnalysisPartition, partition_id)
-        if not part or part.status != "RUNNING" or part.lease_owner != worker_id:
-            raise PartitionLeaseError("Partition lease is not owned by this worker")
+        if (
+            not part
+            or part.status != "RUNNING"
+            or part.lease_owner != worker_id
+            or part.lease_token != lease_token
+        ):
+            raise PartitionLeaseError("Partition lease is not owned by this worker generation")
         part.lease_expires_at = now() + timedelta(seconds=self.lease_seconds)
         part.updated_at = now()
         self.db.commit()
         return part
 
-    def succeed(self, partition_id: UUID, worker_id: str, *, metadata: dict | None = None) -> AnalysisPartition:
-        part = self._owned(partition_id, worker_id)
+    def succeed(
+        self,
+        partition_id: UUID,
+        worker_id: str,
+        lease_token: str,
+        *,
+        metadata: dict | None = None,
+    ) -> AnalysisPartition:
+        part = self._owned(partition_id, worker_id, lease_token)
         part.status = "SUCCEEDED"
         part.lease_owner = None
+        part.lease_token = None
         part.lease_expires_at = None
         part.completed_at = now()
         if metadata:
@@ -175,19 +196,38 @@ class PartitionScheduler:
         self.db.commit()
         return part
 
-    def fail(self, partition_id: UUID, worker_id: str, *, error_code: str, error_message: str) -> AnalysisPartition:
-        part = self._owned(partition_id, worker_id)
+    def fail(
+        self,
+        partition_id: UUID,
+        worker_id: str,
+        lease_token: str,
+        *,
+        error_code: str,
+        error_message: str,
+    ) -> AnalysisPartition:
+        part = self._owned(partition_id, worker_id, lease_token)
         part.error_code = error_code
         part.error_message = error_message
         part.lease_owner = None
+        part.lease_token = None
         part.lease_expires_at = None
         part.status = "READY" if part.attempt < settings.partition_max_attempts else "FAILED"
         part.updated_at = now()
         self.db.commit()
         return part
 
-    def _owned(self, partition_id: UUID, worker_id: str) -> AnalysisPartition:
+    def _owned(
+        self,
+        partition_id: UUID,
+        worker_id: str,
+        lease_token: str,
+    ) -> AnalysisPartition:
         part = self.db.get(AnalysisPartition, partition_id)
-        if not part or part.status != "RUNNING" or part.lease_owner != worker_id:
-            raise PartitionLeaseError("Partition lease is not owned by this worker")
+        if (
+            not part
+            or part.status != "RUNNING"
+            or part.lease_owner != worker_id
+            or part.lease_token != lease_token
+        ):
+            raise PartitionLeaseError("Partition lease is not owned by this worker generation")
         return part

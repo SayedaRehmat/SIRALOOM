@@ -251,6 +251,10 @@ class AnalysisPartition(Base):
     memory_mb: Mapped[int] = mapped_column(Integer, default=1024)
     attempt: Mapped[int] = mapped_column(Integer, default=0)
     lease_owner: Mapped[str | None] = mapped_column(Text)
+    # Unique fencing token for the current lease generation. Worker identity alone
+    # is not sufficient because the same workflow worker can reclaim an expired
+    # lease after a timeout; stale workers must not be able to mutate the new lease.
+    lease_token: Mapped[str | None] = mapped_column(Text)
     lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error_code: Mapped[str | None] = mapped_column(Text)
     error_message: Mapped[str | None] = mapped_column(Text)

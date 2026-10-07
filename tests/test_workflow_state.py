@@ -475,6 +475,7 @@ def test_transient_genebe_failure_requeues_annotation_partition_and_checkpoints(
         failed = scheduler.fail(
             partition_id,
             worker_id,
+            claimed.lease_token,
             error_code="ANNOTATION_PROVIDER_TRANSIENT",
             error_message=str(provider_error),
         )
