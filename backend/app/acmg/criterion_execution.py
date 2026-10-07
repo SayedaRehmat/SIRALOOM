@@ -111,6 +111,7 @@ class CriterionExecutionDecision:
         *,
         executor_id: str | None = "CLINGEN_SOURCE_ASSERTION",
         executor_version: str | None = None,
+        evidence_ids: tuple[str, ...] | None = None,
     ) -> "CriterionExecutionDecision":
         """Adapt the existing source-assessment result into this contract.
 
@@ -138,7 +139,7 @@ class CriterionExecutionDecision:
             specification_version=assessment.specification_version,
             executor_id=executor_id,
             executor_version=executor_version,
-            evidence_ids=assessment.source_assertion_ids,
+            evidence_ids=evidence_ids if evidence_ids is not None else assessment.source_assertion_ids,
             rationale=assessment.rationale,
             review_reason=review_reason,
             modification_type=str(modification_type) if modification_type else None,
