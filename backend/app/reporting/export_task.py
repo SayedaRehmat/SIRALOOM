@@ -3,8 +3,9 @@ from datetime import datetime, timezone
 from uuid import UUID
 from backend.app.config import settings
 from backend.app.infrastructure.db.session import SessionLocal
-from backend.app.infrastructure.db.models import CaseExport
+from backend.app.infrastructure.db.models import CaseExport, Case
 from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.reporting.export_service import build_case_export
 
@@ -20,7 +21,16 @@ def run_case_export(export_id: UUID) -> None:
             export.status = "RUNNING"
             db.add(export)
             db.commit()
-        artifact = build_case_export(db, export=export, store=ArtifactStore(settings.artifact_root))
+        case = db.get(Case, export.case_id)
+        if case is None:
+            raise RuntimeError("Case not found for export")
+        try:
+            store = artifact_store_for_organization(
+                db, organization_id=case.organization_id
+            )
+        except StorageProfileError as exc:
+            raise RuntimeError(str(exc)) from exc
+        artifact = build_case_export(db, export=export, store=store)
         export.artifact_id = artifact.id; export.status = "SUCCEEDED"; export.completed_at = datetime.now(timezone.utc); db.flush()
         AuditService(db).record(event_type="CASE_EXPORT_COMPLETED", case_id=export.case_id, analysis_id=None, actor_type="SYSTEM", actor_id="siraloom-export", subject_type="CASE_EXPORT", subject_id=str(export.id), operation="CREATE", output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}])
         db.commit()
