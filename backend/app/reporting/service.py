@@ -248,6 +248,7 @@ def _classification_snapshot_sha256(classification) -> str:
         "specification_id": classification.specification_id,
         "specification_version": classification.specification_version,
         "criterion_ids": [str(x) for x in (classification.criterion_ids or [])],
+        "metadata_json": classification.metadata_json or {},
     }
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()
