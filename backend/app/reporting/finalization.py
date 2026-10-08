@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid5
 import tempfile
 
 from sqlalchemy import select
@@ -41,6 +41,10 @@ def _persist_pdf_artifact(
     if analysis is None:
         raise ReportFinalizationError("Report analysis not found")
     store = _artifact_store()
+    # The signed artifact belongs deterministically to this report version.
+    # A worker crash after storage upload but before the surrounding DB
+    # transaction commits must not create a second artifact on retry.
+    signed_artifact_id = uuid5(report.id, "siraloom:signed-report-pdf")
     with tempfile.NamedTemporaryFile(prefix="siraloom-signed-report-", suffix=".pdf", delete=False) as tmp:
         tmp.write(pdf)
         path = Path(tmp.name)
@@ -63,6 +67,7 @@ def _persist_pdf_artifact(
                 "signed": True,
             },
             validation_status="VALID",
+            artifact_id=signed_artifact_id,
         )
     finally:
         path.unlink(missing_ok=True)

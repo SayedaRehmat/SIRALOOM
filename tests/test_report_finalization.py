@@ -1,10 +1,11 @@
-from uuid import uuid4
+from uuid import uuid4, uuid5
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, ReportabilityDecision, Artifact
 from backend.app.reporting.service import final_report_eligibility
-from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
+from backend.app.reporting.finalization import finalize_report, ReportFinalizationError, _persist_pdf_artifact
 from backend.app.infrastructure.db.models import Report
 
 
@@ -30,3 +31,48 @@ def test_finalize_report_sets_final_and_supersedes():
     db,u,c,a,v=seed(True); r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json={}); db.add(r); db.commit()
     out=finalize_report(db,report_id=r.id,approver_id=u.id,reason='Reviewed and approved'); db.commit()
     assert out.status=='FINAL'; assert out.approved_by==u.id
+
+
+def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, monkeypatch):
+    db, u, c, a, _ = seed(True)
+    r = Report(
+        id=uuid4(), case_id=c.id, analysis_id=a.id, report_version=1,
+        language="en", report_type="CLINICAL_INTERPRETATION", status="DRAFT",
+        artifact_id=db.query(Artifact).first().id, content_json={},
+    )
+    db.add(r)
+    db.commit()
+
+    monkeypatch.setattr(
+        "backend.app.reporting.finalization.settings.artifact_root",
+        str(tmp_path),
+    )
+    content = {
+        "report_schema_version": "1.1.0",
+        "report_version": 1,
+        "language": "en",
+        "report_type": "CLINICAL_INTERPRETATION",
+        "case_id": str(c.id),
+        "analysis_id": str(a.id),
+        "reference_build": "GRCh38",
+        "findings": [],
+        "methodology": "Test methodology.",
+        "limitations": "Test limitations.",
+        "recommendations": "None.",
+        "references": [],
+        "final_result": {"status": "FINAL"},
+    }
+
+    first = _persist_pdf_artifact(
+        db, report=r, content=content, filename="report_v1_signed.pdf"
+    )
+    first_id = first.id
+    db.rollback()
+
+    second = _persist_pdf_artifact(
+        db, report=r, content=content, filename="report_v1_signed.pdf"
+    )
+    db.commit()
+
+    assert first_id == second.id == uuid5(r.id, "siraloom:signed-report-pdf")
+    assert db.get(Artifact, second.id) is not None
