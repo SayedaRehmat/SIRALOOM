@@ -96,6 +96,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             "specification_id": cls.specification_id,
             "specification_version": cls.specification_version,
             "criterion_ids": [str(x) for x in (cls.criterion_ids or [])],
+            "metadata_json": cls.metadata_json or {},
         }
         current_hash = hashlib.sha256(
             json.dumps(classification_payload, sort_keys=True, separators=(",", ":"), default=str).encode()

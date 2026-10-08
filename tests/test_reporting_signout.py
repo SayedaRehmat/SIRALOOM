@@ -240,6 +240,24 @@ def test_signout_rejects_mutated_classification_snapshot():
         raise AssertionError("Sign-out must reject a mutated classification snapshot")
 
 
+
+def test_signout_rejects_mutated_classification_metadata_snapshot():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    db.commit()
+
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    classification.metadata_json = {"review_note": "changed after draft"}
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    try:
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+    except ReportFinalizationError as exc:
+        assert "ACMG classification" in str(exc)
+    else:
+        raise AssertionError("Sign-out must reject mutated classification metadata")
+
 def test_signout_rejects_mutated_acmg_assessment_snapshot():
     db, reviewer, analysis, report = seed_finalizable_report()
     variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
