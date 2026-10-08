@@ -31,16 +31,16 @@ def upgrade():
             "Resolve clinical-history duplicates explicitly before migrating."
         )
 
-    op.create_unique_constraint(
+    op.create_index(
         "uq_confirmation_record_version_identity",
         "confirmation_records",
         ["analysis_id", "variant_id", "version"],
+        unique=True,
     )
 
 
 def downgrade():
-    op.drop_constraint(
+    op.drop_index(
         "uq_confirmation_record_version_identity",
-        "confirmation_records",
-        type_="unique",
+        table_name="confirmation_records",
     )
