@@ -6,7 +6,7 @@ from backend.app.api.v1 import (
     cases_router, artifacts_router, analyses_router, variants_router,
     populations_router, review_router, reports_router, audit_router,
     health_router, evidence_router, acmg_router,
-    auth_router, resources_router,
+    auth_router, resources_router, storage_router,
 )
 from backend.app.api.v1.phenotypes import router as phenotypes_router
 from backend.app.api.v1.evidence_context import router as evidence_context_router
@@ -69,3 +69,5 @@ app.include_router(clinical_followup_router, prefix="/api/v1", dependencies=secu
 
 app.include_router(reanalysis_router, prefix="/api/v1", dependencies=secured)
 app.include_router(resources_router, prefix="/api/v1", dependencies=secured)
+
+app.include_router(storage_router, prefix="/api/v1", dependencies=secured)
