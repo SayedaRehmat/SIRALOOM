@@ -17,6 +17,7 @@ from backend.app.reporting.finalization import finalize_report, ReportFinalizati
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
 from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.application.analysis import resume_analysis
@@ -75,7 +76,10 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
         f"siraloom:draft-report:{analysis.case_id}:{payload.report_type}:{version}",
     )
     pdf = render_pdf(content)
-    store = FirebaseArtifactStore(settings.firebase_storage_bucket) if settings.firebase_storage_enabled else ArtifactStore(settings.artifact_root)
+    try:
+        store = artifact_store_for_organization(db, organization_id=analysis.case_id and analysis_case.organization_id)
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     with tempfile.NamedTemporaryFile(prefix="siraloom-report-draft-", suffix=".pdf", delete=False) as tmp:
         tmp.write(pdf)
