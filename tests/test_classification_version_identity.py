@@ -42,3 +42,16 @@ def test_classification_version_identity_is_unique():
         ])
         with pytest.raises(IntegrityError):
             db.commit()
+
+
+def test_classification_versions_preserve_supersession_lineage():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        analysis = Analysis(id=uuid4(), case_id=uuid4(), analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1", workflow_version="1.0", status="RUNNING", reference_build="GRCh38", configuration={})
+        variant = Variant(id=uuid4(), genome_build="GRCh38", chromosome="1", position=101, reference="A", alternate="G", normalization_status="NORMALIZED", canonical_key="GRCh38:1:101:A:G", identifiers={})
+        first = Classification(id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, framework_name="ACMG/AMP", framework_version="2015", result="VUS", criterion_ids=[], metadata_json={}, state="PROPOSED", review_status="PENDING", version=1)
+        second = Classification(id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, framework_name="ACMG/AMP", framework_version="2015", result="LIKELY_PATHOGENIC", criterion_ids=[], metadata_json={}, state="PROPOSED", review_status="PENDING", version=2, supersedes_classification_id=first.id)
+        db.add_all([analysis, variant, first, second])
+        db.commit()
+        assert second.supersedes_classification_id == first.id
