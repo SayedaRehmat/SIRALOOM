@@ -83,6 +83,15 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     report = db.get(Report, report_id, with_for_update=True)
     if report is None:
         raise ReportFinalizationError("Report not found")
+
+    # Final report ordering is case/report-type scoped clinical history.
+    # Lock the case before inspecting the finalized chain so two different
+    # report versions cannot finalize concurrently and invert supersession.
+    case_lock = db.get(Case, report.case_id, with_for_update=True)
+    if case_lock is None:
+        raise ReportFinalizationError("Report case not found")
+    db.refresh(case_lock, with_for_update=True)
+
     if report.status == REPORT_STATUS_FINAL:
         return report
     if report.status != "DRAFT":
@@ -103,6 +112,12 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
         )
         .order_by(Report.report_version.desc())
     ).first()
+
+    if prior is not None and prior.report_version > report.report_version:
+        raise ReportFinalizationError(
+            f"Report version {report.report_version} cannot be finalized after "
+            f"newer finalized version {prior.report_version}."
+        )
 
     before = {
         "status": report.status,
