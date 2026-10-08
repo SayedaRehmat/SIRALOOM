@@ -50,6 +50,11 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
     content = {
         "report_schema_version": "1.1.0",
         "report_version": 1,
+        "language": "en",
+        "report_type": "CLINICAL_INTERPRETATION",
+        "case_id": str(c.id),
+        "analysis_id": str(a.id),
+        "reference_build": "GRCh38",
         "final_result": {"status": "FINAL"},
     }
 
