@@ -241,6 +241,55 @@ def test_signout_rejects_mutated_classification_snapshot():
 
 
 
+
+def test_signout_rejects_mutated_acmg_evidence_snapshot():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    evidence = Evidence(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        evidence_type="POPULATION",
+        statement="Rare in population",
+        direction="SUPPORTS",
+        source_name="test",
+        source_version="1",
+        evidence_fingerprint="test-evidence-fingerprint",
+        created_by_type="TEST",
+        created_by_id="test",
+        payload={"af": 0.0001},
+    )
+    db.add(evidence)
+    db.flush()
+    assessment = db.scalar(select(ACMGAssessment).where(ACMGAssessment.analysis_id == analysis.id))
+    if assessment is None:
+        assessment = ACMGAssessment(
+            id=uuid4(),
+            analysis_id=analysis.id,
+            variant_id=variant.id,
+            framework_name="ACMG/AMP",
+            framework_version="2015",
+            criterion="PM2",
+            state="PROPOSED",
+            automated_assessment={"evidence_ids": [str(evidence.id)]},
+            review_version=1,
+        )
+        db.add(assessment)
+    else:
+        assessment.automated_assessment = {**(assessment.automated_assessment or {}), "evidence_ids": [str(evidence.id)]}
+    classification.criterion_ids = [str(assessment.id)]
+    db.commit()
+
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    db.commit()
+    evidence.statement = "Changed after draft generation"
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    with pytest.raises(ReportFinalizationError, match="evidence .* changed"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
 def test_signout_rejects_mutated_classification_metadata_snapshot():
     db, reviewer, analysis, report = seed_finalizable_report()
     report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
