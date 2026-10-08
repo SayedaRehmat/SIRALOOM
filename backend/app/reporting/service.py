@@ -285,6 +285,10 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         followups = list(db.scalars(select(FollowUpPlan).where(FollowUpPlan.analysis_id == analysis.id, FollowUpPlan.variant_id == variant.id).order_by(FollowUpPlan.created_at.desc())))
         finding = {
             "variant_id": str(variant.id),
+            # Finalization fences the draft to the exact classification record,
+            # not merely its numeric version. Persist that immutable identity in
+            # every generated finding so the snapshot can be verified at sign-out.
+            "classification_id": str(cls.id),
             "canonical_key": variant.canonical_key,
             "genomic": {
                 "build": variant.genome_build,

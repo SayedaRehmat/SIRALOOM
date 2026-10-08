@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.base import Base
@@ -16,7 +16,7 @@ from backend.app.infrastructure.db.models import (
     Variant,
 )
 from backend.app.reporting.finalization import finalize_report
-from backend.app.reporting.service import final_report_eligibility
+from backend.app.reporting.service import build_report_content, final_report_eligibility
 
 
 def make_db():
@@ -200,6 +200,27 @@ def test_report_is_not_eligible_until_reportability_is_final():
 
     assert eligible is False
     assert any("reportability is not FINAL" in error for error in errors)
+
+
+def test_report_content_persists_exact_classification_identity():
+    db, reviewer, analysis, report = seed_finalizable_report()
+
+    content = build_report_content(
+        db,
+        analysis,
+        "en",
+        report_type="CLINICAL_INTERPRETATION",
+    )
+
+    assert len(content["findings"]) == 1
+    finding = content["findings"][0]
+    classification = db.scalar(
+        select(Classification).where(
+            Classification.analysis_id == analysis.id,
+        )
+    )
+    assert finding["classification_id"] == str(classification.id)
+    assert finding["classification_version"] == classification.version
 
 
 def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
