@@ -385,6 +385,16 @@ class ACMGSpecificationAssessmentService:
     ) -> None:
         if result.binding.status != "SELECTED":
             return
+
+        # Serialize automated ACMG persistence for the analysis. This protects
+        # the unique current assessment rows and classification-version allocation
+        # when two workers assess the same variant concurrently.
+        locked_analysis = db.get(Analysis, analysis.id, with_for_update=True)
+        if locked_analysis is None:
+            raise ValueError("Analysis not found")
+        db.refresh(locked_analysis, with_for_update=True)
+        analysis = locked_analysis
+
         classification = result.classification
         for evaluated in result.evaluator_results:
             existing = db.scalar(
@@ -485,13 +495,32 @@ class ACMGSpecificationAssessmentService:
                 ).order_by(Classification.version.desc())
             )
             if existing is None or existing.criterion_ids != criterion_ids:
+                latest = db.scalar(
+                    select(Classification)
+                    .where(
+                        Classification.analysis_id == analysis.id,
+                        Classification.variant_id == variant.id,
+                    )
+                    .order_by(Classification.version.desc())
+                    .limit(1)
+                )
+                next_version = (latest.version if latest else 0) + 1
                 db.add(
                     Classification(
-                        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
-                        framework_name=classification.framework, framework_version=classification.framework_version,
-                        specification_provider="ClinGen", specification_id=result.binding.specification_id,
-                        specification_version=result.binding.specification_version, result=classification.classification,
-                        criterion_ids=criterion_ids, state=classification.state, review_status="PENDING",
+                        id=uuid4(),
+                        variant_id=variant.id,
+                        analysis_id=analysis.id,
+                        framework_name=classification.framework,
+                        framework_version=classification.framework_version,
+                        specification_provider="ClinGen",
+                        specification_id=result.binding.specification_id,
+                        specification_version=result.binding.specification_version,
+                        result=classification.classification,
+                        criterion_ids=criterion_ids,
+                        state=classification.state,
+                        review_status="PENDING",
+                        version=next_version,
+                        supersedes_classification_id=latest.id if latest else None,
                     )
                 )
         db.flush()

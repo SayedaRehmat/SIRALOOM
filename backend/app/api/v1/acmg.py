@@ -32,6 +32,10 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
     if payload.variant_id != variant_id:
         raise HTTPException(status_code=400, detail="Payload variant_id does not match path variant_id")
     analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, REVIEW_ROLES)
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    db.refresh(analysis, with_for_update=True)
     variant = db.get(Variant, variant_id)
     if not analysis or not variant:
         raise HTTPException(status_code=404, detail="Analysis or variant not found")
@@ -80,14 +84,63 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
         ]
         result = engine.classify(assessments)
         # Persist a complete, versioned assessment snapshot for every supplied criterion.
+        criterion_ids: list[str] = []
         for a in result.criteria:
-            existing = db.scalar(select(ACMGAssessment).where(ACMGAssessment.variant_id == variant_id, ACMGAssessment.analysis_id == analysis_id, ACMGAssessment.criterion == a.criterion))
-            row = existing or ACMGAssessment(id=__import__("uuid").uuid4(), variant_id=variant_id, analysis_id=analysis_id, framework_name=result.framework, framework_version=result.framework_version, specification_provider="SIRALOOM", specification_id=result.profile_id, specification_version=result.profile_version, criterion=a.criterion, state=a.status)
-            row.automated_assessment = {"strength": a.strength, "direction": a.direction, "status": a.status, "evidence_ids": list(a.evidence_ids), "reason": a.reason, "metadata": a.metadata}
+            existing = db.scalar(
+                select(ACMGAssessment).where(
+                    ACMGAssessment.variant_id == variant_id,
+                    ACMGAssessment.analysis_id == analysis_id,
+                    ACMGAssessment.criterion == a.criterion,
+                )
+            )
+            row = existing or ACMGAssessment(
+                id=__import__("uuid").uuid4(),
+                variant_id=variant_id,
+                analysis_id=analysis_id,
+                framework_name=result.framework,
+                framework_version=result.framework_version,
+                specification_provider="SIRALOOM",
+                specification_id=result.profile_id,
+                specification_version=result.profile_version,
+                criterion=a.criterion,
+                state=a.status,
+            )
+            row.automated_assessment = {
+                "strength": a.strength,
+                "direction": a.direction,
+                "status": a.status,
+                "evidence_ids": list(a.evidence_ids),
+                "reason": a.reason,
+                "metadata": a.metadata,
+            }
             row.state = a.status
             db.add(row)
+            criterion_ids.append(str(row.id))
 
-        db.add(Classification(id=__import__("uuid").uuid4(), variant_id=variant_id, analysis_id=analysis_id, framework_name=result.framework, framework_version=result.framework_version, result=result.classification, criterion_ids=[], state=result.state, review_status="PENDING"))
+        latest_version = db.scalar(
+            select(Classification.version)
+            .where(
+                Classification.analysis_id == analysis_id,
+                Classification.variant_id == variant_id,
+            )
+            .order_by(Classification.version.desc())
+            .limit(1)
+        )
+        next_version = int(latest_version or 0) + 1
+        db.add(
+            Classification(
+                id=__import__("uuid").uuid4(),
+                variant_id=variant_id,
+                analysis_id=analysis_id,
+                framework_name=result.framework,
+                framework_version=result.framework_version,
+                result=result.classification,
+                criterion_ids=criterion_ids,
+                state=result.state,
+                review_status="PENDING",
+                version=next_version,
+            )
+        )
         AuditService(db).record(event_type="ACMG_ASSESSMENT_CREATED", case_id=analysis.case_id, analysis_id=analysis_id, actor_type="SYSTEM", actor_id="siraloom-acmg-engine", subject_type="VARIANT", subject_id=str(variant_id), operation="CREATE", after_state={"classification": result.classification, "state": result.state, "profile_id": result.profile_id, "profile_version": result.profile_version}, reason="Versioned ACMG/AMP 2015 baseline combination assessment")
         db.commit()
         return {
