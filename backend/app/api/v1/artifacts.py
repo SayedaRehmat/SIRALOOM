@@ -19,7 +19,7 @@ from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifact
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
-from backend.app.domain.storage_profiles import StorageProfileError, resolve_storage_profile
+from backend.app.domain.storage_profiles import StorageProfileError, resolve_storage_profile, artifact_store_for_organization
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["artifacts"])
