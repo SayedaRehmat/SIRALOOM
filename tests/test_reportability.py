@@ -118,3 +118,22 @@ def test_reportability_finalization_rejects_stale_decision_after_new_classificat
     from pytest import raises
     with raises(ValueError, match="no longer the latest"):
         finalize_reportability(db, decision_id=first[0].id, reviewer_id=user.id, expected_version=first[0].review_version, disposition="REPORT", reason="Stale decision")
+
+
+def test_final_reportability_state_rejects_decision_linked_to_stale_classification():
+    db = make_db()
+    org = Organization(id=uuid4(), name="Lab")
+    user = User(id=uuid4(), organization_id=org.id, display_name="Reviewer", role="MEDICAL_REVIEWER", status="ACTIVE")
+    case = Case(id=uuid4(), organization_id=org.id, case_identifier="CASE-LINK", status="ACTIVE", clinical_context={}, language="en", created_by=user.id)
+    analysis = Analysis(id=uuid4(), case_id=case.id, analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1", workflow_version="1.0", status="REQUIRES_REVIEW", reference_build="GRCh38", configuration={})
+    variant = Variant(id=uuid4(), genome_build="GRCh38", chromosome="1", position=12, reference="A", alternate="G", normalization_status="NORMALIZED", canonical_key="GRCh38:1:12:A:G", identifiers={})
+    cls1 = Classification(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", result="PATHOGENIC", criterion_ids=[], metadata_json={}, state="FINAL", review_status="APPROVED", version=1, review_version=1)
+    cls2 = Classification(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", result="LIKELY_PATHOGENIC", criterion_ids=[], metadata_json={}, state="FINAL", review_status="APPROVED", version=2, supersedes_classification_id=cls1.id)
+    from backend.app.infrastructure.db.models import ReportabilityDecision
+    decision = ReportabilityDecision(id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, classification_id=cls1.id, version=1, policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY", policy_version="1.0.0", disposition="REPORT", priority_score=100, priority_band="HIGH", reasons=["test"], status="FINAL", review_version=1)
+    db.add_all([org, user, case, analysis, variant, cls1, cls2, decision])
+    db.commit()
+    from backend.app.reporting.reportability import final_reportability_state
+    ok, errors = final_reportability_state(db, analysis.id)
+    assert not ok
+    assert any("stale classification" in error for error in errors)
