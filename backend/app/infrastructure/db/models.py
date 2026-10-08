@@ -792,6 +792,9 @@ class ConfirmationRecord(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("analysis_id", "variant_id", "version"),
+    )
 
 class FollowUpPlan(Base):
     __tablename__ = "follow_up_plans"
