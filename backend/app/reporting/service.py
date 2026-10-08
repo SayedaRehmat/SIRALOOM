@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import hashlib
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -233,6 +234,58 @@ def _review_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> list[di
     ]
 
 
+def _classification_snapshot_sha256(classification) -> str:
+    payload = {
+        "id": str(classification.id),
+        "version": classification.version,
+        "result": classification.result,
+        "state": classification.state,
+        "review_status": classification.review_status,
+        "review_version": classification.review_version,
+        "framework_name": classification.framework_name,
+        "framework_version": classification.framework_version,
+        "specification_provider": classification.specification_provider,
+        "specification_id": classification.specification_id,
+        "specification_version": classification.specification_version,
+        "criterion_ids": [str(x) for x in (classification.criterion_ids or [])],
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()
+    ).hexdigest()
+
+
+def _acmg_assessment_snapshot(db: Session, analysis_id: UUID, variant_id: UUID, criterion_ids: list) -> list[dict]:
+    ids = {str(x) for x in criterion_ids}
+    if not ids:
+        return []
+    rows = db.scalars(
+        select(ACMGAssessment).where(
+            ACMGAssessment.analysis_id == analysis_id,
+            ACMGAssessment.variant_id == variant_id,
+        )
+    ).all()
+    selected = [row for row in rows if str(row.id) in ids]
+    if {str(row.id) for row in selected} != ids:
+        raise ValueError("Classification references missing ACMG assessment records")
+    return [
+        {
+            "assessment_id": str(row.id),
+            "criterion": row.criterion,
+            "review_version": row.review_version,
+            "state": row.state,
+            "framework_name": row.framework_name,
+            "framework_version": row.framework_version,
+            "specification_provider": row.specification_provider,
+            "specification_id": row.specification_id,
+            "specification_version": row.specification_version,
+            "automated_assessment": row.automated_assessment or {},
+            "reviewed_assessment": row.reviewed_assessment,
+            "final_assessment": row.final_assessment,
+        }
+        for row in sorted(selected, key=lambda x: str(x.id))
+    ]
+
+
 def build_report_content(db: Session, analysis: Analysis, language: str, *, report_type: str = "CLINICAL_INTERPRETATION", include_full_evidence: bool = False) -> dict[str, Any]:
     if language not in {"en", "ar", "bilingual"}:
         raise ValueError("Unsupported report language")
@@ -305,6 +358,10 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "classification_id": str(cls.id),
             "classification": cls.result,
             "classification_version": cls.version,
+            "classification_snapshot_sha256": _classification_snapshot_sha256(cls),
+            "acmg_assessment_snapshot": _acmg_assessment_snapshot(
+                db, analysis.id, variant.id, cls.criterion_ids or []
+            ),
             "reportability": {
                 "decision_id": str(decision.id) if decision else None,
                 "version": decision.version if decision else None,
