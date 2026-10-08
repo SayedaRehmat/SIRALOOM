@@ -199,6 +199,10 @@ def final_reportability_state(db: Session, analysis_id: UUID) -> tuple[bool, lis
             errors.append(f"Variant {variant_id} has no reportability decision")
         elif decision.status != "FINAL":
             errors.append(f"Variant {variant_id} reportability is not FINAL")
+        elif decision.classification_id != cls.id:
+            errors.append(
+                f"Variant {variant_id} reportability is linked to a stale classification"
+            )
     if not latest:
         errors.append("No variant classification is available")
     return not errors, errors
