@@ -2,9 +2,10 @@ import pytest
 from uuid import uuid4, uuid5
 from pathlib import Path
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, ReportabilityDecision, Artifact
+from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, ReportabilityDecision, Artifact, ConfirmationRecord
 from backend.app.reporting.service import build_report_content, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError, _persist_pdf_artifact
 from backend.app.infrastructure.db.models import Report
@@ -98,3 +99,106 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
 
     assert first_id == second.id == uuid5(r.id, "siraloom:signed-report-pdf")
     assert db.get(Artifact, second.id) is not None
+
+
+def test_report_content_persists_exact_confirmation_identity():
+    db, _, _, a, v = seed(True)
+    confirmation = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=a.id,
+        variant_id=v.id,
+        version=1,
+        required=True,
+        status="COMPLETED",
+        method="ORTHOGONAL_TEST",
+        result="CONFIRMED",
+    )
+    db.add(confirmation)
+    db.commit()
+
+    content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
+    snapshot = content["findings"][0]["confirmation_context"]
+
+    assert snapshot["record_id"] == str(confirmation.id)
+    assert snapshot["version"] == 1
+    assert snapshot["required"] is True
+    assert snapshot["status"] == "COMPLETED"
+
+
+def test_finalize_report_rejects_changed_confirmation_snapshot():
+    db, u, c, a, v = seed(True)
+    confirmation_v1 = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=a.id,
+        variant_id=v.id,
+        version=1,
+        required=True,
+        status="COMPLETED",
+        method="ORTHOGONAL_TEST",
+        result="CONFIRMED",
+    )
+    db.add(confirmation_v1)
+    db.commit()
+
+    content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
+
+    confirmation_v2 = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=a.id,
+        variant_id=v.id,
+        version=2,
+        supersedes_record_id=confirmation_v1.id,
+        required=True,
+        status="COMPLETED",
+        method="ORTHOGONAL_TEST_REPEAT",
+        result="CONFIRMED",
+    )
+    db.add(confirmation_v2)
+    db.commit()
+
+    r = Report(
+        id=uuid4(),
+        case_id=c.id,
+        analysis_id=a.id,
+        report_version=1,
+        language="en",
+        report_type="CLINICAL_INTERPRETATION",
+        status="DRAFT",
+        artifact_id=db.query(Artifact).first().id,
+        content_json=content,
+    )
+    db.add(r)
+    db.commit()
+
+    with pytest.raises(ReportFinalizationError, match="confirmation.*stale"):
+        finalize_report(
+            db,
+            report_id=r.id,
+            approver_id=u.id,
+            reason="Reviewed and approved",
+        )
+
+
+def test_confirmation_record_version_identity_is_database_enforced():
+    db, _, _, a, v = seed(True)
+    first = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=a.id,
+        variant_id=v.id,
+        version=1,
+        required=True,
+        status="COMPLETED",
+    )
+    second = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=a.id,
+        variant_id=v.id,
+        version=1,
+        required=True,
+        status="WAIVED",
+    )
+    db.add(first)
+    db.commit()
+    db.add(second)
+    with pytest.raises(IntegrityError):
+        db.commit()

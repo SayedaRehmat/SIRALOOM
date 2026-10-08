@@ -12,7 +12,7 @@ from backend.app.config import settings
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Report
+from backend.app.infrastructure.db.models import Analysis, Artifact, Case, ConfirmationRecord, Report
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
     REPORT_STATUS_SUPERSEDED,
@@ -107,6 +107,54 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             raise ReportFinalizationError(
                 f"Report snapshot reportability decision for variant {variant_id} is stale or not final"
             )
+
+        confirmation_context = finding.get("confirmation_context")
+        if not isinstance(confirmation_context, dict):
+            raise ReportFinalizationError(
+                f"Report snapshot is missing confirmation identity for variant {variant_id}"
+            )
+        confirmation_id_raw = confirmation_context.get("record_id")
+        confirmation_version = confirmation_context.get("version")
+        latest_confirmation = db.scalar(
+            select(ConfirmationRecord)
+            .where(
+                ConfirmationRecord.analysis_id == report.analysis_id,
+                ConfirmationRecord.variant_id == variant_id,
+            )
+            .order_by(ConfirmationRecord.version.desc())
+        )
+        if confirmation_id_raw is None:
+            if confirmation_version is not None or latest_confirmation is not None:
+                raise ReportFinalizationError(
+                    f"Report snapshot confirmation for variant {variant_id} is stale"
+                )
+        else:
+            if confirmation_version is None:
+                raise ReportFinalizationError(
+                    f"Report snapshot is missing confirmation version for variant {variant_id}"
+                )
+            try:
+                confirmation_id = UUID(str(confirmation_id_raw))
+            except (ValueError, TypeError) as exc:
+                raise ReportFinalizationError(
+                    f"Report snapshot contains invalid confirmation identity for variant {variant_id}"
+                ) from exc
+            confirmation = db.scalar(
+                select(ConfirmationRecord).where(
+                    ConfirmationRecord.id == confirmation_id,
+                    ConfirmationRecord.analysis_id == report.analysis_id,
+                    ConfirmationRecord.variant_id == variant_id,
+                )
+            )
+            if (
+                confirmation is None
+                or confirmation.version != int(confirmation_version)
+                or latest_confirmation is None
+                or latest_confirmation.id != confirmation.id
+            ):
+                raise ReportFinalizationError(
+                    f"Report snapshot confirmation for variant {variant_id} is stale or no longer latest"
+                )
 
     secondary_findings = content.get("secondary_findings") or []
     secondary_snapshot_variants = set()
