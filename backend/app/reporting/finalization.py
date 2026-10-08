@@ -26,30 +26,35 @@ class ReportFinalizationError(ValueError):
 
 
 def _verify_report_snapshot(db: Session, report: Report) -> None:
-    """Reject sign-out when the draft no longer matches the approved evidence snapshot."""
+    """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
     findings = content.get("findings") or []
-    if not findings:
-        raise ReportFinalizationError("Report has no findings snapshot to sign out")
+    from backend.app.infrastructure.db.models import Classification, ReportabilityDecision
 
+    latest_cls_rows = list(
+        db.scalars(
+            select(Classification)
+            .where(Classification.analysis_id == report.analysis_id)
+            .order_by(Classification.variant_id, Classification.version.desc())
+        )
+    )
+    latest_cls = {}
+    for row in latest_cls_rows:
+        latest_cls.setdefault(row.variant_id, row)
+
+    snapshot_by_variant = {}
     for finding in findings:
         variant_id_raw = finding.get("variant_id")
         classification_id = finding.get("classification_id")
         classification_version = finding.get("classification_version")
         reportability = finding.get("reportability") or {}
-        decision_id = reportability.get("decision_id")
-        decision_version = reportability.get("version")
         if not variant_id_raw or not classification_id or classification_version is None:
             raise ReportFinalizationError("Report snapshot is missing exact classification identity")
         variant_id = UUID(str(variant_id_raw))
+        if variant_id in snapshot_by_variant:
+            raise ReportFinalizationError(f"Report contains duplicate finding snapshot for variant {variant_id}")
+        snapshot_by_variant[variant_id] = finding
 
-        current_cls = db.scalar(
-            select(Analysis).where(Analysis.id == report.analysis_id)
-        )
-        if current_cls is None:
-            raise ReportFinalizationError("Report analysis not found")
-
-        from backend.app.infrastructure.db.models import Classification, ReportabilityDecision
         cls = db.scalar(
             select(Classification).where(
                 Classification.id == UUID(str(classification_id)),
@@ -57,40 +62,33 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                 Classification.variant_id == variant_id,
             )
         )
-        if cls is None or cls.version != int(classification_version) or cls.state != "FINAL" or cls.review_status != "APPROVED":
+        if (
+            cls is None
+            or cls.version != int(classification_version)
+            or cls.state != "FINAL"
+            or cls.review_status != "APPROVED"
+        ):
             raise ReportFinalizationError(
                 f"Report snapshot classification for variant {variant_id} is stale or no longer approved"
             )
-
-        latest_cls = db.scalar(
-            select(Classification)
-            .where(
-                Classification.analysis_id == report.analysis_id,
-                Classification.variant_id == variant_id,
-            )
-            .order_by(Classification.version.desc())
-        )
-        if latest_cls is None or latest_cls.id != cls.id:
+        if latest_cls.get(variant_id) is None or latest_cls[variant_id].id != cls.id:
             raise ReportFinalizationError(
-                f"Report snapshot classification for variant {variant_id} is no longer the latest approved version"
+                f"Report snapshot classification for variant {variant_id} is no longer the latest version"
             )
 
+        decision_id = reportability.get("decision_id")
+        decision_version = reportability.get("version")
         if not decision_id or decision_version is None:
             raise ReportFinalizationError(
                 f"Report snapshot is missing exact reportability identity for variant {variant_id}"
             )
         decision = db.scalar(
-            select(ReportabilityDecision)
-            .where(
+            select(ReportabilityDecision).where(
                 ReportabilityDecision.id == UUID(str(decision_id)),
                 ReportabilityDecision.analysis_id == report.analysis_id,
                 ReportabilityDecision.variant_id == variant_id,
             )
         )
-        if decision is None or decision.version != int(decision_version) or decision.status != "FINAL":
-            raise ReportFinalizationError(
-                f"Report snapshot reportability decision for variant {variant_id} is stale or not final"
-            )
         latest_decision = db.scalar(
             select(ReportabilityDecision)
             .where(
@@ -99,10 +97,41 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             )
             .order_by(ReportabilityDecision.version.desc())
         )
-        if latest_decision is None or latest_decision.id != decision.id:
+        if (
+            decision is None
+            or decision.version != int(decision_version)
+            or decision.status != "FINAL"
+            or latest_decision is None
+            or latest_decision.id != decision.id
+        ):
             raise ReportFinalizationError(
-                f"Report snapshot reportability decision for variant {variant_id} is no longer the latest version"
+                f"Report snapshot reportability decision for variant {variant_id} is stale or not final"
             )
+
+    expected_reportable = {
+        variant_id
+        for variant_id, cls in latest_cls.items()
+        if cls.state == "FINAL"
+        and cls.review_status == "APPROVED"
+        and (
+            (decision := db.scalar(
+                select(ReportabilityDecision)
+                .where(
+                    ReportabilityDecision.analysis_id == report.analysis_id,
+                    ReportabilityDecision.variant_id == variant_id,
+                )
+                .order_by(ReportabilityDecision.version.desc())
+            ))
+            is not None
+            and decision.status == "FINAL"
+            and decision.disposition == "REPORT"
+        )
+    }
+    if expected_reportable != set(snapshot_by_variant):
+        raise ReportFinalizationError(
+            "Report snapshot no longer matches the current finalized reportability set"
+        )
+
 
 
 def _artifact_store():
