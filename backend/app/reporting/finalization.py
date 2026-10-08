@@ -109,6 +109,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             )
 
     secondary_findings = content.get("secondary_findings") or []
+    secondary_snapshot_variants = set()
     for finding in secondary_findings:
         decision_id = finding.get("decision_id")
         version = finding.get("version")
@@ -117,6 +118,9 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             raise ReportFinalizationError("Report snapshot is missing exact secondary finding decision identity")
         try:
             variant_id = UUID(str(variant_id_raw))
+            if variant_id in secondary_snapshot_variants:
+                raise ReportFinalizationError(f"Report contains duplicate secondary finding snapshot for variant {variant_id}")
+            secondary_snapshot_variants.add(variant_id)
             decision_uuid = UUID(str(decision_id))
         except (ValueError, TypeError) as exc:
             raise ReportFinalizationError("Report snapshot contains invalid secondary finding identity") from exc
@@ -146,6 +150,26 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             raise ReportFinalizationError(
                 f"Report snapshot secondary finding for variant {variant_id} is stale or no longer reportable"
             )
+
+    latest_secondary_rows = list(
+        db.scalars(
+            select(SecondaryFindingDecision)
+            .where(SecondaryFindingDecision.analysis_id == report.analysis_id)
+            .order_by(SecondaryFindingDecision.variant_id, SecondaryFindingDecision.version.desc())
+        )
+    )
+    latest_secondary = {}
+    for row in latest_secondary_rows:
+        latest_secondary.setdefault(row.variant_id, row)
+    expected_secondary_reportable = {
+        variant_id
+        for variant_id, row in latest_secondary.items()
+        if row.status == "FINAL" and row.disposition == "REPORT"
+    }
+    if expected_secondary_reportable != secondary_snapshot_variants:
+        raise ReportFinalizationError(
+            "Report snapshot no longer matches the current finalized secondary-finding set"
+        )
 
     expected_reportable = {
         variant_id
