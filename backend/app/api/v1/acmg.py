@@ -91,7 +91,30 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
             row.state = a.status
             db.add(row)
 
-        latest_version = db.scalar(\n            select(Classification.version)\n            .where(\n                Classification.analysis_id == analysis_id,\n                Classification.variant_id == variant_id,\n            )\n            .order_by(Classification.version.desc())\n            .limit(1)\n        )\n        next_version = int(latest_version or 0) + 1\n        db.add(Classification(id=__import__("uuid").uuid4(), variant_id=variant_id, analysis_id=analysis_id, framework_name=result.framework, framework_version=result.framework_version, result=result.classification, criterion_ids=[], state=result.state, review_status="PENDING", version=next_version))
+        latest_version = db.scalar(
+            select(Classification.version)
+            .where(
+                Classification.analysis_id == analysis_id,
+                Classification.variant_id == variant_id,
+            )
+            .order_by(Classification.version.desc())
+            .limit(1)
+        )
+        next_version = int(latest_version or 0) + 1
+        db.add(
+            Classification(
+                id=__import__("uuid").uuid4(),
+                variant_id=variant_id,
+                analysis_id=analysis_id,
+                framework_name=result.framework,
+                framework_version=result.framework_version,
+                result=result.classification,
+                criterion_ids=[],
+                state=result.state,
+                review_status="PENDING",
+                version=next_version,
+            )
+        )
         AuditService(db).record(event_type="ACMG_ASSESSMENT_CREATED", case_id=analysis.case_id, analysis_id=analysis_id, actor_type="SYSTEM", actor_id="siraloom-acmg-engine", subject_type="VARIANT", subject_id=str(variant_id), operation="CREATE", after_state={"classification": result.classification, "state": result.state, "profile_id": result.profile_id, "profile_version": result.profile_version}, reason="Versioned ACMG/AMP 2015 baseline combination assessment")
         db.commit()
         return {
