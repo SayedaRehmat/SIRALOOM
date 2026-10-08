@@ -302,6 +302,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "hgvs": hgvs,
             "consequence": consequences,
             "zygosity": (normalized.get("genotype") or {}).get("zygosity"),
+            "classification_id": str(cls.id),
             "classification": cls.result,
             "classification_version": cls.version,
             "reportability": {
