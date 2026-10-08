@@ -77,7 +77,7 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
     )
     pdf = render_pdf(content)
     try:
-        store = artifact_store_for_organization(db, organization_id=analysis.case_id and analysis_case.organization_id)
+        store = artifact_store_for_organization(db, organization_id=case.organization_id)
     except StorageProfileError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
