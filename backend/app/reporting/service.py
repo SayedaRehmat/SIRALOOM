@@ -282,9 +282,52 @@ def _acmg_assessment_snapshot(db: Session, analysis_id: UUID, variant_id: UUID, 
             "automated_assessment": row.automated_assessment or {},
             "reviewed_assessment": row.reviewed_assessment,
             "final_assessment": row.final_assessment,
+            "evidence_snapshot": _evidence_snapshot(db, analysis_id, variant_id, row.automated_assessment or {}, row.reviewed_assessment, row.final_assessment),
         }
         for row in sorted(selected, key=lambda x: str(x.id))
     ]
+
+
+def _evidence_snapshot(db: Session, analysis_id: UUID, variant_id: UUID, automated_assessment: dict, reviewed_assessment: Any, final_assessment: Any) -> list[dict]:
+    evidence_ids: set[str] = set()
+    def collect(value: Any) -> None:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key == "evidence_ids" and isinstance(item, list):
+                    evidence_ids.update(str(x) for x in item)
+                else:
+                    collect(item)
+        elif isinstance(value, list):
+            for item in value:
+                collect(item)
+    collect(automated_assessment)
+    collect(reviewed_assessment)
+    collect(final_assessment)
+    snapshots = []
+    for evidence_id in sorted(evidence_ids):
+        try:
+            evidence_uuid = UUID(evidence_id)
+        except (ValueError, TypeError) as exc:
+            raise ValueError(f"ACMG assessment references invalid Evidence ID {evidence_id}") from exc
+        evidence = db.scalar(select(Evidence).where(Evidence.id == evidence_uuid, Evidence.analysis_id == analysis_id, Evidence.variant_id == variant_id))
+        if evidence is None:
+            raise ValueError(f"ACMG assessment references missing Evidence ID {evidence_id}")
+        snapshots.append({
+            "evidence_id": str(evidence.id),
+            "evidence_fingerprint": evidence.evidence_fingerprint,
+            "evidence_type": evidence.evidence_type,
+            "statement": evidence.statement,
+            "direction": evidence.direction,
+            "source_name": evidence.source_name,
+            "source_version": evidence.source_version,
+            "resource_id": str(evidence.resource_id) if evidence.resource_id else None,
+            "source_record_id": evidence.source_record_id,
+            "request_fingerprint": evidence.request_fingerprint,
+            "response_sha256": evidence.response_sha256,
+            "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
+            "payload": evidence.payload or {},
+        })
+    return snapshots
 
 
 def build_report_content(db: Session, analysis: Analysis, language: str, *, report_type: str = "CLINICAL_INTERPRETATION", include_full_evidence: bool = False) -> dict[str, Any]:
