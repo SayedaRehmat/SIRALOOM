@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import hashlib
+import json
 from pathlib import Path
 from uuid import UUID, uuid5
 import tempfile
@@ -75,6 +77,82 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             raise ReportFinalizationError(
                 f"Report snapshot classification for variant {variant_id} is no longer the latest version"
             )
+
+        snapshot_hash = finding.get("classification_snapshot_sha256")
+        if not isinstance(snapshot_hash, str):
+            raise ReportFinalizationError(
+                f"Report snapshot is missing ACMG classification identity for variant {variant_id}"
+            )
+        classification_payload = {
+            "id": str(cls.id),
+            "version": cls.version,
+            "result": cls.result,
+            "state": cls.state,
+            "review_status": cls.review_status,
+            "review_version": cls.review_version,
+            "framework_name": cls.framework_name,
+            "framework_version": cls.framework_version,
+            "specification_provider": cls.specification_provider,
+            "specification_id": cls.specification_id,
+            "specification_version": cls.specification_version,
+            "criterion_ids": [str(x) for x in (cls.criterion_ids or [])],
+        }
+        current_hash = hashlib.sha256(
+            json.dumps(classification_payload, sort_keys=True, separators=(",", ":"), default=str).encode()
+        ).hexdigest()
+        if current_hash != snapshot_hash:
+            raise ReportFinalizationError(
+                f"Report snapshot ACMG classification for variant {variant_id} changed after draft generation"
+            )
+
+        assessment_snapshot = finding.get("acmg_assessment_snapshot")
+        if not isinstance(assessment_snapshot, list):
+            raise ReportFinalizationError(
+                f"Report snapshot is missing ACMG assessment identity for variant {variant_id}"
+            )
+        expected_ids = {str(x) for x in (cls.criterion_ids or [])}
+        actual_ids = {str(x.get("assessment_id")) for x in assessment_snapshot if isinstance(x, dict)}
+        if actual_ids != expected_ids or len(actual_ids) != len(assessment_snapshot):
+            raise ReportFinalizationError(
+                f"Report snapshot ACMG assessment set for variant {variant_id} no longer matches classification"
+            )
+        for item in assessment_snapshot:
+            assessment_id = item.get("assessment_id")
+            try:
+                assessment_uuid = UUID(str(assessment_id))
+            except (ValueError, TypeError) as exc:
+                raise ReportFinalizationError(
+                    f"Report snapshot contains invalid ACMG assessment identity for variant {variant_id}"
+                ) from exc
+            assessment = db.scalar(
+                select(ACMGAssessment).where(
+                    ACMGAssessment.id == assessment_uuid,
+                    ACMGAssessment.analysis_id == report.analysis_id,
+                    ACMGAssessment.variant_id == variant_id,
+                )
+            )
+            if assessment is None:
+                raise ReportFinalizationError(
+                    f"Report snapshot ACMG assessment {assessment_id} is missing"
+                )
+            current_item = {
+                "assessment_id": str(assessment.id),
+                "criterion": assessment.criterion,
+                "review_version": assessment.review_version,
+                "state": assessment.state,
+                "framework_name": assessment.framework_name,
+                "framework_version": assessment.framework_version,
+                "specification_provider": assessment.specification_provider,
+                "specification_id": assessment.specification_id,
+                "specification_version": assessment.specification_version,
+                "automated_assessment": assessment.automated_assessment or {},
+                "reviewed_assessment": assessment.reviewed_assessment,
+                "final_assessment": assessment.final_assessment,
+            }
+            if current_item != item:
+                raise ReportFinalizationError(
+                    f"Report snapshot ACMG assessment {assessment_id} changed after draft generation"
+                )
 
         decision_id = reportability.get("decision_id")
         decision_version = reportability.get("version")
