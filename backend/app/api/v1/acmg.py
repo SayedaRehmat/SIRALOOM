@@ -84,12 +84,38 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
         ]
         result = engine.classify(assessments)
         # Persist a complete, versioned assessment snapshot for every supplied criterion.
+        criterion_ids: list[str] = []
         for a in result.criteria:
-            existing = db.scalar(select(ACMGAssessment).where(ACMGAssessment.variant_id == variant_id, ACMGAssessment.analysis_id == analysis_id, ACMGAssessment.criterion == a.criterion))
-            row = existing or ACMGAssessment(id=__import__("uuid").uuid4(), variant_id=variant_id, analysis_id=analysis_id, framework_name=result.framework, framework_version=result.framework_version, specification_provider="SIRALOOM", specification_id=result.profile_id, specification_version=result.profile_version, criterion=a.criterion, state=a.status)
-            row.automated_assessment = {"strength": a.strength, "direction": a.direction, "status": a.status, "evidence_ids": list(a.evidence_ids), "reason": a.reason, "metadata": a.metadata}
+            existing = db.scalar(
+                select(ACMGAssessment).where(
+                    ACMGAssessment.variant_id == variant_id,
+                    ACMGAssessment.analysis_id == analysis_id,
+                    ACMGAssessment.criterion == a.criterion,
+                )
+            )
+            row = existing or ACMGAssessment(
+                id=__import__("uuid").uuid4(),
+                variant_id=variant_id,
+                analysis_id=analysis_id,
+                framework_name=result.framework,
+                framework_version=result.framework_version,
+                specification_provider="SIRALOOM",
+                specification_id=result.profile_id,
+                specification_version=result.profile_version,
+                criterion=a.criterion,
+                state=a.status,
+            )
+            row.automated_assessment = {
+                "strength": a.strength,
+                "direction": a.direction,
+                "status": a.status,
+                "evidence_ids": list(a.evidence_ids),
+                "reason": a.reason,
+                "metadata": a.metadata,
+            }
             row.state = a.status
             db.add(row)
+            criterion_ids.append(str(row.id))
 
         latest_version = db.scalar(
             select(Classification.version)
@@ -109,7 +135,7 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
                 framework_name=result.framework,
                 framework_version=result.framework_version,
                 result=result.classification,
-                criterion_ids=[],
+                criterion_ids=criterion_ids,
                 state=result.state,
                 review_status="PENDING",
                 version=next_version,
