@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.base import Base
@@ -215,11 +215,11 @@ def test_report_content_persists_exact_classification_identity():
     assert len(content["findings"]) == 1
     finding = content["findings"][0]
     classification = db.scalar(
-        __import__("sqlalchemy", fromlist=["select"]).select(Classification).where(
+        select(Classification).where(
             Classification.analysis_id == analysis.id,
-            Classification.variant_id == uuid4(),
+            Classification.variant_id == finding["variant_id"],
         )
-    ) if False else db.query(Classification).filter_by(analysis_id=analysis.id).one()
+    )
     assert finding["classification_id"] == str(classification.id)
     assert finding["classification_version"] == classification.version
 
