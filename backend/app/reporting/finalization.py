@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from backend.app.config import settings
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, ConfirmationRecord, Report
 from backend.app.reporting.service import (
@@ -371,10 +372,6 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
 
 
 
-def _artifact_store():
-    return FirebaseArtifactStore(settings.firebase_storage_bucket) if settings.firebase_storage_enabled else ArtifactStore(settings.artifact_root)
-
-
 def _persist_pdf_artifact(
     db: Session,
     *,
@@ -386,7 +383,13 @@ def _persist_pdf_artifact(
     analysis = db.get(Analysis, report.analysis_id)
     if analysis is None:
         raise ReportFinalizationError("Report analysis not found")
-    store = _artifact_store()
+    case = db.get(Case, report.case_id)
+    if case is None:
+        raise ReportFinalizationError("Report case not found")
+    try:
+        store = artifact_store_for_organization(db, organization_id=case.organization_id)
+    except StorageProfileError as exc:
+        raise ReportFinalizationError(str(exc)) from exc
     # The signed artifact belongs deterministically to this report version.
     # A worker crash after storage upload but before the surrounding DB
     # transaction commits must not create a second artifact on retry.
