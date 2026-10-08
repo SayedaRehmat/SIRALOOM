@@ -19,14 +19,30 @@ from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifact
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
+from backend.app.domain.storage_profiles import StorageProfileError, resolve_storage_profile
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["artifacts"])
 MAX_BYTES = 512 * 1024 * 1024
 
 
-def _store():
-    return FirebaseArtifactStore(settings.firebase_storage_bucket) if settings.firebase_storage_enabled else ArtifactStore(settings.artifact_root)
+def _store(db: Session, organization_id: UUID):
+    try:
+        profile = resolve_storage_profile(db, organization_id=organization_id)
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    if profile is None:
+        return (
+            FirebaseArtifactStore(settings.firebase_storage_bucket)
+            if settings.firebase_storage_enabled
+            else ArtifactStore(settings.artifact_root)
+        )
+
+    if profile.backend_type == "FIREBASE_GCS":
+        return FirebaseArtifactStore(settings.firebase_storage_bucket)
+
+    return ArtifactStore(settings.artifact_root)
 
 
 def _safe_filename(filename: str) -> str:
@@ -142,7 +158,7 @@ async def upload_artifact(
             }
             build_for_artifact = primary.genome_build
 
-        store = _store()
+        store = _store(db, principal.organization_id)
         artifact = store.put_file(
             db=db, case_id=case_id, analysis_id=None, source_path=staged, filename=filename,
             artifact_type=artifact_type, media_type=file.content_type, genome_build=build_for_artifact,
@@ -198,9 +214,20 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
     if not case:
         raise HTTPException(status_code=404, detail="Artifact not found")
     require_case_tenant(case, principal)
+    try:
+        profile = resolve_storage_profile(db, organization_id=principal.organization_id)
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
     if artifact.storage_uri.startswith("gs://"):
         content = FirebaseArtifactStore(settings.firebase_storage_bucket).download_bytes(artifact.storage_uri)
         return Response(content=content, media_type=artifact.media_type or "application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'})
-    store = ArtifactStore(settings.artifact_root)
+
+    # Artifact URIs are immutable. The active profile controls the deployment
+    # target for new artifacts; historical files continue to resolve by URI.
+    root = settings.artifact_root
+    if profile is not None and profile.backend_type != "LOCAL_FILESYSTEM":
+        raise HTTPException(status_code=409, detail="Artifact uses local storage but the organization's active storage profile is not local filesystem.")
+    store = ArtifactStore(root)
     path = store.local_path(artifact.storage_uri)
     return FileResponse(path, media_type=artifact.media_type or "application/octet-stream", filename=artifact.filename)
