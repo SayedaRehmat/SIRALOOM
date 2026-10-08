@@ -53,6 +53,14 @@ def latest_decision(db: Session, analysis_id: UUID, variant_id: UUID) -> Reporta
 
 
 def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDecision]:
+    # Serialize proposal generation for the whole analysis. Locking the existing
+    # classification rows alone does not protect the no-decision-yet case: two
+    # evaluators could both observe no current decision and create version 1.
+    locked_analysis = db.get(Analysis, analysis.id, with_for_update=True)
+    if locked_analysis is None:
+        raise ValueError("Analysis not found")
+    db.refresh(locked_analysis, with_for_update=True)
+    analysis = locked_analysis
     classifications = list(
         db.scalars(
             select(Classification)
