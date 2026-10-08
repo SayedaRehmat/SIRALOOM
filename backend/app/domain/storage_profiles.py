@@ -153,3 +153,24 @@ def activate_storage_profile(
     db.add(profile)
     db.flush()
     return profile
+
+
+def artifact_store_for_organization(db: Session, *, organization_id: UUID):
+    """Return the deployment-governed artifact store for one organization.
+
+    The database profile selects the deployment-managed target; credentials,
+    mounts and bucket access remain outside the database.
+    """
+    from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+
+    profile = resolve_storage_profile(db, organization_id=organization_id)
+    if profile is None:
+        return (
+            FirebaseArtifactStore(settings.firebase_storage_bucket)
+            if settings.firebase_storage_enabled
+            else ArtifactStore(settings.artifact_root)
+        )
+    if profile.backend_type == "FIREBASE_GCS":
+        return FirebaseArtifactStore(settings.firebase_storage_bucket)
+    return ArtifactStore(settings.artifact_root)
