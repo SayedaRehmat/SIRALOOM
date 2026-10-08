@@ -31,7 +31,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
     findings = content.get("findings") or []
-    from backend.app.infrastructure.db.models import Classification, ReportabilityDecision, SecondaryFindingDecision
+    from backend.app.infrastructure.db.models import ACMGAssessment, Classification, ReportabilityDecision, SecondaryFindingDecision
 
     latest_cls_rows = list(
         db.scalars(
