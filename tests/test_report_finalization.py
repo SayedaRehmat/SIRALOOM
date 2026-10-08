@@ -1,3 +1,4 @@
+import pytest
 from uuid import uuid4, uuid5
 from pathlib import Path
 from sqlalchemy import create_engine
@@ -28,9 +29,55 @@ def test_final_report_requires_approved_classification():
     db, _, _, a, _=seed(False); ok, errs=final_report_eligibility(db,analysis_id=a.id); assert not ok and errs
 
 def test_finalize_report_sets_final_and_supersedes():
-    db,u,c,a,v=seed(True); r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json={}); db.add(r); db.commit()
+    db,u,c,a,v=seed(True)
+    classification = db.query(Classification).filter_by(analysis_id=a.id, variant_id=v.id).one()
+    decision = db.query(ReportabilityDecision).filter_by(analysis_id=a.id, variant_id=v.id).one()
+    content = {
+        "findings": [{
+            "variant_id": str(v.id),
+            "classification_id": str(classification.id),
+            "classification_version": classification.version,
+            "reportability": {
+                "decision_id": str(decision.id),
+                "version": decision.version,
+                "disposition": decision.disposition,
+                "status": decision.status,
+            },
+        }]
+    }
+    r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
+    db.add(r); db.commit()
     out=finalize_report(db,report_id=r.id,approver_id=u.id,reason='Reviewed and approved'); db.commit()
     assert out.status=='FINAL'; assert out.approved_by==u.id
+
+def test_finalize_report_rejects_stale_classification_snapshot():
+    db,u,c,a,v=seed(True)
+    classification = db.query(Classification).filter_by(analysis_id=a.id, variant_id=v.id).one()
+    decision = db.query(ReportabilityDecision).filter_by(analysis_id=a.id, variant_id=v.id).one()
+    newer = Classification(
+        id=uuid4(), variant_id=v.id, analysis_id=a.id, framework_name=classification.framework_name,
+        framework_version=classification.framework_version, result="PATHOGENIC", criterion_ids=[],
+        metadata_json={}, state="FINAL", review_status="APPROVED", version=2, review_version=1,
+        supersedes_classification_id=classification.id,
+    )
+    db.add(newer); db.commit()
+    content = {
+        "findings": [{
+            "variant_id": str(v.id),
+            "classification_id": str(classification.id),
+            "classification_version": classification.version,
+            "reportability": {
+                "decision_id": str(decision.id),
+                "version": decision.version,
+                "disposition": decision.disposition,
+                "status": decision.status,
+            },
+        }]
+    }
+    r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
+    db.add(r); db.commit()
+    with pytest.raises(ReportFinalizationError, match="no longer the latest"):
+        finalize_report(db,report_id=r.id,approver_id=u.id,reason='Reviewed and approved')
 
 
 def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, monkeypatch):
