@@ -270,6 +270,27 @@ def test_signout_rejects_stale_secondary_finding_snapshot():
         raise AssertionError("Sign-out must reject a stale secondary-finding snapshot")
 
 
+def test_signout_rejects_new_secondary_reportable_decision_missing_from_draft():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    db.commit()
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    db.add(SecondaryFindingDecision(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, version=1,
+        policy_name="ACMG_SF", policy_version="3.3.2", eligibility="ELIGIBLE",
+        consent_status="CONSENTED", disposition="REPORT", status="FINAL",
+        rationale="Added after draft generation", gene_disease_context={},
+    ))
+    db.commit()
+    from backend.app.reporting.finalization import ReportFinalizationError
+    try:
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+    except ReportFinalizationError as exc:
+        assert "secondary-finding set" in str(exc)
+    else:
+        raise AssertionError("Sign-out must reject a newly reportable secondary finding absent from the draft")
+
+
 def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
     db, reviewer, analysis, report = seed_finalizable_report()
     from backend.app.reporting import finalization
