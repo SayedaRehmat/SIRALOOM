@@ -112,6 +112,9 @@ def seed_finalizable_report():
         validation_status="VALID",
         metadata_json={"report_state": "DRAFT"},
     )
+    db.add_all([org, reviewer, case, analysis, variant, classification, decision, draft_artifact])
+    db.flush()
+
     report_content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
     report = Report(
         id=uuid4(),
@@ -124,7 +127,7 @@ def seed_finalizable_report():
         artifact_id=draft_artifact.id,
         content_json=report_content,
     )
-    db.add_all([org, reviewer, case, analysis, variant, classification, decision, draft_artifact, report])
+    db.add(report)
     db.commit()
     return db, reviewer, analysis, report
 
