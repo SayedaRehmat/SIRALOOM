@@ -10,6 +10,7 @@ from backend.app.infrastructure.db.models import (
     Artifact,
     Case,
     Classification,
+    Evidence,
     Organization,
     Report,
     ReportabilityDecision,
