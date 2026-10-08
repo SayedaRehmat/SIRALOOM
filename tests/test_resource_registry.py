@@ -385,3 +385,38 @@ def test_approval_requires_qualification_and_rejects_stale_version():
             assert "already" in str(exc).lower() or "changed" in str(exc).lower()
         else:
             raise AssertionError("stale approval decision must be rejected")
+
+
+def test_registry_accepts_canonical_workflow_capability_resource_types():
+    engine = _engine()
+    canonical_types = [
+        "REFERENCE_PACKAGE",
+        "ANNOTATION_ENGINE",
+        "POPULATION_SECONDARY",
+        "CLINICAL_DATABASE",
+        "GENE_DISEASE",
+        "PHENOTYPE_ONTOLOGY",
+        "COMPUTATIONAL_PREDICTOR",
+        "SPLICING_PREDICTOR",
+        "FUNCTIONAL_EVIDENCE",
+        "LITERATURE_PROVIDER",
+        "ACMG_RULE_SPECIFICATION",
+    ]
+    with Session(engine) as db:
+        for index, resource_type in enumerate(canonical_types):
+            resource, created = register_resource_version(
+                db,
+                name=f"Canonical-{index}",
+                provider="LabProvider",
+                resource_type=resource_type,
+                version="1",
+                genome_build="GRCh38",
+                access_method="LOCAL",
+                license_text=None,
+                checksum=(f"{index + 1:064x}")[-64:],
+                location=f"/opt/resources/{index}",
+                population_definition=None,
+                initial_status="CANDIDATE",
+            )
+            assert created is True
+            assert resource.resource_type == resource_type
