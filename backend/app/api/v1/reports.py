@@ -103,18 +103,6 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
 
     report.artifact_id = artifact.id
     AuditService(db).record(
-        id=uuid4(),
-        case_id=analysis.case_id,
-        analysis_id=analysis.id,
-        report_version=version,
-        language=payload.language,
-        report_type=payload.report_type,
-        status="DRAFT",
-        artifact_id=artifact.id,
-        content_json=content,
-    )
-    db.add(report)
-    AuditService(db).record(
         event_type="REPORT_GENERATED",
         case_id=analysis.case_id,
         analysis_id=analysis.id,
