@@ -58,6 +58,7 @@ class Settings(BaseSettings):
 
     organization_self_signup_enabled: bool = False
     organization_first_bootstrap_enabled: bool = False
+    organization_require_storage_profile: bool = False
 
     celery_concurrency: int = 2
     celery_worker_max_tasks_per_child: int = 20
