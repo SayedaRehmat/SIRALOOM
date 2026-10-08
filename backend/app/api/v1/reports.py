@@ -1,9 +1,10 @@
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 from pathlib import Path
 import tempfile
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.auth.authorization import CASE_WRITE_ROLES, REPORT_FINALIZE_ROLES, get_accessible_analysis, get_accessible_report, require_role
@@ -27,6 +28,14 @@ router = APIRouter(tags=["reports"])
 def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal)
     require_role(principal, CASE_WRITE_ROLES)
+
+    # Report version allocation is a case-scoped clinical history mutation.
+    # Lock the case before eligibility/version allocation so concurrent requests serialize.
+    case = db.get(Case, analysis.case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    db.refresh(case, with_for_update=True)
+
     eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
     if not eligible:
         raise HTTPException(status_code=409, detail="Report generation is blocked until classification review and reportability are finalized: " + "; ".join(errors))
@@ -46,6 +55,25 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
     ) or 0
     version = int(last) + 1
     content["report_version"] = version
+
+    report = Report(
+        id=uuid4(),
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        report_version=version,
+        language=payload.language,
+        report_type=payload.report_type,
+        status="DRAFT",
+        artifact_id=None,
+        content_json=content,
+    )
+    db.add(report)
+    db.flush()
+
+    draft_artifact_id = uuid5(
+        NAMESPACE_URL,
+        f"siraloom:draft-report:{analysis.case_id}:{payload.report_type}:{version}",
+    )
     pdf = render_pdf(content)
     store = FirebaseArtifactStore(settings.firebase_storage_bucket) if settings.firebase_storage_enabled else ArtifactStore(settings.artifact_root)
 
@@ -68,22 +96,12 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
                 "report_state": "DRAFT",
             },
             validation_status="VALID",
+            artifact_id=draft_artifact_id,
         )
     finally:
         draft_path.unlink(missing_ok=True)
 
-    report = Report(
-        id=uuid4(),
-        case_id=analysis.case_id,
-        analysis_id=analysis.id,
-        report_version=version,
-        language=payload.language,
-        report_type=payload.report_type,
-        status="DRAFT",
-        artifact_id=artifact.id,
-        content_json=content,
-    )
-    db.add(report)
+    report.artifact_id = artifact.id
     AuditService(db).record(
         event_type="REPORT_GENERATED",
         case_id=analysis.case_id,
@@ -96,7 +114,11 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
         output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
         payload={"draft": True, "reportability_final": True},
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Report version was allocated concurrently; retry report generation.") from exc
     return {
         "report_id": str(report.id),
         "version": version,

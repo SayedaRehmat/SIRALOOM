@@ -850,6 +850,7 @@ class Report(Base):
     approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (UniqueConstraint("case_id", "report_type", "report_version"),)
 
 
 class CaseExport(Base):
