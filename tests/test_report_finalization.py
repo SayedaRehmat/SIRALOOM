@@ -49,18 +49,6 @@ def test_finalize_report_rejects_stale_classification_snapshot():
     )
     db.add(newer); db.commit()
     # The draft snapshot intentionally remains the version-1 content built before version 2 existed.
-        "findings": [{
-            "variant_id": str(v.id),
-            "classification_id": str(classification.id),
-            "classification_version": classification.version,
-            "reportability": {
-                "decision_id": str(decision.id),
-                "version": decision.version,
-                "disposition": decision.disposition,
-                "status": decision.status,
-            },
-        }]
-    }
     r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
     db.add(r); db.commit()
     with pytest.raises(ReportFinalizationError, match="no longer the latest"):
