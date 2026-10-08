@@ -32,8 +32,11 @@ def _validate_target(backend_type: str, storage_key: str) -> None:
         root = str(settings.artifact_root or "").strip()
         if not root:
             raise StorageProfileError("ARTIFACT_ROOT is not configured")
-    if backend == "FIREBASE_GCS" and not settings.firebase_storage_bucket:
-        raise StorageProfileError("FIREBASE_STORAGE_BUCKET is not configured")
+    if backend == "FIREBASE_GCS":
+        if not settings.firebase_storage_enabled:
+            raise StorageProfileError("FIREBASE_STORAGE_ENABLED is false")
+        if not settings.firebase_storage_bucket:
+            raise StorageProfileError("FIREBASE_STORAGE_BUCKET is not configured")
 
 
 def get_active_storage_profile(
