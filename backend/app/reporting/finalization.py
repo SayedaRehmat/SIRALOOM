@@ -31,7 +31,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
     findings = content.get("findings") or []
-    from backend.app.infrastructure.db.models import ACMGAssessment, Classification, ReportabilityDecision, SecondaryFindingDecision
+    from backend.app.infrastructure.db.models import ACMGAssessment, Evidence, Classification, ReportabilityDecision, SecondaryFindingDecision
 
     latest_cls_rows = list(
         db.scalars(
@@ -154,6 +154,50 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                 raise ReportFinalizationError(
                     f"Report snapshot ACMG assessment {assessment_id} changed after draft generation"
                 )
+
+            snapshot_evidence = item.get("evidence_snapshot")
+            if not isinstance(snapshot_evidence, list):
+                raise ReportFinalizationError(
+                    f"Report snapshot ACMG evidence binding is missing for assessment {assessment_id}"
+                )
+            for evidence_item in snapshot_evidence:
+                evidence_id_raw = evidence_item.get("evidence_id")
+                try:
+                    evidence_uuid = UUID(str(evidence_id_raw))
+                except (ValueError, TypeError) as exc:
+                    raise ReportFinalizationError(
+                        f"Report snapshot contains invalid evidence identity {evidence_id_raw}"
+                    ) from exc
+                evidence = db.scalar(
+                    select(Evidence).where(
+                        Evidence.id == evidence_uuid,
+                        Evidence.analysis_id == report.analysis_id,
+                        Evidence.variant_id == variant_id,
+                    )
+                )
+                if evidence is None:
+                    raise ReportFinalizationError(
+                        f"Report snapshot evidence {evidence_id_raw} is missing"
+                    )
+                current_evidence = {
+                    "evidence_id": str(evidence.id),
+                    "evidence_fingerprint": evidence.evidence_fingerprint,
+                    "evidence_type": evidence.evidence_type,
+                    "statement": evidence.statement,
+                    "direction": evidence.direction,
+                    "source_name": evidence.source_name,
+                    "source_version": evidence.source_version,
+                    "resource_id": str(evidence.resource_id) if evidence.resource_id else None,
+                    "source_record_id": evidence.source_record_id,
+                    "request_fingerprint": evidence.request_fingerprint,
+                    "response_sha256": evidence.response_sha256,
+                    "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
+                    "payload": evidence.payload or {},
+                }
+                if current_evidence != evidence_item:
+                    raise ReportFinalizationError(
+                        f"Report snapshot evidence {evidence_id_raw} changed after draft generation"
+                    )
 
         decision_id = reportability.get("decision_id")
         decision_version = reportability.get("version")
