@@ -12,6 +12,7 @@ from backend.app.infrastructure.db.models import (
     Organization,
     Report,
     ReportabilityDecision,
+    SecondaryFindingDecision,
     User,
     Variant,
 )
@@ -217,6 +218,56 @@ def test_report_content_persists_exact_classification_identity():
     )
     assert finding["classification_id"] == str(classification.id)
     assert finding["classification_version"] == classification.version
+
+
+def test_signout_rejects_stale_secondary_finding_snapshot():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    variant = db.scalar(select(Variant).where(Variant.id != uuid4())) if False else db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    decision = SecondaryFindingDecision(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        version=1,
+        policy_name="ACMG_SF",
+        policy_version="3.3.2",
+        eligibility="ELIGIBLE",
+        consent_status="CONSENTED",
+        disposition="REPORT",
+        status="FINAL",
+        rationale="Initial secondary finding decision",
+        gene_disease_context={},
+    )
+    db.add(decision)
+    db.commit()
+
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    db.commit()
+
+    replacement = SecondaryFindingDecision(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        version=2,
+        supersedes_decision_id=decision.id,
+        policy_name="ACMG_SF",
+        policy_version="3.3.2",
+        eligibility="ELIGIBLE",
+        consent_status="CONSENTED",
+        disposition="REPORT",
+        status="FINAL",
+        rationale="Updated secondary finding decision",
+        gene_disease_context={},
+    )
+    db.add(replacement)
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    try:
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+    except ReportFinalizationError as exc:
+        assert "secondary finding" in str(exc)
+    else:
+        raise AssertionError("Sign-out must reject a stale secondary-finding snapshot")
 
 
 def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
