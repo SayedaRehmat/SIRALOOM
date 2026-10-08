@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
     Analysis,
     Artifact,
     Case,
@@ -219,6 +220,66 @@ def test_report_content_persists_exact_classification_identity():
     assert finding["classification_id"] == str(classification.id)
     assert finding["classification_version"] == classification.version
 
+
+
+def test_signout_rejects_mutated_classification_snapshot():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    db.commit()
+
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    classification.result = "VUS"
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    try:
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+    except ReportFinalizationError as exc:
+        assert "ACMG classification" in str(exc)
+    else:
+        raise AssertionError("Sign-out must reject a mutated classification snapshot")
+
+
+def test_signout_rejects_mutated_acmg_assessment_snapshot():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    variant = db.scalar(select(Variant).where(Variant.analysis_id == analysis.id))
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    assessment = ACMGAssessment(
+        id=uuid4(),
+        variant_id=variant.id,
+        analysis_id=analysis.id,
+        framework_name="ACMG/AMP",
+        framework_version="2015",
+        specification_provider="SIRALOOM",
+        specification_id="ACMG_2015",
+        specification_version="1.0",
+        criterion="PM2",
+        automated_assessment={"strength": "MODERATE", "direction": "BENIGN", "evidence_ids": []},
+        state="PROPOSED",
+        review_version=1,
+    )
+    db.add(assessment)
+    classification.criterion_ids = [str(assessment.id)]
+    db.commit()
+
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    db.commit()
+
+    assessment.reviewed_assessment = {
+        "decision": "ACCEPT",
+        "strength": "MODERATE",
+        "reason": "Reviewed after draft generation",
+    }
+    assessment.review_version = 2
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    try:
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+    except ReportFinalizationError as exc:
+        assert "ACMG assessment" in str(exc)
+    else:
+        raise AssertionError("Sign-out must reject a mutated ACMG assessment snapshot")
 
 def test_signout_rejects_stale_secondary_finding_snapshot():
     db, reviewer, analysis, report = seed_finalizable_report()
