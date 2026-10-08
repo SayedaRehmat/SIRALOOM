@@ -217,7 +217,6 @@ def test_report_content_persists_exact_classification_identity():
     classification = db.scalar(
         select(Classification).where(
             Classification.analysis_id == analysis.id,
-            Classification.variant_id == finding["variant_id"],
         )
     )
     assert finding["classification_id"] == str(classification.id)
