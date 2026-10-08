@@ -20,8 +20,19 @@ from backend.app.infrastructure.db.models import (
 
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _ALLOWED_TYPES = frozenset({
+    # Legacy resource classes retained for backward compatibility.
     "REFERENCE", "REFERENCE_PACKAGE", "POPULATION", "ANNOTATION",
     "EVIDENCE", "ACMG_RULE",
+    # Canonical workflow capability classes. These names intentionally match
+    # workflow_resource_contracts and resource_profile_resolver so a resource
+    # registered through the laboratory registry can actually satisfy the
+    # capability it is intended to provide.
+    "REFERENCE_PACKAGE", "ANNOTATION_ENGINE", "ANNOTATION_CACHE",
+    "POPULATION_SECONDARY", "CLINICAL_DATABASE", "GENE_DISEASE",
+    "PHENOTYPE_ONTOLOGY", "COMPUTATIONAL_PREDICTOR", "SPLICING_PREDICTOR",
+    "FUNCTIONAL_EVIDENCE", "LITERATURE_PROVIDER", "ACMG_RULE_SPECIFICATION",
+    "VARIANT_IDENTITY", "INTERNAL_LAB_EVIDENCE", "DISEASE_ONTOLOGY",
+    "GENE_PANEL", "DOSAGE_SENSITIVITY",
 })
 RESOURCE_STATUSES = frozenset({
     "CANDIDATE", "QUALIFIED", "ACTIVE", "SUPERSEDED", "REJECTED", "QUARANTINED",
