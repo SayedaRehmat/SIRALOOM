@@ -127,6 +127,16 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
             .limit(1)
         )
         next_version = int(latest_version or 0) + 1
+        previous_classification = db.scalar(
+            select(Classification)
+            .where(
+                Classification.analysis_id == analysis_id,
+                Classification.variant_id == variant_id,
+            )
+            .order_by(Classification.version.desc())
+            .limit(1)
+            .with_for_update()
+        )
         db.add(
             Classification(
                 id=__import__("uuid").uuid4(),
@@ -139,6 +149,9 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
                 state=result.state,
                 review_status="PENDING",
                 version=next_version,
+                supersedes_classification_id=(
+                    previous_classification.id if previous_classification else None
+                ),
             )
         )
         AuditService(db).record(event_type="ACMG_ASSESSMENT_CREATED", case_id=analysis.case_id, analysis_id=analysis_id, actor_type="SYSTEM", actor_id="siraloom-acmg-engine", subject_type="VARIANT", subject_id=str(variant_id), operation="CREATE", after_state={"classification": result.classification, "state": result.state, "profile_id": result.profile_id, "profile_version": result.profile_version}, reason="Versioned ACMG/AMP 2015 baseline combination assessment")
