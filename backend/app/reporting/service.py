@@ -335,6 +335,11 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 "segregation_observations": [{"pedigree_member_id": str(o.pedigree_member_id), "genotype": o.genotype, "zygosity": o.zygosity, "phase": o.phase, "phenotype_status": o.phenotype_status, "source": o.source, "notes": o.notes} for o in segregation_rows],
             },
             "confirmation_context": {
+                # Persist exact confirmation identity so sign-out can prove that
+                # the clinical report reflects the confirmation state that was
+                # actually present when the draft was generated.
+                "record_id": str(confirmation.id) if confirmation else None,
+                "version": confirmation.version if confirmation else None,
                 "required": confirmation.required if confirmation else None,
                 "status": confirmation.status if confirmation else "NOT_CONFIGURED",
                 "method": confirmation.method if confirmation else None,
