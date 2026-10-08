@@ -12,3 +12,5 @@ from .acmg import router as acmg_router
 from .auth import router as auth_router
 
 from .resources import router as resources_router
+
+from .storage import router as storage_router
