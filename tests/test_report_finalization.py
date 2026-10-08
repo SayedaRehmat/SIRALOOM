@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, ReportabilityDecision, Artifact
-from backend.app.reporting.service import final_report_eligibility
+from backend.app.reporting.service import build_report_content, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError, _persist_pdf_artifact
 from backend.app.infrastructure.db.models import Report
 
@@ -30,21 +30,7 @@ def test_final_report_requires_approved_classification():
 
 def test_finalize_report_sets_final_and_supersedes():
     db,u,c,a,v=seed(True)
-    classification = db.query(Classification).filter_by(analysis_id=a.id, variant_id=v.id).one()
-    decision = db.query(ReportabilityDecision).filter_by(analysis_id=a.id, variant_id=v.id).one()
-    content = {
-        "findings": [{
-            "variant_id": str(v.id),
-            "classification_id": str(classification.id),
-            "classification_version": classification.version,
-            "reportability": {
-                "decision_id": str(decision.id),
-                "version": decision.version,
-                "disposition": decision.disposition,
-                "status": decision.status,
-            },
-        }]
-    }
+    content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
     r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
     db.add(r); db.commit()
     out=finalize_report(db,report_id=r.id,approver_id=u.id,reason='Reviewed and approved'); db.commit()
@@ -54,6 +40,7 @@ def test_finalize_report_rejects_stale_classification_snapshot():
     db,u,c,a,v=seed(True)
     classification = db.query(Classification).filter_by(analysis_id=a.id, variant_id=v.id).one()
     decision = db.query(ReportabilityDecision).filter_by(analysis_id=a.id, variant_id=v.id).one()
+    content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
     newer = Classification(
         id=uuid4(), variant_id=v.id, analysis_id=a.id, framework_name=classification.framework_name,
         framework_version=classification.framework_version, result="PATHOGENIC", criterion_ids=[],
@@ -61,19 +48,7 @@ def test_finalize_report_rejects_stale_classification_snapshot():
         supersedes_classification_id=classification.id,
     )
     db.add(newer); db.commit()
-    content = {
-        "findings": [{
-            "variant_id": str(v.id),
-            "classification_id": str(classification.id),
-            "classification_version": classification.version,
-            "reportability": {
-                "decision_id": str(decision.id),
-                "version": decision.version,
-                "disposition": decision.disposition,
-                "status": decision.status,
-            },
-        }]
-    }
+    # The draft snapshot intentionally remains the version-1 content built before version 2 existed.
     r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
     db.add(r); db.commit()
     with pytest.raises(ReportFinalizationError, match="no longer the latest"):
