@@ -150,7 +150,10 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                 "reviewed_assessment": assessment.reviewed_assessment,
                 "final_assessment": assessment.final_assessment,
             }
-            if current_item != item:
+            assessment_snapshot_without_evidence = {
+                key: value for key, value in item.items() if key != "evidence_snapshot"
+            }
+            if current_item != assessment_snapshot_without_evidence:
                 raise ReportFinalizationError(
                     f"Report snapshot ACMG assessment {assessment_id} changed after draft generation"
                 )
