@@ -38,6 +38,7 @@ from backend.app.domain.workflow_decision_persistence import record_workflow_dec
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
 from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionLeaseError, PartitionScheduler, configure_partition
 from backend.app.infrastructure.db.models import (
@@ -449,7 +450,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if not analysis:
             raise RuntimeError(f"Analysis not found: {analysis_id}")
 
-        artifacts = ArtifactStore(settings.artifact_root)
+        case = db.get(Case, analysis.case_id)
+        if case is None:
+            raise RuntimeError(f"Analysis case not found: {analysis.case_id}")
+        try:
+            artifacts = artifact_store_for_organization(
+                db, organization_id=case.organization_id
+            )
+        except StorageProfileError as exc:
+            raise RuntimeError(str(exc)) from exc
         audit = AuditService(db)
         ctx = WorkflowContext(db=db, artifacts=artifacts, audit=audit)
         ensure_steps(db, analysis_id)
