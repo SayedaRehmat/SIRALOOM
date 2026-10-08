@@ -7,6 +7,33 @@ from backend.app.infrastructure.db.base import Base
 def now() -> datetime:
     return datetime.now(timezone.utc)
 
+class OrganizationStorageProfile(Base):
+    """Organization-scoped artifact storage binding.
+
+    The database records which deployment-managed storage target an organization
+    uses. Credentials and filesystem mounts remain deployment configuration and
+    are never stored in this table. Existing artifact URIs remain immutable when
+    a profile is changed.
+    """
+    __tablename__ = "organization_storage_profiles"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    backend_type: Mapped[str] = mapped_column(Text, nullable=False)
+    storage_key: Mapped[str] = mapped_column(Text, nullable=False)
+    configuration_json: Mapped[dict] = mapped_column("configuration", JSON, default=dict)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="DRAFT")
+    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "name", "version"),
+    )
+
+
 class Organization(Base):
     __tablename__ = "organizations"
     id: Mapped[UUID] = mapped_column(primary_key=True)
