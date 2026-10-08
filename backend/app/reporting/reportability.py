@@ -126,6 +126,36 @@ def finalize_reportability(
         raise ValueError("Reportability decision not found")
     if decision.status == "FINAL":
         return decision
+
+    current_latest = latest_decision(db, decision.analysis_id, decision.variant_id)
+    if current_latest is None or current_latest.id != decision.id:
+        raise ValueError(
+            "Reportability decision is no longer the latest decision for this variant; "
+            "finalize the current latest proposal instead"
+        )
+    classification = db.get(Classification, decision.classification_id)
+    if (
+        classification is None
+        or classification.analysis_id != decision.analysis_id
+        or classification.variant_id != decision.variant_id
+        or classification.state != "FINAL"
+        or classification.review_status != "APPROVED"
+    ):
+        raise ValueError(
+            "Reportability decision is no longer backed by the current approved classification"
+        )
+    latest_classification = db.scalar(
+        select(Classification)
+        .where(
+            Classification.analysis_id == decision.analysis_id,
+            Classification.variant_id == decision.variant_id,
+        )
+        .order_by(Classification.version.desc())
+    )
+    if latest_classification is None or latest_classification.id != classification.id:
+        raise ValueError(
+            "Reportability decision is stale because a newer classification exists"
+        )
     if decision.review_version != expected_version:
         raise ValueError(
             f"Reportability review version conflict: expected {expected_version}, current {decision.review_version}"
