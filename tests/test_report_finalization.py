@@ -55,6 +55,11 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
         "case_id": str(c.id),
         "analysis_id": str(a.id),
         "reference_build": "GRCh38",
+        "findings": [],
+        "methodology": "Test methodology.",
+        "limitations": "Test limitations.",
+        "recommendations": "None.",
+        "references": [],
         "final_result": {"status": "FINAL"},
     }
 
