@@ -356,7 +356,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     for row in secondary_rows:
         secondary_latest[row.variant_id] = row
     secondary_findings = [{
-        "variant_id": str(row.variant_id), "version": row.version, "policy": {"name": row.policy_name, "version": row.policy_version},
+        "decision_id": str(row.id), "variant_id": str(row.variant_id), "version": row.version, "policy": {"name": row.policy_name, "version": row.policy_version},
         "eligibility": row.eligibility, "consent_status": row.consent_status, "disposition": row.disposition,
         "status": row.status, "rationale": row.rationale, "gene_disease_context": row.gene_disease_context or {},
     } for row in secondary_latest.values() if row.status == "FINAL" and row.disposition == "REPORT"]
