@@ -222,7 +222,7 @@ def test_report_content_persists_exact_classification_identity():
 
 def test_signout_rejects_stale_secondary_finding_snapshot():
     db, reviewer, analysis, report = seed_finalizable_report()
-    variant = db.scalar(select(Variant).where(Variant.id != uuid4())) if False else db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
     decision = SecondaryFindingDecision(
         id=uuid4(),
         analysis_id=analysis.id,
