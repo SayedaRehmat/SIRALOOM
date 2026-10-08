@@ -732,6 +732,7 @@ class Classification(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (UniqueConstraint("analysis_id", "variant_id", "version"),)
 
 class ReviewAction(Base):
     __tablename__ = "review_actions"
