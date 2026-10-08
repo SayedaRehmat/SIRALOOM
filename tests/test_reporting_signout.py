@@ -242,7 +242,7 @@ def test_signout_rejects_mutated_classification_snapshot():
 
 def test_signout_rejects_mutated_acmg_assessment_snapshot():
     db, reviewer, analysis, report = seed_finalizable_report()
-    variant = db.scalar(select(Variant).where(Variant.analysis_id == analysis.id))
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
     classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
     assessment = ACMGAssessment(
         id=uuid4(),
