@@ -29,7 +29,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
     findings = content.get("findings") or []
-    from backend.app.infrastructure.db.models import Classification, ReportabilityDecision
+    from backend.app.infrastructure.db.models import Classification, ReportabilityDecision, SecondaryFindingDecision
 
     latest_cls_rows = list(
         db.scalars(
@@ -106,6 +106,45 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
         ):
             raise ReportFinalizationError(
                 f"Report snapshot reportability decision for variant {variant_id} is stale or not final"
+            )
+
+    secondary_findings = content.get("secondary_findings") or []
+    for finding in secondary_findings:
+        decision_id = finding.get("decision_id")
+        version = finding.get("version")
+        variant_id_raw = finding.get("variant_id")
+        if not decision_id or version is None or not variant_id_raw:
+            raise ReportFinalizationError("Report snapshot is missing exact secondary finding decision identity")
+        try:
+            variant_id = UUID(str(variant_id_raw))
+            decision_uuid = UUID(str(decision_id))
+        except (ValueError, TypeError) as exc:
+            raise ReportFinalizationError("Report snapshot contains invalid secondary finding identity") from exc
+        decision = db.scalar(
+            select(SecondaryFindingDecision).where(
+                SecondaryFindingDecision.id == decision_uuid,
+                SecondaryFindingDecision.analysis_id == report.analysis_id,
+                SecondaryFindingDecision.variant_id == variant_id,
+            )
+        )
+        latest_secondary = db.scalar(
+            select(SecondaryFindingDecision)
+            .where(
+                SecondaryFindingDecision.analysis_id == report.analysis_id,
+                SecondaryFindingDecision.variant_id == variant_id,
+            )
+            .order_by(SecondaryFindingDecision.version.desc())
+        )
+        if (
+            decision is None
+            or decision.version != int(version)
+            or decision.status != "FINAL"
+            or decision.disposition != "REPORT"
+            or latest_secondary is None
+            or latest_secondary.id != decision.id
+        ):
+            raise ReportFinalizationError(
+                f"Report snapshot secondary finding for variant {variant_id} is stale or no longer reportable"
             )
 
     expected_reportable = {
