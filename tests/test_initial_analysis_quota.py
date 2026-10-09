@@ -303,7 +303,7 @@ def test_unrestricted_laboratory_upload_has_no_siraloom_application_ceiling():
         def scalar(self, _statement):
             return entitlement
 
-    assert effective_max_upload_bytes(FakeDB()) is None
+    assert effective_max_upload_bytes(FakeDB(), organization_id) is None
 
 
 def test_organization_without_entitlement_has_no_siraloom_application_ceiling():
