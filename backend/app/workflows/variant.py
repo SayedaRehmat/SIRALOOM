@@ -38,6 +38,7 @@ from backend.app.domain.workflow_decision_persistence import record_workflow_dec
 from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
 from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.partition_scheduler import PartitionCapacityError, PartitionLeaseError, PartitionScheduler, configure_partition
@@ -441,10 +442,49 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
     return True
 
 
+def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[Path]) -> Path:
+    """Resolve an immutable artifact URI to a worker-local file for tools.
+
+    Scientific tools such as bcftools and VEP require filesystem paths. Cloud
+    artifact URIs must therefore be downloaded to a worker-local temporary
+    file rather than incorrectly interpreted as a local path.
+    """
+    uri = str(artifact.storage_uri or "")
+    if uri.startswith("gs://"):
+        if not settings.firebase_storage_enabled or not settings.firebase_storage_bucket:
+            raise RuntimeError(
+                f"Artifact {artifact.id} is stored in cloud storage, but cloud storage "
+                "is not configured on this worker."
+            )
+        store = FirebaseArtifactStore(settings.firebase_storage_bucket)
+        payload = store.download_bytes(uri)
+        suffix = "".join(Path(artifact.filename).suffixes) or ".bin"
+        with NamedTemporaryFile(
+            prefix="siraloom-artifact-",
+            suffix=suffix,
+            delete=False,
+        ) as handle:
+            handle.write(payload)
+            local_path = Path(handle.name)
+        temporary_paths.append(local_path)
+        return local_path
+
+    if uri.startswith("file://"):
+        local_path = Path(uri.removeprefix("file://"))
+    else:
+        local_path = Path(uri)
+    if not local_path.is_file():
+        raise RuntimeError(
+            f"Artifact {artifact.id} is not available on this worker: {uri}"
+        )
+    return local_path
+
+
 def run_variant_analysis(analysis_id: UUID) -> None:
     from backend.app.infrastructure.db.session import SessionLocal
 
     db = SessionLocal()
+    temporary_artifact_paths: list[Path] = []
     try:
         analysis = db.get(Analysis, analysis_id)
         if not analysis:
@@ -468,9 +508,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         input_artifact = db.get(Artifact, UUID(str(input_artifact_id)))
         if not input_artifact:
             raise RuntimeError("Input artifact not found")
-        input_path = Path(input_artifact.storage_uri.removeprefix("file://"))
-        if not input_path.is_file():
-            raise RuntimeError(f"Input artifact path does not exist: {input_path}")
+        input_path = _materialize_artifact_for_worker(input_artifact, temporary_artifact_paths)
 
         if analysis.status not in {AnalysisStatus.SUCCEEDED, AnalysisStatus.REQUIRES_REVIEW}:
             analysis.status = AnalysisStatus.RUNNING
@@ -936,7 +974,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         elif normalized_artifact is None:
             raise RuntimeError("Normalization step is marked complete but normalized artifact is missing")
 
-        normalized_path = Path(normalized_artifact.storage_uri.removeprefix("file://"))
+        normalized_path = _materialize_artifact_for_worker(normalized_artifact, temporary_artifact_paths)
         if not normalized_path.is_file():
             raise RuntimeError(f"Normalized artifact path does not exist: {normalized_path}")
 
@@ -2728,6 +2766,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         raise
     finally:
         db.close()
+        for temporary_path in temporary_artifact_paths:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                # Cleanup failure must not mask the scientific workflow outcome.
+                pass
 
 
 def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
