@@ -15,10 +15,8 @@ from backend.app.infrastructure.db.models import Analysis, Report, CaseExport, C
 from backend.app.reporting.service import build_report_content, render_pdf, render_html, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
-from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
-from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.application.analysis import resume_analysis
 from backend.app.application.case_export import enqueue_case_export
