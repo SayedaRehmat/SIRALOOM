@@ -20,6 +20,7 @@ from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPat
 from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
+from backend.app.adapters.population.secondary import LocalTabixSecondaryPopulationProvider, SecondaryPopulationProviderError
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf
@@ -1098,7 +1099,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         execution=profile_runtime_annotation.execution,
                     )]
                     deployment = dict(((analysis.configuration or {}).get("resource_plan") or {}).get("deployment") or {})
-                    plan = SimpleNamespace(profile_type=deployment.get("profile_type", "LABORATORY"))
+                    plan = SimpleNamespace(
+                        profile_type=deployment.get("profile_type", "LABORATORY"),
+                        profile_version=deployment.get("profile_version", "1"),
+                        unavailable_optional=[],
+                    )
                 else:
                     plan = build_resource_execution_plan(
                         db,
@@ -1872,6 +1877,179 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             direct_count += 1
                         db.commit()
 
+                secondary_count = 0
+                secondary_limitations: list[dict] = []
+                if (analysis.configuration or {}).get("resource_profile_id"):
+                    try:
+                        secondary_runtime_resources = resolve_profile_runtime_resources(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="POPULATION_SECONDARY",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+
+                    for secondary_runtime in secondary_runtime_resources:
+                        secondary_resource = secondary_runtime.resource
+                        secondary_execution = secondary_runtime.execution
+                        provider_name = secondary_resource.provider.strip().upper()
+                        try:
+                            secondary_provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(
+                                secondary_execution.contract
+                            )
+                        except SecondaryPopulationProviderError as exc:
+                            secondary_limitations.append({
+                                "resource_id": str(secondary_resource.id),
+                                "provider": secondary_resource.provider,
+                                "code": "SECONDARY_POPULATION_ADAPTER_UNSUPPORTED",
+                                "message": str(exc),
+                            })
+                            record_workflow_decision(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="population",
+                                attempt=population_step.attempt,
+                                outcome=OutcomeKind.NO_DATA,
+                                decision=decide_step_outcome(
+                                    "population",
+                                    OutcomeKind.NO_DATA,
+                                    code="SECONDARY_POPULATION_ADAPTER_UNSUPPORTED",
+                                    message=(
+                                        f"Optional secondary population resource {secondary_resource.provider!r} "
+                                        "could not be executed; primary gnomAD population context remains authoritative."
+                                    ),
+                                ),
+                                resource_id=secondary_resource.id,
+                                metadata={
+                                    "population_role": "SECONDARY",
+                                    "provider": secondary_resource.provider,
+                                    "qualification_id": str(secondary_execution.qualification_id),
+                                    "contract_hash": secondary_execution.contract_hash,
+                                    "error": str(exc),
+                                },
+                            )
+                            db.commit()
+                            continue
+
+                        record_workflow_decision(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="population",
+                            attempt=population_step.attempt,
+                            outcome=OutcomeKind.SUCCESS,
+                            decision=decide_step_outcome(
+                                "population",
+                                OutcomeKind.SUCCESS,
+                                code="PROFILE_SECONDARY_RESOURCE_SELECTED",
+                                message=(
+                                    f"Optional secondary population resource {secondary_resource.provider!r} "
+                                    "is bound to the exact resource selected during analysis preflight."
+                                ),
+                            ),
+                            resource_id=secondary_resource.id,
+                            metadata={
+                                "population_role": "SECONDARY",
+                                "provider": secondary_resource.provider,
+                                "provider_version": secondary_resource.version,
+                                "qualification_id": str(secondary_execution.qualification_id),
+                                "contract_hash": secondary_execution.contract_hash,
+                            },
+                        )
+                        db.commit()
+
+                        for variant in iter_normalized_vcf(normalized_path, reference_build):
+                            execution_record = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="population",
+                                attempt=population_step.attempt,
+                                resolved=secondary_execution,
+                                requested_resource_id=str(secondary_resource.id),
+                                fallback_resource_id=None,
+                                batch_key=(
+                                    f"secondary:{provider_name}:{variant.chromosome}:{variant.position}:"
+                                    f"{variant.reference}:{variant.alternate}"
+                                ),
+                                metadata={
+                                    "provider": secondary_provider.provider_id,
+                                    "population_role": "SECONDARY",
+                                    "dataset": secondary_execution.contract.dataset,
+                                },
+                            )
+                            db.commit()
+                            try:
+                                observations = secondary_provider.query_variant(variant)
+                                complete_resource_execution(
+                                    db,
+                                    execution_record,
+                                    status="SUCCEEDED",
+                                    request_fingerprint=None,
+                                    response_sha256=None,
+                                )
+                                db.commit()
+                            except SecondaryPopulationProviderError as exc:
+                                complete_resource_execution(
+                                    db,
+                                    execution_record,
+                                    status="FAILED",
+                                    error_code="SECONDARY_POPULATION_PROVIDER_ERROR",
+                                    error_message=str(exc),
+                                )
+                                db.commit()
+                                secondary_limitations.append({
+                                    "resource_id": str(secondary_resource.id),
+                                    "provider": secondary_resource.provider,
+                                    "code": "SECONDARY_POPULATION_PROVIDER_ERROR",
+                                    "message": str(exc),
+                                })
+                                continue
+
+                            row = db.get(
+                                Variant,
+                                stable_variant_uuid(
+                                    canonical_key(
+                                        variant.genome_build,
+                                        variant.chromosome,
+                                        variant.position,
+                                        variant.reference,
+                                        variant.alternate,
+                                    )
+                                ),
+                            )
+                            if row is None:
+                                raise RuntimeError("Canonical variant row missing during secondary population processing")
+                            for obs in observations:
+                                existing = db.scalar(
+                                    select(PopulationObservation).where(
+                                        PopulationObservation.analysis_id == analysis.id,
+                                        PopulationObservation.variant_id == row.id,
+                                        PopulationObservation.resource_id == secondary_resource.id,
+                                        PopulationObservation.population_code == obs.population_code,
+                                    )
+                                )
+                                if existing:
+                                    continue
+                                db.add(
+                                    PopulationObservation(
+                                        id=__import__("uuid").uuid4(),
+                                        analysis_id=analysis.id,
+                                        variant_id=row.id,
+                                        resource_id=secondary_resource.id,
+                                        population_level=obs.population_level,
+                                        population_code=obs.population_code,
+                                        population_label=obs.population_label,
+                                        allele_count=obs.allele_count,
+                                        allele_number=obs.allele_number,
+                                        allele_frequency=obs.allele_frequency,
+                                        homozygote_count=obs.homozygote_count,
+                                        availability=obs.availability,
+                                        quality_status=obs.quality_status,
+                                        source_record_id=obs.source_record_id,
+                                    )
+                                )
+                                secondary_count += 1
+                        db.commit()
+
                 population_metadata = {
                     "executed_resources": executed_resources,
                     "profile_type": plan.profile_type,
@@ -1879,6 +2057,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "gene_be_global_observations": created,
                     "direct_population_observations": direct_count,
                     "optional_resources_not_selected": len(plan.unavailable_optional),
+                    "secondary_population_observations": secondary_count,
+                    "secondary_population_limitations": secondary_limitations,
                 }
                 # Absence of an optional population resource is not a workflow
                 # failure and is not converted into a user-facing limitation.
