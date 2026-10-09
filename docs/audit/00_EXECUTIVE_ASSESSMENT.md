@@ -48,3 +48,11 @@ The latest green CI is a meaningful engineering signal, but it cannot substitute
 - Clinical workflow / patient-care use: HOLD pending intended-use definition, laboratory validation under the deploying laboratory's quality system, authorized clinical review/sign-out, and applicable jurisdictional/regulatory assessment.
 
 See the companion audit documents in this directory for architecture, workflow, standards, threat model, validation, deployment, roadmap and release gates.
+
+
+## Follow-up checkpoint — 2026-10-09 12:12 UTC
+
+- PR #136 merged as `fdeafb56b43db6d7f0867778abef2726cefe97df`: explicit variant-class support matrix and classifier test. Its PR CI passed across backend, PostgreSQL integration and frontend.
+- PR #134 merged as `cab2c93b46566ab9b31ca83ebfdfb24eba9f160c`: bind runtime resource selection and reanalysis dispatch to persisted preflight plans. Final PR-head CI run [37928332355](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928332355) passed backend, PostgreSQL integration and frontend. Earlier runs failed; fixture corrections were made and the final run passed.
+- Current observed `main` HEAD is `cab2c93b46566ab9b31ca83ebfdfb24eba9f160c`. Post-merge main CI run [37928518446](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928518446) was queued at this checkpoint; its result must be verified before claiming post-merge CI success.
+- PR #135 is documentation-only and remains open while the final CI run is completed. No live production E2E or scientific truth-set benchmark was run in this audit.
