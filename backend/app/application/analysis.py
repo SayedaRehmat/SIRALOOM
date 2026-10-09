@@ -17,6 +17,7 @@ from backend.app.domain.resource_profile_resolver import (
     build_workflow_stage_resource_plan,
     resolve_analysis_resource_profile,
 )
+from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 
 
 
@@ -90,6 +91,15 @@ def preflight_analysis_resources(
     configuration = dict(analysis.configuration or {})
     profile_id = configuration.get("resource_profile_id")
     if not profile_id:
+        policy = resolve_resource_deployment_policy(
+            db,
+            organization_id=organization_id,
+        )
+        if policy.is_laboratory:
+            raise ValueError(
+                "RESOURCE_PROFILE_REQUIRED: laboratory analyses must declare a governed "
+                "resource_profile_id before dispatch."
+            )
         return None
 
     plan = resolve_analysis_resource_profile(

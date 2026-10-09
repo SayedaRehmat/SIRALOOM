@@ -532,3 +532,45 @@ def test_secondary_population_selection_keeps_all_qualified_providers():
         "MIDDLE_EAST",
     ]
     assert len(selected) == 3
+
+
+def test_laboratory_preflight_rejects_missing_resource_profile(monkeypatch):
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    import pytest
+    import backend.app.application.analysis as analysis_module
+
+    monkeypatch.setattr(
+        analysis_module,
+        "resolve_resource_deployment_policy",
+        lambda *_args, **_kwargs: SimpleNamespace(is_laboratory=True),
+    )
+    analysis = SimpleNamespace(configuration={}, reference_build="GRCh38")
+
+    with pytest.raises(ValueError, match="RESOURCE_PROFILE_REQUIRED"):
+        analysis_module.preflight_analysis_resources(
+            object(),
+            analysis=analysis,
+            organization_id=uuid4(),
+        )
+
+
+def test_trial_preflight_keeps_legacy_no_profile_path(monkeypatch):
+    from types import SimpleNamespace
+    from uuid import uuid4
+
+    import backend.app.application.analysis as analysis_module
+
+    monkeypatch.setattr(
+        analysis_module,
+        "resolve_resource_deployment_policy",
+        lambda *_args, **_kwargs: SimpleNamespace(is_laboratory=False),
+    )
+    analysis = SimpleNamespace(configuration={}, reference_build="GRCh38")
+
+    assert analysis_module.preflight_analysis_resources(
+        object(),
+        analysis=analysis,
+        organization_id=uuid4(),
+    ) is None
