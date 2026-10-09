@@ -457,15 +457,18 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
                 "is not configured on this worker."
             )
         store = FirebaseArtifactStore(settings.firebase_storage_bucket)
-        payload = store.download_bytes(uri)
         suffix = "".join(Path(artifact.filename).suffixes) or ".bin"
         with NamedTemporaryFile(
             prefix="siraloom-artifact-",
             suffix=suffix,
             delete=False,
         ) as handle:
-            handle.write(payload)
             local_path = Path(handle.name)
+        try:
+            store.download_to_file(uri, local_path)
+        except Exception:
+            local_path.unlink(missing_ok=True)
+            raise
         temporary_paths.append(local_path)
         return local_path
 

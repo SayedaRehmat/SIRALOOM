@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -220,8 +220,12 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     if artifact.storage_uri.startswith("gs://"):
-        content = FirebaseArtifactStore(settings.firebase_storage_bucket).download_bytes(artifact.storage_uri)
-        return Response(content=content, media_type=artifact.media_type or "application/octet-stream", headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'})
+        cloud_store = FirebaseArtifactStore(settings.firebase_storage_bucket)
+        return StreamingResponse(
+            cloud_store.iter_bytes(artifact.storage_uri),
+            media_type=artifact.media_type or "application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'},
+        )
 
     # Artifact URIs are immutable. The active profile controls the deployment
     # target for new artifacts; historical files continue to resolve by URI.
