@@ -1623,19 +1623,36 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "Analysis case was not found during population resource planning.",
                     )
 
-                plan = build_resource_execution_plan(
-                    db,
-                    organization_id=case.organization_id,
-                    requirements=(
-                        CapabilityRequirement(
-                            ResourceCapability.POPULATION_FREQUENCY,
-                            required=False,
+                profile_runtime_population = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_population = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="POPULATION",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    deployment = dict(((analysis.configuration or {}).get("resource_plan") or {}).get("deployment") or {})
+                    plan = SimpleNamespace(profile_type=deployment.get("profile_type", "LABORATORY"))
+                    population_candidates = [SimpleNamespace(
+                        resource=profile_runtime_population.resource,
+                        execution=profile_runtime_population.execution,
+                    )]
+                else:
+                    plan = build_resource_execution_plan(
+                        db,
+                        organization_id=case.organization_id,
+                        requirements=(
+                            CapabilityRequirement(
+                                ResourceCapability.POPULATION_FREQUENCY,
+                                required=False,
+                            ),
                         ),
-                    ),
-                )
-                population_candidates = plan.for_capability(
-                    ResourceCapability.POPULATION_FREQUENCY
-                )
+                    )
+                    population_candidates = plan.for_capability(
+                        ResourceCapability.POPULATION_FREQUENCY
+                    )
 
                 created = 0
                 direct_count = 0
@@ -1644,12 +1661,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 for candidate in population_candidates:
                     resource = candidate.resource
-                    execution = resolve_resource_execution(db, resource=resource)
+                    execution = (
+                        candidate.execution
+                        if profile_bound_analysis
+                        else resolve_resource_execution(db, resource=resource)
+                    )
                     implementation = registry.resolve(
                         provider_id=execution.contract.provider_id,
                         provider_version=execution.contract.provider_version,
                     )
                     if implementation is None:
+                        if profile_bound_analysis:
+                            raise ResourceConsumptionError(
+                                "POPULATION_ADAPTER_UNSUPPORTED",
+                                f"Preflight-selected population provider {execution.contract.provider_id!r} has no runtime adapter.",
+                            )
                         continue
 
                     provider = implementation.factory(execution.contract)
