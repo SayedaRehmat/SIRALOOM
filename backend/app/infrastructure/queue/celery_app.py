@@ -147,7 +147,13 @@ if Celery is not None:
         if task_id is not None and analysis.queue_task_id != task_id:
             return False
         if analysis.status == AnalysisStatus.RUNNING:
-            return allow_running
+            if allow_running:
+                # Release the row lock before redelivery recovery uses a second
+                # session to lock and reconcile the interrupted workflow. The
+                # session-scoped advisory lock remains held by this claim session.
+                db.commit()
+                return True
+            return False
         if analysis.status not in {AnalysisStatus.CREATED, AnalysisStatus.QUEUED}:
             return False
 
