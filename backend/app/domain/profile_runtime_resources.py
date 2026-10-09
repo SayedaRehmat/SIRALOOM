@@ -83,6 +83,8 @@ def resolve_profile_runtime_resources(
             None,
         )
         if issue is not None:
+            if not bool(issue.get("required", True)):
+                return ()
             raise ProfileRuntimeResourceError(
                 str(issue.get("code") or "RESOURCE_UNAVAILABLE"),
                 str(issue.get("message") or f"Preflight could not resolve {capability!r}."),
