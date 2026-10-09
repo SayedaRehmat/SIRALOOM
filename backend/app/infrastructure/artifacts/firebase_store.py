@@ -222,7 +222,28 @@ class FirebaseArtifactStore:
 
         return self.bucket.blob(object_name)
 
+    def download_to_file(self, storage_uri: str, destination: Path) -> Path:
+        """Download a cloud artifact directly to disk without buffering it in RAM."""
+        target = Path(destination)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        blob = self._blob_from_uri(storage_uri)
+        blob.download_to_filename(str(target))
+        return target
+
+    def iter_bytes(self, storage_uri: str, *, chunk_size: int = 8 * 1024 * 1024):
+        """Yield bounded chunks from a cloud artifact for HTTP streaming."""
+        if chunk_size < 1:
+            raise ValueError("chunk_size must be positive")
+        blob = self._blob_from_uri(storage_uri)
+        with blob.open("rb") as handle:
+            while True:
+                chunk = handle.read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+
     def download_bytes(self, storage_uri: str) -> bytes:
+        """Convenience helper for small objects only; large files should stream."""
         blob = self._blob_from_uri(storage_uri)
         return blob.download_as_bytes()
 
