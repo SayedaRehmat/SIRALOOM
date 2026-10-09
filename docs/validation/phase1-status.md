@@ -13,7 +13,7 @@
 - FASTA `.fai` random-access tests: PASS
 - Reference allele mismatch detection: PASS
 - Reference-aware indel left-normalization tests: PASS
-- Multiallelic splitting via BCFtools: covered by the current normalization test suite; genotype/INFO/FORMAT remapping still needs a dedicated golden fixture.
+- Multiallelic splitting via BCFtools: basic genotype-bearing fixture passes in CI; it checks GT remapping, INFO Number=A values, FORMAT AD Number=R cardinality and PL Number=G cardinality. Expanded phase/multi-sample/missing-value qualification remains open.
 - GeneBe response normalization fixture tests: PASS
 - gnomAD INFO field parsing tests: PASS
 - Current CI evidence: [GitHub Actions run 1043](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37917001590) reports the backend suite, PostgreSQL migration/dispatch integration, and frontend production build as successful.
@@ -86,3 +86,8 @@ Python validation in this workspace: 73 tests passing. Frontend production build
 ## 2026-10-09 — current-mainline support clarification
 
 The original statements above about multiallelic rejection and the 12-test suite were historical and no longer describe the current mainline CI evidence. Current workflow behavior is defined by `backend/app/workflows/variant.py`, `backend/app/domain/vcf_tools.py`, and the explicit support matrix in `docs/VARIANT_CLASS_SUPPORT.md`. CI success is software test evidence only; independent scientific concordance and clinical validation remain unclaimed.
+
+
+## 2026-10-09 — genotype-bearing multiallelic regression fixture
+
+PR #137 added a BCFtools 1.19 fixture for a diploid `1/2` genotype and allele-indexed INFO/FORMAT fields. [CI run 37928636733](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928636733) passed backend, PostgreSQL integration and frontend jobs. This is bounded tool-level regression evidence, not independent scientific concordance or clinical validation.
