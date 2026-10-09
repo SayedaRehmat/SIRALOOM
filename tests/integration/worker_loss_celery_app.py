@@ -1,15 +1,16 @@
-"""Test-only Celery app for exercising real worker-process loss in PostgreSQL CI.
+"""Test-only Celery app for crashing the real SIRALOOM analysis task mid-stage.
 
-Loaded by a separate prefork worker process. The first delivery commits an
-in-progress workflow checkpoint and exits the child process abruptly; a broker
-redelivery must invoke the production execution claim and recovery routines.
+The outer task runs in a real prefork worker. It calls the production
+run_analysis_task with broker delivery metadata preserved. The workflow
+function is replaced only inside this worker process so the first invocation
+commits an interrupted-stage checkpoint and exits abruptly.
 """
+import json
 import os
 from uuid import UUID
 
 from celery import Celery
 from redis import Redis
-from sqlalchemy import text
 
 from backend.app.config import settings
 
@@ -31,114 +32,87 @@ celery_app.conf.update(
     result_backend_transport_options={"visibility_timeout": 30},
 )
 
-@celery_app.task(bind=True, name="siraloom.test_worker_loss_after_checkpoint", acks_late=True)
+
+@celery_app.task(
+    bind=True,
+    name="siraloom.test_worker_loss_after_checkpoint",
+    acks_late=True,
+    reject_on_worker_lost=True,
+)
 def worker_loss_after_checkpoint(self, analysis_id: str, marker_prefix: str):
     import importlib
-    import time
 
     from backend.app.domain.enums import StepStatus
-    from backend.app.infrastructure.db.models import Analysis, AnalysisPartition, WorkflowStep
-    from backend.app.infrastructure.db.session import SessionLocal, engine
-    from backend.app.workflows.variant import recover_interrupted_execution
+    from backend.app.infrastructure.db.models import AnalysisPartition, WorkflowStep
+    from backend.app.infrastructure.db.session import SessionLocal
 
     redis = Redis.from_url(settings.redis_url, decode_responses=True)
     analysis_uuid = UUID(analysis_id)
-    delivery = self.request.delivery_info or {}
-    redelivered = bool(delivery.get("redelivered"))
-    marker_key = f"{marker_prefix}:attempts"
-    attempt = redis.incr(marker_key)
-    redis.expire(marker_key, 300)
-
+    marker = lambda suffix: f"{marker_prefix}:{suffix}"
     production_queue = importlib.import_module(
         "backend.app.infrastructure.queue.celery_app"
     )
-    lock_connection = engine.connect() if engine.dialect.name == "postgresql" else None
-    claim_db = SessionLocal()
-    try:
-        claim_kwargs = {"lock_connection": lock_connection} if lock_connection else {}
-        claimed = production_queue._claim_analysis_execution(
-            claim_db,
-            analysis_uuid,
-            task_id=self.request.id,
-            allow_running=redelivered,
-            **claim_kwargs,
-        )
-        if not claimed:
-            result = {
-                "outcome": "claim_rejected",
-                "redelivered": redelivered,
-                "attempt": attempt,
-            }
-            redis.set(f"{marker_prefix}:result", __import__("json").dumps(result), ex=300)
-            return result
+    workflow_module = importlib.import_module("backend.app.workflows.variant")
+    original_workflow = workflow_module.run_variant_analysis
 
-        if not redelivered:
-            # Persist a checkpoint exactly as a worker would before entering a
-            # long-running annotation batch, then die without executing finally.
+    def crashable_workflow(workflow_analysis_id):
+        assert UUID(str(workflow_analysis_id)) == analysis_uuid
+        if redis.get(marker("checkpoint")) is None:
+            # The production task has already claimed the analysis and committed
+            # RUNNING. Commit a real stage/partition checkpoint, then kill this
+            # prefork child without running either task's Python finalizers.
             with SessionLocal() as db:
-                step = WorkflowStep(
-                    id=__import__("uuid").uuid4(),
-                    analysis_id=analysis_uuid,
-                    step_id="annotate",
-                    step_order=3,
-                    status=StepStatus.RUNNING,
-                    attempt=1,
-                    input_artifacts=["normalized-vcf"],
-                    output_artifacts=[],
-                    metadata_json={"next_step": "annotate", "checkpoint": "batch-4"},
-                )
-                partition = AnalysisPartition(
-                    id=__import__("uuid").uuid4(),
-                    analysis_id=analysis_uuid,
-                    step_id="annotate",
-                    partition_key="batch-4",
-                    ordinal=4,
-                    record_start=400,
-                    record_end=500,
-                    variant_count=100,
-                    status="RUNNING",
-                    metadata_json={"variant_ids": ["unfinished-variant"]},
-                    resource_class="STANDARD",
-                    cpu_request=1.0,
-                    memory_mb=1024,
-                    attempt=1,
-                    lease_owner="crashed-worker",
-                    lease_expires_at=None,
-                )
-                db.add_all([step, partition])
+                db.add_all([
+                    WorkflowStep(
+                        id=__import__("uuid").uuid4(),
+                        analysis_id=analysis_uuid,
+                        step_id="annotate",
+                        step_order=3,
+                        status=StepStatus.RUNNING,
+                        attempt=1,
+                        input_artifacts=["normalized-vcf"],
+                        output_artifacts=[],
+                        metadata_json={
+                            "next_step": "annotate",
+                            "checkpoint": "batch-4",
+                        },
+                    ),
+                    AnalysisPartition(
+                        id=__import__("uuid").uuid4(),
+                        analysis_id=analysis_uuid,
+                        step_id="annotate",
+                        partition_key="batch-4",
+                        ordinal=4,
+                        record_start=400,
+                        record_end=500,
+                        variant_count=100,
+                        status="RUNNING",
+                        metadata_json={"variant_ids": ["unfinished-variant"]},
+                        resource_class="STANDARD",
+                        cpu_request=1.0,
+                        memory_mb=1024,
+                        attempt=1,
+                        lease_owner="crashed-worker",
+                        lease_expires_at=None,
+                    ),
+                ])
                 db.commit()
-            redis.set(f"{marker_prefix}:checkpoint", "committed", ex=300)
-            # No Python cleanup runs; the OS closes this process's PostgreSQL
-            # connection, releasing the session-scoped execution advisory lock.
+            redis.set(marker("checkpoint"), "committed", ex=300)
             os._exit(73)
 
-        # Do not paper over missing broker metadata: this test specifically
-        # validates that real redelivery is marked as such by the configured
-        # Celery/Redis transport.
-        if not redelivered:
-            result = {"outcome": "redelivery_flag_missing", "attempt": attempt}
-            redis.set(f"{marker_prefix}:result", __import__("json").dumps(result), ex=300)
-            return result
-
-        with SessionLocal() as recovery_db:
-            recovered = recover_interrupted_execution(recovery_db, analysis_uuid)
-
-        with SessionLocal() as verify_db:
-            analysis = verify_db.get(Analysis, analysis_uuid)
-            step = verify_db.query(WorkflowStep).filter(
+        # This executes only if the actual production task sees redelivery,
+        # reacquires the execution fence, and recovers interrupted state before
+        # calling run_variant_analysis again.
+        with SessionLocal() as db:
+            step = db.query(WorkflowStep).filter(
                 WorkflowStep.analysis_id == analysis_uuid,
                 WorkflowStep.step_id == "annotate",
             ).one()
-            partition = verify_db.query(AnalysisPartition).filter(
+            partition = db.query(AnalysisPartition).filter(
                 AnalysisPartition.analysis_id == analysis_uuid,
                 AnalysisPartition.partition_key == "batch-4",
             ).one()
-            result = {
-                "outcome": "recovered",
-                "redelivered": redelivered,
-                "attempt": attempt,
-                "recovered": recovered,
-                "analysis_status": str(analysis.status),
+            workflow_result = {
                 "step_status": str(step.status),
                 "step_error_code": step.error_code,
                 "checkpoint": step.metadata_json.get("checkpoint"),
@@ -146,22 +120,30 @@ def worker_loss_after_checkpoint(self, analysis_id: str, marker_prefix: str):
                 "partition_lease_owner": partition.lease_owner,
                 "partition_error_code": partition.error_code,
             }
-        redis.set(f"{marker_prefix}:result", __import__("json").dumps(result), ex=300)
+        redis.set(marker("workflow"), json.dumps(workflow_result), ex=300)
+        # The test replaces the scientific stage body after verifying that the
+        # production wrapper recovered its checkpoint. Do not run external
+        # annotation providers in this worker-process fault-injection test.
+        return None
+
+    workflow_module.run_variant_analysis = crashable_workflow
+    production_task = production_queue.run_analysis_task
+    delivery = dict(self.request.delivery_info or {})
+    production_task.push_request(
+        id=self.request.id,
+        retries=0,
+        delivery_info=delivery,
+    )
+    try:
+        production_result = production_task.run(analysis_id)
+        workflow_payload = redis.get(marker("workflow"))
+        result = {
+            "production_result": production_result,
+            "delivery_redelivered": bool(delivery.get("redelivered")),
+            "workflow_result": json.loads(workflow_payload) if workflow_payload else None,
+        }
+        redis.set(marker("result"), json.dumps(result), ex=300)
         return result
     finally:
-        claim_db.close()
-        if lock_connection is not None:
-            lock_key = lock_connection.info.pop(
-                "siraloom_analysis_execution_lock_key", None
-            )
-            try:
-                if lock_key is not None:
-                    lock_connection.execute(
-                        text("SELECT pg_advisory_unlock(:lock_key)"),
-                        {"lock_key": lock_key},
-                    ).scalar_one()
-                    lock_connection.commit()
-            except Exception:
-                lock_connection.invalidate()
-            finally:
-                lock_connection.close()
+        production_task.pop_request()
+        workflow_module.run_variant_analysis = original_workflow
