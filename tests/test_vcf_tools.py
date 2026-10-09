@@ -173,12 +173,12 @@ from backend.app.domain.vcf_tools import classify_records
 def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_path: Path):
     path = tmp_path / "classes.vcf"
     path.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##ALT=<ID=NON_REF,Description=\"Represents any possible alternative allele at this location\">\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\n"
-        "1\\t3\\t.\\tA\\t<DEL>\\t.\\tPASS\\t.\\n"
-        "1\\t4\\t.\\tA\\t<NON_REF>\\t.\\tPASS\\tEND=10\\n",
+        "##fileformat=VCFv4.3\n"
+        "##ALT=<ID=NON_REF,Description=\"Represents any possible alternative allele at this location\">\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\n"
+        "1\t3\t.\tA\t<DEL>\t.\tPASS\t.\n"
+        "1\t4\t.\tA\t<NON_REF>\t.\tPASS\tEND=10\n",
         encoding="utf-8",
     )
 
