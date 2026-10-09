@@ -136,3 +136,78 @@ def test_dispatch_outbox_relay_only_scans_queued_analyses(monkeypatch):
     assert result == {"inspected": 1, "dispatched": 1}
     assert published == ["queued-dispatch"]
     assert db.closed
+
+
+def test_dispatch_boundary_rejects_laboratory_analysis_without_resource_profile(monkeypatch):
+    from types import SimpleNamespace
+    import pytest
+    import backend.app.application.analysis as analysis_module
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        case_id=uuid4(),
+        status=AnalysisStatus.CREATED,
+        queue_task_id=None,
+        configuration={},
+    )
+    case = SimpleNamespace(organization_id=uuid4())
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            if model.__name__ == "Analysis":
+                return analysis
+            if model.__name__ == "Case":
+                return case
+            return None
+
+        def refresh(self, _row, **_kwargs):
+            return None
+
+    monkeypatch.setattr(
+        analysis_module,
+        "resolve_resource_deployment_policy",
+        lambda *_args, **_kwargs: SimpleNamespace(is_laboratory=True),
+    )
+
+    with pytest.raises(ValueError, match="RESOURCE_PROFILE_REQUIRED"):
+        enqueue_analysis(FakeDB(), analysis)
+
+
+def test_dispatch_boundary_rejects_profile_without_runnable_persisted_plan(monkeypatch):
+    from types import SimpleNamespace
+    import pytest
+    import backend.app.application.analysis as analysis_module
+    from backend.app.domain.enums import AnalysisStatus
+
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        case_id=uuid4(),
+        status=AnalysisStatus.CREATED,
+        queue_task_id=None,
+        configuration={
+            "resource_profile_id": "WES_GRCh38_STANDARD",
+            "resource_plan": {"status": "BLOCKED", "plan_hash": "blocked"},
+        },
+    )
+    case = SimpleNamespace(organization_id=uuid4())
+
+    class FakeDB:
+        def get(self, model, row_id, **kwargs):
+            if model.__name__ == "Analysis":
+                return analysis
+            if model.__name__ == "Case":
+                return case
+            return None
+
+        def refresh(self, _row, **_kwargs):
+            return None
+
+    monkeypatch.setattr(
+        analysis_module,
+        "resolve_resource_deployment_policy",
+        lambda *_args, **_kwargs: SimpleNamespace(is_laboratory=True),
+    )
+
+    with pytest.raises(ValueError, match="RESOURCE_PLAN_NOT_READY"):
+        enqueue_analysis(FakeDB(), analysis)
