@@ -42,7 +42,10 @@ if Celery is not None:
         },
     )
 
-    def _finalize_transient_retry_exhaustion(db, analysis_id, error_message):
+    def _finalize_transient_retry_exhaustion(
+        db, analysis_id, error_message, *, error_code="ANNOTATION_PROVIDER_RETRY_EXHAUSTED",
+        max_retries=3,
+    ):
         from datetime import datetime, timezone
         from sqlalchemy import select
         from backend.app.domain.enums import AnalysisStatus, StepStatus
@@ -63,7 +66,7 @@ if Celery is not None:
             metadata = dict(step.metadata_json or {})
             metadata["retry_exhausted"] = True
             step.status = StepStatus.FAILED
-            step.error_code = "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+            step.error_code = error_code
             step.error_message = error_message
             step.metadata_json = metadata
 
@@ -78,19 +81,19 @@ if Celery is not None:
             partition.status = "FAILED"
             partition.lease_owner = None
             partition.lease_expires_at = None
-            partition.error_code = "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+            partition.error_code = error_code
             partition.error_message = error_message
 
         analysis.status = AnalysisStatus.FAILED
         analysis.completed_at = datetime.now(timezone.utc)
         AuditService(db).record(
-            event_type="ANNOTATION_RETRY_EXHAUSTED",
+            event_type="ANALYSIS_RETRY_EXHAUSTED",
             case_id=analysis.case_id,
             analysis_id=analysis.id,
             actor_type="SYSTEM",
             actor_id="celery",
             reason=error_message,
-            payload={"error_code": "ANNOTATION_PROVIDER_RETRY_EXHAUSTED", "max_retries": 3},
+            payload={"error_code": error_code, "max_retries": max_retries},
         )
         db.commit()
         return True
@@ -290,18 +293,24 @@ if Celery is not None:
             try:
                 run_variant_analysis(UUID(analysis_id))
             except TransientWorkflowError as exc:
-                if self.request.retries >= self.max_retries:
+                if self.request.retries >= exc.max_retries:
                     terminal_db = SessionLocal()
                     try:
                         _finalize_transient_retry_exhaustion(
                             terminal_db,
                             UUID(analysis_id),
                             str(exc),
+                            error_code=exc.error_code,
+                            max_retries=exc.max_retries,
                         )
                     finally:
                         terminal_db.close()
                     raise
-                raise self.retry(exc=exc, countdown=exc.countdown)
+                raise self.retry(
+                    exc=exc,
+                    countdown=exc.countdown,
+                    max_retries=exc.max_retries,
+                )
             from backend.app.infrastructure.db.models import Analysis
             analysis = claim_db.get(Analysis, UUID(analysis_id))
             return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
