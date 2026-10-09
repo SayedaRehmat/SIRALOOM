@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 
@@ -83,7 +85,12 @@ def normalize_vcf_with_bcftools(
     expected_bcftools_version: str | None = None,
     timeout_seconds: int = 1800,
 ) -> dict:
-    """Normalize, sort, and CSI-index a canonical VCF using pinned bcftools."""
+    """Normalize, sort, and CSI-index a VCF before publishing either output.
+
+    All expensive work occurs in a private directory on the destination
+    filesystem. Existing output and index files remain untouched until
+    normalization, sorting, and indexing have all succeeded.
+    """
     if not bcftools_available():
         raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
     input_path = Path(input_path)
@@ -97,10 +104,19 @@ def normalize_vcf_with_bcftools(
         raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     index_path = Path(str(output_path) + ".csi")
-    output_path.unlink(missing_ok=True)
-    index_path.unlink(missing_ok=True)
 
-    version_result = subprocess.run(["bcftools", "--version"], capture_output=True, text=True, timeout=30, check=False)
+    try:
+        version_result = subprocess.run(
+            ["bcftools", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise VCFToolError("Timed out while checking the bcftools version.") from exc
+    except OSError as exc:
+        raise VCFToolError(f"Unable to execute bcftools: {exc}") from exc
     if version_result.returncode != 0:
         detail = (version_result.stderr or version_result.stdout or "unknown bcftools error").strip()
         raise VCFToolError(f"Unable to determine bcftools version: {detail}")
@@ -109,13 +125,36 @@ def normalize_vcf_with_bcftools(
     if expected_bcftools_version and detected_version != expected_bcftools_version:
         raise VCFToolError(f"bcftools version mismatch: expected {expected_bcftools_version}, found {detected_version or version_line}")
 
-    normalized_path = output_path.with_name(output_path.name + ".normalized")
-    sorted_path = output_path.with_name(output_path.name + ".sorted")
-    normalized_path.unlink(missing_ok=True)
-    sorted_path.unlink(missing_ok=True)
-    try:
-        normalize_command = ["bcftools", "norm", "-f", str(reference_fasta), "-c", "e", "-m", "-any", "-Oz", "-o", str(normalized_path), str(input_path)]
-        completed = subprocess.run(normalize_command, capture_output=True, text=True, timeout=max(1, int(timeout_seconds)), check=False)
+    timeout = max(1, int(timeout_seconds))
+    with tempfile.TemporaryDirectory(
+        prefix=f".{output_path.name}.siraloom-",
+        dir=str(output_path.parent),
+    ) as work_dir:
+        work = Path(work_dir)
+        normalized_path = work / "normalized.vcf.gz"
+        sorted_path = work / "sorted.vcf.gz"
+        staged_index_path = Path(str(sorted_path) + ".csi")
+        normalized_stderr = ""
+        sorted_stderr = ""
+        indexed_stderr = ""
+
+        normalize_command = [
+            "bcftools", "norm", "-f", str(reference_fasta), "-c", "e",
+            "-m", "-any", "-Oz", "-o", str(normalized_path), str(input_path),
+        ]
+        try:
+            completed = subprocess.run(
+                normalize_command,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise VCFToolError(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
+        except OSError as exc:
+            raise VCFToolError(f"Unable to execute bcftools normalization: {exc}") from exc
+        normalized_stderr = (completed.stderr or "").strip()
         if completed.returncode != 0:
             detail = (completed.stderr or completed.stdout or "unknown bcftools normalization error").strip()
             raise VCFToolError(f"bcftools reference-aware normalization failed (exit {completed.returncode}): {detail}")
@@ -123,21 +162,79 @@ def normalize_vcf_with_bcftools(
             raise VCFToolError("bcftools reported success but produced no normalized VCF.")
 
         sort_command = ["bcftools", "sort", "-Oz", "-o", str(sorted_path), str(normalized_path)]
-        sorted_result = subprocess.run(sort_command, capture_output=True, text=True, timeout=max(1, int(timeout_seconds)), check=False)
+        try:
+            sorted_result = subprocess.run(
+                sort_command,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise VCFToolError(f"bcftools sorting timed out after {timeout}s.") from exc
+        except OSError as exc:
+            raise VCFToolError(f"Unable to execute bcftools sorting: {exc}") from exc
+        sorted_stderr = (sorted_result.stderr or "").strip()
         if sorted_result.returncode != 0:
             detail = (sorted_result.stderr or sorted_result.stdout or "unknown bcftools sort error").strip()
             raise VCFToolError(f"bcftools sorting of normalized VCF failed (exit {sorted_result.returncode}): {detail}")
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
-        sorted_path.replace(output_path)
 
-        index_command = ["bcftools", "index", "--csi", "--force", str(output_path)]
-        indexed_result = subprocess.run(index_command, capture_output=True, text=True, timeout=120, check=False)
+        index_command = ["bcftools", "index", "--csi", "--force", str(sorted_path)]
+        try:
+            indexed_result = subprocess.run(
+                index_command,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise VCFToolError("bcftools CSI indexing timed out after 120s.") from exc
+        except OSError as exc:
+            raise VCFToolError(f"Unable to execute bcftools CSI indexing: {exc}") from exc
+        indexed_stderr = (indexed_result.stderr or "").strip()
         if indexed_result.returncode != 0:
             detail = (indexed_result.stderr or indexed_result.stdout or "unknown bcftools index error").strip()
             raise VCFToolError(f"bcftools CSI indexing failed (exit {indexed_result.returncode}): {detail}")
-        if not index_path.is_file() or index_path.stat().st_size == 0:
+        if not staged_index_path.is_file() or staged_index_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no CSI index.")
+
+        # Flush staged files before publication. The private directory is on the
+        # destination filesystem, so os.replace avoids cross-device partial copies.
+        for staged in (sorted_path, staged_index_path):
+            with staged.open("rb") as handle:
+                os.fsync(handle.fileno())
+
+        output_backup = work / "previous.vcf.gz"
+        index_backup = work / "previous.vcf.gz.csi"
+        moved_old_output = False
+        moved_old_index = False
+        published_output = False
+        published_index = False
+        try:
+            if output_path.exists():
+                os.replace(output_path, output_backup)
+                moved_old_output = True
+            if index_path.exists():
+                os.replace(index_path, index_backup)
+                moved_old_index = True
+
+            os.replace(sorted_path, output_path)
+            published_output = True
+            os.replace(staged_index_path, index_path)
+            published_index = True
+        except BaseException:
+            if published_output:
+                output_path.unlink(missing_ok=True)
+            if published_index:
+                index_path.unlink(missing_ok=True)
+            if moved_old_output and output_backup.exists():
+                os.replace(output_backup, output_path)
+            if moved_old_index and index_backup.exists():
+                os.replace(index_backup, index_path)
+            raise
 
         return {
             "tool": "bcftools",
@@ -152,12 +249,8 @@ def normalize_vcf_with_bcftools(
             "compression": "BGZF",
             "index": "CSI",
             "index_path": str(index_path),
-            "stderr": "\n".join(x for x in ((completed.stderr or "").strip(), (sorted_result.stderr or "").strip(), (indexed_result.stderr or "").strip()) if x),
+            "stderr": "\n".join(x for x in (normalized_stderr, sorted_stderr, indexed_stderr) if x),
         }
-    finally:
-        normalized_path.unlink(missing_ok=True)
-        sorted_path.unlink(missing_ok=True)
-
 
 def classify_records(path: str | Path) -> dict:
     import gzip
