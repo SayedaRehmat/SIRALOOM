@@ -1162,7 +1162,8 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
 
     from backend.app.domain.enums import StepStatus
     from backend.app.infrastructure.db.models import AuditEvent, WorkflowStep
-    from backend.app.infrastructure.queue import celery_app as celery_module
+    import importlib
+    celery_module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     from backend.app.workflows.variant import recover_interrupted_execution
 
     engine = create_engine(database_url, pool_pre_ping=True)
