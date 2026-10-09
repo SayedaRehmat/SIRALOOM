@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, WorkflowStep
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, Case, WorkflowStep
 from backend.app.domain.resource_profile_resolver import (
     AnalysisResourcePlan,
     build_workflow_stage_resource_plan,
@@ -109,6 +109,21 @@ def preflight_analysis_resources(
         analysis_reference_build=analysis.reference_build,
     )
     previous_resource_plan = dict(configuration.get("resource_plan") or {})
+    previous_plan_status = str(previous_resource_plan.get("status") or "").upper()
+    previous_plan_hash = str(previous_resource_plan.get("plan_hash") or "")
+    # Once a runnable plan has been persisted, retries must not silently select
+    # a different resource release. Only an analysis blocked at preflight may
+    # replace its blocked plan after the lab registers/qualifies the missing resource.
+    if (
+        previous_plan_status in {"READY", "READY_WITH_LIMITATIONS"}
+        and previous_plan_hash
+        and previous_plan_hash != plan.plan_hash
+    ):
+        raise ValueError(
+            "RESOURCE_PLAN_STALE: the resolved resource plan differs from the "
+            "persisted analysis plan. Preserve the original plan for retries; "
+            "create a new reanalysis to intentionally select updated resources."
+        )
     configuration["resource_plan"] = plan.snapshot()
     configuration["resource_stage_plan"] = build_workflow_stage_resource_plan(plan)
     analysis.configuration = configuration
@@ -243,6 +258,29 @@ def enqueue_analysis(
         return analysis.queue_task_id
     if analysis.status == AnalysisStatus.RUNNING:
         return analysis.queue_task_id
+
+    case_id = getattr(analysis, "case_id", None)
+    if case_id is not None:
+        case = db.get(Case, case_id)
+        if case is not None:
+            policy = resolve_resource_deployment_policy(
+                db,
+                organization_id=case.organization_id,
+            )
+            configuration = dict(analysis.configuration or {})
+            profile_id = configuration.get("resource_profile_id")
+            if policy.is_laboratory and not profile_id:
+                raise ValueError(
+                    "RESOURCE_PROFILE_REQUIRED: laboratory analyses cannot be dispatched "
+                    "without a governed resource profile."
+                )
+            if profile_id:
+                resource_plan = dict(configuration.get("resource_plan") or {})
+                if resource_plan.get("status") not in {"READY", "READY_WITH_LIMITATIONS"}:
+                    raise ValueError(
+                        "RESOURCE_PLAN_NOT_READY: analysis dispatch requires a persisted, "
+                        "runnable resource plan."
+                    )
 
     if analysis.status not in {
         AnalysisStatus.CREATED,

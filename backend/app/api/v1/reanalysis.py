@@ -16,7 +16,7 @@ from backend.app.infrastructure.db.models import (
     Resource,
 )
 from backend.app.infrastructure.db.session import get_db
-from backend.app.application.analysis import enqueue_analysis
+from backend.app.application.analysis import enqueue_analysis, preflight_analysis_resources
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.domain.reanalysis import (
     create_reanalysis,
@@ -141,6 +141,38 @@ def request_reanalysis(
         }
 
     try:
+        plan = preflight_analysis_resources(
+            db,
+            analysis=child,
+            organization_id=principal.organization_id,
+        )
+    except (ValueError, KeyError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    if plan is not None and not plan.is_ready:
+        db.commit()
+        db.refresh(child)
+        return {
+            "analysis_id": str(child.id),
+            "parent_analysis_id": str(parent.id),
+            "analysis_version": child.analysis_version,
+            "status": child.status,
+            "task_id": None,
+            "resource_plan_status": plan.status,
+            "resource_issues": [
+                {
+                    "capability": issue.capability,
+                    "required": issue.required,
+                    "code": issue.code,
+                    "message": issue.message,
+                }
+                for issue in plan.issues
+            ],
+            "candidate_id": str(candidate.id) if candidate else None,
+        }
+
+    try:
         task_id = enqueue_analysis(db, child)
     except ValueError as exc:
         raise HTTPException(
@@ -230,6 +262,42 @@ def execute_reanalysis_candidate(
             "analysis_version": child.analysis_version,
             "status": child.status,
             "task_id": child.queue_task_id,
+            "candidate_id": str(candidate.id),
+            "earliest_affected_step": candidate.earliest_affected_step,
+        }
+
+    try:
+        plan = preflight_analysis_resources(
+            db,
+            analysis=child,
+            organization_id=principal.organization_id,
+        )
+    except (ValueError, KeyError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    if plan is not None and not plan.is_ready:
+        candidate.status = "PENDING"
+        candidate.acted_at = None
+        db.add(candidate)
+        db.commit()
+        db.refresh(child)
+        return {
+            "analysis_id": str(child.id),
+            "parent_analysis_id": str(parent.id),
+            "analysis_version": child.analysis_version,
+            "status": child.status,
+            "task_id": None,
+            "resource_plan_status": plan.status,
+            "resource_issues": [
+                {
+                    "capability": issue.capability,
+                    "required": issue.required,
+                    "code": issue.code,
+                    "message": issue.message,
+                }
+                for issue in plan.issues
+            ],
             "candidate_id": str(candidate.id),
             "earliest_affected_step": candidate.earliest_affected_step,
         }

@@ -24,6 +24,7 @@ from backend.app.infrastructure.db.models import (
     ReanalysisCandidate,
     ReanalysisChangeEvent,
     Resource,
+    ResourceDeploymentProfile,
     User,
 )
 
@@ -38,7 +39,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         engine,
         tables=[
             Organization.__table__, Case.__table__, Analysis.__table__,
-            AnalysisDispatch.__table__, OrganizationEntitlement.__table__, AuditEvent.__table__,
+            AnalysisDispatch.__table__, OrganizationEntitlement.__table__, ResourceDeploymentProfile.__table__, AuditEvent.__table__,
         ],
     )
 

@@ -74,10 +74,25 @@ def resolve_profile_runtime_resources(
         if str(item.get("capability")) == capability
     ]
     if not selected:
-        raise ProfileRuntimeResourceError(
-            "RESOURCE_NOT_SELECTED",
-            f"Preflight selected no resources for capability {capability!r}.",
+        issue = next(
+            (
+                dict(item)
+                for item in (plan.get("issues") or [])
+                if str(item.get("capability")) == capability
+            ),
+            None,
         )
+        if issue is not None:
+            if not bool(issue.get("required", True)):
+                return ()
+            raise ProfileRuntimeResourceError(
+                str(issue.get("code") or "RESOURCE_UNAVAILABLE"),
+                str(issue.get("message") or f"Preflight could not resolve {capability!r}."),
+            )
+        # No selection and no issue means this is an intentionally absent
+        # optional capability. The plural resolver represents that as an empty
+        # tuple; required capabilities already make the plan BLOCKED.
+        return ()
 
     resolved: list[ProfileRuntimeResource] = []
     for snapshot in selected:

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from types import SimpleNamespace
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -19,6 +20,7 @@ from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPat
 from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
+from backend.app.adapters.population.secondary import LocalTabixSecondaryPopulationProvider, SecondaryPopulationProviderError
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf
@@ -29,6 +31,7 @@ from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
+from backend.app.domain.profile_runtime_resources import ProfileRuntimeResourceError, resolve_profile_runtime_resource, resolve_profile_runtime_resources
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
 from backend.app.domain.resource_capabilities import ResourceCapability, CapabilityRequirement
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
@@ -605,6 +608,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         normalized_artifact = _existing_normalized_artifact(db, analysis.id)
         reference_build = normalize_build(analysis.reference_build)
         reference_resource_id = analysis.configuration.get("reference_resource_id")
+        profile_bound_analysis = bool((analysis.configuration or {}).get("resource_profile_id"))
         partition_size = min(max(1, int(analysis.configuration.get("partition_size", 500) or 500)), 1000)
 
         if normalization_step.status != StepStatus.SUCCEEDED:
@@ -616,26 +620,51 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "Analysis case was not found while resolving the organization-approved reference package.",
                         code="CASE_NOT_FOUND",
                     )
-                try:
-                    requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
-                except (TypeError, ValueError) as exc:
-                    raise ReferencePackageError(
-                        f"Invalid reference package resource ID: {reference_resource_id!r}.",
-                        code="REFERENCE_PACKAGE_INVALID",
-                    ) from exc
-                if requested_reference is None:
-                    raise ReferencePackageError(
-                        "The configured reference package resource was not found.",
-                        code="REFERENCE_PACKAGE_NOT_FOUND",
+                profile_runtime_reference = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_reference = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="REFERENCE_PACKAGE",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ReferencePackageError(str(exc), code=exc.code) from exc
+                    requested_reference = profile_runtime_reference.resource
+                    reference_resource_id = str(requested_reference.id)
+                    resolution = SimpleNamespace(
+                        resource=requested_reference,
+                        used_fallback=False,
+                        requested_resource_id=requested_reference.id,
+                        fallback_resource_id=None,
+                        decision=decide_step_outcome(
+                            "normalize",
+                            OutcomeKind.SUCCESS,
+                            code="PROFILE_RESOURCE_SELECTED",
+                            message="Reference package is bound to the exact resource selected during analysis preflight.",
+                        ),
                     )
-                resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=reference_resource_id,
-                    expected_type="REFERENCE_PACKAGE",
-                    expected_build=reference_build,
-                    expected_provider=requested_reference.provider,
-                )
+                else:
+                    try:
+                        requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
+                    except (TypeError, ValueError) as exc:
+                        raise ReferencePackageError(
+                            f"Invalid reference package resource ID: {reference_resource_id!r}.",
+                            code="REFERENCE_PACKAGE_INVALID",
+                        ) from exc
+                    if requested_reference is None:
+                        raise ReferencePackageError(
+                            "The configured reference package resource was not found.",
+                            code="REFERENCE_PACKAGE_NOT_FOUND",
+                        )
+                    resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=reference_resource_id,
+                        expected_type="REFERENCE_PACKAGE",
+                        expected_build=reference_build,
+                        expected_provider=requested_reference.provider,
+                    )
                 record_workflow_decision(
                     db,
                     analysis_id=analysis.id,
@@ -1050,14 +1079,35 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     )
 
                 registry = register_builtin_providers()
-                plan = build_resource_execution_plan(
-                    db,
-                    organization_id=case.organization_id,
-                    requirements=(
-                        CapabilityRequirement(ResourceCapability.ANNOTATION, required=True),
-                    ),
-                )
-                candidates = plan.for_capability(ResourceCapability.ANNOTATION)
+                profile_runtime_annotation = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_annotation = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="ANNOTATION_ENGINE",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    candidates = [SimpleNamespace(
+                        resource=profile_runtime_annotation.resource,
+                        execution=profile_runtime_annotation.execution,
+                    )]
+                    deployment = dict(((analysis.configuration or {}).get("resource_plan") or {}).get("deployment") or {})
+                    plan = SimpleNamespace(
+                        profile_type=deployment.get("profile_type", "LABORATORY"),
+                        profile_version=deployment.get("profile_version", "1"),
+                        unavailable_optional=[],
+                    )
+                else:
+                    plan = build_resource_execution_plan(
+                        db,
+                        organization_id=case.organization_id,
+                        requirements=(
+                            CapabilityRequirement(ResourceCapability.ANNOTATION, required=True),
+                        ),
+                    )
+                    candidates = plan.for_capability(ResourceCapability.ANNOTATION)
                 if not candidates:
                     raise ResourceConsumptionError(
                         "ANNOTATION_PROVIDER_UNAVAILABLE",
@@ -1068,6 +1118,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "annotation_resource_id"
                 )
                 selected = None
+                if profile_bound_analysis and requested_annotation_resource_id and str(
+                    requested_annotation_resource_id
+                ) != str(candidates[0].resource.id):
+                    raise ResourceConsumptionError(
+                        "RESOURCE_PLAN_CONFLICT",
+                        "annotation_resource_id conflicts with the immutable preflight-selected annotation resource.",
+                    )
                 if requested_annotation_resource_id:
                     for candidate in candidates:
                         if str(candidate.resource.id) == str(requested_annotation_resource_id):
@@ -1077,9 +1134,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     selected = candidates[0]
 
                 annotation_resource = selected.resource
-                annotation_execution = resolve_resource_execution(
-                    db,
-                    resource=annotation_resource,
+                annotation_execution = (
+                    selected.execution
+                    if profile_bound_analysis
+                    else resolve_resource_execution(db, resource=annotation_resource)
                 )
                 implementation = registry.require(
                     provider_id=annotation_execution.contract.provider_id,
@@ -1100,15 +1158,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 requested_annotation_resource_id = str(annotation_resource.id)
 
-                resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=requested_annotation_resource_id,
-                    expected_type="ANNOTATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=annotation_resource.provider,
-                    expected_provider_version=annotation_execution.contract.provider_version,
-                )
+                if profile_bound_analysis:
+                    resolution = SimpleNamespace(
+                        resource=annotation_resource,
+                        used_fallback=False,
+                        requested_resource_id=annotation_resource.id,
+                        fallback_resource_id=None,
+                        decision=decide_step_outcome(
+                            "annotate",
+                            OutcomeKind.SUCCESS,
+                            code="PROFILE_RESOURCE_SELECTED",
+                            message="Annotation is bound to the exact resource selected during analysis preflight.",
+                        ),
+                    )
+                else:
+                    resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=requested_annotation_resource_id,
+                        expected_type="ANNOTATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider=annotation_resource.provider,
+                        expected_provider_version=annotation_execution.contract.provider_version,
+                    )
                 record_workflow_decision(
                     db,
                     analysis_id=analysis.id,
@@ -1138,15 +1210,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         resolution.decision.message,
                     )
                 annotation_resource = resolution.resource
-                annotation_execution = resolve_resource_execution(
-                    db,
-                    resource=annotation_resource,
-                )
-                implementation = registry.require(
-                    provider_id=annotation_execution.contract.provider_id,
-                    provider_version=annotation_execution.contract.provider_version,
-                )
-                provider = implementation.factory(annotation_execution.contract)
+                if not profile_bound_analysis:
+                    annotation_execution = resolve_resource_execution(
+                        db,
+                        resource=annotation_resource,
+                    )
+                    implementation = registry.require(
+                        provider_id=annotation_execution.contract.provider_id,
+                        provider_version=annotation_execution.contract.provider_version,
+                    )
+                    provider = implementation.factory(annotation_execution.contract)
             except (ResourceConsumptionError, ResourceExecutionError) as exc:
                 mark_step(
                     db,
@@ -1550,19 +1623,36 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "Analysis case was not found during population resource planning.",
                     )
 
-                plan = build_resource_execution_plan(
-                    db,
-                    organization_id=case.organization_id,
-                    requirements=(
-                        CapabilityRequirement(
-                            ResourceCapability.POPULATION_FREQUENCY,
-                            required=False,
+                profile_runtime_population = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_population = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="POPULATION",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    deployment = dict(((analysis.configuration or {}).get("resource_plan") or {}).get("deployment") or {})
+                    plan = SimpleNamespace(profile_type=deployment.get("profile_type", "LABORATORY"))
+                    population_candidates = [SimpleNamespace(
+                        resource=profile_runtime_population.resource,
+                        execution=profile_runtime_population.execution,
+                    )]
+                else:
+                    plan = build_resource_execution_plan(
+                        db,
+                        organization_id=case.organization_id,
+                        requirements=(
+                            CapabilityRequirement(
+                                ResourceCapability.POPULATION_FREQUENCY,
+                                required=False,
+                            ),
                         ),
-                    ),
-                )
-                population_candidates = plan.for_capability(
-                    ResourceCapability.POPULATION_FREQUENCY
-                )
+                    )
+                    population_candidates = plan.for_capability(
+                        ResourceCapability.POPULATION_FREQUENCY
+                    )
 
                 created = 0
                 direct_count = 0
@@ -1571,12 +1661,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 for candidate in population_candidates:
                     resource = candidate.resource
-                    execution = resolve_resource_execution(db, resource=resource)
+                    execution = (
+                        candidate.execution
+                        if profile_bound_analysis
+                        else resolve_resource_execution(db, resource=resource)
+                    )
                     implementation = registry.resolve(
                         provider_id=execution.contract.provider_id,
                         provider_version=execution.contract.provider_version,
                     )
                     if implementation is None:
+                        if profile_bound_analysis:
+                            raise ResourceConsumptionError(
+                                "POPULATION_ADAPTER_UNSUPPORTED",
+                                f"Preflight-selected population provider {execution.contract.provider_id!r} has no runtime adapter.",
+                            )
                         continue
 
                     provider = implementation.factory(execution.contract)
@@ -1773,6 +1872,179 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             direct_count += 1
                         db.commit()
 
+                secondary_count = 0
+                secondary_limitations: list[dict] = []
+                if (analysis.configuration or {}).get("resource_profile_id"):
+                    try:
+                        secondary_runtime_resources = resolve_profile_runtime_resources(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="POPULATION_SECONDARY",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+
+                    for secondary_runtime in secondary_runtime_resources:
+                        secondary_resource = secondary_runtime.resource
+                        secondary_execution = secondary_runtime.execution
+                        provider_name = secondary_resource.provider.strip().upper()
+                        try:
+                            secondary_provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(
+                                secondary_execution.contract
+                            )
+                        except SecondaryPopulationProviderError as exc:
+                            secondary_limitations.append({
+                                "resource_id": str(secondary_resource.id),
+                                "provider": secondary_resource.provider,
+                                "code": "SECONDARY_POPULATION_ADAPTER_UNSUPPORTED",
+                                "message": str(exc),
+                            })
+                            record_workflow_decision(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="population",
+                                attempt=population_step.attempt,
+                                outcome=OutcomeKind.NO_DATA,
+                                decision=decide_step_outcome(
+                                    "population",
+                                    OutcomeKind.NO_DATA,
+                                    code="SECONDARY_POPULATION_ADAPTER_UNSUPPORTED",
+                                    message=(
+                                        f"Optional secondary population resource {secondary_resource.provider!r} "
+                                        "could not be executed; primary gnomAD population context remains authoritative."
+                                    ),
+                                ),
+                                resource_id=secondary_resource.id,
+                                metadata={
+                                    "population_role": "SECONDARY",
+                                    "provider": secondary_resource.provider,
+                                    "qualification_id": str(secondary_execution.qualification_id),
+                                    "contract_hash": secondary_execution.contract_hash,
+                                    "error": str(exc),
+                                },
+                            )
+                            db.commit()
+                            continue
+
+                        record_workflow_decision(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="population",
+                            attempt=population_step.attempt,
+                            outcome=OutcomeKind.SUCCESS,
+                            decision=decide_step_outcome(
+                                "population",
+                                OutcomeKind.SUCCESS,
+                                code="PROFILE_SECONDARY_RESOURCE_SELECTED",
+                                message=(
+                                    f"Optional secondary population resource {secondary_resource.provider!r} "
+                                    "is bound to the exact resource selected during analysis preflight."
+                                ),
+                            ),
+                            resource_id=secondary_resource.id,
+                            metadata={
+                                "population_role": "SECONDARY",
+                                "provider": secondary_resource.provider,
+                                "provider_version": secondary_resource.version,
+                                "qualification_id": str(secondary_execution.qualification_id),
+                                "contract_hash": secondary_execution.contract_hash,
+                            },
+                        )
+                        db.commit()
+
+                        for variant in iter_normalized_vcf(normalized_path, reference_build):
+                            execution_record = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="population",
+                                attempt=population_step.attempt,
+                                resolved=secondary_execution,
+                                requested_resource_id=str(secondary_resource.id),
+                                fallback_resource_id=None,
+                                batch_key=(
+                                    f"secondary:{provider_name}:{variant.chromosome}:{variant.position}:"
+                                    f"{variant.reference}:{variant.alternate}"
+                                ),
+                                metadata={
+                                    "provider": secondary_provider.provider_id,
+                                    "population_role": "SECONDARY",
+                                    "dataset": secondary_execution.contract.dataset,
+                                },
+                            )
+                            db.commit()
+                            try:
+                                observations = secondary_provider.query_variant(variant)
+                                complete_resource_execution(
+                                    db,
+                                    execution_record,
+                                    status="SUCCEEDED",
+                                    request_fingerprint=None,
+                                    response_sha256=None,
+                                )
+                                db.commit()
+                            except SecondaryPopulationProviderError as exc:
+                                complete_resource_execution(
+                                    db,
+                                    execution_record,
+                                    status="FAILED",
+                                    error_code="SECONDARY_POPULATION_PROVIDER_ERROR",
+                                    error_message=str(exc),
+                                )
+                                db.commit()
+                                secondary_limitations.append({
+                                    "resource_id": str(secondary_resource.id),
+                                    "provider": secondary_resource.provider,
+                                    "code": "SECONDARY_POPULATION_PROVIDER_ERROR",
+                                    "message": str(exc),
+                                })
+                                continue
+
+                            row = db.get(
+                                Variant,
+                                stable_variant_uuid(
+                                    canonical_key(
+                                        variant.genome_build,
+                                        variant.chromosome,
+                                        variant.position,
+                                        variant.reference,
+                                        variant.alternate,
+                                    )
+                                ),
+                            )
+                            if row is None:
+                                raise RuntimeError("Canonical variant row missing during secondary population processing")
+                            for obs in observations:
+                                existing = db.scalar(
+                                    select(PopulationObservation).where(
+                                        PopulationObservation.analysis_id == analysis.id,
+                                        PopulationObservation.variant_id == row.id,
+                                        PopulationObservation.resource_id == secondary_resource.id,
+                                        PopulationObservation.population_code == obs.population_code,
+                                    )
+                                )
+                                if existing:
+                                    continue
+                                db.add(
+                                    PopulationObservation(
+                                        id=__import__("uuid").uuid4(),
+                                        analysis_id=analysis.id,
+                                        variant_id=row.id,
+                                        resource_id=secondary_resource.id,
+                                        population_level=obs.population_level,
+                                        population_code=obs.population_code,
+                                        population_label=obs.population_label,
+                                        allele_count=obs.allele_count,
+                                        allele_number=obs.allele_number,
+                                        allele_frequency=obs.allele_frequency,
+                                        homozygote_count=obs.homozygote_count,
+                                        availability=obs.availability,
+                                        quality_status=obs.quality_status,
+                                        source_record_id=obs.source_record_id,
+                                    )
+                                )
+                                secondary_count += 1
+                        db.commit()
+
                 population_metadata = {
                     "executed_resources": executed_resources,
                     "profile_type": plan.profile_type,
@@ -1780,6 +2052,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "gene_be_global_observations": created,
                     "direct_population_observations": direct_count,
                     "optional_resources_not_selected": len(plan.unavailable_optional),
+                    "secondary_population_observations": secondary_count,
+                    "secondary_population_limitations": secondary_limitations,
                 }
                 # Absence of an optional population resource is not a workflow
                 # failure and is not converted into a user-facing limitation.
@@ -1870,54 +2144,89 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clinvar_provider = None
                 clinvar_execution = None
                 clinvar_execution_metadata = None
+                clinvar_limitations: list[dict[str, object]] = []
                 configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
+                clinvar_profile_managed = profile_bound_analysis
 
-                # ClinVar is an optional clinical-variant evidence capability.
-                # If the laboratory has adopted a qualified ClinVar release, use
-                # it automatically. An explicit analysis resource ID remains a
-                # hard pin and is validated rather than silently substituted.
-                if configured_clinvar_id:
-                    clinvar_resource = _require_registered_resource(
-                        db,
-                        resource_id=configured_clinvar_id,
-                        expected_type="EVIDENCE",
-                        expected_build=analysis.reference_build,
-                        expected_provider="NCBI ClinVar",
-                    )
+                if clinvar_profile_managed:
+                    selected_clinvar = [
+                        item for item in ((analysis.configuration or {}).get("resource_plan") or {}).get("selected", [])
+                        if item.get("capability") == "CLINICAL_DATABASE"
+                    ]
+                    if selected_clinvar:
+                        try:
+                            resolved_clinvar = resolve_profile_runtime_resource(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="CLINICAL_DATABASE",
+                            )
+                            clinvar_resource = resolved_clinvar.resource
+                            clinvar_execution = resolved_clinvar.execution
+                            clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                                resolved=clinvar_execution,
+                                resource_location=clinvar_resource.location,
+                                genome_build=analysis.reference_build,
+                                index_root=settings.resource_cache_root,
+                            )
+                            clinvar_execution_metadata = {
+                                **clinvar_execution.snapshot,
+                                "resource_name": clinvar_resource.name,
+                                "resource_checksum": clinvar_resource.checksum,
+                                "execution_dataset": clinvar_execution.contract.dataset,
+                            }
+                        except (ProfileRuntimeResourceError, ResourceExecutionError, ClinVarProviderError) as exc:
+                            clinvar_limitations.append({
+                                "code": getattr(exc, "code", None) or "CLINVAR_RESOURCE_UNAVAILABLE",
+                                "message": str(exc),
+                                "resource_capability": "CLINICAL_DATABASE",
+                            })
+                    # An absent optional CLINICAL_DATABASE selection means the
+                    # lab has explicitly chosen not to use ClinVar in this profile.
                 else:
-                    case_for_resources = db.get(Case, analysis.case_id)
-                    if case_for_resources is not None:
-                        clinvar_plan = build_resource_execution_plan(
+                    # Legacy, non-profile analyses retain the explicit resource
+                    # ID path and old deployment capability discovery.
+                    if configured_clinvar_id:
+                        clinvar_resource = _require_registered_resource(
                             db,
-                            organization_id=case_for_resources.organization_id,
-                            requirements=(
-                                CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
-                            ),
+                            resource_id=configured_clinvar_id,
+                            expected_type="EVIDENCE",
+                            expected_build=analysis.reference_build,
+                            expected_provider="NCBI ClinVar",
                         )
-                        clinvar_candidates = [
-                            item for item in clinvar_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
-                            if item.resource.provider == "NCBI ClinVar"
-                        ]
-                        if clinvar_candidates:
-                            clinvar_resource = clinvar_candidates[0].resource
+                    else:
+                        case_for_resources = db.get(Case, analysis.case_id)
+                        if case_for_resources is not None:
+                            clinvar_plan = build_resource_execution_plan(
+                                db,
+                                organization_id=case_for_resources.organization_id,
+                                requirements=(
+                                    CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
+                                ),
+                            )
+                            clinvar_candidates = [
+                                item for item in clinvar_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
+                                if item.resource.provider == "NCBI ClinVar"
+                            ]
+                            if clinvar_candidates:
+                                clinvar_resource = clinvar_candidates[0].resource
 
-                if clinvar_resource is not None:
-                    clinvar_execution = resolve_resource_execution(
-                        db,
-                        resource=clinvar_resource,
-                    )
-                    clinvar_provider = ClinVarVCVProvider.from_execution_contract(
-                        resolved=clinvar_execution,
-                        resource_location=clinvar_resource.location,
-                        genome_build=analysis.reference_build,
-                        index_root=settings.resource_cache_root,
-                    )
-                    clinvar_execution_metadata = {
-                        **clinvar_execution.snapshot,
-                        "resource_name": clinvar_resource.name,
-                        "resource_checksum": clinvar_resource.checksum,
-                        "execution_dataset": clinvar_execution.contract.dataset,
-                    }
+                    if clinvar_resource is not None:
+                        clinvar_execution = resolve_resource_execution(
+                            db,
+                            resource=clinvar_resource,
+                        )
+                        clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                            resolved=clinvar_execution,
+                            resource_location=clinvar_resource.location,
+                            genome_build=analysis.reference_build,
+                            index_root=settings.resource_cache_root,
+                        )
+                        clinvar_execution_metadata = {
+                            **clinvar_execution.snapshot,
+                            "resource_name": clinvar_resource.name,
+                            "resource_checksum": clinvar_resource.checksum,
+                            "execution_dataset": clinvar_execution.contract.dataset,
+                        }
 
                 # ClinGen evidence activities are optional and independently governed.
                 clingen_vp_resource = None
@@ -2174,6 +2483,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "engine": engine.engine_id,
                     "engine_version": engine.engine_version,
                     "created_evidence": created,
+                    "optional_resource_limitations": clinvar_limitations,
                 }
                 if created == 0:
                     _apply_scientific_limitation(
@@ -2253,6 +2563,30 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 case_context = case.clinical_context if case else {}
                 disease = analysis.configuration.get("disease") or case_context.get("disease")
                 assessment_service = ACMGSpecificationAssessmentService()
+                acmg_runtime_resource = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_acmg = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="ACMG_RULE_SPECIFICATION",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    acmg_runtime_resource = profile_runtime_acmg.resource
+                    if acmg_runtime_resource.provider.strip().upper() != "CLINGEN":
+                        raise ResourceConsumptionError(
+                            "ACMG_ADAPTER_UNSUPPORTED",
+                            f"Governed ACMG specification provider {acmg_runtime_resource.provider!r} is not supported.",
+                        )
+                    acmg_metadata = dict(acmg_runtime_resource.metadata_json or {})
+                    if not str(acmg_metadata.get("specification_id") or "").strip() or not str(
+                        acmg_metadata.get("specification_version") or ""
+                    ).strip():
+                        raise ResourceConsumptionError(
+                            "ACMG_SPECIFICATION_IDENTITY_MISSING",
+                            "Qualified ClinGen ACMG resource must declare specification_id and specification_version in resource metadata.",
+                        )
                 resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
                 existing_assessment_variant_ids = set(db.scalars(select(ACMGAssessment.variant_id).where(ACMGAssessment.analysis_id == analysis.id)).all())
@@ -2285,7 +2619,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if variant_row is None:
                             blocked_variants += 1; batch_blocked += 1; continue
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
-                        result = assessment_service.assess_variant(db, analysis=analysis, variant=variant_row, annotation=ann, population_rows=population_rows_for_variant, resource_rows=resource_rows, gene=gene, disease=disease)
+                        result = assessment_service.assess_variant(
+                            db,
+                            analysis=analysis,
+                            variant=variant_row,
+                            annotation=ann,
+                            population_rows=population_rows_for_variant,
+                            resource_rows=resource_rows,
+                            gene=gene,
+                            disease=disease,
+                            specification_resource=acmg_runtime_resource,
+                        )
                         if result.status in {"PROPOSED", "REQUIRES_REVIEW"} and result.binding.status == "SELECTED":
                             # Evidence and criterion assessments are persisted even
                             # when final combination is not automatable. Only the
@@ -2402,6 +2746,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         },
                     )
                 db.commit()
+            except ResourceConsumptionError as exc:
+                mark_step(
+                    db,
+                    acmg_step,
+                    StepStatus.BLOCKED,
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    metadata={"next_step": "RESOURCE_REQUIRED", "automatic_fallback": False},
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                db.commit()
+                audit.record(
+                    event_type="ACMG_RESOURCE_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="acmg-resource",
+                    reason=str(exc),
+                    payload={"error_code": exc.code, "automatic_fallback": False},
+                )
+                db.commit()
+                return
             except Exception as exc:
                 mark_step(db, acmg_step, StepStatus.FAILED, error_code="ACMG_ASSESSMENT_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED

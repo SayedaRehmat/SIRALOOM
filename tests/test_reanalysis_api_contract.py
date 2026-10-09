@@ -7,6 +7,13 @@ from backend.app.api.v1.reanalysis import ManualReanalysisRequest
 from backend.app.domain.enums import AnalysisStatus
 
 
+@pytest.fixture(autouse=True)
+def _keep_reanalysis_state_contract_tests_isolated_from_preflight(monkeypatch):
+    # These tests cover retry/state API contracts. Resource preflight has its own
+    # focused tests; use the explicit legacy/trial path here.
+    monkeypatch.setattr(reanalysis_api, "preflight_analysis_resources", lambda *args, **kwargs: None)
+
+
 def test_manual_reanalysis_request_is_explicitly_manual():
     request = ManualReanalysisRequest(reason="Laboratory-requested case-level reanalysis.")
     assert request.reason == "Laboratory-requested case-level reanalysis."
@@ -45,11 +52,12 @@ def test_manual_reanalysis_endpoint_requeues_existing_resource_failure_child(mon
             "status": AnalysisStatus.RESOURCE_FAILURE,
             "analysis_version": 2,
             "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
     candidate = type("Candidate", (), {"id": candidate_id})()
-    principal = type("Principal", (), {"user_id": uuid4()})()
+    principal = type("Principal", (), {"user_id": uuid4(), "organization_id": uuid4()})()
     calls = []
 
     monkeypatch.setattr(reanalysis_api, "get_accessible_analysis", lambda *_args: parent)
@@ -112,6 +120,7 @@ def test_change_candidate_endpoint_requeues_existing_resource_failure_child(monk
             "status": AnalysisStatus.RESOURCE_FAILURE,
             "analysis_version": 2,
             "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
@@ -178,11 +187,12 @@ def test_manual_reanalysis_endpoint_preserves_non_retryable_child_state(monkeypa
             "status": status,
             "analysis_version": 2,
             "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
     candidate = type("Candidate", (), {"id": candidate_id})()
-    principal = type("Principal", (), {"user_id": uuid4()})()
+    principal = type("Principal", (), {"user_id": uuid4(), "organization_id": uuid4()})()
 
     monkeypatch.setattr(reanalysis_api, "get_accessible_analysis", lambda *_args: parent)
     monkeypatch.setattr(reanalysis_api, "require_role", lambda *_args: None)
@@ -248,6 +258,7 @@ def test_change_candidate_endpoint_preserves_non_retryable_child_state(monkeypat
             "status": status,
             "analysis_version": 2,
             "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
