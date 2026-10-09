@@ -104,6 +104,7 @@ if Celery is not None:
         *,
         task_id: str | None = None,
         allow_running: bool = False,
+        lock_connection=None,
     ) -> bool:
         """Atomically claim one persisted analysis for one Celery execution.
 
@@ -132,12 +133,18 @@ if Celery is not None:
                 byteorder="big",
                 signed=True,
             )
-            acquired = bool(
-                db.scalar(
-                    text("SELECT pg_try_advisory_lock(:lock_key)"),
-                    {"lock_key": lock_key},
+            lock_statement = text("SELECT pg_try_advisory_lock(:lock_key)")
+            lock_parameters = {"lock_key": lock_key}
+            if lock_connection is not None:
+                # A dedicated connection must stay checked out for the whole
+                # task. Session.commit() can return its own connection to the
+                # pool even while the Session object remains open.
+                acquired = bool(
+                    lock_connection.execute(lock_statement, lock_parameters).scalar_one()
                 )
-            )
+                lock_connection.commit()
+            else:
+                acquired = bool(db.scalar(lock_statement, lock_parameters))
             if not acquired:
                 return False
 
@@ -271,21 +278,30 @@ if Celery is not None:
             run_variant_analysis,
             TransientWorkflowError,
         )
-        from backend.app.infrastructure.db.session import SessionLocal
+        from backend.app.infrastructure.db.session import SessionLocal, engine
 
         redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
         is_retry = self.request.retries > 0
-        # Keep the claim session open for the complete task. The PostgreSQL
-        # advisory lock acquired by _claim_analysis_execution is session-scoped;
-        # closing this session here would release the only execution fence and
-        # allow a duplicate/redelivered task to overlap the live worker.
+        # Hold the PostgreSQL session-level advisory lock on a dedicated
+        # checked-out connection. Session.commit() releases a Session's
+        # connection to the pool; keeping only the Session object alive is not
+        # sufficient to preserve lock ownership across workflow commits.
+        claim_lock_connection = (
+            engine.connect() if engine.dialect.name == "postgresql" else None
+        )
         claim_db = SessionLocal()
         try:
+            claim_options = (
+                {"lock_connection": claim_lock_connection}
+                if claim_lock_connection is not None
+                else {}
+            )
             claimed = _claim_analysis_execution(
                 claim_db,
                 UUID(analysis_id),
                 task_id=self.request.id,
                 allow_running=redelivered or is_retry,
+                **claim_options,
             )
             if not claimed:
                 return {"analysis_id": analysis_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
@@ -322,6 +338,8 @@ if Celery is not None:
             return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
         finally:
             claim_db.close()
+            if claim_lock_connection is not None:
+                claim_lock_connection.close()
 
 
     def _claim_case_export_execution(
