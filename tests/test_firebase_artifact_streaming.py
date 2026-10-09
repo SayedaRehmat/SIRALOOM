@@ -7,6 +7,7 @@ class FakeBlob:
     def __init__(self, payload: bytes):
         self.payload = payload
         self.downloaded_to = None
+        self.metadata = None
 
     def download_to_filename(self, filename):
         self.downloaded_to = Path(filename)
