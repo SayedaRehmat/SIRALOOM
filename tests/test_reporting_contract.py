@@ -33,5 +33,7 @@ def test_report_finalization_requires_reviewed_classifications():
     ok, errors=final_report_eligibility(d,analysis_id=a.id); assert not ok and errors
 
 def test_report_finalization_creates_approval_lineage():
-    d,_,u,c,a,_=seed(True); r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=d.query(Artifact).first().id,content_json={'report_schema_version':'1.0.0'}); d.add(r); d.commit()
+    d,_,u,c,a,_=seed(True)
+    content = build_report_content(d, a, "en", report_type="CLINICAL_INTERPRETATION")
+    r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=d.query(Artifact).first().id,content_json=content); d.add(r); d.commit()
     out=finalize_report(d,report_id=r.id,approver_id=u.id,reason='Approved after review'); d.commit(); assert out.status=='FINAL' and out.approved_by==u.id

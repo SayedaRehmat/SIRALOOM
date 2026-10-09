@@ -16,7 +16,7 @@ from backend.app.infrastructure.db.models import (
     Variant,
 )
 from backend.app.reporting.finalization import finalize_report
-from backend.app.reporting.service import final_report_eligibility
+from backend.app.reporting.service import build_report_content, final_report_eligibility
 
 
 def make_db():
@@ -112,6 +112,10 @@ def seed_finalizable_report():
         validation_status="VALID",
         metadata_json={"report_state": "DRAFT"},
     )
+    db.add_all([org, reviewer, case, analysis, variant, classification, decision, draft_artifact])
+    db.commit()
+
+    report_content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
     report = Report(
         id=uuid4(),
         case_id=case.id,
@@ -121,17 +125,9 @@ def seed_finalizable_report():
         report_type="CLINICAL_INTERPRETATION",
         status="DRAFT",
         artifact_id=draft_artifact.id,
-        content_json={
-            "report_schema_version": "1.1.0",
-            "report_version": 1,
-            "report_status": "DRAFT",
-            "final_result": {
-                "status": "DRAFT",
-                "release_state": "NOT_FOR_CLINICAL_RELEASE",
-            },
-        },
+        content_json=report_content,
     )
-    db.add_all([org, reviewer, case, analysis, variant, classification, decision, draft_artifact, report])
+    db.add(report)
     db.commit()
     return db, reviewer, analysis, report
 
