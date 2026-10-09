@@ -39,15 +39,20 @@ class ClinGenSpecificationSelector:
         *,
         gene: str,
         disease: str | None = None,
+        specification_id: str | None = None,
+        specification_version: str | None = None,
     ) -> list[SpecificationCandidate]:
         if not gene.strip():
             raise ValueError("gene is required")
-        rows = db.scalars(
-            select(ClinGenSpecification).where(
-                ClinGenSpecification.provider == "ClinGen",
-                ClinGenSpecification.validated_for_automation.is_(True),
-            )
-        ).all()
+        conditions = [
+            ClinGenSpecification.provider == "ClinGen",
+            ClinGenSpecification.validated_for_automation.is_(True),
+        ]
+        if specification_id:
+            conditions.append(ClinGenSpecification.specification_id == specification_id)
+        if specification_version:
+            conditions.append(ClinGenSpecification.version == specification_version)
+        rows = db.scalars(select(ClinGenSpecification).where(*conditions)).all()
         ngene = self._norm(gene)
         ndisease = self._norm(disease) if disease else None
         results: list[SpecificationCandidate] = []
@@ -68,8 +73,22 @@ class ClinGenSpecificationSelector:
         results.sort(key=lambda x: (-x.score, x.specification_id, x.version, x.id))
         return results
 
-    def select(self, db: Session, *, gene: str, disease: str | None = None) -> SelectionResult:
-        candidates = self.candidates(db, gene=gene, disease=disease)
+    def select(
+        self,
+        db: Session,
+        *,
+        gene: str,
+        disease: str | None = None,
+        specification_id: str | None = None,
+        specification_version: str | None = None,
+    ) -> SelectionResult:
+        candidates = self.candidates(
+            db,
+            gene=gene,
+            disease=disease,
+            specification_id=specification_id,
+            specification_version=specification_version,
+        )
         if not candidates:
             return SelectionResult("NOT_FOUND", None, (), "No validated ClinGen specification is applicable to the supplied gene/disease context.")
         top = candidates[0]
