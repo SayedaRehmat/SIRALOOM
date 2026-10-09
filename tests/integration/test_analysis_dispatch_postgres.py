@@ -1552,6 +1552,8 @@ def test_real_celery_worker_loss_redelivers_and_recovers_checkpoint(tmp_path):
         # Import the test app in the producer process only after env is set for
         # the child; its broker points to the same dedicated Redis database.
         import importlib
+        import sys
+        sys.path.insert(0, str(repo_root / "tests" / "integration"))
         test_worker_module = importlib.import_module("worker_loss_celery_app")
         task = test_worker_module.worker_loss_after_checkpoint.apply_async(
             args=[str(analysis_id), marker_prefix],
