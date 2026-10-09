@@ -526,7 +526,7 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     class RetryRequested(BaseException):
         pass
 
-    def fake_retry(*, exc, countdown):
+    def fake_retry(*, exc, countdown, max_retries=None):
         calls["exc"] = exc
         calls["countdown"] = countdown
         raise RetryRequested()
@@ -1383,7 +1383,7 @@ def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monk
         )).all()
         exhaustion_audit = db.scalars(select(AuditEvent).where(
             AuditEvent.analysis_id == analysis_id,
-            AuditEvent.event_type == "ANNOTATION_RETRY_EXHAUSTED",
+            AuditEvent.event_type == "ANALYSIS_RETRY_EXHAUSTED",
         )).all()
 
         assert analysis.status == AnalysisStatus.FAILED
@@ -1737,7 +1737,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         events.append("run_analysis")
         raise transient
 
-    def fake_finalize(db, received_analysis_id, error_message):
+    def fake_finalize(db, received_analysis_id, error_message, **kwargs):
         assert isinstance(db, FakeTerminalSession)
         assert received_analysis_id == UUID(analysis_id)
         assert error_message == str(transient)
