@@ -98,3 +98,30 @@ def test_storage_profile_has_no_cross_organization_visibility():
 
         assert get_active_storage_profile(db, organization_id=org_b.id) is None
         assert profile.organization_id == org_a.id
+
+
+def test_storage_profile_api_payload_never_exposes_configuration():
+    from datetime import datetime, timezone
+
+    from backend.app.api.v1.storage import _payload
+
+    secret = "do-not-return-this-service-account-key"
+    now = datetime.now(timezone.utc)
+    profile = OrganizationStorageProfile(
+        id=uuid4(),
+        organization_id=uuid4(),
+        name="primary",
+        version=1,
+        backend_type="FIREBASE_GCS",
+        storage_key="PRIMARY_FIREBASE",
+        configuration_json={"service_account_key": secret, "purpose": "clinical"},
+        status="DRAFT",
+        created_by=None,
+        created_at=now,
+        updated_at=now,
+    )
+
+    payload = _payload(profile)
+
+    assert "configuration" not in payload
+    assert secret not in repr(payload)
