@@ -437,6 +437,12 @@ def create_reanalysis(
         raise ValueError("Only a successfully completed analysis can be reanalyzed.")
 
     earliest = affected_step or affected_step_for_trigger(trigger_type)
+    profile_bound = bool((parent.configuration or {}).get("resource_profile_id"))
+    # A profile-bound plan is a single cross-stage resource contract. Until
+    # incremental reanalysis can pin unaffected capabilities to the parent's
+    # exact plan, replay from normalization rather than mixing old upstream
+    # outputs with a newly resolved plan.
+    execution_start_step = "normalize" if profile_bound else earliest
     next_version = (parent.analysis_version or 1) + 1
 
     duplicate = db.scalar(
@@ -462,21 +468,36 @@ def create_reanalysis(
         raise ValueError("Parent analysis case not found.")
     require_analysis_quota(db, case.organization_id)
 
+    child_configuration = dict(parent.configuration or {})
+    if profile_bound:
+        for key in (
+            "resource_plan",
+            "resource_stage_plan",
+            "reference_resource_id",
+            "annotation_resource_id",
+            "population_resource_id",
+            "gnomad_resource_id",
+        ):
+            child_configuration.pop(key, None)
+    child_configuration["reanalysis"] = {
+        "parent_analysis_id": str(parent.id),
+        "trigger_type": trigger_type,
+        "reason": reason,
+        "earliest_affected_step": earliest,
+        "execution_start_step": execution_start_step,
+        "reuse_through_step": _previous_step(execution_start_step),
+        "resource_plan_policy": (
+            "FULL_REPLAY_FROM_NORMALIZATION"
+            if profile_bound
+            else "INCREMENTAL_REUSE"
+        ),
+    }
     child = Analysis(
         id=uuid4(), case_id=parent.case_id, parent_analysis_id=parent.id,
         assay_id=parent.assay_id, analysis_type=parent.analysis_type,
         workflow_id=parent.workflow_id, workflow_version=parent.workflow_version,
         status="CREATED", queue_task_id=None, reference_build=parent.reference_build,
-        configuration={
-            **(parent.configuration or {}),
-            "reanalysis": {
-                "parent_analysis_id": str(parent.id),
-                "trigger_type": trigger_type,
-                "reason": reason,
-                "earliest_affected_step": earliest,
-                "reuse_through_step": _previous_step(earliest),
-            },
-        },
+        configuration=child_configuration,
         started_at=None, completed_at=None, created_by=requested_by,
         analysis_version=next_version,
     )
@@ -485,7 +506,7 @@ def create_reanalysis(
         with db.begin_nested():
             db.add(child)
             db.flush()
-            _copy_rows(db, parent.id, child.id, earliest)
+            _copy_rows(db, parent.id, child.id, execution_start_step)
 
             candidate = None
             if change_event_id:
