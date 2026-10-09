@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from backend.app.domain.vcf_tools import VCFToolError, normalize_vcf_with_bcftools
+from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 
 
 def make_reference(tmp_path: Path) -> Path:
@@ -165,3 +165,25 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
     assert index_path.read_bytes() == b"previous-valid-index"
     assert not list(tmp_path.glob(".normalized.vcf.gz.siraloom-*"))
+
+
+def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_path: Path):
+    path = tmp_path / "classes.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##ALT=<ID=NON_REF,Description=\"Represents any possible alternative allele at this location\">\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\n"
+        "1\t3\t.\tA\t<DEL>\t.\tPASS\t.\n"
+        "1\t4\t.\tA\t<NON_REF>\t.\tPASS\tEND=10\n",
+        encoding="utf-8",
+    )
+
+    profile = classify_records(path)
+
+    assert profile == {
+        "records": 3,
+        "multiallelic_records": 1,
+        "symbolic_records": 2,
+        "gvcf_markers": 1,
+    }
