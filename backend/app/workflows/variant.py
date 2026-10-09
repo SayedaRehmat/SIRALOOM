@@ -1118,6 +1118,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "annotation_resource_id"
                 )
                 selected = None
+                if profile_bound_analysis and requested_annotation_resource_id and str(
+                    requested_annotation_resource_id
+                ) != str(candidates[0].resource.id):
+                    raise ResourceConsumptionError(
+                        "RESOURCE_PLAN_CONFLICT",
+                        "annotation_resource_id conflicts with the immutable preflight-selected annotation resource.",
+                    )
                 if requested_annotation_resource_id:
                     for candidate in candidates:
                         if str(candidate.resource.id) == str(requested_annotation_resource_id):
