@@ -121,7 +121,10 @@ def worker_loss_after_checkpoint(self, analysis_id: str, marker_prefix: str):
                 "partition_error_code": partition.error_code,
             }
         redis.set(marker("workflow"), json.dumps(workflow_result), ex=300)
-        return original_workflow(workflow_analysis_id)
+        # The test replaces the scientific stage body after verifying that the
+        # production wrapper recovered its checkpoint. Do not run external
+        # annotation providers in this worker-process fault-injection test.
+        return None
 
     workflow_module.run_variant_analysis = crashable_workflow
     production_task = production_queue.run_analysis_task
