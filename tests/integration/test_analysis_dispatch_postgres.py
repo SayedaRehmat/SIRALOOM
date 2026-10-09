@@ -1396,6 +1396,7 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
         if duplicate_lock_connection is not None:
             duplicate_lock_connection.close()
         if redelivery_lock_connection is not None:
+            redelivery_lock_connection.invalidate()
             redelivery_lock_connection.close()
         with Session(engine) as db:
             db.query(AnalysisPartition).filter(
