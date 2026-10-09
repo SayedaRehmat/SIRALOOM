@@ -574,3 +574,43 @@ def test_trial_preflight_keeps_legacy_no_profile_path(monkeypatch):
         analysis=analysis,
         organization_id=uuid4(),
     ) is None
+
+
+def test_preflight_rejects_resource_plan_drift_without_overwriting_persisted_plan(monkeypatch):
+    from types import SimpleNamespace
+    import pytest
+    import backend.app.application.analysis as analysis_module
+
+    persisted = {
+        "status": "READY",
+        "plan_hash": "previous-qualified-plan",
+        "selected": [{"capability": "REFERENCE_PACKAGE", "resource_id": "old-resource"}],
+    }
+    plan = SimpleNamespace(
+        status="READY",
+        plan_hash="newly-resolved-plan",
+        is_ready=True,
+    )
+    monkeypatch.setattr(
+        analysis_module,
+        "resolve_analysis_resource_profile",
+        lambda *_args, **_kwargs: plan,
+    )
+    analysis = SimpleNamespace(
+        configuration={
+            "resource_profile_id": "WES_GRCh38_STANDARD",
+            "resource_plan": persisted,
+        },
+        reference_build="GRCh38",
+        status="CREATED",
+    )
+
+    with pytest.raises(ValueError, match="RESOURCE_PLAN_STALE"):
+        analysis_module.preflight_analysis_resources(
+            object(),
+            analysis=analysis,
+            organization_id=__import__("uuid").uuid4(),
+        )
+
+    assert analysis.configuration["resource_plan"] is persisted
+    assert analysis.configuration["resource_plan"]["plan_hash"] == "previous-qualified-plan"
