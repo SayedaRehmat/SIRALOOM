@@ -13,10 +13,10 @@
 - FASTA `.fai` random-access tests: PASS
 - Reference allele mismatch detection: PASS
 - Reference-aware indel left-normalization tests: PASS
-- Multiallelic rejection safeguard: PASS
+- Multiallelic splitting via BCFtools: covered by the current normalization test suite; genotype/INFO/FORMAT remapping still needs a dedicated golden fixture.
 - GeneBe response normalization fixture tests: PASS
 - gnomAD INFO field parsing tests: PASS
-- Full test suite: PASS (12 tests)
+- Current CI evidence: [GitHub Actions run 1043](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37917001590) reports the backend suite, PostgreSQL migration/dispatch integration, and frontend production build as successful.
 
 ## Not yet validated
 
@@ -31,7 +31,7 @@
 
 ## Scientific boundary
 
-The Phase 1 normalizer requires a validated reference FASTA and `.fai` index. It supports DNA SNV/MNV/indel records and intentionally rejects multiallelic records until a validated genotype-remapping splitter is integrated. Symbolic/SV alleles are outside this service's current normalization scope.
+The current mainline workflow requires a qualified reference package and runs pinned BCFtools reference-aware normalization. Short-variant multiallelic records are split by `bcftools norm -m -any`; dedicated genotype-bearing golden fixtures are still needed to validate FORMAT/INFO allele-index remapping. The workflow explicitly rejects GVCF reference-confidence input and symbolic/breakend/SV records before normalization. See `docs/VARIANT_CLASS_SUPPORT.md` for the current scope and unvalidated boundaries.
 ## ClinGen specification selection validation
 - Specification matcher tests: PASS
 - Ambiguity fail-closed behavior: PASS
@@ -81,3 +81,8 @@ Production PostgreSQL migration execution was not performed in this environment 
 Implemented in the recovered workspace: case intake UI, specimen registration, VCF/VCF.GZ/BGZ validation, explicit GRCh37/GRCh38 selection, TBI/CSI association, artifact SHA-256, validation metadata, tenant-scoped storage, and ingestion audit events. The primary uploaded artifact remains immutable.
 
 Python validation in this workspace: 73 tests passing. Frontend production build remains environment-dependent and must be run with installed Node dependencies.
+
+
+## 2026-10-09 — current-mainline support clarification
+
+The original statements above about multiallelic rejection and the 12-test suite were historical and no longer describe the current mainline CI evidence. Current workflow behavior is defined by `backend/app/workflows/variant.py`, `backend/app/domain/vcf_tools.py`, and the explicit support matrix in `docs/VARIANT_CLASS_SUPPORT.md`. CI success is software test evidence only; independent scientific concordance and clinical validation remain unclaimed.
