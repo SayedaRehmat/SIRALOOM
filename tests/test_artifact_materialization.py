@@ -28,9 +28,10 @@ def test_materialize_cloud_artifact_downloads_worker_local_copy(monkeypatch):
         def __init__(self, bucket):
             assert bucket == "test-bucket"
 
-        def download_bytes(self, uri):
+        def download_to_file(self, uri, destination):
             assert uri == "gs://test-bucket/case/artifact/input.vcf"
-            return b"##fileformat=VCFv4.2\n"
+            Path(destination).write_bytes(b"##fileformat=VCFv4.2\n")
+            return Path(destination)
 
     monkeypatch.setattr(workflow.settings, "firebase_storage_enabled", True)
     monkeypatch.setattr(workflow.settings, "firebase_storage_bucket", "test-bucket")
