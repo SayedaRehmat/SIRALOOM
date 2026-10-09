@@ -109,6 +109,21 @@ def preflight_analysis_resources(
         analysis_reference_build=analysis.reference_build,
     )
     previous_resource_plan = dict(configuration.get("resource_plan") or {})
+    previous_plan_status = str(previous_resource_plan.get("status") or "").upper()
+    previous_plan_hash = str(previous_resource_plan.get("plan_hash") or "")
+    # Once a runnable plan has been persisted, retries must not silently select
+    # a different resource release. Only an analysis blocked at preflight may
+    # replace its blocked plan after the lab registers/qualifies the missing resource.
+    if (
+        previous_plan_status in {"READY", "READY_WITH_LIMITATIONS"}
+        and previous_plan_hash
+        and previous_plan_hash != plan.plan_hash
+    ):
+        raise ValueError(
+            "RESOURCE_PLAN_STALE: the resolved resource plan differs from the "
+            "persisted analysis plan. Preserve the original plan for retries; "
+            "create a new reanalysis to intentionally select updated resources."
+        )
     configuration["resource_plan"] = plan.snapshot()
     configuration["resource_stage_plan"] = build_workflow_stage_resource_plan(plan)
     analysis.configuration = configuration
