@@ -51,7 +51,8 @@ def test_manual_reanalysis_endpoint_requeues_existing_resource_failure_child(mon
             "id": child_id,
             "status": AnalysisStatus.RESOURCE_FAILURE,
             "analysis_version": 2,
-            "queue_task_id": None,\n            "configuration": {},
+            "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
@@ -118,7 +119,8 @@ def test_change_candidate_endpoint_requeues_existing_resource_failure_child(monk
             "id": child_id,
             "status": AnalysisStatus.RESOURCE_FAILURE,
             "analysis_version": 2,
-            "queue_task_id": None,\n            "configuration": {},
+            "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
@@ -184,7 +186,8 @@ def test_manual_reanalysis_endpoint_preserves_non_retryable_child_state(monkeypa
             "id": child_id,
             "status": status,
             "analysis_version": 2,
-            "queue_task_id": None,\n            "configuration": {},
+            "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
@@ -254,7 +257,8 @@ def test_change_candidate_endpoint_preserves_non_retryable_child_state(monkeypat
             "id": child_id,
             "status": status,
             "analysis_version": 2,
-            "queue_task_id": None,\n            "configuration": {},
+            "queue_task_id": None,
+            "configuration": {},
             "case_id": parent.case_id,
         },
     )()
