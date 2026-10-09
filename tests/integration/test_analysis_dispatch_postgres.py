@@ -1326,6 +1326,10 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
         # lock connection; PostgreSQL then releases the execution fence.
         lost_worker_db.close()
         lost_worker_db = None
+        # A normal SQLAlchemy Connection.close() returns the connection to its
+        # pool; session-level advisory locks intentionally survive that. Invalidate
+        # the physical connection to model the server observing worker-process loss.
+        lost_worker_lock_connection.invalidate()
         lost_worker_lock_connection.close()
         lost_worker_lock_connection = None
 
