@@ -49,6 +49,15 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -60,10 +69,10 @@ jobs:
         env:
           DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom
         run: alembic upgrade head
-      - name: PostgreSQL concurrency tests
+      - name: PostgreSQL and real Celery worker-loss integration tests
         env:
           DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom
-          REDIS_URL: redis://localhost:6379/0
+          REDIS_URL: redis://localhost:6379/1
           GENEBE_ENABLED: "false"
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"

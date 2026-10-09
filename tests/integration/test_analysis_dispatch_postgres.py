@@ -1417,3 +1417,219 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_real_celery_worker_loss_redelivers_and_recovers_checkpoint(tmp_path):
+    """Kill a real prefork task child after commit and verify broker redelivery."""
+    import json
+    import subprocess
+    import sys
+    import time
+    from pathlib import Path
+
+    from redis import Redis
+
+    database_url = os.environ.get("DATABASE_URL", "")
+    redis_url = os.environ.get("REDIS_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+    if not redis_url.startswith("redis://"):
+        pytest.skip("Real Celery worker-loss test requires REDIS_URL")
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.db.models import AuditEvent, WorkflowStep
+    from backend.app.infrastructure.db.session import SessionLocal
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        AnalysisPartition,
+        Case,
+        Organization,
+        ResourceDeploymentProfile,
+        User,
+    )
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    dispatch_id = uuid4()
+    marker_prefix = f"siraloom:worker-loss:{uuid4().hex}"
+    queue_name = f"worker-loss-{uuid4().hex}"
+    redis_client = Redis.from_url(redis_url, decode_responses=True)
+    worker = None
+    worker_log = (tmp_path / "celery-worker.log").open("w+")
+    repo_root = Path(__file__).resolve().parents[2]
+    worker_env = os.environ.copy()
+    worker_env.update({
+        "DATABASE_URL": database_url,
+        "REDIS_URL": redis_url,
+        "GENEBE_ENABLED": "false",
+        "GNOMAD_ENABLED": "false",
+        "FIREBASE_AUTH_REQUIRED": "false",
+        "PYTHONPATH": os.pathsep.join([
+            str(repo_root),
+            str(repo_root / "tests" / "integration"),
+            worker_env.get("PYTHONPATH", ""),
+        ]).rstrip(os.pathsep),
+    })
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"worker-loss-e2e-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+        _set_trial_deployment_profile(engine, organization_id)
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Worker Loss E2E Test",
+                role="LAB_DIRECTOR",
+                status="ACTIVE",
+            ))
+            db.commit()
+        with Session(engine) as db:
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=str(case_id),
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.commit()
+        with Session(engine) as db:
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="GERMLINE",
+                workflow_id="integration",
+                workflow_version="1",
+                status=AnalysisStatus.QUEUED,
+                queue_task_id=str(dispatch_id),
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.commit()
+
+        # Start a real Celery prefork worker. The test task terminates only its
+        # child process after committing the RUNNING-stage checkpoint.
+        worker = subprocess.Popen(
+            [
+                sys.executable, "-m", "celery",
+                "-A", "worker_loss_celery_app:celery_app",
+                "worker",
+                "--pool=prefork",
+                "--concurrency=1",
+                "--loglevel=INFO",
+                "--without-gossip",
+                "--without-mingle",
+                "--without-heartbeat",
+                "-Q", queue_name,
+                "-n", f"worker-loss-{uuid4().hex}@%h",
+            ],
+            cwd=str(repo_root),
+            env=worker_env,
+            stdout=worker_log,
+            stderr=subprocess.STDOUT,
+        )
+
+        # Import the test app in the producer process only after env is set for
+        # the child; its broker points to the same dedicated Redis database.
+        import importlib
+        import sys
+        sys.path.insert(0, str(repo_root / "tests" / "integration"))
+        test_worker_module = importlib.import_module("worker_loss_celery_app")
+        task = test_worker_module.worker_loss_after_checkpoint.apply_async(
+            args=[str(analysis_id), marker_prefix],
+            task_id=str(dispatch_id),
+            queue=queue_name,
+        )
+
+        deadline = time.monotonic() + 90
+        result_payload = None
+        while time.monotonic() < deadline:
+            raw_result = redis_client.get(f"{marker_prefix}:result")
+            if raw_result:
+                result_payload = json.loads(raw_result)
+                break
+            if worker.poll() is not None:
+                worker_log.flush()
+                raise AssertionError(
+                    f"Celery worker exited unexpectedly ({worker.returncode}):\n"
+                    f"{(tmp_path / 'celery-worker.log').read_text()[-12000:]}"
+                )
+            time.sleep(0.25)
+
+        if result_payload is None:
+            worker_log.flush()
+            raise AssertionError(
+                "Celery did not complete a redelivery within 90 seconds; "
+                f"checkpoint={redis_client.get(f'{marker_prefix}:checkpoint')!r}. "
+                f"Worker log:\n{(tmp_path / 'celery-worker.log').read_text()[-12000:]}"
+            )
+
+        assert redis_client.get(f"{marker_prefix}:checkpoint") == "committed"
+        assert result_payload["outcome"] == "recovered", result_payload
+        assert result_payload["redelivered"] is True
+        assert result_payload["attempt"] >= 2
+        assert result_payload["analysis_status"] == str(AnalysisStatus.RUNNING)
+        assert result_payload["step_status"] == str(StepStatus.RETRYING)
+        assert result_payload["step_error_code"] == "WORKER_INTERRUPTED"
+        assert result_payload["checkpoint"] == "batch-4"
+        assert result_payload["partition_status"] == "READY"
+        assert result_payload["partition_lease_owner"] is None
+        assert result_payload["partition_error_code"] == "WORKER_INTERRUPTED"
+
+        with Session(engine) as db:
+            events = db.query(AuditEvent).filter(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+            ).all()
+            assert len(events) == 1
+            assert db.get(Analysis, analysis_id).status == AnalysisStatus.RUNNING
+    finally:
+        if worker is not None and worker.poll() is None:
+            worker.terminate()
+            try:
+                worker.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                worker.kill()
+                worker.wait(timeout=10)
+        worker_log.close()
+        for suffix in (":attempts", ":checkpoint", ":result"):
+            redis_client.delete(f"{marker_prefix}{suffix}")
+        with Session(engine) as db:
+            db.query(AnalysisPartition).filter(
+                AnalysisPartition.analysis_id == analysis_id
+            ).delete()
+            db.query(WorkflowStep).filter(
+                WorkflowStep.analysis_id == analysis_id
+            ).delete()
+            db.query(AuditEvent).filter(
+                AuditEvent.analysis_id == analysis_id
+            ).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(Case).filter(Case.id == case_id).delete()
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(ResourceDeploymentProfile).filter(
+                ResourceDeploymentProfile.organization_id == organization_id
+            ).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
