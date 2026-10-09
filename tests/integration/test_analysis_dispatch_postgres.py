@@ -1176,6 +1176,10 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
     completed_step_id = uuid4()
     running_partition_id = uuid4()
     completed_partition_id = uuid4()
+    lost_worker_db = None
+    lost_worker_lock_connection = None
+    duplicate_lock_connection = None
+    redelivery_lock_connection = None
 
     try:
         with Session(engine) as db:
@@ -1230,11 +1234,15 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
             ))
             db.commit()
 
-        # Claim and keep this PostgreSQL session alive, matching the worker's
-        # session-scoped advisory lock lifetime.
+        # Keep the advisory lock on a dedicated checked-out connection. A
+        # SQLAlchemy Session can return its own connection to the pool on commit.
+        lost_worker_lock_connection = engine.connect()
         lost_worker_db = Session(engine)
         assert celery_module._claim_analysis_execution(
-            lost_worker_db, analysis_id, task_id=str(dispatch_id)
+            lost_worker_db,
+            analysis_id,
+            task_id=str(dispatch_id),
+            lock_connection=lost_worker_lock_connection,
         ) is True
 
         with Session(engine) as db:
@@ -1302,24 +1310,33 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
 
         # A concurrent redelivery cannot enter while the original worker still
         # owns the PostgreSQL advisory lock.
+        duplicate_lock_connection = engine.connect()
         with Session(engine) as duplicate_db:
             assert celery_module._claim_analysis_execution(
                 duplicate_db,
                 analysis_id,
                 task_id=str(dispatch_id),
                 allow_running=True,
+                lock_connection=duplicate_lock_connection,
             ) is False
+        duplicate_lock_connection.close()
+        duplicate_lock_connection = None
 
-        # Closing the claim session models the database-visible consequence of
-        # worker death: PostgreSQL releases the session-scoped execution fence.
+        # Worker death closes both its database session and the dedicated
+        # lock connection; PostgreSQL then releases the execution fence.
         lost_worker_db.close()
+        lost_worker_db = None
+        lost_worker_lock_connection.close()
+        lost_worker_lock_connection = None
 
+        redelivery_lock_connection = engine.connect()
         with Session(engine) as redelivery_claim_db:
             assert celery_module._claim_analysis_execution(
                 redelivery_claim_db,
                 analysis_id,
                 task_id=str(dispatch_id),
                 allow_running=True,
+                lock_connection=redelivery_lock_connection,
             ) is True
             with Session(engine) as recovery_db:
                 assert recover_interrupted_execution(recovery_db, analysis_id) is True
@@ -1368,10 +1385,14 @@ def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatc
                     AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
                 ).count() == 1
     finally:
-        try:
+        if lost_worker_db is not None:
             lost_worker_db.close()
-        except UnboundLocalError:
-            pass
+        if lost_worker_lock_connection is not None:
+            lost_worker_lock_connection.close()
+        if duplicate_lock_connection is not None:
+            duplicate_lock_connection.close()
+        if redelivery_lock_connection is not None:
+            redelivery_lock_connection.close()
         with Session(engine) as db:
             db.query(AnalysisPartition).filter(
                 AnalysisPartition.analysis_id == analysis_id
