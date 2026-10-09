@@ -1970,53 +1970,83 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clinvar_execution = None
                 clinvar_execution_metadata = None
                 configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
+                clinvar_profile_managed = profile_bound_analysis
 
-                # ClinVar is an optional clinical-variant evidence capability.
-                # If the laboratory has adopted a qualified ClinVar release, use
-                # it automatically. An explicit analysis resource ID remains a
-                # hard pin and is validated rather than silently substituted.
-                if configured_clinvar_id:
-                    clinvar_resource = _require_registered_resource(
-                        db,
-                        resource_id=configured_clinvar_id,
-                        expected_type="EVIDENCE",
-                        expected_build=analysis.reference_build,
-                        expected_provider="NCBI ClinVar",
-                    )
-                else:
-                    case_for_resources = db.get(Case, analysis.case_id)
-                    if case_for_resources is not None:
-                        clinvar_plan = build_resource_execution_plan(
-                            db,
-                            organization_id=case_for_resources.organization_id,
-                            requirements=(
-                                CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
-                            ),
+                if clinvar_profile_managed:
+                    selected_clinvar = [
+                        item for item in ((analysis.configuration or {}).get("resource_plan") or {}).get("selected", [])
+                        if item.get("capability") == "CLINICAL_DATABASE"
+                    ]
+                    if selected_clinvar:
+                        try:
+                            resolved_clinvar = resolve_profile_runtime_resource(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="CLINICAL_DATABASE",
+                            )
+                        except ProfileRuntimeResourceError as exc:
+                            raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                        clinvar_resource = resolved_clinvar.resource
+                        clinvar_execution = resolved_clinvar.execution
+                        clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                            resolved=clinvar_execution,
+                            resource_location=clinvar_resource.location,
+                            genome_build=analysis.reference_build,
+                            index_root=settings.resource_cache_root,
                         )
-                        clinvar_candidates = [
-                            item for item in clinvar_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
-                            if item.resource.provider == "NCBI ClinVar"
-                        ]
-                        if clinvar_candidates:
-                            clinvar_resource = clinvar_candidates[0].resource
+                        clinvar_execution_metadata = {
+                            **clinvar_execution.snapshot,
+                            "resource_name": clinvar_resource.name,
+                            "resource_checksum": clinvar_resource.checksum,
+                            "execution_dataset": clinvar_execution.contract.dataset,
+                        }
+                    # An absent optional CLINICAL_DATABASE selection means the
+                    # lab has explicitly chosen not to use ClinVar in this profile.
+                else:
+                    # Legacy, non-profile analyses retain the explicit resource
+                    # ID path and old deployment capability discovery.
+                    if configured_clinvar_id:
+                        clinvar_resource = _require_registered_resource(
+                            db,
+                            resource_id=configured_clinvar_id,
+                            expected_type="EVIDENCE",
+                            expected_build=analysis.reference_build,
+                            expected_provider="NCBI ClinVar",
+                        )
+                    else:
+                        case_for_resources = db.get(Case, analysis.case_id)
+                        if case_for_resources is not None:
+                            clinvar_plan = build_resource_execution_plan(
+                                db,
+                                organization_id=case_for_resources.organization_id,
+                                requirements=(
+                                    CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
+                                ),
+                            )
+                            clinvar_candidates = [
+                                item for item in clinvar_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
+                                if item.resource.provider == "NCBI ClinVar"
+                            ]
+                            if clinvar_candidates:
+                                clinvar_resource = clinvar_candidates[0].resource
 
-                if clinvar_resource is not None:
-                    clinvar_execution = resolve_resource_execution(
-                        db,
-                        resource=clinvar_resource,
-                    )
-                    clinvar_provider = ClinVarVCVProvider.from_execution_contract(
-                        resolved=clinvar_execution,
-                        resource_location=clinvar_resource.location,
-                        genome_build=analysis.reference_build,
-                        index_root=settings.resource_cache_root,
-                    )
-                    clinvar_execution_metadata = {
-                        **clinvar_execution.snapshot,
-                        "resource_name": clinvar_resource.name,
-                        "resource_checksum": clinvar_resource.checksum,
-                        "execution_dataset": clinvar_execution.contract.dataset,
-                    }
+                    if clinvar_resource is not None:
+                        clinvar_execution = resolve_resource_execution(
+                            db,
+                            resource=clinvar_resource,
+                        )
+                        clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                            resolved=clinvar_execution,
+                            resource_location=clinvar_resource.location,
+                            genome_build=analysis.reference_build,
+                            index_root=settings.resource_cache_root,
+                        )
+                        clinvar_execution_metadata = {
+                            **clinvar_execution.snapshot,
+                            "resource_name": clinvar_resource.name,
+                            "resource_checksum": clinvar_resource.checksum,
+                            "execution_dataset": clinvar_execution.contract.dataset,
+                        }
 
                 # ClinGen evidence activities are optional and independently governed.
                 clingen_vp_resource = None
