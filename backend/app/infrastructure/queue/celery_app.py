@@ -147,6 +147,8 @@ if Celery is not None:
                 acquired = bool(db.scalar(lock_statement, lock_parameters))
             if not acquired:
                 return False
+            if lock_connection is not None:
+                lock_connection.info["siraloom_analysis_execution_lock_key"] = lock_key
 
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
@@ -339,7 +341,25 @@ if Celery is not None:
         finally:
             claim_db.close()
             if claim_lock_connection is not None:
-                claim_lock_connection.close()
+                lock_key = claim_lock_connection.info.pop(
+                    "siraloom_analysis_execution_lock_key", None
+                )
+                try:
+                    if lock_key is not None:
+                        from sqlalchemy import text
+
+                        claim_lock_connection.execute(
+                            text("SELECT pg_advisory_unlock(:lock_key)"),
+                            {"lock_key": lock_key},
+                        ).scalar_one()
+                        claim_lock_connection.commit()
+                except Exception:
+                    # A broken connection already causes PostgreSQL to release
+                    # its session locks when it detects disconnect. Do not mask
+                    # the scientific workflow's result with unlock cleanup.
+                    claim_lock_connection.invalidate()
+                finally:
+                    claim_lock_connection.close()
 
 
     def _claim_case_export_execution(
