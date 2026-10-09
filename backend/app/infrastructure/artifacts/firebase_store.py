@@ -236,7 +236,14 @@ class FirebaseArtifactStore:
         blob = self._blob_from_uri(storage_uri)
         blob.download_to_filename(str(target))
 
-        if expected_size_bytes is not None or expected_sha256 is not None:
+        # Every artifact uploaded by this store carries its SHA-256 in object
+        # metadata. Prefer an explicit caller expectation when available, but
+        # otherwise verify that immutable metadata before a worker can consume
+        # the downloaded file.
+        metadata_sha256 = (blob.metadata or {}).get("sha256")
+        verification_sha256 = expected_sha256 or metadata_sha256
+
+        if expected_size_bytes is not None or verification_sha256 is not None:
             actual_sha256, actual_size_bytes = self._sha256_and_size(target)
 
             if (
@@ -251,13 +258,13 @@ class FirebaseArtifactStore:
                 )
 
             if (
-                expected_sha256 is not None
-                and actual_sha256.lower() != expected_sha256.lower()
+                verification_sha256 is not None
+                and actual_sha256.lower() != verification_sha256.lower()
             ):
                 target.unlink(missing_ok=True)
                 raise RuntimeError(
                     "Cloud artifact SHA-256 mismatch: "
-                    f"expected {expected_sha256}, received {actual_sha256}."
+                    f"expected {verification_sha256}, received {actual_sha256}."
                 )
 
         return target
