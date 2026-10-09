@@ -32,7 +32,6 @@ def _payload(row: OrganizationStorageProfile) -> dict:
         "backend_type": row.backend_type,
         "storage_key": row.storage_key,
         "status": row.status,
-        "configuration": row.configuration_json or {},
         "created_by": str(row.created_by) if row.created_by else None,
         "created_at": row.created_at.isoformat(),
         "updated_at": row.updated_at.isoformat(),
