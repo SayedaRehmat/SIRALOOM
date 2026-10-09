@@ -1150,3 +1150,270 @@ def test_postgres_partition_lease_fencing_rejects_stale_worker_generation():
             ).delete(synchronize_session=False)
             db.commit()
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_worker_loss_during_stage_is_recovered_on_redelivery(monkeypatch):
+    """A lost worker releases its execution fence; redelivery recovers only unfinished work."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    from backend.app.domain.enums import StepStatus
+    from backend.app.infrastructure.db.models import AuditEvent, WorkflowStep
+    import importlib
+    celery_module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    from backend.app.workflows.variant import recover_interrupted_execution
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_id = uuid4()
+    analysis_id = uuid4()
+    dispatch_id = uuid4()
+    running_step_id = uuid4()
+    completed_step_id = uuid4()
+    running_partition_id = uuid4()
+    completed_partition_id = uuid4()
+    lost_worker_db = None
+    lost_worker_lock_connection = None
+    duplicate_lock_connection = None
+    redelivery_lock_connection = None
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"worker-loss-stage-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Worker Loss Stage Test",
+                role="LAB_DIRECTOR",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=str(case_id),
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="GERMLINE",
+                workflow_id="integration",
+                workflow_version="1",
+                status=AnalysisStatus.QUEUED,
+                queue_task_id=str(dispatch_id),
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.commit()
+
+        # Keep the advisory lock on a dedicated checked-out connection. A
+        # SQLAlchemy Session can return its own connection to the pool on commit.
+        lost_worker_lock_connection = engine.connect()
+        lost_worker_db = Session(engine)
+        assert celery_module._claim_analysis_execution(
+            lost_worker_db,
+            analysis_id,
+            task_id=str(dispatch_id),
+            lock_connection=lost_worker_lock_connection,
+        ) is True
+
+        with Session(engine) as db:
+            db.add_all([
+                WorkflowStep(
+                    id=running_step_id,
+                    analysis_id=analysis_id,
+                    step_id="annotate",
+                    step_order=3,
+                    status=StepStatus.RUNNING,
+                    attempt=2,
+                    input_artifacts=["normalized-vcf"],
+                    output_artifacts=[],
+                    metadata_json={"next_step": "annotate", "checkpoint": "batch-4"},
+                ),
+                WorkflowStep(
+                    id=completed_step_id,
+                    analysis_id=analysis_id,
+                    step_id="normalize",
+                    step_order=2,
+                    status=StepStatus.SUCCEEDED,
+                    attempt=1,
+                    input_artifacts=["validated-vcf"],
+                    output_artifacts=["normalized-vcf"],
+                    metadata_json={"next_step": "annotate", "checkpoint": "complete"},
+                ),
+                AnalysisPartition(
+                    id=running_partition_id,
+                    analysis_id=analysis_id,
+                    step_id="annotate",
+                    partition_key="batch-4",
+                    ordinal=4,
+                    record_start=400,
+                    record_end=500,
+                    variant_count=100,
+                    status="RUNNING",
+                    metadata_json={"variant_ids": ["unfinished-variant"]},
+                    resource_class="STANDARD",
+                    cpu_request=1.0,
+                    memory_mb=1024,
+                    attempt=2,
+                    lease_owner="worker-lost",
+                    lease_expires_at=None,
+                ),
+                AnalysisPartition(
+                    id=completed_partition_id,
+                    analysis_id=analysis_id,
+                    step_id="annotate",
+                    partition_key="batch-3",
+                    ordinal=3,
+                    record_start=300,
+                    record_end=400,
+                    variant_count=100,
+                    status="SUCCEEDED",
+                    metadata_json={"variant_ids": ["completed-variant"]},
+                    resource_class="STANDARD",
+                    cpu_request=1.0,
+                    memory_mb=1024,
+                    attempt=1,
+                    lease_owner=None,
+                    lease_expires_at=None,
+                ),
+            ])
+            db.commit()
+
+        # A concurrent redelivery cannot enter while the original worker still
+        # owns the PostgreSQL advisory lock.
+        duplicate_lock_connection = engine.connect()
+        with Session(engine) as duplicate_db:
+            assert celery_module._claim_analysis_execution(
+                duplicate_db,
+                analysis_id,
+                task_id=str(dispatch_id),
+                allow_running=True,
+                lock_connection=duplicate_lock_connection,
+            ) is False
+        duplicate_lock_connection.close()
+        duplicate_lock_connection = None
+
+        # Worker death closes both its database session and the dedicated
+        # lock connection; PostgreSQL then releases the execution fence.
+        lost_worker_db.close()
+        lost_worker_db = None
+        # A normal SQLAlchemy Connection.close() returns the connection to its
+        # pool; session-level advisory locks intentionally survive that. Invalidate
+        # the physical connection to model the server observing worker-process loss.
+        lost_worker_lock_connection.invalidate()
+        lost_worker_lock_connection.close()
+        lost_worker_lock_connection = None
+
+        redelivery_lock_connection = engine.connect()
+        with Session(engine) as redelivery_claim_db:
+            assert celery_module._claim_analysis_execution(
+                redelivery_claim_db,
+                analysis_id,
+                task_id=str(dispatch_id),
+                allow_running=True,
+                lock_connection=redelivery_lock_connection,
+            ) is True
+            with Session(engine) as recovery_db:
+                assert recover_interrupted_execution(recovery_db, analysis_id) is True
+
+            with Session(engine) as verify_db:
+                analysis = verify_db.get(Analysis, analysis_id)
+                running_step = verify_db.get(WorkflowStep, running_step_id)
+                completed_step = verify_db.get(WorkflowStep, completed_step_id)
+                running_partition = verify_db.get(AnalysisPartition, running_partition_id)
+                completed_partition = verify_db.get(AnalysisPartition, completed_partition_id)
+
+                assert analysis.status == AnalysisStatus.RUNNING
+                assert running_step.status == StepStatus.RETRYING
+                assert running_step.error_code == "WORKER_INTERRUPTED"
+                assert running_step.attempt == 2
+                assert running_step.metadata_json["next_step"] == "annotate"
+                assert running_step.metadata_json["recovery"] == "CELERY_REDELIVERY"
+                assert running_partition.status == "READY"
+                assert running_partition.lease_owner is None
+                assert running_partition.lease_token is None
+                assert running_partition.lease_expires_at is None
+                assert running_partition.error_code == "WORKER_INTERRUPTED"
+
+                # Durable successful checkpoints are not invalidated or replayed.
+                assert completed_step.status == StepStatus.SUCCEEDED
+                assert completed_step.output_artifacts == ["normalized-vcf"]
+                assert completed_step.metadata_json["checkpoint"] == "complete"
+                assert completed_partition.status == "SUCCEEDED"
+                assert completed_partition.metadata_json["variant_ids"] == ["completed-variant"]
+                assert completed_partition.attempt == 1
+
+                recovery_events = verify_db.scalars(
+                    select(AuditEvent).where(
+                        AuditEvent.analysis_id == analysis_id,
+                        AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+                    )
+                ).all()
+                assert len(recovery_events) == 1
+                assert recovery_events[0].payload["recovered_partitions"] == 1
+
+            with Session(engine) as recovery_db:
+                assert recover_interrupted_execution(recovery_db, analysis_id) is False
+            with Session(engine) as verify_db:
+                assert verify_db.query(AuditEvent).filter(
+                    AuditEvent.analysis_id == analysis_id,
+                    AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+                ).count() == 1
+    finally:
+        if lost_worker_db is not None:
+            lost_worker_db.close()
+        if lost_worker_lock_connection is not None:
+            lost_worker_lock_connection.close()
+        if duplicate_lock_connection is not None:
+            duplicate_lock_connection.close()
+        if redelivery_lock_connection is not None:
+            redelivery_lock_connection.invalidate()
+            redelivery_lock_connection.close()
+        with Session(engine) as db:
+            db.query(AnalysisPartition).filter(
+                AnalysisPartition.analysis_id == analysis_id
+            ).delete()
+            db.query(WorkflowStep).filter(
+                WorkflowStep.analysis_id == analysis_id
+            ).delete()
+            db.query(AuditEvent).filter(
+                AuditEvent.analysis_id == analysis_id
+            ).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(Case).filter(Case.id == case_id).delete()
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(ResourceDeploymentProfile).filter(
+                ResourceDeploymentProfile.organization_id == organization_id
+            ).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
