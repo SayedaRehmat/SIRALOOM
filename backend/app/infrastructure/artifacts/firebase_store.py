@@ -222,12 +222,44 @@ class FirebaseArtifactStore:
 
         return self.bucket.blob(object_name)
 
-    def download_to_file(self, storage_uri: str, destination: Path) -> Path:
-        """Download a cloud artifact directly to disk without buffering it in RAM."""
+    def download_to_file(
+        self,
+        storage_uri: str,
+        destination: Path,
+        *,
+        expected_sha256: str | None = None,
+        expected_size_bytes: int | None = None,
+    ) -> Path:
+        """Download a cloud artifact directly to disk and verify its integrity."""
         target = Path(destination)
         target.parent.mkdir(parents=True, exist_ok=True)
         blob = self._blob_from_uri(storage_uri)
         blob.download_to_filename(str(target))
+
+        if expected_size_bytes is not None or expected_sha256 is not None:
+            actual_sha256, actual_size_bytes = self._sha256_and_size(target)
+
+            if (
+                expected_size_bytes is not None
+                and actual_size_bytes != expected_size_bytes
+            ):
+                target.unlink(missing_ok=True)
+                raise RuntimeError(
+                    "Cloud artifact size mismatch: "
+                    f"expected {expected_size_bytes} bytes, "
+                    f"received {actual_size_bytes} bytes."
+                )
+
+            if (
+                expected_sha256 is not None
+                and actual_sha256.lower() != expected_sha256.lower()
+            ):
+                target.unlink(missing_ok=True)
+                raise RuntimeError(
+                    "Cloud artifact SHA-256 mismatch: "
+                    f"expected {expected_sha256}, received {actual_sha256}."
+                )
+
         return target
 
     def iter_bytes(self, storage_uri: str, *, chunk_size: int = 8 * 1024 * 1024):
