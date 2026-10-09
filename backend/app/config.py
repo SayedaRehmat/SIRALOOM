@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,8 @@ class Settings(BaseSettings):
     redis_url: str
 
     artifact_root: str = "/data/siraloom/artifacts"
+    # Hard application-level upper bound; labs can raise it per deployment via MAX_ARTIFACT_UPLOAD_BYTES.
+    max_artifact_upload_bytes: int = Field(default=512 * 1024 * 1024, gt=0)
     resource_cache_root: str = "/data/siraloom/resource-cache"
     bcftools_version: str = "1.19"
 
