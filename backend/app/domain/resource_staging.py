@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 import os
 import shutil
 from uuid import uuid4
+from urllib.parse import unquote, urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -281,6 +282,19 @@ def prepare_staging(db: Session, row: ResourceStaging) -> ResourceStaging:
     return transition_staging(db, row, "READY_TO_STAGE")
 
 
+def _declared_local_source_path(source_uri: str) -> Path | None:
+    """Resolve a registered local source URI without treating remote URLs as paths."""
+    value = str(source_uri or "").strip()
+    if not value:
+        return None
+    parsed = urlparse(value)
+    if parsed.scheme == "":
+        return Path(value)
+    if parsed.scheme.lower() != "file" or parsed.netloc not in {"", "localhost"}:
+        return None
+    return Path(unquote(parsed.path))
+
+
 def stage_local_artifact(
     db: Session,
     row: ResourceStaging,
@@ -295,6 +309,25 @@ def stage_local_artifact(
     """
     source = Path(source_path)
     destination = Path(row.destination_uri)
+    declared_source = _declared_local_source_path(row.source_uri)
+    if declared_source is not None:
+        if source.resolve(strict=False) != declared_source.resolve(strict=False):
+            raise ResourceStagingError(
+                "provided local source path does not match the registered staging source URI"
+            )
+    else:
+        # A local file may be the acquired copy of a remote release. In that
+        # case the origin URL remains the provenance source, and the published
+        # checksum must bind the staged bytes to that release.
+        parsed_source = urlparse(str(row.source_uri or "").strip())
+        if parsed_source.scheme.lower() != "https" or not parsed_source.hostname:
+            raise ResourceStagingError(
+                "local staging requires a local path, file:// URI, or HTTPS origin URI"
+            )
+        if not row.expected_sha256:
+            raise ResourceStagingError(
+                "staging a local copy of a remote origin requires a registered SHA-256"
+            )
     if not source.is_file():
         return transition_staging(
             db,
@@ -312,7 +345,7 @@ def stage_local_artifact(
 
     transition_staging(db, row, "STAGING")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_name(f".{destination.name}.staging-{row.id}")
+    temporary = destination.with_name(f".{destination.name}.staging-{row.id}-{uuid4().hex}")
     try:
         shutil.copyfile(source, temporary)
         observed_size = temporary.stat().st_size
