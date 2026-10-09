@@ -2,7 +2,7 @@ from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 from pathlib import Path
 import tempfile
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -15,10 +15,8 @@ from backend.app.infrastructure.db.models import Analysis, Report, CaseExport, C
 from backend.app.reporting.service import build_report_content, render_pdf, render_html, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
-from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
-from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.application.analysis import resume_analysis
 from backend.app.application.case_export import enqueue_case_export
@@ -242,5 +240,36 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
     artifact = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact, exp.artifact_id)
     if not artifact:
         raise HTTPException(status_code=404, detail="Export artifact not found")
-    path = ArtifactStore(settings.artifact_root).local_path(artifact.storage_uri)
-    return FileResponse(path, media_type="application/zip", filename=artifact.filename)
+    try:
+        store = artifact_store_for_organization(
+            db,
+            organization_id=case.organization_id,
+        )
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    # Resolve the export through the same organization-selected store that
+    # created it. A cloud URI must never be treated as a local filesystem path.
+    if isinstance(store, FirebaseArtifactStore):
+        return StreamingResponse(
+            store.iter_bytes(artifact.storage_uri),
+            media_type=artifact.media_type or "application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{Path(artifact.filename).name}"',
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+
+    try:
+        path = store.local_path(artifact.storage_uri)
+    except (AttributeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Export artifact storage URI is incompatible with the organization's configured storage profile.",
+        ) from exc
+    return FileResponse(
+        path,
+        media_type=artifact.media_type or "application/zip",
+        filename=Path(artifact.filename).name,
+        headers={"X-Content-Type-Options": "nosniff"},
+    )

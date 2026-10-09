@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 import gzip
+import os
+from pathlib import Path
+import tempfile
 
 from backend.app.domain.reference import FastaReference, ReferenceError
 from backend.app.domain.schemas import CanonicalVariant
@@ -145,7 +147,36 @@ def _split_vcf_alt(alt: str) -> list[str]:
 
 
 def normalize_vcf_file(input_path: str | Path, output_path: str | Path, *, genome_build: str, reference: FastaReference, collect_variants: bool = True):
-    """Stream-normalize a biallelic VCF without loading it into memory."""
+    """Normalize into a temporary file and atomically publish only on success."""
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    compressed = output_path.suffix == ".gz"
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{output_path.stem}.siraloom-",
+        suffix=".tmp.gz" if compressed else ".tmp",
+        dir=str(output_path.parent),
+    )
+    os.close(fd)
+    temporary_path = Path(temporary_name)
+    try:
+        result = _normalize_vcf_file_to_path(
+            input_path,
+            temporary_path,
+            genome_build=genome_build,
+            reference=reference,
+            collect_variants=collect_variants,
+        )
+        os.replace(temporary_path, output_path)
+        result["output_path"] = str(output_path)
+        return result
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise
+
+
+def _normalize_vcf_file_to_path(input_path: str | Path, output_path: str | Path, *, genome_build: str, reference: FastaReference, collect_variants: bool = True):
+    """Stream-normalize a biallelic VCF into a private temporary file."""
     input_path = Path(input_path)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -99,3 +99,69 @@ def test_bcftools_version_pin_rejects_mismatch(tmp_path: Path):
             reference_fasta=fasta,
             expected_bcftools_version="0.0.0",
         )
+
+
+
+def test_failed_normalization_preserves_existing_vcf_and_index(tmp_path: Path):
+    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
+        pytest.skip("bcftools is not installed outside CI")
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "bad.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    index_path = Path(str(output_vcf) + ".csi")
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tC\tA\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    output_vcf.write_bytes(b"previous-valid-vcf")
+    index_path.write_bytes(b"previous-valid-index")
+
+    with pytest.raises(VCFToolError, match="reference-aware normalization failed"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            output_vcf,
+            reference_fasta=fasta,
+            expected_bcftools_version="1.19",
+        )
+
+    assert output_vcf.read_bytes() == b"previous-valid-vcf"
+    assert index_path.read_bytes() == b"previous-valid-index"
+
+
+def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: Path):
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "input.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    index_path = Path(str(output_vcf) + ".csi")
+    input_vcf.write_text("dummy input\n", encoding="utf-8")
+    output_vcf.write_bytes(b"previous-valid-vcf")
+    index_path.write_bytes(b"previous-valid-index")
+    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+
+    def fake_run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.19\n", stderr="")
+        if command[1] in {"norm", "sort"}:
+            target = Path(command[command.index("-o") + 1])
+            target.write_bytes(b"staged-" + command[1].encode())
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        if command[1] == "index":
+            return subprocess.CompletedProcess(command, 1, stdout="", stderr="injected index failure")
+        raise AssertionError(f"Unexpected command: {command!r}")
+
+    monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
+    with pytest.raises(VCFToolError, match="CSI indexing failed"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            output_vcf,
+            reference_fasta=fasta,
+            expected_bcftools_version="1.19",
+        )
+
+    assert output_vcf.read_bytes() == b"previous-valid-vcf"
+    assert index_path.read_bytes() == b"previous-valid-index"
+    assert not list(tmp_path.glob(".normalized.vcf.gz.siraloom-*"))

@@ -1,3 +1,4 @@
+import gzip
 from pathlib import Path
 
 import pytest
@@ -92,3 +93,43 @@ def test_unsupported_variant_errors_have_stable_codes():
     )
     assert error.code == "UNSUPPORTED_GVCF_INPUT"
     assert str(error) == "GVCF input is not supported by Phase 1."
+
+
+
+def test_failed_normalization_does_not_publish_partial_output(tmp_path: Path):
+    fasta, fai = make_reference(tmp_path)
+    input_vcf = tmp_path / "input.vcf"
+    output_vcf = tmp_path / "normalized.vcf"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n"
+        "1\t3\t.\tT\tA\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    output_vcf.write_text("previous-valid-output\n", encoding="utf-8")
+    with FastaReference(fasta, fai) as ref:
+        with pytest.raises(NormalizationError, match="Reference allele mismatch"):
+            normalize_vcf_file(input_vcf, output_vcf, genome_build="GRCh38", reference=ref)
+    assert output_vcf.read_text(encoding="utf-8") == "previous-valid-output\n"
+    assert not list(tmp_path.glob(".normalized.*.tmp"))
+
+
+def test_gzip_output_is_valid_and_published_with_final_gzip_suffix(tmp_path: Path):
+    fasta, fai = make_reference(tmp_path)
+    input_vcf = tmp_path / "input.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with FastaReference(fasta, fai) as ref:
+        result = normalize_vcf_file(input_vcf, output_vcf, genome_build="GRCh38", reference=ref)
+    assert result["output_path"] == str(output_vcf)
+    with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
+        normalized_text = handle.read()
+    assert "#CHROM" in normalized_text
+    assert "1\t2\t.\tA\tC" in normalized_text
+    assert not list(tmp_path.glob(".normalized.*.tmp.gz"))
