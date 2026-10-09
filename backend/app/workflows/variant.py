@@ -85,10 +85,20 @@ def _now() -> datetime:
 
 
 class TransientWorkflowError(RuntimeError):
-    """Signals a transient provider/worker failure that a durable queue may retry."""
-    def __init__(self, message: str, *, countdown: int = 10):
+    """Signals a transient workflow condition that a durable queue may retry."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        countdown: int = 10,
+        max_retries: int = 3,
+        error_code: str = "ANNOTATION_PROVIDER_RETRY_EXHAUSTED",
+    ):
         super().__init__(message)
         self.countdown = max(1, countdown)
+        self.max_retries = max(0, int(max_retries))
+        self.error_code = error_code
 
 
 class ResourceConsumptionError(RuntimeError):
@@ -1453,27 +1463,49 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             except TransientWorkflowError:
                 raise
             except PartitionCapacityError as exc:
+                # Capacity contention is transient: do not terminally fail a
+                # scientifically valid analysis just because another partition
+                # currently owns the deployment's CPU/RAM envelope. Keep the
+                # checkpoint durable and let Celery retry this analysis later.
+                _save_batch_checkpoint(
+                    db,
+                    annotation_step,
+                    start,
+                    end,
+                    status="RETRYING",
+                    attempt=int(_batch_checkpoint(annotation_step, start, end).get("attempt", 0)),
+                    metadata={"wait_reason": "CAPACITY_UNAVAILABLE", "error": str(exc)},
+                )
                 mark_step(
                     db,
                     annotation_step,
-                    StepStatus.RESOURCE_FAILURE,
-                    error_code="ANNOTATION_RESOURCE_CAPACITY_EXHAUSTED",
+                    StepStatus.RETRYING,
+                    error_code="ANNOTATION_WAITING_FOR_CAPACITY",
                     error_message=str(exc),
-                    metadata={"next_step": "annotate"},
+                    metadata={"next_step": "annotate", "retry_policy": "bounded_capacity_wait"},
                 )
-                analysis.status = AnalysisStatus.RESOURCE_FAILURE
                 db.commit()
                 audit.record(
-                    event_type="ANNOTATION_RESOURCE_FAILURE",
+                    event_type="ANNOTATION_WAITING_FOR_CAPACITY",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
                     actor_id="partition-scheduler",
                     reason=str(exc),
-                    payload={"error_code": "ANNOTATION_RESOURCE_CAPACITY_EXHAUSTED", "next_step": "annotate"},
+                    payload={
+                        "error_code": "ANNOTATION_WAITING_FOR_CAPACITY",
+                        "next_step": "annotate",
+                        "retry_delay_seconds": 60,
+                        "max_retries": 20,
+                    },
                 )
                 db.commit()
-                return
+                raise TransientWorkflowError(
+                    str(exc),
+                    countdown=60,
+                    max_retries=20,
+                    error_code="ANNOTATION_CAPACITY_RETRY_EXHAUSTED",
+                ) from exc
             except GeneBeError as exc:
                 mark_step(db, annotation_step, StepStatus.FAILED, error_code="ANNOTATION_PROVIDER_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
