@@ -204,3 +204,58 @@ def test_staging_state_machine_rejects_skipping_preflight(tmp_path: Path):
     finally:
         db.close()
         engine.dispose()
+
+
+def test_local_staging_rejects_source_path_not_registered_in_staging_record(tmp_path: Path):
+    engine, db = _db()
+    try:
+        registered_source = tmp_path / "registered.fa"
+        supplied_source = tmp_path / "different.fa"
+        registered_source.write_bytes(b">1\\nAAAA\\n")
+        supplied_source.write_bytes(b">1\\nCCCC\\n")
+        destination = tmp_path / "staged" / "reference.fa"
+        destination.parent.mkdir()
+        resource = _resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri=str(registered_source),
+            destination_uri=str(destination),
+        )
+
+        with pytest.raises(ResourceStagingError, match="does not match the registered staging source URI"):
+            stage_local_artifact(db, row, source_path=supplied_source)
+
+        assert row.status == "DISCOVERED"
+        assert not destination.exists()
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_local_staging_accepts_registered_file_uri(tmp_path: Path):
+    engine, db = _db()
+    try:
+        source = tmp_path / "incoming reference.fa"
+        source.write_bytes(b">1\\nACGT\\n")
+        destination = tmp_path / "staged reference.fa"
+        resource = _resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri=source.as_uri(),
+            destination_uri=str(destination),
+            expected_sha256=sha256(source.read_bytes()).hexdigest(),
+        )
+
+        staged = stage_local_artifact(db, row, source_path=source)
+
+        assert staged.status == "STAGED"
+        assert destination.read_bytes() == source.read_bytes()
+    finally:
+        db.close()
+        engine.dispose()
