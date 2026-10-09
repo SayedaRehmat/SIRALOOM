@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from backend.app.domain.vcf_tools import VCFToolError, normalize_vcf_with_bcftools
+from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 
 
 def make_reference(tmp_path: Path) -> Path:
@@ -165,9 +165,6 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
     assert index_path.read_bytes() == b"previous-valid-index"
     assert not list(tmp_path.glob(".normalized.vcf.gz.siraloom-*"))
-
-
-from backend.app.domain.vcf_tools import classify_records
 
 
 def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_path: Path):
