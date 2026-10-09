@@ -665,11 +665,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         expected_build=reference_build,
                         expected_provider=requested_reference.provider,
                     )
-                    if resolution.used_fallback:
-                        raise ReferencePackageError(
-                            "The configured reference resource changed after selection; restart preflight instead of substituting another release.",
-                            code="RESOURCE_PLAN_STALE",
-                        )
                 record_workflow_decision(
                     db,
                     analysis_id=analysis.id,
