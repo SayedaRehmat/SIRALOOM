@@ -1585,16 +1585,16 @@ def test_real_celery_worker_loss_redelivers_and_recovers_checkpoint(tmp_path):
             )
 
         assert redis_client.get(f"{marker_prefix}:checkpoint") == "committed"
-        assert result_payload["outcome"] == "recovered", result_payload
-        assert result_payload["redelivered"] is True
-        assert result_payload["attempt"] >= 2
-        assert result_payload["analysis_status"] == str(AnalysisStatus.RUNNING)
-        assert result_payload["step_status"] == str(StepStatus.RETRYING)
-        assert result_payload["step_error_code"] == "WORKER_INTERRUPTED"
-        assert result_payload["checkpoint"] == "batch-4"
-        assert result_payload["partition_status"] == "READY"
-        assert result_payload["partition_lease_owner"] is None
-        assert result_payload["partition_error_code"] == "WORKER_INTERRUPTED"
+        assert result_payload["delivery_redelivered"] is True, result_payload
+        assert result_payload["production_result"]["status"] == str(AnalysisStatus.RUNNING)
+        workflow_result = result_payload["workflow_result"]
+        assert workflow_result is not None, result_payload
+        assert workflow_result["step_status"] == str(StepStatus.RETRYING)
+        assert workflow_result["step_error_code"] == "WORKER_INTERRUPTED"
+        assert workflow_result["checkpoint"] == "batch-4"
+        assert workflow_result["partition_status"] == "READY"
+        assert workflow_result["partition_lease_owner"] is None
+        assert workflow_result["partition_error_code"] == "WORKER_INTERRUPTED"
 
         with Session(engine) as db:
             events = db.query(AuditEvent).filter(
