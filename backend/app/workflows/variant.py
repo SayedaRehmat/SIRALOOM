@@ -2149,6 +2149,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clinvar_provider = None
                 clinvar_execution = None
                 clinvar_execution_metadata = None
+                clinvar_limitations: list[dict[str, object]] = []
                 configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
                 clinvar_profile_managed = profile_bound_analysis
 
@@ -2164,22 +2165,26 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 analysis_id=analysis.id,
                                 capability="CLINICAL_DATABASE",
                             )
-                        except ProfileRuntimeResourceError as exc:
-                            raise ResourceConsumptionError(exc.code, str(exc)) from exc
-                        clinvar_resource = resolved_clinvar.resource
-                        clinvar_execution = resolved_clinvar.execution
-                        clinvar_provider = ClinVarVCVProvider.from_execution_contract(
-                            resolved=clinvar_execution,
-                            resource_location=clinvar_resource.location,
-                            genome_build=analysis.reference_build,
-                            index_root=settings.resource_cache_root,
-                        )
-                        clinvar_execution_metadata = {
-                            **clinvar_execution.snapshot,
-                            "resource_name": clinvar_resource.name,
-                            "resource_checksum": clinvar_resource.checksum,
-                            "execution_dataset": clinvar_execution.contract.dataset,
-                        }
+                            clinvar_resource = resolved_clinvar.resource
+                            clinvar_execution = resolved_clinvar.execution
+                            clinvar_provider = ClinVarVCVProvider.from_execution_contract(
+                                resolved=clinvar_execution,
+                                resource_location=clinvar_resource.location,
+                                genome_build=analysis.reference_build,
+                                index_root=settings.resource_cache_root,
+                            )
+                            clinvar_execution_metadata = {
+                                **clinvar_execution.snapshot,
+                                "resource_name": clinvar_resource.name,
+                                "resource_checksum": clinvar_resource.checksum,
+                                "execution_dataset": clinvar_execution.contract.dataset,
+                            }
+                        except (ProfileRuntimeResourceError, ResourceExecutionError, ClinVarProviderError) as exc:
+                            clinvar_limitations.append({
+                                "code": getattr(exc, "code", None) or "CLINVAR_RESOURCE_UNAVAILABLE",
+                                "message": str(exc),
+                                "resource_capability": "CLINICAL_DATABASE",
+                            })
                     # An absent optional CLINICAL_DATABASE selection means the
                     # lab has explicitly chosen not to use ClinVar in this profile.
                 else:
@@ -2483,6 +2488,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "engine": engine.engine_id,
                     "engine_version": engine.engine_version,
                     "created_evidence": created,
+                    "optional_resource_limitations": clinvar_limitations,
                 }
                 if created == 0:
                     _apply_scientific_limitation(
