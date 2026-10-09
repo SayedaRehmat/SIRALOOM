@@ -984,3 +984,90 @@ def test_analysis_execution_claim_uses_postgresql_session_advisory_lock():
         allow_running=True,
     ) is True
     assert recovery_db.scalar_calls == 1
+
+
+
+def test_redelivered_analysis_recovers_after_claim_before_workflow_starts(monkeypatch):
+    """A broker redelivery after RUNNING was committed must recover before work resumes."""
+    from uuid import UUID
+
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_session = importlib.import_module("backend.app.infrastructure.db.session")
+    analysis_id = uuid4()
+    task_id = "redelivered-analysis-task"
+    events = []
+
+    class FakeDB:
+        def __init__(self, name):
+            self.name = name
+            self.closed = False
+
+        def get(self, model, row_id):
+            assert row_id == analysis_id
+            events.append(("read_final_status", self.name))
+            return type("Analysis", (), {"status": "SUCCEEDED"})()
+
+        def close(self):
+            self.closed = True
+            events.append(("close", self.name))
+
+    claim_db = FakeDB("claim")
+    recovery_db = FakeDB("recovery")
+    sessions = iter([claim_db, recovery_db])
+    monkeypatch.setattr(db_session, "SessionLocal", lambda: next(sessions))
+
+    def claim(db, claimed_analysis_id, *, task_id=None, allow_running=False):
+        assert db is claim_db
+        assert claimed_analysis_id == analysis_id
+        assert task_id == task_id_expected
+        assert allow_running is True
+        events.append(("claim_running", db.name))
+        return True
+
+    # Avoid a shadowing trap in the assertion above while retaining the exact
+    # dispatch-generation identifier expected from the Celery request.
+    task_id_expected = task_id
+    monkeypatch.setattr(module, "_claim_analysis_execution", claim)
+
+    def recover(db, recovered_analysis_id):
+        assert db is recovery_db
+        assert recovered_analysis_id == analysis_id
+        assert not claim_db.closed, "execution fence must remain held during recovery"
+        events.append(("recover_interrupted_execution", db.name))
+
+    monkeypatch.setattr(
+        "backend.app.workflows.variant.recover_interrupted_execution",
+        recover,
+    )
+
+    def run_workflow(workflow_analysis_id):
+        assert workflow_analysis_id == analysis_id
+        assert not claim_db.closed, "execution fence must remain held while workflow runs"
+        assert recovery_db.closed, "recovery session should close before workflow execution"
+        events.append(("run_variant_analysis", "workflow"))
+
+    monkeypatch.setattr(
+        "backend.app.workflows.variant.run_variant_analysis",
+        run_workflow,
+    )
+
+    task = module.run_analysis_task
+    task.push_request(
+        id=task_id,
+        retries=0,
+        delivery_info={"redelivered": True},
+    )
+    try:
+        result = task.run(str(analysis_id))
+    finally:
+        task.pop_request()
+
+    assert result == {"analysis_id": str(analysis_id), "status": "SUCCEEDED"}
+    assert events.index(("claim_running", "claim")) < events.index(
+        ("recover_interrupted_execution", "recovery")
+    )
+    assert events.index(("recover_interrupted_execution", "recovery")) < events.index(
+        ("run_variant_analysis", "workflow")
+    )
+    assert claim_db.closed is True
+    assert recovery_db.closed is True
