@@ -23,7 +23,7 @@ from backend.app.domain.storage_profiles import StorageProfileError, resolve_sto
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["artifacts"])
-MAX_BYTES = 512 * 1024 * 1024
+MAX_BYTES = settings.max_artifact_upload_bytes
 
 
 def _store(db: Session, organization_id: UUID):

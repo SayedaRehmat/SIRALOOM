@@ -103,6 +103,12 @@ REFERENCE_FAI
 
 GeneBe is optional at the software level but required for the current development annotation path. Its credentials remain server-side.
 
+## Artifact upload capacity
+
+The API enforces a configurable per-file ceiling through `MAX_ARTIFACT_UPLOAD_BYTES` (default: `536870912`, or 512 MiB). Trial entitlements may impose a lower ceiling; they cannot raise the deployment limit. Laboratory deployments may increase this setting only after sizing the API's multipart temporary storage, persistent artifact storage, concurrent upload count, and available disk headroom.
+
+Configure the reverse proxy or ingress request-body limit to the same value or lower. The endpoint-level check runs while reading the multipart upload, but the ASGI multipart parser may already have spooled request bytes to temporary storage before the endpoint executes; therefore this setting is not, by itself, protection against ingress-level disk exhaustion. Monitor temporary-disk free space and reject overload at the ingress layer. Do not set an unlimited value.
+
 ## Health checks
 
 ```bash
