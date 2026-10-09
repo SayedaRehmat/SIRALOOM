@@ -89,3 +89,18 @@ def test_save_batch_checkpoint_can_stage_without_commit():
     db.add.assert_called_once_with(step)
     db.commit.assert_not_called()
     assert step.metadata_json["batches"]["0:10"]["status"] == "SUCCEEDED"
+
+
+def test_transient_workflow_error_supports_capacity_specific_retry_policy():
+    from backend.app.workflows.variant import TransientWorkflowError
+
+    error = TransientWorkflowError(
+        "No resource capacity available for the next annotation partition",
+        countdown=60,
+        max_retries=20,
+        error_code="ANNOTATION_CAPACITY_RETRY_EXHAUSTED",
+    )
+
+    assert error.countdown == 60
+    assert error.max_retries == 20
+    assert error.error_code == "ANNOTATION_CAPACITY_RETRY_EXHAUSTED"
