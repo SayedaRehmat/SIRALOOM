@@ -147,12 +147,18 @@ def test_analysis_execution_claim_allows_continuation_of_running_work():
     from backend.app.domain.enums import AnalysisStatus
     analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.RUNNING})()
     class FakeDB:
+        def __init__(self):
+            self.commits = 0
         def get(self, model, analysis_id, **kwargs):
             assert kwargs == {"with_for_update": True}
             return analysis
+        def commit(self):
+            self.commits += 1
     db = FakeDB()
     assert module._claim_analysis_execution(db, analysis.id, allow_running=True) is True
+    assert db.commits == 1  # release row lock before second-session recovery
     assert module._claim_analysis_execution(db, analysis.id, allow_running=False) is False
+    assert db.commits == 1
 
 
 def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatch):
