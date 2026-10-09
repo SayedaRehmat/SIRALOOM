@@ -1083,14 +1083,31 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     )
 
                 registry = register_builtin_providers()
-                plan = build_resource_execution_plan(
-                    db,
-                    organization_id=case.organization_id,
-                    requirements=(
-                        CapabilityRequirement(ResourceCapability.ANNOTATION, required=True),
-                    ),
-                )
-                candidates = plan.for_capability(ResourceCapability.ANNOTATION)
+                profile_runtime_annotation = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_annotation = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="ANNOTATION_ENGINE",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    candidates = [SimpleNamespace(
+                        resource=profile_runtime_annotation.resource,
+                        execution=profile_runtime_annotation.execution,
+                    )]
+                    deployment = dict(((analysis.configuration or {}).get("resource_plan") or {}).get("deployment") or {})
+                    plan = SimpleNamespace(profile_type=deployment.get("profile_type", "LABORATORY"))
+                else:
+                    plan = build_resource_execution_plan(
+                        db,
+                        organization_id=case.organization_id,
+                        requirements=(
+                            CapabilityRequirement(ResourceCapability.ANNOTATION, required=True),
+                        ),
+                    )
+                    candidates = plan.for_capability(ResourceCapability.ANNOTATION)
                 if not candidates:
                     raise ResourceConsumptionError(
                         "ANNOTATION_PROVIDER_UNAVAILABLE",
@@ -1110,9 +1127,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     selected = candidates[0]
 
                 annotation_resource = selected.resource
-                annotation_execution = resolve_resource_execution(
-                    db,
-                    resource=annotation_resource,
+                annotation_execution = (
+                    selected.execution
+                    if profile_bound_analysis
+                    else resolve_resource_execution(db, resource=annotation_resource)
                 )
                 implementation = registry.require(
                     provider_id=annotation_execution.contract.provider_id,
@@ -1133,15 +1151,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 requested_annotation_resource_id = str(annotation_resource.id)
 
-                resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=requested_annotation_resource_id,
-                    expected_type="ANNOTATION",
-                    expected_build=normalize_build(analysis.reference_build),
-                    expected_provider=annotation_resource.provider,
-                    expected_provider_version=annotation_execution.contract.provider_version,
-                )
+                if profile_bound_analysis:
+                    resolution = SimpleNamespace(
+                        resource=annotation_resource,
+                        used_fallback=False,
+                        requested_resource_id=annotation_resource.id,
+                        fallback_resource_id=None,
+                        decision=decide_step_outcome(
+                            "annotate",
+                            OutcomeKind.SUCCESS,
+                            code="PROFILE_RESOURCE_SELECTED",
+                            message="Annotation is bound to the exact resource selected during analysis preflight.",
+                        ),
+                    )
+                else:
+                    resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=requested_annotation_resource_id,
+                        expected_type="ANNOTATION",
+                        expected_build=normalize_build(analysis.reference_build),
+                        expected_provider=annotation_resource.provider,
+                        expected_provider_version=annotation_execution.contract.provider_version,
+                    )
                 record_workflow_decision(
                     db,
                     analysis_id=analysis.id,
@@ -1171,15 +1203,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         resolution.decision.message,
                     )
                 annotation_resource = resolution.resource
-                annotation_execution = resolve_resource_execution(
-                    db,
-                    resource=annotation_resource,
-                )
-                implementation = registry.require(
-                    provider_id=annotation_execution.contract.provider_id,
-                    provider_version=annotation_execution.contract.provider_version,
-                )
-                provider = implementation.factory(annotation_execution.contract)
+                if not profile_bound_analysis:
+                    annotation_execution = resolve_resource_execution(
+                        db,
+                        resource=annotation_resource,
+                    )
+                    implementation = registry.require(
+                        provider_id=annotation_execution.contract.provider_id,
+                        provider_version=annotation_execution.contract.provider_version,
+                    )
+                    provider = implementation.factory(annotation_execution.contract)
             except (ResourceConsumptionError, ResourceExecutionError) as exc:
                 mark_step(
                     db,
