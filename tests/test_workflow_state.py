@@ -1677,7 +1677,7 @@ def test_celery_retry_exhaustion_persists_terminal_failure():
         audit = db.scalars(
             select(AuditEvent).where(
                 AuditEvent.analysis_id == analysis_id,
-                AuditEvent.event_type == "ANNOTATION_RETRY_EXHAUSTED",
+                AuditEvent.event_type == "ANALYSIS_RETRY_EXHAUSTED",
             )
         ).all()
 
@@ -1965,7 +1965,7 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
     class RetryRequested(BaseException):
         pass
 
-    def fake_retry(*, exc, countdown):
+    def fake_retry(*, exc, countdown, max_retries=None):
         retry_requested.append((exc, countdown))
         raise RetryRequested()
 
