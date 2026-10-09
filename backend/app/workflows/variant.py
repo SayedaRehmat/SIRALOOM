@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from types import SimpleNamespace
 from uuid import UUID
 
 from sqlalchemy import func, or_, select
@@ -29,6 +30,7 @@ from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
+from backend.app.domain.profile_runtime_resources import ProfileRuntimeResourceError, resolve_profile_runtime_resource, resolve_profile_runtime_resources
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
 from backend.app.domain.resource_capabilities import ResourceCapability, CapabilityRequirement
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
@@ -605,6 +607,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         normalized_artifact = _existing_normalized_artifact(db, analysis.id)
         reference_build = normalize_build(analysis.reference_build)
         reference_resource_id = analysis.configuration.get("reference_resource_id")
+        profile_bound_analysis = bool((analysis.configuration or {}).get("resource_profile_id"))
         partition_size = min(max(1, int(analysis.configuration.get("partition_size", 500) or 500)), 1000)
 
         if normalization_step.status != StepStatus.SUCCEEDED:
@@ -616,26 +619,56 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "Analysis case was not found while resolving the organization-approved reference package.",
                         code="CASE_NOT_FOUND",
                     )
-                try:
-                    requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
-                except (TypeError, ValueError) as exc:
-                    raise ReferencePackageError(
-                        f"Invalid reference package resource ID: {reference_resource_id!r}.",
-                        code="REFERENCE_PACKAGE_INVALID",
-                    ) from exc
-                if requested_reference is None:
-                    raise ReferencePackageError(
-                        "The configured reference package resource was not found.",
-                        code="REFERENCE_PACKAGE_NOT_FOUND",
+                profile_runtime_reference = None
+                if profile_bound_analysis:
+                    try:
+                        profile_runtime_reference = resolve_profile_runtime_resource(
+                            db,
+                            analysis_id=analysis.id,
+                            capability="REFERENCE_PACKAGE",
+                        )
+                    except ProfileRuntimeResourceError as exc:
+                        raise ReferencePackageError(str(exc), code=exc.code) from exc
+                    requested_reference = profile_runtime_reference.resource
+                    reference_resource_id = str(requested_reference.id)
+                    resolution = SimpleNamespace(
+                        resource=requested_reference,
+                        used_fallback=False,
+                        requested_resource_id=requested_reference.id,
+                        fallback_resource_id=None,
+                        decision=decide_step_outcome(
+                            "normalize",
+                            OutcomeKind.SUCCESS,
+                            code="PROFILE_RESOURCE_SELECTED",
+                            message="Reference package is bound to the exact resource selected during analysis preflight.",
+                        ),
                     )
-                resolution = resolve_resource_with_fallback(
-                    db,
-                    organization_id=case.organization_id,
-                    requested_resource_id=reference_resource_id,
-                    expected_type="REFERENCE_PACKAGE",
-                    expected_build=reference_build,
-                    expected_provider=requested_reference.provider,
-                )
+                else:
+                    try:
+                        requested_reference = db.get(Resource, UUID(str(reference_resource_id))) if reference_resource_id else None
+                    except (TypeError, ValueError) as exc:
+                        raise ReferencePackageError(
+                            f"Invalid reference package resource ID: {reference_resource_id!r}.",
+                            code="REFERENCE_PACKAGE_INVALID",
+                        ) from exc
+                    if requested_reference is None:
+                        raise ReferencePackageError(
+                            "The configured reference package resource was not found.",
+                            code="REFERENCE_PACKAGE_NOT_FOUND",
+                        )
+                    resolution = resolve_resource_with_fallback(
+                        db,
+                        organization_id=case.organization_id,
+                        requested_resource_id=reference_resource_id,
+                        expected_type="REFERENCE_PACKAGE",
+                        expected_build=reference_build,
+                        expected_provider=requested_reference.provider,
+                    )
+                    if resolution.used_fallback:
+                        raise ReferencePackageError(
+                            "The configured reference resource changed after selection; restart preflight instead of substituting another release.",
+                            code="RESOURCE_PLAN_STALE",
+                        )
                 record_workflow_decision(
                     db,
                     analysis_id=analysis.id,
