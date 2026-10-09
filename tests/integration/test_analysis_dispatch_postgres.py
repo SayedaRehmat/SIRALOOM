@@ -8,8 +8,21 @@ from sqlalchemy.orm import Session
 
 from backend.app.application.analysis import enqueue_analysis, resume_analysis
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, AnalysisPartition, Case, Organization, User
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, AnalysisPartition, Case, Organization, ResourceDeploymentProfile, User
 from backend.app.partition_scheduler import PartitionLeaseError, PartitionScheduler, configure_partition
+
+
+def _set_trial_deployment_profile(engine, organization_id):
+    """Keep dispatch-mechanics tests in an explicitly configured trial profile."""
+    with Session(engine) as db:
+        db.add(ResourceDeploymentProfile(
+            id=uuid4(),
+            organization_id=organization_id,
+            profile_type="TRIAL_PUBLIC",
+            profile_version="test-v1",
+            status="ACTIVE",
+        ))
+        db.commit()
 
 
 @pytest.mark.integration
@@ -34,6 +47,8 @@ def test_postgres_concurrent_analysis_start_creates_one_dispatch_generation(monk
             external_identifier=str(organization_id),
         ))
         db.commit()
+
+    _set_trial_deployment_profile(engine, organization_id)
 
     with Session(engine) as db:
         db.add(User(
@@ -122,7 +137,7 @@ def test_postgres_concurrent_analysis_start_creates_one_dispatch_generation(monk
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
-            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.query(ResourceDeploymentProfile).filter(ResourceDeploymentProfile.organization_id == organization_id).delete()\n            db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
 
@@ -268,7 +283,7 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
-            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.query(ResourceDeploymentProfile).filter(ResourceDeploymentProfile.organization_id == organization_id).delete()\n            db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
 
@@ -295,6 +310,8 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
                 external_identifier=str(organization_id),
             ))
             db.commit()
+
+        _set_trial_deployment_profile(engine, organization_id)
 
         with Session(engine) as db:
             db.add(User(
@@ -411,7 +428,7 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
-            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.query(ResourceDeploymentProfile).filter(ResourceDeploymentProfile.organization_id == organization_id).delete()\n            db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
 
@@ -537,7 +554,7 @@ def test_postgres_stale_worker_generation_cannot_claim_after_retry(monkeypatch):
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
-            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.query(ResourceDeploymentProfile).filter(ResourceDeploymentProfile.organization_id == organization_id).delete()\n            db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
 
@@ -702,7 +719,7 @@ def test_postgres_concurrent_worker_recovery_is_serialized(monkeypatch):
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
-            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.query(ResourceDeploymentProfile).filter(ResourceDeploymentProfile.organization_id == organization_id).delete()\n            db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
 
@@ -820,7 +837,7 @@ def test_postgres_concurrent_human_gate_resume_creates_one_dispatch(monkeypatch)
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
-            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.query(ResourceDeploymentProfile).filter(ResourceDeploymentProfile.organization_id == organization_id).delete()\n            db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
 
