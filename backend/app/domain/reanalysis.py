@@ -120,7 +120,7 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis) -> int:
             continue
         seen.add(key)
         db.add(AnalysisResourceSnapshot(
-            id=uuid4(), analysis_id=analysis.id, resource_id=None,
+            id=uuid4(), analysis_id=analysis.id, resource_id=row.resource_id,
             resource_kind="ANNOTATION", resource_name=row.resource_name or row.provider_name,
             provider=row.provider_name, version=row.resource_version or row.provider_version,
             checksum=None, genome_build=analysis.reference_build,
@@ -138,7 +138,7 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis) -> int:
             continue
         seen.add(key)
         db.add(AnalysisResourceSnapshot(
-            id=uuid4(), analysis_id=analysis.id, resource_id=None,
+            id=uuid4(), analysis_id=analysis.id, resource_id=row.resource_id,
             resource_kind="EVIDENCE", resource_name=row.source_name,
             provider=None, version=row.source_version,
             checksum=None, genome_build=analysis.reference_build,
@@ -183,13 +183,9 @@ def _change_fingerprint(
     one newly registered resource release is one change event, even when
     different historical analyses used different older releases.
     """
-    material = "\\x1f".join([
-        str(organization_id),
-        trigger_type,
-        resource_kind,
-        resource_name,
-        new_version or "",
-        new_checksum or "",
+    material = "\x1f".join([
+        str(organization_id), trigger_type, resource_kind, resource_name,
+        new_version or "", new_checksum or "",
     ])
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
@@ -208,45 +204,32 @@ def create_change_event(
     resource_id: UUID | None = None,
 ) -> ReanalysisChangeEvent:
     fingerprint = _change_fingerprint(
-        organization_id=organization_id,
-        trigger_type=trigger_type,
-        resource_kind=resource_kind,
-        resource_name=resource_name,
-        new_version=new_version,
-        new_checksum=new_checksum,
+        organization_id=organization_id, trigger_type=trigger_type,
+        resource_kind=resource_kind, resource_name=resource_name,
+        new_version=new_version, new_checksum=new_checksum,
     )
-    existing = db.scalar(
-        select(ReanalysisChangeEvent).where(
-            ReanalysisChangeEvent.change_fingerprint == fingerprint,
-        )
-    )
+    existing = db.scalar(select(ReanalysisChangeEvent).where(
+        ReanalysisChangeEvent.change_fingerprint == fingerprint,
+    ))
     if existing:
         return existing
 
     event = ReanalysisChangeEvent(
-        id=uuid4(),
-        change_fingerprint=fingerprint,
-        organization_id=organization_id,
-        resource_id=resource_id,
-        trigger_type=trigger_type,
-        resource_kind=resource_kind,
-        resource_name=resource_name,
-        previous_version=previous_version,
-        new_version=new_version,
-        previous_checksum=previous_checksum,
-        new_checksum=new_checksum,
-        metadata_json={},
+        id=uuid4(), change_fingerprint=fingerprint,
+        organization_id=organization_id, resource_id=resource_id,
+        trigger_type=trigger_type, resource_kind=resource_kind,
+        resource_name=resource_name, previous_version=previous_version,
+        new_version=new_version, previous_checksum=previous_checksum,
+        new_checksum=new_checksum, metadata_json={},
     )
     try:
         with db.begin_nested():
             db.add(event)
             db.flush()
     except IntegrityError:
-        existing = db.scalar(
-            select(ReanalysisChangeEvent).where(
-                ReanalysisChangeEvent.change_fingerprint == fingerprint,
-            )
-        )
+        existing = db.scalar(select(ReanalysisChangeEvent).where(
+            ReanalysisChangeEvent.change_fingerprint == fingerprint,
+        ))
         if existing is None:
             raise
         return existing
@@ -279,50 +262,35 @@ def detect_change(
 
     candidates: list[ReanalysisCandidate] = []
     for snapshot in snapshots:
-        same_identity = (
-            snapshot.version == new_version
-            and snapshot.checksum == new_checksum
-        )
+        same_identity = snapshot.version == new_version and snapshot.checksum == new_checksum
         if same_identity:
             continue
 
         event = create_change_event(
-            db,
-            organization_id=organization_id,
-            trigger_type=trigger_type,
-            resource_kind=resource_kind,
-            resource_name=resource_name,
-            new_version=new_version,
-            new_checksum=new_checksum,
-            previous_version=snapshot.version,
-            previous_checksum=snapshot.checksum,
+            db, organization_id=organization_id, trigger_type=trigger_type,
+            resource_kind=resource_kind, resource_name=resource_name,
+            new_version=new_version, new_checksum=new_checksum,
+            previous_version=snapshot.version, previous_checksum=snapshot.checksum,
             resource_id=resource_id,
         )
         parent = db.get(Analysis, snapshot.analysis_id)
         if not parent:
             continue
 
-        candidate = db.scalar(
-            select(ReanalysisCandidate).where(
-                ReanalysisCandidate.parent_analysis_id == parent.id,
-                ReanalysisCandidate.change_event_id == event.id,
-            )
-        )
+        candidate = db.scalar(select(ReanalysisCandidate).where(
+            ReanalysisCandidate.parent_analysis_id == parent.id,
+            ReanalysisCandidate.change_event_id == event.id,
+        ))
         if candidate:
             continue
 
         candidate = ReanalysisCandidate(
-            id=uuid4(),
-            organization_id=organization_id,
-            case_id=parent.case_id,
-            parent_analysis_id=parent.id,
-            change_event_id=event.id,
+            id=uuid4(), organization_id=organization_id, case_id=parent.case_id,
+            parent_analysis_id=parent.id, change_event_id=event.id,
             trigger_type=trigger_type,
             earliest_affected_step=affected_step_for_trigger(trigger_type),
-            reason=(
-                f"{resource_kind} resource '{resource_name}' changed from "
-                f"{snapshot.version or 'unversioned'} to {new_version or 'unversioned'}."
-            ),
+            reason=(f"{resource_kind} resource '{resource_name}' changed from "
+                    f"{snapshot.version or 'unversioned'} to {new_version or 'unversioned'}."),
             status="PENDING",
         )
         created_candidate = False
@@ -332,40 +300,27 @@ def detect_change(
                 db.flush()
             created_candidate = True
         except IntegrityError:
-            candidate = db.scalar(
-                select(ReanalysisCandidate).where(
-                    ReanalysisCandidate.parent_analysis_id == parent.id,
-                    ReanalysisCandidate.change_event_id == event.id,
-                )
-            )
+            candidate = db.scalar(select(ReanalysisCandidate).where(
+                ReanalysisCandidate.parent_analysis_id == parent.id,
+                ReanalysisCandidate.change_event_id == event.id,
+            ))
             if candidate is None:
                 raise
 
         if created_candidate:
-            users = db.scalars(
-                select(OrganizationMembership.user_id).where(
-                    OrganizationMembership.organization_id == organization_id,
-                    OrganizationMembership.status == "ACTIVE",
-                )
-            ).all()
+            users = db.scalars(select(OrganizationMembership.user_id).where(
+                OrganizationMembership.organization_id == organization_id,
+                OrganizationMembership.status == "ACTIVE",
+            )).all()
             for user_id in users:
                 db.add(Notification(
                     id=uuid4(), organization_id=organization_id, user_id=user_id,
-                    notification_type="REANALYSIS_CANDIDATE",
-                    status="UNREAD",
-                    title="Case reanalysis may be required",
-                    body=candidate.reason,
-                    case_id=parent.case_id,
-                    analysis_id=parent.id,
-                    candidate_id=candidate.id,
-                    metadata_json={
-                        "trigger_type": trigger_type,
-                        "resource_kind": resource_kind,
-                        "resource_name": resource_name,
-                        "previous_version": snapshot.version,
-                        "new_version": new_version,
-                        "earliest_affected_step": candidate.earliest_affected_step,
-                    },
+                    notification_type="REANALYSIS_CANDIDATE", status="UNREAD",
+                    title="Case reanalysis may be required", body=candidate.reason,
+                    case_id=parent.case_id, analysis_id=parent.id, candidate_id=candidate.id,
+                    metadata_json={"trigger_type": trigger_type, "resource_kind": resource_kind,
+                                   "resource_name": resource_name, "previous_version": snapshot.version,
+                                   "new_version": new_version, "earliest_affected_step": candidate.earliest_affected_step},
                 ))
             candidates.append(candidate)
 
@@ -376,12 +331,21 @@ def detect_change(
 def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> None:
     start = STEP_ORDER[earliest]
 
+    # Reuse is an exact scientific observation copy. Provenance columns are
+    # intentionally copied verbatim; the child analysis records the same
+    # upstream observation rather than fabricating a new provider observation.
     if start > STEP_ORDER["annotate"]:
         for row in db.scalars(select(Annotation).where(Annotation.analysis_id == parent_id)).all():
             db.add(Annotation(
                 id=uuid4(), variant_id=row.variant_id, analysis_id=child_id,
                 provider_name=row.provider_name, provider_version=row.provider_version,
-                resource_name=row.resource_name, resource_version=row.resource_version,
+                resource_id=row.resource_id, resource_name=row.resource_name,
+                resource_version=row.resource_version,
+                request_fingerprint=row.request_fingerprint,
+                response_sha256=row.response_sha256,
+                request_metadata=dict(row.request_metadata or {}),
+                observed_at=row.observed_at,
+                retry_count=row.retry_count,
                 payload=row.payload,
             ))
 
@@ -394,6 +358,11 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 allele_count=row.allele_count, allele_number=row.allele_number,
                 allele_frequency=row.allele_frequency, homozygote_count=row.homozygote_count,
                 availability=row.availability, quality_status=row.quality_status,
+                source_record_id=row.source_record_id,
+                request_fingerprint=row.request_fingerprint,
+                response_sha256=row.response_sha256,
+                request_metadata=dict(row.request_metadata or {}),
+                observed_at=row.observed_at,
             ))
 
     if start > STEP_ORDER["build_evidence"]:
@@ -402,9 +371,15 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 id=uuid4(), variant_id=row.variant_id, analysis_id=child_id,
                 evidence_type=row.evidence_type, statement=row.statement,
                 direction=row.direction, source_name=row.source_name,
-                source_version=row.source_version, source_record_id=row.source_record_id,
-                observation_ids=row.observation_ids, payload=row.payload,
-                created_by_type=row.created_by_type, created_by_id=row.created_by_id,
+                source_version=row.source_version, resource_id=row.resource_id,
+                source_record_id=row.source_record_id,
+                request_fingerprint=row.request_fingerprint,
+                response_sha256=row.response_sha256,
+                request_metadata=dict(row.request_metadata or {}),
+                observed_at=row.observed_at,
+                observation_ids=list(row.observation_ids or []),
+                payload=row.payload, created_by_type=row.created_by_type,
+                created_by_id=row.created_by_id,
                 evidence_fingerprint=row.evidence_fingerprint,
             ))
 
@@ -438,20 +413,14 @@ def create_reanalysis(
 
     earliest = affected_step or affected_step_for_trigger(trigger_type)
     profile_bound = bool((parent.configuration or {}).get("resource_profile_id"))
-    # A profile-bound plan is a single cross-stage resource contract. Until
-    # incremental reanalysis can pin unaffected capabilities to the parent's
-    # exact plan, replay from normalization rather than mixing old upstream
-    # outputs with a newly resolved plan.
     execution_start_step = "normalize" if profile_bound else earliest
     next_version = (parent.analysis_version or 1) + 1
 
-    duplicate = db.scalar(
-        select(Analysis).where(
-            Analysis.case_id == parent.case_id,
-            Analysis.parent_analysis_id == parent.id,
-            Analysis.analysis_version == next_version,
-        )
-    )
+    duplicate = db.scalar(select(Analysis).where(
+        Analysis.case_id == parent.case_id,
+        Analysis.parent_analysis_id == parent.id,
+        Analysis.analysis_version == next_version,
+    ))
     if duplicate:
         candidate = None
         if change_event_id:
@@ -470,36 +439,22 @@ def create_reanalysis(
 
     child_configuration = dict(parent.configuration or {})
     if profile_bound:
-        for key in (
-            "resource_plan",
-            "resource_stage_plan",
-            "reference_resource_id",
-            "annotation_resource_id",
-            "population_resource_id",
-            "gnomad_resource_id",
-        ):
+        for key in ("resource_plan", "resource_stage_plan", "reference_resource_id", "annotation_resource_id", "population_resource_id", "gnomad_resource_id"):
             child_configuration.pop(key, None)
     child_configuration["reanalysis"] = {
-        "parent_analysis_id": str(parent.id),
-        "trigger_type": trigger_type,
-        "reason": reason,
-        "earliest_affected_step": earliest,
+        "parent_analysis_id": str(parent.id), "trigger_type": trigger_type,
+        "reason": reason, "earliest_affected_step": earliest,
         "execution_start_step": execution_start_step,
         "reuse_through_step": _previous_step(execution_start_step),
-        "resource_plan_policy": (
-            "FULL_REPLAY_FROM_NORMALIZATION"
-            if profile_bound
-            else "INCREMENTAL_REUSE"
-        ),
+        "resource_plan_policy": "FULL_REPLAY_FROM_NORMALIZATION" if profile_bound else "INCREMENTAL_REUSE",
     }
     child = Analysis(
         id=uuid4(), case_id=parent.case_id, parent_analysis_id=parent.id,
         assay_id=parent.assay_id, analysis_type=parent.analysis_type,
         workflow_id=parent.workflow_id, workflow_version=parent.workflow_version,
         status="CREATED", queue_task_id=None, reference_build=parent.reference_build,
-        configuration=child_configuration,
-        started_at=None, completed_at=None, created_by=requested_by,
-        analysis_version=next_version,
+        configuration=child_configuration, started_at=None, completed_at=None,
+        created_by=requested_by, analysis_version=next_version,
     )
 
     try:
@@ -518,125 +473,38 @@ def create_reanalysis(
                     candidate.child_analysis_id = child.id
                     candidate.status = "STARTED"
                     candidate.acted_at = _now()
-
-            # Reserve exactly one quota unit with the child transaction.
-            consume_analysis_quota(db, case.organization_id, commit=False)
-
-            AuditService(db).record(
-                event_type="REANALYSIS_REQUESTED",
-                case_id=parent.case_id,
-                analysis_id=child.id,
-                actor_type="USER",
-                actor_id=str(requested_by),
-                subject_type="ANALYSIS",
-                subject_id=str(child.id),
-                operation="CREATE_REANALYSIS",
-                before_state={
-                    "parent_analysis_id": str(parent.id),
-                    "parent_status": str(parent.status),
-                    "parent_analysis_version": parent.analysis_version,
-                },
-                after_state={
-                    "child_analysis_id": str(child.id),
-                    "child_status": str(child.status),
-                    "child_analysis_version": child.analysis_version,
-                    "trigger_type": trigger_type,
-                    "earliest_affected_step": earliest,
-                },
-                reason=reason,
-                workflow={
-                    "workflow_id": child.workflow_id,
-                    "workflow_version": child.workflow_version,
-                    "reuse_through_step": _previous_step(earliest),
-                },
-                payload={
-                    "parent_analysis_id": str(parent.id),
-                    "child_analysis_id": str(child.id),
-                    "analysis_version": child.analysis_version,
-                    "trigger_type": trigger_type,
-                    "change_event_id": str(change_event_id) if change_event_id else None,
-                },
-            )
+            db.flush()
     except IntegrityError:
-        duplicate = db.scalar(
-            select(Analysis).where(
-                Analysis.case_id == parent.case_id,
-                Analysis.parent_analysis_id == parent.id,
-                Analysis.analysis_version == next_version,
-            )
-        )
-        if duplicate is None:
-            raise
-        candidate = None
-        if change_event_id:
-            candidate = db.scalar(select(ReanalysisCandidate).where(
-                ReanalysisCandidate.parent_analysis_id == parent.id,
-                ReanalysisCandidate.change_event_id == change_event_id,
-            ))
-        return duplicate, candidate
+        duplicate = db.scalar(select(Analysis).where(
+            Analysis.case_id == parent.case_id,
+            Analysis.parent_analysis_id == parent.id,
+            Analysis.analysis_version == next_version,
+        ))
+        if duplicate:
+            candidate = None
+            if change_event_id:
+                candidate = db.scalar(select(ReanalysisCandidate).where(
+                    ReanalysisCandidate.parent_analysis_id == parent.id,
+                    ReanalysisCandidate.change_event_id == change_event_id,
+                ))
+            return duplicate, candidate
+        raise
 
+    consume_analysis_quota(db, case.organization_id)
+    AuditService(db).record(
+        event_type="REANALYSIS_CREATED", case_id=parent.case_id, analysis_id=child.id,
+        actor_type="HUMAN", actor_id=str(requested_by), subject_type="ANALYSIS",
+        subject_id=str(child.id), operation="CREATE",
+        after_state={"parent_analysis_id": str(parent.id), "trigger_type": trigger_type,
+                     "earliest_affected_step": earliest, "execution_start_step": execution_start_step},
+        reason=reason,
+    )
     db.commit()
     return child, candidate
 
 
 def _previous_step(step: str) -> str | None:
     order = STEP_ORDER[step]
-    previous = [name for name, value in STEP_ORDER.items() if value < order]
-    return max(previous, key=lambda name: STEP_ORDER[name], default=None)
-
-
-RESOURCE_TRIGGER_TYPE = {
-    "REFERENCE": "REFERENCE_UPDATE",
-    "POPULATION": "POPULATION_UPDATE",
-    "ANNOTATION": "ANNOTATION_UPDATE",
-    "EVIDENCE": "EVIDENCE_UPDATE",
-    "ACMG_RULE": "ACMG_RULE_UPDATE",
-}
-
-
-def scan_active_resources_for_reanalysis(db: Session) -> int:
-    """Detect changes for every active globally registered resource.
-
-    This creates durable candidates/notifications only; it never starts a
-    reanalysis automatically. The scan is safe to repeat because change
-    events and parent/change-event candidates are idempotent.
-    """
-    resources = db.scalars(
-        select(Resource).where(Resource.status == "ACTIVE").order_by(Resource.name, Resource.version)
-    ).all()
-
-    total_candidates = 0
-    for resource in resources:
-        trigger_type = RESOURCE_TRIGGER_TYPE.get(str(resource.resource_type).upper())
-        if trigger_type is None:
-            continue
-
-        organization_ids = db.scalars(
-            select(Case.organization_id)
-            .join(Analysis, Analysis.case_id == Case.id)
-            .join(
-                AnalysisResourceSnapshot,
-                AnalysisResourceSnapshot.analysis_id == Analysis.id,
-            )
-            .where(
-                Analysis.status == "SUCCEEDED",
-                AnalysisResourceSnapshot.resource_kind == str(resource.resource_type).upper(),
-                AnalysisResourceSnapshot.resource_name == resource.name,
-            )
-            .distinct()
-        ).all()
-
-        for organization_id in organization_ids:
-            candidates = detect_change(
-                db,
-                organization_id=organization_id,
-                trigger_type=trigger_type,
-                resource_kind=str(resource.resource_type).upper(),
-                resource_name=resource.name,
-                new_version=resource.version,
-                new_checksum=resource.checksum,
-                resource_id=resource.id,
-            )
-            total_candidates += len(candidates)
-
-    return total_candidates
+    if order <= 1:
+        return None
+    return next(name for name, value in STEP_ORDER.items() if value == order - 1)
