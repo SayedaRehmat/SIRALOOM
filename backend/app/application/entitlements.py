@@ -157,6 +157,11 @@ def consume_analysis_quota(db: Session, organization_id: UUID, *, commit: bool =
 def effective_max_upload_bytes(db: Session, organization_id: UUID, default_max_bytes: int) -> int:
     """Returns the smaller of the platform-wide upload limit and any trial-specific limit."""
     entitlement = get_entitlement(db, organization_id)
-    if entitlement is None or entitlement.max_vcf_size_bytes is None:
+    if entitlement is None or entitlement.plan in _UNRESTRICTED_PLANS:
+        # The deployment cap remains authoritative for disk/ingress safety.
+        # A legacy max_vcf_size_bytes value on an unrestricted plan must not
+        # accidentally reintroduce a trial entitlement limit.
+        return default_max_bytes
+    if entitlement.max_vcf_size_bytes is None:
         return default_max_bytes
     return min(default_max_bytes, entitlement.max_vcf_size_bytes)
