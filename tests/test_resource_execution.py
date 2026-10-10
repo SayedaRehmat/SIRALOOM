@@ -628,7 +628,6 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
                 metadata={"provider": "GeneBe", "variant_count": 1},
             )
             db.commit()
-            db.refresh(partition)
             assert db.get(AnalysisPartition, retry_claim.id).status == "SUCCEEDED"
             assert step.metadata_json["batches"]["0:1"]["status"] == "SUCCEEDED"
 
