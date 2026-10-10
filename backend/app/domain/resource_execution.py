@@ -15,7 +15,7 @@ from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
 )
-from backend.app.infrastructure.db.models import Resource, ResourceQualification
+from backend.app.infrastructure.db.models import Analysis, Resource, ResourceQualification
 
 
 class ResourceExecutionError(RuntimeError):
@@ -101,6 +101,100 @@ def resolve_resource_execution(
     )
 
 
+def _assert_profile_bound_resource_execution(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    resolved: ResolvedResourceExecution,
+) -> None:
+    """Fail closed unless a profile-bound analysis executes its exact selection.
+
+    Runtime stage code may discover legacy resources for backward compatibility,
+    but a laboratory/profile-bound analysis has an immutable preflight plan. This
+    guard prevents any stage from consuming a resource that was not selected in
+    that plan, or from consuming the selected resource under a changed execution
+    qualification/contract.
+    """
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        raise ResourceExecutionError(
+            f"Analysis {analysis_id} was not found while validating resource binding."
+        )
+
+    configuration = dict(analysis.configuration or {})
+    if not configuration.get("resource_profile_id"):
+        return
+
+    plan = dict(configuration.get("resource_plan") or {})
+    if plan.get("status") not in {"READY", "READY_WITH_LIMITATIONS"}:
+        raise ResourceExecutionError(
+            f"Profile-bound analysis {analysis_id} has a non-runnable resource plan: {plan.get('status')!r}."
+        )
+
+    allowed_capabilities = {
+        "normalize": {"REFERENCE_PACKAGE"},
+        "annotate": {"ANNOTATION_ENGINE"},
+        "population": {"POPULATION", "POPULATION_SECONDARY"},
+        "build_evidence": {
+            "CLINICAL_DATABASE",
+            "GENE_DISEASE",
+            "PHENOTYPE_ONTOLOGY",
+            "COMPUTATIONAL_PREDICTOR",
+            "SPLICING_PREDICTOR",
+            "FUNCTIONAL_EVIDENCE",
+            "LITERATURE_PROVIDER",
+            "INTERNAL_LAB_EVIDENCE",
+        },
+        "acmg_assessment": {"ACMG_RULE_SPECIFICATION"},
+    }
+    capabilities_for_step = allowed_capabilities.get(step_id)
+    if capabilities_for_step is None:
+        raise ResourceExecutionError(
+            f"Profile-bound resource execution is not permitted for workflow step {step_id!r}."
+        )
+
+    selected = [
+        dict(item)
+        for item in (plan.get("selected") or [])
+        if str(item.get("resource_id")) == str(resolved.resource_id)
+    ]
+    if len(selected) != 1:
+        raise ResourceExecutionError(
+            f"Resource {resolved.resource_id} was not selected exactly once by the immutable "
+            f"resource plan for analysis {analysis_id}."
+        )
+
+    snapshot = selected[0]
+    capability = str(snapshot.get("capability") or "")
+    if capability not in capabilities_for_step:
+        raise ResourceExecutionError(
+            f"Resource {resolved.resource_id} is bound to capability {capability!r}, "
+            f"which is not executable by workflow step {step_id!r}."
+        )
+
+    expected_execution = dict(snapshot.get("execution") or {})
+    expected = {
+        "resource_id": str(expected_execution.get("resource_id")),
+        "resource_version": expected_execution.get("resource_version"),
+        "qualification_id": str(expected_execution.get("qualification_id")),
+        "qualification_version": expected_execution.get("qualification_version"),
+        "contract_hash": expected_execution.get("contract_hash"),
+    }
+    actual = {
+        "resource_id": str(resolved.resource_id),
+        "resource_version": resolved.resource_version,
+        "qualification_id": str(resolved.qualification_id),
+        "qualification_version": resolved.qualification_version,
+        "contract_hash": resolved.contract_hash,
+    }
+    if actual != expected:
+        raise ResourceExecutionError(
+            f"Runtime resource qualification differs from the immutable preflight plan: "
+            f"expected={expected}, actual={actual}."
+        )
+
+
 def start_resource_execution(
     db: Session,
     *,
@@ -116,6 +210,13 @@ def start_resource_execution(
     from datetime import datetime, timezone
     from uuid import uuid4
     from backend.app.infrastructure.db.models import ResourceExecutionRecord
+
+    _assert_profile_bound_resource_execution(
+        db,
+        analysis_id=analysis_id,
+        step_id=step_id,
+        resolved=resolved,
+    )
 
     contract = resolved.contract
     row = ResourceExecutionRecord(
