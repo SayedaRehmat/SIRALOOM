@@ -8,7 +8,6 @@ from backend.app.domain.reanalysis import _copy_rows
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
-    AnalysisResourceSnapshot,
     Annotation,
     Case,
     Evidence,
@@ -39,6 +38,8 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
     )
     organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
     parent_one, parent_two = uuid4(), uuid4()
+    phenotype_id = uuid4()
+    change_metadata = {"hpo_id": "HP:0001250", "phenotype_id": str(phenotype_id)}
 
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Case Change Lab", external_identifier=None))
@@ -70,7 +71,7 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
             case=case,
             trigger_type="PHENOTYPE_UPDATE",
             reason="A new phenotype was recorded.",
-            metadata={"hpo_id": "HP:0001250", "phenotype_id": str(uuid4())},
+            metadata=change_metadata,
         )
         db.commit()
 
@@ -80,17 +81,19 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert db.query(ReanalysisChangeEvent).count() == 1
         assert db.query(Notification).count() == 2
 
-        # The same exact change is idempotent and must not notify again.
+        # Replaying the exact same durable change must return the same candidates
+        # without creating a second event or a second notification set.
         again = create_case_change_candidates(
             db,
             case=case,
             trigger_type="PHENOTYPE_UPDATE",
             reason="A new phenotype was recorded.",
-            metadata={"hpo_id": "HP:0001250", "phenotype_id": candidates[0].id.hex},
+            metadata=change_metadata,
         )
-        # Different metadata means a different event; this assertion ensures the
-        # idempotency contract is tied to the exact durable change identity.
-        assert len(again) == 2
+        assert {c.id for c in again} == {c.id for c in candidates}
+        assert db.query(ReanalysisChangeEvent).count() == 1
+        assert db.query(ReanalysisCandidate).count() == 2
+        assert db.query(Notification).count() == 2
 
 
 def test_reanalysis_copy_preserves_annotation_and_evidence_provenance():
