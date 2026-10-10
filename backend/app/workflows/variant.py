@@ -354,6 +354,19 @@ def _load_annotation_response_checkpoint(
         raise RuntimeError("Persisted annotation response failed its provenance/identity checks.")
     return response["payloads"]
 
+def _count_persisted_evidence(db: Session, analysis_id: UUID) -> int:
+    """Count durable evidence rows for an analysis, including prior attempts.
+
+    Evidence rows and their batch-success checkpoint are committed separately.
+    After worker loss between those commits, retry deduplicates the persisted rows;
+    the per-attempt creation counter is therefore not a reliable existence signal.
+    """
+    return int(
+        db.scalar(select(func.count(Evidence.id)).where(Evidence.analysis_id == analysis_id))
+        or 0
+    )
+
+
 def _chunk_ranges(length: int, size: int = 250):
     size = max(1, size)
     for start in range(0, length, size):
@@ -2742,14 +2755,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     _save_batch_checkpoint(db, evidence_step, start_i, end_i, status="SUCCEEDED", attempt=attempt, metadata={"created_evidence": batch_created})
                 db.commit()
+                # A prior attempt may have committed evidence rows and then died
+                # before checkpointing the batch as SUCCEEDED. On retry, those
+                # rows are deduplicated, so this attempt's created counter can be
+                # zero even though durable evidence exists. Base the scientific
+                # outcome on persisted state, not this attempt's insertion count.
+                persisted_evidence_count = _count_persisted_evidence(db, analysis.id)
                 evidence_step.input_artifacts = [str(normalized_artifact.id)] if normalized_artifact else []
                 evidence_metadata = {
                     "engine": engine.engine_id,
                     "engine_version": engine.engine_version,
                     "created_evidence": created,
+                    "persisted_evidence": persisted_evidence_count,
                     "optional_resource_limitations": clinvar_limitations,
                 }
-                if created == 0:
+                if persisted_evidence_count == 0:
                     _apply_scientific_limitation(
                         db,
                         evidence_step,
@@ -2770,7 +2790,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
                     actor_id=engine.engine_id,
-                    payload={"created_evidence": created, "engine_version": engine.engine_version},
+                    payload={
+                        "created_evidence": created,
+                        "persisted_evidence": persisted_evidence_count,
+                        "engine_version": engine.engine_version,
+                    },
                 )
                 db.commit()
             except (ResourceConsumptionError, ResourceExecutionError, ClinVarProviderError) as exc:
