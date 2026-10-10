@@ -263,3 +263,207 @@ def test_replayed_annotation_observation_cannot_duplicate_or_change_resource_ide
     finally:
         db.close()
         engine.dispose()
+
+
+def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(tmp_path):
+    """A crash after response checkpointing but before row persistence must not call the provider again."""
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+    from backend.app.infrastructure.db.models import Artifact, Case, Organization, User, WorkflowStep
+    from backend.app.workflows.variant import (
+        _load_annotation_response_checkpoint,
+        _persist_annotation_response_checkpoint,
+    )
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
+            Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            WorkflowStep.__table__,
+        ],
+    )
+    store = ArtifactStore(tmp_path / "artifact-store")
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Replay Safety Lab", external_identifier=None))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject=None,
+            email="replay@test.local", display_name="Replay test", role="ADMIN", status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="REPLAY-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        analysis = Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="RUNNING", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user_id, analysis_version=1,
+        )
+        db.add(analysis)
+        resource = _resource(db)
+        step = WorkflowStep(
+            id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
+            status="RUNNING", attempt=1, input_artifacts=[], output_artifacts=[],
+            metadata_json={"batches": {"0:1": {"status": "RUNNING", "attempt": 1}}},
+        )
+        db.add(step)
+        db.commit()
+
+        provider_calls = {"count": 0}
+
+        def fake_provider_response():
+            provider_calls["count"] += 1
+            return [{
+                "chr": "1", "pos": 555, "ref": "T", "alt": "C",
+                "impact": "MODERATE",
+                "_siraloom_annotation_provenance": {
+                    "provider": "GeneBe",
+                    "provider_version": "api-public-v1",
+                    "request_fingerprint": "request-fingerprint-1",
+                    "response_sha256": "a" * 64,
+                    "observed_at": "2026-10-10T00:00:00+00:00",
+                    "retry_count": 0,
+                },
+            }]
+
+        first_payload = fake_provider_response()
+        _persist_annotation_response_checkpoint(
+            db, store, analysis=analysis, step=step, start=0, end=1,
+            payloads=first_payload, resource=resource,
+            provider_id="GeneBe", provider_version="api-public-v1",
+        )
+
+        # Simulate worker death here: response artifact + checkpoint are committed,
+        # but no Annotation rows have been written yet.
+        db.expire(step)
+        temporary_paths = []
+        replayed_payload = _load_annotation_response_checkpoint(
+            db, step=step, start=0, end=1, analysis=analysis, resource=resource,
+            provider_id="GeneBe", provider_version="api-public-v1",
+            temporary_paths=temporary_paths,
+        )
+        if replayed_payload is None:
+            replayed_payload = fake_provider_response()
+
+        assert provider_calls["count"] == 1
+        assert replayed_payload == first_payload
+        checkpoint = step.metadata_json["batches"]["0:1"]
+        assert checkpoint["status"] == "RESPONSE_PERSISTED"
+        assert checkpoint["resource_id"] == str(resource.id)
+        assert checkpoint["resource_version"] == resource.version
+        assert checkpoint["request_fingerprint"] == "request-fingerprint-1"
+        assert checkpoint["response_sha256"] == "a" * 64
+        assert checkpoint["response_artifact_id"]
+        assert db.query(Artifact).filter_by(artifact_type="ANNOTATION_PROVIDER_RESPONSE").count() == 1
+    engine.dispose()
+
+
+def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(tmp_path):
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+    from backend.app.infrastructure.db.models import Artifact, Case, Organization, User, WorkflowStep
+    from backend.app.workflows.variant import (
+        _load_annotation_response_checkpoint,
+        _persist_annotation_response_checkpoint,
+    )
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
+            Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            WorkflowStep.__table__,
+        ],
+    )
+    store = ArtifactStore(tmp_path / "artifact-store")
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Identity Lab", external_identifier=None))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject=None,
+            email="identity@test.local", display_name="Identity test", role="ADMIN", status="ACTIVE",
+        ))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="IDENTITY-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        analysis = Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+            workflow_version="2.1", status="RUNNING", queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=None,
+            completed_at=None, created_by=user_id, analysis_version=1,
+        )
+        db.add(analysis)
+        resource = _resource(db)
+        other_resource = _resource(db)
+        step = WorkflowStep(
+            id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
+            status="RUNNING", attempt=1, input_artifacts=[], output_artifacts=[],
+            metadata_json={"batches": {"0:1": {"status": "RUNNING", "attempt": 1}}},
+        )
+        db.add(step)
+        db.commit()
+        payload = [{
+            "chr": "1", "pos": 555, "ref": "T", "alt": "C",
+            "_siraloom_annotation_provenance": {
+                "provider": "GeneBe", "provider_version": "api-public-v1",
+                "request_fingerprint": "request-fingerprint-1", "response_sha256": "a" * 64,
+            },
+        }]
+        _persist_annotation_response_checkpoint(
+            db, store, analysis=analysis, step=step, start=0, end=1,
+            payloads=payload, resource=resource,
+            provider_id="GeneBe", provider_version="api-public-v1",
+        )
+        with pytest.raises(RuntimeError, match="identity"):
+            _load_annotation_response_checkpoint(
+                db, step=step, start=0, end=1, analysis=analysis, resource=other_resource,
+                provider_id="GeneBe", provider_version="api-public-v1",
+                temporary_paths=[],
+            )
+    engine.dispose()
+
+
+def test_local_annotation_provider_gets_stable_request_fingerprint():
+    from types import SimpleNamespace
+    from backend.app.workflows.variant import _ensure_annotation_request_fingerprint
+
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        reference_build="GRCh38",
+    )
+    resource = SimpleNamespace(
+        id=uuid4(),
+        version="release-1",
+        checksum="f" * 64,
+    )
+    payloads = [{
+        "chr": "1", "pos": 555, "ref": "T", "alt": "C",
+        "_siraloom_annotation_provenance": {
+            "provider": "VEP",
+            "provider_version": "vep-115",
+            "response_sha256": "a" * 64,
+        },
+    }]
+    first = _ensure_annotation_request_fingerprint(
+        payloads, analysis=analysis, start=0, end=1, resource=resource,
+        provider_id="VEP", provider_version="vep-115",
+    )
+    second_payloads = [{
+        **payloads[0],
+        "_siraloom_annotation_provenance": {
+            "provider": "VEP", "provider_version": "vep-115",
+            "response_sha256": "a" * 64,
+        },
+    }]
+    second = _ensure_annotation_request_fingerprint(
+        second_payloads, analysis=analysis, start=0, end=1, resource=resource,
+        provider_id="VEP", provider_version="vep-115",
+    )
+    assert first == second
+    assert len(first) == 64
+    assert payloads[0]["_siraloom_annotation_provenance"]["request_fingerprint"] == first
