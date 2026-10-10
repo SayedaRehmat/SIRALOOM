@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import get_accessible_analysis
+from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_analysis, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.infrastructure.db.models import Case, Analysis, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, Variant, Evidence
 from backend.app.infrastructure.db.session import get_db
@@ -67,6 +67,7 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
     case=db.get(Case,case_id)
     if not case: raise HTTPException(404,"Case not found")
     require_case_tenant(case,principal)
+    require_role(principal, CASE_WRITE_ROLES)
     if db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.member_identifier==body.member_identifier.strip())):
         raise HTTPException(409,"Pedigree member identifier already exists")
     if body.is_proband and db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.is_proband.is_(True))):
@@ -81,6 +82,7 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
     case=db.get(Case,case_id)
     if not case: raise HTTPException(404,"Case not found")
     require_case_tenant(case,principal)
+    require_role(principal, CASE_WRITE_ROLES)
     parent=db.get(PedigreeMember,body.parent_member_id); child=db.get(PedigreeMember,body.child_member_id)
     if not parent or not child or parent.case_id!=case_id or child.case_id!=case_id or parent.id==child.id: raise HTTPException(400,"Parent and child must be distinct members in the same case")
     if db.scalar(select(PedigreeRelationship).where(PedigreeRelationship.case_id==case_id,PedigreeRelationship.parent_member_id==parent.id,PedigreeRelationship.child_member_id==child.id)):
@@ -103,6 +105,7 @@ def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_d
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/segregation",status_code=201)
 def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
+    require_role(principal, CASE_WRITE_ROLES)
     variant=db.get(Variant,variant_id)
     member=db.get(PedigreeMember,body.pedigree_member_id)
     if not variant or not member or member.case_id!=analysis.case_id: raise HTTPException(400,"Variant and pedigree member must belong to this analysis/case")
@@ -118,6 +121,7 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/inheritance/assess")
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
+    require_role(principal, CASE_WRITE_ROLES)
     variant=db.get(Variant,variant_id)
     if not variant: raise HTTPException(404,"Variant not found")
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
