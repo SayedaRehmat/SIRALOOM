@@ -9,6 +9,7 @@ from backend.app.infrastructure.db.models import Case, Analysis, PhenotypeObserv
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.phenotype import normalize_hpo_id
+from backend.app.domain.case_change import create_case_change_candidates
 
 router = APIRouter(tags=["phenotypes"])
 class PhenotypeInput(BaseModel):
@@ -46,6 +47,13 @@ def add_case_phenotype(case_id: UUID, body: PhenotypeInput, db: Session = Depend
     row = PhenotypeObservation(id=uuid4(), case_id=case_id, analysis_id=None, hpo_id=hpo, label=body.label, present=body.present, onset=body.onset, severity=body.severity, source=body.source, evidence=body.evidence)
     db.add(row)
     AuditService(db).record(event_type="PHENOTYPE_ADDED", case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="PHENOTYPE", subject_id=str(row.id), operation="CREATE", after_state={"hpo_id": hpo, "present": body.present})
+    create_case_change_candidates(
+        db,
+        case=case,
+        trigger_type="PHENOTYPE_UPDATE",
+        reason=f"Phenotype {hpo} was added to case {case.case_identifier}; completed analyses may require reanalysis.",
+        metadata={"hpo_id": hpo, "present": body.present, "phenotype_id": str(row.id)},
+    )
     db.commit()
     return _payload(row)
 
