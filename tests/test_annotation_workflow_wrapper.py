@@ -264,11 +264,29 @@ def test_production_celery_wrapper_recovers_annotation_and_persists_evidence(
         queue_module.run_analysis_task.push_request(
             id=task_id, retries=0, delivery_info={"redelivered": False}
         )
+        did_crash = False
         try:
-            with pytest.raises(SystemExit):
+            try:
                 queue_module.run_analysis_task.run(str(analysis_id))
+            except SystemExit:
+                did_crash = True
         finally:
             queue_module.run_analysis_task.pop_request()
+
+        if not did_crash:
+            with LocalSession() as diagnostic_db:
+                failed_step = diagnostic_db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "annotate",
+                ))
+                current_analysis = diagnostic_db.get(Analysis, analysis_id)
+                raise AssertionError(
+                    "annotation persistence failpoint was not reached; "
+                    f"fault_armed={fault['armed']}, provider_calls={provider_calls['count']}, "
+                    f"analysis_status={current_analysis.status}, "
+                    f"annotation_step_status={failed_step.status}, "
+                    f"error_code={failed_step.error_code}, error_message={failed_step.error_message}"
+                )
 
         with LocalSession() as db:
             assert db.scalar(select(func.count(Annotation.id)).where(
