@@ -245,6 +245,27 @@ def test_production_celery_wrapper_recovers_annotation_and_persists_evidence(
         )
         monkeypatch.setattr(workflow, "complete_resource_execution", lambda *_args, **_kwargs: None)
 
+        # These fixture preconditions are already validated/persisted artifacts;
+        # pin the corresponding upstream steps as complete while exercising the
+        # actual annotation, recovery, and evidence stages below.
+        original_step = workflow._step
+
+        def step_with_prevalidated_inputs(db, requested_analysis_id, step_id):
+            step = original_step(db, requested_analysis_id, step_id)
+            if step_id in succeeded_before_annotation:
+                step.status = StepStatus.SUCCEEDED
+                if step_id == "normalize":
+                    step.metadata_json = {
+                        **(step.metadata_json or {}),
+                        "record_count": 1,
+                        "variant_count": 1,
+                    }
+                db.add(step)
+                db.commit()
+            return step
+
+        monkeypatch.setattr(workflow, "_step", step_with_prevalidated_inputs)
+
         original_persist_rows = workflow._persist_annotation_batch_rows
 
         def persist_rows_then_lose_worker(*args, **kwargs):
