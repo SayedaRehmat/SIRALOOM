@@ -157,6 +157,154 @@ def _completed_batch_keys(step: WorkflowStep) -> set[str]:
     batches = (step.metadata_json or {}).get("batches") or {}
     return {k for k, v in batches.items() if (v or {}).get("status") == "SUCCEEDED"}
 
+def _persist_annotation_response_checkpoint(
+    db: Session,
+    artifacts: ArtifactStore,
+    *,
+    analysis: Analysis,
+    step: WorkflowStep,
+    start: int,
+    end: int,
+    payloads: list[dict],
+    resource: Resource,
+    provider_id: str,
+    provider_version: str,
+) -> Artifact:
+    """Durably store a provider response before attempting annotation-row persistence.
+
+    The artifact reference and batch checkpoint are committed together. On retry,
+    the workflow can replay the exact received payload instead of issuing a second
+    provider request after a crash between response receipt and annotation writes.
+    """
+    if not isinstance(payloads, list) or not payloads or not all(isinstance(x, dict) for x in payloads):
+        raise ValueError("Annotation provider response must be a non-empty list of objects.")
+    provenance = dict(payloads[0].get("_siraloom_annotation_provenance") or {})
+    if provenance.get("provider") != provider_id or provenance.get("provider_version") != provider_version:
+        raise ValueError("Annotation response provenance does not match the selected provider.")
+    if not provenance.get("request_fingerprint") or not provenance.get("response_sha256"):
+        raise ValueError("Annotation response is missing its request/response fingerprint.")
+    response_material = {
+        "schema_version": 1,
+        "analysis_id": str(analysis.id),
+        "batch_key": _batch_key(start, end),
+        "provider_id": provider_id,
+        "provider_version": provider_version,
+        "resource_id": str(resource.id),
+        "resource_version": resource.version,
+        "request_fingerprint": provenance["request_fingerprint"],
+        "response_sha256": provenance["response_sha256"],
+        "payloads": payloads,
+    }
+    with NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        prefix="siraloom-annotation-response-",
+        suffix=".json",
+        delete=False,
+    ) as handle:
+        temp_path = Path(handle.name)
+        json.dump(response_material, handle, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    try:
+        artifact = artifacts.put_file(
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            source_path=temp_path,
+            filename=f"annotation-response-{start}-{end}.json",
+            artifact_type="ANNOTATION_PROVIDER_RESPONSE",
+            media_type="application/json",
+            genome_build=analysis.reference_build,
+            validation_status="VALIDATED",
+            metadata={
+                "step_id": "annotate",
+                "batch_key": _batch_key(start, end),
+                "provider_id": provider_id,
+                "provider_version": provider_version,
+                "resource_id": str(resource.id),
+                "resource_version": resource.version,
+                "request_fingerprint": provenance["request_fingerprint"],
+                "response_sha256": provenance["response_sha256"],
+            },
+        )
+        _save_batch_checkpoint(
+            db,
+            step,
+            start,
+            end,
+            status="RESPONSE_PERSISTED",
+            metadata={
+                "provider": provider_id,
+                "provider_version": provider_version,
+                "resource_id": str(resource.id),
+                "resource_version": resource.version,
+                "request_fingerprint": provenance["request_fingerprint"],
+                "response_sha256": provenance["response_sha256"],
+                "response_artifact_id": str(artifact.id),
+                "response_artifact_sha256": artifact.sha256,
+            },
+            commit=False,
+        )
+        db.commit()
+        return artifact
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+
+def _load_annotation_response_checkpoint(
+    db: Session,
+    *,
+    step: WorkflowStep,
+    start: int,
+    end: int,
+    analysis: Analysis,
+    resource: Resource,
+    provider_id: str,
+    provider_version: str,
+    temporary_paths: list[Path],
+) -> list[dict] | None:
+    """Load and validate the exact response artifact saved for an interrupted batch."""
+    checkpoint = _batch_checkpoint(step, start, end)
+    artifact_id = checkpoint.get("response_artifact_id")
+    if not artifact_id:
+        return None
+    artifact = db.get(Artifact, UUID(str(artifact_id)))
+    if artifact is None or artifact.artifact_type != "ANNOTATION_PROVIDER_RESPONSE":
+        raise RuntimeError("Persisted annotation response checkpoint points to a missing or invalid artifact.")
+    metadata = artifact.metadata_json or {}
+    expected = {
+        "step_id": "annotate",
+        "batch_key": _batch_key(start, end),
+        "provider_id": provider_id,
+        "provider_version": provider_version,
+        "resource_id": str(resource.id),
+        "resource_version": resource.version,
+    }
+    if artifact.analysis_id != analysis.id or artifact.case_id != analysis.case_id:
+        raise RuntimeError("Persisted annotation response belongs to a different analysis or case.")
+    if any(metadata.get(key) != value for key, value in expected.items()):
+        raise RuntimeError("Persisted annotation response resource/provider identity conflicts with the active execution plan.")
+    if checkpoint.get("response_artifact_sha256") != artifact.sha256:
+        raise RuntimeError("Persisted annotation response artifact checksum conflicts with its workflow checkpoint.")
+    path = _materialize_artifact_for_worker(artifact, temporary_paths)
+    if sha256_file(path) != artifact.sha256:
+        raise RuntimeError("Persisted annotation response artifact failed SHA-256 verification.")
+    with path.open("r", encoding="utf-8") as handle:
+        response = json.load(handle)
+    if (
+        response.get("schema_version") != 1
+        or response.get("analysis_id") != str(analysis.id)
+        or response.get("batch_key") != _batch_key(start, end)
+        or response.get("provider_id") != provider_id
+        or response.get("provider_version") != provider_version
+        or response.get("resource_id") != str(resource.id)
+        or response.get("resource_version") != resource.version
+        or response.get("request_fingerprint") != checkpoint.get("request_fingerprint")
+        or response.get("response_sha256") != checkpoint.get("response_sha256")
+        or not isinstance(response.get("payloads"), list)
+    ):
+        raise RuntimeError("Persisted annotation response failed its provenance/identity checks.")
+    return response["payloads"]
+
 def _chunk_ranges(length: int, size: int = 250):
     size = max(1, size)
     for start in range(0, length, size):
@@ -1390,11 +1538,40 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     try:
                         scheduler.heartbeat(partition.id, worker_id, lease_token)
-                        payloads = provider.annotate(batch, {"genome": genome})
-                        scheduler.heartbeat(partition.id, worker_id, lease_token)
-                        sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
-                        complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
-                        db.commit()
+                        payloads = _load_annotation_response_checkpoint(
+                            db,
+                            step=annotation_step,
+                            start=start,
+                            end=end,
+                            analysis=analysis,
+                            resource=annotation_resource,
+                            provider_id=provider.provider_id,
+                            provider_version=provider.provider_version,
+                            temporary_paths=temporary_artifact_paths,
+                        )
+                        if payloads is None:
+                            payloads = provider.annotate(batch, {"genome": genome})
+                            scheduler.heartbeat(partition.id, worker_id, lease_token)
+                            sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                            complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                            db.commit()
+                            _persist_annotation_response_checkpoint(
+                                db,
+                                artifacts,
+                                analysis=analysis,
+                                step=annotation_step,
+                                start=start,
+                                end=end,
+                                payloads=payloads,
+                                resource=annotation_resource,
+                                provider_id=provider.provider_id,
+                                provider_version=provider.provider_version,
+                            )
+                        else:
+                            sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                            complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                            db.commit()
+                            scheduler.heartbeat(partition.id, worker_id, lease_token)
                     except (GeneBeError, VEPProviderError) as exc:
                         complete_resource_execution(
                             db,
