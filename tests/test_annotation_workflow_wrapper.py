@@ -39,6 +39,8 @@ def test_production_celery_wrapper_recovers_annotation_and_persists_evidence(
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     workflow = importlib.import_module("backend.app.workflows.variant")
     from backend.app.domain.resource_capabilities import ResourceCapability
+    from backend.app.domain.schemas import CanonicalVariant
+    from backend.app.domain.variant_identity import canonical_key
 
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'wrapper-recovery.db'}")
     Base.metadata.create_all(engine)
@@ -265,6 +267,20 @@ def test_production_celery_wrapper_recovers_annotation_and_persists_evidence(
             return step
 
         monkeypatch.setattr(workflow, "_step", step_with_prevalidated_inputs)
+        fixture_variant = CanonicalVariant(
+            genome_build="GRCh38",
+            chromosome="1",
+            position=555,
+            reference="T",
+            alternate="C",
+            normalization_status="NORMALIZED",
+            variant_key=canonical_key("GRCh38", "1", 555, "T", "C"),
+        )
+
+        def one_normalized_batch(_path, _build, _batch_size):
+            yield 0, [fixture_variant]
+
+        monkeypatch.setattr(workflow, "_iter_variant_batches", one_normalized_batch)
 
         original_persist_rows = workflow._persist_annotation_batch_rows
 
