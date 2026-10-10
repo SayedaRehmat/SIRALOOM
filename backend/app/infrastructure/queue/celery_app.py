@@ -337,6 +337,13 @@ if Celery is not None:
                 )
             from backend.app.infrastructure.db.models import Analysis
             analysis = claim_db.get(Analysis, UUID(analysis_id))
+            if analysis is not None:
+                # SessionLocal uses expire_on_commit=False. The workflow runs in
+                # another session and may have completed/review-blocked the analysis;
+                # refresh before returning or the task result can report stale RUNNING.
+                refresh = getattr(claim_db, "refresh", None)
+                if callable(refresh):
+                    refresh(analysis)
             return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
         finally:
             claim_db.close()

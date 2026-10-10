@@ -2517,7 +2517,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         clingen_gdv_execution = resolve_resource_execution(db, resource=clingen_gdv_resource)
                         clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
                         clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
-                from backend.app.infrastructure.db.models import Case, PhenotypeObservation
+                from backend.app.infrastructure.db.models import PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
                 phenotype_rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == analysis.case_id, (PhenotypeObservation.analysis_id == analysis.id) | (PhenotypeObservation.analysis_id.is_(None)))).all()
@@ -2821,7 +2821,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             mark_step(db, acmg_step, StepStatus.RUNNING)
             try:
                 from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
-                from backend.app.infrastructure.db.models import Case
+                # Case is imported at module scope; do not shadow it locally.
 
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
