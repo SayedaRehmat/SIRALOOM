@@ -2821,7 +2821,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             mark_step(db, acmg_step, StepStatus.RUNNING)
             try:
                 from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
-                from backend.app.infrastructure.db.models import Case
+                # Case is imported at module scope; do not shadow it locally.
 
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
