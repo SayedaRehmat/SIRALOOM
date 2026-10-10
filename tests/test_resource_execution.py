@@ -426,3 +426,44 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(t
                 temporary_paths=[],
             )
     engine.dispose()
+
+
+def test_local_annotation_provider_gets_stable_request_fingerprint():
+    from types import SimpleNamespace
+    from backend.app.workflows.variant import _ensure_annotation_request_fingerprint
+
+    analysis = SimpleNamespace(
+        id=uuid4(),
+        reference_build="GRCh38",
+    )
+    resource = SimpleNamespace(
+        id=uuid4(),
+        version="release-1",
+        checksum="f" * 64,
+    )
+    payloads = [{
+        "chr": "1", "pos": 555, "ref": "T", "alt": "C",
+        "_siraloom_annotation_provenance": {
+            "provider": "VEP",
+            "provider_version": "vep-115",
+            "response_sha256": "a" * 64,
+        },
+    }]
+    first = _ensure_annotation_request_fingerprint(
+        payloads, analysis=analysis, start=0, end=1, resource=resource,
+        provider_id="VEP", provider_version="vep-115",
+    )
+    second_payloads = [{
+        **payloads[0],
+        "_siraloom_annotation_provenance": {
+            "provider": "VEP", "provider_version": "vep-115",
+            "response_sha256": "a" * 64,
+        },
+    }]
+    second = _ensure_annotation_request_fingerprint(
+        second_payloads, analysis=analysis, start=0, end=1, resource=resource,
+        provider_id="VEP", provider_version="vep-115",
+    )
+    assert first == second
+    assert len(first) == 64
+    assert payloads[0]["_siraloom_annotation_provenance"]["request_fingerprint"] == first
