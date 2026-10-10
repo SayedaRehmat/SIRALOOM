@@ -138,7 +138,7 @@ def build_workflow_stage_resource_plan(plan: AnalysisResourcePlan) -> list[dict[
             "required_resources": list(contract.required_resources),
             "optional_resources": list(contract.optional_resources),
             "selected": [
-                item.snapshot
+                item.snapshot()
                 for c in capabilities
                 for item in selected_by_capability.get(c, [])
             ],
