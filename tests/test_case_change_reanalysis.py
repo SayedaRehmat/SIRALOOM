@@ -87,6 +87,20 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert db.query(ReanalysisCandidate).count() == 2
         assert db.query(Notification).count() == 2
 
+        # The same request payload is idempotent, but a later transition with
+        # a distinct prior case version must create a new event and candidates.
+        later = create_case_change_candidates(
+            db, case=case, trigger_type="CLINICAL_CONTEXT_UPDATE",
+            reason="Clinical context changed again.",
+            metadata={"before": {"diagnosis": "A"}, "after": {"diagnosis": "B"},
+                      "previous_updated_at": "2026-10-10T09:00:00+00:00"},
+        )
+        db.commit()
+        assert len(later) == 2
+        assert db.query(ReanalysisChangeEvent).count() == 2
+        assert db.query(ReanalysisCandidate).count() == 4
+        assert db.query(Notification).count() == 4
+
 
 def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance():
     engine = _engine()
