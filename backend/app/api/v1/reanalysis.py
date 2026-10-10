@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role, get_accessible_analysis
+from backend.app.auth.authorization import CASE_WRITE_ROLES, REPORT_FINALIZE_ROLES, require_role, get_accessible_analysis
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -128,8 +128,6 @@ def request_reanalysis(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # Manual requests are idempotent for the same parent/version. Never enqueue
-    # an already active or completed child a second time.
     if str(child.status) in {"QUEUED", "RUNNING", "SUCCEEDED"}:
         return {
             "analysis_id": str(child.id),
@@ -223,7 +221,6 @@ def execute_reanalysis_candidate(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    """Execute one reviewed change candidate without stranding it on queue failure."""
     require_role(principal, CASE_WRITE_ROLES)
     candidate = db.get(ReanalysisCandidate, candidate_id)
     if not candidate or candidate.organization_id != principal.organization_id:
@@ -252,9 +249,6 @@ def execute_reanalysis_candidate(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         candidate = linked_candidate or candidate
 
-    # A candidate can be retried after queue infrastructure failure. Once the
-    # child is queued/running/completed, return its durable state instead of
-    # dispatching a second task.
     if str(child.status) in {"QUEUED", "RUNNING", "SUCCEEDED"}:
         return {
             "analysis_id": str(child.id),
@@ -359,7 +353,10 @@ def register_change(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    require_role(principal, CASE_WRITE_ROLES)
+    # Resource-change injection is a governed laboratory operation. Ordinary
+    # case writers must not be able to fabricate a release/checksum change and
+    # trigger reanalysis across the organization.
+    require_role(principal, REPORT_FINALIZE_ROLES)
     trigger_type = str(payload.get("trigger_type") or "").upper()
     resource_kind = str(payload.get("resource_kind") or "").upper()
     resource_name = str(payload.get("resource_name") or "").strip()
@@ -390,6 +387,7 @@ def snapshot(
     principal: Principal = Depends(get_current_principal),
 ):
     analysis = get_accessible_analysis(analysis_id, db, principal)
+    require_role(principal, CASE_WRITE_ROLES)
     if analysis.status != "SUCCEEDED":
         raise HTTPException(status_code=409, detail="Only completed analyses can be snapshotted.")
     count = snapshot_analysis_resources(db, analysis)
