@@ -693,6 +693,86 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
     return local_path
 
 
+def _persist_annotation_batch_rows(
+    db: Session,
+    *,
+    analysis: Analysis,
+    provider,
+    annotation_resource: Resource,
+    variant_ids: dict[str, UUID],
+    existing_rows: list[Annotation],
+    payloads: list[dict],
+    batch_key: str,
+) -> tuple[int, int]:
+    """Validate and idempotently persist one provider batch's annotation rows.
+
+    This helper persists provider-returned observations only; it does not alter
+    scientific interpretation. The response artifact is checkpointed before
+    this call, allowing a retry to replay the exact payload. Row writes commit
+    before the batch success checkpoint, so retries must recognize existing
+    observations and avoid duplicates.
+    """
+    payloads_by_key: dict[str, dict] = {}
+    for payload in payloads:
+        try:
+            payload_key = canonical_key(
+                normalize_build(analysis.reference_build),
+                str(payload.get("chr")),
+                int(payload["pos"]),
+                str(payload["ref"]),
+                str(payload["alt"]),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise GeneBeError(f"Invalid annotation response record in batch {batch_key}") from exc
+        if payload_key in payloads_by_key:
+            raise GeneBeError(f"Duplicate provider result for canonical variant {payload_key}")
+        payloads_by_key[payload_key] = payload
+
+    expected_batch = set(variant_ids)
+    if payloads_by_key.keys() != expected_batch:
+        missing = expected_batch - payloads_by_key.keys()
+        extra = payloads_by_key.keys() - expected_batch
+        raise GeneBeError(
+            f"Provider result set does not match batch {batch_key}; missing={len(missing)}, extra={len(extra)}"
+        )
+
+    existing_by_variant = {str(row.variant_id): row for row in existing_rows}
+    new_count = 0
+    for canonical, row_id in variant_ids.items():
+        if str(row_id) in existing_by_variant:
+            continue
+        payload = payloads_by_key[canonical]
+        provenance = dict(payload.pop("_siraloom_annotation_provenance", {}) or {})
+        normalized = normalize_annotation_payload(provider.provider_id, payload)
+        db.add(Annotation(
+            id=__import__("uuid").uuid4(),
+            variant_id=row_id,
+            analysis_id=analysis.id,
+            provider_name=provider.provider_id,
+            provider_version=provider.provider_version,
+            resource_id=annotation_resource.id,
+            resource_name=annotation_resource.name,
+            resource_version=annotation_resource.version,
+            request_fingerprint=provenance.get("request_fingerprint"),
+            response_sha256=provenance.get("response_sha256"),
+            request_metadata={
+                "endpoint": provenance.get("endpoint"),
+                "genome": provenance.get("genome"),
+                "provider": provenance.get("provider"),
+                "provider_version": provenance.get("provider_version"),
+            },
+            observed_at=(
+                datetime.fromisoformat(provenance["observed_at"])
+                if provenance.get("observed_at") else None
+            ),
+            retry_count=int(provenance.get("retry_count", 0) or 0),
+            payload={"raw": payload, "normalized": normalized},
+        ))
+        new_count += 1
+    db.commit()
+    return new_count, len(payloads_by_key)
+
+
 def run_variant_analysis(analysis_id: UUID) -> None:
     from backend.app.infrastructure.db.session import SessionLocal
 
@@ -1656,70 +1736,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         )
                         raise
 
-                    payloads_by_key: dict[str, dict] = {}
-                    for payload in payloads:
-                        try:
-                            payload_key = canonical_key(
-                                normalize_build(analysis.reference_build),
-                                str(payload.get("chr")),
-                                int(payload["pos"]),
-                                str(payload["ref"]),
-                                str(payload["alt"]),
-                            )
-                        except (KeyError, TypeError, ValueError) as exc:
-                            raise GeneBeError(f"Invalid GeneBe response record in batch {key}") from exc
-                        if payload_key in payloads_by_key:
-                            raise GeneBeError(f"Duplicate provider result for canonical variant {payload_key}")
-                        payloads_by_key[payload_key] = payload
-
-                    expected_batch = set(variant_ids)
-                    if payloads_by_key.keys() != expected_batch:
-                        missing = expected_batch - payloads_by_key.keys()
-                        extra = payloads_by_key.keys() - expected_batch
-                        raise GeneBeError(
-                            f"Provider result set does not match batch {key}; missing={len(missing)}, extra={len(extra)}"
-                        )
-
-                    existing_by_variant = {str(a.variant_id): a for a in existing_rows}
-                    new_count = 0
-                    for canonical, row_id in variant_ids.items():
-                        if str(row_id) in existing_by_variant:
-                            continue
-                        payload = payloads_by_key[canonical]
-                        provenance = dict(payload.pop("_siraloom_annotation_provenance", {}) or {})
-                        normalized = normalize_annotation_payload(provider.provider_id, payload)
-                        db.add(
-                            Annotation(
-                                id=__import__("uuid").uuid4(),
-                                variant_id=row_id,
-                                analysis_id=analysis.id,
-                                provider_name=provider.provider_id,
-                                provider_version=provider.provider_version,
-                                resource_id=annotation_resource.id if annotation_resource else None,
-                                resource_name=annotation_resource.name if annotation_resource else "GeneBe",
-                                resource_version=annotation_resource.version if annotation_resource else None,
-                                request_fingerprint=provenance.get("request_fingerprint"),
-                                response_sha256=provenance.get("response_sha256"),
-                                request_metadata={
-                                    "endpoint": provenance.get("endpoint"),
-                                    "genome": provenance.get("genome"),
-                                    "provider": provenance.get("provider"),
-                                    "provider_version": provenance.get("provider_version"),
-                                },
-                                observed_at=(
-                                    datetime.fromisoformat(provenance["observed_at"])
-                                    if provenance.get("observed_at")
-                                    else None
-                                ),
-                                retry_count=int(provenance.get("retry_count", 0) or 0),
-                                payload={"raw": payload, "normalized": normalized},
-                            )
-                        )
-                        new_count += 1
-                    db.commit()
+                    new_count, returned_rows = _persist_annotation_batch_rows(
+                        db,
+                        analysis=analysis,
+                        provider=provider,
+                        annotation_resource=annotation_resource,
+                        variant_ids=variant_ids,
+                        existing_rows=existing_rows,
+                        payloads=payloads,
+                        batch_key=key,
+                    )
                     _save_batch_checkpoint(
                         db, annotation_step, start, end, status="SUCCEEDED", attempt=attempt,
-                        metadata={"provider": provider.provider_id, "new_annotation_rows": new_count, "returned_rows": len(payloads_by_key)},
+                        metadata={"provider": provider.provider_id, "new_annotation_rows": new_count, "returned_rows": returned_rows},
                         commit=False,
                     )
                     if partition.status == "RUNNING" and partition.lease_owner == worker_id:
