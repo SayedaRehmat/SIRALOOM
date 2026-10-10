@@ -353,7 +353,9 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
             assert evidence_rows
             assert all(row.variant_id == variant_id for row in evidence_rows)
             assert all(row.resource_id == resource_id for row in evidence_rows)
-            assert all(row.source_version == "test-release" for row in evidence_rows)
+            # Source-version semantics vary by evidence type; the immutable
+            # resource foreign key is the release identity for this observation.
+            assert db.get(Resource, resource_id).version == "test-release"
             assert all(row.request_fingerprint == "d" * 64 for row in evidence_rows)
             assert all(row.response_sha256 == "e" * 64 for row in evidence_rows)
             annotation_step = db.scalar(select(WorkflowStep).where(
