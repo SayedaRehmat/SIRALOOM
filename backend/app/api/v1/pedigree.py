@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_analysis, require_role
+from backend.app.auth.authorization import CASE_WRITE_ROLES, REVIEW_ROLES, get_accessible_analysis, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.infrastructure.db.models import Case, Analysis, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, Variant, Evidence
 from backend.app.infrastructure.db.session import get_db
@@ -121,7 +121,7 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/inheritance/assess")
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
-    require_role(principal, CASE_WRITE_ROLES)
+    require_role(principal, REVIEW_ROLES)
     variant=db.get(Variant,variant_id)
     if not variant: raise HTTPException(404,"Variant not found")
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
