@@ -67,11 +67,8 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         db.commit()
 
         candidates = create_case_change_candidates(
-            db,
-            case=case,
-            trigger_type="PHENOTYPE_UPDATE",
-            reason="A new phenotype was recorded.",
-            metadata=change_metadata,
+            db, case=case, trigger_type="PHENOTYPE_UPDATE",
+            reason="A new phenotype was recorded.", metadata=change_metadata,
         )
         db.commit()
 
@@ -81,14 +78,9 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert db.query(ReanalysisChangeEvent).count() == 1
         assert db.query(Notification).count() == 2
 
-        # Replaying the exact same durable change must return the same candidates
-        # without creating a second event or a second notification set.
         again = create_case_change_candidates(
-            db,
-            case=case,
-            trigger_type="PHENOTYPE_UPDATE",
-            reason="A new phenotype was recorded.",
-            metadata=change_metadata,
+            db, case=case, trigger_type="PHENOTYPE_UPDATE",
+            reason="A new phenotype was recorded.", metadata=change_metadata,
         )
         assert {c.id for c in again} == {c.id for c in candidates}
         assert db.query(ReanalysisChangeEvent).count() == 1
@@ -96,7 +88,7 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert db.query(Notification).count() == 2
 
 
-def test_reanalysis_copy_preserves_annotation_and_evidence_provenance():
+def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance():
     engine = _engine()
     Base.metadata.create_all(
         engine,
@@ -134,11 +126,20 @@ def test_reanalysis_copy_preserves_annotation_and_evidence_provenance():
         ))
         annotation = Annotation(
             id=uuid4(), variant_id=variant_id, analysis_id=parent_id,
-            provider_name="GeneBe", provider_version="2026.10",
-            resource_id=None, resource_name="GeneBe", resource_version="release-1",
+            provider_name="GeneBe", provider_version="2026.10", resource_id=None,
+            resource_name="GeneBe", resource_version="release-1",
             request_fingerprint="request-fp", response_sha256="response-sha",
             request_metadata={"endpoint": "approved"}, observed_at=None, retry_count=2,
             payload={"gene": "TEST"},
+        )
+        population = PopulationObservation(
+            id=uuid4(), analysis_id=parent_id, variant_id=variant_id,
+            resource_id=uuid4(), population_level="GLOBAL", population_code="NFE",
+            population_label="Non-Finnish European", allele_count=2, allele_number=100,
+            allele_frequency=0.02, homozygote_count=0, availability="AVAILABLE",
+            quality_status="PASS", source_record_id="gnomad-record",
+            request_fingerprint="population-request", response_sha256="population-response",
+            request_metadata={"dataset": "qualified"}, observed_at=None,
         )
         evidence = Evidence(
             id=uuid4(), variant_id=variant_id, analysis_id=parent_id,
@@ -149,20 +150,32 @@ def test_reanalysis_copy_preserves_annotation_and_evidence_provenance():
             observed_at=None, observation_ids=[], payload={"x": 1},
             created_by_type="SYSTEM", created_by_id="annotation", evidence_fingerprint="evidence-fp",
         )
-        db.add_all([annotation, evidence])
+        db.add_all([annotation, population, evidence])
         db.commit()
 
-        _copy_rows(db, parent_id, child_id, "population")
+        # Starting at ACMG means annotation, population, and evidence are all
+        # upstream of the affected stage and must be reused exactly.
+        _copy_rows(db, parent_id, child_id, "acmg_assessment")
         db.commit()
 
         copied_annotation = db.scalar(select(Annotation).where(Annotation.analysis_id == child_id))
+        copied_population = db.scalar(select(PopulationObservation).where(PopulationObservation.analysis_id == child_id))
         copied_evidence = db.scalar(select(Evidence).where(Evidence.analysis_id == child_id))
+
         assert copied_annotation is not None
         assert copied_annotation.request_fingerprint == "request-fp"
         assert copied_annotation.response_sha256 == "response-sha"
         assert copied_annotation.request_metadata == {"endpoint": "approved"}
         assert copied_annotation.retry_count == 2
+
+        assert copied_population is not None
+        assert copied_population.source_record_id == "gnomad-record"
+        assert copied_population.request_fingerprint == "population-request"
+        assert copied_population.response_sha256 == "population-response"
+        assert copied_population.request_metadata == {"dataset": "qualified"}
+
         assert copied_evidence is not None
+        assert copied_evidence.resource_id is None
         assert copied_evidence.request_fingerprint == "evidence-request"
         assert copied_evidence.response_sha256 == "evidence-response"
         assert copied_evidence.request_metadata == {"endpoint": "approved"}
