@@ -531,6 +531,7 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
                 canonical_key=variant_key, identifiers={"canonical_key_sha256": "fixture"},
             ))
             resource = _resource(db)
+            resource_id = resource.id
             step = WorkflowStep(
                 id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
                 status=StepStatus.RUNNING, attempt=1, input_artifacts=[], output_artifacts=[],
@@ -584,7 +585,7 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id, WorkflowStep.step_id == "annotate"
             ))
-            resource = db.get(Resource, resource.id)
+            resource = db.get(Resource, resource_id)
             assert child.parent_analysis_id == parent_id
             assert step.status == StepStatus.RETRYING
 
