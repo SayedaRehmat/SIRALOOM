@@ -341,7 +341,9 @@ if Celery is not None:
                 # SessionLocal uses expire_on_commit=False. The workflow runs in
                 # another session and may have completed/review-blocked the analysis;
                 # refresh before returning or the task result can report stale RUNNING.
-                claim_db.refresh(analysis)
+                refresh = getattr(claim_db, "refresh", None)
+                if callable(refresh):
+                    refresh(analysis)
             return {"analysis_id": analysis_id, "status": str(analysis.status) if analysis else "NOT_FOUND"}
         finally:
             claim_db.close()
