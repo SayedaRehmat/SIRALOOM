@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.session import get_db
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role
 from backend.app.domain.enums import CaseStatus
 from backend.app.domain.schemas import CaseCreate
 from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
@@ -36,6 +37,7 @@ def _case_payload(db: Session, case: Case) -> dict:
 
 @router.post("", status_code=201)
 def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    require_role(principal, CASE_WRITE_ROLES)
     existing = db.scalar(select(Case).where(
         Case.organization_id == principal.organization_id, Case.case_identifier == payload.case_identifier,
     ))
@@ -78,6 +80,7 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_tenant(case, principal)
+    require_role(principal, CASE_WRITE_ROLES)
     before = {"language": case.language, "clinical_context": case.clinical_context or {}}
     if payload.language is not None:
         case.language = payload.language
@@ -98,6 +101,7 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_tenant(case, principal)
+    require_role(principal, CASE_WRITE_ROLES)
     specimen = Specimen(
         id=uuid4(), case_id=case.id, specimen_identifier=payload.specimen_identifier, specimen_type=payload.specimen_type,
         collection_datetime=payload.collection_datetime, received_datetime=payload.received_datetime, metadata_json=payload.metadata,
