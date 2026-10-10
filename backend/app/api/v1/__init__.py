@@ -14,3 +14,4 @@ from .auth import router as auth_router
 from .resources import router as resources_router
 
 from .storage import router as storage_router
+from .workflow import router as workflow_router
