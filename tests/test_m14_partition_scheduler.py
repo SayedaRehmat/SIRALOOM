@@ -4,8 +4,9 @@ from uuid import uuid4
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import AnalysisPartition
+from backend.app.infrastructure.db.models import AnalysisPartition, WorkflowStep
 from backend.app.partition_scheduler import PartitionScheduler, configure_partition
 from backend.app.infrastructure.db.models import Analysis, Case, Organization, User
 
@@ -21,7 +22,7 @@ def seed_analysis(db):
     db.add(Organization(id=oid, name="Org", external_identifier=None))
     db.add(User(id=uid, organization_id=oid, display_name="u", role="ADMIN", status="ACTIVE"))
     db.add(Case(id=cid, organization_id=oid, case_identifier="C1", status="READY", created_by=uid))
-    db.add(Analysis(id=aid, case_id=cid, analysis_type="GERMLINE", workflow_id="w", workflow_version="1", status="RUNNING", reference_build="GRCh38", configuration={}))
+    db.add(Analysis(id=aid, case_id=cid, analysis_type="GERMLINE", workflow_id="w", workflow_version="1", status=AnalysisStatus.RUNNING, reference_build="GRCh38", configuration={}))
     db.commit()
     return aid
 
@@ -62,6 +63,72 @@ def test_scheduler_lease_recovery_and_retry_limit(tmp_path):
         assert recovered and recovered.lease_owner == "w2" and recovered.attempt == 2
         scheduler.fail(recovered.id, "w2", recovered.lease_token, error_code="TEMP", error_message="retry")
         assert db.get(AnalysisPartition, recovered.id).status == "READY"
+
+
+def test_worker_recovery_requeues_annotation_partition_without_reopening_completed_work(tmp_path):
+    """A recovered stage must be schedulable again while successful partitions stay terminal."""
+    from backend.app.workflows.variant import recover_interrupted_execution
+
+    engine = make_db(tmp_path)
+    with Session(engine) as db:
+        aid = seed_analysis(db)
+        step = WorkflowStep(
+            id=uuid4(),
+            analysis_id=aid,
+            step_id="annotate",
+            step_order=3,
+            status=StepStatus.RUNNING,
+            attempt=2,
+            input_artifacts=["normalized-vcf"],
+            output_artifacts=[],
+            metadata_json={"checkpoint": "batch-4", "batches": {"0:10": {"status": "SUCCEEDED"}}},
+        )
+        interrupted = AnalysisPartition(
+            id=uuid4(), analysis_id=aid, step_id="annotate",
+            partition_key="10:20", ordinal=1, record_start=10, record_end=20,
+            variant_count=10, status="RUNNING", metadata_json={"resource_id": "resource-v1"},
+            resource_class="STANDARD", cpu_request=1.0, memory_mb=1024,
+            attempt=1, lease_owner="lost-worker", lease_token="stale-token",
+            lease_expires_at=None,
+        )
+        completed = AnalysisPartition(
+            id=uuid4(), analysis_id=aid, step_id="annotate",
+            partition_key="0:10", ordinal=0, record_start=0, record_end=10,
+            variant_count=10, status="SUCCEEDED", metadata_json={"resource_id": "resource-v1"},
+            resource_class="STANDARD", cpu_request=1.0, memory_mb=1024,
+            attempt=1,
+        )
+        db.add_all([step, interrupted, completed])
+        db.commit()
+
+        assert recover_interrupted_execution(db, aid) is True
+        db.refresh(step)
+        db.refresh(interrupted)
+        db.refresh(completed)
+
+        assert step.status == StepStatus.RETRYING
+        assert step.metadata_json["checkpoint"] == "batch-4"
+        assert step.metadata_json["batches"]["0:10"]["status"] == "SUCCEEDED"
+        assert interrupted.status == "READY"
+        assert interrupted.lease_owner is None
+        assert interrupted.lease_token is None
+        assert interrupted.lease_expires_at is None
+        assert completed.status == "SUCCEEDED"
+
+        scheduler = PartitionScheduler(db, cpu_capacity=1, memory_mb=1024, lease_seconds=60)
+        reclaimed = scheduler.claim_next(aid, "annotate", "retry-worker")
+        assert reclaimed is not None
+        assert reclaimed.id == interrupted.id
+        assert reclaimed.attempt == 2
+        assert reclaimed.lease_owner == "retry-worker"
+        scheduler.succeed(reclaimed.id, "retry-worker", reclaimed.lease_token, metadata={"resource_id": "resource-v1"})
+
+        # A second scheduling pass sees no READY partition. The already-completed
+        # batch is not reopened or leased a second time.
+        assert scheduler.claim_next(aid, "annotate", "third-worker") is None
+        db.refresh(completed)
+        assert completed.status == "SUCCEEDED"
+        assert completed.attempt == 1
 
 
 def test_save_batch_checkpoint_can_stage_without_commit():
