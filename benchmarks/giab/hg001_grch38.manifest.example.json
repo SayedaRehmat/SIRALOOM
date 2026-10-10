@@ -1,0 +1,35 @@
+{
+  "status": "UNCONFIGURED",
+  "benchmark": {
+    "name": "Genome in a Bottle HG001 small-variant benchmark",
+    "sample_id": "HG001",
+    "release": "NISTv4.2.1",
+    "reference_build": "GRCh38",
+    "scope": "small-variant concordance within the selected benchmark-confidence BED",
+    "official_source": "https://www.nist.gov/programs-projects/genome-bottle",
+    "release_root": "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/"
+  },
+  "assets": {
+    "truth_vcf": { "path": null, "sha256": null },
+    "confident_regions_bed": { "path": null, "sha256": null },
+    "reference_fasta": { "path": null, "sha256": null },
+    "input_vcf": { "path": null, "sha256": null },
+    "siraloom_normalized_vcf": { "path": null, "sha256": null }
+  },
+  "toolchain": {
+    "bcftools_version": null,
+    "hap_py_version": null,
+    "comparison_engine": "hap.py / vcfeval"
+  },
+  "acceptance_policy": {
+    "id": null,
+    "approved_by": null,
+    "criteria": null
+  },
+  "notes": [
+    "Replace all nulls with exact paths, SHA-256 hashes, and verified tool versions.",
+    "Record upstream README/license/usage terms for the exact selected assets.",
+    "Do not change status to CONFIGURED until every required asset hash and the acceptance policy are approved.",
+    "A completed comparison is not a clinical validation or automatic PASS."
+  ]
+}
