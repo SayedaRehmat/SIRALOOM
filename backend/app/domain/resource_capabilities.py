@@ -37,7 +37,7 @@ class ResourceExecutionAvailability(StrEnum):
     NOT_EXECUTABLE = "NOT_EXECUTABLE"
 
 
-TRIAL_ONLY_PROVIDERS = frozenset({"GeneBe"})
+TRIAL_ONLY_PROVIDERS = frozenset({"GeneBe", "gnomad-graphql"})
 
 
 @dataclass(frozen=True)
