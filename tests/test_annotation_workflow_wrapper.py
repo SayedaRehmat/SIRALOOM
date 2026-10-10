@@ -374,3 +374,57 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
             )) == "SUCCEEDED"
     finally:
         engine.dispose()
+
+
+def test_run_variant_analysis_resolves_case_without_local_name_shadowing(
+    monkeypatch, tmp_path
+):
+    """Guard the real workflow entry point against a local-import UnboundLocalError."""
+    import importlib
+
+    db_module = importlib.import_module("backend.app.infrastructure.db.session")
+    workflow = importlib.import_module("backend.app.workflows.variant")
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'workflow-entry.db'}")
+    Base.metadata.create_all(engine)
+    LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    try:
+        with LocalSession() as db:
+            db.add(Organization(
+                id=organization_id, name="Workflow Entry Lab",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@test.local",
+                display_name="Workflow Entry Test", role="ADMIN", status="ACTIVE",
+            ))
+            db.commit()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"ENTRY-{case_id}", status="OPEN",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.commit()
+            db.add(Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=None,
+                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1", workflow_version="test",
+                status=AnalysisStatus.RUNNING, queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=1,
+            ))
+            db.commit()
+
+        monkeypatch.setattr(db_module, "SessionLocal", LocalSession)
+        monkeypatch.setattr(
+            workflow, "artifact_store_for_organization",
+            lambda *_args, **_kwargs: ArtifactStore(tmp_path / "workflow-artifacts"),
+        )
+        # Reaching the expected missing-input configuration error proves the
+        # Case lookup succeeded; the regression was an UnboundLocalError first.
+        with pytest.raises(KeyError, match="input_artifact_id"):
+            workflow.run_variant_analysis(analysis_id)
+    finally:
+        engine.dispose()
