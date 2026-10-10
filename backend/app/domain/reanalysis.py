@@ -314,13 +314,15 @@ def detect_change(
             )).all()
             for user_id in users:
                 db.add(Notification(
-                    id=uuid4(), organization_id=organization_id, user_id=user_id,
-                    notification_type="REANALYSIS_CANDIDATE", status="UNREAD",
-                    title="Case reanalysis may be required", body=candidate.reason,
-                    case_id=parent.case_id, analysis_id=parent.id, candidate_id=candidate.id,
+                    id=uuid4(), organization_id=organization_id,
+                    user_id=user_id, notification_type="REANALYSIS_CANDIDATE",
+                    status="UNREAD", title="Case reanalysis may be required",
+                    body=candidate.reason, case_id=parent.case_id,
+                    analysis_id=parent.id, candidate_id=candidate.id,
                     metadata_json={"trigger_type": trigger_type, "resource_kind": resource_kind,
                                    "resource_name": resource_name, "previous_version": snapshot.version,
-                                   "new_version": new_version, "earliest_affected_step": candidate.earliest_affected_step},
+                                   "new_version": new_version,
+                                   "earliest_affected_step": candidate.earliest_affected_step},
                 ))
             candidates.append(candidate)
 
@@ -508,3 +510,60 @@ def _previous_step(step: str) -> str | None:
     if order <= 1:
         return None
     return next(name for name, value in STEP_ORDER.items() if value == order - 1)
+
+
+RESOURCE_TRIGGER_TYPE = {
+    "REFERENCE": "REFERENCE_UPDATE",
+    "POPULATION": "POPULATION_UPDATE",
+    "ANNOTATION": "ANNOTATION_UPDATE",
+    "EVIDENCE": "EVIDENCE_UPDATE",
+    "ACMG_RULE": "ACMG_RULE_UPDATE",
+}
+
+
+def scan_active_resources_for_reanalysis(db: Session) -> int:
+    """Detect changes for every active globally registered resource.
+
+    This creates durable candidates/notifications only; it never starts a
+    reanalysis automatically. The scan is safe to repeat because change
+    events and parent/change-event candidates are idempotent.
+    """
+    resources = db.scalars(
+        select(Resource).where(Resource.status == "ACTIVE").order_by(Resource.name, Resource.version)
+    ).all()
+
+    total_candidates = 0
+    for resource in resources:
+        trigger_type = RESOURCE_TRIGGER_TYPE.get(str(resource.resource_type).upper())
+        if trigger_type is None:
+            continue
+
+        organization_ids = db.scalars(
+            select(Case.organization_id)
+            .join(Analysis, Analysis.case_id == Case.id)
+            .join(
+                AnalysisResourceSnapshot,
+                AnalysisResourceSnapshot.analysis_id == Analysis.id,
+            )
+            .where(
+                Analysis.status == "SUCCEEDED",
+                AnalysisResourceSnapshot.resource_kind == str(resource.resource_type).upper(),
+                AnalysisResourceSnapshot.resource_name == resource.name,
+            )
+            .distinct()
+        ).all()
+
+        for organization_id in organization_ids:
+            candidates = detect_change(
+                db,
+                organization_id=organization_id,
+                trigger_type=trigger_type,
+                resource_kind=str(resource.resource_type).upper(),
+                resource_name=resource.name,
+                new_version=resource.version,
+                new_checksum=resource.checksum,
+                resource_id=resource.id,
+            )
+            total_candidates += len(candidates)
+
+    return total_candidates
