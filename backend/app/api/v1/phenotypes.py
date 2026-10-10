@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import get_accessible_analysis
+from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_analysis, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.infrastructure.db.models import Case, Analysis, PhenotypeObservation
 from backend.app.infrastructure.db.session import get_db
@@ -38,6 +38,7 @@ def add_case_phenotype(case_id: UUID, body: PhenotypeInput, db: Session = Depend
     case = db.get(Case, case_id)
     if not case: raise HTTPException(404, "Case not found")
     require_case_tenant(case, principal)
+    require_role(principal, CASE_WRITE_ROLES)
     try: hpo = normalize_hpo_id(body.hpo_id)
     except ValueError as exc: raise HTTPException(400, str(exc))
     row = db.scalar(select(PhenotypeObservation).where(PhenotypeObservation.case_id == case_id, PhenotypeObservation.analysis_id.is_(None), PhenotypeObservation.hpo_id == hpo, PhenotypeObservation.present == body.present))

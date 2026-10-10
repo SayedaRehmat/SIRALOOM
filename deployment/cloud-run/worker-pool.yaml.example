@@ -64,3 +64,13 @@ spec:
             limits:
               cpu: "2"
               memory: 4Gi
+          volumeMounts:
+            - name: references
+              mountPath: /data/references
+      volumes:
+        - name: references
+          csi:
+            driver: gcsfuse.run.googleapis.com
+            readOnly: true
+            volumeAttributes:
+              bucketName: SIRALOOM_REFERENCE_BUCKET
