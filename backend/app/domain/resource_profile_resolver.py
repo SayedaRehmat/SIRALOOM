@@ -93,7 +93,7 @@ class AnalysisResourcePlan:
                 "profile_version": self.deployment_profile_version,
             },
             "status": self.status,
-            "selected": [r.snapshot for r in self.selected],
+            "selected": [r.snapshot() for r in self.selected],
             "issues": [
                 {
                     "capability": i.capability,
@@ -464,7 +464,7 @@ def resolve_analysis_resource_profile(
         "genome_build": profile.genome_build,
         "deployment_profile_type": policy.profile_type,
         "deployment_profile_version": policy.profile_version,
-        "selected": [r.snapshot for r in selected],
+        "selected": [r.snapshot() for r in selected],
         "issues": [
             {
                 "capability": i.capability,
