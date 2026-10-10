@@ -467,3 +467,197 @@ def test_local_annotation_provider_gets_stable_request_fingerprint():
     assert first == second
     assert len(first) == 64
     assert payloads[0]["_siraloom_annotation_provenance"]["request_fingerprint"] == first
+
+
+def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_lineage(tmp_path):
+    """Recover after row commit but before batch completion without duplicate annotations."""
+    from types import SimpleNamespace
+
+    from sqlalchemy import func
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid
+    from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+    from backend.app.infrastructure.db.models import (
+        AnalysisPartition, Artifact, Case, Evidence, Organization, User, Variant, WorkflowStep,
+    )
+    from backend.app.partition_scheduler import PartitionScheduler, configure_partition
+    from backend.app.workflows.variant import (
+        _load_annotation_response_checkpoint,
+        _persist_annotation_batch_rows,
+        _persist_annotation_response_checkpoint,
+        _save_batch_checkpoint,
+        recover_interrupted_execution,
+    )
+
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path/'annotation-stage-recovery.db'}")
+    Base.metadata.create_all(engine)
+    store = ArtifactStore(tmp_path / "artifact-store")
+    organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
+    parent_id, analysis_id = uuid4(), uuid4()
+    variant_key = canonical_key("GRCh38", "1", 555, "T", "C")
+    variant_id = stable_variant_uuid(variant_key)
+    try:
+        with Session(engine) as db:
+            db.add(Organization(id=organization_id, name="Continuation Lab", external_identifier=None))
+            db.add(User(
+                id=user_id, organization_id=organization_id, external_subject=None,
+                email="continuation@test.local", display_name="Continuation test",
+                role="ADMIN", status="ACTIVE",
+            ))
+            db.add(Case(
+                id=case_id, organization_id=organization_id, case_identifier="CONT-001",
+                status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.add(Analysis(
+                id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status=AnalysisStatus.SUCCEEDED, queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=1,
+            ))
+            child = Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=parent_id, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status=AnalysisStatus.RUNNING, queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=2,
+            )
+            db.add(child)
+            db.add(Variant(
+                id=variant_id, genome_build="GRCh38", chromosome="1", position=555,
+                reference="T", alternate="C", normalization_status="NORMALIZED",
+                canonical_key=variant_key, identifiers={"canonical_key_sha256": "fixture"},
+            ))
+            resource = _resource(db)
+            resource_id = resource.id
+            step = WorkflowStep(
+                id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
+                status=StepStatus.RUNNING, attempt=1, input_artifacts=[], output_artifacts=[],
+                metadata_json={"batches": {"0:1": {"status": "RUNNING", "attempt": 1}}},
+            )
+            partition = AnalysisPartition(
+                id=uuid4(), analysis_id=analysis_id, step_id="annotate",
+                partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+                variant_count=1, status="READY", metadata_json={"variant_ids": [str(variant_id)]},
+            )
+            configure_partition(partition, "STANDARD")
+            db.add_all([step, partition])
+            db.commit()
+
+            scheduler = PartitionScheduler(db, cpu_capacity=1, memory_mb=1024, lease_seconds=60)
+            claimed = scheduler.claim_next(analysis_id, "annotate", "worker-before-crash")
+            assert claimed is not None
+            lease_token = claimed.lease_token
+            provider = SimpleNamespace(provider_id="GeneBe", provider_version="api-public-v1")
+            payload = {
+                "chr": "1", "pos": 555, "ref": "T", "alt": "C",
+                "gene_symbol": "TEST1", "effect": "missense_variant",
+                "frequency_reference_population": 0.00001,
+                "computational_score_selected": 0.91,
+                "_siraloom_annotation_provenance": {
+                    "provider": "GeneBe", "provider_version": "api-public-v1",
+                    "request_fingerprint": "d" * 64, "response_sha256": "e" * 64,
+                    "observed_at": "2026-10-10T00:00:00+00:00", "retry_count": 0,
+                },
+            }
+            _persist_annotation_response_checkpoint(
+                db, store, analysis=child, step=step, start=0, end=1,
+                payloads=[dict(payload)], resource=resource,
+                provider_id=provider.provider_id, provider_version=provider.provider_version,
+            )
+            # First durable side effect after the checkpoint: rows commit, then
+            # simulate abrupt worker death before the batch checkpoint/partition succeed.
+            new_count, returned_rows = _persist_annotation_batch_rows(
+                db, analysis=child, provider=provider, annotation_resource=resource,
+                variant_ids={variant_key: variant_id}, existing_rows=[],
+                payloads=[dict(payload)], batch_key="0:1",
+            )
+            assert (new_count, returned_rows) == (1, 1)
+            assert db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis_id)) == 1
+            db.close()
+
+        # New session represents Celery redelivery after worker loss.
+        with Session(engine) as db:
+            assert recover_interrupted_execution(db, analysis_id) is True
+            child = db.get(Analysis, analysis_id)
+            step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id, WorkflowStep.step_id == "annotate"
+            ))
+            resource = db.get(Resource, resource_id)
+            assert child.parent_analysis_id == parent_id
+            assert step.status == StepStatus.RETRYING
+
+            replay_payloads = _load_annotation_response_checkpoint(
+                db, step=step, start=0, end=1, analysis=child, resource=resource,
+                provider_id="GeneBe", provider_version="api-public-v1", temporary_paths=[],
+            )
+            assert replay_payloads[0]["_siraloom_annotation_provenance"]["request_fingerprint"] == "d" * 64
+            existing_rows = db.scalars(select(Annotation).where(
+                Annotation.analysis_id == analysis_id,
+                Annotation.provider_name == "GeneBe",
+                Annotation.resource_id == resource.id,
+                Annotation.resource_version == resource.version,
+                Annotation.variant_id == variant_id,
+            )).all()
+            new_count, returned_rows = _persist_annotation_batch_rows(
+                db, analysis=child, provider=SimpleNamespace(
+                    provider_id="GeneBe", provider_version="api-public-v1"
+                ), annotation_resource=resource,
+                variant_ids={variant_key: variant_id}, existing_rows=existing_rows,
+                payloads=replay_payloads, batch_key="0:1",
+            )
+            assert (new_count, returned_rows) == (0, 1)
+            assert db.scalar(select(func.count(Annotation.id)).where(
+                Annotation.analysis_id == analysis_id
+            )) == 1
+
+            retry_claim = PartitionScheduler(
+                db, cpu_capacity=1, memory_mb=1024, lease_seconds=60
+            ).claim_next(analysis_id, "annotate", "worker-after-redelivery")
+            assert retry_claim is not None
+            _save_batch_checkpoint(
+                db, step, 0, 1, status="SUCCEEDED", attempt=2,
+                metadata={
+                    "provider": "GeneBe", "new_annotation_rows": 0, "returned_rows": 1,
+                    "resource_id": str(resource.id), "resource_version": resource.version,
+                }, commit=False,
+            )
+            PartitionScheduler(db, cpu_capacity=1, memory_mb=1024, lease_seconds=60).succeed(
+                retry_claim.id, "worker-after-redelivery", retry_claim.lease_token,
+                metadata={"provider": "GeneBe", "variant_count": 1},
+            )
+            db.commit()
+            assert db.get(AnalysisPartition, retry_claim.id).status == "SUCCEEDED"
+            assert step.metadata_json["batches"]["0:1"]["status"] == "SUCCEEDED"
+
+            annotation = db.scalars(select(Annotation).where(
+                Annotation.analysis_id == analysis_id
+            )).one()
+            assert annotation.resource_id == resource.id
+            assert annotation.resource_version == resource.version
+            assert annotation.request_fingerprint == "d" * 64
+            assert annotation.response_sha256 == "e" * 64
+
+            # Exercise the real evidence extraction engine on the persisted
+            # normalized observation; this creates evidence facts, not a final classification.
+            records = EvidenceEngine().build_from_annotation(
+                variant_id=annotation.variant_id,
+                annotation=annotation.payload["normalized"],
+                provider_name=annotation.provider_name,
+                provider_version=annotation.provider_version,
+                resource_name=annotation.resource_name,
+                resource_version=annotation.resource_version,
+                context=EvidenceContext(analysis_id=analysis_id),
+            )
+            assert records
+            assert all(record.variant_id == annotation.variant_id for record in records)
+            assert any(
+                record.source_name == annotation.resource_name
+                and record.source_version == annotation.resource_version
+                for record in records
+            )
+            assert db.get(Analysis, analysis_id).parent_analysis_id == parent_id
+    finally:
+        engine.dispose()
