@@ -166,6 +166,61 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
             reference="T", alternate="C",
         )
 
+        def persist_test_evidence(db, received_analysis_id):
+            annotation = db.scalar(select(Annotation).where(
+                Annotation.analysis_id == received_analysis_id
+            ))
+            assert annotation is not None
+            records = EvidenceEngine().build_from_annotation(
+                variant_id=annotation.variant_id,
+                annotation=annotation.payload["normalized"],
+                provider_name=annotation.provider_name,
+                provider_version=annotation.provider_version,
+                resource_name=annotation.resource_name,
+                resource_version=annotation.resource_version,
+                context=EvidenceContext(analysis_id=received_analysis_id),
+            )
+            created_count = 0
+            for record in records:
+                fingerprint = evidence_fingerprint(
+                    variant_id=record.variant_id,
+                    analysis_id=received_analysis_id,
+                    evidence_type=record.evidence_type,
+                    statement=record.statement,
+                    direction=record.direction,
+                    source_name=record.source_name,
+                    source_version=record.source_version,
+                    observation_ids=record.observation_ids,
+                    payload=record.payload,
+                    resource_id=annotation.resource_id,
+                    source_record_id=None,
+                    request_fingerprint=annotation.request_fingerprint,
+                    response_sha256=annotation.response_sha256,
+                )
+                exists = db.scalar(select(Evidence.id).where(
+                    Evidence.analysis_id == received_analysis_id,
+                    Evidence.evidence_fingerprint == fingerprint,
+                ))
+                if exists:
+                    continue
+                db.add(Evidence(
+                    id=record.evidence_id, variant_id=record.variant_id,
+                    analysis_id=received_analysis_id, evidence_type=record.evidence_type,
+                    statement=record.statement, direction=record.direction,
+                    source_name=record.source_name, source_version=record.source_version,
+                    resource_id=annotation.resource_id, source_record_id=None,
+                    request_fingerprint=annotation.request_fingerprint,
+                    response_sha256=annotation.response_sha256,
+                    request_metadata=annotation.request_metadata or {},
+                    observed_at=annotation.observed_at,
+                    observation_ids=[str(x) for x in record.observation_ids],
+                    payload=record.payload, created_by_type="SYSTEM",
+                    created_by_id="siraloom-evidence", evidence_fingerprint=fingerprint,
+                ))
+                created_count += 1
+            db.commit()
+            return created_count
+
         def controlled_workflow_delegate(received_analysis_id):
             assert str(received_analysis_id) == str(analysis_id)
             delegate_calls["count"] += 1
@@ -190,8 +245,10 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                         variant_ids={variant_key: variant_id}, existing_rows=[],
                         payloads=[dict(payloads[0])], batch_key="0:1",
                     )
-                    # Simulate worker death after the annotation-row transaction,
-                    # but before the batch success checkpoint and partition succeed.
+                    # Persist evidence, then simulate worker death before the
+                    # evidence-step/batch success checkpoint is committed.
+                    created_before_crash = persist_test_evidence(db, analysis_id)
+                    assert created_before_crash > 0
                     raise SystemExit(73)
 
                 # The production task wrapper has already invoked the production
@@ -236,53 +293,13 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                 )
                 db.commit()
 
-                annotation = db.scalar(select(Annotation).where(
-                    Annotation.analysis_id == analysis_id
-                ))
-                evidence_records = EvidenceEngine().build_from_annotation(
-                    variant_id=annotation.variant_id,
-                    annotation=annotation.payload["normalized"],
-                    provider_name=annotation.provider_name,
-                    provider_version=annotation.provider_version,
-                    resource_name=annotation.resource_name,
-                    resource_version=annotation.resource_version,
-                    context=EvidenceContext(analysis_id=analysis_id),
-                )
-                for record in evidence_records:
-                    fingerprint = evidence_fingerprint(
-                        variant_id=record.variant_id,
-                        analysis_id=analysis_id,
-                        evidence_type=record.evidence_type,
-                        statement=record.statement,
-                        direction=record.direction,
-                        source_name=record.source_name,
-                        source_version=record.source_version,
-                        observation_ids=record.observation_ids,
-                        payload=record.payload,
-                        resource_id=annotation.resource_id,
-                        source_record_id=None,
-                        request_fingerprint=annotation.request_fingerprint,
-                        response_sha256=annotation.response_sha256,
-                    )
-                    if db.scalar(select(Evidence.id).where(
-                        Evidence.analysis_id == analysis_id,
-                        Evidence.evidence_fingerprint == fingerprint,
-                    )):
-                        continue
-                    db.add(Evidence(
-                        id=record.evidence_id, variant_id=record.variant_id,
-                        analysis_id=analysis_id, evidence_type=record.evidence_type,
-                        statement=record.statement, direction=record.direction,
-                        source_name=record.source_name, source_version=record.source_version,
-                        resource_id=annotation.resource_id, source_record_id=None,
-                        request_fingerprint=annotation.request_fingerprint,
-                        response_sha256=annotation.response_sha256,
-                        request_metadata=annotation.request_metadata or {},
-                        observed_at=annotation.observed_at,
-                        observation_ids=[str(x) for x in record.observation_ids],
-                        payload=record.payload, created_by_type="SYSTEM",
-                        created_by_id="siraloom-evidence", evidence_fingerprint=fingerprint,
-                    ))
+                created_evidence = persist_test_evidence(db, analysis_id)
+                persisted_evidence_count = workflow._count_persisted_evidence(db, analysis_id)
+                assert persisted_evidence_count > 0
+                # The first attempt committed evidence but died before recording
+                # success. A retry must deduplicate the evidence and derive its
+                # outcome from durable rows, not this attempt's insertion count.
+                assert created_evidence == 0
                 annotation_step.status = StepStatus.SUCCEEDED
                 evidence_step = db.scalar(select(WorkflowStep).where(
                     WorkflowStep.analysis_id == analysis_id,
@@ -291,7 +308,9 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                 evidence_step.status = StepStatus.SUCCEEDED
                 evidence_step.metadata_json = {
                     **(evidence_step.metadata_json or {}),
-                    "batches": {"0:1": {"status": "SUCCEEDED", "created_evidence": len(evidence_records)}},
+                    "batches": {"0:1": {"status": "SUCCEEDED", "created_evidence": created_evidence}},
+                    "created_evidence": created_evidence,
+                    "persisted_evidence": persisted_evidence_count,
                 }
                 analysis.status = AnalysisStatus.SUCCEEDED
                 db.commit()
@@ -312,9 +331,16 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
             assert db.scalar(select(func.count(Annotation.id)).where(
                 Annotation.analysis_id == analysis_id
             )) == 1
+            # Evidence was committed before the worker died, while the
+            # evidence success checkpoint was intentionally not committed.
             assert db.scalar(select(func.count(Evidence.id)).where(
                 Evidence.analysis_id == analysis_id
-            )) == 0
+            )) > 0
+            evidence_step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "build_evidence",
+            ))
+            assert evidence_step.status == StepStatus.PENDING
             annotation_step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "annotate",
