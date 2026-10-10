@@ -1,7 +1,8 @@
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -10,7 +11,7 @@ from backend.app.adapters.population.gnomad import GnomADGraphQLProvider
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Analysis, Resource, ResourceQualification
+from backend.app.infrastructure.db.models import Analysis, Annotation, Resource, ResourceQualification
 
 
 def _db():
@@ -21,6 +22,7 @@ def _db():
             Analysis.__table__,
             Resource.__table__,
             ResourceQualification.__table__,
+            Annotation.__table__,
         ],
     )
     return engine, Session(engine)
@@ -213,3 +215,51 @@ def test_local_gnomad_adapter_requires_qualified_local_contract():
                 execution_scope="ORGANIZATION_MANAGED",
             )
         )
+
+
+def test_replayed_annotation_observation_cannot_duplicate_or_change_resource_identity():
+    """A retry after provider success must not create a second observation for the same governed release."""
+    engine, db = _db()
+    try:
+        resource = _resource(db)
+        analysis_id = uuid4()
+        variant_id = uuid4()
+        identity = {
+            "analysis_id": analysis_id,
+            "variant_id": variant_id,
+            "provider_name": "GeneBe",
+            "provider_version": "api-public-v1",
+            "resource_id": resource.id,
+            "resource_name": resource.name,
+            "resource_version": resource.version,
+            "request_fingerprint": "request-fingerprint-v1",
+            "response_sha256": "a" * 64,
+            "request_metadata": {"provider": "GeneBe", "provider_version": "api-public-v1"},
+            "payload": {"raw": {"impact": "MODERATE"}, "normalized": {"impact": "MODERATE"}},
+        }
+        db.add(Annotation(id=uuid4(), **identity))
+        db.commit()
+
+        # Simulate the replay trying to persist the same canonical observation
+        # after the first provider call succeeded. The database uniqueness
+        # contract is the final guard against duplicate rows under retry/races.
+        db.add(Annotation(id=uuid4(), **identity))
+        with pytest.raises(IntegrityError):
+            db.commit()
+        db.rollback()
+
+        rows = db.scalars(
+            select(Annotation).where(
+                Annotation.analysis_id == analysis_id,
+                Annotation.variant_id == variant_id,
+                Annotation.resource_id == resource.id,
+            )
+        ).all()
+        assert len(rows) == 1
+        assert rows[0].resource_id == resource.id
+        assert rows[0].resource_version == resource.version
+        assert rows[0].request_fingerprint == "request-fingerprint-v1"
+        assert rows[0].response_sha256 == "a" * 64
+    finally:
+        db.close()
+        engine.dispose()
