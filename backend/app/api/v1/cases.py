@@ -11,6 +11,7 @@ from backend.app.domain.schemas import CaseCreate
 from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
 from backend.app.infrastructure.db.models import Case, Specimen, Analysis
 from backend.app.infrastructure.audit.service import AuditService
+from backend.app.domain.case_change import create_case_change_candidates
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -82,6 +83,8 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
     require_case_tenant(case, principal)
     require_role(principal, CASE_WRITE_ROLES)
     before = {"language": case.language, "clinical_context": case.clinical_context or {}}
+    before_updated_at = case.updated_at.isoformat() if case.updated_at else None
+    clinical_context_changed = payload.clinical_context is not None and payload.clinical_context != (case.clinical_context or {})
     if payload.language is not None:
         case.language = payload.language
     if payload.clinical_context is not None:
@@ -91,6 +94,14 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
         subject_type="CASE", subject_id=str(case.id), operation="UPDATE", before_state=before,
         after_state={"language": case.language, "clinical_context": case.clinical_context or {}}, reason="Case metadata updated",
     )
+    if clinical_context_changed:
+        create_case_change_candidates(
+            db,
+            case=case,
+            trigger_type="CLINICAL_CONTEXT_UPDATE",
+            reason=f"Clinical context for case {case.case_identifier} changed; completed analyses may require reanalysis.",
+            metadata={"before": before["clinical_context"], "after": case.clinical_context or {}, "previous_updated_at": before_updated_at},
+        )
     db.commit()
     return _case_payload(db, case)
 

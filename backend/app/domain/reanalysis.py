@@ -381,7 +381,13 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
             db.add(Annotation(
                 id=uuid4(), variant_id=row.variant_id, analysis_id=child_id,
                 provider_name=row.provider_name, provider_version=row.provider_version,
-                resource_name=row.resource_name, resource_version=row.resource_version,
+                resource_id=row.resource_id, resource_name=row.resource_name,
+                resource_version=row.resource_version,
+                request_fingerprint=row.request_fingerprint,
+                response_sha256=row.response_sha256,
+                request_metadata=dict(row.request_metadata or {}),
+                observed_at=row.observed_at,
+                retry_count=row.retry_count,
                 payload=row.payload,
             ))
 
@@ -394,6 +400,11 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 allele_count=row.allele_count, allele_number=row.allele_number,
                 allele_frequency=row.allele_frequency, homozygote_count=row.homozygote_count,
                 availability=row.availability, quality_status=row.quality_status,
+                source_record_id=row.source_record_id,
+                request_fingerprint=row.request_fingerprint,
+                response_sha256=row.response_sha256,
+                request_metadata=dict(row.request_metadata or {}),
+                observed_at=row.observed_at,
             ))
 
     if start > STEP_ORDER["build_evidence"]:
@@ -402,8 +413,13 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 id=uuid4(), variant_id=row.variant_id, analysis_id=child_id,
                 evidence_type=row.evidence_type, statement=row.statement,
                 direction=row.direction, source_name=row.source_name,
-                source_version=row.source_version, source_record_id=row.source_record_id,
-                observation_ids=row.observation_ids, payload=row.payload,
+                source_version=row.source_version, resource_id=row.resource_id,
+                source_record_id=row.source_record_id,
+                request_fingerprint=row.request_fingerprint,
+                response_sha256=row.response_sha256,
+                request_metadata=dict(row.request_metadata or {}),
+                observed_at=row.observed_at,
+                observation_ids=list(row.observation_ids or []), payload=row.payload,
                 created_by_type=row.created_by_type, created_by_id=row.created_by_id,
                 evidence_fingerprint=row.evidence_fingerprint,
             ))
