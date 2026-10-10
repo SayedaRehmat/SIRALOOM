@@ -300,13 +300,26 @@ def test_production_celery_wrapper_recovers_annotation_and_persists_evidence(
                     WorkflowStep.analysis_id == analysis_id,
                     WorkflowStep.step_id == "annotate",
                 ))
+                normalize_step = diagnostic_db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "normalize",
+                ))
+                all_steps = {
+                    row.step_id: str(row.status)
+                    for row in diagnostic_db.scalars(select(WorkflowStep).where(
+                        WorkflowStep.analysis_id == analysis_id
+                    )).all()
+                }
                 current_analysis = diagnostic_db.get(Analysis, analysis_id)
                 raise AssertionError(
                     "annotation persistence failpoint was not reached; "
                     f"fault_armed={fault['armed']}, provider_calls={provider_calls['count']}, "
                     f"analysis_status={current_analysis.status}, "
+                    f"normalize_status={normalize_step.status}, "
+                    f"normalize_error={normalize_step.error_code}:{normalize_step.error_message}, "
                     f"annotation_step_status={failed_step.status}, "
-                    f"error_code={failed_step.error_code}, error_message={failed_step.error_message}"
+                    f"error_code={failed_step.error_code}, error_message={failed_step.error_message}, "
+                    f"all_steps={all_steps}"
                 )
 
         with LocalSession() as db:
