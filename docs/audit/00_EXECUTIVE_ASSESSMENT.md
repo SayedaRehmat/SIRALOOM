@@ -61,3 +61,17 @@ See the companion audit documents in this directory for architecture, workflow, 
 ## Subsequent verification — 2026-10-09 12:13 UTC
 
 The post-merge main CI run [37928518446](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928518446) completed successfully for `cab2c93b46566ab9b31ca83ebfdfb24eba9f160c`, including backend, PostgreSQL integration and frontend jobs. The blueprint PR's latest CI run [37928559601](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928559601) also completed successfully before this final documentation update. The final documentation commit will trigger another PR CI run; this line records the observed code-state checkpoint, not the result of that future run.
+
+
+## Current-state reconciliation — 2026-10-10 08:10 UTC
+
+This section supersedes the earlier checkpoint where `main` was observed at `cab2c93b46566ab9b31ca83ebfdfb24eba9f160c`.
+
+- **Current verified `main` HEAD:** `c91ed0e2fca9133dbd33f9365ce934221f1557c8`.
+- **Current main CI:** GitHub Actions run `38036686972` (run #1078) completed successfully against that exact SHA. Backend, PostgreSQL integration, and frontend jobs all completed successfully; PostgreSQL migrations and the real Celery/Redis worker-loss integration test also passed.
+- **Recent merged reliability work:** PR #140, #141, #142, and #143 are merged. The current mainline therefore includes PostgreSQL advisory execution fencing, worker-loss/redelivery recovery, production-task recovery coverage, stage/partition recovery, and replay-safe annotation persistence guards.
+- **Current open P0 reliability work:** PR #144, `fix/durable-annotation-response-checkpoint`, is open against the current `main` SHA. Its purpose is to persist successful annotation-provider responses before annotation-row persistence so a worker loss after that durable checkpoint can replay the exact response without a second provider call. Its PR CI run `38036974027` is currently in progress; frontend has passed while backend and PostgreSQL integration are still running. It must not be merged until the complete CI run is green and the diff is reviewed.
+- **Current open legacy branches/PRs:** #84, #78, #2, #1, and #10 remain open. They are not evidence of current mainline behavior and must not be merged blindly because their bases and assumptions predate the current resource-governance and normalization architecture.
+- **Current code-path evidence:** the production workflow has ten durable stages from input validation through provenance export; resource selection is bound to governed profile/preflight data; normalization is reference-aware and BCFtools-backed; annotation/population/evidence/ACMG processing is partitioned and resource-aware; worker execution uses late acknowledgements and worker-loss rejection; reanalysis reuse and historical lineage are represented durably.
+- **Important remaining limitation:** no evidence inspected here demonstrates a live production-like end-to-end case using real PostgreSQL/Redis/Celery/artifact storage and real external scientific providers. CI success remains software-engineering evidence, not clinical validation.
+- **Readiness verdict remains:** internal engineering use is appropriate; external research-laboratory pilot remains **HOLD** until live E2E, scientific concordance, adversarial tenant isolation, operational recovery, deployment configuration, backup/restore, and governance evidence are demonstrated.
