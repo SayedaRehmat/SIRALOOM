@@ -157,6 +157,55 @@ def _completed_batch_keys(step: WorkflowStep) -> set[str]:
     batches = (step.metadata_json or {}).get("batches") or {}
     return {k for k, v in batches.items() if (v or {}).get("status") == "SUCCEEDED"}
 
+def _ensure_annotation_request_fingerprint(
+    payloads: list[dict],
+    *,
+    analysis: Analysis,
+    start: int,
+    end: int,
+    resource: Resource,
+    provider_id: str,
+    provider_version: str,
+) -> str:
+    """Ensure API and local providers share a stable, governed request identity."""
+    sample = next(
+        (item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)),
+        {},
+    )
+    existing = sample.get("request_fingerprint")
+    if existing:
+        return str(existing)
+    variants = []
+    for item in payloads:
+        provenance = dict(item.get("_siraloom_annotation_provenance") or {})
+        variants.append({
+            "chromosome": item.get("chr"),
+            "position": item.get("pos"),
+            "reference": item.get("ref"),
+            "alternate": item.get("alt"),
+            "assembly": item.get("genome") or provenance.get("assembly") or analysis.reference_build,
+        })
+    request_material = {
+        "analysis_id": str(analysis.id),
+        "batch_key": _batch_key(start, end),
+        "provider_id": provider_id,
+        "provider_version": provider_version,
+        "resource_id": str(resource.id),
+        "resource_version": resource.version,
+        "resource_checksum": resource.checksum,
+        "reference_build": analysis.reference_build,
+        "variants": variants,
+    }
+    fingerprint = hashlib.sha256(
+        json.dumps(request_material, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    ).hexdigest()
+    for item in payloads:
+        provenance = dict(item.get("_siraloom_annotation_provenance") or {})
+        provenance["request_fingerprint"] = fingerprint
+        item["_siraloom_annotation_provenance"] = provenance
+    return fingerprint
+
+
 def _persist_annotation_response_checkpoint(
     db: Session,
     artifacts: ArtifactStore,
@@ -1552,6 +1601,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if payloads is None:
                             payloads = provider.annotate(batch, {"genome": genome})
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
+                            _ensure_annotation_request_fingerprint(
+                                payloads,
+                                analysis=analysis,
+                                start=start,
+                                end=end,
+                                resource=annotation_resource,
+                                provider_id=provider.provider_id,
+                                provider_version=provider.provider_version,
+                            )
                             sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                             complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                             db.commit()
