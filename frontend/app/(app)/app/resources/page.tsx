@@ -151,6 +151,16 @@ export default function ResourcesPage() {
     try {
       metadata = JSON.parse(metadataText);
       if (!metadata || Array.isArray(metadata) || typeof metadata !== "object") throw new Error("Metadata must be a JSON object.");
+      const source = metadata.source_contract && typeof metadata.source_contract === "object" ? metadata.source_contract as Record<string, unknown> : null;
+      const execution = metadata.execution && typeof metadata.execution === "object" ? metadata.execution as Record<string, unknown> : null;
+      // Keep duplicated immutable identity fields aligned with the registry form.
+      if (source) source.release_identity = form.version.trim();
+      if (execution) {
+        execution.provider_id = form.provider.trim();
+        execution.provider_version = form.version.trim();
+        execution.access_method = form.access_method;
+        execution.location = form.location.trim();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("resources.metadataInvalid"));
       return;
@@ -259,6 +269,7 @@ export default function ResourcesPage() {
       <section className="panel resources-governance-note">
         <strong>{t("resources.lifecycleNote")}</strong>
         <p>{t("resources.stagingGap")}</p>
+        <label className="resources-qualification-version">{t("resources.qualificationVersion")}<input value={qualificationVersion} onChange={e => setQualificationVersion(e.target.value)} /></label>
       </section>
 
       {showRegister && <section className="panel resources-register-panel">
