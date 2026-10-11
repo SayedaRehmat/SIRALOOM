@@ -445,20 +445,23 @@ export default function Cases() {
             {cases.map((item) => {
               const latestAnalysis = item.analyses?.[0];
               return (
-                <button
-                  key={item.case_id}
-                  className={caseId === item.case_id ? "case-registry-item selected" : "case-registry-item"}
-                  onClick={() => loadExistingCase(item.case_id)}
-                  disabled={busy}
-                >
-                  <span>
-                    <strong>{item.case_identifier}</strong>
-                    <small>{pretty(item.status)} · {item.specimens?.length ?? 0} {t("cases.specimenCount")}</small>
-                  </span>
-                  <span>
-                    <small>{latestAnalysis ? `${t("cases.analysis")} · ${pretty(latestAnalysis.status)}` : t("cases.noAnalysis")}</small>
-                  </span>
-                </button>
+                <div className="case-registry-entry" key={item.case_id}>
+                  <button
+                    type="button"
+                    className={caseId === item.case_id ? "case-registry-item selected" : "case-registry-item"}
+                    onClick={() => loadExistingCase(item.case_id)}
+                    disabled={busy}
+                  >
+                    <span>
+                      <strong>{item.case_identifier}</strong>
+                      <small>{pretty(item.status)} · {item.specimens?.length ?? 0} {t("cases.specimenCount")}</small>
+                    </span>
+                    <span>
+                      <small>${latestAnalysis ? `${t("cases.analysis")} · ${pretty(latestAnalysis.status)}` : t("cases.noAnalysis")}</small>
+                    </span>
+                  </button>
+                  <Link className="case-registry-dossier-link" href={`/app/cases/${item.case_id}`}>{t("cases.openDossier")}</Link>
+                </div>
               );
             })}
           </div>
