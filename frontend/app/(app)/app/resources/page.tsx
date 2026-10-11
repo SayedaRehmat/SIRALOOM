@@ -7,7 +7,7 @@ import { useLanguage } from "../../../../lib/i18n";
 const API_BASE_RAW = process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1";
 const API_BASE = API_BASE_RAW.endsWith("/") ? API_BASE_RAW.slice(0, -1) : API_BASE_RAW;
 const RESOURCE_TYPES = [
-  "REFERENCE_PACKAGE", "ANNOTATION_ENGINE", "ANNOTATION_CACHE", "POPULATION",
+  "REFERENCE_PACKAGE", "ANNOTATION_ENGINE", "ANNOTATION_CACHE", "POPULATION", "EVIDENCE",
   "POPULATION_SECONDARY", "CLINICAL_DATABASE", "PHENOTYPE_ONTOLOGY",
   "COMPUTATIONAL_PREDICTOR", "SPLICING_PREDICTOR", "FUNCTIONAL_EVIDENCE",
   "LITERATURE_PROVIDER", "ACMG_RULE_SPECIFICATION", "GENE_DISEASE",
@@ -400,17 +400,25 @@ export default function ResourcesPage() {
             <tbody>{visibleResources.map(resource => {
               const result = qualificationResults[resource.resource_id];
               const isBusy = busy === resource.resource_id;
+              const sourceContract = (resource.metadata?.source_contract ?? {}) as Record<string, unknown>;
+              const isGlobalDiscovery = !resource.organization_id && Boolean(resource.metadata?.discovery_provider);
+              const sourceChecksumReady = String(sourceContract.checksum_status ?? "").toUpperCase() === "PUBLISHED_AND_VERIFIED";
+              const sourceLicenseReady = ["VERIFIED", "NOT_REQUIRED"].includes(String(sourceContract.license_status ?? "").toUpperCase());
+              const canStageRelease = resource.access_method === "HTTPS" && ["CANDIDATE", "QUALIFIED"].includes(resource.status) && sourceChecksumReady && sourceLicenseReady && Boolean(resource.checksum);
               return <tr key={resource.resource_id}>
                 <td><strong>{resource.name}</strong><small>{resource.provider} · {resource.access_method}</small><code>{resource.resource_id}</code>{resource.location && <small className="resources-location">{resource.location}</small>}</td>
                 <td>{resource.resource_type}</td><td>{resource.version}<small>{resource.checksum ? `SHA-256 ${resource.checksum.slice(0, 12)}…` : "No checksum recorded"}</small></td><td>{resource.genome_build ?? "—"}</td>
                 <td><span className={`badge ${statusClass(resource.status)}`}>{pretty(resource.status)}</span></td>
                 <td><div className="resources-row-actions">
-                  {resource.access_method === "HTTPS" && ["CANDIDATE","QUALIFIED"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy || busy === `stage-${resource.resource_id}`} onClick={() => void openStaging(resource)}>{t("resources.stageRelease")}</button>}
-                  <button className="secondary small" type="button" disabled={isBusy} onClick={() => void runQualification(resource)}>{isBusy ? "Working…" : t("resources.qualify")}</button>
-                  {["QUALIFIED","ACTIVE"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy} onClick={() => void requestApproval(resource)}>{t("resources.requestApproval")}</button>}
-                  {resource.status !== "ACTIVE" && ["QUALIFIED","APPROVED"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy} onClick={() => void activate(resource)}>{t("resources.activate")}</button>}
+                  {isGlobalDiscovery ? <span className="badge neutral">{t("resources.globalDiscovery")}</span> : <>
+                    {canStageRelease && <button className="secondary small" type="button" disabled={isBusy || busy === `stage-${resource.resource_id}`} onClick={() => void openStaging(resource)}>{t("resources.stageRelease")}</button>}
+                    <button className="secondary small" type="button" disabled={isBusy} onClick={() => void runQualification(resource)}>{isBusy ? "Working…" : t("resources.qualify")}</button>
+                    {["QUALIFIED","ACTIVE"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy} onClick={() => void requestApproval(resource)}>{t("resources.requestApproval")}</button>}
+                    {resource.status !== "ACTIVE" && ["QUALIFIED","APPROVED"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy} onClick={() => void activate(resource)}>{t("resources.activate")}</button>}
+                  </>}
                 </div>
-                {result && <details className="resources-qualification-result"><summary>{t("resources.qualificationResult")}: {result.passed ? "PASS" : "BLOCKED"}</summary><pre>{JSON.stringify({ outcome: result.outcome, activation_blockers: result.activation_blockers, checks: result.checks }, null, 2)}</pre></details>}
+                {isGlobalDiscovery && <details className="resources-qualification-result"><summary>{t("resources.globalDiscoveryDetails")}</summary><p className="muted">{t("resources.globalDiscoveryNotice")}</p><pre>{JSON.stringify({ source_contract: sourceContract, discovery_provider: resource.metadata?.discovery_provider, release_metadata: resource.metadata }, null, 2)}</pre></details>}
+                {result && <details className="resources-qualification-result"><summary>{t("resources.qualificationResult")}: {result.passed ? "PASS" : "BLOCKED"}</summary><pre>{JSON.stringify({ outcome: result.outcome, activation_blockers: result.activation_blockers, checks: result.checks }, null, 2)}</pre></details>
                 </td>
               </tr>;
             })}</tbody></table></div>}
