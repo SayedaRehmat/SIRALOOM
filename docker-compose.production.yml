@@ -43,6 +43,7 @@ services:
     volumes:
       - artifact_data:/data/siraloom/artifacts
       - reference_data:/data/references:ro
+      - resource_cache_data:/data/siraloom/resource-cache
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
       interval: 10s
@@ -65,9 +66,11 @@ services:
     volumes:
       - artifact_data:/data/siraloom/artifacts
       - reference_data:/data/references:ro
+      - resource_cache_data:/data/siraloom/resource-cache
 
 volumes:
   postgres_data:
   redis_data:
   artifact_data:
   reference_data:
+  resource_cache_data:
