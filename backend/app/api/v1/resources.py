@@ -171,23 +171,50 @@ def register_resource(
     requested_status = str(payload.get("status") or "CANDIDATE").strip().upper()
     if principal.role != "platform_admin" and requested_status != "CANDIDATE":
         raise HTTPException(status_code=403, detail="Lab-managed resources must enter as CANDIDATE")
+    provider = str(payload.get("provider") or "").strip()
+    version = str(payload.get("version") or "").strip()
+    access_method = str(payload.get("access_method") or "").strip().upper()
+    metadata_json = dict(payload.get("metadata") or {})
+    organization_id = principal.organization_id if principal.role != "platform_admin" else (
+        UUID(str(payload["organization_id"])) if payload.get("organization_id") else None
+    )
+    location = str(payload.get("location") or "").strip() or None
+    source_contract = dict(metadata_json.get("source_contract") or {})
+    artifact_url = str(source_contract.get("artifact_url") or "").strip()
+    file_release_contract = (
+        access_method == "HTTPS"
+        and str(source_contract.get("access_mode") or "").upper() == "PUBLIC"
+        and str(source_contract.get("checksum_status") or "").upper() == "PUBLISHED_AND_VERIFIED"
+        and urlparse(artifact_url).scheme == "https"
+        and bool(urlparse(artifact_url).hostname)
+    )
+    if file_release_contract and organization_id is not None:
+        if location:
+            destination = _validate_org_destination(location, organization_id)
+            location = str(destination)
+        else:
+            location = str(_resource_destination_path(organization_id, provider, version, artifact_url))
+        execution = dict(metadata_json.get("execution") or {})
+        execution["provider_id"] = provider
+        execution["provider_version"] = version
+        execution["access_method"] = access_method
+        execution["location"] = location
+        metadata_json["execution"] = execution
     try:
         resource, created = register_resource_version(
             db,
             name=str(payload.get("name") or ""),
-            provider=str(payload.get("provider") or ""),
+            provider=provider,
             resource_type=str(payload.get("resource_type") or ""),
-            version=str(payload.get("version") or ""),
+            version=version,
             genome_build=str(payload["genome_build"]) if payload.get("genome_build") else None,
-            access_method=str(payload.get("access_method") or ""),
+            access_method=access_method,
             license_text=payload.get("license_text"),
             checksum=payload.get("checksum"),
-            location=payload.get("location"),
+            location=location,
             population_definition=payload.get("population_definition"),
-            metadata_json=payload.get("metadata"),
-            organization_id=principal.organization_id if principal.role != "platform_admin" else (
-                UUID(str(payload["organization_id"])) if payload.get("organization_id") else None
-            ),
+            metadata_json=metadata_json,
+            organization_id=organization_id,
             initial_status=requested_status,
         )
     except ResourceRegistryError as exc:
@@ -219,6 +246,7 @@ def register_resource(
         "genome_build": resource.genome_build,
         "organization_id": str(resource.organization_id) if resource.organization_id else None,
         "checksum": resource.checksum,
+        "location": resource.location,
         "reanalysis_scan_queued": scan_queued,
     }
 
