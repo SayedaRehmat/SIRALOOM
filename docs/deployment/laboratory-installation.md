@@ -1,6 +1,6 @@
 # SIRALOOM laboratory installation and deployment
 
-This guide deploys the **full SIRALOOM application** on laboratory-controlled infrastructure: Next.js workspace/public routes, FastAPI, PostgreSQL, Redis, Celery worker, local artifact storage, read-only reference data and a persistent resource cache. It is a deployment procedure, not a statement of clinical validation.
+This guide deploys the **full SIRALOOM application** on laboratory-controlled infrastructure: Next.js workspace/public routes, FastAPI, PostgreSQL, Redis, Celery worker and single Celery Beat scheduler, local artifact storage, read-only reference data and a persistent resource cache. It is a deployment procedure, not a statement of clinical validation.
 
 ## 1. Choose the presentation mode
 
@@ -30,10 +30,10 @@ cp .env.production.example .env
 chmod 600 .env
 sudo mkdir -p /srv/siraloom/postgres /srv/siraloom/redis \
   /srv/siraloom/artifacts /srv/siraloom/references /srv/siraloom/resource-cache \
-  /srv/siraloom/scratch
+  /srv/siraloom/scratch /srv/siraloom/beat
 ```
 
-Edit `.env` before starting the stack. Set the actual absolute host paths in the `SIRALOOM_*_HOST_PATH` variables. These paths are bind-mounted into the API and worker containers; the reference path is read-only. Configure `SIRALOOM_SCRATCH_HOST_PATH` as well as the artifact and resource-cache paths. The API and worker must see the same scratch filesystem at `/data/siraloom/scratch`; the API preflight estimates capacity there, while worker jobs consume it. Ensure the relevant container users can write to the database, Redis, artifact, resource-cache and scratch paths. Do not guess ownership IDs: inspect the exact container images and apply your lab's filesystem policy.
+Edit `.env` before starting the stack. Set the actual absolute host paths in the `SIRALOOM_*_HOST_PATH` variables. These paths are bind-mounted into the API and worker containers; the reference path is read-only. Configure `SIRALOOM_SCRATCH_HOST_PATH`, `SIRALOOM_BEAT_HOST_PATH`, and the artifact/resource-cache paths. Keep exactly one Celery Beat instance active for this deployment; it uses the persistent beat schedule file to coordinate daily discovery and recovery jobs. The API and worker must see the same scratch filesystem at `/data/siraloom/scratch`; the API preflight estimates capacity there, while worker jobs consume it. Ensure the relevant container users can write to the database, Redis, artifact, resource-cache and scratch paths. Do not guess ownership IDs: inspect the exact container images and apply your lab's filesystem policy.
 
 Copy the approved reference package into `/srv/siraloom/references`; set `REFERENCE_FASTA` and `REFERENCE_FAI` to the matching in-container paths. Do not silently replace a reference build or index after a case has been analyzed.
 
