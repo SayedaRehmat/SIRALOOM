@@ -1,21 +1,123 @@
 from __future__ import annotations
 
 from uuid import UUID
+from datetime import datetime, timezone
+from pathlib import Path
+import re
+from urllib.parse import urlparse, unquote
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field
 
 from backend.app.auth.authorization import require_role
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.config import settings
 from backend.app.domain.resources import (
     ResourceRegistryError, decide_resource_approval, register_resource_version,
     request_resource_approval,
 )
 from backend.app.infrastructure.db.models import Resource, ResourceApproval, ResourceQualification, ResourceStaging
 from backend.app.infrastructure.db.session import get_db
+from backend.app.domain.resource_staging import (
+    ResourceStagingError,
+    create_staging_candidate,
+    prepare_staging,
+)
 
 router = APIRouter(prefix="/resources", tags=["resources"])
+
+
+class ResourceStagingCreateRequest(BaseModel):
+    source_uri: str | None = Field(default=None, min_length=1)
+    expected_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    expected_size_bytes: int | None = Field(default=None, gt=0)
+    storage_backend: str = "ORGANIZATION_LOCAL_FILESYSTEM"
+    staging_key: str | None = None
+    metadata: dict = Field(default_factory=dict)
+
+
+def _safe_path_segment(value: str) -> str:
+    segment = re.sub(r"[^A-Za-z0-9._-]+", "-", str(value).strip()).strip(".-")
+    return (segment or "resource")[:100]
+
+
+def _organization_resource_root(organization_id: UUID) -> Path:
+    return (Path(settings.resource_cache_root).expanduser().resolve() / str(organization_id)).resolve()
+
+
+def _resource_destination_path(organization_id: UUID, provider: str, version: str, artifact_url: str) -> Path:
+    filename = Path(urlparse(artifact_url).path).name
+    filename = _safe_path_segment(filename or f"{provider}-{version}.resource")
+    return _organization_resource_root(organization_id) / _safe_path_segment(provider) / _safe_path_segment(version) / filename
+
+
+def _validate_org_destination(destination_uri: str, organization_id: UUID) -> Path:
+    destination = Path(destination_uri).expanduser().resolve(strict=False)
+    root = _organization_resource_root(organization_id)
+    try:
+        relative = destination.relative_to(root)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Resource destination must be inside the organization's resource cache: {root}",
+        ) from exc
+    if not relative.parts:
+        raise HTTPException(status_code=400, detail="Resource destination must name a file below the organization resource cache")
+    return destination
+
+
+def _local_source_path(source_uri: str) -> Path | None:
+    parsed = urlparse(str(source_uri or "").strip())
+    if parsed.scheme == "":
+        return Path(source_uri).expanduser().resolve(strict=False)
+    if parsed.scheme.lower() == "file" and parsed.netloc in {"", "localhost"}:
+        return Path(unquote(parsed.path)).expanduser().resolve(strict=False)
+    return None
+
+
+def _allowed_resource_hosts() -> set[str]:
+    return {host.strip().lower().rstrip(".") for host in settings.resource_staging_allowed_hosts.replace(";", ",").split(",") if host.strip()}
+
+
+def _allowed_local_source_roots() -> list[Path]:
+    return [Path(root.strip()).expanduser().resolve() for root in settings.resource_staging_local_source_roots.replace(";", ",").split(",") if root.strip()]
+
+
+def _require_resource_owner(row: Resource | None, principal: Principal) -> Resource:
+    if row is None or row.organization_id != principal.organization_id:
+        raise HTTPException(status_code=404, detail="Organization resource not found")
+    return row
+
+
+def _staging_payload(row: ResourceStaging) -> dict:
+    metadata = dict(row.metadata_json or {})
+    preflight = metadata.get("storage_preflight") or {}
+    dispatch = metadata.get("staging_dispatch") or {}
+    return {
+        "staging_id": str(row.id),
+        "resource_id": str(row.resource_id),
+        "resource_version": row.resource_version,
+        "staging_key": row.staging_key,
+        "source_uri": row.source_uri,
+        "destination_uri": row.destination_uri,
+        "storage_backend": row.storage_backend,
+        "status": row.status,
+        "expected_sha256": row.expected_sha256,
+        "observed_sha256": row.observed_sha256,
+        "expected_size_bytes": row.expected_size_bytes,
+        "observed_size_bytes": row.observed_size_bytes,
+        "attempt": row.attempt,
+        "error_code": row.error_code,
+        "error_message": row.error_message,
+        "storage_preflight": preflight,
+        "dispatch": dispatch,
+        "metadata": metadata,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
+        "completed_at": row.completed_at,
+    }
 
 
 @router.get("")
