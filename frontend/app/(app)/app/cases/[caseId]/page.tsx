@@ -138,7 +138,7 @@ export default function CaseDossierPage() {
         }
       } else {
         if (artifact.size_bytes > LARGE_DOWNLOAD_BYTES) {
-          throw new Error("This file is larger than 512 MiB. Use a browser with save-to-disk streaming support to avoid buffering the entire file in memory.");
+          throw new Error(t("cases.dossierLargeDownloadRequiresStreaming"));
         }
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
