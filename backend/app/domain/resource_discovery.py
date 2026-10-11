@@ -178,6 +178,12 @@ def _notify_organizations_of_release(
                 "license_status": discovery.license_status,
                 "checksum_status": discovery.checksum_status,
                 "requires_lab_review": True,
+                "title_ar": f"تم اكتشاف إصدار جديد من {resource.provider}",
+                "body_ar": (
+                    f"تم اكتشاف {resource.name} الإصدار {resource.version} من "
+                    f"{source_contract.get('publisher')}. راجع عقد المصدر وشروط الترخيص "
+                    "وأدلة السلامة قبل اعتماد الإصدار أو تفعيله."
+                ),
             },
         ))
         created += 1
