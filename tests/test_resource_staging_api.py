@@ -173,6 +173,34 @@ def test_create_resource_staging_rejects_unapproved_publisher(monkeypatch, tmp_p
         engine.dispose()
 
 
+def test_create_resource_staging_blocks_unresolved_license_review(monkeypatch, tmp_path):
+    engine, db = _db()
+    try:
+        organization_id = uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        db.flush()
+        root = tmp_path / "cache"
+        monkeypatch.setattr(settings, "resource_cache_root", str(root))
+        monkeypatch.setattr(settings, "resource_staging_allowed_hosts", "ftp.example.test")
+        resource, payload = _seed_remote_resource(db, organization_id, root)
+        resource.metadata_json["source_contract"]["license_status"] = "REVIEW_REQUIRED"
+        db.add(resource)
+        db.commit()
+
+        with pytest.raises(HTTPException) as exc:
+            resources_api.create_resource_staging(
+                resource.id,
+                resources_api.ResourceStagingCreateRequest(expected_size_bytes=len(payload)),
+                db,
+                _principal(organization_id),
+            )
+        assert exc.value.status_code == 409
+        assert db.query(ResourceStaging).count() == 0
+    finally:
+        db.close()
+        engine.dispose()
+
+
 def test_create_resource_staging_rejects_cross_organization_resource(monkeypatch, tmp_path):
     engine, db = _db()
     try:
