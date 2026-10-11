@@ -12,6 +12,7 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AnalysisPartition,
     Annotation,
     Artifact,
     Case,
@@ -180,6 +181,24 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
                 status="FINAL",
                 content_json={"report_status": "FINAL", "findings": []},
             ))
+            for partition_step in ("normalize", "annotate"):
+                db.add(AnalysisPartition(
+                    id=uuid4(),
+                    analysis_id=analysis_id,
+                    step_id=partition_step,
+                    partition_key="0:1",
+                    ordinal=0,
+                    record_start=0,
+                    record_end=1,
+                    variant_count=1,
+                    status="SUCCEEDED",
+                    input_artifact_id=normalized_artifact.id,
+                    metadata_json={"variant_ids": [str(variant_id)]},
+                    resource_class="STANDARD",
+                    cpu_request=1.0,
+                    memory_mb=1024,
+                    attempt=1,
+                ))
 
             for step_id, order in (
                 ("validate_input", 1),
@@ -206,7 +225,7 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
                     attempt=1,
                     input_artifacts=[],
                     output_artifacts=[],
-                    metadata_json={},
+                    metadata_json=({"record_count": 1} if step_id == "normalize" else {}),
                 ))
             db.commit()
 
@@ -284,5 +303,15 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
             assert len(artifacts) == 1
             assert step.output_artifacts == [str(artifacts[0].id)]
             assert step.metadata_json["next_step"] == "analysis_complete"
+            assert db.scalar(select(AnalysisPartition.status).where(
+                AnalysisPartition.analysis_id == analysis_id,
+                AnalysisPartition.step_id == "normalize",
+                AnalysisPartition.partition_key == "0:1",
+            )) == "SUCCEEDED"
+            assert db.scalar(select(AnalysisPartition.status).where(
+                AnalysisPartition.analysis_id == analysis_id,
+                AnalysisPartition.step_id == "annotate",
+                AnalysisPartition.partition_key == "0:1",
+            )) == "SUCCEEDED"
     finally:
         engine.dispose()
