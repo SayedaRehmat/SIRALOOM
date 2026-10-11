@@ -34,6 +34,7 @@ services:
     env_file: .env
     environment:
       FIREBASE_CREDENTIALS_PATH: /run/secrets/firebase_admin_credentials
+      TMPDIR: /data/siraloom/scratch
     secrets:
       - firebase_admin_credentials
     command: ["/app/scripts/start_api.sh"]
@@ -48,6 +49,7 @@ services:
       - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
       - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
       - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
+      - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
       interval: 10s
@@ -61,6 +63,8 @@ services:
       dockerfile: docker/backend.Dockerfile
     restart: unless-stopped
     env_file: .env
+    environment:
+      TMPDIR: /data/siraloom/scratch
     command: ["/app/scripts/start_worker.sh"]
     depends_on:
       api:
@@ -110,3 +114,4 @@ volumes:
   artifact_data:
   reference_data:
   resource_cache_data:
+  scratch_data:
