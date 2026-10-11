@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     resource_staging_local_source_roots: str = "/data/references"
     resource_staging_max_bytes: int = Field(default=5 * 1024 * 1024 * 1024, gt=0)
     resource_staging_timeout_seconds: float = Field(default=30.0, gt=0)
+    worker_scratch_root: str = "/data/siraloom/scratch"
+    storage_capacity_preflight_enabled: bool = False
+    analysis_artifact_output_multiplier: float = Field(default=1.0, gt=0)
+    analysis_scratch_multiplier: float = Field(default=2.0, gt=0)
+    analysis_storage_headroom_bytes: int = Field(default=1024 * 1024 * 1024, ge=0)
     bcftools_version: str = "1.19"
 
     genebe_enabled: bool = False
