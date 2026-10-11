@@ -61,6 +61,7 @@ type CaseWorkspace = {
 };
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
+type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
 
 type AuditEvent = {
   event_id: string;
@@ -142,6 +143,16 @@ function statusTone(status: string) {
   return "neutral";
 }
 
+function formatBytes(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return "—";
+  if (value < 1024) return `${value} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let amount = value / 1024;
+  let index = 0;
+  while (amount >= 1024 && index < units.length - 1) { amount /= 1024; index += 1; }
+  return `${amount.toFixed(amount >= 100 ? 0 : amount >= 10 ? 1 : 2)} ${units[index]}`;
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
@@ -176,6 +187,7 @@ export default function Home() {
   const [indication, setIndication] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [artifactId, setArtifactId] = useState("");
+  const [caseArtifacts, setCaseArtifacts] = useState<CaseArtifact[]>([]);
   const [analysisId, setAnalysisId] = useState("");
   const [analysis, setAnalysis] = useState<any>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -231,6 +243,8 @@ export default function Home() {
     return Array.from(found.values());
   }, [preflightResult, resourceStageReadiness]);
 
+  const stepStatusSignature = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).map(step => `${step.step_id}:${step.status}:${step.attempt}`).join("|"), [analysis]);
+
   const annotationProgress = useMemo(() => {
     const annotation = (analysis?.steps as Step[] | undefined)?.find((step) => step.step_id === "annotate");
     const batches = annotation?.metadata?.batches;
@@ -256,6 +270,18 @@ export default function Home() {
       .then(() => setConnection("online"))
       .catch(() => setConnection("offline"));
   }, []);
+
+  const refreshCaseArtifacts = useCallback(async () => {
+    if (!caseId) return;
+    try {
+      const rows = await apiFetch(`/cases/${caseId}/artifacts`);
+      setCaseArtifacts(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
+    }
+  }, [caseId, t]);
+
+  useEffect(() => { void refreshCaseArtifacts(); }, [refreshCaseArtifacts, stepStatusSignature]);
 
   useEffect(() => {
     if (!caseId) return;
@@ -534,6 +560,7 @@ export default function Home() {
       form.append("genome_build", genomeBuild);
       const result = await apiFetch(`/cases/${caseId}/artifacts`, { method: "POST", body: form });
       setArtifactId(result.artifact_id);
+      await refreshCaseArtifacts();
       setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.uploadFailed"));
@@ -953,6 +980,14 @@ export default function Home() {
             </div>
           )}
         </section>
+      </section>
+
+      <section className="panel artifacts-panel">
+        <div className="panel-head"><div><div className="section-kicker">{t("workspace.files")}</div><h3>{caseArtifacts.length} {t("workspace.files")}</h3><p className="muted">{t("workspace.filesLead")}</p></div><button type="button" className="secondary" onClick={() => void refreshCaseArtifacts()}>{t("workspace.refreshFiles")}</button></div>
+        {!caseArtifacts.length ? <div className="empty small"><strong>{t("workspace.noFiles")}</strong></div> : <div className="artifacts-list">{caseArtifacts.map(artifact => <article className="artifact-row" key={artifact.artifact_id}>
+          <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small><details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
+          <div className="artifact-actions"><code>{artifact.artifact_id.slice(0, 12)}…</code><button type="button" className="secondary small" onClick={() => void downloadAuthenticated(`/artifacts/${artifact.artifact_id}/download`, artifact.filename)}>{t("workspace.downloadArtifact")}</button></div>
+        </article>)}</div>}
       </section>
 
       <section className="panel variants-panel">
