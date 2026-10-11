@@ -62,6 +62,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [casesUnavailable, setCasesUnavailable] = useState(false);
+  const [notificationsUnavailable, setNotificationsUnavailable] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
   const [markingId, setMarkingId] = useState<string | null>(null);
 
@@ -74,10 +76,10 @@ export default function Dashboard() {
       apiFetch("/storage/capacity"),
     ]);
     const nextErrors: string[] = [];
-    if (results[0].status === "fulfilled") setCases(Array.isArray(results[0].value) ? results[0].value : []);
-    else nextErrors.push(`${t("dashboard.caseDataUnavailable")}: ${results[0].reason instanceof Error ? results[0].reason.message : "API error"}`);
-    if (results[1].status === "fulfilled") setNotifications(Array.isArray(results[1].value) ? results[1].value : []);
-    else nextErrors.push(`${t("dashboard.notificationDataUnavailable")}: ${results[1].reason instanceof Error ? results[1].reason.message : "API error"}`);
+    if (results[0].status === "fulfilled") { setCases(Array.isArray(results[0].value) ? results[0].value : []); setCasesUnavailable(false); }
+    else { setCasesUnavailable(true); nextErrors.push(`${t("dashboard.caseDataUnavailable")}: ${results[0].reason instanceof Error ? results[0].reason.message : "API error"}`); }
+    if (results[1].status === "fulfilled") { setNotifications(Array.isArray(results[1].value) ? results[1].value : []); setNotificationsUnavailable(false); }
+    else { setNotificationsUnavailable(true); nextErrors.push(`${t("dashboard.notificationDataUnavailable")}: ${results[1].reason instanceof Error ? results[1].reason.message : "API error"}`); }
     if (results[2].status === "fulfilled") setCapacity(results[2].value && typeof results[2].value === "object" ? results[2].value : null);
     else setCapacity(null);
     setErrors(nextErrors);
@@ -150,7 +152,7 @@ export default function Dashboard() {
             <div><p className="eyebrow">{t("dashboard.worklist")}</p><h2>{t("dashboard.recentCases")}</h2><p className="muted">{t("dashboard.recentCasesHint")}</p></div>
             <Link className="secondary link-button" href="/app/cases">{t("dashboard.viewAllCases")}</Link>
           </div>
-          {!recentCases.length ? <div className="empty small"><strong>{t("cases.none")}</strong><p>{t("cases.createHelp")}</p><Link className="primary link-button" href="/app/cases">{t("dashboard.createCase")}</Link></div> : <div className="operations-case-list">
+          {casesUnavailable ? <div className="empty small"><strong>{t("dashboard.caseDataUnavailable")}</strong></div> : !recentCases.length ? <div className="empty small"><strong>{t("cases.none")}</strong><p>{t("cases.createHelp")}</p><Link className="primary link-button" href="/app/cases">{t("dashboard.createCase")}</Link></div> : <div className="operations-case-list">
             {recentCases.map(item => {
               const analysis = latestAnalysis(item);
               return <article key={item.case_id}>
@@ -173,7 +175,7 @@ export default function Dashboard() {
             <div><p className="eyebrow">{t("dashboard.attention")}</p><h2>{t("dashboard.notifications")}</h2></div>
             <span className="badge neutral">{unreadCount} {t("dashboard.unread")}</span>
           </div>
-          {!notifications.length ? <div className="empty small"><strong>{t("dashboard.noNotifications")}</strong></div> : <div className="operations-notification-list">
+          {notificationsUnavailable ? <div className="empty small"><strong>{t("dashboard.notificationDataUnavailable")}</strong></div> : !notifications.length ? <div className="empty small"><strong>{t("dashboard.noNotifications")}</strong></div> : <div className="operations-notification-list">
             {notifications.slice(0, 8).map(notification => {
               const destination = notification.case_id ? `/app/cases/${notification.case_id}` : notification.analysis_id ? "/app/workspace" : "/app/resources";
               return <article key={notification.notification_id}>
