@@ -571,3 +571,6 @@ tbody tr.selected { background: #eff8f5; }
   .siraloom-workspace .shell .bottom-grid { grid-template-columns: minmax(0, 1fr); }
   .siraloom-workspace .shell .panel { padding: 13px; }
 }
+
+.resources-qualification-version { display: grid; gap: 6px; max-width: 420px; margin-top: 10px; font-size: 11px; color: var(--muted); font-weight: 600; }
+.resources-qualification-version input { width: 100%; border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; color: var(--text); background: white; font: inherit; font-weight: 450; }
