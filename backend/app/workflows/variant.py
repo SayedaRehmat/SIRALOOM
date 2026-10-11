@@ -2850,14 +2850,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 .where(Annotation.analysis_id == analysis.id)
                 .distinct()
             ).all())
-            manual_classification_count = int(db.scalar(
-                select(func.count(Classification.id)).where(
-                    Classification.analysis_id == analysis.id,
-                    Classification.state == "FINAL",
-                    Classification.review_status == "APPROVED",
-                    Classification.metadata_json["decision_mode"].as_string() == "MANUAL",
+            latest_classifications = _latest_classifications_by_variant(db, analysis.id)
+            manual_classification_count = sum(
+                1
+                for variant_id in annotated_variant_ids
+                if (
+                    latest_classifications.get(variant_id) is not None
+                    and (latest_classifications[variant_id].metadata_json or {}).get("decision_mode") == "MANUAL"
                 )
-            ) or 0)
+            )
             mark_step(
                 db,
                 acmg_step,
