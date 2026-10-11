@@ -5,100 +5,67 @@ import { SiteShell } from "../../components/site-shell";
 import { useLanguage } from "../../lib/i18n";
 
 export default function Home() {
-  const { t } = useLanguage();
-  const steps = t("public.home.lifecycle.steps").split(" · ");
+  const { language } = useLanguage();
+  const copy = language === "ar" ? {
+    eyebrow: "منصة سير عمل جينومي",
+    title: "سجل واحد للحالة من الإدخال إلى التقرير وإعادة التحليل.",
+    lead: "SIRALOOM يربط الحالات والعينات والملفات والتحليل والأدلة والمراجعة والتقارير ضمن سير عمل مختبري قابل للتتبع.",
+    access: "طلب الوصول", product: "استكشاف المنتج", panel: "سير عمل الحالة", status: "حالة نشطة",
+    case: "CASE-02418", caseBody: "WES · GRCh38 · مراجعة جارية", analysis: "التحليل", evidence: "الأدلة", review: "المراجعة", report: "التقرير", reanalysis: "إعادة التحليل",
+    workflowTitle: "سير العمل المتين", workflowBody: "تظل حالة التحليل ومراحلها ونقاط التوقف والملفات قابلة للاستئناف والتدقيق.",
+    reviewTitle: "مراجعة بشرية", reviewBody: "المخرجات الحسابية تدعم القرار؛ يظل التصنيف السريري المصرح به ضمن مسؤولية المراجع المختص.",
+    resourcesTitle: "موارد محكومة", resourcesBody: "الإصدارات والمراجع وقواعد البيانات مرتبطة بالتحليل حتى يمكن إعادة بناء النتيجة.",
+    sectionTitle: "مصمم للعمل المختبري الفعلي", sectionBody: "إدارة الحالة، التحليل، تفسير المتغيرات، المراجعة، التقرير، وسجل provenance في مساحة عمل واحدة.",
+    productTitle: "SIRALOOM Variant", productBody: "من إدخال VCF والتحقق والتطبيع إلى الأدلة والتصنيف والمراجعة والتقرير وإعادة التحليل.",
+    deployTitle: "نشر داخل بنية المختبر", deployBody: "يمكن تشغيل مساحة العمل مع تخزين المختبر وموارده وسعة البنية التحتية الخاصة به، مع الاحتفاظ بإصدارات الموارد المستخدمة.",
+    lifecycleTitle: "دورة الحالة", lifecycle: ["الحالة", "الإدخال", "التحليل", "التعليق", "السكان", "الأدلة", "ACMG", "المراجعة", "التقرير", "إعادة التحليل"]
+  } : {
+    eyebrow: "GENOMIC WORKFLOW PLATFORM",
+    title: "One case record from intake to report and reanalysis.",
+    lead: "SIRALOOM connects cases, specimens, files, analysis, evidence, review and reporting in a controlled laboratory workflow.",
+    access: "Request access", product: "Explore product", panel: "Case workflow", status: "Active case",
+    case: "CASE-02418", caseBody: "WES · GRCh38 · review in progress", analysis: "Analysis", evidence: "Evidence", review: "Review", report: "Report", reanalysis: "Reanalysis",
+    workflowTitle: "Durable workflow", workflowBody: "Analysis state, checkpoints, gates and artifacts remain recoverable and auditable.",
+    reviewTitle: "Human review", reviewBody: "Computational results support interpretation; authorized reviewers retain clinical decision authority.",
+    resourcesTitle: "Governed resources", resourcesBody: "Reference, annotation, population and clinical-resource versions remain attached to the analysis.",
+    sectionTitle: "Designed for laboratory operations", sectionBody: "Case management, analysis, variant interpretation, review, reporting and provenance in one workspace.",
+    productTitle: "SIRALOOM Variant", productBody: "From VCF intake, validation and normalization through evidence, classification, review, reporting and reanalysis.",
+    deployTitle: "Deploy within the laboratory", deployBody: "Run the workspace with laboratory-owned storage, resources and infrastructure capacity while preserving the resource versions used for each analysis.",
+    lifecycleTitle: "Case lifecycle", lifecycle: ["Case", "Intake", "Analysis", "Annotation", "Population", "Evidence", "ACMG", "Review", "Report", "Reanalysis"]
+  };
 
   return (
-    <SiteShell showLanguageSwitcher>
-      <main>
-        <section className="hero public-hero">
-          <div className="hero-copy">
-            <p className="eyebrow">{t("public.home.eyebrow")}</p>
-            <h1>{t("public.home.title")}</h1>
-            <p className="lead">{t("public.home.lead")}</p>
-            <div className="actions">
-              <Link className="button" href="/signup">{t("public.startTrial")}</Link>
-              <Link className="text-link" href="/services">{t("public.services")}</Link>
-            </div>
+    <SiteShell>
+      <main className="public-main">
+        <section className="public-hero-v2">
+          <div className="hero-copy-v2">
+            <p className="eyebrow">{copy.eyebrow}</p>
+            <h1>{copy.title}</h1>
+            <p className="lead">{copy.lead}</p>
+            <div className="actions"><Link className="button" href="/signup">{copy.access}</Link><Link className="text-link" href="/services">{copy.product} →</Link></div>
           </div>
-
-          <div className="hero-visual" aria-label={t("public.home.product.title")}>
-            <div className="workflow-board">
-              <div className="workflow-board-top">
-                <span>{t("public.home.product.eyebrow")}</span>
-                <span className="workflow-status">{t("public.home.review.title")}</span>
-              </div>
-
-              <div className="workflow-case">
-                <div className="workflow-case-meta">
-                  <span>{steps[0] ?? "CASE"}</span>
-                  <span>GRCh38</span>
-                </div>
-                <strong>{t("public.platform.caseTitle")}</strong>
-                <small>{t("public.platform.caseBody")}</small>
-              </div>
-
-              <div className="workflow-track" aria-hidden="true">
-                <span /><span /><span /><span />
-              </div>
-
-              <div className="workflow-node-grid">
-                <div className="workflow-node"><span>{steps[1] ?? "ANALYSIS"}</span><strong>{t("public.platform.workflowTitle")}</strong></div>
-                <div className="workflow-node"><span>{steps[3] ?? "EVIDENCE"}</span><strong>{t("public.platform.governanceTitle")}</strong></div>
-                <div className="workflow-node"><span>{steps[5] ?? "REVIEW"}</span><strong>{t("public.home.review.title")}</strong></div>
-                <div className="workflow-node"><span>{steps[6] ?? "REPORT"}</span><strong>{t("public.home.product.title")}</strong></div>
-              </div>
-
-              <div className="workflow-reanalysis">
-                <span>{steps[steps.length - 1] ?? "REANALYSIS"}</span>
-                <strong>{t("public.home.lifecycle.title")}</strong>
-              </div>
-            </div>
+          <div className="workflow-console" aria-label={copy.panel}>
+            <div className="console-header"><span>{copy.panel}</span><span className="console-status"><i />{copy.status}</span></div>
+            <div className="console-case"><div><small>{copy.case}</small><strong>BRCA1 hereditary cancer evaluation</strong><span>{copy.caseBody}</span></div><b>GRCh38</b></div>
+            <div className="console-stage"><div className="stage-complete" /><span>{copy.analysis}</span><i>→</i><div className="stage-active" /><span>{copy.evidence}</span><i>→</i><div className="stage-pending" /><span>{copy.review}</span></div>
+            <div className="console-grid"><div><small>{copy.analysis}</small><strong>Checkpointed</strong></div><div><small>{copy.evidence}</small><strong>Versioned</strong></div><div><small>{copy.review}</small><strong>Required</strong></div><div><small>{copy.report}</small><strong>Pending sign-out</strong></div></div>
+            <div className="console-footer"><span>{copy.reanalysis}</span><strong>Change-aware case history</strong></div>
           </div>
         </section>
 
-        <section className="home-section home-platform" aria-labelledby="platform-title">
-          <div className="section-intro">
-            <p className="section-kicker">{t("public.home.platform.eyebrow")}</p>
-            <h2 id="platform-title">{t("public.home.platform.title")}</h2>
-            <p>{t("public.home.platform.body")}</p>
-          </div>
-          <div className="platform-principles">
-            <article><span>01</span><h3>{t("public.platform.caseTitle")}</h3><p>{t("public.platform.caseBody")}</p></article>
-            <article><span>02</span><h3>{t("public.platform.workflowTitle")}</h3><p>{t("public.platform.workflowBody")}</p></article>
-            <article><span>03</span><h3>{t("public.platform.governanceTitle")}</h3><p>{t("public.platform.governanceBody")}</p></article>
-          </div>
+        <section className="public-section-v2 intro-section"><p className="section-kicker">SIRALOOM</p><h2>{copy.sectionTitle}</h2><p>{copy.sectionBody}</p></section>
+
+        <section className="public-feature-grid-v2">
+          <article><span>01</span><h3>{copy.workflowTitle}</h3><p>{copy.workflowBody}</p></article>
+          <article><span>02</span><h3>{copy.reviewTitle}</h3><p>{copy.reviewBody}</p></article>
+          <article><span>03</span><h3>{copy.resourcesTitle}</h3><p>{copy.resourcesBody}</p></article>
         </section>
 
-        <section className="home-section home-product" aria-labelledby="product-title">
-          <div className="product-panel product-panel-large">
-            <div>
-              <p className="section-kicker">{t("public.home.product.eyebrow")}</p>
-              <h2 id="product-title">{t("public.home.product.title")}</h2>
-              <p>{t("public.home.product.body")}</p>
-            </div>
-            <Link className="button secondary" href="/services/variant">{t("public.services.variant.link")}</Link>
-          </div>
-        </section>
+        <section className="public-product-row"><div><p className="section-kicker">PRODUCT</p><h2>{copy.productTitle}</h2><p>{copy.productBody}</p></div><Link className="button secondary" href="/services/variant">{copy.product} →</Link></section>
 
-        <section className="home-section home-lifecycle" aria-labelledby="lifecycle-title">
-          <div className="section-intro">
-            <p className="section-kicker">{t("public.home.lifecycle.eyebrow")}</p>
-            <h2 id="lifecycle-title">{t("public.home.lifecycle.title")}</h2>
-            <p>{t("public.home.lifecycle.body")}</p>
-          </div>
-          <div className="workflow-strip" aria-label={t("public.home.lifecycle.steps")}>
-            {steps.map((step, index) => (
-              <span key={step}><b>{String(index + 1).padStart(2, "0")}</b>{step}</span>
-            ))}
-          </div>
-        </section>
+        <section className="public-deployment-row"><div><p className="section-kicker">LABORATORY DEPLOYMENT</p><h2>{copy.deployTitle}</h2><p>{copy.deployBody}</p></div><Link className="text-link" href="/contact">{language === "ar" ? "تحدث معنا" : "Discuss deployment"} →</Link></section>
 
-        <section className="feature-grid public-principles">
-          <article><span>01</span><b>{t("public.home.traceable.title")}</b><p>{t("public.home.traceable.body")}</p></article>
-          <article><span>02</span><b>{t("public.home.review.title")}</b><p>{t("public.home.review.body")}</p></article>
-          <article><span>03</span><b>{t("public.home.extend.title")}</b><p>{t("public.home.extend.body")}</p></article>
-        </section>
+        <section className="public-section-v2 lifecycle-section"><p className="section-kicker">{copy.lifecycleTitle}</p><div className="lifecycle-list">{copy.lifecycle.map((step, index) => <span key={step}><b>{String(index + 1).padStart(2, "0")}</b>{step}</span>)}</div></section>
       </main>
     </SiteShell>
   );
