@@ -39,7 +39,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - artifact_data:/data/siraloom/artifacts
       - reference_data:/data/references:ro
@@ -67,6 +67,28 @@ services:
       - artifact_data:/data/siraloom/artifacts
       - reference_data:/data/references:ro
       - resource_cache_data:/data/siraloom/resource-cache
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_SIRALOOM_API_BASE: ${NEXT_PUBLIC_SIRALOOM_API_BASE:?Set public API base URL, e.g. https://lab.example.org/api/v1}
+        NEXT_PUBLIC_SIRALOOM_DEPLOYMENT_MODE: ${NEXT_PUBLIC_SIRALOOM_DEPLOYMENT_MODE:-lab}
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:?Set Firebase web API key}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:?Set Firebase auth domain}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:?Set Firebase project ID}
+        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:-}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:?Set Firebase web app ID}
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
 
 volumes:
   postgres_data:
