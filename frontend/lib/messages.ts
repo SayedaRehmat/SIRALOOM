@@ -144,6 +144,7 @@ export type TranslationKey =
   | "workspace.sha256"
   | "workspace.validationStatus"
   | "workspace.createdAt"
+  | "resources.stagingReady"
   | "resources.stageRelease"
   | "resources.prepareStaging"
   | "resources.executeStaging"
@@ -1455,6 +1456,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.sha256": "SHA-256",
     "workspace.validationStatus": "Validation",
     "workspace.createdAt": "Created",
+    "resources.stagingReady": "Storage preflight passed; release is ready to stage.",
     "resources.stageRelease": "Stage release",
     "resources.prepareStaging": "Prepare and check storage",
     "resources.executeStaging": "Download and verify",
@@ -2189,6 +2191,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.sha256": "SHA-256",
     "workspace.validationStatus": "التحقق",
     "workspace.createdAt": "تاريخ الإنشاء",
+    "resources.stagingReady": "اجتاز فحص التخزين؛ الإصدار جاهز للتجهيز.",
     "resources.stageRelease": "تجهيز الإصدار",
     "resources.prepareStaging": "التحضير وفحص التخزين",
     "resources.executeStaging": "التنزيل والتحقق",
