@@ -42,6 +42,7 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     result = reports_api.finalize(
         report.id,
         reports_api.ClassificationReviewRequest(
+            expected_version=1,
             reason="Final clinical report reviewed and authorized for sign-out."
         ),
         db,
