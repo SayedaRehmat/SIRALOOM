@@ -3362,8 +3362,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             mark_step(db, report_step, StepStatus.RUNNING)
             try:
                 from backend.app.reporting.service import build_report_content, render_pdf
-                from backend.app.infrastructure.db.models import Report
-
                 existing_report = db.scalar(
                     select(Report)
                     .where(
