@@ -4,11 +4,12 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import "./public-theme.css";
 import "../components/lab-shell.css";
+import "../components/public-polish.css";
 import { LanguageProvider, type AppLanguage } from "../lib/i18n";
 
 export const metadata: Metadata = {
   title: "SIRALOOM",
-  description: "Evidence-connected genomic laboratory workflows",
+  description: "Case-based genomic workflow software for laboratory analysis, interpretation, review and reporting.",
 };
 
 function cookieLanguage(value: string | undefined): AppLanguage {
