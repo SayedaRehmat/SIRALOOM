@@ -18,6 +18,7 @@ export type TranslationKey =
   | "nav.reports"
   | "nav.audit"
   | "nav.settings"
+  | "nav.resources"
   | "nav.signOut"
   | "language.label"
   | "language.english"
@@ -59,6 +60,90 @@ export type TranslationKey =
   | "settings.analysisId"
   | "settings.contextNote"
   | "settings.unableToLoad"
+  | "resources.eyebrow"
+  | "resources.title"
+  | "resources.lead"
+  | "resources.refresh"
+  | "resources.catalog"
+  | "resources.register"
+  | "resources.registerHelp"
+  | "resources.name"
+  | "resources.provider"
+  | "resources.type"
+  | "resources.version"
+  | "resources.build"
+  | "resources.accessMethod"
+  | "resources.location"
+  | "resources.checksum"
+  | "resources.license"
+  | "resources.populationDefinition"
+  | "resources.metadata"
+  | "resources.registerCandidate"
+  | "resources.pendingApprovals"
+  | "resources.noResources"
+  | "resources.noApprovals"
+  | "resources.status"
+  | "resources.actions"
+  | "resources.qualify"
+  | "resources.requestApproval"
+  | "resources.qualificationVersion"
+  | "resources.activate"
+  | "resources.approve"
+  | "resources.reject"
+  | "resources.defer"
+  | "resources.reason"
+  | "resources.reasonRequired"
+  | "resources.metadataInvalid"
+  | "resources.registered"
+  | "resources.qualificationResult"
+  | "resources.qualificationBlocked"
+  | "resources.approvalRequested"
+  | "resources.approvalDecided"
+  | "resources.activated"
+  | "resources.apiUnavailable"
+  | "resources.lifecycleNote"
+  | "resources.stagingGap"
+  | "resources.profiles"
+  | "resources.profileHelp"
+  | "resources.requiredCapabilities"
+  | "resources.accessPolicy"
+  | "resources.candidateOnly"
+  | "resources.organization"
+  | "resources.sourceExecutionMetadata"
+  | "resources.sourceExecutionHelp"
+  | "resources.loadError"
+  | "resources.operationFailed"
+  | "workspace.gateRequired"
+  | "workspace.resolveGate"
+  | "workspace.gateDecision"
+  | "workspace.gateAccept"
+  | "workspace.gateOverride"
+  | "workspace.gateMoreEvidence"
+  | "workspace.gateRetry"
+  | "workspace.gateReason"
+  | "workspace.gateInputsChanged"
+  | "workspace.gateSubmit"
+  | "workspace.gateResolved"
+  | "workspace.gateRetryNeedsChange"
+  | "workspace.analysisProfile"
+  | "workspace.preflightTitle"
+  | "workspace.preflightBlocked"
+  | "workspace.preflightReady"
+  | "workspace.preflightDetails"
+  | "workspace.preflightIssues"
+  | "workspace.preflightNoIssues"
+  | "workspace.profileWes38"
+  | "workspace.profileWgs38"
+  | "workspace.profileWes37"
+  | "workspace.files"
+  | "workspace.filesLead"
+  | "workspace.refreshFiles"
+  | "workspace.noFiles"
+  | "workspace.downloadArtifact"
+  | "workspace.size"
+  | "workspace.sha256"
+  | "workspace.validationStatus"
+  | "workspace.createdAt"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -736,7 +821,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.validationPassed": "The primary VCF passed structural validation and has an explicit genome build. You can proceed to the existing Variant workflow.",
     "cases.eyebrow": "SIRALOOM VARIANT · CASE INTAKE",
     "cases.title": "New genomic case",
-    "cases.lead": "Create a traceable case, register its specimen, and validate the variant dataset before scientific analysis begins.",
+    "cases.lead": "Create a case, register its specimen, and validate the VCF before analysis.",
     "cases.back": "Back to dashboard",
     "cases.registry": "CASE REGISTRY",
     "cases.existing": "Existing cases",
@@ -772,7 +857,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.indexLabel": "Index",
     "reports.eyebrow": "GOVERNED REPORTING",
     "reports.title": "Reports & sign-out",
-    "reports.lead": "Separate reportability from pathogenicity classification, preserve every decision version, and release only an authorized immutable report artifact.",
+    "reports.lead": "Finalize reportability, generate versioned reports, and record authorized sign-out.",
     "reports.analysisId": "Analysis ID",
     "reports.type": "Report type",
     "reports.clinical": "Clinical interpretation",
@@ -813,7 +898,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "audit.selectHelp": "Select a case with persisted activity.",
     "review.eyebrow": "SIRALOOM VARIANT · CLINICAL REVIEW",
     "review.title": "Clinical interpretation workspace",
-    "review.lead": "Case-first review: clinical indication, phenotype, inheritance, variant evidence, population context, disease validity, literature, ACMG/ClinGen assessment, reportability and sign-out readiness.",
+    "review.lead": "Review phenotype, family context, variant evidence, classification, and reportability for each case.",
     "review.open": "Open variant workspace",
     "review.analysisId": "Analysis ID",
     "review.status": "Review status",
@@ -935,7 +1020,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "development.notice": "Development mode: Firebase client configuration is absent. Production requires Firebase authentication and server-side membership provisioning.",
     "dashboard.eyebrow": "DASHBOARD",
     "dashboard.title": "Laboratory workspace",
-    "dashboard.lead": "Start with a case, then use the existing Variant workspace to inspect durable workflow state.",
+    "dashboard.lead": "Open a case, continue an analysis, or resolve the next review task.",
     "dashboard.cases.title": "Cases",
     "dashboard.cases.body": "Case-centered intake and longitudinal analysis history.",
     "dashboard.cases.link": "Open cases →",
@@ -947,7 +1032,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "dashboard.review.link": "Open review queue →",
     "settings.eyebrow": "GOVERNANCE · CONFIGURATION",
     "settings.title": "Settings",
-    "settings.lead": "Authenticated workspace identity, entitlement, service connection, and active workflow context.",
+    "settings.lead": "Manage organization access and inspect the active service connection.",
     "settings.identity": "IDENTITY",
     "settings.currentSession": "Current session",
     "settings.email": "Email",
@@ -977,17 +1062,17 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.brand.tagline": "Turning complexity into coherence.",
     "public.home.eyebrow": "GENOMIC PLATFORM",
     "public.home.title": "A connected platform for genomic laboratory work.",
-    "public.home.lead": "A structured environment for the work surrounding genomic analysis, interpretation, review, reporting, and reanalysis.",
+    "public.home.lead": "Case-centered software for genomic analysis, evidence review, reporting, and controlled reanalysis.",
     "public.home.platform.eyebrow": "THE SIRALOOM PLATFORM",
     "public.home.platform.title": "Built to bring the genomic laboratory together.",
-    "public.home.platform.body": "SIRALOOM is a software platform for the work surrounding genomic analysis, interpretation, review, reporting, and what follows.",
+    "public.home.platform.body": "A case-centered platform for VCF intake, analysis orchestration, variant interpretation, human review, reporting, and reanalysis.",
     "public.home.lifecycle.eyebrow": "THE LIFECYCLE",
     "public.home.lifecycle.title": "From case to reanalysis.",
     "public.home.lifecycle.body": "A continuous record that carries the case through analysis, interpretation, review, reporting, and back into reanalysis as knowledge and clinical context change.",
     "public.home.lifecycle.steps": "CASE · ANALYSIS · ANNOTATION · EVIDENCE · CLASSIFICATION · REVIEW · REPORT · REANALYSIS",
     "public.home.product.eyebrow": "THE FIRST PRODUCT",
     "public.home.product.title": "SIRALOOM Variant",
-    "public.home.product.body": "The first SIRALOOM product, built around the variant lifecycle from case intake and analysis through annotation, evidence, classification, review, reporting, and reanalysis.",
+    "public.home.product.body": "Manage the variant lifecycle from case intake and normalization through annotation, evidence, classification, review, reporting, and reanalysis.",
     "public.home.traceable.title": "Traceable by design",
     "public.home.traceable.body": "Case context, artifacts, workflow state, evidence, review actions, and report versions remain connected to the record.",
     "public.home.review.title": "Built for review",
@@ -1121,7 +1206,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.eyebrow": "GENOMIC INTERPRETATION WORKSPACE",
     "workspace.subtitle": "VCF → evidence → review → report",
     "workspace.title": "A controlled workspace for case-based variant interpretation.",
-    "workspace.lead": "The case record remains connected to analysis state, evidence, review decisions, reporting, and provenance. Closing the browser does not stop server-side work.",
+    "workspace.lead": "Track analysis progress, inspect variant evidence, resolve review gates, and retrieve reports and provenance from the case record.",
     "workspace.startCase": "Start a case",
     "workspace.caseIdentifier": "Case identifier",
     "workspace.clinicalIndication": "Clinical indication",
@@ -1263,6 +1348,91 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.reanalysisAffected": "Earliest affected stage",
     "workspace.markRead": "Mark read",
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
+    "nav.resources": "Resources",
+    "resources.eyebrow": "Laboratory configuration",
+    "resources.title": "Resources & analysis profiles",
+    "resources.lead": "Register laboratory-managed scientific resources, review qualification and approval status, and understand which profiles the current workflow supports.",
+    "resources.refresh": "Refresh",
+    "resources.catalog": "Resource registry",
+    "resources.register": "Register a resource",
+    "resources.registerHelp": "New laboratory resources enter as candidates. Registration does not authorize execution.",
+    "resources.name": "Resource name",
+    "resources.provider": "Provider / engine",
+    "resources.type": "Resource type",
+    "resources.version": "Exact version / release",
+    "resources.build": "Reference build",
+    "resources.accessMethod": "Access method",
+    "resources.location": "Runtime location or endpoint",
+    "resources.checksum": "SHA-256 checksum (if applicable)",
+    "resources.license": "License / terms summary",
+    "resources.populationDefinition": "Population definition (optional)",
+    "resources.metadata": "Metadata JSON",
+    "resources.registerCandidate": "Register candidate",
+    "resources.pendingApprovals": "Pending resource approvals",
+    "resources.noResources": "No resources match the current registry filter.",
+    "resources.noApprovals": "No pending resource approvals.",
+    "resources.status": "Status",
+    "resources.actions": "Actions",
+    "resources.qualify": "Run qualification",
+    "resources.requestApproval": "Request approval",
+    "resources.qualificationVersion": "Qualification protocol version",
+    "resources.activate": "Activate after approval",
+    "resources.approve": "Approve",
+    "resources.reject": "Reject",
+    "resources.defer": "Defer",
+    "resources.reason": "Decision reason",
+    "resources.reasonRequired": "A reason is required for approval decisions.",
+    "resources.metadataInvalid": "Metadata must be valid JSON.",
+    "resources.registered": "Resource candidate registered.",
+    "resources.qualificationResult": "Qualification result",
+    "resources.qualificationBlocked": "Qualification did not pass. Review the returned blockers; do not bypass them.",
+    "resources.approvalRequested": "Approval request created.",
+    "resources.approvalDecided": "Approval decision recorded.",
+    "resources.activated": "Resource activation requested.",
+    "resources.apiUnavailable": "The resource API could not be reached.",
+    "resources.lifecycleNote": "Lifecycle: register → stage and verify → qualify → request lab approval → approve → activate → bind into the intended analysis profile.",
+    "resources.stagingGap": "Important: the current API does not expose resource staging/acquisition as a user-facing endpoint. A candidate can be registered here, but qualification can remain blocked until a matching verified staging record exists. This screen will not pretend a resource is executable.",
+    "resources.profiles": "Built-in analysis profiles",
+    "resources.profileHelp": "These are the profile identifiers present in this backend build. A profile defines required capabilities; it does not register or approve resources.",
+    "resources.requiredCapabilities": "Required capabilities",
+    "resources.accessPolicy": "Lab resource policy",
+    "resources.candidateOnly": "Candidate only",
+    "resources.organization": "Organization",
+    "resources.sourceExecutionMetadata": "Source and execution metadata",
+    "resources.sourceExecutionHelp": "Provide publisher/source and runtime execution contracts in metadata JSON. Use exact release identities, URLs, access policy, and toolchain configuration; do not paste secrets.",
+    "resources.loadError": "Unable to load resource data.",
+    "resources.operationFailed": "Resource operation failed.",
+    "workspace.gateRequired": "Workflow steps awaiting human action",
+    "workspace.resolveGate": "Resolve workflow gate",
+    "workspace.gateDecision": "Decision",
+    "workspace.gateAccept": "Accept and continue",
+    "workspace.gateOverride": "Override with documented rationale",
+    "workspace.gateMoreEvidence": "Request more evidence",
+    "workspace.gateRetry": "Reject and retry",
+    "workspace.gateReason": "Reason (required)",
+    "workspace.gateInputsChanged": "I changed the input, clinical context, or governed resource before retrying",
+    "workspace.gateSubmit": "Record decision",
+    "workspace.gateResolved": "Gate decision recorded. Workflow state refreshed.",
+    "workspace.gateRetryNeedsChange": "Before retrying, document a real input, clinical-context, or resource change.",
+    "workspace.analysisProfile": "Analysis profile",
+    "workspace.preflightTitle": "Resource preflight",
+    "workspace.preflightBlocked": "Blocked before dispatch",
+    "workspace.preflightReady": "Resource plan ready",
+    "workspace.preflightDetails": "Inspect stage readiness and selected resources",
+    "workspace.preflightIssues": "Resource issues",
+    "workspace.preflightNoIssues": "No resource issues were returned by preflight.",
+    "workspace.profileWes38": "Standard WES · GRCh38",
+    "workspace.profileWgs38": "Standard WGS · GRCh38",
+    "workspace.profileWes37": "Standard WES · GRCh37",
+    "workspace.files": "Case files",
+    "workspace.filesLead": "Input files and generated artifacts are listed here with their recorded build, validation status, size, and SHA-256.",
+    "workspace.refreshFiles": "Refresh files",
+    "workspace.noFiles": "No files are registered for this case yet.",
+    "workspace.downloadArtifact": "Download",
+    "workspace.size": "Size",
+    "workspace.sha256": "SHA-256",
+    "workspace.validationStatus": "Validation",
+    "workspace.createdAt": "Created",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -1363,7 +1533,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.validationPassed": "اجتاز ملف VCF الأساسي التحقق البنيوي وله بناء جينومي محدد. يمكنك المتابعة إلى سير عمل المتغيرات الحالي.",
     "cases.eyebrow": "SIRALOOM VARIANT · إدخال الحالة",
     "cases.title": "حالة جينومية جديدة",
-    "cases.lead": "أنشئ حالة قابلة للتتبع، وسجّل عينتها، وتحقق من صحة مجموعة المتغيرات قبل بدء التحليل العلمي.",
+    "cases.lead": "أنشئ حالة وسجّل عينتها وتحقق من ملف VCF قبل التحليل.",
     "cases.back": "العودة إلى لوحة المعلومات",
     "cases.registry": "سجل الحالات",
     "cases.existing": "الحالات الحالية",
@@ -1399,7 +1569,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.indexLabel": "الفهرس",
     "reports.eyebrow": "إصدار التقارير المحكوم",
     "reports.title": "التقارير والاعتماد النهائي",
-    "reports.lead": "افصل قابلية الإبلاغ عن تصنيف الإمراضية، واحفظ كل إصدار من القرارات، ولا تُصدر إلا أثر تقرير ثابتًا ومصرحًا به.",
+    "reports.lead": "احسم قابلية الإبلاغ وأنشئ تقارير ذات إصدارات وسجّل الاعتماد المصرح به.",
     "reports.analysisId": "معرّف التحليل",
     "reports.type": "نوع التقرير",
     "reports.clinical": "التفسير السريري",
@@ -1440,7 +1610,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "audit.selectHelp": "اختر حالة تحتوي على نشاط محفوظ.",
     "review.eyebrow": "SIRALOOM VARIANT · المراجعة السريرية",
     "review.title": "مساحة التفسير السريري",
-    "review.lead": "مراجعة تبدأ بالحالة: الداعي السريري، والنمط الظاهري، والوراثة، وأدلة المتغير، والسياق السكاني، وصحة علاقة المرض، والأدبيات، وتقييم ACMG/ClinGen، وقابلية الإبلاغ، والاستعداد للاعتماد النهائي.",
+    "review.lead": "راجع النمط الظاهري وسياق العائلة وأدلة المتغير والتصنيف وقابلية الإبلاغ لكل حالة.",
     "review.open": "فتح مساحة المتغيرات",
     "review.analysisId": "معرّف التحليل",
     "review.status": "حالة المراجعة",
@@ -1562,7 +1732,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "development.notice": "وضع التطوير: إعدادات Firebase للعميل غير موجودة. يتطلب الإنتاج مصادقة Firebase وتوفير العضوية على الخادم.",
     "dashboard.eyebrow": "لوحة المعلومات",
     "dashboard.title": "مساحة عمل المختبر",
-    "dashboard.lead": "ابدأ بحالة، ثم استخدم مساحة تحليل المتغيرات لمراجعة حالة سير العمل المحفوظة بشكل مستمر.",
+    "dashboard.lead": "افتح حالة أو تابع تحليلًا أو أنجز مهمة المراجعة التالية.",
     "dashboard.cases.title": "الحالات",
     "dashboard.cases.body": "استقبال متمحور حول الحالة وسجل التحليل الطولي.",
     "dashboard.cases.link": "فتح الحالات ←",
@@ -1574,7 +1744,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "dashboard.review.link": "فتح قائمة المراجعة ←",
     "settings.eyebrow": "الحوكمة · الإعدادات",
     "settings.title": "الإعدادات",
-    "settings.lead": "هوية مساحة العمل الموثقة، والاستحقاق، واتصال الخدمة، وسياق سير العمل النشط.",
+    "settings.lead": "أدر صلاحيات المؤسسة وافحص اتصال الخدمة النشط.",
     "settings.identity": "الهوية",
     "settings.currentSession": "الجلسة الحالية",
     "settings.email": "البريد الإلكتروني",
@@ -1604,17 +1774,17 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "public.brand.tagline": "تحويل التعقيد إلى ترابط متماسك.",
     "public.home.eyebrow": "منصة جينومية",
     "public.home.title": "منصة مترابطة للعمل الجينومي في المختبرات.",
-    "public.home.lead": "بيئة منظمة للعمل المحيط بالتحليل الجينومي والتفسير والمراجعة وإعداد التقارير وإعادة التحليل.",
+    "public.home.lead": "برمجيات تتمحور حول الحالة للتحليل الجينومي ومراجعة الأدلة وإعداد التقارير وإعادة التحليل المنضبطة.",
     "public.home.platform.eyebrow": "منصة SIRALOOM",
     "public.home.platform.title": "مصممة لجمع العمل الجينومي في صورة متماسكة.",
-    "public.home.platform.body": "SIRALOOM منصة برمجية للعمل المحيط بالتحليل الجينومي والتفسير والمراجعة وإعداد التقارير وما يأتي بعدها.",
+    "public.home.platform.body": "منصة تتمحور حول الحالة لاستقبال ملفات VCF وتنسيق التحليل وتفسير المتغيرات والمراجعة البشرية وإعداد التقارير وإعادة التحليل.",
     "public.home.lifecycle.eyebrow": "دورة العمل",
     "public.home.lifecycle.title": "من الحالة إلى إعادة التحليل.",
     "public.home.lifecycle.body": "سجل مستمر يحمل الحالة عبر التحليل والتفسير والمراجعة وإعداد التقارير، ثم يعيدها إلى إعادة التحليل مع تغير المعرفة والسياق السريري.",
     "public.home.lifecycle.steps": "الحالة · التحليل · التعليق الجينومي · الأدلة · التصنيف · المراجعة · التقرير · إعادة التحليل",
     "public.home.product.eyebrow": "المنتج الأول",
     "public.home.product.title": "SIRALOOM Variant",
-    "public.home.product.body": "أول منتجات SIRALOOM، ومبني حول دورة المتغير من استقبال الحالة والتحليل إلى التعليق الجينومي والأدلة والتصنيف والمراجعة وإعداد التقارير وإعادة التحليل.",
+    "public.home.product.body": "أدر دورة المتغير من استقبال الحالة والتطبيع إلى التعليق الجينومي والأدلة والتصنيف والمراجعة وإعداد التقارير وإعادة التحليل.",
     "public.home.traceable.title": "قابل للتتبع منذ التصميم",
     "public.home.traceable.body": "تحافظ القطع والأدلة والقرارات والموارد والتقارير على سجلها التاريخي.",
     "public.home.review.title": "مصمم للمراجعة",
@@ -1748,7 +1918,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.eyebrow": "مساحة عمل التفسير الجينومي",
     "workspace.subtitle": "VCF ← الأدلة ← المراجعة ← التقرير",
     "workspace.title": "مساحة عمل منضبطة لتفسير المتغيرات المتمحور حول الحالة.",
-    "workspace.lead": "يبقى سجل الحالة مرتبطاً بحالة التحليل والأدلة وقرارات المراجعة وإعداد التقارير وسلسلة المصدر. ولا يؤدي إغلاق المتصفح إلى إيقاف العمل المنفذ على الخادم.",
+    "workspace.lead": "تابع تقدم التحليل، وافحص أدلة المتغيرات، واحسم بوابات المراجعة، واسترجع التقارير وسلسلة المصدر من سجل الحالة.",
     "workspace.startCase": "بدء حالة",
     "workspace.caseIdentifier": "معرّف الحالة",
     "workspace.clinicalIndication": "الداعي السريري",
@@ -1890,5 +2060,90 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.reanalysisAffected": "أول مرحلة متأثرة",
     "workspace.markRead": "تحديد كمقروء",
     "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
+    "nav.resources": "الموارد",
+    "resources.eyebrow": "تهيئة المختبر",
+    "resources.title": "الموارد وملفات التحليل",
+    "resources.lead": "سجّل الموارد العلمية التي يديرها المختبر، وراجع حالة التأهيل والموافقة، وتعرّف على الملفات التي يدعمها سير العمل الحالي.",
+    "resources.refresh": "تحديث",
+    "resources.catalog": "سجل الموارد",
+    "resources.register": "تسجيل مورد",
+    "resources.registerHelp": "تبدأ الموارد الجديدة التي يديرها المختبر كمرشّحة. التسجيل لا يسمح بالتنفيذ.",
+    "resources.name": "اسم المورد",
+    "resources.provider": "المزوّد / المحرك",
+    "resources.type": "نوع المورد",
+    "resources.version": "الإصدار الدقيق",
+    "resources.build": "البناء المرجعي",
+    "resources.accessMethod": "طريقة الوصول",
+    "resources.location": "موقع التشغيل أو نقطة النهاية",
+    "resources.checksum": "بصمة SHA-256 (إن وجدت)",
+    "resources.license": "ملخص الترخيص / الشروط",
+    "resources.populationDefinition": "تعريف المجموعة (اختياري)",
+    "resources.metadata": "بيانات وصفية بصيغة JSON",
+    "resources.registerCandidate": "تسجيل المورد المرشّح",
+    "resources.pendingApprovals": "موافقات الموارد المعلّقة",
+    "resources.noResources": "لا توجد موارد تطابق مرشح السجل الحالي.",
+    "resources.noApprovals": "لا توجد موافقات معلّقة.",
+    "resources.status": "الحالة",
+    "resources.actions": "الإجراءات",
+    "resources.qualify": "تشغيل التأهيل",
+    "resources.requestApproval": "طلب الموافقة",
+    "resources.qualificationVersion": "إصدار بروتوكول التأهيل",
+    "resources.activate": "التفعيل بعد الموافقة",
+    "resources.approve": "موافقة",
+    "resources.reject": "رفض",
+    "resources.defer": "تأجيل",
+    "resources.reason": "سبب القرار",
+    "resources.reasonRequired": "يلزم إدخال سبب لقرار الموافقة.",
+    "resources.metadataInvalid": "يجب أن تكون البيانات الوصفية بصيغة JSON صحيحة.",
+    "resources.registered": "تم تسجيل المورد المرشّح.",
+    "resources.qualificationResult": "نتيجة التأهيل",
+    "resources.qualificationBlocked": "لم يجتز التأهيل. راجع العوائق المعروضة ولا تتجاوزها.",
+    "resources.approvalRequested": "تم إنشاء طلب الموافقة.",
+    "resources.approvalDecided": "تم تسجيل قرار الموافقة.",
+    "resources.activated": "تم طلب تفعيل المورد.",
+    "resources.apiUnavailable": "تعذر الوصول إلى واجهة الموارد.",
+    "resources.lifecycleNote": "دورة الحياة: تسجيل ← تجهيز والتحقق ← التأهيل ← طلب موافقة المختبر ← الموافقة ← التفعيل ← الربط بملف التحليل المقصود.",
+    "resources.stagingGap": "مهم: لا تعرض الواجهة البرمجية الحالية نقطة استخدام لتجهيز الموارد أو جلبها. يمكن تسجيل مورد مرشّح هنا، لكن قد يبقى التأهيل محظورًا حتى وجود سجل تجهيز مطابق تم التحقق منه. لن تعرض هذه الصفحة موردًا على أنه قابل للتنفيذ دون دليل.",
+    "resources.profiles": "ملفات التحليل المضمنة",
+    "resources.profileHelp": "هذه معرّفات الملفات الموجودة في إصدار الخلفية الحالي. يحدد الملف القدرات المطلوبة؛ ولا يسجّل الموارد أو يوافق عليها.",
+    "resources.requiredCapabilities": "القدرات المطلوبة",
+    "resources.accessPolicy": "سياسة موارد المختبر",
+    "resources.candidateOnly": "مرشّح فقط",
+    "resources.organization": "المؤسسة",
+    "resources.sourceExecutionMetadata": "بيانات المصدر والتنفيذ",
+    "resources.sourceExecutionHelp": "أدخل عقود المصدر/الناشر والتنفيذ في JSON. استخدم إصدارات وروابط وسياسات وصول وإعدادات أدوات دقيقة، ولا تُدخل الأسرار.",
+    "resources.loadError": "تعذر تحميل بيانات الموارد.",
+    "resources.operationFailed": "فشلت عملية المورد.",
+    "workspace.gateRequired": "خطوات سير العمل التي تنتظر إجراءً بشريًا",
+    "workspace.resolveGate": "حسم بوابة سير العمل",
+    "workspace.gateDecision": "القرار",
+    "workspace.gateAccept": "قبول ومتابعة",
+    "workspace.gateOverride": "تجاوز مع توثيق المبررات",
+    "workspace.gateMoreEvidence": "طلب أدلة إضافية",
+    "workspace.gateRetry": "رفض وإعادة المحاولة",
+    "workspace.gateReason": "السبب (مطلوب)",
+    "workspace.gateInputsChanged": "لقد غيّرت الإدخال أو السياق السريري أو المورد الخاضع للحوكمة قبل إعادة المحاولة",
+    "workspace.gateSubmit": "تسجيل القرار",
+    "workspace.gateResolved": "تم تسجيل قرار البوابة وتحديث حالة سير العمل.",
+    "workspace.gateRetryNeedsChange": "قبل إعادة المحاولة، وثّق تغييرًا فعليًا في الإدخال أو السياق السريري أو المورد.",
+    "workspace.analysisProfile": "ملف التحليل",
+    "workspace.preflightTitle": "فحص جاهزية الموارد",
+    "workspace.preflightBlocked": "تم الحظر قبل الإرسال للتنفيذ",
+    "workspace.preflightReady": "خطة الموارد جاهزة",
+    "workspace.preflightDetails": "افحص جاهزية المراحل والموارد المحددة",
+    "workspace.preflightIssues": "مشكلات الموارد",
+    "workspace.preflightNoIssues": "لم يُرجع فحص الجاهزية مشكلات موارد.",
+    "workspace.profileWes38": "تسلسل الإكسوم القياسي · GRCh38",
+    "workspace.profileWgs38": "تسلسل الجينوم القياسي · GRCh38",
+    "workspace.profileWes37": "تسلسل الإكسوم القياسي · GRCh37",
+    "workspace.files": "ملفات الحالة",
+    "workspace.filesLead": "تظهر ملفات الإدخال والآثار الناتجة هنا مع البناء المسجل وحالة التحقق والحجم وبصمة SHA-256.",
+    "workspace.refreshFiles": "تحديث الملفات",
+    "workspace.noFiles": "لم تُسجّل ملفات لهذه الحالة بعد.",
+    "workspace.downloadArtifact": "تنزيل",
+    "workspace.size": "الحجم",
+    "workspace.sha256": "SHA-256",
+    "workspace.validationStatus": "التحقق",
+    "workspace.createdAt": "تاريخ الإنشاء",
   },
 };

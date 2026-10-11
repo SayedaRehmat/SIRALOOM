@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 
@@ -61,6 +61,7 @@ type CaseWorkspace = {
 };
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
+type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
 
 type AuditEvent = {
   event_id: string;
@@ -142,6 +143,16 @@ function statusTone(status: string) {
   return "neutral";
 }
 
+function formatBytes(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return "—";
+  if (value < 1024) return `${value} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let amount = value / 1024;
+  let index = 0;
+  while (amount >= 1024 && index < units.length - 1) { amount /= 1024; index += 1; }
+  return `${amount.toFixed(amount >= 100 ? 0 : amount >= 10 ? 1 : 2)} ${units[index]}`;
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "—";
   return new Date(value).toLocaleString();
@@ -171,9 +182,12 @@ export default function Home() {
   const [specimenType, setSpecimenType] = useState("Blood");
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
   const [genomeBuild, setGenomeBuild] = useState("GRCh38");
+  const [resourceProfileId, setResourceProfileId] = useState("WES_GRCh38_STANDARD");
+  const [preflightResult, setPreflightResult] = useState<any>(null);
   const [indication, setIndication] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [artifactId, setArtifactId] = useState("");
+  const [caseArtifacts, setCaseArtifacts] = useState<CaseArtifact[]>([]);
   const [analysisId, setAnalysisId] = useState("");
   const [analysis, setAnalysis] = useState<any>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -193,6 +207,11 @@ export default function Home() {
   const [connection, setConnection] = useState<"checking" | "online" | "offline">("checking");
   const [message, setMessage] = useState("");
   const [reviewReason, setReviewReason] = useState("");
+  const [gateStepId, setGateStepId] = useState("");
+  const [gateDecision, setGateDecision] = useState<"ACCEPT" | "OVERRIDE" | "REQUEST_MORE_EVIDENCE" | "REJECT_AND_RETRY">("ACCEPT");
+  const [gateReason, setGateReason] = useState("");
+  const [gateInputsChanged, setGateInputsChanged] = useState(false);
+  const [pollingEpoch, setPollingEpoch] = useState(0);
   const [criterionReason, setCriterionReason] = useState("");
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -206,6 +225,25 @@ export default function Home() {
     });
     return last;
   }, [analysis]);
+
+  const waitingGates = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).filter(step => step.status === "REQUIRES_REVIEW"), [analysis]);
+
+  const resourceStageReadiness = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).flatMap(step => {
+    const raw = step.metadata?.resource_readiness;
+    if (!raw || typeof raw !== "object") return [];
+    const readiness = raw as Record<string, any>;
+    return [{ step_id: step.step_id, status: String(readiness.status ?? "UNKNOWN"), issues: Array.isArray(readiness.issues) ? readiness.issues : [], selected: Array.isArray(readiness.selected) ? readiness.selected : [] }];
+  }), [analysis]);
+
+  const preflightIssues = useMemo(() => {
+    const fromStart = preflightResult?.resource_issues;
+    if (Array.isArray(fromStart) && fromStart.length) return fromStart;
+    const found = new Map<string, any>();
+    for (const stage of resourceStageReadiness) for (const issue of stage.issues) found.set(`${issue.capability}:${issue.code}`, issue);
+    return Array.from(found.values());
+  }, [preflightResult, resourceStageReadiness]);
+
+  const stepStatusSignature = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).map(step => `${step.step_id}:${step.status}:${step.attempt}`).join("|"), [analysis]);
 
   const annotationProgress = useMemo(() => {
     const annotation = (analysis?.steps as Step[] | undefined)?.find((step) => step.step_id === "annotate");
@@ -233,8 +271,21 @@ export default function Home() {
       .catch(() => setConnection("offline"));
   }, []);
 
+  const refreshCaseArtifacts = useCallback(async () => {
+    if (!caseId) return;
+    try {
+      const rows = await apiFetch(`/cases/${caseId}/artifacts`);
+      setCaseArtifacts(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
+    }
+  }, [caseId, t]);
+
+  useEffect(() => { void refreshCaseArtifacts(); }, [refreshCaseArtifacts, stepStatusSignature]);
+
   useEffect(() => {
     if (!caseId) return;
+    setPreflightResult(null);
     const loadCase = async () => {
       try {
         const data = await apiFetch(`/cases/${caseId}`);
@@ -325,7 +376,7 @@ export default function Home() {
       if (pollingRef.current) clearInterval(pollingRef.current);
       pollingRef.current = null;
     };
-  }, [analysisId, selectedVariantId]);
+  }, [analysisId, selectedVariantId, pollingEpoch]);
 
   useEffect(() => {
     if (!exportId) return;
@@ -509,6 +560,7 @@ export default function Home() {
       form.append("genome_build", genomeBuild);
       const result = await apiFetch(`/cases/${caseId}/artifacts`, { method: "POST", body: form });
       setArtifactId(result.artifact_id);
+      await refreshCaseArtifacts();
       setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.uploadFailed"));
@@ -560,12 +612,22 @@ export default function Home() {
           workflow_id: "variant-v1",
           workflow_version: "2.1",
           reference_build: genomeBuild,
+          resource_profile_id: resourceProfileId,
         }),
       });
       setAnalysisId(created.analysis_id);
       window.localStorage.setItem("siraloom.analysis_id", created.analysis_id);
-      await apiFetch(`/analyses/${created.analysis_id}/start`, { method: "POST" });
-      setMessage(t("workspace.analysisQueued"));
+      const started = await apiFetch(`/analyses/${created.analysis_id}/start`, { method: "POST" });
+      setPreflightResult(started);
+      const current = await apiFetch(`/analyses/${created.analysis_id}`);
+      setAnalysis(current);
+      setPollingEpoch(epoch => epoch + 1);
+      if (started.status === "BLOCKED" || started.resource_plan_status === "BLOCKED") {
+        const issueText = (started.resource_issues ?? []).map((issue: any) => `${issue.capability}: ${issue.message}`).join(" · ");
+        setMessage(issueText ? `${t("workspace.preflightBlocked")}: ${issueText}` : t("workspace.preflightBlocked"));
+      } else {
+        setMessage(t("workspace.analysisQueued"));
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.analysisStartFailed"));
     } finally {
@@ -705,6 +767,37 @@ export default function Home() {
     }
   };
 
+  const resolveGate = async () => {
+    const gate = waitingGates.find(step => step.step_id === gateStepId);
+    if (!analysisId || !gate || !gateReason.trim()) {
+      setMessage(t("workspace.reasonRequired"));
+      return;
+    }
+    if (gateDecision === "REJECT_AND_RETRY" && !gateInputsChanged) {
+      setMessage(t("workspace.gateRetryNeedsChange"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await apiFetch(`/analyses/${analysisId}/workflow/${encodeURIComponent(gate.step_id)}/human-gate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: gateDecision, reason: gateReason.trim(), expected_attempt: gate.attempt, inputs_changed: gateInputsChanged }),
+      });
+      setMessage(result.workflow_resume_queued ? t("workspace.gateResolved") : gateDecision === "REQUEST_MORE_EVIDENCE" ? t("workspace.moreEvidenceRequested") : t("workspace.gateResolved"));
+      setGateReason("");
+      setGateInputsChanged(false);
+      setGateStepId("");
+      const refreshed = await apiFetch(`/analyses/${analysisId}`);
+      setAnalysis(refreshed);
+      setPollingEpoch(epoch => epoch + 1);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("workspace.analysisStartFailed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
   };
@@ -821,8 +914,15 @@ export default function Home() {
               ))}
             </select>
           </label>
+          <label>{t("workspace.analysisProfile")}
+            <select value={resourceProfileId} onChange={(e) => { const profile = e.target.value; setResourceProfileId(profile); setGenomeBuild(profile === "WES_GRCh37_STANDARD" ? "GRCh37" : "GRCh38"); }}>
+              <option value="WES_GRCh38_STANDARD">{t("workspace.profileWes38")}</option>
+              <option value="WGS_GRCh38_STANDARD">{t("workspace.profileWgs38")}</option>
+              <option value="WES_GRCh37_STANDARD">{t("workspace.profileWes37")}</option>
+            </select>
+          </label>
           <label>Reference genome
-            <select value={genomeBuild} onChange={(e) => setGenomeBuild(e.target.value)}>
+            <select value={genomeBuild} onChange={(e) => { const build = e.target.value; setGenomeBuild(build); setResourceProfileId(build === "GRCh37" ? "WES_GRCh37_STANDARD" : resourceProfileId === "WGS_GRCh38_STANDARD" ? "WGS_GRCh38_STANDARD" : "WES_GRCh38_STANDARD"); }}>
               <option value="GRCh38">GRCh38</option>
               <option value="GRCh37">GRCh37</option>
             </select>
@@ -851,6 +951,21 @@ export default function Home() {
               </div>;
             })}
           </div>
+          {waitingGates.length > 0 && <div className="workflow-gate-panel">
+            <div className="panel-head"><div><div className="section-kicker">{t("workspace.gateRequired")}</div><h4>{waitingGates.length} {t("workspace.gateRequired")}</h4></div><span className="badge active">Human action required</span></div>
+            <div className="workflow-gate-list">{waitingGates.map(gate => <button type="button" key={gate.step_id} className={`workflow-gate-chip ${gateStepId === gate.step_id ? "selected" : ""}`} onClick={() => setGateStepId(gate.step_id)}><strong>{prettyStatus(gate.step_id)}</strong><span>Attempt {gate.attempt}</span></button>)}</div>
+            {gateStepId && waitingGates.some(gate => gate.step_id === gateStepId) && <div className="workflow-gate-form">
+              <label>{t("workspace.gateDecision")}<select value={gateDecision} onChange={e => setGateDecision(e.target.value as typeof gateDecision)}><option value="ACCEPT">{t("workspace.gateAccept")}</option><option value="OVERRIDE">{t("workspace.gateOverride")}</option><option value="REQUEST_MORE_EVIDENCE">{t("workspace.gateMoreEvidence")}</option><option value="REJECT_AND_RETRY">{t("workspace.gateRetry")}</option></select></label>
+              <label>{t("workspace.gateReason")}<textarea rows={3} value={gateReason} onChange={e => setGateReason(e.target.value)} required /></label>
+              {gateDecision === "REJECT_AND_RETRY" && <label className="workflow-gate-checkbox"><input type="checkbox" checked={gateInputsChanged} onChange={e => setGateInputsChanged(e.target.checked)} />{t("workspace.gateInputsChanged")}</label>}
+              <button type="button" className="primary" disabled={busy || !gateReason.trim()} onClick={() => void resolveGate()}>{busy ? t("workspace.loading") : t("workspace.gateSubmit")}</button>
+            </div>}
+          </div>}
+          {(preflightResult || resourceStageReadiness.length > 0) && <div className="preflight-panel">
+            <div className="panel-head"><div><div className="section-kicker">{t("workspace.preflightTitle")}</div><h4>{preflightResult?.resource_plan_status ?? preflightResult?.status ?? (resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? "BLOCKED" : "READY")}</h4></div><span className={`badge ${preflightResult?.status === "BLOCKED" || resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? "danger" : "neutral"}`}>{preflightResult?.status === "BLOCKED" || resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? t("workspace.preflightBlocked") : t("workspace.preflightReady")}</span></div>
+            {preflightIssues.length ? <div className="preflight-issues"><strong>{t("workspace.preflightIssues")}</strong>{preflightIssues.map((issue: any, index: number) => <div className="preflight-issue" key={`${issue.capability ?? "resource"}-${issue.code ?? index}`}><b>{issue.capability ?? "Resource"}{issue.required ? " · required" : ""}</b><span>{issue.message ?? issue.code ?? "Resource readiness issue"}</span>{issue.code && <small>{issue.code}</small>}</div>)}</div> : <p className="muted">{t("workspace.preflightNoIssues")}</p>}
+            {resourceStageReadiness.length > 0 && <details className="preflight-details"><summary>{t("workspace.preflightDetails")}</summary>{resourceStageReadiness.map(stage => <div className="preflight-stage" key={stage.step_id}><strong>{prettyStatus(stage.step_id)}</strong><span className={`badge ${stage.status === "BLOCKED" ? "danger" : "neutral"}`}>{prettyStatus(stage.status)}</span>{stage.selected.map((resource: any, index: number) => <small key={`${resource.resource_id ?? resource.provider ?? "resource"}-${index}`}>{resource.capability}: {resource.name ?? resource.provider} · {resource.version ?? "unversioned"}</small>)}{stage.issues.map((issue: any, index: number) => <small className="preflight-stage-issue" key={`${issue.code ?? "issue"}-${index}`}>{issue.capability}: {issue.message ?? issue.code}</small>)}</div>)}</details>}
+          </div>}
           {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>{t("workspace.checkpointPersisted")}</span></div>}
           {analysis?.started_at && <div className="run-meta"><span>Started {formatDate(analysis.started_at)}</span><span>Last state update {formatDate(analysis.completed_at ?? analysis.started_at)}</span></div>}
           {analysis?.next_step && ["REQUIRES_REVIEW", "BLOCKED", "FAILED", "RESOURCE_FAILURE"].includes(String(analysis?.status)) && (
@@ -865,6 +980,14 @@ export default function Home() {
             </div>
           )}
         </section>
+      </section>
+
+      <section className="panel artifacts-panel">
+        <div className="panel-head"><div><div className="section-kicker">{t("workspace.files")}</div><h3>{caseArtifacts.length} {t("workspace.files")}</h3><p className="muted">{t("workspace.filesLead")}</p></div><button type="button" className="secondary" onClick={() => void refreshCaseArtifacts()}>{t("workspace.refreshFiles")}</button></div>
+        {!caseArtifacts.length ? <div className="empty small"><strong>{t("workspace.noFiles")}</strong></div> : <div className="artifacts-list">{caseArtifacts.map(artifact => <article className="artifact-row" key={artifact.artifact_id}>
+          <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small><details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
+          <div className="artifact-actions"><code>{artifact.artifact_id.slice(0, 12)}…</code><button type="button" className="secondary small" onClick={() => void downloadAuthenticated(`/artifacts/${artifact.artifact_id}/download`, artifact.filename)}>{t("workspace.downloadArtifact")}</button></div>
+        </article>)}</div>}
       </section>
 
       <section className="panel variants-panel">

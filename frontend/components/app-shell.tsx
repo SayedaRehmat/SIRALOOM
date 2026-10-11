@@ -6,6 +6,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
 import { useLanguage } from "../lib/i18n";
 import { Brand } from "./brand";
+import { LanguageSwitcher } from "./language-switcher";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -39,10 +40,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Link href="/app/workspace">{t("nav.variantWorkspace")}</Link>
         <span className="nav-label">{t("app.governance")}</span>
         <Link href="/app/review">{t("nav.reviewQueue")}</Link>
+        <Link href="/app/resources">{t("nav.resources")}</Link>
         <Link href="/app/reports">{t("nav.reports")}</Link>
         <Link href="/app/audit">{t("nav.audit")}</Link>
         <Link href="/app/settings">{t("nav.settings")}</Link>
-        <button className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth)}>{t("nav.signOut")}</button>
+        <div className="app-nav-footer">
+          <LanguageSwitcher className="workspace-language-switcher" />
+          <button className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth)}>{t("nav.signOut")}</button>
+        </div>
       </aside>
       <main className="app-content">
         {!firebaseConfigured && <div className="configuration-notice">{t("development.notice")}</div>}
