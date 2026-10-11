@@ -683,6 +683,7 @@ export type TranslationKey =
   | "cases.dossierOpenReports"
   | "cases.dossierProvenanceNote"
   | "cases.dossierReportsUnavailable"
+  | "cases.dossierLargeDownloadRequiresStreaming"
   | "workspace.updatedAt"
   | "workspace.downloading"
   | "cases.readyHelp"
@@ -878,6 +879,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.dossierOpenReports": "Open report workflow",
     "cases.dossierProvenanceNote": "This dossier summarizes case-linked records. Use Audit to inspect the persisted event history and provenance details.",
     "cases.dossierReportsUnavailable": "Report records could not be loaded",
+    "cases.dossierLargeDownloadRequiresStreaming": "This file is larger than 512 MiB. Use a browser with save-to-disk streaming support to avoid buffering the entire file in memory.",
     "workspace.updatedAt": "Last updated",
     "workspace.downloading": "Preparing download…",
     "cases.readyHelp": "Confirm the case is internally consistent before starting scientific analysis.",
@@ -1643,6 +1645,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.dossierOpenReports": "فتح سير عمل التقرير",
     "cases.dossierProvenanceNote": "يلخص هذا الملف السجلات المرتبطة بالحالة. استخدم سجل التدقيق لفحص سجل الأحداث وتفاصيل مصدر البيانات المحفوظة.",
     "cases.dossierReportsUnavailable": "تعذر تحميل سجلات التقارير",
+    "cases.dossierLargeDownloadRequiresStreaming": "يتجاوز حجم الملف 512 ميبيبايت. استخدم متصفحًا يدعم الحفظ المباشر إلى القرص لتجنب تحميل الملف كاملًا في الذاكرة.",
     "workspace.updatedAt": "آخر تحديث",
     "workspace.downloading": "جارٍ تجهيز التنزيل…",
     "cases.readyHelp": "تأكد من اتساق الحالة داخليًا قبل بدء التحليل العلمي.",
