@@ -386,26 +386,31 @@ def stage_local_artifact(
         raise
 
 
+def cleanup_staging_temporary_files(row: ResourceStaging) -> None:
+    """Remove incomplete sibling files for this resource's unique destination."""
+    destination = Path(row.destination_uri)
+    if not destination.parent.is_dir():
+        return
+    patterns = (
+        f".{destination.name}.remote-*",
+        f".{destination.name}.staging-{row.id}-*",
+    )
+    for pattern in patterns:
+        for temporary in destination.parent.glob(pattern):
+            if temporary.is_file():
+                temporary.unlink(missing_ok=True)
+
+
 def recover_interrupted_staging(db: Session, row: ResourceStaging) -> ResourceStaging:
     """Reset an interrupted staging attempt after Celery redelivery.
 
     Staging writes to a temporary sibling and atomically promotes the verified
-    payload. If a worker disappears while status is STAGING, remove only the
-    temporary siblings for this destination and return the durable record to
-    READY_TO_STAGE. The task dispatcher guarantees one live task per staging ID.
+    payload. Temporary siblings are cleaned on every attempt; a durable STAGING
+    state is transitioned back to READY_TO_STAGE when recovering a redelivery.
     """
+    cleanup_staging_temporary_files(row)
     if row.status != "STAGING":
         return row
-    destination = Path(row.destination_uri)
-    if destination.parent.is_dir():
-        patterns = (
-            f".{destination.name}.remote-*",
-            f".{destination.name}.staging-{row.id}-*",
-        )
-        for pattern in patterns:
-            for temporary in destination.parent.glob(pattern):
-                if temporary.is_file():
-                    temporary.unlink(missing_ok=True)
     row.metadata_json = {
         **dict(row.metadata_json or {}),
         "recovery": "CELERY_REDELIVERY",
