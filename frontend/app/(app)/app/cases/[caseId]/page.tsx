@@ -55,6 +55,7 @@ export default function CaseDossierPage() {
   const [record, setRecord] = useState<CaseRecord | null>(null);
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [reportError, setReportError] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -74,14 +75,18 @@ export default function CaseDossierPage() {
       const reportGroups = await Promise.all(analysisRows.map(async (analysis) => {
         try {
           const result = await apiFetch(`/analyses/${analysis.analysis_id}/reports`);
-          return (Array.isArray(result?.items) ? result.items : []).map((report: Omit<Report, "analysis_id">) => ({ ...report, analysis_id: analysis.analysis_id }));
-        } catch {
-          return [];
+          return {
+            items: (Array.isArray(result?.items) ? result.items : []).map((report: Omit<Report, "analysis_id">) => ({ ...report, analysis_id: analysis.analysis_id })),
+            error: "",
+          };
+        } catch (e) {
+          return { items: [], error: e instanceof Error ? e.message : "Report list could not be loaded." };
         }
       }));
       setRecord(caseData);
       setArtifacts(Array.isArray(fileRows) ? fileRows : []);
-      setReports(reportGroups.flat());
+      setReports(reportGroups.flatMap(group => group.items));
+      setReportError(reportGroups.find(group => group.error)?.error ?? "");
       window.localStorage.setItem("siraloom.case_id", caseData.case_id);
       window.localStorage.setItem("siraloom.case_identifier", caseData.case_identifier);
     } catch (e) {
@@ -245,6 +250,7 @@ export default function CaseDossierPage() {
 
       <section className="panel case-dossier-panel">
         <div className="panel-head"><div><p className="eyebrow">{t("workspace.reportSection")}</p><h2>{t("workspace.reportSection")}</h2></div><span className="badge neutral">{reports.length}</span></div>
+        {reportError && <div className="notice error-notice" role="status">{t("cases.dossierReportsUnavailable")}: {reportError}</div>}
         {!reports.length ? <div className="empty small"><strong>{t("cases.dossierNoReports")}</strong><p>{t("cases.dossierReportsLead")}</p></div> : <div className="case-dossier-list">
           {reports.map(report => <article key={report.report_id}>
             <div>
