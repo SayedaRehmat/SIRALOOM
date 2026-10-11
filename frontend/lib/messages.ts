@@ -167,6 +167,21 @@ export type TranslationKey =
   | "resources.stagingPolicy"
   | "resources.observedSize"
   | "resources.observedSha256"
+  | "workspace.capacityPreflight"
+  | "workspace.capacityEstimate"
+  | "workspace.capacityNotConfigured"
+  | "workspace.capacityReservationNotProvided"
+  | "workspace.availableStorage"
+  | "workspace.totalStorage"
+  | "workspace.storageCapacityIssue"
+  | "resources.storageCapacity"
+  | "resources.uploadLimit"
+  | "resources.capacityPreflightEnabled"
+  | "resources.capacityPreflightDisabled"
+  | "resources.totalStorage"
+  | "resources.usedStorage"
+  | "resources.freeStorage"
+  | "resources.storageWritable"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -1479,6 +1494,21 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.stagingPolicy": "Remote staging is limited to approved public HTTPS releases. Authenticated or licensed resources require a provider-specific adapter.",
     "resources.observedSize": "Observed size",
     "resources.observedSha256": "Observed SHA-256",
+    "workspace.capacityPreflight": "Storage capacity preflight",
+    "workspace.capacityEstimate": "Estimated capacity needed",
+    "workspace.capacityNotConfigured": "Capacity preflight is not configured. Configure it for a laboratory deployment.",
+    "workspace.capacityReservationNotProvided": "This is a point-in-time estimate, not a storage reservation; concurrent work can consume space.",
+    "workspace.availableStorage": "Available",
+    "workspace.totalStorage": "Total",
+    "workspace.storageCapacityIssue": "Capacity issue",
+    "resources.storageCapacity": "Deployment storage capacity",
+    "resources.uploadLimit": "Configured upload limit",
+    "resources.capacityPreflightEnabled": "Analysis capacity preflight enabled",
+    "resources.capacityPreflightDisabled": "Analysis capacity preflight is disabled",
+    "resources.totalStorage": "Total",
+    "resources.usedStorage": "Used",
+    "resources.freeStorage": "Free",
+    "resources.storageWritable": "Writable",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2214,5 +2244,20 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.stagingPolicy": "يقتصر التجهيز عن بُعد على الإصدارات العامة المعتمدة عبر HTTPS. تتطلب الموارد الموثقة أو المرخصة موائمًا خاصًا بالمزوّد.",
     "resources.observedSize": "الحجم الفعلي",
     "resources.observedSha256": "بصمة SHA-256 الفعلية",
+    "workspace.capacityPreflight": "فحص سعة التخزين قبل التحليل",
+    "workspace.capacityEstimate": "السعة المقدرة المطلوبة",
+    "workspace.capacityNotConfigured": "فحص السعة غير مضبوط. فعّله في نشر المختبر.",
+    "workspace.capacityReservationNotProvided": "هذا تقدير لحظي وليس حجزًا للتخزين؛ قد تستهلك الأعمال المتزامنة المساحة.",
+    "workspace.availableStorage": "المتاح",
+    "workspace.totalStorage": "الإجمالي",
+    "workspace.storageCapacityIssue": "مشكلة في السعة",
+    "resources.storageCapacity": "سعة تخزين النشر",
+    "resources.uploadLimit": "حد الرفع المضبوط",
+    "resources.capacityPreflightEnabled": "فحص سعة التحليل مفعّل",
+    "resources.capacityPreflightDisabled": "فحص سعة التحليل معطّل",
+    "resources.totalStorage": "الإجمالي",
+    "resources.usedStorage": "المستخدم",
+    "resources.freeStorage": "المتاح",
+    "resources.storageWritable": "قابل للكتابة",
   },
 };
