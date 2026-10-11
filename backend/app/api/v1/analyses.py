@@ -238,7 +238,7 @@ def start(
             if not (preflight_step.error_code and str(preflight_step.error_code).startswith("RESOURCE_")):
                 preflight_step.status = "BLOCKED"
                 preflight_step.error_code = "STORAGE_CAPACITY_PREFLIGHT_BLOCKED"
-                preflight_step.error_message = "Configured artifact/scratch storage is below the analysis planning estimate."
+                preflight_step.error_message = "Storage-capacity preflight is not ready. Resolve the reported capacity issues before starting analysis."
         elif preflight_step.error_code == "STORAGE_CAPACITY_PREFLIGHT_BLOCKED" and (plan is None or plan.is_ready):
             preflight_step.status = "SUCCEEDED"
             preflight_step.error_code = None
