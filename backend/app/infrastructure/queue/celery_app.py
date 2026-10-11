@@ -849,7 +849,7 @@ if Celery is not None:
             metadata["staging_dispatch"] = {
                 **dict(metadata.get("staging_dispatch") or {}),
                 "status": "COMPLETED" if staged.status == "STAGED" else "FAILED",
-                "completed_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
             staged.metadata_json = metadata
             db.add(staged)
