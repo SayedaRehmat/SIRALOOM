@@ -43,9 +43,10 @@ export default function ReviewQueuePage(){
     try{
      if(caseId){
       const caseData=await apiFetch(`/cases/${caseId}`);
-      const latest=Array.isArray(caseData?.analyses)&&caseData.analyses.length?caseData.analyses[0]:null;
-      if(latest?.analysis_id){
-       const id=String(latest.analysis_id);
+      const availableAnalyses=Array.isArray(caseData?.analyses)?caseData.analyses:[];
+      const requestedAnalysis=availableAnalyses.find((item:any)=>String(item.analysis_id)===storedAnalysis)??availableAnalyses[0]??null;
+      if(requestedAnalysis?.analysis_id){
+       const id=String(requestedAnalysis.analysis_id);
        setAnalysisId(id);
        window.localStorage.setItem("siraloom.analysis_id",id);
       }else{
