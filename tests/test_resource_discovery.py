@@ -104,7 +104,7 @@ def test_scientific_resource_discovery_is_scheduled_daily():
 
 def test_production_compose_runs_one_persistent_beat_scheduler():
     compose = (Path(__file__).resolve().parents[1] / "docker-compose.production.yml").read_text(encoding="utf-8")
-    assert compose.count("\\n  beat:\\n") == 1
+    assert compose.count("  beat:" + chr(10)) == 1
     beat_block = compose.split("  beat:" + chr(10), 1)[1].split(chr(10) + "  frontend:", 1)[0]
     assert "celery" in beat_block
     assert "beat" in beat_block
