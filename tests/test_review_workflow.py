@@ -133,6 +133,52 @@ def test_manual_classification_rejects_evidence_from_another_variant():
         )
 
 
+def _add_annotation(db, analysis, variant):
+    annotation = Annotation(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        provider_name="GeneBe", provider_version="2026.10",
+        resource_id=None, resource_name="GeneBe", resource_version="2026.10",
+        request_fingerprint=f"request-{uuid4()}", response_sha256=f"response-{uuid4()}",
+        request_metadata={}, observed_at=datetime.now(timezone.utc), retry_count=0,
+        payload={"normalized": {"gene": {"symbol": "TEST"}}},
+    )
+    db.add(annotation)
+    db.flush()
+    return annotation
+
+
+def test_manual_acmg_approval_reconciles_when_every_annotated_variant_is_approved():
+    from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete
+
+    db, reviewer, _, analysis, variant, assessment, classification = seed()
+    _add_annotation(db, analysis, variant)
+    db.delete(assessment)
+    classification.criterion_ids = []
+    classification.state = "FINAL"
+    classification.review_status = ReviewStatus.APPROVED
+    classification.metadata_json = {
+        "decision_mode": "MANUAL",
+        "automation_status": "NOT_AUTOMATED",
+        "acmg_criteria_available": False,
+    }
+    db.commit()
+
+    assert _manual_acmg_review_complete(db, analysis.id) is True
+    assert _classification_review_gate_ready(db, analysis.id) is True
+
+
+def test_classification_gate_blocks_if_any_annotated_variant_has_no_classification():
+    from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete
+
+    db, _, _, analysis, variant, _, classification = seed()
+    _add_annotation(db, analysis, variant)
+    db.delete(classification)
+    db.commit()
+
+    assert _manual_acmg_review_complete(db, analysis.id) is False
+    assert _classification_review_gate_ready(db, analysis.id) is False
+
+
 def test_criterion_review_is_versioned_and_append_only_history():
     db, reviewer, _, analysis, variant, assessment, _ = seed()
     out = review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("MODIFY", "MODERATE", "Reviewed evidence", tuple(), 0), reviewer=reviewer)
