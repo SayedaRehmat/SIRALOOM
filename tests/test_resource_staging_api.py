@@ -2,7 +2,7 @@
 from hashlib import sha256
 from pathlib import Path
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
@@ -109,7 +109,7 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
         result = resources_api.register_resource(payload, db, _principal(organization_id))
         destination = Path(result["location"])
         assert destination.is_relative_to((tmp_path / "cache" / str(organization_id)).resolve())
-        resource = db.get(Resource, result["resource_id"])
+        resource = db.get(Resource, UUID(result["resource_id"]))
         assert resource.metadata_json["execution"]["location"] == str(destination)
     finally:
         db.close()
