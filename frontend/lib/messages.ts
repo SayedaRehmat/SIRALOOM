@@ -671,6 +671,19 @@ export type TranslationKey =
   | "cases.skipIndex"
   | "cases.openWorkspace"
   | "cases.openDossier"
+  | "cases.dossierTitle"
+  | "cases.dossierNotFound"
+  | "cases.dossierNoSpecimens"
+  | "cases.dossierNoFiles"
+  | "cases.dossierNoAnalyses"
+  | "cases.dossierStartFromWorkspace"
+  | "cases.dossierNoReports"
+  | "cases.dossierReportsLead"
+  | "cases.dossierSignedHash"
+  | "cases.dossierOpenReports"
+  | "cases.dossierProvenanceNote"
+  | "workspace.updatedAt"
+  | "workspace.downloading"
   | "cases.readyHelp"
   | "cases.readyDetail"
   | "cases.invalidPrimary"
@@ -852,6 +865,19 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.skipIndex": "Skip index & review",
     "cases.openWorkspace": "Open Variant workspace",
     "cases.openDossier": "Open case dossier",
+    "cases.dossierTitle": "Case dossier",
+    "cases.dossierNotFound": "This case could not be loaded.",
+    "cases.dossierNoSpecimens": "No specimens are registered for this case.",
+    "cases.dossierNoFiles": "No files are stored for this case yet.",
+    "cases.dossierNoAnalyses": "No analyses have been created for this case.",
+    "cases.dossierStartFromWorkspace": "Open the workspace to upload input data or continue setup.",
+    "cases.dossierNoReports": "No reports are available for this case yet.",
+    "cases.dossierReportsLead": "Reports are grouped by analysis and version; signed report hashes remain visible here.",
+    "cases.dossierSignedHash": "Signed SHA-256",
+    "cases.dossierOpenReports": "Open report workflow",
+    "cases.dossierProvenanceNote": "This dossier summarizes case-linked records. Use Audit to inspect the persisted event history and provenance details.",
+    "workspace.updatedAt": "Last updated",
+    "workspace.downloading": "Preparing download…",
     "cases.readyHelp": "Confirm the case is internally consistent before starting scientific analysis.",
     "cases.readyDetail": "The primary VCF passed structural validation and has an explicit genome build. You can proceed to the existing Variant workflow.",
     "cases.invalidPrimary": "The primary variant artifact is not valid. Resolve the validation failure before starting analysis.",
@@ -1603,6 +1629,19 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.skipIndex": "تخطي الفهرس والمراجعة",
     "cases.openWorkspace": "فتح مساحة المتغيرات",
     "cases.openDossier": "فتح ملف الحالة",
+    "cases.dossierTitle": "ملف الحالة",
+    "cases.dossierNotFound": "تعذر تحميل هذه الحالة.",
+    "cases.dossierNoSpecimens": "لم تُسجّل عينات لهذه الحالة.",
+    "cases.dossierNoFiles": "لا توجد ملفات محفوظة لهذه الحالة حتى الآن.",
+    "cases.dossierNoAnalyses": "لم تُنشأ تحليلات لهذه الحالة.",
+    "cases.dossierStartFromWorkspace": "افتح مساحة العمل لرفع بيانات الإدخال أو متابعة الإعداد.",
+    "cases.dossierNoReports": "لا تتوفر تقارير لهذه الحالة حتى الآن.",
+    "cases.dossierReportsLead": "تُجمع التقارير حسب التحليل والإصدار، وتظل بصمات التقارير الموقّعة ظاهرة هنا.",
+    "cases.dossierSignedHash": "بصمة SHA-256 للتقرير الموقّع",
+    "cases.dossierOpenReports": "فتح سير عمل التقرير",
+    "cases.dossierProvenanceNote": "يلخص هذا الملف السجلات المرتبطة بالحالة. استخدم سجل التدقيق لفحص سجل الأحداث وتفاصيل مصدر البيانات المحفوظة.",
+    "workspace.updatedAt": "آخر تحديث",
+    "workspace.downloading": "جارٍ تجهيز التنزيل…",
     "cases.readyHelp": "تأكد من اتساق الحالة داخليًا قبل بدء التحليل العلمي.",
     "cases.readyDetail": "اجتاز ملف VCF الأساسي التحقق البنيوي وله بناء جينومي محدد. يمكنك المتابعة إلى سير عمل المتغيرات الحالي.",
     "cases.invalidPrimary": "أثر المتغير الأساسي غير صالح. عالج فشل التحقق قبل بدء التحليل.",
