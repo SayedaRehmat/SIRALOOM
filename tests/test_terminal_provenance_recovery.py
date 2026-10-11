@@ -26,8 +26,9 @@ from backend.app.infrastructure.db.models import (
 )
 
 
-def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
-    monkeypatch, tmp_path
+@pytest.mark.parametrize("failure_mode", ["transient", "worker_loss"])
+def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
+    monkeypatch, tmp_path, failure_mode
 ):
     """A transient provenance write failure must not strand a signed-out case."""
     import importlib
@@ -244,6 +245,8 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
         def fail_first_provenance_write(**kwargs):
             if kwargs.get("filename") == "provenance.json" and failures_remaining["count"]:
                 failures_remaining["count"] -= 1
+                if failure_mode == "worker_loss":
+                    raise SystemExit(73)
                 raise OSError("simulated transient provenance storage interruption")
             return original_put_file(**kwargs)
 
@@ -255,8 +258,12 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
             delivery_info={"redelivered": False},
         )
         try:
-            with pytest.raises(workflow.TransientWorkflowError, match="simulated transient provenance storage interruption"):
-                queue_module.run_analysis_task.run(str(analysis_id))
+            if failure_mode == "worker_loss":
+                with pytest.raises(SystemExit):
+                    queue_module.run_analysis_task.run(str(analysis_id))
+            else:
+                with pytest.raises(workflow.TransientWorkflowError, match="simulated transient provenance storage interruption"):
+                    queue_module.run_analysis_task.run(str(analysis_id))
         finally:
             queue_module.run_analysis_task.pop_request()
 
@@ -268,9 +275,12 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
             ))
             assert analysis.status == AnalysisStatus.RUNNING
             assert analysis.completed_at is None
-            assert step.status == StepStatus.RETRYING
-            assert step.error_code == "PROVENANCE_EXPORT_RETRYING"
-            assert step.metadata_json["next_step"] == "export_provenance"
+            if failure_mode == "worker_loss":
+                assert step.status == StepStatus.RUNNING
+            else:
+                assert step.status == StepStatus.RETRYING
+                assert step.error_code == "PROVENANCE_EXPORT_RETRYING"
+                assert step.metadata_json["next_step"] == "export_provenance"
             assert db.scalar(select(Artifact.id).where(
                 Artifact.analysis_id == analysis_id,
                 Artifact.filename == "provenance.json",
@@ -278,8 +288,8 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
 
         queue_module.run_analysis_task.push_request(
             id=task_id,
-            retries=1,
-            delivery_info={"redelivered": False},
+            retries=1 if failure_mode == "transient" else 0,
+            delivery_info={"redelivered": failure_mode == "worker_loss"},
         )
         try:
             result = queue_module.run_analysis_task.run(str(analysis_id))
@@ -327,7 +337,12 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
             audit_events = list(db.scalars(select(AuditEvent).where(
                 AuditEvent.analysis_id == analysis_id
             )))
-            assert sum(event.event_type == "PROVENANCE_EXPORT_RETRY_SCHEDULED" for event in audit_events) == 1
+            assert sum(event.event_type == "PROVENANCE_EXPORT_RETRY_SCHEDULED" for event in audit_events) == (
+                1 if failure_mode == "transient" else 0
+            )
+            assert sum(event.event_type == "WORKFLOW_WORKER_RECOVERY" for event in audit_events) == (
+                1 if failure_mode == "worker_loss" else 0
+            )
             assert sum(event.event_type == "PROVENANCE_EXPORT_COMPLETED" for event in audit_events) == 1
     finally:
         engine.dispose()
