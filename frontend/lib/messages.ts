@@ -135,6 +135,15 @@ export type TranslationKey =
   | "workspace.profileWes38"
   | "workspace.profileWgs38"
   | "workspace.profileWes37"
+  | "workspace.files"
+  | "workspace.filesLead"
+  | "workspace.refreshFiles"
+  | "workspace.noFiles"
+  | "workspace.downloadArtifact"
+  | "workspace.size"
+  | "workspace.sha256"
+  | "workspace.validationStatus"
+  | "workspace.createdAt"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -1415,6 +1424,15 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.profileWes38": "Standard WES · GRCh38",
     "workspace.profileWgs38": "Standard WGS · GRCh38",
     "workspace.profileWes37": "Standard WES · GRCh37",
+    "workspace.files": "Case files",
+    "workspace.filesLead": "Input files and generated artifacts are listed here with their recorded build, validation status, size, and SHA-256.",
+    "workspace.refreshFiles": "Refresh files",
+    "workspace.noFiles": "No files are registered for this case yet.",
+    "workspace.downloadArtifact": "Download",
+    "workspace.size": "Size",
+    "workspace.sha256": "SHA-256",
+    "workspace.validationStatus": "Validation",
+    "workspace.createdAt": "Created",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2118,5 +2136,14 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.profileWes38": "تسلسل الإكسوم القياسي · GRCh38",
     "workspace.profileWgs38": "تسلسل الجينوم القياسي · GRCh38",
     "workspace.profileWes37": "تسلسل الإكسوم القياسي · GRCh37",
+    "workspace.files": "ملفات الحالة",
+    "workspace.filesLead": "تظهر ملفات الإدخال والآثار الناتجة هنا مع البناء المسجل وحالة التحقق والحجم وبصمة SHA-256.",
+    "workspace.refreshFiles": "تحديث الملفات",
+    "workspace.noFiles": "لم تُسجّل ملفات لهذه الحالة بعد.",
+    "workspace.downloadArtifact": "تنزيل",
+    "workspace.size": "الحجم",
+    "workspace.sha256": "SHA-256",
+    "workspace.validationStatus": "التحقق",
+    "workspace.createdAt": "تاريخ الإنشاء",
   },
 };
