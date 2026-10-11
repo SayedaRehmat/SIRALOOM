@@ -77,6 +77,21 @@ services:
       - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
       - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
 
+  beat:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    command: ["celery", "-A", "backend.app.infrastructure.queue.celery_app.celery_app", "beat", "--loglevel=INFO", "--schedule=/data/siraloom/beat/celerybeat-schedule"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${SIRALOOM_BEAT_HOST_PATH:-beat_data}:/data/siraloom/beat
+
   frontend:
     build:
       context: .
@@ -116,3 +131,4 @@ volumes:
   reference_data:
   resource_cache_data:
   scratch_data:
+  beat_data:
