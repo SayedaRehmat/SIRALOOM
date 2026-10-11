@@ -18,6 +18,7 @@ export type TranslationKey =
   | "nav.reports"
   | "nav.audit"
   | "nav.settings"
+  | "nav.resources"
   | "nav.signOut"
   | "language.label"
   | "language.english"
@@ -59,6 +60,59 @@ export type TranslationKey =
   | "settings.analysisId"
   | "settings.contextNote"
   | "settings.unableToLoad"
+  | "resources.eyebrow"
+  | "resources.title"
+  | "resources.lead"
+  | "resources.refresh"
+  | "resources.catalog"
+  | "resources.register"
+  | "resources.registerHelp"
+  | "resources.name"
+  | "resources.provider"
+  | "resources.type"
+  | "resources.version"
+  | "resources.build"
+  | "resources.accessMethod"
+  | "resources.location"
+  | "resources.checksum"
+  | "resources.license"
+  | "resources.populationDefinition"
+  | "resources.metadata"
+  | "resources.registerCandidate"
+  | "resources.pendingApprovals"
+  | "resources.noResources"
+  | "resources.noApprovals"
+  | "resources.status"
+  | "resources.actions"
+  | "resources.qualify"
+  | "resources.requestApproval"
+  | "resources.qualificationVersion"
+  | "resources.activate"
+  | "resources.approve"
+  | "resources.reject"
+  | "resources.defer"
+  | "resources.reason"
+  | "resources.reasonRequired"
+  | "resources.metadataInvalid"
+  | "resources.registered"
+  | "resources.qualificationResult"
+  | "resources.qualificationBlocked"
+  | "resources.approvalRequested"
+  | "resources.approvalDecided"
+  | "resources.activated"
+  | "resources.apiUnavailable"
+  | "resources.lifecycleNote"
+  | "resources.stagingGap"
+  | "resources.profiles"
+  | "resources.profileHelp"
+  | "resources.requiredCapabilities"
+  | "resources.accessPolicy"
+  | "resources.candidateOnly"
+  | "resources.organization"
+  | "resources.sourceExecutionMetadata"
+  | "resources.sourceExecutionHelp"
+  | "resources.loadError"
+  | "resources.operationFailed"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -1263,6 +1317,60 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.reanalysisAffected": "Earliest affected stage",
     "workspace.markRead": "Mark read",
     "reports.validationDisclaimer": "SIRALOOM software validation is distinct from clinical laboratory validation, accreditation, or regulatory authorization. Release remains subject to the laboratory's qualified signatory, policies, and jurisdictional requirements.",
+    "nav.resources": "Resources",
+    "resources.eyebrow": "Laboratory configuration",
+    "resources.title": "Resources & analysis profiles",
+    "resources.lead": "Register laboratory-managed scientific resources, review qualification and approval status, and understand which profiles the current workflow supports.",
+    "resources.refresh": "Refresh",
+    "resources.catalog": "Resource registry",
+    "resources.register": "Register a resource",
+    "resources.registerHelp": "New laboratory resources enter as candidates. Registration does not authorize execution.",
+    "resources.name": "Resource name",
+    "resources.provider": "Provider / engine",
+    "resources.type": "Resource type",
+    "resources.version": "Exact version / release",
+    "resources.build": "Reference build",
+    "resources.accessMethod": "Access method",
+    "resources.location": "Runtime location or endpoint",
+    "resources.checksum": "SHA-256 checksum (if applicable)",
+    "resources.license": "License / terms summary",
+    "resources.populationDefinition": "Population definition (optional)",
+    "resources.metadata": "Metadata JSON",
+    "resources.registerCandidate": "Register candidate",
+    "resources.pendingApprovals": "Pending resource approvals",
+    "resources.noResources": "No resources match the current registry filter.",
+    "resources.noApprovals": "No pending resource approvals.",
+    "resources.status": "Status",
+    "resources.actions": "Actions",
+    "resources.qualify": "Run qualification",
+    "resources.requestApproval": "Request approval",
+    "resources.qualificationVersion": "Qualification protocol version",
+    "resources.activate": "Activate after approval",
+    "resources.approve": "Approve",
+    "resources.reject": "Reject",
+    "resources.defer": "Defer",
+    "resources.reason": "Decision reason",
+    "resources.reasonRequired": "A reason is required for approval decisions.",
+    "resources.metadataInvalid": "Metadata must be valid JSON.",
+    "resources.registered": "Resource candidate registered.",
+    "resources.qualificationResult": "Qualification result",
+    "resources.qualificationBlocked": "Qualification did not pass. Review the returned blockers; do not bypass them.",
+    "resources.approvalRequested": "Approval request created.",
+    "resources.approvalDecided": "Approval decision recorded.",
+    "resources.activated": "Resource activation requested.",
+    "resources.apiUnavailable": "The resource API could not be reached.",
+    "resources.lifecycleNote": "Lifecycle: register → stage and verify → qualify → request lab approval → approve → activate → bind into the intended analysis profile.",
+    "resources.stagingGap": "Important: the current API does not expose resource staging/acquisition as a user-facing endpoint. A candidate can be registered here, but qualification can remain blocked until a matching verified staging record exists. This screen will not pretend a resource is executable.",
+    "resources.profiles": "Built-in analysis profiles",
+    "resources.profileHelp": "These are the profile identifiers present in this backend build. A profile defines required capabilities; it does not register or approve resources.",
+    "resources.requiredCapabilities": "Required capabilities",
+    "resources.accessPolicy": "Lab resource policy",
+    "resources.candidateOnly": "Candidate only",
+    "resources.organization": "Organization",
+    "resources.sourceExecutionMetadata": "Source and execution metadata",
+    "resources.sourceExecutionHelp": "Provide publisher/source and runtime execution contracts in metadata JSON. Use exact release identities, URLs, access policy, and toolchain configuration; do not paste secrets.",
+    "resources.loadError": "Unable to load resource data.",
+    "resources.operationFailed": "Resource operation failed.",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -1890,5 +1998,59 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.reanalysisAffected": "أول مرحلة متأثرة",
     "workspace.markRead": "تحديد كمقروء",
     "reports.validationDisclaimer": "يختلف التحقق من برنامج SIRALOOM عن التحقق السريري للمختبر أو الاعتماد أو الترخيص التنظيمي. ويظل الإصدار خاضعاً للموقّع المؤهل في المختبر وسياساته ومتطلبات الاختصاص القضائي.",
+    "nav.resources": "الموارد",
+    "resources.eyebrow": "تهيئة المختبر",
+    "resources.title": "الموارد وملفات التحليل",
+    "resources.lead": "سجّل الموارد العلمية التي يديرها المختبر، وراجع حالة التأهيل والموافقة، وتعرّف على الملفات التي يدعمها سير العمل الحالي.",
+    "resources.refresh": "تحديث",
+    "resources.catalog": "سجل الموارد",
+    "resources.register": "تسجيل مورد",
+    "resources.registerHelp": "تبدأ الموارد الجديدة التي يديرها المختبر كمرشّحة. التسجيل لا يسمح بالتنفيذ.",
+    "resources.name": "اسم المورد",
+    "resources.provider": "المزوّد / المحرك",
+    "resources.type": "نوع المورد",
+    "resources.version": "الإصدار الدقيق",
+    "resources.build": "البناء المرجعي",
+    "resources.accessMethod": "طريقة الوصول",
+    "resources.location": "موقع التشغيل أو نقطة النهاية",
+    "resources.checksum": "بصمة SHA-256 (إن وجدت)",
+    "resources.license": "ملخص الترخيص / الشروط",
+    "resources.populationDefinition": "تعريف المجموعة (اختياري)",
+    "resources.metadata": "بيانات وصفية بصيغة JSON",
+    "resources.registerCandidate": "تسجيل المورد المرشّح",
+    "resources.pendingApprovals": "موافقات الموارد المعلّقة",
+    "resources.noResources": "لا توجد موارد تطابق مرشح السجل الحالي.",
+    "resources.noApprovals": "لا توجد موافقات معلّقة.",
+    "resources.status": "الحالة",
+    "resources.actions": "الإجراءات",
+    "resources.qualify": "تشغيل التأهيل",
+    "resources.requestApproval": "طلب الموافقة",
+    "resources.qualificationVersion": "إصدار بروتوكول التأهيل",
+    "resources.activate": "التفعيل بعد الموافقة",
+    "resources.approve": "موافقة",
+    "resources.reject": "رفض",
+    "resources.defer": "تأجيل",
+    "resources.reason": "سبب القرار",
+    "resources.reasonRequired": "يلزم إدخال سبب لقرار الموافقة.",
+    "resources.metadataInvalid": "يجب أن تكون البيانات الوصفية بصيغة JSON صحيحة.",
+    "resources.registered": "تم تسجيل المورد المرشّح.",
+    "resources.qualificationResult": "نتيجة التأهيل",
+    "resources.qualificationBlocked": "لم يجتز التأهيل. راجع العوائق المعروضة ولا تتجاوزها.",
+    "resources.approvalRequested": "تم إنشاء طلب الموافقة.",
+    "resources.approvalDecided": "تم تسجيل قرار الموافقة.",
+    "resources.activated": "تم طلب تفعيل المورد.",
+    "resources.apiUnavailable": "تعذر الوصول إلى واجهة الموارد.",
+    "resources.lifecycleNote": "دورة الحياة: تسجيل ← تجهيز والتحقق ← التأهيل ← طلب موافقة المختبر ← الموافقة ← التفعيل ← الربط بملف التحليل المقصود.",
+    "resources.stagingGap": "مهم: لا تعرض الواجهة البرمجية الحالية نقطة استخدام لتجهيز الموارد أو جلبها. يمكن تسجيل مورد مرشّح هنا، لكن قد يبقى التأهيل محظورًا حتى وجود سجل تجهيز مطابق تم التحقق منه. لن تعرض هذه الصفحة موردًا على أنه قابل للتنفيذ دون دليل.",
+    "resources.profiles": "ملفات التحليل المضمنة",
+    "resources.profileHelp": "هذه معرّفات الملفات الموجودة في إصدار الخلفية الحالي. يحدد الملف القدرات المطلوبة؛ ولا يسجّل الموارد أو يوافق عليها.",
+    "resources.requiredCapabilities": "القدرات المطلوبة",
+    "resources.accessPolicy": "سياسة موارد المختبر",
+    "resources.candidateOnly": "مرشّح فقط",
+    "resources.organization": "المؤسسة",
+    "resources.sourceExecutionMetadata": "بيانات المصدر والتنفيذ",
+    "resources.sourceExecutionHelp": "أدخل عقود المصدر/الناشر والتنفيذ في JSON. استخدم إصدارات وروابط وسياسات وصول وإعدادات أدوات دقيقة، ولا تُدخل الأسرار.",
+    "resources.loadError": "تعذر تحميل بيانات الموارد.",
+    "resources.operationFailed": "فشلت عملية المورد.",
   },
 };
