@@ -17,6 +17,7 @@ from backend.app.infrastructure.db.models import (
   )
 from backend.app.application.analysis import create_analysis, enqueue_analysis, preflight_analysis_resources
 from backend.app.domain.storage_capacity import preflight_analysis_capacity
+from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.application.entitlements import (
     reserve_analysis_quota,
     require_analysis_quota,
@@ -190,6 +191,36 @@ def start(
         if input_artifact is None or input_artifact.case_id != analysis.case_id:
             raise HTTPException(status_code=409, detail="Analysis input artifact is missing or no longer belongs to this case")
     capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
+    deployment_policy = resolve_resource_deployment_policy(
+        db,
+        organization_id=principal.organization_id,
+    )
+    # Laboratory deployments fail closed: an unavailable or disabled capacity
+    # check is not evidence that the configured artifact and scratch storage
+    # can support the analysis. Trial deployments retain their existing policy.
+    if deployment_policy.is_laboratory and capacity.get("status") != "READY":
+        capacity = {
+            **capacity,
+            "status": "BLOCKED",
+            "issues": [
+                *capacity.get("issues", []),
+                *(
+                    [{
+                        "code": "LAB_CAPACITY_PREFLIGHT_REQUIRED",
+                        "message": (
+                            "Laboratory analysis requires a successful storage-capacity "
+                            "preflight. Configure and enable STORAGE_CAPACITY_PREFLIGHT_ENABLED, "
+                            "then resolve any storage readiness issues before retrying."
+                        ),
+                    }]
+                    if not any(
+                        issue.get("code") == "LAB_CAPACITY_PREFLIGHT_REQUIRED"
+                        for issue in capacity.get("issues", [])
+                    )
+                    else []
+                ),
+            ],
+        }
     configuration["capacity_preflight"] = capacity
     analysis.configuration = configuration
 
