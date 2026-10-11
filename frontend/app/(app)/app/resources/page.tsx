@@ -4,7 +4,8 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 
-const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\\/$/, "");
+const API_BASE_RAW = process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1";
+const API_BASE = API_BASE_RAW.endsWith("/") ? API_BASE_RAW.slice(0, -1) : API_BASE_RAW;
 const RESOURCE_TYPES = [
   "REFERENCE_PACKAGE", "ANNOTATION_ENGINE", "ANNOTATION_CACHE", "POPULATION",
   "POPULATION_SECONDARY", "CLINICAL_DATABASE", "PHENOTYPE_ONTOLOGY",
@@ -61,7 +62,7 @@ async function apiFetch(path: string, init: RequestInit = {}) {
 }
 
 function pretty(value?: string | null) {
-  return String(value ?? "—").replaceAll("_", " ").toLowerCase().replace(/\\b\\w/g, c => c.toUpperCase());
+  return String(value ?? "—").replaceAll("_", " ").toLowerCase().split(" ").map(part => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ");
 }
 
 function statusClass(status: string) {
