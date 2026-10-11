@@ -386,6 +386,41 @@ def stage_local_artifact(
         raise
 
 
+def recover_interrupted_staging(db: Session, row: ResourceStaging) -> ResourceStaging:
+    """Reset an interrupted staging attempt after Celery redelivery.
+
+    Staging writes to a temporary sibling and atomically promotes the verified
+    payload. If a worker disappears while status is STAGING, remove only the
+    temporary siblings for this destination and return the durable record to
+    READY_TO_STAGE. The task dispatcher guarantees one live task per staging ID.
+    """
+    if row.status != "STAGING":
+        return row
+    destination = Path(row.destination_uri)
+    if destination.parent.is_dir():
+        patterns = (
+            f".{destination.name}.remote-*",
+            f".{destination.name}.staging-{row.id}-*",
+        )
+        for pattern in patterns:
+            for temporary in destination.parent.glob(pattern):
+                if temporary.is_file():
+                    temporary.unlink(missing_ok=True)
+    row.metadata_json = {
+        **dict(row.metadata_json or {}),
+        "recovery": "CELERY_REDELIVERY",
+        "recovered_at": _now().isoformat(),
+        "recovered_attempt": row.attempt,
+    }
+    return transition_staging(
+        db,
+        row,
+        "READY_TO_STAGE",
+        error_code=None,
+        error_message=None,
+    )
+
+
 def stage_resource_release(
     db: Session,
     row: ResourceStaging,
