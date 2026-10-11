@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 from backend.app.domain.resource_staging import (
     ResourceStagingError,
     create_staging_candidate,
+    prepare_staging,
+    recover_interrupted_staging,
     stage_resource_release,
+    transition_staging,
     staging_recovery_decision,
 )
 from backend.app.infrastructure.db.base import Base
@@ -84,6 +87,62 @@ def _remote_resource(access_mode="PUBLIC"):
     )
 
 
+
+def test_remote_staging_fails_closed_without_deployment_allowlist(tmp_path):
+    (tmp_path / "staged").mkdir()
+    engine, db = _db()
+    try:
+        resource = _remote_resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/clinvar/release.xml.gz",
+            destination_uri=str(tmp_path / "staged" / "release.xml.gz"),
+            expected_sha256="0" * 64,
+            expected_size_bytes=100,
+        )
+        with pytest.raises(ResourceStagingError, match="RESOURCE_STAGING_ALLOWED_HOSTS"):
+            stage_resource_release(db, row, max_remote_bytes=1024)
+        assert not Path(row.destination_uri).exists()
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_interrupted_staging_recovery_removes_only_destination_temporary_files(tmp_path):
+    destination_dir = tmp_path / "staged"
+    destination_dir.mkdir()
+    engine, db = _db()
+    try:
+        resource = _remote_resource()
+        db.add(resource)
+        db.flush()
+        destination = destination_dir / "release.xml.gz"
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri="https://ftp.ncbi.nlm.nih.gov/clinvar/release.xml.gz",
+            destination_uri=str(destination),
+            expected_sha256="0" * 64,
+            expected_size_bytes=100,
+        )
+        prepare_staging(db, row)
+        transition_staging(db, row, "STAGING")
+        orphan = destination_dir / ".release.xml.gz.remote-orphan"
+        orphan.write_bytes(b"partial")
+        unrelated = destination_dir / ".other.remote-orphan"
+        unrelated.write_bytes(b"keep")
+        recovered = recover_interrupted_staging(db, row)
+        assert recovered.status == "READY_TO_STAGE"
+        assert not orphan.exists()
+        assert unrelated.exists()
+        assert recovered.metadata_json["recovery"] == "CELERY_REDELIVERY"
+    finally:
+        db.close()
+        engine.dispose()
+
 def test_orchestrator_routes_public_https_resource_to_governed_remote(monkeypatch, tmp_path):
     payload = b"authoritative release"
     opener = FakeOpener(FakeResponse(payload))
@@ -106,7 +165,7 @@ def test_orchestrator_routes_public_https_resource_to_governed_remote(monkeypatc
             expected_sha256=sha256(payload).hexdigest(),
             expected_size_bytes=len(payload),
         )
-        result = stage_resource_release(db, row, max_remote_bytes=1024)
+        result = stage_resource_release(db, row, max_remote_bytes=1024, allowed_hosts={"ftp.ncbi.nlm.nih.gov"})
         assert result.status == "STAGED"
         assert Path(result.destination_uri).read_bytes() == payload
     finally:
@@ -187,7 +246,7 @@ def test_checksum_failure_produces_explicit_lab_action_and_preserves_active_rele
             expected_size_bytes=len(payload),
         )
 
-        result = stage_resource_release(db, row, max_remote_bytes=1024)
+        result = stage_resource_release(db, row, max_remote_bytes=1024, allowed_hosts={"ftp.ncbi.nlm.nih.gov"})
         decision = staging_recovery_decision(result)
 
         assert result.status == "INTEGRITY_FAILED"
@@ -234,7 +293,7 @@ def test_transient_remote_failure_is_retryable_without_touching_active_release(
         )
 
         with pytest.raises(ResourceStagingError) as exc_info:
-            stage_resource_release(db, row, max_remote_bytes=1024)
+            stage_resource_release(db, row, max_remote_bytes=1024, allowed_hosts={"ftp.ncbi.nlm.nih.gov"})
 
         decision = staging_recovery_decision(row)
 

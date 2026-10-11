@@ -16,6 +16,7 @@ from backend.app.domain.storage_profiles import (
 )
 from backend.app.infrastructure.db.models import OrganizationStorageProfile
 from backend.app.infrastructure.db.session import get_db
+from backend.app.domain.storage_capacity import inspect_deployment_capacity
 
 router = APIRouter(prefix="/storage", tags=["storage"])
 
@@ -36,6 +37,15 @@ def _payload(row: OrganizationStorageProfile) -> dict:
         "created_at": row.created_at.isoformat(),
         "updated_at": row.updated_at.isoformat(),
     }
+
+
+@router.get("/capacity")
+def storage_capacity(
+    principal: Principal = Depends(get_current_principal),
+):
+    """Return deployment filesystem capacity to authorized lab operators."""
+    require_role(principal, READ_ROLES)
+    return inspect_deployment_capacity()
 
 
 @router.get("/profiles")

@@ -22,9 +22,20 @@ Status: implemented and locally software-tested where the environment permits; l
 5. Build the backend image.
 6. Start API/release migration step; verify `/api/v1/health` and `/api/v1/ready`.
 7. Start workers only after the API is healthy and migrations have completed.
-8. Deploy the Next.js frontend separately (for example Vercel) with the public API base URL and Firebase web configuration.
-9. Run the M7 smoke/E2E validation against the deployed URL.
-10. Perform concurrency, failure/recovery, provider, security and laboratory-specific validation before any clinical deployment claim.
+
+### Governed resource staging (lab deployments)
+
+- Mount the persistent `resource_cache_data` volume into both API and worker containers at `/data/siraloom/resource-cache`, or configure `RESOURCE_CACHE_ROOT` to the lab's persistent resource store and mount that exact path in both containers.
+- Set `RESOURCE_STAGING_ALLOWED_HOSTS` to a comma-separated allow-list of approved publisher hostnames. Leave it empty when remote acquisition is not approved; the API fails closed in that case.
+- Set `RESOURCE_STAGING_LOCAL_SOURCE_ROOTS` to the lab-mounted read-only directories from which local resource files may be staged.
+- Set `RESOURCE_STAGING_MAX_BYTES` and `RESOURCE_STAGING_TIMEOUT_SECONDS` to the lab-approved transfer limits.
+- Generic remote staging supports public HTTPS files only, with a registered exact release URL, published SHA-256 and expected size. Authenticated or license-controlled resources require provider-specific adapters.
+- Verify that a staging attempt records free bytes, required bytes, observed size and SHA-256; simulate worker interruption and retry before enabling resource acquisition in a production environment.
+8. Deploy the frontend either with the production Compose profile (self-hosted) or separately on Vercel. For the self-hosted option, configure the public API URL and Firebase web configuration as build arguments; put a TLS reverse proxy in front of the loopback-bound frontend/API ports and route `/api/` to port 8000 and other requests to port 3000.
+9. Set `NEXT_PUBLIC_SIRALOOM_DEPLOYMENT_MODE=lab` for workspace-first mode (marketing pages redirect to login; login, onboarding, privacy and terms remain available). Use `platform` for the full public website.
+10. Configure the Firebase project and server-side Firebase Admin identity. Firebase Authentication remains an external identity dependency in this release; patient genomic files are routed through the authenticated API and configured artifact storage, not uploaded directly from the browser to Firebase Storage.
+11. Run the M7 smoke/E2E validation against the deployed URL.
+12. Perform concurrency, failure/recovery, provider, security and laboratory-specific validation before any clinical deployment claim.
 
 ## Safety boundaries
 

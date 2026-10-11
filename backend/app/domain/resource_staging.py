@@ -105,7 +105,7 @@ class StoragePreflight:
 _ALLOWED_TRANSITIONS = {
     "DISCOVERED": {"READY_TO_STAGE", "PREFLIGHT_FAILED", "INVALID"},
     "READY_TO_STAGE": {"STAGING", "PREFLIGHT_FAILED", "INVALID"},
-    "STAGING": {"STAGED", "INTEGRITY_FAILED", "INVALID"},
+    "STAGING": {"READY_TO_STAGE", "STAGED", "INTEGRITY_FAILED", "INVALID"},
     "STAGED": {"INTEGRITY_FAILED", "REMOVED"},
     "PREFLIGHT_FAILED": {"READY_TO_STAGE", "REMOVED"},
     "INTEGRITY_FAILED": {"READY_TO_STAGE", "REMOVED"},
@@ -386,6 +386,46 @@ def stage_local_artifact(
         raise
 
 
+def cleanup_staging_temporary_files(row: ResourceStaging) -> None:
+    """Remove incomplete sibling files for this resource's unique destination."""
+    destination = Path(row.destination_uri)
+    if not destination.parent.is_dir():
+        return
+    patterns = (
+        f".{destination.name}.remote-*",
+        f".{destination.name}.staging-{row.id}-*",
+    )
+    for pattern in patterns:
+        for temporary in destination.parent.glob(pattern):
+            if temporary.is_file():
+                temporary.unlink(missing_ok=True)
+
+
+def recover_interrupted_staging(db: Session, row: ResourceStaging) -> ResourceStaging:
+    """Reset an interrupted staging attempt after Celery redelivery.
+
+    Staging writes to a temporary sibling and atomically promotes the verified
+    payload. Temporary siblings are cleaned on every attempt; a durable STAGING
+    state is transitioned back to READY_TO_STAGE when recovering a redelivery.
+    """
+    cleanup_staging_temporary_files(row)
+    if row.status != "STAGING":
+        return row
+    row.metadata_json = {
+        **dict(row.metadata_json or {}),
+        "recovery": "CELERY_REDELIVERY",
+        "recovered_at": _now().isoformat(),
+        "recovered_attempt": row.attempt,
+    }
+    return transition_staging(
+        db,
+        row,
+        "READY_TO_STAGE",
+        error_code=None,
+        error_message=None,
+    )
+
+
 def stage_resource_release(
     db: Session,
     row: ResourceStaging,
@@ -393,6 +433,7 @@ def stage_resource_release(
     local_source_path: str | Path | None = None,
     max_remote_bytes: int = 5 * 1024 * 1024 * 1024,
     timeout_seconds: float = 30.0,
+    allowed_hosts: set[str] | frozenset[str] | None = None,
 ) -> ResourceStaging:
     """Execute the governed staging path selected by the registered resource.
 
@@ -425,6 +466,12 @@ def stage_resource_release(
             "generic remote staging requires a PUBLIC source contract; "
             "authenticated or license-controlled resources require a provider-specific adapter"
         )
+    if str(contract.get("license_status") or "").upper() not in {"VERIFIED", "NOT_REQUIRED"}:
+        raise ResourceStagingError(
+            "resource license/terms must be verified or explicitly not required before acquisition",
+            code="LICENSE_REVIEW_REQUIRED",
+            outcome="RESOURCE_REJECTED",
+        )
     artifact_url = str(contract.get("artifact_url") or "").strip()
     if artifact_url != row.source_uri:
         raise ResourceStagingError(
@@ -445,11 +492,23 @@ def stage_resource_release(
     parsed = urlparse(artifact_url)
     if parsed.scheme != "https" or not parsed.hostname:
         raise ResourceStagingError("source contract artifact must be an absolute HTTPS URL")
-    allowed_hosts = {parsed.hostname.lower().rstrip(".")}
+    governed_hosts = {str(host).strip().lower().rstrip(".") for host in (allowed_hosts or set()) if str(host).strip()}
+    if not governed_hosts:
+        raise ResourceStagingError(
+            "remote staging is disabled until RESOURCE_STAGING_ALLOWED_HOSTS is configured by the laboratory deployment",
+            code="PUBLISHER_ALLOWLIST_NOT_CONFIGURED",
+            outcome="RESOURCE_REJECTED",
+        )
+    if parsed.hostname.lower().rstrip(".") not in governed_hosts:
+        raise ResourceStagingError(
+            f"publisher host {parsed.hostname!r} is not in the deployment-approved allow-list",
+            code="PUBLISHER_HOST_REJECTED",
+            outcome="RESOURCE_REJECTED",
+        )
     return stage_remote_artifact(
         db,
         row,
-        allowed_hosts=allowed_hosts,
+        allowed_hosts=governed_hosts,
         max_bytes=max_remote_bytes,
         timeout_seconds=timeout_seconds,
     )

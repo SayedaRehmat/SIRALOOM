@@ -43,6 +43,7 @@ type Approval = {
   version: number;
   requested_at?: string;
 };
+type StagingRecord = { staging_id: string; status: string; attempt?: number; expected_sha256?: string | null; observed_sha256?: string | null; expected_size_bytes?: number | null; observed_size_bytes?: number | null; error_code?: string | null; error_message?: string | null; storage_preflight?: Record<string, any>; dispatch?: Record<string, any>; metadata?: Record<string, any>; };
 
 async function apiFetch(path: string, init: RequestInit = {}) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
@@ -59,6 +60,16 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
   if (!response.ok) throw new Error(body?.detail ? String(body.detail) : `HTTP ${response.status}`);
   return body;
+}
+
+function formatBytes(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return "—";
+  if (value < 1024) return `${value} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let amount = value / 1024;
+  let index = 0;
+  while (amount >= 1024 && index < units.length - 1) { amount /= 1024; index += 1; }
+  return `${amount.toFixed(amount >= 100 ? 0 : amount >= 10 ? 1 : 2)} ${units[index]}`;
 }
 
 function pretty(value?: string | null) {
@@ -113,6 +124,11 @@ export default function ResourcesPage() {
   const [decisionReason, setDecisionReason] = useState("");
   const [metadataText, setMetadataText] = useState(METADATA_TEMPLATE);
   const [qualificationResults, setQualificationResults] = useState<Record<string, any>>({});
+  const [stagingConfig, setStagingConfig] = useState<Record<string, any> | null>(null);
+  const [capacitySnapshot, setCapacitySnapshot] = useState<Record<string, any> | null>(null);
+  const [stagingRows, setStagingRows] = useState<Record<string, StagingRecord[]>>({});
+  const [stageOpenResourceId, setStageOpenResourceId] = useState<string | null>(null);
+  const [stagingForm, setStagingForm] = useState({ source_uri: "", expected_size_bytes: "", expected_sha256: "" });
   const [form, setForm] = useState({
     name: "", provider: "", resource_type: "REFERENCE_PACKAGE", version: "",
     genome_build: "GRCh38", access_method: "LOCAL", location: "", checksum: "",
@@ -123,12 +139,16 @@ export default function ResourcesPage() {
     setLoading(true);
     setError("");
     try {
-      const [resourceRows, approvalRows] = await Promise.all([
+      const [resourceRows, approvalRows, stagingConfiguration, capacity] = await Promise.all([
         apiFetch("/resources?status="),
-        apiFetch("/resources/approvals/pending"),
+        apiFetch("/resources/approvals/pending").catch(() => []),
+        apiFetch("/resources/staging/config").catch(() => null),
+        apiFetch("/storage/capacity").catch(() => null),
       ]);
       setResources(Array.isArray(resourceRows) ? resourceRows : []);
       setApprovals(Array.isArray(approvalRows) ? approvalRows : []);
+      setStagingConfig(stagingConfiguration && typeof stagingConfiguration === "object" ? stagingConfiguration : null);
+      setCapacitySnapshot(capacity && typeof capacity === "object" ? capacity : null);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("resources.loadError"));
     } finally {
@@ -137,6 +157,70 @@ export default function ResourcesPage() {
   }, [t]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const loadStaging = useCallback(async (resourceId: string) => {
+    try {
+      const rows = await apiFetch(`/resources/${resourceId}/staging`);
+      setStagingRows(current => ({ ...current, [resourceId]: Array.isArray(rows) ? rows : [] }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("resources.operationFailed"));
+    }
+  }, [t]);
+
+  async function openStaging(resource: Resource) {
+    setStageOpenResourceId(resource.resource_id);
+    const sourceContract = (resource.metadata?.source_contract ?? {}) as Record<string, unknown>;
+    setStagingForm({
+      source_uri: String(sourceContract.artifact_url ?? ""),
+      expected_size_bytes: "",
+      expected_sha256: String(resource.checksum ?? ""),
+    });
+    await loadStaging(resource.resource_id);
+  }
+
+  async function prepareStaging(resource: Resource) {
+    setBusy(`stage-${resource.resource_id}`); setError(""); setMessage("");
+    try {
+      const expectedSize = Number(stagingForm.expected_size_bytes);
+      if (!Number.isSafeInteger(expectedSize) || expectedSize <= 0) throw new Error("Enter the exact positive release size in bytes.");
+      if (!/^[a-fA-F0-9]{64}$/.test(stagingForm.expected_sha256.trim())) throw new Error("Enter the publisher-verified 64-character SHA-256.");
+      const result = await apiFetch(`/resources/${resource.resource_id}/staging`, {
+        method: "POST",
+        body: JSON.stringify({
+          source_uri: stagingForm.source_uri.trim() || null,
+          expected_sha256: stagingForm.expected_sha256.trim(),
+          expected_size_bytes: expectedSize,
+          storage_backend: "ORGANIZATION_LOCAL_FILESYSTEM",
+        }),
+      });
+      setMessage(result.status === "READY_TO_STAGE" ? t("resources.stagingReady") : t("resources.stagingBlocked"));
+      await loadStaging(resource.resource_id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("resources.operationFailed"));
+      await loadStaging(resource.resource_id);
+    } finally { setBusy(null); }
+  }
+
+  async function executeStaging(resource: Resource, record: StagingRecord) {
+    setBusy(`stage-${resource.resource_id}`); setError(""); setMessage("");
+    try {
+      const result = await apiFetch(`/resources/${resource.resource_id}/staging/${record.staging_id}/execute`, { method: "POST" });
+      setMessage(["PUBLISHED","QUEUING","RUNNING"].includes(String(result.dispatch?.status ?? "").toUpperCase()) ? t("resources.stagingQueued") : result.status === "STAGED" ? t("resources.stagingCompleted") : t("resources.stagingBlocked"));
+      await loadStaging(resource.resource_id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("resources.operationFailed"));
+      await loadStaging(resource.resource_id);
+    } finally { setBusy(null); }
+  }
+
+  useEffect(() => {
+    if (!stageOpenResourceId) return;
+    const rows = stagingRows[stageOpenResourceId] ?? [];
+    const active = rows.some(row => row.status === "STAGING" || ["QUEUING","PUBLISHED","RUNNING"].includes(String(row.dispatch?.status ?? "").toUpperCase()));
+    if (!active) return;
+    const timer = window.setInterval(() => { void loadStaging(stageOpenResourceId); }, 3000);
+    return () => window.clearInterval(timer);
+  }, [stageOpenResourceId, stagingRows, loadStaging]);
 
   const resourcesById = useMemo(() => new Map(resources.map(r => [r.resource_id, r])), [resources]);
   const visibleResources = useMemo(() => resources.filter(r =>
@@ -272,6 +356,14 @@ export default function ResourcesPage() {
         <label className="resources-qualification-version">{t("resources.qualificationVersion")}<input value={qualificationVersion} onChange={e => setQualificationVersion(e.target.value)} /></label>
       </section>
 
+      {capacitySnapshot && <section className="panel resources-capacity-panel">
+        <div className="panel-head"><div><p className="eyebrow">{t("resources.storageCapacity")}</p><h2>{capacitySnapshot.capacity_preflight_enabled ? t("resources.capacityPreflightEnabled") : t("resources.capacityPreflightDisabled")}</h2></div><span className={`badge ${capacitySnapshot.status === "READY" ? "success" : "danger"}`}>{pretty(capacitySnapshot.status)}</span></div>
+        <p className="muted">{t("resources.uploadLimit")}: {formatBytes(capacitySnapshot.max_artifact_upload_bytes)} · Resource staging max: {formatBytes(capacitySnapshot.resource_staging_max_bytes)}</p>
+        <div className="resources-capacity-grid">{(capacitySnapshot.roots ?? []).map((root: any) => <div className="resources-capacity-cell" key={root.label}><strong>{pretty(root.label)}</strong><span>{t("resources.freeStorage")}: {formatBytes(root.free_bytes)}</span><span>{t("resources.totalStorage")}: {formatBytes(root.total_bytes)}</span><small>{root.writable ? t("resources.storageWritable") : root.error_code ?? t("resources.capacityPreflightDisabled")}</small></div>)}</div>
+        {(capacitySnapshot.issues ?? []).map((issue: any, index: number) => <p className="notice error-notice" key={`${issue.code ?? "capacity"}-${index}`}>{issue.storage ? `${issue.storage}: ` : ""}{issue.code}: {issue.message}</p>)}
+        {capacitySnapshot.reservation_supported === false && <p className="muted">{t("workspace.capacityReservationNotProvided")}</p>}
+      </section>}
+
       {showRegister && <section className="panel resources-register-panel">
         <div className="panel-head">
           <div><p className="eyebrow">{t("resources.candidateOnly")}</p><h2>{t("resources.register")}</h2></div>
@@ -285,7 +377,7 @@ export default function ResourcesPage() {
             <label>{t("resources.version")}<input required value={form.version} onChange={e => setForm(s => ({ ...s, version: e.target.value }))} /></label>
             <label>{t("resources.build")}<select value={form.genome_build} onChange={e => setForm(s => ({ ...s, genome_build: e.target.value }))}><option value="GRCh38">GRCh38</option><option value="GRCh37">GRCh37</option><option value="">Not build-specific</option></select></label>
             <label>{t("resources.accessMethod")}<select value={form.access_method} onChange={e => setForm(s => ({ ...s, access_method: e.target.value }))}>{["LOCAL","FILE","LOCAL_ONLY","HTTPS","HTTP_API","REST","GRAPHQL","TABIX","VCF","SQL","S3","GCS","AUTHENTICATED"].map(v => <option key={v} value={v}>{v}</option>)}</select></label>
-            <label className="resources-field-wide">{t("resources.location")}<input required value={form.location} onChange={e => setForm(s => ({ ...s, location: e.target.value }))} placeholder="/lab/resources/reference.fa or approved endpoint" /></label>
+            <label className="resources-field-wide">{t("resources.location")}<input required={form.access_method !== "HTTPS"} value={form.location} onChange={e => setForm(s => ({ ...s, location: e.target.value }))} placeholder={form.access_method === "HTTPS" ? "Leave blank to use the lab-managed resource cache" : "/data/references/reference.fa or approved endpoint"} /></label>
             <label>{t("resources.checksum")}<input value={form.checksum} onChange={e => setForm(s => ({ ...s, checksum: e.target.value }))} placeholder="64 hexadecimal characters" /></label>
             <label>{t("resources.license")}<input value={form.license_text} onChange={e => setForm(s => ({ ...s, license_text: e.target.value }))} /></label>
             <label className="resources-field-wide">{t("resources.populationDefinition")}<input value={form.population_definition} onChange={e => setForm(s => ({ ...s, population_definition: e.target.value }))} /></label>
@@ -313,6 +405,7 @@ export default function ResourcesPage() {
                 <td>{resource.resource_type}</td><td>{resource.version}<small>{resource.checksum ? `SHA-256 ${resource.checksum.slice(0, 12)}…` : "No checksum recorded"}</small></td><td>{resource.genome_build ?? "—"}</td>
                 <td><span className={`badge ${statusClass(resource.status)}`}>{pretty(resource.status)}</span></td>
                 <td><div className="resources-row-actions">
+                  {resource.access_method === "HTTPS" && ["CANDIDATE","QUALIFIED"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy || busy === `stage-${resource.resource_id}`} onClick={() => void openStaging(resource)}>{t("resources.stageRelease")}</button>}
                   <button className="secondary small" type="button" disabled={isBusy} onClick={() => void runQualification(resource)}>{isBusy ? "Working…" : t("resources.qualify")}</button>
                   {["QUALIFIED","ACTIVE"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy} onClick={() => void requestApproval(resource)}>{t("resources.requestApproval")}</button>}
                   {resource.status !== "ACTIVE" && ["QUALIFIED","APPROVED"].includes(resource.status) && <button className="secondary small" type="button" disabled={isBusy} onClick={() => void activate(resource)}>{t("resources.activate")}</button>}
@@ -322,6 +415,37 @@ export default function ResourcesPage() {
               </tr>;
             })}</tbody></table></div>}
       </section>
+
+      {stageOpenResourceId && resourcesById.get(stageOpenResourceId) && <section className="panel resources-staging-panel">
+        {(() => {
+          const resource = resourcesById.get(stageOpenResourceId)!;
+          const rows = stagingRows[stageOpenResourceId] ?? [];
+          const busyStage = busy === `stage-${resource.resource_id}`;
+          return <>
+            <div className="panel-head"><div><p className="eyebrow">{t("resources.stagingRecords")}</p><h2>{resource.name} · {resource.version}</h2><p className="muted">{t("resources.stagingPolicy")}</p></div><button className="secondary" type="button" onClick={() => setStageOpenResourceId(null)}>{t("cases.back")}</button></div>
+            <div className="resources-staging-config"><span><strong>{t("resources.resourceCacheRoot")}:</strong> {String(stagingConfig?.organization_resource_root ?? stagingConfig?.resource_cache_root ?? "—")}</span><span><strong>{t("resources.allowedHosts")}:</strong> {(stagingConfig?.allowed_publisher_hosts ?? []).join(", ") || t("resources.remoteStagingDisabled")}</span><span><strong>Maximum release size:</strong> {stagingConfig?.max_remote_bytes ? formatBytes(Number(stagingConfig.max_remote_bytes)) : "—"}</span></div>
+            <div className="resources-staging-form">
+              <label>{t("resources.sourceUrl")}<input value={stagingForm.source_uri} onChange={e => setStagingForm(s => ({ ...s, source_uri: e.target.value }))} /></label>
+              <label>{t("resources.expectedSize")}<input inputMode="numeric" type="number" min="1" required value={stagingForm.expected_size_bytes} onChange={e => setStagingForm(s => ({ ...s, expected_size_bytes: e.target.value }))} /></label>
+              <label>{t("resources.expectedSha256")}<input required value={stagingForm.expected_sha256} onChange={e => setStagingForm(s => ({ ...s, expected_sha256: e.target.value }))} /></label>
+              <button className="primary" type="button" disabled={busyStage || !stagingConfig?.remote_staging_enabled} onClick={() => void prepareStaging(resource)}>{busyStage ? "Working…" : t("resources.prepareStaging")}</button>
+            </div>
+            {!stagingConfig?.remote_staging_enabled && <p className="notice">{t("resources.remoteStagingDisabled")}</p>}
+            {!rows.length ? <div className="empty"><strong>{t("resources.noStagingRecords")}</strong></div> : <div className="resources-staging-list">{rows.map(record => {
+              const dispatchStatus = String(record.dispatch?.status ?? "").toUpperCase();
+              const active = ["QUEUING","PUBLISHED","RUNNING"].includes(dispatchStatus);
+              return <article className="resources-staging-row" key={record.staging_id}>
+                <div className="resources-staging-row-head"><div><strong>{pretty(record.status)}</strong><small>Attempt {record.attempt ?? 0} · {record.staging_id}</small></div><span className={`badge ${record.status === "STAGED" ? "success" : ["PREFLIGHT_FAILED","INTEGRITY_FAILED","INVALID"].includes(record.status) ? "danger" : "neutral"}`}>{pretty(dispatchStatus || record.status)}</span></div>
+                <div className="resources-staging-metrics"><span><small>{t("resources.storageRequired")}</small><strong>{formatBytes(record.storage_preflight?.required_bytes ?? record.expected_size_bytes)}</strong></span><span><small>{t("resources.storageAvailable")}</small><strong>{formatBytes(record.storage_preflight?.available_bytes)}</strong></span><span><small>{t("resources.observedSize")}</small><strong>{formatBytes(record.observed_size_bytes)}</strong></span></div>
+                {record.error_message && <p className="notice error-notice">{record.error_code}: {record.error_message}</p>}
+                {record.observed_sha256 && <details><summary>{t("resources.observedSha256")}</summary><code>{record.observed_sha256}</code></details>}
+                {record.status === "READY_TO_STAGE" && !active && <button className="primary small" type="button" disabled={busyStage} onClick={() => void executeStaging(resource, record)}>{busyStage ? "Working…" : t("resources.executeStaging")}</button>}
+                {record.status === "STAGED" && <p className="muted">{t("resources.stagingCompleted")}</p>}
+              </article>;
+            })}</div>}
+          </>;
+        })()}
+      </section>}
 
       <section className="panel resources-approvals-panel">
         <div className="panel-head"><div><p className="eyebrow">{t("resources.pendingApprovals")}</p><h2>{approvals.length} pending</h2></div></div>
