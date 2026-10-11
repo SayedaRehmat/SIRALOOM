@@ -72,6 +72,8 @@ def test_provider_discovery_registers_candidates_without_activation(monkeypatch)
         assert notifications[0].notification_type == "RESOURCE_RELEASE_DISCOVERED"
         assert notifications[0].organization_id == organization_id
         assert notifications[0].metadata_json["discovery_id"] == str(discovery.id)
+        assert notifications[0].metadata_json["title_ar"]
+        assert notifications[0].metadata_json["body_ar"]
 
         # A repeat scan must not send the same release notification again.
         resource_discovery.discover_resource_candidates(db)
