@@ -585,3 +585,20 @@ tbody tr.selected { background: #eff8f5; }
   .siraloom-workspace .workspace-language-switcher { grid-template-columns: repeat(3, minmax(0, 68px)); }
   .siraloom-workspace .app-nav .text-button { margin: 0 8px; justify-self: end; }
 }
+
+.workflow-gate-panel { margin-top: 14px; padding: 14px; border: 1px solid #d8d2f1; border-radius: 10px; background: #fbfaff; }
+.workflow-gate-panel .panel-head { margin-bottom: 10px; }
+.workflow-gate-panel h4 { margin: 4px 0 0; font-size: 14px; }
+.workflow-gate-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.workflow-gate-chip { display: grid; gap: 3px; text-align: left; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--text); cursor: pointer; }
+.workflow-gate-chip strong { font-size: 11px; }
+.workflow-gate-chip span { font-size: 10px; color: var(--muted); }
+.workflow-gate-chip.selected { border-color: var(--accent); background: #f1effb; box-shadow: inset 0 0 0 1px var(--accent); }
+.workflow-gate-form { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(240px, 1.5fr); gap: 10px 12px; margin-top: 12px; align-items: end; }
+.workflow-gate-form label { display: grid; gap: 6px; font-size: 11px; color: var(--muted); font-weight: 600; }
+.workflow-gate-form select, .workflow-gate-form textarea { width: 100%; border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; background: white; color: var(--text); font: inherit; font-weight: 400; }
+.workflow-gate-form textarea { resize: vertical; }
+.workflow-gate-form > button { justify-self: start; }
+.workflow-gate-checkbox { grid-column: 1 / -1; display: flex !important; grid-template-columns: auto 1fr; align-items: flex-start; font-weight: 450 !important; line-height: 1.45; }
+.workflow-gate-checkbox input { width: auto !important; margin-top: 3px; }
+@media (max-width: 760px) { .workflow-gate-form { grid-template-columns: 1fr; } }
