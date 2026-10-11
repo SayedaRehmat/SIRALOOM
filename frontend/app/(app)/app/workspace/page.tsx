@@ -259,6 +259,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!caseId) return;
+    setPreflightResult(null);
     const loadCase = async () => {
       try {
         const data = await apiFetch(`/cases/${caseId}`);
