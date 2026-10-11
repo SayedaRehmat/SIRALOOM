@@ -297,13 +297,15 @@ export default function Home() {
         const indicationValue = data?.clinical_context?.indication;
         if (typeof indicationValue === "string") setIndication(indicationValue);
 
-        // The selected case is the source of truth for workspace analysis context.
-        // Never trust a stale analysis ID left in browser storage from another case.
-        const latestAnalysis = Array.isArray(data?.analyses) && data.analyses.length
-          ? data.analyses[0]
-          : null;
-        if (latestAnalysis?.analysis_id) {
-          const nextAnalysisId = String(latestAnalysis.analysis_id);
+        // The selected case is authoritative. Preserve an explicitly selected
+        // analysis only when it belongs to this case; otherwise fall back to latest.
+        const availableAnalyses = Array.isArray(data?.analyses) ? data.analyses : [];
+        const requestedAnalysisId = window.localStorage.getItem("siraloom.analysis_id") ?? "";
+        const selectedAnalysis = availableAnalyses.find((item: any) => String(item.analysis_id) === requestedAnalysisId)
+          ?? availableAnalyses[0]
+          ?? null;
+        if (selectedAnalysis?.analysis_id) {
+          const nextAnalysisId = String(selectedAnalysis.analysis_id);
           setAnalysisId(nextAnalysisId);
           window.localStorage.setItem("siraloom.analysis_id", nextAnalysisId);
         } else {
