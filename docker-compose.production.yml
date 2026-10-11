@@ -12,7 +12,7 @@ services:
       timeout: 5s
       retries: 20
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ${SIRALOOM_POSTGRES_HOST_PATH:-postgres_data}:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -24,7 +24,7 @@ services:
       timeout: 5s
       retries: 20
     volumes:
-      - redis_data:/data
+      - ${SIRALOOM_REDIS_HOST_PATH:-redis_data}:/data
 
   api:
     build:
@@ -41,9 +41,9 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
-      - artifact_data:/data/siraloom/artifacts
-      - reference_data:/data/references:ro
-      - resource_cache_data:/data/siraloom/resource-cache
+      - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
+      - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
+      - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
       interval: 10s
@@ -64,9 +64,9 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - artifact_data:/data/siraloom/artifacts
-      - reference_data:/data/references:ro
-      - resource_cache_data:/data/siraloom/resource-cache
+      - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
+      - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
+      - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
 
   frontend:
     build:
