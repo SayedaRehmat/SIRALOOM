@@ -1,3 +1,4 @@
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -99,3 +100,12 @@ def test_scientific_resource_discovery_is_scheduled_daily():
     schedule = celery_app.conf.beat_schedule
     assert schedule["discover-scientific-resource-releases-daily"]["task"] == "siraloom.discover_scientific_resources"
     assert schedule["discover-scientific-resource-releases-daily"]["schedule"] == 86400.0
+
+
+def test_production_compose_runs_one_persistent_beat_scheduler():
+    compose = (Path(__file__).resolve().parents[1] / "docker-compose.production.yml").read_text(encoding="utf-8")
+    assert compose.count("\\n  beat:\\n") == 1
+    beat_block = compose.split("  beat:" + chr(10), 1)[1].split(chr(10) + "  frontend:", 1)[0]
+    assert "celery" in beat_block
+    assert "beat" in beat_block
+    assert "${SIRALOOM_BEAT_HOST_PATH:-beat_data}:/data/siraloom/beat" in beat_block
