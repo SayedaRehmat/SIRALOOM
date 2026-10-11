@@ -34,7 +34,6 @@ class ResourceStagingCreateRequest(BaseModel):
     expected_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     expected_size_bytes: int | None = Field(default=None, gt=0)
     storage_backend: str = "ORGANIZATION_LOCAL_FILESYSTEM"
-    staging_key: str | None = None
     metadata: dict = Field(default_factory=dict)
 
 
@@ -185,6 +184,7 @@ def register_resource(
         access_method == "HTTPS"
         and str(source_contract.get("access_mode") or "").upper() == "PUBLIC"
         and str(source_contract.get("checksum_status") or "").upper() == "PUBLISHED_AND_VERIFIED"
+        and str(source_contract.get("license_status") or "").upper() in {"VERIFIED", "NOT_REQUIRED"}
         and urlparse(artifact_url).scheme == "https"
         and bool(urlparse(artifact_url).hostname)
     )
@@ -391,6 +391,9 @@ def create_resource_staging(
     if not resource.location:
         raise HTTPException(status_code=400, detail="Resource must have a registered execution destination before staging")
     destination = _validate_org_destination(resource.location, principal.organization_id)
+    collision = db.scalar(select(Resource).where(Resource.location == str(destination), Resource.id != resource.id).limit(1))
+    if collision is not None:
+        raise HTTPException(status_code=409, detail="Another registered resource already uses this destination path")
     source_contract = dict((resource.metadata_json or {}).get("source_contract") or {})
     access_method = str(resource.access_method or "").strip().upper()
     source_uri = str(payload.source_uri or "").strip()
@@ -413,6 +416,8 @@ def create_resource_staging(
             raise HTTPException(status_code=400, detail="Generic staging only supports public resources; use a provider-specific adapter for authenticated/licensed sources")
         if str(source_contract.get("checksum_status") or "").upper() != "PUBLISHED_AND_VERIFIED":
             raise HTTPException(status_code=400, detail="Remote staging requires a published and verified checksum declaration")
+        if str(source_contract.get("license_status") or "").upper() not in {"VERIFIED", "NOT_REQUIRED"}:
+            raise HTTPException(status_code=409, detail="License/terms review must be resolved before resource acquisition")
         allowed_hosts = _allowed_resource_hosts()
         if not allowed_hosts:
             raise HTTPException(status_code=409, detail="Remote staging is disabled until the lab configures RESOURCE_STAGING_ALLOWED_HOSTS")
@@ -450,7 +455,6 @@ def create_resource_staging(
             storage_backend=payload.storage_backend,
             expected_sha256=expected_sha256,
             expected_size_bytes=expected_size_bytes,
-            staging_key=payload.staging_key,
             metadata={
                 **payload.metadata,
                 "source_contract_release": source_contract.get("release_identity"),
