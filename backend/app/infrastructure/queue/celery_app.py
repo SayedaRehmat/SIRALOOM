@@ -761,10 +761,12 @@ if Celery is not None:
     def run_resource_staging_task(self, staging_id: str):
         from pathlib import Path
         from uuid import UUID
+        from datetime import datetime, timezone
         from backend.app.config import settings
         from backend.app.domain.resource_staging import (
             ResourceStagingError,
             _declared_local_source_path,
+            cleanup_staging_temporary_files,
             prepare_staging,
             recover_interrupted_staging,
             stage_resource_release,
@@ -804,11 +806,12 @@ if Celery is not None:
                 db.commit()
                 return {"staging_id": staging_id, "status": row.status, "error_code": row.error_code}
 
+            cleanup_staging_temporary_files(row)
             metadata = dict(row.metadata_json or {})
             metadata["staging_dispatch"] = {
                 **dict(metadata.get("staging_dispatch") or {}),
                 "status": "RUNNING",
-                "started_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                "started_at": datetime.now(timezone.utc).isoformat(),
                 "task_id": str(self.request.id or ""),
             }
             row.metadata_json = metadata
@@ -859,7 +862,6 @@ if Celery is not None:
                 "error_code": staged.error_code,
             }
         except ResourceStagingError as exc:
-            db.rollback()
             current = db.get(ResourceStaging, staging_uuid, with_for_update=True)
             if current is not None:
                 if current.status == "STAGING":
