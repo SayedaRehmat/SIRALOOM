@@ -252,20 +252,25 @@ export default function CaseDossierPage() {
         <div className="panel-head"><div><p className="eyebrow">{t("workspace.reportSection")}</p><h2>{t("workspace.reportSection")}</h2></div><span className="badge neutral">{reports.length}</span></div>
         {reportError && <div className="notice error-notice" role="status">{t("cases.dossierReportsUnavailable")}: {reportError}</div>}
         {!reports.length ? <div className="empty small"><strong>{t("cases.dossierNoReports")}</strong><p>{t("cases.dossierReportsLead")}</p></div> : <div className="case-dossier-list">
-          {reports.map(report => <article key={report.report_id}>
-            <div>
-              <strong>{pretty(report.report_type ?? "CLINICAL_INTERPRETATION")} · v{report.version}</strong>
-              <small>{pretty(report.status)} · {report.language ?? "—"} · {formatDate(report.created_at)}</small>
-              {report.signed_sha256 && <code>{t("cases.dossierSignedHash")}: {report.signed_sha256}</code>}
-              <code>{report.report_id}</code>
-            </div>
-            <div className="case-dossier-actions">
-              <Link className="secondary link-button" href="/app/reports" onClick={() => {
-                const analysis = analyses.find(item => item.analysis_id === report.analysis_id);
-                if (analysis) selectAnalysis(analysis);
-              }}>{t("cases.dossierOpenReports")}</Link>
-            </div>
-          </article>)}
+          {reports.map(report => {
+            const reportArtifactId = report.signed_artifact_id ?? report.artifact_id;
+            const reportArtifact = reportArtifactId ? artifacts.find(item => item.artifact_id === reportArtifactId) : undefined;
+            return <article key={report.report_id}>
+              <div>
+                <strong>{pretty(report.report_type ?? "CLINICAL_INTERPRETATION")} · v{report.version}</strong>
+                <small>{pretty(report.status)} · {report.language ?? "—"} · {formatDate(report.created_at)}</small>
+                {report.signed_sha256 && <code>{t("cases.dossierSignedHash")}: {report.signed_sha256}</code>}
+                <code>{report.report_id}</code>
+              </div>
+              <div className="case-dossier-actions">
+                {reportArtifact && <button className="secondary small" type="button" disabled={downloadingId === reportArtifact.artifact_id} onClick={() => void downloadArtifact(reportArtifact)}>{downloadingId === reportArtifact.artifact_id ? t("workspace.downloading") : t("workspace.downloadPdf")}</button>}
+                <Link className="secondary link-button" href="/app/reports" onClick={() => {
+                  const analysis = analyses.find(item => item.analysis_id === report.analysis_id);
+                  if (analysis) selectAnalysis(analysis);
+                }}>{t("cases.dossierOpenReports")}</Link>
+              </div>
+            </article>;
+          })}
         </div>}
       </section>
 
