@@ -267,6 +267,18 @@ def test_real_registry_recovery_queues_one_durable_dispatch_and_duplicate_start_
         lambda requested_id, db, _principal: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    # Isolate registry resolution/dispatch from the independent laboratory storage gate.
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_capacity",
+        lambda _size: {
+            "status": "READY",
+            "enabled": True,
+            "issues": [],
+            "reservation_supported": False,
+            "roots": [],
+        },
+    )
     monkeypatch.setattr(
         celery_app,
         "publish_analysis_dispatch",
