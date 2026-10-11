@@ -62,7 +62,7 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   return body;
 }
 
-function formatBytes(value?: number) {
+function formatBytes(value?: number | null) {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return "—";
   if (value < 1024) return `${value} B`;
   const units = ["KB", "MB", "GB", "TB"];
