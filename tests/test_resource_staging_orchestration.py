@@ -106,7 +106,7 @@ def test_orchestrator_routes_public_https_resource_to_governed_remote(monkeypatc
             expected_sha256=sha256(payload).hexdigest(),
             expected_size_bytes=len(payload),
         )
-        result = stage_resource_release(db, row, max_remote_bytes=1024)
+        result = stage_resource_release(db, row, max_remote_bytes=1024, allowed_hosts={"ftp.ncbi.nlm.nih.gov"})
         assert result.status == "STAGED"
         assert Path(result.destination_uri).read_bytes() == payload
     finally:
