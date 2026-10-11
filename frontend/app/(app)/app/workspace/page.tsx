@@ -171,6 +171,8 @@ export default function Home() {
   const [specimenType, setSpecimenType] = useState("Blood");
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
   const [genomeBuild, setGenomeBuild] = useState("GRCh38");
+  const [resourceProfileId, setResourceProfileId] = useState("WES_GRCh38_STANDARD");
+  const [preflightResult, setPreflightResult] = useState<any>(null);
   const [indication, setIndication] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [artifactId, setArtifactId] = useState("");
@@ -213,6 +215,21 @@ export default function Home() {
   }, [analysis]);
 
   const waitingGates = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).filter(step => step.status === "REQUIRES_REVIEW"), [analysis]);
+
+  const resourceStageReadiness = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).flatMap(step => {
+    const raw = step.metadata?.resource_readiness;
+    if (!raw || typeof raw !== "object") return [];
+    const readiness = raw as Record<string, any>;
+    return [{ step_id: step.step_id, status: String(readiness.status ?? "UNKNOWN"), issues: Array.isArray(readiness.issues) ? readiness.issues : [], selected: Array.isArray(readiness.selected) ? readiness.selected : [] }];
+  }), [analysis]);
+
+  const preflightIssues = useMemo(() => {
+    const fromStart = preflightResult?.resource_issues;
+    if (Array.isArray(fromStart) && fromStart.length) return fromStart;
+    const found = new Map<string, any>();
+    for (const stage of resourceStageReadiness) for (const issue of stage.issues) found.set(`${issue.capability}:${issue.code}`, issue);
+    return Array.from(found.values());
+  }, [preflightResult, resourceStageReadiness]);
 
   const annotationProgress = useMemo(() => {
     const annotation = (analysis?.steps as Step[] | undefined)?.find((step) => step.step_id === "annotate");
@@ -567,12 +584,22 @@ export default function Home() {
           workflow_id: "variant-v1",
           workflow_version: "2.1",
           reference_build: genomeBuild,
+          resource_profile_id: resourceProfileId,
         }),
       });
       setAnalysisId(created.analysis_id);
       window.localStorage.setItem("siraloom.analysis_id", created.analysis_id);
-      await apiFetch(`/analyses/${created.analysis_id}/start`, { method: "POST" });
-      setMessage(t("workspace.analysisQueued"));
+      const started = await apiFetch(`/analyses/${created.analysis_id}/start`, { method: "POST" });
+      setPreflightResult(started);
+      const current = await apiFetch(`/analyses/${created.analysis_id}`);
+      setAnalysis(current);
+      setPollingEpoch(epoch => epoch + 1);
+      if (started.status === "BLOCKED" || started.resource_plan_status === "BLOCKED") {
+        const issueText = (started.resource_issues ?? []).map((issue: any) => `${issue.capability}: ${issue.message}`).join(" · ");
+        setMessage(issueText ? `${t("workspace.preflightBlocked")}: ${issueText}` : t("workspace.preflightBlocked"));
+      } else {
+        setMessage(t("workspace.analysisQueued"));
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.analysisStartFailed"));
     } finally {
@@ -859,8 +886,15 @@ export default function Home() {
               ))}
             </select>
           </label>
+          <label>{t("workspace.analysisProfile")}
+            <select value={resourceProfileId} onChange={(e) => { const profile = e.target.value; setResourceProfileId(profile); setGenomeBuild(profile === "WES_GRCh37_STANDARD" ? "GRCh37" : "GRCh38"); }}>
+              <option value="WES_GRCh38_STANDARD">{t("workspace.profileWes38")}</option>
+              <option value="WGS_GRCh38_STANDARD">{t("workspace.profileWgs38")}</option>
+              <option value="WES_GRCh37_STANDARD">{t("workspace.profileWes37")}</option>
+            </select>
+          </label>
           <label>Reference genome
-            <select value={genomeBuild} onChange={(e) => setGenomeBuild(e.target.value)}>
+            <select value={genomeBuild} onChange={(e) => { const build = e.target.value; setGenomeBuild(build); setResourceProfileId(build === "GRCh37" ? "WES_GRCh37_STANDARD" : resourceProfileId === "WGS_GRCh38_STANDARD" ? "WGS_GRCh38_STANDARD" : "WES_GRCh38_STANDARD"); }}>
               <option value="GRCh38">GRCh38</option>
               <option value="GRCh37">GRCh37</option>
             </select>
@@ -898,6 +932,11 @@ export default function Home() {
               {gateDecision === "REJECT_AND_RETRY" && <label className="workflow-gate-checkbox"><input type="checkbox" checked={gateInputsChanged} onChange={e => setGateInputsChanged(e.target.checked)} />{t("workspace.gateInputsChanged")}</label>}
               <button type="button" className="primary" disabled={busy || !gateReason.trim()} onClick={() => void resolveGate()}>{busy ? t("workspace.loading") : t("workspace.gateSubmit")}</button>
             </div>}
+          </div>}
+          {(preflightResult || resourceStageReadiness.length > 0) && <div className="preflight-panel">
+            <div className="panel-head"><div><div className="section-kicker">{t("workspace.preflightTitle")}</div><h4>{preflightResult?.resource_plan_status ?? preflightResult?.status ?? (resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? "BLOCKED" : "READY")}</h4></div><span className={`badge ${preflightResult?.status === "BLOCKED" || resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? "danger" : "neutral"}`}>{preflightResult?.status === "BLOCKED" || resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? t("workspace.preflightBlocked") : t("workspace.preflightReady")}</span></div>
+            {preflightIssues.length ? <div className="preflight-issues"><strong>{t("workspace.preflightIssues")}</strong>{preflightIssues.map((issue: any, index: number) => <div className="preflight-issue" key={`${issue.capability ?? "resource"}-${issue.code ?? index}`}><b>{issue.capability ?? "Resource"}{issue.required ? " · required" : ""}</b><span>{issue.message ?? issue.code ?? "Resource readiness issue"}</span>{issue.code && <small>{issue.code}</small>}</div>)}</div> : <p className="muted">{t("workspace.preflightNoIssues")}</p>}
+            {resourceStageReadiness.length > 0 && <details className="preflight-details"><summary>{t("workspace.preflightDetails")}</summary>{resourceStageReadiness.map(stage => <div className="preflight-stage" key={stage.step_id}><strong>{prettyStatus(stage.step_id)}</strong><span className={`badge ${stage.status === "BLOCKED" ? "danger" : "neutral"}`}>{prettyStatus(stage.status)}</span>{stage.selected.map((resource: any, index: number) => <small key={`${resource.resource_id ?? resource.provider ?? "resource"}-${index}`}>{resource.capability}: {resource.name ?? resource.provider} · {resource.version ?? "unversioned"}</small>)}{stage.issues.map((issue: any, index: number) => <small className="preflight-stage-issue" key={`${issue.code ?? "issue"}-${index}`}>{issue.capability}: {issue.message ?? issue.code}</small>)}</div>)}</details>}
           </div>}
           {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>{t("workspace.checkpointPersisted")}</span></div>}
           {analysis?.started_at && <div className="run-meta"><span>Started {formatDate(analysis.started_at)}</span><span>Last state update {formatDate(analysis.completed_at ?? analysis.started_at)}</span></div>}
