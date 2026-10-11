@@ -121,12 +121,15 @@ async def upload_artifact(
         raise HTTPException(status_code=400, detail="Select genome_build explicitly as GRCh37 or GRCh38; SIRALOOM will not silently infer it.")
 
     try:
-        await file.seek(0, 2)
+        file.file.seek(0, 2)
         incoming_size = int(file.file.tell())
         await file.seek(0)
     except Exception:
         incoming_size = int(file.size or 0)
         await file.seek(0)
+    if incoming_size <= 0:
+        await file.close()
+        raise HTTPException(status_code=400, detail="The uploaded artifact is empty.")
     if incoming_size > max_bytes:
         await file.close()
         raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
