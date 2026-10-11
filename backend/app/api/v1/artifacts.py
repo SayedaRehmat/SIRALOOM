@@ -21,6 +21,7 @@ from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
 from backend.app.domain.storage_profiles import StorageProfileError, resolve_storage_profile, artifact_store_for_organization
 from backend.app.infrastructure.db.session import get_db
+from backend.app.domain.storage_capacity import preflight_upload_capacity
 
 router = APIRouter(tags=["artifacts"])
 MAX_BYTES = settings.max_artifact_upload_bytes
@@ -119,6 +120,27 @@ async def upload_artifact(
     if kind == "VCF" and requested_build not in {"GRCh37", "GRCh38"}:
         raise HTTPException(status_code=400, detail="Select genome_build explicitly as GRCh37 or GRCh38; SIRALOOM will not silently infer it.")
 
+    try:
+        await file.seek(0, 2)
+        incoming_size = int(file.file.tell())
+        await file.seek(0)
+    except Exception:
+        incoming_size = int(file.size or 0)
+        await file.seek(0)
+    if incoming_size > max_bytes:
+        await file.close()
+        raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
+    capacity_preflight = preflight_upload_capacity(incoming_size)
+    if capacity_preflight.get("status") == "BLOCKED":
+        await file.close()
+        raise HTTPException(
+            status_code=507,
+            detail={
+                "message": "Upload blocked by configured storage capacity preflight.",
+                "capacity_preflight": capacity_preflight,
+            },
+        )
+
     with tempfile.TemporaryDirectory(prefix="siraloom-ingest-") as tmp:
         staged = Path(tmp) / filename
         digest_size = 0
@@ -146,7 +168,7 @@ async def upload_artifact(
                     "sample_names": result.sample_names, "detected_build": result.detected_build,
                     "errors": result.errors, "warnings": result.warnings,
                 },
-                "ingestion": {"file_kind": "VCF", "original_filename": filename},
+                "ingestion": {"file_kind": "VCF", "original_filename": filename, "capacity_preflight": capacity_preflight},
             }
             build_for_artifact = requested_build
         else:
@@ -154,7 +176,7 @@ async def upload_artifact(
             artifact_type = ArtifactType.VCF_INDEX_TBI if kind == "TBI" else ArtifactType.VCF_INDEX_CSI
             validation_metadata = {
                 "validation": {"status": result.status, "errors": result.errors, "warnings": result.warnings},
-                "ingestion": {"file_kind": kind, "paired_primary_artifact_id": str(primary.id)},
+                "ingestion": {"file_kind": kind, "paired_primary_artifact_id": str(primary.id), "capacity_preflight": capacity_preflight},
             }
             build_for_artifact = primary.genome_build
 
@@ -187,7 +209,7 @@ async def upload_artifact(
             after_state={"case_status": case.status, "validation_status": result.status},
             reason="Variant artifact ingestion validation",
             output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
-            payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"]},
+            payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
         )
         db.commit()
 
@@ -198,6 +220,7 @@ async def upload_artifact(
             "specimen_id": str(artifact.specimen_id) if artifact.specimen_id else None,
             "paired_artifact_id": str(artifact.paired_artifact_id) if artifact.paired_artifact_id else None,
             "validation": validation_metadata["validation"],
+            "capacity_preflight": capacity_preflight,
         }
 
 
