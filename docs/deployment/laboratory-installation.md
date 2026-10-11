@@ -52,7 +52,19 @@ Set at minimum:
 
 Never commit `.env`, Firebase Admin credentials, API tokens or real patient data.
 
-## 5. Configure upload and resource limits
+## 5. Operate scheduled resource discovery
+
+The production Compose stack runs exactly one persistent Celery Beat service. It schedules resource discovery daily and the existing recovery/outbox tasks. After the stack is healthy, an administrator can trigger the first discovery scan manually:
+
+```bash
+docker compose -f docker-compose.production.yml exec worker \
+  celery -A backend.app.infrastructure.queue.celery_app.celery_app call siraloom.discover_scientific_resources
+docker compose -f docker-compose.production.yml logs --tail=200 beat worker
+```
+
+Confirm the task result reports the discovered-candidate and failed-provider counts, then check the lab dashboard notifications and Resources catalog. Discovery is not activation: candidates require lab review, qualification, approval and activation. The installed adapter set currently covers ClinVar monthly archived releases only; gnomAD and other providers require separate release-specific adapters. ClinVar releases without publisher-verified checksums or resolved terms remain blocked from generic staging.
+
+## 6. Configure upload and resource limits
 
 The application upload limit defaults to **512 MiB**. It is configurable with `MAX_ARTIFACT_UPLOAD_BYTES`; the example template keeps that conservative default. Do not raise it to 5 or 10 GiB until the ingress, API temporary storage, application staging storage, persistent artifact store, worker scratch, timeouts and concurrent-upload behavior have been measured on the actual deployment.
 
