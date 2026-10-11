@@ -43,7 +43,7 @@ type Approval = {
   version: number;
   requested_at?: string;
 };
-type StagingRecord = { staging_id: string; status: string; expected_sha256?: string | null; observed_sha256?: string | null; expected_size_bytes?: number | null; observed_size_bytes?: number | null; error_code?: string | null; error_message?: string | null; storage_preflight?: Record<string, any>; dispatch?: Record<string, any>; metadata?: Record<string, any>; };
+type StagingRecord = { staging_id: string; status: string; attempt?: number; expected_sha256?: string | null; observed_sha256?: string | null; expected_size_bytes?: number | null; observed_size_bytes?: number | null; error_code?: string | null; error_message?: string | null; storage_preflight?: Record<string, any>; dispatch?: Record<string, any>; metadata?: Record<string, any>; };
 
 async function apiFetch(path: string, init: RequestInit = {}) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
