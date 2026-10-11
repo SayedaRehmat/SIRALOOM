@@ -1,5 +1,6 @@
+import hashlib
+import json
 from datetime import datetime, timezone
-from pathlib import Path
 from uuid import uuid4
 
 import pytest
@@ -14,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     AnalysisPartition,
     Annotation,
     Artifact,
+    AuditEvent,
     Case,
     Classification,
     Organization,
@@ -312,5 +314,20 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
                 AnalysisPartition.step_id == "annotate",
                 AnalysisPartition.partition_key == "0:1",
             )) == "SUCCEEDED"
+            provenance_artifact = artifacts[0]
+            payload_bytes = store.read_bytes(provenance_artifact.storage_uri)
+            assert hashlib.sha256(payload_bytes).hexdigest() == provenance_artifact.sha256
+            manifest = json.loads(payload_bytes.decode("utf-8"))
+            assert manifest["analysis_id"] == str(analysis_id)
+            assert any(
+                item["step_id"] == "export_provenance"
+                and item["status"] == str(StepStatus.SUCCEEDED)
+                for item in manifest["steps"]
+            )
+            audit_events = list(db.scalars(select(AuditEvent).where(
+                AuditEvent.analysis_id == analysis_id
+            )))
+            assert sum(event.event_type == "PROVENANCE_EXPORT_RETRY_SCHEDULED" for event in audit_events) == 1
+            assert sum(event.event_type == "PROVENANCE_EXPORT_COMPLETED" for event in audit_events) == 1
     finally:
         engine.dispose()
