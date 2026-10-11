@@ -105,7 +105,7 @@ class StoragePreflight:
 _ALLOWED_TRANSITIONS = {
     "DISCOVERED": {"READY_TO_STAGE", "PREFLIGHT_FAILED", "INVALID"},
     "READY_TO_STAGE": {"STAGING", "PREFLIGHT_FAILED", "INVALID"},
-    "STAGING": {"STAGED", "INTEGRITY_FAILED", "INVALID"},
+    "STAGING": {"READY_TO_STAGE", "STAGED", "INTEGRITY_FAILED", "INVALID"},
     "STAGED": {"INTEGRITY_FAILED", "REMOVED"},
     "PREFLIGHT_FAILED": {"READY_TO_STAGE", "REMOVED"},
     "INTEGRITY_FAILED": {"READY_TO_STAGE", "REMOVED"},
@@ -393,6 +393,7 @@ def stage_resource_release(
     local_source_path: str | Path | None = None,
     max_remote_bytes: int = 5 * 1024 * 1024 * 1024,
     timeout_seconds: float = 30.0,
+    allowed_hosts: set[str] | frozenset[str] | None = None,
 ) -> ResourceStaging:
     """Execute the governed staging path selected by the registered resource.
 
@@ -445,11 +446,23 @@ def stage_resource_release(
     parsed = urlparse(artifact_url)
     if parsed.scheme != "https" or not parsed.hostname:
         raise ResourceStagingError("source contract artifact must be an absolute HTTPS URL")
-    allowed_hosts = {parsed.hostname.lower().rstrip(".")}
+    governed_hosts = {str(host).strip().lower().rstrip(".") for host in (allowed_hosts or set()) if str(host).strip()}
+    if not governed_hosts:
+        raise ResourceStagingError(
+            "remote staging is disabled until RESOURCE_STAGING_ALLOWED_HOSTS is configured by the laboratory deployment",
+            code="PUBLISHER_ALLOWLIST_NOT_CONFIGURED",
+            outcome="RESOURCE_REJECTED",
+        )
+    if parsed.hostname.lower().rstrip(".") not in governed_hosts:
+        raise ResourceStagingError(
+            f"publisher host {parsed.hostname!r} is not in the deployment-approved allow-list",
+            code="PUBLISHER_HOST_REJECTED",
+            outcome="RESOURCE_REJECTED",
+        )
     return stage_remote_artifact(
         db,
         row,
-        allowed_hosts=allowed_hosts,
+        allowed_hosts=governed_hosts,
         max_bytes=max_remote_bytes,
         timeout_seconds=timeout_seconds,
     )
