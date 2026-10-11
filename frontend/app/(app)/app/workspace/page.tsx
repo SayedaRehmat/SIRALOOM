@@ -1128,9 +1128,3 @@ export default function Home() {
     </main>
   );
 }
-
-/* Manual ACMG fallback is deliberately distinct from automated criterion assessment. */
-.manual-classification-form { display: grid; gap: 10px; margin: 14px 0; padding: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
-.manual-classification-form > p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
-.manual-classification-form label { display: grid; gap: 5px; font-size: 12px; font-weight: 600; }
-.manual-classification-form select, .manual-classification-form textarea { width: 100%; min-width: 0; }
