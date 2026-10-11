@@ -293,7 +293,7 @@ def test_transient_remote_failure_is_retryable_without_touching_active_release(
         )
 
         with pytest.raises(ResourceStagingError) as exc_info:
-            stage_resource_release(db, row, max_remote_bytes=1024)
+            stage_resource_release(db, row, max_remote_bytes=1024, allowed_hosts={"ftp.ncbi.nlm.nih.gov"})
 
         decision = staging_recovery_decision(row)
 
