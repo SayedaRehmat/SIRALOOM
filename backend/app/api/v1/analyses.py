@@ -198,7 +198,7 @@ def start(
         db,
         organization_id=principal.organization_id,
     )
-        capacity = enforce_laboratory_capacity_policy(
+    capacity = enforce_laboratory_capacity_policy(
         capacity,
         is_laboratory=deployment_policy.is_laboratory,
     )
