@@ -37,7 +37,12 @@ def reviewer_or_user(x):
     return x
 
 
-def test_manual_classification_proposal_is_evidence_linked_and_audited():
+@pytest.mark.parametrize("acmg_error_code", [
+    "NO_AUTOMATABLE_CLINGEN_CONTEXT",
+    "ACMG_VARIANTS_REQUIRE_REVIEW",
+    "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW",
+])
+def test_manual_classification_proposal_is_evidence_linked_and_audited(acmg_error_code):
     db, reviewer, _, analysis, variant, _, classification = seed()
     db.delete(classification)
     annotation = Annotation(
@@ -64,7 +69,7 @@ def test_manual_classification_proposal_is_evidence_linked_and_audited():
         WorkflowStep(
             id=uuid4(), analysis_id=analysis.id, step_id="acmg_assessment", step_order=6,
             status="REQUIRES_REVIEW", attempt=1,
-            error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
+            error_code=acmg_error_code,
             error_message="No validated applicable specification.",
             metadata_json={"next_step": "review"},
         ),
