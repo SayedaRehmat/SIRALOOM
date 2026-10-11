@@ -16,7 +16,10 @@ from backend.app.infrastructure.db.models import (
     Artifact,
   )
 from backend.app.application.analysis import create_analysis, enqueue_analysis, preflight_analysis_resources
-from backend.app.domain.storage_capacity import preflight_analysis_capacity
+from backend.app.domain.storage_capacity import (
+    enforce_laboratory_capacity_policy,
+    preflight_analysis_capacity,
+)
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.application.entitlements import (
     reserve_analysis_quota,
@@ -195,7 +198,7 @@ def start(
         db,
         organization_id=principal.organization_id,
     )
-        capacity = storage_capacity.enforce_laboratory_capacity_policy(
+        capacity = enforce_laboratory_capacity_policy(
         capacity,
         is_laboratory=deployment_policy.is_laboratory,
     )
