@@ -428,6 +428,21 @@ export type TranslationKey =
   | "workspace.backendConnected"
   | "workspace.reconnecting"
   | "workspace.reviewRevision"
+  | "workspace.manualClassificationTitle"
+  | "workspace.manualClassificationHelp"
+  | "workspace.manualClassificationResult"
+  | "workspace.manualClassificationEvidence"
+  | "workspace.manualClassificationRationale"
+  | "workspace.manualClassificationSubmit"
+  | "workspace.manualClassificationSaved"
+  | "workspace.manualClassificationEvidenceRequired"
+  | "workspace.manualClassificationFailed"
+  | "workspace.selectEvidence"
+  | "workspace.classPathogenic"
+  | "workspace.classLikelyPathogenic"
+  | "workspace.classVus"
+  | "workspace.classLikelyBenign"
+  | "workspace.classBenign"
   | "workspace.noClassification"
   | "workspace.noAutomatedRationale"
   | "workspace.reportArtifact"
@@ -1399,6 +1414,21 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.backendConnected": "Backend connected",
     "workspace.reconnecting": "Reconnecting",
     "workspace.reviewRevision": "Review revision",
+    "workspace.manualClassificationTitle": "Manual classification required",
+    "workspace.manualClassificationHelp": "No applicable validated ACMG specification could be automated for this variant. Record a manual proposal with a documented rationale and evidence; it remains unapproved until the normal review process is completed.",
+    "workspace.manualClassificationResult": "Proposed classification",
+    "workspace.manualClassificationEvidence": "Supporting evidence",
+    "workspace.manualClassificationRationale": "Manual rationale",
+    "workspace.manualClassificationSubmit": "Save manual proposal",
+    "workspace.manualClassificationSaved": "Manual proposal saved. Start review and obtain approval before reportability can proceed.",
+    "workspace.manualClassificationEvidenceRequired": "Select supporting evidence and enter a documented rationale.",
+    "workspace.manualClassificationFailed": "Unable to save the manual classification proposal.",
+    "workspace.selectEvidence": "Select an evidence record",
+    "workspace.classPathogenic": "Pathogenic",
+    "workspace.classLikelyPathogenic": "Likely pathogenic",
+    "workspace.classVus": "Variant of uncertain significance (VUS)",
+    "workspace.classLikelyBenign": "Likely benign",
+    "workspace.classBenign": "Benign",
     "workspace.noClassification": "No classification",
     "workspace.noAutomatedRationale": "No automated rationale recorded.",
     "workspace.reportArtifact": "Interpretation available in report artifact.",
@@ -2195,6 +2225,21 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.backendConnected": "الخادم الخلفي متصل",
     "workspace.reconnecting": "جارٍ إعادة الاتصال",
     "workspace.reviewRevision": "مراجعة الإصدار",
+    "workspace.manualClassificationTitle": "التصنيف اليدوي مطلوب",
+    "workspace.manualClassificationHelp": "تعذرت أتمتة تصنيف هذه المتغيرات باستخدام مواصفة ACMG معتمدة ومنطبقة. سجّل مقترحًا يدويًا مع مبرر موثق ودليل داعم؛ ولن يُعتمد قبل إكمال المراجعة المعتادة.",
+    "workspace.manualClassificationResult": "التصنيف المقترح",
+    "workspace.manualClassificationEvidence": "الدليل الداعم",
+    "workspace.manualClassificationRationale": "مبرر التصنيف اليدوي",
+    "workspace.manualClassificationSubmit": "حفظ المقترح اليدوي",
+    "workspace.manualClassificationSaved": "تم حفظ المقترح اليدوي. ابدأ المراجعة واحصل على الاعتماد قبل متابعة قابلية الإبلاغ.",
+    "workspace.manualClassificationEvidenceRequired": "اختر دليلًا داعمًا وأدخل مبررًا موثقًا.",
+    "workspace.manualClassificationFailed": "تعذر حفظ مقترح التصنيف اليدوي.",
+    "workspace.selectEvidence": "اختر سجل دليل",
+    "workspace.classPathogenic": "ممرض",
+    "workspace.classLikelyPathogenic": "مرجح الإمراض",
+    "workspace.classVus": "متغير ذو دلالة غير مؤكدة (VUS)",
+    "workspace.classLikelyBenign": "مرجح الحميدة",
+    "workspace.classBenign": "حميد",
     "workspace.noClassification": "لا يوجد تصنيف",
     "workspace.noAutomatedRationale": "لا يوجد تبرير آلي مسجل.",
     "workspace.reportArtifact": "التفسير متاح في أثر التقرير.",
