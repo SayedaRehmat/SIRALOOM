@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Case, Classification, Organization, ReviewAction, User, Variant
-from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, review_criterion, request_more_evidence
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Case, Classification, Evidence, Organization, ReviewAction, User, Variant, WorkflowStep
+from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, propose_manual_classification, review_criterion, request_more_evidence
 from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
 
 
@@ -35,6 +35,102 @@ def seed():
 
 def reviewer_or_user(x):
     return x
+
+
+def test_manual_classification_proposal_is_evidence_linked_and_audited():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    db.delete(classification)
+    annotation = Annotation(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        provider_name="GeneBe", provider_version="2026.10",
+        resource_id=None, resource_name="GeneBe", resource_version="2026.10",
+        request_fingerprint="manual-review-request", response_sha256="manual-review-response",
+        request_metadata={}, observed_at=datetime.now(timezone.utc), retry_count=0,
+        payload={"normalized": {"gene": {"symbol": "TEST"}}},
+    )
+    evidence = Evidence(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        evidence_type="LITERATURE", statement="Published evidence reviewed by the laboratory.",
+        direction="SUPPORTING", source_name="PubMed", source_version="2026",
+        resource_id=None, source_record_id="PMID:12345678",
+        request_fingerprint="manual-evidence-request", response_sha256="manual-evidence-response",
+        request_metadata={}, observed_at=datetime.now(timezone.utc), observation_ids=[],
+        payload={}, created_by_type="HUMAN", created_by_id=str(reviewer.id),
+        evidence_fingerprint="manual-evidence-fingerprint",
+    )
+    db.add_all([
+        annotation,
+        evidence,
+        WorkflowStep(
+            id=uuid4(), analysis_id=analysis.id, step_id="acmg_assessment", step_order=6,
+            status="REQUIRES_REVIEW", attempt=1,
+            error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
+            error_message="No validated applicable specification.",
+            metadata_json={"next_step": "review"},
+        ),
+    ])
+    db.commit()
+
+    proposal = propose_manual_classification(
+        db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+        result="VUS", reason="Manual interpretation documented because no applicable automated ACMG specification was available.",
+        evidence_ids=(evidence.id,),
+    )
+    db.commit()
+
+    assert proposal.result == "VUS"
+    assert proposal.state == "PROPOSED"
+    assert proposal.review_status == ReviewStatus.NOT_STARTED
+    assert proposal.criterion_ids == []
+    assert proposal.metadata_json["decision_mode"] == "MANUAL"
+    assert proposal.metadata_json["automation_status"] == "NOT_AUTOMATED"
+    assert proposal.metadata_json["evidence_ids"] == [str(evidence.id)]
+    action = db.query(ReviewAction).one()
+    assert action.action_type == "MANUAL_CLASSIFICATION_PROPOSED"
+    assert action.reason.startswith("Manual interpretation documented")
+
+
+def test_manual_classification_rejects_evidence_from_another_variant():
+    db, reviewer, _, analysis, variant, _, classification = seed()
+    db.delete(classification)
+    other_variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=9,
+        reference="C", alternate="T", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:1:9:C:T", identifiers={},
+    )
+    annotation = Annotation(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        provider_name="GeneBe", provider_version="2026.10",
+        resource_id=None, resource_name="GeneBe", resource_version="2026.10",
+        request_fingerprint="request", response_sha256="response",
+        request_metadata={}, observed_at=None, retry_count=0, payload={},
+    )
+    evidence = Evidence(
+        id=uuid4(), variant_id=other_variant.id, analysis_id=analysis.id,
+        evidence_type="LITERATURE", statement="Evidence for a different variant.",
+        direction="SUPPORTING", source_name="PubMed", source_version="2026",
+        resource_id=None, source_record_id="PMID:87654321",
+        request_fingerprint="other-request", response_sha256="other-response",
+        request_metadata={}, observed_at=None, observation_ids=[], payload={},
+        created_by_type="HUMAN", created_by_id=str(reviewer.id),
+        evidence_fingerprint="other-evidence-fingerprint",
+    )
+    db.add_all([
+        other_variant, annotation, evidence,
+        WorkflowStep(
+            id=uuid4(), analysis_id=analysis.id, step_id="acmg_assessment", step_order=6,
+            status="REQUIRES_REVIEW", attempt=1,
+            error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
+            error_message="No validated applicable specification.", metadata_json={},
+        ),
+    ])
+    db.commit()
+
+    with pytest.raises(ReviewError, match="must belong to this variant and analysis"):
+        propose_manual_classification(
+            db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer,
+            result="VUS", reason="Manual review", evidence_ids=(evidence.id,),
+        )
 
 
 def test_criterion_review_is_versioned_and_append_only_history():
