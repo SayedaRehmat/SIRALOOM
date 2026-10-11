@@ -236,7 +236,7 @@ def propose_manual_classification(
     )
     if acmg_step is None or str(acmg_step.status).upper() != StepStatus.REQUIRES_REVIEW.value:
         raise ReviewError("The ACMG assessment stage is not waiting for manual review")
-    if acmg_step.error_code not in {"NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW"}:
+    if acmg_step.error_code not in {"NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"}:
         raise ReviewError("Manual classification is not enabled for this ACMG review state")
 
     variant = db.get(Variant, variant_id)
