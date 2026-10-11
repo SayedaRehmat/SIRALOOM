@@ -82,7 +82,7 @@ def test_provider_discovery_registers_candidates_without_activation(monkeypatch)
 
 def test_provider_discovery_persists_source_identity_and_never_activates(monkeypatch):
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine, tables=[Organization.__table__, Resource.__table__, ResourceDiscovery.__table__, ResourceStaging.__table__])
+    Base.metadata.create_all(engine, tables=[Organization.__table__, User.__table__, OrganizationMembership.__table__, Notification.__table__, Resource.__table__, ResourceDiscovery.__table__, ResourceStaging.__table__])
     monkeypatch.setattr(resource_discovery, "entry_points", lambda: FakeEntryPoints())
 
     with Session(engine) as db:
