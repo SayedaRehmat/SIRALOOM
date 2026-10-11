@@ -73,6 +73,75 @@ def inspect_deployment_capacity() -> dict[str, Any]:
     }
 
 
+def preflight_upload_capacity(incoming_size_bytes: int) -> dict[str, Any]:
+    """Estimate extra space needed to stage and persist an incoming upload."""
+    if not settings.storage_capacity_preflight_enabled:
+        return {
+            "status": "NOT_CONFIGURED",
+            "enabled": False,
+            "input_size_bytes": incoming_size_bytes,
+            "estimated_required_bytes": None,
+            "reservation_supported": False,
+            "issues": [],
+            "roots": [],
+        }
+    if incoming_size_bytes <= 0:
+        return {
+            "status": "BLOCKED",
+            "enabled": True,
+            "input_size_bytes": incoming_size_bytes,
+            "estimated_required_bytes": None,
+            "reservation_supported": False,
+            "issues": [{"code": "INPUT_SIZE_UNKNOWN", "message": "The incoming upload size is missing or invalid."}],
+            "roots": [],
+        }
+    headroom = settings.analysis_storage_headroom_bytes
+    required = incoming_size_bytes + headroom
+    roots = [
+        inspect_storage_root("artifact_store", settings.artifact_root),
+        inspect_storage_root("worker_scratch", settings.worker_scratch_root),
+    ]
+    issues: list[dict[str, Any]] = [
+        {"code": root["error_code"], "message": root["error_message"], "storage": root["label"]}
+        for root in roots if root["error_code"]
+    ]
+    groups: dict[int, dict[str, Any]] = {}
+    for root in roots:
+        device_id = root.get("_device_id")
+        if device_id is None:
+            continue
+        group = groups.setdefault(device_id, {
+            "available_bytes": root["free_bytes"],
+            "required_bytes": 0,
+            "labels": [],
+        })
+        group["required_bytes"] += required
+        group["labels"].append(root["label"])
+    for group in groups.values():
+        if group["available_bytes"] is not None and group["available_bytes"] < group["required_bytes"]:
+            issues.append({
+                "code": "INSUFFICIENT_UPLOAD_CAPACITY",
+                "message": "Available capacity is below the estimate for multipart staging and persistent artifact storage.",
+                "storage": ", ".join(group["labels"]),
+                "available_bytes": group["available_bytes"],
+                "required_bytes": group["required_bytes"],
+            })
+    return {
+        "status": "BLOCKED" if issues else "READY",
+        "enabled": True,
+        "input_size_bytes": incoming_size_bytes,
+        "estimated_required_bytes": required * len(roots),
+        "headroom_bytes_per_root": headroom,
+        "reservation_supported": False,
+        "issues": issues,
+        "roots": [
+            {key: value for key, value in root.items() if not key.startswith("_")}
+            | {"estimated_required_bytes": required}
+            for root in roots
+        ],
+    }
+
+
 def preflight_analysis_capacity(input_size_bytes: int) -> dict[str, Any]:
     if not settings.storage_capacity_preflight_enabled:
         return {
