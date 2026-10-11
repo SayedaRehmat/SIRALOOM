@@ -18,7 +18,7 @@ The frontend is built into a container with `frontend/Dockerfile`; it can also b
 - A lab-owned Firebase project for the current authentication implementation, including a Firebase Admin service-account JSON file. Firebase Authentication remains an external identity dependency in this release; patient VCFs and generated artifacts are stored through the authenticated SIRALOOM API in the configured lab storage.
 - PostgreSQL and Redis capacity appropriate to the lab's case volume.
 - A validated, indexed reference package mounted read-only.
-- Dedicated persistent storage for database, Redis, artifacts and resource cache; backups, access control, disk/inode monitoring and a retention policy.
+- Dedicated storage for database, Redis, artifacts, resource cache and worker scratch; backups for durable data, access control, disk/inode monitoring and a retention policy. Scratch may be managed as a separate high-capacity work volume, but its real mount must be shared consistently with the capacity preflight configuration.
 - Provider executables, caches and datasets qualified for the intended workflow. A registry row alone does not make a provider executable or clinically validated.
 
 ## 3. Prepare lab-owned storage
@@ -29,10 +29,11 @@ Copy the template and create the directories configured in it:
 cp .env.production.example .env
 chmod 600 .env
 sudo mkdir -p /srv/siraloom/postgres /srv/siraloom/redis \
-  /srv/siraloom/artifacts /srv/siraloom/references /srv/siraloom/resource-cache
+  /srv/siraloom/artifacts /srv/siraloom/references /srv/siraloom/resource-cache \
+  /srv/siraloom/scratch
 ```
 
-Edit `.env` before starting the stack. Set the actual absolute host paths in the `SIRALOOM_*_HOST_PATH` variables. These paths are bind-mounted into the API and worker containers; the reference path is read-only. Ensure the relevant container users can write to the database, Redis, artifact and resource-cache paths. Do not guess ownership IDs: inspect the exact container images and apply your lab's filesystem policy.
+Edit `.env` before starting the stack. Set the actual absolute host paths in the `SIRALOOM_*_HOST_PATH` variables. These paths are bind-mounted into the API and worker containers; the reference path is read-only. Configure `SIRALOOM_SCRATCH_HOST_PATH` as well as the artifact and resource-cache paths. The API and worker must see the same scratch filesystem at `/data/siraloom/scratch`; the API preflight estimates capacity there, while worker jobs consume it. Ensure the relevant container users can write to the database, Redis, artifact, resource-cache and scratch paths. Do not guess ownership IDs: inspect the exact container images and apply your lab's filesystem policy.
 
 Copy the approved reference package into `/srv/siraloom/references`; set `REFERENCE_FASTA` and `REFERENCE_FAI` to the matching in-container paths. Do not silently replace a reference build or index after a case has been analyzed.
 
