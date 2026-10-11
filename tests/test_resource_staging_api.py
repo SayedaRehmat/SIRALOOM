@@ -183,7 +183,11 @@ def test_create_resource_staging_blocks_unresolved_license_review(monkeypatch, t
         monkeypatch.setattr(settings, "resource_cache_root", str(root))
         monkeypatch.setattr(settings, "resource_staging_allowed_hosts", "ftp.example.test")
         resource, payload = _seed_remote_resource(db, organization_id, root)
-        resource.metadata_json["source_contract"]["license_status"] = "REVIEW_REQUIRED"
+        metadata = dict(resource.metadata_json)
+        source_contract = dict(metadata["source_contract"])
+        source_contract["license_status"] = "REVIEW_REQUIRED"
+        metadata["source_contract"] = source_contract
+        resource.metadata_json = metadata
         db.add(resource)
         db.commit()
 
