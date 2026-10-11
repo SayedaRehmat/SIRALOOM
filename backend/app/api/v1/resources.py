@@ -400,6 +400,8 @@ def create_resource_staging(
         raise HTTPException(status_code=400, detail="source_uri is required for local resources")
 
     expected_sha256 = str(payload.expected_sha256 or resource.checksum or "").strip() or None
+    if resource.checksum and expected_sha256 and expected_sha256.lower() != resource.checksum.lower():
+        raise HTTPException(status_code=409, detail="Staging SHA-256 must match the checksum registered on this immutable resource version")
     expected_size_bytes = payload.expected_size_bytes
     if access_method == "HTTPS":
         parsed = urlparse(source_uri)
