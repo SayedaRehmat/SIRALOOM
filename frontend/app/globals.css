@@ -574,3 +574,14 @@ tbody tr.selected { background: #eff8f5; }
 
 .resources-qualification-version { display: grid; gap: 6px; max-width: 420px; margin-top: 10px; font-size: 11px; color: var(--muted); font-weight: 600; }
 .resources-qualification-version input { width: 100%; border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; color: var(--text); background: white; font: inherit; font-weight: 450; }
+
+@media (max-width: 760px) {
+  .siraloom-workspace.app-frame { display: flex; flex-direction: column; }
+  .siraloom-workspace .app-nav { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; padding: 10px 12px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .siraloom-workspace .app-nav .brand { margin: 0 8px 0 0; }
+  .siraloom-workspace .app-nav .nav-label { display: none; }
+  .siraloom-workspace .app-nav > a { padding: 7px 9px; font-size: 11px; }
+  .siraloom-workspace .app-nav-footer { width: 100%; grid-template-columns: 1fr auto; align-items: center; padding-top: 8px; }
+  .siraloom-workspace .workspace-language-switcher { grid-template-columns: repeat(3, minmax(0, 68px)); }
+  .siraloom-workspace .app-nav .text-button { margin: 0 8px; justify-self: end; }
+}
