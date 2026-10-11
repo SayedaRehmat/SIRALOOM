@@ -2841,6 +2841,49 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         # by SIRALOOM evaluators. Otherwise the case is blocked/review-required,
         # never silently classified by a generic rule set.
         acmg_step = _step(db, analysis.id, "acmg_assessment")
+        if (
+            acmg_step.status == StepStatus.REQUIRES_REVIEW
+            and _manual_acmg_review_complete(db, analysis.id)
+        ):
+            annotated_variant_ids = set(db.scalars(
+                select(Annotation.variant_id)
+                .where(Annotation.analysis_id == analysis.id)
+                .distinct()
+            ).all())
+            manual_classification_count = int(db.scalar(
+                select(func.count(Classification.id)).where(
+                    Classification.analysis_id == analysis.id,
+                    Classification.state == "FINAL",
+                    Classification.review_status == "APPROVED",
+                    Classification.metadata_json["decision_mode"].as_string() == "MANUAL",
+                )
+            ) or 0)
+            mark_step(
+                db,
+                acmg_step,
+                StepStatus.SUCCEEDED,
+                metadata={
+                    "assessed_variants": len(annotated_variant_ids),
+                    "classification_automation": "MANUAL_REVIEWED",
+                    "manual_classification_count": manual_classification_count,
+                    "reconciled_after_review": True,
+                    "next_step": "review",
+                },
+            )
+            audit.record(
+                event_type="ACMG_MANUAL_CLASSIFICATION_RECONCILED",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="siraloom-acmg-specification-engine",
+                reason="All annotated variants have final approved classifications; variants without automated ACMG criteria were explicitly reviewed and classified manually.",
+                payload={
+                    "annotated_variants": len(annotated_variant_ids),
+                    "manual_classification_count": manual_classification_count,
+                },
+            )
+            db.commit()
+
         if acmg_step.status != StepStatus.SUCCEEDED:
             mark_step(db, acmg_step, StepStatus.RUNNING)
             try:
@@ -3463,26 +3506,69 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 pass
 
 
-def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
-    """Return True only when every classified variant has a final approved classification."""
-    classifications = list(
-        db.scalars(
-            select(Classification)
-            .where(Classification.analysis_id == analysis_id)
-            .order_by(Classification.variant_id, Classification.version.desc())
-        )
+def _latest_classifications_by_variant(db: Session, analysis_id: UUID) -> dict[UUID, Classification]:
+    """Return the latest immutable classification version for each variant."""
+    rows = db.scalars(
+        select(Classification)
+        .where(Classification.analysis_id == analysis_id)
+        .order_by(Classification.variant_id, Classification.version.desc())
     )
     latest: dict[UUID, Classification] = {}
-    for row in classifications:
+    for row in rows:
         latest.setdefault(row.variant_id, row)
+    return latest
 
-    if not latest:
+
+def _manual_acmg_review_complete(db: Session, analysis_id: UUID) -> bool:
+    """Whether every annotated variant has a final, approved classification and any
+    variant without persisted ACMG criteria was explicitly classified manually.
+    """
+    annotated_variant_ids = set(db.scalars(
+        select(Annotation.variant_id)
+        .where(Annotation.analysis_id == analysis_id)
+        .distinct()
+    ).all())
+    if not annotated_variant_ids:
+        return False
+
+    latest = _latest_classifications_by_variant(db, analysis_id)
+    if not annotated_variant_ids.issubset(latest):
+        return False
+
+    variants_with_criteria = set(db.scalars(
+        select(ACMGAssessment.variant_id)
+        .where(ACMGAssessment.analysis_id == analysis_id)
+        .distinct()
+    ).all())
+
+    for variant_id in annotated_variant_ids:
+        classification = latest[variant_id]
+        if classification.state != "FINAL" or classification.review_status != "APPROVED":
+            return False
+        if variant_id not in variants_with_criteria:
+            if (classification.metadata_json or {}).get("decision_mode") != "MANUAL":
+                return False
+    return True
+
+
+def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    """Require a final approved classification for every variant annotated in this analysis."""
+    annotated_variant_ids = set(db.scalars(
+        select(Annotation.variant_id)
+        .where(Annotation.analysis_id == analysis_id)
+        .distinct()
+    ).all())
+    if not annotated_variant_ids:
+        return False
+
+    latest = _latest_classifications_by_variant(db, analysis_id)
+    if not annotated_variant_ids.issubset(latest):
         return False
 
     return all(
-        classification.state == "FINAL"
-        and classification.review_status == "APPROVED"
-        for classification in latest.values()
+        latest[variant_id].state == "FINAL"
+        and latest[variant_id].review_status == "APPROVED"
+        for variant_id in annotated_variant_ids
     )
 
 
