@@ -243,6 +243,7 @@ export default function CaseDossierPage() {
             </div>
             <div className="case-dossier-actions">
               <Link className="secondary link-button" href="/app/workspace" onClick={() => selectAnalysis(analysis)}>{t("cases.openWorkspace")}</Link>
+              <Link className="secondary link-button" href="/app/review" onClick={() => selectAnalysis(analysis)}>{t("nav.reviewQueue")}</Link>
               <Link className="secondary link-button" href="/app/reports" onClick={() => selectAnalysis(analysis)}>{t("nav.reports")}</Link>
             </div>
           </article>)}
