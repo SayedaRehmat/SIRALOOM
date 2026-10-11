@@ -292,7 +292,7 @@ def propose_manual_classification(
             "acmg_criteria_available": False,
         },
         state="PROPOSED",
-        review_status=ReviewStatus.PENDING,
+        review_status=ReviewStatus.NOT_STARTED,
         version=1,
         review_version=0,
     )
