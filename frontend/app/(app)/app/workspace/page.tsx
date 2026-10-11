@@ -228,6 +228,8 @@ export default function Home() {
 
   const waitingGates = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).filter(step => step.status === "REQUIRES_REVIEW"), [analysis]);
 
+  const capacityPreflight = preflightResult?.capacity_preflight ?? analysis?.capacity_preflight;
+
   const resourceStageReadiness = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).flatMap(step => {
     const raw = step.metadata?.resource_readiness;
     if (!raw || typeof raw !== "object") return [];
@@ -961,8 +963,16 @@ export default function Home() {
               <button type="button" className="primary" disabled={busy || !gateReason.trim()} onClick={() => void resolveGate()}>{busy ? t("workspace.loading") : t("workspace.gateSubmit")}</button>
             </div>}
           </div>}
-          {(preflightResult || resourceStageReadiness.length > 0) && <div className="preflight-panel">
+          {(preflightResult || capacityPreflight || resourceStageReadiness.length > 0) && <div className="preflight-panel">
             <div className="panel-head"><div><div className="section-kicker">{t("workspace.preflightTitle")}</div><h4>{preflightResult?.resource_plan_status ?? preflightResult?.status ?? (resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? "BLOCKED" : "READY")}</h4></div><span className={`badge ${preflightResult?.status === "BLOCKED" || resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? "danger" : "neutral"}`}>{preflightResult?.status === "BLOCKED" || resourceStageReadiness.some(stage => stage.status === "BLOCKED") ? t("workspace.preflightBlocked") : t("workspace.preflightReady")}</span></div>
+            {capacityPreflight && <div className="capacity-preflight">
+              <div className="capacity-preflight-heading"><strong>{t("workspace.capacityPreflight")}</strong><span className={`badge ${capacityPreflight.status === "BLOCKED" ? "danger" : capacityPreflight.status === "READY" ? "success" : "neutral"}`}>{prettyStatus(capacityPreflight.status)}</span></div>
+              <div className="capacity-preflight-summary"><span>Input: <strong>{formatBytes(capacityPreflight.input_size_bytes)}</strong></span><span>{t("workspace.capacityEstimate")}: <strong>{formatBytes(capacityPreflight.estimated_required_bytes)}</strong></span></div>
+              {capacityPreflight.status === "NOT_CONFIGURED" && <p className="muted">{t("workspace.capacityNotConfigured")}</p>}
+              {(capacityPreflight.roots ?? []).map((root: any) => <div className="capacity-root-row" key={root.label}><strong>{prettyStatus(root.label)}</strong><span>{t("workspace.availableStorage")}: {formatBytes(root.free_bytes)} / {t("workspace.totalStorage")}: {formatBytes(root.total_bytes)}</span><small>Estimated for this step: {formatBytes(root.estimated_required_bytes)}</small>{root.error_message && <small className="preflight-stage-issue">{root.error_message}</small>}</div>)}
+              {(capacityPreflight.issues ?? []).map((issue: any, index: number) => <p className="preflight-stage-issue" key={`${issue.code ?? "capacity"}-${index}`}>{issue.code}: {issue.message}</p>)}
+              <p className="capacity-reservation-note">{t("workspace.capacityReservationNotProvided")}</p>
+            </div>}
             {preflightIssues.length ? <div className="preflight-issues"><strong>{t("workspace.preflightIssues")}</strong>{preflightIssues.map((issue: any, index: number) => <div className="preflight-issue" key={`${issue.capability ?? "resource"}-${issue.code ?? index}`}><b>{issue.capability ?? "Resource"}{issue.required ? " · required" : ""}</b><span>{issue.message ?? issue.code ?? "Resource readiness issue"}</span>{issue.code && <small>{issue.code}</small>}</div>)}</div> : <p className="muted">{t("workspace.preflightNoIssues")}</p>}
             {resourceStageReadiness.length > 0 && <details className="preflight-details"><summary>{t("workspace.preflightDetails")}</summary>{resourceStageReadiness.map(stage => <div className="preflight-stage" key={stage.step_id}><strong>{prettyStatus(stage.step_id)}</strong><span className={`badge ${stage.status === "BLOCKED" ? "danger" : "neutral"}`}>{prettyStatus(stage.status)}</span>{stage.selected.map((resource: any, index: number) => <small key={`${resource.resource_id ?? resource.provider ?? "resource"}-${index}`}>{resource.capability}: {resource.name ?? resource.provider} · {resource.version ?? "unversioned"}</small>)}{stage.issues.map((issue: any, index: number) => <small className="preflight-stage-issue" key={`${issue.code ?? "issue"}-${index}`}>{issue.capability}: {issue.message ?? issue.code}</small>)}</div>)}</details>}
           </div>}
