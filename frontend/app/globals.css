@@ -671,3 +671,12 @@ tbody tr.selected { background: #eff8f5; }
 .capacity-root-row small { grid-column: 1 / -1; }
 .capacity-reservation-note { margin: 8px 0 0; font-size: 9px; color: var(--muted); line-height: 1.4; }
 @media (max-width: 620px) { .capacity-root-row { grid-template-columns: 1fr; } }
+
+.resources-capacity-panel { min-width: 0; }
+.resources-capacity-panel .panel-head h2 { font-size: 15px; margin: 4px 0; }
+.resources-capacity-panel > .muted { font-size: 11px; line-height: 1.5; }
+.resources-capacity-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.resources-capacity-cell { display: grid; gap: 5px; padding: 11px; border: 1px solid #edf0f4; border-radius: 8px; min-width: 0; }
+.resources-capacity-cell strong { font-size: 11px; }
+.resources-capacity-cell span, .resources-capacity-cell small { font-size: 10px; color: var(--muted); overflow-wrap: anywhere; }
+@media (max-width: 760px) { .resources-capacity-grid { grid-template-columns: 1fr; } }
