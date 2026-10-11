@@ -19,6 +19,10 @@ if Celery is not None:
         task_reject_on_worker_lost=True,
         timezone="UTC",
         beat_schedule={
+            "discover-scientific-resource-releases-daily": {
+                "task": "siraloom.discover_scientific_resources",
+                "schedule": 86400.0,
+            },
             "scan-reanalysis-resources-daily": {
                 "task": "siraloom.scan_reanalysis_resources",
                 "schedule": 86400.0,
