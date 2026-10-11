@@ -138,6 +138,7 @@ export default function CaseDossierPage() {
         }
       } else {
         if (artifact.size_bytes > LARGE_DOWNLOAD_BYTES) {
+          await response.body?.cancel();
           throw new Error(t("cases.dossierLargeDownloadRequiresStreaming"));
         }
         const blob = await response.blob();
