@@ -179,9 +179,17 @@ def start(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(exc))
 
-    input_artifact = db.get(Artifact, analysis.input_artifact_id) if analysis.input_artifact_id else None
-    capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
     configuration = dict(analysis.configuration or {})
+    input_artifact_id = configuration.get("input_artifact_id")
+    input_artifact = None
+    if input_artifact_id:
+        try:
+            input_artifact = db.get(Artifact, UUID(str(input_artifact_id)))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=409, detail="Analysis input artifact reference is invalid")
+        if input_artifact is None or input_artifact.case_id != analysis.case_id:
+            raise HTTPException(status_code=409, detail="Analysis input artifact is missing or no longer belongs to this case")
+    capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
     configuration["capacity_preflight"] = capacity
     analysis.configuration = configuration
 
