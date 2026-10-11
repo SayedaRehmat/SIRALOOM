@@ -228,8 +228,8 @@ def test_manual_classification_without_acmg_criteria_can_be_signed_out(tmp_path,
     content = build_report_content(
         db, analysis, "en", report_type="CLINICAL_INTERPRETATION"
     )
-    assert content["findings"][0]["classification_result"] == "LIKELY_PATHOGENIC"
-    assert content["findings"][0]["classification_snapshot"]["criterion_ids"] == []
+    assert content["findings"][0]["classification"] == "LIKELY_PATHOGENIC"
+    assert content["findings"][0]["acmg_assessment_snapshot"] == []
 
     report = Report(
         id=uuid4(),
