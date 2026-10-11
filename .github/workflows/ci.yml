@@ -101,3 +101,28 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: demo.firebasestorage.app
           NEXT_PUBLIC_FIREBASE_APP_ID: demo
         run: npm run build
+      - name: Build production frontend container
+        working-directory: .
+        run: |
+          docker build -f frontend/Dockerfile \
+            --build-arg NEXT_PUBLIC_SIRALOOM_API_BASE=https://example.invalid/api/v1 \
+            --build-arg NEXT_PUBLIC_SIRALOOM_DEPLOYMENT_MODE=lab \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=ci-demo \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=ci-demo.firebaseapp.com \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=ci-demo \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=ci-demo.firebasestorage.app \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=ci-demo \
+            -t siraloom-frontend:ci .
+      - name: Validate production Compose configuration
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+          FIREBASE_ADMIN_CREDENTIALS_HOST_PATH: /tmp/siraloom-firebase-admin.json
+          NEXT_PUBLIC_SIRALOOM_API_BASE: https://example.invalid/api/v1
+          NEXT_PUBLIC_FIREBASE_API_KEY: ci-demo
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-demo.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-demo
+          NEXT_PUBLIC_FIREBASE_APP_ID: ci-demo
+        run: |
+          cp .env.production.example .env
+          touch /tmp/siraloom-firebase-admin.json
+          docker compose -f docker-compose.production.yml config --quiet
