@@ -20,14 +20,14 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
     title: copy("Sign in to your laboratory workspace", "سجّل الدخول إلى مساحة عمل مختبرك"),
     body: copy("Use your laboratory-approved account to continue a case, review interpretation, or access reports.", "استخدم حساب المختبر المعتمد لمتابعة حالة أو مراجعة التفسير أو الوصول إلى التقارير."),
     submit: copy("Sign in", "تسجيل الدخول"),
-    secondary: copy("New to SIRALOOM? Request access", "جديد على SIRALOOM؟ اطلب الوصول"),
+    secondary: copy("New to SIRALOOM?", "جديد على SIRALOOM؟"),
     reset: copy("Reset password", "إعادة تعيين كلمة المرور")
   } : {
     eyebrow: copy("LABORATORY ACCESS", "وصول المختبر"),
     title: trial ? copy("Create a SIRALOOM workspace", "أنشئ مساحة عمل SIRALOOM") : copy("Create laboratory access", "أنشئ وصول المختبر"),
     body: trial ? copy("Create an account to evaluate the workflow before laboratory deployment.", "أنشئ حساباً لتقييم سير العمل قبل نشره في المختبر.") : copy("Create your account and continue to laboratory onboarding.", "أنشئ حسابك وتابع إعداد المختبر."),
     submit: trial ? copy("Create account", "إنشاء الحساب") : copy("Continue", "متابعة"),
-    secondary: copy("Already have an account? Sign in", "لديك حساب بالفعل؟ سجّل الدخول"),
+    secondary: copy("Already have an account?", "لديك حساب بالفعل؟"),
     reset: ""
   };
 
@@ -83,7 +83,7 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
       <label>{copy("Password", "كلمة المرور")}<input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} value={password} onChange={e => setPassword(e.target.value)} required /></label>
       {message && <p className="form-message" role="status">{message}</p>}
       <button className="button" disabled={busy || !firebaseConfigured}>{busy ? copy("Working…", "جارٍ التنفيذ…") : text.submit}</button>
-      {mode === "login" ? <><button type="button" className="text-button" onClick={reset}>{text.reset}</button><p>{text.secondary.includes(" · ") ? text.secondary : <>{text.secondary.split("?")[0]}? <Link href="/signup">{copy("Request access", "طلب الوصول")}</Link></>}</p></> : <p><Link href="/login">{text.secondary}</Link></p>}
+      {mode === "login" ? <><button type="button" className="text-button" onClick={reset}>{text.reset}</button><p>{text.secondary} <Link href="/signup">{copy("Request access", "طلب الوصول")}</Link></p></> : <p>{text.secondary} <Link href="/login">{copy("Sign in", "تسجيل الدخول")}</Link></p>}
     </form>
   );
 }
