@@ -418,7 +418,7 @@ export default function ResourcesPage() {
                   </>}
                 </div>
                 {isGlobalDiscovery && <details className="resources-qualification-result"><summary>{t("resources.globalDiscoveryDetails")}</summary><p className="muted">{t("resources.globalDiscoveryNotice")}</p><pre>{JSON.stringify({ source_contract: sourceContract, discovery_provider: resource.metadata?.discovery_provider, release_metadata: resource.metadata }, null, 2)}</pre></details>}
-                {result && <details className="resources-qualification-result"><summary>{t("resources.qualificationResult")}: {result.passed ? "PASS" : "BLOCKED"}</summary><pre>{JSON.stringify({ outcome: result.outcome, activation_blockers: result.activation_blockers, checks: result.checks }, null, 2)}</pre></details>
+                {result && <details className="resources-qualification-result"><summary>{t("resources.qualificationResult")}: {result.passed ? "PASS" : "BLOCKED"}</summary><pre>{JSON.stringify({ outcome: result.outcome, activation_blockers: result.activation_blockers, checks: result.checks }, null, 2)}</pre></details>}
                 </td>
               </tr>;
             })}</tbody></table></div>}
