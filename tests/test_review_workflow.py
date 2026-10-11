@@ -152,6 +152,33 @@ def _add_annotation(db, analysis, variant):
     return annotation
 
 
+def test_completed_acmg_batch_restores_review_and_blocked_counts():
+    from backend.app.workflows.variant import _completed_acmg_batch_outcome_counts
+
+    db, _, _, analysis, _, _, _ = seed()
+    step = WorkflowStep(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        step_id="acmg_assessment",
+        step_order=6,
+        status="SUCCEEDED",
+        attempt=1,
+        metadata_json={
+            "batches": {
+                "0:10": {
+                    "status": "SUCCEEDED",
+                    "requires_review": 2,
+                    "blocked": 1,
+                }
+            }
+        },
+    )
+    db.add(step)
+    db.commit()
+
+    assert _completed_acmg_batch_outcome_counts(step, 0, 10) == (2, 1)
+
+
 def test_manual_acmg_approval_reconciles_when_every_annotated_variant_is_approved():
     from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete
 
