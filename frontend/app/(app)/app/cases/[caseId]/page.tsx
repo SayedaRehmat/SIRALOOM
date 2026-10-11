@@ -253,7 +253,7 @@ export default function CaseDossierPage() {
       <section className="panel case-dossier-panel">
         <div className="panel-head"><div><p className="eyebrow">{t("workspace.reportSection")}</p><h2>{t("workspace.reportSection")}</h2></div><span className="badge neutral">{reports.length}</span></div>
         {reportError && <div className="notice error-notice" role="status">{t("cases.dossierReportsUnavailable")}: {reportError}</div>}
-        {!reports.length ? <div className="empty small"><strong>{t("cases.dossierNoReports")}</strong><p>{t("cases.dossierReportsLead")}</p></div> : <div className="case-dossier-list">
+        {!reports.length && reportError ? <div className="empty small"><strong>{t("cases.dossierReportsUnavailable")}</strong></div> : !reports.length ? <div className="empty small"><strong>{t("cases.dossierNoReports")}</strong><p>{t("cases.dossierReportsLead")}</p></div> : <div className="case-dossier-list">
           {reports.map(report => {
             const reportArtifactId = report.signed_artifact_id ?? report.artifact_id;
             const reportArtifact = reportArtifactId ? artifacts.find(item => item.artifact_id === reportArtifactId) : undefined;
