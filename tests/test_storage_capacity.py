@@ -1,3 +1,4 @@
+from pathlib import Path
 from collections import namedtuple
 
 from backend.app.config import settings
@@ -64,3 +65,16 @@ def test_analysis_preflight_is_explicitly_not_configured_when_disabled(monkeypat
     assert result["status"] == "NOT_CONFIGURED"
     assert result["enabled"] is False
     assert result["reservation_supported"] is False
+
+
+
+def test_production_compose_mounts_the_same_scratch_path_for_api_and_worker():
+    compose_path = Path(__file__).resolve().parents[1] / "docker-compose.production.yml"
+    compose = compose_path.read_text(encoding="utf-8")
+    api_block = compose.split("  api:\\n", 1)[1].split("\\n  worker:", 1)[0]
+    worker_block = compose.split("  worker:\\n", 1)[1].split("\\n  frontend:", 1)[0]
+    expected_mount = "${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch"
+    assert expected_mount in api_block
+    assert expected_mount in worker_block
+    assert "TMPDIR: /data/siraloom/scratch" in api_block
+    assert "TMPDIR: /data/siraloom/scratch" in worker_block
