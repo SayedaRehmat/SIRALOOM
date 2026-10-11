@@ -71,8 +71,8 @@ def test_analysis_preflight_is_explicitly_not_configured_when_disabled(monkeypat
 def test_production_compose_mounts_the_same_scratch_path_for_api_and_worker():
     compose_path = Path(__file__).resolve().parents[1] / "docker-compose.production.yml"
     compose = compose_path.read_text(encoding="utf-8")
-    api_block = compose.split("  api:\\n", 1)[1].split("\\n  worker:", 1)[0]
-    worker_block = compose.split("  worker:\\n", 1)[1].split("\\n  frontend:", 1)[0]
+    api_block = compose.split("  api:" + chr(10), 1)[1].split(chr(10) + "  worker:", 1)[0]
+    worker_block = compose.split("  worker:" + chr(10), 1)[1].split(chr(10) + "  frontend:", 1)[0]
     expected_mount = "${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch"
     assert expected_mount in api_block
     assert expected_mount in worker_block
