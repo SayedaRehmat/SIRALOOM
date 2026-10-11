@@ -125,6 +125,7 @@ export default function ResourcesPage() {
   const [metadataText, setMetadataText] = useState(METADATA_TEMPLATE);
   const [qualificationResults, setQualificationResults] = useState<Record<string, any>>({});
   const [stagingConfig, setStagingConfig] = useState<Record<string, any> | null>(null);
+  const [capacitySnapshot, setCapacitySnapshot] = useState<Record<string, any> | null>(null);
   const [stagingRows, setStagingRows] = useState<Record<string, StagingRecord[]>>({});
   const [stageOpenResourceId, setStageOpenResourceId] = useState<string | null>(null);
   const [stagingForm, setStagingForm] = useState({ source_uri: "", expected_size_bytes: "", expected_sha256: "" });
@@ -138,14 +139,16 @@ export default function ResourcesPage() {
     setLoading(true);
     setError("");
     try {
-      const [resourceRows, approvalRows, stagingConfiguration] = await Promise.all([
+      const [resourceRows, approvalRows, stagingConfiguration, capacity] = await Promise.all([
         apiFetch("/resources?status="),
         apiFetch("/resources/approvals/pending").catch(() => []),
         apiFetch("/resources/staging/config").catch(() => null),
+        apiFetch("/storage/capacity").catch(() => null),
       ]);
       setResources(Array.isArray(resourceRows) ? resourceRows : []);
       setApprovals(Array.isArray(approvalRows) ? approvalRows : []);
       setStagingConfig(stagingConfiguration && typeof stagingConfiguration === "object" ? stagingConfiguration : null);
+      setCapacitySnapshot(capacity && typeof capacity === "object" ? capacity : null);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("resources.loadError"));
     } finally {
@@ -352,6 +355,14 @@ export default function ResourcesPage() {
         <p>{t("resources.stagingGap")}</p>
         <label className="resources-qualification-version">{t("resources.qualificationVersion")}<input value={qualificationVersion} onChange={e => setQualificationVersion(e.target.value)} /></label>
       </section>
+
+      {capacitySnapshot && <section className="panel resources-capacity-panel">
+        <div className="panel-head"><div><p className="eyebrow">{t("resources.storageCapacity")}</p><h2>{capacitySnapshot.status === "READY" ? t("resources.capacityPreflightEnabled") : t("resources.capacityPreflightDisabled")}</h2></div><span className={`badge ${capacitySnapshot.status === "READY" ? "success" : "danger"}`}>{pretty(capacitySnapshot.status)}</span></div>
+        <p className="muted">{t("resources.uploadLimit")}: {formatBytes(Number(capacitySnapshot.max_artifact_upload_bytes ?? 0))} · Resource staging max: {formatBytes(Number(capacitySnapshot.resource_staging_max_bytes ?? 0))}</p>
+        <div className="resources-capacity-grid">{(capacitySnapshot.roots ?? []).map((root: any) => <div className="resources-capacity-cell" key={root.label}><strong>{pretty(root.label)}</strong><span>{t("resources.freeStorage")}: {formatBytes(root.free_bytes)}</span><span>{t("resources.totalStorage")}: {formatBytes(root.total_bytes)}</span><small>{root.writable ? t("resources.storageWritable") : root.error_code ?? t("resources.capacityPreflightDisabled")}</small></div>)}</div>
+        {(capacitySnapshot.issues ?? []).map((issue: any, index: number) => <p className="notice error-notice" key={`${issue.code ?? "capacity"}-${index}`}>{issue.storage ? `${issue.storage}: ` : ""}{issue.code}: {issue.message}</p>)}
+        {capacitySnapshot.reservation_supported === false && <p className="muted">{t("workspace.capacityReservationNotProvided")}</p>}
+      </section>}
 
       {showRegister && <section className="panel resources-register-panel">
         <div className="panel-head">
