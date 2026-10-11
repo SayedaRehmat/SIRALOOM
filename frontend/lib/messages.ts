@@ -144,6 +144,28 @@ export type TranslationKey =
   | "workspace.sha256"
   | "workspace.validationStatus"
   | "workspace.createdAt"
+  | "resources.stageRelease"
+  | "resources.prepareStaging"
+  | "resources.executeStaging"
+  | "resources.stagingRecords"
+  | "resources.sourceUrl"
+  | "resources.expectedSize"
+  | "resources.expectedSha256"
+  | "resources.storageAvailable"
+  | "resources.storageRequired"
+  | "resources.allowedHosts"
+  | "resources.remoteStagingDisabled"
+  | "resources.noStagingRecords"
+  | "resources.stagingQueued"
+  | "resources.stagingRunning"
+  | "resources.stagingCompleted"
+  | "resources.stagingBlocked"
+  | "resources.stagingError"
+  | "resources.resourceCacheRoot"
+  | "resources.retryStaging"
+  | "resources.stagingPolicy"
+  | "resources.observedSize"
+  | "resources.observedSha256"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -1391,7 +1413,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.activated": "Resource activation requested.",
     "resources.apiUnavailable": "The resource API could not be reached.",
     "resources.lifecycleNote": "Lifecycle: register → stage and verify → qualify → request lab approval → approve → activate → bind into the intended analysis profile.",
-    "resources.stagingGap": "Important: the current API does not expose resource staging/acquisition as a user-facing endpoint. A candidate can be registered here, but qualification can remain blocked until a matching verified staging record exists. This screen will not pretend a resource is executable.",
+    "resources.stagingGap": "Public HTTPS releases can be staged only when the lab has allowlisted the publisher and supplied the release SHA-256 and expected size. Storage is checked before queueing; qualification and lab approval are still required before execution.",
     "resources.profiles": "Built-in analysis profiles",
     "resources.profileHelp": "These are the profile identifiers present in this backend build. A profile defines required capabilities; it does not register or approve resources.",
     "resources.requiredCapabilities": "Required capabilities",
@@ -1433,6 +1455,28 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.sha256": "SHA-256",
     "workspace.validationStatus": "Validation",
     "workspace.createdAt": "Created",
+    "resources.stageRelease": "Stage release",
+    "resources.prepareStaging": "Prepare and check storage",
+    "resources.executeStaging": "Download and verify",
+    "resources.stagingRecords": "Staging attempts",
+    "resources.sourceUrl": "Source URL or lab-mounted file path",
+    "resources.expectedSize": "Expected size (bytes)",
+    "resources.expectedSha256": "Expected SHA-256",
+    "resources.storageAvailable": "Free storage",
+    "resources.storageRequired": "Required storage",
+    "resources.allowedHosts": "Approved publisher hosts",
+    "resources.remoteStagingDisabled": "Remote staging is disabled until the lab configures approved publisher hosts.",
+    "resources.noStagingRecords": "No staging attempts for this resource version.",
+    "resources.stagingQueued": "Staging task queued. This page will refresh status while it runs.",
+    "resources.stagingRunning": "Staging is running",
+    "resources.stagingCompleted": "Staging and integrity verification completed",
+    "resources.stagingBlocked": "Staging is blocked. Review the preflight or integrity error.",
+    "resources.stagingError": "Staging error",
+    "resources.resourceCacheRoot": "Resource cache",
+    "resources.retryStaging": "Retry staging",
+    "resources.stagingPolicy": "Remote staging is limited to approved public HTTPS releases. Authenticated or licensed resources require a provider-specific adapter.",
+    "resources.observedSize": "Observed size",
+    "resources.observedSha256": "Observed SHA-256",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2103,7 +2147,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.activated": "تم طلب تفعيل المورد.",
     "resources.apiUnavailable": "تعذر الوصول إلى واجهة الموارد.",
     "resources.lifecycleNote": "دورة الحياة: تسجيل ← تجهيز والتحقق ← التأهيل ← طلب موافقة المختبر ← الموافقة ← التفعيل ← الربط بملف التحليل المقصود.",
-    "resources.stagingGap": "مهم: لا تعرض الواجهة البرمجية الحالية نقطة استخدام لتجهيز الموارد أو جلبها. يمكن تسجيل مورد مرشّح هنا، لكن قد يبقى التأهيل محظورًا حتى وجود سجل تجهيز مطابق تم التحقق منه. لن تعرض هذه الصفحة موردًا على أنه قابل للتنفيذ دون دليل.",
+    "resources.stagingGap": "لا يمكن تجهيز الإصدارات العامة عبر HTTPS إلا بعد اعتماد نطاق الناشر وإدخال بصمة SHA-256 وحجم الإصدار المتوقع. تُفحص السعة قبل الإرسال إلى التنفيذ، ويظل التأهيل وموافقة المختبر مطلوبين قبل الاستخدام.",
     "resources.profiles": "ملفات التحليل المضمنة",
     "resources.profileHelp": "هذه معرّفات الملفات الموجودة في إصدار الخلفية الحالي. يحدد الملف القدرات المطلوبة؛ ولا يسجّل الموارد أو يوافق عليها.",
     "resources.requiredCapabilities": "القدرات المطلوبة",
@@ -2145,5 +2189,27 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.sha256": "SHA-256",
     "workspace.validationStatus": "التحقق",
     "workspace.createdAt": "تاريخ الإنشاء",
+    "resources.stageRelease": "تجهيز الإصدار",
+    "resources.prepareStaging": "التحضير وفحص التخزين",
+    "resources.executeStaging": "التنزيل والتحقق",
+    "resources.stagingRecords": "محاولات التجهيز",
+    "resources.sourceUrl": "رابط المصدر أو مسار ملف مثبت في المختبر",
+    "resources.expectedSize": "الحجم المتوقع (بايت)",
+    "resources.expectedSha256": "بصمة SHA-256 المتوقعة",
+    "resources.storageAvailable": "مساحة التخزين المتاحة",
+    "resources.storageRequired": "مساحة التخزين المطلوبة",
+    "resources.allowedHosts": "نطاقات الناشرين المعتمدة",
+    "resources.remoteStagingDisabled": "التجهيز عن بُعد معطل حتى يضبط المختبر نطاقات الناشرين المعتمدة.",
+    "resources.noStagingRecords": "لا توجد محاولات تجهيز لهذا الإصدار.",
+    "resources.stagingQueued": "تم وضع مهمة التجهيز في قائمة الانتظار. ستُحدّث الصفحة الحالة أثناء التنفيذ.",
+    "resources.stagingRunning": "التجهيز قيد التنفيذ",
+    "resources.stagingCompleted": "اكتمل التجهيز والتحقق من السلامة",
+    "resources.stagingBlocked": "التجهيز محظور. راجع خطأ الجاهزية أو سلامة البيانات.",
+    "resources.stagingError": "خطأ التجهيز",
+    "resources.resourceCacheRoot": "مخزن الموارد المؤقت",
+    "resources.retryStaging": "إعادة محاولة التجهيز",
+    "resources.stagingPolicy": "يقتصر التجهيز عن بُعد على الإصدارات العامة المعتمدة عبر HTTPS. تتطلب الموارد الموثقة أو المرخصة موائمًا خاصًا بالمزوّد.",
+    "resources.observedSize": "الحجم الفعلي",
+    "resources.observedSha256": "بصمة SHA-256 الفعلية",
   },
 };
