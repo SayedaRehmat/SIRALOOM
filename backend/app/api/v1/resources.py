@@ -334,6 +334,227 @@ def decide_resource_approval_endpoint(
     }
 
 
+@router.get("/staging/config")
+def get_resource_staging_config(
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({
+        "platform_admin", "organization_admin", "lab_director", "bioinformatician",
+    }))
+    return {
+        "resource_cache_root": str(Path(settings.resource_cache_root).expanduser().resolve()),
+        "organization_resource_root": str(_organization_resource_root(principal.organization_id)),
+        "max_remote_bytes": settings.resource_staging_max_bytes,
+        "timeout_seconds": settings.resource_staging_timeout_seconds,
+        "allowed_publisher_hosts": sorted(_allowed_resource_hosts()),
+        "local_source_roots": [str(root) for root in _allowed_local_source_roots()],
+        "remote_staging_enabled": bool(_allowed_resource_hosts()),
+    }
+
+
+@router.get("/{resource_id}/staging")
+def list_resource_staging(
+    resource_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({
+        "platform_admin", "organization_admin", "lab_director", "bioinformatician",
+        "clinical_geneticist", "reviewer", "lab_scientist", "read_only",
+    }))
+    resource = _require_resource_owner(db.get(Resource, resource_id), principal)
+    rows = db.scalars(
+        select(ResourceStaging)
+        .where(
+            ResourceStaging.resource_id == resource.id,
+            ResourceStaging.resource_version == resource.version,
+        )
+        .order_by(ResourceStaging.created_at.desc())
+        .limit(50)
+    ).all()
+    return [_staging_payload(row) for row in rows]
+
+
+@router.post("/{resource_id}/staging", status_code=201)
+def create_resource_staging(
+    resource_id: UUID,
+    payload: ResourceStagingCreateRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({
+        "platform_admin", "organization_admin", "lab_director", "bioinformatician",
+    }))
+    resource = _require_resource_owner(db.get(Resource, resource_id), principal)
+    if resource.status not in {"CANDIDATE", "QUALIFIED"}:
+        raise HTTPException(status_code=409, detail=f"Resource status {resource.status} cannot be staged")
+    if not resource.location:
+        raise HTTPException(status_code=400, detail="Resource must have a registered execution destination before staging")
+    destination = _validate_org_destination(resource.location, principal.organization_id)
+    source_contract = dict((resource.metadata_json or {}).get("source_contract") or {})
+    access_method = str(resource.access_method or "").strip().upper()
+    source_uri = str(payload.source_uri or "").strip()
+    if not source_uri and access_method == "HTTPS":
+        source_uri = str(source_contract.get("artifact_url") or "").strip()
+    if not source_uri:
+        raise HTTPException(status_code=400, detail="source_uri is required for local resources")
+
+    expected_sha256 = str(payload.expected_sha256 or resource.checksum or "").strip() or None
+    expected_size_bytes = payload.expected_size_bytes
+    if access_method == "HTTPS":
+        parsed = urlparse(source_uri)
+        if parsed.scheme != "https" or not parsed.hostname:
+            raise HTTPException(status_code=400, detail="Remote resource staging requires an absolute HTTPS source URL")
+        if source_uri != str(source_contract.get("artifact_url") or "").strip():
+            raise HTTPException(status_code=400, detail="Source URL must match the registered source contract")
+        if str(source_contract.get("access_mode") or "").upper() != "PUBLIC":
+            raise HTTPException(status_code=400, detail="Generic staging only supports public resources; use a provider-specific adapter for authenticated/licensed sources")
+        if str(source_contract.get("checksum_status") or "").upper() != "PUBLISHED_AND_VERIFIED":
+            raise HTTPException(status_code=400, detail="Remote staging requires a published and verified checksum declaration")
+        allowed_hosts = _allowed_resource_hosts()
+        if not allowed_hosts:
+            raise HTTPException(status_code=409, detail="Remote staging is disabled until the lab configures RESOURCE_STAGING_ALLOWED_HOSTS")
+        if parsed.hostname.lower().rstrip(".") not in allowed_hosts:
+            raise HTTPException(status_code=403, detail=f"Publisher host {parsed.hostname!r} is not allowed by this deployment")
+        if not expected_sha256:
+            raise HTTPException(status_code=400, detail="Remote staging requires an expected SHA-256 checksum")
+        if expected_size_bytes is None:
+            raise HTTPException(status_code=400, detail="Remote staging requires the expected release size so storage preflight can reserve capacity")
+        if expected_size_bytes > settings.resource_staging_max_bytes:
+            raise HTTPException(status_code=413, detail=f"Resource exceeds the configured staging limit of {settings.resource_staging_max_bytes} bytes")
+    else:
+        source_path = _local_source_path(source_uri)
+        if source_path is None:
+            raise HTTPException(status_code=400, detail="Local staging source must be a filesystem path or file:// URI")
+        allowed_roots = _allowed_local_source_roots()
+        if not allowed_roots or not any(source_path == root or root in source_path.parents for root in allowed_roots):
+            raise HTTPException(status_code=403, detail="Local source is outside RESOURCE_STAGING_LOCAL_SOURCE_ROOTS")
+        if not source_path.is_file():
+            raise HTTPException(status_code=400, detail="Local staging source file does not exist")
+        if expected_size_bytes is None:
+            expected_size_bytes = source_path.stat().st_size
+        if expected_size_bytes > settings.resource_staging_max_bytes:
+            raise HTTPException(status_code=413, detail=f"Resource exceeds the configured staging limit of {settings.resource_staging_max_bytes} bytes")
+
+    try:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        row = create_staging_candidate(
+            db,
+            resource=resource,
+            source_uri=source_uri,
+            destination_uri=str(destination),
+            storage_backend=payload.storage_backend,
+            expected_sha256=expected_sha256,
+            expected_size_bytes=expected_size_bytes,
+            staging_key=payload.staging_key,
+            metadata={
+                **payload.metadata,
+                "source_contract_release": source_contract.get("release_identity"),
+                "created_by": str(principal.user_id),
+            },
+        )
+        if row.status in {"DISCOVERED", "PREFLIGHT_FAILED"} or (
+            row.status == "INTEGRITY_FAILED" and bool((row.metadata_json or {}).get("retryable"))
+        ):
+            prepare_staging(db, row)
+        db.commit()
+        db.refresh(row)
+    except (ResourceStagingError, ValueError, OSError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _staging_payload(row)
+
+
+@router.post("/{resource_id}/staging/{staging_id}/execute")
+def execute_resource_staging(
+    resource_id: UUID,
+    staging_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({
+        "platform_admin", "organization_admin", "lab_director", "bioinformatician",
+    }))
+    resource = _require_resource_owner(db.get(Resource, resource_id), principal)
+    row = db.get(ResourceStaging, staging_id)
+    if row is None or row.resource_id != resource.id or row.resource_version != resource.version:
+        raise HTTPException(status_code=404, detail="Staging record not found for this resource version")
+    if row.status == "STAGED":
+        return _staging_payload(row)
+    if row.status == "STAGING":
+        return _staging_payload(row)
+    if row.status == "INTEGRITY_FAILED" and not bool((row.metadata_json or {}).get("retryable")):
+        raise HTTPException(status_code=409, detail="This staging failure is not retryable; correct the release/checksum and register a new resource version")
+    if row.status in {"DISCOVERED", "PREFLIGHT_FAILED", "INTEGRITY_FAILED"}:
+        try:
+            prepare_staging(db, row)
+            db.commit()
+            db.refresh(row)
+        except (ResourceStagingError, ValueError, OSError) as exc:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if row.status != "READY_TO_STAGE":
+        raise HTTPException(status_code=409, detail=f"Staging is not ready to execute: {row.status}")
+
+    metadata = dict(row.metadata_json or {})
+    dispatch = dict(metadata.get("staging_dispatch") or {})
+    dispatch_status = str(dispatch.get("status") or "").upper()
+    queued_at = dispatch.get("queued_at")
+    stale_queuing = False
+    if dispatch_status == "QUEUING" and queued_at:
+        try:
+            stale_queuing = (datetime.now(timezone.utc) - datetime.fromisoformat(str(queued_at))).total_seconds() > 120
+        except ValueError:
+            stale_queuing = True
+    if dispatch_status in {"QUEUING", "PUBLISHED", "RUNNING"} and not stale_queuing:
+        return _staging_payload(row)
+
+    metadata["staging_dispatch"] = {
+        "status": "QUEUING",
+        "queued_at": datetime.now(timezone.utc).isoformat(),
+        "task_id": f"siraloom-resource-stage-{row.id}",
+    }
+    row.metadata_json = metadata
+    db.add(row)
+    db.commit()
+    try:
+        from backend.app.infrastructure.queue.celery_app import run_resource_staging_task
+        run_resource_staging_task.apply_async(
+            args=[str(row.id)],
+            task_id=f"siraloom-resource-stage-{row.id}",
+        )
+    except Exception as exc:
+        current = db.get(ResourceStaging, row.id)
+        if current is not None:
+            current_metadata = dict(current.metadata_json or {})
+            current_metadata["staging_dispatch"] = {
+                "status": "FAILED",
+                "error": str(exc),
+                "failed_at": datetime.now(timezone.utc).isoformat(),
+            }
+            current.metadata_json = current_metadata
+            db.add(current)
+            db.commit()
+        raise HTTPException(status_code=503, detail="Resource staging could not be queued. The staging record is preserved; retry the queue action after the worker/broker is healthy.") from exc
+
+    current = db.get(ResourceStaging, row.id)
+    if current is not None:
+        current_metadata = dict(current.metadata_json or {})
+        current_dispatch = dict(current_metadata.get("staging_dispatch") or {})
+        if str(current_dispatch.get("status") or "").upper() == "QUEUING":
+            current_metadata["staging_dispatch"] = {
+                **current_dispatch,
+                "status": "PUBLISHED",
+                "published_at": datetime.now(timezone.utc).isoformat(),
+            }
+            current.metadata_json = current_metadata
+            db.add(current)
+            db.commit()
+        row = current
+    db.refresh(row)
+    return _staging_payload(row)
+
+
 @router.get("/{resource_id}")
 def get_resource(
     resource_id: UUID,
