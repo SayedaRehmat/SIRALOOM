@@ -91,3 +91,11 @@ def test_provider_discovery_persists_source_identity_and_never_activates(monkeyp
         assert discovery.authority_evidence_url == "https://example.org/resource/docs"
         assert db.query(ResourceStaging).count() == 0
         assert db.query(Resource).one().status == "CANDIDATE"
+
+
+def test_scientific_resource_discovery_is_scheduled_daily():
+    from backend.app.infrastructure.queue.celery_app import celery_app
+
+    schedule = celery_app.conf.beat_schedule
+    assert schedule["discover-scientific-resource-releases-daily"]["task"] == "siraloom.discover_scientific_resources"
+    assert schedule["discover-scientific-resource-releases-daily"]["schedule"] == 86400.0
