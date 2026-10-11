@@ -150,7 +150,7 @@ export default function CaseDossierPage() {
         anchor.remove();
         window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       }
-      setMessage(`${artifact.filename}: ${t("workspace.downloadArtifact")}`);
+      setMessage(t("cases.dossierDownloadComplete"));
     } catch (e) {
       setMessage(e instanceof Error ? e.message : t("workspace.downloadFailed"));
     } finally {
