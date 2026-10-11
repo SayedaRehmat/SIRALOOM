@@ -111,6 +111,17 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
                 validation_status="VALID",
             )
             analysis.configuration = {"input_artifact_id": str(input_artifact.id)}
+            normalized_artifact = store.put_file(
+                db=db,
+                case_id=case_id,
+                analysis_id=analysis_id,
+                source_path=input_path,
+                filename="normalized.vcf",
+                artifact_type="NORMALIZED_VCF",
+                media_type="text/vcf",
+                genome_build="GRCh38",
+                validation_status="VALID",
+            )
 
             variant = Variant(
                 id=variant_id,
