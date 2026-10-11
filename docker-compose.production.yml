@@ -75,6 +75,7 @@ services:
       - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
       - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
       - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
+      - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
 
   frontend:
     build:
