@@ -701,7 +701,7 @@ export default function Home() {
       setManualClassificationEvidenceId("");
       setMessage(t("workspace.manualClassificationSaved"));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t("workspace.actionFailed"));
+      setMessage(error instanceof Error ? error.message : t("workspace.manualClassificationFailed"));
     } finally {
       setBusy(false);
     }
@@ -1091,11 +1091,11 @@ export default function Home() {
               <p>{t("workspace.manualClassificationHelp")}</p>
               <label>{t("workspace.manualClassificationResult")}
                 <select value={manualClassificationResult} onChange={event => setManualClassificationResult(event.target.value)}>
-                  <option value="PATHOGENIC">Pathogenic</option>
-                  <option value="LIKELY_PATHOGENIC">Likely pathogenic</option>
-                  <option value="VUS">Variant of uncertain significance (VUS)</option>
-                  <option value="LIKELY_BENIGN">Likely benign</option>
-                  <option value="BENIGN">Benign</option>
+                  <option value="PATHOGENIC">{t("workspace.classPathogenic")}</option>
+                  <option value="LIKELY_PATHOGENIC">{t("workspace.classLikelyPathogenic")}</option>
+                  <option value="VUS">{t("workspace.classVus")}</option>
+                  <option value="LIKELY_BENIGN">{t("workspace.classLikelyBenign")}</option>
+                  <option value="BENIGN">{t("workspace.classBenign")}</option>
                 </select>
               </label>
               <label>{t("workspace.manualClassificationEvidence")}
