@@ -670,6 +670,7 @@ export type TranslationKey =
   | "cases.continueIndex"
   | "cases.skipIndex"
   | "cases.openWorkspace"
+  | "cases.openDossier"
   | "cases.readyHelp"
   | "cases.readyDetail"
   | "cases.invalidPrimary"
@@ -850,6 +851,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.continueIndex": "Continue to index",
     "cases.skipIndex": "Skip index & review",
     "cases.openWorkspace": "Open Variant workspace",
+    "cases.openDossier": "Open case dossier",
     "cases.readyHelp": "Confirm the case is internally consistent before starting scientific analysis.",
     "cases.readyDetail": "The primary VCF passed structural validation and has an explicit genome build. You can proceed to the existing Variant workflow.",
     "cases.invalidPrimary": "The primary variant artifact is not valid. Resolve the validation failure before starting analysis.",
@@ -1600,6 +1602,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.continueIndex": "المتابعة إلى الفهرس",
     "cases.skipIndex": "تخطي الفهرس والمراجعة",
     "cases.openWorkspace": "فتح مساحة المتغيرات",
+    "cases.openDossier": "فتح ملف الحالة",
     "cases.readyHelp": "تأكد من اتساق الحالة داخليًا قبل بدء التحليل العلمي.",
     "cases.readyDetail": "اجتاز ملف VCF الأساسي التحقق البنيوي وله بناء جينومي محدد. يمكنك المتابعة إلى سير عمل المتغيرات الحالي.",
     "cases.invalidPrimary": "أثر المتغير الأساسي غير صالح. عالج فشل التحقق قبل بدء التحليل.",
