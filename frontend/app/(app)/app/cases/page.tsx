@@ -457,7 +457,7 @@ export default function Cases() {
                       <small>{pretty(item.status)} · {item.specimens?.length ?? 0} {t("cases.specimenCount")}</small>
                     </span>
                     <span>
-                      <small>${latestAnalysis ? `${t("cases.analysis")} · ${pretty(latestAnalysis.status)}` : t("cases.noAnalysis")}</small>
+                      <small>{latestAnalysis ? `${t("cases.analysis")} · ${pretty(latestAnalysis.status)}` : t("cases.noAnalysis")}</small>
                     </span>
                   </button>
                   <Link className="case-registry-dossier-link" href={`/app/cases/${item.case_id}`}>{t("cases.openDossier")}</Link>
