@@ -125,6 +125,16 @@ export type TranslationKey =
   | "workspace.gateSubmit"
   | "workspace.gateResolved"
   | "workspace.gateRetryNeedsChange"
+  | "workspace.analysisProfile"
+  | "workspace.preflightTitle"
+  | "workspace.preflightBlocked"
+  | "workspace.preflightReady"
+  | "workspace.preflightDetails"
+  | "workspace.preflightIssues"
+  | "workspace.preflightNoIssues"
+  | "workspace.profileWes38"
+  | "workspace.profileWgs38"
+  | "workspace.profileWes37"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -1395,6 +1405,16 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.gateSubmit": "Record decision",
     "workspace.gateResolved": "Gate decision recorded. Workflow state refreshed.",
     "workspace.gateRetryNeedsChange": "Before retrying, document a real input, clinical-context, or resource change.",
+    "workspace.analysisProfile": "Analysis profile",
+    "workspace.preflightTitle": "Resource preflight",
+    "workspace.preflightBlocked": "Blocked before dispatch",
+    "workspace.preflightReady": "Resource plan ready",
+    "workspace.preflightDetails": "Inspect stage readiness and selected resources",
+    "workspace.preflightIssues": "Resource issues",
+    "workspace.preflightNoIssues": "No resource issues were returned by preflight.",
+    "workspace.profileWes38": "Standard WES · GRCh38",
+    "workspace.profileWgs38": "Standard WGS · GRCh38",
+    "workspace.profileWes37": "Standard WES · GRCh37",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2088,5 +2108,15 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.gateSubmit": "تسجيل القرار",
     "workspace.gateResolved": "تم تسجيل قرار البوابة وتحديث حالة سير العمل.",
     "workspace.gateRetryNeedsChange": "قبل إعادة المحاولة، وثّق تغييرًا فعليًا في الإدخال أو السياق السريري أو المورد.",
+    "workspace.analysisProfile": "ملف التحليل",
+    "workspace.preflightTitle": "فحص جاهزية الموارد",
+    "workspace.preflightBlocked": "تم الحظر قبل الإرسال للتنفيذ",
+    "workspace.preflightReady": "خطة الموارد جاهزة",
+    "workspace.preflightDetails": "افحص جاهزية المراحل والموارد المحددة",
+    "workspace.preflightIssues": "مشكلات الموارد",
+    "workspace.preflightNoIssues": "لم يُرجع فحص الجاهزية مشكلات موارد.",
+    "workspace.profileWes38": "تسلسل الإكسوم القياسي · GRCh38",
+    "workspace.profileWgs38": "تسلسل الجينوم القياسي · GRCh38",
+    "workspace.profileWes37": "تسلسل الإكسوم القياسي · GRCh37",
   },
 };
