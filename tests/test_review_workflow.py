@@ -382,6 +382,91 @@ def test_reportability_is_not_created_from_proposed_classification():
     assert any("classification is not FINAL + APPROVED" in error for error in errors)
 
 
+def test_manual_classification_to_final_reportability_gate_is_auditable():
+    from backend.app.review.service import start_review
+    from backend.app.reporting.reportability import finalize_reportability
+
+    db, reviewer, _, analysis, variant, assessment, classification = seed()
+    db.delete(classification)
+    db.delete(assessment)
+    annotation = _add_annotation(db, analysis, variant)
+    evidence = Evidence(
+        id=uuid4(),
+        variant_id=variant.id,
+        analysis_id=analysis.id,
+        evidence_type="LITERATURE",
+        statement="Literature evidence documented for manual review.",
+        direction="SUPPORTING",
+        source_name="PubMed",
+        source_version="2026",
+        source_record_id="PMID:12345678",
+        observation_ids=[],
+        payload={},
+        created_by_type="HUMAN",
+        created_by_id=str(reviewer.id),
+        evidence_fingerprint=f"manual-chain-{uuid4()}",
+    )
+    acmg_step = WorkflowStep(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        step_id="acmg_assessment",
+        step_order=6,
+        status="REQUIRES_REVIEW",
+        attempt=1,
+        error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
+        error_message="No validated applicable specification.",
+        metadata_json={"next_step": "review"},
+    )
+    db.add_all([annotation, evidence, acmg_step])
+    db.commit()
+
+    proposal = propose_manual_classification(
+        db,
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        reviewer=reviewer,
+        result="VUS",
+        reason="Manual interpretation documented because no applicable automated specification was available.",
+        evidence_ids=(evidence.id,),
+    )
+    db.commit()
+    started = start_review(db, analysis_id=analysis.id, variant_id=variant.id, reviewer=reviewer)
+    db.commit()
+    approved = approve_classification(
+        db,
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        reviewer=reviewer,
+        expected_version=started.review_version,
+        reason="Evidence and rationale reviewed and approved.",
+    )
+    db.commit()
+
+    assert proposal.state == "PROPOSED"
+    assert approved.state == "FINAL"
+    assert approved.review_status == ReviewStatus.APPROVED
+    assert approved.metadata_json["decision_mode"] == "MANUAL"
+    assert approved.criterion_ids == []
+
+    decisions = evaluate_analysis(db, analysis)
+    db.commit()
+    assert len(decisions) == 1
+    assert decisions[0].classification_id == approved.id
+    assert decisions[0].status == "PROPOSED"
+
+    finalized = finalize_reportability(
+        db,
+        decision_id=decisions[0].id,
+        reviewer_id=reviewer.id,
+        expected_version=decisions[0].review_version,
+        disposition="REVIEW",
+        reason="Reportability reviewed by authorized reviewer.",
+    )
+    db.commit()
+    assert finalized.status == "FINAL"
+    ready, errors = final_reportability_state(db, analysis.id)
+    assert ready is True, errors
+
 def test_reportability_is_created_only_after_approved_final_classification():
     db, reviewer, _, analysis, variant, _, _ = seed()
     approved = approve_classification(
