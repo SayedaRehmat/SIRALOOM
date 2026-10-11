@@ -13,8 +13,10 @@ from backend.app.infrastructure.db.models import (
     Annotation,
     AnalysisPartition,
     Assay,
+    Artifact,
   )
 from backend.app.application.analysis import create_analysis, enqueue_analysis, preflight_analysis_resources
+from backend.app.domain.storage_capacity import preflight_analysis_capacity
 from backend.app.application.entitlements import (
     reserve_analysis_quota,
     require_analysis_quota,
@@ -177,23 +179,58 @@ def start(
         db.rollback()
         raise HTTPException(status_code=400, detail=str(exc))
 
-    if plan is not None and not plan.is_ready:
+    input_artifact = db.get(Artifact, analysis.input_artifact_id) if analysis.input_artifact_id else None
+    capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
+    configuration = dict(analysis.configuration or {})
+    configuration["capacity_preflight"] = capacity
+    analysis.configuration = configuration
+
+    preflight_step = db.scalar(
+        select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis.id,
+            WorkflowStep.step_id == "preflight",
+        )
+    )
+    if preflight_step is not None:
+        step_metadata = dict(preflight_step.metadata_json or {})
+        step_metadata["capacity_preflight"] = capacity
+        preflight_step.metadata_json = step_metadata
+        if capacity.get("status") == "BLOCKED":
+            if not (preflight_step.error_code and str(preflight_step.error_code).startswith("RESOURCE_")):
+                preflight_step.status = "BLOCKED"
+                preflight_step.error_code = "STORAGE_CAPACITY_PREFLIGHT_BLOCKED"
+                preflight_step.error_message = "Configured artifact/scratch storage is below the analysis planning estimate."
+        elif preflight_step.error_code == "STORAGE_CAPACITY_PREFLIGHT_BLOCKED" and (plan is None or plan.is_ready):
+            preflight_step.status = "SUCCEEDED"
+            preflight_step.error_code = None
+            preflight_step.error_message = None
+        db.add(preflight_step)
+
+    if capacity.get("status") == "BLOCKED":
+        analysis.status = "BLOCKED"
+    db.add(analysis)
+
+    resource_blocked = plan is not None and not plan.is_ready
+    capacity_blocked = capacity.get("status") == "BLOCKED"
+    resource_issues = [
+        {
+            "capability": issue.capability,
+            "required": issue.required,
+            "code": issue.code,
+            "message": issue.message,
+        }
+        for issue in (plan.issues if plan is not None else [])
+    ]
+    if resource_blocked or capacity_blocked:
         db.commit()
         db.refresh(analysis)
         return {
             "analysis_id": str(analysis_id),
             "status": analysis.status,
             "task_id": None,
-            "resource_plan_status": plan.status,
-            "resource_issues": [
-                {
-                    "capability": issue.capability,
-                    "required": issue.required,
-                    "code": issue.code,
-                    "message": issue.message,
-                }
-                for issue in plan.issues
-            ],
+            "resource_plan_status": plan.status if plan is not None else None,
+            "resource_issues": resource_issues,
+            "capacity_preflight": capacity,
         }
 
     task_id = enqueue_analysis(db, analysis)
@@ -202,6 +239,9 @@ def start(
         "analysis_id": str(analysis_id),
         "status": analysis.status,
         "task_id": task_id,
+        "resource_plan_status": plan.status if plan is not None else None,
+        "resource_issues": resource_issues,
+        "capacity_preflight": capacity,
     }
 
 
@@ -262,6 +302,7 @@ def get(
         "completed_at": analysis.completed_at,
         "next_step": workflow_next_step,
         "steps": step_payloads,
+        "capacity_preflight": (analysis.configuration or {}).get("capacity_preflight"),
     }
 
 
