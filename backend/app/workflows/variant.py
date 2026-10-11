@@ -157,6 +157,14 @@ def _completed_batch_keys(step: WorkflowStep) -> set[str]:
     batches = (step.metadata_json or {}).get("batches") or {}
     return {k for k, v in batches.items() if (v or {}).get("status") == "SUCCEEDED"}
 
+def _completed_acmg_batch_outcome_counts(step: WorkflowStep, start: int, end: int) -> tuple[int, int]:
+    """Restore human-review/blocking counters from a durable successful batch checkpoint."""
+    checkpoint = _batch_checkpoint(step, start, end)
+    return (
+        int(checkpoint.get("requires_review", 0) or 0),
+        int(checkpoint.get("blocked", 0) or 0),
+    )
+
 def _ensure_annotation_request_fingerprint(
     payloads: list[dict],
     *,
@@ -2934,7 +2942,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     rows = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id).order_by(Annotation.created_at, Annotation.id).offset(start_i).limit(end_i - start_i)).all()
                     key = _batch_key(start_i, end_i)
                     if key in completed_batches:
-                        # Reconcile counts from persisted ACMG assessments on recovery.
+                        # Assessments persist across retries, but local counters do not.
+                        # Restore review/blocking outcomes from the durable checkpoint so
+                        # a partial manual review cannot incorrectly mark ACMG succeeded.
+                        batch_review, batch_blocked = _completed_acmg_batch_outcome_counts(
+                            acmg_step, start_i, end_i
+                        )
+                        review_variants += batch_review
+                        blocked_variants += batch_blocked
                         continue
                     attempt = int((_batch_checkpoint(acmg_step, start_i, end_i).get("attempt") or 0)) + 1
                     _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="RUNNING", attempt=attempt)
