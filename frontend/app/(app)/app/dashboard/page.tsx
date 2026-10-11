@@ -112,6 +112,7 @@ export default function Dashboard() {
     if (notification.case_id) {
       window.localStorage.setItem("siraloom.case_id", notification.case_id);
       if (notification.analysis_id) window.localStorage.setItem("siraloom.analysis_id", notification.analysis_id);
+      else window.localStorage.removeItem("siraloom.analysis_id");
       return;
     }
     if (notification.analysis_id) window.localStorage.setItem("siraloom.analysis_id", notification.analysis_id);
