@@ -49,6 +49,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link href="/app/cases" className={isActive("/app/cases") ? "active" : undefined} aria-current={isActive("/app/cases") ? "page" : undefined}>{t("nav.cases")}</Link>
           <Link href="/app/workspace" className={isActive("/app/workspace") ? "active" : undefined} aria-current={isActive("/app/workspace") ? "page" : undefined}>{t("nav.variantWorkspace")}</Link>
 
+          <span className="nav-label">Operations</span>
+          <Link href="/app/operations" className={isActive("/app/operations") ? "active" : undefined} aria-current={isActive("/app/operations") ? "page" : undefined}>Operations</Link>
+
           <span className="nav-label">{t("app.governance")}</span>
           <Link href="/app/review" className={isActive("/app/review") ? "active" : undefined} aria-current={isActive("/app/review") ? "page" : undefined}>{t("nav.reviewQueue")}</Link>
           <Link href="/app/resources" className={isActive("/app/resources") ? "active" : undefined} aria-current={isActive("/app/resources") ? "page" : undefined}>{t("nav.resources")}</Link>
