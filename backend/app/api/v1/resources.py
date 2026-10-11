@@ -433,6 +433,8 @@ def create_resource_staging(
             raise HTTPException(status_code=403, detail="Local source is outside RESOURCE_STAGING_LOCAL_SOURCE_ROOTS")
         if not source_path.is_file():
             raise HTTPException(status_code=400, detail="Local staging source file does not exist")
+        if source_path.stat().st_size <= 0:
+            raise HTTPException(status_code=400, detail="Local staging source file is empty")
         if expected_size_bytes is None:
             expected_size_bytes = source_path.stat().st_size
         if expected_size_bytes > settings.resource_staging_max_bytes:
