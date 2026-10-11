@@ -1444,7 +1444,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 part = AnalysisPartition(id=__import__("uuid").uuid4(), analysis_id=analysis.id, step_id="normalize", partition_key=partition_key, ordinal=ordinal, record_start=start, record_end=end, variant_count=len(batch), status="READY", input_artifact_id=normalized_artifact.id, metadata_json={"genome_build": reference_build})
                 db.add(part)
             else:
-                part.status = "READY"
+                # A resumed workflow reparses the immutable normalized artifact
+                # to rebuild its in-memory batch cursor, but completed durable
+                # partitions must remain terminal and must not become schedulable
+                # again after a human review gate.
+                if part.status != "SUCCEEDED":
+                    part.status = "READY"
                 part.variant_count = len(batch)
                 part.input_artifact_id = normalized_artifact.id
             rows = []
