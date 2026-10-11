@@ -64,7 +64,7 @@ def affected_step_for_trigger(trigger_type: str) -> str:
         raise ValueError(f"Unsupported reanalysis trigger: {trigger_type}")
 
 
-def snapshot_analysis_resources(db: Session, analysis: Analysis) -> int:
+def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool = True) -> int:
     """Persist the exact external resource identities observed by a completed analysis."""
     existing = db.scalar(
         select(AnalysisResourceSnapshot.id)
@@ -164,7 +164,8 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis) -> int:
         ))
         count += 1
 
-    db.commit()
+    if commit:
+        db.commit()
     return count
 
 
