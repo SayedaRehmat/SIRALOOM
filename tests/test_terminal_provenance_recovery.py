@@ -3,7 +3,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from celery.exceptions import Retry
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -254,7 +253,7 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
             delivery_info={"redelivered": False},
         )
         try:
-            with pytest.raises(Retry):
+            with pytest.raises(workflow.TransientWorkflowError, match="simulated transient provenance storage interruption"):
                 queue_module.run_analysis_task.run(str(analysis_id))
         finally:
             queue_module.run_analysis_task.pop_request()
