@@ -1,6 +1,6 @@
 # Frontend-to-backend coverage audit and laboratory UX requirements
 
-**Audit basis:** default-branch source at `a12f57728e9c371d7947f9fce346a8ae79cdb32f`, reviewed 2026-10-11. This is a source-level audit, not a live-deployment or browser E2E result.
+**Audit basis:** this branch’s source, reviewed 2026-10-11. This is a source-level audit, not a live-deployment or browser E2E result. Re-run the audit against the exact merge commit before release.
 
 ## Design research and operating principles
 
@@ -20,7 +20,7 @@ SIRALOOM should adopt the useful interaction patterns without copying proprietar
 | Case registry and case creation | `/cases`, specimen and artifact APIs | `frontend/app/(app)/app/cases/page.tsx` | Implemented in source; verify create/open/edit and authorization in deployed E2E. |
 | VCF intake and artifact persistence | `backend/app/api/v1/artifacts.py`, artifact store implementations | Cases page and `frontend/app/(app)/app/workspace/page.tsx` | This branch adds a case-artifact inventory with download actions and recorded hash/build/validation metadata for every artifact returned by the API. The backend creates a normalized VCF plus index and per-batch annotation-provider response JSON artifacts. It does not currently produce one consolidated annotated VCF artifact; annotations are also persisted in database rows. Hash verification, access control and large-file behavior still require deployed tests. |
 | Durable analysis and workflow state | `backend/app/api/v1/analyses.py`, workflow/domain modules, checkpoint and dispatch tests | Workspace polls analysis and renders workflow steps | This branch adds explicit WES/WGS GRCh38 and WES GRCh37 profile selection, passes the profile ID at analysis creation, surfaces the start/preflight response and persisted per-stage resource readiness/issues, and avoids saying “queued” when preflight blocks. Source tests do not prove crash recovery at every stage. |
-| Preflight/resource plan | `preflight_analysis_resources`, `resource_profile_resolver.py`, persisted resource plan | Workspace can start an analysis; no dedicated preflight/resource-plan workbench was found | Remaining gap: show the immutable plan hash/version and an accurate deployment-backed capacity estimate; add recovery actions tied to specific blockers. The current UI exposes readiness/issue details but does not estimate capacity. |
+| Preflight/resource plan | `preflight_analysis_resources`, `resource_profile_resolver.py`, persisted resource plan | Workspace can start an analysis; no dedicated preflight/resource-plan workbench was found | The workspace shows the persisted resource readiness and capacity-preflight result. Remaining gap: verify that its figures correspond to the actual deployment mounts, scratch paths and worker concurrency; UI estimates alone are not proof of reserved capacity. |
 | Resource registry | `backend/app/api/v1/resources.py`, registry, qualification and approval domain modules | No resource-management page was present in the audited tree | Gap addressed in this branch by adding `/app/resources`; live API integration remains to be verified. |
 | Resource staging/acquisition | Domain modules `resource_staging.py` and `resource_remote_staging.py`; staging tests | This branch adds organization-scoped staging configuration/list/create/execute endpoints, a Celery task, persistent resource-cache volume, size/free-space preflight, publisher allow-list enforcement, SHA-256 verification and redelivery cleanup; the Resources page exposes the lifecycle | Implemented in source; only public HTTPS file releases and approved local source roots are supported by this generic path. Authenticated/licensed resources still need provider-specific adapters, and deployed failure/recovery must be tested. |
 | Resource profiles | `analysis_resource_profiles.py` defines WES/WGS GRCh38 and WES GRCh37 standard profiles | No profile-management or profile-selection screen was found | Gap: expose profile selection/inspection and per-profile organization-bound resource readiness; current branch shows the profiles known to this backend build. |
@@ -35,12 +35,12 @@ SIRALOOM should adopt the useful interaction patterns without copying proprietar
 | Capacity and storage | Upload policy, storage health, upload smoke script | Settings reports health; no operator-facing capacity dashboard was found | Gap: show storage and capacity telemetry only when the deployment supplies trustworthy metrics. Do not infer capacity from an upload-size setting. |
 | Laboratory deployment | Production Compose, deployment docs, health/readiness checks | Public website and workspace exist; frontend deploys separately | This branch adds a production Next.js container and full-stack Compose option, plus workspace-first lab mode; Firebase Authentication remains an external identity dependency and a host TLS reverse proxy is required. Not yet deployment-verified. Run installation, migrations, worker/broker/storage, authentication, upload, recovery and report sign-out on a real staging environment. |
 
-## Resource Center added in this branch
+## Resource Center and staging workflow in this branch
 
 - Adds `/app/resources` to the authenticated navigation.
 - Adds resource registration as a candidate, status/type filters, qualification result inspection, approval requests, approval decisions with reason/version, activation requests, and visibility of the three built-in analysis profiles.
 - Adds a workspace language switcher using the centralized locale catalog.
-- Explicitly warns that the existing API does not expose staging/acquisition as a user-facing endpoint. Resource registration must not be represented as qualification or executable readiness.
+- Exposes a governed staging/preflight flow for public HTTPS releases and approved lab-mounted source files. It checks organization-scoped destination, publisher allow-list, release size, storage availability, source contract/license readiness and SHA-256 before marking a resource staged. Staging does not imply qualification, lab approval or activation.
 
 ## Large VCF files and capacity
 
@@ -49,11 +49,11 @@ No code or UI should promise support for arbitrary 5 GB/10 GB files based only o
 ## Required next verification gates
 
 1. Run frontend i18n validation, TypeScript and production build; run backend tests after API/UI integration changes.
-2. Complete the resource staging API and a user-facing staging/preflight flow, with publisher allow-list, checksum, size limit, disk preflight, organization storage boundary and retryable failure states.
-3. Add a case worklist and case detail information architecture that makes the case the permanent root, with explicit tabs for overview, files, analysis, variants, phenotype/family, evidence/review, reports and audit.
+2. Verify resource staging against the deployed lab’s real persistent mounts and approved publisher allow-list; exercise interrupted downloads, Celery redelivery, checksum mismatch, insufficient space and cross-organization denial. Add provider-specific adapters before enabling authenticated or licensed sources.
+3. Refine the case worklist and case detail information architecture so the case is the permanent root, with clear sections for overview, files, analysis, variants, phenotype/family, evidence/review, reports and audit; remove duplicated explanatory copy and excessive card framing.
 4. Trace every workflow-level human gate from visible pending task through authorization, decision persistence, resumed execution and final report.
 5. Test English, Arabic/RTL and bilingual modes across public pages, login/onboarding and every protected workspace route.
-6. Execute a deployed end-to-end test with a non-sensitive VCF and registered, qualified, approved, organization-bound resources. Record artifact hashes and generated report IDs.
+6. Execute a deployed end-to-end test with a non-sensitive VCF and registered, qualified, approved, organization-bound resources. Record artifact hashes and generated report IDs. The repository is not connected to a lab runtime or real credentials in this session, so source/CI results must not be described as this live acceptance test.
 7. Run a measured upload/recovery test on disposable staging cases and execute a properly configured GIAB benchmark before making any scientific-concordance claim.
 
 **Release rule:** a route, component, unit test or implementation report is not proof of a completed laboratory workflow. Mark each requirement PASS only after its intended integration test has passed and retain the run evidence.
