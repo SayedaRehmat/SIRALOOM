@@ -466,6 +466,12 @@ def stage_resource_release(
             "generic remote staging requires a PUBLIC source contract; "
             "authenticated or license-controlled resources require a provider-specific adapter"
         )
+    if str(contract.get("license_status") or "").upper() not in {"VERIFIED", "NOT_REQUIRED"}:
+        raise ResourceStagingError(
+            "resource license/terms must be verified or explicitly not required before acquisition",
+            code="LICENSE_REVIEW_REQUIRED",
+            outcome="RESOURCE_REJECTED",
+        )
     artifact_url = str(contract.get("artifact_url") or "").strip()
     if artifact_url != row.source_uri:
         raise ResourceStagingError(
