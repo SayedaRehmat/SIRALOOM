@@ -682,6 +682,7 @@ export type TranslationKey =
   | "cases.dossierSignedHash"
   | "cases.dossierOpenReports"
   | "cases.dossierProvenanceNote"
+  | "cases.dossierReportsUnavailable"
   | "workspace.updatedAt"
   | "workspace.downloading"
   | "cases.readyHelp"
@@ -876,6 +877,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.dossierSignedHash": "Signed SHA-256",
     "cases.dossierOpenReports": "Open report workflow",
     "cases.dossierProvenanceNote": "This dossier summarizes case-linked records. Use Audit to inspect the persisted event history and provenance details.",
+    "cases.dossierReportsUnavailable": "Report records could not be loaded",
     "workspace.updatedAt": "Last updated",
     "workspace.downloading": "Preparing download…",
     "cases.readyHelp": "Confirm the case is internally consistent before starting scientific analysis.",
@@ -1640,6 +1642,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.dossierSignedHash": "بصمة SHA-256 للتقرير الموقّع",
     "cases.dossierOpenReports": "فتح سير عمل التقرير",
     "cases.dossierProvenanceNote": "يلخص هذا الملف السجلات المرتبطة بالحالة. استخدم سجل التدقيق لفحص سجل الأحداث وتفاصيل مصدر البيانات المحفوظة.",
+    "cases.dossierReportsUnavailable": "تعذر تحميل سجلات التقارير",
     "workspace.updatedAt": "آخر تحديث",
     "workspace.downloading": "جارٍ تجهيز التنزيل…",
     "cases.readyHelp": "تأكد من اتساق الحالة داخليًا قبل بدء التحليل العلمي.",
