@@ -193,6 +193,11 @@ export default function Home() {
   const [connection, setConnection] = useState<"checking" | "online" | "offline">("checking");
   const [message, setMessage] = useState("");
   const [reviewReason, setReviewReason] = useState("");
+  const [gateStepId, setGateStepId] = useState("");
+  const [gateDecision, setGateDecision] = useState<"ACCEPT" | "OVERRIDE" | "REQUEST_MORE_EVIDENCE" | "REJECT_AND_RETRY">("ACCEPT");
+  const [gateReason, setGateReason] = useState("");
+  const [gateInputsChanged, setGateInputsChanged] = useState(false);
+  const [pollingEpoch, setPollingEpoch] = useState(0);
   const [criterionReason, setCriterionReason] = useState("");
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -206,6 +211,8 @@ export default function Home() {
     });
     return last;
   }, [analysis]);
+
+  const waitingGates = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).filter(step => step.status === "REQUIRES_REVIEW"), [analysis]);
 
   const annotationProgress = useMemo(() => {
     const annotation = (analysis?.steps as Step[] | undefined)?.find((step) => step.step_id === "annotate");
@@ -325,7 +332,7 @@ export default function Home() {
       if (pollingRef.current) clearInterval(pollingRef.current);
       pollingRef.current = null;
     };
-  }, [analysisId, selectedVariantId]);
+  }, [analysisId, selectedVariantId, pollingEpoch]);
 
   useEffect(() => {
     if (!exportId) return;
@@ -705,6 +712,37 @@ export default function Home() {
     }
   };
 
+  const resolveGate = async () => {
+    const gate = waitingGates.find(step => step.step_id === gateStepId);
+    if (!analysisId || !gate || !gateReason.trim()) {
+      setMessage(t("workspace.reasonRequired"));
+      return;
+    }
+    if (gateDecision === "REJECT_AND_RETRY" && !gateInputsChanged) {
+      setMessage(t("workspace.gateRetryNeedsChange"));
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await apiFetch(`/analyses/${analysisId}/workflow/${encodeURIComponent(gate.step_id)}/human-gate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision: gateDecision, reason: gateReason.trim(), expected_attempt: gate.attempt, inputs_changed: gateInputsChanged }),
+      });
+      setMessage(result.workflow_resume_queued ? t("workspace.gateResolved") : gateDecision === "REQUEST_MORE_EVIDENCE" ? t("workspace.moreEvidenceRequested") : t("workspace.gateResolved"));
+      setGateReason("");
+      setGateInputsChanged(false);
+      setGateStepId("");
+      const refreshed = await apiFetch(`/analyses/${analysisId}`);
+      setAnalysis(refreshed);
+      setPollingEpoch(epoch => epoch + 1);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("workspace.analysisStartFailed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
   };
@@ -851,6 +889,16 @@ export default function Home() {
               </div>;
             })}
           </div>
+          {waitingGates.length > 0 && <div className="workflow-gate-panel">
+            <div className="panel-head"><div><div className="section-kicker">{t("workspace.gateRequired")}</div><h4>{waitingGates.length} {t("workspace.gateRequired")}</h4></div><span className="badge active">Human action required</span></div>
+            <div className="workflow-gate-list">{waitingGates.map(gate => <button type="button" key={gate.step_id} className={`workflow-gate-chip ${gateStepId === gate.step_id ? "selected" : ""}`} onClick={() => setGateStepId(gate.step_id)}><strong>{prettyStatus(gate.step_id)}</strong><span>Attempt {gate.attempt}</span></button>)}</div>
+            {gateStepId && waitingGates.some(gate => gate.step_id === gateStepId) && <div className="workflow-gate-form">
+              <label>{t("workspace.gateDecision")}<select value={gateDecision} onChange={e => setGateDecision(e.target.value as typeof gateDecision)}><option value="ACCEPT">{t("workspace.gateAccept")}</option><option value="OVERRIDE">{t("workspace.gateOverride")}</option><option value="REQUEST_MORE_EVIDENCE">{t("workspace.gateMoreEvidence")}</option><option value="REJECT_AND_RETRY">{t("workspace.gateRetry")}</option></select></label>
+              <label>{t("workspace.gateReason")}<textarea rows={3} value={gateReason} onChange={e => setGateReason(e.target.value)} required /></label>
+              {gateDecision === "REJECT_AND_RETRY" && <label className="workflow-gate-checkbox"><input type="checkbox" checked={gateInputsChanged} onChange={e => setGateInputsChanged(e.target.checked)} />{t("workspace.gateInputsChanged")}</label>}
+              <button type="button" className="primary" disabled={busy || !gateReason.trim()} onClick={() => void resolveGate()}>{busy ? t("workspace.loading") : t("workspace.gateSubmit")}</button>
+            </div>}
+          </div>}
           {annotationProgress && <div className="run-meta"><span>Annotation checkpoints {annotationProgress.completed}/{annotationProgress.total} completed</span><span>{t("workspace.checkpointPersisted")}</span></div>}
           {analysis?.started_at && <div className="run-meta"><span>Started {formatDate(analysis.started_at)}</span><span>Last state update {formatDate(analysis.completed_at ?? analysis.started_at)}</span></div>}
           {analysis?.next_step && ["REQUIRES_REVIEW", "BLOCKED", "FAILED", "RESOURCE_FAILURE"].includes(String(analysis?.status)) && (
