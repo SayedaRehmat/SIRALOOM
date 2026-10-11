@@ -16,7 +16,7 @@ class CriterionReviewRequest(BaseModel):
 
 class ManualClassificationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    result: str = Field(pattern=r"^(PATHOGENIC|LIKELY_PATHOGENIC|UNCERTAIN_SIGNIFICANCE|LIKELY_BENIGN|BENIGN)$")
+    result: str = Field(pattern=r"^(PATHOGENIC|LIKELY_PATHOGENIC|VUS|LIKELY_BENIGN|BENIGN)$")
     reason: str = Field(min_length=1, max_length=5000)
     evidence_ids: list[str] = Field(min_length=1, max_length=100)
 
