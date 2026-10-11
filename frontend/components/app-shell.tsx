@@ -14,8 +14,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [signedIn, setSignedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const pathname = usePathname();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const operationsLabel = language === "ar" ? "العمليات" : language === "bilingual" ? "Operations / العمليات" : "Operations";
 
   useEffect(() => {
     if (!firebaseAuth) {
@@ -49,8 +50,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link href="/app/cases" className={isActive("/app/cases") ? "active" : undefined} aria-current={isActive("/app/cases") ? "page" : undefined}>{t("nav.cases")}</Link>
           <Link href="/app/workspace" className={isActive("/app/workspace") ? "active" : undefined} aria-current={isActive("/app/workspace") ? "page" : undefined}>{t("nav.variantWorkspace")}</Link>
 
-          <span className="nav-label">Operations</span>
-          <Link href="/app/operations" className={isActive("/app/operations") ? "active" : undefined} aria-current={isActive("/app/operations") ? "page" : undefined}>Operations</Link>
+          <span className="nav-label">{operationsLabel}</span>
+          <Link href="/app/operations" className={isActive("/app/operations") ? "active" : undefined} aria-current={isActive("/app/operations") ? "page" : undefined}>{operationsLabel}</Link>
 
           <span className="nav-label">{t("app.governance")}</span>
           <Link href="/app/review" className={isActive("/app/review") ? "active" : undefined} aria-current={isActive("/app/review") ? "page" : undefined}>{t("nav.reviewQueue")}</Link>
