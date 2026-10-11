@@ -113,6 +113,18 @@ export type TranslationKey =
   | "resources.sourceExecutionHelp"
   | "resources.loadError"
   | "resources.operationFailed"
+  | "workspace.gateRequired"
+  | "workspace.resolveGate"
+  | "workspace.gateDecision"
+  | "workspace.gateAccept"
+  | "workspace.gateOverride"
+  | "workspace.gateMoreEvidence"
+  | "workspace.gateRetry"
+  | "workspace.gateReason"
+  | "workspace.gateInputsChanged"
+  | "workspace.gateSubmit"
+  | "workspace.gateResolved"
+  | "workspace.gateRetryNeedsChange"
   | "public.about"
   | "public.services"
   | "public.contact"
@@ -1371,6 +1383,18 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.sourceExecutionHelp": "Provide publisher/source and runtime execution contracts in metadata JSON. Use exact release identities, URLs, access policy, and toolchain configuration; do not paste secrets.",
     "resources.loadError": "Unable to load resource data.",
     "resources.operationFailed": "Resource operation failed.",
+    "workspace.gateRequired": "Workflow steps awaiting human action",
+    "workspace.resolveGate": "Resolve workflow gate",
+    "workspace.gateDecision": "Decision",
+    "workspace.gateAccept": "Accept and continue",
+    "workspace.gateOverride": "Override with documented rationale",
+    "workspace.gateMoreEvidence": "Request more evidence",
+    "workspace.gateRetry": "Reject and retry",
+    "workspace.gateReason": "Reason (required)",
+    "workspace.gateInputsChanged": "I changed the input, clinical context, or governed resource before retrying",
+    "workspace.gateSubmit": "Record decision",
+    "workspace.gateResolved": "Gate decision recorded. Workflow state refreshed.",
+    "workspace.gateRetryNeedsChange": "Before retrying, document a real input, clinical-context, or resource change.",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2052,5 +2076,17 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.sourceExecutionHelp": "أدخل عقود المصدر/الناشر والتنفيذ في JSON. استخدم إصدارات وروابط وسياسات وصول وإعدادات أدوات دقيقة، ولا تُدخل الأسرار.",
     "resources.loadError": "تعذر تحميل بيانات الموارد.",
     "resources.operationFailed": "فشلت عملية المورد.",
+    "workspace.gateRequired": "خطوات سير العمل التي تنتظر إجراءً بشريًا",
+    "workspace.resolveGate": "حسم بوابة سير العمل",
+    "workspace.gateDecision": "القرار",
+    "workspace.gateAccept": "قبول ومتابعة",
+    "workspace.gateOverride": "تجاوز مع توثيق المبررات",
+    "workspace.gateMoreEvidence": "طلب أدلة إضافية",
+    "workspace.gateRetry": "رفض وإعادة المحاولة",
+    "workspace.gateReason": "السبب (مطلوب)",
+    "workspace.gateInputsChanged": "لقد غيّرت الإدخال أو السياق السريري أو المورد الخاضع للحوكمة قبل إعادة المحاولة",
+    "workspace.gateSubmit": "تسجيل القرار",
+    "workspace.gateResolved": "تم تسجيل قرار البوابة وتحديث حالة سير العمل.",
+    "workspace.gateRetryNeedsChange": "قبل إعادة المحاولة، وثّق تغييرًا فعليًا في الإدخال أو السياق السريري أو المورد.",
   },
 };
