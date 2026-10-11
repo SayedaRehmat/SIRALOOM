@@ -62,6 +62,16 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   return body;
 }
 
+function formatBytes(value?: number) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return "—";
+  if (value < 1024) return `${value} B`;
+  const units = ["KB", "MB", "GB", "TB"];
+  let amount = value / 1024;
+  let index = 0;
+  while (amount >= 1024 && index < units.length - 1) { amount /= 1024; index += 1; }
+  return `${amount.toFixed(amount >= 100 ? 0 : amount >= 10 ? 1 : 2)} ${units[index]}`;
+}
+
 function pretty(value?: string | null) {
   return String(value ?? "—").replaceAll("_", " ").toLowerCase().split(" ").map(part => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ");
 }
