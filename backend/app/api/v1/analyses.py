@@ -195,32 +195,10 @@ def start(
         db,
         organization_id=principal.organization_id,
     )
-    # Laboratory deployments fail closed: an unavailable or disabled capacity
-    # check is not evidence that the configured artifact and scratch storage
-    # can support the analysis. Trial deployments retain their existing policy.
-    if deployment_policy.is_laboratory and capacity.get("status") != "READY":
-        capacity = {
-            **capacity,
-            "status": "BLOCKED",
-            "issues": [
-                *capacity.get("issues", []),
-                *(
-                    [{
-                        "code": "LAB_CAPACITY_PREFLIGHT_REQUIRED",
-                        "message": (
-                            "Laboratory analysis requires a successful storage-capacity "
-                            "preflight. Configure and enable STORAGE_CAPACITY_PREFLIGHT_ENABLED, "
-                            "then resolve any storage readiness issues before retrying."
-                        ),
-                    }]
-                    if not any(
-                        issue.get("code") == "LAB_CAPACITY_PREFLIGHT_REQUIRED"
-                        for issue in capacity.get("issues", [])
-                    )
-                    else []
-                ),
-            ],
-        }
+        capacity = storage_capacity.enforce_laboratory_capacity_policy(
+        capacity,
+        is_laboratory=deployment_policy.is_laboratory,
+    )
     configuration["capacity_preflight"] = capacity
     analysis.configuration = configuration
 
