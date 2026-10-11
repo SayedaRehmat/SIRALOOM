@@ -140,10 +140,10 @@ export default function Dashboard() {
       {actionMessage && <div className="notice error-notice" role="status">{actionMessage}</div>}
 
       <section className="operations-metrics" aria-label={t("dashboard.operationalView")}>
-        <article><span>{t("dashboard.totalCases")}</span><strong>{cases.length}</strong><small>{t("dashboard.totalCasesHint")}</small></article>
-        <article><span>{t("dashboard.activeAnalyses")}</span><strong>{activeAnalysisCount}</strong><small>{t("dashboard.activeAnalysesHint")}</small></article>
-        <article><span>{t("dashboard.needsAttention")}</span><strong>{attentionCount}</strong><small>{t("dashboard.needsAttentionHint")}</small></article>
-        <article><span>{t("dashboard.unreadNotifications")}</span><strong>{unreadCount}</strong><small>{t("dashboard.unreadNotificationsHint")}</small></article>
+        <article><span>{t("dashboard.totalCases")}</span><strong>{casesUnavailable ? "—" : cases.length}</strong><small>{t("dashboard.totalCasesHint")}</small></article>
+        <article><span>{t("dashboard.activeAnalyses")}</span><strong>{casesUnavailable ? "—" : activeAnalysisCount}</strong><small>{t("dashboard.activeAnalysesHint")}</small></article>
+        <article><span>{t("dashboard.needsAttention")}</span><strong>{casesUnavailable ? "—" : attentionCount}</strong><small>{t("dashboard.needsAttentionHint")}</small></article>
+        <article><span>{t("dashboard.unreadNotifications")}</span><strong>{notificationsUnavailable ? "—" : unreadCount}</strong><small>{t("dashboard.unreadNotificationsHint")}</small></article>
       </section>
 
       <div className="operations-main-grid">
@@ -173,7 +173,7 @@ export default function Dashboard() {
         <section className="panel operations-notifications">
           <div className="panel-head">
             <div><p className="eyebrow">{t("dashboard.attention")}</p><h2>{t("dashboard.notifications")}</h2></div>
-            <span className="badge neutral">{unreadCount} {t("dashboard.unread")}</span>
+            <span className="badge neutral">{notificationsUnavailable ? "—" : unreadCount} {t("dashboard.unread")}</span>
           </div>
           {notificationsUnavailable ? <div className="empty small"><strong>{t("dashboard.notificationDataUnavailable")}</strong></div> : !notifications.length ? <div className="empty small"><strong>{t("dashboard.noNotifications")}</strong></div> : <div className="operations-notification-list">
             {notifications.slice(0, 8).map(notification => {
