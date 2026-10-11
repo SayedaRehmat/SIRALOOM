@@ -68,6 +68,19 @@ Use the authenticated API under the target organization's own tenancy. The API p
 
 **Pass evidence:** sign-out is performed by an authorized identity only after review and reportability gates are satisfied; the signed artifact is durable and checksum-verifiable; provenance/audit events are present; a fresh session sees the same finalized state; no duplicate report version or dispatch appears after recovery.
 
+## Frontend case-dossier acceptance
+
+After the API workflow has produced durable records, verify the same case through the authenticated workspace UI:
+
+1. Open **Cases**, locate the exact case identifier, and use **Open case dossier**. Confirm the dossier case ID matches the API response and that the specimen count, analysis versions, file inventory, and report count agree with the API.
+2. For every listed artifact, compare filename, artifact type, byte size, genome build, validation status, and SHA-256 with the API response. Download a small fixture and verify its bytes/hash. For a large fixture, verify save-to-disk streaming on the supported browser; do not test multi-gigabyte downloads in a browser path that buffers the entire response into memory.
+3. Open each analysis from the dossier. Confirm the selected case and analysis IDs are preserved, and that the workflow steps, human gates, variant review, phenotype/family context, evidence, and provenance are visible for the selected analysis.
+4. Open reports for the same analysis. Confirm draft/final status, version, signed artifact identity/hash, and report download correspond to the API. The UI must show report-loading errors rather than silently representing a failed request as “no reports.”
+5. Change the workspace language to English, Arabic, and bilingual. Verify that the selection persists after refresh and that Arabic layout uses RTL direction without clipping tables, hashes, action buttons, or status labels.
+6. Reload the dossier in a fresh authenticated browser session. Confirm that case files, analyses, reports, and audit links resolve to the same persisted IDs without relying on stale component state.
+
+**Pass evidence:** record screenshots or a screen recording with test identifiers only, the API IDs/hashes, browser/version, selected locale, and any console/network errors. A successful frontend build is not a substitute for these browser checks.
+
 ## Required negative and recovery tests
 
 Run these as separate cases or isolated test runs so they cannot contaminate the positive test:
