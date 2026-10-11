@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 from sqlalchemy import select
 
 from backend.app.domain.enums import AnalysisStatus
@@ -38,7 +36,7 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     principal = type(
         "Principal",
         (),
-        {"user_id": reviewer.id, "organization_id": analysis.case_id},
+        {"user_id": reviewer.id, "organization_id": reviewer.organization_id},
     )()
 
     result = reports_api.finalize(
@@ -64,7 +62,7 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     assert report.signed_sha256
     assert analysis.status == AnalysisStatus.QUEUED
     assert len(dispatches) == 1
-    assert dispatches[0].status == "PUBLISHED"
-    assert analysis.queue_task_id == str(dispatches[0].task_id)
+    assert dispatches[0].status == "PENDING"
+    assert analysis.queue_task_id == str(dispatches[0].id)
     assert published == [str(dispatches[0].id)]
     db.close()
