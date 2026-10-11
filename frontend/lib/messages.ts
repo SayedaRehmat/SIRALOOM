@@ -29,6 +29,35 @@ export type TranslationKey =
   | "dashboard.eyebrow"
   | "dashboard.title"
   | "dashboard.lead"
+  | "dashboard.operationalView"
+  | "dashboard.totalCases"
+  | "dashboard.totalCasesHint"
+  | "dashboard.activeAnalyses"
+  | "dashboard.activeAnalysesHint"
+  | "dashboard.needsAttention"
+  | "dashboard.needsAttentionHint"
+  | "dashboard.unreadNotifications"
+  | "dashboard.unreadNotificationsHint"
+  | "dashboard.worklist"
+  | "dashboard.recentCases"
+  | "dashboard.recentCasesHint"
+  | "dashboard.viewAllCases"
+  | "dashboard.lastUpdated"
+  | "dashboard.createCase"
+  | "dashboard.attention"
+  | "dashboard.notifications"
+  | "dashboard.unread"
+  | "dashboard.noNotifications"
+  | "dashboard.openNotification"
+  | "dashboard.markRead"
+  | "dashboard.notificationsPreviewLimit"
+  | "dashboard.infrastructure"
+  | "dashboard.capacityUnavailable"
+  | "dashboard.capacityUnavailableHint"
+  | "dashboard.storageNotWritable"
+  | "dashboard.caseDataUnavailable"
+  | "dashboard.notificationDataUnavailable"
+  | "dashboard.actionFailed"
   | "dashboard.cases.title"
   | "dashboard.cases.body"
   | "dashboard.cases.link"
@@ -1093,6 +1122,35 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "dashboard.eyebrow": "DASHBOARD",
     "dashboard.title": "Laboratory workspace",
     "dashboard.lead": "Open a case, continue an analysis, or resolve the next review task.",
+    "dashboard.operationalView": "Operational overview",
+    "dashboard.totalCases": "Cases",
+    "dashboard.totalCasesHint": "Cases visible to your organization",
+    "dashboard.activeAnalyses": "Active analyses",
+    "dashboard.activeAnalysesHint": "Queued, running, blocked, or awaiting review",
+    "dashboard.needsAttention": "Needs attention",
+    "dashboard.needsAttentionHint": "Blocked, failed, or review-required analyses",
+    "dashboard.unreadNotifications": "Unread notifications",
+    "dashboard.unreadNotificationsHint": "Resource and reanalysis notices",
+    "dashboard.worklist": "Worklist",
+    "dashboard.recentCases": "Recent cases",
+    "dashboard.recentCasesHint": "Open a case dossier to inspect its files, analyses, reports, and history.",
+    "dashboard.viewAllCases": "View all cases",
+    "dashboard.lastUpdated": "Updated",
+    "dashboard.createCase": "Create a case",
+    "dashboard.attention": "Attention",
+    "dashboard.notifications": "Notifications",
+    "dashboard.unread": "unread",
+    "dashboard.noNotifications": "No notifications are available.",
+    "dashboard.openNotification": "Open",
+    "dashboard.markRead": "Mark read",
+    "dashboard.notificationsPreviewLimit": "Showing the latest eight notifications. Open the relevant case or Resources page for details.",
+    "dashboard.infrastructure": "Infrastructure",
+    "dashboard.capacityUnavailable": "Storage telemetry unavailable",
+    "dashboard.capacityUnavailableHint": "Check deployment health and storage configuration. No capacity is inferred when the API does not provide metrics.",
+    "dashboard.storageNotWritable": "Not writable",
+    "dashboard.caseDataUnavailable": "Case worklist unavailable",
+    "dashboard.notificationDataUnavailable": "Notifications unavailable",
+    "dashboard.actionFailed": "Action failed",
     "dashboard.cases.title": "Cases",
     "dashboard.cases.body": "Case-centered intake and longitudinal analysis history.",
     "dashboard.cases.link": "Open cases →",
@@ -1860,6 +1918,35 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "dashboard.eyebrow": "لوحة المعلومات",
     "dashboard.title": "مساحة عمل المختبر",
     "dashboard.lead": "افتح حالة أو تابع تحليلًا أو أنجز مهمة المراجعة التالية.",
+    "dashboard.operationalView": "نظرة تشغيلية",
+    "dashboard.totalCases": "الحالات",
+    "dashboard.totalCasesHint": "الحالات المتاحة لمؤسستك",
+    "dashboard.activeAnalyses": "التحليلات النشطة",
+    "dashboard.activeAnalysesHint": "قيد الانتظار أو التنفيذ أو الحظر أو المراجعة",
+    "dashboard.needsAttention": "تحتاج إلى متابعة",
+    "dashboard.needsAttentionHint": "تحليلات محظورة أو فاشلة أو تتطلب مراجعة",
+    "dashboard.unreadNotifications": "الإشعارات غير المقروءة",
+    "dashboard.unreadNotificationsHint": "إشعارات الموارد وإعادة التحليل",
+    "dashboard.worklist": "قائمة العمل",
+    "dashboard.recentCases": "الحالات الأخيرة",
+    "dashboard.recentCasesHint": "افتح ملف الحالة لفحص الملفات والتحليلات والتقارير والسجل.",
+    "dashboard.viewAllCases": "عرض جميع الحالات",
+    "dashboard.lastUpdated": "آخر تحديث",
+    "dashboard.createCase": "إنشاء حالة",
+    "dashboard.attention": "المتابعة",
+    "dashboard.notifications": "الإشعارات",
+    "dashboard.unread": "غير مقروء",
+    "dashboard.noNotifications": "لا توجد إشعارات متاحة.",
+    "dashboard.openNotification": "فتح",
+    "dashboard.markRead": "تحديد كمقروء",
+    "dashboard.notificationsPreviewLimit": "يتم عرض أحدث ثمانية إشعارات. افتح الحالة ذات الصلة أو صفحة الموارد للتفاصيل.",
+    "dashboard.infrastructure": "البنية التحتية",
+    "dashboard.capacityUnavailable": "بيانات التخزين غير متاحة",
+    "dashboard.capacityUnavailableHint": "تحقق من صحة النشر وإعدادات التخزين. لا يتم تقدير السعة عند غياب المقاييس من واجهة البرمجة.",
+    "dashboard.storageNotWritable": "غير قابل للكتابة",
+    "dashboard.caseDataUnavailable": "قائمة الحالات غير متاحة",
+    "dashboard.notificationDataUnavailable": "الإشعارات غير متاحة",
+    "dashboard.actionFailed": "فشل الإجراء",
     "dashboard.cases.title": "الحالات",
     "dashboard.cases.body": "استقبال متمحور حول الحالة وسجل التحليل الطولي.",
     "dashboard.cases.link": "فتح الحالات ←",
