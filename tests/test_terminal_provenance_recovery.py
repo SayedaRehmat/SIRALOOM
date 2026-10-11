@@ -95,8 +95,8 @@ def test_resumed_signed_out_analysis_retries_provenance_failure_and_completes(
             input_path = tmp_path / "signed-out-input.vcf"
             input_path.write_text(
                 "##fileformat=VCFv4.2\n"
-                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\n"
-                "1\\t555\\t.\\tT\\tC\\t.\\tPASS\\t.\n",
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "1\t555\t.\tT\tC\t.\tPASS\t.\n",
                 encoding="utf-8",
             )
             input_artifact = store.put_file(
