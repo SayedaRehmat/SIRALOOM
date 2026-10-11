@@ -757,6 +757,163 @@ if Celery is not None:
             return {"export_id": export_id, "status": "completed"}
         finally:
             claim_db.close()
+    @celery_app.task(bind=True, name="siraloom.stage_resource_release", autoretry_for=(), acks_late=True, max_retries=3)
+    def run_resource_staging_task(self, staging_id: str):
+        from pathlib import Path
+        from uuid import UUID
+        from backend.app.config import settings
+        from backend.app.domain.resource_staging import (
+            ResourceStagingError,
+            _declared_local_source_path,
+            prepare_staging,
+            recover_interrupted_staging,
+            stage_resource_release,
+            transition_staging,
+        )
+        from backend.app.infrastructure.db.models import Resource, ResourceStaging
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        staging_uuid = UUID(staging_id)
+        db = SessionLocal()
+        try:
+            row = db.get(ResourceStaging, staging_uuid, with_for_update=True)
+            if row is None:
+                return {"staging_id": staging_id, "status": "NOT_FOUND"}
+            if row.status == "STAGED":
+                return {"staging_id": staging_id, "status": "STAGED"}
+            if row.status == "STAGING":
+                recover_interrupted_staging(db, row)
+                db.commit()
+                db.refresh(row)
+            if row.status in {"DISCOVERED", "PREFLIGHT_FAILED"} or (
+                row.status == "INTEGRITY_FAILED" and bool((row.metadata_json or {}).get("retryable"))
+            ):
+                prepare_staging(db, row)
+                db.commit()
+                db.refresh(row)
+            if row.status != "READY_TO_STAGE":
+                return {"staging_id": staging_id, "status": row.status, "error_code": row.error_code}
+
+            resource = db.get(Resource, row.resource_id)
+            if resource is None or resource.version != row.resource_version:
+                transition_staging(
+                    db, row, "INVALID",
+                    error_code="RESOURCE_VERSION_MISMATCH",
+                    error_message="Registered resource version no longer matches the staging record.",
+                )
+                db.commit()
+                return {"staging_id": staging_id, "status": row.status, "error_code": row.error_code}
+
+            metadata = dict(row.metadata_json or {})
+            metadata["staging_dispatch"] = {
+                **dict(metadata.get("staging_dispatch") or {}),
+                "status": "RUNNING",
+                "started_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                "task_id": str(self.request.id or ""),
+            }
+            row.metadata_json = metadata
+            db.add(row)
+            db.commit()
+
+            access_method = str(resource.access_method or "").strip().upper()
+            local_source_path = None
+            if access_method in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+                local_source_path = _declared_local_source_path(row.source_uri)
+                if local_source_path is None:
+                    raise ResourceStagingError("Local staging source URI is invalid.", code="LOCAL_SOURCE_INVALID")
+                roots = [
+                    Path(item.strip()).expanduser().resolve()
+                    for item in settings.resource_staging_local_source_roots.replace(";", ",").split(",")
+                    if item.strip()
+                ]
+                resolved_source = local_source_path.expanduser().resolve(strict=False)
+                if not roots or not any(resolved_source == root or root in resolved_source.parents for root in roots):
+                    raise ResourceStagingError("Local staging source is outside RESOURCE_STAGING_LOCAL_SOURCE_ROOTS.", code="LOCAL_SOURCE_POLICY_REJECTED", outcome="RESOURCE_REJECTED")
+            allowed_hosts = {
+                item.strip().lower().rstrip(".")
+                for item in settings.resource_staging_allowed_hosts.replace(";", ",").split(",")
+                if item.strip()
+            }
+            staged = stage_resource_release(
+                db,
+                row,
+                local_source_path=local_source_path,
+                max_remote_bytes=settings.resource_staging_max_bytes,
+                timeout_seconds=settings.resource_staging_timeout_seconds,
+                allowed_hosts=allowed_hosts,
+            )
+            metadata = dict(staged.metadata_json or {})
+            metadata["staging_dispatch"] = {
+                **dict(metadata.get("staging_dispatch") or {}),
+                "status": "COMPLETED" if staged.status == "STAGED" else "FAILED",
+                "completed_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+            }
+            staged.metadata_json = metadata
+            db.add(staged)
+            db.commit()
+            return {
+                "staging_id": staging_id,
+                "status": staged.status,
+                "observed_sha256": staged.observed_sha256,
+                "observed_size_bytes": staged.observed_size_bytes,
+                "error_code": staged.error_code,
+            }
+        except ResourceStagingError as exc:
+            db.rollback()
+            current = db.get(ResourceStaging, staging_uuid, with_for_update=True)
+            if current is not None:
+                if current.status == "STAGING":
+                    recover_interrupted_staging(db, current)
+                    db.flush()
+                if current.status == "READY_TO_STAGE":
+                    transition_staging(
+                        db, current, "PREFLIGHT_FAILED",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                    )
+                metadata = dict(current.metadata_json or {})
+                metadata["staging_dispatch"] = {
+                    **dict(metadata.get("staging_dispatch") or {}),
+                    "status": "FAILED",
+                    "error": str(exc),
+                    "error_code": exc.code,
+                    "retryable": bool(exc.retryable),
+                }
+                current.metadata_json = metadata
+                db.add(current)
+                db.commit()
+            return {"staging_id": staging_id, "status": current.status if current else "NOT_FOUND", "error_code": exc.code}
+        except Exception as exc:
+            db.rollback()
+            try:
+                raise self.retry(exc=exc, countdown=30)
+            except self.MaxRetriesExceededError:
+                current = db.get(ResourceStaging, staging_uuid, with_for_update=True)
+                if current is not None:
+                    if current.status == "STAGING":
+                        recover_interrupted_staging(db, current)
+                    if current.status == "READY_TO_STAGE":
+                        transition_staging(
+                            db, current, "PREFLIGHT_FAILED",
+                            error_code="STAGING_UNEXPECTED_ERROR",
+                            error_message=str(exc),
+                        )
+                    metadata = dict(current.metadata_json or {})
+                    metadata["staging_dispatch"] = {
+                        **dict(metadata.get("staging_dispatch") or {}),
+                        "status": "FAILED",
+                        "error": str(exc),
+                        "error_code": "STAGING_UNEXPECTED_ERROR",
+                        "retryable": False,
+                    }
+                    current.metadata_json = metadata
+                    db.add(current)
+                    db.commit()
+                return {"staging_id": staging_id, "status": current.status if current else "NOT_FOUND", "error_code": "STAGING_UNEXPECTED_ERROR"}
+        finally:
+            db.close()
+
+
 else:
     class _UnavailableTask:
         def delay(self, *_args, **_kwargs):
@@ -766,6 +923,7 @@ else:
     celery_app = _UnavailableCeleryApp()
     run_analysis_task = _UnavailableTask()
     run_case_export_task = _UnavailableTask()
+    run_resource_staging_task = _UnavailableTask()
 
 
     @celery_app.task(name="siraloom.discover_scientific_resources", autoretry_for=(), acks_late=True)
