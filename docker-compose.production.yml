@@ -32,6 +32,10 @@ services:
       dockerfile: docker/backend.Dockerfile
     restart: unless-stopped
     env_file: .env
+    environment:
+      FIREBASE_CREDENTIALS_PATH: /run/secrets/firebase_admin_credentials
+    secrets:
+      - firebase_admin_credentials
     command: ["/app/scripts/start_api.sh"]
     depends_on:
       postgres:
@@ -89,6 +93,10 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:3000:3000"
+
+secrets:
+  firebase_admin_credentials:
+    file: ${FIREBASE_ADMIN_CREDENTIALS_HOST_PATH:?Set path to Firebase Admin service-account JSON}
 
 volumes:
   postgres_data:
