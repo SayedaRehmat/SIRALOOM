@@ -106,6 +106,10 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
                 "execution": {"provider_id": "NCBI", "provider_version": "2026-10"},
             },
         }
+        monkeypatch.setattr(
+            "backend.app.infrastructure.queue.celery_app.scan_reanalysis_resources",
+            SimpleNamespace(delay=lambda: None),
+        )
         result = resources_api.register_resource(payload, db, _principal(organization_id))
         destination = Path(result["location"])
         assert destination.is_relative_to((tmp_path / "cache" / str(organization_id)).resolve())
@@ -224,7 +228,7 @@ def test_execute_resource_staging_queues_durable_task(monkeypatch, tmp_path):
 
         result = resources_api.execute_resource_staging(
             resource.id,
-            staged["staging_id"],
+            UUID(staged["staging_id"]),
             db,
             _principal(organization_id),
         )
