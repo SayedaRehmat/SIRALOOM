@@ -35,7 +35,7 @@ export default function Home() {
   };
 
   return (
-    <SiteShell>
+    <SiteShell showLanguageSwitcher>
       <main className="public-main">
         <section className="public-hero-v2">
           <div className="hero-copy-v2">
@@ -61,11 +61,12 @@ export default function Home() {
           <article><span>03</span><h3>{copy.resourcesTitle}</h3><p>{copy.resourcesBody}</p></article>
         </section>
 
-        <section className="public-product-row"><div><p className="section-kicker">PRODUCT</p><h2>{copy.productTitle}</h2><p>{copy.productBody}</p></div><Link className="button secondary" href="/services/variant">{copy.product} →</Link></section>
+        <section className="public-section-v2 product-section">
+          <div><p className="section-kicker">PRODUCT</p><h2>{copy.productTitle}</h2><p>{copy.productBody}</p></div>
+          <div className="product-aside"><p className="section-kicker">{copy.deployTitle}</p><p>{copy.deployBody}</p></div>
+        </section>
 
-        <section className="public-deployment-row"><div><p className="section-kicker">LABORATORY DEPLOYMENT</p><h2>{copy.deployTitle}</h2><p>{copy.deployBody}</p></div><Link className="text-link" href="/contact">{language === "ar" ? "تحدث معنا" : "Discuss deployment"} →</Link></section>
-
-        <section className="public-section-v2 lifecycle-section"><p className="section-kicker">{copy.lifecycleTitle}</p><div className="lifecycle-list">{copy.lifecycle.map((step, index) => <span key={step}><b>{String(index + 1).padStart(2, "0")}</b>{step}</span>)}</div></section>
+        <section className="public-section-v2 lifecycle-section"><p className="section-kicker">{copy.lifecycleTitle}</p><div className="lifecycle-line">{copy.lifecycle.map((item, index) => <span key={item}><b>{String(index + 1).padStart(2, "0")}</b>{item}</span>)}</div></section>
       </main>
     </SiteShell>
   );
