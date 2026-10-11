@@ -246,7 +246,7 @@ def test_checksum_failure_produces_explicit_lab_action_and_preserves_active_rele
             expected_size_bytes=len(payload),
         )
 
-        result = stage_resource_release(db, row, max_remote_bytes=1024)
+        result = stage_resource_release(db, row, max_remote_bytes=1024, allowed_hosts={"ftp.ncbi.nlm.nih.gov"})
         decision = staging_recovery_decision(result)
 
         assert result.status == "INTEGRITY_FAILED"
