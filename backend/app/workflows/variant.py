@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
-from uuid import UUID
+from uuid import UUID, uuid5
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -802,8 +802,35 @@ def _persist_terminal_provenance(
     provenance_step: WorkflowStep,
     audit: AuditService,
 ) -> Artifact:
-    """Persist terminal provenance before making the analysis durably successful."""
+    """Atomically persist terminal provenance and mark the analysis successful.
+
+    A deterministic artifact identity makes a retry overwrite any orphaned
+    filesystem object left by a failed database transaction instead of
+    creating duplicate provenance artifacts.
+    """
     import json
+
+    provenance_artifact_id = uuid5(analysis.id, "siraloom:terminal-provenance-manifest")
+    existing_artifact = db.get(Artifact, provenance_artifact_id)
+
+    # Stage the successful terminal-step state before rendering the manifest so
+    # the manifest describes the intended terminal state. Nothing is committed
+    # until the artifact, resource snapshots, audit event, and analysis status
+    # are all ready.
+    now = _now()
+    provenance_step.status = StepStatus.SUCCEEDED
+    provenance_step.updated_at = now
+    provenance_step.completed_at = now
+    provenance_step.last_heartbeat = now
+    provenance_step.error_code = None
+    provenance_step.error_message = None
+    provenance_step.output_artifacts = [str(provenance_artifact_id)]
+    provenance_step.metadata_json = {
+        **(provenance_step.metadata_json or {}),
+        "provenance_artifact_id": str(provenance_artifact_id),
+        "next_step": "analysis_complete",
+    }
+    db.add(provenance_step)
 
     with NamedTemporaryFile(
         prefix="siraloom-provenance-", suffix=".json", mode="w", encoding="utf-8", delete=False
@@ -836,6 +863,12 @@ def _persist_terminal_provenance(
         }, indent=2, ensure_ascii=False))
         provenance_tmp_path = Path(provenance_tmp.name)
     try:
+        # If an earlier attempt left a committed artifact row (for example,
+        # from a deployment with older non-atomic behavior), replace that row
+        # under the same deterministic ID rather than violating the PK.
+        if existing_artifact is not None:
+            db.delete(existing_artifact)
+            db.flush()
         provenance_artifact = artifacts.put_file(
             db=db,
             case_id=analysis.case_id,
@@ -846,19 +879,15 @@ def _persist_terminal_provenance(
             media_type="application/json",
             genome_build=analysis.reference_build,
             metadata={"provenance_schema_version": "1.0.0"},
+            artifact_id=provenance_artifact_id,
         )
     finally:
         provenance_tmp_path.unlink(missing_ok=True)
-    provenance_step.output_artifacts = [str(provenance_artifact.id)]
-    mark_step(
-        db,
-        provenance_step,
-        StepStatus.SUCCEEDED,
-        metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
-    )
-    snapshot_analysis_resources(db, analysis)
+
+    snapshot_analysis_resources(db, analysis, commit=False)
     analysis.status = AnalysisStatus.SUCCEEDED
     analysis.completed_at = _now()
+    db.add(analysis)
     audit.record(
         event_type="PROVENANCE_EXPORT_COMPLETED",
         case_id=analysis.case_id,
@@ -3499,25 +3528,47 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     audit=audit,
                 )
             except Exception as exc:
+                # Provenance storage/database failures are retried through the
+                # same bounded Celery retry path as other transient workflow
+                # failures. Do not terminally fail the analysis on the first
+                # failure after the clinical report has already been signed out.
+                db.rollback()
+                analysis = db.get(Analysis, analysis_id)
+                provenance_step = _step(db, analysis_id, "export_provenance")
+                if analysis is not None:
+                    analysis.status = AnalysisStatus.RUNNING
+                    analysis.completed_at = None
                 mark_step(
                     db,
                     provenance_step,
-                    StepStatus.FAILED,
-                    error_code="PROVENANCE_EXPORT_FAILED",
+                    StepStatus.RETRYING,
+                    error_code="PROVENANCE_EXPORT_RETRYING",
                     error_message=str(exc),
+                    metadata={
+                        "next_step": "export_provenance",
+                        "retry_policy": "bounded_transient_retry",
+                    },
                 )
-                analysis.status = AnalysisStatus.FAILED
-                db.commit()
                 audit.record(
-                    event_type="PROVENANCE_EXPORT_FAILED",
+                    event_type="PROVENANCE_EXPORT_RETRY_SCHEDULED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
                     actor_id="provenance",
                     reason=str(exc),
+                    payload={
+                        "error_code": "PROVENANCE_EXPORT_RETRYING",
+                        "next_step": "export_provenance",
+                        "max_retries": 3,
+                    },
                 )
                 db.commit()
-                return
+                raise TransientWorkflowError(
+                    str(exc),
+                    countdown=10,
+                    max_retries=3,
+                    error_code="PROVENANCE_EXPORT_RETRY_EXHAUSTED",
+                ) from exc
 
         return
     except TransientWorkflowError:
