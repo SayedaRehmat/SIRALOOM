@@ -794,6 +794,84 @@ def _persist_annotation_batch_rows(
     return new_count, len(payloads_by_key)
 
 
+def _persist_terminal_provenance(
+    db: Session,
+    *,
+    artifacts: ArtifactStore,
+    analysis: Analysis,
+    provenance_step: WorkflowStep,
+    audit: AuditService,
+) -> Artifact:
+    """Persist terminal provenance before making the analysis durably successful."""
+    import json
+
+    with NamedTemporaryFile(
+        prefix="siraloom-provenance-", suffix=".json", mode="w", encoding="utf-8", delete=False
+    ) as provenance_tmp:
+        provenance_tmp.write(json.dumps({
+            "schema_version": "1.0.0",
+            "analysis_id": str(analysis.id),
+            "case_id": str(analysis.case_id),
+            "workflow_id": analysis.workflow_id,
+            "workflow_version": analysis.workflow_version,
+            "reference_build": analysis.reference_build,
+            "steps": [
+                {
+                    "step_id": s.step_id,
+                    "step_order": s.step_order,
+                    "status": s.status,
+                    "attempt": s.attempt,
+                    "input_artifacts": s.input_artifacts,
+                    "output_artifacts": s.output_artifacts,
+                    "metadata": s.metadata_json,
+                    "error_code": s.error_code,
+                    "error_message": s.error_message,
+                }
+                for s in db.scalars(
+                    select(WorkflowStep)
+                    .where(WorkflowStep.analysis_id == analysis.id)
+                    .order_by(WorkflowStep.step_order)
+                )
+            ],
+        }, indent=2, ensure_ascii=False))
+        provenance_tmp_path = Path(provenance_tmp.name)
+    try:
+        provenance_artifact = artifacts.put_file(
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            source_path=provenance_tmp_path,
+            filename="provenance.json",
+            artifact_type="JSON",
+            media_type="application/json",
+            genome_build=analysis.reference_build,
+            metadata={"provenance_schema_version": "1.0.0"},
+        )
+    finally:
+        provenance_tmp_path.unlink(missing_ok=True)
+    provenance_step.output_artifacts = [str(provenance_artifact.id)]
+    mark_step(
+        db,
+        provenance_step,
+        StepStatus.SUCCEEDED,
+        metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
+    )
+    snapshot_analysis_resources(db, analysis)
+    analysis.status = AnalysisStatus.SUCCEEDED
+    analysis.completed_at = _now()
+    audit.record(
+        event_type="PROVENANCE_EXPORT_COMPLETED",
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        actor_type="SYSTEM",
+        actor_id="provenance",
+        output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
+        payload={"next_step": "analysis_complete"},
+    )
+    db.commit()
+    return provenance_artifact
+
+
 def run_variant_analysis(analysis_id: UUID) -> None:
     from backend.app.infrastructure.db.session import SessionLocal
 
@@ -3413,72 +3491,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if provenance_step.status != StepStatus.SUCCEEDED:
             mark_step(db, provenance_step, StepStatus.RUNNING)
             try:
-                import json
-
-                with NamedTemporaryFile(
-                    prefix="siraloom-provenance-", suffix=".json", mode="w", encoding="utf-8", delete=False
-                ) as provenance_tmp:
-                    provenance_tmp.write(json.dumps({
-                        "schema_version": "1.0.0",
-                        "analysis_id": str(analysis.id),
-                        "case_id": str(analysis.case_id),
-                        "workflow_id": analysis.workflow_id,
-                        "workflow_version": analysis.workflow_version,
-                        "reference_build": analysis.reference_build,
-                        "steps": [
-                            {
-                                "step_id": s.step_id,
-                                "step_order": s.step_order,
-                                "status": s.status,
-                                "attempt": s.attempt,
-                                "input_artifacts": s.input_artifacts,
-                                "output_artifacts": s.output_artifacts,
-                                "metadata": s.metadata_json,
-                                "error_code": s.error_code,
-                                "error_message": s.error_message,
-                            }
-                            for s in db.scalars(
-                                select(WorkflowStep)
-                                .where(WorkflowStep.analysis_id == analysis.id)
-                                .order_by(WorkflowStep.step_order)
-                            )
-                        ],
-                    }, indent=2, ensure_ascii=False))
-                    provenance_tmp_path = Path(provenance_tmp.name)
-                try:
-                    provenance_artifact = artifacts.put_file(
-                        db=db,
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        source_path=provenance_tmp_path,
-                        filename="provenance.json",
-                        artifact_type="JSON",
-                        media_type="application/json",
-                        genome_build=analysis.reference_build,
-                        metadata={"provenance_schema_version": "1.0.0"},
-                    )
-                finally:
-                    provenance_tmp_path.unlink(missing_ok=True)
-                provenance_step.output_artifacts = [str(provenance_artifact.id)]
-                mark_step(
+                _persist_terminal_provenance(
                     db,
-                    provenance_step,
-                    StepStatus.SUCCEEDED,
-                    metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
+                    artifacts=artifacts,
+                    analysis=analysis,
+                    provenance_step=provenance_step,
+                    audit=audit,
                 )
-                snapshot_analysis_resources(db, analysis)
-                analysis.status = AnalysisStatus.SUCCEEDED
-                analysis.completed_at = _now()
-                audit.record(
-                    event_type="PROVENANCE_EXPORT_COMPLETED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="provenance",
-                    output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
-                    payload={"next_step": "analysis_complete"},
-                )
-                db.commit()
             except Exception as exc:
                 mark_step(
                     db,
