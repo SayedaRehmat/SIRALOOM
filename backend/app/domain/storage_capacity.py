@@ -15,6 +15,38 @@ from typing import Any
 from backend.app.config import settings
 
 
+def enforce_laboratory_capacity_policy(
+    capacity: dict[str, Any],
+    *,
+    is_laboratory: bool,
+) -> dict[str, Any]:
+    """Fail closed for laboratory analyses unless capacity preflight is READY.
+
+    Trial deployments retain the pre-existing capacity policy. This function
+    enforces a readiness gate only; it does not reserve disk space.
+    """
+    if not is_laboratory or capacity.get("status") == "READY":
+        return capacity
+
+    issues = list(capacity.get("issues") or [])
+    if not any(
+        isinstance(issue, dict)
+        and issue.get("code") == "LAB_CAPACITY_PREFLIGHT_REQUIRED"
+        for issue in issues
+    ):
+        issues.append({
+            "code": "LAB_CAPACITY_PREFLIGHT_REQUIRED",
+            "message": (
+                "Laboratory analysis requires a successful storage-capacity "
+                "preflight. Configure and enable STORAGE_CAPACITY_PREFLIGHT_ENABLED, "
+                "then resolve any storage readiness issues before retrying."
+            ),
+        })
+    return {**capacity, "status": "BLOCKED", "issues": issues}
+
+
+
+
 def inspect_storage_root(label: str, raw_path: str) -> dict[str, Any]:
     path = Path(raw_path).expanduser().resolve(strict=False)
     result: dict[str, Any] = {
