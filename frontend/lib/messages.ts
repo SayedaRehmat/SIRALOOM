@@ -12,6 +12,7 @@ export type TranslationKey =
   | "app.workspace"
   | "app.governance"
   | "nav.dashboard"
+  | "nav.operations"
   | "nav.cases"
   | "nav.variantWorkspace"
   | "nav.reviewQueue"
@@ -1120,7 +1121,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.rationalePlaceholder": "Document the laboratory basis for the final reportability decision.",
     "app.workspace": "Clinical Workspace",
     "app.governance": "Review & Governance",
-    "nav.dashboard": "Operations",
+    "nav.dashboard": "Overview",
+    "nav.operations": "Operations",
     "nav.cases": "Cases",
     "nav.variantWorkspace": "Variant Workbench",
     "nav.reviewQueue": "Review Queue",
@@ -1931,7 +1933,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.rationalePlaceholder": "وثّق الأساس المختبري لقرار قابلية الإبلاغ النهائي.",
     "app.workspace": "مساحة العمل السريرية",
     "app.governance": "المراجعة والحوكمة",
-    "nav.dashboard": "العمليات",
+    "nav.dashboard": "نظرة عامة",
+    "nav.operations": "العمليات",
     "nav.cases": "الحالات",
     "nav.variantWorkspace": "مساحة عمل المتغيرات",
     "nav.reviewQueue": "قائمة المراجعة",
