@@ -2560,27 +2560,36 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except ResourceConsumptionError as exc:
-                mark_step(
+                # Population absence/qualification gaps are scientific limitations:
+                # do not use an unapproved resource, but continue without its data so
+                # evidence and ACMG can route the affected variants to human review.
+                _apply_scientific_limitation(
                     db,
                     population_step,
-                    StepStatus.BLOCKED,
-                    error_code=exc.code,
-                    error_message=str(exc),
-                    metadata={"next_step": "RESOURCE_REQUIRED"},
+                    outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                    code=exc.code,
+                    message=str(exc),
+                    metadata={
+                        "next_step": "build_evidence",
+                        "resource_limitation": True,
+                        "automatic_fallback": False,
+                        "population_data_available": False,
+                    },
                 )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
                 audit.record(
-                    event_type="WORKFLOW_BLOCKED",
+                    event_type="POPULATION_RESOURCE_LIMITATION",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
-                    actor_type="population",
+                    actor_type="SYSTEM",
                     actor_id="resource-registry",
                     reason=str(exc),
-                    payload={"error_code": exc.code, "next_step": "RESOURCE_REQUIRED"},
+                    payload={
+                        "error_code": exc.code,
+                        "next_step": "build_evidence",
+                        "automatic_fallback": False,
+                    },
                 )
                 db.commit()
-                return
             except GnomADProviderError as exc:
                 if exc.retryable:
                     _schedule_transient_step_retry(
@@ -2599,19 +2608,37 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         max_retries=3,
                         error_code="POPULATION_PROVIDER_RETRY_EXHAUSTED",
                     ) from exc
-                mark_step(db, population_step, StepStatus.FAILED, error_code="GNOMAD_PROVIDER_ERROR", error_message=str(exc))
-                analysis.status = AnalysisStatus.FAILED
-                db.commit()
+                # Permanent provider responses (for example a rejected request or
+                # unusable response) must not be treated as zero allele frequency.
+                # Continue with an explicit limitation; ACMG will require review if
+                # a criterion depends on the unavailable population evidence.
+                _apply_scientific_limitation(
+                    db,
+                    population_step,
+                    outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                    code="GNOMAD_PROVIDER_UNAVAILABLE",
+                    message=str(exc),
+                    metadata={
+                        "next_step": "build_evidence",
+                        "population_data_available": False,
+                        "provider": "gnomAD",
+                        "retryable": False,
+                    },
+                )
                 audit.record(
-                    event_type="POPULATION_FAILED",
+                    event_type="POPULATION_PROVIDER_LIMITATION",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
                     actor_id="gnomad",
                     reason=str(exc),
+                    payload={
+                        "error_code": "GNOMAD_PROVIDER_UNAVAILABLE",
+                        "next_step": "build_evidence",
+                        "population_data_available": False,
+                    },
                 )
                 db.commit()
-                return
             except SQLAlchemyError as exc:
                 _schedule_transient_step_retry(
                     db,
