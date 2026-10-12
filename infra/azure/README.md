@@ -24,6 +24,41 @@ az group create --name rg-siraloom-validation --location "<AZURE_REGION>"
 
 Check student-credit expiry and budget in Azure Cost Management before provisioning. Never paste subscription credentials, private SSH keys, Firebase service-account JSON, database passwords, or provider keys into chat or GitHub.
 
+## Windows PowerShell quick start
+
+Since most deployment commands will be run from Windows PowerShell, this is the equivalent first pass. Run locally; do not send the SSH key or subscription details in chat.
+
+~~~powershell
+az login
+az account list --output table
+$subscriptionId = Read-Host "Paste the Azure subscription ID to use"
+az account set --subscription $subscriptionId
+az account show --output table
+
+# Choose a region after checking availability and current credit/cost.
+az account list-locations --output table
+$location = Read-Host "Azure region name, e.g. eastus"
+az group create --name rg-siraloom-validation --location $location
+
+# Create an SSH key if you do not already have one.
+if (-not (Test-Path "$HOME/.ssh/id_ed25519.pub")) {
+  ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519"
+}
+$sshPublicKey = (Get-Content "$HOME/.ssh/id_ed25519.pub" -Raw).Trim()
+$adminCidr = (Invoke-RestMethod -Uri "https://api.ipify.org").Trim() + "/32"
+
+az bicep build --file infra/azure/main.bicep
+az deployment group what-if --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters location=$location adminCidr=$adminCidr sshPublicKey="$sshPublicKey" vmSize="Standard_D2s_v5" dataDiskSizeGB=256
+~~~
+
+Review the preview and ensure the SSH CIDR is your current public IP with /32. If your network changes, update the NSG rule before attempting SSH. Only after reviewing the what-if output, run the same command with what-if replaced by create:
+
+~~~powershell
+az deployment group create --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters location=$location adminCidr=$adminCidr sshPublicKey="$sshPublicKey" vmSize="Standard_D2s_v5" dataDiskSizeGB=256
+~~~
+
+The deployment may take several minutes, and cloud-init continues after the VM resource is created. Verify the instance view and cloud-init completion before cloning the repository or copying data.
+
 ## 2. Preview and create infrastructure
 
 From the repository root, Linux/macOS shell:
