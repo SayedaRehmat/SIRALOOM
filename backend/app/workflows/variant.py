@@ -2729,6 +2729,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clinvar_execution = None
                 clinvar_execution_metadata = None
                 clinvar_limitations: list[dict[str, object]] = []
+                provider_limitations: list[dict[str, object]] = []
                 configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
                 clinvar_profile_managed = profile_bound_analysis
 
@@ -2896,7 +2897,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
                             except Exception as exc:
                                 complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
-                                raise
+                                provider_limitations.append({
+                                    "code": "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED",
+                                    "message": str(exc),
+                                    "resource_capability": "CLINICAL_VARIANT",
+                                    "variant_id": str(row.id),
+                                })
 
                         if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
                             query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
@@ -2910,7 +2916,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
                             except Exception as exc:
                                 complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
-                                raise
+                                provider_limitations.append({
+                                    "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
+                                    "message": str(exc),
+                                    "resource_capability": "GENE_DISEASE",
+                                    "variant_id": str(row.id),
+                                })
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
@@ -2991,7 +3002,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     error_code="CLINVAR_QUERY_FAILED",
                                     error_message=str(exc),
                                 )
-                                raise
+                                provider_limitations.append({
+                                    "code": "CLINVAR_QUERY_FAILED",
+                                    "message": str(exc),
+                                    "resource_capability": "CLINICAL_DATABASE",
+                                    "variant_id": str(row.id),
+                                })
 
                         for record in records:
                             if record.resource_id is not None:
@@ -3075,18 +3091,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "created_evidence": created,
                     "persisted_evidence": persisted_evidence_count,
                     "optional_resource_limitations": clinvar_limitations,
+                    "provider_limitations": provider_limitations,
                 }
-                if persisted_evidence_count == 0:
+                if persisted_evidence_count == 0 or provider_limitations:
+                    limitation_message = (
+                        "Evidence collection completed with one or more source-provider limitations. "
+                        "Any resulting criterion proposals require human review."
+                        if provider_limitations
+                        else
+                        "Evidence collection completed, but no reportable evidence records were "
+                        "established from the available annotation, population, phenotype, gene-disease, "
+                        "or literature context."
+                    )
                     _apply_scientific_limitation(
                         db,
                         evidence_step,
                         outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
-                        code="EVIDENCE_INSUFFICIENT",
-                        message=(
-                            "Evidence collection completed, but no reportable evidence records were "
-                            "established from the available annotation, population, phenotype, gene-disease, "
-                            "or literature context."
+                        code=(
+                            "EVIDENCE_SOURCE_LIMITATION_REQUIRES_REVIEW"
+                            if provider_limitations
+                            else "EVIDENCE_INSUFFICIENT"
                         ),
+                        message=limitation_message,
                         metadata=evidence_metadata,
                     )
                 else:
