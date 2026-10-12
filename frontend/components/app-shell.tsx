@@ -36,10 +36,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-frame siraloom-workspace">
       <aside className="app-nav">
-        <Brand />
+        <div className="app-nav-brand">
+          <Brand />
+          <span className="app-nav-context">{t("app.workspace")}</span>
+        </div>
         <nav className="app-nav-links" aria-label={t("app.workspace")}>
           <span className="nav-label">{t("app.workspace")}</span>
           <Link href="/app/dashboard" className={isActive("/app/dashboard") ? "active" : undefined} aria-current={isActive("/app/dashboard") ? "page" : undefined}>{t("nav.dashboard")}</Link>
+          <Link href="/app/operations" className={isActive("/app/operations") ? "active" : undefined} aria-current={isActive("/app/operations") ? "page" : undefined}>{t("nav.operations")}</Link>
           <Link href="/app/cases" className={isActive("/app/cases") ? "active" : undefined} aria-current={isActive("/app/cases") ? "page" : undefined}>{t("nav.cases")}</Link>
           <Link href="/app/workspace" className={isActive("/app/workspace") ? "active" : undefined} aria-current={isActive("/app/workspace") ? "page" : undefined}>{t("nav.variantWorkspace")}</Link>
           <span className="nav-label">{t("app.governance")}</span>

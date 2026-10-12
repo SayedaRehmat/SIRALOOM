@@ -284,9 +284,11 @@ export default function Home() {
   }, [analysis]);
 
   useEffect(() => {
-    const storedCase = window.localStorage.getItem("siraloom.case_id") ?? "";
+    const queryCase = new URLSearchParams(window.location.search).get("case") ?? "";
+    const storedCase = queryCase || window.localStorage.getItem("siraloom.case_id") || "";
     const storedAnalysis = window.localStorage.getItem("siraloom.analysis_id") ?? "";
     const storedCaseIdentifier = window.localStorage.getItem("siraloom.case_identifier") ?? "";
+    if (queryCase) window.localStorage.setItem("siraloom.case_id", queryCase);
     if (storedCase) {
       setCaseId(storedCase);
     } else if (storedAnalysis) {
@@ -319,8 +321,12 @@ export default function Home() {
       try {
         const data = await apiFetch(`/cases/${caseId}`);
         setCaseWorkspace(data);
+        setCaseIdentifier(String(data?.case_identifier ?? ""));
+        window.localStorage.setItem("siraloom.case_identifier", String(data?.case_identifier ?? ""));
         const specimens = Array.isArray(data?.specimens) ? data.specimens : [];
-        if (specimens.length && !selectedSpecimenId) setSelectedSpecimenId(String(specimens[0].specimen_id));
+        // A case deep-link must not retain a specimen or input artifact from the previously open case.
+        setSelectedSpecimenId(specimens.length ? String(specimens[0].specimen_id) : "");
+        setArtifactId("");
         const indicationValue = data?.clinical_context?.indication;
         if (typeof indicationValue === "string") setIndication(indicationValue);
 
@@ -883,6 +889,18 @@ export default function Home() {
         <div className="metric-card"><span>{t("workflow.case")}</span><strong>{caseIdentifier || t("workspace.notSelected")}</strong></div>
       </section>
 
+      <nav className="workspace-section-nav" aria-label={t("workspace.title")}>
+        <a href="#case-intake">{t("workspace.caseSection")}</a>
+        <a href="#analysis-workflow">{t("workspace.executionSection")}</a>
+        <a href="#artifacts">{t("workspace.files")}</a>
+        <a href="#variants">{t("workspace.interpretationSection")}</a>
+        <a href="#variant-export">{t("workspace.completeReport")}</a>
+        <a href="#evidence">{t("workspace.evidenceSection")}</a>
+        <a href="#review">{t("workspace.reviewSection")}</a>
+        <a href="#report">{t("workspace.reportSection")}</a>
+        <a href="#audit">{t("workspace.auditSection")}</a>
+      </nav>
+
       {message && <div className="notice" role="status">{message}</div>}
 
       {notifications.length > 0 && (
@@ -932,7 +950,7 @@ export default function Home() {
         </section>
       )}
 
-      <section className="workspace-grid">
+      <section id="case-intake" className="workspace-grid">
         <aside className="panel case-panel">
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.caseSection")}</div><h3>{t("workspace.startCase")}</h3></div><span className={`badge ${statusTone(caseId ? "SUCCEEDED" : "READY")}`}>{caseId ? t("workspace.created") : t("workspace.new")}</span></div>
           <form onSubmit={createCase} className="stack">
@@ -999,7 +1017,7 @@ export default function Home() {
           {artifactId && <div className="keyline"><span>{t("workspace.artifactId")}</span><code>{artifactId}</code></div>}
         </section>
 
-        <section className="panel workflow-panel">
+        <section id="analysis-workflow" className="panel workflow-panel">
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.executionSection")}</div><h3>{t("workspace.durableWorkflow")}</h3></div>{analysis?.status && <span className={`badge ${statusTone(analysis.status)}`}>{prettyStatus(analysis.status)}</span>}</div>
           <div className="timeline">
             {steps.map(([id, label], index) => {
@@ -1050,7 +1068,7 @@ export default function Home() {
         </section>
       </section>
 
-      <section className="panel artifacts-panel">
+      <section id="artifacts" className="panel artifacts-panel">
         <div className="panel-head"><div><div className="section-kicker">{t("workspace.files")}</div><h3>{caseArtifacts.length} {t("workspace.files")}</h3><p className="muted">{t("workspace.filesLead")}</p></div><button type="button" className="secondary" onClick={() => void refreshCaseArtifacts()}>{t("workspace.refreshFiles")}</button></div>
         {!caseArtifacts.length ? <div className="empty small"><strong>{t("workspace.noFiles")}</strong></div> : <div className="artifacts-list">{caseArtifacts.map(artifact => <article className="artifact-row" key={artifact.artifact_id}>
           <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small><details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
@@ -1058,19 +1076,19 @@ export default function Home() {
         </article>)}</div>}
       </section>
 
-      <section className="panel variants-panel">
+      <section id="variants" className="panel variants-panel">
         <div className="panel-head"><div><div className="section-kicker">{t("workspace.interpretationSection")}</div><h3>{t("workspace.prioritizedVariants")}</h3></div><span className="badge neutral">{variants.length} {t("workspace.variantsCount")}</span></div>
         {variants.length === 0 ? <div className="empty"><strong>{t("workspace.waitingAnalysis")}</strong><p>{t("workspace.variantsWillPopulate")}</p></div> : <div className="table-wrap"><table><thead><tr><th>{t("workflow.variantFile")}</th><th>{t("workspace.position")}</th><th>{t("workspace.refAlt")}</th><th>{t("workspace.build")}</th><th>{t("workspace.review")}</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">{t("workspace.selected")}</span> : <span className="badge neutral">{t("workspace.open")}</span>}</td></tr>)}</tbody></table></div>}
       </section>
 
-      <section className="panel complete-report-panel">
+      <section id="variant-export" className="panel complete-report-panel">
         <div className="panel-head"><div><div className="section-kicker">{t("workspace.completeReport")}</div><h3>{t("workspace.allAnalyzedVariants")}</h3></div><span className="badge neutral">{completeVariants.length} {t("workspace.rowsCount")}</span></div>
         <div className="report-toolbar"><p>{t("workspace.completeReportLead")}</p><div className="actions-row"><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.csv`, `siraloom-complete-variant-report-${analysisId}.csv`)} disabled={!analysisId}>{t("workspace.downloadCsv")}</button><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.json`, `siraloom-complete-variant-report-${analysisId}.json`)} disabled={!analysisId}>{t("workspace.downloadJson")}</button></div></div>
         {completeVariants.length === 0 ? <div className="empty small"><strong>{t("workspace.noCompleteDataset")}</strong><p>{t("workspace.completeDatasetPending")}</p></div> : <div className="table-wrap"><table><thead><tr>{completeVariantColumns.slice(0, 12).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{completeVariants.slice(0, 100).map((row, index) => <tr key={String(row.variant_id ?? index)} onClick={() => typeof row.variant_id === "string" && setSelectedVariantId(row.variant_id)}>{completeVariantColumns.slice(0, 12).map((column) => <td key={column}><code>{String(row[column] ?? "—")}</code></td>)}</tr>)}</tbody></table>{completeVariants.length > 100 && <p className="table-note">{t("workspace.first100Note")}</p>}</div>}
       </section>
 
       <section className="detail-grid">
-        <section className="panel evidence-panel">
+        <section id="evidence" className="panel evidence-panel">
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.evidenceSection")}</div><h3>{t("workspace.variantEvidence")}</h3></div></div>
           {!variantDetail ? <div className="empty"><strong>{t("workspace.noVariantSelected")}</strong><p>{t("workspace.selectVariantAfterAnalysis")}</p></div> : <div className="evidence-stack">
             <div className="identity-card"><div><span>{t("workspace.canonical")}</span><strong>{String(variantDetail.variant.canonical_key ?? "—")}</strong></div><div><span>{t("workspace.normalization")}</span><strong>{String(variantDetail.variant.normalization_status ?? "—")}</strong></div></div>
@@ -1082,7 +1100,7 @@ export default function Home() {
           </div>}
         </section>
 
-        <section className="panel review-panel">
+        <section id="review" className="panel review-panel">
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.reviewSection")}</div><h3>{t("workspace.humanDecisionWorkspace")}</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
           {!review ? <div className="empty"><strong>{t("workspace.reviewPending")}</strong><p>{t("workspace.automatedOutputProposed")}</p></div> : <>
             <div className="classification-banner"><span>{t("workspace.proposedCurrent")}</span><strong>{String(review.classification?.result ?? t("workspace.noClassification"))}</strong><small>Review revision {String(review.classification?.review_version ?? 0)}</small></div>
@@ -1120,8 +1138,8 @@ export default function Home() {
       </section>
 
       <section className="bottom-grid">
-        <section className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.reportSection")}</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
-        <section className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.auditSection")}</div><h3>{t("workspace.caseTimeline")}</h3></div><span className="badge neutral">{auditEvents.length} {t("workspace.eventsCount")}</span></div><div className="audit-callout"><strong>{t("workspace.auditReconstructable")}</strong><p>{t("workspace.auditLead")}</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>{t("workspace.noAuditEvents")}</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>{t("workspace.exportHistory")}</button>{exportId && <><div className="keyline"><span>{t("workspace.export")}</span><code>{exportId}</code></div><div className="keyline"><span>{t("workspace.status")}</span><strong>{exportStatus ? prettyStatus(exportStatus) : t("workspace.queued")}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>{t("workspace.downloadHistoryZip")}</button>}</>}</section>
+        <section id="report" className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.reportSection")}</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
+        <section id="audit" className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.auditSection")}</div><h3>{t("workspace.caseTimeline")}</h3></div><span className="badge neutral">{auditEvents.length} {t("workspace.eventsCount")}</span></div><div className="audit-callout"><strong>{t("workspace.auditReconstructable")}</strong><p>{t("workspace.auditLead")}</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>{t("workspace.noAuditEvents")}</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>{t("workspace.exportHistory")}</button>{exportId && <><div className="keyline"><span>{t("workspace.export")}</span><code>{exportId}</code></div><div className="keyline"><span>{t("workspace.status")}</span><strong>{exportStatus ? prettyStatus(exportStatus) : t("workspace.queued")}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>{t("workspace.downloadHistoryZip")}</button>}</>}</section>
       </section>
 
       <footer className="footer"><span>SIRALOOM Variant v1</span><span>{t("workspace.footer")}</span></footer>
