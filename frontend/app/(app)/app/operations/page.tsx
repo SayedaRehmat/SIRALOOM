@@ -80,19 +80,26 @@ function pretty(value?: string | null) {
 
 export default function OperationsPage() {
   const { language } = useLanguage();
-  const copy = language === "ar" ? {
-    eyebrow: "عمليات المختبر", title: "التنبيهات وإعادة التحليل والسعة", lead: "نقطة تشغيل واحدة للإجراءات التي تتطلب انتباهاً من المختبر.",
-    refresh: "تحديث", notifications: "التنبيهات", reanalysis: "مرشحو إعادة التحليل", capacity: "سعة التخزين", storage: "ملفات التخزين",
-    unread: "غير مقروء", markRead: "تحديد كمقروء", openCase: "فتح الحالة", execute: "تنفيذ إعادة التحليل", pending: "معلّق", noNotifications: "لا توجد تنبيهات.", noCandidates: "لا توجد حالات مرشحة لإعادة التحليل.",
-    capacityNote: "تعرض هذه القيم القياس الفعلي الذي يقدمه نشر المختبر؛ لا يتم استنتاج السعة من حد رفع الملفات.", active: "نشط", activate: "تفعيل", activeProfile: "ملف نشط", noProfiles: "لا توجد ملفات تخزين مسجلة.",
-    queued: "تمت جدولة إعادة التحليل", failed: "تعذر تنفيذ الإجراء", source: "المصدر", affected: "أقدم مرحلة متأثرة", reason: "السبب", status: "الحالة", version: "الإصدار"
-  } : {
+  const englishCopy = {
     eyebrow: "LABORATORY OPERATIONS", title: "Notifications, reanalysis and capacity", lead: "One operational view for changes that require laboratory attention or action.",
     refresh: "Refresh", notifications: "Notifications", reanalysis: "Reanalysis candidates", capacity: "Storage capacity", storage: "Storage profiles",
     unread: "Unread", markRead: "Mark read", openCase: "Open case", execute: "Execute reanalysis", pending: "Pending", noNotifications: "No notifications.", noCandidates: "No reanalysis candidates are waiting.",
     capacityNote: "These figures come from the deployment capacity probe. SIRALOOM does not infer laboratory capacity from an upload-size setting.", active: "Active", activate: "Activate", activeProfile: "Active profile", noProfiles: "No storage profiles are registered.",
     queued: "Reanalysis dispatched", failed: "Action failed", source: "Source", affected: "Earliest affected stage", reason: "Reason", status: "Status", version: "Version"
   };
+  const arabicCopy = {
+    eyebrow: "عمليات المختبر", title: "التنبيهات وإعادة التحليل والسعة", lead: "نقطة تشغيل واحدة للإجراءات التي تتطلب انتباهاً من المختبر.",
+    refresh: "تحديث", notifications: "التنبيهات", reanalysis: "مرشحو إعادة التحليل", capacity: "سعة التخزين", storage: "ملفات التخزين",
+    unread: "غير مقروء", markRead: "تحديد كمقروء", openCase: "فتح الحالة", execute: "تنفيذ إعادة التحليل", pending: "معلّق", noNotifications: "لا توجد تنبيهات.", noCandidates: "لا توجد حالات مرشحة لإعادة التحليل.",
+    capacityNote: "تعرض هذه القيم القياس الفعلي الذي يقدمه نشر المختبر؛ لا يتم استنتاج السعة من حد رفع الملفات.", active: "نشط", activate: "تفعيل", activeProfile: "ملف نشط", noProfiles: "لا توجد ملفات تخزين مسجلة.",
+    queued: "تمت جدولة إعادة التحليل", failed: "تعذر تنفيذ الإجراء", source: "المصدر", affected: "أقدم مرحلة متأثرة", reason: "السبب", status: "الحالة", version: "الإصدار"
+  };
+  const copy = Object.fromEntries(Object.keys(englishCopy).map((key) => [
+    key,
+    language === "ar" ? arabicCopy[key as keyof typeof arabicCopy]
+      : language === "bilingual" ? `${englishCopy[key as keyof typeof englishCopy]} · ${arabicCopy[key as keyof typeof arabicCopy]}`
+      : englishCopy[key as keyof typeof englishCopy]
+  ])) as Record<keyof typeof englishCopy, string>;
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
