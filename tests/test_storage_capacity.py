@@ -78,3 +78,55 @@ def test_production_compose_mounts_the_same_scratch_path_for_api_and_worker():
     assert expected_mount in worker_block
     assert "TMPDIR: /data/siraloom/scratch" in api_block
     assert "TMPDIR: /data/siraloom/scratch" in worker_block
+
+
+def test_laboratory_capacity_policy_blocks_disabled_preflight():
+    result = storage_capacity.enforce_laboratory_capacity_policy(
+        {
+            "status": "NOT_CONFIGURED",
+            "enabled": False,
+            "issues": [{"code": "CAPACITY_PREFLIGHT_DISABLED", "message": "disabled"}],
+        },
+        is_laboratory=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert any(issue["code"] == "LAB_CAPACITY_PREFLIGHT_REQUIRED" for issue in result["issues"])
+    assert result["enabled"] is False
+
+
+def test_laboratory_capacity_policy_preserves_ready_preflight():
+    capacity = {"status": "READY", "enabled": True, "issues": [], "reservation_supported": False}
+
+    result = storage_capacity.enforce_laboratory_capacity_policy(
+        capacity,
+        is_laboratory=True,
+    )
+
+    assert result is capacity
+    assert result["status"] == "READY"
+    assert result["issues"] == []
+
+
+def test_trial_capacity_policy_preserves_existing_not_configured_behavior():
+    capacity = {"status": "NOT_CONFIGURED", "enabled": False, "issues": []}
+
+    result = storage_capacity.enforce_laboratory_capacity_policy(
+        capacity,
+        is_laboratory=False,
+    )
+
+    assert result is capacity
+    assert result["status"] == "NOT_CONFIGURED"
+    assert result["issues"] == []
+
+
+def test_laboratory_capacity_policy_does_not_duplicate_required_issue():
+    existing_issue = {"code": "LAB_CAPACITY_PREFLIGHT_REQUIRED", "message": "required"}
+    result = storage_capacity.enforce_laboratory_capacity_policy(
+        {"status": "BLOCKED", "issues": [existing_issue]},
+        is_laboratory=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["issues"].count(existing_issue) == 1

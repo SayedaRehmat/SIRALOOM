@@ -17,7 +17,11 @@ async function apiFetch(path: string, init: RequestInit = {}) {
   const text = await response.text();
   let body: any = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
-  if (!response.ok) throw new Error(body?.detail ? String(body.detail) : `HTTP ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(body?.detail ? String(body.detail) : `HTTP ${response.status}`) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
   return body;
 }
 
@@ -26,6 +30,7 @@ export default function SettingsPage() {
   const [session, setSession] = useState<any>(null);
   const [health, setHealth] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
+  const [membersAvailable, setMembersAvailable] = useState(true);
   const [message, setMessage] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<(typeof INVITATION_ROLES)[number]>("lab_scientist");
@@ -35,8 +40,15 @@ export default function SettingsPage() {
   const [updatingMembershipId, setUpdatingMembershipId] = useState<string | null>(null);
 
   async function loadMembers() {
-    const result = await apiFetch("/auth/memberships");
-    setMembers(result.members ?? []);
+    try {
+      const result = await apiFetch("/auth/memberships");
+      setMembers(result.members ?? []);
+      setMembersAvailable(true);
+    } catch (error) {
+      const status = (error as Error & { status?: number }).status;
+      setMembersAvailable(false);
+      if (status !== 404) throw error;
+    }
   }
 
   useEffect(() => {
@@ -46,7 +58,7 @@ export default function SettingsPage() {
         try {
           await loadMembers();
         } catch (error) {
-          setMessage(error instanceof Error ? error.message : "Unable to load organization members.");
+          setMessage(error instanceof Error ? error.message : t("settings.unableToLoad"));
         }
       })
       .catch((e) => setMessage(e instanceof Error ? e.message : t("settings.unableToLoad")));
@@ -74,10 +86,7 @@ export default function SettingsPage() {
   async function updateMember(membershipId: string, role: string, status: string) {
     setMessage(""); setUpdatingMembershipId(membershipId);
     try {
-      await apiFetch(`/auth/memberships/${encodeURIComponent(membershipId)}`, {
-        method: "PATCH",
-        body: JSON.stringify({ role, status }),
-      });
+      await apiFetch(`/auth/memberships/${encodeURIComponent(membershipId)}`, { method: "PATCH", body: JSON.stringify({ role, status }) });
       await loadMembers();
       setMessage("Organization membership updated.");
     } catch (e) {
@@ -104,7 +113,7 @@ export default function SettingsPage() {
 
         {canManageMembers && <section className="panel">
           <p className="eyebrow">Organization access</p><h2>Laboratory members</h2>
-          <div className="context-list">
+          {!membersAvailable ? <div className="notice"><strong>Member directory unavailable</strong><p className="muted">This deployment does not currently expose the membership route. Session and laboratory workflow access remain available.</p></div> : <div className="context-list">
             {members.length === 0 && <p className="muted">No organization members were returned.</p>}
             {members.map((member) => {
               const isSelf = member.user_id === session?.user_id;
@@ -123,7 +132,7 @@ export default function SettingsPage() {
                 </div>
               );
             })}
-          </div>
+          </div>}
           <h3 style={{ marginTop: 24 }}>Invite staff</h3>
           <p className="muted">The recipient must authenticate with the exact invited Firebase email.</p>
           <div className="form-stack">
