@@ -70,7 +70,7 @@ The existing Compose file binds API and frontend ports to VM loopback. Keep thos
 
 ~~~bash
 sudo cp infra/azure/Caddyfile.example /etc/caddy/Caddyfile
-sudo sed -i 's/YOUR_DNS_NAME/<YOUR_REAL_DNS_NAME>/' /etc/caddy/Caddyfile
+sudo nano /etc/caddy/Caddyfile  # replace YOUR_DNS_NAME with your actual DNS hostname
 sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl enable --now caddy
 sudo systemctl reload caddy
