@@ -34,14 +34,25 @@ type Candidate = {
   acted_at?: string | null;
 };
 
-type Capacity = {
-  available_bytes?: number;
-  total_bytes?: number;
-  used_bytes?: number;
-  free_bytes?: number;
+type CapacityRoot = {
+  label: string;
   path?: string;
+  exists?: boolean;
+  writable?: boolean;
+  total_bytes?: number | null;
+  used_bytes?: number | null;
+  free_bytes?: number | null;
+  error_code?: string | null;
+  error_message?: string | null;
+};
+type Capacity = {
   status?: string;
-  [key: string]: unknown;
+  capacity_preflight_enabled?: boolean;
+  max_artifact_upload_bytes?: number;
+  resource_staging_max_bytes?: number;
+  reservation_supported?: boolean;
+  roots?: CapacityRoot[];
+  issues?: Array<{ code: string; message: string; storage?: string }>;
 };
 
 type StorageProfile = {
@@ -85,14 +96,22 @@ export default function OperationsPage() {
     refresh: "Refresh", notifications: "Notifications", reanalysis: "Reanalysis candidates", capacity: "Storage capacity", storage: "Storage profiles",
     unread: "Unread", markRead: "Mark read", openCase: "Open case", execute: "Execute reanalysis", pending: "Pending", noNotifications: "No notifications.", noCandidates: "No reanalysis candidates are waiting.",
     capacityNote: "These figures come from the deployment capacity probe. SIRALOOM does not infer laboratory capacity from an upload-size setting.", active: "Active", activate: "Activate", activeProfile: "Active profile", noProfiles: "No storage profiles are registered.",
-    queued: "Reanalysis dispatched", failed: "Action failed", source: "Source", affected: "Earliest affected stage", reason: "Reason", status: "Status", version: "Version"
+    queued: "Reanalysis dispatched", failed: "Action failed", source: "Source", affected: "Earliest affected stage", reason: "Reason", status: "Status", version: "Version",
+    uploadLimit: "Upload limit", stagingLimit: "Resource staging limit", preflight: "Capacity preflight", enabled: "Enabled", disabled: "Disabled",
+    free: "Free", used: "Used", total: "Total", writable: "Writable", notWritable: "Not writable", capacityIssues: "Capacity issues",
+    storageName: "Profile name", storageBackend: "Storage backend", registerStorage: "Register storage profile", localFilesystem: "Lab-managed filesystem",
+    cloudStorage: "Configured Firebase Cloud Storage", storageNote: "This profile selects storage configured by the deployment administrator. It does not create a disk, mount a path or provision a bucket."
   };
   const arabicCopy = {
     eyebrow: "عمليات المختبر", title: "التنبيهات وإعادة التحليل والسعة", lead: "نقطة تشغيل واحدة للإجراءات التي تتطلب انتباهاً من المختبر.",
     refresh: "تحديث", notifications: "التنبيهات", reanalysis: "مرشحو إعادة التحليل", capacity: "سعة التخزين", storage: "ملفات التخزين",
     unread: "غير مقروء", markRead: "تحديد كمقروء", openCase: "فتح الحالة", execute: "تنفيذ إعادة التحليل", pending: "معلّق", noNotifications: "لا توجد تنبيهات.", noCandidates: "لا توجد حالات مرشحة لإعادة التحليل.",
     capacityNote: "تعرض هذه القيم القياس الفعلي الذي يقدمه نشر المختبر؛ لا يتم استنتاج السعة من حد رفع الملفات.", active: "نشط", activate: "تفعيل", activeProfile: "ملف نشط", noProfiles: "لا توجد ملفات تخزين مسجلة.",
-    queued: "تمت جدولة إعادة التحليل", failed: "تعذر تنفيذ الإجراء", source: "المصدر", affected: "أقدم مرحلة متأثرة", reason: "السبب", status: "الحالة", version: "الإصدار"
+    queued: "تمت جدولة إعادة التحليل", failed: "تعذر تنفيذ الإجراء", source: "المصدر", affected: "أقدم مرحلة متأثرة", reason: "السبب", status: "الحالة", version: "الإصدار",
+    uploadLimit: "حد الرفع", stagingLimit: "حد تجهيز الموارد", preflight: "فحص السعة", enabled: "مفعّل", disabled: "معطّل",
+    free: "المتاح", used: "المستخدم", total: "الإجمالي", writable: "قابل للكتابة", notWritable: "غير قابل للكتابة", capacityIssues: "مشكلات السعة",
+    storageName: "اسم الملف", storageBackend: "خلفية التخزين", registerStorage: "تسجيل ملف تخزين", localFilesystem: "نظام ملفات تديره المختبر",
+    cloudStorage: "تخزين Firebase السحابي المُهيّأ", storageNote: "يختار هذا الملف التخزين الذي هيأه مسؤول النشر. لا ينشئ قرصاً أو نقطة تركيب أو حاوية تخزين."
   };
   const copy = Object.fromEntries(Object.keys(englishCopy).map((key) => [
     key,
@@ -105,6 +124,8 @@ export default function OperationsPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [capacity, setCapacity] = useState<Capacity | null>(null);
   const [profiles, setProfiles] = useState<StorageProfile[]>([]);
+  const [storageProfileName, setStorageProfileName] = useState("");
+  const [storageBackend, setStorageBackend] = useState<"LOCAL_FILESYSTEM" | "FIREBASE_GCS">("LOCAL_FILESYSTEM");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -151,6 +172,28 @@ export default function OperationsPage() {
     finally { setBusy(false); }
   }
 
+  async function registerStorage(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!storageProfileName.trim()) return;
+    setBusy(true); setMessage("");
+    try {
+      await apiFetch("/storage/profiles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: storageProfileName.trim(),
+          backend_type: storageBackend,
+          storage_key: storageBackend === "FIREBASE_GCS" ? "PRIMARY_FIREBASE" : "PRIMARY_ARTIFACTS",
+          configuration: {},
+        }),
+      });
+      setStorageProfileName("");
+      setMessage(copy.registerStorage);
+      await load();
+    } catch (error) { setMessage(error instanceof Error ? error.message : copy.failed); }
+    finally { setBusy(false); }
+  }
+
   return (
     <div className="lab-page">
       <header className="page-header">
@@ -182,13 +225,35 @@ export default function OperationsPage() {
       <div className="operations-grid">
         <section className="panel">
           <div className="section-heading"><div><h2>{copy.capacity}</h2><p className="muted">{copy.capacityNote}</p></div></div>
-          {capacity ? <div className="capacity-metrics"><div><small>Free</small><strong>{bytes(Number(capacity.free_bytes ?? capacity.available_bytes))}</strong></div><div><small>Used</small><strong>{bytes(Number(capacity.used_bytes))}</strong></div><div><small>Total</small><strong>{bytes(Number(capacity.total_bytes))}</strong></div><div><small>Status</small><strong>{pretty(String(capacity.status ?? "UNKNOWN"))}</strong></div></div> : <p className="muted">—</p>}
-          {capacity?.path && <p className="metadata-line">Path: <b>{String(capacity.path)}</b></p>}
+          {capacity ? <>
+            <div className="operations-capacity-summary">
+              <div><span>{copy.uploadLimit}</span><strong>{bytes(capacity.max_artifact_upload_bytes)}</strong></div>
+              <div><span>{copy.stagingLimit}</span><strong>{bytes(capacity.resource_staging_max_bytes)}</strong></div>
+              <div><span>{copy.preflight}</span><strong>{capacity.capacity_preflight_enabled ? copy.enabled : copy.disabled}</strong></div>
+              <div><span>{copy.status}</span><strong>{pretty(String(capacity.status ?? "UNKNOWN"))}</strong></div>
+            </div>
+            <div className="operations-capacity-roots">{(capacity.roots ?? []).map(root => <article key={root.label}>
+              <strong>{pretty(root.label)}</strong><span>{copy.free}</span><b>{bytes(root.free_bytes ?? undefined)}</b>
+              <span>{copy.used}</span><b>{bytes(root.used_bytes ?? undefined)}</b>
+              <span>{copy.total}</span><b>{bytes(root.total_bytes ?? undefined)}</b>
+              <small>{root.path ?? "—"} · {root.writable ? copy.writable : copy.notWritable}</small>
+              {root.error_message && <small>{root.error_message}</small>}
+            </article>)}</div>
+            {(capacity.issues ?? []).map((issue, index) => <p className="preflight-stage-issue" key={`${issue.code}-${index}`}>{issue.code}: {issue.message}</p>)}
+          </> : <p className="muted">—</p>}
         </section>
 
         <section className="panel">
           <div className="section-heading"><div><h2>{copy.storage}</h2><p className="muted">{copy.activeProfile}: {profiles.find(p => p.status === "ACTIVE")?.name ?? "—"}</p></div></div>
           {profiles.length === 0 ? <p className="muted">{copy.noProfiles}</p> : <div className="operation-list compact">{profiles.map(profile => <div className="operation-row" key={profile.storage_profile_id}><div className="operation-main"><strong>{profile.name}</strong><small>{profile.backend_type} · {profile.storage_key}</small><span className="metadata-line">{copy.version}: {profile.version}</span></div><div className="operation-actions">{profile.status === "ACTIVE" ? <span className="badge success">{copy.active}</span> : <button className="text-button" disabled={busy} onClick={() => void activate(profile.storage_profile_id)}>{copy.activate}</button>}</div></div>)}</div>}
+          <form className="manual-classification-form" onSubmit={registerStorage}>
+            <label>{copy.storageName}<input value={storageProfileName} onChange={event => setStorageProfileName(event.target.value)} required maxLength={120} /></label>
+            <label>{copy.storageBackend}<select value={storageBackend} onChange={event => setStorageBackend(event.target.value as "LOCAL_FILESYSTEM" | "FIREBASE_GCS")}>
+              <option value="LOCAL_FILESYSTEM">{copy.localFilesystem}</option><option value="FIREBASE_GCS">{copy.cloudStorage}</option>
+            </select></label>
+            <p>{copy.storageNote}</p>
+            <button className="secondary" type="submit" disabled={busy || !storageProfileName.trim()}>{copy.registerStorage}</button>
+          </form>
         </section>
       </div>
     </div>
