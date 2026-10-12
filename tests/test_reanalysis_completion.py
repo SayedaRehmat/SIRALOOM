@@ -12,6 +12,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Organization,
     ReanalysisCandidate,
+    User,
 )
 
 
@@ -20,30 +21,35 @@ def test_reanalysis_candidate_closes_only_when_child_completes():
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, Case.__table__, Analysis.__table__,
+            Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
             ReanalysisCandidate.__table__, AuditEvent.__table__,
         ],
     )
-    organization_id, case_id, parent_id, child_id, candidate_id = [uuid4() for _ in range(5)]
+    organization_id, user_id, case_id, parent_id, child_id, candidate_id = [uuid4() for _ in range(6)]
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Completion Lab", external_identifier=None))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject=None,
+            email="completion@example.test", display_name="Completion User",
+            role="ANALYST", status="ACTIVE",
+        ))
         db.add(Case(
             id=case_id, organization_id=organization_id, case_identifier="COMP-001",
-            status="ACTIVE", clinical_context={}, language="en", created_by=None,
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
         ))
         db.add(Analysis(
             id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
             analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
             reference_build="GRCh38", configuration={}, started_at=None,
-            completed_at=datetime.now(timezone.utc), created_by=None, analysis_version=1,
+            completed_at=datetime.now(timezone.utc), created_by=user_id, analysis_version=1,
         ))
         db.add(Analysis(
             id=child_id, case_id=case_id, parent_analysis_id=parent_id, assay_id=None,
             analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
             reference_build="GRCh38", configuration={}, started_at=None,
-            completed_at=datetime.now(timezone.utc), created_by=None, analysis_version=2,
+            completed_at=datetime.now(timezone.utc), created_by=user_id, analysis_version=2,
         ))
         db.add(ReanalysisCandidate(
             id=candidate_id, organization_id=organization_id, case_id=case_id,
