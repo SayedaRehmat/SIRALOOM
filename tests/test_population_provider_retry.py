@@ -71,7 +71,7 @@ def test_gnomad_timeout_is_retryable(monkeypatch):
     )
     provider = GnomADGraphQLProvider(endpoint="https://provider.invalid/graphql")
     variant = SimpleNamespace(
-        chromosome="1", position=123, reference="A", alternate="G"
+        chromosome="1", position=123, reference="A", alternate="G", genome_build="GRCh38"
     )
 
     with pytest.raises(GnomADProviderError) as caught:
