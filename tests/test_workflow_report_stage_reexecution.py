@@ -5,6 +5,7 @@ report stage body. The real run_variant_analysis entry point executes twice, wit
 one-shot artifact-store failure on the first attempt.
 """
 from datetime import datetime, timezone
+import gzip
 from pathlib import Path
 from uuid import uuid4
 
@@ -64,7 +65,7 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
             encoding="utf-8",
         )
         normalized_vcf = tmp_path / "normalized.vcf.gz"
-        normalized_vcf.write_bytes(b"test-normalized-vcf-artifact")
+        normalized_vcf.write_bytes(gzip.compress(input_vcf.read_bytes()))
         with LocalSession() as db:
             db.add(Organization(
                 id=organization_id, name="Report Retry Lab",
