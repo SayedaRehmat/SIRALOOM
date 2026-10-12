@@ -10,6 +10,7 @@ on:
     branches: ["main"]
     paths:
       - "infra/azure/**"
+      - "scripts/azure/**"
       - ".github/workflows/azure-infra.yml"
 
 permissions:
