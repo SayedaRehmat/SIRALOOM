@@ -894,6 +894,7 @@ export default function Home() {
         <a href="#analysis-workflow">{t("workspace.executionSection")}</a>
         <a href="#artifacts">{t("workspace.files")}</a>
         <a href="#variants">{t("workspace.interpretationSection")}</a>
+        <a href="#variant-export">{t("workspace.completeReport")}</a>
         <a href="#evidence">{t("workspace.evidenceSection")}</a>
         <a href="#review">{t("workspace.reviewSection")}</a>
         <a href="#report">{t("workspace.reportSection")}</a>
@@ -1080,7 +1081,7 @@ export default function Home() {
         {variants.length === 0 ? <div className="empty"><strong>{t("workspace.waitingAnalysis")}</strong><p>{t("workspace.variantsWillPopulate")}</p></div> : <div className="table-wrap"><table><thead><tr><th>{t("workflow.variantFile")}</th><th>{t("workspace.position")}</th><th>{t("workspace.refAlt")}</th><th>{t("workspace.build")}</th><th>{t("workspace.review")}</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">{t("workspace.selected")}</span> : <span className="badge neutral">{t("workspace.open")}</span>}</td></tr>)}</tbody></table></div>}
       </section>
 
-      <section className="panel complete-report-panel">
+      <section id="variant-export" className="panel complete-report-panel">
         <div className="panel-head"><div><div className="section-kicker">{t("workspace.completeReport")}</div><h3>{t("workspace.allAnalyzedVariants")}</h3></div><span className="badge neutral">{completeVariants.length} {t("workspace.rowsCount")}</span></div>
         <div className="report-toolbar"><p>{t("workspace.completeReportLead")}</p><div className="actions-row"><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.csv`, `siraloom-complete-variant-report-${analysisId}.csv`)} disabled={!analysisId}>{t("workspace.downloadCsv")}</button><button className="secondary" onClick={() => analysisId && downloadAuthenticated(`/analyses/${analysisId}/complete-variant-report.json`, `siraloom-complete-variant-report-${analysisId}.json`)} disabled={!analysisId}>{t("workspace.downloadJson")}</button></div></div>
         {completeVariants.length === 0 ? <div className="empty small"><strong>{t("workspace.noCompleteDataset")}</strong><p>{t("workspace.completeDatasetPending")}</p></div> : <div className="table-wrap"><table><thead><tr>{completeVariantColumns.slice(0, 12).map((column) => <th key={column}>{column.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{completeVariants.slice(0, 100).map((row, index) => <tr key={String(row.variant_id ?? index)} onClick={() => typeof row.variant_id === "string" && setSelectedVariantId(row.variant_id)}>{completeVariantColumns.slice(0, 12).map((column) => <td key={column}><code>{String(row[column] ?? "—")}</code></td>)}</tr>)}</tbody></table>{completeVariants.length > 100 && <p className="table-note">{t("workspace.first100Note")}</p>}</div>}
