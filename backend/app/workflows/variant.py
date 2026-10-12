@@ -3173,6 +3173,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             )
             db.commit()
 
+        population_step_for_acmg = _step(db, analysis.id, "population")
+        evidence_step_for_acmg = _step(db, analysis.id, "build_evidence")
+        population_scientific_gap = bool(
+            (population_step_for_acmg.metadata_json or {}).get("scientific_limitation")
+        )
+        evidence_scientific_gap = bool(
+            (evidence_step_for_acmg.metadata_json or {}).get("scientific_limitation")
+        )
+
         if acmg_step.status != StepStatus.SUCCEEDED:
             mark_step(db, acmg_step, StepStatus.RUNNING)
             try:
@@ -3289,7 +3298,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         },
                     )
 
-                if assessed == 0 or review_variants > 0 or blocked_variants > 0:
+                if (
+                    assessed == 0
+                    or review_variants > 0
+                    or blocked_variants > 0
+                    or population_scientific_gap
+                    or evidence_scientific_gap
+                ):
                     # The analysis itself is not failed. Evidence generation and
                     # criterion persistence have completed for the variants that
                     # could be assessed, while classification automation is
@@ -3301,6 +3316,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "No variant received a validated, applicable ClinGen specification "
                             "with supported structured criterion configuration. Manual ACMG "
                             "classification is required for all variants in this case."
+                        )
+                    elif population_scientific_gap or evidence_scientific_gap:
+                        review_code = "SCIENTIFIC_EVIDENCE_GAP_REQUIRES_REVIEW"
+                        review_message = (
+                            "Population or evidence collection recorded a scientific limitation. "
+                            "Any automated criterion proposals remain provisional; an authorized "
+                            "reviewer must inspect the missing-source context before classification "
+                            "can be approved."
                         )
                     elif review_variants > 0:
                         review_code = "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"
@@ -3327,6 +3350,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "proposed_variants": proposed_variants,
                             "classification_review_variants": review_variants,
                             "blocked_variants": blocked_variants,
+                            "population_scientific_gap": population_scientific_gap,
+                            "evidence_scientific_gap": evidence_scientific_gap,
                             "classification_automation": "PARTIAL_OR_REVIEW_REQUIRED",
                             "next_step": "review",
                         },
