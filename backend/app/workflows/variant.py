@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid5
 
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
@@ -2567,6 +2568,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="population",
+                    error_code="POPULATION_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="POPULATION_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="gnomad",
+                    next_step="population",
+                )
+                raise TransientWorkflowError(
+                    "Population observation persistence failed; retrying from the durable population checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="POPULATION_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 # Safety net -- see the matching comment on the normalization step above.
                 mark_step(db, population_step, StepStatus.FAILED, error_code="POPULATION_UNEXPECTED_ERROR", error_message=str(exc))
@@ -3002,6 +3020,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="build_evidence",
+                    error_code="EVIDENCE_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="EVIDENCE_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="siraloom-evidence",
+                    next_step="build_evidence",
+                )
+                raise TransientWorkflowError(
+                    "Evidence persistence failed; retrying from the durable evidence checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="EVIDENCE_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 mark_step(db, evidence_step, StepStatus.FAILED, error_code="EVIDENCE_BUILD_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
@@ -3289,6 +3324,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="acmg_assessment",
+                    error_code="ACMG_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="ACMG_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="siraloom-acmg-specification-engine",
+                    next_step="acmg_assessment",
+                )
+                raise TransientWorkflowError(
+                    "ACMG assessment persistence failed; retrying without fabricating a classification.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="ACMG_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 mark_step(db, acmg_step, StepStatus.FAILED, error_code="ACMG_ASSESSMENT_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
