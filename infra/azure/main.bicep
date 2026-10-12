@@ -167,6 +167,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
 
 output vmName string = vm.name
 output publicIpAddress string = publicIp.properties.ipAddress
-output publicFqdn string = empty(dnsLabel) ? '' : '${dnsLabel}.${environment().suffixes.dns.zone}'
+output publicFqdn string = empty(dnsLabel) ? '' : publicIp.properties.dnsSettings.fqdn
 output dataDiskSizeGB int = dataDiskSizeGB
 output sshCommand string = 'ssh ${adminUsername}@${publicIp.properties.ipAddress}'
