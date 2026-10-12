@@ -8,7 +8,7 @@ from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis
 from sqlalchemy import func, select
 
 from backend.app.infrastructure.db.models import ACMGAssessment, Annotation, Classification, Evidence, PopulationObservation, User, Variant, ReportabilityDecision
-from backend.app.domain.review import ClassificationReviewRequest, CriterionReviewRequest, ReviewResponse
+from backend.app.domain.review import ClassificationReviewRequest, CriterionReviewRequest, ManualClassificationRequest, ReviewResponse
 from backend.app.infrastructure.db.session import get_db
 from backend.app.application.analysis import resume_analysis
 from backend.app.review.service import (
@@ -21,6 +21,7 @@ from backend.app.review.service import (
     request_more_evidence,
     start_review,
     review_criterion,
+    propose_manual_classification,
 )
 
 router = APIRouter(tags=["review"])
@@ -154,6 +155,45 @@ def get_review(analysis_id: UUID, variant_id: UUID, db: Session = Depends(get_db
         return get_review_bundle(db, analysis_id=analysis_id, variant_id=variant_id)
     except ReviewError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/analyses/{analysis_id}/variants/{variant_id}/classification/manual")
+def propose_manual(
+    analysis_id: UUID,
+    variant_id: UUID,
+    payload: ManualClassificationRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    get_accessible_analysis(analysis_id, db, principal)
+    reviewer = _reviewer(db, principal)
+    try:
+        classification = propose_manual_classification(
+            db,
+            analysis_id=analysis_id,
+            variant_id=variant_id,
+            reviewer=reviewer,
+            result=payload.result,
+            reason=payload.reason,
+            evidence_ids=tuple(UUID(value) for value in payload.evidence_ids),
+        )
+        db.commit()
+        return {
+            "classification_id": str(classification.id),
+            "analysis_id": str(classification.analysis_id),
+            "variant_id": str(classification.variant_id),
+            "result": classification.result,
+            "state": classification.state,
+            "review_status": classification.review_status,
+            "version": classification.version,
+            "automation_status": "NOT_AUTOMATED",
+        }
+    except ReviewAuthorizationError as exc:
+        db.rollback()
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except (ReviewConflictError, ReviewError, ValueError) as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/review/start")

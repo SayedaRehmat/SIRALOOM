@@ -7,9 +7,9 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.enums import ReviewStatus, UserRole
+from backend.app.domain.enums import ReviewStatus, StepStatus, UserRole
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Evidence, ReviewAction, User, Variant, Case, PhenotypeObservation, PopulationObservation, ReportabilityDecision, Annotation, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, TechnicalQCObservation, QCAssessment, Assay
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Evidence, ReviewAction, User, Variant, Case, PhenotypeObservation, PopulationObservation, ReportabilityDecision, Annotation, WorkflowStep, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, TechnicalQCObservation, QCAssessment, Assay
 
 
 class ReviewError(ValueError):
@@ -193,6 +193,144 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         "secondary_finding": secondary_finding,
         "evidence_count": len(evidence),
     }
+
+
+def propose_manual_classification(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    variant_id: UUID,
+    reviewer: User,
+    result: str,
+    reason: str,
+    evidence_ids: tuple[UUID, ...],
+) -> Classification:
+    """Create an auditable manual proposal when ACMG automation cannot classify a variant.
+
+    This does not create ACMG criterion assessments or claim automated ACMG support.
+    A manual proposal remains PROPOSED until the existing review/approval workflow
+    records an authorized final decision.
+    """
+    require_reviewer(reviewer)
+    result = result.strip().upper()
+    allowed_results = {"PATHOGENIC", "LIKELY_PATHOGENIC", "VUS", "LIKELY_BENIGN", "BENIGN"}
+    if result not in allowed_results:
+        raise ReviewError("Unsupported manual classification result")
+    rationale = reason.strip()
+    if not rationale:
+        raise ReviewError("A documented manual classification rationale is required")
+    if not evidence_ids:
+        raise ReviewError("At least one analysis-scoped evidence record is required")
+
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        raise ReviewError("Analysis not found")
+    if str(analysis.status).upper() != "REQUIRES_REVIEW":
+        raise ReviewError("Manual classification proposals are only allowed while the analysis requires review")
+
+    acmg_step = db.scalar(
+        select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis_id,
+            WorkflowStep.step_id == "acmg_assessment",
+        )
+    )
+    if acmg_step is None or str(acmg_step.status).upper() != StepStatus.REQUIRES_REVIEW.value:
+        raise ReviewError("The ACMG assessment stage is not waiting for manual review")
+    if acmg_step.error_code not in {"NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"}:
+        raise ReviewError("Manual classification is not enabled for this ACMG review state")
+
+    variant = db.get(Variant, variant_id)
+    if variant is None:
+        raise ReviewError("Variant not found")
+    has_annotation = db.scalar(
+        select(Annotation.id).where(
+            Annotation.analysis_id == analysis_id,
+            Annotation.variant_id == variant_id,
+        ).limit(1)
+    )
+    if has_annotation is None:
+        raise ReviewError("Variant is not annotated in this analysis")
+
+    existing = db.scalar(
+        select(Classification.id).where(
+            Classification.analysis_id == analysis_id,
+            Classification.variant_id == variant_id,
+        ).limit(1)
+    )
+    if existing is not None:
+        raise ReviewError("A classification already exists for this variant; use the existing review workflow")
+
+    selected_evidence = list(db.scalars(
+        select(Evidence).where(
+            Evidence.id.in_(evidence_ids),
+            Evidence.analysis_id == analysis_id,
+            Evidence.variant_id == variant_id,
+        )
+    ))
+    if len(selected_evidence) != len(set(evidence_ids)):
+        raise ReviewError("Every selected evidence record must belong to this variant and analysis")
+
+    now = datetime.now(timezone.utc)
+    classification = Classification(
+        id=uuid4(),
+        variant_id=variant_id,
+        analysis_id=analysis_id,
+        framework_name="Manual clinical classification",
+        framework_version="manual-review-v1",
+        specification_provider=None,
+        specification_id=None,
+        specification_version=None,
+        result=result,
+        criterion_ids=[],
+        metadata_json={
+            "decision_mode": "MANUAL",
+            "automation_status": "NOT_AUTOMATED",
+            "rationale": rationale,
+            "evidence_ids": [str(item) for item in evidence_ids],
+            "proposed_by": str(reviewer.id),
+            "proposed_at": now.isoformat(),
+            "acmg_criteria_available": False,
+        },
+        state="PROPOSED",
+        review_status=ReviewStatus.NOT_STARTED,
+        version=1,
+        review_version=0,
+    )
+    db.add(classification)
+    action = ReviewAction(
+        id=uuid4(),
+        case_id=analysis.case_id,
+        analysis_id=analysis_id,
+        variant_id=variant_id,
+        reviewer_id=reviewer.id,
+        action_type="MANUAL_CLASSIFICATION_PROPOSED",
+        sequence_number=_next_review_sequence(db, analysis_id, variant_id),
+        reason=rationale,
+        before_state=None,
+        after_state=_classification_dict(classification),
+        expected_version=0,
+        resulting_version=0,
+    )
+    db.add(action)
+    AuditService(db).record(
+        event_type="MANUAL_CLASSIFICATION_PROPOSED",
+        case_id=analysis.case_id,
+        analysis_id=analysis_id,
+        actor_type="HUMAN",
+        actor_id=str(reviewer.id),
+        subject_type="CLASSIFICATION",
+        subject_id=str(classification.id),
+        operation="PROPOSE",
+        after_state=_classification_dict(classification),
+        reason=rationale,
+        payload={
+            "decision_mode": "MANUAL",
+            "evidence_ids": [str(item) for item in evidence_ids],
+            "acmg_criteria_available": False,
+        },
+    )
+    db.flush()
+    return classification
 
 
 def start_review(

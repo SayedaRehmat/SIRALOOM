@@ -48,6 +48,13 @@ type ReviewBundle = {
     resulting_version?: number;
     created_at?: string;
   }>;
+  variant_context?: {
+    gene_disease?: Array<Record<string, unknown>>;
+    phenotype_evidence?: Array<Record<string, unknown>>;
+    literature?: Array<Record<string, unknown>>;
+    functional_computational?: Array<Record<string, unknown>>;
+    segregation?: Array<Record<string, unknown>>;
+  };
 };
 
 type CaseWorkspace = {
@@ -213,6 +220,9 @@ export default function Home() {
   const [gateInputsChanged, setGateInputsChanged] = useState(false);
   const [pollingEpoch, setPollingEpoch] = useState(0);
   const [criterionReason, setCriterionReason] = useState("");
+  const [manualClassificationResult, setManualClassificationResult] = useState("VUS");
+  const [manualClassificationReason, setManualClassificationReason] = useState("");
+  const [manualClassificationEvidenceId, setManualClassificationEvidenceId] = useState("");
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -246,6 +256,23 @@ export default function Home() {
   }, [preflightResult, resourceStageReadiness]);
 
   const stepStatusSignature = useMemo(() => ((analysis?.steps as Step[] | undefined) ?? []).map(step => `${step.step_id}:${step.status}:${step.attempt}`).join("|"), [analysis]);
+  const manualClassificationEvidence = useMemo(() => {
+    const context = review?.variant_context;
+    const groups = [
+      ...(context?.gene_disease ?? []),
+      ...(context?.phenotype_evidence ?? []),
+      ...(context?.literature ?? []),
+      ...(context?.functional_computational ?? []),
+      ...(context?.segregation ?? []),
+    ];
+    const unique = new Map<string, Record<string, unknown>>();
+    for (const item of groups) {
+      const id = typeof item.id === "string" ? item.id : "";
+      if (id) unique.set(id, item);
+    }
+    return Array.from(unique.values());
+  }, [review]);
+
 
   const annotationProgress = useMemo(() => {
     const annotation = (analysis?.steps as Step[] | undefined)?.find((step) => step.step_id === "annotate");
@@ -651,6 +678,35 @@ export default function Home() {
     }
   };
 
+  const proposeManualClassification = async () => {
+    if (!analysisId || !selectedVariantId || !manualClassificationReason.trim() || !manualClassificationEvidenceId) {
+      setMessage(t("workspace.manualClassificationEvidenceRequired"));
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/classification/manual`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          result: manualClassificationResult,
+          reason: manualClassificationReason.trim(),
+          evidence_ids: [manualClassificationEvidenceId],
+        }),
+      });
+      const next = await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`);
+      setReview(next);
+      setManualClassificationReason("");
+      setManualClassificationEvidenceId("");
+      setMessage(t("workspace.manualClassificationSaved"));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : t("workspace.manualClassificationFailed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reviewCriterion = async (criterion: string, decision: "ACCEPT" | "REJECT") => {
     const current = review?.criteria.find((item) => item.criterion === criterion);
     const expectedVersion = Number((current as any)?.review_version ?? 0);
@@ -1030,7 +1086,30 @@ export default function Home() {
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.reviewSection")}</div><h3>{t("workspace.humanDecisionWorkspace")}</h3></div>{review?.review_status && <span className={`badge ${statusTone(review.review_status)}`}>{prettyStatus(review.review_status)}</span>}</div>
           {!review ? <div className="empty"><strong>{t("workspace.reviewPending")}</strong><p>{t("workspace.automatedOutputProposed")}</p></div> : <>
             <div className="classification-banner"><span>{t("workspace.proposedCurrent")}</span><strong>{String(review.classification?.result ?? t("workspace.noClassification"))}</strong><small>Review revision {String(review.classification?.review_version ?? 0)}</small></div>
-            <div className="actions-row"><button className="secondary" onClick={startReview} disabled={review.review_status === "APPROVED"}>{t("workspace.startReview")}</button></div>
+            {!review.classification && review.review_status === "NOT_STARTED" && (analysis?.steps as Step[] | undefined)?.some(step => step.step_id === "acmg_assessment" && step.status === "REQUIRES_REVIEW" && ["NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"].includes(String(step.error_code))) && <div className="manual-classification-form">
+              <div className="section-kicker">{t("workspace.manualClassificationTitle")}</div>
+              <p>{t("workspace.manualClassificationHelp")}</p>
+              <label>{t("workspace.manualClassificationResult")}
+                <select value={manualClassificationResult} onChange={event => setManualClassificationResult(event.target.value)}>
+                  <option value="PATHOGENIC">{t("workspace.classPathogenic")}</option>
+                  <option value="LIKELY_PATHOGENIC">{t("workspace.classLikelyPathogenic")}</option>
+                  <option value="VUS">{t("workspace.classVus")}</option>
+                  <option value="LIKELY_BENIGN">{t("workspace.classLikelyBenign")}</option>
+                  <option value="BENIGN">{t("workspace.classBenign")}</option>
+                </select>
+              </label>
+              <label>{t("workspace.manualClassificationEvidence")}
+                <select value={manualClassificationEvidenceId} onChange={event => setManualClassificationEvidenceId(event.target.value)}>
+                  <option value="">{t("workspace.selectEvidence")}</option>
+                  {manualClassificationEvidence.map(item => <option key={String(item.id)} value={String(item.id)}>{String(item.type ?? "Evidence")} — {String(item.statement ?? item.source ?? item.id)}</option>)}
+                </select>
+              </label>
+              <label>{t("workspace.manualClassificationRationale")}
+                <textarea value={manualClassificationReason} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setManualClassificationReason(event.target.value)} rows={3} />
+              </label>
+              <button className="primary" type="button" onClick={() => void proposeManualClassification()} disabled={busy || !manualClassificationEvidence.length}>{t("workspace.manualClassificationSubmit")}</button>
+            </div>}
+            <div className="actions-row"><button className="secondary" onClick={startReview} disabled={!review.classification || review.review_status === "APPROVED"}>{t("workspace.startReview")}</button></div>
             <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String((item.automated as any)?.reason ?? t("workspace.noAutomatedRationale"))}</p><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">{t("workspace.accept")}</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">{t("workspace.reject")}</button></div></div>)}</div>
             <label>{t("workspace.criterionReviewReason")}<input value={criterionReason} onChange={(e: ChangeEvent<HTMLInputElement>) => setCriterionReason(e.target.value)} placeholder="Why is this criterion accepted/rejected?" /></label>
             <label>{t("workspace.finalApprovalReason")}<textarea value={reviewReason} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReviewReason(e.target.value)} placeholder="Explain the basis for the final reviewer decision." rows={3} /></label>

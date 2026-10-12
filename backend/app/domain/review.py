@@ -14,6 +14,13 @@ class CriterionReviewRequest(BaseModel):
     expected_version: int = Field(ge=0)
 
 
+class ManualClassificationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    result: str = Field(pattern=r"^(PATHOGENIC|LIKELY_PATHOGENIC|VUS|LIKELY_BENIGN|BENIGN)$")
+    reason: str = Field(min_length=1, max_length=5000)
+    evidence_ids: list[str] = Field(min_length=1, max_length=100)
+
+
 class ClassificationReviewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     expected_version: int = Field(ge=0)

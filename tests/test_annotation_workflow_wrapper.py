@@ -456,3 +456,88 @@ def test_run_variant_analysis_resolves_case_without_local_name_shadowing(
             workflow.run_variant_analysis(analysis_id)
     finally:
         engine.dispose()
+
+
+def test_terminal_provenance_is_persisted_before_analysis_succeeds(tmp_path):
+    import json
+    from datetime import datetime, timezone
+
+    from backend.app.domain.enums import AnalysisStatus, StepStatus
+    from backend.app.infrastructure.audit.service import AuditService
+    from backend.app.infrastructure.db.models import Artifact, AuditEvent, Report
+    from backend.app.workflows.variant import _persist_terminal_provenance
+
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'terminal-provenance.db'}")
+    Base.metadata.create_all(engine)
+    store = ArtifactStore(tmp_path / "terminal-artifacts")
+    organization_id, user_id, case_id, analysis_id = (
+        uuid4(), uuid4(), uuid4(), uuid4()
+    )
+
+    with Session(engine) as db:
+        db.add(Organization(
+            id=organization_id, name="Terminal Provenance Lab",
+            external_identifier=str(organization_id),
+        ))
+        db.flush()
+        db.add(User(
+            id=user_id, organization_id=organization_id,
+            external_subject=str(user_id), email=f"{user_id}@test.local",
+            display_name="Provenance Reviewer", role="ADMIN", status="ACTIVE",
+        ))
+        db.flush()
+        db.add(Case(
+            id=case_id, organization_id=organization_id,
+            case_identifier="PROV-TERMINAL-001", status="ACTIVE",
+            clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.flush()
+        db.add(Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None,
+            assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="variant-v1", workflow_version="test",
+            status=AnalysisStatus.REQUIRES_REVIEW, queue_task_id=None,
+            reference_build="GRCh38", configuration={}, started_at=datetime.now(timezone.utc),
+            completed_at=None, created_by=user_id, analysis_version=1,
+        ))
+        db.flush()
+        db.add(Report(
+            id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+            report_version=1, language="en", report_type="CLINICAL_INTERPRETATION",
+            status="FINAL", content_json={"report_status": "FINAL"},
+        ))
+        step = WorkflowStep(
+            id=uuid4(), analysis_id=analysis_id, step_id="export_provenance",
+            step_order=10, status=StepStatus.RUNNING, attempt=1,
+            input_artifacts=[], output_artifacts=[], metadata_json={},
+        )
+        db.add(step)
+        db.commit()
+
+        analysis = db.get(Analysis, analysis_id)
+        step = db.get(WorkflowStep, step.id)
+        artifact = _persist_terminal_provenance(
+            db, artifacts=store, analysis=analysis, provenance_step=step,
+            audit=AuditService(db),
+        )
+
+        db.refresh(analysis)
+        db.refresh(step)
+        assert analysis.status == AnalysisStatus.SUCCEEDED
+        assert analysis.completed_at is not None
+        assert step.status == StepStatus.SUCCEEDED
+        assert step.output_artifacts == [str(artifact.id)]
+        assert step.metadata_json["provenance_artifact_id"] == str(artifact.id)
+        assert db.get(Artifact, artifact.id) is not None
+        event = db.query(AuditEvent).filter_by(
+            event_type="PROVENANCE_EXPORT_COMPLETED",
+            analysis_id=analysis_id,
+        ).one()
+        assert event.output_artifacts[0]["sha256"] == artifact.sha256
+        assert event.payload["next_step"] == "analysis_complete"
+
+        stored_path = Path(unquote(urlparse(artifact.storage_uri).path))
+        manifest = json.loads(stored_path.read_text(encoding="utf-8"))
+        assert manifest["analysis_id"] == str(analysis_id)
+        assert manifest["case_id"] == str(case_id)
+        assert any(item["step_id"] == "export_provenance" for item in manifest["steps"])

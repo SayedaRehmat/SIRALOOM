@@ -202,3 +202,60 @@ def test_confirmation_record_version_identity_is_database_enforced():
     db.add(second)
     with pytest.raises(IntegrityError):
         db.commit()
+
+
+def test_manual_classification_without_acmg_criteria_can_be_signed_out(tmp_path, monkeypatch):
+    """A reviewed manual classification must use the ordinary immutable report sign-out path."""
+    db, reviewer, case, analysis, variant = seed(True)
+    classification = db.query(Classification).filter_by(
+        analysis_id=analysis.id, variant_id=variant.id
+    ).one()
+    classification.result = "LIKELY_PATHOGENIC"
+    classification.framework_name = "Manual clinical classification"
+    classification.framework_version = "manual-review-v1"
+    classification.criterion_ids = []
+    classification.metadata_json = {
+        "decision_mode": "MANUAL",
+        "automation_status": "NOT_AUTOMATED",
+        "acmg_criteria_available": False,
+    }
+    db.commit()
+
+    monkeypatch.setattr(
+        "backend.app.reporting.finalization.settings.artifact_root",
+        str(tmp_path),
+    )
+    content = build_report_content(
+        db, analysis, "en", report_type="CLINICAL_INTERPRETATION"
+    )
+    assert content["findings"][0]["classification"] == "LIKELY_PATHOGENIC"
+    assert content["findings"][0]["acmg_assessment_snapshot"] == []
+
+    report = Report(
+        id=uuid4(),
+        case_id=case.id,
+        analysis_id=analysis.id,
+        report_version=1,
+        language="en",
+        report_type="CLINICAL_INTERPRETATION",
+        status="DRAFT",
+        artifact_id=db.query(Artifact).first().id,
+        content_json=content,
+    )
+    db.add(report)
+    db.commit()
+
+    finalized = finalize_report(
+        db,
+        report_id=report.id,
+        approver_id=reviewer.id,
+        reason="Manual interpretation and evidence reviewed; authorized sign-out.",
+    )
+    db.commit()
+
+    assert finalized.status == "FINAL"
+    assert finalized.approved_by == reviewer.id
+    assert finalized.signed_artifact_id is not None
+    assert finalized.signed_sha256
+    assert finalized.signout_reason.startswith("Manual interpretation")
+    assert db.get(Artifact, finalized.signed_artifact_id) is not None

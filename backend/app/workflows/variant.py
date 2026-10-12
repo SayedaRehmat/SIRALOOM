@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
-from uuid import UUID
+from uuid import UUID, uuid5
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -156,6 +156,14 @@ def _save_batch_checkpoint(
 def _completed_batch_keys(step: WorkflowStep) -> set[str]:
     batches = (step.metadata_json or {}).get("batches") or {}
     return {k for k, v in batches.items() if (v or {}).get("status") == "SUCCEEDED"}
+
+def _completed_acmg_batch_outcome_counts(step: WorkflowStep, start: int, end: int) -> tuple[int, int]:
+    """Restore human-review/blocking counters from a durable successful batch checkpoint."""
+    checkpoint = _batch_checkpoint(step, start, end)
+    return (
+        int(checkpoint.get("requires_review", 0) or 0),
+        int(checkpoint.get("blocked", 0) or 0),
+    )
 
 def _ensure_annotation_request_fingerprint(
     payloads: list[dict],
@@ -786,6 +794,113 @@ def _persist_annotation_batch_rows(
     return new_count, len(payloads_by_key)
 
 
+def _persist_terminal_provenance(
+    db: Session,
+    *,
+    artifacts: ArtifactStore,
+    analysis: Analysis,
+    provenance_step: WorkflowStep,
+    audit: AuditService,
+) -> Artifact:
+    """Atomically persist terminal provenance and mark the analysis successful.
+
+    A deterministic artifact identity makes a retry overwrite any orphaned
+    filesystem object left by a failed database transaction instead of
+    creating duplicate provenance artifacts.
+    """
+    import json
+
+    provenance_artifact_id = uuid5(analysis.id, "siraloom:terminal-provenance-manifest")
+    existing_artifact = db.get(Artifact, provenance_artifact_id)
+
+    # Stage the successful terminal-step state before rendering the manifest so
+    # the manifest describes the intended terminal state. Nothing is committed
+    # until the artifact, resource snapshots, audit event, and analysis status
+    # are all ready.
+    now = _now()
+    provenance_step.status = StepStatus.SUCCEEDED
+    provenance_step.updated_at = now
+    provenance_step.completed_at = now
+    provenance_step.last_heartbeat = now
+    provenance_step.error_code = None
+    provenance_step.error_message = None
+    provenance_step.output_artifacts = [str(provenance_artifact_id)]
+    provenance_step.metadata_json = {
+        **(provenance_step.metadata_json or {}),
+        "provenance_artifact_id": str(provenance_artifact_id),
+        "next_step": "analysis_complete",
+    }
+    db.add(provenance_step)
+
+    with NamedTemporaryFile(
+        prefix="siraloom-provenance-", suffix=".json", mode="w", encoding="utf-8", delete=False
+    ) as provenance_tmp:
+        provenance_tmp.write(json.dumps({
+            "schema_version": "1.0.0",
+            "analysis_id": str(analysis.id),
+            "case_id": str(analysis.case_id),
+            "workflow_id": analysis.workflow_id,
+            "workflow_version": analysis.workflow_version,
+            "reference_build": analysis.reference_build,
+            "steps": [
+                {
+                    "step_id": s.step_id,
+                    "step_order": s.step_order,
+                    "status": s.status,
+                    "attempt": s.attempt,
+                    "input_artifacts": s.input_artifacts,
+                    "output_artifacts": s.output_artifacts,
+                    "metadata": s.metadata_json,
+                    "error_code": s.error_code,
+                    "error_message": s.error_message,
+                }
+                for s in db.scalars(
+                    select(WorkflowStep)
+                    .where(WorkflowStep.analysis_id == analysis.id)
+                    .order_by(WorkflowStep.step_order)
+                )
+            ],
+        }, indent=2, ensure_ascii=False))
+        provenance_tmp_path = Path(provenance_tmp.name)
+    try:
+        # If an earlier attempt left a committed artifact row (for example,
+        # from a deployment with older non-atomic behavior), replace that row
+        # under the same deterministic ID rather than violating the PK.
+        if existing_artifact is not None:
+            db.delete(existing_artifact)
+            db.flush()
+        provenance_artifact = artifacts.put_file(
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            source_path=provenance_tmp_path,
+            filename="provenance.json",
+            artifact_type="JSON",
+            media_type="application/json",
+            genome_build=analysis.reference_build,
+            metadata={"provenance_schema_version": "1.0.0"},
+            artifact_id=provenance_artifact_id,
+        )
+    finally:
+        provenance_tmp_path.unlink(missing_ok=True)
+
+    snapshot_analysis_resources(db, analysis, commit=False)
+    analysis.status = AnalysisStatus.SUCCEEDED
+    analysis.completed_at = _now()
+    db.add(analysis)
+    audit.record(
+        event_type="PROVENANCE_EXPORT_COMPLETED",
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        actor_type="SYSTEM",
+        actor_id="provenance",
+        output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
+        payload={"next_step": "analysis_complete"},
+    )
+    db.commit()
+    return provenance_artifact
+
+
 def run_variant_analysis(analysis_id: UUID) -> None:
     from backend.app.infrastructure.db.session import SessionLocal
 
@@ -1329,7 +1444,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 part = AnalysisPartition(id=__import__("uuid").uuid4(), analysis_id=analysis.id, step_id="normalize", partition_key=partition_key, ordinal=ordinal, record_start=start, record_end=end, variant_count=len(batch), status="READY", input_artifact_id=normalized_artifact.id, metadata_json={"genome_build": reference_build})
                 db.add(part)
             else:
-                part.status = "READY"
+                # A resumed workflow reparses the immutable normalized artifact
+                # to rebuild its in-memory batch cursor, but completed durable
+                # partitions must remain terminal and must not become schedulable
+                # again after a human review gate.
+                if part.status != "SUCCEEDED":
+                    part.status = "READY"
                 part.variant_count = len(batch)
                 part.input_artifact_id = normalized_artifact.id
             rows = []
@@ -2841,6 +2961,50 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         # by SIRALOOM evaluators. Otherwise the case is blocked/review-required,
         # never silently classified by a generic rule set.
         acmg_step = _step(db, analysis.id, "acmg_assessment")
+        if (
+            acmg_step.status == StepStatus.REQUIRES_REVIEW
+            and _manual_acmg_review_complete(db, analysis.id)
+        ):
+            annotated_variant_ids = set(db.scalars(
+                select(Annotation.variant_id)
+                .where(Annotation.analysis_id == analysis.id)
+                .distinct()
+            ).all())
+            latest_classifications = _latest_classifications_by_variant(db, analysis.id)
+            manual_classification_count = sum(
+                1
+                for variant_id in annotated_variant_ids
+                if (
+                    latest_classifications.get(variant_id) is not None
+                    and (latest_classifications[variant_id].metadata_json or {}).get("decision_mode") == "MANUAL"
+                )
+            )
+            mark_step(
+                db,
+                acmg_step,
+                StepStatus.SUCCEEDED,
+                metadata={
+                    "assessed_variants": len(annotated_variant_ids),
+                    "classification_automation": "MANUAL_REVIEWED",
+                    "manual_classification_count": manual_classification_count,
+                    "reconciled_after_review": True,
+                    "next_step": "review",
+                },
+            )
+            audit.record(
+                event_type="ACMG_MANUAL_CLASSIFICATION_RECONCILED",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="siraloom-acmg-specification-engine",
+                reason="All annotated variants have final approved classifications; variants without automated ACMG criteria were explicitly reviewed and classified manually.",
+                payload={
+                    "annotated_variants": len(annotated_variant_ids),
+                    "manual_classification_count": manual_classification_count,
+                },
+            )
+            db.commit()
+
         if acmg_step.status != StepStatus.SUCCEEDED:
             mark_step(db, acmg_step, StepStatus.RUNNING)
             try:
@@ -2890,7 +3054,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     rows = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id).order_by(Annotation.created_at, Annotation.id).offset(start_i).limit(end_i - start_i)).all()
                     key = _batch_key(start_i, end_i)
                     if key in completed_batches:
-                        # Reconcile counts from persisted ACMG assessments on recovery.
+                        # Assessments persist across retries, but local counters do not.
+                        # Restore review/blocking outcomes from the durable checkpoint so
+                        # a partial manual review cannot incorrectly mark ACMG succeeded.
+                        batch_review, batch_blocked = _completed_acmg_batch_outcome_counts(
+                            acmg_step, start_i, end_i
+                        )
+                        review_variants += batch_review
+                        blocked_variants += batch_blocked
                         continue
                     attempt = int((_batch_checkpoint(acmg_step, start_i, end_i).get("attempt") or 0)) + 1
                     _save_batch_checkpoint(db, acmg_step, start_i, end_i, status="RUNNING", attempt=attempt)
@@ -3196,8 +3367,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             mark_step(db, report_step, StepStatus.RUNNING)
             try:
                 from backend.app.reporting.service import build_report_content, render_pdf
-                from backend.app.infrastructure.db.models import Report
-
                 existing_report = db.scalar(
                     select(Report)
                     .where(
@@ -3354,92 +3523,55 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if provenance_step.status != StepStatus.SUCCEEDED:
             mark_step(db, provenance_step, StepStatus.RUNNING)
             try:
-                import json
-
-                with NamedTemporaryFile(
-                    prefix="siraloom-provenance-", suffix=".json", mode="w", encoding="utf-8", delete=False
-                ) as provenance_tmp:
-                    provenance_tmp.write(json.dumps({
-                        "schema_version": "1.0.0",
-                        "analysis_id": str(analysis.id),
-                        "case_id": str(analysis.case_id),
-                        "workflow_id": analysis.workflow_id,
-                        "workflow_version": analysis.workflow_version,
-                        "reference_build": analysis.reference_build,
-                        "steps": [
-                            {
-                                "step_id": s.step_id,
-                                "step_order": s.step_order,
-                                "status": s.status,
-                                "attempt": s.attempt,
-                                "input_artifacts": s.input_artifacts,
-                                "output_artifacts": s.output_artifacts,
-                                "metadata": s.metadata_json,
-                                "error_code": s.error_code,
-                                "error_message": s.error_message,
-                            }
-                            for s in db.scalars(
-                                select(WorkflowStep)
-                                .where(WorkflowStep.analysis_id == analysis.id)
-                                .order_by(WorkflowStep.step_order)
-                            )
-                        ],
-                    }, indent=2, ensure_ascii=False))
-                    provenance_tmp_path = Path(provenance_tmp.name)
-                try:
-                    provenance_artifact = artifacts.put_file(
-                        db=db,
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        source_path=provenance_tmp_path,
-                        filename="provenance.json",
-                        artifact_type="JSON",
-                        media_type="application/json",
-                        genome_build=analysis.reference_build,
-                        metadata={"provenance_schema_version": "1.0.0"},
-                    )
-                finally:
-                    provenance_tmp_path.unlink(missing_ok=True)
-                provenance_step.output_artifacts = [str(provenance_artifact.id)]
-                mark_step(
+                _persist_terminal_provenance(
                     db,
-                    provenance_step,
-                    StepStatus.SUCCEEDED,
-                    metadata={"provenance_artifact_id": str(provenance_artifact.id), "next_step": "report_finalization"},
+                    artifacts=artifacts,
+                    analysis=analysis,
+                    provenance_step=provenance_step,
+                    audit=audit,
                 )
-                snapshot_analysis_resources(db, analysis)
-                analysis.status = AnalysisStatus.SUCCEEDED
-                analysis.completed_at = _now()
-                audit.record(
-                    event_type="PROVENANCE_EXPORT_COMPLETED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="provenance",
-                    output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
-                    payload={"next_step": "analysis_complete"},
-                )
-                db.commit()
             except Exception as exc:
+                # Provenance storage/database failures are retried through the
+                # same bounded Celery retry path as other transient workflow
+                # failures. Do not terminally fail the analysis on the first
+                # failure after the clinical report has already been signed out.
+                db.rollback()
+                analysis = db.get(Analysis, analysis_id)
+                provenance_step = _step(db, analysis_id, "export_provenance")
+                if analysis is not None:
+                    analysis.status = AnalysisStatus.RUNNING
+                    analysis.completed_at = None
                 mark_step(
                     db,
                     provenance_step,
-                    StepStatus.FAILED,
-                    error_code="PROVENANCE_EXPORT_FAILED",
+                    StepStatus.RETRYING,
+                    error_code="PROVENANCE_EXPORT_RETRYING",
                     error_message=str(exc),
+                    metadata={
+                        "next_step": "export_provenance",
+                        "retry_policy": "bounded_transient_retry",
+                    },
                 )
-                analysis.status = AnalysisStatus.FAILED
-                db.commit()
                 audit.record(
-                    event_type="PROVENANCE_EXPORT_FAILED",
+                    event_type="PROVENANCE_EXPORT_RETRY_SCHEDULED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
                     actor_id="provenance",
                     reason=str(exc),
+                    payload={
+                        "error_code": "PROVENANCE_EXPORT_RETRYING",
+                        "next_step": "export_provenance",
+                        "max_retries": 3,
+                    },
                 )
                 db.commit()
-                return
+                raise TransientWorkflowError(
+                    str(exc),
+                    countdown=10,
+                    max_retries=3,
+                    error_code="PROVENANCE_EXPORT_RETRY_EXHAUSTED",
+                ) from exc
 
         return
     except TransientWorkflowError:
@@ -3463,26 +3595,69 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 pass
 
 
-def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
-    """Return True only when every classified variant has a final approved classification."""
-    classifications = list(
-        db.scalars(
-            select(Classification)
-            .where(Classification.analysis_id == analysis_id)
-            .order_by(Classification.variant_id, Classification.version.desc())
-        )
+def _latest_classifications_by_variant(db: Session, analysis_id: UUID) -> dict[UUID, Classification]:
+    """Return the latest immutable classification version for each variant."""
+    rows = db.scalars(
+        select(Classification)
+        .where(Classification.analysis_id == analysis_id)
+        .order_by(Classification.variant_id, Classification.version.desc())
     )
     latest: dict[UUID, Classification] = {}
-    for row in classifications:
+    for row in rows:
         latest.setdefault(row.variant_id, row)
+    return latest
 
-    if not latest:
+
+def _manual_acmg_review_complete(db: Session, analysis_id: UUID) -> bool:
+    """Whether every annotated variant has a final, approved classification and any
+    variant without persisted ACMG criteria was explicitly classified manually.
+    """
+    annotated_variant_ids = set(db.scalars(
+        select(Annotation.variant_id)
+        .where(Annotation.analysis_id == analysis_id)
+        .distinct()
+    ).all())
+    if not annotated_variant_ids:
+        return False
+
+    latest = _latest_classifications_by_variant(db, analysis_id)
+    if not annotated_variant_ids.issubset(latest):
+        return False
+
+    variants_with_criteria = set(db.scalars(
+        select(ACMGAssessment.variant_id)
+        .where(ACMGAssessment.analysis_id == analysis_id)
+        .distinct()
+    ).all())
+
+    for variant_id in annotated_variant_ids:
+        classification = latest[variant_id]
+        if classification.state != "FINAL" or classification.review_status != "APPROVED":
+            return False
+        if variant_id not in variants_with_criteria:
+            if (classification.metadata_json or {}).get("decision_mode") != "MANUAL":
+                return False
+    return True
+
+
+def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    """Require a final approved classification for every variant annotated in this analysis."""
+    annotated_variant_ids = set(db.scalars(
+        select(Annotation.variant_id)
+        .where(Annotation.analysis_id == analysis_id)
+        .distinct()
+    ).all())
+    if not annotated_variant_ids:
+        return False
+
+    latest = _latest_classifications_by_variant(db, analysis_id)
+    if not annotated_variant_ids.issubset(latest):
         return False
 
     return all(
-        classification.state == "FINAL"
-        and classification.review_status == "APPROVED"
-        for classification in latest.values()
+        latest[variant_id].state == "FINAL"
+        and latest[variant_id].review_status == "APPROVED"
+        for variant_id in annotated_variant_ids
     )
 
 
