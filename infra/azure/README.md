@@ -14,6 +14,17 @@ A single VM is a cost-conscious starting point but is a single point of failure.
 
 ## 1. Verify subscription
 
+A guarded PowerShell deployment script is provided for Windows users. It validates the active subscription, requires a single IPv4 /32 for SSH, compiles the Bicep template, previews changes with what-if, and requires typing DEPLOY before it creates the VM/network/disk. It never reads or uploads a private SSH key.
+
+~~~powershell
+$myPublicIp = (Invoke-RestMethod -Uri "https://api.ipify.org").Trim()
+$adminCidr = "$myPublicIp/32"
+.\scripts\azure\deploy-infrastructure.ps1 -SubscriptionId "<YOUR_SUBSCRIPTION_ID>" -ResourceGroup "rg-siraloom-validation" -Location "<AZURE_REGION>" -AdminCidr $adminCidr -SshPublicKeyPath (Join-Path $HOME ".ssh\id_ed25519.pub") -VmSize "Standard_D2s_v5" -DataDiskSizeGB 256 -DnsLabel "<UNIQUE_AZURE_DNS_LABEL>"
+~~~
+
+Replace every placeholder before running. The DNS label must be globally unique in the selected Azure DNS namespace. Review the what-if plan and Azure Cost Management before typing DEPLOY. If your SSH public key is not at that path, pass the correct .pub path. The script can also be run with -WhatIf? No: it always displays Azure what-if first and only proceeds after explicit DEPLOY confirmation.
+
+
 ~~~bash
 az login
 az account list --output table
