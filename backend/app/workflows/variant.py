@@ -2537,6 +2537,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except GnomADProviderError as exc:
+                if exc.retryable:
+                    _schedule_transient_step_retry(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="population",
+                        error_code="POPULATION_PROVIDER_TRANSIENT",
+                        error_message=str(exc),
+                        event_type="POPULATION_RETRY_SCHEDULED",
+                        actor_id="gnomad",
+                        next_step="population",
+                    )
+                    raise TransientWorkflowError(
+                        str(exc),
+                        countdown=10,
+                        max_retries=3,
+                        error_code="POPULATION_PROVIDER_RETRY_EXHAUSTED",
+                    ) from exc
                 mark_step(db, population_step, StepStatus.FAILED, error_code="GNOMAD_PROVIDER_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
