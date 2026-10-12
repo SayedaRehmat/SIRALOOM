@@ -104,6 +104,51 @@ class TransientWorkflowError(RuntimeError):
         self.error_code = error_code
 
 
+def _schedule_transient_step_retry(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    error_code: str,
+    error_message: str,
+    event_type: str,
+    actor_id: str,
+    next_step: str,
+) -> None:
+    """Persist a retryable stage failure before the Celery wrapper retries it.
+
+    The stage's durable checkpoint remains available; the analysis is not marked
+    terminally failed until the bounded retry policy is exhausted.
+    """
+    db.rollback()
+    analysis = db.get(Analysis, analysis_id)
+    step = _step(db, analysis_id, step_id)
+    if analysis is not None:
+        analysis.status = AnalysisStatus.RUNNING
+        analysis.completed_at = None
+        db.add(analysis)
+    metadata = dict(step.metadata_json or {})
+    metadata["next_step"] = next_step
+    metadata["retry_policy"] = "bounded_transient_retry"
+    step.status = StepStatus.RETRYING
+    step.error_code = error_code
+    step.error_message = error_message
+    step.metadata_json = metadata
+    step.last_heartbeat = _now()
+    step.updated_at = _now()
+    db.add(step)
+    AuditService(db).record(
+        event_type=event_type,
+        case_id=analysis.case_id if analysis is not None else None,
+        analysis_id=analysis_id,
+        actor_type="SYSTEM",
+        actor_id=actor_id,
+        reason=error_message,
+        payload={"error_code": error_code, "next_step": next_step},
+    )
+    db.commit()
+
+
 class ResourceConsumptionError(RuntimeError):
     """Signals that a workflow resource is not governed or is incompatible."""
     def __init__(self, code: str, message: str):
@@ -3461,25 +3506,22 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except Exception as exc:
-                mark_step(
+                _schedule_transient_step_retry(
                     db,
-                    report_step,
-                    StepStatus.FAILED,
-                    error_code="REPORT_GENERATION_FAILED",
-                    error_message=str(exc),
-                )
-                analysis.status = AnalysisStatus.FAILED
-                db.commit()
-                audit.record(
-                    event_type="REPORT_GENERATION_FAILED",
-                    case_id=analysis.case_id,
                     analysis_id=analysis.id,
-                    actor_type="SYSTEM",
+                    step_id="report",
+                    error_code="REPORT_GENERATION_RETRYING",
+                    error_message=str(exc),
+                    event_type="REPORT_GENERATION_RETRY_SCHEDULED",
                     actor_id="reporting",
-                    reason=str(exc),
+                    next_step="report",
                 )
-                db.commit()
-                return
+                raise TransientWorkflowError(
+                    "Report generation failed; retrying from the durable report checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="REPORT_GENERATION_RETRY_EXHAUSTED",
+                ) from exc
 
         # 9. Final report sign-out is the terminal human gate. Provenance is
         # exported only after the report itself is FINAL, so the terminal
