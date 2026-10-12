@@ -2539,7 +2539,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 ).all())
                 population_variant_ids = set(db.scalars(
                     select(PopulationObservation.variant_id)
-                    .where(PopulationObservation.analysis_id == analysis.id)
+                    .where(
+                        PopulationObservation.analysis_id == analysis.id,
+                        PopulationObservation.availability == "AVAILABLE",
+                        PopulationObservation.allele_frequency.is_not(None),
+                        PopulationObservation.allele_number.is_not(None),
+                    )
                     .distinct()
                 ).all())
                 variants_without_population = sorted(
