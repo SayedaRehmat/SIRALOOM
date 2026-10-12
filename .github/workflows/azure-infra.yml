@@ -1,0 +1,38 @@
+name: Azure infrastructure validation
+
+on:
+  pull_request:
+    paths:
+      - "infra/azure/**"
+      - ".github/workflows/azure-infra.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "infra/azure/**"
+      - ".github/workflows/azure-infra.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-bicep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bicep CLI
+        run: az bicep install
+      - name: Compile Azure infrastructure template
+        run: az bicep build --file infra/azure/main.bicep --outfile /tmp/siraloom-azure-template.json
+      - name: Validate cloud-init YAML syntax
+        run: |
+          python -m pip install --disable-pip-version-check PyYAML
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          path = Path("infra/azure/cloud-init.yaml")
+          config = yaml.safe_load(path.read_text(encoding="utf-8"))
+          assert isinstance(config, dict), "cloud-init must parse as a YAML mapping"
+          assert config.get("runcmd"), "cloud-init must define bootstrap commands"
+          assert "__ADMIN_USERNAME__" in path.read_text(encoding="utf-8")
+          print("cloud-init YAML parsed successfully")
+          PY
