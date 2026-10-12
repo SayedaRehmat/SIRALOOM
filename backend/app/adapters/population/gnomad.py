@@ -16,7 +16,11 @@ from backend.app.domain.resource_source_contract import ResourceExecutionContrac
 
 
 class GnomADProviderError(RuntimeError):
-    pass
+    """Provider failure with explicit transient/permanent retry semantics."""
+
+    def __init__(self, message: str, *, retryable: bool = False):
+        super().__init__(message)
+        self.retryable = bool(retryable)
 
 
 @dataclass(frozen=True)
@@ -135,8 +139,23 @@ class GnomADGraphQLProvider:
                 response = client.post(self.endpoint, json={"query": query, "variables": variables})
                 response.raise_for_status()
                 body = response.json()
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            retryable = status == 429 or 500 <= status <= 599
+            raise GnomADProviderError(
+                f"gnoMAD GraphQL request failed with HTTP {status}: {exc}",
+                retryable=retryable,
+            ) from exc
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            raise GnomADProviderError(
+                f"gnoMAD GraphQL transport failure: {exc}",
+                retryable=True,
+            ) from exc
         except (httpx.HTTPError, ValueError) as exc:
-            raise GnomADProviderError(f"gnoMAD GraphQL request failed: {exc}") from exc
+            raise GnomADProviderError(
+                f"gnoMAD GraphQL request failed: {exc}",
+                retryable=False,
+            ) from exc
 
         if body.get("errors"):
             raise GnomADProviderError(f"gnoMAD GraphQL errors: {body['errors']}")
