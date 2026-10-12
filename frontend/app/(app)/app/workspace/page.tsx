@@ -284,9 +284,11 @@ export default function Home() {
   }, [analysis]);
 
   useEffect(() => {
-    const storedCase = window.localStorage.getItem("siraloom.case_id") ?? "";
+    const queryCase = new URLSearchParams(window.location.search).get("case") ?? "";
+    const storedCase = queryCase || window.localStorage.getItem("siraloom.case_id") || "";
     const storedAnalysis = window.localStorage.getItem("siraloom.analysis_id") ?? "";
     const storedCaseIdentifier = window.localStorage.getItem("siraloom.case_identifier") ?? "";
+    if (queryCase) window.localStorage.setItem("siraloom.case_id", queryCase);
     if (storedCase) {
       setCaseId(storedCase);
     } else if (storedAnalysis) {
