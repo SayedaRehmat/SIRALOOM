@@ -16,7 +16,7 @@ param dataDiskSizeGB int = 256
 param dnsLabel string = ''
 
 var vmName = 'siraloom-azure-validation'
-var cloudInit = loadTextContent('./cloud-init.yaml')
+var cloudInit = replace(loadTextContent('./cloud-init.yaml'), '__ADMIN_USERNAME__', adminUsername)
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   name: 'siraloom-validation-nsg'
