@@ -66,7 +66,19 @@ Create .env on the VM from .env.production.example, not in Git. Configure the pr
 
 Use chmod 600 for .env and Firebase credentials. Keep provider credentials server-side and enable a provider only after confirming its terms, limits, and suitability for non-clinical validation. Never leave example placeholders enabled. Confirm both GRCh37 and GRCh38 package identities, FASTA/FAI/contig manifests and checksums before testing normalization.
 
-The existing Compose file binds API and frontend ports to VM loopback. Keep those bindings: do not expose 8000/3000 to the Internet. A domain-backed TLS reverse proxy still must be configured and tested before public browser access; opening ports 80/443 is not TLS. Until then, use an SSH tunnel for controlled API smoke tests:
+The existing Compose file binds API and frontend ports to VM loopback. Keep those bindings: do not expose 8000/3000 to the Internet. Configure Caddy on the VM host as the TLS reverse proxy. After DNS for your chosen hostname points to the VM public IP, install Caddy using its official Ubuntu repository instructions at https://caddyserver.com/docs/install, then:
+
+~~~bash
+sudo cp infra/azure/Caddyfile.example /etc/caddy/Caddyfile
+sudo sed -i 's/YOUR_DNS_NAME/<YOUR_REAL_DNS_NAME>/' /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl enable --now caddy
+sudo systemctl reload caddy
+~~~
+
+Run the copy command from the repository root; if Caddy is installed before cloning the repository, create the file from the example content manually. Replace the placeholder with a hostname you control that resolves to the VM. Caddy must be able to reach the public ACME service, and inbound 80/443 must be reachable for certificate issuance/renewal. Test HTTPS and certificate renewal behavior before using a browser. Set PUBLIC_BASE_URL and FRONTEND_ORIGIN to the final origin and set NEXT_PUBLIC_SIRALOOM_API_BASE to https://<YOUR_REAL_DNS_NAME>/api/v1 before building the frontend. Opening ports 80/443 alone is not TLS.
+
+Until the reverse proxy and application are configured, use an SSH tunnel for controlled API smoke tests:
 
 ~~~bash
 ssh -L 8000:127.0.0.1:8000 <ADMIN_USERNAME>@<PUBLIC_IP>
