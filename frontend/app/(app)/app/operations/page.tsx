@@ -86,7 +86,7 @@ function bytes(value?: number) {
 }
 
 function pretty(value?: string | null) {
-  return value ? value.toLowerCase().replaceAll("_", " ").replace(/\\b\\w/g, c => c.toUpperCase()) : "—";
+  return value ? value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, c => c.toUpperCase()) : "—";
 }
 
 export default function OperationsPage() {
