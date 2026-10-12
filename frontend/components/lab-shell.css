@@ -118,5 +118,5 @@
 .siraloom-workspace .workspace-section-nav a{display:inline-flex;align-items:center;min-height:30px;padding:6px 10px;border:1px solid #e0e5ea;border-radius:6px;background:#fff;color:#4f5965;text-decoration:none;font-size:11px;font-weight:600;white-space:nowrap}
 .siraloom-workspace .workspace-section-nav a:hover{background:#f0f2f5;color:#202a34;border-color:#c9d1d9}
 .siraloom-workspace .workspace-section-nav a:focus-visible{outline:2px solid #766bb0;outline-offset:2px}
-.siraloom-workspace #case-intake,.siraloom-workspace #analysis-workflow,.siraloom-workspace #artifacts,.siraloom-workspace #variants,.siraloom-workspace #evidence,.siraloom-workspace #review,.siraloom-workspace #report,.siraloom-workspace #audit{scroll-margin-top:64px}
+.siraloom-workspace #case-intake,.siraloom-workspace #analysis-workflow,.siraloom-workspace #artifacts,.siraloom-workspace #variants,.siraloom-workspace #variant-export,.siraloom-workspace #evidence,.siraloom-workspace #review,.siraloom-workspace #report,.siraloom-workspace #audit{scroll-margin-top:64px}
 @media(max-width:760px){.siraloom-workspace .workspace-section-nav{position:static;overflow-x:auto;flex-wrap:nowrap}.siraloom-workspace .workspace-section-nav a{flex:0 0 auto}}
