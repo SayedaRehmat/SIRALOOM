@@ -75,6 +75,18 @@ def test_resource_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
         lambda requested_id, db, _principal: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    # Isolate resource recovery/dispatch from the independent laboratory storage gate.
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_capacity",
+        lambda _size: {
+            "status": "READY",
+            "enabled": True,
+            "issues": [],
+            "reservation_supported": False,
+            "roots": [],
+        },
+    )
     published = []
     monkeypatch.setattr(
         celery_app,
@@ -224,6 +236,18 @@ def test_optional_resource_gap_does_not_block_preflight_or_dispatch(monkeypatch)
         lambda requested_id, db, _principal: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    # Isolate resource recovery/dispatch from the independent laboratory storage gate.
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_capacity",
+        lambda _size: {
+            "status": "READY",
+            "enabled": True,
+            "issues": [],
+            "reservation_supported": False,
+            "roots": [],
+        },
+    )
     published = []
     monkeypatch.setattr(
         celery_app,

@@ -16,7 +16,11 @@ from backend.app.infrastructure.db.models import (
     Artifact,
   )
 from backend.app.application.analysis import create_analysis, enqueue_analysis, preflight_analysis_resources
-from backend.app.domain.storage_capacity import preflight_analysis_capacity
+from backend.app.domain.storage_capacity import (
+    enforce_laboratory_capacity_policy,
+    preflight_analysis_capacity,
+)
+from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.application.entitlements import (
     reserve_analysis_quota,
     require_analysis_quota,
@@ -190,6 +194,14 @@ def start(
         if input_artifact is None or input_artifact.case_id != analysis.case_id:
             raise HTTPException(status_code=409, detail="Analysis input artifact is missing or no longer belongs to this case")
     capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
+    deployment_policy = resolve_resource_deployment_policy(
+        db,
+        organization_id=principal.organization_id,
+    )
+    capacity = enforce_laboratory_capacity_policy(
+        capacity,
+        is_laboratory=deployment_policy.is_laboratory,
+    )
     configuration["capacity_preflight"] = capacity
     analysis.configuration = configuration
 
@@ -207,7 +219,7 @@ def start(
             if not (preflight_step.error_code and str(preflight_step.error_code).startswith("RESOURCE_")):
                 preflight_step.status = "BLOCKED"
                 preflight_step.error_code = "STORAGE_CAPACITY_PREFLIGHT_BLOCKED"
-                preflight_step.error_message = "Configured artifact/scratch storage is below the analysis planning estimate."
+                preflight_step.error_message = "Storage-capacity preflight is not ready. Resolve the reported capacity issues before starting analysis."
         elif preflight_step.error_code == "STORAGE_CAPACITY_PREFLIGHT_BLOCKED" and (plan is None or plan.is_ready):
             preflight_step.status = "SUCCEEDED"
             preflight_step.error_code = None
