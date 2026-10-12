@@ -267,6 +267,19 @@ def test_real_registry_recovery_queues_one_durable_dispatch_and_duplicate_start_
         lambda requested_id, db, _principal: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    # This test isolates resource-plan recovery; capacity readiness has its own
+    # dedicated fail-closed tests and must be READY to exercise dispatch.
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_capacity",
+        lambda _size: {
+            "status": "READY",
+            "enabled": True,
+            "issues": [],
+            "roots": [],
+            "reservation_supported": False,
+        },
+    )
     monkeypatch.setattr(
         celery_app,
         "publish_analysis_dispatch",
