@@ -2532,6 +2532,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 secondary_count += 1
                         db.commit()
 
+                annotated_variant_ids = set(db.scalars(
+                    select(Annotation.variant_id)
+                    .where(Annotation.analysis_id == analysis.id)
+                    .distinct()
+                ).all())
+                population_variant_ids = set(db.scalars(
+                    select(PopulationObservation.variant_id)
+                    .where(PopulationObservation.analysis_id == analysis.id)
+                    .distinct()
+                ).all())
+                variants_without_population = sorted(
+                    str(variant_id)
+                    for variant_id in annotated_variant_ids - population_variant_ids
+                )
                 population_metadata = {
                     "executed_resources": executed_resources,
                     "profile_type": plan.profile_type,
@@ -2541,15 +2555,32 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "optional_resources_not_selected": len(plan.unavailable_optional),
                     "secondary_population_observations": secondary_count,
                     "secondary_population_limitations": secondary_limitations,
+                    "annotated_variants": len(annotated_variant_ids),
+                    "variants_without_population_observations": variants_without_population,
                 }
-                # Absence of an optional population resource is not a workflow
-                # failure and is not converted into a user-facing limitation.
-                mark_step(
-                    db,
-                    population_step,
-                    StepStatus.SUCCEEDED,
-                    metadata=population_metadata,
-                )
+                if variants_without_population:
+                    _apply_scientific_limitation(
+                        db,
+                        population_step,
+                        outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                        code="POPULATION_OBSERVATIONS_MISSING",
+                        message=(
+                            "Population observations are unavailable for one or more annotated variants. "
+                            "Missing frequency data must not be interpreted as zero; classification requires human review."
+                        ),
+                        metadata={
+                            **population_metadata,
+                            "next_step": "build_evidence",
+                            "population_data_available": bool(population_variant_ids),
+                        },
+                    )
+                else:
+                    mark_step(
+                        db,
+                        population_step,
+                        StepStatus.SUCCEEDED,
+                        metadata=population_metadata,
+                    )
                 audit.record(
                     event_type="POPULATION_COMPLETED",
                     case_id=analysis.case_id,
