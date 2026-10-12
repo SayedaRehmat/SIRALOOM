@@ -1,0 +1,11 @@
+# Copy this file to /etc/caddy/Caddyfile after replacing the hostname with
+# the DNS name that resolves to the Azure VM public IP.
+# Caddy obtains and renews HTTPS certificates automatically when DNS and ports
+# 80/443 are reachable and the hostname is eligible for public ACME issuance.
+YOUR_DNS_NAME {
+    encode zstd gzip
+
+    @api path /api/*
+    reverse_proxy @api 127.0.0.1:8000
+    reverse_proxy 127.0.0.1:3000
+}
