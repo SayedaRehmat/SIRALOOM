@@ -321,8 +321,12 @@ export default function Home() {
       try {
         const data = await apiFetch(`/cases/${caseId}`);
         setCaseWorkspace(data);
+        setCaseIdentifier(String(data?.case_identifier ?? ""));
+        window.localStorage.setItem("siraloom.case_identifier", String(data?.case_identifier ?? ""));
         const specimens = Array.isArray(data?.specimens) ? data.specimens : [];
-        if (specimens.length && !selectedSpecimenId) setSelectedSpecimenId(String(specimens[0].specimen_id));
+        // A case deep-link must not retain a specimen or input artifact from the previously open case.
+        setSelectedSpecimenId(specimens.length ? String(specimens[0].specimen_id) : "");
+        setArtifactId("");
         const indicationValue = data?.clinical_context?.indication;
         if (typeof indicationValue === "string") setIndication(indicationValue);
 
