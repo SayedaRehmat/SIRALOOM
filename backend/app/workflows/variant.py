@@ -3131,28 +3131,38 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except (ResourceConsumptionError, ResourceExecutionError, ClinVarProviderError) as exc:
-                code = getattr(exc, "code", None) or "CLINVAR_RESOURCE_UNAVAILABLE"
-                mark_step(
+                code = getattr(exc, "code", None) or "EVIDENCE_RESOURCE_UNAVAILABLE"
+                # Do not consume an unqualified source or fail the whole analysis
+                # because a clinical evidence provider is unavailable. Preserve any
+                # evidence already persisted, record the gap, and force ACMG review.
+                _apply_scientific_limitation(
                     db,
                     evidence_step,
-                    StepStatus.BLOCKED,
-                    error_code=code,
-                    error_message=str(exc),
-                    metadata={"next_step": "RESOURCE_REQUIRED", "automatic_fallback": False},
+                    outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                    code=code,
+                    message=str(exc),
+                    metadata={
+                        "next_step": "acmg_assessment",
+                        "resource_limitation": True,
+                        "automatic_fallback": False,
+                        "partial_evidence_build": True,
+                    },
                 )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
                 audit.record(
-                    event_type="EVIDENCE_BLOCKED",
+                    event_type="EVIDENCE_RESOURCE_LIMITATION",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
-                    actor_id="clinvar-resource",
+                    actor_id="evidence-resource",
                     reason=str(exc),
-                    payload={"error_code": code, "automatic_fallback": False},
+                    payload={
+                        "error_code": code,
+                        "next_step": "acmg_assessment",
+                        "automatic_fallback": False,
+                        "partial_evidence_build": True,
+                    },
                 )
                 db.commit()
-                return
             except SQLAlchemyError as exc:
                 _schedule_transient_step_retry(
                     db,
