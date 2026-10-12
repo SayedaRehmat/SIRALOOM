@@ -52,3 +52,18 @@
 7. Compare scientific output against a defined truth set and record precision/recall/concordance under a versioned validation protocol.
 
 **No row in this source map should be treated as a live deployment pass without execution evidence.**
+
+
+## UX design basis reviewed
+
+The public and authenticated surfaces should follow these principles:
+
+1. **Case-first navigation:** a case list/worklist is the entry point; case identity, specimen/input artifacts, analyses, review tasks, reports and audit history remain connected.
+2. **Evidence before conclusion:** present source, version, direction and rationale alongside evidence; distinguish automated assessment from reviewer decision and reportability.
+3. **Explicit workflow state:** show the current step, completed work, blockers, retry/recovery state, responsible action and audit history. A status badge must not substitute for the underlying evidence.
+4. **Role-appropriate actions:** expose decisions only to authorized roles; show actionable error states rather than silently hiding failed operations.
+5. **Readable data density:** compact page headings, predictable tables, restrained borders, consistent spacing, keyboard focus, responsive layouts and text labels in addition to color.
+6. **No false clinical claims:** mark illustrative examples as synthetic; do not imply that a software workflow or automated ACMG result is a clinically validated diagnostic conclusion.
+7. **Language consistency:** public and authenticated navigation must expose the same language choices; Arabic requires RTL testing, and bilingual mode must render both languages rather than silently falling back to English.
+
+These principles are informed by the [ClinGen Variant Curation Interface paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC8764818/), the [ACMG/AMP variant-classification consensus recommendations](https://pmc.ncbi.nlm.nih.gov/articles/PMC4544753/), the [ACMG points-to-consider statement on genomic data in the health record](https://www.nature.com/articles/s41436-020-0841-2), and a [WHO-published usability evaluation of a laboratory information system](https://www.emro.who.int/emhj-volume-26-2020/volume-26-issue-12/compliance-with-design-principles-a-case-study-of-a-widely-used-laboratory-information-system.html). These references inform interface design; they do not validate SIRALOOM itself.
