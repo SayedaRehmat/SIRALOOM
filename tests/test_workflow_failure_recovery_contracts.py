@@ -20,7 +20,7 @@ from backend.app.infrastructure.db.models import (
     User,
     WorkflowStep,
 )
-from backend.app.workflows.variant import _schedule_transient_step_retry
+from backend.app.workflows.variant import _route_step_to_human_review, _schedule_transient_step_retry
 
 
 @pytest.mark.parametrize(
@@ -141,5 +141,81 @@ def test_stage_persistence_failure_is_durable_and_retryable(
             assert event is not None
             assert event.payload["error_code"] == error_code
             assert event.payload["next_step"] == stage_id
+    finally:
+        engine.dispose()
+
+
+
+def test_missing_clingen_resource_routes_acmg_to_resumable_human_review(tmp_path):
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'acmg-resource-review.db'}")
+    Base.metadata.create_all(engine)
+    organization_id, user_id, case_id, analysis_id = (uuid4(), uuid4(), uuid4(), uuid4())
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id, name="ACMG Review Lab",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@test.local",
+                display_name="ACMG Review Test", role="ADMIN", status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"ACMG-REVIEW-{case_id}", status="OPEN",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.flush()
+            db.add(Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=None,
+                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1", workflow_version="test",
+                status=AnalysisStatus.RUNNING, queue_task_id="missing-clingen-test",
+                reference_build="GRCh38", configuration={},
+                started_at=datetime.now(timezone.utc), completed_at=None,
+                created_by=user_id, analysis_version=1,
+            ))
+            db.flush()
+            db.add(WorkflowStep(
+                id=uuid4(), analysis_id=analysis_id, step_id="acmg_assessment",
+                step_order=6, status=StepStatus.RUNNING, attempt=1,
+                input_artifacts=[], output_artifacts=[],
+                metadata_json={"next_step": "acmg_assessment"},
+            ))
+            db.commit()
+
+            _route_step_to_human_review(
+                db,
+                analysis_id=analysis_id,
+                step_id="acmg_assessment",
+                error_code="CLINGEN_SPECIFICATION_UNAVAILABLE",
+                error_message="No approved ClinGen specification is available.",
+                event_type="ACMG_RESOURCE_REQUIRES_REVIEW",
+                actor_id="acmg-resource",
+                next_step="review",
+                payload={"resource_gap": True},
+            )
+
+            analysis = db.get(Analysis, analysis_id)
+            step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "acmg_assessment",
+            ))
+            event = db.scalar(select(AuditEvent).where(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "ACMG_RESOURCE_REQUIRES_REVIEW",
+            ))
+            assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
+            assert analysis.completed_at is None
+            assert step.status == StepStatus.REQUIRES_REVIEW
+            assert step.error_code == "CLINGEN_SPECIFICATION_UNAVAILABLE"
+            assert step.metadata_json["next_step"] == "review"
+            assert step.metadata_json["human_action_required"] is True
+            assert event is not None
+            assert event.payload["resource_gap"] is True
+            assert event.payload["human_action_required"] is True
     finally:
         engine.dispose()
