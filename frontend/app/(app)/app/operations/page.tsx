@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 
@@ -172,7 +172,7 @@ export default function OperationsPage() {
     finally { setBusy(false); }
   }
 
-  async function registerStorage(event: React.FormEvent<HTMLFormElement>) {
+  async function registerStorage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!storageProfileName.trim()) return;
     setBusy(true); setMessage("");
