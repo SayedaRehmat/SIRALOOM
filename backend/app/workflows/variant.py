@@ -150,6 +150,50 @@ def _schedule_transient_step_retry(
     db.commit()
 
 
+def _route_step_to_human_review(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    error_code: str,
+    error_message: str,
+    event_type: str,
+    actor_id: str,
+    next_step: str,
+    payload: dict | None = None,
+) -> None:
+    """Persist a recoverable scientific/resource gap for explicit human action.
+
+    This is not a technical success: downstream clinical decisions remain gated,
+    but the analysis is kept resumable instead of being terminally FAILED/BLOCKED.
+    """
+    analysis = db.get(Analysis, analysis_id)
+    step = _step(db, analysis_id, step_id)
+    mark_step(
+        db,
+        step,
+        StepStatus.REQUIRES_REVIEW,
+        error_code=error_code,
+        error_message=error_message,
+        metadata={"next_step": next_step, "human_action_required": True},
+    )
+    if analysis is not None:
+        analysis.status = AnalysisStatus.REQUIRES_REVIEW
+        analysis.completed_at = None
+        db.add(analysis)
+    db.commit()
+    AuditService(db).record(
+        event_type=event_type,
+        case_id=analysis.case_id if analysis is not None else None,
+        analysis_id=analysis_id,
+        actor_type="SYSTEM",
+        actor_id=actor_id,
+        reason=error_message,
+        payload={"error_code": error_code, "next_step": next_step, "human_action_required": True, **(payload or {})},
+    )
+    db.commit()
+
+
 class ResourceConsumptionError(RuntimeError):
     """Signals that a workflow resource is not governed or is incompatible."""
     def __init__(self, code: str, message: str):
@@ -3303,26 +3347,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     )
                 db.commit()
             except ResourceConsumptionError as exc:
-                mark_step(
+                # Missing/unapproved ClinGen rules are a scientific governance gap,
+                # not a terminal pipeline failure. Route the case to an authorized
+                # human for manual classification or resource remediation; the
+                # workflow can reconcile the manual decision on redelivery.
+                _route_step_to_human_review(
                     db,
-                    acmg_step,
-                    StepStatus.BLOCKED,
+                    analysis_id=analysis.id,
+                    step_id="acmg_assessment",
                     error_code=exc.code,
                     error_message=str(exc),
-                    metadata={"next_step": "RESOURCE_REQUIRED", "automatic_fallback": False},
-                )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
-                audit.record(
-                    event_type="ACMG_RESOURCE_BLOCKED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
+                    event_type="ACMG_RESOURCE_REQUIRES_REVIEW",
                     actor_id="acmg-resource",
-                    reason=str(exc),
-                    payload={"error_code": exc.code, "automatic_fallback": False},
+                    next_step="review",
+                    payload={"automatic_fallback": False, "resource_gap": True},
                 )
-                db.commit()
                 return
             except SQLAlchemyError as exc:
                 _schedule_transient_step_retry(
