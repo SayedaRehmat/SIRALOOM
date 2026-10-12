@@ -27,10 +27,20 @@
 | Full case package export | Export service | Backend tests | Required | PARTIAL |
 | API contract tests | FastAPI/backend suite | CI | Required | PARTIAL |
 | Security tests | Tenant/RBAC/auth tests | CI | Required | PARTIAL |
+| Laboratory capacity preflight fails closed when not READY | PR #174 merged as `01ef71735f812d51acaabd059f9431e264544ccc`; lab analysis dispatch requires READY preflight; no disk reservation | PR CI run #1329: backend, PostgreSQL integration and frontend/Compose jobs passed | Verify against configured lab deployment and actual host mounts | PARTIAL |
+| Laboratory Operations UI and source trace | PR #173 merged as `94d4625fc85e8803ce096fe802228dcfd682b0e2`; notifications, reanalysis candidates, storage/capacity telemetry, storage-profile registration, case deep-links and workflow section navigation | PR CI run #1332: backend, PostgreSQL integration and frontend/production Compose jobs passed on PR head `5368c502498f848f5efbcadb888c830bd3ef086a` | Test authenticated actions, persistence, permissions, language/RTL and production deployment | PARTIAL |
 | End-to-end VCF → report | Workflow + UI | Integration tests | Required | NOT VALIDATED |
 | Scientific benchmark validation | Validation corpus + expected outputs | Harness | Required | NOT VALIDATED |
 | Live frontend/backend deployment | Vercel/public backend | CI/deployment | Required | NOT VALIDATED |
 
+## Release-gate evidence snapshot (2026-10-12)
+
+- **Merged UI/source-trace change:** [PR #173](https://github.com/SayedaRehmat/SIRALOOM/pull/173), merge commit [`94d4625fc85e8803ce096fe802228dcfd682b0e2`](https://github.com/SayedaRehmat/SIRALOOM/commit/94d4625fc85e8803ce096fe802228dcfd682b0e2).
+- **PR CI evidence:** [run #1332](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38232150704) completed successfully for backend tests, PostgreSQL/Celery integration, frontend production build, container build and production Compose validation on the PR head. This is not a live VCF-to-report test.
+- **Capacity safety change:** [PR #174](https://github.com/SayedaRehmat/SIRALOOM/pull/174), merge commit [`01ef71735f812d51acaabd059f9431e264544ccc`](https://github.com/SayedaRehmat/SIRALOOM/commit/01ef71735f812d51acaabd059f9431e264544ccc). Preflight remains a snapshot with `reservation_supported=false`; large-file support remains unqualified.
+- **Preview only:** [PR #173 Vercel preview](https://siraloom-git-feat-lab-operations-and-ux-release-pass-sira14.vercel.app) reported Ready. This does not prove the production domain runs the merged revision.
+- **Still not evidenced:** a controlled live authenticated VCF → worker → persisted evidence → human review → report/provenance run; tenant-isolation verification; failure injection at every scientific stage; and truth-set concordance metrics.
+
 ## Release rule
 
-The GitHub repository may describe the software as a **Phase-1 release candidate** only while the rows marked PARTIAL/NOT VALIDATED remain explicitly disclosed. It may be described as a clinically validated diagnostic system only after separate laboratory validation, which is outside this software release gate.
+The GitHub repository may describe the software as a **Phase-1 release candidate** only while the rows marked PARTIAL/NOT VALIDATED remain explicitly disclosed. It may be described as a clinically validated diagnostic system only after separate laboratory validation, which is outside this software release gate. Keep the release gate open until the deployed end-to-end workflow, scientific benchmark, authorization/isolation, recovery, and deployment gates have evidence.
