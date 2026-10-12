@@ -1,0 +1,17 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+packages:
+  - docker.io
+  - docker-compose-v2
+  - git
+  - jq
+  - curl
+  - ca-certificates
+runcmd:
+  - [ bash, -lc, "systemctl enable --now docker" ]
+  - [ bash, -lc, "usermod -aG docker siraloomadmin || true" ]
+  - [ bash, -lc, "mkdir -p /data/siraloom" ]
+  - [ bash, -lc, "DEVICE=/dev/disk/azure/scsi1/lun0; for i in $(seq 1 60); do [ -b \"$DEVICE\" ] && break; sleep 2; done; test -b \"$DEVICE\"; if ! blkid \"$DEVICE\"; then mkfs.ext4 -F \"$DEVICE\"; fi; UUID=$(blkid -s UUID -o value \"$DEVICE\"); grep -q \"UUID=$UUID \" /etc/fstab || echo \"UUID=$UUID /data/siraloom ext4 defaults,nofail 0 2\" >> /etc/fstab; mount -a" ]
+  - [ bash, -lc, "mkdir -p /data/siraloom/postgres /data/siraloom/redis /data/siraloom/artifacts /data/siraloom/references /data/siraloom/resource-cache /data/siraloom/scratch; chown -R root:docker /data/siraloom; chmod 0770 /data/siraloom/postgres /data/siraloom/redis /data/siraloom/artifacts /data/siraloom/references /data/siraloom/resource-cache /data/siraloom/scratch" ]
+  - [ bash, -lc, "docker version && docker compose version" ]
