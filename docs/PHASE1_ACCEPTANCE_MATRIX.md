@@ -59,6 +59,7 @@
 - No captured live deployed VCF → worker → population/evidence → human review → report/sign-out → provenance workflow with artifact hashes and deployment revision.
 - Annotation stage-body recovery is pending PR #179; population/evidence/ACMG/review/report/provenance recovery has not been demonstrated end-to-end at every durable boundary.
 - No pinned GIAB truth-set comparison artifact with TP/FP/FN, precision/recall or concordance, confident-region/scope declaration and excluded variant classes.
+- The current Render blueprint is explicitly staging/free, sets `ARTIFACT_ROOT=/tmp/siraloom/artifacts`, disables Firebase Storage, and declares no persistent disk/reference mount. That configuration does not establish artifact/reference durability across restart or redeploy; qualify a durable storage target and restore before any lab trial. Source: [render.yaml](https://github.com/SayedaRehmat/SIRALOOM/blob/main/render.yaml).
 - No production backup/restore proof, host-mounted reference/artifact storage evidence, health/readiness evidence or representative concurrency/load report for 10 labs × 5–6 users and the scale path toward 100 labs.
 - No proof that current main is deployed to the production frontend/backend domains.
 
