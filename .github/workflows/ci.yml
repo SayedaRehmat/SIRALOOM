@@ -76,7 +76,7 @@ jobs:
           GENEBE_ENABLED: "false"
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
-        run: pytest -q tests/integration/test_analysis_dispatch_postgres.py
+        run: pytest -q tests/integration
 
   frontend:
     runs-on: ubuntu-latest
