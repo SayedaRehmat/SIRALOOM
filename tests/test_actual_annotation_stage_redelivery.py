@@ -270,11 +270,20 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
 
         def stop_after_annotation_is_reconciled(db, received_analysis_id, step_id):
             # ensure_steps() reads/creates all workflow steps before annotation
-            # begins, including population. Only stop when the persistence helper
-            # has run twice: first commit + injected worker loss, then replay on
-            # redelivery. This keeps the stop boundary after actual reconciliation.
-            if step_id == "population" and persistence_calls["count"] >= 2:
-                raise SystemExit(74)
+            # begins, including population. Stop only when the annotation stage
+            # is durably SUCCEEDED and its annotation rows exist after redelivery.
+            if step_id == "population":
+                annotation_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == received_analysis_id,
+                    WorkflowStep.step_id == "annotate",
+                ))
+                persisted_rows = db.scalar(
+                    select(func.count()).select_from(Annotation).where(
+                        Annotation.analysis_id == received_analysis_id
+                    )
+                )
+                if annotation_step is not None and annotation_step.status == StepStatus.SUCCEEDED and persisted_rows == 1:
+                    raise SystemExit(74)
             return real_step(db, received_analysis_id, step_id)
 
         monkeypatch.setattr(workflow, "_step", stop_after_annotation_is_reconciled)
@@ -343,6 +352,8 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             assert partitions and all(p.status == "SUCCEEDED" for p in partitions)
             assert db.get(Analysis, analysis_id).parent_analysis_id is None
         assert provider_calls["count"] == 1
-        assert persistence_calls["count"] == 2
+        # The row commit happened once. Redelivery reconciles the durable row
+        # and completes the checkpoint without a duplicate persistence operation.
+        assert persistence_calls["count"] == 1
     finally:
         engine.dispose()
