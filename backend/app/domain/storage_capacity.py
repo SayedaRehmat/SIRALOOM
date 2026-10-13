@@ -25,13 +25,12 @@ def enforce_laboratory_capacity_policy(
     Trial deployments retain the pre-existing capacity policy. This function
     enforces a readiness gate only; it does not reserve disk space.
     """
-    if not is_laboratory or capacity.get("status") == "READY":
+    if not is_laboratory:
         return capacity
 
     issues = list(capacity.get("issues") or [])
-    if not any(
-        isinstance(issue, dict)
-        and issue.get("code") == "LAB_CAPACITY_PREFLIGHT_REQUIRED"
+    if capacity.get("status") != "READY" and not any(
+        isinstance(issue, dict) and issue.get("code") == "LAB_CAPACITY_PREFLIGHT_REQUIRED"
         for issue in issues
     ):
         issues.append({
@@ -42,7 +41,26 @@ def enforce_laboratory_capacity_policy(
                 "then resolve any storage readiness issues before retrying."
             ),
         })
-    return {**capacity, "status": "BLOCKED", "issues": issues}
+
+    # A free-space snapshot is not a reservation. Until the deployment implements
+    # concurrency-safe reservations, never treat READY as permission to admit a
+    # laboratory workload that can race another analysis for the same capacity.
+    if capacity.get("reservation_supported") is not True and not any(
+        isinstance(issue, dict) and issue.get("code") == "LAB_CAPACITY_RESERVATION_REQUIRED"
+        for issue in issues
+    ):
+        issues.append({
+            "code": "LAB_CAPACITY_RESERVATION_REQUIRED",
+            "message": (
+                "Laboratory analysis is blocked because storage capacity has only "
+                "been inspected, not reserved atomically. Enable a concurrency-safe "
+                "reservation mechanism before running laboratory workloads."
+            ),
+        })
+
+    if issues or capacity.get("status") != "READY" or capacity.get("reservation_supported") is not True:
+        return {**capacity, "status": "BLOCKED", "issues": issues}
+    return capacity
 
 
 
