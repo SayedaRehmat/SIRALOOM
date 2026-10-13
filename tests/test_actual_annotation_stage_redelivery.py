@@ -196,8 +196,30 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                 } for v in variants]
 
         provider = FakeProvider()
-        contract = SimpleNamespace(provider_id="GeneBe", provider_version=provider.provider_version)
-        execution = SimpleNamespace(contract=contract)
+        contract = SimpleNamespace(
+            provider_id="GeneBe",
+            provider_version=provider.provider_version,
+            access_method="API",
+            endpoint="https://fixture.invalid/annotation",
+            location="https://fixture.invalid/annotation",
+            dataset=None,
+            as_dict=lambda: {
+                "provider_id": "GeneBe",
+                "provider_version": provider.provider_version,
+                "access_method": "API",
+                "endpoint": "https://fixture.invalid/annotation",
+                "location": "https://fixture.invalid/annotation",
+                "dataset": None,
+            },
+        )
+        execution = SimpleNamespace(
+            resource_id=resource_id,
+            resource_version=resource.version,
+            qualification_id=uuid4(),
+            qualification_version="test-qualification-v1",
+            contract=contract,
+            contract_hash="f" * 64,
+        )
         candidate = SimpleNamespace(resource=resource, execution=execution)
         registry = SimpleNamespace(
             require=lambda **_k: SimpleNamespace(factory=lambda _contract: provider),
