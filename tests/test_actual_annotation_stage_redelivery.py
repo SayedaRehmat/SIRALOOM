@@ -59,8 +59,12 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         import subprocess
 
         normalized = tmp_path / "normalized.vcf.gz"
-        with normalized.open("wb") as handle:
-            subprocess.run(["bgzip", "-c", str(source)], check=True, stdout=handle)
+        subprocess.run(
+            ["bcftools", "view", "-Oz", "-o", str(normalized), str(source)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
         with LocalSession() as db:
             db.add(Organization(
