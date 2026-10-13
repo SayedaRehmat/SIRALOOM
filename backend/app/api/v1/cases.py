@@ -1,6 +1,7 @@
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.session import get_db
@@ -50,7 +51,25 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
         created_by=principal.user_id,
     )
     db.add(case)
-    db.flush()
+    try:
+        # The organization/case_identifier unique constraint is the final arbiter
+        # under concurrent submissions. Reconcile the losing request to the
+        # winning row instead of surfacing a spurious HTTP 500.
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        existing = db.scalar(select(Case).where(
+            Case.organization_id == principal.organization_id,
+            Case.case_identifier == payload.case_identifier,
+        ))
+        if existing is not None:
+            return {
+                "case_id": str(existing.id),
+                "case_identifier": existing.case_identifier,
+                "status": existing.status,
+                "created": False,
+            }
+        raise
     AuditService(db).record(
         event_type="CASE_CREATED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
         subject_type="CASE", subject_id=str(case.id), operation="CREATE", after_state={"case_identifier": case.case_identifier},
