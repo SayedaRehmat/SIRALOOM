@@ -1769,31 +1769,17 @@ def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypa
     invited_subject = f"firebase-{uuid4()}"
     invited_email = f"{uuid4().hex}@example.test"
     barrier = threading.Barrier(2)
-    thread_local = threading.local()
     results = []
     errors = []
 
-    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-        normalized = statement.lower()
-        if (
-            normalized.lstrip().startswith("select")
-            and "organization_invitations" in normalized
-            and "token_hash" in normalized
-            and not getattr(thread_local, "invitation_lookup_seen", False)
-        ):
-            thread_local.invitation_lookup_seen = True
-            barrier.wait(timeout=15)
-
-    event.listen(engine, "before_cursor_execute", before_cursor_execute)
-
-    monkeypatch.setattr(
-        auth_api,
-        "_authenticate_bearer",
-        lambda authorization: (
+    def fake_authenticate(authorization):
+        barrier.wait(timeout=15)
+        return (
             invited_subject,
             {"uid": invited_subject, "email": invited_email, "name": "Invitee"},
-        ),
-    )
+        )
+
+    monkeypatch.setattr(auth_api, "_authenticate_bearer", fake_authenticate)
 
     try:
         with Session(engine) as db:
@@ -1866,7 +1852,6 @@ def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypa
             assert len(memberships) == 1
             assert memberships[0].status == "ACTIVE"
     finally:
-        event.remove(engine, "before_cursor_execute", before_cursor_execute)
         with Session(engine) as db:
             db.query(OrganizationInvitation).filter(
                 OrganizationInvitation.id == invitation_id
@@ -1904,30 +1889,17 @@ def test_postgres_distinct_invitations_cannot_duplicate_one_identity(monkeypatch
     subject = f"firebase-{uuid4()}"
     email = f"{uuid4().hex}@example.test"
     barrier = threading.Barrier(2)
-    thread_local = threading.local()
     results = []
     errors = []
 
-    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-        normalized = statement.lower()
-        if (
-            normalized.lstrip().startswith("select")
-            and "organization_invitations" in normalized
-            and "token_hash" in normalized
-            and not getattr(thread_local, "invitation_lookup_seen", False)
-        ):
-            thread_local.invitation_lookup_seen = True
-            barrier.wait(timeout=15)
-
-    event.listen(engine, "before_cursor_execute", before_cursor_execute)
-    monkeypatch.setattr(
-        auth_api,
-        "_authenticate_bearer",
-        lambda authorization: (
+    def fake_authenticate(authorization):
+        barrier.wait(timeout=15)
+        return (
             subject,
             {"uid": subject, "email": email, "name": "Identity Race Invitee"},
-        ),
-    )
+        )
+
+    monkeypatch.setattr(auth_api, "_authenticate_bearer", fake_authenticate)
 
     try:
         for index in range(2):
