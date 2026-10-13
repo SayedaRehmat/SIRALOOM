@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid5
 
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
@@ -102,6 +103,95 @@ class TransientWorkflowError(RuntimeError):
         self.countdown = max(1, countdown)
         self.max_retries = max(0, int(max_retries))
         self.error_code = error_code
+
+
+def _schedule_transient_step_retry(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    error_code: str,
+    error_message: str,
+    event_type: str,
+    actor_id: str,
+    next_step: str,
+) -> None:
+    """Persist a retryable stage failure before the Celery wrapper retries it.
+
+    The stage's durable checkpoint remains available; the analysis is not marked
+    terminally failed until the bounded retry policy is exhausted.
+    """
+    db.rollback()
+    analysis = db.get(Analysis, analysis_id)
+    step = _step(db, analysis_id, step_id)
+    if analysis is not None:
+        analysis.status = AnalysisStatus.RUNNING
+        analysis.completed_at = None
+        db.add(analysis)
+    metadata = dict(step.metadata_json or {})
+    metadata["next_step"] = next_step
+    metadata["retry_policy"] = "bounded_transient_retry"
+    step.status = StepStatus.RETRYING
+    step.error_code = error_code
+    step.error_message = error_message
+    step.metadata_json = metadata
+    step.last_heartbeat = _now()
+    step.updated_at = _now()
+    db.add(step)
+    AuditService(db).record(
+        event_type=event_type,
+        case_id=analysis.case_id if analysis is not None else None,
+        analysis_id=analysis_id,
+        actor_type="SYSTEM",
+        actor_id=actor_id,
+        reason=error_message,
+        payload={"error_code": error_code, "next_step": next_step},
+    )
+    db.commit()
+
+
+def _route_step_to_human_review(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    step_id: str,
+    error_code: str,
+    error_message: str,
+    event_type: str,
+    actor_id: str,
+    next_step: str,
+    payload: dict | None = None,
+) -> None:
+    """Persist a recoverable scientific/resource gap for explicit human action.
+
+    This is not a technical success: downstream clinical decisions remain gated,
+    but the analysis is kept resumable instead of being terminally FAILED/BLOCKED.
+    """
+    analysis = db.get(Analysis, analysis_id)
+    step = _step(db, analysis_id, step_id)
+    mark_step(
+        db,
+        step,
+        StepStatus.REQUIRES_REVIEW,
+        error_code=error_code,
+        error_message=error_message,
+        metadata={"next_step": next_step, "human_action_required": True},
+    )
+    if analysis is not None:
+        analysis.status = AnalysisStatus.REQUIRES_REVIEW
+        analysis.completed_at = None
+        db.add(analysis)
+    db.commit()
+    AuditService(db).record(
+        event_type=event_type,
+        case_id=analysis.case_id if analysis is not None else None,
+        analysis_id=analysis_id,
+        actor_type="SYSTEM",
+        actor_id=actor_id,
+        reason=error_message,
+        payload={"error_code": error_code, "next_step": next_step, "human_action_required": True, **(payload or {})},
+    )
+    db.commit()
 
 
 class ResourceConsumptionError(RuntimeError):
@@ -2442,6 +2532,25 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 secondary_count += 1
                         db.commit()
 
+                annotated_variant_ids = set(db.scalars(
+                    select(Annotation.variant_id)
+                    .where(Annotation.analysis_id == analysis.id)
+                    .distinct()
+                ).all())
+                population_variant_ids = set(db.scalars(
+                    select(PopulationObservation.variant_id)
+                    .where(
+                        PopulationObservation.analysis_id == analysis.id,
+                        PopulationObservation.availability == "AVAILABLE",
+                        PopulationObservation.allele_frequency.is_not(None),
+                        PopulationObservation.allele_number.is_not(None),
+                    )
+                    .distinct()
+                ).all())
+                variants_without_population = sorted(
+                    str(variant_id)
+                    for variant_id in annotated_variant_ids - population_variant_ids
+                )
                 population_metadata = {
                     "executed_resources": executed_resources,
                     "profile_type": plan.profile_type,
@@ -2451,15 +2560,32 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "optional_resources_not_selected": len(plan.unavailable_optional),
                     "secondary_population_observations": secondary_count,
                     "secondary_population_limitations": secondary_limitations,
+                    "annotated_variants": len(annotated_variant_ids),
+                    "variants_without_population_observations": variants_without_population,
                 }
-                # Absence of an optional population resource is not a workflow
-                # failure and is not converted into a user-facing limitation.
-                mark_step(
-                    db,
-                    population_step,
-                    StepStatus.SUCCEEDED,
-                    metadata=population_metadata,
-                )
+                if variants_without_population:
+                    _apply_scientific_limitation(
+                        db,
+                        population_step,
+                        outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                        code="POPULATION_OBSERVATIONS_MISSING",
+                        message=(
+                            "Population observations are unavailable for one or more annotated variants. "
+                            "Missing frequency data must not be interpreted as zero; classification requires human review."
+                        ),
+                        metadata={
+                            **population_metadata,
+                            "next_step": "build_evidence",
+                            "population_data_available": bool(population_variant_ids),
+                        },
+                    )
+                else:
+                    mark_step(
+                        db,
+                        population_step,
+                        StepStatus.SUCCEEDED,
+                        metadata=population_metadata,
+                    )
                 audit.record(
                     event_type="POPULATION_COMPLETED",
                     case_id=analysis.case_id,
@@ -2470,41 +2596,102 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except ResourceConsumptionError as exc:
-                mark_step(
+                # Population absence/qualification gaps are scientific limitations:
+                # do not use an unapproved resource, but continue without its data so
+                # evidence and ACMG can route the affected variants to human review.
+                _apply_scientific_limitation(
                     db,
                     population_step,
-                    StepStatus.BLOCKED,
-                    error_code=exc.code,
-                    error_message=str(exc),
-                    metadata={"next_step": "RESOURCE_REQUIRED"},
+                    outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                    code=exc.code,
+                    message=str(exc),
+                    metadata={
+                        "next_step": "build_evidence",
+                        "resource_limitation": True,
+                        "automatic_fallback": False,
+                        "population_data_available": False,
+                    },
                 )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
                 audit.record(
-                    event_type="WORKFLOW_BLOCKED",
+                    event_type="POPULATION_RESOURCE_LIMITATION",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
-                    actor_type="population",
+                    actor_type="SYSTEM",
                     actor_id="resource-registry",
                     reason=str(exc),
-                    payload={"error_code": exc.code, "next_step": "RESOURCE_REQUIRED"},
+                    payload={
+                        "error_code": exc.code,
+                        "next_step": "build_evidence",
+                        "automatic_fallback": False,
+                    },
                 )
                 db.commit()
-                return
             except GnomADProviderError as exc:
-                mark_step(db, population_step, StepStatus.FAILED, error_code="GNOMAD_PROVIDER_ERROR", error_message=str(exc))
-                analysis.status = AnalysisStatus.FAILED
-                db.commit()
+                if exc.retryable:
+                    _schedule_transient_step_retry(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="population",
+                        error_code="POPULATION_PROVIDER_TRANSIENT",
+                        error_message=str(exc),
+                        event_type="POPULATION_RETRY_SCHEDULED",
+                        actor_id="gnomad",
+                        next_step="population",
+                    )
+                    raise TransientWorkflowError(
+                        str(exc),
+                        countdown=10,
+                        max_retries=3,
+                        error_code="POPULATION_PROVIDER_RETRY_EXHAUSTED",
+                    ) from exc
+                # Permanent provider responses (for example a rejected request or
+                # unusable response) must not be treated as zero allele frequency.
+                # Continue with an explicit limitation; ACMG will require review if
+                # a criterion depends on the unavailable population evidence.
+                _apply_scientific_limitation(
+                    db,
+                    population_step,
+                    outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                    code="GNOMAD_PROVIDER_UNAVAILABLE",
+                    message=str(exc),
+                    metadata={
+                        "next_step": "build_evidence",
+                        "population_data_available": False,
+                        "provider": "gnomAD",
+                        "retryable": False,
+                    },
+                )
                 audit.record(
-                    event_type="POPULATION_FAILED",
+                    event_type="POPULATION_PROVIDER_LIMITATION",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
                     actor_id="gnomad",
                     reason=str(exc),
+                    payload={
+                        "error_code": "GNOMAD_PROVIDER_UNAVAILABLE",
+                        "next_step": "build_evidence",
+                        "population_data_available": False,
+                    },
                 )
                 db.commit()
-                return
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="population",
+                    error_code="POPULATION_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="POPULATION_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="gnomad",
+                    next_step="population",
+                )
+                raise TransientWorkflowError(
+                    "Population observation persistence failed; retrying from the durable population checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="POPULATION_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 # Safety net -- see the matching comment on the normalization step above.
                 mark_step(db, population_step, StepStatus.FAILED, error_code="POPULATION_UNEXPECTED_ERROR", error_message=str(exc))
@@ -2542,6 +2729,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clinvar_execution = None
                 clinvar_execution_metadata = None
                 clinvar_limitations: list[dict[str, object]] = []
+                provider_limitations: list[dict[str, object]] = []
                 configured_clinvar_id = (analysis.configuration or {}).get("clinvar_resource_id")
                 clinvar_profile_managed = profile_bound_analysis
 
@@ -2709,7 +2897,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
                             except Exception as exc:
                                 complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
-                                raise
+                                provider_limitations.append({
+                                    "code": "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED",
+                                    "message": str(exc),
+                                    "resource_capability": "CLINICAL_VARIANT",
+                                    "variant_id": str(row.id),
+                                })
 
                         if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
                             query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
@@ -2723,7 +2916,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
                             except Exception as exc:
                                 complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
-                                raise
+                                provider_limitations.append({
+                                    "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
+                                    "message": str(exc),
+                                    "resource_capability": "GENE_DISEASE",
+                                    "variant_id": str(row.id),
+                                })
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
@@ -2804,7 +3002,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     error_code="CLINVAR_QUERY_FAILED",
                                     error_message=str(exc),
                                 )
-                                raise
+                                provider_limitations.append({
+                                    "code": "CLINVAR_QUERY_FAILED",
+                                    "message": str(exc),
+                                    "resource_capability": "CLINICAL_DATABASE",
+                                    "variant_id": str(row.id),
+                                })
 
                         for record in records:
                             if record.resource_id is not None:
@@ -2888,18 +3091,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "created_evidence": created,
                     "persisted_evidence": persisted_evidence_count,
                     "optional_resource_limitations": clinvar_limitations,
+                    "provider_limitations": provider_limitations,
                 }
-                if persisted_evidence_count == 0:
+                if persisted_evidence_count == 0 or provider_limitations:
+                    limitation_message = (
+                        "Evidence collection completed with one or more source-provider limitations. "
+                        "Any resulting criterion proposals require human review."
+                        if provider_limitations
+                        else
+                        "Evidence collection completed, but no reportable evidence records were "
+                        "established from the available annotation, population, phenotype, gene-disease, "
+                        "or literature context."
+                    )
                     _apply_scientific_limitation(
                         db,
                         evidence_step,
                         outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
-                        code="EVIDENCE_INSUFFICIENT",
-                        message=(
-                            "Evidence collection completed, but no reportable evidence records were "
-                            "established from the available annotation, population, phenotype, gene-disease, "
-                            "or literature context."
+                        code=(
+                            "EVIDENCE_SOURCE_LIMITATION_REQUIRES_REVIEW"
+                            if provider_limitations
+                            else "EVIDENCE_INSUFFICIENT"
                         ),
+                        message=limitation_message,
                         metadata=evidence_metadata,
                     )
                 else:
@@ -2918,28 +3131,55 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except (ResourceConsumptionError, ResourceExecutionError, ClinVarProviderError) as exc:
-                code = getattr(exc, "code", None) or "CLINVAR_RESOURCE_UNAVAILABLE"
-                mark_step(
+                code = getattr(exc, "code", None) or "EVIDENCE_RESOURCE_UNAVAILABLE"
+                # Do not consume an unqualified source or fail the whole analysis
+                # because a clinical evidence provider is unavailable. Preserve any
+                # evidence already persisted, record the gap, and force ACMG review.
+                _apply_scientific_limitation(
                     db,
                     evidence_step,
-                    StepStatus.BLOCKED,
-                    error_code=code,
-                    error_message=str(exc),
-                    metadata={"next_step": "RESOURCE_REQUIRED", "automatic_fallback": False},
+                    outcome=OutcomeKind.INSUFFICIENT_EVIDENCE,
+                    code=code,
+                    message=str(exc),
+                    metadata={
+                        "next_step": "acmg_assessment",
+                        "resource_limitation": True,
+                        "automatic_fallback": False,
+                        "partial_evidence_build": True,
+                    },
                 )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
                 audit.record(
-                    event_type="EVIDENCE_BLOCKED",
+                    event_type="EVIDENCE_RESOURCE_LIMITATION",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
-                    actor_id="clinvar-resource",
+                    actor_id="evidence-resource",
                     reason=str(exc),
-                    payload={"error_code": code, "automatic_fallback": False},
+                    payload={
+                        "error_code": code,
+                        "next_step": "acmg_assessment",
+                        "automatic_fallback": False,
+                        "partial_evidence_build": True,
+                    },
                 )
                 db.commit()
-                return
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="build_evidence",
+                    error_code="EVIDENCE_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="EVIDENCE_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="siraloom-evidence",
+                    next_step="build_evidence",
+                )
+                raise TransientWorkflowError(
+                    "Evidence persistence failed; retrying from the durable evidence checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="EVIDENCE_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 mark_step(db, evidence_step, StepStatus.FAILED, error_code="EVIDENCE_BUILD_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
@@ -3004,6 +3244,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 },
             )
             db.commit()
+
+        population_step_for_acmg = _step(db, analysis.id, "population")
+        evidence_step_for_acmg = _step(db, analysis.id, "build_evidence")
+        population_scientific_gap = bool(
+            (population_step_for_acmg.metadata_json or {}).get("scientific_limitation")
+        )
+        evidence_scientific_gap = bool(
+            (evidence_step_for_acmg.metadata_json or {}).get("scientific_limitation")
+        )
 
         if acmg_step.status != StepStatus.SUCCEEDED:
             mark_step(db, acmg_step, StepStatus.RUNNING)
@@ -3121,7 +3370,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         },
                     )
 
-                if assessed == 0 or review_variants > 0 or blocked_variants > 0:
+                if (
+                    assessed == 0
+                    or review_variants > 0
+                    or blocked_variants > 0
+                    or population_scientific_gap
+                    or evidence_scientific_gap
+                ):
                     # The analysis itself is not failed. Evidence generation and
                     # criterion persistence have completed for the variants that
                     # could be assessed, while classification automation is
@@ -3133,6 +3388,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "No variant received a validated, applicable ClinGen specification "
                             "with supported structured criterion configuration. Manual ACMG "
                             "classification is required for all variants in this case."
+                        )
+                    elif population_scientific_gap or evidence_scientific_gap:
+                        review_code = "SCIENTIFIC_EVIDENCE_GAP_REQUIRES_REVIEW"
+                        review_message = (
+                            "Population or evidence collection recorded a scientific limitation. "
+                            "Any automated criterion proposals remain provisional; an authorized "
+                            "reviewer must inspect the missing-source context before classification "
+                            "can be approved."
                         )
                     elif review_variants > 0:
                         review_code = "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"
@@ -3159,6 +3422,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "proposed_variants": proposed_variants,
                             "classification_review_variants": review_variants,
                             "blocked_variants": blocked_variants,
+                            "population_scientific_gap": population_scientific_gap,
+                            "evidence_scientific_gap": evidence_scientific_gap,
                             "classification_automation": "PARTIAL_OR_REVIEW_REQUIRED",
                             "next_step": "review",
                         },
@@ -3206,27 +3471,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     )
                 db.commit()
             except ResourceConsumptionError as exc:
-                mark_step(
+                # Missing/unapproved ClinGen rules are a scientific governance gap,
+                # not a terminal pipeline failure. Route the case to an authorized
+                # human for manual classification or resource remediation; the
+                # workflow can reconcile the manual decision on redelivery.
+                _route_step_to_human_review(
                     db,
-                    acmg_step,
-                    StepStatus.BLOCKED,
+                    analysis_id=analysis.id,
+                    step_id="acmg_assessment",
                     error_code=exc.code,
                     error_message=str(exc),
-                    metadata={"next_step": "RESOURCE_REQUIRED", "automatic_fallback": False},
-                )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
-                audit.record(
-                    event_type="ACMG_RESOURCE_BLOCKED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
+                    event_type="ACMG_RESOURCE_REQUIRES_REVIEW",
                     actor_id="acmg-resource",
-                    reason=str(exc),
-                    payload={"error_code": exc.code, "automatic_fallback": False},
+                    next_step="review",
+                    payload={"automatic_fallback": False, "resource_gap": True},
                 )
-                db.commit()
                 return
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="acmg_assessment",
+                    error_code="ACMG_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="ACMG_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="siraloom-acmg-specification-engine",
+                    next_step="acmg_assessment",
+                )
+                raise TransientWorkflowError(
+                    "ACMG assessment persistence failed; retrying without fabricating a classification.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="ACMG_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 mark_step(db, acmg_step, StepStatus.FAILED, error_code="ACMG_ASSESSMENT_FAILED", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
@@ -3461,25 +3738,22 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except Exception as exc:
-                mark_step(
+                _schedule_transient_step_retry(
                     db,
-                    report_step,
-                    StepStatus.FAILED,
-                    error_code="REPORT_GENERATION_FAILED",
-                    error_message=str(exc),
-                )
-                analysis.status = AnalysisStatus.FAILED
-                db.commit()
-                audit.record(
-                    event_type="REPORT_GENERATION_FAILED",
-                    case_id=analysis.case_id,
                     analysis_id=analysis.id,
-                    actor_type="SYSTEM",
+                    step_id="report",
+                    error_code="REPORT_GENERATION_RETRYING",
+                    error_message=str(exc),
+                    event_type="REPORT_GENERATION_RETRY_SCHEDULED",
                     actor_id="reporting",
-                    reason=str(exc),
+                    next_step="report",
                 )
-                db.commit()
-                return
+                raise TransientWorkflowError(
+                    "Report generation failed; retrying from the durable report checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="REPORT_GENERATION_RETRY_EXHAUSTED",
+                ) from exc
 
         # 9. Final report sign-out is the terminal human gate. Provenance is
         # exported only after the report itself is FINAL, so the terminal
