@@ -29,7 +29,7 @@
 | Requirement | Code inspected | Current checkpoint |
 |---|---|---|
 | A1: Authentication environment boundary | `backend/app/auth/principal.py:get_current_principal` | Corrected and merged; run #1410 passed. |
-| A1: Firebase token verification and active membership | `backend/app/auth/principal.py:_verify_firebase_token`, `get_current_principal` | Source checks revoked Firebase tokens and requires active membership; follow-up role/status tests pending. |
+| A1: Firebase token verification and active membership | `backend/app/auth/principal.py:_verify_firebase_token`, `get_current_principal` | Source checks revoked Firebase tokens and requires active membership; role-authority and membership-status regression tests passed in run #1432. |
 | A1: Invitation and membership lifecycle | `backend/app/api/v1/auth.py`, `backend/app/infrastructure/db/organization_invitations.py` | Invitation row locking and subject-scoped advisory locking merged; PostgreSQL single-token and cross-invitation concurrency tests passed in run #1432. Membership mutation races remain open. |
 | A2: Role and tenant authorization | `backend/app/auth/authorization.py` and API routes | Shared helpers inspected; complete endpoint-by-endpoint and background-worker authorization matrix remains open. |
 | A3: Case lifecycle | `backend/app/api/v1/cases.py`, `backend/app/infrastructure/db/models.py` | Duplicate fix merged; PostgreSQL race test passed in run #1432. Specimen identity, update races, and audit transaction coverage remain open. |
