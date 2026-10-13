@@ -1410,7 +1410,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.commit()
                     raise
 
-                normalized_artifact = artifacts.put_file(
+                normalized_artifact = _put_idempotent_stage_artifact(
+                    artifacts,
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v2"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip",
@@ -1437,7 +1439,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     },
                 )
                 index_path = Path(normalization_stats["index_path"])
-                index_artifact = artifacts.put_file(
+                index_artifact = _put_idempotent_stage_artifact(
+                    artifacts,
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v2"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=index_path,
                     filename="normalized.vcf.gz.csi",
                     artifact_type="VCF_INDEX", media_type="application/octet-stream",
@@ -4064,6 +4068,84 @@ def _existing_normalized_artifact(db: Session, analysis_id: UUID) -> Artifact | 
         .where(Artifact.analysis_id == analysis_id, Artifact.artifact_type == "NORMALIZED_VCF")
         .order_by(Artifact.created_at.desc())
         .limit(1)
+    )
+
+
+def _put_idempotent_stage_artifact(
+    store,
+    *,
+    artifact_id: UUID,
+    db: Session,
+    case_id: UUID,
+    analysis_id: UUID | None,
+    source_path: Path,
+    filename: str,
+    artifact_type: str,
+    media_type: str | None,
+    genome_build: str | None,
+    metadata: dict | None = None,
+    specimen_id: UUID | None = None,
+    paired_artifact_id: UUID | None = None,
+    validation_status: str = "PENDING",
+) -> Artifact:
+    """Persist or reuse a deterministic workflow artifact after worker redelivery.
+
+    The same analysis/stage/output receives the same artifact ID. If the DB row
+    already exists, verify its immutable content and provenance instead of
+    creating a duplicate row or overwriting a different artifact.
+    """
+    source = Path(source_path)
+    if not source.is_file():
+        raise FileNotFoundError(f"Artifact source file does not exist: {source}")
+    expected_type = artifact_type.value if hasattr(artifact_type, "value") else str(artifact_type)
+    expected_metadata = dict(metadata or {})
+    existing = db.get(Artifact, artifact_id)
+    if existing is not None:
+        existing_metadata = dict(existing.metadata_json or {})
+        # The recorded command includes worker-local temporary paths. Those can
+        # legitimately differ after redelivery, while the scientific resource
+        # and normalization provenance must remain identical.
+        expected_metadata.pop("normalization_command", None)
+        existing_metadata.pop("normalization_command", None)
+        if (
+            existing.case_id != case_id
+            or existing.analysis_id != analysis_id
+            or existing.artifact_type != expected_type
+            or existing.filename != Path(filename).name.strip()
+            or existing.media_type != media_type
+            or existing.genome_build != genome_build
+            or existing.specimen_id != specimen_id
+            or existing.validation_status != validation_status
+            or existing_metadata != expected_metadata
+        ):
+            raise RuntimeError(
+                f"Deterministic artifact identity {artifact_id} is already bound to different workflow provenance."
+            )
+        source_sha256 = sha256_file(source)
+        if existing.sha256 != source_sha256 or existing.size_bytes != source.stat().st_size:
+            raise RuntimeError(
+                f"Deterministic artifact identity {artifact_id} produced different bytes on replay."
+            )
+        if not store.exists(existing.storage_uri):
+            raise RuntimeError(
+                f"Persisted artifact {artifact_id} is missing from its configured storage backend."
+            )
+        return existing
+
+    return store.put_file(
+        db=db,
+        case_id=case_id,
+        analysis_id=analysis_id,
+        source_path=source,
+        filename=filename,
+        artifact_type=artifact_type,
+        media_type=media_type,
+        genome_build=genome_build,
+        metadata=expected_metadata,
+        specimen_id=specimen_id,
+        paired_artifact_id=paired_artifact_id,
+        validation_status=validation_status,
+        artifact_id=artifact_id,
     )
 
 
