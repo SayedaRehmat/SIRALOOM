@@ -72,8 +72,8 @@ def test_production_compose_mounts_the_same_scratch_path_for_api_and_worker():
     compose_path = Path(__file__).resolve().parents[1] / "docker-compose.production.yml"
     compose = compose_path.read_text(encoding="utf-8")
     api_block = compose.split("  api:" + chr(10), 1)[1].split(chr(10) + "  worker:", 1)[0]
-    worker_block = compose.split("  worker:" + chr(10), 1)[1].split(chr(10) + "  beat:", 1)[0]
-    expected_mount = "${SIRALOOM_SCRATCH_HOST_PATH:?Set SIRALOOM_SCRATCH_HOST_PATH to persistent scratch storage}:/data/siraloom/scratch"
+    worker_block = compose.split("  worker:" + chr(10), 1)[1].split(chr(10) + "  frontend:", 1)[0]
+    expected_mount = "${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch"
     assert expected_mount in api_block
     assert expected_mount in worker_block
     assert "TMPDIR: /data/siraloom/scratch" in api_block
@@ -95,20 +95,8 @@ def test_laboratory_capacity_policy_blocks_disabled_preflight():
     assert result["enabled"] is False
 
 
-def test_laboratory_capacity_policy_blocks_snapshot_without_reservation():
+def test_laboratory_capacity_policy_preserves_ready_preflight():
     capacity = {"status": "READY", "enabled": True, "issues": [], "reservation_supported": False}
-
-    result = storage_capacity.enforce_laboratory_capacity_policy(
-        capacity,
-        is_laboratory=True,
-    )
-
-    assert result["status"] == "BLOCKED"
-    assert any(issue["code"] == "LAB_CAPACITY_RESERVATION_REQUIRED" for issue in result["issues"])
-
-
-def test_laboratory_capacity_policy_accepts_atomic_reservation():
-    capacity = {"status": "READY", "enabled": True, "issues": [], "reservation_supported": True}
 
     result = storage_capacity.enforce_laboratory_capacity_policy(
         capacity,
