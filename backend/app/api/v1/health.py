@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Response, status
@@ -42,11 +43,11 @@ def _check_artifact_root() -> tuple[str, str | None]:
     try:
         root = Path(settings.artifact_root)
         root.mkdir(parents=True, exist_ok=True)
-        probe = root / ".siraloom-readiness-probe"
-        with probe.open("xb") as handle:
-            handle.write(b"ok")
-            handle.flush()
-        probe.unlink()
+        # A unique probe avoids false readiness failures when multiple probes arrive
+        # concurrently against the same shared artifact mount.
+        with tempfile.NamedTemporaryFile(prefix=".siraloom-readiness-", dir=root) as probe:
+            probe.write(b"ok")
+            probe.flush()
         return "ok", None
     except Exception as exc:  # pragma: no cover - deployment/runtime dependent
         # Avoid exposing filesystem paths and OS error details to unauthenticated callers.
