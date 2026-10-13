@@ -56,8 +56,11 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         )
         # Use a plain VCF here: this fixture is testing annotation recovery,
         # not BGZF/index handling by bcftools.
-        normalized = tmp_path / "normalized.vcf"
-        normalized.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        import gzip
+
+        normalized = tmp_path / "normalized.vcf.gz"
+        with gzip.open(normalized, "wt", encoding="utf-8", newline="") as handle:
+            handle.write(source.read_text(encoding="utf-8"))
 
         with LocalSession() as db:
             db.add(Organization(
