@@ -2,7 +2,6 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from backend.app.api.v1.cases import create
