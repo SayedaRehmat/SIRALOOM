@@ -1877,3 +1877,141 @@ def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypa
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_distinct_invitations_cannot_duplicate_one_identity(monkeypatch):
+    """Different invitation tokens must not race to provision duplicate users."""
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import event
+    from fastapi import HTTPException
+
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    import backend.app.api.v1.auth as auth_api
+    from backend.app.infrastructure.db.models import OrganizationMembership
+    from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_ids = [uuid4(), uuid4()]
+    inviter_ids = [uuid4(), uuid4()]
+    invitation_ids = [uuid4(), uuid4()]
+    tokens = [f"identity-race-{uuid4().hex}-token", f"identity-race-{uuid4().hex}-token"]
+    subject = f"firebase-{uuid4()}"
+    email = f"{uuid4().hex}@example.test"
+    barrier = threading.Barrier(2)
+    thread_local = threading.local()
+    results = []
+    errors = []
+
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        normalized = statement.lower()
+        if (
+            "organization_invitations" in normalized
+            and "token_hash" in normalized
+            and not getattr(thread_local, "invitation_lookup_seen", False)
+        ):
+            thread_local.invitation_lookup_seen = True
+            barrier.wait(timeout=15)
+
+    event.listen(engine, "before_cursor_execute", before_cursor_execute)
+    monkeypatch.setattr(
+        auth_api,
+        "_authenticate_bearer",
+        lambda authorization: (
+            subject,
+            {"uid": subject, "email": email, "name": "Identity Race Invitee"},
+        ),
+    )
+
+    try:
+        for index in range(2):
+            with Session(engine) as db:
+                db.add(Organization(
+                    id=organization_ids[index],
+                    name=f"identity-race-org-{organization_ids[index]}",
+                    external_identifier=str(organization_ids[index]),
+                ))
+                db.commit()
+            with Session(engine) as db:
+                db.add(User(
+                    id=inviter_ids[index],
+                    organization_id=organization_ids[index],
+                    external_subject=f"inviter-{inviter_ids[index]}",
+                    email=f"{inviter_ids[index]}@example.test",
+                    display_name="Invitation Admin",
+                    role="organization_admin",
+                    status="ACTIVE",
+                ))
+                db.commit()
+            with Session(engine) as db:
+                db.add(OrganizationInvitation(
+                    id=invitation_ids[index],
+                    organization_id=organization_ids[index],
+                    email=email,
+                    role="read_only",
+                    token_hash=auth_api._hash_invitation_token(tokens[index]),
+                    status="PENDING",
+                    invited_by=inviter_ids[index],
+                    expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+                ))
+                db.commit()
+
+        def accept_one(index):
+            try:
+                with Session(engine) as db:
+                    results.append(auth_api.accept_organization_invitation(
+                        auth_api.InvitationAcceptance(token=tokens[index]),
+                        authorization="Bearer integration-token",
+                        db=db,
+                    ))
+            except Exception as exc:
+                errors.append(exc)
+
+        threads = [
+            threading.Thread(target=accept_one, args=(0,)),
+            threading.Thread(target=accept_one, args=(1,)),
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+
+        assert all(not thread.is_alive() for thread in threads), "identity provisioning race did not finish"
+        assert len(results) == 1
+        assert len(errors) == 1
+        assert isinstance(errors[0], HTTPException)
+        assert errors[0].status_code == 409
+
+        with Session(engine) as db:
+            users = db.scalars(select(User).where(User.external_subject == subject)).all()
+            assert len(users) == 1
+            memberships = db.scalars(select(OrganizationMembership).where(
+                OrganizationMembership.user_id == users[0].id,
+                OrganizationMembership.status == "ACTIVE",
+            )).all()
+            assert len(memberships) == 1
+            invitations = db.scalars(select(OrganizationInvitation).where(
+                OrganizationInvitation.id.in_(invitation_ids)
+            )).all()
+            assert sorted(inv.status for inv in invitations) == ["ACCEPTED", "PENDING"]
+    finally:
+        event.remove(engine, "before_cursor_execute", before_cursor_execute)
+        with Session(engine) as db:
+            db.query(OrganizationInvitation).filter(
+                OrganizationInvitation.id.in_(invitation_ids)
+            ).delete(synchronize_session=False)
+            db.query(OrganizationMembership).filter(
+                OrganizationMembership.organization_id.in_(organization_ids)
+            ).delete(synchronize_session=False)
+            db.query(User).filter(
+                User.organization_id.in_(organization_ids)
+            ).delete(synchronize_session=False)
+            db.query(Organization).filter(
+                Organization.id.in_(organization_ids)
+            ).delete(synchronize_session=False)
+            db.commit()
+        engine.dispose()
