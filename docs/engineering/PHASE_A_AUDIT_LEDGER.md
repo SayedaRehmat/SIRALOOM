@@ -1,9 +1,9 @@
 # SIRALOOM Phase A Engineering Audit Ledger
 
 **Updated:** 2026-10-13  
-**Audit baseline:** current `main` after merges of PRs #185–#193.  
-**Active batch:** A1, A3, A4/A5 — membership mutation races, case/specimen concurrency, and normalization operational retry.  
-**Status:** PRs #185–#193 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, and #1452 passed their applicable jobs. The PostgreSQL job now executes the full `tests/integration` suite. **Phase A remains open** because endpoint/worker authorization breadth, stage-body replay beyond annotation/report, deployment validation, and scientific qualification are not complete.
+**Audit baseline:** current `main` after merges of PRs #185–#201.  
+**Active batch:** A1, A3, A4/A5, A7, A8 — invitation lifecycle, route/tenant authorization, version allocation, replay idempotency, and reanalysis provenance.  
+**Status:** PRs #185–#201 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1456, #1458, #1460, #1462, #1464, #1468, and #1469 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage crash/replay, deployed lab validation, and scientific qualification are not complete.
 
 ## Confirmed findings and corrections
 
