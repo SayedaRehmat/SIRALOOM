@@ -9,7 +9,7 @@ from backend.app.auth.principal import Principal
 
 
 class _Db:
-    def get(self, _model, object_id):
+    def get(self, _model, object_id, **_kwargs):
         return SimpleNamespace(id=object_id, case_id=object_id)
 
 
