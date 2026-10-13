@@ -297,9 +297,12 @@ def accept_organization_invitation(
     """Accepts an invitation only when the verified Firebase email exactly matches it."""
     subject, claims = _authenticate_bearer(authorization)
     email = _normalize_email(claims.get("email"))
+    # Acceptance is a single-use state transition. Lock the invitation row
+    # until the membership and ACCEPTED status commit together, so two requests
+    # cannot both observe PENDING and provision the same invitation concurrently.
     invitation = db.scalar(select(OrganizationInvitation).where(
         OrganizationInvitation.token_hash == _hash_invitation_token(payload.token),
-    ))
+    ).with_for_update())
     if not invitation:
         raise HTTPException(status_code=404, detail="Invitation not found")
     if invitation.status != "PENDING":
