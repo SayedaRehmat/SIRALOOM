@@ -1776,7 +1776,8 @@ def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypa
     def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
         normalized = statement.lower()
         if (
-            "organization_invitations" in normalized
+            normalized.lstrip().startswith("select")
+            and "organization_invitations" in normalized
             and "token_hash" in normalized
             and not getattr(thread_local, "invitation_lookup_seen", False)
         ):
