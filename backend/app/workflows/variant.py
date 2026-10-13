@@ -1493,12 +1493,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
                 db.commit()
                 return
+            except (SQLAlchemyError, OSError) as exc:
+                # Database and artifact-storage failures are operationally retryable.
+                # Preserve the normalization checkpoint and let the bounded Celery
+                # retry policy re-enter this stage instead of terminally failing it.
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code="NORMALIZATION_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_RETRY_SCHEDULED",
+                    actor_id="siraloom-normalizer",
+                    next_step="normalize",
+                )
+                raise TransientWorkflowError(
+                    "Normalization persistence or artifact storage failed; retrying from the durable stage checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="NORMALIZATION_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
-                # Catch-all: anything unexpected here (a bug, an artifact-storage failure,
-                # etc.) must still mark *this step* FAILED with a message, or the UI is
-                # left showing "Running" forever while the outer handler only flips
-                # analysis.status. See NORMALIZATION_FAILED/REFERENCE errors above for the
-                # expected-error path; this is the safety net for everything else.
+                # Unexpected non-operational failures remain explicit terminal errors.
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code="NORMALIZATION_UNEXPECTED_ERROR", error_message=str(exc))
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
