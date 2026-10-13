@@ -1730,7 +1730,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     metadata={"next_step": "RESOURCE_REQUIRED"},
                 )
                 analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
                 audit.record(
                     event_type="ANNOTATION_RESOURCE_DECISION",
                     case_id=analysis.case_id,
@@ -1739,20 +1738,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     actor_id="resource-registry",
                     reason=str(exc),
                 )
+                # State transition and its audit event must become durable together.
                 db.commit()
                 return
-
-                annotation_resource = resolution.resource
-                try:
-                    annotation_execution = resolve_resource_execution(db, resource=annotation_resource)
-                    provider = registry.require(provider_id=annotation_execution.contract.provider_id, provider_version=annotation_execution.contract.provider_version).factory(annotation_execution.contract)
-                except (ResourceExecutionError, GeneBeError) as exc:
-                    mark_step(db, annotation_step, StepStatus.RESOURCE_FAILURE, error_code="ANNOTATION_EXECUTION_CONTRACT_INVALID", error_message=str(exc), metadata={"next_step": "ANNOTATION_RESOURCE_REVIEW"})
-                    analysis.status = AnalysisStatus.RESOURCE_FAILURE
-                    db.commit()
-                    audit.record(event_type="ANNOTATION_EXECUTION_CONTRACT_INVALID", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="resource-registry", reason=str(exc), payload={"resource_id": str(annotation_resource.id)})
-                    db.commit()
-                    return
 
                 if resolution.used_fallback:
                     annotation_step.metadata_json = {
