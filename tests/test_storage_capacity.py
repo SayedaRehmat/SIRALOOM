@@ -95,8 +95,20 @@ def test_laboratory_capacity_policy_blocks_disabled_preflight():
     assert result["enabled"] is False
 
 
-def test_laboratory_capacity_policy_preserves_ready_preflight():
+def test_laboratory_capacity_policy_blocks_snapshot_without_reservation():
     capacity = {"status": "READY", "enabled": True, "issues": [], "reservation_supported": False}
+
+    result = storage_capacity.enforce_laboratory_capacity_policy(
+        capacity,
+        is_laboratory=True,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert any(issue["code"] == "LAB_CAPACITY_RESERVATION_REQUIRED" for issue in result["issues"])
+
+
+def test_laboratory_capacity_policy_accepts_atomic_reservation():
+    capacity = {"status": "READY", "enabled": True, "issues": [], "reservation_supported": True}
 
     result = storage_capacity.enforce_laboratory_capacity_policy(
         capacity,
