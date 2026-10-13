@@ -72,8 +72,8 @@ def test_production_compose_mounts_the_same_scratch_path_for_api_and_worker():
     compose_path = Path(__file__).resolve().parents[1] / "docker-compose.production.yml"
     compose = compose_path.read_text(encoding="utf-8")
     api_block = compose.split("  api:" + chr(10), 1)[1].split(chr(10) + "  worker:", 1)[0]
-    worker_block = compose.split("  worker:" + chr(10), 1)[1].split(chr(10) + "  frontend:", 1)[0]
-    expected_mount = "${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch"
+    worker_block = compose.split("  worker:" + chr(10), 1)[1].split(chr(10) + "  beat:", 1)[0]
+    expected_mount = "${SIRALOOM_SCRATCH_HOST_PATH:?Set SIRALOOM_SCRATCH_HOST_PATH to persistent scratch storage}:/data/siraloom/scratch"
     assert expected_mount in api_block
     assert expected_mount in worker_block
     assert "TMPDIR: /data/siraloom/scratch" in api_block
