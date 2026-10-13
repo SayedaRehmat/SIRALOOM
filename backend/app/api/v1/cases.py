@@ -96,7 +96,9 @@ def get_case(case_id: UUID, db: Session = Depends(get_db), principal: Principal 
 
 @router.patch("/{case_id}")
 def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    case = db.get(Case, case_id)
+    # Case metadata and its audit/reanalysis candidates form one serialized
+    # clinical-history mutation. Lock the row before reading the prior state.
+    case = db.get(Case, case_id, with_for_update=True)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_tenant(case, principal)
