@@ -36,16 +36,18 @@ def upgrade():
             "Resolve the duplicate specimen records explicitly, then rerun migration 0047."
         )
 
-    op.create_unique_constraint(
-        "uq_specimen_case_identifier",
-        "specimens",
-        ["case_id", "specimen_identifier"],
-    )
+    # Batch mode supports SQLite CI/dev databases and emits the equivalent
+    # ALTER TABLE constraint operation on PostgreSQL.
+    with op.batch_alter_table("specimens") as batch_op:
+        batch_op.create_unique_constraint(
+            "uq_specimen_case_identifier",
+            ["case_id", "specimen_identifier"],
+        )
 
 
 def downgrade():
-    op.drop_constraint(
-        "uq_specimen_case_identifier",
-        "specimens",
-        type_="unique",
-    )
+    with op.batch_alter_table("specimens") as batch_op:
+        batch_op.drop_constraint(
+            "uq_specimen_case_identifier",
+            type_="unique",
+        )
