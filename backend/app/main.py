@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import settings
@@ -19,6 +21,36 @@ from backend.app.api.v1.reanalysis import router as reanalysis_router
 from backend.app.api.v1.membership import router as membership_router
 
 app = FastAPI(title=f"{settings.app_name} Variant API", version="0.1.0")
+
+
+@app.on_event("startup")
+def enforce_production_configuration() -> None:
+    """Refuse to serve traffic when mandatory production controls are absent."""
+    if settings.app_env.strip().lower() != "production":
+        return
+
+    problems: list[str] = []
+    if not settings.firebase_auth_required:
+        problems.append("FIREBASE_AUTH_REQUIRED must be true")
+    if not settings.firebase_project_id:
+        problems.append("FIREBASE_PROJECT_ID must be configured")
+    if not settings.firebase_credentials_path:
+        problems.append("FIREBASE_CREDENTIALS_PATH must be configured")
+    elif not Path(settings.firebase_credentials_path).is_file():
+        problems.append("Firebase Admin credentials file is not readable at the configured path")
+    if not settings.public_base_url.lower().startswith("https://"):
+        problems.append("PUBLIC_BASE_URL must use HTTPS")
+    if not settings.frontend_origin.lower().startswith("https://"):
+        problems.append("FRONTEND_ORIGIN must use HTTPS")
+    if not settings.storage_capacity_preflight_enabled:
+        problems.append("STORAGE_CAPACITY_PREFLIGHT_ENABLED must be true")
+
+    if problems:
+        raise RuntimeError(
+            "SIRALOOM production startup blocked by incomplete security/deployment configuration: "
+            + "; ".join(problems)
+        )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,7 +86,7 @@ def root():
         "platform": "SIRALOOM",
         "service": "SIRALOOM Variant",
         "phase": "1",
-        "status": "development",
+        "status": settings.app_env,
     }
 
 
