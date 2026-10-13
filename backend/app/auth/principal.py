@@ -45,8 +45,15 @@ def _development_principal(db: Session) -> Principal:
 def get_current_principal(request: Request, db: Session = Depends(get_db)) -> Principal:
     authorization = request.headers.get("Authorization", "")
     if not authorization.startswith("Bearer "):
-        if settings.firebase_auth_required or settings.app_env.lower() == "production":
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bearer authentication is required")
+        # The implicit local identity is a development/test convenience only.
+        # Every shared environment (including staging and preview deployments)
+        # must authenticate explicitly; "not production" is not a safe boundary.
+        environment = settings.app_env.strip().lower()
+        if settings.firebase_auth_required or environment not in {"development", "test"}:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Bearer authentication is required",
+            )
         return _development_principal(db)
 
     token = authorization.removeprefix("Bearer ").strip()
