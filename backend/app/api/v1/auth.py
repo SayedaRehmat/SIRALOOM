@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.application.entitlements import create_trial_entitlement, get_entitlement, summarize
 from backend.app.auth.principal import Principal, _verify_firebase_token, get_current_principal
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.config import settings
 from backend.app.infrastructure.db.models import Organization, OrganizationMembership, User
 from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
