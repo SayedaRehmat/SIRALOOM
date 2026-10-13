@@ -1633,3 +1633,114 @@ def test_real_celery_worker_loss_redelivers_and_recovers_checkpoint(tmp_path):
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_concurrent_case_create_returns_one_durable_case():
+    """Exercise the real unique-key race through the case API service function."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    from backend.app.api.v1.cases import create as create_case
+    from backend.app.auth.principal import Principal
+    from backend.app.domain.schemas import CaseCreate
+    from backend.app.infrastructure.db.models import AuditEvent
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_identifier = f"concurrent-case-{uuid4()}"
+    barrier = threading.Barrier(2)
+    results = []
+    errors = []
+
+    class RacingSession(Session):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._first_scalar = True
+
+        def scalar(self, statement, *args, **kwargs):
+            # Ensure both transactions complete the pre-insert existence check
+            # before either is allowed to continue to the insert.
+            if self._first_scalar:
+                self._first_scalar = False
+                barrier.wait(timeout=15)
+            return super().scalar(statement, *args, **kwargs)
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"case-create-race-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Case Creation Race Test",
+                role="bioinformatician",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        principal = Principal(
+            user_id=user_id,
+            organization_id=organization_id,
+            role="bioinformatician",
+            subject=str(user_id),
+        )
+
+        def create_one():
+            try:
+                with RacingSession(bind=engine) as db:
+                    results.append(create_case(
+                        CaseCreate(case_identifier=case_identifier),
+                        db=db,
+                        principal=principal,
+                    ))
+            except Exception as exc:
+                errors.append(exc)
+
+        threads = [threading.Thread(target=create_one) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+
+        assert all(not thread.is_alive() for thread in threads), "case creation race did not finish"
+        assert not errors, [repr(error) for error in errors]
+        assert len(results) == 2
+        assert sorted(result["created"] for result in results) == [False, True]
+        assert len({result["case_id"] for result in results}) == 1
+
+        with Session(engine) as db:
+            cases = db.scalars(select(Case).where(
+                Case.organization_id == organization_id,
+                Case.case_identifier == case_identifier,
+            )).all()
+            assert len(cases) == 1
+            events = db.scalars(select(AuditEvent).where(
+                AuditEvent.case_id == cases[0].id,
+                AuditEvent.event_type == "CASE_CREATED",
+            )).all()
+            assert len(events) == 1
+    finally:
+        with Session(engine) as db:
+            case_ids = db.scalars(select(Case.id).where(
+                Case.organization_id == organization_id,
+                Case.case_identifier == case_identifier,
+            )).all()
+            if case_ids:
+                db.query(AuditEvent).filter(AuditEvent.case_id.in_(case_ids)).delete(synchronize_session=False)
+                db.query(Case).filter(Case.id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
