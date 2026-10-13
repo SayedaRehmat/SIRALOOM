@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from sqlalchemy import text
 
 from backend.app.config import settings
@@ -23,7 +23,8 @@ def _check_database() -> tuple[str, str | None]:
             db.execute(text("SELECT 1"))
         return "ok", None
     except Exception as exc:  # pragma: no cover - deployment/runtime dependent
-        return "error", str(exc)[:300]
+        # Do not return exception text: DB errors may contain hostnames or credentials.
+        return "error", type(exc).__name__
 
 
 def _check_redis() -> tuple[str, str | None]:
@@ -34,7 +35,7 @@ def _check_redis() -> tuple[str, str | None]:
         client.ping()
         return "ok", None
     except Exception as exc:  # pragma: no cover - deployment/runtime dependent
-        return "error", str(exc)[:300]
+        return "error", type(exc).__name__
 
 
 def _check_artifact_root() -> tuple[str, str | None]:
@@ -42,20 +43,23 @@ def _check_artifact_root() -> tuple[str, str | None]:
         root = Path(settings.artifact_root)
         root.mkdir(parents=True, exist_ok=True)
         probe = root / ".siraloom-readiness-probe"
-        probe.write_bytes(b"ok")
-        probe.unlink(missing_ok=True)
+        with probe.open("xb") as handle:
+            handle.write(b"ok")
+            handle.flush()
+        probe.unlink()
         return "ok", None
     except Exception as exc:  # pragma: no cover - deployment/runtime dependent
-        return "error", str(exc)[:300]
+        # Avoid exposing filesystem paths and OS error details to unauthenticated callers.
+        return "error", type(exc).__name__
 
 
 @router.get("/ready")
-def ready():
+def ready(response: Response):
     """Readiness probe for load balancers/orchestrators.
 
-    Liveness and readiness are intentionally separate: a process can be alive while
-    its database, queue, or artifact store is unavailable. The endpoint never returns
-    credentials or provider secrets.
+    Returns HTTP 503 whenever a required dependency is unavailable. Liveness remains
+    independent so orchestration can distinguish a live process from a ready service.
+    Diagnostic details are deliberately limited to exception class names.
     """
     checks = {}
     for name, checker in (
@@ -63,19 +67,29 @@ def ready():
         ("redis", _check_redis),
         ("artifact_store", _check_artifact_root),
     ):
-        status, error = checker()
-        checks[name] = {"status": status, **({"error": error} if error else {})}
+        check_status, error = checker()
+        checks[name] = {"status": check_status, **({"error": error} if error else {})}
 
     firebase = {
         "required": bool(settings.firebase_auth_required or settings.app_env.lower() == "production"),
         "configured": bool(settings.firebase_project_id),
     }
     if firebase["required"] and not firebase["configured"]:
-        checks["firebase"] = {"status": "error", "configured": False, "required": True, "error": "Firebase project is not configured"}
+        checks["firebase"] = {
+            "status": "error",
+            "configured": False,
+            "required": True,
+            "error": "Firebase project is not configured",
+        }
     else:
-        checks["firebase"] = {"status": "ok" if firebase["configured"] else "not_required", "configured": firebase["configured"], "required": firebase["required"]}
+        checks["firebase"] = {
+            "status": "ok" if firebase["configured"] else "not_required",
+            "configured": firebase["configured"],
+            "required": firebase["required"],
+        }
 
     overall = "ok" if all(c["status"] in {"ok", "not_required"} for c in checks.values()) else "not_ready"
+    response.status_code = status.HTTP_200_OK if overall == "ok" else status.HTTP_503_SERVICE_UNAVAILABLE
     return {
         "status": overall,
         "service": "SIRALOOM Variant API",
