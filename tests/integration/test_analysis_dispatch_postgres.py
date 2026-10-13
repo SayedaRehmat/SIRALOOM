@@ -1911,7 +1911,8 @@ def test_postgres_distinct_invitations_cannot_duplicate_one_identity(monkeypatch
     def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
         normalized = statement.lower()
         if (
-            "organization_invitations" in normalized
+            normalized.lstrip().startswith("select")
+            and "organization_invitations" in normalized
             and "token_hash" in normalized
             and not getattr(thread_local, "invitation_lookup_seen", False)
         ):
