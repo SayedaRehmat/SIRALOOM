@@ -5,7 +5,6 @@ stage, response artifact checkpointing, row persistence, partition scheduling, a
 redelivery recovery remain production code. This is orchestration coverage, not a
 live provider or clinical truth-set validation.
 """
-import gzip
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -55,8 +54,10 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             "1\t555\t.\tT\tC\t.\tPASS\t.\n",
             encoding="utf-8",
         )
-        normalized = tmp_path / "normalized.vcf.gz"
-        normalized.write_bytes(gzip.compress(source.read_bytes()))
+        # Use a plain VCF here: this fixture is testing annotation recovery,
+        # not BGZF/index handling by bcftools.
+        normalized = tmp_path / "normalized.vcf"
+        normalized.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
         with LocalSession() as db:
             db.add(Organization(
