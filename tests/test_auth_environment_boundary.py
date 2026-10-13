@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import HTTPException, Request
 import pytest
 
@@ -30,7 +32,7 @@ def test_shared_environments_reject_implicit_development_identity(monkeypatch, e
 
 def test_development_environment_keeps_explicit_local_identity_path(monkeypatch):
     expected = principal.Principal(
-        user_id=__import__("uuid").uuid4(),
+        user_id=uuid4(),
         organization_id=__import__("uuid").uuid4(),
         role="bioinformatician",
         subject="local-development-user",
