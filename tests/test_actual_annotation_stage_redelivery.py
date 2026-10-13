@@ -219,7 +219,11 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         real_step = workflow._step
 
         def stop_after_annotation_is_reconciled(db, received_analysis_id, step_id):
-            if step_id == "population":
+            # ensure_steps() reads/creates all workflow steps before annotation
+            # begins, including population. Only stop when the persistence helper
+            # has run twice: first commit + injected worker loss, then replay on
+            # redelivery. This keeps the stop boundary after actual reconciliation.
+            if step_id == "population" and persistence_calls["count"] >= 2:
                 raise SystemExit(74)
             return real_step(db, received_analysis_id, step_id)
 
