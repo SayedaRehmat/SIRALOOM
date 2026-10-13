@@ -38,7 +38,17 @@ def _validate_info(value: str, line_no: int) -> None:
             raise StrictVCFValidationError(f"Malformed INFO flag at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
 
 
-def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str] | None) -> tuple[str, int, list[str]]:
+def _validate_record(
+    fields: list[str],
+    line_no: int,
+    reference_contigs: set[str] | None,
+    expected_column_count: int | None = None,
+) -> tuple[str, int, list[str]]:
+    if expected_column_count is not None and len(fields) != expected_column_count:
+        raise StrictVCFValidationError(
+            f"Record has {len(fields)} columns but #CHROM declares {expected_column_count} at line {line_no}",
+            code="VCF_RECORD_COLUMN_COUNT_MISMATCH",
+        )
     if len(fields) < 8:
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
     chrom, pos_text, identifier, ref, alt, qual, filt, info = fields[:8]
@@ -157,8 +167,15 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         "The #CHROM header must begin with CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO",
                         code="VCF_HEADER_INVALID",
                     )
+                if len(columns) == 9:
+                    raise StrictVCFValidationError(
+                        "The #CHROM header must contain either the 8 fixed columns or FORMAT plus at least one sample",
+                        code="VCF_HEADER_INVALID",
+                    )
                 if len(columns) >= 9 and columns[8] != "FORMAT":
                     raise StrictVCFValidationError("Column 9 must be FORMAT when sample columns are present", code="VCF_HEADER_INVALID")
+                if len(columns) > 9 and any(not sample for sample in columns[9:]):
+                    raise StrictVCFValidationError("Sample names must not be empty", code="VCF_SAMPLE_INVALID")
                 if len(columns) > 9 and len(columns[9:]) != len(set(columns[9:])):
                     raise StrictVCFValidationError("Duplicate sample names are not allowed", code="VCF_SAMPLE_INVALID")
                 chrom_header = columns
@@ -173,13 +190,17 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         raise StrictVCFValidationError(f"Duplicate singleton header: {key}", code="VCF_HEADER_INVALID")
                     singleton_headers.add(key)
                 continue
-            if not found_header:
+            if not found_header or chrom_header is None:
                 raise StrictVCFValidationError(
-                    f"VCF data encountered before #CHROM at line {line_no}",
-                    code="VCF_HEADER_INVALID",
+                    f"VCF data encountered before #CHROM at line {line_no}", code="VCF_HEADER_INVALID"
                 )
             fields = line.split("\t")
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            _chrom, _pos, alts = _validate_record(
+                fields,
+                line_no,
+                reference_contigs,
+                expected_column_count=len(chrom_header),
+            )
             records += 1
             if len(alts) > 1:
                 multiallelic += 1
