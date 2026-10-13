@@ -29,7 +29,9 @@ jobs:
           FIREBASE_AUTH_REQUIRED: "false"
         run: pytest -q
       - name: Validate process startup scripts
-        run: sh -n scripts/start_worker.sh scripts/start_beat.sh
+        run: sh -n scripts/start_api.sh scripts/start_worker.sh scripts/start_beat.sh
+      - name: Build production backend container
+        run: docker build -f docker/backend.Dockerfile -t siraloom-backend:ci .
       - name: Compile Python
         run: python -m compileall backend scripts
 
@@ -117,6 +119,12 @@ jobs:
         env:
           POSTGRES_PASSWORD: ci-only-password
           FIREBASE_ADMIN_CREDENTIALS_HOST_PATH: /tmp/siraloom-firebase-admin.json
+          SIRALOOM_POSTGRES_HOST_PATH: /tmp/siraloom/postgres
+          SIRALOOM_REDIS_HOST_PATH: /tmp/siraloom/redis
+          SIRALOOM_ARTIFACT_HOST_PATH: /tmp/siraloom/artifacts
+          SIRALOOM_REFERENCE_HOST_PATH: /tmp/siraloom/references
+          SIRALOOM_RESOURCE_CACHE_HOST_PATH: /tmp/siraloom/resource-cache
+          SIRALOOM_SCRATCH_HOST_PATH: /tmp/siraloom/scratch
           NEXT_PUBLIC_SIRALOOM_API_BASE: https://example.invalid/api/v1
           NEXT_PUBLIC_FIREBASE_API_KEY: ci-demo
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-demo.firebaseapp.com
