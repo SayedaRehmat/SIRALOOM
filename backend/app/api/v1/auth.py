@@ -391,22 +391,43 @@ def update_organization_membership(
     principal: Principal = Depends(get_current_principal),
     db: Session = Depends(get_db),
 ):
-    """Suspends, revokes, or changes the role of a tenant member without permitting self-escalation."""
+    """Suspends, revokes, or changes a tenant member under serialized authorization."""
     try:
         membership_uuid = UUID(membership_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="Invalid membership id") from exc
 
-    if principal.role not in {"organization_admin", "lab_director"}:
-        raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
     if payload.status is not None and payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
         raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
-    if payload.role is not None:
-        _require_invitation_role(principal, payload.role)
 
-    # Serialize tenant membership changes before loading the row used for
-    # authorization and active-administrator invariant checks.
+    # The Principal was resolved earlier in the request. It may become stale
+    # while this request waits, so serialize first and re-read the actor's
+    # membership before trusting its role for this mutation.
     _lock_organization_membership_mutations(db, principal.organization_id)
+    actor_membership = db.scalar(
+        select(OrganizationMembership)
+        .where(
+            OrganizationMembership.organization_id == principal.organization_id,
+            OrganizationMembership.user_id == principal.user_id,
+            OrganizationMembership.status == "ACTIVE",
+        )
+        .with_for_update()
+    )
+    if actor_membership is None:
+        raise HTTPException(status_code=403, detail="An active organization membership is required to manage memberships")
+
+    current_principal = Principal(
+        user_id=principal.user_id,
+        organization_id=principal.organization_id,
+        role=actor_membership.role,
+        subject=principal.subject,
+        email=principal.email,
+    )
+    if current_principal.role not in {"organization_admin", "lab_director"}:
+        raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
+    if payload.role is not None:
+        _require_invitation_role(current_principal, payload.role)
+
     target = db.scalar(
         select(OrganizationMembership)
         .where(
@@ -417,9 +438,9 @@ def update_organization_membership(
     )
     if not target:
         raise HTTPException(status_code=404, detail="Membership not found")
-    if target.user_id == principal.user_id and payload.status in {"SUSPENDED", "REVOKED"}:
+    if target.user_id == current_principal.user_id and payload.status in {"SUSPENDED", "REVOKED"}:
         raise HTTPException(status_code=409, detail="You cannot suspend or revoke your own active membership")
-    _ensure_membership_admin_hierarchy(principal.role, target.role)
+    _ensure_membership_admin_hierarchy(current_principal.role, target.role)
 
     effective_role = payload.role if payload.role is not None else target.role
     effective_status = payload.status if payload.status is not None else target.status
@@ -433,7 +454,6 @@ def update_organization_membership(
     )
 
     if payload.role is not None:
-        _require_invitation_role(principal, payload.role)
         target.role = payload.role
         user = db.get(User, target.user_id)
         if user:
