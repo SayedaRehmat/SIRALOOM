@@ -143,10 +143,25 @@ def _reject_if_already_provisioned(db: Session, subject: str) -> User | None:
     return user
 
 
+def _lock_identity_provisioning(db: Session, subject: str) -> None:
+    """Serialize user provisioning for one verified Firebase subject on PostgreSQL.
+
+    Different invitations can target the same identity, and onboarding and
+    invitation acceptance share the same users table. Locking only an invitation
+    row is insufficient when the same subject presents two distinct tokens.
+    """
+    if db.bind is None or db.bind.dialect.name != "postgresql":
+        return
+    digest = hashlib.sha256(f"siraloom:identity:{subject}".encode("utf-8")).digest()
+    lock_key = int.from_bytes(digest[:8], byteorder="big", signed=True)
+    db.execute(text("SELECT pg_advisory_xact_lock(:lock_key)"), {"lock_key": lock_key})
+
+
 def _provision_organization(db: Session, *, subject: str, claims: dict, organization_name: str) -> tuple[Organization, User, OrganizationMembership]:
     """Creates an Organization, its owning User, and the organization_admin membership
     for a verified Firebase identity. The privileged initial role is assigned here on the
     server, never accepted from the client."""
+    _lock_identity_provisioning(db, subject)
     user = _reject_if_already_provisioned(db, subject)
     org = Organization(id=uuid4(), name=organization_name.strip(), external_identifier=None)
     db.add(org)
@@ -315,6 +330,7 @@ def accept_organization_invitation(
     if email != invitation.email.casefold():
         raise HTTPException(status_code=403, detail="The authenticated Firebase email does not match this invitation")
 
+    _lock_identity_provisioning(db, subject)
     user = db.scalar(select(User).where(User.external_subject == subject))
     if user:
         if user.organization_id != invitation.organization_id:
