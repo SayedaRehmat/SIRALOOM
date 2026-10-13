@@ -44,13 +44,13 @@ def _validate_record(
     reference_contigs: set[str] | None,
     expected_column_count: int | None = None,
 ) -> tuple[str, int, list[str]]:
+    if len(fields) < 8:
+        raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
     if expected_column_count is not None and len(fields) != expected_column_count:
         raise StrictVCFValidationError(
             f"Record has {len(fields)} columns but #CHROM declares {expected_column_count} at line {line_no}",
             code="VCF_RECORD_COLUMN_COUNT_MISMATCH",
         )
-    if len(fields) < 8:
-        raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
     chrom, pos_text, identifier, ref, alt, qual, filt, info = fields[:8]
 
     if not chrom or chrom.startswith("#"):
