@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.reanalysis import _copy_rows
@@ -131,7 +131,7 @@ def test_reanalysis_reuses_only_upstream_observations_with_exact_provenance(
             db.commit()
 
             counts = tuple(
-                db.scalar(select(__import__("sqlalchemy").func.count(model.id)).where(
+                db.scalar(select(func.count(model.id)).where(
                     model.analysis_id == child_id
                 ))
                 for model in (Annotation, PopulationObservation, Evidence, ACMGAssessment)
