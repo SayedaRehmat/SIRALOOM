@@ -129,6 +129,12 @@ class Specimen(Base):
     received_datetime: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint(
+            "case_id", "specimen_identifier",
+            name="uq_specimen_case_identifier",
+        ),
+    )
 
 class Assay(Base):
     __tablename__ = "assays"
