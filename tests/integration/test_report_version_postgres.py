@@ -6,7 +6,8 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.enums import AnalysisStatus\nfrom backend.app.infrastructure.db.models import Analysis, Case, Organization, Report, User
+from backend.app.domain.enums import AnalysisStatus
+from backend.app.infrastructure.db.models import Analysis, Case, Organization, Report, User
 
 
 @pytest.mark.integration
