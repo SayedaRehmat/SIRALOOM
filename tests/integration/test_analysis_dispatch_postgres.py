@@ -1633,3 +1633,356 @@ def test_real_celery_worker_loss_redelivers_and_recovers_checkpoint(tmp_path):
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_concurrent_case_create_returns_one_durable_case():
+    """Exercise the real unique-key race through the case API service function."""
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    from backend.app.api.v1.cases import create as create_case
+    from backend.app.auth.principal import Principal
+    from backend.app.domain.schemas import CaseCreate
+    from backend.app.infrastructure.db.models import AuditEvent
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    user_id = uuid4()
+    case_identifier = f"concurrent-case-{uuid4()}"
+    barrier = threading.Barrier(2)
+    results = []
+    errors = []
+
+    class RacingSession(Session):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._first_scalar = True
+
+        def scalar(self, statement, *args, **kwargs):
+            # Ensure both transactions complete the pre-insert existence check
+            # before either is allowed to continue to the insert.
+            if self._first_scalar:
+                self._first_scalar = False
+                barrier.wait(timeout=15)
+            return super().scalar(statement, *args, **kwargs)
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"case-create-race-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@example.test",
+                display_name="Case Creation Race Test",
+                role="bioinformatician",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        principal = Principal(
+            user_id=user_id,
+            organization_id=organization_id,
+            role="bioinformatician",
+            subject=str(user_id),
+        )
+
+        def create_one():
+            try:
+                with RacingSession(bind=engine) as db:
+                    results.append(create_case(
+                        CaseCreate(case_identifier=case_identifier),
+                        db=db,
+                        principal=principal,
+                    ))
+            except Exception as exc:
+                errors.append(exc)
+
+        threads = [threading.Thread(target=create_one) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+
+        assert all(not thread.is_alive() for thread in threads), "case creation race did not finish"
+        assert not errors, [repr(error) for error in errors]
+        assert len(results) == 2
+        assert sorted(result["created"] for result in results) == [False, True]
+        assert len({result["case_id"] for result in results}) == 1
+
+        with Session(engine) as db:
+            cases = db.scalars(select(Case).where(
+                Case.organization_id == organization_id,
+                Case.case_identifier == case_identifier,
+            )).all()
+            assert len(cases) == 1
+            events = db.scalars(select(AuditEvent).where(
+                AuditEvent.case_id == cases[0].id,
+                AuditEvent.event_type == "CASE_CREATED",
+            )).all()
+            assert len(events) == 1
+    finally:
+        with Session(engine) as db:
+            case_ids = db.scalars(select(Case.id).where(
+                Case.organization_id == organization_id,
+                Case.case_identifier == case_identifier,
+            )).all()
+            if case_ids:
+                db.query(AuditEvent).filter(AuditEvent.case_id.in_(case_ids)).delete(synchronize_session=False)
+                db.query(Case).filter(Case.id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypatch):
+    """Two simultaneous accepts of one token must create one user and membership."""
+    from datetime import datetime, timedelta, timezone
+
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    import backend.app.api.v1.auth as auth_api
+    from backend.app.infrastructure.db.models import OrganizationMembership
+    from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id = uuid4()
+    inviter_id = uuid4()
+    invitation_id = uuid4()
+    invitation_token = f"single-use-{uuid4().hex}-long-token"
+    invited_subject = f"firebase-{uuid4()}"
+    invited_email = f"{uuid4().hex}@example.test"
+    barrier = threading.Barrier(2)
+    results = []
+    errors = []
+
+    def fake_authenticate(authorization):
+        barrier.wait(timeout=15)
+        return (
+            invited_subject,
+            {"uid": invited_subject, "email": invited_email, "name": "Invitee"},
+        )
+
+    monkeypatch.setattr(auth_api, "_authenticate_bearer", fake_authenticate)
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name=f"invitation-race-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(User(
+                id=inviter_id,
+                organization_id=organization_id,
+                external_subject=f"inviter-{inviter_id}",
+                email=f"{inviter_id}@example.test",
+                display_name="Invitation Admin",
+                role="organization_admin",
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(OrganizationInvitation(
+                id=invitation_id,
+                organization_id=organization_id,
+                email=invited_email,
+                role="read_only",
+                token_hash=auth_api._hash_invitation_token(invitation_token),
+                status="PENDING",
+                invited_by=inviter_id,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+            ))
+            db.commit()
+
+        def accept_one():
+            try:
+                with Session(engine) as db:
+                    result = auth_api.accept_organization_invitation(
+                        auth_api.InvitationAcceptance(token=invitation_token),
+                        authorization="Bearer integration-token",
+                        db=db,
+                    )
+                    results.append(result)
+            except Exception as exc:
+                errors.append(exc)
+
+        threads = [threading.Thread(target=accept_one) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+
+        assert all(not thread.is_alive() for thread in threads), "invitation acceptance race did not finish"
+        assert len(results) == 1
+        from fastapi import HTTPException
+        assert len(errors) == 1
+        assert isinstance(errors[0], HTTPException)
+        assert errors[0].status_code == 409
+
+        with Session(engine) as db:
+            invitation = db.get(OrganizationInvitation, invitation_id)
+            assert invitation.status == "ACCEPTED"
+            users = db.scalars(select(User).where(User.external_subject == invited_subject)).all()
+            assert len(users) == 1
+            memberships = db.scalars(select(OrganizationMembership).where(
+                OrganizationMembership.organization_id == organization_id,
+                OrganizationMembership.user_id == users[0].id,
+            )).all()
+            assert len(memberships) == 1
+            assert memberships[0].status == "ACTIVE"
+    finally:
+        with Session(engine) as db:
+            db.query(OrganizationInvitation).filter(
+                OrganizationInvitation.id == invitation_id
+            ).delete()
+            db.query(OrganizationMembership).filter(
+                OrganizationMembership.organization_id == organization_id
+            ).delete()
+            db.query(User).filter(User.organization_id == organization_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_distinct_invitations_cannot_duplicate_one_identity(monkeypatch):
+    """Different invitation tokens must not race to provision duplicate users."""
+    from datetime import datetime, timedelta, timezone
+    from fastapi import HTTPException
+
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    import backend.app.api.v1.auth as auth_api
+    from backend.app.infrastructure.db.models import OrganizationMembership
+    from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_ids = [uuid4(), uuid4()]
+    inviter_ids = [uuid4(), uuid4()]
+    invitation_ids = [uuid4(), uuid4()]
+    tokens = [f"identity-race-{uuid4().hex}-token", f"identity-race-{uuid4().hex}-token"]
+    subject = f"firebase-{uuid4()}"
+    email = f"{uuid4().hex}@example.test"
+    barrier = threading.Barrier(2)
+    results = []
+    errors = []
+
+    def fake_authenticate(authorization):
+        barrier.wait(timeout=15)
+        return (
+            subject,
+            {"uid": subject, "email": email, "name": "Identity Race Invitee"},
+        )
+
+    monkeypatch.setattr(auth_api, "_authenticate_bearer", fake_authenticate)
+
+    try:
+        for index in range(2):
+            with Session(engine) as db:
+                db.add(Organization(
+                    id=organization_ids[index],
+                    name=f"identity-race-org-{organization_ids[index]}",
+                    external_identifier=str(organization_ids[index]),
+                ))
+                db.commit()
+            with Session(engine) as db:
+                db.add(User(
+                    id=inviter_ids[index],
+                    organization_id=organization_ids[index],
+                    external_subject=f"inviter-{inviter_ids[index]}",
+                    email=f"{inviter_ids[index]}@example.test",
+                    display_name="Invitation Admin",
+                    role="organization_admin",
+                    status="ACTIVE",
+                ))
+                db.commit()
+            with Session(engine) as db:
+                db.add(OrganizationInvitation(
+                    id=invitation_ids[index],
+                    organization_id=organization_ids[index],
+                    email=email,
+                    role="read_only",
+                    token_hash=auth_api._hash_invitation_token(tokens[index]),
+                    status="PENDING",
+                    invited_by=inviter_ids[index],
+                    expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+                ))
+                db.commit()
+
+        def accept_one(index):
+            try:
+                with Session(engine) as db:
+                    results.append(auth_api.accept_organization_invitation(
+                        auth_api.InvitationAcceptance(token=tokens[index]),
+                        authorization="Bearer integration-token",
+                        db=db,
+                    ))
+            except Exception as exc:
+                errors.append(exc)
+
+        threads = [
+            threading.Thread(target=accept_one, args=(0,)),
+            threading.Thread(target=accept_one, args=(1,)),
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=30)
+
+        assert all(not thread.is_alive() for thread in threads), "identity provisioning race did not finish"
+        assert len(results) == 1
+        assert len(errors) == 1
+        assert isinstance(errors[0], HTTPException)
+        assert errors[0].status_code == 409
+
+        with Session(engine) as db:
+            users = db.scalars(select(User).where(User.external_subject == subject)).all()
+            assert len(users) == 1
+            memberships = db.scalars(select(OrganizationMembership).where(
+                OrganizationMembership.user_id == users[0].id,
+                OrganizationMembership.status == "ACTIVE",
+            )).all()
+            assert len(memberships) == 1
+            invitations = db.scalars(select(OrganizationInvitation).where(
+                OrganizationInvitation.id.in_(invitation_ids)
+            )).all()
+            assert sorted(inv.status for inv in invitations) == ["ACCEPTED", "PENDING"]
+    finally:
+        with Session(engine) as db:
+            db.query(OrganizationInvitation).filter(
+                OrganizationInvitation.id.in_(invitation_ids)
+            ).delete(synchronize_session=False)
+            db.query(OrganizationMembership).filter(
+                OrganizationMembership.organization_id.in_(organization_ids)
+            ).delete(synchronize_session=False)
+            db.query(User).filter(
+                User.organization_id.in_(organization_ids)
+            ).delete(synchronize_session=False)
+            db.query(Organization).filter(
+                Organization.id.in_(organization_ids)
+            ).delete(synchronize_session=False)
+            db.commit()
+        engine.dispose()
