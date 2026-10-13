@@ -170,12 +170,16 @@ function nextActionHref(nextStep?: string | null) {
   if (nextStep === "reportability" || nextStep === "report_finalization" || nextStep === "REPORTABILITY_REQUIRED") return "/app/reports";
   if (
     nextStep === "VALID_VCF_REQUIRED" ||
-    nextStep === "SUPPORTED_INPUT_REQUIRED" ||
+    nextStep === "SUPPORTED_INPUT_REQUIRED"
+  ) return "/app/cases";
+  if (
     nextStep === "REFERENCE_REQUIRED" ||
     nextStep === "REFERENCE_PACKAGE_REQUIRED" ||
+    nextStep === "REFERENCE_PACKAGE_NOT_FOUND" ||
     nextStep === "ANNOTATION_PROVIDER_REQUIRED" ||
-    nextStep === "POPULATION_RESOURCE_REQUIRED"
-  ) return "/app/cases";
+    nextStep === "POPULATION_RESOURCE_REQUIRED" ||
+    nextStep === "RESOURCE_REQUIRED"
+  ) return "/app/resources";
   return null;
 }
 
