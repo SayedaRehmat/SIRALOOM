@@ -60,11 +60,10 @@
 
 ## Remaining work before Phase A can be declared complete
 
-1. Complete endpoint-to-role-and-tenant coverage, including artifact downloads, report finalization, evidence/review mutations, and every worker/task entry point.
-2. Complete endpoint-to-role-and-tenant tests across all API routers and background worker entry points; the membership revocation race is now covered, but the full matrix is not.
-3. Add/verify PostgreSQL concurrency coverage for review-version allocation and case/specimen/audit transaction invariants beyond the currently passing targeted tests.
-4. Inject worker loss and side-effect failures at the actual normalization, population, evidence, ACMG, review, report creation, sign-out, and reanalysis stage bodies; prove idempotent replay and no duplicate durable artifacts/decisions.
-5. Verify cross-version reanalysis using pinned resource snapshots and compare reproducible output identities, evidence, classifications, and reports.
-6. Complete deployed environment checks, approved-resource recovery, storage/ingress capacity testing, and scientific benchmark validation from `docs/PHASE1_ACCEPTANCE_MATRIX.md`. Vercel currently reports a build-rate-limit failure; a successful post-merge deployment is not verified.
+1. Finish route-specific authorization/state-transition tests for artifact downloads, evidence/review mutations, report finalization, and worker/task entry points; global principal and shared tenant-boundary guards are now covered.
+2. Extend PostgreSQL concurrency coverage to broader case-update load, audit-chain sequencing, and invitation creation lifecycle; targeted specimen, report-version, classification-approval, last-admin, and invitation acceptance/revocation races pass.
+3. Inject worker loss and side-effect failures at actual population, evidence, ACMG, review, sign-out, and reanalysis stage bodies; prove idempotent replay with no duplicate durable artifacts or decisions. Normalization artifacts and annotation/report paths now have targeted replay protections.
+4. Verify cross-version reanalysis using pinned resource snapshots and compare reproducible output identities, evidence, classifications, and reports against a controlled baseline.
+5. Complete deployed end-to-end testing, approved-resource recovery, storage/ingress capacity testing, and scientific benchmark validation from `docs/PHASE1_ACCEPTANCE_MATRIX.md`. The current main Vercel status is **Deployment rate limited — retry in 24 hours**; a successful post-merge deployment is not verified.
 
 **Decision:** do not label Phase A complete while these verification items remain open. Phase 1 clinical/scientific qualification is a separate release gate.
