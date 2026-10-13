@@ -508,6 +508,14 @@ def approve_classification(
     if not reason.strip():
         raise ReviewError("Approval reason is required")
 
+    # Approval creates a new immutable Classification row, so locking only
+    # the current row does not make version allocation safe: two transactions
+    # could both observe version N and attempt to create N+1. Serialize the
+    # version read/create transition on the durable Analysis row first.
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise ReviewError("Analysis not found")
+
     current = db.scalar(
         select(Classification)
         .where(Classification.analysis_id == analysis_id, Classification.variant_id == variant_id)
@@ -524,10 +532,6 @@ def approve_classification(
         raise ReviewConflictError(
             f"Classification review version conflict: expected {expected_version}, current {current.review_version}"
         )
-
-    analysis = db.get(Analysis, analysis_id)
-    if analysis is None:
-        raise ReviewError("Analysis not found")
 
     before = _classification_dict(current)
     approved_at = datetime.now(timezone.utc)
