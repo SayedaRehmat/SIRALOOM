@@ -431,6 +431,7 @@ def revoke_organization_invitation(
         raise HTTPException(status_code=409, detail="Expired invitation cannot be revoked")
 
     invitation.status = "REVOKED"
+    invitation.revoked_at = now
     db.add(invitation)
     AuditService(db).record(
         event_type="ORGANIZATION_INVITATION_REVOKED",
