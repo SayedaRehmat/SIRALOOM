@@ -142,5 +142,18 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
         subject_type="SPECIMEN", subject_id=str(specimen.id), operation="CREATE",
         after_state={"specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type},
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        existing = db.scalar(select(Specimen).where(
+            Specimen.case_id == case.id,
+            Specimen.specimen_identifier == payload.specimen_identifier,
+        ))
+        if existing is not None:
+            raise HTTPException(
+                status_code=409,
+                detail="A specimen with this identifier already exists in the case",
+            ) from exc
+        raise
     return {"specimen_id": str(specimen.id), "case_id": str(case.id), "specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type}
