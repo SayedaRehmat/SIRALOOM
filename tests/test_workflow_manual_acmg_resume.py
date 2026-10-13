@@ -19,6 +19,7 @@ from backend.app.infrastructure.db.models import (
     Analysis, Annotation, AuditEvent, Case, Classification, Organization,
     Report, User, Variant, WorkflowStep,
 )
+from backend.app.domain.variant_identity import stable_variant_uuid
 
 
 def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, tmp_path):
@@ -89,11 +90,13 @@ def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, t
                 created_by=user_id, analysis_version=1,
             ))
             db.flush()
+            canonical_key = "GRCh38:1:555:T:C"
+            variant_id = stable_variant_uuid(canonical_key)
             variant = Variant(
                 id=variant_id, genome_build="GRCh38", chromosome="1", position=555,
                 reference="T", alternate="C", normalization_status="NORMALIZED",
-                canonical_key=f"GRCh38:1:555:T:C:{variant_id}",
-                identifiers={},
+                canonical_key=canonical_key,
+                identifiers={"canonical_key_sha256": __import__("hashlib").sha256(canonical_key.encode()).hexdigest()},
             )
             db.add(variant)
             db.flush()
