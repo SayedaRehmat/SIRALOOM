@@ -1720,272 +1720,272 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         provider_version=annotation_execution.contract.provider_version,
                     )
                     provider = implementation.factory(annotation_execution.contract)
-            if resolution.used_fallback:
-                annotation_step.metadata_json = {
-                    **(annotation_step.metadata_json or {}),
-                    "resource_fallback": {
-                        "requested_resource_id": str(resolution.requested_resource_id),
-                        "fallback_resource_id": str(resolution.fallback_resource_id),
-                        "action": resolution.decision.action.value,
-                    },
-                }
-                db.add(annotation_step)
-                db.commit()
-                audit.record(
-                    event_type="ANNOTATION_RESOURCE_FALLBACK",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="resource-registry",
-                    reason=resolution.decision.message,
-                    payload={
-                        "requested_resource_id": str(resolution.requested_resource_id),
-                        "fallback_resource_id": str(resolution.fallback_resource_id),
-                        "provider": provider.provider_id,
-                        "reference_build": normalize_build(analysis.reference_build),
-                    },
-                )
-                db.commit()
+                if resolution.used_fallback:
+                    annotation_step.metadata_json = {
+                        **(annotation_step.metadata_json or {}),
+                        "resource_fallback": {
+                            "requested_resource_id": str(resolution.requested_resource_id),
+                            "fallback_resource_id": str(resolution.fallback_resource_id),
+                            "action": resolution.decision.action.value,
+                        },
+                    }
+                    db.add(annotation_step)
+                    db.commit()
+                    audit.record(
+                        event_type="ANNOTATION_RESOURCE_FALLBACK",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="resource-registry",
+                        reason=resolution.decision.message,
+                        payload={
+                            "requested_resource_id": str(resolution.requested_resource_id),
+                            "fallback_resource_id": str(resolution.fallback_resource_id),
+                            "provider": provider.provider_id,
+                            "reference_build": normalize_build(analysis.reference_build),
+                        },
+                    )
+                    db.commit()
 
-            # One streamed iterator drives all annotation batches; no repeated file scans.
-            genome = "hg38" if normalize_build(analysis.reference_build) == "GRCh38" else "hg19"
-            expected_count = int((normalization_step.metadata_json or {}).get("record_count", 0) or 0)
-            scheduler = PartitionScheduler(db)
-            worker_id = f"workflow:{analysis.id}"
-            for start, batch in _iter_variant_batches(normalized_path, reference_build, batch_limit):
-                end = start + len(batch)
-                partition = db.scalar(select(AnalysisPartition).where(
-                    AnalysisPartition.analysis_id == analysis.id,
-                    AnalysisPartition.step_id == "annotate",
-                    AnalysisPartition.partition_key == _batch_key(start, end),
-                ))
-                if partition is None:
-                    raise RuntimeError(f"Annotation execution partition missing: {_batch_key(start, end)}")
-                if partition.status != "SUCCEEDED":
-                    claimed = scheduler.claim_next(analysis.id, "annotate", worker_id)
-                    if claimed is None or claimed.id != partition.id:
-                        raise PartitionCapacityError("No resource capacity available for the next annotation partition")
-                # The lease token is the fencing generation. A worker may
-                # keep the stable workflow identity across retries, but every
-                # successful claim receives a new token.
-                lease_token = claimed.lease_token if partition.status == "RUNNING" else None
-                if partition.status == "RUNNING" and not lease_token:
-                    raise PartitionLeaseError("Claimed annotation partition has no lease fencing token")
-                variant_ids = {
-                    canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate): stable_variant_uuid(canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate))
-                    for v in batch
-                }
-                key = _batch_key(start, end)
-                # Reuse is allowed only for the exact governed observation
-                # identity. A row from another resource release must never be
-                # mistaken for the current annotation result.
-                existing_rows = db.scalars(
-                    select(Annotation).where(
-                        Annotation.analysis_id == analysis.id,
-                        Annotation.provider_name == provider.provider_id,
-                        Annotation.provider_version == provider.provider_version,
-                        Annotation.resource_id == annotation_resource.id,
-                        Annotation.resource_version == annotation_resource.version,
-                        Annotation.variant_id.in_(list(variant_ids.values())),
-                    )
-                ).all()
-
-                # Legacy/unbound or resource-drifted observations are unsafe to
-                # merge into the current governed result set. Fail closed rather
-                # than allowing the same analysis to contain scientifically
-                # ambiguous annotation releases.
-                conflicting_rows = db.scalars(
-                    select(Annotation).where(
-                        Annotation.analysis_id == analysis.id,
-                        Annotation.provider_name == provider.provider_id,
-                        Annotation.variant_id.in_(list(variant_ids.values())),
-                        or_(
-                            Annotation.provider_version != provider.provider_version,
-                            Annotation.resource_id.is_(None),
-                            Annotation.resource_id != annotation_resource.id,
-                            Annotation.resource_version.is_(None),
-                            Annotation.resource_version != annotation_resource.version,
-                        ),
-                    )
-                ).all()
-                if conflicting_rows:
-                    raise ResourceConsumptionError(
-                        "ANNOTATION_OBSERVATION_IDENTITY_CONFLICT",
-                        "Existing annotation observations for this analysis use a different "
-                        "provider/resource identity; the analysis cannot silently mix annotation releases.",
-                    )
-
-                existing_variant_rows = {
-                    row.id: row for row in db.scalars(
-                        select(Variant).where(Variant.id.in_(list(variant_ids.values())))
-                    ).all()
-                }
-                existing_keys = {
-                    canonical_key(
-                        normalize_build(analysis.reference_build),
-                        existing_variant_rows[ann.variant_id].chromosome,
-                        existing_variant_rows[ann.variant_id].position,
-                        existing_variant_rows[ann.variant_id].reference,
-                        existing_variant_rows[ann.variant_id].alternate,
-                    )
-                    for ann in existing_rows
-                    if ann.variant_id in existing_variant_rows
-                }
-                checkpoint = _batch_checkpoint(annotation_step, start, end)
-                if checkpoint.get("status") == "SUCCEEDED" and all(k in existing_keys for k in variant_ids):
-                    if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                        scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
-                    continue
-                if all(k in existing_keys for k in variant_ids):
-                    _save_batch_checkpoint(
-                        db, annotation_step, start, end, status="SUCCEEDED",
-                        attempt=int(checkpoint.get("attempt", 0)),
-                        metadata={"provider": provider.provider_id, "recovered_existing_rows": True, "variant_count": len(batch)},
-                        commit=False,
-                    )
-                    if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                        scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
-                    continue
-
-                attempt = int(checkpoint.get("attempt", 0)) + 1
-                _save_batch_checkpoint(
-                    db, annotation_step, start, end, status="RUNNING", attempt=attempt,
-                    metadata={"provider": provider.provider_id, "variant_count": len(batch)},
-                )
-                execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={"provider": provider.provider_id, "genome": genome})
-                db.commit()
-                try:
-                    scheduler.heartbeat(partition.id, worker_id, lease_token)
-                    payloads = _load_annotation_response_checkpoint(
-                        db,
-                        step=annotation_step,
-                        start=start,
-                        end=end,
-                        analysis=analysis,
-                        resource=annotation_resource,
-                        provider_id=provider.provider_id,
-                        provider_version=provider.provider_version,
-                        temporary_paths=temporary_artifact_paths,
-                    )
-                    if payloads is None:
-                        payloads = provider.annotate(batch, {"genome": genome})
-                        scheduler.heartbeat(partition.id, worker_id, lease_token)
-                        _ensure_annotation_request_fingerprint(
-                            payloads,
-                            analysis=analysis,
-                            start=start,
-                            end=end,
-                            resource=annotation_resource,
-                            provider_id=provider.provider_id,
-                            provider_version=provider.provider_version,
+                # One streamed iterator drives all annotation batches; no repeated file scans.
+                genome = "hg38" if normalize_build(analysis.reference_build) == "GRCh38" else "hg19"
+                expected_count = int((normalization_step.metadata_json or {}).get("record_count", 0) or 0)
+                scheduler = PartitionScheduler(db)
+                worker_id = f"workflow:{analysis.id}"
+                for start, batch in _iter_variant_batches(normalized_path, reference_build, batch_limit):
+                    end = start + len(batch)
+                    partition = db.scalar(select(AnalysisPartition).where(
+                        AnalysisPartition.analysis_id == analysis.id,
+                        AnalysisPartition.step_id == "annotate",
+                        AnalysisPartition.partition_key == _batch_key(start, end),
+                    ))
+                    if partition is None:
+                        raise RuntimeError(f"Annotation execution partition missing: {_batch_key(start, end)}")
+                    if partition.status != "SUCCEEDED":
+                        claimed = scheduler.claim_next(analysis.id, "annotate", worker_id)
+                        if claimed is None or claimed.id != partition.id:
+                            raise PartitionCapacityError("No resource capacity available for the next annotation partition")
+                    # The lease token is the fencing generation. A worker may
+                    # keep the stable workflow identity across retries, but every
+                    # successful claim receives a new token.
+                    lease_token = claimed.lease_token if partition.status == "RUNNING" else None
+                    if partition.status == "RUNNING" and not lease_token:
+                        raise PartitionLeaseError("Claimed annotation partition has no lease fencing token")
+                    variant_ids = {
+                        canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate): stable_variant_uuid(canonical_key(v.genome_build, v.chromosome, v.position, v.reference, v.alternate))
+                        for v in batch
+                    }
+                    key = _batch_key(start, end)
+                    # Reuse is allowed only for the exact governed observation
+                    # identity. A row from another resource release must never be
+                    # mistaken for the current annotation result.
+                    existing_rows = db.scalars(
+                        select(Annotation).where(
+                            Annotation.analysis_id == analysis.id,
+                            Annotation.provider_name == provider.provider_id,
+                            Annotation.provider_version == provider.provider_version,
+                            Annotation.resource_id == annotation_resource.id,
+                            Annotation.resource_version == annotation_resource.version,
+                            Annotation.variant_id.in_(list(variant_ids.values())),
                         )
-                        sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
-                        complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
-                        db.commit()
-                        _persist_annotation_response_checkpoint(
+                    ).all()
+
+                    # Legacy/unbound or resource-drifted observations are unsafe to
+                    # merge into the current governed result set. Fail closed rather
+                    # than allowing the same analysis to contain scientifically
+                    # ambiguous annotation releases.
+                    conflicting_rows = db.scalars(
+                        select(Annotation).where(
+                            Annotation.analysis_id == analysis.id,
+                            Annotation.provider_name == provider.provider_id,
+                            Annotation.variant_id.in_(list(variant_ids.values())),
+                            or_(
+                                Annotation.provider_version != provider.provider_version,
+                                Annotation.resource_id.is_(None),
+                                Annotation.resource_id != annotation_resource.id,
+                                Annotation.resource_version.is_(None),
+                                Annotation.resource_version != annotation_resource.version,
+                            ),
+                        )
+                    ).all()
+                    if conflicting_rows:
+                        raise ResourceConsumptionError(
+                            "ANNOTATION_OBSERVATION_IDENTITY_CONFLICT",
+                            "Existing annotation observations for this analysis use a different "
+                            "provider/resource identity; the analysis cannot silently mix annotation releases.",
+                        )
+
+                    existing_variant_rows = {
+                        row.id: row for row in db.scalars(
+                            select(Variant).where(Variant.id.in_(list(variant_ids.values())))
+                        ).all()
+                    }
+                    existing_keys = {
+                        canonical_key(
+                            normalize_build(analysis.reference_build),
+                            existing_variant_rows[ann.variant_id].chromosome,
+                            existing_variant_rows[ann.variant_id].position,
+                            existing_variant_rows[ann.variant_id].reference,
+                            existing_variant_rows[ann.variant_id].alternate,
+                        )
+                        for ann in existing_rows
+                        if ann.variant_id in existing_variant_rows
+                    }
+                    checkpoint = _batch_checkpoint(annotation_step, start, end)
+                    if checkpoint.get("status") == "SUCCEEDED" and all(k in existing_keys for k in variant_ids):
+                        if partition.status == "RUNNING" and partition.lease_owner == worker_id:
+                            scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
+                        continue
+                    if all(k in existing_keys for k in variant_ids):
+                        _save_batch_checkpoint(
+                            db, annotation_step, start, end, status="SUCCEEDED",
+                            attempt=int(checkpoint.get("attempt", 0)),
+                            metadata={"provider": provider.provider_id, "recovered_existing_rows": True, "variant_count": len(batch)},
+                            commit=False,
+                        )
+                        if partition.status == "RUNNING" and partition.lease_owner == worker_id:
+                            scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "recovered_existing_rows": True})
+                        continue
+
+                    attempt = int(checkpoint.get("attempt", 0)) + 1
+                    _save_batch_checkpoint(
+                        db, annotation_step, start, end, status="RUNNING", attempt=attempt,
+                        metadata={"provider": provider.provider_id, "variant_count": len(batch)},
+                    )
+                    execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={"provider": provider.provider_id, "genome": genome})
+                    db.commit()
+                    try:
+                        scheduler.heartbeat(partition.id, worker_id, lease_token)
+                        payloads = _load_annotation_response_checkpoint(
                             db,
-                            artifacts,
-                            analysis=analysis,
                             step=annotation_step,
                             start=start,
                             end=end,
-                            payloads=payloads,
+                            analysis=analysis,
                             resource=annotation_resource,
                             provider_id=provider.provider_id,
                             provider_version=provider.provider_version,
+                            temporary_paths=temporary_artifact_paths,
                         )
-                    else:
-                        sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
-                        complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                        if payloads is None:
+                            payloads = provider.annotate(batch, {"genome": genome})
+                            scheduler.heartbeat(partition.id, worker_id, lease_token)
+                            _ensure_annotation_request_fingerprint(
+                                payloads,
+                                analysis=analysis,
+                                start=start,
+                                end=end,
+                                resource=annotation_resource,
+                                provider_id=provider.provider_id,
+                                provider_version=provider.provider_version,
+                            )
+                            sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                            complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                            db.commit()
+                            _persist_annotation_response_checkpoint(
+                                db,
+                                artifacts,
+                                analysis=analysis,
+                                step=annotation_step,
+                                start=start,
+                                end=end,
+                                payloads=payloads,
+                                resource=annotation_resource,
+                                provider_id=provider.provider_id,
+                                provider_version=provider.provider_version,
+                            )
+                        else:
+                            sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                            complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                            db.commit()
+                            scheduler.heartbeat(partition.id, worker_id, lease_token)
+                    except (GeneBeError, VEPProviderError) as exc:
+                        complete_resource_execution(
+                            db,
+                            execution_record,
+                            status="FAILED",
+                            error_code="ANNOTATION_PROVIDER_TRANSIENT" if exc.retryable else "ANNOTATION_PROVIDER_ERROR",
+                            error_message=str(exc),
+                        )
                         db.commit()
-                        scheduler.heartbeat(partition.id, worker_id, lease_token)
-                except (GeneBeError, VEPProviderError) as exc:
-                    complete_resource_execution(
-                        db,
-                        execution_record,
-                        status="FAILED",
-                        error_code="ANNOTATION_PROVIDER_TRANSIENT" if exc.retryable else "ANNOTATION_PROVIDER_ERROR",
-                        error_message=str(exc),
-                    )
-                    db.commit()
-                    if exc.retryable:
+                        if exc.retryable:
+                            if partition.status == "RUNNING" and partition.lease_owner == worker_id:
+                                scheduler.fail(partition.id, worker_id, lease_token, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
+                            _save_batch_checkpoint(
+                                db, annotation_step, start, end, status="RETRYING", attempt=attempt,
+                                metadata={"error": str(exc)},
+                            )
+                            mark_step(db, annotation_step, StepStatus.RETRYING, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
+                            raise TransientWorkflowError(str(exc), countdown=min(60, 5 * attempt)) from exc
                         if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                            scheduler.fail(partition.id, worker_id, lease_token, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
+                            scheduler.fail(partition.id, worker_id, lease_token, error_code="ANNOTATION_PROVIDER_ERROR", error_message=str(exc))
                         _save_batch_checkpoint(
-                            db, annotation_step, start, end, status="RETRYING", attempt=attempt,
+                            db, annotation_step, start, end, status="FAILED", attempt=attempt,
                             metadata={"error": str(exc)},
                         )
-                        mark_step(db, annotation_step, StepStatus.RETRYING, error_code="ANNOTATION_PROVIDER_TRANSIENT", error_message=str(exc))
-                        raise TransientWorkflowError(str(exc), countdown=min(60, 5 * attempt)) from exc
-                    if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                        scheduler.fail(partition.id, worker_id, lease_token, error_code="ANNOTATION_PROVIDER_ERROR", error_message=str(exc))
-                    _save_batch_checkpoint(
-                        db, annotation_step, start, end, status="FAILED", attempt=attempt,
-                        metadata={"error": str(exc)},
-                    )
-                    raise
+                        raise
 
-                new_count, returned_rows = _persist_annotation_batch_rows(
-                    db,
-                    analysis=analysis,
-                    provider=provider,
-                    annotation_resource=annotation_resource,
-                    variant_ids=variant_ids,
-                    existing_rows=existing_rows,
-                    payloads=payloads,
-                    batch_key=key,
-                )
-                _save_batch_checkpoint(
-                    db, annotation_step, start, end, status="SUCCEEDED", attempt=attempt,
-                    metadata={"provider": provider.provider_id, "new_annotation_rows": new_count, "returned_rows": returned_rows},
-                    commit=False,
-                )
-                if partition.status == "RUNNING" and partition.lease_owner == worker_id:
-                    scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "variant_count": len(batch)})
-                else:
-                    raise PartitionLeaseError(
-                        f"Annotation partition {partition.id} lost its lease before result persistence"
+                    new_count, returned_rows = _persist_annotation_batch_rows(
+                        db,
+                        analysis=analysis,
+                        provider=provider,
+                        annotation_resource=annotation_resource,
+                        variant_ids=variant_ids,
+                        existing_rows=existing_rows,
+                        payloads=payloads,
+                        batch_key=key,
                     )
+                    _save_batch_checkpoint(
+                        db, annotation_step, start, end, status="SUCCEEDED", attempt=attempt,
+                        metadata={"provider": provider.provider_id, "new_annotation_rows": new_count, "returned_rows": returned_rows},
+                        commit=False,
+                    )
+                    if partition.status == "RUNNING" and partition.lease_owner == worker_id:
+                        scheduler.succeed(partition.id, worker_id, lease_token, metadata={"provider": provider.provider_id, "variant_count": len(batch)})
+                    else:
+                        raise PartitionLeaseError(
+                            f"Annotation partition {partition.id} lost its lease before result persistence"
+                        )
+                    audit.record(
+                        event_type="ANNOTATION_BATCH_COMPLETED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SERVICE",
+                        actor_id=provider.provider_id,
+                        input_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}],
+                        workflow={"step": "annotate", "batch": key, "provider_version": provider.provider_version},
+                        payload={"variant_count": len(batch), "new_annotation_rows": new_count},
+                    )
+                    db.commit()
+
+                persisted_count = db.scalar(
+                    select(func.count(Annotation.id)).where(
+                        Annotation.analysis_id == analysis.id,
+                        Annotation.provider_name == provider.provider_id,
+                    )
+                ) or 0
+                if persisted_count < expected_count:
+                    raise GeneBeError(
+                        f"Annotation checkpoint reconciliation failed: expected {expected_count} rows, found {persisted_count}"
+                    )
+                annotation_step.input_artifacts = [str(normalized_artifact.id)] if normalized_artifact else []
+                mark_step(db, annotation_step, StepStatus.SUCCEEDED, metadata={
+                    "provider": provider.provider_id,
+                    "provider_version": provider.provider_version,
+                    "count": persisted_count,
+                    "batch_limit": batch_limit,
+                    "checkpointed": True,
+                })
                 audit.record(
-                    event_type="ANNOTATION_BATCH_COMPLETED",
+                    event_type="ANNOTATION_COMPLETED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SERVICE",
                     actor_id=provider.provider_id,
                     input_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}],
-                    workflow={"step": "annotate", "batch": key, "provider_version": provider.provider_version},
-                    payload={"variant_count": len(batch), "new_annotation_rows": new_count},
+                    payload={"provider_results": persisted_count, "checkpointed_batches": len((annotation_step.metadata_json or {}).get("batches", {}))},
                 )
                 db.commit()
-
-            persisted_count = db.scalar(
-                select(func.count(Annotation.id)).where(
-                    Annotation.analysis_id == analysis.id,
-                    Annotation.provider_name == provider.provider_id,
-                )
-            ) or 0
-            if persisted_count < expected_count:
-                raise GeneBeError(
-                    f"Annotation checkpoint reconciliation failed: expected {expected_count} rows, found {persisted_count}"
-                )
-            annotation_step.input_artifacts = [str(normalized_artifact.id)] if normalized_artifact else []
-            mark_step(db, annotation_step, StepStatus.SUCCEEDED, metadata={
-                "provider": provider.provider_id,
-                "provider_version": provider.provider_version,
-                "count": persisted_count,
-                "batch_limit": batch_limit,
-                "checkpointed": True,
-            })
-            audit.record(
-                event_type="ANNOTATION_COMPLETED",
-                case_id=analysis.case_id,
-                analysis_id=analysis.id,
-                actor_type="SERVICE",
-                actor_id=provider.provider_id,
-                input_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}],
-                payload={"provider_results": persisted_count, "checkpointed_batches": len((annotation_step.metadata_json or {}).get("batches", {}))},
-            )
-            db.commit()
             except (ResourceConsumptionError, ResourceExecutionError) as exc:
                 mark_step(
                     db,
