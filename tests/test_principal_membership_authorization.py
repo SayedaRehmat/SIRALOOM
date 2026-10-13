@@ -23,7 +23,10 @@ class PrincipalSession:
         self.rows = iter((user, membership))
 
     def scalar(self, statement):
-        return next(self.rows)
+        row = next(self.rows)
+        if hasattr(row, "status") and row.status != "ACTIVE":
+            return None
+        return row
 
 
 def test_principal_uses_active_membership_role_not_stale_user_role(monkeypatch):
