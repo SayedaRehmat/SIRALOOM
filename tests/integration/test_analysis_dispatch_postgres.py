@@ -1751,7 +1751,6 @@ def test_postgres_concurrent_case_create_returns_one_durable_case():
 def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypatch):
     """Two simultaneous accepts of one token must create one user and membership."""
     from datetime import datetime, timedelta, timezone
-    from sqlalchemy import event
 
     database_url = os.environ.get("DATABASE_URL", "")
     if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
@@ -1870,7 +1869,6 @@ def test_postgres_invitation_acceptance_is_single_use_under_concurrency(monkeypa
 def test_postgres_distinct_invitations_cannot_duplicate_one_identity(monkeypatch):
     """Different invitation tokens must not race to provision duplicate users."""
     from datetime import datetime, timedelta, timezone
-    from sqlalchemy import event
     from fastapi import HTTPException
 
     database_url = os.environ.get("DATABASE_URL", "")
@@ -1973,7 +1971,6 @@ def test_postgres_distinct_invitations_cannot_duplicate_one_identity(monkeypatch
             )).all()
             assert sorted(inv.status for inv in invitations) == ["ACCEPTED", "PENDING"]
     finally:
-        event.remove(engine, "before_cursor_execute", before_cursor_execute)
         with Session(engine) as db:
             db.query(OrganizationInvitation).filter(
                 OrganizationInvitation.id.in_(invitation_ids)
