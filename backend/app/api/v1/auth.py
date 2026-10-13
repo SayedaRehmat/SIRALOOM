@@ -397,18 +397,29 @@ def update_organization_membership(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="Invalid membership id") from exc
 
-    target = db.get(OrganizationMembership, membership_uuid)
-    if not target or target.organization_id != principal.organization_id:
+    if principal.role not in {"organization_admin", "lab_director"}:
+        raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
+    if payload.status is not None and payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
+        raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
+    if payload.role is not None:
+        _require_invitation_role(principal, payload.role)
+
+    # Serialize tenant membership changes before loading the row used for
+    # authorization and active-administrator invariant checks.
+    _lock_organization_membership_mutations(db, principal.organization_id)
+    target = db.scalar(
+        select(OrganizationMembership)
+        .where(
+            OrganizationMembership.id == membership_uuid,
+            OrganizationMembership.organization_id == principal.organization_id,
+        )
+        .with_for_update()
+    )
+    if not target:
         raise HTTPException(status_code=404, detail="Membership not found")
     if target.user_id == principal.user_id and payload.status in {"SUSPENDED", "REVOKED"}:
         raise HTTPException(status_code=409, detail="You cannot suspend or revoke your own active membership")
-    if principal.role not in {"organization_admin", "lab_director"}:
-        raise HTTPException(status_code=403, detail="Your organization role is not authorized to manage memberships")
     _ensure_membership_admin_hierarchy(principal.role, target.role)
-    _lock_organization_membership_mutations(db, principal.organization_id)
-
-    if payload.status is not None and payload.status not in {"ACTIVE", "SUSPENDED", "REVOKED"}:
-        raise HTTPException(status_code=422, detail="Membership status must be ACTIVE, SUSPENDED, or REVOKED")
 
     effective_role = payload.role if payload.role is not None else target.role
     effective_status = payload.status if payload.status is not None else target.status
