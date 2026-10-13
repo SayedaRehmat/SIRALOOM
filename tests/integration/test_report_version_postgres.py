@@ -20,6 +20,7 @@ def test_postgres_report_version_allocation_is_serialized():
     organization_id = uuid4()
     user_id = uuid4()
     case_id = uuid4()
+    analysis_id = uuid4()
 
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name=f"report-{organization_id}", external_identifier=str(organization_id)))
