@@ -35,6 +35,13 @@
 - PR #191: https://github.com/SayedaRehmat/SIRALOOM/pull/191 — merged as `6c5fceff199bd18eac9e8072adced51f4f3c470e`; CI run #1442 passed all jobs. Migration 0047 enforces per-case specimen identifier uniqueness with a legacy-data preflight.
 - PR #192: https://github.com/SayedaRehmat/SIRALOOM/pull/192 — merged as `cb40988b3dc54211d42f47b3a6c4d8e676d60d4f`; CI run #1452 passed backend, full PostgreSQL integration suite, and frontend/container/Compose jobs. It revalidates the actor membership under lock and expands CI to run all tests under `tests/integration`, including report-version concurrency and last-admin revocation races.
 - PR #193: https://github.com/SayedaRehmat/SIRALOOM/pull/193 — merged as `e437bd32e28d22fdecb81c99bbffd5fb772d79d6`; CI run #1449 passed all jobs. Normalization database/storage failures now persist retry state and use bounded Celery retry.
+- PR #195: https://github.com/SayedaRehmat/SIRALOOM/pull/195 — merged as `710eb5d91b0d7a90a10c287ca36709b2076e052d`; CI run #1456 passed all jobs. Incremental reanalysis reuse preserves exact provenance for upstream observations.
+- PR #196: https://github.com/SayedaRehmat/SIRALOOM/pull/196 — merged as `d11ef9e38792c1ca915c33fe79f06002b9f18b55`; CI run #1458 passed all jobs. Concurrent classification approval allocates one immutable next version.
+- PR #197: https://github.com/SayedaRehmat/SIRALOOM/pull/197 — merged as `08759891d31361526a2a7bf0b29c4c1db4b83a63`; CI run #1460 passed all jobs. Every non-public API route is checked for a server-resolved principal.
+- PR #198: https://github.com/SayedaRehmat/SIRALOOM/pull/198 — merged as `2e52330fdeed9b17ea0a23d0263983a6f1b104de`; CI run #1462 passed all jobs. Shared object accessors are tested for cross-tenant 404 behavior.
+- PR #199: https://github.com/SayedaRehmat/SIRALOOM/pull/199 — merged as `e45a45af6e23a82ed0cee24a3d3ff89b9d3c2f11`; CI run #1464 passed all jobs. Normalization artifacts have deterministic replay identities and integrity checks.
+- PR #200: https://github.com/SayedaRehmat/SIRALOOM/pull/200 — merged as `1ce0623b90cb3ac59e2034f5cbe472cd3016dde6`; CI run #1469 passed all jobs. Invitation revocation is serialized against acceptance and audited.
+- PR #201: https://github.com/SayedaRehmat/SIRALOOM/pull/201 — merged as `f8e5ab1650bf6c8eed7733959f7fdc6311e59c92`; CI run #1468 passed all jobs. Shared role policies have exhaustive role-matrix tests.
 - GitHub CI success does not establish successful Vercel deployment, live laboratory end-to-end execution, clinical validity, accreditation, or clinical qualification.
 
 ## Requirements traceability
