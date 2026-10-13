@@ -156,6 +156,24 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         monkeypatch.setattr(db_module, "SessionLocal", LocalSession)
         monkeypatch.setattr(db_module, "engine", engine)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
+        # Isolate the annotation recovery boundary from VCF parser/normalizer
+        # behavior: the production workflow still validates the source artifact,
+        # loads the persisted normalized artifact, schedules partitions, calls
+        # the provider adapter boundary, and persists/reconciles annotations.
+        monkeypatch.setattr(
+            workflow,
+            "_iter_variant_batches",
+            lambda *_a, **_k: iter([(
+                0,
+                [SimpleNamespace(
+                    genome_build="GRCh38",
+                    chromosome="1",
+                    position=555,
+                    reference="T",
+                    alternate="C",
+                )],
+            )]),
+        )
 
         class FakeProvider:
             provider_id = "GeneBe"
