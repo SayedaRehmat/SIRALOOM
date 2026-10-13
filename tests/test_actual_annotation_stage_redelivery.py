@@ -234,11 +234,32 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         queue.run_analysis_task.push_request(
             id=task_id, retries=0, delivery_info={"redelivered": False}
         )
+        first_delivery_exit = None
         try:
-            with pytest.raises(SystemExit, match="73"):
+            try:
                 queue.run_analysis_task.run(str(analysis_id))
+            except SystemExit as exc:
+                first_delivery_exit = exc
         finally:
             queue.run_analysis_task.pop_request()
+        if first_delivery_exit is None:
+            with LocalSession() as db:
+                current_analysis = db.get(Analysis, analysis_id)
+                step_states = [
+                    (step.step_id, str(step.status), step.error_code, step.error_message)
+                    for step in db.scalars(
+                        select(WorkflowStep).where(WorkflowStep.analysis_id == analysis_id)
+                        .order_by(WorkflowStep.step_order)
+                    ).all()
+                ]
+            pytest.fail(
+                "First delivery did not reach the injected post-commit worker-loss boundary; "
+                f"provider_calls={provider_calls['count']}, "
+                f"persistence_calls={persistence_calls['count']}, "
+                f"analysis_status={current_analysis.status if current_analysis else None}, "
+                f"step_states={step_states}"
+            )
+        assert str(first_delivery_exit.code) == "73"
 
         # Delivery 2 must use the same task ID with Celery's redelivered flag so
         # the production wrapper runs interrupted-execution reconciliation.
