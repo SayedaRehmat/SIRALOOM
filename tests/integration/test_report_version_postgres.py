@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.db.models import Case, Organization, Report, User
+from backend.app.domain.enums import AnalysisStatus\nfrom backend.app.infrastructure.db.models import Analysis, Case, Organization, Report, User
 
 
 @pytest.mark.integration
@@ -43,6 +43,24 @@ def test_postgres_report_version_allocation_is_serialized():
             created_by=user_id,
         ))
         db.commit()
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=case_id,
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="integration",
+            workflow_version="test",
+            status=AnalysisStatus.SUCCEEDED,
+            queue_task_id=None,
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=user_id,
+            analysis_version=1,
+        ))
+        db.commit()
 
     barrier = threading.Barrier(2)
     results = []
@@ -66,7 +84,7 @@ def test_postgres_report_version_allocation_is_serialized():
                 db.add(Report(
                     id=uuid4(),
                     case_id=case.id,
-                    analysis_id=uuid4(),
+                    analysis_id=analysis_id,
                     report_version=version,
                     language="en",
                     report_type="CLINICAL_INTERPRETATION",
@@ -100,6 +118,7 @@ def test_postgres_report_version_allocation_is_serialized():
     finally:
         with Session(engine) as db:
             db.query(Report).filter(Report.case_id == case_id).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(User).filter(User.id == user_id).delete()
             db.query(Organization).filter(Organization.id == organization_id).delete()
