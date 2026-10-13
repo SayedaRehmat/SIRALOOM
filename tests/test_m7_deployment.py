@@ -48,7 +48,7 @@ def test_readiness_fails_when_required_firebase_is_unconfigured(monkeypatch):
 
     client = TestClient(app)
     response = client.get("/api/v1/ready")
-    assert response.status_code == 200
+    assert response.status_code == 503
     payload = response.json()
     assert payload["status"] == "not_ready"
     assert payload["checks"]["firebase"]["status"] == "error"
