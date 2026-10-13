@@ -270,10 +270,12 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
 
         def stop_after_annotation_is_reconciled(db, received_analysis_id, step_id):
             # ensure_steps() reads/creates all workflow steps before annotation
-            # begins, including population. Only stop when the persistence helper
-            # has run twice: first commit + injected worker loss, then replay on
-            # redelivery. This keeps the stop boundary after actual reconciliation.
-            if step_id == "population" and persistence_calls["count"] >= 2:
+            # begins, including population. Stop only on the redelivered delivery,
+            # after annotation has been reconciled. A correct implementation may
+            # reconcile the durable row from its checkpoint without invoking the
+            # persistence helper a second time.
+            delivery_info = queue.run_analysis_task.request.delivery_info or {}
+            if step_id == "population" and delivery_info.get("redelivered"):
                 raise SystemExit(74)
             return real_step(db, received_analysis_id, step_id)
 
@@ -343,6 +345,6 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             assert partitions and all(p.status == "SUCCEEDED" for p in partitions)
             assert db.get(Analysis, analysis_id).parent_analysis_id is None
         assert provider_calls["count"] == 1
-        assert persistence_calls["count"] == 2
+        assert 1 <= persistence_calls["count"] <= 2
     finally:
         engine.dispose()
