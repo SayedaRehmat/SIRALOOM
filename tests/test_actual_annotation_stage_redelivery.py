@@ -229,14 +229,23 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
 
         monkeypatch.setattr(workflow, "_step", stop_after_annotation_is_reconciled)
 
+        # Delivery 1 simulates a worker dying after the annotation-row commit.
+        # The broker, not the first task invocation, performs redelivery.
         queue.run_analysis_task.push_request(
             id=task_id, retries=0, delivery_info={"redelivered": False}
         )
         try:
-            # The production task wrapper handles the injected worker-loss
-            # boundary, reconciles the persisted response/rows, and re-enters
-            # the real workflow. Stop only when the recovered workflow reaches
-            # the next stage so the test can inspect durable annotation state.
+            with pytest.raises(SystemExit, match="73"):
+                queue.run_analysis_task.run(str(analysis_id))
+        finally:
+            queue.run_analysis_task.pop_request()
+
+        # Delivery 2 must use the same task ID with Celery's redelivered flag so
+        # the production wrapper runs interrupted-execution reconciliation.
+        queue.run_analysis_task.push_request(
+            id=task_id, retries=0, delivery_info={"redelivered": True}
+        )
+        try:
             with pytest.raises(SystemExit, match="74"):
                 queue.run_analysis_task.run(str(analysis_id))
         finally:
