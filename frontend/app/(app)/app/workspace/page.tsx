@@ -388,7 +388,7 @@ export default function Home() {
         const next = await apiFetch(`/analyses/${analysisId}`);
         setAnalysis(next);
         setConnection("online");
-        const terminal = ["SUCCEEDED", "FAILED", "BLOCKED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"].includes(next.status);
+        const terminal = ["SUCCEEDED", "FAILED", "BLOCKED", "CANCELLED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"].includes(next.status);
         if (terminal && pollingRef.current) {
           clearInterval(pollingRef.current);
           pollingRef.current = null;
