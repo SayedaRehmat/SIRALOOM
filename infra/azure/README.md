@@ -19,7 +19,7 @@ A guarded PowerShell deployment script is provided for Windows users. It validat
 ~~~powershell
 $myPublicIp = (Invoke-RestMethod -Uri "https://api.ipify.org").Trim()
 $adminCidr = "$myPublicIp/32"
-.\scripts\azure\deploy-infrastructure.ps1 -SubscriptionId "<YOUR_SUBSCRIPTION_ID>" -ResourceGroup "rg-siraloom-validation" -Location "<AZURE_REGION>" -AdminCidr $adminCidr -SshPublicKeyPath (Join-Path $HOME ".ssh\id_ed25519.pub") -VmSize "Standard_D2s_v5" -DataDiskSizeGB 256 -DnsLabel "<UNIQUE_AZURE_DNS_LABEL>"
+.\scripts\azure\deploy-infrastructure.ps1 -SubscriptionId "<YOUR_SUBSCRIPTION_ID>" -ResourceGroup "rg-siraloom-validation" -Location "<AZURE_REGION>" -AdminCidr $adminCidr -SshPublicKeyPath (Join-Path $HOME ".ssh\id_ed25519.pub") -VmSize "Standard_B2als_v2" -DataDiskSizeGB 64 -DnsLabel "<UNIQUE_AZURE_DNS_LABEL>"
 ~~~
 
 Replace every placeholder before running. The DNS label must be globally unique in the selected Azure DNS namespace. Review the what-if plan and Azure Cost Management before typing DEPLOY. If your SSH public key is not at that path, pass the correct .pub path. The script can also be run with -WhatIf? No: it always displays Azure what-if first and only proceeds after explicit DEPLOY confirmation.
@@ -59,13 +59,13 @@ $sshPublicKey = (Get-Content "$HOME/.ssh/id_ed25519.pub" -Raw).Trim()
 $adminCidr = (Invoke-RestMethod -Uri "https://api.ipify.org").Trim() + "/32"
 
 az bicep build --file infra/azure/main.bicep
-az deployment group what-if --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters location=$location adminCidr=$adminCidr sshPublicKey="$sshPublicKey" vmSize="Standard_D2s_v5" dataDiskSizeGB=256
+az deployment group what-if --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters location=$location adminCidr=$adminCidr sshPublicKey="$sshPublicKey" vmSize="Standard_B2als_v2" dataDiskSizeGB=64
 ~~~
 
 Review the preview and ensure the SSH CIDR is your current public IP with /32. If your network changes, update the NSG rule before attempting SSH. Only after reviewing the what-if output, run the same command with what-if replaced by create:
 
 ~~~powershell
-az deployment group create --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters location=$location adminCidr=$adminCidr sshPublicKey="$sshPublicKey" vmSize="Standard_D2s_v5" dataDiskSizeGB=256
+az deployment group create --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters location=$location adminCidr=$adminCidr sshPublicKey="$sshPublicKey" vmSize="Standard_B2als_v2" dataDiskSizeGB=64
 ~~~
 
 The deployment may take several minutes, and cloud-init continues after the VM resource is created. Verify the instance view and cloud-init completion before cloning the repository or copying data.
@@ -76,7 +76,7 @@ From the repository root, Linux/macOS shell:
 
 ~~~bash
 az bicep build --file infra/azure/main.bicep
-az deployment group what-if --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters adminCidr="<YOUR_PUBLIC_IP>/32" sshPublicKey="$(cat ~/.ssh/id_ed25519.pub)" vmSize="Standard_D2s_v5" dataDiskSizeGB=256
+az deployment group what-if --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters adminCidr="<YOUR_PUBLIC_IP>/32" sshPublicKey="$(cat ~/.ssh/id_ed25519.pub)" vmSize="Standard_B2als_v2" dataDiskSizeGB=64
 ~~~
 
 On Windows PowerShell, pass the contents of your .pub file as the sshPublicKey parameter. A small VM is for smoke tests only; benchmark capacity must be measured. Disk sizing must include reference packages, incoming VCFs, intermediates, reports, database growth, scratch peak, and backup headroom.
@@ -84,7 +84,7 @@ On Windows PowerShell, pass the contents of your .pub file as the sshPublicKey p
 Review the what-if output before creating resources:
 
 ~~~bash
-az deployment group create --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters adminCidr="<YOUR_PUBLIC_IP>/32" sshPublicKey="$(cat ~/.ssh/id_ed25519.pub)" vmSize="Standard_D2s_v5" dataDiskSizeGB=256
+az deployment group create --resource-group rg-siraloom-validation --template-file infra/azure/main.bicep --parameters adminCidr="<YOUR_PUBLIC_IP>/32" sshPublicKey="$(cat ~/.ssh/id_ed25519.pub)" vmSize="Standard_B2als_v2" dataDiskSizeGB=64
 ~~~
 
 The template creates a Linux VM, static public IP, VNet, NSG, SSH-key-only access, and persistent data disk. It opens inbound 22 only from the supplied CIDR, and ports 80/443 for a later TLS reverse proxy. API port 8000 and frontend port 3000 are not exposed publicly. The data disk is formatted/mounted at /data/siraloom on first boot.
