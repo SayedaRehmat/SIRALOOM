@@ -103,7 +103,7 @@ def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, t
                 resource_id=None, resource_name="test-annotation", resource_version="test",
                 request_fingerprint="manual-acmg-resume-request",
                 response_sha256="manual-acmg-resume-response",
-                transcript_consequences=[], metadata_json={"test_fixture": True},
+                request_metadata={"test_fixture": True}, payload={"test_fixture": True},
             ))
             db.add(Classification(
                 id=uuid4(), variant_id=variant_id, analysis_id=analysis_id,
