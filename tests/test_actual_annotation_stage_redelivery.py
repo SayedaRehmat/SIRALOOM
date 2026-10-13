@@ -199,15 +199,25 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         contract = SimpleNamespace(provider_id="GeneBe", provider_version=provider.provider_version)
         execution = SimpleNamespace(contract=contract)
         candidate = SimpleNamespace(resource=resource, execution=execution)
-        registry = SimpleNamespace(require=lambda **_k: SimpleNamespace(factory=lambda _contract: provider))
-        monkeypatch.setattr(workflow, "register_builtin_providers", lambda: registry)
-        monkeypatch.setattr(
-            workflow, "build_resource_execution_plan",
-            lambda *_a, **_k: SimpleNamespace(
-                profile_type="TRIAL_PUBLIC", profile_version="test",
-                unavailable_optional=[], for_capability=lambda *_a, **_k: [candidate],
-            ),
+        registry = SimpleNamespace(
+            require=lambda **_k: SimpleNamespace(factory=lambda _contract: provider),
+            # Population is outside this test's boundary; no population adapter
+            # is advertised by the fixture, so the workflow can take its normal
+            # missing-optional-capability path after annotation recovery.
+            resolve=lambda **_k: None,
         )
+        monkeypatch.setattr(workflow, "register_builtin_providers", lambda: registry)
+
+        def fake_execution_plan(*_args, **kwargs):
+            requirements = kwargs.get("requirements", ())
+            capability = requirements[0].capability if requirements else None
+            candidates = [candidate] if capability == workflow.ResourceCapability.ANNOTATION else []
+            return SimpleNamespace(
+                profile_type="TRIAL_PUBLIC", profile_version="test",
+                unavailable_optional=[], for_capability=lambda _capability: candidates,
+            )
+
+        monkeypatch.setattr(workflow, "build_resource_execution_plan", fake_execution_plan)
         monkeypatch.setattr(workflow, "resolve_resource_execution", lambda *_a, **_k: execution)
         monkeypatch.setattr(
             workflow, "resolve_resource_with_fallback",
