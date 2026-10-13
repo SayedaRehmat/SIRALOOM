@@ -379,6 +379,76 @@ def accept_organization_invitation(
     }
 
 
+@router.post("/invitations/{invitation_id}/revoke")
+def revoke_organization_invitation(
+    invitation_id: str,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    """Revoke a pending invitation, serialized against single-use acceptance."""
+    try:
+        invitation_uuid = UUID(invitation_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid invitation id") from exc
+
+    # Revalidate the actor after serializing tenant membership changes so a
+    # stale Principal cannot revoke invitations after its admin role is removed.
+    _lock_organization_membership_mutations(db, principal.organization_id)
+    actor_membership = db.scalar(
+        select(OrganizationMembership)
+        .where(
+            OrganizationMembership.organization_id == principal.organization_id,
+            OrganizationMembership.user_id == principal.user_id,
+            OrganizationMembership.status == "ACTIVE",
+        )
+        .with_for_update()
+    )
+    if actor_membership is None:
+        raise HTTPException(status_code=403, detail="An active organization membership is required to revoke invitations")
+    if actor_membership.role not in {"organization_admin", "lab_director"}:
+        raise HTTPException(status_code=403, detail="Your organization role is not authorized to revoke invitations")
+
+    invitation = db.scalar(
+        select(OrganizationInvitation)
+        .where(
+            OrganizationInvitation.id == invitation_uuid,
+            OrganizationInvitation.organization_id == principal.organization_id,
+        )
+        .with_for_update()
+    )
+    if invitation is None:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    _ensure_membership_admin_hierarchy(actor_membership.role, invitation.role)
+    if invitation.status != "PENDING":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Invitation is {invitation.status.lower()} and cannot be revoked",
+        )
+    now = datetime.now(timezone.utc)
+    if invitation.expires_at <= now:
+        invitation.status = "EXPIRED"
+        db.commit()
+        raise HTTPException(status_code=409, detail="Expired invitation cannot be revoked")
+
+    invitation.status = "REVOKED"
+    db.add(invitation)
+    AuditService(db).record(
+        event_type="ORGANIZATION_INVITATION_REVOKED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="ORGANIZATION_INVITATION",
+        subject_id=str(invitation.id),
+        operation="REVOKE_INVITATION",
+        before_state={"status": "PENDING", "role": invitation.role, "email": invitation.email},
+        after_state={"status": "REVOKED", "role": invitation.role, "email": invitation.email},
+        reason="Organization administrator revoked a pending invitation.",
+    )
+    db.commit()
+    return {"invitation_id": str(invitation.id), "status": invitation.status}
+
+
 class MembershipUpdate(BaseModel):
     status: str | None = Field(default=None)
     role: str | None = Field(default=None)
