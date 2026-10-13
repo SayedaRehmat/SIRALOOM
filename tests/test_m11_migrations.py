@@ -32,3 +32,9 @@ def test_m11_full_sqlite_upgrade_reaches_qc_head(tmp_path, monkeypatch):
         "request_metadata",
         "observed_at",
     }.issubset(population_cols)
+    specimen_constraints = inspector.get_unique_constraints("specimens")
+    assert any(
+        constraint.get("name") == "uq_specimen_case_identifier"
+        and constraint.get("column_names") == ["case_id", "specimen_identifier"]
+        for constraint in specimen_constraints
+    )
