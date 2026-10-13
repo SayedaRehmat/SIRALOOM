@@ -33,7 +33,7 @@
 
 - Repository main branch and current README / dependency manifest fetched from GitHub.
 - Authentication principal, authorization helpers, case API, analysis dispatch, workflow orchestration, VCF validation, report API, reanalysis API, DB models, readiness endpoint, and release/acceptance documents inspected at source level.
-- Authentication regression tests passed in GitHub Actions backend job; PostgreSQL/Celery integration job passed. PR #185's frontend container/Compose verification was still in progress at last check. PR #186's test run was in progress at last check; no result is claimed for it yet.
+- Authentication regression tests passed in GitHub Actions backend job; PostgreSQL/Celery integration job passed. PR #185 run #1410 completed successfully across backend, PostgreSQL/Celery integration, and frontend/container/Compose jobs. PR #186's test run was in progress at last check; no result is claimed for it yet.
 - No production data or deployment was changed.
 
 ## Remaining work
