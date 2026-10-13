@@ -4101,6 +4101,12 @@ def _put_idempotent_stage_artifact(
     expected_metadata = dict(metadata or {})
     existing = db.get(Artifact, artifact_id)
     if existing is not None:
+        existing_metadata = dict(existing.metadata_json or {})
+        # The recorded command includes worker-local temporary paths. Those can
+        # legitimately differ after redelivery, while the scientific resource
+        # and normalization provenance must remain identical.
+        expected_metadata.pop("normalization_command", None)
+        existing_metadata.pop("normalization_command", None)
         if (
             existing.case_id != case_id
             or existing.analysis_id != analysis_id
@@ -4110,7 +4116,7 @@ def _put_idempotent_stage_artifact(
             or existing.genome_build != genome_build
             or existing.specimen_id != specimen_id
             or existing.validation_status != validation_status
-            or dict(existing.metadata_json or {}) != expected_metadata
+            or existing_metadata != expected_metadata
         ):
             raise RuntimeError(
                 f"Deterministic artifact identity {artifact_id} is already bound to different workflow provenance."
