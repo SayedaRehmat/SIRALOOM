@@ -1,9 +1,9 @@
 # SIRALOOM Phase A Engineering Audit Ledger
 
 **Updated:** 2026-10-14  
-**Audit baseline:** current main after merges of PRs #185–#207, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
+**Audit baseline:** current main after merges of PRs #185–#210, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
 **Active batch:** A1/A2, A4/A5, A7, A8/A9 — worker dispatch authorization, stage recovery/idempotency, reproducibility comparison, and lab qualification preflight.  
-**Status:** PRs #185–#207 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1455, #1456, #1458, #1460, #1462, #1464, #1468, #1469, #1477, #1479, #1480, #1482, and #1486 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage side-effect replay, deployed lab validation, and scientific qualification are not complete.
+**Status:** PRs #185–#210 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1455, #1456, #1458, #1460, #1462, #1464, #1468, #1469, #1477, #1479, #1480, #1482, #1486, #1492, and #1493 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage side-effect replay, deployed lab validation, and scientific qualification are not complete.
 
 ## Confirmed findings and corrections
 
@@ -31,6 +31,10 @@
 | A4-WORKFLOW-004 | High | Report artifact replay | A worker could persist a draft PDF artifact and die before the report row/checkpoint committed, leaving replay at risk of creating a second artifact. | PR #205 derives the draft PDF artifact ID deterministically from analysis and report version and reuses only matching bytes/provenance. | CI run #1479 passed all jobs; tests/test_report_artifact_replay_idempotency.py checks reuse and changed-byte rejection. Full report/sign-out crash injection remains open. |
 | A8-REANALYSIS-002 | High | Cross-version output comparison | Reanalysis reuse tests preserved upstream provenance but did not produce a stable comparison of pinned resources and scientific outputs. | PR #204 adds deterministic resource-snapshot and scientific-output fingerprints and returns INELIGIBLE_UNPINNED_RESOURCES when resource snapshots are absent or lack version/checksum pins. | CI run #1477 passed all jobs; controlled fixtures test matching output across workflow versions and classification drift. Real lab baseline comparison is not yet run. |
 | A9-LAB-001 | High | Laboratory registry/storage preflight | There was no read-only deployment preflight to inspect the actual organization-bound resource registry and configured artifact store before live qualification. | PR #206 adds scripts/qualify_lab_registry.py to verify binding/resource identity, ACTIVE state, version/SHA-256, qualified execution contract, active storage profile, and access to an existing artifact. | CI run #1480 passed all jobs. The script has not been run against a real laboratory database/storage environment; write capacity, ingress, E2E, and truth-set qualification remain separate. |
+
+
+| A1-AUTH-009 | High | Resource staging dispatch | Resource staging could begin recovery/mutation without checking the current persisted dispatch ID. | PR #210 persists a unique task ID before publication and rejects missing/stale task IDs before staging recovery or mutation. | CI run #1493 passed all jobs. |
+| A8-REANALYSIS-003 | High | Resource snapshot checksums | Annotation, evidence, and ACMG snapshots omitted registered resource IDs/checksums even when the observation referenced a registered resource. | PR #209 retains registered identity/version/checksum where available; unmatched resources remain explicitly unpinned. | CI run #1492 passed all jobs; controlled tests verify all three snapshot types. Historical snapshots are not silently rewritten. |
 
 ## Change and CI record
 
