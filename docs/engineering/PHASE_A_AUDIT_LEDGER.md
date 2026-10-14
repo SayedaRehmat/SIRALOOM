@@ -1,9 +1,9 @@
 # SIRALOOM Phase A Engineering Audit Ledger
 
 **Updated:** 2026-10-14  
-**Audit baseline:** current main after merges of PRs #185–#210, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
+**Audit baseline:** current main after merges of PRs #185–#211, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
 **Active batch:** A1/A2, A4/A5, A7, A8/A9 — worker dispatch authorization, stage recovery/idempotency, reproducibility comparison, and lab qualification preflight.  
-**Status:** PRs #185–#210 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1455, #1456, #1458, #1460, #1462, #1464, #1468, #1469, #1477, #1479, #1480, #1482, #1486, #1492, and #1493 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage side-effect replay, deployed lab validation, and scientific qualification are not complete.
+**Status:** PRs #185–#211 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1455, #1456, #1458, #1460, #1462, #1464, #1468, #1469, #1477, #1479, #1480, #1482, #1486, #1492, #1493, and #1495 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage side-effect replay, deployed lab validation, and scientific qualification are not complete.
 
 ## Confirmed findings and corrections
 
@@ -60,6 +60,7 @@
 - PR #206: https://github.com/SayedaRehmat/SIRALOOM/pull/206 — merged as afc1f30db62b4c76647788366cfeb5c2df288ca1; CI run #1480 passed all jobs. Read-only laboratory resource/storage preflight is available.
 - PR #209: https://github.com/SayedaRehmat/SIRALOOM/pull/209 — merged as c98ccff0fba748970498bec4b469347580f739ce; CI run #1492 passed all jobs. Registered checksums are retained in new annotation/evidence/ACMG snapshots.
 - PR #210: https://github.com/SayedaRehmat/SIRALOOM/pull/210 — merged as 6c7a8858d438f347c353cb209989b42b14460120; CI run #1493 passed all jobs. Resource staging tasks are fenced by unique persisted dispatch IDs.
+- PR #211: https://github.com/SayedaRehmat/SIRALOOM/pull/211 — merged as `f8a37d6879aa688ba6048dfa904e7d51b75215a6`; CI run #1495 passed all jobs. Route-level tests verify tenant denial precedes review/report/reanalysis mutation services.
 - PR #207: https://github.com/SayedaRehmat/SIRALOOM/pull/207 — merged as `fef5efe7d7ae3dd995fdda3b33beafeb8255a566`; CI run #1486 passed all jobs. Population, evidence, and ACMG filesystem/storage errors now enter bounded retry state.
 - GitHub CI success does not establish successful Vercel deployment, live laboratory end-to-end execution, clinical validity, accreditation, or clinical qualification.
 
@@ -70,7 +71,7 @@
 | A1: Authentication environment boundary | `backend/app/auth/principal.py:get_current_principal` | Corrected and merged; run #1410 passed. |
 | A1: Firebase token verification and active membership | `backend/app/auth/principal.py:_verify_firebase_token`, `get_current_principal` | Source checks revoked Firebase tokens and requires active membership; role-authority and membership-status regression tests passed in run #1432. |
 | A1: Invitation and membership lifecycle | `backend/app/api/v1/auth.py`, `backend/app/infrastructure/db/organization_invitations.py` | Invitation acceptance/revocation serialize on the same row; membership mutations revalidate the actor under the tenant lock. PostgreSQL acceptance/revocation and last-admin races passed in runs #1469 and #1452. |
-| A2: Role and tenant authorization | `backend/app/auth/authorization.py`, `backend/app/main.py`, API routes | All non-public API routes are checked for principal dependencies; shared accessors and role sets have passing tests. PRs #203 and #210 fence analysis, export, and resource-staging task dispatch identities; route-level mutation tests are pending in PR #211. |
+| A2: Role and tenant authorization | `backend/app/auth/authorization.py`, `backend/app/main.py`, API routes | All non-public API routes are checked for principal dependencies; shared accessors and role sets have passing tests. PRs #203 and #210 fence analysis, export, and resource-staging task dispatch identities; PR #211 adds route-level denial-before-mutation tests for review, report, and reanalysis endpoints; broader download/evidence/system-task coverage remains open. |
 | A3: Case lifecycle | `backend/app/api/v1/cases.py`, `backend/app/infrastructure/db/models.py`, migrations 0044 and 0047 | Duplicate case creation, case-row locking, specimen identity, report-version allocation, and classification approval version allocation have targeted tests. Wider concurrent case-update load and audit-chain transaction coverage remain open. |
 | A4/A5: VCF intake and workflow execution | `backend/app/domain/vcf_validation.py`, `backend/app/workflows/variant.py`, `backend/app/application/analysis.py`, artifact stores | Normalization operational retries and deterministic VCF/index artifact replay are covered; actual annotation redelivery, report-stage artifact retry, population scientific-gap handling, manual ACMG resume, and all-step interrupted-state recovery tests pass. Crash/replay of population, evidence, ACMG, review, sign-out, and reanalysis stage bodies remains to be proven end-to-end. |
 | A6: Evidence and classification | Workflow and evidence adapters/models | Evidence provenance, persisted evidence identity, ACMG evidence binding, classification version identity, and report snapshot hash checks have test coverage. Actual evidence/ACMG stage-body crash/replay and cross-version decision reproduction remain open. |
@@ -80,7 +81,7 @@
 
 ## Remaining work before Phase A can be declared complete
 
-1. Complete PR #211 route-specific mutation-guard tests and extend coverage to artifact downloads, evidence mutations, and every scheduled/system task's tenant-scoped query behavior. Analysis, export, and resource-staging dispatch identities are now fenced.
+1. Extend route-specific coverage to artifact downloads, evidence mutations, and every scheduled/system task's tenant-scoped query behavior. Analysis, export, and resource-staging dispatch identities are now fenced.
 2. Extend PostgreSQL concurrency coverage to broader case-update load, audit-chain sequencing, and invitation creation lifecycle; targeted specimen, report-version, classification-approval, last-admin, and invitation acceptance/revocation races pass.
 3. Inject worker loss and side-effect failures at actual population, evidence, ACMG, review, sign-out, and reanalysis stage bodies; prove idempotent replay with no duplicate durable artifacts or decisions. Normalization, annotation, report-artifact persistence, and bounded infrastructure retry paths have targeted protections; full stage-body replay remains to be tested.
 4. Run the PR #204 reproducibility manifest on actual parent/child analyses with pinned resource snapshots created under PR #209, then compare resource identities and scientific outputs against a controlled baseline dataset. Historical snapshots with missing checksums remain ineligible until a governed re-snapshot/reanalysis creates valid provenance.
