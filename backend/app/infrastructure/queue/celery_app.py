@@ -118,6 +118,12 @@ if Celery is not None:
         from backend.app.infrastructure.db.models import Analysis
         from sqlalchemy import text
 
+        # A worker is a system actor: the durable broker dispatch ID is its
+        # authorization capability. Missing IDs must never bypass generation
+        # fencing and permit direct invocation against an arbitrary analysis.
+        if not isinstance(task_id, str) or not task_id.strip():
+            return False
+
         # A PostgreSQL session-scoped advisory lock is the execution ownership
         # fence. Unlike a row lock, it remains held for the entire Celery task
         # because the claim session stays open until the task exits. If a worker
@@ -153,7 +159,7 @@ if Celery is not None:
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
             return False
-        if task_id is not None and analysis.queue_task_id != task_id:
+        if analysis.queue_task_id != task_id
             return False
         if analysis.status == AnalysisStatus.RUNNING:
             if allow_running:
@@ -379,6 +385,10 @@ if Celery is not None:
         from backend.app.infrastructure.db.models import CaseExport
         from sqlalchemy import text
 
+        # Export tasks likewise require the durable dispatch ID as capability.
+        if not isinstance(task_id, str) or not task_id.strip():
+            return False
+
         get_bind = getattr(db, "get_bind", None)
         bind = get_bind() if callable(get_bind) else None
         if bind is not None and bind.dialect.name == "postgresql":
@@ -398,7 +408,7 @@ if Celery is not None:
         export = db.get(CaseExport, export_id, with_for_update=True)
         if export is None:
             return False
-        if task_id is not None and export.queue_task_id != task_id:
+        if export.queue_task_id != task_id
             return False
         if export.status == "RUNNING":
             return allow_running
