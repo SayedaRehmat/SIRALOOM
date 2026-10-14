@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session, sessionmaker, create_engine
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 
 from backend.app.domain.reanalysis import snapshot_analysis_resources
 from backend.app.infrastructure.db.base import Base
