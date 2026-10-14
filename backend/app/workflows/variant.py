@@ -2682,6 +2682,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     },
                 )
                 db.commit()
+            except OSError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="population",
+                    error_code="POPULATION_STORAGE_RETRYING",
+                    error_message=str(exc),
+                    event_type="POPULATION_STORAGE_RETRY_SCHEDULED",
+                    actor_id="population-engine",
+                    next_step="population",
+                )
+                raise TransientWorkflowError(
+                    "Population stage filesystem/storage operation failed; retrying from the durable population checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="POPULATION_STORAGE_RETRY_EXHAUSTED",
+                ) from exc
             except SQLAlchemyError as exc:
                 _schedule_transient_step_retry(
                     db,
@@ -3170,6 +3187,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     },
                 )
                 db.commit()
+            except OSError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="build_evidence",
+                    error_code="EVIDENCE_INFRASTRUCTURE_RETRYING",
+                    error_message=str(exc),
+                    event_type="EVIDENCE_INFRASTRUCTURE_RETRY_SCHEDULED",
+                    actor_id="siraloom-evidence",
+                    next_step="build_evidence",
+                )
+                raise TransientWorkflowError(
+                    "Evidence stage filesystem/storage operation failed; retrying from the durable evidence checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="EVIDENCE_INFRASTRUCTURE_RETRY_EXHAUSTED",
+                ) from exc
             except SQLAlchemyError as exc:
                 _schedule_transient_step_retry(
                     db,
@@ -3494,6 +3528,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     payload={"automatic_fallback": False, "resource_gap": True},
                 )
                 return
+            except OSError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="acmg_assessment",
+                    error_code="ACMG_INFRASTRUCTURE_RETRYING",
+                    error_message=str(exc),
+                    event_type="ACMG_INFRASTRUCTURE_RETRY_SCHEDULED",
+                    actor_id="siraloom-acmg-specification-engine",
+                    next_step="acmg_assessment",
+                )
+                raise TransientWorkflowError(
+                    "ACMG stage filesystem/storage operation failed; retrying without fabricating a classification.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="ACMG_INFRASTRUCTURE_RETRY_EXHAUSTED",
+                ) from exc
             except SQLAlchemyError as exc:
                 _schedule_transient_step_retry(
                     db,
