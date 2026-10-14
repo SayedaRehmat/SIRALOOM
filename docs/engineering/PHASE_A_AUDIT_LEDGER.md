@@ -1,9 +1,9 @@
 # SIRALOOM Phase A Engineering Audit Ledger
 
 **Updated:** 2026-10-14  
-**Audit baseline:** current main after merges of PRs #185–#206, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
+**Audit baseline:** current main after merges of PRs #185–#207, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
 **Active batch:** A1/A2, A4/A5, A7, A8/A9 — worker dispatch authorization, stage recovery/idempotency, reproducibility comparison, and lab qualification preflight.  
-**Status:** PRs #185–#206 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1455, #1456, #1458, #1460, #1462, #1464, #1468, #1469, #1477, #1479, #1480, and #1482 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage side-effect replay, deployed lab validation, and scientific qualification are not complete.
+**Status:** PRs #185–#207 are merged. CI runs #1410, #1411, #1432, #1440, #1442, #1449, #1452, #1455, #1456, #1458, #1460, #1462, #1464, #1468, #1469, #1477, #1479, #1480, #1482, and #1486 passed their applicable jobs. The PostgreSQL job runs the full `tests/integration` suite. **Phase A remains open** because complete worker authorization, all-stage side-effect replay, deployed lab validation, and scientific qualification are not complete.
 
 ## Confirmed findings and corrections
 
@@ -54,6 +54,7 @@
 - PR #204: https://github.com/SayedaRehmat/SIRALOOM/pull/204 — merged as 028a7f31d956b80b24a71e7bc2e796a247ea693e; CI run #1477 passed all jobs. Deterministic resource/output manifests support controlled reanalysis comparison.
 - PR #205: https://github.com/SayedaRehmat/SIRALOOM/pull/205 — merged as 6f849cc2961e00ed44212670a1450431f03fde79; CI run #1479 passed all jobs. Draft report artifact persistence is replay-safe.
 - PR #206: https://github.com/SayedaRehmat/SIRALOOM/pull/206 — merged as afc1f30db62b4c76647788366cfeb5c2df288ca1; CI run #1480 passed all jobs. Read-only laboratory resource/storage preflight is available.
+- PR #207: https://github.com/SayedaRehmat/SIRALOOM/pull/207 — merged as `fef5efe7d7ae3dd995fdda3b33beafeb8255a566`; CI run #1486 passed all jobs. Population, evidence, and ACMG filesystem/storage errors now enter bounded retry state.
 - GitHub CI success does not establish successful Vercel deployment, live laboratory end-to-end execution, clinical validity, accreditation, or clinical qualification.
 
 ## Requirements traceability
@@ -75,8 +76,8 @@
 
 1. Finish route-specific authorization/state-transition tests for artifact downloads, evidence/review mutations, report finalization, and worker/task entry points; global principal and shared tenant-boundary guards are now covered.
 2. Extend PostgreSQL concurrency coverage to broader case-update load, audit-chain sequencing, and invitation creation lifecycle; targeted specimen, report-version, classification-approval, last-admin, and invitation acceptance/revocation races pass.
-3. Inject worker loss and side-effect failures at actual population, evidence, ACMG, review, sign-out, and reanalysis stage bodies; prove idempotent replay with no duplicate durable artifacts or decisions. Normalization, annotation, and report-artifact paths have targeted replay protections. PR #207 is pending and adds bounded retries for population/evidence/ACMG filesystem failures.
-4. Run the PR #204 reproducibility manifest on actual parent/child analyses with pinned resource snapshots, then compare resource identities and scientific outputs against a controlled baseline dataset.
+3. Inject worker loss and side-effect failures at actual population, evidence, ACMG, review, sign-out, and reanalysis stage bodies; prove idempotent replay with no duplicate durable artifacts or decisions. Normalization, annotation, and report-artifact paths have targeted replay protections. PR #207 is merged and adds bounded retries for population/evidence/ACMG filesystem failures; stage-body crash/replay remains to be tested.
+4. Merge and verify PR #209's resource-snapshot pinning change, then run the PR #204 reproducibility manifest on actual parent/child analyses with pinned resource snapshots and compare resource identities and scientific outputs against a controlled baseline dataset.
 5. Run `python scripts/qualify_lab_registry.py --organization-id <LAB_ORGANIZATION_UUID>` inside the target laboratory deployment, then complete deployed end-to-end testing, approved-resource recovery, storage write/capacity and ingress/load tests, and scientific benchmark validation from `docs/PHASE1_ACCEPTANCE_MATRIX.md`. The preflight has not been executed against a real lab database; CI and Vercel previews are not evidence of laboratory deployment or clinical qualification.
 
 **Decision:** do not label Phase A complete while these verification items remain open. Phase 1 clinical/scientific qualification is a separate release gate.
