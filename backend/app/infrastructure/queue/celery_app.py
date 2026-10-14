@@ -159,7 +159,7 @@ if Celery is not None:
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
             return False
-        if analysis.queue_task_id != task_id
+        if analysis.queue_task_id != task_id:
             return False
         if analysis.status == AnalysisStatus.RUNNING:
             if allow_running:
@@ -408,7 +408,7 @@ if Celery is not None:
         export = db.get(CaseExport, export_id, with_for_update=True)
         if export is None:
             return False
-        if export.queue_task_id != task_id
+        if export.queue_task_id != task_id:
             return False
         if export.status == "RUNNING":
             return allow_running
