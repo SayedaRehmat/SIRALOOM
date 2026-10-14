@@ -513,6 +513,7 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     from backend.app.workflows import variant as variant_module
 
     analysis_id = str(uuid4())
+    task_id = "transient-provider-test"
     transient = variant_module.TransientWorkflowError(
         "temporary annotation provider outage",
         countdown=25,
@@ -540,7 +541,7 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
         def get(self, model, received_analysis_id, **kwargs):
             from backend.app.domain.enums import AnalysisStatus
             assert kwargs == {"with_for_update": True}
-            return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED})()
+            return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": task_id})()
 
         def add(self, _row):
             pass
@@ -558,12 +559,16 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
     monkeypatch.setattr(celery_module.run_analysis_task, "retry", fake_retry)
 
+    task = celery_module.run_analysis_task
+    task.push_request(id=task_id, delivery_info={})
     try:
-        celery_module.run_analysis_task.run(analysis_id)
+        task.run(analysis_id)
     except RetryRequested:
         pass
     else:
         raise AssertionError("Expected Celery retry to raise its retry control exception")
+    finally:
+        task.pop_request()
     assert calls["exc"] is transient
     assert calls["countdown"] == 25
 
@@ -575,12 +580,14 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
     from backend.app.workflows import variant as variant_module
 
     analysis_id = str(uuid4())
+    task_id = "redelivery-recovery-test"
     events = []
 
     class FakeClaimSession:
         class Analysis:
             from backend.app.domain.enums import AnalysisStatus
             status = AnalysisStatus.QUEUED
+            queue_task_id = "redelivery-recovery-test"
 
         def __init__(self):
             self.analysis = self.Analysis()
@@ -638,7 +645,7 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
 
     task = celery_module.run_analysis_task
-    task.push_request(delivery_info={"redelivered": True})
+    task.push_request(id=task_id, delivery_info={"redelivered": True})
     try:
         result = task.run(analysis_id)
     finally:
@@ -867,7 +874,7 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
     )
 
     task = celery_module.run_analysis_task
-    task.push_request(delivery_info={"redelivered": True})
+    task.push_request(id="redelivered-worker-task", delivery_info={"redelivered": True})
     try:
         result = task.run(str(analysis_id))
     finally:
@@ -1360,6 +1367,7 @@ def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monk
 
     task = celery_module.run_analysis_task
     task.push_request(
+        id="redelivery-exhaustion-test",
         retries=task.max_retries,
         delivery_info={"redelivered": True},
     )
@@ -1404,6 +1412,7 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     from backend.app.workflows import variant as variant_module
 
     analysis_id = str(uuid4())
+    task_id = "first-delivery-test"
     events = []
 
     from backend.app.domain.enums import AnalysisStatus
@@ -1411,6 +1420,7 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     class FakeAnalysis:
         def __init__(self):
             self.status = AnalysisStatus.QUEUED
+            self.queue_task_id = task_id
 
     fake_analysis = FakeAnalysis()
 
@@ -1450,7 +1460,7 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     monkeypatch.setattr(variant_module, "run_variant_analysis", fake_run_variant_analysis)
 
     task = celery_module.run_analysis_task
-    task.push_request(delivery_info={})
+    task.push_request(id=task_id, delivery_info={})
     try:
         result = task.run(analysis_id)
     finally:
@@ -1470,6 +1480,7 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
     from backend.app.workflows import variant as variant_module
 
     analysis_id = str(uuid4())
+    task_id = "recovery-failure-test"
     events = []
 
     class RecoveryFailure(RuntimeError):
@@ -1480,6 +1491,7 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
     class FakeClaimSession:
         class Analysis:
             status = AnalysisStatus.QUEUED
+            queue_task_id = "recovery-failure-test"
 
         def get(self, model, received_analysis_id, **kwargs):
             assert kwargs == {"with_for_update": True}
@@ -1519,7 +1531,7 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
     monkeypatch.setattr(variant_module, "run_variant_analysis", fail_if_analysis_resumes)
 
     task = celery_module.run_analysis_task
-    task.push_request(delivery_info={"redelivered": True})
+    task.push_request(id=task_id, delivery_info={"redelivered": True})
     try:
         try:
             task.run(analysis_id)
@@ -1698,6 +1710,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
     from backend.app.workflows import variant as variant_module
 
     analysis_id = str(uuid4())
+    task_id = "retry-exhaustion-test"
     transient = variant_module.TransientWorkflowError(
         "provider remained unavailable",
         countdown=60,
@@ -1709,6 +1722,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
     class FakeClaimSession:
         class Analysis:
             status = AnalysisStatus.QUEUED
+            queue_task_id = "retry-exhaustion-test"
 
         def get(self, model, received_analysis_id, **kwargs):
             assert kwargs == {"with_for_update": True}
@@ -1768,6 +1782,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
 
     task = celery_module.run_analysis_task
     task.push_request(
+        id=task_id,
         retries=task.max_retries,
         delivery_info={},
     )
@@ -1974,7 +1989,7 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
 
     task = celery_module.run_analysis_task
 
-    task.push_request(retries=0, delivery_info={})
+    task.push_request(id="successful-retry-test", retries=0, delivery_info={})
     try:
         try:
             task.run(str(analysis_id))
@@ -1991,7 +2006,7 @@ def test_celery_successful_retry_resumes_durable_annotation_state(monkeypatch):
         assert db.get(WorkflowStep, step_id).status == StepStatus.RETRYING
         assert db.get(AnalysisPartition, partition_id).status == "READY"
 
-    task.push_request(retries=1, delivery_info={})
+    task.push_request(id="successful-retry-test", retries=1, delivery_info={})
     try:
         result = task.run(str(analysis_id))
     finally:
@@ -2169,7 +2184,7 @@ def test_worker_loss_after_execution_claim_resumes_on_redelivery(monkeypatch):
 
     task = celery_module.run_analysis_task
 
-    task.push_request(retries=0, delivery_info={})
+    task.push_request(id="worker-loss-task", retries=0, delivery_info={})
     try:
         try:
             task.run(str(analysis_id))
@@ -2186,7 +2201,7 @@ def test_worker_loss_after_execution_claim_resumes_on_redelivery(monkeypatch):
 
     assert events == ["run"]
 
-    task.push_request(retries=0, delivery_info={"redelivered": True})
+    task.push_request(id="worker-loss-task", retries=0, delivery_info={"redelivered": True})
     try:
         result = task.run(str(analysis_id))
     finally:
