@@ -147,12 +147,21 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         if key in seen:
             continue
         seen.add(key)
+        registered_resource = db.get(Resource, row.resource_id) if row.resource_id else None
         db.add(AnalysisResourceSnapshot(
-            id=uuid4(), analysis_id=analysis.id, resource_id=None,
-            resource_kind="ANNOTATION", resource_name=row.resource_name or row.provider_name,
-            provider=row.provider_name, version=row.resource_version or row.provider_version,
-            checksum=None, genome_build=analysis.reference_build,
-            metadata_json={"provider_version": row.provider_version},
+            id=uuid4(), analysis_id=analysis.id,
+            resource_id=registered_resource.id if registered_resource else None,
+            resource_kind="ANNOTATION",
+            resource_name=registered_resource.name if registered_resource else (row.resource_name or row.provider_name),
+            provider=registered_resource.provider if registered_resource else row.provider_name,
+            version=row.resource_version or (registered_resource.version if registered_resource else None) or row.provider_version,
+            checksum=registered_resource.checksum if registered_resource else None,
+            genome_build=analysis.reference_build,
+            metadata_json={
+                "provider_version": row.provider_version,
+                "observed_resource_version": row.resource_version,
+                "registered_resource_version": registered_resource.version if registered_resource else None,
+            },
         ))
         count += 1
 
@@ -165,12 +174,20 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         if key in seen:
             continue
         seen.add(key)
+        registered_resource = db.get(Resource, row.resource_id) if row.resource_id else None
         db.add(AnalysisResourceSnapshot(
-            id=uuid4(), analysis_id=analysis.id, resource_id=None,
-            resource_kind="EVIDENCE", resource_name=row.source_name,
-            provider=None, version=row.source_version,
-            checksum=None, genome_build=analysis.reference_build,
-            metadata_json={},
+            id=uuid4(), analysis_id=analysis.id,
+            resource_id=registered_resource.id if registered_resource else None,
+            resource_kind="EVIDENCE",
+            resource_name=registered_resource.name if registered_resource else row.source_name,
+            provider=registered_resource.provider if registered_resource else None,
+            version=row.source_version or (registered_resource.version if registered_resource else None),
+            checksum=registered_resource.checksum if registered_resource else None,
+            genome_build=analysis.reference_build,
+            metadata_json={
+                "source_version": row.source_version,
+                "registered_resource_version": registered_resource.version if registered_resource else None,
+            },
         ))
         count += 1
 
@@ -183,12 +200,28 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         if key in seen:
             continue
         seen.add(key)
+        specification_version = row.specification_version or row.framework_version
+        registered_resource = db.scalar(
+            select(Resource).where(
+                Resource.name == row.specification_id,
+                Resource.version == specification_version,
+                Resource.provider == row.specification_provider,
+            ).limit(1)
+        )
         db.add(AnalysisResourceSnapshot(
-            id=uuid4(), analysis_id=analysis.id, resource_id=None,
-            resource_kind="ACMG_RULE", resource_name=row.specification_id,
-            provider=row.specification_provider, version=row.specification_version or row.framework_version,
-            checksum=None, genome_build=analysis.reference_build,
-            metadata_json={"framework_name": row.framework_name, "framework_version": row.framework_version},
+            id=uuid4(), analysis_id=analysis.id,
+            resource_id=registered_resource.id if registered_resource else None,
+            resource_kind="ACMG_RULE",
+            resource_name=registered_resource.name if registered_resource else row.specification_id,
+            provider=registered_resource.provider if registered_resource else row.specification_provider,
+            version=specification_version,
+            checksum=registered_resource.checksum if registered_resource else None,
+            genome_build=analysis.reference_build,
+            metadata_json={
+                "framework_name": row.framework_name,
+                "framework_version": row.framework_version,
+                "registered_resource_version": registered_resource.version if registered_resource else None,
+            },
         ))
         count += 1
 
