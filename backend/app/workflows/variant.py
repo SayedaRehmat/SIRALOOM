@@ -3689,7 +3689,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         report_tmp.write(pdf)
                         report_tmp_path = Path(report_tmp.name)
                     try:
-                        artifact = artifacts.put_file(
+                        artifact = _put_idempotent_stage_artifact(
+                            artifacts,
+                            artifact_id=uuid5(
+                                analysis.id,
+                                f"siraloom:report-pdf:draft:v1:{version}",
+                            ),
                             db=db,
                             case_id=analysis.case_id,
                             analysis_id=analysis.id,
