@@ -3708,7 +3708,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "report_schema_version": content["report_schema_version"],
                                 "report_status": "DRAFT",
                             },
-                            validation_status="VALIDATED",
                         )
                     finally:
                         report_tmp_path.unlink(missing_ok=True)
