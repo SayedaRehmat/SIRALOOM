@@ -767,6 +767,16 @@ if Celery is not None:
             return {"export_id": export_id, "status": "completed"}
         finally:
             claim_db.close()
+    def _resource_staging_dispatch_matches(row, task_id: str | None) -> bool:
+        """Fence resource staging against missing/stale broker dispatch identities."""
+        if not isinstance(task_id, str) or not task_id.strip():
+            return False
+        metadata = dict(getattr(row, "metadata_json", None) or {})
+        dispatch = dict(metadata.get("staging_dispatch") or {})
+        status = str(dispatch.get("status") or "").upper()
+        return dispatch.get("task_id") == task_id and status in {"QUEUING", "PUBLISHED", "RUNNING"}
+
+
     @celery_app.task(bind=True, name="siraloom.stage_resource_release", autoretry_for=(), acks_late=True, max_retries=3)
     def run_resource_staging_task(self, staging_id: str):
         from pathlib import Path
@@ -793,6 +803,8 @@ if Celery is not None:
                 return {"staging_id": staging_id, "status": "NOT_FOUND"}
             if row.status == "STAGED":
                 return {"staging_id": staging_id, "status": "STAGED"}
+            if not _resource_staging_dispatch_matches(row, self.request.id):
+                return {"staging_id": staging_id, "status": "REJECTED_STALE_DISPATCH"}
             if row.status == "STAGING":
                 recover_interrupted_staging(db, row)
                 db.commit()

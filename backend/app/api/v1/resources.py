@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from uuid import UUID
+from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from pathlib import Path
 import re
@@ -517,10 +517,11 @@ def execute_resource_staging(
     if dispatch_status in {"QUEUING", "PUBLISHED", "RUNNING"} and not stale_queuing:
         return _staging_payload(row)
 
+    dispatch_task_id = f"siraloom-resource-stage-{row.id}-{uuid4()}"
     metadata["staging_dispatch"] = {
         "status": "QUEUING",
         "queued_at": datetime.now(timezone.utc).isoformat(),
-        "task_id": f"siraloom-resource-stage-{row.id}",
+        "task_id": dispatch_task_id,
     }
     row.metadata_json = metadata
     db.add(row)
@@ -529,7 +530,7 @@ def execute_resource_staging(
         from backend.app.infrastructure.queue.celery_app import run_resource_staging_task
         run_resource_staging_task.apply_async(
             args=[str(row.id)],
-            task_id=f"siraloom-resource-stage-{row.id}",
+            task_id=dispatch_task_id,
         )
     except Exception as exc:
         current = db.get(ResourceStaging, row.id)
