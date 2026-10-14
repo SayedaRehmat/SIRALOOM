@@ -81,7 +81,7 @@ def test_orphaned_dispatch_recovery_does_not_duplicate_unknown_pending(monkeypat
 def test_analysis_execution_claim_fences_duplicate_worker():
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     from backend.app.domain.enums import AnalysisStatus
-    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.QUEUED})()
+    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.QUEUED, "queue_task_id": "claim-test-dispatch"})()
     class FakeDB:
         def __init__(self): self.commits = 0
         def get(self, model, analysis_id, **kwargs):
@@ -91,10 +91,10 @@ def test_analysis_execution_claim_fences_duplicate_worker():
         def add(self, row): assert row is analysis
         def commit(self): self.commits += 1
     db = FakeDB()
-    assert module._claim_analysis_execution(db, analysis.id) is True
+    assert module._claim_analysis_execution(db, analysis.id, task_id="claim-test-dispatch") is True
     assert analysis.status == AnalysisStatus.RUNNING
     assert db.commits == 1
-    assert module._claim_analysis_execution(db, analysis.id) is False
+    assert module._claim_analysis_execution(db, analysis.id, task_id="claim-test-dispatch") is False
     assert db.commits == 1
 
 
@@ -145,7 +145,7 @@ def test_analysis_execution_claim_rejects_stale_dispatch_generation():
 def test_analysis_execution_claim_allows_continuation_of_running_work():
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     from backend.app.domain.enums import AnalysisStatus
-    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.RUNNING})()
+    analysis = type("Analysis", (), {"id": uuid4(), "status": AnalysisStatus.RUNNING, "queue_task_id": "running-test-dispatch"})()
     class FakeDB:
         def __init__(self):
             self.commits = 0
@@ -155,9 +155,9 @@ def test_analysis_execution_claim_allows_continuation_of_running_work():
         def commit(self):
             self.commits += 1
     db = FakeDB()
-    assert module._claim_analysis_execution(db, analysis.id, allow_running=True) is True
+    assert module._claim_analysis_execution(db, analysis.id, task_id="running-test-dispatch", allow_running=True) is True
     assert db.commits == 1  # release row lock before second-session recovery
-    assert module._claim_analysis_execution(db, analysis.id, allow_running=False) is False
+    assert module._claim_analysis_execution(db, analysis.id, task_id="running-test-dispatch", allow_running=False) is False
     assert db.commits == 1
 
 
@@ -560,7 +560,7 @@ def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execut
     worker_analysis = type(
         "WorkerAnalysis",
         (),
-        {"id": analysis_id, "status": AnalysisStatus.QUEUED},
+        {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": "worker-claim-test"},
     )()
     worker_db = type(
         "WorkerDB",
@@ -571,8 +571,8 @@ def test_published_task_survives_dispatch_commit_failure_and_relay_reuses_execut
             "commit": lambda self: None,
         },
     )()
-    assert module._claim_analysis_execution(worker_db, analysis_id) is True
-    assert module._claim_analysis_execution(worker_db, analysis_id) is False
+    assert module._claim_analysis_execution(worker_db, analysis_id, task_id="worker-claim-test") is True
+    assert module._claim_analysis_execution(worker_db, analysis_id, task_id="worker-claim-test") is False
 
 
 def test_concurrent_relay_workers_serialize_on_dispatch_row_lock(monkeypatch):
