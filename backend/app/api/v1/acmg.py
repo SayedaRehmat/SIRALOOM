@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from backend.app.acmg.engine import ACMGEngine, CriterionAssessment
 from backend.app.acmg.rules import CriterionDirection
 from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Variant, Evidence
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Variant, Evidence, Annotation
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, require_role
 from backend.app.infrastructure.audit.service import AuditService
@@ -37,8 +37,21 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
         raise HTTPException(status_code=404, detail="Analysis not found")
     db.refresh(analysis, with_for_update=True)
     variant = db.get(Variant, variant_id)
-    if not analysis or not variant:
+    if not variant:
         raise HTTPException(status_code=404, detail="Analysis or variant not found")
+    # Variant is a canonical/global entity, so the analysis path alone is not
+    # sufficient to establish that this variant belongs to the analysis. ACMG
+    # mutations must be scoped to an analysis-specific observation; otherwise a
+    # caller could create a classification for an unrelated variant in an
+    # otherwise accessible analysis.
+    variant_in_analysis = db.scalar(
+        select(Annotation.id).where(
+            Annotation.analysis_id == analysis_id,
+            Annotation.variant_id == variant_id,
+        ).limit(1)
+    )
+    if variant_in_analysis is None:
+        raise HTTPException(status_code=404, detail="Variant is not part of this analysis")
     requested_evidence_ids = {str(e) for item in payload.criteria for e in item.evidence_ids}
     evidence_rows = db.scalars(
         select(Evidence).where(
