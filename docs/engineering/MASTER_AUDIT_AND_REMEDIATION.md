@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Audited application-code baseline:** `main` commit `bc22d41` (`Fix report bootstrap cleanup scope`), 2026-10-15. GitHub Actions run [#1546](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38728407140) passed backend, PostgreSQL integration, and frontend jobs, including the corrected production type check.
+**Audited application-code baseline before current batch:** `main` commit `3addae8` (`Isolate reviewer and account workspace state`), 2026-10-15. GitHub Actions run [#1547](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38728759036) passed backend, PostgreSQL/Celery integration, and frontend jobs. The VCF case-status correction is a separate local batch with 32 focused tests passing; CI and route-level verification for that batch remain pending.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -10,6 +10,7 @@
 
 | Finding | Root cause | Correction | Evidence | Status |
 |---|---|---|---|---|
+| Case readiness was overwritten by each VCF upload. | `backend/app/api/v1/artifacts.py` assigned status from only the latest primary VCF and could therefore hide a valid earlier VCF or reset a later lifecycle state. | Added `case_status_after_vcf_upload` and derive intake readiness from all persisted primary VCF validations; preserve statuses outside the intake lifecycle. | Focused intake/artifact/input tests: 32 passed using bundled Python runtime. | FIXED locally; CI and route-level verification pending |
 | Scheduled scientific-resource discovery was absent from the production Celery registry. | `discover_scientific_resources` had been declared only in the `Celery is None` branch, while the Beat schedule referenced it in all deployments. | Registered the named task in the normal Celery-enabled branch; retained an unavailable placeholder for environments without Celery. | `tests/test_celery_dispatch_fence_audit.py` + `tests/test_resource_discovery.py`: 13 passed. GitHub Actions run [#1533](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38723206952): backend, PostgreSQL/Celery integration, and frontend jobs succeeded. Commit `6b11afd`. | FIXED, tested, pushed to main |
 
 ## Verification limits observed

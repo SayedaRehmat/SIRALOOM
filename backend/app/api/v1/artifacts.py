@@ -20,7 +20,8 @@ from backend.app.domain.artifact_integrity import (
     stage_verified_cloud_artifact,
     verify_artifact_file,
 )
-from backend.app.domain.enums import ArtifactType, CaseStatus
+from backend.app.domain.case_intake import case_status_after_vcf_upload
+from backend.app.domain.enums import ArtifactType
 from backend.app.domain.ingestion import (
     classify_filename,
     normalize_build,
@@ -231,12 +232,33 @@ async def upload_artifact(
 
             before_status = case.status
             if kind == "VCF":
-                case.status = CaseStatus.READY_FOR_ANALYSIS if result.status == "VALID" else CaseStatus.INVALID
-            elif result.status == "INVALID" and case.status == CaseStatus.READY_FOR_ANALYSIS:
-                # An invalid optional index must not erase a valid primary VCF state.
-                case.status = CaseStatus.READY_FOR_ANALYSIS
-            elif primary and primary.validation_status == "VALID":
-                case.status = CaseStatus.READY_FOR_ANALYSIS
+                # Derive case readiness from all durable primary VCFs. A later
+                # rejected upload must not hide an earlier valid input, and
+                # new intake must not reset a case already in a later lifecycle.
+                vcf_statuses = db.scalars(
+                    select(Artifact.validation_status).where(
+                        Artifact.case_id == case_id,
+                        Artifact.artifact_type == ArtifactType.VCF,
+                    )
+                ).all()
+                case.status = case_status_after_vcf_upload(
+                    case.status,
+                    has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
+                    has_vcf=bool(vcf_statuses),
+                )
+            elif primary:
+                # An optional index cannot change the primary VCF's intake state.
+                vcf_statuses = db.scalars(
+                    select(Artifact.validation_status).where(
+                        Artifact.case_id == case_id,
+                        Artifact.artifact_type == ArtifactType.VCF,
+                    )
+                ).all()
+                case.status = case_status_after_vcf_upload(
+                    case.status,
+                    has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
+                    has_vcf=bool(vcf_statuses),
+                )
 
             audit = AuditService(db)
             audit.record(

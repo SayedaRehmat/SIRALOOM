@@ -6,6 +6,13 @@
 
 ## Implemented in the current work session
 
+### Case readiness across repeated VCF uploads
+
+- **Defect:** `backend/app/api/v1/artifacts.py` assigned case status from only the newest primary VCF. A rejected re-upload could hide an earlier valid input, while a valid upload could reset a case already in a later lifecycle state.
+- **Fix:** Added `backend/app/domain/case_intake.py` to derive readiness from persisted primary VCF validation statuses and preserve non-intake lifecycle states.
+- **Regression evidence:** Focused intake, input-validation and artifact-integrity tests, executed with the bundled Python runtime: exit 0, 32 passed. Route-level test and CI verification remain pending.
+- **Commit:** Not yet committed.
+
 ### Celery Beat resource-discovery registration
 
 - **Defect:** Beat scheduled `siraloom.discover_scientific_resources`, but production Celery did not register that task because its declaration existed only in the `Celery is None` branch.
