@@ -6,13 +6,14 @@ import { ReactNode, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
 import { useLanguage } from "../lib/i18n";
-import { syncWorkspaceContext } from "../lib/workspace-context.mjs";
+import { syncWorkspaceContext, workspaceIdentityKey } from "../lib/workspace-context.mjs";
 import { Brand } from "./brand";
 import { LanguageSwitcher } from "./language-switcher";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [authUid, setAuthUid] = useState<string | null>(null);
   const [signOutError, setSignOutError] = useState(false);
   const pathname = usePathname();
   const { t } = useLanguage();
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       } catch {
         // Authentication and protected routing must work if browser storage is disabled.
       }
+      setAuthUid(user?.uid ?? null);
       setSignedIn(Boolean(user));
       setReady(true);
       if (!user) window.location.assign("/login");
@@ -78,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
       <main className="app-content">
         {!firebaseConfigured && <div className="configuration-notice">{t("development.notice")}</div>}
-        {children}
+        <div key={workspaceIdentityKey(authUid)}>{children}</div>
       </main>
     </div>
   );

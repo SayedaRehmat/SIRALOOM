@@ -15,6 +15,11 @@ export function isWorkspaceAnalysisReady(requestedAnalysisId, loadedAnalysisId) 
   return Boolean(requestedAnalysisId) && requestedAnalysisId === loadedAnalysisId;
 }
 
+/** Give authenticated workspace trees a distinct lifecycle per Firebase UID. */
+export function workspaceIdentityKey(userId) {
+  return typeof userId === "string" && userId.trim() ? `user:${userId.trim()}` : "signed-out";
+}
+
 /** Keep selected case context within one Firebase identity on this browser. */
 export function syncWorkspaceContext(storage, userId) {
   const nextUserId = typeof userId === "string" && userId.trim() ? userId.trim() : null;

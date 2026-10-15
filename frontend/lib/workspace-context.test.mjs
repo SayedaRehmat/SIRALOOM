@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isWorkspaceAnalysisReady, isWorkspaceCaseReady, syncWorkspaceContext } from "./workspace-context.mjs";
+import { isWorkspaceAnalysisReady, isWorkspaceCaseReady, syncWorkspaceContext, workspaceIdentityKey } from "./workspace-context.mjs";
 
 test("case workspace is hidden until the selected case has loaded", () => {
   assert.equal(isWorkspaceCaseReady("case-b", "case-a"), false);
@@ -14,6 +14,13 @@ test("analysis results are hidden until the selected analysis has loaded", () =>
   assert.equal(isWorkspaceAnalysisReady("analysis-b", null), false);
   assert.equal(isWorkspaceAnalysisReady("analysis-b", "analysis-b"), true);
   assert.equal(isWorkspaceAnalysisReady("", "analysis-a"), false);
+});
+
+test("workspace component identity changes across Firebase accounts and signout", () => {
+  assert.equal(workspaceIdentityKey("user-a"), "user:user-a");
+  assert.notEqual(workspaceIdentityKey("user-a"), workspaceIdentityKey("user-b"));
+  assert.notEqual(workspaceIdentityKey("user-a"), workspaceIdentityKey(null));
+  assert.equal(workspaceIdentityKey("  "), "signed-out");
 });
 
 function createStorage(initial = {}) {
