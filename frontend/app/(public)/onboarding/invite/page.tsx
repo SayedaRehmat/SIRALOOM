@@ -52,11 +52,12 @@ export default function InvitationAcceptancePage() {
   }
 
   async function switchAccount() {
-    if (!firebaseAuth) return;
+    const auth = firebaseAuth;
+    if (!auth) return;
     setBusy(true);
     setMessage("");
     try {
-      if (await attemptSignOut(() => signOut(firebaseAuth))) window.location.reload();
+      if (await attemptSignOut(() => signOut(auth))) window.location.reload();
       else setMessage(t("auth.signOutFailed"));
     } finally {
       setBusy(false);

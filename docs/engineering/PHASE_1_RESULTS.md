@@ -36,6 +36,12 @@
 - **Regression evidence:** Frontend behavior suite: 20 passed, including success/rejection behavior; localization guard passed. CI pending.
 - **Commit:** Current local batch; awaiting CI.
 
+### Signed report artifact recovery
+
+- **Defect:** Signout uploads the signed PDF before report and audit changes are flushed and committed. A failed audit flush, API commit, or durable resume-intent commit could leave untracked signed bytes.
+- **Fix:** The signout route computes the deterministic artifact identity and canonical storage URI before finalization. On exceptions it rolls back, checks a fresh database session, and removes bytes only when artifact metadata is confirmed absent. The direct database commit path now uses shared artifact compensation.
+- **Regression evidence:** `tests/test_report_artifact_commit_compensation.py`, `tests/test_report_finalization.py`, and `tests/test_report_signout_resume.py`: 14 passed locally. CI pending.
+
 ### Celery Beat resource-discovery registration
 
 - **Defect:** Beat scheduled `siraloom.discover_scientific_resources`, but production Celery did not register that task because its declaration existed only in the `Celery is None` branch.

@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import uuid4, uuid5
 
 import pytest
 from fastapi import HTTPException
@@ -61,6 +61,9 @@ class _Store:
     def delete(self, storage_uri):
         self.deleted.append(storage_uri)
 
+    def uri_for_artifact(self, *, case_id, artifact_id, filename):
+        return f"file:///artifact/{case_id}/{artifact_id}/{filename}"
+
 
 class _VerificationSession:
     def __enter__(self):
@@ -100,3 +103,46 @@ def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkey
     assert error.value.status_code == 409
     assert db.rollbacks == 1
     assert store.deleted == ["file:///artifact/draft-report.pdf"]
+
+
+def test_signout_route_compensates_signed_pdf_when_finalization_fails(monkeypatch):
+    case_id = uuid4()
+    report_id = uuid4()
+    organization_id = uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+    report = SimpleNamespace(id=report_id, case_id=case_id, report_version=3)
+
+    class Database:
+        def __init__(self):
+            self.rollbacks = 0
+
+        def get(self, model, *_args, **_kwargs):
+            return case if model is reports_api.Case else None
+
+        def rollback(self):
+            self.rollbacks += 1
+
+    db = Database()
+    store = _Store()
+    monkeypatch.setattr(reports_api, "get_accessible_report", lambda *_args: report)
+    monkeypatch.setattr(reports_api, "require_role", lambda *_args: None)
+    monkeypatch.setattr(reports_api, "artifact_store_for_organization", lambda *_args, **_kwargs: store)
+    monkeypatch.setattr(
+        reports_api,
+        "finalize_report",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("audit flush failed")),
+    )
+    monkeypatch.setattr(compensation_api, "SessionLocal", _VerificationSession)
+
+    with pytest.raises(RuntimeError, match="audit flush failed"):
+        reports_api.finalize(
+            report_id,
+            SimpleNamespace(reason="Reviewed"),
+            db,
+            Principal(user_id=uuid4(), organization_id=organization_id, role="lab_director", subject="test"),
+        )
+
+    assert db.rollbacks == 1
+    assert store.deleted == [
+        f"file:///artifact/{case_id}/{uuid5(report_id, 'siraloom:signed-report-pdf')}/report_v3_signed.pdf"
+    ]

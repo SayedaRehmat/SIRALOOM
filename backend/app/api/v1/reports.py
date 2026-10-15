@@ -29,7 +29,10 @@ from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
 from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
-from backend.app.infrastructure.artifacts.compensation import commit_with_artifact_compensation
+from backend.app.infrastructure.artifacts.compensation import (
+    commit_with_artifact_compensation,
+    compensate_uncommitted_artifact,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, CaseExport, Report
 from backend.app.infrastructure.db.session import get_db
@@ -173,7 +176,21 @@ def get_report(report_id: UUID, db: Session = Depends(get_db), principal: Princi
 
 @router.post("/reports/{report_id}/finalize")
 def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    get_accessible_report(report_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
+    report = get_accessible_report(report_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
+    case = db.get(Case, report.case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Report case not found")
+    signed_artifact_id = uuid5(report.id, "siraloom:signed-report-pdf")
+    signed_filename = f"report_v{report.report_version}_signed.pdf"
+    try:
+        store = artifact_store_for_organization(db, organization_id=case.organization_id)
+        signed_uri = store.uri_for_artifact(
+            case_id=report.case_id,
+            artifact_id=signed_artifact_id,
+            filename=signed_filename,
+        )
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     try:
         r=finalize_report(db, report_id=report_id, approver_id=principal.user_id, reason=payload.reason)
         resume_queued = False
@@ -196,12 +213,22 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
                     db.rollback()
                     raise HTTPException(status_code=409, detail=str(exc)) from exc
             else:
-                db.commit()
+                signed_artifact = db.get(Artifact, r.signed_artifact_id)
+                if signed_artifact is None:
+                    raise ReportFinalizationError("Final report signed artifact metadata is missing")
+                commit_with_artifact_compensation(db, store, signed_artifact)
         else:
-            db.commit()
+            signed_artifact = db.get(Artifact, r.signed_artifact_id)
+            if signed_artifact is None:
+                raise ReportFinalizationError("Final report signed artifact metadata is missing")
+            commit_with_artifact_compensation(db, store, signed_artifact)
         return {"report_id":str(r.id),"version":r.report_version,"status":r.status,"approved_by":str(r.approved_by),"approved_at":r.approved_at.isoformat() if r.approved_at else None,"supersedes_report_id":str(r.supersedes_report_id) if r.supersedes_report_id else None,"workflow_resume_queued":resume_queued}
     except ReportFinalizationError as exc:
-        db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc
+        compensate_uncommitted_artifact(db, store, signed_artifact_id, signed_uri)
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception:
+        compensate_uncommitted_artifact(db, store, signed_artifact_id, signed_uri)
+        raise
 
 @router.post("/analyses/{analysis_id}/reportability/evaluate")
 def evaluate_reportability(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
