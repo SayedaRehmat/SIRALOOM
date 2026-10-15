@@ -3,10 +3,11 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 
 from backend.app.application.analysis import resume_analysis
 from backend.app.application.case_export import enqueue_case_export
@@ -18,6 +19,11 @@ from backend.app.auth.authorization import (
     require_role,
 )
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.domain.artifact_integrity import (
+    ArtifactIntegrityError,
+    stage_verified_cloud_artifact,
+    verify_artifact_file,
+)
 from backend.app.domain.enums import AnalysisStatus
 from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
@@ -295,13 +301,23 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
             filename=artifact.filename,
         ) != artifact.storage_uri:
             raise HTTPException(status_code=404, detail="Export artifact not found")
-        return StreamingResponse(
-            store.iter_bytes(artifact.storage_uri),
+        try:
+            path = stage_verified_cloud_artifact(
+                store,
+                artifact,
+                prefix="siraloom-export-download-",
+            )
+        except ArtifactIntegrityError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Export artifact is unavailable or failed integrity verification.",
+            ) from exc
+        return FileResponse(
+            path,
             media_type=artifact.media_type or "application/zip",
-            headers={
-                "Content-Disposition": f'attachment; filename="{Path(artifact.filename).name}"',
-                "X-Content-Type-Options": "nosniff",
-            },
+            filename=Path(artifact.filename).name,
+            headers={"X-Content-Type-Options": "nosniff"},
+            background=BackgroundTask(path.unlink, missing_ok=True),
         )
 
     try:
@@ -312,6 +328,17 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
         ) != artifact.storage_uri:
             raise HTTPException(status_code=404, detail="Export artifact not found")
         path = store.local_path(artifact.storage_uri)
+        verify_artifact_file(path, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
+    except ArtifactIntegrityError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Export artifact is unavailable or failed integrity verification.",
+        ) from exc
+    except OSError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Export artifact is unavailable or failed integrity verification.",
+        ) from exc
     except (AttributeError, ValueError) as exc:
         raise HTTPException(
             status_code=409,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from uuid import uuid4
 
@@ -98,7 +99,8 @@ def test_download_accepts_export_artifact_with_matching_lineage(monkeypatch, tmp
             "analysis_id": None,
             "artifact_type": "AUDIT_PACKAGE",
             "metadata_json": {"export_id": str(export_id)},
-            "sha256": "a" * 64,
+            "sha256": hashlib.sha256(b"PK").hexdigest(),
+            "size_bytes": 2,
             "storage_uri": "file:///audit-package.zip",
             "media_type": "application/zip",
             "filename": "audit-package.zip",

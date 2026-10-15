@@ -6,14 +6,20 @@ from pathlib import Path
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.background import BackgroundTask
 
 from backend.app.application.entitlements import effective_max_upload_bytes
 from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_artifact, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.config import settings
+from backend.app.domain.artifact_integrity import (
+    ArtifactIntegrityError,
+    stage_verified_cloud_artifact,
+    verify_artifact_file,
+)
 from backend.app.domain.enums import ArtifactType, CaseStatus
 from backend.app.domain.ingestion import (
     classify_filename,
@@ -279,10 +285,23 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
             filename=artifact.filename,
         ) != artifact.storage_uri:
             raise HTTPException(status_code=404, detail="Artifact not found")
-        return StreamingResponse(
-            cloud_store.iter_bytes(artifact.storage_uri),
+        try:
+            path = stage_verified_cloud_artifact(
+                cloud_store,
+                artifact,
+                prefix="siraloom-artifact-download-",
+            )
+        except ArtifactIntegrityError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Artifact is unavailable or failed integrity verification.",
+            ) from exc
+        return FileResponse(
+            path,
             media_type=artifact.media_type or "application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{artifact.filename}"'},
+            filename=Path(artifact.filename).name,
+            headers={"X-Content-Type-Options": "nosniff"},
+            background=BackgroundTask(path.unlink, missing_ok=True),
         )
 
     # Artifact URIs are immutable. The active profile controls the deployment
@@ -298,4 +317,11 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
     ) != artifact.storage_uri:
         raise HTTPException(status_code=404, detail="Artifact not found")
     path = store.local_path(artifact.storage_uri)
+    try:
+        verify_artifact_file(path, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
+    except (ArtifactIntegrityError, OSError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Artifact is unavailable or failed integrity verification.",
+        ) from exc
     return FileResponse(path, media_type=artifact.media_type or "application/octet-stream", filename=Path(artifact.filename).name)

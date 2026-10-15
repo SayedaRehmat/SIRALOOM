@@ -3,10 +3,37 @@
 import hashlib
 import re
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 class ArtifactIntegrityError(ValueError):
     """Raised when stored bytes do not match their persisted identity."""
+
+
+def stage_verified_cloud_artifact(store, artifact, *, prefix: str) -> Path:
+    """Download to a private temporary file and verify before HTTP delivery."""
+    validate_integrity_expectations(artifact.sha256, artifact.size_bytes)
+    suffix = "".join(Path(artifact.filename).suffixes) or ".bin"
+    with NamedTemporaryFile(prefix=prefix, suffix=suffix, delete=False) as handle:
+        path = Path(handle.name)
+    try:
+        store.download_to_file(
+            artifact.storage_uri,
+            path,
+            expected_sha256=artifact.sha256,
+            expected_size_bytes=artifact.size_bytes,
+        )
+        verify_artifact_file(
+            path,
+            sha256=artifact.sha256,
+            size_bytes=artifact.size_bytes,
+        )
+    except Exception as exc:
+        path.unlink(missing_ok=True)
+        raise ArtifactIntegrityError(
+            "Artifact is unavailable or failed integrity verification."
+        ) from exc
+    return path
 
 
 def validate_integrity_expectations(sha256: str | None, size_bytes: int | None) -> None:

@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -41,7 +42,8 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
         analysis_id=None,
         artifact_type="AUDIT_PACKAGE",
         metadata_json={"export_id": str(export_id)},
-        sha256="a" * 64,
+        sha256=hashlib.sha256(b"PKarchive").hexdigest(),
+        size_bytes=len(b"PKarchive"),
         storage_uri=(
             f"gs://test-bucket/cases/{case_id}/artifacts/"
             f"{artifact_id}/case-export.zip"
@@ -53,7 +55,15 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
     store = FirebaseArtifactStore("test-bucket")
     monkeypatch.setattr(reports, "artifact_store_for_organization", lambda _db, *, organization_id: store)
     monkeypatch.setattr(reports, "require_case_tenant", lambda _case, _principal: None)
-    monkeypatch.setattr(store, "iter_bytes", lambda uri: iter([b"PK", b"archive"]))
+    def download_to_file(uri, destination, *, expected_sha256, expected_size_bytes):
+        assert uri == artifact.storage_uri
+        assert expected_sha256 == artifact.sha256
+        assert expected_size_bytes == artifact.size_bytes
+        from pathlib import Path
+
+        Path(destination).write_bytes(b"PKarchive")
+
+    monkeypatch.setattr(store, "download_to_file", download_to_file)
     principal = SimpleNamespace()
 
     response = reports.download_case_export(export_id, db, principal)
@@ -62,7 +72,6 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
     assert response.headers["x-content-type-options"] == "nosniff"
     assert "attachment" in response.headers["content-disposition"]
 
-    async def collect():
-        return b"".join([chunk async for chunk in response.body_iterator])
-
-    assert asyncio.run(collect()) == b"PKarchive"
+    assert response.path.read_bytes() == b"PKarchive"
+    asyncio.run(response.background())
+    assert not response.path.exists()
