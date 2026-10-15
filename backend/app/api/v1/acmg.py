@@ -1,17 +1,22 @@
 from typing import Literal
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.acmg.engine import ACMGEngine, CriterionAssessment
-from backend.app.acmg.rules import CriterionDirection
-from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Variant, Evidence
+from backend.app.acmg.engine import ACMGEngine
+from backend.app.auth.authorization import (
+    REVIEW_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, get_analysis_variant, require_role
 from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Evidence
+from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["acmg"])
 
@@ -204,7 +209,7 @@ def auto_assess(
     from backend.app.infrastructure.db.models import Annotation, PopulationObservation, Resource
 
     analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, REVIEW_ROLES)
-    variant = db.get(Variant, variant_id)
+    variant = get_analysis_variant(analysis, variant_id, db)
     if not analysis or analysis.id != analysis_id or not variant:
         raise HTTPException(status_code=404, detail="Analysis or variant not found")
 

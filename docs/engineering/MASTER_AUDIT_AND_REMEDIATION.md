@@ -37,6 +37,15 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 
 **Phase 1: PARTIAL.** The current code has broad automated coverage and several previously repaired workflow controls, but a complete source-level trace and authenticated end-to-end browser-to-persistence-to-signout verification have not been demonstrated. This is not a clinical validation, regulatory, or production-readiness determination.
 
+## 2026-10-15 API object-authorization audit batch
+
+| Finding | Root cause | Correction | Verification | Status |
+|---|---|---|---|---|
+| Audit endpoint distinguished nonexistent case IDs from cases owned by another tenant. | `GET /cases/{case_id}/audit` returned `200 []` when absent, but tenant guard returned `404 Case not found` for a foreign case, allowing ID existence probing. | Absent case now raises the same `404 Case not found`; added a regression asserting the exact status and response detail match for absent and cross-tenant cases. | Focused auth/tenant/analysis-variant/ACMG suite: 26 passed; `ruff --select F401,I` passed on changed Python files; `git diff --check` passed. | FIXED, locally verified |
+| ACMG auto-assessment accepted a globally fetched variant without proving its membership in the requested analysis. | `auto_assess` called `db.get(Variant, variant_id)` instead of the existing analysis-scoped `get_analysis_variant` authorization helper. | Route now requires variant membership through the common helper before looking up annotation, population evidence, or persisting a specification assessment; regression proves nonmember variants are rejected with 404. | Focused auth/tenant/analysis-variant/ACMG suite: 26 passed; import lint passed on changed Python files. | FIXED, locally verified |
+
+The direct-ID route scan also identified reportability and case-export accessors for further comparison of absent-versus-foreign error behavior. This batch did not claim that the complete API object-authorization inventory is finished. Continue with those paths, then inspect nested specimen/pedigree/resource bindings and worker-owned tenant scope.
+
 ## 2026-10-15 additional verified correction
 
 - **A1 sign-in state misrouting (High):** an inactive or otherwise unauthorized provisioned Firebase identity received the same 403 as a new identity, and frontend redirect handling could send failed session checks to a requested internal route. Fixed with a stable unprovisioned-state response header, explicit CORS exposure, fail-closed frontend routing, and localized access/service messages. Unprovisioned accounts can continue to onboarding or invitation acceptance only; protected routes require a valid session.
