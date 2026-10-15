@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Audited application-code baseline:** `main` commit `a270237` (`Validate variant IDs and run frontend behavior tests`), 2026-10-15. GitHub Actions run [#1542](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38726801785) passed backend, PostgreSQL integration, and frontend jobs.
+**Audited application-code baseline:** `main` commit `c409f68` (`Prevent stale case data during workspace switching`), 2026-10-15. GitHub Actions run [#1542](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38726801785) passed backend, PostgreSQL integration, and frontend jobs for preceding commit `a270237`; the run for `c409f68` is in progress.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -45,6 +45,13 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 - **Correction:** clear case-scoped state when selection changes; render only a loading/retry surface until `caseWorkspace.case_id` matches the selected case; cancel case-detail requests on cleanup; ignore stale responses from analysis, variant, audit, export, and artifact reads. Added a pure readiness-policy regression test.
 - **Verification:** frontend `npm run test:session` passed 14 tests; `npm run validate:i18n` passed; `git diff --check` passed. CI run #1542 passed backend, PostgreSQL integration, and frontend jobs for prior commit `a270237`; the current UI correction still requires its own push-triggered CI run. Local Next build cannot run because `frontend/node_modules` is absent.
 - **Checkpoint:** correction is in the local working tree pending commit/push. Phase A remains PARTIAL: case switching is now guarded in code and helper tests, but interactive browser account/tenant switching, remaining frontend surfaces, and all remaining Phase A workflow checks are still outstanding.
+
+## 2026-10-15 audit timeline case-switch privacy correction
+
+- **Finding:** the standalone audit page retained the prior case's events in the timeline while another case was selected; overlapping requests could allow an older response to overwrite the current selection.
+- **Correction:** associate loaded events with their case identity, hide the timeline unless that identity matches the current selection, clear prior events on selection changes, and ignore canceled or superseded audit/list responses.
+- **Verification:** frontend `npm run test:session` passed 14 tests; `npm run validate:i18n` and `git diff --check` passed. The shared case-identity readiness policy test covers the visible-data guard. This page change is not yet included in a production build or CI run.
+- **Checkpoint:** implementation and this record are in the working tree pending push. Phase A remains PARTIAL; review and reports pages still require the same stale-response audit, and no browser-based journey has been demonstrated.
 
 ## 2026-10-15 API object-authorization audit batch
 
