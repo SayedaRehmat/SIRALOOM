@@ -64,7 +64,7 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
         Path(destination).write_bytes(b"PKarchive")
 
     monkeypatch.setattr(store, "download_to_file", download_to_file)
-    principal = SimpleNamespace()
+    principal = SimpleNamespace(organization_id=organization_id)
 
     response = reports.download_case_export(export_id, db, principal)
 

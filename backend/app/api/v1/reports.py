@@ -45,6 +45,14 @@ from backend.app.reporting.service import (
 
 router = APIRouter(tags=["reports"])
 
+
+def _accessible_case_export(export_id: UUID, db: Session, principal: Principal):
+    export = db.get(CaseExport, export_id)
+    case = db.get(Case, export.case_id) if export is not None else None
+    if export is None or case is None or case.organization_id != principal.organization_id:
+        raise HTTPException(status_code=404, detail="Export not found")
+    return export, case
+
 @router.post("/analyses/{analysis_id}/reports", status_code=201)
 def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal)
@@ -216,7 +224,13 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
     from backend.app.infrastructure.db.models import ReportabilityDecision
     decision = db.get(ReportabilityDecision, decision_id)
     if decision is None: raise HTTPException(status_code=404, detail="Reportability decision not found")
-    analysis = get_accessible_analysis(decision.analysis_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
+    try:
+        analysis = get_accessible_analysis(decision.analysis_id, db, principal)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise HTTPException(status_code=404, detail="Reportability decision not found") from exc
+        raise
+    require_role(principal, REPORT_FINALIZE_ROLES)
     try:
         out = finalize_reportability(db, decision_id=decision_id, reviewer_id=principal.user_id, expected_version=payload.expected_version, disposition=payload.disposition, reason=payload.reason)
         resume_queued = False
@@ -257,18 +271,13 @@ def create_case_export(case_id: UUID, payload: ExportCreate, db: Session = Depen
 
 @router.get("/exports/{export_id}")
 def get_export(export_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    exp=db.get(CaseExport, export_id)
-    if not exp: raise HTTPException(status_code=404, detail="Export not found")
-    case = db.get(Case, exp.case_id); require_case_tenant(case, principal)
+    exp, case = _accessible_case_export(export_id, db, principal)
     return {"export_id":str(exp.id),"case_id":str(exp.case_id),"status":exp.status,"artifact_id":str(exp.artifact_id) if exp.artifact_id else None,"error_code":exp.error_code,"error_message":("Case export failed. Contact a laboratory administrator." if exp.status == "FAILED" else None),"created_at":exp.created_at.isoformat() if exp.created_at else None,"completed_at":exp.completed_at.isoformat() if exp.completed_at else None}
 
 
 @router.get("/exports/{export_id}/download")
 def download_case_export(export_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    exp = db.get(CaseExport, export_id)
-    if not exp:
-        raise HTTPException(status_code=404, detail="Export not found")
-    case = db.get(Case, exp.case_id); require_case_tenant(case, principal)
+    exp, case = _accessible_case_export(export_id, db, principal)
     if exp.status != "SUCCEEDED" or not exp.artifact_id:
         raise HTTPException(status_code=409, detail="Case export is not ready")
     artifact = db.get(Artifact, exp.artifact_id)

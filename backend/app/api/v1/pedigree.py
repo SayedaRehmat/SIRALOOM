@@ -1,14 +1,30 @@
 from uuid import UUID, uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import CASE_WRITE_ROLES, REVIEW_ROLES, get_accessible_analysis, get_analysis_variant, require_role
+
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    REVIEW_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
-from backend.app.infrastructure.db.models import Case, Analysis, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, Evidence
-from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.inheritance import FamilyObservation, normalize_model, assess_model, fingerprint
+from backend.app.infrastructure.db.models import (
+    Case,
+    Evidence,
+    InheritanceAssessment,
+    PedigreeMember,
+    PedigreeRelationship,
+    SegregationObservation,
+    Specimen,
+)
+from backend.app.infrastructure.db.session import get_db
+from backend.app.inheritance import FamilyObservation, assess_model, fingerprint, normalize_model
 
 router = APIRouter(tags=["pedigree-inheritance"])
 
@@ -68,6 +84,10 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
     if not case: raise HTTPException(404,"Case not found")
     require_case_tenant(case,principal)
     require_role(principal, CASE_WRITE_ROLES)
+    if body.specimen_id:
+        specimen = db.get(Specimen, body.specimen_id)
+        if not specimen or specimen.case_id != case_id:
+            raise HTTPException(status_code=404, detail="Specimen not found in this case")
     if db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.member_identifier==body.member_identifier.strip())):
         raise HTTPException(409,"Pedigree member identifier already exists")
     if body.is_proband and db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.is_proband.is_(True))):

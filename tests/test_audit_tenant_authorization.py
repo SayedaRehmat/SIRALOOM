@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from backend.app.api.v1 import acmg
+from backend.app.api.v1 import acmg, pedigree, reports
 from backend.app.api.v1.audit import audit
 from backend.app.auth.principal import Principal
 
@@ -65,3 +65,64 @@ def test_acmg_auto_assessment_rejects_variant_outside_analysis(monkeypatch):
 
     assert exc.value.status_code == 404
     assert exc.value.detail == "Variant is not part of this analysis"
+
+
+def test_pedigree_member_cannot_reference_specimen_from_another_case(monkeypatch):
+    from backend.app.infrastructure.db.models import Case, Specimen
+
+    case_id, specimen_id, organization_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+    foreign_specimen = SimpleNamespace(id=specimen_id, case_id=uuid4())
+
+    class _CaseDb:
+        def get(self, model, _object_id):
+            return {Case: case, Specimen: foreign_specimen}.get(model)
+
+    monkeypatch.setattr(pedigree, "require_case_tenant", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    payload = pedigree.MemberInput(
+        member_identifier="family-member",
+        specimen_id=specimen_id,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        pedigree.add_member(
+            case_id=case_id,
+            body=payload,
+            db=_CaseDb(),
+            principal=_principal(organization_id),
+        )
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Specimen not found in this case"
+
+
+@pytest.mark.parametrize("route", [reports.get_export, reports.download_case_export])
+def test_case_export_hides_foreign_exports_like_missing_exports(route):
+    from backend.app.infrastructure.db.models import Case, CaseExport
+
+    organization_id = uuid4()
+    principal = _principal(organization_id)
+    export = SimpleNamespace(
+        id=uuid4(),
+        case_id=uuid4(),
+        status="QUEUED",
+        artifact_id=None,
+    )
+    foreign_case = SimpleNamespace(organization_id=uuid4())
+
+    responses = []
+    for row in (None, export):
+        class _ExportDb:
+            def get(self, model, _object_id):
+                if model is CaseExport:
+                    return row
+                if model is Case:
+                    return foreign_case
+                raise AssertionError(f"Unexpected model lookup: {model}")
+
+        with pytest.raises(HTTPException) as exc:
+            route(export.id if row is not None else uuid4(), db=_ExportDb(), principal=principal)
+        responses.append((exc.value.status_code, exc.value.detail))
+
+    assert responses == [(404, "Export not found"), (404, "Export not found")]
