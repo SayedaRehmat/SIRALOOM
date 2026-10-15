@@ -10,6 +10,11 @@ export function isWorkspaceCaseReady(requestedCaseId, loadedCaseId) {
   return !requestedCaseId || requestedCaseId === loadedCaseId;
 }
 
+/** Keep analysis-derived pages scoped to the analysis that produced their data. */
+export function isWorkspaceAnalysisReady(requestedAnalysisId, loadedAnalysisId) {
+  return Boolean(requestedAnalysisId) && requestedAnalysisId === loadedAnalysisId;
+}
+
 /** Keep selected case context within one Firebase identity on this browser. */
 export function syncWorkspaceContext(storage, userId) {
   const nextUserId = typeof userId === "string" && userId.trim() ? userId.trim() : null;

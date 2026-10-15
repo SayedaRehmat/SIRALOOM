@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isWorkspaceCaseReady, syncWorkspaceContext } from "./workspace-context.mjs";
+import { isWorkspaceAnalysisReady, isWorkspaceCaseReady, syncWorkspaceContext } from "./workspace-context.mjs";
 
 test("case workspace is hidden until the selected case has loaded", () => {
   assert.equal(isWorkspaceCaseReady("case-b", "case-a"), false);
   assert.equal(isWorkspaceCaseReady("case-b", null), false);
   assert.equal(isWorkspaceCaseReady("case-b", "case-b"), true);
   assert.equal(isWorkspaceCaseReady("", null), true);
+});
+
+test("analysis results are hidden until the selected analysis has loaded", () => {
+  assert.equal(isWorkspaceAnalysisReady("analysis-b", "analysis-a"), false);
+  assert.equal(isWorkspaceAnalysisReady("analysis-b", null), false);
+  assert.equal(isWorkspaceAnalysisReady("analysis-b", "analysis-b"), true);
+  assert.equal(isWorkspaceAnalysisReady("", "analysis-a"), false);
 });
 
 function createStorage(initial = {}) {

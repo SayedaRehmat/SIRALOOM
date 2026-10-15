@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
+import { isWorkspaceAnalysisReady } from "../../../../lib/workspace-context.mjs";
 
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
@@ -31,14 +32,20 @@ export default function ReportsPage() {
   const { language, t } = useLanguage();
   const [selected, setSelected] = useState<Decision | null>(null);
   const [disposition, setDisposition] = useState("REPORT");
+  const [loadedAnalysisId, setLoadedAnalysisId] = useState("");
+  const analysisIdRef = useRef(analysisId);
+  const loadRequest = useRef(0);
+  analysisIdRef.current = analysisId;
 
   useEffect(() => {
     const bootstrapAnalysis = async () => {
       const caseId = window.localStorage.getItem("siraloom.case_id") ?? "";
       const storedAnalysis = window.localStorage.getItem("siraloom.analysis_id") ?? "";
+      let cancelled = false;
       try {
         if (caseId) {
           const caseData = await apiFetch(`/cases/${caseId}`);
+          if (cancelled || analysisIdRef.current) return;
           const availableAnalyses = Array.isArray(caseData?.analyses) ? caseData.analyses : [];
           const requestedAnalysis = availableAnalyses.find((item: any) => String(item.analysis_id) === storedAnalysis) ?? availableAnalyses[0] ?? null;
           if (requestedAnalysis?.analysis_id) {
@@ -54,23 +61,41 @@ export default function ReportsPage() {
       } catch (e) {
         setMessage(e instanceof Error ? e.message : t("reports.messageLoadCase"));
       }
-      if (storedAnalysis) setAnalysisId(storedAnalysis);
+      if (!cancelled && !analysisIdRef.current && storedAnalysis) setAnalysisId(storedAnalysis);
     };
     bootstrapAnalysis();
+    return () => { cancelled = true; };
   }, []);
 
   const load = async () => {
-    if (!analysisId) { setMessage(t("reports.messageAnalysisRequired")); return; }
+    const requestedAnalysisId = analysisId;
+    const request = ++loadRequest.current;
+    if (!requestedAnalysisId) {
+      setReports([]); setDecisions([]); setSelected(null); setLoadedAnalysisId("");
+      setLoading(false);
+      setMessage(t("reports.messageAnalysisRequired")); return;
+    }
+    setLoadedAnalysisId("");
     setLoading(true); setMessage("");
     try {
-      const [r, d] = await Promise.all([apiFetch(`/analyses/${analysisId}/reports`), apiFetch(`/analyses/${analysisId}/reportability`)]);
+      const [r, d] = await Promise.all([apiFetch(`/analyses/${requestedAnalysisId}/reports`), apiFetch(`/analyses/${requestedAnalysisId}/reportability`)]);
+      if (request !== loadRequest.current || analysisIdRef.current !== requestedAnalysisId) return;
       setReports(r.items ?? []); setDecisions(d.items ?? []);
       setSelected((cur) => cur && (d.items ?? []).some((x: Decision) => x.decision_id === cur.decision_id) ? cur : (d.items?.[0] ?? null));
-    } catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageLoad")); }
-    finally { setLoading(false); }
+      setLoadedAnalysisId(requestedAnalysisId);
+    } catch (e) { if (request === loadRequest.current && analysisIdRef.current === requestedAnalysisId) setMessage(e instanceof Error ? e.message : t("reports.messageLoad")); }
+    finally { if (request === loadRequest.current && analysisIdRef.current === requestedAnalysisId) setLoading(false); }
   };
 
-  useEffect(() => { if (analysisId) load(); }, [analysisId]);
+  useEffect(() => {
+    setLoadedAnalysisId("");
+    setSelected(null);
+    setReason("");
+    setDisposition("REPORT");
+    setMessage("");
+    if (analysisId) load();
+    else { loadRequest.current += 1; setLoading(false); setReports([]); setDecisions([]); }
+  }, [analysisId]);
 
   const evaluate = async () => {
     try { await apiFetch(`/analyses/${analysisId}/reportability/evaluate`, { method: "POST" }); await load(); setMessage(t("reports.messageEvaluate")); }
@@ -78,7 +103,7 @@ export default function ReportsPage() {
   };
 
   const finalizeDecision = async () => {
-    if (!selected || !reason.trim()) { setMessage(t("reports.messageReason")); return; }
+    if (!analysisReady || !selected || !reason.trim()) { setMessage(t("reports.messageReason")); return; }
     try {
       await apiFetch(`/reportability/${selected.decision_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disposition, expected_version: selected.review_version, reason: reason.trim() }) });
       setReason(""); await load(); setMessage(t("reports.messageFinalized"));
@@ -104,22 +129,26 @@ export default function ReportsPage() {
     const blob = await response.blob(); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `siraloom-report-${artifactId}.pdf`; a.click(); URL.revokeObjectURL(url);
   };
 
-  const reportabilityReady = decisions.length > 0 && decisions.every(d => d.status === "FINAL");
-  const reportableCount = decisions.filter(d => d.status === "FINAL" && d.disposition === "REPORT").length;
+  const analysisReady = isWorkspaceAnalysisReady(analysisId, loadedAnalysisId);
+  const currentDecisions = analysisReady ? decisions : [];
+  const currentReports = analysisReady ? reports : [];
+  const currentSelection = analysisReady ? selected : null;
+  const currentReportabilityReady = currentDecisions.length > 0 && currentDecisions.every(d => d.status === "FINAL");
+  const reportableCount = currentDecisions.filter(d => d.status === "FINAL" && d.disposition === "REPORT").length;
 
   return <main className="reports-page">
     <header className="reports-header"><div><p className="eyebrow">{t("reports.eyebrow")}</p><h1>{t("reports.title")}</h1><p className="lead compact">{t("reports.lead")}</p></div></header>
-    <section className="panel reports-controls"><div className="control-grid reports-control-grid"><label>{t("reports.analysisId")}<input value={analysisId} onChange={e => setAnalysisId(e.target.value.trim())} placeholder={t("reports.analysisId")} /></label><label>{t("reports.type")}<select value={reportType} onChange={e => setReportType(e.target.value)}><option value="CLINICAL_INTERPRETATION">{t("reports.clinical")}</option><option value="ANALYTICAL">{t("reports.analytical")}</option></select></label></div><div className="actions-row"><button className="primary" onClick={load} disabled={loading}>{loading ? t("reports.loading") : t("reports.refresh")}</button><button className="secondary" onClick={evaluate} disabled={!analysisId}>{t("reports.evaluate")}</button><button className="secondary" onClick={generate} disabled={!analysisId}>{t("reports.generate")}</button></div>{message && <div className="configuration-notice">{message}</div>}</section>
+    <section className="panel reports-controls"><div className="control-grid reports-control-grid"><label>{t("reports.analysisId")}<input value={analysisId} onChange={e => setAnalysisId(e.target.value.trim())} placeholder={t("reports.analysisId")} /></label><label>{t("reports.type")}<select value={reportType} onChange={e => setReportType(e.target.value)}><option value="CLINICAL_INTERPRETATION">{t("reports.clinical")}</option><option value="ANALYTICAL">{t("reports.analytical")}</option></select></label></div><div className="actions-row"><button className="primary" onClick={load} disabled={loading}>{loading ? t("reports.loading") : t("reports.refresh")}</button><button className="secondary" onClick={evaluate} disabled={!analysisReady}>{t("reports.evaluate")}</button><button className="secondary" onClick={generate} disabled={!analysisReady}>{t("reports.generate")}</button></div>{message && <div className="configuration-notice">{message}</div>}</section>
 
     <div className="reports-grid">
-      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.section")}</div><h3>{decisions.length} {t("reports.decisions")} · {reportableCount} {t("reports.reportable")}</h3></div><span className={`badge ${reportabilityReady ? "success" : "active"}`}>{reportabilityReady ? t("reports.finalized") : t("reports.reviewRequired")}</span></div>
-        {!decisions.length ? <div className="empty"><strong>{t("reports.none")}</strong><p>{t("reports.help")}</p></div> : <div className="decision-list">{decisions.map(d => <button className={`decision-item ${selected?.decision_id === d.decision_id ? "selected" : ""}`} key={d.decision_id} onClick={() => { setSelected(d); setDisposition(d.disposition); }}><div><strong>{d.variant_id}</strong><span>Priority {d.priority_score} · {pretty(d.priority_band)}</span></div><div><span className={`badge ${badgeClass(d.status)}`}>{pretty(d.status)}</span><span className={`badge ${badgeClass(d.disposition)}`}>{pretty(d.disposition)}</span></div></button>)}</div>}
+      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.section")}</div><h3>{currentDecisions.length} {t("reports.decisions")} · {reportableCount} {t("reports.reportable")}</h3></div><span className={`badge ${currentReportabilityReady ? "success" : "active"}`}>{currentReportabilityReady ? t("reports.finalized") : t("reports.reviewRequired")}</span></div>
+        {!currentDecisions.length ? <div className="empty"><strong>{t("reports.none")}</strong><p>{t("reports.help")}</p></div> : <div className="decision-list">{currentDecisions.map(d => <button className={`decision-item ${currentSelection?.decision_id === d.decision_id ? "selected" : ""}`} key={d.decision_id} onClick={() => { setSelected(d); setDisposition(d.disposition); }}><div><strong>{d.variant_id}</strong><span>Priority {d.priority_score} · {pretty(d.priority_band)}</span></div><div><span className={`badge ${badgeClass(d.status)}`}>{pretty(d.status)}</span><span className={`badge ${badgeClass(d.disposition)}`}>{pretty(d.disposition)}</span></div></button>)}</div>}
       </section>
 
-      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.human")}</div><h3>{selected ? t("reports.selectedDecision") : t("reports.selectDecision")}</h3></div></div>{!selected ? <div className="empty"><strong>{t("reports.noSelected")}</strong><p>{t("reports.selectHelp")}</p></div> : <><div className="review-summary-grid"><div><span>{t("reports.variant")}</span><strong>{selected.variant_id}</strong></div><div><span>{t("reports.disposition")}</span><strong>{pretty(selected.disposition)}</strong></div><div><span>{t("reports.priority")}</span><strong>{selected.priority_score} · {pretty(selected.priority_band)}</strong></div><div><span>{t("reports.reviewVersion")}</span><strong>{selected.review_version}</strong></div></div><div className="context-section"><div className="section-kicker">{t("reports.policy")}</div><ul>{selected.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul></div><div className="form-grid"><label>{t("reports.finalDisposition")}<select value={disposition} disabled={selected.status === "FINAL"} onChange={e => setDisposition(e.target.value)}><option>REPORT</option><option>REVIEW</option><option>DO_NOT_REPORT</option></select></label><label className="span-2">{t("reports.rationale")}<textarea value={reason} disabled={selected.status === "FINAL"} onChange={e => setReason(e.target.value)} rows={4} placeholder={t("reports.rationalePlaceholder")} /></label></div>{selected.status !== "FINAL" && <button className="primary" onClick={finalizeDecision}>{t("reports.finalize")}</button>}</>}</section>
+      <section className="panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.human")}</div><h3>{currentSelection ? t("reports.selectedDecision") : t("reports.selectDecision")}</h3></div></div>{!currentSelection ? <div className="empty"><strong>{t("reports.noSelected")}</strong><p>{t("reports.selectHelp")}</p></div> : <><div className="review-summary-grid"><div><span>{t("reports.variant")}</span><strong>{currentSelection.variant_id}</strong></div><div><span>{t("reports.disposition")}</span><strong>{pretty(currentSelection.disposition)}</strong></div><div><span>{t("reports.priority")}</span><strong>{currentSelection.priority_score} · {pretty(currentSelection.priority_band)}</strong></div><div><span>{t("reports.reviewVersion")}</span><strong>{currentSelection.review_version}</strong></div></div><div className="context-section"><div className="section-kicker">{t("reports.policy")}</div><ul>{currentSelection.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul></div><div className="form-grid"><label>{t("reports.finalDisposition")}<select value={disposition} disabled={currentSelection.status === "FINAL"} onChange={e => setDisposition(e.target.value)}><option>REPORT</option><option>REVIEW</option><option>DO_NOT_REPORT</option></select></label><label className="span-2">{t("reports.rationale")}<textarea value={reason} disabled={currentSelection.status === "FINAL"} onChange={e => setReason(e.target.value)} rows={4} placeholder={t("reports.rationalePlaceholder")} /></label></div>{currentSelection.status !== "FINAL" && <button className="primary" onClick={finalizeDecision}>{t("reports.finalize")}</button>}</>}</section>
     </div>
 
-    <section className="panel reports-list-panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.versions")}</div><h3>{t("reports.lineage")}</h3></div></div>{!reports.length ? <div className="empty"><strong>{t("reports.noReports")}</strong><p>{t("reports.reportHelp")}</p></div> : <div className="report-version-list">{reports.map(r => <article className="report-version" key={r.report_id}><div><strong>{t("reports.versionLabel")} {r.version} · {pretty(r.report_type)}</strong><span>{pretty(r.status)} · {r.language} · {r.created_at ? new Date(r.created_at).toLocaleString() : "—"}</span>{r.signed_sha256 && <small>Signed SHA-256: {r.signed_sha256}</small>}{r.supersedes_report_id && <small>{t("reports.supersedes")} {r.supersedes_report_id}</small>}</div><div className="actions-row"><span className={`badge ${badgeClass(r.status)}`}>{pretty(r.status)}</span>{(r.signed_artifact_id || r.artifact_id) && <button className="secondary" onClick={() => download(r.signed_artifact_id || r.artifact_id)}>{t("reports.pdf")}</button>}{r.status === "DRAFT" && <button className="primary" disabled={!reportabilityReady} onClick={() => finalize(r)}>{t("reports.signout")}</button>}</div></article>)}</div>}</section>
+    <section className="panel reports-list-panel"><div className="panel-head"><div><div className="section-kicker">{t("reports.versions")}</div><h3>{t("reports.lineage")}</h3></div></div>{!currentReports.length ? <div className="empty"><strong>{t("reports.noReports")}</strong><p>{t("reports.reportHelp")}</p></div> : <div className="report-version-list">{currentReports.map(r => <article className="report-version" key={r.report_id}><div><strong>{t("reports.versionLabel")} {r.version} · {pretty(r.report_type)}</strong><span>{pretty(r.status)} · {r.language} · {r.created_at ? new Date(r.created_at).toLocaleString() : "—"}</span>{r.signed_sha256 && <small>Signed SHA-256: {r.signed_sha256}</small>}{r.supersedes_report_id && <small>{t("reports.supersedes")} {r.supersedes_report_id}</small>}</div><div className="actions-row"><span className={`badge ${badgeClass(r.status)}`}>{pretty(r.status)}</span>{(r.signed_artifact_id || r.artifact_id) && <button className="secondary" onClick={() => download(r.signed_artifact_id || r.artifact_id)}>{t("reports.pdf")}</button>}{r.status === "DRAFT" && <button className="primary" disabled={!currentReportabilityReady} onClick={() => finalize(r)}>{t("reports.signout")}</button>}</div></article>)}</div>}</section>
 <p className="reports-footnote">{t("reports.validationDisclaimer")}</p>
   </main>;
 }
