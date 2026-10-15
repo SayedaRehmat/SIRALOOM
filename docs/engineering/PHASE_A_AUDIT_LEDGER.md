@@ -105,6 +105,13 @@
 
 **Decision:** do not label Phase A complete while these verification items remain open. Phase 1 clinical/scientific qualification is a separate release gate.
 
+### 2026-10-15 — report sign-out test isolation on Windows
+
+- Re-read the A7 implementation and reran the real sign-out/report-access test slice from synchronized `main`: `tests/test_report_signout_resume.py`, `tests/test_tenant_object_authorization.py`, `tests/test_report_finalization.py`, and `tests/test_reporting_contract.py`.
+- Confirmed the report authorization/integrity tests and report-flow logic passed, but four behavior tests were invoking WeasyPrint even though their assertions concern report state, artifact lineage, or retry semantics. On this Windows host, WeasyPrint cannot load `libgobject-2.0-0`/Pango, preventing those tests from reaching the workflow assertions.
+- Updated those workflow tests to inject deterministic PDF bytes at the renderer boundary. Kept `tests/test_report_pdf.py` as the actual rendering test; native renderer execution remains an explicit environment gate, not simulated as passed.
+- Verification: the four-file focused suite now reports **26 passed**. This demonstrates report-domain/sign-out behavior with fake rendering and does not demonstrate real PDF rendering. Phase A remains open; full user-journey E2E, native PDF runtime, remaining worker replay, and PostgreSQL/lab deployment gates remain outstanding.
+
 ## Current session checkpoint — 2026-10-14
 
 - Working branch: `fix/phase-a-population-tenant-and-replay`; no commit or push performed.

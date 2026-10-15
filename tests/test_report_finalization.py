@@ -44,7 +44,8 @@ def seed(approved=True):
 def test_final_report_requires_approved_classification():
     db, _, _, a, _=seed(False); ok, errs=final_report_eligibility(db,analysis_id=a.id); assert not ok and errs
 
-def test_finalize_report_sets_final_and_supersedes():
+def test_finalize_report_sets_final_and_supersedes(monkeypatch):
+    monkeypatch.setattr("backend.app.reporting.finalization.render_pdf", lambda _content: b"%PDF-test%")
     db,u,c,a,v=seed(True)
     content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
     r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
@@ -127,6 +128,7 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
         "backend.app.config.settings.artifact_root",
         str(tmp_path),
     )
+    monkeypatch.setattr("backend.app.reporting.finalization.render_pdf", lambda _content: b"%PDF-test%")
     content = {
         "report_schema_version": "1.1.0",
         "report_version": 1,
@@ -282,6 +284,7 @@ def test_manual_classification_without_acmg_criteria_can_be_signed_out(tmp_path,
         "backend.app.config.settings.artifact_root",
         str(tmp_path),
     )
+    monkeypatch.setattr("backend.app.reporting.finalization.render_pdf", lambda _content: b"%PDF-test%")
     content = build_report_content(
         db, analysis, "en", report_type="CLINICAL_INTERPRETATION"
     )

@@ -1,12 +1,22 @@
-import json
-from pathlib import Path
+from uuid import uuid4
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from uuid import uuid4
+
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, ReportabilityDecision, Artifact, Report
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Artifact,
+    Case,
+    Classification,
+    Organization,
+    Report,
+    ReportabilityDecision,
+    User,
+    Variant,
+)
+from backend.app.reporting.finalization import finalize_report
 from backend.app.reporting.service import build_report_content, final_report_eligibility
-from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 
 
 def db():
@@ -32,7 +42,8 @@ def test_report_finalization_requires_reviewed_classifications():
     d,_,_,_,a,_=seed(False)
     ok, errors=final_report_eligibility(d,analysis_id=a.id); assert not ok and errors
 
-def test_report_finalization_creates_approval_lineage():
+def test_report_finalization_creates_approval_lineage(monkeypatch):
+    monkeypatch.setattr("backend.app.reporting.finalization.render_pdf", lambda _content: b"%PDF-test%")
     d,_,u,c,a,_=seed(True)
     content = build_report_content(d, a, "en", report_type="CLINICAL_INTERPRETATION")
     r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=d.query(Artifact).first().id,content_json=content); d.add(r); d.commit()
