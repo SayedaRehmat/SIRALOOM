@@ -17,8 +17,10 @@
 
 - **Defects:** `.vcf.bgz` was advertised but parsed as uncompressed text; the workspace enabled analysis and showed success for artifacts whose validation result was `INVALID`, and retained an earlier artifact when a different file was selected.
 - **Fixes:** Decode `.bgz` via gzip-compatible parsing; expose the extension in the chooser; allow analysis only for consistent successful API validation; clear stale artifact selection; show validation errors and warnings in English and Arabic.
-- **Regression evidence:** Focused backend intake/artifact/input tests: 33 passed. Frontend upload/readiness plus workspace-context tests: 8 passed. `scripts/validate-i18n.mjs`: PASS. Production build for current changes pending CI.
-- **Commit:** Not yet committed.
+- **Regression evidence:** Focused backend intake/artifact/input tests: 33 passed. Frontend upload/readiness plus workspace-context tests: 18 passed. `scripts/validate-i18n.mjs`: PASS. Run #1549 failed the production build because the JavaScript helper lacked a TS declaration; declarations have since been added, and build verification is pending CI.
+- **Commit:** BGZF and workspace validation behavior pushed in `72f10b9`; the TypeScript declarations and case-wizard replacement handling are in the current local follow-up.
+
+- **CI follow-up:** Run #1549 passed backend, PostgreSQL/Celery integration, and frontend behavior tests, but the production build failed because TypeScript could not find a declaration for `validated-upload.mjs`. Added declarations for the new upload helpers and corrected case-wizard primary/index selection. The frontend behavior suite now reports 18 passed; the next CI run must verify the production build.
 
 ### Celery Beat resource-discovery registration
 

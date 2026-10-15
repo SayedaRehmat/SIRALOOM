@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectCaseInputArtifacts } from "./case-artifacts.mjs";
+import { selectCaseInputArtifacts, selectPrimaryAfterUpload } from "./case-artifacts.mjs";
 
 test("keeps the displayed specimen and index paired to the selected primary VCF", () => {
   const specimens = [
@@ -28,4 +28,12 @@ test("does not display an orphaned index when no validated primary VCF exists", 
   assert.equal(selected.primary, null);
   assert.equal(selected.index, null);
   assert.equal(selected.specimenId, "specimen-a");
+});
+
+test("a rejected replacement does not discard an existing valid primary VCF", () => {
+  const valid = { artifact_id: "valid", validation_status: "VALID" };
+  const rejected = { artifact_id: "rejected", validation_status: "INVALID" };
+  assert.equal(selectPrimaryAfterUpload(valid, rejected), valid);
+  assert.equal(selectPrimaryAfterUpload(null, rejected), rejected);
+  assert.equal(selectPrimaryAfterUpload(valid, { artifact_id: "new", validation_status: "VALID" }).artifact_id, "new");
 });

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
-import { selectCaseInputArtifacts } from "../../../../lib/case-artifacts.mjs";
+import { selectCaseInputArtifacts, selectPrimaryAfterUpload } from "../../../../lib/case-artifacts.mjs";
 
 type CaseSummary = {
   case_id: string;
@@ -363,13 +363,19 @@ export default function Cases() {
       if (isIndex) {
         setIndexArtifact(artifact);
       } else {
-        setPrimaryArtifact(artifact);
+        const nextPrimary = selectPrimaryAfterUpload(primaryArtifact, artifact);
+        setPrimaryArtifact(nextPrimary);
+        if (nextPrimary?.artifact_id === artifact.artifact_id) {
+          // Any previous index was paired to the old primary artifact.
+          setIndexArtifact(null);
+          setIndexFile(null);
+        }
       }
 
       setMessage(
         result.validation_status === "VALID"
           ? `${isIndex ? t("cases.indexLabel") : t("cases.upload")} validated successfully.`
-          : `${isIndex ? t("cases.indexLabel") : t("cases.upload")} was stored but failed validation.`,
+          : `${isIndex ? t("cases.indexLabel") : t("cases.upload")} was stored but failed validation. ${Array.isArray(result.validation?.errors) ? result.validation.errors.join(" ") : ""}`,
       );
 
       await refreshCase();

@@ -21,3 +21,10 @@ export function selectCaseInputArtifacts(artifacts, specimens) {
     specimenId: primary?.specimen_id ?? specimens[0]?.specimen_id ?? "",
   };
 }
+
+/** Keep a valid selected input when a replacement upload is rejected. */
+export function selectPrimaryAfterUpload(currentPrimary, uploadedPrimary) {
+  if (uploadedPrimary?.validation_status === "VALID") return uploadedPrimary;
+  if (currentPrimary?.validation_status === "VALID") return currentPrimary;
+  return uploadedPrimary ?? null;
+}
