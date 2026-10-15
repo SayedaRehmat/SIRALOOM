@@ -1,5 +1,4 @@
 from pathlib import Path
-from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -15,7 +14,7 @@ def test_liveness_probe_is_external_service_independent():
 
 
 def test_readiness_reports_dependency_state_without_secrets(monkeypatch, tmp_path):
-    import backend.app.api.v1.health as health
+    from backend.app.api.v1 import health
 
     monkeypatch.setattr(health, "_check_database", lambda: ("ok", None))
     monkeypatch.setattr(health, "_check_redis", lambda: ("ok", None))
@@ -37,7 +36,7 @@ def test_readiness_reports_dependency_state_without_secrets(monkeypatch, tmp_pat
 
 
 def test_readiness_fails_when_required_firebase_is_unconfigured(monkeypatch):
-    import backend.app.api.v1.health as health
+    from backend.app.api.v1 import health
 
     monkeypatch.setattr(health, "_check_database", lambda: ("ok", None))
     monkeypatch.setattr(health, "_check_redis", lambda: ("ok", None))
@@ -54,8 +53,33 @@ def test_readiness_fails_when_required_firebase_is_unconfigured(monkeypatch):
     assert payload["checks"]["firebase"]["status"] == "error"
 
 
+def test_readiness_does_not_expose_dependency_exception_details(monkeypatch):
+    from backend.app.api.v1 import health
+
+    secret = "postgresql://lab-admin:super-secret@db.internal:5432/siraloom"
+
+    def fail_database():
+        raise RuntimeError(secret)
+
+    monkeypatch.setattr(health, "SessionLocal", fail_database)
+    monkeypatch.setattr(health, "_check_redis", lambda: ("ok", None))
+    monkeypatch.setattr(health, "_check_artifact_root", lambda: ("ok", None))
+    monkeypatch.setattr(health.settings, "app_env", "test")
+    monkeypatch.setattr(health.settings, "firebase_auth_required", False)
+    monkeypatch.setattr(health.settings, "firebase_project_id", None)
+
+    response = TestClient(app).get("/api/v1/ready")
+    assert response.status_code == 200
+    assert secret not in response.text
+    assert "super-secret" not in response.text
+    assert response.json()["checks"]["database"] == {
+        "status": "error",
+        "error": "DATABASE_UNAVAILABLE",
+    }
+
+
 def test_artifact_readiness_probe_writes_and_removes_only_probe(tmp_path, monkeypatch):
-    import backend.app.api.v1.health as health
+    from backend.app.api.v1 import health
 
     monkeypatch.setattr(health.settings, "artifact_root", str(tmp_path))
     status, error = _check_artifact_root()

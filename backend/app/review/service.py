@@ -222,7 +222,7 @@ def propose_manual_classification(
     if not evidence_ids:
         raise ReviewError("At least one analysis-scoped evidence record is required")
 
-    analysis = db.get(Analysis, analysis_id)
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
         raise ReviewError("Analysis not found")
     if str(analysis.status).upper() != "REQUIRES_REVIEW":
@@ -341,6 +341,9 @@ def start_review(
     reviewer: User,
 ) -> Classification:
     require_reviewer(reviewer)
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise ReviewError("Analysis not found")
     current = db.scalar(
         select(Classification)
         .where(Classification.analysis_id == analysis_id, Classification.variant_id == variant_id)
@@ -351,9 +354,6 @@ def start_review(
         raise ReviewError("Classification not found")
     if current.review_status == ReviewStatus.APPROVED:
         raise ReviewError("Approved classification cannot be reopened by start-review")
-    analysis = db.get(Analysis, analysis_id)
-    if analysis is None:
-        raise ReviewError("Analysis not found")
     before = _classification_dict(current)
     current.review_status = ReviewStatus.IN_REVIEW
     current.review_version += 1
@@ -404,6 +404,10 @@ def review_criterion(
     if not criterion or not mutation.reason.strip():
         raise ReviewError("Criterion and review reason are required")
 
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise ReviewError("Analysis not found")
+
     assessment = db.scalar(
         select(ACMGAssessment)
         .where(
@@ -420,9 +424,6 @@ def review_criterion(
             f"Review version conflict: expected {mutation.expected_version}, current {assessment.review_version}"
         )
 
-    analysis = db.get(Analysis, analysis_id)
-    if analysis is None:
-        raise ReviewError("Analysis not found")
     if db.get(Variant, variant_id) is None:
         raise ReviewError("Variant not found")
     if mutation.evidence_ids:
@@ -604,6 +605,10 @@ def request_more_evidence(
     if not reason.strip():
         raise ReviewError("Reason is required")
 
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise ReviewError("Analysis not found")
+
     current = db.scalar(
         select(Classification)
         .where(Classification.analysis_id == analysis_id, Classification.variant_id == variant_id)
@@ -616,10 +621,6 @@ def request_more_evidence(
         raise ReviewConflictError(
             f"Classification review version conflict: expected {expected_version}, current {current.review_version}"
         )
-    analysis = db.get(Analysis, analysis_id)
-    if analysis is None:
-        raise ReviewError("Analysis not found")
-
     before = _classification_dict(current)
     current.review_status = ReviewStatus.MORE_EVIDENCE
     current.review_version += 1

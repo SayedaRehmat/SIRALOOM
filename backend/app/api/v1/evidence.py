@@ -49,10 +49,9 @@ def list_analysis_evidence(analysis_id: UUID, db: Session = Depends(get_db), pri
 @router.get("/evidence/{evidence_id}")
 def get_evidence(evidence_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     row = db.get(Evidence, evidence_id)
-    if row:
-        get_accessible_analysis(row.analysis_id, db, principal)
     if not row:
         raise HTTPException(status_code=404, detail="Evidence not found")
+    get_accessible_analysis(row.analysis_id, db, principal)
     return {
         "evidence_id": str(row.id),
         "analysis_id": str(row.analysis_id),

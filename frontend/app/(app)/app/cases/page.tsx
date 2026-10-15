@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
+import { selectCaseInputArtifacts } from "../../../../lib/case-artifacts.mjs";
 
 type CaseSummary = {
   case_id: string;
@@ -158,15 +159,10 @@ export default function Cases() {
       ]);
       const specimens = Array.isArray(data.specimens) ? data.specimens : [];
       const artifactRows = Array.isArray(files) ? files : [];
-      const primary = artifactRows.find(
-        (a: Artifact) =>
-          a.artifact_type === "VCF" &&
-          a.validation_status === "VALID",
-      ) ?? null;
-      const index = artifactRows.find(
-        (a: Artifact) =>
-          ["VCF_INDEX_TBI", "VCF_INDEX_CSI"].includes(a.artifact_type),
-      ) ?? null;
+      const { primary, index, specimenId: selectedSpecimenId } = selectCaseInputArtifacts(
+        artifactRows,
+        specimens,
+      ) as { primary: Artifact | null; index: Artifact | null; specimenId: string };
       const latestAnalysis = Array.isArray(data.analyses) && data.analyses.length
         ? data.analyses[0]
         : null;
@@ -176,7 +172,7 @@ export default function Cases() {
       setIndication(String(data.clinical_context?.indication ?? ""));
       setCaseData(data);
       setArtifacts(artifactRows);
-      setSpecimenId(specimens[0]?.specimen_id ?? "");
+      setSpecimenId(selectedSpecimenId);
       setPrimaryArtifact(primary);
       setIndexArtifact(index);
       setBuild(primary?.genome_build ?? "GRCh38");

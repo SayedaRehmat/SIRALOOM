@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -9,6 +10,7 @@ from backend.app.config import settings
 from backend.app.infrastructure.db.session import SessionLocal
 
 router = APIRouter(tags=["health"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/health")
@@ -22,8 +24,9 @@ def _check_database() -> tuple[str, str | None]:
         with SessionLocal() as db:
             db.execute(text("SELECT 1"))
         return "ok", None
-    except Exception as exc:  # pragma: no cover - deployment/runtime dependent
-        return "error", str(exc)[:300]
+    except Exception as exc:  # pragma: no cover - deployment/runtime dependent  # noqa: BLE001
+        logger.warning("Readiness database check failed (%s)", type(exc).__name__)
+        return "error", "DATABASE_UNAVAILABLE"
 
 
 def _check_redis() -> tuple[str, str | None]:
@@ -33,8 +36,9 @@ def _check_redis() -> tuple[str, str | None]:
         client = redis.Redis.from_url(settings.redis_url, socket_connect_timeout=2, socket_timeout=2)
         client.ping()
         return "ok", None
-    except Exception as exc:  # pragma: no cover - deployment/runtime dependent
-        return "error", str(exc)[:300]
+    except Exception as exc:  # pragma: no cover - deployment/runtime dependent  # noqa: BLE001
+        logger.warning("Readiness Redis check failed (%s)", type(exc).__name__)
+        return "error", "REDIS_UNAVAILABLE"
 
 
 def _check_artifact_root() -> tuple[str, str | None]:
@@ -45,8 +49,9 @@ def _check_artifact_root() -> tuple[str, str | None]:
         probe.write_bytes(b"ok")
         probe.unlink(missing_ok=True)
         return "ok", None
-    except Exception as exc:  # pragma: no cover - deployment/runtime dependent
-        return "error", str(exc)[:300]
+    except Exception as exc:  # pragma: no cover - deployment/runtime dependent  # noqa: BLE001
+        logger.warning("Readiness artifact-store check failed (%s)", type(exc).__name__)
+        return "error", "ARTIFACT_STORE_UNAVAILABLE"
 
 
 @router.get("/ready")

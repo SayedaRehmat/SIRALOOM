@@ -1,14 +1,29 @@
-import pytest
 from uuid import uuid4, uuid5
-from pathlib import Path
+
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, ReportabilityDecision, Artifact, ConfirmationRecord
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Artifact,
+    Case,
+    Classification,
+    ConfirmationRecord,
+    Organization,
+    Report,
+    ReportabilityDecision,
+    User,
+    Variant,
+)
+from backend.app.reporting.finalization import (
+    ReportFinalizationError,
+    _persist_pdf_artifact,
+    finalize_report,
+)
 from backend.app.reporting.service import build_report_content, final_report_eligibility
-from backend.app.reporting.finalization import finalize_report, ReportFinalizationError, _persist_pdf_artifact
-from backend.app.infrastructure.db.models import Report
 
 
 def make_db():
@@ -36,6 +51,48 @@ def test_finalize_report_sets_final_and_supersedes():
     db.add(r); db.commit()
     out=finalize_report(db,report_id=r.id,approver_id=u.id,reason='Reviewed and approved'); db.commit()
     assert out.status=='FINAL'; assert out.approved_by==u.id
+
+
+def test_repeated_signout_requires_durable_linked_signed_artifact():
+    db, u, c, a, _ = seed(True)
+    draft_artifact = db.query(Artifact).first()
+    report = Report(
+        id=uuid4(), case_id=c.id, analysis_id=a.id, report_version=1,
+        language="en", report_type="CLINICAL_INTERPRETATION", status="FINAL",
+        artifact_id=draft_artifact.id, approved_by=u.id, signed_artifact_id=None,
+        signed_sha256=None, content_json={},
+    )
+    db.add(report)
+    db.commit()
+
+    with pytest.raises(ReportFinalizationError, match="missing a valid linked signed artifact"):
+        finalize_report(db, report_id=report.id, approver_id=u.id, reason="Retry signout")
+
+
+def test_repeated_signout_returns_only_when_signed_artifact_lineage_is_valid():
+    db, u, c, a, _ = seed(True)
+    report_id = uuid4()
+    signed_artifact = Artifact(
+        id=uuid4(), case_id=c.id, analysis_id=a.id, artifact_type="REPORT_PDF",
+        filename="signed.pdf", media_type="application/pdf", size_bytes=500,
+        sha256="b" * 64, storage_uri="file:///tmp/signed.pdf", genome_build="GRCh38",
+        validation_status="VALID",
+        metadata_json={
+            "report_id": str(report_id), "report_version": 1, "signed": True,
+        },
+    )
+    report = Report(
+        id=report_id, case_id=c.id, analysis_id=a.id, report_version=1,
+        language="en", report_type="CLINICAL_INTERPRETATION", status="FINAL",
+        artifact_id=db.query(Artifact).first().id, signed_artifact_id=signed_artifact.id,
+        signed_sha256=signed_artifact.sha256, approved_by=u.id, content_json={},
+    )
+    db.add_all([signed_artifact, report])
+    db.commit()
+
+    result = finalize_report(db, report_id=report.id, approver_id=u.id, reason="Retry signout")
+    assert result.id == report.id
+    assert result.signed_artifact_id == signed_artifact.id
 
 def test_finalize_report_rejects_stale_classification_snapshot():
     db,u,c,a,v=seed(True)
@@ -67,7 +124,7 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
     db.commit()
 
     monkeypatch.setattr(
-        "backend.app.reporting.finalization.settings.artifact_root",
+        "backend.app.config.settings.artifact_root",
         str(tmp_path),
     )
     content = {
@@ -222,7 +279,7 @@ def test_manual_classification_without_acmg_criteria_can_be_signed_out(tmp_path,
     db.commit()
 
     monkeypatch.setattr(
-        "backend.app.reporting.finalization.settings.artifact_root",
+        "backend.app.config.settings.artifact_root",
         str(tmp_path),
     )
     content = build_report_content(

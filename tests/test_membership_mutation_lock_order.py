@@ -117,3 +117,26 @@ def test_membership_mutation_rejects_target_outside_tenant(monkeypatch):
 
     assert error.value.status_code == 404
     assert db.events == ["tenant-lock", "membership-read", "membership-read"]
+
+
+def test_invitation_creation_rejects_stale_admin_after_membership_revocation(monkeypatch):
+    organization_id = uuid4()
+    user_id = uuid4()
+    db = MembershipMutationSession([None])
+    monkeypatch.setattr(
+        auth_api,
+        "_lock_organization_membership_mutations",
+        lambda session, tenant_id: session.events.append("tenant-lock"),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        auth_api.create_organization_invitation(
+            payload=auth_api.OrganizationInvitationCreate(
+                email="new-member@example.test", role="read_only",
+            ),
+            principal=_principal(user_id, organization_id),
+            db=db,
+        )
+
+    assert error.value.status_code == 403
+    assert db.events == ["tenant-lock", "membership-read"]

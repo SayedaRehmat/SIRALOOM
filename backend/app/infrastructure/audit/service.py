@@ -1,11 +1,16 @@
 from __future__ import annotations
+
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
-from sqlalchemy import select, desc
+
+from sqlalchemy import desc, select, text
 from sqlalchemy.orm import Session
+
 from backend.app.infrastructure.db.models import AuditEvent
+
+AUDIT_CHAIN_LOCK_KEY = 0x534952414C4F4F
 
 class AuditService:
     def __init__(self, db: Session):
@@ -19,9 +24,29 @@ class AuditService:
                output_artifacts: list | None = None, software: dict | None = None,
                workflow: dict | None = None, resource_versions: dict | None = None,
                correlation_id: str | None = None, payload: dict | None = None) -> UUID:
+        get_bind = getattr(self.db, "get_bind", None)
+        bind = get_bind() if callable(get_bind) else None
+        if bind is not None and bind.dialect.name == "postgresql":
+            # The hash chain is global. Serialize appenders before reading the
+            # predecessor so concurrent transactions cannot fork the chain.
+            self.db.execute(
+                text("SELECT pg_advisory_xact_lock(:lock_key)"),
+                {"lock_key": AUDIT_CHAIN_LOCK_KEY},
+            )
+        previous = self.db.scalar(
+            select(AuditEvent)
+            .order_by(desc(AuditEvent.occurred_at), desc(AuditEvent.id))
+            .limit(1)
+        )
         event_id = uuid4()
-        now = datetime.now(timezone.utc)
-        previous = self.db.scalar(select(AuditEvent).order_by(desc(AuditEvent.occurred_at)).limit(1))
+        now = datetime.now(UTC)
+        if previous is not None:
+            previous_at = previous.occurred_at
+            if previous_at.tzinfo is None:
+                previous_at = previous_at.replace(tzinfo=UTC)
+            else:
+                previous_at = previous_at.astimezone(UTC)
+            now = max(now, previous_at + timedelta(microseconds=1))
         previous_hash = previous.event_hash if previous else None
         body = {
             "event_id": str(event_id), "event_version": "1.0", "event_type": event_type,

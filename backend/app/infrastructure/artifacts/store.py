@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ArtifactType
+from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.infrastructure.db.models import Artifact
 
 
@@ -112,6 +113,7 @@ class ArtifactStore:
         if not source.is_file():
             raise FileNotFoundError(f"Artifact source file does not exist: {source}")
 
+        generated_artifact_id = artifact_id is None
         if artifact_id is None:
             artifact_id = uuid4()
 
@@ -123,36 +125,51 @@ class ArtifactStore:
 
         destination.parent.mkdir(parents=True, exist_ok=True)
 
-        # Stream the copy to avoid loading potentially large VCF files into RAM.
-        with source.open("rb") as src, destination.open("wb") as dst:
-            while chunk := src.read(8 * 1024 * 1024):
-                dst.write(chunk)
+        try:
+            # Stream the copy to avoid loading potentially large VCF files into RAM.
+            with source.open("rb") as src, destination.open("wb") as dst:
+                while chunk := src.read(8 * 1024 * 1024):
+                    dst.write(chunk)
 
-        sha256, size_bytes = self._sha256_and_size(destination)
+            sha256, size_bytes = self._sha256_and_size(destination)
 
-        artifact = Artifact(
-            id=artifact_id,
-            analysis_id=analysis_id,
-            case_id=case_id,
-            artifact_type=(
-                artifact_type.value
-                if isinstance(artifact_type, ArtifactType)
-                else str(artifact_type)
-            ),
-            filename=self._safe_filename(filename),
-            media_type=media_type,
-            size_bytes=size_bytes,
-            sha256=sha256,
-            storage_uri=destination.as_uri(),
-            genome_build=genome_build,
-            specimen_id=specimen_id,
-            paired_artifact_id=paired_artifact_id,
-            validation_status=validation_status,
-            metadata_json=dict(metadata or {}),
-        )
+            artifact = Artifact(
+                id=artifact_id,
+                analysis_id=analysis_id,
+                case_id=case_id,
+                artifact_type=(
+                    artifact_type.value
+                    if isinstance(artifact_type, ArtifactType)
+                    else str(artifact_type)
+                ),
+                filename=self._safe_filename(filename),
+                media_type=media_type,
+                size_bytes=size_bytes,
+                sha256=sha256,
+                storage_uri=destination.as_uri(),
+                genome_build=genome_build,
+                specimen_id=specimen_id,
+                paired_artifact_id=paired_artifact_id,
+                validation_status=validation_status,
+                metadata_json=dict(metadata or {}),
+            )
 
-        db.add(artifact)
-        db.flush()
+            db.add(artifact)
+            db.flush()
+        except Exception:
+            if generated_artifact_id:
+                try:
+                    destination.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                directory = destination.parent
+                while directory != self.root:
+                    try:
+                        directory.rmdir()
+                    except OSError:
+                        break
+                    directory = directory.parent
+            raise
 
         return artifact
 
@@ -162,10 +179,9 @@ class ArtifactStore:
 
         Only paths contained inside this store's root are accepted.
         """
-        if storage_uri.startswith("file://"):
-            path = Path(storage_uri.removeprefix("file://")).resolve()
-        else:
-            path = Path(storage_uri).resolve()
+        path = local_path_from_uri(storage_uri)
+        if path is None:
+            raise ValueError("Artifact storage URI is not a local filesystem path.")
 
         root = self.root
 

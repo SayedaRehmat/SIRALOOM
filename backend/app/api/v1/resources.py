@@ -4,10 +4,11 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from pathlib import Path
 import re
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
@@ -25,6 +26,7 @@ from backend.app.domain.resource_staging import (
     create_staging_candidate,
     prepare_staging,
 )
+from backend.app.domain.local_uri import local_path_from_uri
 
 router = APIRouter(prefix="/resources", tags=["resources"])
 
@@ -68,12 +70,7 @@ def _validate_org_destination(destination_uri: str, organization_id: UUID) -> Pa
 
 
 def _local_source_path(source_uri: str) -> Path | None:
-    parsed = urlparse(str(source_uri or "").strip())
-    if parsed.scheme == "":
-        return Path(source_uri).expanduser().resolve(strict=False)
-    if parsed.scheme.lower() == "file" and parsed.netloc in {"", "localhost"}:
-        return Path(unquote(parsed.path)).expanduser().resolve(strict=False)
-    return None
+    return local_path_from_uri(source_uri)
 
 
 def _allowed_resource_hosts() -> set[str]:
@@ -87,6 +84,18 @@ def _allowed_local_source_roots() -> list[Path]:
 def _require_resource_owner(row: Resource | None, principal: Principal) -> Resource:
     if row is None or row.organization_id != principal.organization_id:
         raise HTTPException(status_code=404, detail="Organization resource not found")
+    return row
+
+
+def _require_resource_lifecycle_access(row: Resource | None, principal: Principal) -> Resource:
+    """Only platform administrators may change shared global resource state."""
+    if row is None:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    if row.organization_id is None:
+        if principal.role != "platform_admin":
+            raise HTTPException(status_code=404, detail="Resource not found")
+    elif row.organization_id != principal.organization_id:
+        raise HTTPException(status_code=404, detail="Resource not found")
     return row
 
 
@@ -322,6 +331,12 @@ def decide_resource_approval_endpoint(
         )
     except (ResourceRegistryError, ValueError) as exc:
         raise HTTPException(status_code=409 if "changed" in str(exc).lower() else 400, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Another resource release decision changed this organization's binding; refresh and retry.",
+        ) from exc
     db.commit()
     return {
         "approval_id": str(approval.id),
@@ -609,9 +624,7 @@ def qualify_resource(
     principal: Principal = Depends(get_current_principal),
 ):
     require_role(principal, frozenset({"platform_admin", "lab_director", "bioinformatician"}))
-    row = db.get(Resource, resource_id)
-    if not row or (row.organization_id and row.organization_id != principal.organization_id):
-        raise HTTPException(status_code=404, detail="Resource not found")
+    row = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
     try:
         from backend.app.domain.resource_qualification import qualify_resource as run_qualification
         from backend.app.domain.resources import qualify_resource_version
@@ -663,9 +676,7 @@ def activate_resource(
     principal: Principal = Depends(get_current_principal),
 ):
     require_role(principal, frozenset({"platform_admin", "lab_director"}))
-    row = db.get(Resource, resource_id)
-    if not row or (row.organization_id and row.organization_id != principal.organization_id):
-        raise HTTPException(status_code=404, detail="Resource not found")
+    row = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
     try:
         from backend.app.domain.resources import activate_resource_version
         row = activate_resource_version(

@@ -32,7 +32,7 @@ def test_shared_object_accessors_enforce_case_tenant_boundary(object_kind, same_
     case = SimpleNamespace(id=case_id, organization_id=tenant_id if same_tenant else other_tenant_id)
     analysis = SimpleNamespace(id=object_id, case_id=case_id)
     artifact = SimpleNamespace(id=object_id, case_id=case_id)
-    report = SimpleNamespace(id=object_id, case_id=case_id)
+    report = SimpleNamespace(id=object_id, case_id=case_id, analysis_id=object_id)
     db = TenantObjectSession({
         Case: case,
         Analysis: analysis,
@@ -57,3 +57,71 @@ def test_shared_object_accessors_enforce_case_tenant_boundary(object_kind, same_
         with pytest.raises(HTTPException) as error:
             accessor(object_id, db=db, principal=principal)
         assert error.value.status_code == 404
+
+
+def test_report_access_rejects_analysis_from_another_case_in_same_tenant():
+    tenant_id = uuid4()
+    report_case_id, analysis_case_id = uuid4(), uuid4()
+    report_id, analysis_id = uuid4(), uuid4()
+    db = TenantObjectSession({
+        Report: SimpleNamespace(id=report_id, case_id=report_case_id, analysis_id=analysis_id),
+        Case: SimpleNamespace(id=report_case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=analysis_case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_report(report_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
+def test_report_access_rejects_final_report_without_valid_signed_artifact():
+    tenant_id, case_id, analysis_id, report_id = uuid4(), uuid4(), uuid4(), uuid4()
+    db = TenantObjectSession({
+        Report: SimpleNamespace(
+            id=report_id, case_id=case_id, analysis_id=analysis_id,
+            status="FINAL", signed_artifact_id=None, signed_sha256=None,
+        ),
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_report(report_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
+def test_report_access_accepts_final_report_with_matching_signed_artifact():
+    tenant_id, case_id, analysis_id, report_id, artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(),
+    )
+    report = SimpleNamespace(
+        id=report_id, case_id=case_id, analysis_id=analysis_id, status="FINAL",
+        signed_artifact_id=artifact_id, signed_sha256="d" * 64, report_version=3,
+    )
+    artifact = SimpleNamespace(
+        id=artifact_id, case_id=case_id, analysis_id=analysis_id,
+        artifact_type="REPORT_PDF", validation_status="VALID", sha256="d" * 64,
+        metadata_json={"report_id": str(report_id), "report_version": 3, "signed": True},
+    )
+    db = TenantObjectSession({
+        Report: report,
+        Artifact: artifact,
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    assert get_accessible_report(report_id, db=db, principal=principal) is report

@@ -15,12 +15,13 @@ from datetime import datetime, timezone
 import os
 import shutil
 from uuid import uuid4
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import Resource, ResourceStaging
+from backend.app.domain.local_uri import local_path_from_uri
 
 
 class ResourceStagingError(RuntimeError):
@@ -284,15 +285,7 @@ def prepare_staging(db: Session, row: ResourceStaging) -> ResourceStaging:
 
 def _declared_local_source_path(source_uri: str) -> Path | None:
     """Resolve a registered local source URI without treating remote URLs as paths."""
-    value = str(source_uri or "").strip()
-    if not value:
-        return None
-    parsed = urlparse(value)
-    if parsed.scheme == "":
-        return Path(value)
-    if parsed.scheme.lower() != "file" or parsed.netloc not in {"", "localhost"}:
-        return None
-    return Path(unquote(parsed.path))
+    return local_path_from_uri(source_uri)
 
 
 def stage_local_artifact(

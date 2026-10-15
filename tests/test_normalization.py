@@ -11,7 +11,8 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 def make_reference(tmp_path: Path) -> tuple[Path, Path]:
     fasta = tmp_path / "ref.fa"
     seq = "CAAAAAC"
-    fasta.write_text(">1\n" + seq + "\n", encoding="utf-8")
+    # FAI offsets are byte offsets; avoid Windows text-mode newline translation.
+    fasta.write_bytes((">1\n" + seq + "\n").encode("ascii"))
     # Header is 3 bytes (>1 + newline). One sequence line of 7 bases + newline.
     fai = tmp_path / "ref.fa.fai"
     fai.write_text(f"1\t{len(seq)}\t3\t{len(seq)}\t{len(seq)+1}\n", encoding="utf-8")

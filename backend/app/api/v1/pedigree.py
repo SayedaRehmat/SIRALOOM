@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import CASE_WRITE_ROLES, REVIEW_ROLES, get_accessible_analysis, require_role
+from backend.app.auth.authorization import CASE_WRITE_ROLES, REVIEW_ROLES, get_accessible_analysis, get_analysis_variant, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
-from backend.app.infrastructure.db.models import Case, Analysis, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, Variant, Evidence
+from backend.app.infrastructure.db.models import Case, Analysis, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, Evidence
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.inheritance import FamilyObservation, normalize_model, assess_model, fingerprint
@@ -95,8 +95,7 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/segregation")
 def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
-    variant=db.get(Variant,variant_id)
-    if not variant: raise HTTPException(404,"Variant not found")
+    get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id).order_by(SegregationObservation.created_at)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     assessments=list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id==analysis_id,InheritanceAssessment.variant_id==variant_id).order_by(InheritanceAssessment.created_at.desc())))
@@ -106,9 +105,9 @@ def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_d
 def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
     require_role(principal, CASE_WRITE_ROLES)
-    variant=db.get(Variant,variant_id)
+    variant=get_analysis_variant(analysis,variant_id,db)
     member=db.get(PedigreeMember,body.pedigree_member_id)
-    if not variant or not member or member.case_id!=analysis.case_id: raise HTTPException(400,"Variant and pedigree member must belong to this analysis/case")
+    if not member or member.case_id!=analysis.case_id: raise HTTPException(400,"Variant and pedigree member must belong to this analysis/case")
     existing=db.scalar(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id,SegregationObservation.pedigree_member_id==member.id))
     if existing:
         existing.genotype=body.genotype; existing.zygosity=body.zygosity; existing.phase=body.phase; existing.allele_observed=body.allele_observed; existing.phenotype_status=body.phenotype_status; existing.source=body.source; existing.notes=body.notes; existing.metadata_json=body.metadata
@@ -122,8 +121,7 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
     require_role(principal, REVIEW_ROLES)
-    variant=db.get(Variant,variant_id)
-    if not variant: raise HTTPException(404,"Variant not found")
+    get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     obs=[FamilyObservation(member_id=members[r.pedigree_member_id].member_identifier,sex=members[r.pedigree_member_id].sex,affected_status=r.phenotype_status or members[r.pedigree_member_id].affected_status,genotype=r.genotype,zygosity=r.zygosity) for r in rows if r.pedigree_member_id in members]

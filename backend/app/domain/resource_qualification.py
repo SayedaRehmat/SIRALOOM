@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
@@ -41,9 +42,9 @@ def _sha256(path: Path) -> str:
 
 def _local_path(resource: Resource) -> Path | None:
     location = str(resource.location or "")
-    if location.startswith("file://"):
-        return Path(location.removeprefix("file://"))
-    path = Path(location)
+    path = local_path_from_uri(location)
+    if path is None:
+        return None
     return path if path.is_absolute() else None
 
 

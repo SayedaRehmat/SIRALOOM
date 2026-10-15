@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from uuid import UUID, uuid4
 from types import SimpleNamespace
+from uuid import UUID, uuid4
 
 # Backward-compatible patch seam for existing application tests and callers.
 # The actual publisher is resolved lazily by enqueue_analysis.
@@ -10,15 +10,40 @@ run_analysis_task = SimpleNamespace(delay=lambda analysis_id: None)
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, Case, WorkflowStep
+from backend.app.domain.enums import AnalysisStatus, ArtifactType
+from backend.app.domain.ingestion import normalize_build
+from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.resource_profile_resolver import (
     AnalysisResourcePlan,
     build_workflow_stage_resource_plan,
     resolve_analysis_resource_profile,
 )
-from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    AnalysisDispatch,
+    Artifact,
+    Case,
+    WorkflowStep,
+)
 
+SUPPORTED_ANALYSIS_BUILDS = frozenset({"GRCh37", "GRCh38"})
+
+
+def validate_analysis_input_artifact(artifact: Artifact, reference_build: str) -> None:
+    """Require a validated primary VCF on the exact assembly used by the analysis."""
+    if artifact.artifact_type != ArtifactType.VCF:
+        raise ValueError("Analysis input must be a primary VCF artifact")
+    if artifact.validation_status != "VALID":
+        raise ValueError("Analysis input VCF must pass ingestion validation")
+
+    artifact_build = normalize_build(artifact.genome_build)
+    requested_build = normalize_build(reference_build)
+    if artifact_build not in SUPPORTED_ANALYSIS_BUILDS:
+        raise ValueError("Analysis input VCF must declare a supported reference assembly")
+    if requested_build not in SUPPORTED_ANALYSIS_BUILDS:
+        raise ValueError("Analysis reference assembly must be GRCh37 or GRCh38")
+    if artifact_build != requested_build:
+        raise ValueError("Analysis reference assembly must match the validated input VCF")
 
 
 def create_analysis(
@@ -43,6 +68,8 @@ def create_analysis(
 
     if artifact.case_id != case_id:
         raise ValueError("Input artifact does not belong to this case")
+
+    validate_analysis_input_artifact(artifact, reference_build)
 
     analysis_configuration = dict(configuration or {})
     configured_profile_id = analysis_configuration.get("resource_profile_id")

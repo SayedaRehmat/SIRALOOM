@@ -7,6 +7,7 @@ import json
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import (
@@ -281,8 +282,22 @@ def request_resource_approval(db: Session, *, resource_id: UUID, organization_id
         return existing
     approval = ResourceApproval(id=uuid4(), resource_id=resource_id, organization_id=organization_id,
                                qualification_id=qualification.id, status="PENDING", version=1)
-    db.add(approval)
-    db.flush()
+    try:
+        with db.begin_nested():
+            db.add(approval)
+            db.flush()
+    except IntegrityError:
+        # The uniqueness constraint is the arbiter when concurrent requests
+        # ask to adopt the same qualified release. Reconcile to the durable
+        # winner instead of turning an idempotent request into HTTP 500.
+        existing = db.scalar(select(ResourceApproval).where(
+            ResourceApproval.resource_id == resource_id,
+            ResourceApproval.organization_id == organization_id,
+            ResourceApproval.qualification_id == qualification.id,
+        ))
+        if existing is None:
+            raise
+        return existing
     return approval
 
 
@@ -293,6 +308,9 @@ def decide_resource_approval(
     decision = decision.strip().upper()
     if decision not in {"APPROVED", "REJECTED", "DEFERRED"}:
         raise ResourceRegistryError("decision must be APPROVED, REJECTED, or DEFERRED")
+    reason = reason.strip() if isinstance(reason, str) else ""
+    if not reason:
+        raise ResourceRegistryError("a documented reason is required for resource adoption decisions")
     approval = db.scalar(select(ResourceApproval).where(
         ResourceApproval.id == approval_id, ResourceApproval.organization_id == organization_id,
     ))
@@ -335,12 +353,15 @@ def decide_resource_approval(
     binding = db.scalar(select(OrganizationResourceBinding).where(
         OrganizationResourceBinding.organization_id == organization_id,
         OrganizationResourceBinding.identity_key == resource_identity_key,
-    ))
+    ).with_for_update())
     previous_resource_id = binding.resource_id if binding else None
     previous_binding_version = binding.version if binding else None
     previous_resource = db.get(Resource, previous_resource_id) if previous_resource_id else None
 
-    if decision == "REJECTED":
+    # Adoption is tenant-scoped, while a global Resource row is shared by
+    # every organization. A tenant's rejection must not change global release
+    # lifecycle state or prevent other laboratories from adopting it.
+    if decision == "REJECTED" and resource.organization_id == organization_id:
         resource.status = "REJECTED"
 
     if decision == "APPROVED":

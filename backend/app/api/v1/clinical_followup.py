@@ -4,10 +4,10 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from backend.app.auth.authorization import get_accessible_analysis, get_accessible_case, require_role, CASE_WRITE_ROLES, REPORT_FINALIZE_ROLES
+from backend.app.auth.authorization import get_accessible_analysis, get_analysis_variant, get_accessible_case, require_role, CASE_WRITE_ROLES, REPORT_FINALIZE_ROLES
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Case, Variant, ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision
+from backend.app.infrastructure.db.models import Analysis, Case, ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["clinical-governance"])
@@ -52,15 +52,7 @@ def _secondary(r):
     return {"id":str(r.id),"analysis_id":str(r.analysis_id),"variant_id":str(r.variant_id),"version":r.version,"policy_name":r.policy_name,"policy_version":r.policy_version,"eligibility":r.eligibility,"consent_status":r.consent_status,"disposition":r.disposition,"status":r.status,"rationale":r.rationale,"gene_disease_context":r.gene_disease_context or {},"reviewed_by":str(r.reviewed_by) if r.reviewed_by else None,"reviewed_at":r.reviewed_at.isoformat() if r.reviewed_at else None,"created_at":r.created_at.isoformat()}
 
 def _variant_access(analysis, variant_id, db):
-    v=db.get(Variant,variant_id)
-    if not v: raise HTTPException(404,"Variant not found")
-    # Variant ownership is established through the analysis-scoped variant rows in SIRALOOM.
-    from backend.app.infrastructure.db.models import Annotation
-    if not db.scalar(select(Annotation.id).where(Annotation.analysis_id==analysis.id,Annotation.variant_id==variant_id).limit(1)):
-        from backend.app.infrastructure.db.models import Classification
-        if not db.scalar(select(Classification.id).where(Classification.analysis_id==analysis.id,Classification.variant_id==variant_id).limit(1)):
-            raise HTTPException(404,"Variant is not part of this analysis")
-    return v
+    return get_analysis_variant(analysis, variant_id, db)
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/clinical-governance")
 def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):

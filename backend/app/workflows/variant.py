@@ -24,6 +24,7 @@ from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomAD
 from backend.app.adapters.population.secondary import LocalTabixSecondaryPopulationProvider, SecondaryPopulationProviderError
 from backend.app.config import settings
 from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf
 from backend.app.domain.reference import ReferenceError
 from backend.app.domain.reference_package import ReferencePackageError, load_reference_package, sha256_file
@@ -55,6 +56,7 @@ from backend.app.infrastructure.db.models import (
     Evidence,
     PopulationObservation,
     Resource,
+    ResourceExecutionRecord,
     Variant,
     WorkflowStep,
     AnalysisPartition,
@@ -199,6 +201,61 @@ class ResourceConsumptionError(RuntimeError):
     def __init__(self, code: str, message: str):
         super().__init__(message)
         self.code = code
+
+
+def _resources_by_ids(db: Session, resource_ids) -> dict[UUID, Resource]:
+    ids = {resource_id for resource_id in resource_ids if resource_id is not None}
+    if not ids:
+        return {}
+    return {
+        row.id: row
+        for row in db.scalars(select(Resource).where(Resource.id.in_(ids))).all()
+    }
+
+
+def _succeeded_population_execution(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    resource_id: UUID,
+    batch_key: str,
+):
+    """Return a durable succeeded population execution for this variant query."""
+    return db.scalar(
+        select(ResourceExecutionRecord.id).where(
+            ResourceExecutionRecord.analysis_id == analysis_id,
+            ResourceExecutionRecord.step_id == "population",
+            ResourceExecutionRecord.resource_id == resource_id,
+            ResourceExecutionRecord.batch_key == batch_key,
+            ResourceExecutionRecord.status == "SUCCEEDED",
+        ).limit(1)
+    )
+
+
+def _succeeded_evidence_execution(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    resource_id: UUID,
+    batch_key: str,
+    request_fingerprint: str,
+    execution_kind: str,
+) -> bool:
+    """Check whether this exact external evidence query and its rows committed."""
+    rows = db.scalars(
+        select(ResourceExecutionRecord).where(
+            ResourceExecutionRecord.analysis_id == analysis_id,
+            ResourceExecutionRecord.step_id == "build_evidence",
+            ResourceExecutionRecord.resource_id == resource_id,
+            ResourceExecutionRecord.batch_key == batch_key,
+            ResourceExecutionRecord.request_fingerprint == request_fingerprint,
+            ResourceExecutionRecord.status.in_(("SUCCESS", "NO_DATA")),
+        )
+    ).all()
+    return any(
+        (row.metadata_json or {}).get("execution_kind") == execution_kind
+        for row in rows
+    )
 
 
 def _batch_key(start: int, end: int) -> str:
@@ -793,10 +850,9 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
         temporary_paths.append(local_path)
         return local_path
 
-    if uri.startswith("file://"):
-        local_path = Path(uri.removeprefix("file://"))
-    else:
-        local_path = Path(uri)
+    local_path = local_path_from_uri(uri)
+    if local_path is None:
+        raise RuntimeError(f"Artifact {artifact.id} has an unsupported local storage URI: {uri}")
     if not local_path.is_file():
         raise RuntimeError(
             f"Artifact {artifact.id} is not available on this worker: {uri}"
@@ -1235,7 +1291,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 if reference_execution.contract.access_method in {"LOCAL", "FILE", "LOCAL_ONLY"}:
                     contract_location = reference_execution.contract.location or ""
-                    normalized_contract_location = str(Path(contract_location.removeprefix("file://")).resolve())
+                    normalized_contract_location = str(
+                        local_path_from_uri(contract_location) or Path(contract_location).resolve()
+                    )
                     normalized_reference_location = str(reference_fasta_path.resolve())
                     if normalized_contract_location != normalized_reference_location:
                         raise ResourceExecutionError(
@@ -2265,50 +2323,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     for variant in iter_normalized_vcf(
                         normalized_path, reference_build
                     ):
-                        execution_record = start_resource_execution(
-                            db,
-                            analysis_id=analysis.id,
-                            step_id="population",
-                            attempt=population_step.attempt,
-                            resolved=execution,
-                            requested_resource_id=resource.id,
-                            fallback_resource_id=None,
-                            batch_key=(
-                                f"{provider.provider_id}:{variant.chromosome}:"
-                                f"{variant.position}:{variant.reference}:{variant.alternate}"
-                            ),
-                            metadata={
-                                "provider": provider.provider_id,
-                                "resource_id": str(resource.id),
-                            },
+                        batch_key = (
+                            f"{provider.provider_id}:{variant.chromosome}:"
+                            f"{variant.position}:{variant.reference}:{variant.alternate}"
                         )
-                        db.commit()
-                        try:
-                            obs_list = query_variant(variant)
-                            sample = next(iter(obs_list), None)
-                            complete_resource_execution(
-                                db,
-                                execution_record,
-                                status="SUCCEEDED",
-                                request_fingerprint=(
-                                    sample.request_fingerprint if sample else None
-                                ),
-                                response_sha256=(
-                                    sample.response_sha256 if sample else None
-                                ),
-                            )
-                            db.commit()
-                        except GnomADProviderError as exc:
-                            complete_resource_execution(
-                                db,
-                                execution_record,
-                                status="FAILED",
-                                error_code="POPULATION_PROVIDER_ERROR",
-                                error_message=str(exc),
-                            )
-                            db.commit()
-                            raise
-
                         row = db.get(
                             Variant,
                             stable_variant_uuid(
@@ -2325,6 +2343,40 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             raise RuntimeError(
                                 "Canonical variant row missing during population processing"
                             )
+                        if _succeeded_population_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            resource_id=resource.id,
+                            batch_key=batch_key,
+                        ):
+                            continue
+                        execution_record = start_resource_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="population",
+                            attempt=population_step.attempt,
+                            resolved=execution,
+                            requested_resource_id=resource.id,
+                            fallback_resource_id=None,
+                            batch_key=batch_key,
+                            metadata={
+                                "provider": provider.provider_id,
+                                "resource_id": str(resource.id),
+                            },
+                        )
+                        db.commit()
+                        try:
+                            obs_list = query_variant(variant)
+                        except GnomADProviderError as exc:
+                            complete_resource_execution(
+                                db,
+                                execution_record,
+                                status="FAILED",
+                                error_code="POPULATION_PROVIDER_ERROR",
+                                error_message=str(exc),
+                            )
+                            db.commit()
+                            raise
 
                         for obs in obs_list:
                             existing = db.scalar(
@@ -2364,6 +2416,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 )
                             )
                             direct_count += 1
+                        sample = next(iter(obs_list), None)
+                        complete_resource_execution(
+                            db,
+                            execution_record,
+                            status="SUCCEEDED",
+                            request_fingerprint=(
+                                sample.request_fingerprint if sample else None
+                            ),
+                            response_sha256=(
+                                sample.response_sha256 if sample else None
+                            ),
+                        )
                         db.commit()
 
                 secondary_count = 0
@@ -2447,6 +2511,31 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         db.commit()
 
                         for variant in iter_normalized_vcf(normalized_path, reference_build):
+                            batch_key = (
+                                f"secondary:{provider_name}:{variant.chromosome}:{variant.position}:"
+                                f"{variant.reference}:{variant.alternate}"
+                            )
+                            row = db.get(
+                                Variant,
+                                stable_variant_uuid(
+                                    canonical_key(
+                                        variant.genome_build,
+                                        variant.chromosome,
+                                        variant.position,
+                                        variant.reference,
+                                        variant.alternate,
+                                    )
+                                ),
+                            )
+                            if row is None:
+                                raise RuntimeError("Canonical variant row missing during secondary population processing")
+                            if _succeeded_population_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                resource_id=secondary_resource.id,
+                                batch_key=batch_key,
+                            ):
+                                continue
                             execution_record = start_resource_execution(
                                 db,
                                 analysis_id=analysis.id,
@@ -2455,10 +2544,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 resolved=secondary_execution,
                                 requested_resource_id=str(secondary_resource.id),
                                 fallback_resource_id=None,
-                                batch_key=(
-                                    f"secondary:{provider_name}:{variant.chromosome}:{variant.position}:"
-                                    f"{variant.reference}:{variant.alternate}"
-                                ),
+                                batch_key=batch_key,
                                 metadata={
                                     "provider": secondary_provider.provider_id,
                                     "population_role": "SECONDARY",
@@ -2468,14 +2554,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db.commit()
                             try:
                                 observations = secondary_provider.query_variant(variant)
-                                complete_resource_execution(
-                                    db,
-                                    execution_record,
-                                    status="SUCCEEDED",
-                                    request_fingerprint=None,
-                                    response_sha256=None,
-                                )
-                                db.commit()
                             except SecondaryPopulationProviderError as exc:
                                 complete_resource_execution(
                                     db,
@@ -2492,21 +2570,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     "message": str(exc),
                                 })
                                 continue
-
-                            row = db.get(
-                                Variant,
-                                stable_variant_uuid(
-                                    canonical_key(
-                                        variant.genome_build,
-                                        variant.chromosome,
-                                        variant.position,
-                                        variant.reference,
-                                        variant.alternate,
-                                    )
-                                ),
-                            )
-                            if row is None:
-                                raise RuntimeError("Canonical variant row missing during secondary population processing")
                             for obs in observations:
                                 existing = db.scalar(
                                     select(PopulationObservation).where(
@@ -2537,7 +2600,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     )
                                 )
                                 secondary_count += 1
-                        db.commit()
+                            complete_resource_execution(
+                                db,
+                                execution_record,
+                                status="SUCCEEDED",
+                                request_fingerprint=None,
+                                response_sha256=None,
+                            )
+                            db.commit()
 
                 annotated_variant_ids = set(db.scalars(
                     select(Annotation.variant_id)
@@ -2741,7 +2811,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 from backend.app.domain.evidence import evidence_fingerprint
                 engine = EvidenceEngine()
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
-                resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
 
                 # ClinVar is consumed here as direct clinical-database evidence,
                 # not as an annotation-stage side effect. The analysis must pin a
@@ -2883,6 +2952,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     annotations = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id).order_by(Annotation.created_at, Annotation.id).offset(start_i).limit(end_i - start_i)).all()
                     variant_ids_for_batch = [a.variant_id for a in annotations]
                     population_rows = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id.in_(variant_ids_for_batch))).all() if variant_ids_for_batch else []
+                    resource_rows = _resources_by_ids(db, (obs.resource_id for obs in population_rows))
                     population_by_variant: dict[str, list[dict]] = {}
                     for obs in population_rows:
                         resource = resource_rows.get(obs.resource_id)
@@ -2912,40 +2982,56 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if clingen_vp_provider is not None and clingen_vp_resource is not None and clingen_vp_execution is not None and gene:
                             query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "hgvs": hgvs_values, "resource_id": str(clingen_vp_execution.resource_id), "resource_version": clingen_vp_execution.resource_version, "contract_hash": clingen_vp_execution.contract_hash}
                             request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                            execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_vp_execution, requested_resource_id=clingen_vp_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_VARIANT_PATHOGENICITY_QUERY", "query": query_material})
-                            try:
-                                assertions = clingen_vp_provider.query_variant(gene=gene, hgvs=hgvs_values)
-                                response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
-                                response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                                complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
-                                records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
-                            except Exception as exc:
-                                complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
-                                provider_limitations.append({
-                                    "code": "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED",
-                                    "message": str(exc),
-                                    "resource_capability": "CLINICAL_VARIANT",
-                                    "variant_id": str(row.id),
-                                })
+                            if not _succeeded_evidence_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                resource_id=clingen_vp_execution.resource_id,
+                                batch_key=key,
+                                request_fingerprint=request_fingerprint,
+                                execution_kind="CLINGEN_VARIANT_PATHOGENICITY_QUERY",
+                            ):
+                                execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_vp_execution, requested_resource_id=clingen_vp_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_VARIANT_PATHOGENICITY_QUERY", "query": query_material})
+                                try:
+                                    assertions = clingen_vp_provider.query_variant(gene=gene, hgvs=hgvs_values)
+                                    response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
+                                    response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                                    complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
+                                    records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_execution.resource_version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
+                                except Exception as exc:
+                                    complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
+                                    provider_limitations.append({
+                                        "code": "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED",
+                                        "message": str(exc),
+                                        "resource_capability": "CLINICAL_VARIANT",
+                                        "variant_id": str(row.id),
+                                    })
 
                         if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
                             query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
                             request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                            execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_gdv_execution, requested_resource_id=clingen_gdv_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY", "query": query_material})
-                            try:
-                                assertions = clingen_gdv_provider.query_gene(gene=gene)
-                                response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
-                                response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                                complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
-                                records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_resource.version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
-                            except Exception as exc:
-                                complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
-                                provider_limitations.append({
-                                    "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
-                                    "message": str(exc),
-                                    "resource_capability": "GENE_DISEASE",
-                                    "variant_id": str(row.id),
-                                })
+                            if not _succeeded_evidence_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                resource_id=clingen_gdv_execution.resource_id,
+                                batch_key=key,
+                                request_fingerprint=request_fingerprint,
+                                execution_kind="CLINGEN_GENE_DISEASE_VALIDITY_QUERY",
+                            ):
+                                execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_gdv_execution, requested_resource_id=clingen_gdv_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY", "query": query_material})
+                                try:
+                                    assertions = clingen_gdv_provider.query_gene(gene=gene)
+                                    response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
+                                    response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                                    complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
+                                    records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_execution.resource_version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
+                                except Exception as exc:
+                                    complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
+                                    provider_limitations.append({
+                                        "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
+                                        "message": str(exc),
+                                        "resource_capability": "GENE_DISEASE",
+                                        "variant_id": str(row.id),
+                                    })
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
@@ -2962,76 +3048,84 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             request_fingerprint = hashlib.sha256(
                                 json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
                             ).hexdigest()
-                            execution_row = start_resource_execution(
+                            if not _succeeded_evidence_execution(
                                 db,
                                 analysis_id=analysis.id,
-                                step_id="build_evidence",
-                                attempt=attempt,
+                                resource_id=clinvar_execution.resource_id,
                                 batch_key=key,
-                                resolved=clinvar_execution,
-                                requested_resource_id=clinvar_resource.id,
-                                fallback_resource_id=None,
-                                metadata={
-                                    "execution_kind": "CLINVAR_VARIANT_QUERY",
-                                    "query": query_material,
-                                },
-                            )
-                            try:
-                                assertions = clinvar_provider.query_variant(
-                                    chromosome=row.chromosome,
-                                    position=row.position,
-                                    reference=row.reference,
-                                    alternate=row.alternate,
-                                )
-                                response_material = [
-                                    {
-                                        "record_type": x.record_type,
-                                        "accession": x.accession,
-                                        "version": x.version,
-                                        "record_sha256": x.record_sha256,
-                                    }
-                                    for x in assertions
-                                ]
-                                response_sha256 = hashlib.sha256(
-                                    json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
-                                ).hexdigest()
-                                complete_resource_execution(
+                                request_fingerprint=request_fingerprint,
+                                execution_kind="CLINVAR_VARIANT_QUERY",
+                            ):
+                                execution_row = start_resource_execution(
                                     db,
-                                    execution_row,
-                                    status="SUCCESS" if assertions else "NO_DATA",
-                                    request_fingerprint=request_fingerprint,
-                                    response_sha256=response_sha256,
+                                    analysis_id=analysis.id,
+                                    step_id="build_evidence",
+                                    attempt=attempt,
+                                    batch_key=key,
+                                    resolved=clinvar_execution,
+                                    requested_resource_id=clinvar_resource.id,
+                                    fallback_resource_id=None,
+                                    metadata={
+                                        "execution_kind": "CLINVAR_VARIANT_QUERY",
+                                        "query": query_material,
+                                    },
                                 )
-                                records.extend(
-                                    engine.build_from_clinvar_assertions(
-                                        variant_id=row.id,
-                                        assertions=assertions,
-                                        resource_id=clinvar_execution.resource_id,
-                                        resource_name=clinvar_resource.name,
-                                        resource_version=clinvar_resource.version,
-                                        request_fingerprint=request_fingerprint,
-                                        execution_metadata={
-                                            **clinvar_execution_metadata,
-                                            "query": query_material,
-                                            "response_sha256": response_sha256,
-                                        },
+                                try:
+                                    assertions = clinvar_provider.query_variant(
+                                        chromosome=row.chromosome,
+                                        position=row.position,
+                                        reference=row.reference,
+                                        alternate=row.alternate,
                                     )
-                                )
-                            except Exception as exc:
-                                complete_resource_execution(
-                                    db,
-                                    execution_row,
-                                    status="FAILED",
-                                    request_fingerprint=request_fingerprint,
-                                    error_code="CLINVAR_QUERY_FAILED",
-                                    error_message=str(exc),
-                                )
-                                provider_limitations.append({
-                                    "code": "CLINVAR_QUERY_FAILED",
-                                    "message": str(exc),
-                                    "resource_capability": "CLINICAL_DATABASE",
-                                    "variant_id": str(row.id),
-                                })
+                                    response_material = [
+                                        {
+                                            "record_type": x.record_type,
+                                            "accession": x.accession,
+                                            "version": x.version,
+                                            "record_sha256": x.record_sha256,
+                                        }
+                                        for x in assertions
+                                    ]
+                                    response_sha256 = hashlib.sha256(
+                                        json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                                    ).hexdigest()
+                                    complete_resource_execution(
+                                        db,
+                                        execution_row,
+                                        status="SUCCESS" if assertions else "NO_DATA",
+                                        request_fingerprint=request_fingerprint,
+                                        response_sha256=response_sha256,
+                                    )
+                                    records.extend(
+                                        engine.build_from_clinvar_assertions(
+                                            variant_id=row.id,
+                                            assertions=assertions,
+                                            resource_id=clinvar_execution.resource_id,
+                                            resource_name=clinvar_resource.name,
+                                            resource_version=clinvar_execution.resource_version,
+                                            request_fingerprint=request_fingerprint,
+                                            execution_metadata={
+                                                **clinvar_execution_metadata,
+                                                "query": query_material,
+                                                "response_sha256": response_sha256,
+                                            },
+                                        )
+                                    )
+                                except Exception as exc:
+                                    complete_resource_execution(
+                                        db,
+                                        execution_row,
+                                        status="FAILED",
+                                        request_fingerprint=request_fingerprint,
+                                        error_code="CLINVAR_QUERY_FAILED",
+                                        error_message=str(exc),
+                                    )
+                                    provider_limitations.append({
+                                        "code": "CLINVAR_QUERY_FAILED",
+                                        "message": str(exc),
+                                        "resource_capability": "CLINICAL_DATABASE",
+                                        "variant_id": str(row.id),
+                                    })
 
                         for record in records:
                             if record.resource_id is not None:
@@ -3329,7 +3423,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "ACMG_SPECIFICATION_IDENTITY_MISSING",
                             "Qualified ClinGen ACMG resource must declare specification_id and specification_version in resource metadata.",
                         )
-                resource_rows = {r.id: r for r in db.scalars(select(Resource)).all()}
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
                 existing_assessment_variant_ids = set(db.scalars(select(ACMGAssessment.variant_id).where(ACMGAssessment.analysis_id == analysis.id)).all())
                 existing_classifications = db.scalars(select(Classification).where(Classification.analysis_id == analysis.id)).all()
@@ -3374,7 +3467,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             variant=variant_row,
                             annotation=ann,
                             population_rows=population_rows_for_variant,
-                            resource_rows=resource_rows,
+                            resource_rows=_resources_by_ids(
+                                db, (obs.resource_id for obs in population_rows_for_variant)
+                            ),
                             gene=gene,
                             disease=disease,
                             specification_resource=acmg_runtime_resource,

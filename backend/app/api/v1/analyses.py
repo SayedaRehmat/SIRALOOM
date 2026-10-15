@@ -4,39 +4,43 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.db.models import (
-    Case,
-    Analysis,
-    WorkflowStep,
-    Variant,
-    Annotation,
-    AnalysisPartition,
-    Assay,
-    Artifact,
-  )
-from backend.app.application.analysis import create_analysis, enqueue_analysis, preflight_analysis_resources
-from backend.app.domain.storage_capacity import (
-    enforce_laboratory_capacity_policy,
-    preflight_analysis_capacity,
+from backend.app.application.analysis import (
+    create_analysis,
+    enqueue_analysis,
+    preflight_analysis_resources,
+    validate_analysis_input_artifact,
 )
-from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.application.entitlements import (
-    reserve_analysis_quota,
     require_analysis_quota,
+    reserve_analysis_quota,
+)
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    get_accessible_analysis,
+    require_role,
 )
 from backend.app.auth.principal import (
     Principal,
     get_current_principal,
     require_case_tenant,
 )
-from backend.app.auth.authorization import (
-    CASE_WRITE_ROLES,
-    require_role,
-    get_accessible_analysis,
-)
+from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.schemas import AnalysisCreate
-
+from backend.app.domain.storage_capacity import (
+    enforce_laboratory_capacity_policy,
+    preflight_analysis_capacity,
+)
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    AnalysisPartition,
+    Annotation,
+    Artifact,
+    Assay,
+    Case,
+    Variant,
+    WorkflowStep,
+)
+from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["analyses"])
 
@@ -193,6 +197,11 @@ def start(
             raise HTTPException(status_code=409, detail="Analysis input artifact reference is invalid")
         if input_artifact is None or input_artifact.case_id != analysis.case_id:
             raise HTTPException(status_code=409, detail="Analysis input artifact is missing or no longer belongs to this case")
+        try:
+            validate_analysis_input_artifact(input_artifact, analysis.reference_build)
+        except ValueError as exc:
+            db.rollback()
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
     capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
     deployment_policy = resolve_resource_deployment_policy(
         db,

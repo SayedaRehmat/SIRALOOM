@@ -295,6 +295,108 @@ def test_active_resource_scanner_detects_registered_resource_changes():
         assert db.query(Notification).count() == 1
 
 
+def test_tenant_resource_release_does_not_create_candidates_for_same_named_other_tenant_data():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
+            ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
+            Resource.__table__,
+        ],
+    )
+    owner_org_id, other_org_id = uuid4(), uuid4()
+    user_id, case_id, analysis_id, resource_id = uuid4(), uuid4(), uuid4(), uuid4()
+
+    with Session(engine) as db:
+        db.add_all([
+            Organization(id=owner_org_id, name="Owner Lab", external_identifier=None),
+            Organization(id=other_org_id, name="Other Lab", external_identifier=None),
+        ])
+        db.flush()
+        db.add(User(
+            id=user_id,
+            organization_id=other_org_id,
+            external_subject=None,
+            email="other@test.local",
+            display_name="Other Lab User",
+            role="ANALYST",
+            status="ACTIVE",
+        ))
+        db.flush()
+        db.add(Case(
+            id=case_id,
+            organization_id=other_org_id,
+            case_identifier="OTHER-001",
+            status="ACTIVE",
+            clinical_context={},
+            language="en",
+            created_by=user_id,
+        ))
+        db.flush()
+        db.add(Analysis(
+            id=analysis_id,
+            case_id=case_id,
+            parent_analysis_id=None,
+            assay_id=None,
+            analysis_type="VARIANT_INTERPRETATION",
+            workflow_id="variant-v1",
+            workflow_version="2.1",
+            status="SUCCEEDED",
+            queue_task_id=None,
+            reference_build="GRCh38",
+            configuration={},
+            started_at=None,
+            completed_at=None,
+            created_by=user_id,
+            analysis_version=1,
+        ))
+        db.add(AnalysisResourceSnapshot(
+            id=uuid4(),
+            analysis_id=analysis_id,
+            resource_id=None,
+            resource_kind="POPULATION",
+            resource_name="Private gnomAD mirror",
+            provider="gnomAD",
+            version="release-old",
+            checksum="old",
+            genome_build="GRCh38",
+            metadata_json={},
+        ))
+        db.add(Resource(
+            id=resource_id,
+            organization_id=owner_org_id,
+            name="Private gnomAD mirror",
+            provider="gnomAD",
+            resource_type="POPULATION",
+            version="release-new",
+            genome_build="GRCh38",
+            access_method="LOCAL",
+            license_text=None,
+            checksum="new",
+            location="/owner-lab/gnomad",
+            status="ACTIVE",
+            population_definition={},
+            metadata_json={},
+        ))
+        db.commit()
+
+        assert scan_active_resources_for_reanalysis(db) == 0
+        assert detect_change(
+            db,
+            organization_id=other_org_id,
+            trigger_type="POPULATION_UPDATE",
+            resource_kind="POPULATION",
+            resource_name="Private gnomAD mirror",
+            new_version="release-new",
+            new_checksum="new",
+            resource_id=resource_id,
+        ) == []
+        assert db.query(ReanalysisCandidate).count() == 0
+        assert db.query(ReanalysisChangeEvent).count() == 0
+
+
 def test_celery_reanalysis_scan_is_registered_on_daily_utc_schedule():
     from backend.app.infrastructure.queue.celery_app import celery_app
 

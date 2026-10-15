@@ -4,7 +4,13 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from backend.app.auth.authorization import get_accessible_analysis
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    READ_ROLES,
+    REVIEW_ROLES,
+    get_accessible_analysis,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Assay, TechnicalQCObservation, QCAssessment
@@ -12,6 +18,7 @@ from backend.app.infrastructure.db.session import get_db
 from backend.app.quality import assess_metrics
 
 router = APIRouter(tags=["technical-quality"])
+ASSAY_ADMIN_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director"})
 
 class AssayInput(BaseModel):
     name: str = Field(min_length=1, max_length=200)
@@ -45,6 +52,7 @@ def _obs(o):
 
 @router.post("/assays", status_code=201)
 def create_assay(body: AssayInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
+    require_role(principal, ASSAY_ADMIN_ROLES)
     row = Assay(id=uuid4(), organization_id=principal.organization_id, name=body.name.strip(), version=body.version.strip(),
                 assay_type=body.assay_type.strip(), configuration=body.configuration, status=body.status)
     db.add(row)
@@ -54,12 +62,14 @@ def create_assay(body: AssayInput, db=Depends(get_db), principal: Principal=Depe
 
 @router.get("/assays")
 def list_assays(db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
+    require_role(principal, READ_ROLES)
     rows=list(db.scalars(select(Assay).where(Assay.organization_id==principal.organization_id).order_by(Assay.name, Assay.version)))
     return {"assays": [_assay(x) for x in rows]}
 
 @router.post("/analyses/{analysis_id}/quality/observations", status_code=201)
 def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal)
+    require_role(principal, CASE_WRITE_ROLES)
     row=TechnicalQCObservation(id=uuid4(), analysis_id=analysis.id, metric_name=body.metric_name.strip(), metric_value=body.metric_value,
         metric_unit=body.metric_unit, source=body.source, source_version=body.source_version, metadata_json=body.metadata)
     db.add(row)
@@ -70,6 +80,7 @@ def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depend
 @router.get("/analyses/{analysis_id}/quality")
 def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal)
+    require_role(principal, READ_ROLES)
     observations=list(db.scalars(select(TechnicalQCObservation).where(TechnicalQCObservation.analysis_id==analysis.id).order_by(TechnicalQCObservation.created_at)))
     assessments=list(db.scalars(select(QCAssessment).where(QCAssessment.analysis_id==analysis.id).order_by(QCAssessment.created_at.desc())))
     assay=db.get(Assay, analysis.assay_id) if analysis.assay_id else None
@@ -83,6 +94,7 @@ def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depe
 @router.post("/analyses/{analysis_id}/quality/assess")
 def assess_quality(analysis_id: UUID, body: QCAssessmentInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal)
+    require_role(principal, REVIEW_ROLES)
     assay=db.get(Assay, analysis.assay_id) if analysis.assay_id else None
     if assay and assay.organization_id != principal.organization_id:
         raise HTTPException(403,"Assay is not accessible")

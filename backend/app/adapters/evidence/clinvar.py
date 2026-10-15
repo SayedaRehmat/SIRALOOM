@@ -7,6 +7,7 @@ import os
 import sqlite3
 import tempfile
 import xml.etree.ElementTree as ET
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -131,7 +132,7 @@ class ClinVarVCVProvider:
     ) -> list[ClinVarAssertion]:
         self._ensure_index()
         key = _variant_key(self.genome_build, chromosome, position, reference, alternate)
-        with sqlite3.connect(self.index_path) as connection:
+        with closing(sqlite3.connect(self.index_path)) as connection:
             rows = connection.execute(
                 """
                 SELECT record_type, accession, version, variation_id, rcv_accessions,
@@ -223,7 +224,7 @@ def _index_is_current(
     if not index_path.is_file():
         return False
     try:
-        with sqlite3.connect(index_path) as connection:
+        with closing(sqlite3.connect(index_path)) as connection:
             rows = dict(connection.execute("SELECT key, value FROM metadata").fetchall())
         return (
             rows.get("schema_version") == "1"
@@ -253,7 +254,7 @@ def _build_index(
         temporary_path = Path(temporary.name)
 
     try:
-        with sqlite3.connect(temporary_path) as connection:
+        with closing(sqlite3.connect(temporary_path)) as connection:
             connection.execute("PRAGMA journal_mode=DELETE")
             connection.execute("PRAGMA synchronous=FULL")
             connection.executescript(
@@ -472,7 +473,10 @@ def _rows_from_variation_archive(
             record_type = "SCV" if scv_accession else "VCV"
             accession = scv_accession or vcv_accession
             version = scv_version or vcv_version
-            record_xml = ET.tostring(assertion or element, encoding="utf-8")
+            record_xml = ET.tostring(
+                assertion if assertion is not None else element,
+                encoding="utf-8",
+            )
             rows.append(
                 (
                     _variant_key(genome_build, chromosome, position, reference, alternate),
