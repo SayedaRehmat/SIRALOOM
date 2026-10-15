@@ -214,3 +214,81 @@ def test_case_export_execution_rejects_stale_dispatch_generation():
         task_id="stale-dispatch-generation",
         allow_running=True,
     ) is False
+
+
+def test_case_export_task_releases_execution_lock_on_normal_exit(monkeypatch):
+    import importlib
+
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    session_module = importlib.import_module("backend.app.infrastructure.db.session")
+    export_id = uuid4()
+    task_id = "normal-export-exit"
+
+    class Result:
+        def scalar_one(self):
+            return True
+
+    class LockConnection:
+        def __init__(self):
+            self.info = {}
+            self.unlocked = False
+            self.closed = False
+
+        def execute(self, statement, params):
+            assert "pg_advisory_unlock" in str(statement)
+            assert "lock_key" in params
+            self.unlocked = True
+            return Result()
+
+        def commit(self):
+            pass
+
+        def invalidate(self):
+            raise AssertionError("healthy lock connection must not be invalidated")
+
+        def close(self):
+            self.closed = True
+
+    class Engine:
+        dialect = type("Dialect", (), {"name": "postgresql"})()
+
+        def __init__(self, connection):
+            self.connection = connection
+
+        def connect(self):
+            return self.connection
+
+    class DB:
+        def close(self):
+            pass
+
+    connection = LockConnection()
+    monkeypatch.setattr(session_module, "engine", Engine(connection))
+    monkeypatch.setattr(session_module, "SessionLocal", DB)
+
+    def claim(_db, requested_id, *, task_id=None, allow_running=False, lock_connection=None):
+        assert requested_id == export_id
+        assert task_id == task_id_expected
+        assert allow_running is False
+        assert lock_connection is connection
+        connection.info["siraloom_case_export_execution_lock_key"] = 12345
+        return True
+
+    task_id_expected = task_id
+    monkeypatch.setattr(module, "_claim_case_export_execution", claim)
+    monkeypatch.setattr(
+        "backend.app.reporting.export_task.run_case_export",
+        lambda requested_id: None,
+    )
+
+    task = module.run_case_export_task
+    task.push_request(id=task_id, retries=0, delivery_info={"redelivered": False})
+    try:
+        result = task.run(str(export_id))
+    finally:
+        task.pop_request()
+
+    assert result == {"export_id": str(export_id), "status": "completed"}
+    assert connection.unlocked is True
+    assert connection.closed is True
+    assert "siraloom_case_export_execution_lock_key" not in connection.info
