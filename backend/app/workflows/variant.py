@@ -13,56 +13,86 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
-from backend.app.adapters.annotation.vep import VEPProviderError
-from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
-from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
-from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
-from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
-from backend.app.adapters.population.gnomad import GnomADGraphQLProvider, GnomADProviderError, PopulationObservationData
-from backend.app.adapters.population.secondary import LocalTabixSecondaryPopulationProvider, SecondaryPopulationProviderError
+from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
+from backend.app.adapters.annotation.vep import VEPProviderError
+from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
+from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
+from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
+from backend.app.adapters.population.gnomad import (
+    GnomADGraphQLProvider,
+    GnomADProviderError,
+    PopulationObservationData,
+)
+from backend.app.adapters.population.secondary import (
+    LocalTabixSecondaryPopulationProvider,
+    SecondaryPopulationProviderError,
+)
 from backend.app.config import settings
+from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.local_uri import local_path_from_uri
-from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf
-from backend.app.domain.reference import ReferenceError
-from backend.app.domain.reference_package import ReferencePackageError, load_reference_package, sha256_file
-from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
-from backend.app.domain.schemas import CanonicalVariant
-from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid, normalize_build
-from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
-from backend.app.domain.resource_fallback import resolve_resource_with_fallback
-from backend.app.domain.profile_runtime_resources import ProfileRuntimeResourceError, resolve_profile_runtime_resource, resolve_profile_runtime_resources
-from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution, start_resource_execution, complete_resource_execution
-from backend.app.domain.resource_capabilities import ResourceCapability, CapabilityRequirement
-from backend.app.domain.resource_execution_plan import build_resource_execution_plan
+from backend.app.domain.normalization import (
+    NormalizationError,
+    UnsupportedVariantError,
+    iter_normalized_vcf,
+)
+from backend.app.domain.profile_runtime_resources import (
+    ProfileRuntimeResourceError,
+    resolve_profile_runtime_resource,
+    resolve_profile_runtime_resources,
+)
 from backend.app.domain.provider_registry import register_builtin_providers
+from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
+from backend.app.domain.reference import ReferenceError
+from backend.app.domain.reference_package import (
+    ReferencePackageError,
+    load_reference_package,
+    sha256_file,
+)
+from backend.app.domain.resource_capabilities import CapabilityRequirement, ResourceCapability
+from backend.app.domain.resource_execution import (
+    ResourceExecutionError,
+    complete_resource_execution,
+    resolve_resource_execution,
+    start_resource_execution,
+)
+from backend.app.domain.resource_execution_plan import build_resource_execution_plan
+from backend.app.domain.resource_fallback import resolve_resource_with_fallback
+from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
+from backend.app.domain.variant_identity import canonical_key, normalize_build, stable_variant_uuid
+from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
-from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
-from backend.app.acmg.source_assertions import persist_clingen_source_assertions
-from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
-from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
+from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.partition_scheduler import PartitionCapacityError, PartitionLeaseError, PartitionScheduler, configure_partition
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
+    AnalysisPartition,
     Annotation,
     Artifact,
+    Case,
     Classification,
     Evidence,
     PopulationObservation,
+    Report,
+    ReportabilityDecision,
     Resource,
     ResourceExecutionRecord,
     Variant,
     WorkflowStep,
-    AnalysisPartition,
-    Case,
-    Report,
-    ReportabilityDecision,
+)
+from backend.app.partition_scheduler import (
+    PartitionCapacityError,
+    PartitionLeaseError,
+    PartitionScheduler,
+    configure_partition,
 )
 
 WORKFLOW_STEPS = [
@@ -843,7 +873,17 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
         ) as handle:
             local_path = Path(handle.name)
         try:
-            store.download_to_file(uri, local_path)
+            store.download_to_file(
+                uri,
+                local_path,
+                expected_sha256=artifact.sha256,
+                expected_size_bytes=artifact.size_bytes,
+            )
+            verify_artifact_file(
+                local_path,
+                sha256=artifact.sha256,
+                size_bytes=artifact.size_bytes,
+            )
         except Exception:
             local_path.unlink(missing_ok=True)
             raise
@@ -857,6 +897,11 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
         raise RuntimeError(
             f"Artifact {artifact.id} is not available on this worker: {uri}"
         )
+    verify_artifact_file(
+        local_path,
+        sha256=artifact.sha256,
+        size_bytes=artifact.size_bytes,
+    )
     return local_path
 
 
@@ -2807,8 +2852,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if evidence_step.status != StepStatus.SUCCEEDED:
             mark_step(db, evidence_step, StepStatus.RUNNING)
             try:
-                from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
                 from backend.app.domain.evidence import evidence_fingerprint
+                from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
                 engine = EvidenceEngine()
                 total_annotation_rows = db.scalar(select(func.count(Annotation.id)).where(Annotation.analysis_id == analysis.id)) or 0
 
@@ -3722,7 +3767,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if reportability_step.status != StepStatus.SUCCEEDED:
             mark_step(db, reportability_step, StepStatus.RUNNING)
             try:
-                from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
+                from backend.app.reporting.reportability import (
+                    evaluate_analysis,
+                    final_reportability_state,
+                )
 
                 evaluate_analysis(db, analysis)
                 reportability_ready, reportability_errors = final_reportability_state(db, analysis.id)
