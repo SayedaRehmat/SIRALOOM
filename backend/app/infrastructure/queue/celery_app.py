@@ -381,11 +381,12 @@ if Celery is not None:
         *,
         task_id: str | None = None,
         allow_running: bool = False,
+        lock_connection=None,
     ) -> bool:
         from backend.app.infrastructure.db.models import CaseExport
         from sqlalchemy import text
 
-        # Export tasks likewise require the durable dispatch ID as capability.
+        # The durable dispatch ID is the worker's execution capability.
         if not isinstance(task_id, str) or not task_id.strip():
             return False
 
@@ -397,13 +398,25 @@ if Celery is not None:
                 byteorder="big",
                 signed=True,
             )
-            if not bool(
-                db.scalar(
-                    text("SELECT pg_try_advisory_lock(:lock_key)"),
-                    {"lock_key": lock_key},
+            lock_statement = text("SELECT pg_try_advisory_lock(:lock_key)")
+            lock_parameters = {"lock_key": lock_key}
+            if lock_connection is not None:
+                # Never acquire this lock through the ORM Session when the task
+                # commits: that connection may be returned to the pool mid-task.
+                acquired = bool(
+                    lock_connection.execute(
+                        lock_statement, lock_parameters
+                    ).scalar_one()
                 )
-            ):
+                lock_connection.commit()
+            else:
+                acquired = bool(db.scalar(lock_statement, lock_parameters))
+            if not acquired:
                 return False
+            if lock_connection is not None:
+                lock_connection.info[
+                    "siraloom_case_export_execution_lock_key"
+                ] = lock_key
 
         export = db.get(CaseExport, export_id, with_for_update=True)
         if export is None:
@@ -411,14 +424,16 @@ if Celery is not None:
         if export.queue_task_id != task_id:
             return False
         if export.status == "RUNNING":
-            return allow_running
+            if allow_running:
+                db.commit()
+                return True
+            return False
         if export.status != "QUEUED":
             return False
         export.status = "RUNNING"
         db.add(export)
         db.commit()
         return True
-
 
     def publish_case_export_dispatch(dispatch_id):
         from datetime import datetime, timezone
@@ -748,18 +763,30 @@ if Celery is not None:
     @celery_app.task(bind=True, autoretry_for=(), acks_late=True)
     def run_case_export_task(self, export_id: str):
         from uuid import UUID
-        from backend.app.infrastructure.db.session import SessionLocal
+        from backend.app.infrastructure.db.session import SessionLocal, engine
         from backend.app.reporting.export_task import run_case_export
 
         redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
         is_retry = self.request.retries > 0
+        # Keep the PostgreSQL session-level advisory lock on a dedicated,
+        # checked-out connection for the full export task. ORM commits can
+        # return a Session connection to the pool while its session lock remains.
+        claim_lock_connection = (
+            engine.connect() if engine.dialect.name == "postgresql" else None
+        )
         claim_db = SessionLocal()
         try:
+            claim_options = (
+                {"lock_connection": claim_lock_connection}
+                if claim_lock_connection is not None
+                else {}
+            )
             claimed = _claim_case_export_execution(
                 claim_db,
                 UUID(export_id),
                 task_id=self.request.id,
                 allow_running=redelivered or is_retry,
+                **claim_options,
             )
             if not claimed:
                 return {"export_id": export_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
@@ -767,6 +794,26 @@ if Celery is not None:
             return {"export_id": export_id, "status": "completed"}
         finally:
             claim_db.close()
+            if claim_lock_connection is not None:
+                lock_key = claim_lock_connection.info.pop(
+                    "siraloom_case_export_execution_lock_key", None
+                )
+                try:
+                    if lock_key is not None:
+                        from sqlalchemy import text
+
+                        claim_lock_connection.execute(
+                            text("SELECT pg_advisory_unlock(:lock_key)"),
+                            {"lock_key": lock_key},
+                        ).scalar_one()
+                        claim_lock_connection.commit()
+                except Exception:
+                    # A disconnected PostgreSQL session releases its locks once
+                    # the server detects the disconnect. Do not mask task errors.
+                    claim_lock_connection.invalidate()
+                finally:
+                    claim_lock_connection.close()
+
     def _resource_staging_dispatch_matches(row, task_id: str | None) -> bool:
         """Fence resource staging against missing/stale broker dispatch identities."""
         if not isinstance(task_id, str) or not task_id.strip():
@@ -793,11 +840,45 @@ if Celery is not None:
             transition_staging,
         )
         from backend.app.infrastructure.db.models import Resource, ResourceStaging
-        from backend.app.infrastructure.db.session import SessionLocal
+        from backend.app.infrastructure.db.session import SessionLocal, engine
 
         staging_uuid = UUID(staging_id)
+        # A matching dispatch ID fences stale generations, while this dedicated
+        # PostgreSQL session lock fences duplicate deliveries of that same ID.
+        # Keep the connection checked out across stage_resource_release(), which
+        # commits multiple times and would otherwise release a Session-owned lock.
+        staging_lock_connection = (
+            engine.connect() if engine.dialect.name == "postgresql" else None
+        )
+        staging_lock_key = None
         db = SessionLocal()
         try:
+            if staging_lock_connection is not None:
+                from sqlalchemy import text
+
+                staging_lock_key = int.from_bytes(
+                    hashlib.sha256(
+                        f"resource-staging:{staging_uuid}".encode("utf-8")
+                    ).digest()[:8],
+                    byteorder="big",
+                    signed=True,
+                )
+                lock_acquired = bool(
+                    staging_lock_connection.execute(
+                        text("SELECT pg_try_advisory_lock(:lock_key)"),
+                        {"lock_key": staging_lock_key},
+                    ).scalar_one()
+                )
+                staging_lock_connection.commit()
+                if not lock_acquired:
+                    return {
+                        "staging_id": staging_id,
+                        "status": "ALREADY_CLAIMED",
+                    }
+                staging_lock_connection.info[
+                    "siraloom_resource_staging_execution_lock_key"
+                ] = staging_lock_key
+
             row = db.get(ResourceStaging, staging_uuid, with_for_update=True)
             if row is None:
                 return {"staging_id": staging_id, "status": "NOT_FOUND"}
@@ -936,6 +1017,25 @@ if Celery is not None:
                 return {"staging_id": staging_id, "status": current.status if current else "NOT_FOUND", "error_code": "STAGING_UNEXPECTED_ERROR"}
         finally:
             db.close()
+            if staging_lock_connection is not None:
+                lock_key = staging_lock_connection.info.pop(
+                    "siraloom_resource_staging_execution_lock_key", None
+                )
+                try:
+                    if lock_key is not None:
+                        from sqlalchemy import text
+
+                        staging_lock_connection.execute(
+                            text("SELECT pg_advisory_unlock(:lock_key)"),
+                            {"lock_key": lock_key},
+                        ).scalar_one()
+                        staging_lock_connection.commit()
+                except Exception:
+                    # If the worker lost its database connection, PostgreSQL
+                    # releases the session lock when it observes disconnect.
+                    staging_lock_connection.invalidate()
+                finally:
+                    staging_lock_connection.close()
 
 
 else:

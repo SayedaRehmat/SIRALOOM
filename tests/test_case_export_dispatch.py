@@ -5,7 +5,7 @@ from uuid import uuid4
 import importlib
 
 
-def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
+def test_case_export_execution_claim_uses_dedicated_postgresql_connection():
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
 
     export = type(
@@ -24,19 +24,42 @@ def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
     class Bind:
         dialect = Dialect()
 
-    class FakeDB:
+    class LockResult:
         def __init__(self, acquired):
             self.acquired = acquired
+
+        def scalar_one(self):
+            return self.acquired
+
+    class LockConnection:
+        def __init__(self, acquired):
+            self.acquired = acquired
+            self.info = {}
+            self.statements = []
+            self.commits = 0
+
+        def execute(self, statement, params):
+            self.statements.append((str(statement), params))
+            assert "pg_try_advisory_lock" in str(statement)
+            assert "lock_key" in params
+            return LockResult(self.acquired)
+
+        def commit(self):
+            self.commits += 1
+
+    class FakeDB:
+        def __init__(self):
             self.scalar_calls = 0
+            self.commits = 0
 
         def get_bind(self):
             return Bind()
 
         def scalar(self, statement, params):
             self.scalar_calls += 1
-            assert "pg_try_advisory_lock" in str(statement)
-            assert "lock_key" in params
-            return self.acquired
+            raise AssertionError(
+                "PostgreSQL execution lock must use the dedicated connection"
+            )
 
         def get(self, model, export_id, **kwargs):
             assert kwargs == {"with_for_update": True}
@@ -47,25 +70,41 @@ def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
             assert row is export
 
         def commit(self):
-            pass
+            self.commits += 1
 
-    duplicate_db = FakeDB(acquired=False)
+    # A live export owns the lock: duplicate delivery is rejected before it
+    # can inspect or mutate the export row.
+    duplicate_db = FakeDB()
+    duplicate_connection = LockConnection(acquired=False)
     assert module._claim_case_export_execution(
         duplicate_db,
         export.id,
         task_id="live-export-task",
         allow_running=True,
+        lock_connection=duplicate_connection,
     ) is False
-    assert duplicate_db.scalar_calls == 1
+    assert len(duplicate_connection.statements) == 1
+    assert duplicate_db.scalar_calls == 0
+    assert duplicate_connection.commits == 1
 
-    recovery_db = FakeDB(acquired=True)
+    # After worker loss, PostgreSQL releases the lock with the original
+    # connection. A redelivery can claim the still-RUNNING export. Crucially,
+    # committing the ORM session does not change the dedicated lock connection.
+    recovery_db = FakeDB()
+    recovery_connection = LockConnection(acquired=True)
     assert module._claim_case_export_execution(
         recovery_db,
         export.id,
         task_id="live-export-task",
         allow_running=True,
+        lock_connection=recovery_connection,
     ) is True
-    assert recovery_db.scalar_calls == 1
+    assert recovery_connection.info[
+        "siraloom_case_export_execution_lock_key"
+    ]
+    assert recovery_connection.commits == 1
+    assert recovery_db.commits == 1
+    assert recovery_db.scalar_calls == 0
 
 
 def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
@@ -114,3 +153,142 @@ def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
     publish_index = next(i for i, event in enumerate(events) if event[0] == "publish")
     assert commit_index < publish_index
     assert events[commit_index][1] == dispatch_id
+
+
+def test_case_export_execution_rejects_missing_dispatch_capability_before_db_access():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    export_id = uuid4()
+
+    class UntouchableDB:
+        def get_bind(self):
+            raise AssertionError("missing dispatch must be rejected before DB access")
+
+        def get(self, *args, **kwargs):
+            raise AssertionError("missing dispatch must not load or mutate export")
+
+        def scalar(self, *args, **kwargs):
+            raise AssertionError("missing dispatch must not acquire a lock")
+
+    for task_id in (None, ""):
+        assert module._claim_case_export_execution(
+            UntouchableDB(),
+            export_id,
+            task_id=task_id,
+            allow_running=True,
+        ) is False
+
+
+def test_case_export_execution_rejects_stale_dispatch_generation():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    export_id = uuid4()
+    export = type(
+        "CaseExport",
+        (),
+        {"id": export_id, "status": "RUNNING", "queue_task_id": "current-generation"},
+    )()
+
+    class Dialect:
+        name = "sqlite"
+
+    class Bind:
+        dialect = Dialect()
+
+    class FakeDB:
+        def get_bind(self):
+            return Bind()
+
+        def get(self, model, requested_id, **kwargs):
+            assert requested_id == export_id
+            assert kwargs == {"with_for_update": True}
+            return export
+
+        def add(self, row):
+            raise AssertionError("stale generation must not mutate the export")
+
+        def commit(self):
+            raise AssertionError("stale generation must not commit")
+
+    assert module._claim_case_export_execution(
+        FakeDB(),
+        export_id,
+        task_id="stale-dispatch-generation",
+        allow_running=True,
+    ) is False
+
+
+def test_case_export_task_releases_execution_lock_on_normal_exit(monkeypatch):
+    import importlib
+
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    session_module = importlib.import_module("backend.app.infrastructure.db.session")
+    export_id = uuid4()
+    task_id = "normal-export-exit"
+
+    class Result:
+        def scalar_one(self):
+            return True
+
+    class LockConnection:
+        def __init__(self):
+            self.info = {}
+            self.unlocked = False
+            self.closed = False
+
+        def execute(self, statement, params):
+            assert "pg_advisory_unlock" in str(statement)
+            assert "lock_key" in params
+            self.unlocked = True
+            return Result()
+
+        def commit(self):
+            pass
+
+        def invalidate(self):
+            raise AssertionError("healthy lock connection must not be invalidated")
+
+        def close(self):
+            self.closed = True
+
+    class Engine:
+        dialect = type("Dialect", (), {"name": "postgresql"})()
+
+        def __init__(self, connection):
+            self.connection = connection
+
+        def connect(self):
+            return self.connection
+
+    class DB:
+        def close(self):
+            pass
+
+    connection = LockConnection()
+    monkeypatch.setattr(session_module, "engine", Engine(connection))
+    monkeypatch.setattr(session_module, "SessionLocal", DB)
+
+    def claim(_db, requested_id, *, task_id=None, allow_running=False, lock_connection=None):
+        assert requested_id == export_id
+        assert task_id == task_id_expected
+        assert allow_running is False
+        assert lock_connection is connection
+        connection.info["siraloom_case_export_execution_lock_key"] = 12345
+        return True
+
+    task_id_expected = task_id
+    monkeypatch.setattr(module, "_claim_case_export_execution", claim)
+    monkeypatch.setattr(
+        "backend.app.reporting.export_task.run_case_export",
+        lambda requested_id: None,
+    )
+
+    task = module.run_case_export_task
+    task.push_request(id=task_id, retries=0, delivery_info={"redelivered": False})
+    try:
+        result = task.run(str(export_id))
+    finally:
+        task.pop_request()
+
+    assert result == {"export_id": str(export_id), "status": "completed"}
+    assert connection.unlocked is True
+    assert connection.closed is True
+    assert "siraloom_case_export_execution_lock_key" not in connection.info
