@@ -42,6 +42,13 @@
 - **Fix:** The signout route computes the deterministic artifact identity and canonical storage URI before finalization. On exceptions it rolls back, checks a fresh database session, and removes bytes only when artifact metadata is confirmed absent. The direct database commit path now uses shared artifact compensation.
 - **Regression evidence:** `tests/test_report_artifact_commit_compensation.py`, `tests/test_report_finalization.py`, and `tests/test_report_signout_resume.py`: 14 passed locally. CI pending.
 
+### Artifact-to-analysis tenant linkage
+
+- **Defect:** Shared artifact authorization checked the artifact case's tenant but did not verify that an optional linked analysis belonged to the same case.
+- **Fix:** The accessor now rejects missing analyses and case mismatches with the same not-found response, before download handlers resolve storage.
+- **Regression evidence:** `tests/test_tenant_object_authorization.py`, `tests/test_artifact_download_identity.py`, and `tests/test_population_route_tenant_guards.py`: 27 passed locally. CI pending.
+- **Commit:** Local batch; awaiting push-triggered CI.
+
 ### Celery Beat resource-discovery registration
 
 - **Defect:** Beat scheduled `siraloom.discover_scientific_resources`, but production Celery did not register that task because its declaration existed only in the `Celery is None` branch.

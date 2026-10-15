@@ -98,6 +98,10 @@ def get_accessible_artifact(artifact_id: UUID, db: Session = Depends(get_db), pr
     case = db.get(Case, artifact.case_id)
     if not case: raise HTTPException(status_code=404, detail="Artifact not found")
     require_case_tenant(case, principal)
+    if artifact.analysis_id is not None:
+        analysis = db.get(Analysis, artifact.analysis_id)
+        if analysis is None or analysis.case_id != artifact.case_id:
+            raise HTTPException(status_code=404, detail="Artifact not found")
     return artifact
 
 def get_accessible_report(report_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)) -> Report:

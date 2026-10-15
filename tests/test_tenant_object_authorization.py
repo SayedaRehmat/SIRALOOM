@@ -31,7 +31,7 @@ def test_shared_object_accessors_enforce_case_tenant_boundary(object_kind, same_
     object_id = uuid4()
     case = SimpleNamespace(id=case_id, organization_id=tenant_id if same_tenant else other_tenant_id)
     analysis = SimpleNamespace(id=object_id, case_id=case_id)
-    artifact = SimpleNamespace(id=object_id, case_id=case_id)
+    artifact = SimpleNamespace(id=object_id, case_id=case_id, analysis_id=None)
     report = SimpleNamespace(id=object_id, case_id=case_id, analysis_id=object_id)
     db = TenantObjectSession({
         Case: case,
@@ -75,6 +75,26 @@ def test_report_access_rejects_analysis_from_another_case_in_same_tenant():
 
     with pytest.raises(HTTPException) as error:
         get_accessible_report(report_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
+def test_artifact_access_rejects_analysis_from_another_case_in_same_tenant():
+    tenant_id = uuid4()
+    artifact_case_id, analysis_case_id = uuid4(), uuid4()
+    artifact_id, analysis_id = uuid4(), uuid4()
+    db = TenantObjectSession({
+        Artifact: SimpleNamespace(id=artifact_id, case_id=artifact_case_id, analysis_id=analysis_id),
+        Case: SimpleNamespace(id=artifact_case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=analysis_case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_artifact(artifact_id, db=db, principal=principal)
 
     assert error.value.status_code == 404
 
