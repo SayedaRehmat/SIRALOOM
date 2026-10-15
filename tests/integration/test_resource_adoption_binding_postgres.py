@@ -40,7 +40,9 @@ def test_concurrent_release_adoptions_preserve_binding_version_history():
         db.add(User(id=user_id, organization_id=organization_id, external_subject=str(user_id), email=f"{user_id}@example.test", display_name="Adoption concurrency", role="lab_director", status="ACTIVE"))
         db.flush()
         db.add(Resource(id=baseline_id, organization_id=None, name="ConcurrentDB", provider="FixtureProvider", resource_type="EVIDENCE", version="1", genome_build="GRCh38", access_method="OBJECT_STORAGE", checksum="1" * 64, location="blob://concurrent/1", status="QUALIFIED", population_definition=None, metadata_json={}))
+        db.flush()
         db.add(ResourceQualification(id=baseline_qualification_id, resource_id=baseline_id, qualification_version="q1", status="QUALIFIED", checks_json={"passed": True}, qualified_by=user_id))
+        db.flush()
         db.add(ResourceApproval(id=baseline_approval_id, resource_id=baseline_id, organization_id=organization_id, qualification_id=baseline_qualification_id, status="PENDING", version=1))
         db.commit()
 
@@ -51,7 +53,9 @@ def test_concurrent_release_adoptions_preserve_binding_version_history():
     with Session(engine) as db:
         for index, version in enumerate(("2", "3")):
             db.add(Resource(id=candidate_ids[index], organization_id=None, name="ConcurrentDB", provider="FixtureProvider", resource_type="EVIDENCE", version=version, genome_build="GRCh38", access_method="OBJECT_STORAGE", checksum=str(index + 2) * 64, location=f"blob://concurrent/{version}", status="QUALIFIED", population_definition=None, metadata_json={}))
+            db.flush()
             db.add(ResourceQualification(id=qualification_ids[index], resource_id=candidate_ids[index], qualification_version="q1", status="QUALIFIED", checks_json={"passed": True}, qualified_by=user_id))
+            db.flush()
             db.add(ResourceApproval(id=approval_ids[index], resource_id=candidate_ids[index], organization_id=organization_id, qualification_id=qualification_ids[index], status="PENDING", version=1))
         db.commit()
 
