@@ -6,6 +6,7 @@ import { Brand } from "../../../components/brand";
 import { firebaseAuth, firebaseConfigured } from "../../../lib/firebase";
 import { apiBase, resolveSessionDestination } from "../../../lib/session";
 import { useLanguage } from "../../../lib/i18n";
+import { attemptSignOut } from "../../../lib/signout.mjs";
 
 export default function Onboarding() {
   const { t } = useLanguage();
@@ -73,6 +74,18 @@ export default function Onboarding() {
     finally { setBusy(false); }
   };
 
+  const leaveOnboarding = async () => {
+    if (!firebaseAuth) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (await attemptSignOut(() => signOut(firebaseAuth))) window.location.assign("/login");
+      else setMessage(t("auth.signOutFailed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (checking) return <main className="loading">{t("onboarding.checking")}</main>;
 
   if (!firebaseConfigured || !user) return (
@@ -98,7 +111,7 @@ export default function Onboarding() {
         {isTrial && <label>{t("onboarding.labName")} ({t("onboarding.optional")})<input value={name} onChange={e => setName(e.target.value)} disabled={busy} /></label>}
         {!verified ? <><p>{t("onboarding.verifyBody")}</p><button className="button" onClick={refreshVerification} disabled={busy}>{busy ? t("onboarding.checking") : t("onboarding.verified")}</button><button type="button" className="text-button" onClick={() => firebaseAuth?.currentUser && sendEmailVerification(firebaseAuth.currentUser).then(() => setMessage(t("onboarding.verifySent"))).catch(error => setMessage(error instanceof Error ? error.message : t("onboarding.createFailed")))} disabled={busy}>{t("onboarding.resend")}</button></> : <button className="button" onClick={startWorkspace} disabled={busy}>{busy ? t("onboarding.creating") : isTrial ? t("onboarding.create") : t("onboarding.createOrg")}</button>}
         {message && <p className="form-message" role="status">{message}</p>}
-        <button type="button" className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth).then(() => window.location.assign("/login"))} disabled={busy}>{t("onboarding.signOut")}</button>
+        <button type="button" className="text-button" onClick={() => void leaveOnboarding()} disabled={busy}>{t("onboarding.signOut")}</button>
       </section>
     </main>
   );

@@ -329,6 +329,7 @@ export type TranslationKey =
   | "auth.resetSent"
   | "auth.resetFailed"
   | "auth.googleFailed"
+  | "auth.signOutFailed"
   | "auth.orgSwitch"
   | "onboarding.secure"
   | "onboarding.trialEyebrow"
@@ -1320,6 +1321,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "auth.resetSent": "Password-reset email sent.",
     "auth.resetFailed": "Unable to send reset email.",
     "auth.googleFailed": "Google sign-in could not be completed.",
+    "auth.signOutFailed": "Could not sign out. Please try again.",
     "auth.orgSwitch": "Setting up a production laboratory account instead?",
     "onboarding.secure": "SECURE ACCESS REQUIRED",
     "onboarding.trialEyebrow": "SIRALOOM FREE TRIAL",
@@ -2139,6 +2141,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "auth.resetSent": "تم إرسال رسالة إعادة تعيين كلمة المرور.",
     "auth.resetFailed": "تعذر إرسال إعادة التعيين.",
     "auth.googleFailed": "تعذر إكمال تسجيل الدخول باستخدام Google.",
+    "auth.signOutFailed": "تعذر تسجيل الخروج. حاول مرة أخرى.",
     "auth.orgSwitch": "هل تريد إعداد حساب مختبر إنتاجي بدلاً من ذلك؟",
     "onboarding.secure": "الوصول الآمن مطلوب",
     "onboarding.trialEyebrow": "التجربة المجانية لـ SIRALOOM",

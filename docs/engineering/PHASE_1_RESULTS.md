@@ -26,8 +26,15 @@
 
 - **Defect:** Draft report bytes were persisted to artifact storage before database commit. If commit failed, the route rolled back but left stored bytes without a durable report/artifact row.
 - **Fix:** Extracted a shared artifact compensation service and applied it to draft report commits. Cleanup uses a fresh DB session and occurs only when artifact absence is confirmed; uncertain outcomes preserve bytes.
-- **Regression evidence:** `tests/test_artifact_commit_compensation.py`, `tests/test_report_artifact_commit_compensation.py`, `tests/test_report_finalization.py`, and `tests/test_report_artifact_replay_idempotency.py`: 16 passed. The route-level failure-injection test confirms rollback, fresh-session absence check, and storage cleanup. CI pending.
-- **Commit:** Current local batch; awaiting focused review and push.
+- **Regression evidence:** `tests/test_artifact_commit_compensation.py`, `tests/test_report_artifact_commit_compensation.py`, `tests/test_report_finalization.py`, and `tests/test_report_artifact_replay_idempotency.py`: 16 passed. The route-level failure-injection test confirms rollback, fresh-session absence check, and storage cleanup. CI run #1553 passed all three jobs.
+- **Commit:** `c4113fa` plus required ignored-module follow-up `a863097`, pushed to `main`.
+
+### Onboarding and invitation signout failures
+
+- **Defect:** The signout controls on onboarding and invitation acceptance allowed Firebase rejection to become an unhandled promise with no user-visible error.
+- **Fix:** Added a shared signout result helper, localized error feedback, and busy-state protection in both screens.
+- **Regression evidence:** Frontend behavior suite: 20 passed, including success/rejection behavior; localization guard passed. CI pending.
+- **Commit:** Current local batch; awaiting CI.
 
 ### Celery Beat resource-discovery registration
 

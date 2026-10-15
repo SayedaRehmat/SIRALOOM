@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, reload, sendEmailVerification, signOut, User } from "firebase/auth";
 import { Brand } from "../../../../components/brand";
 import { firebaseAuth, firebaseConfigured } from "../../../../lib/firebase";
+import { useLanguage } from "../../../../lib/i18n";
+import { attemptSignOut } from "../../../../lib/signout.mjs";
 
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
 export default function InvitationAcceptancePage() {
+  const { t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -48,6 +51,18 @@ export default function InvitationAcceptancePage() {
     finally { setBusy(false); }
   }
 
+  async function switchAccount() {
+    if (!firebaseAuth) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (await attemptSignOut(() => signOut(firebaseAuth))) window.location.reload();
+      else setMessage(t("auth.signOutFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (checking) return <main className="loading">Checking invitation…</main>;
   if (!firebaseConfigured) return <main className="auth-page"><Brand /><section className="auth-card"><h1>Invitation unavailable</h1><p>Firebase authentication is not configured for this deployment.</p></section></main>;
 
@@ -59,7 +74,7 @@ export default function InvitationAcceptancePage() {
       {user && !user.emailVerified && <button className="button" onClick={() => sendEmailVerification(user).then(() => setMessage("Verification email sent. Verify your address, then return to this invitation." )).catch(error => setMessage(error instanceof Error ? error.message : "Unable to send verification email."))}>Resend verification email</button>}
       {user && <button className="button" onClick={acceptInvitation} disabled={busy || !token || !user.emailVerified}>{busy ? "Accepting…" : "Accept invitation"}</button>}
       {message && <p className="form-message" role="status">{message}</p>}
-      {user && <button type="button" className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth).then(() => window.location.reload())} disabled={busy}>Use a different account</button>}
+      {user && <button type="button" className="text-button" onClick={() => void switchAccount()} disabled={busy}>Use a different account</button>}
     </section></main>
   );
 }
