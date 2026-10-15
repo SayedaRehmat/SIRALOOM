@@ -12,6 +12,7 @@ from backend.app.domain.schemas import ReportCreate, ExportCreate, Reportability
 from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.db.models import Analysis, Report, CaseExport, Case
+from backend.app.domain.enums import AnalysisStatus
 from backend.app.reporting.service import build_report_content, render_pdf, render_html, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
@@ -148,13 +149,25 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
         r=finalize_report(db, report_id=report_id, approver_id=principal.user_id, reason=payload.reason)
         resume_queued = False
         if r.status == "FINAL":
-            try:
-                # Persist the sign-out mutation and durable resume intent together;
-                # broker publication is handled by the analysis outbox.
-                resume_queued = resume_analysis(db, r.analysis_id) is not None
-            except ValueError as exc:
-                db.rollback()
-                raise HTTPException(status_code=409, detail=str(exc)) from exc
+            # A repeated sign-out must remain successful after the analysis has
+            # completed. Resume only when the analysis is at a resumable human
+            # gate; an already queued/running analysis is handled idempotently by
+            # resume_analysis, while terminal states must not be restarted here.
+            analysis = db.get(Analysis, r.analysis_id)
+            if analysis is not None and analysis.status in {
+                AnalysisStatus.REQUIRES_REVIEW,
+                AnalysisStatus.QUEUED,
+                AnalysisStatus.RUNNING,
+            }:
+                try:
+                    # Persist the sign-out mutation and durable resume intent together;
+                    # broker publication is handled by the analysis outbox.
+                    resume_queued = resume_analysis(db, r.analysis_id) is not None
+                except ValueError as exc:
+                    db.rollback()
+                    raise HTTPException(status_code=409, detail=str(exc)) from exc
+            else:
+                db.commit()
         else:
             db.commit()
         return {"report_id":str(r.id),"version":r.report_version,"status":r.status,"approved_by":str(r.approved_by),"approved_at":r.approved_at.isoformat() if r.approved_at else None,"supersedes_report_id":str(r.supersedes_report_id) if r.supersedes_report_id else None,"workflow_resume_queued":resume_queued}
