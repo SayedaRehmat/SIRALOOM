@@ -5,7 +5,7 @@ from uuid import uuid4
 import importlib
 
 
-def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
+def test_case_export_execution_claim_uses_dedicated_postgresql_connection():
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
 
     export = type(
@@ -24,19 +24,42 @@ def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
     class Bind:
         dialect = Dialect()
 
-    class FakeDB:
+    class LockResult:
         def __init__(self, acquired):
             self.acquired = acquired
+
+        def scalar_one(self):
+            return self.acquired
+
+    class LockConnection:
+        def __init__(self, acquired):
+            self.acquired = acquired
+            self.info = {}
+            self.statements = []
+            self.commits = 0
+
+        def execute(self, statement, params):
+            self.statements.append((str(statement), params))
+            assert "pg_try_advisory_lock" in str(statement)
+            assert "lock_key" in params
+            return LockResult(self.acquired)
+
+        def commit(self):
+            self.commits += 1
+
+    class FakeDB:
+        def __init__(self):
             self.scalar_calls = 0
+            self.commits = 0
 
         def get_bind(self):
             return Bind()
 
         def scalar(self, statement, params):
             self.scalar_calls += 1
-            assert "pg_try_advisory_lock" in str(statement)
-            assert "lock_key" in params
-            return self.acquired
+            raise AssertionError(
+                "PostgreSQL execution lock must use the dedicated connection"
+            )
 
         def get(self, model, export_id, **kwargs):
             assert kwargs == {"with_for_update": True}
@@ -47,25 +70,41 @@ def test_case_export_execution_claim_uses_postgresql_session_advisory_lock():
             assert row is export
 
         def commit(self):
-            pass
+            self.commits += 1
 
-    duplicate_db = FakeDB(acquired=False)
+    # A live export owns the lock: duplicate delivery is rejected before it
+    # can inspect or mutate the export row.
+    duplicate_db = FakeDB()
+    duplicate_connection = LockConnection(acquired=False)
     assert module._claim_case_export_execution(
         duplicate_db,
         export.id,
         task_id="live-export-task",
         allow_running=True,
+        lock_connection=duplicate_connection,
     ) is False
-    assert duplicate_db.scalar_calls == 1
+    assert len(duplicate_connection.statements) == 1
+    assert duplicate_db.scalar_calls == 0
+    assert duplicate_connection.commits == 1
 
-    recovery_db = FakeDB(acquired=True)
+    # After worker loss, PostgreSQL releases the lock with the original
+    # connection. A redelivery can claim the still-RUNNING export. Crucially,
+    # committing the ORM session does not change the dedicated lock connection.
+    recovery_db = FakeDB()
+    recovery_connection = LockConnection(acquired=True)
     assert module._claim_case_export_execution(
         recovery_db,
         export.id,
         task_id="live-export-task",
         allow_running=True,
+        lock_connection=recovery_connection,
     ) is True
-    assert recovery_db.scalar_calls == 1
+    assert recovery_connection.info[
+        "siraloom_case_export_execution_lock_key"
+    ]
+    assert recovery_connection.commits == 1
+    assert recovery_db.commits == 1
+    assert recovery_db.scalar_calls == 0
 
 
 def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
