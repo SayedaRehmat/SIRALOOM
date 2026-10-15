@@ -38,10 +38,10 @@ export default function ReportsPage() {
   analysisIdRef.current = analysisId;
 
   useEffect(() => {
+    let cancelled = false;
     const bootstrapAnalysis = async () => {
       const caseId = window.localStorage.getItem("siraloom.case_id") ?? "";
       const storedAnalysis = window.localStorage.getItem("siraloom.analysis_id") ?? "";
-      let cancelled = false;
       try {
         if (caseId) {
           const caseData = await apiFetch(`/cases/${caseId}`);
@@ -59,7 +59,7 @@ export default function ReportsPage() {
           return;
         }
       } catch (e) {
-        setMessage(e instanceof Error ? e.message : t("reports.messageLoadCase"));
+        if (!cancelled) setMessage(e instanceof Error ? e.message : t("reports.messageLoadCase"));
       }
       if (!cancelled && !analysisIdRef.current && storedAnalysis) setAnalysisId(storedAnalysis);
     };

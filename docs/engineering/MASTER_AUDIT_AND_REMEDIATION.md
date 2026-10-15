@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Audited application-code baseline:** `main` commit `5519751` (`Hide stale audit events when switching cases`), 2026-10-15. GitHub Actions run [#1543](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38727321120) passed backend, PostgreSQL integration, and frontend jobs for `c409f68`; run [#1544](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38727484870) for `5519751` is in progress.
+**Audited application-code baseline:** `main` commit `c914c44` (`Scope report decisions to the selected analysis`), 2026-10-15. GitHub Actions run [#1544](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38727484870) passed backend, PostgreSQL integration, and frontend jobs for `5519751`; run [#1545](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38727874862) failed the frontend production type check because the report page cleanup closure had a block-scoped variable error. The fix is in the current working tree.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -51,14 +51,21 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 - **Finding:** the standalone audit page retained the prior case's events in the timeline while another case was selected; overlapping requests could allow an older response to overwrite the current selection.
 - **Correction:** associate loaded events with their case identity, hide the timeline unless that identity matches the current selection, clear prior events on selection changes, and ignore canceled or superseded audit/list responses.
 - **Verification:** frontend `npm run test:session` passed 14 tests; `npm run validate:i18n` and `git diff --check` passed. The shared case-identity readiness policy test covers the visible-data guard. This page change is not yet included in a production build or CI run.
-- **Checkpoint:** correction was committed and pushed as `5519751`; its CI run #1544 is in progress. Phase A remains PARTIAL; review and reports pages still require the same stale-response audit, and no browser-based journey has been demonstrated.
+- **Checkpoint:** correction was committed and pushed as `5519751`; GitHub Actions run #1544 passed all three jobs. Reports were then separately corrected in `c914c44`; run #1545 is in progress. Phase A remains PARTIAL; review still requires the same stale-response audit, and no browser-based journey has been demonstrated.
 
 ## 2026-10-15 report-page analysis-scope correction (working tree)
 
 - **Finding:** the Reports page continued rendering decision and report rows from the previous analysis while another analysis ID was selected; racing requests could overwrite the newly selected analysis's data.
 - **Correction:** results and selected decision are rendered only when their loaded analysis ID matches the selected ID; overlapping reads are generation-checked; reportability and report-generation actions remain disabled until the selected analysis data is loaded. Changing analyses also clears the prior decision selection, rationale, and disposition.
-- **Verification:** frontend `npm run test:session` passed 15 tests, including the analysis-identity readiness policy; `npm run validate:i18n` passed; `git diff --check` passed. No production build has yet run against this uncommitted page change.
-- **Checkpoint:** implementation is in the working tree and is not yet committed or pushed. Continue by reviewing its final diff, committing/pushing to `main`, checking that push-triggered CI, then audit remaining review and report sign-out race/failure behavior. Phase A remains PARTIAL.
+- **Verification:** frontend `npm run test:session` passed 15 tests, including the analysis-identity readiness policy; `npm run validate:i18n` passed. The first pushed production build, CI run #1545, caught a TypeScript error in the bootstrap effect cleanup. The scope error is corrected locally and awaits push-triggered verification.
+- **Checkpoint:** report-scope correction is committed as `c914c44`; its frontend CI failed on the cleanup closure and the hotfix is currently uncommitted. The review-page correction is also in the working tree. Phase A remains PARTIAL.
+
+## 2026-10-15 clinical review analysis and variant context correction (working tree)
+
+- **Finding:** changing analyses or selected variants could leave a previous clinical dossier, governance record, pedigree/segregation data, or reviewer rationale visible or writable while new review detail was loading. Late queue/detail responses could also replace newer selections.
+- **Correction:** queue visibility is bound to its loaded analysis ID; dossier visibility additionally requires the selected variant and returned review bundle to match. Queue, review, governance, and family reads ignore superseded requests. Analysis changes reset case-specific reviewer edits, and variant changes clear variant-specific review data and rationale.
+- **Verification:** frontend `npm run test:session` passed 15 tests (including analysis readiness policy); `npm run validate:i18n` and `git diff --check` passed. The Next production build is unavailable locally because `frontend/node_modules` is absent; push-triggered CI will verify TypeScript/build integration.
+- **Checkpoint:** implementation is in the working tree pending commit/push. Phase A remains PARTIAL; this correction has not yet passed CI or a browser-level reviewer journey.
 
 ## 2026-10-15 API object-authorization audit batch
 
