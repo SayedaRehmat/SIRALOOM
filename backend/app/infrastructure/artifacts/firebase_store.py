@@ -125,6 +125,16 @@ class FirebaseArtifactStore:
             f"{artifact_id}/{safe_filename}"
         )
 
+    def uri_for_artifact(
+        self,
+        *,
+        case_id: UUID,
+        artifact_id: UUID,
+        filename: str,
+    ) -> str:
+        """Return the canonical cloud URI bound to this artifact identity."""
+        return f"gs://{self.bucket_name}/{self._object_name(case_id, artifact_id, filename)}"
+
     def put_file(
         self,
         *,

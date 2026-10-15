@@ -42,7 +42,10 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
         artifact_type="AUDIT_PACKAGE",
         metadata_json={"export_id": str(export_id)},
         sha256="a" * 64,
-        storage_uri="gs://test-bucket/cases/export.zip",
+        storage_uri=(
+            f"gs://test-bucket/cases/{case_id}/artifacts/"
+            f"{artifact_id}/case-export.zip"
+        ),
         filename="case-export.zip",
         media_type="application/zip",
     )

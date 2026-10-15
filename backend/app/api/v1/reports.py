@@ -289,6 +289,12 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
     # Resolve the export through the same organization-selected store that
     # created it. A cloud URI must never be treated as a local filesystem path.
     if isinstance(store, FirebaseArtifactStore):
+        if store.uri_for_artifact(
+            case_id=artifact.case_id,
+            artifact_id=artifact.id,
+            filename=artifact.filename,
+        ) != artifact.storage_uri:
+            raise HTTPException(status_code=404, detail="Export artifact not found")
         return StreamingResponse(
             store.iter_bytes(artifact.storage_uri),
             media_type=artifact.media_type or "application/zip",
@@ -299,6 +305,12 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
         )
 
     try:
+        if store.uri_for_artifact(
+            case_id=artifact.case_id,
+            artifact_id=artifact.id,
+            filename=artifact.filename,
+        ) != artifact.storage_uri:
+            raise HTTPException(status_code=404, detail="Export artifact not found")
         path = store.local_path(artifact.storage_uri)
     except (AttributeError, ValueError) as exc:
         raise HTTPException(

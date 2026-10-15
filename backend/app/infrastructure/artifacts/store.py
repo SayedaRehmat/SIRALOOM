@@ -73,6 +73,16 @@ class ArtifactStore:
 
         return path
 
+    def uri_for_artifact(
+        self,
+        *,
+        case_id: UUID,
+        artifact_id: UUID,
+        filename: str,
+    ) -> str:
+        """Return the canonical local URI bound to this artifact identity."""
+        return self._artifact_path(case_id, artifact_id, filename).as_uri()
+
     @staticmethod
     def _sha256_and_size(path: Path) -> tuple[str, int]:
         digest = hashlib.sha256()

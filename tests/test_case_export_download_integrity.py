@@ -118,6 +118,14 @@ def test_download_accepts_export_artifact_with_matching_lineage(monkeypatch, tmp
             raise AssertionError(f"Unexpected model lookup: {model}")
 
     class FakeStore:
+        def uri_for_artifact(self, **kwargs):
+            assert kwargs == {
+                "case_id": case_id,
+                "artifact_id": export_id,
+                "filename": artifact.filename,
+            }
+            return artifact.storage_uri
+
         def local_path(self, uri):
             assert uri == artifact.storage_uri
             return expected_path

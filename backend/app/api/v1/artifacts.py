@@ -273,6 +273,12 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
 
     if artifact.storage_uri.startswith("gs://"):
         cloud_store = FirebaseArtifactStore(settings.firebase_storage_bucket)
+        if cloud_store.uri_for_artifact(
+            case_id=artifact.case_id,
+            artifact_id=artifact.id,
+            filename=artifact.filename,
+        ) != artifact.storage_uri:
+            raise HTTPException(status_code=404, detail="Artifact not found")
         return StreamingResponse(
             cloud_store.iter_bytes(artifact.storage_uri),
             media_type=artifact.media_type or "application/octet-stream",
@@ -285,5 +291,11 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
     if profile is not None and profile.backend_type != "LOCAL_FILESYSTEM":
         raise HTTPException(status_code=409, detail="Artifact uses local storage but the organization's active storage profile is not local filesystem.")
     store = ArtifactStore(root)
+    if store.uri_for_artifact(
+        case_id=artifact.case_id,
+        artifact_id=artifact.id,
+        filename=artifact.filename,
+    ) != artifact.storage_uri:
+        raise HTTPException(status_code=404, detail="Artifact not found")
     path = store.local_path(artifact.storage_uri)
-    return FileResponse(path, media_type=artifact.media_type or "application/octet-stream", filename=artifact.filename)
+    return FileResponse(path, media_type=artifact.media_type or "application/octet-stream", filename=Path(artifact.filename).name)
