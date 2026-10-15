@@ -267,3 +267,9 @@
 - Confirmed defect: failed export workers persisted raw exception strings to `CaseExport.error_message` and the tenant-facing export status endpoint returned that text. Storage errors can reveal private filesystem paths and dependency/object-store details; already persisted failures would remain exposed even if only the worker changed.
 - Implemented: worker failure state now stores a stable user message; the audit record stores a generic reason plus exception class, not the raw message. The status endpoint redacts every failed row, including legacy rows with previously persisted raw text.
 - Verification: new injected storage-error tests prove a secret token, private path, and internal endpoint do not appear in persisted state, audit event, or API response. Export redaction and dispatch/recovery tests => **7 passed**. Phase A remains open; full tenant audit and deployment log-access review remain outstanding.
+
+### A2/A7 case-export artifact lineage enforcement — 2026-10-15
+
+- Confirmed defect: export download checked that the export's case belonged to the caller's tenant, then trusted its `artifact_id` without verifying the artifact's case, type, analysis scope, export metadata, or SHA-256 shape. A mismatched/corrupt pointer could bypass the intended case-level object boundary before storage was opened.
+- Implemented: download now returns the same not-found response unless the artifact is a case-scoped `AUDIT_PACKAGE`, has no analysis link, names this export in metadata, and carries a well-formed SHA-256. Replaced the dynamic Artifact model import with a normal import.
+- Verification: injected mismatches for another case, wrong artifact type, wrong export ID, and malformed hash all fail before store access; matching lineage remains downloadable. Export construction, redaction, dispatch, and lineage suite => **14 passed**. Phase A remains open; object-store byte/hash verification and live tenant deployment tests remain unverified.

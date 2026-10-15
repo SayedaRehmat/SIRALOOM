@@ -24,7 +24,7 @@ from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionReques
 from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Case, CaseExport, Report
+from backend.app.infrastructure.db.models import Analysis, Artifact, Case, CaseExport, Report
 from backend.app.infrastructure.db.session import get_db
 from backend.app.reporting.finalization import ReportFinalizationError, finalize_report
 from backend.app.reporting.reportability import (
@@ -265,8 +265,18 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
     case = db.get(Case, exp.case_id); require_case_tenant(case, principal)
     if exp.status != "SUCCEEDED" or not exp.artifact_id:
         raise HTTPException(status_code=409, detail="Case export is not ready")
-    artifact = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact, exp.artifact_id)
-    if not artifact:
+    artifact = db.get(Artifact, exp.artifact_id)
+    metadata = dict(artifact.metadata_json or {}) if artifact is not None else {}
+    if (
+        artifact is None
+        or artifact.case_id != case.id
+        or artifact.analysis_id is not None
+        or artifact.artifact_type != "AUDIT_PACKAGE"
+        or metadata.get("export_id") != str(exp.id)
+        or not isinstance(artifact.sha256, str)
+        or len(artifact.sha256) != 64
+        or any(character not in "0123456789abcdefABCDEF" for character in artifact.sha256)
+    ):
         raise HTTPException(status_code=404, detail="Export artifact not found")
     try:
         store = artifact_store_for_organization(
