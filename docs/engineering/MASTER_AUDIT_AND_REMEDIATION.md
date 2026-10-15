@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Audited application-code baseline:** `main` commit `dc3be3e` (`Mask tenant-owned evidence and follow-up lookups`), 2026-10-15. Earlier account-session CI evidence applies to commit `324283b` only.
+**Audited application-code baseline:** `main` commit `12ed477` (`Clear workspace context on account changes`), 2026-10-15. Additional API/CI corrections below are currently local and await their push-triggered CI run.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -16,6 +16,7 @@
 
 - The local Windows full suite at `6b11afd` reported 807 passed, 37 skipped, and one failure in `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`. The runtime could not load WeasyPrint native `libgobject-2.0-0`/Pango libraries. This is an environment limitation, not evidence that PDF rendering passes locally.
 - A fresh full backend run at `dc3be3e` reported **816 passed, 37 skipped, 1 failed**. The only failure was again `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`, caused by the unavailable Windows native `libgobject-2.0-0` dependency. CI status for commits after `324283b` has not been verified in this environment; prior run #1534 is not evidence for these later commits.
+- GitHub Actions run [#1541](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38726450883) for `12ed477` completed successfully in backend, PostgreSQL/Celery integration, and frontend jobs. It includes the frontend production build/container and Compose validation. The current local changes have not yet been included in that run.
 - The matching GitHub Actions run succeeded in all three jobs, including PostgreSQL/Celery integration and frontend production checks.
 - No configured Firebase browser identity, live cloud bucket, or laboratory deployment was used for browser-based signup, email verification/recovery, real tenant separation, or report signout. Those checks remain NOT RUN here.
 - The repository's existing detailed history is retained in [`PHASE_A_AUDIT_LEDGER.md`](PHASE_A_AUDIT_LEDGER.md); it contains prior fixes and remaining worker, deployment, and scientific qualification boundaries. This file supplements, rather than replaces, that record.
@@ -60,6 +61,15 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Change:** introduced `syncWorkspaceContext`, called from Firebase auth-state changes. It clears case/analysis context on signout or UID change, preserves it for the same UID, and tolerates restricted browser storage. Signout failures now display an English/Arabic alert. The `test:session` command now includes case artifact and account-context tests.
 - **Verification:** `npm run test:session` passed 13 tests; `npm run validate:i18n` passed; `git diff --check` passed. `frontend/node_modules` is absent, so the TypeScript/Next build cannot run in this checkout.
 - **Checkpoint:** implementation and tests are in the working tree and not yet pushed. After committing, continue frontend stale-data/error-state review and then worker tenant scope/recovery. Overall Phase A remains PARTIAL.
+
+## 2026-10-15 API input and frontend regression CI correction (local, pending push)
+
+- **Finding:** `/api/v1/variants/{variant_id}` accepted `str` and manually called `UUID(...)`, so malformed path IDs could raise an uncaught `ValueError` rather than FastAPI's normal 422 validation response.
+- **Change:** typed the route parameter as `UUID` and added an API-level malformed-ID regression.
+- **Finding:** the frontend CI job installed dependencies and built the app but never ran the existing Node behavior tests, including account-session routing and VCF artifact selection.
+- **Change:** added `npm run test:session` to frontend CI. This command now includes safe redirect, session destination, case artifact selection, and account-context policy tests.
+- **Verification:** focused backend API/auth tests passed 10; frontend Node behavior tests passed 13; localization guard passed; CI YAML parsed; `git diff --check` passed. These changes are uncommitted and will receive a new GitHub run after the direct-main push.
+- **Checkpoint:** push this coherent input-validation/CI batch, then audit the remaining worker tenant/data lineage boundaries. Phase A remains PARTIAL.
 
 ## 2026-10-15 additional verified correction
 

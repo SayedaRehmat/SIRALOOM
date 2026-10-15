@@ -1,16 +1,27 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
+    Analysis,
+    Annotation,
+    Case,
+    Classification,
+    Evidence,
+    PopulationObservation,
+    Variant,
+)
 from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.db.models import Variant, Annotation, PopulationObservation, Evidence, ACMGAssessment, Classification, Analysis, Case
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 
 router = APIRouter(tags=["variants"])
 
 @router.get("/variants/{variant_id}")
-def get_variant(variant_id: str, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    v = db.get(Variant, UUID(variant_id))
+def get_variant(variant_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    v = db.get(Variant, variant_id)
     if not v:
         raise HTTPException(status_code=404, detail="Variant not found")
     annotation = db.scalar(select(Annotation).join(Analysis, Annotation.analysis_id == Analysis.id).join(Case, Analysis.case_id == Case.id).where(Annotation.variant_id == v.id, Case.organization_id == principal.organization_id).order_by(Annotation.created_at.desc()))
