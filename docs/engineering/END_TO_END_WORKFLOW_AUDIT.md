@@ -1,6 +1,6 @@
 # End-to-End Workflow Audit Matrix
 
-**Current committed code baseline:** `main` commit `c612163`, 2026-10-15; CI run #1555 is queued. Run #1554 passed frontend behavior and PostgreSQL/Celery integration but failed the production build on nullable Firebase auth typing; its correction is included in c612163. The current local batch also hardens artifact-to-analysis case linkage; 27 focused authorization/download tests passed.
+**Current committed code baseline:** `main` commit `a4cfd23`, 2026-10-15; CI run #1556 is in progress. Run #1555 passed backend and PostgreSQL/Celery integration but failed the frontend production build on nullable auth typing in onboarding; that narrowing is fixed in the current local batch. Artifact-to-analysis case linkage was hardened in a4cfd23; 27 focused authorization/download tests passed locally.
 **Status convention:** PASS requires verified implementation and relevant executed tests. PARTIAL means source/tests exist but the complete user journey or required boundary is not proven. NOT RUN means no execution evidence. BLOCKED identifies an unavailable dependency. This matrix is a live audit record, not a readiness claim.
 
 | Stage / user action | Frontend route or component | API / backend path | Durable effects and guards observed | Relevant test evidence | Status / remaining verification |

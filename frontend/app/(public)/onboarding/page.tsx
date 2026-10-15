@@ -75,11 +75,12 @@ export default function Onboarding() {
   };
 
   const leaveOnboarding = async () => {
-    if (!firebaseAuth) return;
+    const auth = firebaseAuth;
+    if (!auth) return;
     setBusy(true);
     setMessage("");
     try {
-      if (await attemptSignOut(() => signOut(firebaseAuth))) window.location.assign("/login");
+      if (await attemptSignOut(() => signOut(auth))) window.location.assign("/login");
       else setMessage(t("auth.signOutFailed"));
     } finally {
       setBusy(false);
