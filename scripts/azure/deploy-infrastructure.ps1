@@ -9,9 +9,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$AdminCidr,
     [string]$SshPublicKeyPath = "$HOME/.ssh/id_ed25519.pub",
-    [string]$VmSize = "Standard_D2s_v5",
-    [ValidateRange(128, 2048)]
-    [int]$DataDiskSizeGB = 256,
+    [string]$VmSize = "Standard_B2als_v2",
+    [ValidateRange(64, 2048)]
+    [int]$DataDiskSizeGB = 64,
     [string]$DnsLabel = ""
 )
 

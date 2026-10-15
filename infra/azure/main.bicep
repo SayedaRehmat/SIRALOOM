@@ -7,11 +7,11 @@ param sshPublicKey string
 @description('CIDR allowed to SSH, e.g. 203.0.113.10/32. Never use 0.0.0.0/0.')
 param adminCidr string
 @description('VM size; benchmark capacity must be measured.')
-param vmSize string = 'Standard_D2s_v5'
-@minValue(128)
+param vmSize string = 'Standard_B2als_v2'
+@minValue(64)
 @maxValue(2048)
 @description('Persistent managed data disk size in GiB.')
-param dataDiskSizeGB int = 256
+param dataDiskSizeGB int = 64
 @description('Optional globally unique DNS label for the public IP.')
 param dnsLabel string = ''
 
