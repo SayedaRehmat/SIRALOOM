@@ -3,8 +3,8 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from backend.app.api.v1 import reports
-from backend.app.infrastructure.db.models import Artifact, Case, CaseExport
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+from backend.app.infrastructure.db.models import Artifact, Case, CaseExport
 
 
 class FakeDB:
@@ -37,6 +37,11 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
     case = SimpleNamespace(id=case_id, organization_id=organization_id)
     artifact = SimpleNamespace(
         id=artifact_id,
+        case_id=case_id,
+        analysis_id=None,
+        artifact_type="AUDIT_PACKAGE",
+        metadata_json={"export_id": str(export_id)},
+        sha256="a" * 64,
         storage_uri="gs://test-bucket/cases/export.zip",
         filename="case-export.zip",
         media_type="application/zip",
