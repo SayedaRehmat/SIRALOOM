@@ -20,7 +20,14 @@
 - **Regression evidence:** Focused backend intake/artifact/input tests: 33 passed. Frontend upload/readiness plus workspace-context tests: 18 passed. `scripts/validate-i18n.mjs`: PASS. Run #1549 failed the production build because the JavaScript helper lacked a TS declaration; declarations have since been added, and build verification is pending CI.
 - **Commit:** BGZF and workspace validation behavior pushed in `72f10b9`; the TypeScript declarations and case-wizard replacement handling are in the current local follow-up.
 
-- **CI follow-up:** Run #1549 passed backend, PostgreSQL/Celery integration, and frontend behavior tests, but the production build failed because TypeScript could not find a declaration for `validated-upload.mjs`. Added declarations for the new upload helpers and corrected case-wizard primary/index selection. The frontend behavior suite now reports 18 passed; the next CI run must verify the production build.
+- **CI follow-up:** Run #1549 passed backend, PostgreSQL/Celery integration, and frontend behavior tests, but the production build failed because TypeScript could not find a declaration for `validated-upload.mjs`. Added declarations for the new upload helpers and corrected case-wizard primary/index selection in `082dbd7`. The frontend behavior suite reports 18 passed; run #1550 must verify the production build.
+
+### Report draft artifact commit recovery
+
+- **Defect:** Draft report bytes were persisted to artifact storage before database commit. If commit failed, the route rolled back but left stored bytes without a durable report/artifact row.
+- **Fix:** Extracted a shared artifact compensation service and applied it to draft report commits. Cleanup uses a fresh DB session and occurs only when artifact absence is confirmed; uncertain outcomes preserve bytes.
+- **Regression evidence:** `tests/test_artifact_commit_compensation.py`, `tests/test_report_artifact_commit_compensation.py`, `tests/test_report_finalization.py`, and `tests/test_report_artifact_replay_idempotency.py`: 16 passed. The route-level failure-injection test confirms rollback, fresh-session absence check, and storage cleanup. CI pending.
+- **Commit:** Current local batch; awaiting focused review and push.
 
 ### Celery Beat resource-discovery registration
 

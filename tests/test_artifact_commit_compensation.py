@@ -1,6 +1,8 @@
 from uuid import uuid4
 
 from backend.app.api.v1 import artifacts as artifacts_api
+from backend.app.infrastructure.artifacts import compensation as compensation_api
+from backend.app.infrastructure.artifacts.compensation import commit_with_artifact_compensation
 
 
 class _Database:
@@ -9,6 +11,9 @@ class _Database:
 
     def rollback(self):
         self.rollbacks += 1
+
+    def commit(self):
+        raise RuntimeError("database commit failed")
 
 
 class _Store:
@@ -78,3 +83,24 @@ def test_failed_verification_preserves_object_and_does_not_mask_original_error(m
 
     assert db.rollbacks == 1
     assert store.deleted == []
+
+
+def test_failed_commit_removes_uploaded_object_only_after_database_absence_is_confirmed(monkeypatch):
+    artifact_id = uuid4()
+    db = _Database()
+    store = _Store()
+    monkeypatch.setattr(compensation_api, "SessionLocal", lambda: _VerificationSession(None))
+    artifact = type("ArtifactRef", (), {
+        "id": artifact_id,
+        "storage_uri": "file:///artifact/uncommitted-report.pdf",
+    })()
+
+    try:
+        commit_with_artifact_compensation(db, store, artifact)
+    except RuntimeError as exc:
+        assert str(exc) == "database commit failed"
+    else:
+        raise AssertionError("commit error should propagate")
+
+    assert db.rollbacks == 1
+    assert store.deleted == ["file:///artifact/uncommitted-report.pdf"]

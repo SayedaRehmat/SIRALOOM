@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 import tempfile
 from pathlib import Path
 from uuid import UUID
@@ -34,6 +33,7 @@ from backend.app.domain.storage_profiles import (
     resolve_storage_profile,
 )
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+from backend.app.infrastructure.artifacts.compensation import compensate_uncommitted_artifact
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
@@ -41,25 +41,17 @@ from backend.app.infrastructure.db.session import SessionLocal, get_db
 
 router = APIRouter(tags=["artifacts"])
 MAX_BYTES = settings.max_artifact_upload_bytes
-logger = logging.getLogger(__name__)
 
 
 def _compensate_uncommitted_artifact(db: Session, store, artifact_id: UUID, storage_uri: str) -> None:
     """Delete stored bytes only when a fresh DB read proves the commit did not land."""
-    db.rollback()
-    try:
-        with SessionLocal() as verification_db:
-            durable = verification_db.get(Artifact, artifact_id)
-    except Exception as exc:  # noqa: BLE001 - uncertain commit outcome must preserve the object
-        logger.warning("Could not verify failed artifact commit outcome (%s)", type(exc).__name__)
-        return
-
-    if durable is not None:
-        return
-    try:
-        store.delete(storage_uri)
-    except Exception as exc:  # noqa: BLE001 - cleanup failure must not mask the original error
-        logger.warning("Could not remove uncommitted artifact object (%s)", type(exc).__name__)
+    compensate_uncommitted_artifact(
+        db,
+        store,
+        artifact_id,
+        storage_uri,
+        verification_session_factory=SessionLocal,
+    )
 
 
 def _store(db: Session, organization_id: UUID):

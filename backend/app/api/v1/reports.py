@@ -29,6 +29,7 @@ from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
 from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+from backend.app.infrastructure.artifacts.compensation import commit_with_artifact_compensation
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, CaseExport, Report
 from backend.app.infrastructure.db.session import get_db
@@ -147,9 +148,8 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
         payload={"draft": True, "reportability_final": True},
     )
     try:
-        db.commit()
+        commit_with_artifact_compensation(db, store, artifact)
     except IntegrityError as exc:
-        db.rollback()
         raise HTTPException(status_code=409, detail="Report version was allocated concurrently; retry report generation.") from exc
     return {
         "report_id": str(report.id),
