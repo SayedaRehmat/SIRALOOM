@@ -11,6 +11,13 @@
 - **Defect:** `backend/app/api/v1/artifacts.py` assigned case status from only the newest primary VCF. A rejected re-upload could hide an earlier valid input, while a valid upload could reset a case already in a later lifecycle state.
 - **Fix:** Added `backend/app/domain/case_intake.py` to derive readiness from persisted primary VCF validation statuses and preserve non-intake lifecycle states.
 - **Regression evidence:** Focused intake, input-validation and artifact-integrity tests, executed with the bundled Python runtime: exit 0, 32 passed. Route-level test and CI verification remain pending.
+- **Commit:** `3928ca1` pushed to `main`; CI run #1548 passed backend, PostgreSQL integration, and frontend jobs.
+
+### BGZF parsing and validation-aware upload UI
+
+- **Defects:** `.vcf.bgz` was advertised but parsed as uncompressed text; the workspace enabled analysis and showed success for artifacts whose validation result was `INVALID`, and retained an earlier artifact when a different file was selected.
+- **Fixes:** Decode `.bgz` via gzip-compatible parsing; expose the extension in the chooser; allow analysis only for consistent successful API validation; clear stale artifact selection; show validation errors and warnings in English and Arabic.
+- **Regression evidence:** Focused backend intake/artifact/input tests: 33 passed. Frontend upload/readiness plus workspace-context tests: 8 passed. `scripts/validate-i18n.mjs`: PASS. Production build for current changes pending CI.
 - **Commit:** Not yet committed.
 
 ### Celery Beat resource-discovery registration

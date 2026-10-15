@@ -37,6 +37,16 @@ def test_vcfgz_validation_reads_real_content(tmp_path: Path):
     assert result.record_count == 1
 
 
+def test_vcfbgz_validation_parses_compressed_records(tmp_path: Path):
+    path = tmp_path / "sample.vcf.bgz"
+    with gzip.open(path, "wt", encoding="utf-8") as fh:
+        fh.write(VALID_VCF)
+    result = validate_vcf(path)
+    assert result.status == "VALID"
+    assert result.record_count == 1
+    assert result.detected_build == "GRCh38"
+
+
 def test_invalid_vcf_header_is_rejected(tmp_path: Path):
     path = tmp_path / "bad.vcf"
     path.write_text("#CHROM\tPOS\tID\tREF\tALT\nchr1\t1\t.\tA\tG\n")

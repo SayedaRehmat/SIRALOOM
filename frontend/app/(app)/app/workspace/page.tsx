@@ -5,6 +5,7 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useSta
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
+import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
 
 type Step = {
   step_id: string;
@@ -645,9 +646,16 @@ export default function Home() {
       form.append("specimen_id", selectedSpecimenId);
       form.append("genome_build", genomeBuild);
       const result = await apiFetch(`/cases/${caseId}/artifacts`, { method: "POST", body: form });
-      setArtifactId(result.artifact_id);
+      const validatedId = validatedArtifactId(result);
+      setArtifactId(validatedId);
       await refreshCaseArtifacts();
-      setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}`);
+      if (!validatedId) {
+        const validationErrors = Array.isArray(result.validation?.errors) ? result.validation.errors.join(" ") : "";
+        setMessage(`${t("workspace.inputValidationFailedPrefix")}${validationErrors}`);
+      } else {
+        const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
+        setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.uploadFailed"));
     } finally {
@@ -915,6 +923,7 @@ export default function Home() {
 
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
+    setArtifactId("");
   };
 
   const caseContextReady = isWorkspaceCaseReady(caseId, caseWorkspace?.case_id);
@@ -1075,8 +1084,8 @@ export default function Home() {
           </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
-            <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz"}</strong><p>{t("workspace.inputPersisted")}</p></div>
-            <label className="secondary file-button">{t("workspace.choose")}<input type="file" accept=".vcf,.vcf.gz,.gz" onChange={handleFile} hidden /></label>
+            <div><strong>{file?.name ?? "Choose a VCF / .vcf.gz / .vcf.bgz"}</strong><p>{t("workspace.inputPersisted")}</p></div>
+            <label className="secondary file-button">{t("workspace.choose")}<input type="file" accept=".vcf,.vcf.gz,.vcf.bgz" onChange={handleFile} hidden /></label>
           </div>
           <div className="actions-row">
             <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file || !selectedSpecimenId}>{t("workspace.registerInput")}</button>

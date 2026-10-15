@@ -485,6 +485,7 @@ export type TranslationKey =
   | "workspace.backendReconnectingPrefix"
   | "workspace.connectionUnavailable"
   | "workspace.inputRegisteredPrefix"
+  | "workspace.inputValidationFailedPrefix"
   | "workspace.downloadFailedPrefix"
   | "workspace.variantsCount"
   | "workspace.rowsCount"
@@ -1474,7 +1475,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.exportFailed": "Case export failed.",
     "workspace.backendReconnectingPrefix": "Backend reconnecting: ",
     "workspace.connectionUnavailable": "connection unavailable",
-    "workspace.inputRegisteredPrefix": "Input registered. SHA-256: ",
+    "workspace.inputRegisteredPrefix": "Input validated and registered. SHA-256: ",
+    "workspace.inputValidationFailedPrefix": "Input was stored but failed VCF validation; analysis cannot start. ",
     "workspace.downloadFailedPrefix": "Download failed: ",
     "workspace.variantsCount": "variants",
     "workspace.rowsCount": "rows",
@@ -2292,7 +2294,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.exportFailed": "فشل تصدير الحالة.",
     "workspace.backendReconnectingPrefix": "جارٍ إعادة اتصال الخادم الخلفي: ",
     "workspace.connectionUnavailable": "الاتصال غير متاح",
-    "workspace.inputRegisteredPrefix": "تم تسجيل الإدخال. SHA-256: ",
+    "workspace.inputRegisteredPrefix": "تم التحقق من الإدخال وتسجيله. SHA-256: ",
+    "workspace.inputValidationFailedPrefix": "تم حفظ الملف لكن فشل التحقق من VCF؛ لا يمكن بدء التحليل. ",
     "workspace.downloadFailedPrefix": "فشل التنزيل: ",
     "workspace.variantsCount": "متغيرات",
     "workspace.rowsCount": "صفوف",

@@ -22,7 +22,7 @@ def open_text(path: str):
     # strict improvement, not a behavior change for already-working files. Without this,
     # a BOM-prefixed file fails validation with a misleading "missing ##fileformat
     # header" error, because the BOM sits invisibly in front of the first line.
-    if path.endswith(".gz"):
+    if path.endswith((".gz", ".bgz")):
         return gzip.open(path, "rt", encoding="utf-8-sig")
     return open(path, "rt", encoding="utf-8-sig")
 
