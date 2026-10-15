@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Report
+from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, Report
 from tests.test_reporting_signout import seed_finalizable_report
 
 
@@ -68,4 +68,67 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     assert dispatches[0].status == "PENDING"
     assert analysis.queue_task_id == str(dispatches[0].id)
     assert published == [str(dispatches[0].id)]
+    db.close()
+
+
+
+def test_repeated_signout_after_analysis_succeeded_is_idempotent(monkeypatch, tmp_path):
+    """A lost response followed by a retry must not turn a final report into HTTP 409."""
+    from backend.app.api.v1 import reports as reports_api
+    from backend.app.reporting import finalization
+
+    db, reviewer, analysis, report = seed_finalizable_report()
+    analysis.status = AnalysisStatus.SUCCEEDED
+    db.commit()
+
+    monkeypatch.setattr(
+        "backend.app.config.settings.artifact_root",
+        str(tmp_path / "artifacts"),
+    )
+    monkeypatch.setattr(finalization, "render_pdf", lambda _content: b"%PDF-test-signout%")
+    monkeypatch.setattr(
+        reports_api,
+        "get_accessible_report",
+        lambda report_id, session, _principal: session.get(Report, report_id),
+    )
+    monkeypatch.setattr(reports_api, "require_role", lambda *_args, **_kwargs: None)
+
+    # Simulate the original request having committed successfully while its
+    # response was lost, then the client retrying the same finalize endpoint.
+    signed = finalization.finalize_report(
+        db,
+        report_id=report.id,
+        approver_id=reviewer.id,
+        reason="Initial authorized sign-out",
+    )
+    db.commit()
+    signed_artifact_id = signed.signed_artifact_id
+    signed_sha256 = signed.signed_sha256
+    artifact_count_before_retry = len(list(db.scalars(select(Artifact))))
+
+    principal = type(
+        "Principal",
+        (),
+        {"user_id": reviewer.id, "organization_id": reviewer.organization_id},
+    )()
+    result = reports_api.finalize(
+        report.id,
+        reports_api.ClassificationReviewRequest(
+            expected_version=1,
+            reason="Retry after a lost response",
+        ),
+        db,
+        principal,
+    )
+
+    db.refresh(analysis)
+    db.refresh(report)
+    assert result["status"] == "FINAL"
+    assert result["workflow_resume_queued"] is False
+    assert report.status == "FINAL"
+    assert report.signed_artifact_id == signed_artifact_id
+    assert report.signed_sha256 == signed_sha256
+    assert analysis.status == AnalysisStatus.SUCCEEDED
+    assert len(list(db.scalars(select(Artifact)))) == artifact_count_before_retry
+    assert list(db.scalars(select(AnalysisDispatch).where(AnalysisDispatch.analysis_id == analysis.id))) == []
     db.close()
