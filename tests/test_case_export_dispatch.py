@@ -155,24 +155,62 @@ def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
     assert events[commit_index][1] == dispatch_id
 
 
-def test_case_export_execution_rejects_missing_or_stale_dispatch_capability():
+def test_case_export_execution_rejects_missing_dispatch_capability_before_db_access():
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     export_id = uuid4()
 
     class UntouchableDB:
         def get_bind(self):
-            raise AssertionError("unauthorized dispatch must be rejected before DB access")
+            raise AssertionError("missing dispatch must be rejected before DB access")
 
         def get(self, *args, **kwargs):
-            raise AssertionError("unauthorized dispatch must not load or mutate export")
+            raise AssertionError("missing dispatch must not load or mutate export")
 
         def scalar(self, *args, **kwargs):
-            raise AssertionError("unauthorized dispatch must not acquire a lock")
+            raise AssertionError("missing dispatch must not acquire a lock")
 
-    for task_id in (None, "", "stale-dispatch-generation"):
+    for task_id in (None, ""):
         assert module._claim_case_export_execution(
             UntouchableDB(),
             export_id,
             task_id=task_id,
             allow_running=True,
         ) is False
+
+
+def test_case_export_execution_rejects_stale_dispatch_generation():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    export_id = uuid4()
+    export = type(
+        "CaseExport",
+        (),
+        {"id": export_id, "status": "RUNNING", "queue_task_id": "current-generation"},
+    )()
+
+    class Dialect:
+        name = "sqlite"
+
+    class Bind:
+        dialect = Dialect()
+
+    class FakeDB:
+        def get_bind(self):
+            return Bind()
+
+        def get(self, model, requested_id, **kwargs):
+            assert requested_id == export_id
+            assert kwargs == {"with_for_update": True}
+            return export
+
+        def add(self, row):
+            raise AssertionError("stale generation must not mutate the export")
+
+        def commit(self):
+            raise AssertionError("stale generation must not commit")
+
+    assert module._claim_case_export_execution(
+        FakeDB(),
+        export_id,
+        task_id="stale-dispatch-generation",
+        allow_running=True,
+    ) is False
