@@ -61,9 +61,13 @@ def get_current_principal(request: Request, db: Session = Depends(get_db)) -> Pr
     subject = str(decoded.get("uid") or decoded.get("sub") or "")
     if not subject:
         raise HTTPException(status_code=401, detail="Firebase token has no subject")
+    if not decoded.get("email_verified"):
+        raise HTTPException(status_code=403, detail="A verified Firebase email is required")
     user = db.scalar(select(User).where(User.external_subject == subject))
     if not user:
         raise HTTPException(status_code=403, detail="No SIRALOOM user is provisioned for this identity")
+    if str(user.status) != "ACTIVE":
+        raise HTTPException(status_code=403, detail="This SIRALOOM account is inactive")
     membership = db.scalar(select(OrganizationMembership).where(
         OrganizationMembership.user_id == user.id,
         OrganizationMembership.organization_id == user.organization_id,

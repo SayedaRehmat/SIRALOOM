@@ -24,7 +24,7 @@ class PrincipalSession:
 
     def scalar(self, statement):
         row = next(self.rows)
-        if hasattr(row, "status") and row.status != "ACTIVE":
+        if not hasattr(row, "external_subject") and getattr(row, "status", None) != "ACTIVE":
             return None
         return row
 
@@ -38,6 +38,7 @@ def test_principal_uses_active_membership_role_not_stale_user_role(monkeypatch):
         "external_subject": "firebase-subject-1",
         "role": "organization_admin",
         "email": "member@example.test",
+        "status": "ACTIVE",
     })()
     membership = type("MembershipRow", (), {
         "user_id": user_id,
@@ -48,7 +49,7 @@ def test_principal_uses_active_membership_role_not_stale_user_role(monkeypatch):
     monkeypatch.setattr(
         principal,
         "_verify_firebase_token",
-        lambda token: {"uid": "firebase-subject-1", "email": "member@example.test"},
+        lambda token: {"uid": "firebase-subject-1", "email": "member@example.test", "email_verified": True},
     )
 
     resolved = principal.get_current_principal(
@@ -71,6 +72,7 @@ def test_principal_rejects_suspended_or_revoked_membership(monkeypatch, membersh
         "external_subject": "firebase-subject-2",
         "role": "organization_admin",
         "email": "member@example.test",
+        "status": "ACTIVE",
     })()
     membership = type("MembershipRow", (), {
         "user_id": user_id,
@@ -81,7 +83,7 @@ def test_principal_rejects_suspended_or_revoked_membership(monkeypatch, membersh
     monkeypatch.setattr(
         principal,
         "_verify_firebase_token",
-        lambda token: {"uid": "firebase-subject-2", "email": "member@example.test"},
+        lambda token: {"uid": "firebase-subject-2", "email": "member@example.test", "email_verified": True},
     )
 
     with pytest.raises(HTTPException) as error:
@@ -103,6 +105,7 @@ def test_principal_rejects_unknown_role_in_active_membership(monkeypatch):
         "external_subject": "firebase-subject-3",
         "role": "organization_admin",
         "email": "member@example.test",
+        "status": "ACTIVE",
     })()
     membership = type("MembershipRow", (), {
         "user_id": user_id,
@@ -113,7 +116,7 @@ def test_principal_rejects_unknown_role_in_active_membership(monkeypatch):
     monkeypatch.setattr(
         principal,
         "_verify_firebase_token",
-        lambda token: {"uid": "firebase-subject-3", "email": "member@example.test"},
+        lambda token: {"uid": "firebase-subject-3", "email": "member@example.test", "email_verified": True},
     )
 
     with pytest.raises(HTTPException) as error:
@@ -123,3 +126,54 @@ def test_principal_rejects_unknown_role_in_active_membership(monkeypatch):
         )
 
     assert error.value.status_code == 403
+
+
+def test_principal_rejects_unverified_firebase_email_before_database_access(monkeypatch):
+    monkeypatch.setattr(
+        principal,
+        "_verify_firebase_token",
+        lambda token: {"uid": "firebase-subject-unverified", "email_verified": False},
+    )
+
+    class UntouchedDB:
+        def scalar(self, statement):
+            raise AssertionError("Unverified identity must be rejected before user lookup")
+
+    with pytest.raises(HTTPException) as error:
+        principal.get_current_principal(_bearer_request(), db=UntouchedDB())
+
+    assert error.value.status_code == 403
+    assert error.value.detail == "A verified Firebase email is required"
+
+
+def test_principal_rejects_inactive_local_user_with_active_membership(monkeypatch):
+    user_id = uuid4()
+    organization_id = uuid4()
+    user = type("UserRow", (), {
+        "id": user_id,
+        "organization_id": organization_id,
+        "external_subject": "firebase-subject-inactive",
+        "role": "organization_admin",
+        "email": "member@example.test",
+        "status": "INACTIVE",
+    })()
+    membership = type("MembershipRow", (), {
+        "user_id": user_id,
+        "organization_id": organization_id,
+        "role": "organization_admin",
+        "status": "ACTIVE",
+    })()
+    monkeypatch.setattr(
+        principal,
+        "_verify_firebase_token",
+        lambda token: {"uid": "firebase-subject-inactive", "email_verified": True},
+    )
+
+    with pytest.raises(HTTPException) as error:
+        principal.get_current_principal(
+            _bearer_request(),
+            db=PrincipalSession(user, membership),
+        )
+
+    assert error.value.status_code == 403
+    assert error.value.detail == "This SIRALOOM account is inactive"
