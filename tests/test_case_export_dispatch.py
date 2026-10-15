@@ -153,3 +153,26 @@ def test_case_export_enqueue_persists_dispatch_before_publication(monkeypatch):
     publish_index = next(i for i, event in enumerate(events) if event[0] == "publish")
     assert commit_index < publish_index
     assert events[commit_index][1] == dispatch_id
+
+
+def test_case_export_execution_rejects_missing_or_stale_dispatch_capability():
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    export_id = uuid4()
+
+    class UntouchableDB:
+        def get_bind(self):
+            raise AssertionError("unauthorized dispatch must be rejected before DB access")
+
+        def get(self, *args, **kwargs):
+            raise AssertionError("unauthorized dispatch must not load or mutate export")
+
+        def scalar(self, *args, **kwargs):
+            raise AssertionError("unauthorized dispatch must not acquire a lock")
+
+    for task_id in (None, "", "stale-dispatch-generation"):
+        assert module._claim_case_export_execution(
+            UntouchableDB(),
+            export_id,
+            task_id=task_id,
+            allow_running=True,
+        ) is False
