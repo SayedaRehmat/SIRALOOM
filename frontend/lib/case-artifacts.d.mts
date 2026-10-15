@@ -6,7 +6,7 @@ export function selectCaseInputArtifacts(
   index: Record<string, any> | null;
   specimenId: string;
 };
-export function selectPrimaryAfterUpload(
-  currentPrimary: Record<string, any> | null,
-  uploadedPrimary: Record<string, any> | null,
-): Record<string, any> | null;
+export function selectPrimaryAfterUpload<T extends { validation_status?: string }>(
+  currentPrimary: T | null,
+  uploadedPrimary: T | null,
+): T | null;
