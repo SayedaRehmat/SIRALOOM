@@ -45,6 +45,9 @@ line-length = 100
 [tool.pytest.ini_options]
 pythonpath = ["."]
 asyncio_mode = "auto"
+markers = [
+  "integration: requires an external service or validates production database concurrency",
+]
 
 [project.entry-points."siraloom.resource_providers"]
 clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"

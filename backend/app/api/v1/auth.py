@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
 import hashlib
 import secrets
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -8,10 +8,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from backend.app.application.entitlements import create_trial_entitlement, get_entitlement, summarize
+from backend.app.application.entitlements import (
+    create_trial_entitlement,
+    get_entitlement,
+    summarize,
+)
 from backend.app.auth.principal import Principal, _verify_firebase_token, get_current_principal
-from backend.app.infrastructure.audit.service import AuditService
 from backend.app.config import settings
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Organization, OrganizationMembership, User
 from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
 from backend.app.infrastructure.db.session import get_db
@@ -61,6 +65,13 @@ def _normalize_email(email: str | None) -> str:
     if not normalized or "@" not in normalized:
         raise HTTPException(status_code=403, detail="A verified Firebase email is required")
     return normalized
+
+
+def _as_utc(value: datetime) -> datetime:
+    """Normalize SQLite's naive DateTime reloads and PostgreSQL timestamps for comparison."""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def _hash_invitation_token(token: str) -> str:
@@ -186,6 +197,22 @@ def _provision_organization(db: Session, *, subject: str, claims: dict, organiza
         role="organization_admin", status="ACTIVE",
     )
     db.add(membership)
+    AuditService(db).record(
+        event_type="ORGANIZATION_PROVISIONED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(user.id),
+        subject_type="ORGANIZATION",
+        subject_id=str(org.id),
+        operation="CREATE_ORGANIZATION_AND_OWNER_MEMBERSHIP",
+        after_state={
+            "organization_id": str(org.id),
+            "owner_user_id": str(user.id),
+            "owner_role": membership.role,
+            "owner_status": membership.status,
+        },
+    )
     return org, user, membership
 
 
@@ -256,7 +283,26 @@ def create_organization_invitation(
     The raw bearer token is returned once so a trusted UI/email-delivery layer can turn it
     into an invitation link. Only its SHA-256 hash is persisted in the database.
     """
-    _require_invitation_role(principal, payload.role)
+    _lock_organization_membership_mutations(db, principal.organization_id)
+    actor_membership = db.scalar(
+        select(OrganizationMembership)
+        .where(
+            OrganizationMembership.organization_id == principal.organization_id,
+            OrganizationMembership.user_id == principal.user_id,
+            OrganizationMembership.status == "ACTIVE",
+        )
+        .with_for_update()
+    )
+    if actor_membership is None:
+        raise HTTPException(status_code=403, detail="An active organization membership is required to invite members")
+    current_principal = Principal(
+        user_id=principal.user_id,
+        organization_id=principal.organization_id,
+        role=actor_membership.role,
+        subject=principal.subject,
+        email=principal.email,
+    )
+    _require_invitation_role(current_principal, payload.role)
     email = _normalize_email(payload.email)
 
     existing = db.scalar(select(User).where(func.lower(User.email) == email))
@@ -276,7 +322,7 @@ def create_organization_invitation(
         func.lower(OrganizationInvitation.email) == email,
         OrganizationInvitation.status == "PENDING",
     ))
-    if pending and pending.expires_at > datetime.now(timezone.utc):
+    if pending and _as_utc(pending.expires_at) > datetime.now(timezone.utc):
         raise HTTPException(status_code=409, detail="A pending invitation already exists for this email")
     if pending:
         pending.status = "EXPIRED"
@@ -289,6 +335,23 @@ def create_organization_invitation(
         expires_at=datetime.now(timezone.utc) + timedelta(days=payload.expires_in_days),
     )
     db.add(invitation)
+    AuditService(db).record(
+        event_type="ORGANIZATION_INVITATION_CREATED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(current_principal.user_id),
+        subject_type="ORGANIZATION_INVITATION",
+        subject_id=str(invitation.id),
+        operation="CREATE_INVITATION",
+        after_state={
+            "organization_id": str(principal.organization_id),
+            "email": invitation.email,
+            "role": invitation.role,
+            "status": invitation.status,
+            "expires_at": invitation.expires_at.isoformat(),
+        },
+    )
     db.commit()
     return {
         "invitation_id": str(invitation.id),
@@ -324,7 +387,7 @@ def accept_organization_invitation(
     if invitation.status != "PENDING":
         raise HTTPException(status_code=409, detail=f"Invitation is {invitation.status.lower()} and cannot be accepted")
     now = datetime.now(timezone.utc)
-    if invitation.expires_at <= now:
+    if _as_utc(invitation.expires_at) <= now:
         invitation.status = "EXPIRED"
         db.commit()
         raise HTTPException(status_code=410, detail="Invitation has expired")
@@ -371,6 +434,23 @@ def accept_organization_invitation(
     invitation.status = "ACCEPTED"
     invitation.accepted_by_user_id = user.id
     invitation.accepted_at = now
+    AuditService(db).record(
+        event_type="ORGANIZATION_INVITATION_ACCEPTED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(user.id),
+        subject_type="ORGANIZATION_INVITATION",
+        subject_id=str(invitation.id),
+        operation="ACCEPT_INVITATION",
+        before_state={"status": "PENDING", "role": invitation.role},
+        after_state={
+            "status": invitation.status,
+            "role": membership.role,
+            "membership_id": str(membership.id),
+            "organization_id": str(invitation.organization_id),
+        },
+    )
     db.commit()
     return {
         "organization_id": str(invitation.organization_id),
@@ -426,7 +506,7 @@ def revoke_organization_invitation(
             detail=f"Invitation is {invitation.status.lower()} and cannot be revoked",
         )
     now = datetime.now(timezone.utc)
-    if invitation.expires_at <= now:
+    if _as_utc(invitation.expires_at) <= now:
         invitation.status = "EXPIRED"
         db.commit()
         raise HTTPException(status_code=409, detail="Expired invitation cannot be revoked")
@@ -516,6 +596,7 @@ def update_organization_membership(
 
     effective_role = payload.role if payload.role is not None else target.role
     effective_status = payload.status if payload.status is not None else target.status
+    before_state = {"role": target.role, "status": target.status}
     _ensure_active_admin_invariant(
         db,
         principal.organization_id,
@@ -536,6 +617,25 @@ def update_organization_membership(
         user = db.get(User, target.user_id)
         if user:
             user.status = "ACTIVE" if payload.status == "ACTIVE" else "INACTIVE"
+
+    after_state = {"role": target.role, "status": target.status}
+    if after_state != before_state:
+        AuditService(db).record(
+            event_type="ORGANIZATION_MEMBERSHIP_UPDATED",
+            case_id=None,
+            analysis_id=None,
+            actor_type="HUMAN",
+            actor_id=str(current_principal.user_id),
+            subject_type="ORGANIZATION_MEMBERSHIP",
+            subject_id=str(target.id),
+            operation="UPDATE_MEMBERSHIP",
+            before_state=before_state,
+            after_state={
+                **after_state,
+                "organization_id": str(principal.organization_id),
+                "user_id": str(target.user_id),
+            },
+        )
 
     db.commit()
     return {"membership_id": str(target.id), "role": target.role, "status": target.status}

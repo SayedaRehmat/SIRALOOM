@@ -1,21 +1,25 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID, uuid5
-import tempfile
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.config import settings
-from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
-from backend.app.infrastructure.artifacts.store import ArtifactStore
-from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
+from backend.app.domain.report_integrity import has_valid_signed_artifact
+from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Artifact, Case, ConfirmationRecord, Report
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Artifact,
+    Case,
+    ConfirmationRecord,
+    Report,
+)
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
     REPORT_STATUS_SUPERSEDED,
@@ -32,7 +36,13 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
     findings = content.get("findings") or []
-    from backend.app.infrastructure.db.models import ACMGAssessment, Evidence, Classification, ReportabilityDecision, SecondaryFindingDecision
+    from backend.app.infrastructure.db.models import (
+        ACMGAssessment,
+        Classification,
+        Evidence,
+        ReportabilityDecision,
+        SecondaryFindingDecision,
+    )
 
     latest_cls_rows = list(
         db.scalars(
@@ -433,6 +443,13 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     if report is None:
         raise ReportFinalizationError("Report not found")
 
+    # Decision writers serialize on Analysis. Take the same lock before reading
+    # classification, reportability, and evidence snapshots so a sign-out cannot
+    # approve a draft assembled while a clinical decision is changing.
+    analysis = db.get(Analysis, report.analysis_id, with_for_update=True)
+    if analysis is None or analysis.case_id != report.case_id:
+        raise ReportFinalizationError("Report analysis not found")
+
     # Final report ordering is case/report-type scoped clinical history.
     # Lock the case before inspecting the finalized chain so two different
     # report versions cannot finalize concurrently and invert supersession.
@@ -442,6 +459,10 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     db.refresh(case_lock, with_for_update=True)
 
     if report.status == REPORT_STATUS_FINAL:
+        if not has_valid_signed_artifact(db, report):
+            raise ReportFinalizationError(
+                "Final report is missing a valid linked signed artifact"
+            )
         return report
     if report.status != "DRAFT":
         raise ReportFinalizationError(f"Report cannot be finalized from status {report.status}")
@@ -476,9 +497,6 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
         "artifact_id": str(report.artifact_id),
     }
 
-    analysis = db.get(Analysis, report.analysis_id)
-    if analysis is None:
-        raise ReportFinalizationError("Report analysis not found")
     case = db.get(Case, report.case_id)
     signed_content = {
         "report_schema_version": "1.1.0",

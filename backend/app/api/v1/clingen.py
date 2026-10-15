@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.auth.authorization import READ_ROLES, require_role
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.adapters.clingen.cspec import CSpecClient, CSpecClientError
 from backend.app.acmg.clingen_registry import (
     fetch_current_sequence_variant_interpretation,
@@ -30,12 +32,18 @@ class ClinGenImportRequest(BaseModel):
     activate_for_automation: bool = False
 
 class ClinGenValidationRequest(BaseModel):
-    approved_by: str = Field(min_length=1)
     reason: str = Field(min_length=1)
     validation_reference: str | None = None
 
 @router.post("/clingen/specifications/import")
-def import_specification(payload: ClinGenImportRequest, db: Session = Depends(get_db)):
+def import_specification(
+    payload: ClinGenImportRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    # Specification rows and their automation approval are global. Only the
+    # platform governance role may import or replace their source snapshots.
+    require_role(principal, frozenset({"platform_admin"}))
     selectors = sum(
         bool(x)
         for x in (
@@ -100,12 +108,33 @@ def import_specification(payload: ClinGenImportRequest, db: Session = Depends(ge
     row.validated_for_automation = False
     row.validation_status = "UNVALIDATED"
     db.add(row)
-    AuditService(db).record(event_type="CLINGEN_SPECIFICATION_IMPORTED", case_id=None, analysis_id=None, actor_type="SYSTEM", actor_id="siraloom-clingen", subject_type="CLINGEN_SPECIFICATION", subject_id=str(row.id), operation="IMPORT", after_state={"specification_id": row.specification_id, "version": row.version, "validated_for_automation": False}, reason="Imported from ClinGen Criteria Specification Registry")
+    AuditService(db).record(
+        event_type="CLINGEN_SPECIFICATION_IMPORTED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CLINGEN_SPECIFICATION",
+        subject_id=str(row.id),
+        operation="IMPORT",
+        after_state={
+            "specification_id": row.specification_id,
+            "version": row.version,
+            "validated_for_automation": False,
+        },
+        reason="Imported from ClinGen Criteria Specification Registry",
+    )
     db.commit()
     return {"id": str(row.id), "specification_id": row.specification_id, "version": row.version, "validated_for_automation": row.validated_for_automation, "validation_status": row.validation_status, "criteria": sorted(row.criteria), "gene_scope": row.gene_scope, "disease_scope": row.disease_scope}
 
 @router.get("/clingen/specifications/select")
-def select_specification(gene: str, disease: str | None = None, db: Session = Depends(get_db)):
+def select_specification(
+    gene: str,
+    disease: str | None = None,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, READ_ROLES)
     result = ClinGenSpecificationSelector().select(db, gene=gene, disease=disease)
     return {
         "status": result.status,
@@ -115,22 +144,33 @@ def select_specification(gene: str, disease: str | None = None, db: Session = De
     }
 
 @router.post("/clingen/specifications/{specification_id}/validate")
-def validate_specification(specification_id: UUID, payload: ClinGenValidationRequest, db: Session = Depends(get_db)):
+def validate_specification(
+    specification_id: UUID,
+    payload: ClinGenValidationRequest,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, frozenset({"platform_admin"}))
     row = db.get(ClinGenSpecification, specification_id)
     if not row:
         raise HTTPException(status_code=404, detail="ClinGen specification not found")
     try:
-        metadata = validate_snapshot_for_automation(row, approved_by=payload.approved_by, reason=payload.reason, validation_reference=payload.validation_reference)
+        metadata = validate_snapshot_for_automation(
+            row,
+            approved_by=str(principal.user_id),
+            reason=payload.reason,
+            validation_reference=payload.validation_reference,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     before = {"validation_status": row.validation_status, "validated_for_automation": row.validated_for_automation}
     row.validated_for_automation = True
     row.validation_status = "APPROVED_FOR_AUTOMATION"
-    row.validated_by = payload.approved_by
+    row.validated_by = str(principal.user_id)
     row.validation_reason = payload.reason
     row.validation_reference = payload.validation_reference
     row.validated_at = datetime.now(timezone.utc)
     db.add(row)
-    AuditService(db).record(event_type="CLINGEN_SPECIFICATION_VALIDATED", case_id=None, analysis_id=None, actor_type="HUMAN", actor_id=payload.approved_by, subject_type="CLINGEN_SPECIFICATION", subject_id=str(row.id), operation="VALIDATE", before_state=before, after_state={"validation_status": row.validation_status, "validated_for_automation": True, **metadata}, reason=payload.reason)
+    AuditService(db).record(event_type="CLINGEN_SPECIFICATION_VALIDATED", case_id=None, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="CLINGEN_SPECIFICATION", subject_id=str(row.id), operation="VALIDATE", before_state=before, after_state={"validation_status": row.validation_status, "validated_for_automation": True, **metadata}, reason=payload.reason)
     db.commit()
     return {"id": str(row.id), "specification_id": row.specification_id, "version": row.version, "validation_status": row.validation_status, "validated_for_automation": row.validated_for_automation, "validated_by": row.validated_by, "validated_at": row.validated_at.isoformat() if row.validated_at else None}

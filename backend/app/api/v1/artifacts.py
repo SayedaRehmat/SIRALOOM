@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import tempfile
 from pathlib import Path
 from uuid import UUID
@@ -10,21 +11,48 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.application.entitlements import effective_max_upload_bytes
-from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role
+from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_artifact, require_role
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.config import settings
 from backend.app.domain.enums import ArtifactType, CaseStatus
-from backend.app.domain.ingestion import classify_filename, normalize_build, validate_index, validate_vcf
+from backend.app.domain.ingestion import (
+    classify_filename,
+    normalize_build,
+    validate_index,
+    validate_vcf,
+)
+from backend.app.domain.storage_capacity import preflight_upload_capacity
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    resolve_storage_profile,
+)
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
-from backend.app.domain.storage_profiles import StorageProfileError, resolve_storage_profile, artifact_store_for_organization
-from backend.app.infrastructure.db.session import get_db
-from backend.app.domain.storage_capacity import preflight_upload_capacity
+from backend.app.infrastructure.db.session import SessionLocal, get_db
 
 router = APIRouter(tags=["artifacts"])
 MAX_BYTES = settings.max_artifact_upload_bytes
+logger = logging.getLogger(__name__)
+
+
+def _compensate_uncommitted_artifact(db: Session, store, artifact_id: UUID, storage_uri: str) -> None:
+    """Delete stored bytes only when a fresh DB read proves the commit did not land."""
+    db.rollback()
+    try:
+        with SessionLocal() as verification_db:
+            durable = verification_db.get(Artifact, artifact_id)
+    except Exception as exc:  # noqa: BLE001 - uncertain commit outcome must preserve the object
+        logger.warning("Could not verify failed artifact commit outcome (%s)", type(exc).__name__)
+        return
+
+    if durable is not None:
+        return
+    try:
+        store.delete(storage_uri)
+    except Exception as exc:  # noqa: BLE001 - cleanup failure must not mask the original error
+        logger.warning("Could not remove uncommitted artifact object (%s)", type(exc).__name__)
 
 
 def _store(db: Session, organization_id: UUID):
@@ -191,30 +219,34 @@ async def upload_artifact(
             validation_status=result.status,
         )
 
-        if kind in {"TBI", "CSI"} and primary:
-            primary.metadata_json = {**(primary.metadata_json or {}), "index": {"artifact_id": str(artifact.id), "status": result.status, "type": kind}}
+        try:
+            if kind in {"TBI", "CSI"} and primary:
+                primary.metadata_json = {**(primary.metadata_json or {}), "index": {"artifact_id": str(artifact.id), "status": result.status, "type": kind}}
 
-        before_status = case.status
-        if kind == "VCF":
-            case.status = CaseStatus.READY_FOR_ANALYSIS if result.status == "VALID" else CaseStatus.INVALID
-        elif result.status == "INVALID" and case.status == CaseStatus.READY_FOR_ANALYSIS:
-            # An invalid optional index must not erase a valid primary VCF state.
-            case.status = CaseStatus.READY_FOR_ANALYSIS
-        elif primary and primary.validation_status == "VALID":
-            case.status = CaseStatus.READY_FOR_ANALYSIS
+            before_status = case.status
+            if kind == "VCF":
+                case.status = CaseStatus.READY_FOR_ANALYSIS if result.status == "VALID" else CaseStatus.INVALID
+            elif result.status == "INVALID" and case.status == CaseStatus.READY_FOR_ANALYSIS:
+                # An invalid optional index must not erase a valid primary VCF state.
+                case.status = CaseStatus.READY_FOR_ANALYSIS
+            elif primary and primary.validation_status == "VALID":
+                case.status = CaseStatus.READY_FOR_ANALYSIS
 
-        audit = AuditService(db)
-        audit.record(
-            event_type="ARTIFACT_VALIDATION_COMPLETED" if result.status == "VALID" else "ARTIFACT_VALIDATION_FAILED",
-            case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
-            subject_type="ARTIFACT", subject_id=str(artifact.id), operation="VALIDATE",
-            before_state={"case_status": before_status},
-            after_state={"case_status": case.status, "validation_status": result.status},
-            reason="Variant artifact ingestion validation",
-            output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
-            payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
-        )
-        db.commit()
+            audit = AuditService(db)
+            audit.record(
+                event_type="ARTIFACT_VALIDATION_COMPLETED" if result.status == "VALID" else "ARTIFACT_VALIDATION_FAILED",
+                case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
+                subject_type="ARTIFACT", subject_id=str(artifact.id), operation="VALIDATE",
+                before_state={"case_status": before_status},
+                after_state={"case_status": case.status, "validation_status": result.status},
+                reason="Variant artifact ingestion validation",
+                output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
+                payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
+            )
+            db.commit()
+        except Exception:
+            _compensate_uncommitted_artifact(db, store, artifact.id, artifact.storage_uri)
+            raise
 
         return {
             "artifact_id": str(artifact.id), "sha256": artifact.sha256, "size_bytes": artifact.size_bytes,
@@ -233,13 +265,7 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
         artifact_uuid = UUID(artifact_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid artifact_id") from exc
-    artifact = db.get(Artifact, artifact_uuid)
-    if not artifact:
-        raise HTTPException(status_code=404, detail="Artifact not found")
-    case = db.get(Case, artifact.case_id)
-    if not case:
-        raise HTTPException(status_code=404, detail="Artifact not found")
-    require_case_tenant(case, principal)
+    artifact = get_accessible_artifact(artifact_uuid, db, principal)
     try:
         profile = resolve_storage_profile(db, organization_id=principal.organization_id)
     except StorageProfileError as exc:

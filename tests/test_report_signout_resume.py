@@ -9,6 +9,7 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     """The production sign-out route must persist a resume intent after FINAL."""
     from backend.app.api.v1 import reports as reports_api
     from backend.app.infrastructure.queue import celery_app
+    from backend.app.reporting import finalization
 
     db, reviewer, analysis, report = seed_finalizable_report()
     analysis.status = AnalysisStatus.REQUIRES_REVIEW
@@ -17,9 +18,10 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     db.commit()
 
     monkeypatch.setattr(
-        "backend.app.reporting.finalization.settings.artifact_root",
+        "backend.app.config.settings.artifact_root",
         str(tmp_path / "artifacts"),
     )
+    monkeypatch.setattr(finalization, "render_pdf", lambda _content: b"%PDF-test-signout%")
     monkeypatch.setattr(
         reports_api,
         "get_accessible_report",

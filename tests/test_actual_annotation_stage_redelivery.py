@@ -5,11 +5,12 @@ stage, response artifact checkpointing, row persistence, partition scheduling, a
 redelivery recovery remain production code. This is orchestration coverage, not a
 live provider or clinical truth-set validation.
 """
+import shutil
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
@@ -17,8 +18,15 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, AnalysisPartition, Annotation, Artifact, Case, Organization,
-    Resource, User, Variant, WorkflowStep,
+    Analysis,
+    AnalysisPartition,
+    Annotation,
+    Case,
+    Organization,
+    Resource,
+    User,
+    Variant,
+    WorkflowStep,
 )
 from backend.app.partition_scheduler import configure_partition
 
@@ -26,6 +34,8 @@ from backend.app.partition_scheduler import configure_partition
 def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
     monkeypatch, tmp_path
 ):
+    if shutil.which("bcftools") is None:
+        pytest.skip("bcftools is required to build the indexed annotation fixture")
     import importlib
 
     queue = importlib.import_module("backend.app.infrastructure.queue.celery_app")

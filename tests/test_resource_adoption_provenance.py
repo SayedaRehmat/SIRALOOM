@@ -1,9 +1,11 @@
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.resources import (
+    ResourceRegistryError,
     decide_resource_approval,
     qualify_resource_version,
     register_resource_version,
@@ -139,15 +141,69 @@ def test_approval_records_exact_release_transition_and_binding_provenance():
         assert event.event_hash
 
 
-def test_rejection_records_release_decision_without_changing_existing_binding():
+def test_adoption_decision_requires_a_nonblank_audit_reason():
     engine = _engine()
     with Session(engine) as db:
-        org = Organization(id=uuid4(), name="Lab A", external_identifier=None)
+        org = Organization(id=uuid4(), name="Lab Decision Reason", external_identifier=None)
         user = User(
             id=uuid4(), organization_id=org.id, display_name="Director",
             role="lab_director", status="ACTIVE",
         )
         db.add_all([org, user])
+        db.flush()
+        resource = _qualified(db, name="ReasonDB", version="1", checksum="9" * 64)
+        approval = request_resource_approval(
+            db, resource_id=resource.id, organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+
+        with pytest.raises(ResourceRegistryError, match="documented reason is required"):
+            decide_resource_approval(
+                db, approval_id=approval.id, organization_id=org.id,
+                actor_id=user.id, decision="REJECTED", expected_version=1,
+                reason="   ",
+            )
+
+        assert approval.status == "PENDING"
+        assert approval.version == 1
+
+
+def test_repeated_adoption_request_reuses_the_same_pending_approval():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab Idempotent Adoption", external_identifier=None)
+        db.add(org)
+        db.flush()
+        resource = _qualified(db, name="IdempotentDB", version="1", checksum="8" * 64)
+
+        first = request_resource_approval(
+            db, resource_id=resource.id, organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+        second = request_resource_approval(
+            db, resource_id=resource.id, organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+
+        assert second.id == first.id
+        assert second.status == "PENDING"
+        assert second.version == 1
+
+
+def test_rejection_records_release_decision_without_changing_existing_binding():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab A", external_identifier=None)
+        other_org = Organization(id=uuid4(), name="Lab B", external_identifier=None)
+        user = User(
+            id=uuid4(), organization_id=org.id, display_name="Director",
+            role="lab_director", status="ACTIVE",
+        )
+        other_user = User(
+            id=uuid4(), organization_id=other_org.id, display_name="Other Director",
+            role="lab_director", status="ACTIVE",
+        )
+        db.add_all([org, other_org, user, other_user])
         db.flush()
 
         old = _qualified(db, name="FutureDB", version="1", checksum="c" * 64)
@@ -178,7 +234,10 @@ def test_rejection_records_release_decision_without_changing_existing_binding():
         ))
         assert binding is not None
         assert binding.resource_id == old.id
-        assert new.status == "REJECTED"
+        # _qualified() creates a globally shared release. Rejection applies to
+        # Lab A's approval record and must not alter the shared resource state.
+        assert new.organization_id is None
+        assert new.status == "QUALIFIED"
 
         event = db.scalar(select(AuditEvent).where(
             AuditEvent.event_type == "RESOURCE_ADOPTION_DECISION",
@@ -190,7 +249,25 @@ def test_rejection_records_release_decision_without_changing_existing_binding():
         assert event.resource_versions["previous"]["resource_id"] == str(old.id)
         assert event.resource_versions["previous"]["version"] == "1"
         assert event.resource_versions["resulting"] is None
-        assert event.after_state["resource_status"] == "REJECTED"
+        assert event.after_state["resource_status"] == "QUALIFIED"
+
+        # Lab B can independently approve the same globally shared release.
+        other_approval = request_resource_approval(
+            db, resource_id=new.id, organization_id=other_org.id,
+            qualification_version="qualification-v1",
+        )
+        decide_resource_approval(
+            db, approval_id=other_approval.id, organization_id=other_org.id,
+            actor_id=other_user.id, decision="APPROVED", expected_version=1,
+            reason="Adopt release for Lab B",
+        )
+        other_binding = db.scalar(select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == other_org.id,
+            OrganizationResourceBinding.identity_key == "FutureDB|FutureProvider|EVIDENCE|GRCh38",
+        ))
+        assert other_binding is not None
+        assert other_binding.resource_id == new.id
+        assert new.status == "QUALIFIED"
 
 
 def test_approved_release_creates_reanalysis_candidate_for_historical_analysis():

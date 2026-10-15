@@ -1,9 +1,15 @@
-from pathlib import Path
+import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
 from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+
+
+def require_bcftools() -> None:
+    if shutil.which("bcftools") is None:
+        pytest.skip("bcftools is required for production normalization tests")
 
 
 def make_reference(tmp_path: Path) -> Path:
@@ -20,8 +26,7 @@ def make_reference(tmp_path: Path) -> Path:
 
 
 def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path: Path):
-    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
-        pytest.skip("bcftools is not installed outside CI")
+    require_bcftools()
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "input.vcf"
     output_vcf = tmp_path / "normalized.vcf.gz"
@@ -58,8 +63,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
 
 
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
-    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
-        pytest.skip("bcftools is not installed outside CI")
+    require_bcftools()
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "bad.vcf"
     output_vcf = tmp_path / "normalized.vcf.gz"
@@ -80,8 +84,7 @@ def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
 
 
 def test_bcftools_version_pin_rejects_mismatch(tmp_path: Path):
-    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
-        pytest.skip("bcftools is not installed outside CI")
+    require_bcftools()
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "input.vcf"
     output_vcf = tmp_path / "normalized.vcf.gz"
@@ -103,8 +106,7 @@ def test_bcftools_version_pin_rejects_mismatch(tmp_path: Path):
 
 
 def test_failed_normalization_preserves_existing_vcf_and_index(tmp_path: Path):
-    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
-        pytest.skip("bcftools is not installed outside CI")
+    require_bcftools()
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "bad.vcf"
     output_vcf = tmp_path / "normalized.vcf.gz"
@@ -190,8 +192,7 @@ def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_pat
 
 
 def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(tmp_path: Path):
-    if subprocess.run(["which", "bcftools"], capture_output=True).returncode != 0:
-        pytest.skip("bcftools is not installed outside CI")
+    require_bcftools()
     fasta = make_reference(tmp_path)
     input_vcf = tmp_path / "multiallelic-genotypes.vcf"
     output_vcf = tmp_path / "normalized-genotypes.vcf.gz"

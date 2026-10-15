@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 import hashlib
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
@@ -254,7 +254,51 @@ def create_change_event(db: Session, *, organization_id: UUID, trigger_type: str
 
 
 def detect_change(db: Session, *, organization_id: UUID, trigger_type: str, resource_kind: str, resource_name: str, new_version: str | None, new_checksum: str | None, resource_id: UUID | None = None) -> list[ReanalysisCandidate]:
-    snapshots = db.scalars(select(AnalysisResourceSnapshot).join(Analysis, Analysis.id == AnalysisResourceSnapshot.analysis_id).join(Case, Case.id == Analysis.case_id).where(Case.organization_id == organization_id, Analysis.status == "SUCCEEDED", AnalysisResourceSnapshot.resource_kind == resource_kind, AnalysisResourceSnapshot.resource_name == resource_name)).all()
+    statement = (
+        select(AnalysisResourceSnapshot)
+        .join(Analysis, Analysis.id == AnalysisResourceSnapshot.analysis_id)
+        .join(Case, Case.id == Analysis.case_id)
+        .where(
+            Case.organization_id == organization_id,
+            Analysis.status == "SUCCEEDED",
+            AnalysisResourceSnapshot.resource_kind == resource_kind,
+            AnalysisResourceSnapshot.resource_name == resource_name,
+        )
+    )
+    if resource_id is not None:
+        snapshot_resource = aliased(Resource)
+        statement = statement.outerjoin(
+            snapshot_resource, snapshot_resource.id == AnalysisResourceSnapshot.resource_id
+        )
+        changed_resource = db.get(Resource, resource_id)
+        if changed_resource is None:
+            return []
+        if changed_resource.organization_id is not None:
+            if changed_resource.organization_id != organization_id:
+                return []
+            ownership_scope = or_(
+                and_(
+                    snapshot_resource.organization_id == organization_id,
+                    snapshot_resource.provider == changed_resource.provider,
+                ),
+                and_(
+                    AnalysisResourceSnapshot.resource_id.is_(None),
+                    AnalysisResourceSnapshot.provider == changed_resource.provider,
+                ),
+            )
+        else:
+            ownership_scope = or_(
+                and_(
+                    snapshot_resource.organization_id.is_(None),
+                    snapshot_resource.provider == changed_resource.provider,
+                ),
+                and_(
+                    AnalysisResourceSnapshot.resource_id.is_(None),
+                    AnalysisResourceSnapshot.provider == changed_resource.provider,
+                ),
+            )
+        statement = statement.where(ownership_scope)
+    snapshots = db.scalars(statement).all()
     candidates: list[ReanalysisCandidate] = []
     for snapshot in snapshots:
         if snapshot.version == new_version and snapshot.checksum == new_checksum:
@@ -359,7 +403,32 @@ def scan_active_resources_for_reanalysis(db: Session) -> int:
         trigger_type = RESOURCE_TRIGGER_TYPE.get(str(resource.resource_type).upper())
         if trigger_type is None:
             continue
-        organization_ids = db.scalars(select(Case.organization_id).join(Analysis, Analysis.case_id == Case.id).join(AnalysisResourceSnapshot, AnalysisResourceSnapshot.analysis_id == Analysis.id).where(Analysis.status == "SUCCEEDED", AnalysisResourceSnapshot.resource_kind == str(resource.resource_type).upper(), AnalysisResourceSnapshot.resource_name == resource.name).distinct()).all()
+        if resource.organization_id is not None:
+            organization_ids = [resource.organization_id]
+        else:
+            snapshot_resource = aliased(Resource)
+            organization_ids = db.scalars(
+                select(Case.organization_id)
+                .join(Analysis, Analysis.case_id == Case.id)
+                .join(AnalysisResourceSnapshot, AnalysisResourceSnapshot.analysis_id == Analysis.id)
+                .outerjoin(snapshot_resource, snapshot_resource.id == AnalysisResourceSnapshot.resource_id)
+                .where(
+                    Analysis.status == "SUCCEEDED",
+                    AnalysisResourceSnapshot.resource_kind == str(resource.resource_type).upper(),
+                    AnalysisResourceSnapshot.resource_name == resource.name,
+                    or_(
+                        and_(
+                            snapshot_resource.organization_id.is_(None),
+                            snapshot_resource.provider == resource.provider,
+                        ),
+                        and_(
+                            AnalysisResourceSnapshot.resource_id.is_(None),
+                            AnalysisResourceSnapshot.provider == resource.provider,
+                        ),
+                    ),
+                )
+                .distinct()
+            ).all()
         for organization_id in organization_ids:
             candidates = detect_change(db, organization_id=organization_id, trigger_type=trigger_type, resource_kind=str(resource.resource_type).upper(), resource_name=resource.name, new_version=resource.version, new_checksum=resource.checksum, resource_id=resource.id)
             total_candidates += len(candidates)

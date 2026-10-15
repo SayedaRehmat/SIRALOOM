@@ -1,10 +1,10 @@
-from pathlib import Path
 from uuid import uuid4
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Organization, User, Case, CaseExport
 from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.reporting.export_service import build_case_export
 
 def test_case_export_contains_core_manifests(tmp_path):
@@ -15,7 +15,7 @@ def test_case_export_contains_core_manifests(tmp_path):
     db.add_all([org,user,case,export]); db.commit()
     artifact=build_case_export(db,export=export,store=ArtifactStore(str(tmp_path)))
     assert artifact.artifact_type == "AUDIT_PACKAGE"
-    data=Path(artifact.storage_uri.removeprefix("file://")).read_bytes()
+    data=local_path_from_uri(artifact.storage_uri).read_bytes()
     assert data[:2] == b"PK"
 
 

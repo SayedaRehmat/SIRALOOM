@@ -1,3 +1,5 @@
+import { safeRedirectPath } from "./safe-redirect.mjs";
+
 export const apiBase = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
 /**
@@ -13,11 +15,12 @@ export const apiBase = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://loc
 export async function resolveSessionDestination(
   idToken: string,
   fallbackOnError: "/app/dashboard" | "/onboarding" = "/onboarding",
-): Promise<"/app/dashboard" | "/onboarding"> {
+  fallbackWhenUnprovisioned: string = "/onboarding",
+): Promise<string> {
   try {
     const res = await fetch(`${apiBase}/auth/session`, { headers: { Authorization: `Bearer ${idToken}` } });
     if (res.ok) return "/app/dashboard";
-    if (res.status === 403) return "/onboarding";
+    if (res.status === 403) return safeRedirectPath(fallbackWhenUnprovisioned) ?? "/onboarding";
     return fallbackOnError;
   } catch {
     // Network/backend hiccup: fall back to the caller's best guess rather than stranding the user.

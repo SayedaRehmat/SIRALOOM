@@ -10,7 +10,7 @@ from backend.app.acmg.rules import CriterionDirection
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Variant, Evidence
 from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, require_role
+from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, get_analysis_variant, require_role
 from backend.app.infrastructure.audit.service import AuditService
 
 router = APIRouter(tags=["acmg"])
@@ -36,7 +36,7 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
     if analysis is None:
         raise HTTPException(status_code=404, detail="Analysis not found")
     db.refresh(analysis, with_for_update=True)
-    variant = db.get(Variant, variant_id)
+    variant = get_analysis_variant(analysis, variant_id, db)
     if not analysis or not variant:
         raise HTTPException(status_code=404, detail="Analysis or variant not found")
     requested_evidence_ids = {str(e) for item in payload.criteria for e in item.evidence_ids}
@@ -223,9 +223,15 @@ def auto_assess(
             PopulationObservation.variant_id == variant_id,
         )
     ).all()
-    resource_rows = {
-        r.id: r for r in db.scalars(select(Resource)).all()
+    resource_ids = {
+        observation.resource_id
+        for observation in population_rows
+        if observation.resource_id is not None
     }
+    resource_rows = {
+        row.id: row
+        for row in db.scalars(select(Resource).where(Resource.id.in_(resource_ids))).all()
+    } if resource_ids else {}
 
     service = ACMGSpecificationAssessmentService()
     result = service.assess_variant(

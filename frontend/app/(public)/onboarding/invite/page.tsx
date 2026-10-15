@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, reload, signOut, User } from "firebase/auth";
+import { onAuthStateChanged, reload, sendEmailVerification, signOut, User } from "firebase/auth";
 import { Brand } from "../../../../components/brand";
 import { firebaseAuth, firebaseConfigured } from "../../../../lib/firebase";
 
@@ -56,7 +56,8 @@ export default function InvitationAcceptancePage() {
       <p className="eyebrow">SIRALOOM organization access</p><h1>Accept laboratory invitation</h1>
       <p>This invitation can only be accepted by the verified Firebase account whose email address was invited.</p>
       {user ? <div className="configuration-notice"><strong>{user.displayName || user.email}</strong><br />{user.email}</div> : <a className="button" href={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in to continue</a>}
-      {user && <button className="button" onClick={acceptInvitation} disabled={busy || !token}>{busy ? "Accepting…" : "Accept invitation"}</button>}
+      {user && !user.emailVerified && <button className="button" onClick={() => sendEmailVerification(user).then(() => setMessage("Verification email sent. Verify your address, then return to this invitation." )).catch(error => setMessage(error instanceof Error ? error.message : "Unable to send verification email."))}>Resend verification email</button>}
+      {user && <button className="button" onClick={acceptInvitation} disabled={busy || !token || !user.emailVerified}>{busy ? "Accepting…" : "Accept invitation"}</button>}
       {message && <p className="form-message" role="status">{message}</p>}
       {user && <button type="button" className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth).then(() => window.location.reload())} disabled={busy}>Use a different account</button>}
     </section></main>

@@ -8,7 +8,8 @@ from backend.app.workflows.variant import _iter_variant_batches
 def make_reference(tmp_path: Path):
     fasta = tmp_path / "ref.fa"
     seq = "C" + "A" * 1999
-    fasta.write_text(">1\n" + seq + "\n", encoding="utf-8")
+    # FAI offsets are byte offsets; avoid Windows text-mode newline translation.
+    fasta.write_bytes((">1\n" + seq + "\n").encode("ascii"))
     fai = tmp_path / "ref.fa.fai"
     fai.write_text(f"1\t{len(seq)}\t3\t{len(seq)}\t{len(seq)+1}\n", encoding="utf-8")
     return fasta, fai

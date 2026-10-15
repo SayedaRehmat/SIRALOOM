@@ -8,7 +8,6 @@ separate gate.
 """
 from pathlib import Path
 from types import SimpleNamespace
-from urllib.parse import unquote, urlparse
 from uuid import uuid4
 
 import pytest
@@ -536,7 +535,9 @@ def test_terminal_provenance_is_persisted_before_analysis_succeeds(tmp_path):
         assert event.output_artifacts[0]["sha256"] == artifact.sha256
         assert event.payload["next_step"] == "analysis_complete"
 
-        stored_path = Path(unquote(urlparse(artifact.storage_uri).path))
+        from backend.app.domain.local_uri import local_path_from_uri
+
+        stored_path = local_path_from_uri(artifact.storage_uri)
         manifest = json.loads(stored_path.read_text(encoding="utf-8"))
         assert manifest["analysis_id"] == str(analysis_id)
         assert manifest["case_id"] == str(case_id)
