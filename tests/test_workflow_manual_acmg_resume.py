@@ -162,6 +162,12 @@ def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, t
 
         workflow.run_variant_analysis(analysis_id)
 
+        # Re-entry after a human classification has been reconciled must remain
+        # safe while the downstream reportability gate is unresolved. It must
+        # not duplicate the reconciliation audit event or prematurely create a
+        # report on the second execution.
+        workflow.run_variant_analysis(analysis_id)
+
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)
             acmg = db.scalar(select(WorkflowStep).where(
