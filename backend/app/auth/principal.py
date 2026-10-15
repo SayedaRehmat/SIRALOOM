@@ -65,7 +65,11 @@ def get_current_principal(request: Request, db: Session = Depends(get_db)) -> Pr
         raise HTTPException(status_code=403, detail="A verified Firebase email is required")
     user = db.scalar(select(User).where(User.external_subject == subject))
     if not user:
-        raise HTTPException(status_code=403, detail="No SIRALOOM user is provisioned for this identity")
+        raise HTTPException(
+            status_code=403,
+            detail="No SIRALOOM user is provisioned for this identity",
+            headers={"X-Siraloom-Session-State": "UNPROVISIONED"},
+        )
     if str(user.status) != "ACTIVE":
         raise HTTPException(status_code=403, detail="This SIRALOOM account is inactive")
     membership = db.scalar(select(OrganizationMembership).where(

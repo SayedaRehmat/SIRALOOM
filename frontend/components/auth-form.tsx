@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured, googleProvider } from "../lib/firebase";
 import { resolveSessionDestination } from "../lib/session";
@@ -17,6 +17,12 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
   const onboardingHref = trial ? "/onboarding?trial=1" : "/onboarding?trial=0";
   const requestedRedirect = () => safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"));
 
+  useEffect(() => {
+    const accessState = new URLSearchParams(window.location.search).get("access");
+    if (accessState === "restricted") setMessage(t("auth.accessRestricted"));
+    else if (accessState === "unavailable") setMessage(t("auth.sessionUnavailable"));
+  }, [t]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!firebaseAuth) return setMessage(t("auth.firebaseMissing"));
@@ -31,8 +37,12 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
         const redirectPath = requestedRedirect();
         if (!credential.user.emailVerified) { window.location.assign(redirectPath ?? "/onboarding"); return; }
         const token = await credential.user.getIdToken();
-        const destination = await resolveSessionDestination(token, "/onboarding", redirectPath ?? "/onboarding");
-        window.location.assign(redirectPath ?? destination);
+        const destination = await resolveSessionDestination(
+          token,
+          redirectPath ?? "/onboarding",
+          redirectPath,
+        );
+        window.location.assign(destination);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("auth.failed"));
@@ -45,11 +55,14 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
     try {
       const credential = await signInWithPopup(firebaseAuth, googleProvider);
       const token = await credential.user.getIdToken();
-      const fallback = mode === "signup" ? "/onboarding" : "/app/dashboard";
       const redirectPath = requestedRedirect();
-      const destination = await resolveSessionDestination(token, fallback, redirectPath ?? "/onboarding");
-      if (redirectPath && (destination !== "/onboarding" || mode === "signup")) {
-        window.location.assign(redirectPath);
+      const destination = await resolveSessionDestination(
+        token,
+        redirectPath ?? "/onboarding",
+        redirectPath,
+      );
+      if (destination.startsWith("/login?access=")) {
+        window.location.assign(destination);
         return;
       }
       window.location.assign(destination === "/onboarding" ? onboardingHref : destination);

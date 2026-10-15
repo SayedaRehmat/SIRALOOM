@@ -322,6 +322,8 @@ export type TranslationKey =
   | "auth.haveAccount"
   | "auth.firebaseMissing"
   | "auth.failed"
+  | "auth.accessRestricted"
+  | "auth.sessionUnavailable"
   | "auth.enterEmail"
   | "auth.resetSent"
   | "auth.resetFailed"
@@ -1309,6 +1311,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "auth.haveAccount": "Already have an account?",
     "auth.firebaseMissing": "Firebase is not configured for this deployment.",
     "auth.failed": "Authentication could not be completed.",
+    "auth.accessRestricted": "This account is not currently authorized for a SIRALOOM workspace. Contact your laboratory administrator.",
+    "auth.sessionUnavailable": "SIRALOOM could not verify workspace access. Check the service connection and sign in again.",
     "auth.enterEmail": "Enter your email address first.",
     "auth.resetSent": "Password-reset email sent.",
     "auth.resetFailed": "Unable to send reset email.",
@@ -2124,6 +2128,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "auth.haveAccount": "لديك حساب بالفعل؟",
     "auth.firebaseMissing": "لم يتم إعداد Firebase لهذا النشر.",
     "auth.failed": "تعذر إكمال المصادقة.",
+    "auth.accessRestricted": "هذا الحساب غير مخول حالياً للوصول إلى مساحة عمل SIRALOOM. تواصل مع مسؤول المختبر.",
+    "auth.sessionUnavailable": "تعذر على SIRALOOM التحقق من الوصول إلى مساحة العمل. تحقق من اتصال الخدمة وسجل الدخول مجدداً.",
     "auth.enterEmail": "أدخل عنوان بريدك الإلكتروني أولاً.",
     "auth.resetSent": "تم إرسال رسالة إعادة تعيين كلمة المرور.",
     "auth.resetFailed": "تعذر إرسال إعادة التعيين.",

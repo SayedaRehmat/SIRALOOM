@@ -177,3 +177,21 @@ def test_principal_rejects_inactive_local_user_with_active_membership(monkeypatc
 
     assert error.value.status_code == 403
     assert error.value.detail == "This SIRALOOM account is inactive"
+
+
+def test_unprovisioned_identity_has_distinct_session_state(monkeypatch):
+    monkeypatch.setattr(
+        principal,
+        "_verify_firebase_token",
+        lambda token: {"uid": "firebase-subject-new", "email_verified": True},
+    )
+
+    class UnprovisionedDB:
+        def scalar(self, statement):
+            return None
+
+    with pytest.raises(HTTPException) as error:
+        principal.get_current_principal(_bearer_request(), db=UnprovisionedDB())
+
+    assert error.value.status_code == 403
+    assert error.value.headers["X-Siraloom-Session-State"] == "UNPROVISIONED"
