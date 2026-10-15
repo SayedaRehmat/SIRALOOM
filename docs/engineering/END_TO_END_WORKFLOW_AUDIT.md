@@ -1,6 +1,6 @@
 # End-to-End Workflow Audit Matrix
 
-**Current committed code baseline:** `main` commit `0124176`, 2026-10-15; additional local findings below are being verified.
+**Current committed code baseline:** `main` commit `dc3be3e`, 2026-10-15.
 **Status convention:** PASS requires verified implementation and relevant executed tests. PARTIAL means source/tests exist but the complete user journey or required boundary is not proven. NOT RUN means no execution evidence. BLOCKED identifies an unavailable dependency. This matrix is a live audit record, not a readiness claim.
 
 | Stage / user action | Frontend route or component | API / backend path | Durable effects and guards observed | Relevant test evidence | Status / remaining verification |
@@ -24,6 +24,7 @@
 - API route authentication inventory exists in `tests/test_api_route_authentication_coverage.py`; object-level authorization tests cover shared accessors. These do not by themselves prove all route-specific object ownership or background worker query scope.
 - Backend CI workflow is `.github/workflows/ci.yml`: SQLite-backed full backend tests plus separate PostgreSQL/Redis integration job; frontend localization guard, production build/container and Compose config checks.
 - GitHub Actions run #1533 succeeded for backend, PostgreSQL/Celery integration and frontend. Local Windows full suite had 807 passed, 37 skipped and one unrelated runtime dependency failure in WeasyPrint (`libgobject-2.0-0`).
+- At current baseline `dc3be3e`, full local backend suite reported 816 passed, 37 skipped, and 1 PDF-render test failure because WeasyPrint could not load native `libgobject-2.0-0` on this Windows runtime. GitHub CI for commits after `324283b` is not verified here; earlier green CI is not counted for the latest commits.
 - No full browser E2E harness is configured in `frontend/package.json`; only the Node safe-redirect session helper test command is exposed. A production build is not an end-to-end workflow test.
 
 ## Acceptance summary

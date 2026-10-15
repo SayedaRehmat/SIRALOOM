@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Audited application-code baseline:** `main` commit `324283be87d28d209d7319e1e599ab898266853d` (`Correct authentication session routing and record Phase 1 audit`). The audit-record-only follow-up is `dd4c1e6`.
+**Audited application-code baseline:** `main` commit `dc3be3e` (`Mask tenant-owned evidence and follow-up lookups`), 2026-10-15. Earlier account-session CI evidence applies to commit `324283b` only.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -15,6 +15,7 @@
 ## Verification limits observed
 
 - The local Windows full suite at `6b11afd` reported 807 passed, 37 skipped, and one failure in `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`. The runtime could not load WeasyPrint native `libgobject-2.0-0`/Pango libraries. This is an environment limitation, not evidence that PDF rendering passes locally.
+- A fresh full backend run at `dc3be3e` reported **816 passed, 37 skipped, 1 failed**. The only failure was again `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`, caused by the unavailable Windows native `libgobject-2.0-0` dependency. CI status for commits after `324283b` has not been verified in this environment; prior run #1534 is not evidence for these later commits.
 - The matching GitHub Actions run succeeded in all three jobs, including PostgreSQL/Celery integration and frontend production checks.
 - No configured Firebase browser identity, live cloud bucket, or laboratory deployment was used for browser-based signup, email verification/recovery, real tenant separation, or report signout. Those checks remain NOT RUN here.
 - The repository's existing detailed history is retained in [`PHASE_A_AUDIT_LEDGER.md`](PHASE_A_AUDIT_LEDGER.md); it contains prior fixes and remaining worker, deployment, and scientific qualification boundaries. This file supplements, rather than replaces, that record.
@@ -51,7 +52,7 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 | Pedigree member could link to a specimen from another case. | `add_member` accepted `specimen_id` from request without checking the specimen's owning case. | Resolve the specimen server-side and require `specimen.case_id == case_id`; otherwise return 404 with a case-scoped message. | Added a regression proving a foreign-case specimen is rejected before mutation; focused authorization, export integrity/download, mutation, variant access and reportability suites passed: 28 tests. | FIXED, locally verified |
 | Case-export status/download, reportability signoff, evidence lookup and follow-up update could return different not-found details for absent versus foreign-tenant IDs. | Export routes fetched globally then applied tenant checks whose error detail identified a case; decision/evidence/follow-up routes returned an object-specific missing detail for absence but `Analysis not found` for a foreign tenant. | Centralized export lookup and tenant verification to return `404 Export not found`; remap only 404 analysis access failures to the matching object-specific 404 before continuing. | Regression tests in `tests/test_audit_tenant_authorization.py` compare absent and foreign responses for all four route types. Focused auth, export, variant and reportability suite passed: 31 tests. Updated an existing download test fixture to provide a realistic organization ID. Changed-file import lint (`ruff --select F401,I`) and `git diff --check` passed. | FIXED, locally verified |
 
-The inventory continues. Nested resource/assay/specimen linkage and worker-owned tenant scope still need separate validation. The latest committed and pushed main correction is `cb474b5`; this additional response-consistency batch is still uncommitted at this checkpoint.
+The inventory continues. Nested resource/assay/specimen linkage and worker-owned tenant scope still need separate validation. The latest committed and pushed main correction is `dc3be3e`.
 
 ## 2026-10-15 additional verified correction
 
