@@ -5,6 +5,11 @@ const CONTEXT_KEYS = [
 ];
 const AUTH_UID_KEY = "siraloom.auth_uid";
 
+/** Do not render case-scoped workspace data until it belongs to the selection. */
+export function isWorkspaceCaseReady(requestedCaseId, loadedCaseId) {
+  return !requestedCaseId || requestedCaseId === loadedCaseId;
+}
+
 /** Keep selected case context within one Firebase identity on this browser. */
 export function syncWorkspaceContext(storage, userId) {
   const nextUserId = typeof userId === "string" && userId.trim() ? userId.trim() : null;

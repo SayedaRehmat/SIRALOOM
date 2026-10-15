@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Audited application-code baseline:** `main` commit `12ed477` (`Clear workspace context on account changes`), 2026-10-15. Additional API/CI corrections below are currently local and await their push-triggered CI run.
+**Audited application-code baseline:** `main` commit `a270237` (`Validate variant IDs and run frontend behavior tests`), 2026-10-15. GitHub Actions run [#1542](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38726801785) passed backend, PostgreSQL integration, and frontend jobs.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -38,6 +38,13 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 ## Phase decision
 
 **Phase 1: PARTIAL.** The current code has broad automated coverage and several previously repaired workflow controls, but a complete source-level trace and authenticated end-to-end browser-to-persistence-to-signout verification have not been demonstrated. This is not a clinical validation, regulatory, or production-readiness determination.
+
+## 2026-10-15 workspace case-switch privacy and stale-response correction
+
+- **Finding:** changing the selected case left the previous case's analysis, specimens, variants, review, report, export, artifacts, and audit entries rendered until the new case request completed. In-flight polling and detail requests could also write the previous case's data after a switch.
+- **Correction:** clear case-scoped state when selection changes; render only a loading/retry surface until `caseWorkspace.case_id` matches the selected case; cancel case-detail requests on cleanup; ignore stale responses from analysis, variant, audit, export, and artifact reads. Added a pure readiness-policy regression test.
+- **Verification:** frontend `npm run test:session` passed 14 tests; `npm run validate:i18n` passed; `git diff --check` passed. CI run #1542 passed backend, PostgreSQL integration, and frontend jobs for prior commit `a270237`; the current UI correction still requires its own push-triggered CI run. Local Next build cannot run because `frontend/node_modules` is absent.
+- **Checkpoint:** correction is in the local working tree pending commit/push. Phase A remains PARTIAL: case switching is now guarded in code and helper tests, but interactive browser account/tenant switching, remaining frontend surfaces, and all remaining Phase A workflow checks are still outstanding.
 
 ## 2026-10-15 API object-authorization audit batch
 

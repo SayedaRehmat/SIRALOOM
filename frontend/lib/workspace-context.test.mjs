@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { syncWorkspaceContext } from "./workspace-context.mjs";
+import { isWorkspaceCaseReady, syncWorkspaceContext } from "./workspace-context.mjs";
+
+test("case workspace is hidden until the selected case has loaded", () => {
+  assert.equal(isWorkspaceCaseReady("case-b", "case-a"), false);
+  assert.equal(isWorkspaceCaseReady("case-b", null), false);
+  assert.equal(isWorkspaceCaseReady("case-b", "case-b"), true);
+  assert.equal(isWorkspaceCaseReady("", null), true);
+});
 
 function createStorage(initial = {}) {
   const values = new Map(Object.entries(initial));

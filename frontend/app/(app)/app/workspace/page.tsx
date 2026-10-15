@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
+import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 
 type Step = {
   step_id: string;
@@ -189,6 +190,9 @@ export default function Home() {
   const [caseId, setCaseId] = useState("");
   const [caseIdentifier, setCaseIdentifier] = useState("");
   const [caseWorkspace, setCaseWorkspace] = useState<CaseWorkspace | null>(null);
+  const [caseLoadError, setCaseLoadError] = useState("");
+  const [caseLoadAttempt, setCaseLoadAttempt] = useState(0);
+  const caseIdRef = useRef("");
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
@@ -229,6 +233,7 @@ export default function Home() {
   const [manualClassificationEvidenceId, setManualClassificationEvidenceId] = useState("");
   const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  caseIdRef.current = caseId;
 
   const currentStepIndex = useMemo(() => {
     const stepsFromApi: Step[] = analysis?.steps ?? [];
@@ -310,9 +315,9 @@ export default function Home() {
     if (!caseId) return;
     try {
       const rows = await apiFetch(`/cases/${caseId}/artifacts`);
-      setCaseArtifacts(Array.isArray(rows) ? rows : []);
+      if (caseIdRef.current === caseId) setCaseArtifacts(Array.isArray(rows) ? rows : []);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
+      if (caseIdRef.current === caseId) setMessage(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
     }
   }, [caseId, t]);
 
@@ -320,10 +325,31 @@ export default function Home() {
 
   useEffect(() => {
     if (!caseId) return;
+    let cancelled = false;
+    setCaseLoadError("");
+    setCaseWorkspace(null);
+    setAnalysisId("");
+    setAnalysis(null);
+    setVariants([]);
+    setCompleteVariants([]);
+    setCompleteVariantColumns([]);
+    setSelectedVariantId("");
+    setVariantDetail(null);
+    setReview(null);
+    setReportId("");
+    setReport(null);
+    setExportId("");
+    setExportStatus("");
+    setAuditEvents([]);
+    setCaseArtifacts([]);
+    setArtifactId("");
+    setSelectedSpecimenId("");
     setPreflightResult(null);
+    setMessage("");
     const loadCase = async () => {
       try {
         const data = await apiFetch(`/cases/${caseId}`);
+        if (cancelled) return;
         setCaseWorkspace(data);
         setCaseIdentifier(String(data?.case_identifier ?? ""));
         window.localStorage.setItem("siraloom.case_identifier", String(data?.case_identifier ?? ""));
@@ -350,11 +376,14 @@ export default function Home() {
           window.localStorage.removeItem("siraloom.analysis_id");
         }
       } catch (error) {
+        if (cancelled) return;
+        setCaseLoadError(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
         setMessage(error instanceof Error ? error.message : t("workspace.errorLoadCase"));
       }
     };
     loadCase();
-  }, [caseId]);
+    return () => { cancelled = true; };
+  }, [caseId, caseLoadAttempt, t]);
 
   useEffect(() => {
     if (!analysisId || !["SUCCEEDED", "REQUIRES_REVIEW"].includes(analysis?.status ?? "")) {
@@ -362,34 +391,40 @@ export default function Home() {
       setCompleteVariantColumns([]);
       return;
     }
+    let cancelled = false;
     apiFetch(`/analyses/${analysisId}/complete-variant-report`)
       .then((data) => {
+        if (cancelled) return;
         setCompleteVariants(data.variants ?? []);
         setCompleteVariantColumns(data.columns ?? []);
       })
-      .catch((error) => setMessage(error instanceof Error ? error.message : t("workspace.errorCompleteReport")));
+      .catch((error) => { if (!cancelled) setMessage(error instanceof Error ? error.message : t("workspace.errorCompleteReport")); });
+    return () => { cancelled = true; };
   }, [analysisId, analysis?.status]);
 
   useEffect(() => {
     if (!analysisId) return;
+    let cancelled = false;
     const loadAudit = async () => {
       try {
         const events = await apiFetch(`/cases/${caseId}/audit`);
-        setAuditEvents(events);
+        if (!cancelled) setAuditEvents(events);
       } catch {
         // Audit view is observational; analysis state remains authoritative.
       }
     };
     loadAudit();
     const timer = setInterval(loadAudit, 4000);
-    return () => clearInterval(timer);
+    return () => { cancelled = true; clearInterval(timer); };
   }, [caseId, analysisId]);
 
   useEffect(() => {
     if (!analysisId) return;
+    let cancelled = false;
     const poll = async () => {
       try {
         const next = await apiFetch(`/analyses/${analysisId}`);
+        if (cancelled) return;
         setAnalysis(next);
         setConnection("online");
         const terminal = ["SUCCEEDED", "FAILED", "BLOCKED", "CANCELLED", "REQUIRES_REVIEW", "RESOURCE_FAILURE"].includes(next.status);
@@ -400,6 +435,7 @@ export default function Home() {
         if (["SUCCEEDED", "REQUIRES_REVIEW"].includes(next.status)) {
           try {
             const vs = await apiFetch(`/analyses/${analysisId}/variants`);
+            if (cancelled) return;
             setVariants(vs);
             if (!selectedVariantId && vs.length) setSelectedVariantId(vs[0].variant_id);
           } catch {
@@ -407,6 +443,7 @@ export default function Home() {
           }
         }
       } catch (error) {
+        if (cancelled) return;
         setConnection("offline");
         setMessage(`${t("workspace.backendReconnectingPrefix")}${error instanceof Error ? error.message : t("workspace.connectionUnavailable")}`);
       }
@@ -414,6 +451,7 @@ export default function Home() {
     poll();
     pollingRef.current = setInterval(poll, 2000);
     return () => {
+      cancelled = true;
       if (pollingRef.current) clearInterval(pollingRef.current);
       pollingRef.current = null;
     };
@@ -421,39 +459,46 @@ export default function Home() {
 
   useEffect(() => {
     if (!exportId) return;
+    let cancelled = false;
     let timer: ReturnType<typeof setInterval> | null = null;
     const pollExport = async () => {
       try {
         const result = await apiFetch(`/exports/${exportId}`);
+        if (cancelled) return;
         setExportStatus(result.status);
         if (["SUCCEEDED", "FAILED", "CANCELLED"].includes(result.status) && timer) {
           clearInterval(timer);
           timer = null;
         }
       } catch (error) {
+        if (cancelled) return;
         setMessage(error instanceof Error ? error.message : t("workspace.errorExportState"));
       }
     };
     pollExport();
     timer = setInterval(pollExport, 2000);
-    return () => { if (timer) clearInterval(timer); };
+    return () => { cancelled = true; if (timer) clearInterval(timer); };
   }, [exportId]);
 
   useEffect(() => {
     if (!analysisId || !selectedVariantId) return;
+    let cancelled = false;
     const load = async () => {
       try {
         const [detail, reviewBundle] = await Promise.all([
           apiFetch(`/variants/${selectedVariantId}`),
           apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`).catch(() => null),
         ]);
+        if (cancelled) return;
         setVariantDetail(detail);
         setReview(reviewBundle);
       } catch (error) {
+        if (cancelled) return;
         setMessage(error instanceof Error ? error.message : t("workspace.errorVariantDetails"));
       }
     };
     load();
+    return () => { cancelled = true; };
   }, [analysisId, selectedVariantId]);
 
   const loadNotifications = async () => {
@@ -871,6 +916,25 @@ export default function Home() {
   const handleFile = (event: ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
   };
+
+  const caseContextReady = isWorkspaceCaseReady(caseId, caseWorkspace?.case_id);
+  if (caseId && !caseContextReady) {
+    return (
+      <main className="shell">
+        <header className="topbar">
+          <div>
+            <div className="eyebrow">{t("workspace.eyebrow")}</div>
+            <h1>SIRALOOM <span>{t("workflow.variantFile")}</span></h1>
+          </div>
+          <div className="connection"><span className={`dot ${connection}`} />{connection === "online" ? t("workspace.backendConnected") : connection === "checking" ? t("workspace.checkingBackend") : t("workspace.reconnecting")}</div>
+        </header>
+        <section className="panel" role={caseLoadError ? "alert" : "status"} aria-live="polite">
+          <p>{caseLoadError || t("workspace.loading")}</p>
+          {caseLoadError && <button type="button" className="secondary" onClick={() => { setCaseLoadError(""); setCaseLoadAttempt(attempt => attempt + 1); }}>{t("cases.refresh")}</button>}
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="shell">
