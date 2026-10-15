@@ -176,6 +176,9 @@ export type TranslationKey =
   | "workspace.createdAt"
   | "resources.stagingReady"
   | "resources.stageRelease"
+  | "resources.globalDiscovery"
+  | "resources.globalDiscoveryDetails"
+  | "resources.globalDiscoveryNotice"
   | "resources.prepareStaging"
   | "resources.executeStaging"
   | "resources.stagingRecords"
@@ -1597,6 +1600,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.createdAt": "Created",
     "resources.stagingReady": "Storage preflight passed; release is ready to stage.",
     "resources.stageRelease": "Stage release",
+    "resources.globalDiscovery": "Global discovery",
+    "resources.globalDiscoveryDetails": "Inspect release source and governance",
+    "resources.globalDiscoveryNotice": "This release was discovered centrally. It is not approved or executable for this lab. Review publisher, license/terms, checksum evidence, and provider-specific staging support before registering a lab-owned version. Do not mark evidence verified unless it has been independently established.",
     "resources.prepareStaging": "Prepare and check storage",
     "resources.executeStaging": "Download and verify",
     "resources.stagingRecords": "Staging attempts",
@@ -2409,6 +2415,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.createdAt": "تاريخ الإنشاء",
     "resources.stagingReady": "اجتاز فحص التخزين؛ الإصدار جاهز للتجهيز.",
     "resources.stageRelease": "تجهيز الإصدار",
+    "resources.globalDiscovery": "اكتشاف عام",
+    "resources.globalDiscoveryDetails": "فحص مصدر الإصدار والحوكمة",
+    "resources.globalDiscoveryNotice": "تم اكتشاف هذا الإصدار مركزيًا. لم تتم الموافقة عليه أو جعله قابلًا للتنفيذ في هذا المختبر. راجع الناشر والترخيص/الشروط وأدلة البصمة ودعم التجهيز الخاص بالمزوّد قبل تسجيل إصدار تابع للمختبر. لا تحدد الأدلة على أنها متحققة ما لم يتم التحقق منها بشكل مستقل.",
     "resources.prepareStaging": "التحضير وفحص التخزين",
     "resources.executeStaging": "التنزيل والتحقق",
     "resources.stagingRecords": "محاولات التجهيز",

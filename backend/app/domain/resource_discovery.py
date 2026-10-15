@@ -12,9 +12,18 @@ from sqlalchemy.orm import Session
 from backend.app.domain.resources import register_resource_version
 from backend.app.domain.resource_source_contract import validate_source_contract
 from backend.app.domain.resource_staging import create_staging_candidate
-from backend.app.infrastructure.db.models import ResourceDiscovery, ResourceStaging
+from backend.app.infrastructure.db.models import (
+    Notification,
+    OrganizationMembership,
+    ResourceDiscovery,
+    ResourceStaging,
+    User,
+)
 
 RESOURCE_PROVIDER_GROUP = "siraloom.resource_providers"
+RESOURCE_NOTIFICATION_ROLES = frozenset({
+    "organization_admin", "lab_director", "bioinformatician", "clinical_geneticist",
+})
 
 
 def _provider_instances() -> list[Any]:
@@ -71,7 +80,8 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                         ResourceDiscovery.artifact_url == source_contract.artifact_url,
                     )
                 )
-                if existing_discovery is None:
+                is_new_discovery = existing_discovery is None
+                if is_new_discovery:
                     discovery = ResourceDiscovery(
                         id=uuid4(),
                         resource_id=resource.id,
@@ -92,6 +102,12 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                     )
                     db.add(discovery)
                     db.flush()
+                    _notify_organizations_of_release(
+                        db,
+                        resource=resource,
+                        discovery=discovery,
+                        source_contract=source_contract.as_dict(),
+                    )
                 else:
                     discovery = existing_discovery
 
@@ -117,3 +133,58 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
             db.commit()
     db.commit()
     return {"candidates_discovered": discovered_count, "providers_failed": failed_providers}
+
+def _notify_organizations_of_release(
+    db: Session,
+    *,
+    resource,
+    discovery: ResourceDiscovery,
+    source_contract: dict[str, object],
+) -> int:
+    """Notify active lab resource stewards once per newly persisted release."""
+    query = (
+        select(OrganizationMembership, User)
+        .join(User, User.id == OrganizationMembership.user_id)
+        .where(
+            OrganizationMembership.status == "ACTIVE",
+            OrganizationMembership.role.in_(RESOURCE_NOTIFICATION_ROLES),
+            User.status == "ACTIVE",
+        )
+    )
+    if resource.organization_id is not None:
+        query = query.where(OrganizationMembership.organization_id == resource.organization_id)
+    recipients = db.execute(query).all()
+    created = 0
+    for membership, user in recipients:
+        db.add(Notification(
+            id=uuid4(),
+            organization_id=membership.organization_id,
+            user_id=membership.user_id,
+            notification_type="RESOURCE_RELEASE_DISCOVERED",
+            status="UNREAD",
+            title=f"New {resource.provider} release discovered",
+            body=(
+                f"{resource.name} version {resource.version} was discovered from "
+                f"{source_contract.get('publisher')}. Review the source contract, "
+                "license/terms and integrity evidence before adopting or activating it."
+            ),
+            metadata_json={
+                "resource_id": str(resource.id),
+                "discovery_id": str(discovery.id),
+                "provider": resource.provider,
+                "resource_name": resource.name,
+                "release_identity": discovery.release_identity,
+                "artifact_url": discovery.artifact_url,
+                "license_status": discovery.license_status,
+                "checksum_status": discovery.checksum_status,
+                "requires_lab_review": True,
+                "title_ar": f"تم اكتشاف إصدار جديد من {resource.provider}",
+                "body_ar": (
+                    f"تم اكتشاف {resource.name} الإصدار {resource.version} من "
+                    f"{source_contract.get('publisher')}. راجع عقد المصدر وشروط الترخيص "
+                    "وأدلة السلامة قبل اعتماد الإصدار أو تفعيله."
+                ),
+            },
+        ))
+        created += 1
+    return created

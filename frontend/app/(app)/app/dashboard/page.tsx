@@ -55,7 +55,7 @@ function statusTone(value?: string | null) {
 }
 
 export default function Dashboard() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [capacity, setCapacity] = useState<Capacity | null>(null);
@@ -120,6 +120,20 @@ export default function Dashboard() {
     if (notification.analysis_id) window.localStorage.setItem("siraloom.analysis_id", notification.analysis_id);
   };
 
+  const notificationTitle = (notification: NotificationRow) => {
+    const arabic = String(notification.metadata?.title_ar ?? "");
+    if (language === "ar") return arabic || notification.title;
+    if (language === "bilingual" && arabic) return notification.title + " · " + arabic;
+    return notification.title;
+  };
+
+  const notificationBody = (notification: NotificationRow) => {
+    const arabic = String(notification.metadata?.body_ar ?? "");
+    if (language === "ar") return arabic || notification.body;
+    if (language === "bilingual" && arabic) return notification.body + " · " + arabic;
+    return notification.body;
+  };
+
   if (loading) return <div className="operations-dashboard"><div className="empty"><strong>{t("session.checking")}</strong></div></div>;
 
   return (
@@ -180,10 +194,10 @@ export default function Dashboard() {
               const destination = notification.case_id ? `/app/cases/${notification.case_id}` : notification.analysis_id ? "/app/workspace" : "/app/resources";
               return <article key={notification.notification_id}>
                 <div className="operations-notification-head">
-                  <strong>{notification.title}</strong>
+                  <strong>{notificationTitle(notification)}</strong>
                   <span className={`badge ${statusTone(notification.status)}`}>{pretty(notification.status)}</span>
                 </div>
-                <p>{notification.body}</p>
+                <p>{notificationBody(notification)}</p>
                 <small>{pretty(notification.notification_type)} · {formatDate(notification.created_at)}</small>
                 <div className="operations-notification-actions">
                   <Link className="operations-open-link" href={destination} onClick={() => openNotification(notification)}>{t("dashboard.openNotification")}</Link>
