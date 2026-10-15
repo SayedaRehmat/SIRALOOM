@@ -1,26 +1,41 @@
-from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
-from pathlib import Path
 import tempfile
+from pathlib import Path
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
-from backend.app.auth.authorization import CASE_WRITE_ROLES, REPORT_FINALIZE_ROLES, get_accessible_analysis, get_accessible_report, require_role
-from backend.app.domain.schemas import ReportCreate, ExportCreate, ReportabilityDecisionRequest
-from backend.app.domain.review import ClassificationReviewRequest
-from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.db.models import Analysis, Report, CaseExport, Case
-from backend.app.domain.enums import AnalysisStatus
-from backend.app.reporting.service import build_report_content, render_pdf, render_html, final_report_eligibility
-from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
-from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, latest_decision
-from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
-from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
-from backend.app.infrastructure.audit.service import AuditService
+
 from backend.app.application.analysis import resume_analysis
 from backend.app.application.case_export import enqueue_case_export
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    REPORT_FINALIZE_ROLES,
+    get_accessible_analysis,
+    get_accessible_report,
+    require_role,
+)
+from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.domain.enums import AnalysisStatus
+from backend.app.domain.review import ClassificationReviewRequest
+from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
+from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
+from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.models import Analysis, Case, CaseExport, Report
+from backend.app.infrastructure.db.session import get_db
+from backend.app.reporting.finalization import ReportFinalizationError, finalize_report
+from backend.app.reporting.reportability import (
+    evaluate_analysis,
+    finalize_reportability,
+)
+from backend.app.reporting.service import (
+    build_report_content,
+    final_report_eligibility,
+    render_pdf,
+)
 
 router = APIRouter(tags=["reports"])
 
@@ -239,7 +254,7 @@ def get_export(export_id: UUID, db: Session = Depends(get_db), principal: Princi
     exp=db.get(CaseExport, export_id)
     if not exp: raise HTTPException(status_code=404, detail="Export not found")
     case = db.get(Case, exp.case_id); require_case_tenant(case, principal)
-    return {"export_id":str(exp.id),"case_id":str(exp.case_id),"status":exp.status,"artifact_id":str(exp.artifact_id) if exp.artifact_id else None,"error_code":exp.error_code,"error_message":exp.error_message,"created_at":exp.created_at.isoformat() if exp.created_at else None,"completed_at":exp.completed_at.isoformat() if exp.completed_at else None}
+    return {"export_id":str(exp.id),"case_id":str(exp.case_id),"status":exp.status,"artifact_id":str(exp.artifact_id) if exp.artifact_id else None,"error_code":exp.error_code,"error_message":("Case export failed. Contact a laboratory administrator." if exp.status == "FAILED" else None),"created_at":exp.created_at.isoformat() if exp.created_at else None,"completed_at":exp.completed_at.isoformat() if exp.completed_at else None}
 
 
 @router.get("/exports/{export_id}/download")

@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 from datetime import datetime, timezone
 from uuid import UUID
-from backend.app.config import settings
-from backend.app.infrastructure.db.session import SessionLocal
-from backend.app.infrastructure.db.models import CaseExport, Case
-from backend.app.infrastructure.artifacts.store import ArtifactStore
-from backend.app.domain.storage_profiles import artifact_store_for_organization, StorageProfileError
+
+from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.models import Case, CaseExport
+from backend.app.infrastructure.db.session import SessionLocal
 from backend.app.reporting.export_service import build_case_export
+
 
 def run_case_export(export_id: UUID) -> None:
     db = SessionLocal()
@@ -38,7 +39,26 @@ def run_case_export(export_id: UUID) -> None:
         db.rollback()
         export = db.get(CaseExport, export_id)
         if export:
-            export.status = "FAILED"; export.error_code = "CASE_EXPORT_FAILED"; export.error_message = str(exc)[:4000]; export.completed_at = datetime.now(timezone.utc); db.commit()
-            AuditService(db).record(event_type="CASE_EXPORT_FAILED", case_id=export.case_id, analysis_id=None, actor_type="SYSTEM", actor_id="siraloom-export", subject_type="CASE_EXPORT", subject_id=str(export.id), operation="CREATE", reason=str(exc)[:4000]); db.commit()
+            # Exception messages can contain storage paths, credentials, or
+            # dependency endpoints. Keep user-visible state stable and record
+            # only the exception type in the tenant audit trail.
+            export.status = "FAILED"
+            export.error_code = "CASE_EXPORT_FAILED"
+            export.error_message = "Case export failed. Contact a laboratory administrator."
+            export.completed_at = datetime.now(timezone.utc)
+            db.commit()
+            AuditService(db).record(
+                event_type="CASE_EXPORT_FAILED",
+                case_id=export.case_id,
+                analysis_id=None,
+                actor_type="SYSTEM",
+                actor_id="siraloom-export",
+                subject_type="CASE_EXPORT",
+                subject_id=str(export.id),
+                operation="CREATE",
+                reason="Case export failed.",
+                payload={"error_type": type(exc).__name__},
+            )
+            db.commit()
     finally:
         db.close()

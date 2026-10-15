@@ -261,3 +261,9 @@
 - Follow-up audit found the finalization guard alone did not protect report reads: `get_accessible_report` and the report GET/finalize routes could still return a `FINAL` record whose signed artifact was missing or mismatched.
 - Implemented shared `backend/app/domain/report_integrity.py:has_valid_signed_artifact`, used by both finalization idempotency and the tenant-scoped report accessor. Final report access now returns not-found unless its validated signed PDF row has matching case, analysis, report/version metadata, and hash.
 - Added regression coverage for final report access when signed output is missing. Tenant object authorization and report integrity/finalization checks => **17 passed, 3 deselected** (the deselected finalization tests require WeasyPrint native libraries). The full-suite run after this shared helper has not yet been performed. No commit or merge has occurred; Phase A remains open.
+
+### A7 case-export failure diagnostic redaction — 2026-10-15
+
+- Confirmed defect: failed export workers persisted raw exception strings to `CaseExport.error_message` and the tenant-facing export status endpoint returned that text. Storage errors can reveal private filesystem paths and dependency/object-store details; already persisted failures would remain exposed even if only the worker changed.
+- Implemented: worker failure state now stores a stable user message; the audit record stores a generic reason plus exception class, not the raw message. The status endpoint redacts every failed row, including legacy rows with previously persisted raw text.
+- Verification: new injected storage-error tests prove a secret token, private path, and internal endpoint do not appear in persisted state, audit event, or API response. Export redaction and dispatch/recovery tests => **7 passed**. Phase A remains open; full tenant audit and deployment log-access review remain outstanding.
