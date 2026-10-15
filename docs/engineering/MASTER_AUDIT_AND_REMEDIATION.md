@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Current branch / commit:** `main` at `324283be87d28d209d7319e1e599ab898266853d` (`Correct authentication session routing and record Phase 1 audit`).
+**Audited application-code baseline:** `main` commit `324283be87d28d209d7319e1e599ab898266853d` (`Correct authentication session routing and record Phase 1 audit`). The audit-record-only follow-up is `dd4c1e6`.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
