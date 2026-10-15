@@ -605,6 +605,17 @@ if Celery is not None:
         finally:
             db.close()
 
+    @celery_app.task(name="siraloom.discover_scientific_resources", autoretry_for=(), acks_late=True)
+    def discover_scientific_resources():
+        from backend.app.domain.resource_discovery import discover_resource_candidates
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            return discover_resource_candidates(db)
+        finally:
+            db.close()
+
     @celery_app.task(name="siraloom.dispatch_pending_analysis_outbox", autoretry_for=(), acks_late=True)
     def dispatch_pending_analysis_outbox():
         """Relay durable analysis dispatch intents to Celery."""
@@ -1052,15 +1063,4 @@ else:
     run_analysis_task = _UnavailableTask()
     run_case_export_task = _UnavailableTask()
     run_resource_staging_task = _UnavailableTask()
-
-
-    @celery_app.task(name="siraloom.discover_scientific_resources", autoretry_for=(), acks_late=True)
-    def discover_scientific_resources():
-        from backend.app.domain.resource_discovery import discover_resource_candidates
-        from backend.app.infrastructure.db.session import SessionLocal
-
-        db = SessionLocal()
-        try:
-            return discover_resource_candidates(db)
-        finally:
-            db.close()
+    discover_scientific_resources = _UnavailableTask()
