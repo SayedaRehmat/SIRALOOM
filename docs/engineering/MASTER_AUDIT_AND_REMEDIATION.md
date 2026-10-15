@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-15
-**Branch / baseline:** `main` at `6b11afd90de23565d6eca633bdef3e2fc95cfca8` (`Register scientific resource discovery Celery task`).
+**Current branch / commit:** `main` at `324283be87d28d209d7319e1e599ab898266853d` (`Correct authentication session routing and record Phase 1 audit`).
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -40,5 +40,5 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 ## 2026-10-15 additional verified correction
 
 - **A1 sign-in state misrouting (High):** an inactive or otherwise unauthorized provisioned Firebase identity received the same 403 as a new identity, and frontend redirect handling could send failed session checks to a requested internal route. Fixed with a stable unprovisioned-state response header, explicit CORS exposure, fail-closed frontend routing, and localized access/service messages. Unprovisioned accounts can continue to onboarding or invitation acceptance only; protected routes require a valid session.
-- **Tests:** auth/principal/route/tenant focused suite 68 passed; frontend redirect/session-state Node tests 7 passed; i18n guard and JavaScript syntax checks passed. Local Next build unavailable because `next` is not installed. CI validation on the pushed commit is pending.
-- **Current branch state:** code is being committed directly to `main` as previously authorized. Do not mark Phase 1 complete based on these checks.
+- **Tests:** auth/principal/route/tenant focused suite 68 passed; frontend redirect/session-state Node tests 7 passed; i18n guard and JavaScript syntax checks passed. Local Next build unavailable because `next` is not installed. GitHub Actions run #1534 passed the backend, PostgreSQL/Celery integration, and frontend jobs, including the production frontend build/container and Compose validation.
+- **Current branch state:** commit `324283b` is pushed to `main`. GitHub Actions run #1534 completed successfully across all three jobs; see [run details](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38724143912). Do not mark Phase 1 complete based on focused checks.

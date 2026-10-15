@@ -1,7 +1,7 @@
 # SIRALOOM Phase 1 Results
 
 **As of:** 2026-10-15
-**Main commit:** `6b11afd90de23565d6eca633bdef3e2fc95cfca8`
+**Main commit:** `324283be87d28d209d7319e1e599ab898266853d`
 **Phase status:** IN PROGRESS / PARTIAL. The acceptance criteria are not all met; this report makes no clinical validation or production-readiness claim.
 
 ## Implemented in the current work session
