@@ -54,6 +54,13 @@ Source inspection has confirmed the Next.js/Firebase browser identity flow, Fast
 
 The inventory continues. Nested resource/assay/specimen linkage and worker-owned tenant scope still need separate validation. The latest committed and pushed main correction is `dc3be3e`.
 
+## 2026-10-15 browser account-context checkpoint (local, pending push)
+
+- **Finding:** the app stored `siraloom.case_id`, `siraloom.case_identifier`, and `siraloom.analysis_id` globally in browser localStorage. `AppShell` did not clear them when Firebase identity changed or signed out. Server-side tenant checks prevented these IDs alone from granting access, but a different account inherited stale context and UI requests.
+- **Change:** introduced `syncWorkspaceContext`, called from Firebase auth-state changes. It clears case/analysis context on signout or UID change, preserves it for the same UID, and tolerates restricted browser storage. Signout failures now display an English/Arabic alert. The `test:session` command now includes case artifact and account-context tests.
+- **Verification:** `npm run test:session` passed 13 tests; `npm run validate:i18n` passed; `git diff --check` passed. `frontend/node_modules` is absent, so the TypeScript/Next build cannot run in this checkout.
+- **Checkpoint:** implementation and tests are in the working tree and not yet pushed. After committing, continue frontend stale-data/error-state review and then worker tenant scope/recovery. Overall Phase A remains PARTIAL.
+
 ## 2026-10-15 additional verified correction
 
 - **A1 sign-in state misrouting (High):** an inactive or otherwise unauthorized provisioned Firebase identity received the same 403 as a new identity, and frontend redirect handling could send failed session checks to a requested internal route. Fixed with a stable unprovisioned-state response header, explicit CORS exposure, fail-closed frontend routing, and localized access/service messages. Unprovisioned accounts can continue to onboarding or invitation acceptance only; protected routes require a valid session.

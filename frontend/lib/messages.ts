@@ -21,6 +21,7 @@ export type TranslationKey =
   | "nav.settings"
   | "nav.resources"
   | "nav.signOut"
+  | "nav.signOutFailed"
   | "language.label"
   | "language.english"
   | "language.arabic"
@@ -1135,6 +1136,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "nav.audit": "Audit & Provenance",
     "nav.settings": "Workspace Settings",
     "nav.signOut": "Sign out",
+    "nav.signOutFailed": "Sign out failed. Please retry.",
     "language.label": "Language",
     "language.english": "English",
     "language.arabic": "Arabic",
@@ -1952,6 +1954,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "nav.audit": "التدقيق وسلسلة المصدر",
     "nav.settings": "إعدادات مساحة العمل",
     "nav.signOut": "تسجيل الخروج",
+    "nav.signOutFailed": "تعذر تسجيل الخروج. يرجى المحاولة مرة أخرى.",
     "language.label": "اللغة",
     "language.english": "الإنجليزية",
     "language.arabic": "العربية",

@@ -6,12 +6,14 @@ import { ReactNode, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
 import { useLanguage } from "../lib/i18n";
+import { syncWorkspaceContext } from "../lib/workspace-context.mjs";
 import { Brand } from "./brand";
 import { LanguageSwitcher } from "./language-switcher";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
   const pathname = usePathname();
   const { t } = useLanguage();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -23,12 +25,27 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
 
     return onAuthStateChanged(firebaseAuth, (user) => {
+      try {
+        syncWorkspaceContext(window.localStorage, user?.uid ?? null);
+      } catch {
+        // Authentication and protected routing must work if browser storage is disabled.
+      }
       setSignedIn(Boolean(user));
       setReady(true);
       if (!user) window.location.assign("/login");
       else if (!user.emailVerified) window.location.assign("/onboarding");
     });
   }, []);
+
+  async function handleSignOut() {
+    if (!firebaseAuth) return;
+    setSignOutError(false);
+    try {
+      await signOut(firebaseAuth);
+    } catch {
+      setSignOutError(true);
+    }
+  }
 
   if (!ready) return <main className="loading">{t("session.checking")}</main>;
   if (firebaseConfigured && !signedIn) return null;
@@ -55,7 +72,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
         <div className="app-nav-footer">
           <LanguageSwitcher className="workspace-language-switcher" />
-          <button className="text-button" onClick={() => firebaseAuth && signOut(firebaseAuth)}>{t("nav.signOut")}</button>
+          {signOutError && <p role="alert">{t("nav.signOutFailed")}</p>}
+          <button className="text-button" onClick={handleSignOut}>{t("nav.signOut")}</button>
         </div>
       </aside>
       <main className="app-content">
