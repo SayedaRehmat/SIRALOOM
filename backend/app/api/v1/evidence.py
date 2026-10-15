@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.db.models import Evidence
-from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.auth.authorization import get_accessible_analysis
+from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.infrastructure.db.models import Evidence
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["evidence"])
@@ -51,7 +51,12 @@ def get_evidence(evidence_id: UUID, db: Session = Depends(get_db), principal: Pr
     row = db.get(Evidence, evidence_id)
     if not row:
         raise HTTPException(status_code=404, detail="Evidence not found")
-    get_accessible_analysis(row.analysis_id, db, principal)
+    try:
+        get_accessible_analysis(row.analysis_id, db, principal)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise HTTPException(status_code=404, detail="Evidence not found") from exc
+        raise
     return {
         "evidence_id": str(row.id),
         "analysis_id": str(row.analysis_id),

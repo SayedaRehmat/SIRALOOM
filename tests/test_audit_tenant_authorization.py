@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from backend.app.api.v1 import acmg, pedigree, reports
+from backend.app.api.v1 import acmg, clinical_followup, evidence, pedigree, reports
 from backend.app.api.v1.audit import audit
 from backend.app.auth.principal import Principal
 
@@ -126,3 +126,99 @@ def test_case_export_hides_foreign_exports_like_missing_exports(route):
         responses.append((exc.value.status_code, exc.value.detail))
 
     assert responses == [(404, "Export not found"), (404, "Export not found")]
+
+
+def test_evidence_endpoint_hides_foreign_evidence_like_missing_evidence(monkeypatch):
+    from backend.app.infrastructure.db.models import Evidence
+
+    evidence_id = uuid4()
+    row = SimpleNamespace(id=evidence_id, analysis_id=uuid4())
+    monkeypatch.setattr(
+        evidence,
+        "get_accessible_analysis",
+        lambda *_args: (_ for _ in ()).throw(HTTPException(404, "Analysis not found")),
+    )
+
+    class _EvidenceDb:
+        def __init__(self, stored):
+            self.stored = stored
+
+        def get(self, model, _object_id):
+            assert model is Evidence
+            return self.stored
+
+    responses = []
+    for stored in (None, row):
+        with pytest.raises(HTTPException) as exc:
+            evidence.get_evidence(evidence_id, _EvidenceDb(stored), _principal(uuid4()))
+        responses.append((exc.value.status_code, exc.value.detail))
+
+    assert responses == [(404, "Evidence not found"), (404, "Evidence not found")]
+
+
+def test_followup_endpoint_hides_foreign_plan_like_missing_plan(monkeypatch):
+    from backend.app.infrastructure.db.models import FollowUpPlan
+
+    followup_id = uuid4()
+    row = SimpleNamespace(id=followup_id, analysis_id=uuid4())
+    monkeypatch.setattr(
+        clinical_followup,
+        "get_accessible_analysis",
+        lambda *_args: (_ for _ in ()).throw(HTTPException(404, "Analysis not found")),
+    )
+    payload = clinical_followup.FollowUpInput(action_type="contact")
+
+    class _FollowUpDb:
+        def __init__(self, stored):
+            self.stored = stored
+
+        def get(self, model, _object_id):
+            assert model is FollowUpPlan
+            return self.stored
+
+    responses = []
+    for stored in (None, row):
+        with pytest.raises(HTTPException) as exc:
+            clinical_followup.update_followup(
+                followup_id, payload, _FollowUpDb(stored), _principal(uuid4())
+            )
+        responses.append((exc.value.status_code, exc.value.detail))
+
+    assert responses == [
+        (404, "Follow-up plan not found"),
+        (404, "Follow-up plan not found"),
+    ]
+
+
+def test_reportability_signoff_hides_foreign_decision_like_missing_decision(monkeypatch):
+    from backend.app.infrastructure.db.models import ReportabilityDecision
+
+    decision_id = uuid4()
+    row = SimpleNamespace(id=decision_id, analysis_id=uuid4())
+    monkeypatch.setattr(
+        reports,
+        "get_accessible_analysis",
+        lambda *_args: (_ for _ in ()).throw(HTTPException(404, "Analysis not found")),
+    )
+
+    class _DecisionDb:
+        def __init__(self, stored):
+            self.stored = stored
+
+        def get(self, model, _object_id):
+            assert model is ReportabilityDecision
+            return self.stored
+
+    payload = SimpleNamespace()
+    responses = []
+    for stored in (None, row):
+        with pytest.raises(HTTPException) as exc:
+            reports.finalize_reportability_decision(
+                decision_id, payload, _DecisionDb(stored), _principal(uuid4())
+            )
+        responses.append((exc.value.status_code, exc.value.detail))
+
+    assert responses == [
+        (404, "Reportability decision not found"),
+        (404, "Reportability decision not found"),
+    ]

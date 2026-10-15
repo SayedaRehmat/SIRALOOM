@@ -1,13 +1,26 @@
 from __future__ import annotations
+
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from backend.app.auth.authorization import get_accessible_analysis, get_analysis_variant, get_accessible_case, require_role, CASE_WRITE_ROLES, REPORT_FINALIZE_ROLES
+
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    REPORT_FINALIZE_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Case, ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision
+from backend.app.infrastructure.db.models import (
+    ConfirmationRecord,
+    FollowUpPlan,
+    SecondaryFindingDecision,
+)
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["clinical-governance"])
@@ -79,7 +92,13 @@ def create_followup(analysis_id: UUID, variant_id: UUID, body: FollowUpInput, db
 def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     row=db.get(FollowUpPlan,follow_up_id)
     if not row: raise HTTPException(404,"Follow-up plan not found")
-    analysis=get_accessible_analysis(row.analysis_id,db,principal); require_role(principal,CASE_WRITE_ROLES)
+    try:
+        analysis=get_accessible_analysis(row.analysis_id,db,principal)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise HTTPException(404,"Follow-up plan not found") from exc
+        raise
+    require_role(principal,CASE_WRITE_ROLES)
     row.action_type=body.action_type.strip(); row.status=body.status; row.due_date=body.due_date; row.responsible_role=body.responsible_role; row.outcome=body.outcome; row.notes=body.notes; row.metadata_json=body.metadata
     if body.status in {"COMPLETED","CANCELLED"}: row.completed_by=principal.user_id; row.completed_at=datetime.now(timezone.utc)
     AuditService(db).record(event_type="FOLLOW_UP_PLAN_UPDATED",case_id=analysis.case_id,analysis_id=row.analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="FOLLOW_UP_PLAN",subject_id=str(row.id),operation="UPDATE",after_state=_followup(row)); db.commit(); return _followup(row)
