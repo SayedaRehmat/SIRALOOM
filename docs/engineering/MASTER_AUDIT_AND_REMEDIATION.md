@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `e8b7bc9` (`Compensate draft PDF after audit flush failure`); CI #1606/#1607 exposed one stale signout compensation test stub missing the report's required DRAFT status, while the backend runs otherwise reported 895/896 passed, 24 skipped and PostgreSQL/Celery passed. The report-access fixture corrections are in `b4f9956`; current local change supplies the required report status in that stale stub. Local Python verification is unavailable in this Windows runtime. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `b0994d6` (`Model draft report in signout recovery test`); GitHub Actions run [#1608](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024112606) passed all jobs: backend **897 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. The latest report draft/signed artifact checks, storage-independent finalized-report retry, review assay organization guard, and audit-flush artifact compensation are verified by that run. Local Python verification remains unavailable in this Windows runtime. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
