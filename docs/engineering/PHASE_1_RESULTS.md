@@ -127,6 +127,12 @@ Earlier Phase A changes and their evidence remain in [`PHASE_A_AUDIT_LEDGER.md`]
 - **Correction:** review-bundle construction now rejects a linked assay whose organization differs from the case. Added a SQLite service regression with a foreign-organization assay.
 - **Verification:** awaiting CI; local Python interpreter is unavailable. Phase A remains PARTIAL.
 
+### CI #1603 report-lineage fixture correction
+
+- **Result:** run #1603 failed in two pre-existing authorization fixtures because they represented accessible reports without draft artifact links. This confirmed the new guard is enforced; those fixtures had to be updated to represent valid report records.
+- **Correction:** shared-accessor and valid-final-report fixtures now include explicit valid draft artifact metadata. The FINAL fixture separately models both draft and signed artifacts. The negative missing-artifact regression remains unchanged.
+- **Next verification:** commits `e424d3b` and `c7fa1ea` are in CI runs #1604 and #1605 respectively. This fixture correction will be pushed as a new main commit for fresh full CI. Do not treat the failed #1603 run as a passing implementation verification.
+
 ### Additional sign-in state routing fix
 
 - Changed `backend/app/auth/principal.py`, `backend/app/main.py`, `frontend/lib/session.ts`, `frontend/lib/session-destination.mjs`, `frontend/components/auth-form.tsx`, and English/Arabic auth messages. Added a backend regression for the unprovisioned marker and frontend behavior tests.

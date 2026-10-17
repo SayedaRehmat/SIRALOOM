@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `e424d3b` (`Make signed report retries storage independent`); CI #1602 passed, #1603 is running, and #1604 is queued. Current uncommitted checkpoint rejects review bundles linked to another organization's assay and adds a SQLite regression. Local Python verification is unavailable in this Windows runtime; CI must execute focused and full suites after push. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `c7fa1ea` (`Enforce assay tenant lineage in review context`); CI #1603 failed because two existing report-access tests lacked the now-required draft-artifact fixture, while the other 893 backend tests passed and PostgreSQL/Celery plus frontend jobs succeeded. CI #1604/#1605 are in progress/queued. Local Python verification is unavailable in this Windows runtime. The local correction updates those fixtures to model valid report artifact lineage; it will be pushed for a fresh full CI. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.

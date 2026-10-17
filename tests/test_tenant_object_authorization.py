@@ -18,8 +18,11 @@ class TenantObjectSession:
     def __init__(self, rows):
         self.rows = rows
 
-    def get(self, model, _object_id):
-        return self.rows.get(model)
+    def get(self, model, object_id):
+        value = self.rows.get(model)
+        if model is Artifact and isinstance(value, dict):
+            return value.get(object_id)
+        return value
 
 
 @pytest.mark.parametrize("object_kind", ["case", "analysis", "artifact", "report"])
@@ -31,8 +34,15 @@ def test_shared_object_accessors_enforce_case_tenant_boundary(object_kind, same_
     object_id = uuid4()
     case = SimpleNamespace(id=case_id, organization_id=tenant_id if same_tenant else other_tenant_id)
     analysis = SimpleNamespace(id=object_id, case_id=case_id)
-    artifact = SimpleNamespace(id=object_id, case_id=case_id, analysis_id=None)
-    report = SimpleNamespace(id=object_id, case_id=case_id, analysis_id=object_id)
+    artifact = SimpleNamespace(
+        id=object_id, case_id=case_id, analysis_id=object_id,
+        artifact_type="REPORT_PDF", validation_status="VALID",
+        metadata_json={"report_id": str(object_id), "report_version": 1, "report_state": "DRAFT"},
+    )
+    report = SimpleNamespace(
+        id=object_id, case_id=case_id, analysis_id=object_id,
+        artifact_id=object_id, report_version=1, status="DRAFT",
+    )
     db = TenantObjectSession({
         Case: case,
         Analysis: analysis,
@@ -181,21 +191,27 @@ def test_report_access_rejects_released_report_without_valid_signed_artifact(sta
 
 
 def test_report_access_accepts_final_report_with_matching_signed_artifact():
-    tenant_id, case_id, analysis_id, report_id, artifact_id = (
-        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(),
+    tenant_id, case_id, analysis_id, report_id, artifact_id, draft_artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(), uuid4(),
     )
     report = SimpleNamespace(
         id=report_id, case_id=case_id, analysis_id=analysis_id, status="FINAL",
-        signed_artifact_id=artifact_id, signed_sha256="d" * 64, report_version=3,
+        artifact_id=draft_artifact_id, signed_artifact_id=artifact_id,
+        signed_sha256="d" * 64, report_version=3,
     )
     artifact = SimpleNamespace(
         id=artifact_id, case_id=case_id, analysis_id=analysis_id,
         artifact_type="REPORT_PDF", validation_status="VALID", sha256="d" * 64,
         metadata_json={"report_id": str(report_id), "report_version": 3, "signed": True},
     )
+    draft_artifact = SimpleNamespace(
+        id=draft_artifact_id, case_id=case_id, analysis_id=analysis_id,
+        artifact_type="REPORT_PDF", validation_status="VALID",
+        metadata_json={"report_id": str(report_id), "report_version": 3, "report_state": "DRAFT"},
+    )
     db = TenantObjectSession({
         Report: report,
-        Artifact: artifact,
+        Artifact: {artifact_id: artifact, draft_artifact_id: draft_artifact},
         Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
         Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
     })
