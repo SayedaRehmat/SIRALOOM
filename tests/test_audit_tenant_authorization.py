@@ -4,7 +4,15 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from backend.app.api.v1 import acmg, clinical_followup, evidence, pedigree, reports, variants
+from backend.app.api.v1 import (
+    acmg,
+    clinical_followup,
+    evidence,
+    pedigree,
+    reports,
+    reanalysis as reanalysis_api,
+    variants,
+)
 from backend.app.api.v1.audit import audit
 from backend.app.auth.principal import Principal
 
@@ -468,3 +476,124 @@ def test_report_list_rejects_case_link_different_from_analysis(monkeypatch):
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Report case does not match its analysis"
+
+
+@pytest.mark.parametrize(
+    "broken_link",
+    [
+        "case_tenant",
+        "analysis_case",
+        "candidate_case",
+        "resource_tenant",
+        "resource_discovery",
+    ],
+)
+def test_notification_list_rejects_cross_tenant_or_inconsistent_links(broken_link):
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        Case,
+        ReanalysisCandidate,
+        Resource,
+        ResourceDiscovery,
+    )
+
+    organization_id, foreign_organization_id = uuid4(), uuid4()
+    user_id = uuid4()
+    case_id, foreign_case_id = uuid4(), uuid4()
+    analysis_id, candidate_id, resource_id, discovery_id = uuid4(), uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(
+        id=case_id if broken_link != "case_tenant" else foreign_case_id,
+        organization_id=(
+            foreign_organization_id if broken_link == "case_tenant" else organization_id
+        ),
+    )
+    analysis = SimpleNamespace(
+        id=analysis_id,
+        case_id=foreign_case_id if broken_link == "analysis_case" else case_id,
+    )
+    candidate = SimpleNamespace(
+        organization_id=organization_id,
+        case_id=foreign_case_id if broken_link == "candidate_case" else case_id,
+        parent_analysis_id=analysis_id,
+    )
+    resource = SimpleNamespace(
+        id=resource_id,
+        organization_id=foreign_organization_id if broken_link == "resource_tenant" else None,
+    )
+    discovery = SimpleNamespace(
+        resource_id=uuid4() if broken_link == "resource_discovery" else resource_id
+    )
+    row = SimpleNamespace(
+        id=uuid4(),
+        organization_id=organization_id,
+        user_id=user_id,
+        notification_type=(
+            "RESOURCE_RELEASE_DISCOVERED"
+            if broken_link in {"resource_tenant", "resource_discovery"}
+            else "REANALYSIS_CANDIDATE"
+        ),
+        case_id=None if broken_link in {"resource_tenant", "resource_discovery"} else case.id,
+        analysis_id=(
+            analysis_id if broken_link in {"analysis_case", "candidate_case"} else None
+        ),
+        candidate_id=candidate_id if broken_link == "candidate_case" else None,
+        metadata_json=(
+            {"resource_id": str(resource_id), "discovery_id": str(discovery_id)}
+            if broken_link in {"resource_tenant", "resource_discovery"}
+            else {}
+        ),
+    )
+
+    class _Db:
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [row])
+
+        def get(self, model, object_id):
+            if model is Case and object_id == row.case_id:
+                return case
+            if model is Analysis and object_id == analysis_id:
+                return analysis
+            if model is ReanalysisCandidate and object_id == candidate_id:
+                return candidate
+            if model is Resource and object_id == resource_id:
+                return resource
+            if model is ResourceDiscovery and object_id == discovery_id:
+                return discovery
+            return None
+
+    with pytest.raises(HTTPException) as exc:
+        reanalysis_api.notifications(
+            _Db(),
+            SimpleNamespace(organization_id=organization_id, user_id=user_id),
+        )
+
+    assert exc.value.status_code == 409
+
+
+def test_secondary_finding_list_rejects_variant_outside_analysis(monkeypatch):
+    analysis_id, variant_id = uuid4(), uuid4()
+    principal = _principal(uuid4())
+    analysis = SimpleNamespace(id=analysis_id)
+    row = SimpleNamespace(analysis_id=analysis_id, variant_id=variant_id)
+    monkeypatch.setattr(clinical_followup, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        clinical_followup,
+        "_variant_access",
+        lambda *_args: (_ for _ in ()).throw(
+            HTTPException(404, "Variant is not part of this analysis")
+        ),
+    )
+
+    class _Db:
+        def scalars(self, _query):
+            return [row]
+
+    with pytest.raises(HTTPException) as exc:
+        clinical_followup.list_secondary_findings(
+            analysis_id=analysis_id,
+            db=_Db(),
+            principal=principal,
+        )
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Variant is not part of this analysis"

@@ -1,12 +1,22 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `a5c61c6` (`Reject cross-case pedigree observations`); GitHub Actions run [#1574](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018883781) is in progress. Runs #1570–#1573 succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `fcd0efe` (`Validate report list case lineage`); GitHub Actions run [#1576](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39019099271) completed successfully. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. Current bundled Python has no pytest/ruff modules. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
+
+## 2026-10-17 notification and direct-object lineage checkpoint
+
+- **Confirmed CI:** run #1576 completed successfully for `fcd0efe` on `main`.
+- **Findings:** the notifications endpoint scopes rows to the current organization and user but previously serialized case, analysis, candidate, and discovered-resource references without checking their ownership/lineage. The secondary-finding list authorized its analysis but trusted each stored variant link when serializing decisions.
+- **Corrections:** `backend/app/api/v1/reanalysis.py` now validates notification case/analysis/candidate ownership and consistency and permits a discovered resource only when it is shared or owned by the notification tenant; inconsistent rows return 409 without exposing the referenced objects. `backend/app/api/v1/clinical_followup.py` now validates every secondary-finding variant against the authorized analysis before serialization.
+- **Regression coverage:** parametrized notification tests cover foreign case, mismatched case/analysis, cross-case candidate, foreign resource tenant, and a discovery linked to another resource. A secondary-finding list test verifies out-of-analysis variants are rejected.
+- **Verification:** Python `compileall` passed for changed Python files. Local focused pytest could not start because the bundled interpreter reports `No module named pytest`; `git diff --check` is recorded after the patch. Push-triggered CI is required to execute the regression tests.
+- **Status:** implementation is in progress and Phase A remains PARTIAL. CI #1576 confirms only the prior commit; it does not verify this change.
+- **Next action:** inspect remaining direct-ID APIs and worker entrypoints; then continue integrated reviewer-to-signout, notification delivery, and failure recovery. Live Firebase/browser and deployed two-tenant verification still require configured infrastructure and test identities.
 
 ## 2026-10-17 continuation checkpoint — global variant detail lineage
 

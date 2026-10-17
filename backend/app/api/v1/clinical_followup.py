@@ -141,6 +141,8 @@ def record_secondary_finding(analysis_id: UUID, variant_id: UUID, body: Secondar
 def list_secondary_findings(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
     rows=list(db.scalars(select(SecondaryFindingDecision).where(SecondaryFindingDecision.analysis_id==analysis_id).order_by(SecondaryFindingDecision.variant_id,SecondaryFindingDecision.version)))
+    for row in rows:
+        _variant_access(analysis, row.variant_id, db)
     latest={}
     for r in rows: latest[r.variant_id]=r
     return {"analysis_id":str(analysis_id),"items":[_secondary(r) for r in latest.values()]}

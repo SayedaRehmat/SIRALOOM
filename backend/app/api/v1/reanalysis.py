@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     ReanalysisCandidate,
     ReanalysisChangeEvent,
     Resource,
+    ResourceDiscovery,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.application.analysis import enqueue_analysis, preflight_analysis_resources
@@ -35,6 +36,94 @@ class ManualReanalysisRequest(BaseModel):
     reason: str = Field(default="Laboratory-requested case reanalysis.", min_length=1, max_length=2000)
 
 
+def _validate_notification_lineage(row: Notification, db: Session) -> None:
+    case = None
+    if row.case_id is not None:
+        case = db.get(Case, row.case_id)
+        if case is None or case.organization_id != row.organization_id:
+            raise HTTPException(
+                status_code=409,
+                detail="Notification case does not belong to its organization",
+            )
+
+    analysis = None
+    if row.analysis_id is not None:
+        analysis = db.get(Analysis, row.analysis_id)
+        if analysis is None or (case is not None and analysis.case_id != case.id):
+            raise HTTPException(
+                status_code=409,
+                detail="Notification analysis does not match its case",
+            )
+        if case is None:
+            case = db.get(Case, analysis.case_id)
+            if case is None or case.organization_id != row.organization_id:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Notification analysis does not belong to its organization",
+                )
+
+    if row.candidate_id is not None:
+        candidate = db.get(ReanalysisCandidate, row.candidate_id)
+        if candidate is not None:
+            candidate_case = db.get(Case, candidate.case_id)
+            candidate_parent = (
+                analysis
+                if analysis is not None and analysis.id == candidate.parent_analysis_id
+                else db.get(Analysis, candidate.parent_analysis_id)
+            )
+        else:
+            candidate_case = candidate_parent = None
+        if (
+            candidate is None
+            or candidate.organization_id != row.organization_id
+            or candidate_case is None
+            or candidate_case.organization_id != row.organization_id
+            or candidate_parent is None
+            or candidate_parent.case_id != candidate.case_id
+            or (case is not None and candidate.case_id != case.id)
+            or (
+                analysis is not None
+                and candidate.parent_analysis_id != analysis.id
+            )
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Notification candidate does not match its organization and case context",
+            )
+
+    if row.notification_type == "RESOURCE_RELEASE_DISCOVERED":
+        metadata = row.metadata_json if isinstance(row.metadata_json, dict) else {}
+        try:
+            resource_id = UUID(str(metadata.get("resource_id")))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="Resource notification is missing a valid resource reference",
+            ) from exc
+        resource = db.get(Resource, resource_id)
+        if resource is None or resource.organization_id not in {
+            None,
+            row.organization_id,
+        }:
+            raise HTTPException(
+                status_code=409,
+                detail="Resource notification does not belong to its organization",
+            )
+        try:
+            discovery_id = UUID(str(metadata.get("discovery_id")))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=409,
+                detail="Resource notification is missing a valid discovery reference",
+            ) from exc
+        discovery = db.get(ResourceDiscovery, discovery_id)
+        if discovery is None or discovery.resource_id != resource.id:
+            raise HTTPException(
+                status_code=409,
+                detail="Resource notification does not match its discovered release",
+            )
+
+
 @router.get("/notifications")
 def notifications(
     db: Session = Depends(get_db),
@@ -49,6 +138,8 @@ def notifications(
         .order_by(Notification.created_at.desc())
         .limit(100)
     ).all()
+    for row in rows:
+        _validate_notification_lineage(row, db)
     return [{
         "notification_id": str(row.id),
         "notification_type": row.notification_type,
