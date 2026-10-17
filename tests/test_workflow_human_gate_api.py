@@ -18,6 +18,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Classification,
     Organization,
+    ReportabilityDecision,
     User,
     Variant,
     WorkflowStep,
@@ -171,6 +172,47 @@ def test_review_gate_cannot_be_accepted_without_final_approved_classification(mo
         assert db.scalar(select(AnalysisDispatch.id)) is None
         assert db.scalar(select(AuditEvent.id)) is None
         assert published == []
+
+    engine.dispose()
+
+
+def test_reportability_gate_rejects_final_decision_for_superseded_classification():
+    from backend.app.api.v1 import workflow as workflow_api
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as db:
+        seeded = _seed_gate(db, step_id="reportability", with_classification=True)
+        prior = db.scalar(select(Classification).where(
+            Classification.analysis_id == seeded.analysis_id,
+        ))
+        prior.state = "FINAL"
+        prior.review_status = "APPROVED"
+        latest = Classification(
+            id=uuid4(), variant_id=prior.variant_id, analysis_id=prior.analysis_id,
+            framework_name=prior.framework_name, framework_version=prior.framework_version,
+            specification_provider=None, specification_id=None, specification_version=None,
+            result="LIKELY_PATHOGENIC", criterion_ids=[], metadata_json={}, state="FINAL",
+            review_status="APPROVED", version=prior.version + 1,
+            supersedes_classification_id=prior.id, review_version=prior.review_version + 1,
+        )
+        db.add(latest)
+        db.flush()
+        decision = ReportabilityDecision(
+            id=uuid4(), analysis_id=prior.analysis_id, variant_id=prior.variant_id,
+            classification_id=prior.id, version=1, supersedes_decision_id=None,
+            policy_name="test", policy_version="1", disposition="REPORT",
+            priority_score=100, priority_band="HIGH", reasons=[], status="FINAL",
+            review_version=1,
+        )
+        db.add(decision)
+        db.commit()
+
+        assert workflow_api._reportability_gate_ready(db, seeded.analysis_id) is False
+        decision.classification_id = latest.id
+        db.commit()
+        assert workflow_api._reportability_gate_ready(db, seeded.analysis_id) is True
 
     engine.dispose()
 

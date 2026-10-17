@@ -63,7 +63,9 @@ def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
         latest.setdefault(row.variant_id, row)
     if not latest:
         return False
-    for variant_id in latest:
+    for variant_id, classification in latest.items():
+        if classification.state != "FINAL" or classification.review_status != "APPROVED":
+            return False
         decision = db.scalar(
             select(ReportabilityDecision)
             .where(
@@ -72,7 +74,11 @@ def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
             )
             .order_by(ReportabilityDecision.version.desc())
         )
-        if decision is None or decision.status != "FINAL":
+        if (
+            decision is None
+            or decision.status != "FINAL"
+            or decision.classification_id != classification.id
+        ):
             return False
     return True
 

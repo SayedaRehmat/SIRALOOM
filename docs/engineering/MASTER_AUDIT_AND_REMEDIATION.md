@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed commit:** `main` commit `127dfa1` (`Validate report lineage in case exports`). The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. CI status for `96ab9db` and `127dfa1` could not be retrieved in this environment (`gh` is unavailable and the unauthenticated Actions API was inaccessible). Local Python/pytest verification is unavailable. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed commit:** `main` commit `b2a31ee` (`Make notification reads lineage-safe and idempotent`). The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. CI status for `96ab9db`, `127dfa1`, and later commits could not be retrieved in this environment (`gh` is unavailable and GitHub API access is blocked). Local Python/pytest verification is unavailable. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -32,6 +32,15 @@
 - **Verification:** `git diff --check` passed. Focused pytest cannot run locally because no usable Python/pytest runtime is available. Remote CI status remains unavailable from this environment.
 - **Status:** implementation in progress on `main`; CI pending. Phase A remains PARTIAL.
 - **Next action:** run the notification, authorization, artifact, and case-export tests in CI when status is accessible; continue remaining direct-object and reviewer/signout/recovery checks.
+
+## 2026-10-17 continuation checkpoint — reportability human-gate freshness
+
+- **Finding:** the generic reportability human-gate acceptance check required the latest decision to be FINAL but did not require it to reference the latest approved FINAL classification. A stale final decision could therefore release the gate after a newer classification version existed.
+- **Correction:** `_reportability_gate_ready` now requires every latest classification to be FINAL + APPROVED and its latest FINAL reportability decision to link to that exact classification.
+- **Regression coverage:** `tests/test_workflow_human_gate_api.py` verifies a final decision linked to the superseded classification blocks release, while relinking it to the current classification passes.
+- **Verification:** `git diff --check` passed. Python/pytest remain unavailable locally. CI status for recent pushes remains unavailable.
+- **Status:** implementation in progress on `main`; CI pending. Phase A remains PARTIAL.
+- **Next action:** run this gate regression and relevant reportability/finalization suites in CI; continue direct-object and integrated reviewer/signout/recovery audit.
 
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
 
