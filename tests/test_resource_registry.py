@@ -288,6 +288,60 @@ def test_organization_approval_is_distinct_from_technical_qualification():
         )) is None
 
 
+def test_resource_approval_cannot_use_another_resources_qualification():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab A", external_identifier=None)
+        user = User(
+            id=uuid4(),
+            organization_id=org.id,
+            display_name="Director",
+            role="lab_director",
+            status="ACTIVE",
+        )
+        db.add_all([org, user])
+        db.flush()
+
+        resource_a = _candidate(db, name="ResourceA", version="1", checksum="a" * 64)
+        resource_b = _candidate(db, name="ResourceB", version="1", checksum="b" * 64)
+        approval = request_resource_approval(
+            db,
+            resource_id=resource_a.id,
+            organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+        qualification_b = db.scalar(
+            select(ResourceQualification).where(
+                ResourceQualification.resource_id == resource_b.id,
+                ResourceQualification.qualification_version == "qualification-v1",
+            )
+        )
+        approval.qualification_id = qualification_b.id
+        db.flush()
+
+        try:
+            decide_resource_approval(
+                db,
+                approval_id=approval.id,
+                organization_id=org.id,
+                actor_id=user.id,
+                decision="APPROVED",
+                expected_version=1,
+                reason="Attempt inconsistent qualification linkage",
+            )
+        except ResourceRegistryError as exc:
+            assert "qualification" in str(exc)
+        else:
+            raise AssertionError("approval must reject qualification for another resource")
+
+        assert approval.status == "PENDING"
+        assert db.scalar(
+            select(OrganizationResourceBinding).where(
+                OrganizationResourceBinding.organization_id == org.id
+            )
+        ) is None
+
+
 def test_reject_and_defer_leave_existing_active_binding_unchanged():
     engine = _engine()
     with Session(engine) as db:

@@ -324,7 +324,11 @@ def decide_resource_approval(
     qualification = db.get(ResourceQualification, approval.qualification_id)
     if resource is None:
         raise ResourceRegistryError("resource not found")
-    if qualification is None or qualification.status != "QUALIFIED":
+    if (
+        qualification is None
+        or qualification.status != "QUALIFIED"
+        or qualification.resource_id != resource.id
+    ):
         raise ResourceRegistryError("approval requires a successful technical qualification")
 
     next_version = expected_version + 1

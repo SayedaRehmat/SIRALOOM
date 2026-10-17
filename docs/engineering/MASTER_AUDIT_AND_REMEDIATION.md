@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `5b54f17` (`Update Phase A authorization checkpoint`); GitHub Actions runs [#1566](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017022599), [#1567](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017086560), and [#1568](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017130620) succeeded. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `0b77752` (`Validate reanalysis candidate lineage`); GitHub Actions run [#1569](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018373615) is in progress. Runs #1566–#1568 succeeded. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -34,6 +34,15 @@
 - **Verification:** reanalysis API, reanalysis workflow/completion, case-change reanalysis, resource snapshot, and discovery suites: 34 passed; `git diff --check` passed. Latest main CI runs #1566–#1568 all succeeded.
 - **Status:** locally verified; this batch is not yet pushed. Phase A remains PARTIAL.
 - **Next action:** inspect notification/candidate list lineage and remaining direct-object APIs, then continue reviewer-to-signout and end-to-end recovery acceptance.
+
+## 2026-10-17 resource approval qualification lineage
+
+- **Finding:** resource adoption decision verified that the referenced qualification was marked `QUALIFIED` but did not verify that the qualification belonged to the resource on the approval row. An inconsistent approval link could therefore authorize a resource based on another resource's technical qualification.
+- **Correction:** `backend/app/domain/resources.py::decide_resource_approval` now requires the qualification's `resource_id` to match the approval's resource before changing approval status or creating/updating a tenant resource binding.
+- **Regression coverage:** `tests/test_resource_registry.py::test_resource_approval_cannot_use_another_resources_qualification` injects a cross-resource qualification link and verifies rejection leaves the approval pending and creates no binding.
+- **Verification:** resource registry and adoption provenance suites: 18 passed; `git diff --check` passed. Candidate lineage batch also passed 34 related tests and is pushed in `0b77752`; its CI run #1569 is in progress.
+- **Status:** resource fix verified locally, pending commit/push. Phase A remains PARTIAL.
+- **Next action:** finish notification/candidate list lineage and remaining direct-object APIs, then perform cross-tenant and end-to-end workflow verification where configured dependencies are available.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
