@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `0b77752` (`Validate reanalysis candidate lineage`); GitHub Actions run [#1569](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018373615) is in progress. Runs #1566–#1568 succeeded. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `d2267fe` (`Scope reanalysis candidate list lineage`); GitHub Actions run [#1571](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018582985) is in progress. Resource qualification lineage run #1570 and reanalysis execution lineage run #1569 succeeded. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -52,6 +52,14 @@
 - **Verification:** reanalysis API + resource registry + adoption provenance suites: 36 passed; `git diff --check` passed. Candidate execution lineage CI run #1569 passed. Resource qualification linkage CI run #1570 remains in progress.
 - **Status:** candidate-list fix locally verified; pending commit/push. Phase A remains PARTIAL.
 - **Next action:** audit notification-to-case/candidate/resource lineage and continue remaining direct-object APIs, then verify the full reviewer-to-signout journey and failure-recovery requirements.
+
+## 2026-10-17 signup/session, signout, report, and recovery regression pass
+
+- **Scope exercised:** auth foundation/onboarding, invitation and membership lifecycle, report signout/resume and serialization ordering, failure-recovery contracts, worker-loss recovery matrix, and frontend session destination/signout/workspace identity behavior.
+- **Verification:** backend focused suites: 58 passed. Frontend Node tests (`signout`, `session-destination`, `workspace-context`): 13 passed. One Starlette/httpx deprecation warning was emitted by the Python test runtime. These are code-level contract tests, not live Firebase/browser e2e sessions.
+- **CI:** resource qualification ownership commit `7f688b1` passed run #1570; candidate-list commit `d2267fe` run #1571 remains in progress.
+- **Status:** source/test verification for these contracts passed; Phase A remains PARTIAL because no configured Firebase identity, interactive browser E2E, deployed two-tenant lab, or full report signout journey has been exercised.
+- **Next action:** continue notification lineage and direct object route review; run live auth/tenant journey only when configured test identity and deployment are available, then exercise reviewer-to-authorized-report signout and recovery against the integrated stack.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
