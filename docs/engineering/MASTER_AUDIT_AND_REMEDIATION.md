@@ -44,6 +44,15 @@
 - **Status:** resource fix verified locally, pending commit/push. Phase A remains PARTIAL.
 - **Next action:** finish notification/candidate list lineage and remaining direct-object APIs, then perform cross-tenant and end-to-end workflow verification where configured dependencies are available.
 
+## 2026-10-17 reanalysis candidate list lineage
+
+- **Finding:** the candidate list was scoped only by its denormalized `organization_id`, then returned its case and analysis IDs without confirming the case's tenant, parent analysis case, or linked child lineage. Corrupt rows could send the UI to unrelated or inconsistent case/analysis context.
+- **Correction:** `backend/app/api/v1/reanalysis.py::list_candidates` joins the case and parent analysis, filters both to the requesting organization and matching case, and includes a linked child only when its case and parent match. Invalid rows are omitted from the candidate work list.
+- **Regression coverage:** `tests/test_reanalysis_api_contract.py::test_candidate_list_excludes_cross_case_and_cross_parent_lineage` seeds valid and mismatched candidate rows in SQLite and verifies only the coherent candidate is returned.
+- **Verification:** reanalysis API + resource registry + adoption provenance suites: 36 passed; `git diff --check` passed. Candidate execution lineage CI run #1569 passed. Resource qualification linkage CI run #1570 remains in progress.
+- **Status:** candidate-list fix locally verified; pending commit/push. Phase A remains PARTIAL.
+- **Next action:** audit notification-to-case/candidate/resource lineage and continue remaining direct-object APIs, then verify the full reviewer-to-signout journey and failure-recovery requirements.
+
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
 - **Current code batch:** case-export cloud artifact packaging/download integrity and compensation on failed persistence are pushed; locally focused export suite: 17 passed. Earlier authorization changes (analysis/case artifact linkage and administrator-only member roster) are also pushed and covered by focused tests.

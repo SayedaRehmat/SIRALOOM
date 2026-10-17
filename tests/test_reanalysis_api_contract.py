@@ -233,6 +233,129 @@ def test_change_candidate_endpoint_rejects_inconsistent_case_or_parent_links(
     assert exc.value.status_code == 409
 
 
+def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
+    from types import SimpleNamespace
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from backend.app.infrastructure.db.base import Base
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        Case,
+        Organization,
+        ReanalysisCandidate,
+        User,
+    )
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    organization_id, foreign_organization_id = uuid4(), uuid4()
+    actor_id = uuid4()
+    case_id, foreign_case_id = uuid4(), uuid4()
+    parent_id, foreign_parent_id, child_id = uuid4(), uuid4(), uuid4()
+    valid_candidate_id, mismatched_case_id, mismatched_child_id = uuid4(), uuid4(), uuid4()
+
+    with Session(engine) as db:
+        db.add_all(
+            [
+                Organization(id=organization_id, name="Lab A", external_identifier=None),
+                Organization(id=foreign_organization_id, name="Lab B", external_identifier=None),
+                User(
+                    id=actor_id,
+                    organization_id=organization_id,
+                    display_name="Reviewer",
+                    role="reviewer",
+                    status="ACTIVE",
+                ),
+            ]
+        )
+        db.flush()
+        db.add_all(
+            [
+                Case(
+                    id=case_id,
+                    organization_id=organization_id,
+                    case_identifier="CASE-A",
+                    status="ANALYSIS_COMPLETE",
+                    created_by=actor_id,
+                ),
+                Case(
+                    id=foreign_case_id,
+                    organization_id=foreign_organization_id,
+                    case_identifier="CASE-B",
+                    status="ANALYSIS_COMPLETE",
+                    created_by=actor_id,
+                ),
+            ]
+        )
+        db.flush()
+
+        def make_analysis(analysis_id, related_case_id, parent=None):
+            return Analysis(
+                id=analysis_id,
+                case_id=related_case_id,
+                parent_analysis_id=parent,
+                assay_id=None,
+                analysis_type="GENOME",
+                workflow_id="test",
+                workflow_version="1",
+                status="SUCCEEDED",
+                queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={},
+                created_by=actor_id,
+            )
+
+        db.add_all(
+            [
+                make_analysis(parent_id, case_id),
+                make_analysis(foreign_parent_id, foreign_case_id),
+                make_analysis(child_id, case_id, parent_id),
+                make_analysis(mismatched_child_id, foreign_case_id, foreign_parent_id),
+            ]
+        )
+        db.flush()
+        common = {
+            "organization_id": organization_id,
+            "parent_analysis_id": parent_id,
+            "trigger_type": "EVIDENCE_UPDATE",
+            "earliest_affected_step": "build_evidence",
+            "reason": "resource release",
+            "status": "PENDING",
+        }
+        db.add_all(
+            [
+                ReanalysisCandidate(
+                    id=valid_candidate_id,
+                    case_id=case_id,
+                    child_analysis_id=child_id,
+                    **common,
+                ),
+                ReanalysisCandidate(
+                    id=mismatched_case_id,
+                    case_id=foreign_case_id,
+                    child_analysis_id=None,
+                    **common,
+                ),
+                ReanalysisCandidate(
+                    id=mismatched_child_id,
+                    case_id=case_id,
+                    child_analysis_id=mismatched_child_id,
+                    **common,
+                ),
+            ]
+        )
+        db.flush()
+
+        result = reanalysis_api.list_candidates(
+            db,
+            SimpleNamespace(organization_id=organization_id),
+        )
+
+        assert [row["candidate_id"] for row in result] == [str(valid_candidate_id)]
+
+
 @pytest.mark.parametrize(
     "status",
     [

@@ -2,14 +2,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_, select
+from sqlalchemy.orm import Session, aliased
 
 from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role, get_accessible_analysis
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisResourceSnapshot,
+    Case,
     Notification,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
@@ -84,9 +85,24 @@ def list_candidates(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
+    child_analysis = aliased(Analysis)
     rows = db.scalars(
         select(ReanalysisCandidate)
-        .where(ReanalysisCandidate.organization_id == principal.organization_id)
+        .join(Analysis, Analysis.id == ReanalysisCandidate.parent_analysis_id)
+        .join(Case, Case.id == ReanalysisCandidate.case_id)
+        .outerjoin(child_analysis, child_analysis.id == ReanalysisCandidate.child_analysis_id)
+        .where(
+            ReanalysisCandidate.organization_id == principal.organization_id,
+            Case.organization_id == principal.organization_id,
+            ReanalysisCandidate.case_id == Analysis.case_id,
+            or_(
+                ReanalysisCandidate.child_analysis_id.is_(None),
+                and_(
+                    child_analysis.case_id == ReanalysisCandidate.case_id,
+                    child_analysis.parent_analysis_id == ReanalysisCandidate.parent_analysis_id,
+                ),
+            ),
+        )
         .order_by(ReanalysisCandidate.created_at.desc())
         .limit(100)
     ).all()
