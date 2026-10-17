@@ -118,6 +118,6 @@ def get_accessible_report(report_id: UUID, db: Session = Depends(get_db), princi
         raise HTTPException(status_code=404, detail="Report not found")
     if not has_valid_draft_artifact(db, report):
         raise HTTPException(status_code=404, detail="Report not found")
-    if getattr(report, "status", None) == "FINAL" and not has_valid_signed_artifact(db, report):
+    if getattr(report, "status", None) in {"FINAL", "SUPERSEDED"} and not has_valid_signed_artifact(db, report):
         raise HTTPException(status_code=404, detail="Report not found")
     return report

@@ -137,12 +137,13 @@ def test_artifact_access_rejects_analysis_from_another_case_in_same_tenant():
     assert error.value.status_code == 404
 
 
-def test_report_access_rejects_final_report_without_valid_signed_artifact():
+@pytest.mark.parametrize("status", ["FINAL", "SUPERSEDED"])
+def test_report_access_rejects_released_report_without_valid_signed_artifact(status):
     tenant_id, case_id, analysis_id, report_id = uuid4(), uuid4(), uuid4(), uuid4()
     db = TenantObjectSession({
         Report: SimpleNamespace(
             id=report_id, case_id=case_id, analysis_id=analysis_id,
-            status="FINAL", signed_artifact_id=None, signed_sha256=None,
+            status=status, signed_artifact_id=None, signed_sha256=None,
         ),
         Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
         Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),

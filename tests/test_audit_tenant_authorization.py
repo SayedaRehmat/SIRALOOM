@@ -491,7 +491,12 @@ def test_report_list_rejects_case_link_different_from_analysis(monkeypatch):
         (
             "FINAL",
             "has_valid_signed_artifact",
-            "Final report is missing a valid linked signed artifact",
+            "Final or superseded report is missing a valid linked signed artifact",
+        ),
+        (
+            "SUPERSEDED",
+            "has_valid_signed_artifact",
+            "Final or superseded report is missing a valid linked signed artifact",
         ),
     ],
 )

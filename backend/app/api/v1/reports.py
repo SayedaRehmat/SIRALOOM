@@ -197,10 +197,10 @@ def list_reports(analysis_id: UUID, db: Session = Depends(get_db), principal: Pr
                 status_code=409,
                 detail="Report draft artifact does not match its case and analysis",
             )
-        if row.status == "FINAL" and not has_valid_signed_artifact(db, row):
+        if row.status in {"FINAL", "SUPERSEDED"} and not has_valid_signed_artifact(db, row):
             raise HTTPException(
                 status_code=409,
-                detail="Final report is missing a valid linked signed artifact",
+                detail="Final or superseded report is missing a valid linked signed artifact",
             )
     return {"analysis_id": str(analysis_id), "items": [{"report_id": str(r.id), "case_id": str(r.case_id), "version": r.report_version, "status": r.status, "language": r.language, "report_type": r.report_type, "artifact_id": str(r.artifact_id) if r.artifact_id else None, "signed_artifact_id": str(r.signed_artifact_id) if r.signed_artifact_id else None, "signed_sha256": r.signed_sha256, "signout_reason": r.signout_reason, "approved_by": str(r.approved_by) if r.approved_by else None, "approved_at": r.approved_at.isoformat() if r.approved_at else None, "supersedes_report_id": str(r.supersedes_report_id) if r.supersedes_report_id else None, "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]}
 
