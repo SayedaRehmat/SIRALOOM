@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `2041fcb` (`Validate reportability variant ownership`); GitHub Actions run [#1561](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015567065) passed backend, PostgreSQL/Celery integration, and frontend jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `f631433` (`Reject cross-case artifacts in exports`); GitHub Actions run [#1562](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015773837) is in progress. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -31,6 +31,15 @@
 - **Verification:** case export build, cloud/local download integrity, compensation, error redaction and dispatch tests: 19 passed; `git diff --check` passed.
 - **Status:** code and regression pass locally; push-triggered CI pending. Phase A remains PARTIAL.
 - **Next action:** resume direct object-linkage inventory for clinical-governance and worker exports; verify the newly pushed reportability check's frontend job, then continue the remaining A1–A10 workflows and failure injection.
+
+## 2026-10-17 clinical follow-up lineage batch (local, pending push)
+
+- **Finding:** clinical follow-up rows store both `case_id` and `analysis_id`. The update path authorized only through the analysis and then returned/mutated the row without proving its case matched that analysis; the governance dossier also serialized follow-up rows without checking the redundant case link.
+- **Correction:** `backend/app/api/v1/clinical_followup.py` rejects inconsistent case/analysis links with HTTP 409 on dossier reads and updates; updates also verify any linked variant is in the analysis before mutation.
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py::test_followup_update_rejects_case_mismatch_with_its_analysis`.
+- **Verification:** clinical governance/mutation and object-authorization suites: 24 passed; `git diff --check` passed.
+- **Status:** locally verified; push-triggered CI pending. Phase A remains PARTIAL.
+- **Next action:** continue validating worker-owned query scope and case-export payload lineage; complete the remaining signup-to-signout workflow checks and deterministic failure-injection cases.
 
 ## Verified current batch
 

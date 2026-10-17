@@ -67,11 +67,20 @@ def _secondary(r):
 def _variant_access(analysis, variant_id, db):
     return get_analysis_variant(analysis, variant_id, db)
 
+def _validate_followup_case_link(row, analysis) -> None:
+    if row.case_id != analysis.case_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Follow-up plan case does not match its analysis",
+        )
+
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/clinical-governance")
 def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db)
     confirmations=list(db.scalars(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id==analysis_id,ConfirmationRecord.variant_id==variant_id).order_by(ConfirmationRecord.version.desc())))
     followups=list(db.scalars(select(FollowUpPlan).where(FollowUpPlan.analysis_id==analysis_id,FollowUpPlan.variant_id==variant_id).order_by(FollowUpPlan.created_at.desc())))
+    for followup in followups:
+        _validate_followup_case_link(followup, analysis)
     secondary=list(db.scalars(select(SecondaryFindingDecision).where(SecondaryFindingDecision.analysis_id==analysis_id,SecondaryFindingDecision.variant_id==variant_id).order_by(SecondaryFindingDecision.version.desc())))
     return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"confirmation":_confirmation(confirmations[0]) if confirmations else None,"confirmation_history":[_confirmation(x) for x in confirmations],"follow_up":[_followup(x) for x in followups],"secondary_finding":_secondary(secondary[0]) if secondary else None,"secondary_finding_history":[_secondary(x) for x in secondary]}
 
@@ -99,6 +108,9 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
             raise HTTPException(404,"Follow-up plan not found") from exc
         raise
     require_role(principal,CASE_WRITE_ROLES)
+    _validate_followup_case_link(row, analysis)
+    if row.variant_id is not None:
+        _variant_access(analysis, row.variant_id, db)
     row.action_type=body.action_type.strip(); row.status=body.status; row.due_date=body.due_date; row.responsible_role=body.responsible_role; row.outcome=body.outcome; row.notes=body.notes; row.metadata_json=body.metadata
     if body.status in {"COMPLETED","CANCELLED"}: row.completed_by=principal.user_id; row.completed_at=datetime.now(timezone.utc)
     AuditService(db).record(event_type="FOLLOW_UP_PLAN_UPDATED",case_id=analysis.case_id,analysis_id=row.analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="FOLLOW_UP_PLAN",subject_id=str(row.id),operation="UPDATE",after_state=_followup(row)); db.commit(); return _followup(row)

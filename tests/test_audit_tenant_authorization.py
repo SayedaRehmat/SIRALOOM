@@ -280,3 +280,30 @@ def test_reportability_listing_rejects_variant_outside_analysis(monkeypatch):
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Reportability decision references a variant outside its analysis"
+
+
+def test_followup_update_rejects_case_mismatch_with_its_analysis(monkeypatch):
+    analysis = SimpleNamespace(id=uuid4(), case_id=uuid4())
+    row = SimpleNamespace(
+        id=uuid4(), analysis_id=analysis.id, case_id=uuid4(), variant_id=None
+    )
+    principal = _principal(uuid4(), role="lab_director")
+    monkeypatch.setattr(
+        clinical_followup, "get_accessible_analysis", lambda *_args: analysis
+    )
+
+    class _Db:
+        def get(self, model, _object_id):
+            from backend.app.infrastructure.db.models import FollowUpPlan
+
+            assert model is FollowUpPlan
+            return row
+
+    with pytest.raises(HTTPException) as exc:
+        clinical_followup.update_followup(
+            row.id, clinical_followup.FollowUpInput(action_type="contact"),
+            _Db(), principal,
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Follow-up plan case does not match its analysis"
