@@ -4,12 +4,35 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.enums import ReviewStatus, StepStatus, UserRole
+from backend.app.auth.authorization import get_analysis_variant
+from backend.app.domain.enums import ReviewStatus, StepStatus
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Classification, Evidence, ReviewAction, User, Variant, Case, PhenotypeObservation, PopulationObservation, ReportabilityDecision, Annotation, WorkflowStep, PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment, TechnicalQCObservation, QCAssessment, Assay
+from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
+    Analysis,
+    Annotation,
+    Assay,
+    Case,
+    Classification,
+    Evidence,
+    InheritanceAssessment,
+    PedigreeMember,
+    PedigreeRelationship,
+    PhenotypeObservation,
+    PopulationObservation,
+    QCAssessment,
+    ReportabilityDecision,
+    ReviewAction,
+    SegregationObservation,
+    TechnicalQCObservation,
+    User,
+    Variant,
+    WorkflowStep,
+)
 
 
 class ReviewError(ValueError):
@@ -22,6 +45,15 @@ class ReviewConflictError(ReviewError):
 
 class ReviewAuthorizationError(ReviewError):
     pass
+
+
+def _require_analysis_variant(db: Session, analysis: Analysis, variant_id: UUID) -> Variant:
+    try:
+        return get_analysis_variant(analysis, variant_id, db)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise ReviewError("Variant is not part of this analysis") from exc
+        raise
 
 
 @dataclass(frozen=True)
@@ -80,9 +112,7 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
     analysis = db.get(Analysis, analysis_id)
     if not analysis:
         raise ReviewError("Analysis not found")
-    variant = db.get(Variant, variant_id)
-    if not variant:
-        raise ReviewError("Variant not found")
+    variant = _require_analysis_variant(db, analysis, variant_id)
 
     assessments = list(db.scalars(
         select(ACMGAssessment)
@@ -146,7 +176,11 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
     inheritance_assessments = list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id == analysis_id, InheritanceAssessment.variant_id == variant_id).order_by(InheritanceAssessment.created_at.desc())))
     pedigree = {**pedigree, "members": [{"id": str(m.id), "member_identifier": m.member_identifier, "relationship_to_proband": m.relationship_to_proband, "sex": m.sex, "affected_status": m.affected_status, "is_proband": m.is_proband, "sampled": m.sampled, "specimen_id": str(m.specimen_id) if m.specimen_id else None, "metadata": m.metadata_json or {}} for m in pedigree_members], "relationships": [{"id": str(r.id), "parent_member_id": str(r.parent_member_id), "child_member_id": str(r.child_member_id), "relationship_type": r.relationship_type, "metadata": r.metadata_json or {}} for r in pedigree_relationships]}
     inheritance = {**inheritance, "assessments": [{"id": str(a.id), "model": a.model, "status": a.status, "score": a.score, "rationale": a.rationale, "fingerprint": a.observation_fingerprint, "reviewer_note": a.reviewer_note, "created_at": a.created_at.isoformat()} for a in inheritance_assessments]}
-    from backend.app.infrastructure.db.models import ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision
+    from backend.app.infrastructure.db.models import (
+        ConfirmationRecord,
+        FollowUpPlan,
+        SecondaryFindingDecision,
+    )
     confirmations = list(db.scalars(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id == analysis_id, ConfirmationRecord.variant_id == variant_id).order_by(ConfirmationRecord.version.desc())))
     followups = list(db.scalars(select(FollowUpPlan).where(FollowUpPlan.analysis_id == analysis_id, FollowUpPlan.variant_id == variant_id).order_by(FollowUpPlan.created_at.desc())))
     secondary = list(db.scalars(select(SecondaryFindingDecision).where(SecondaryFindingDecision.analysis_id == analysis_id, SecondaryFindingDecision.variant_id == variant_id).order_by(SecondaryFindingDecision.version.desc())))
@@ -239,9 +273,7 @@ def propose_manual_classification(
     if acmg_step.error_code not in {"NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"}:
         raise ReviewError("Manual classification is not enabled for this ACMG review state")
 
-    variant = db.get(Variant, variant_id)
-    if variant is None:
-        raise ReviewError("Variant not found")
+    variant = _require_analysis_variant(db, analysis, variant_id)
     has_annotation = db.scalar(
         select(Annotation.id).where(
             Annotation.analysis_id == analysis_id,
@@ -344,6 +376,7 @@ def start_review(
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
         raise ReviewError("Analysis not found")
+    _require_analysis_variant(db, analysis, variant_id)
     current = db.scalar(
         select(Classification)
         .where(Classification.analysis_id == analysis_id, Classification.variant_id == variant_id)
@@ -407,6 +440,7 @@ def review_criterion(
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
         raise ReviewError("Analysis not found")
+    _require_analysis_variant(db, analysis, variant_id)
 
     assessment = db.scalar(
         select(ACMGAssessment)
@@ -516,6 +550,7 @@ def approve_classification(
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
         raise ReviewError("Analysis not found")
+    _require_analysis_variant(db, analysis, variant_id)
 
     current = db.scalar(
         select(Classification)
@@ -608,6 +643,7 @@ def request_more_evidence(
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
         raise ReviewError("Analysis not found")
+    _require_analysis_variant(db, analysis, variant_id)
 
     current = db.scalar(
         select(Classification)

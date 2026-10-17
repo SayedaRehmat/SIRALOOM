@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Case, Classification, Evidence, Organization, ReviewAction, User, Variant, WorkflowStep
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Case, AnalysisPartition, Classification, Evidence, Organization, ReviewAction, User, Variant, WorkflowStep
 from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, propose_manual_classification, review_criterion, request_more_evidence
 from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
 
@@ -29,6 +29,11 @@ def seed():
     assessment = ACMGAssessment(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", criterion="PM2", automated_assessment={"strength": "SUPPORTING"}, state="PROPOSED", review_version=0)
     classification = Classification(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", result="VUS", criterion_ids=[str(assessment.id)], metadata_json={}, state="PROPOSED", review_status=ReviewStatus.IN_REVIEW, version=1, review_version=0)
     db.add_all([org, user, analyst, case, analysis, variant, assessment, classification])
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+        variant_count=1, status="SUCCEEDED", metadata_json={"variant_ids": [str(variant.id)]},
+    ))
     db.commit()
     return db, reviewer_or_user(user), analyst, analysis, variant, assessment, classification
 
@@ -485,3 +490,44 @@ def test_reportability_is_created_only_after_approved_final_classification():
     ready, errors = final_reportability_state(db, analysis.id)
     assert ready is False
     assert any("reportability is not FINAL" in error for error in errors)
+
+
+def test_review_bundle_rejects_variant_not_in_analysis():
+    db, _reviewer, _analyst, analysis, _variant, _assessment, _classification = seed()
+    foreign_variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=2,
+        reference="C", alternate="T", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:1:2:C:T-{uuid4()}", identifiers={},
+    )
+    db.add(foreign_variant)
+    db.commit()
+
+    with pytest.raises(ReviewError, match="not part of this analysis"):
+        get_review_bundle(db, analysis_id=analysis.id, variant_id=foreign_variant.id)
+
+
+def test_manual_classification_rejects_variant_not_in_analysis():
+    db, reviewer, _analyst, analysis, _variant, _assessment, classification = seed()
+    from backend.app.infrastructure.db.models import WorkflowStep
+
+    db.delete(classification)
+    db.add(WorkflowStep(
+        id=uuid4(), analysis_id=analysis.id, step_id="acmg_assessment",
+        step_order=6, status="REQUIRES_REVIEW", attempt=1,
+        error_code="NO_AUTOMATABLE_CLINGEN_CONTEXT",
+        metadata_json={"next_step": "review"},
+    ))
+    foreign_variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=3,
+        reference="G", alternate="A", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:1:3:G:A-{uuid4()}", identifiers={},
+    )
+    db.add(foreign_variant)
+    db.commit()
+
+    with pytest.raises(ReviewError, match="not part of this analysis"):
+        propose_manual_classification(
+            db, analysis_id=analysis.id, variant_id=foreign_variant.id,
+            reviewer=reviewer, result="VUS", reason="Reviewed outside analysis",
+            evidence_ids=(uuid4(),),
+        )

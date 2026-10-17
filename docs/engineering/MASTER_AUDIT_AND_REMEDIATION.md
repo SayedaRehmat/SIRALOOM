@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `f631433` (`Reject cross-case artifacts in exports`); GitHub Actions run [#1562](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015773837) is in progress. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `558eb20` (`Validate clinical follow-up lineage`); GitHub Actions run [#1563](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015850493) passed backend, PostgreSQL/Celery integration, and frontend. Run #1562 for `f631433` also passed all three jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -40,6 +40,15 @@
 - **Verification:** clinical governance/mutation and object-authorization suites: 24 passed; `git diff --check` passed.
 - **Status:** locally verified; push-triggered CI pending. Phase A remains PARTIAL.
 - **Next action:** continue validating worker-owned query scope and case-export payload lineage; complete the remaining signup-to-signout workflow checks and deterministic failure-injection cases.
+
+## 2026-10-17 review-service variant authorization batch (local, pending push)
+
+- **Finding:** review bundle and manual-classification service fetched a global `Variant` by ID without proving membership in the requested analysis. Other review mutations similarly relied on matching classification/assessment rows but did not consistently verify membership at the reusable service boundary.
+- **Correction:** `backend/app/review/service.py` now uses the shared `get_analysis_variant` authorization helper in the review bundle, manual proposal, review start, criterion mutation, approval, and more-evidence request paths. Foreign analysis variants fail as a domain `ReviewError` before any review mutation.
+- **Regression coverage:** `tests/test_review_workflow.py` records normalize-manifest membership in its valid fixture and verifies both dossier reads and manual proposals reject globally existing variants absent from the analysis.
+- **Verification:** review workflow, queue, signout integration, and route mutation tenant tests: 47 passed; changed service import lint and compileall passed; `git diff --check` passed.
+- **Status:** locally verified; push-triggered CI pending. Phase A remains PARTIAL.
+- **Next action:** audit review queue/criterion lineage and the rest of clinical governance; then continue user-journey and failure-recovery verification from signup through signout.
 
 ## Verified current batch
 
