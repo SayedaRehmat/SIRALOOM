@@ -1,4 +1,5 @@
 from hashlib import sha256
+from types import SimpleNamespace
 
 import pytest
 
@@ -60,6 +61,7 @@ from backend.app.domain.resource_staging import (
     prepare_staging,
     stage_local_artifact,
     transition_staging,
+    validate_staging_destination,
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Resource, ResourceStaging
@@ -259,3 +261,34 @@ def test_local_staging_accepts_registered_file_uri(tmp_path: Path):
     finally:
         db.close()
         engine.dispose()
+
+
+def test_worker_staging_destination_must_remain_under_owning_organization_root(tmp_path: Path):
+    organization_id = uuid4()
+    root = tmp_path / "resources"
+    destination = root / str(organization_id) / "reference" / "GRCh38.fa"
+    resource = SimpleNamespace(organization_id=organization_id, location=str(destination))
+    row = SimpleNamespace(
+        destination_uri=str(destination),
+        storage_backend="ORGANIZATION_LOCAL_FILESYSTEM",
+    )
+
+    assert validate_staging_destination(
+        row, resource, organization_resource_root=root
+    ) == destination.resolve()
+
+    row.destination_uri = str(root / str(uuid4()) / "reference" / "foreign.fa")
+    resource.location = row.destination_uri
+    with pytest.raises(ResourceStagingError, match="outside its organization's storage root"):
+        validate_staging_destination(row, resource, organization_resource_root=root)
+
+
+def test_worker_staging_destination_must_match_registered_location(tmp_path: Path):
+    resource = SimpleNamespace(organization_id=None, location=str(tmp_path / "registered.fa"))
+    row = SimpleNamespace(
+        destination_uri=str(tmp_path / "tampered.fa"),
+        storage_backend="LOCAL_FILESYSTEM",
+    )
+
+    with pytest.raises(ResourceStagingError, match="matches the registered resource location"):
+        validate_staging_destination(row, resource, organization_resource_root=tmp_path)

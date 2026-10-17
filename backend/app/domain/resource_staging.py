@@ -230,6 +230,46 @@ def create_staging_candidate(
     return row
 
 
+def validate_staging_destination(
+    row: ResourceStaging,
+    resource: Resource,
+    *,
+    organization_resource_root: str | Path,
+) -> Path:
+    """Revalidate persisted worker destinations against registered resource ownership."""
+    destination = Path(row.destination_uri).expanduser().resolve(strict=False)
+    registered_location = Path(str(resource.location or "")).expanduser().resolve(strict=False)
+    if not resource.location or destination != registered_location:
+        raise ResourceStagingError(
+            "staging destination no longer matches the registered resource location",
+            code="RESOURCE_DESTINATION_MISMATCH",
+            outcome="RESOURCE_REJECTED",
+        )
+    if resource.organization_id is not None:
+        if row.storage_backend != "ORGANIZATION_LOCAL_FILESYSTEM":
+            raise ResourceStagingError(
+                "organization resources require organization-local staging storage",
+                code="RESOURCE_STORAGE_SCOPE_MISMATCH",
+                outcome="RESOURCE_REJECTED",
+            )
+        root = (Path(organization_resource_root) / str(resource.organization_id)).expanduser().resolve(strict=False)
+        try:
+            relative = destination.relative_to(root)
+        except ValueError as exc:
+            raise ResourceStagingError(
+                "organization resource destination is outside its organization's storage root",
+                code="RESOURCE_DESTINATION_SCOPE_MISMATCH",
+                outcome="RESOURCE_REJECTED",
+            ) from exc
+        if not relative.parts:
+            raise ResourceStagingError(
+                "organization resource destination must name a file below its storage root",
+                code="RESOURCE_DESTINATION_SCOPE_MISMATCH",
+                outcome="RESOURCE_REJECTED",
+            )
+    return destination
+
+
 def transition_staging(
     db: Session,
     row: ResourceStaging,

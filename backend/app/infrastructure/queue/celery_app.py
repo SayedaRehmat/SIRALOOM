@@ -853,6 +853,7 @@ if Celery is not None:
             recover_interrupted_staging,
             stage_resource_release,
             transition_staging,
+            validate_staging_destination,
         )
         from backend.app.infrastructure.db.models import Resource, ResourceStaging
         from backend.app.infrastructure.db.session import SessionLocal, engine
@@ -923,6 +924,12 @@ if Celery is not None:
                 )
                 db.commit()
                 return {"staging_id": staging_id, "status": row.status, "error_code": row.error_code}
+
+            validate_staging_destination(
+                row,
+                resource,
+                organization_resource_root=settings.resource_cache_root,
+            )
 
             cleanup_staging_temporary_files(row)
             metadata = dict(row.metadata_json or {})
