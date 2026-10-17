@@ -2,7 +2,7 @@
 
 ## Current checkpoint — 2026-10-17
 
-**Latest pushed application baseline:** `main` commit `d6d7ec7`. GitHub Actions run [#1593](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39022885955) succeeded across backend, PostgreSQL/Celery worker-loss integration, frontend behavior, localization, production build/container, and Compose validation. The report signout UI recovery follow-up is commit `4458859`; CI #1594 is running.
+**Latest pushed application baseline:** `main` commit `e4573a9`. CI #1593 passed report draft-artifact lineage checks and #1594 passed report signout UI recovery. Commit `e4573a9` extends lineage enforcement to report listings: draft artifact lineage is checked and FINAL reports must have a valid signed artifact before artifact IDs are listed. CI #1596 is running.
 
 This continuation repaired two real clinical-governance defects: the secondary-finding request schema lacked the `status` field the route dereferenced, and four create routes serialized ORM-generated timestamps before flushing new rows. Regression coverage now exercises confirmation, follow-up, secondary finding, and QC observation creation with a SQLite session and checks their audit snapshots. The status-field regression first caused run #1582 to fail and identified the route defect; the correction passed run #1583.
 
@@ -17,7 +17,8 @@ Commit `147062a` constrains governance states; CI #1584 passed. Commits `5a5e788
 - **Direct-object finding:** `get_accessible_report` validated the report's tenant, case-analysis lineage, and final signed artifact but did not validate a non-null draft `artifact_id`. The report could expose a stale or cross-case PDF reference.
 - **Correction:** `has_valid_draft_artifact` now verifies case, analysis, PDF type, validation state, and explicit metadata identity when present. New draft reports persist report ID/version metadata; legacy draft artifacts without those optional fields remain supported if their case/analysis/type are valid.
 - **Regression coverage:** six parameter cases reject a draft artifact with wrong case, analysis, type, report ID, version, or state. CI #1593 passed all jobs. Local backend pytest was unavailable (`python.exe` is only a Windows Store stub).
-- **Signout UI recovery finding:** reports UI mutation handlers always displayed success after `load()` even though `load()` swallowed refresh errors. Commit `4458859` checks the refresh outcome and shows a new English/Arabic “mutation succeeded, latest status unavailable” message. Frontend behavior tests passed 20/20; i18n validation and `git diff --check` passed. CI #1594 is pending.
+- **Signout UI recovery finding:** reports UI mutation handlers always displayed success after `load()` even though `load()` swallowed refresh errors. Commit `4458859` checks the refresh outcome and shows a new English/Arabic “mutation succeeded, latest status unavailable” message. Frontend behavior tests passed 20/20; i18n validation and `git diff --check` passed. CI #1594 passed.
+- **Report list follow-up:** `GET /analyses/{analysis_id}/reports` previously returned draft/signed artifact references after only checking case linkage. Commit `e4573a9` validates draft artifact lineage on every row and rejects finalized rows whose signed artifact fails integrity checks; route regressions cover both cases. CI #1596 is running.
 - **Next:** continue route-by-route direct-object review and integrated reviewer-to-signout/retry recovery tests. Live Firebase and deployed two-tenant evidence is still required. Phase A remains PARTIAL.
 
 **Historical baseline recorded below:** 2026-10-15, application commit `324283be87d28d209d7319e1e599ab898266853d`; audit-record follow-up `dd4c1e6`.
