@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+import pytest
+from pydantic import ValidationError
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -162,3 +164,22 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
     finally:
         Base.metadata.drop_all(engine)
         engine.dispose()
+
+
+@pytest.mark.parametrize(
+    ("model", "payload"),
+    [
+        (clinical_followup.ConfirmationInput, {"status": "REVIEWED"}),
+        (
+            clinical_followup.FollowUpInput,
+            {"action_type": "confirmatory testing", "status": "UNKNOWN"},
+        ),
+        (
+            clinical_followup.SecondaryFindingInput,
+            {"policy_name": "LAB_POLICY", "policy_version": "1", "status": "SIGNED"},
+        ),
+    ],
+)
+def test_governance_input_rejects_unsupported_states(model, payload):
+    with pytest.raises(ValidationError):
+        model(**payload)

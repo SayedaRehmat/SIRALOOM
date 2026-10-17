@@ -28,7 +28,10 @@ router = APIRouter(tags=["clinical-governance"])
 class ConfirmationInput(BaseModel):
     required: bool = False
     method: str | None = Field(default=None, max_length=150)
-    status: str = Field(default="PENDING", max_length=50)
+    status: str = Field(
+        default="PENDING",
+        pattern=r"^(PENDING|COMPLETED|WAIVED|FAILED|NOT_REQUIRED)$",
+    )
     result: str | None = Field(default=None, max_length=100)
     laboratory: str | None = Field(default=None, max_length=200)
     accession: str | None = Field(default=None, max_length=150)
@@ -38,7 +41,10 @@ class ConfirmationInput(BaseModel):
 
 class FollowUpInput(BaseModel):
     action_type: str = Field(min_length=1, max_length=150)
-    status: str = Field(default="PLANNED", max_length=50)
+    status: str = Field(
+        default="PLANNED",
+        pattern=r"^(PLANNED|IN_PROGRESS|COMPLETED|CANCELLED)$",
+    )
     due_date: datetime | None = None
     responsible_role: str | None = Field(default=None, max_length=100)
     outcome: str | None = Field(default=None, max_length=5000)
@@ -51,7 +57,7 @@ class SecondaryFindingInput(BaseModel):
     eligibility: str = Field(default="REVIEW", max_length=50)
     consent_status: str = Field(default="NOT_DOCUMENTED", max_length=50)
     disposition: str = Field(default="REVIEW", max_length=50)
-    status: str = Field(default="DRAFT", max_length=50)
+    status: str = Field(default="DRAFT", pattern=r"^(DRAFT|FINAL)$")
     rationale: str | None = Field(default=None, max_length=5000)
     gene_disease_context: dict = Field(default_factory=dict)
 

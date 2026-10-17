@@ -1,8 +1,19 @@
 # SIRALOOM Phase 1 Results
 
-**As of:** 2026-10-15
-**Application-code baseline:** `324283be87d28d209d7319e1e599ab898266853d`; audit-record follow-up: `dd4c1e6`.
-**Phase status:** IN PROGRESS / PARTIAL. The acceptance criteria are not all met; this report makes no clinical validation or production-readiness claim.
+## Current checkpoint — 2026-10-17
+
+**Latest pushed application baseline:** `main` commit `9d14ef7`. GitHub Actions run [#1583](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39021934019) succeeded across all jobs: backend **878 passed, 24 skipped**, PostgreSQL/Celery integration passed, and frontend behavior tests, production build/container, and Compose validation passed.
+
+This continuation repaired two real clinical-governance defects: the secondary-finding request schema lacked the `status` field the route dereferenced, and four create routes serialized ORM-generated timestamps before flushing new rows. Regression coverage now exercises confirmation, follow-up, secondary finding, and QC observation creation with a SQLite session and checks their audit snapshots. The status-field regression first caused run #1582 to fail and identified the route defect; the correction passed run #1583.
+
+Additional tenant-lineage fixes in commits `14b819d`, `81a604c`, `a8ccc3f`, and `fcd0efe` cover notification references, secondary-finding variants, quality assay ownership, case-phenotype analysis linkage, and report-to-case linkage; the associated CI runs passed as recorded in the master ledger.
+
+The current follow-up constrains confirmation, follow-up, and secondary-finding state values to their supported sets and adds invalid-state schema tests. This additional delta has frontend behavior/i18n and whitespace checks; its backend CI result will be recorded in the next checkpoint. The unrelated untracked backup artifact remains untouched.
+
+**Phase 1 remains PARTIAL.** The stage matrix still records all 13 journeys as partial; live Firebase/browser signup, verification, recovery, token/session invalidation, deployed direct cross-tenant checks, a complete reviewer-to-signed-report journey, and integrated failure recovery have not been demonstrated. No clinical validation, regulatory authorization, or production-readiness claim is made.
+
+**Historical baseline recorded below:** 2026-10-15, application commit `324283be87d28d209d7319e1e599ab898266853d`; audit-record follow-up `dd4c1e6`.
+**Historical phase status:** IN PROGRESS / PARTIAL. The newer 2026-10-17 status is recorded above.
 
 ## Implemented in the current work session
 
