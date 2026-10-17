@@ -438,14 +438,14 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Correction:** active/nonterminal updates now clear the current completion fields; completion/cancellation continues to assign the acting user and current timestamp. Audit events retain the state history.
 - **Regression:** extended the SQLite route-persistence test to complete then reopen one plan and assert completion fields are assigned and subsequently cleared, while both transitions are audited.
 - **Verification:** clinical governance plus tenant object authorization tests passed **42**; reviewer, report finalization/signout, recovery, reportability, and reanalysis API suites passed **89**; direct-object, tenant-boundary, and mutation-authorization suites passed **70**. `git diff --check` passed. These are focused SQLite/local tests; PostgreSQL concurrency and browser/deployed behavior are not covered by these runs.
-- **Status / next:** continue remaining direct-object review and integrated live reviewer-to-signed-report/failure recovery. Phase A remains PARTIAL; external Firebase/browser and deployed two-tenant evidence remain outstanding.
+- **Status / next:** committed and pushed as `db42c61`; CI #1632 passed. Continue remaining direct-object review and integrated live reviewer-to-signed-report/failure recovery. Phase A remains PARTIAL; external Firebase/browser and deployed two-tenant evidence remain outstanding.
 
 ### 2026-10-17 QC artifact lineage guard
 
 - **Finding:** quality and reviewer dossier reads returned persisted technical QC observations without checking whether a referenced artifact belonged to the same case/analysis.
 - **Correction:** added a shared analysis-artifact lineage guard and applied it to both quality reads and reviewer bundle construction; inconsistent references fail closed with a conflict.
 - **Regression / verification:** new cases cover missing, cross-case, and cross-analysis artifact links and the quality endpoint's fail-closed response. QC lineage, clinical-governance, and review workflow/queue suites passed **40**; `git diff --check` passed.
-- **Status / next:** committed and pushed to `main` as `ce80f1d`; local focused tests passed. CI has not yet been confirmed. Continue route-by-route direct-object review and reviewer-to-signed-report recovery. Phase A remains PARTIAL; live browser/Firebase and deployed two-tenant verification remain unexecuted.
+- **Status / next:** committed and pushed to `main` as `ce80f1d`; CI #1633 passed. Continue route-by-route direct-object review and reviewer-to-signed-report recovery. Phase A remains PARTIAL; live browser/Firebase and deployed two-tenant verification remain unexecuted.
 - **Full-suite check on `main` (`c2a75eb`):** **869 passed, 37 skipped, 1 failed**. The sole failure is `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`: the isolated local test runtime does not include the project-declared WeasyPrint package. This leaves PDF rendering unverified in this local run; no test was weakened.
 
 ### 2026-10-17 population query direct-object boundary
@@ -453,10 +453,10 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Finding:** `/populations/query` authorized the analysis tenant but accepted arbitrary variant IDs without establishing their membership in the requested analysis. It also accepted an unbounded ID list, allowing expensive repeated membership lookups.
 - **Correction:** each requested variant is checked with the analysis membership guard before observation reads, and request validation caps the list at 500 IDs.
 - **Regression / verification:** added tests proving a nonmember is rejected before population rows are read and a 501-item list is rejected. Population route, tenant/direct-object, audit-authorization, and QC-lineage suites passed **81**; `git diff --check` passed.
-- **Status / next:** committed and pushed to `main` as `c03a835`; focused tests passed locally and CI has not been confirmed. Continue remaining route-by-route audit and integrated reviewer-to-signed-report/recovery validation. Phase A remains PARTIAL pending live browser/Firebase and deployed two-tenant evidence.
+- **Status / next:** committed and pushed to `main` as `c03a835`; CI #1636 passed. Continue remaining route-by-route audit and integrated reviewer-to-signed-report/recovery validation. Phase A remains PARTIAL pending live browser/Firebase and deployed two-tenant evidence.
 
 ### 2026-10-17 integrated reviewer-to-signout recovery
 
 - **Coverage added:** one SQLite journey transitions a classification into active review, records independent approval, binds final reportability to that exact approved classification, builds the report snapshot, injects signed-artifact persistence failure and verifies the report remains DRAFT, retries successfully, verifies signed artifact integrity and audit events, then repeats signout and verifies idempotent artifact identity.
 - **Verification:** the combined authorization, tenant/direct-object, population, QC, clinical-governance, review, report/signout, recovery, reportability, reanalysis, and integrated workflow suite passed **179** with one dependency deprecation warning. This is local service/database coverage with deterministic artifact persistence; it does not exercise browser/Firebase or real object storage. `git diff --check` passed.
-- **Status / next:** commit/push the integrated regression; continue remaining direct-object paths and obtain CI plus live/deployed evidence. Phase A remains PARTIAL.
+- **Status / next:** committed and pushed to `main` as `8b4db3e`; CI #1638 passed backend, PostgreSQL integration, and frontend jobs. Continue remaining direct-object paths and obtain live/deployed evidence. Phase A remains PARTIAL.
