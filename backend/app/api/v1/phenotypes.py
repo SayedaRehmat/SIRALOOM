@@ -32,6 +32,11 @@ def list_case_phenotypes(case_id: UUID, db: Session = Depends(get_db), principal
     if not case: raise HTTPException(404, "Case not found")
     require_case_tenant(case, principal)
     rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == case_id).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)).all()
+    for row in rows:
+        if row.analysis_id is not None:
+            analysis = db.get(Analysis, row.analysis_id)
+            if analysis is None or analysis.case_id != case.id:
+                raise HTTPException(409, "Phenotype analysis does not match its case")
     return {"case_id": str(case_id), "count": len(rows), "phenotypes": [_payload(r) for r in rows]}
 
 @router.post("/cases/{case_id}/phenotypes", status_code=201)

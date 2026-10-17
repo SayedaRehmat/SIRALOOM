@@ -1,12 +1,21 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `14b819d` (`Validate notification and secondary finding lineage`); GitHub Actions run [#1577](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39020385382) is in progress. Run #1576 for `fcd0efe` succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. Current bundled Python has no pytest/ruff modules. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `81a604c` (`Guard quality assay tenant lineage`); GitHub Actions run [#1578](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39020508656) is in progress. Run #1577 for `14b819d` succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. Current bundled Python has no pytest/ruff modules. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
+
+## 2026-10-17 case phenotype lineage checkpoint
+
+- **Finding:** `GET /cases/{case_id}/phenotypes` authorized the requested case and filtered observations by `case_id`, but returned each row's optional `analysis_id` without verifying that the analysis belonged to that case. An inconsistent persisted link could attach unrelated analysis context to a case phenotype response.
+- **Correction:** `backend/app/api/v1/phenotypes.py::list_case_phenotypes` now rejects missing or cross-case linked analyses with 409 before serialization.
+- **Regression coverage:** `test_case_phenotype_list_rejects_analysis_from_another_case` seeds an authorized case observation linked to another case's analysis and asserts fail-closed behavior.
+- **Verification:** Python `compileall` and `git diff --check` before push. Local pytest is unavailable (`No module named pytest`); pending push-triggered CI.
+- **Status:** in progress; Phase A remains PARTIAL. CI #1578 verifies the preceding assay-tenant change only.
+- **Next action:** push and inspect CI; continue direct-object API and worker-boundary audit plus integrated reviewer-to-signout/recovery acceptance.
 
 ## 2026-10-17 quality-assay tenant lineage checkpoint
 

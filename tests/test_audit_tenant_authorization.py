@@ -9,6 +9,7 @@ from backend.app.api.v1 import (
     clinical_followup,
     evidence,
     pedigree,
+    phenotypes,
     quality,
     reports,
     reanalysis as reanalysis_api,
@@ -625,3 +626,30 @@ def test_quality_read_rejects_analysis_assay_from_another_tenant(monkeypatch):
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Analysis assay reference is outside its organization"
+
+
+def test_case_phenotype_list_rejects_analysis_from_another_case(monkeypatch):
+    from backend.app.infrastructure.db.models import Analysis, Case
+
+    case_id, foreign_case_id, organization_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+    row = SimpleNamespace(case_id=case_id, analysis_id=uuid4())
+    foreign_analysis = SimpleNamespace(case_id=foreign_case_id)
+    monkeypatch.setattr(phenotypes, "require_case_tenant", lambda *_args: None)
+
+    class _Db:
+        def get(self, model, _object_id):
+            return {Case: case, Analysis: foreign_analysis}.get(model)
+
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [row])
+
+    with pytest.raises(HTTPException) as exc:
+        phenotypes.list_case_phenotypes(
+            case_id=case_id,
+            db=_Db(),
+            principal=_principal(organization_id),
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Phenotype analysis does not match its case"
