@@ -36,6 +36,12 @@
 - **Regression evidence:** Frontend behavior suite: 20 passed, including success/rejection behavior; localization guard passed. CI pending.
 - **Commit:** Current local batch; awaiting CI.
 
+### Case export integrity and recovery
+
+- **Defects:** Artifact inclusion assumed a local filesystem store, so cloud-backed tenants could not create exports; package bytes could remain after artifact flush or export commit failure because the deterministic artifact ID bypassed generated-ID cleanup.
+- **Fix:** Download cloud artifacts through the store's integrity-checked method and verify both local and cloud bytes against persisted SHA-256/size. The worker now removes a package only after a fresh DB read confirms its Artifact row is absent and preserves success when an exception follows a durable commit.
+- **Regression evidence:** Case export, injected flush failure, error redaction, download integrity, and dispatch suites: 17 passed locally. CI pending.
+
 ### Membership roster privacy
 
 - **Defect:** Any authenticated tenant member could query all member emails and roles even though the settings UI exposes the roster only to organization admins and lab directors.

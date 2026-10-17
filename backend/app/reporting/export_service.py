@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -82,7 +82,7 @@ def build_manifest(db: Session, case: Case) -> dict:
     }
 
 
-def build_case_export(db: Session, *, export: CaseExport, store: ArtifactStore) -> Artifact:
+def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
     case = db.get(Case, export.case_id)
     if case is None:
         raise CaseExportError("Case not found")
@@ -166,12 +166,31 @@ def build_case_export(db: Session, *, export: CaseExport, store: ArtifactStore) 
             artifacts_root = root / "artifacts"
             artifacts_root.mkdir()
             for artifact in artifacts:
-                source = store.local_path(artifact.storage_uri)
                 target = artifacts_root / f"{artifact.id}-{artifact.filename}"
                 target.parent.mkdir(parents=True, exist_ok=True)
-                with source.open("rb") as src, target.open("wb") as dst:
-                    while chunk := src.read(8 * 1024 * 1024):
-                        dst.write(chunk)
+                download_to_file = getattr(store, "download_to_file", None)
+                if callable(download_to_file):
+                    download_to_file(
+                        artifact.storage_uri,
+                        target,
+                        expected_sha256=artifact.sha256,
+                        expected_size_bytes=artifact.size_bytes,
+                    )
+                else:
+                    source = store.local_path(artifact.storage_uri)
+                    verify_artifact_file(
+                        source,
+                        sha256=artifact.sha256,
+                        size_bytes=artifact.size_bytes,
+                    )
+                    with source.open("rb") as src, target.open("wb") as dst:
+                        while chunk := src.read(8 * 1024 * 1024):
+                            dst.write(chunk)
+                verify_artifact_file(
+                    target,
+                    sha256=artifact.sha256,
+                    size_bytes=artifact.size_bytes,
+                )
 
         archive = root / "case_export.zip"
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
