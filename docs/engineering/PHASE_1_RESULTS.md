@@ -48,7 +48,7 @@ Full backend suite locally on `main` at `c2a75eb`: **869 passed, 37 skipped, 1 f
 
 **2026-10-17 resource approval ownership revalidation:** resource approval decisions now re-check private resource ownership before mutating approval state or tenant binding. The adoption plus staging/API/dispatch/recovery suite passed **48**; `git diff --check` pending final review. Phase A remains **PARTIAL**.
 
-Signup/invitation/membership authorization and concurrency suites passed **33**. CI #1640 for `6a24d13` is in progress. No Firebase/deployment variables or browser E2E harness are configured in this session; the existing SIRALOOM Chrome window could not be inspected because computer-use app approval timed out. No live or deployed journey is claimed. Phase A remains **PARTIAL**.
+Signup/invitation/membership authorization and concurrency suites passed **33**. CI #1640 for `6a24d13` passed backend, PostgreSQL integration, and frontend. No Firebase/deployment variables or browser E2E harness are configured in this session; the existing SIRALOOM Chrome window could not be inspected because computer-use app approval timed out. No live or deployed journey is claimed. Phase A remains **PARTIAL**.
 
 **Additional review dossier audit (CI verified):** the review service independently assembled pedigree context without checking that included segregation observations, relationship endpoints, and member specimens belonged to the analysis case. It now fails closed on those broken links; three parameterized SQLite regressions passed in CI #1610. This does not replace deployed two-tenant or browser verification.
 
