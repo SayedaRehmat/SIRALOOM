@@ -1,12 +1,21 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `fcd0efe` (`Validate report list case lineage`); GitHub Actions run [#1576](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39019099271) completed successfully. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. Current bundled Python has no pytest/ruff modules. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `14b819d` (`Validate notification and secondary finding lineage`); GitHub Actions run [#1577](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39020385382) is in progress. Run #1576 for `fcd0efe` succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. Current bundled Python has no pytest/ruff modules. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
+
+## 2026-10-17 quality-assay tenant lineage checkpoint
+
+- **Finding:** `GET /analyses/{analysis_id}/quality` authorized the analysis, then serialized `analysis.assay_id` without checking that the referenced assay belonged to the caller's organization. The quality-assessment write endpoint already rejects a foreign assay, but the read endpoint could disclose its profile name/configuration from an inconsistent persisted link.
+- **Correction:** `backend/app/api/v1/quality.py::get_quality` now fails closed with 409 before returning the assay when its organization differs from the principal's.
+- **Regression coverage:** `test_quality_read_rejects_analysis_assay_from_another_tenant` injects the cross-tenant assay relation and asserts no response is produced.
+- **Verification:** Python `compileall` and `git diff --check` are run before commit; local pytest is unavailable (`No module named pytest`). Push-triggered CI is needed to execute the regression.
+- **Status:** in progress; Phase A remains PARTIAL. CI run #1577 is still executing the notification/secondary-finding batch and does not include this additional fix.
+- **Next action:** await CI verification for the two pushed batches while continuing the direct-object and integrated review/signout recovery audit.
 
 ## 2026-10-17 notification and direct-object lineage checkpoint
 

@@ -9,6 +9,7 @@ from backend.app.api.v1 import (
     clinical_followup,
     evidence,
     pedigree,
+    quality,
     reports,
     reanalysis as reanalysis_api,
     variants,
@@ -597,3 +598,30 @@ def test_secondary_finding_list_rejects_variant_outside_analysis(monkeypatch):
 
     assert exc.value.status_code == 404
     assert exc.value.detail == "Variant is not part of this analysis"
+
+
+def test_quality_read_rejects_analysis_assay_from_another_tenant(monkeypatch):
+    from backend.app.infrastructure.db.models import Assay
+
+    organization_id = uuid4()
+    analysis = SimpleNamespace(id=uuid4(), assay_id=uuid4())
+    foreign_assay = SimpleNamespace(organization_id=uuid4())
+    monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
+
+    class _Db:
+        def scalars(self, _query):
+            return []
+
+        def get(self, model, _object_id):
+            assert model is Assay
+            return foreign_assay
+
+    with pytest.raises(HTTPException) as exc:
+        quality.get_quality(
+            analysis_id=analysis.id,
+            db=_Db(),
+            principal=_principal(organization_id),
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Analysis assay reference is outside its organization"

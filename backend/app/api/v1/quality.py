@@ -84,6 +84,8 @@ def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depe
     observations=list(db.scalars(select(TechnicalQCObservation).where(TechnicalQCObservation.analysis_id==analysis.id).order_by(TechnicalQCObservation.created_at)))
     assessments=list(db.scalars(select(QCAssessment).where(QCAssessment.analysis_id==analysis.id).order_by(QCAssessment.created_at.desc())))
     assay=db.get(Assay, analysis.assay_id) if analysis.assay_id else None
+    if assay is not None and assay.organization_id != principal.organization_id:
+        raise HTTPException(409, "Analysis assay reference is outside its organization")
     return {"analysis_id": str(analysis.id), "assay": _assay(assay) if assay else None,
             "observations": [_obs(x) for x in observations],
             "assessments": [{"id":str(x.id),"status":x.status,"gate_status":x.gate_status,"profile_name":x.profile_name,
