@@ -2,13 +2,13 @@
 
 ## Current checkpoint — 2026-10-17
 
-**Latest pushed application baseline:** `main` commit `9d14ef7`. GitHub Actions run [#1583](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39021934019) succeeded across all jobs: backend **878 passed, 24 skipped**, PostgreSQL/Celery integration passed, and frontend behavior tests, production build/container, and Compose validation passed.
+**Latest pushed application baseline:** `main` commit `147062a`. GitHub Actions run [#1584](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39022240716) succeeded across all jobs: backend, PostgreSQL/Celery worker-loss integration, frontend behavior tests, production build/container, and Compose validation. The preceding backend result at `9d14ef7` reported **878 passed, 24 skipped**.
 
 This continuation repaired two real clinical-governance defects: the secondary-finding request schema lacked the `status` field the route dereferenced, and four create routes serialized ORM-generated timestamps before flushing new rows. Regression coverage now exercises confirmation, follow-up, secondary finding, and QC observation creation with a SQLite session and checks their audit snapshots. The status-field regression first caused run #1582 to fail and identified the route defect; the correction passed run #1583.
 
 Additional tenant-lineage fixes in commits `14b819d`, `81a604c`, `a8ccc3f`, and `fcd0efe` cover notification references, secondary-finding variants, quality assay ownership, case-phenotype analysis linkage, and report-to-case linkage; the associated CI runs passed as recorded in the master ledger.
 
-The current follow-up constrains confirmation, follow-up, and secondary-finding state values to their supported sets and adds invalid-state schema tests. This additional delta has frontend behavior/i18n and whitespace checks; its backend CI result will be recorded in the next checkpoint. The unrelated untracked backup artifact remains untouched.
+Commit `147062a` constrains confirmation, follow-up, and secondary-finding state values to supported sets; its full CI run #1584 passed. A subsequent resource-staging contract audit found that arbitrary backend identifiers were accepted and persisted although only organization-local filesystem staging is implemented. Commits `5a5e788` and `32f8e84` add rejection regression cases and enforce the API model/route contract; CI runs #1585 and #1586 are in progress at this checkpoint. The unrelated untracked backup artifact remains untouched.
 
 **Phase 1 remains PARTIAL.** The stage matrix still records all 13 journeys as partial; live Firebase/browser signup, verification, recovery, token/session invalidation, deployed direct cross-tenant checks, a complete reviewer-to-signed-report journey, and integrated failure recovery have not been demonstrated. No clinical validation, regulatory authorization, or production-readiness claim is made.
 
