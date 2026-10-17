@@ -481,6 +481,40 @@ def test_report_list_rejects_case_link_different_from_analysis(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    ("status", "invalid_check", "detail"),
+    [
+        (
+            "DRAFT",
+            "has_valid_draft_artifact",
+            "Report draft artifact does not match its case and analysis",
+        ),
+        (
+            "FINAL",
+            "has_valid_signed_artifact",
+            "Final report is missing a valid linked signed artifact",
+        ),
+    ],
+)
+def test_report_list_rejects_invalid_pdf_lineage(monkeypatch, status, invalid_check, detail):
+    analysis_id, case_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    row = SimpleNamespace(case_id=case_id, status=status)
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(reports, "has_valid_draft_artifact", lambda *_args: invalid_check != "has_valid_draft_artifact")
+    monkeypatch.setattr(reports, "has_valid_signed_artifact", lambda *_args: invalid_check != "has_valid_signed_artifact")
+
+    class _Db:
+        def scalars(self, _query):
+            return [row]
+
+    with pytest.raises(HTTPException) as exc:
+        reports.list_reports(analysis_id, _Db(), _principal(uuid4()))
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == detail
+
+
+@pytest.mark.parametrize(
     "broken_link",
     [
         "case_tenant",
