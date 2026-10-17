@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from pydantic import ValidationError
@@ -126,6 +126,26 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
                 db,
                 principal,
             )
+            completed_follow_up = clinical_followup.update_followup(
+                UUID(follow_up["id"]),
+                clinical_followup.FollowUpInput(
+                    action_type="confirmatory testing", status="COMPLETED"
+                ),
+                db,
+                principal,
+            )
+            assert completed_follow_up["completed_by"] == str(user_id)
+            assert completed_follow_up["completed_at"]
+            reopened_follow_up = clinical_followup.update_followup(
+                UUID(follow_up["id"]),
+                clinical_followup.FollowUpInput(
+                    action_type="confirmatory testing", status="IN_PROGRESS"
+                ),
+                db,
+                principal,
+            )
+            assert reopened_follow_up["completed_by"] is None
+            assert reopened_follow_up["completed_at"] is None
             secondary = clinical_followup.record_secondary_finding(
                 analysis_id,
                 variant_id,
@@ -155,7 +175,7 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             events = db.scalars(
                 select(AuditEvent).where(AuditEvent.analysis_id == analysis_id)
             ).all()
-            assert len(events) == 4
+            assert len(events) == 6
             assert all(event.after_state["created_at"] for event in events)
             assert len(db.scalars(select(ConfirmationRecord)).all()) == 1
             assert len(db.scalars(select(FollowUpPlan)).all()) == 1
