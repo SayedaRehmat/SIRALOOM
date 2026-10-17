@@ -212,6 +212,36 @@ def get_report(report_id: UUID, db: Session = Depends(get_db), principal: Princi
 @router.post("/reports/{report_id}/finalize")
 def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     report = get_accessible_report(report_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
+    if report.status == "FINAL":
+        if not payload.reason.strip():
+            raise HTTPException(status_code=409, detail="Approval reason is required")
+        # The shared accessor already verified the durable signed artifact.
+        # A retry after a lost response must not depend on today's storage
+        # profile: the immutable sign-out has already committed. Preserve the
+        # existing recovery behavior if workflow resumption is still needed.
+        analysis = db.get(Analysis, report.analysis_id)
+        resume_queued = False
+        if analysis is not None and analysis.status in {
+            AnalysisStatus.REQUIRES_REVIEW,
+            AnalysisStatus.QUEUED,
+            AnalysisStatus.RUNNING,
+        }:
+            try:
+                resume_queued = resume_analysis(db, report.analysis_id) is not None
+            except ValueError as exc:
+                db.rollback()
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {
+            "report_id": str(report.id),
+            "version": report.report_version,
+            "status": report.status,
+            "approved_by": str(report.approved_by),
+            "approved_at": report.approved_at.isoformat() if report.approved_at else None,
+            "supersedes_report_id": str(report.supersedes_report_id) if report.supersedes_report_id else None,
+            "workflow_resume_queued": resume_queued,
+        }
+    if report.status != "DRAFT":
+        raise HTTPException(status_code=409, detail=f"Report cannot be finalized from status {report.status}")
     case = db.get(Case, report.case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Report case not found")

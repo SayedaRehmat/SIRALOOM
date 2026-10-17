@@ -92,6 +92,13 @@ def test_repeated_signout_after_analysis_succeeded_is_idempotent(monkeypatch, tm
         lambda report_id, session, _principal: session.get(Report, report_id),
     )
     monkeypatch.setattr(reports_api, "require_role", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        reports_api,
+        "artifact_store_for_organization",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("a committed sign-out retry must not resolve storage")
+        ),
+    )
 
     # Simulate the original request having committed successfully while its
     # response was lost, then the client retrying the same finalize endpoint.

@@ -115,6 +115,12 @@ Earlier Phase A changes and their evidence remain in [`PHASE_A_AUDIT_LEDGER.md`]
 - **Verification:** `git diff --check` passed. Local Python execution remains unavailable; run the focused regression and full relevant suites in CI after this push.
 - **Status:** code change is pending push-triggered CI. Phase A remains PARTIAL pending end-to-end review/signout recovery and live Firebase/browser and deployed two-tenant validation.
 
+### 2026-10-17 repeated signout recovery correction
+
+- **Finding:** the finalize route resolved the current organization storage profile before recognizing a previously committed FINAL report. A lost-response retry could therefore fail during an unrelated storage-profile outage even though the signed report and its durable artifact record were valid.
+- **Correction:** already-final reports return their existing signed state without resolving storage; resumable analysis states still invoke the existing idempotent durable resume path. Non-DRAFT/non-FINAL reports fail before storage resolution. The lost-response regression now injects storage-resolution failure on retry.
+- **Verification:** `git diff --check` passed. Python tests cannot execute locally in this Windows checkout. Awaiting push-triggered CI.
+
 ### Additional sign-in state routing fix
 
 - Changed `backend/app/auth/principal.py`, `backend/app/main.py`, `frontend/lib/session.ts`, `frontend/lib/session-destination.mjs`, `frontend/components/auth-form.tsx`, and English/Arabic auth messages. Added a backend regression for the unprovisioned marker and frontend behavior tests.
