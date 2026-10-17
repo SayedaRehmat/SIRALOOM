@@ -454,3 +454,9 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Correction:** each requested variant is checked with the analysis membership guard before observation reads, and request validation caps the list at 500 IDs.
 - **Regression / verification:** added tests proving a nonmember is rejected before population rows are read and a 501-item list is rejected. Population route, tenant/direct-object, audit-authorization, and QC-lineage suites passed **81**; `git diff --check` passed.
 - **Status / next:** committed and pushed to `main` as `c03a835`; focused tests passed locally and CI has not been confirmed. Continue remaining route-by-route audit and integrated reviewer-to-signed-report/recovery validation. Phase A remains PARTIAL pending live browser/Firebase and deployed two-tenant evidence.
+
+### 2026-10-17 integrated reviewer-to-signout recovery
+
+- **Coverage added:** one SQLite journey transitions a classification into active review, records independent approval, binds final reportability to that exact approved classification, builds the report snapshot, injects signed-artifact persistence failure and verifies the report remains DRAFT, retries successfully, verifies signed artifact integrity and audit events, then repeats signout and verifies idempotent artifact identity.
+- **Verification:** the combined authorization, tenant/direct-object, population, QC, clinical-governance, review, report/signout, recovery, reportability, reanalysis, and integrated workflow suite passed **179** with one dependency deprecation warning. This is local service/database coverage with deterministic artifact persistence; it does not exercise browser/Firebase or real object storage. `git diff --check` passed.
+- **Status / next:** commit/push the integrated regression; continue remaining direct-object paths and obtain CI plus live/deployed evidence. Phase A remains PARTIAL.
