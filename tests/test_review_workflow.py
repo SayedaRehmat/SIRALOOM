@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Assay, Case, AnalysisPartition, Classification, Evidence, Organization, ReviewAction, User, Variant, WorkflowStep
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Assay, Case, AnalysisPartition, Classification, Evidence, Organization, PedigreeMember, PedigreeRelationship, ReviewAction, SegregationObservation, Specimen, User, Variant, WorkflowStep
 from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, propose_manual_classification, review_criterion, request_more_evidence
 from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
 
@@ -284,6 +284,58 @@ def test_review_bundle_rejects_assay_from_another_organization():
     db.commit()
 
     with pytest.raises(ReviewError, match="assay reference is outside its organization"):
+        get_review_bundle(db, analysis_id=analysis.id, variant_id=variant.id)
+
+
+@pytest.mark.parametrize("broken_link", ["observation_member", "relationship_endpoint", "specimen"])
+def test_review_bundle_rejects_pedigree_links_outside_analysis_case(broken_link):
+    db, _reviewer, analyst, analysis, variant, *_ = seed()
+    case = db.get(Case, analysis.case_id)
+    foreign_case = Case(
+        id=uuid4(), organization_id=case.organization_id,
+        case_identifier=f"FOREIGN-{uuid4()}", status="ACTIVE",
+        clinical_context={}, language="en", created_by=analyst.id,
+    )
+    foreign_member = PedigreeMember(
+        id=uuid4(), case_id=foreign_case.id, member_identifier="other-case-member",
+        affected_status="AFFECTED", is_proband=False, sampled=True,
+    )
+    db.add_all([foreign_case, foreign_member])
+    if broken_link == "observation_member":
+        db.add(SegregationObservation(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            pedigree_member_id=foreign_member.id, genotype="0/1",
+        ))
+    elif broken_link == "relationship_endpoint":
+        local_member = PedigreeMember(
+            id=uuid4(), case_id=case.id, member_identifier="local-member",
+            affected_status="UNKNOWN", is_proband=True, sampled=True,
+        )
+        db.add_all([
+            local_member,
+            PedigreeRelationship(
+                id=uuid4(), case_id=case.id, parent_member_id=foreign_member.id,
+                child_member_id=local_member.id, relationship_type="PARENT_CHILD",
+            ),
+        ])
+    else:
+        foreign_specimen = Specimen(
+            id=uuid4(), case_id=foreign_case.id, specimen_identifier="other-case-specimen",
+        )
+        local_member = PedigreeMember(
+            id=uuid4(), case_id=case.id, member_identifier="local-member",
+            affected_status="UNKNOWN", is_proband=True, sampled=True,
+            specimen_id=foreign_specimen.id,
+        )
+        db.add_all([foreign_specimen, local_member])
+    db.commit()
+
+    expected_message = {
+        "observation_member": "Segregation observation member does not belong to the analysis case",
+        "relationship_endpoint": "Pedigree relationship endpoints do not belong to the analysis case",
+        "specimen": "Pedigree member specimen does not belong to the analysis case",
+    }[broken_link]
+    with pytest.raises(ReviewError, match=expected_message):
         get_review_bundle(db, analysis_id=analysis.id, variant_id=variant.id)
 
 def test_start_review_creates_auditable_state_transition():

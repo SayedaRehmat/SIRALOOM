@@ -14,6 +14,8 @@ Commit `147062a` constrains governance states; CI #1584 passed. Commits `5a5e788
 
 **Current Phase A checkpoint:** report read access now requires a durable draft artifact; report lists and direct reads validate draft and signed PDF lineage. Lost-response signout retries no longer depend on today's storage profile, while first-time signout keeps the original storage/transaction recovery contract. Both draft creation audit-flush and signout finalization failures have deterministic compensation coverage. Review context rejects a case whose linked assay belongs to a different organization. These code changes pass CI #1608, but live Firebase/browser journeys and deployed two-tenant direct API verification remain open prerequisites for Phase A completion.
 
+**Additional review dossier audit (local, pending CI):** the review service independently assembled pedigree context without checking that included segregation observations, relationship endpoints, and member specimens belonged to the analysis case. It now fails closed on those broken links, with parameterized SQLite regressions for all three cases. This does not replace deployed two-tenant or browser verification.
+
 ### 2026-10-17 direct-object and signout recovery continuation
 
 - **Direct-object finding:** `get_accessible_report` validated the report's tenant, case-analysis lineage, and final signed artifact but did not validate a non-null draft `artifact_id`. The report could expose a stale or cross-case PDF reference.

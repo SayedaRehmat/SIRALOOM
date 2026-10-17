@@ -28,6 +28,7 @@ from backend.app.infrastructure.db.models import (
     ReportabilityDecision,
     ReviewAction,
     SegregationObservation,
+    Specimen,
     TechnicalQCObservation,
     User,
     Variant,
@@ -173,8 +174,28 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
     pedigree = clinical_context.get("pedigree") if isinstance(clinical_context.get("pedigree"), dict) else {}
     pedigree_members = list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id == analysis.case_id).order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)))
     pedigree_relationships = list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id == analysis.case_id).order_by(PedigreeRelationship.created_at)))
+    member_by_id = {member.id: member for member in pedigree_members}
+    if any(
+        relationship.parent_member_id not in member_by_id
+        or relationship.child_member_id not in member_by_id
+        or relationship.parent_member_id == relationship.child_member_id
+        for relationship in pedigree_relationships
+    ):
+        raise ReviewError("Pedigree relationship endpoints do not belong to the analysis case")
+    specimen_ids = {member.specimen_id for member in pedigree_members if member.specimen_id is not None}
+    if specimen_ids:
+        specimens = {
+            specimen.id: specimen
+            for specimen in db.scalars(select(Specimen).where(Specimen.id.in_(specimen_ids)))
+        }
+        if any(
+            specimen_id not in specimens or specimens[specimen_id].case_id != analysis.case_id
+            for specimen_id in specimen_ids
+        ):
+            raise ReviewError("Pedigree member specimen does not belong to the analysis case")
     segregation_rows = list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id == analysis_id, SegregationObservation.variant_id == variant_id).order_by(SegregationObservation.created_at)))
-    member_by_id = {m.id: m for m in pedigree_members}
+    if any(row.pedigree_member_id not in member_by_id for row in segregation_rows):
+        raise ReviewError("Segregation observation member does not belong to the analysis case")
     inheritance_assessments = list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id == analysis_id, InheritanceAssessment.variant_id == variant_id).order_by(InheritanceAssessment.created_at.desc())))
     pedigree = {**pedigree, "members": [{"id": str(m.id), "member_identifier": m.member_identifier, "relationship_to_proband": m.relationship_to_proband, "sex": m.sex, "affected_status": m.affected_status, "is_proband": m.is_proband, "sampled": m.sampled, "specimen_id": str(m.specimen_id) if m.specimen_id else None, "metadata": m.metadata_json or {}} for m in pedigree_members], "relationships": [{"id": str(r.id), "parent_member_id": str(r.parent_member_id), "child_member_id": str(r.child_member_id), "relationship_type": r.relationship_type, "metadata": r.metadata_json or {}} for r in pedigree_relationships]}
     inheritance = {**inheritance, "assessments": [{"id": str(a.id), "model": a.model, "status": a.status, "score": a.score, "rationale": a.rationale, "fingerprint": a.observation_fingerprint, "reviewer_note": a.reviewer_note, "created_at": a.created_at.isoformat()} for a in inheritance_assessments]}
