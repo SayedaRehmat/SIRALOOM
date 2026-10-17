@@ -40,6 +40,8 @@ Commit `147062a` constrains governance states; CI #1584 passed. Commits `5a5e788
 
 **2026-10-17 QC artifact lineage guard:** the quality endpoint and review dossier now validate any QC observation artifact against the analysis case and analysis identity before returning dossier data. QC lineage, clinical-governance, and reviewer workflow/queue tests passed **40**; Python syntax compilation and `git diff --check` passed. Committed and pushed to `main` as `ce80f1d`; CI status has not been confirmed. Phase A remains **PARTIAL** pending live and deployed workflow checks.
 
+Full backend suite on `main` at `c2a75eb`: **869 passed, 37 skipped, 1 failed**. The sole failure is the PDF renderer test because the isolated local Python runtime lacks the declared WeasyPrint dependency. Report rendering remains unverified by this local run; Phase A remains **PARTIAL**.
+
 **Additional review dossier audit (CI verified):** the review service independently assembled pedigree context without checking that included segregation observations, relationship endpoints, and member specimens belonged to the analysis case. It now fails closed on those broken links; three parameterized SQLite regressions passed in CI #1610. This does not replace deployed two-tenant or browser verification.
 
 ### 2026-10-17 direct-object and signout recovery continuation
