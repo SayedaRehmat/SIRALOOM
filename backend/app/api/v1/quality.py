@@ -9,6 +9,7 @@ from backend.app.auth.authorization import (
     READ_ROLES,
     REVIEW_ROLES,
     get_accessible_analysis,
+    require_analysis_artifact,
     require_role,
 )
 from backend.app.auth.principal import Principal, get_current_principal
@@ -85,6 +86,9 @@ def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depe
     require_role(principal, READ_ROLES)
     observations=list(db.scalars(select(TechnicalQCObservation).where(TechnicalQCObservation.analysis_id==analysis.id).order_by(TechnicalQCObservation.created_at)))
     assessments=list(db.scalars(select(QCAssessment).where(QCAssessment.analysis_id==analysis.id).order_by(QCAssessment.created_at.desc())))
+    for observation in observations:
+        if observation.artifact_id is not None:
+            require_analysis_artifact(analysis, observation.artifact_id, db)
     assay=db.get(Assay, analysis.assay_id) if analysis.assay_id else None
     if assay is not None and assay.organization_id != principal.organization_id:
         raise HTTPException(409, "Analysis assay reference is outside its organization")

@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.authorization import get_analysis_variant
+from backend.app.auth.authorization import get_analysis_variant, require_analysis_artifact
 from backend.app.domain.enums import ReviewStatus, StepStatus
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
@@ -148,6 +148,12 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
     qc_observations = list(db.scalars(
         select(TechnicalQCObservation).where(TechnicalQCObservation.analysis_id == analysis_id).order_by(TechnicalQCObservation.created_at)
     ))
+    for observation in qc_observations:
+        if observation.artifact_id is not None:
+            try:
+                require_analysis_artifact(analysis, observation.artifact_id, db)
+            except HTTPException as exc:
+                raise ReviewError("QC observation artifact does not match its analysis") from exc
     qc_assessments = list(db.scalars(
         select(QCAssessment).where(QCAssessment.analysis_id == analysis_id).order_by(QCAssessment.created_at.desc())
     ))

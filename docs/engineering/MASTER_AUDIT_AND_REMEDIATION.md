@@ -439,3 +439,10 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Regression:** extended the SQLite route-persistence test to complete then reopen one plan and assert completion fields are assigned and subsequently cleared, while both transitions are audited.
 - **Verification:** clinical governance plus tenant object authorization tests passed **42**; reviewer, report finalization/signout, recovery, reportability, and reanalysis API suites passed **89**; direct-object, tenant-boundary, and mutation-authorization suites passed **70**. `git diff --check` passed. These are focused SQLite/local tests; PostgreSQL concurrency and browser/deployed behavior are not covered by these runs.
 - **Status / next:** continue remaining direct-object review and integrated live reviewer-to-signed-report/failure recovery. Phase A remains PARTIAL; external Firebase/browser and deployed two-tenant evidence remain outstanding.
+
+### 2026-10-17 QC artifact lineage guard
+
+- **Finding:** quality and reviewer dossier reads returned persisted technical QC observations without checking whether a referenced artifact belonged to the same case/analysis.
+- **Correction:** added a shared analysis-artifact lineage guard and applied it to both quality reads and reviewer bundle construction; inconsistent references fail closed with a conflict.
+- **Regression / verification:** new cases cover missing, cross-case, and cross-analysis artifact links and the quality endpoint's fail-closed response. QC lineage, clinical-governance, and review workflow/queue suites passed **40**; `git diff --check` passed.
+- **Status / next:** commit/push this correction, then continue route-by-route direct-object review and reviewer-to-signed-report recovery. Phase A remains PARTIAL; live browser/Firebase and deployed two-tenant verification remain unexecuted.

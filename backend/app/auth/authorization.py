@@ -168,6 +168,20 @@ def get_accessible_artifact(artifact_id: UUID, db: Session = Depends(get_db), pr
             raise HTTPException(status_code=404, detail="Artifact not found")
     return artifact
 
+def require_analysis_artifact(analysis: Analysis, artifact_id: UUID, db: Session) -> Artifact:
+    """Require an artifact reference to stay inside its owning analysis context."""
+    artifact = db.get(Artifact, artifact_id)
+    if (
+        artifact is None
+        or artifact.case_id != analysis.case_id
+        or (artifact.analysis_id is not None and artifact.analysis_id != analysis.id)
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Analysis artifact reference does not match its case and analysis",
+        )
+    return artifact
+
 def get_accessible_report(report_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)) -> Report:
     report = db.get(Report, report_id)
     if not report: raise HTTPException(status_code=404, detail="Report not found")
