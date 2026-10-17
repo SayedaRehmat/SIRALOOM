@@ -1,6 +1,12 @@
 # SIRALOOM Phase 1 Results
 
-## Current checkpoint — 2026-10-17 continuation
+## Latest main checkpoint — 2026-10-17
+
+Current pushed baseline: `main` at `fb21c38`. Full local backend suite: **905 passed, 37 skipped, 1 failed**; the only failure is WeasyPrint’s inability to load Windows-native `libgobject-2.0-0`. Focused worker/tenant/reportability/report-PDF authorization set: **76 passed**; reportability, human-gate, signout, and recovery set: **14 passed**. Frontend session/workspace suite: **20 passed**; localization guard: **PASS**. GitHub Actions run `39028090674` passed backend, PostgreSQL/Celery integration, frontend behavior/build/container, and Compose validation.
+
+Phase A remains **PARTIAL**, not complete. Browser-based Firebase signup/verification/password recovery/signout, deployed two-tenant object/storage boundary checks, and a complete live reviewer-to-signed-report and failure-recovery journey have not been run. The local browser surface is disabled and no deployed Firebase/laboratory test environment was supplied in this session. No clinical validation, regulatory authorization, or production-readiness claim is supported. Preserve the unrelated untracked backup artifact.
+
+## Historical checkpoint — before this continuation
 
 Inspected on `main` at `c724bdb`; tracked files were clean before this documentation update, and the unrelated untracked backup artifact was preserved. Four recently pushed backend fixes have regression tests but no observable CI result in this environment: report PDF ownership checks (`96ab9db`), report/analysis/PDF lineage validation in case exports (`127dfa1`), notification read lineage and timestamp idempotency (`b2a31ee`), and stale classification rejection at the reportability human gate (`4eedd33`). Local Python/pytest is unavailable because only the WindowsApps Python stub is present and no repository virtual environment exists.
 
@@ -16,7 +22,7 @@ Logout source review: `AppShell.handleSignOut` calls Firebase client `signOut`; 
 
 Latest reportability follow-up: reportability finalization previously returned an already-FINAL decision before checking if a newer classification had made it stale, and the list endpoint did not verify decision-to-classification lineage. The service now checks current decision/latest approved classification before idempotent success; list reads fail closed on stale lineage. Regression tests were added for stale FINAL retry and listing. The focused Python command could not start because the WindowsApps Python executable is inaccessible, and no recent CI result is available; this code is not yet verified. Phase 1 remains **PARTIAL**.
 
-## Current checkpoint — 2026-10-17
+## Prior implementation checkpoint — 2026-10-17
 
 **Latest pushed application baseline:** `main` commit `0e2e372`. GitHub Actions run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) passed all jobs: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose checks passed. This verifies the report artifact guards and fixtures, storage-independent retry of an already signed report, reviewer assay tenant-lineage rejection, reviewer pedigree-lineage rejection, and compensation after draft-report audit flush failure.
 
