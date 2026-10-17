@@ -73,7 +73,7 @@ export default function ReportsPage() {
     if (!requestedAnalysisId) {
       setReports([]); setDecisions([]); setSelected(null); setLoadedAnalysisId("");
       setLoading(false);
-      setMessage(t("reports.messageAnalysisRequired")); return;
+      setMessage(t("reports.messageAnalysisRequired")); return false;
     }
     setLoadedAnalysisId("");
     setLoading(true); setMessage("");
@@ -83,7 +83,8 @@ export default function ReportsPage() {
       setReports(r.items ?? []); setDecisions(d.items ?? []);
       setSelected((cur) => cur && (d.items ?? []).some((x: Decision) => x.decision_id === cur.decision_id) ? cur : (d.items?.[0] ?? null));
       setLoadedAnalysisId(requestedAnalysisId);
-    } catch (e) { if (request === loadRequest.current && analysisIdRef.current === requestedAnalysisId) setMessage(e instanceof Error ? e.message : t("reports.messageLoad")); }
+      return true;
+    } catch (e) { if (request === loadRequest.current && analysisIdRef.current === requestedAnalysisId) setMessage(e instanceof Error ? e.message : t("reports.messageLoad")); return false; }
     finally { if (request === loadRequest.current && analysisIdRef.current === requestedAnalysisId) setLoading(false); }
   };
 
@@ -98,7 +99,7 @@ export default function ReportsPage() {
   }, [analysisId]);
 
   const evaluate = async () => {
-    try { await apiFetch(`/analyses/${analysisId}/reportability/evaluate`, { method: "POST" }); await load(); setMessage(t("reports.messageEvaluate")); }
+    try { await apiFetch(`/analyses/${analysisId}/reportability/evaluate`, { method: "POST" }); setMessage(await load() ? t("reports.messageEvaluate") : t("reports.messageRefreshFailed")); }
     catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorEvaluate")); }
   };
 
@@ -106,18 +107,18 @@ export default function ReportsPage() {
     if (!analysisReady || !selected || !reason.trim()) { setMessage(t("reports.messageReason")); return; }
     try {
       await apiFetch(`/reportability/${selected.decision_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ disposition, expected_version: selected.review_version, reason: reason.trim() }) });
-      setReason(""); await load(); setMessage(t("reports.messageFinalized"));
+      setReason(""); setMessage(await load() ? t("reports.messageFinalized") : t("reports.messageRefreshFailed"));
     } catch (e) { setMessage(e instanceof Error ? e.message : "Unable to finalize reportability."); }
   };
 
   const generate = async () => {
-    try { await apiFetch(`/analyses/${analysisId}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ report_type: reportType, language: language === "ar" ? "ar" : "en", include_full_evidence: reportType === "ANALYTICAL" }) }); await load(); setMessage(t("reports.messageGenerate")); }
+    try { await apiFetch(`/analyses/${analysisId}/reports`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ report_type: reportType, language: language === "ar" ? "ar" : "en", include_full_evidence: reportType === "ANALYTICAL" }) }); setMessage(await load() ? t("reports.messageGenerate") : t("reports.messageRefreshFailed")); }
     catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorGenerate")); }
   };
 
   const finalize = async (report: Report) => {
     if (!reason.trim()) { setMessage(t("reports.messageSignoutReason")); return; }
-    try { await apiFetch(`/reports/${report.report_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_version: 0, reason: reason.trim() }) }); setReason(""); await load(); setMessage(t("reports.messageFinalize")); }
+    try { await apiFetch(`/reports/${report.report_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_version: 0, reason: reason.trim() }) }); setReason(""); setMessage(await load() ? t("reports.messageFinalize") : t("reports.messageRefreshFailed")); }
     catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorFinalize")); }
   };
 

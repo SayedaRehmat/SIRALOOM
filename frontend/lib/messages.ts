@@ -792,6 +792,7 @@ export type TranslationKey =
   | "reports.messageErrorEvaluate"
   | "reports.messageErrorGenerate"
   | "reports.messageErrorFinalize"
+  | "reports.messageRefreshFailed"
   | "review.all"
   | "review.loading"
   | "review.refreshQueue"
@@ -910,6 +911,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.messageErrorEvaluate": "Unable to evaluate reportability.",
     "reports.messageErrorGenerate": "Unable to generate report.",
     "reports.messageErrorFinalize": "Report finalization failed.",
+    "reports.messageRefreshFailed": "The action succeeded, but the latest status could not be loaded. Refresh to confirm it.",
     "cases.refresh": "Refresh cases",
     "cases.orgHelp": "The case is created inside your authenticated organization. Organization ownership is determined by the server.",
     "cases.specimenHelp": "A variant file must be associated with a specimen before it can enter the Phase 1 workflow.",
@@ -1730,6 +1732,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.messageErrorEvaluate": "تعذر تقييم قابلية الإبلاغ.",
     "reports.messageErrorGenerate": "تعذر إنشاء التقرير.",
     "reports.messageErrorFinalize": "فشل اعتماد التقرير النهائي.",
+    "reports.messageRefreshFailed": "نجح الإجراء، لكن تعذر تحميل الحالة الأحدث. حدّث الصفحة للتحقق.",
     "cases.refresh": "تحديث الحالات",
     "cases.orgHelp": "تُنشأ الحالة داخل مؤسستك الموثقة. ويحدد الخادم ملكية المؤسسة.",
     "cases.specimenHelp": "يجب ربط ملف المتغير بعينة قبل أن يدخل سير عمل المرحلة 1.",
