@@ -73,6 +73,8 @@ def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depend
     row=TechnicalQCObservation(id=uuid4(), analysis_id=analysis.id, metric_name=body.metric_name.strip(), metric_value=body.metric_value,
         metric_unit=body.metric_unit, source=body.source, source_version=body.source_version, metadata_json=body.metadata)
     db.add(row)
+    # _obs includes the insert-generated created_at value in the audit snapshot.
+    db.flush()
     AuditService(db).record(event_type="TECHNICAL_QC_OBSERVATION_RECORDED", case_id=analysis.case_id, analysis_id=analysis.id,
         actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="TECHNICAL_QC", subject_id=str(row.id), operation="CREATE", after_state=_obs(row))
     db.commit(); return _obs(row)

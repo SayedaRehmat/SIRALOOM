@@ -51,6 +51,7 @@ class SecondaryFindingInput(BaseModel):
     eligibility: str = Field(default="REVIEW", max_length=50)
     consent_status: str = Field(default="NOT_DOCUMENTED", max_length=50)
     disposition: str = Field(default="REVIEW", max_length=50)
+    status: str = Field(default="DRAFT", max_length=50)
     rationale: str | None = Field(default=None, max_length=5000)
     gene_disease_context: dict = Field(default_factory=dict)
 

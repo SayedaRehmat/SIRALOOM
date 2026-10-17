@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from backend.app.api.v1 import clinical_followup
+from backend.app.api.v1 import clinical_followup, quality
 from backend.app.auth.principal import Principal
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     FollowUpPlan,
     Organization,
     SecondaryFindingDecision,
+    TechnicalQCObservation,
     User,
     Variant,
 )
@@ -102,6 +103,12 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
                 lambda _analysis, requested_id, session: session.get(Variant, requested_id),
             )
             monkeypatch.setattr(clinical_followup, "require_role", lambda *_args: None)
+            monkeypatch.setattr(
+                quality,
+                "get_accessible_analysis",
+                lambda requested_id, session, _principal: session.get(Analysis, requested_id),
+            )
+            monkeypatch.setattr(quality, "require_role", lambda *_args: None)
 
             confirmation = clinical_followup.record_confirmation(
                 analysis_id,
@@ -123,6 +130,16 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
                 clinical_followup.SecondaryFindingInput(
                     policy_name="LAB_POLICY",
                     policy_version="1",
+                    status="DRAFT",
+                ),
+                db,
+                principal,
+            )
+            qc_observation = quality.record_qc_observation(
+                analysis_id,
+                quality.QCObservationInput(
+                    metric_name="coverage_mean",
+                    metric_value=42.0,
                 ),
                 db,
                 principal,
@@ -131,14 +148,17 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             assert confirmation["created_at"]
             assert follow_up["created_at"]
             assert secondary["created_at"]
+            assert secondary["status"] == "DRAFT"
+            assert qc_observation["created_at"]
             events = db.scalars(
                 select(AuditEvent).where(AuditEvent.analysis_id == analysis_id)
             ).all()
-            assert len(events) == 3
+            assert len(events) == 4
             assert all(event.after_state["created_at"] for event in events)
             assert len(db.scalars(select(ConfirmationRecord)).all()) == 1
             assert len(db.scalars(select(FollowUpPlan)).all()) == 1
             assert len(db.scalars(select(SecondaryFindingDecision)).all()) == 1
+            assert len(db.scalars(select(TechnicalQCObservation)).all()) == 1
     finally:
         Base.metadata.drop_all(engine)
         engine.dispose()
