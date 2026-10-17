@@ -90,6 +90,7 @@ def _validate_notification_lineage(row: Notification, db: Session) -> None:
                 status_code=409,
                 detail="Notification candidate does not match its organization and case context",
             )
+        _validate_candidate_event_lineage(candidate, db)
 
     if row.notification_type == "RESOURCE_RELEASE_DISCOVERED":
         metadata = row.metadata_json if isinstance(row.metadata_json, dict) else {}
@@ -121,6 +122,32 @@ def _validate_notification_lineage(row: Notification, db: Session) -> None:
             raise HTTPException(
                 status_code=409,
                 detail="Resource notification does not match its discovered release",
+            )
+
+
+def _validate_candidate_event_lineage(candidate: ReanalysisCandidate, db: Session) -> None:
+    """Fail closed when a candidate's optional change event crosses governance scope."""
+    if candidate.change_event_id is None:
+        return
+    event = db.get(ReanalysisChangeEvent, candidate.change_event_id)
+    if (
+        event is None
+        or event.organization_id != candidate.organization_id
+        or event.trigger_type != candidate.trigger_type
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Reanalysis candidate does not match its change event",
+        )
+    if event.resource_id is not None:
+        resource = db.get(Resource, event.resource_id)
+        if (
+            resource is None
+            or resource.organization_id not in {None, candidate.organization_id}
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Reanalysis change event resource does not belong to its organization",
             )
 
 
@@ -199,6 +226,8 @@ def list_candidates(
         .order_by(ReanalysisCandidate.created_at.desc())
         .limit(100)
     ).all()
+    for row in rows:
+        _validate_candidate_event_lineage(row, db)
     return [{
         "candidate_id": str(row.id),
         "case_id": str(row.case_id),
@@ -337,6 +366,7 @@ def execute_reanalysis_candidate(
     candidate = db.get(ReanalysisCandidate, candidate_id)
     if not candidate or candidate.organization_id != principal.organization_id:
         raise HTTPException(status_code=404, detail="Reanalysis candidate not found")
+    _validate_candidate_event_lineage(candidate, db)
     if candidate.status not in {"PENDING", "STARTED"}:
         raise HTTPException(status_code=409, detail="This reanalysis candidate has already been completed.")
 
