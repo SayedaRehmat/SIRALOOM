@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `d2267fe` (`Scope reanalysis candidate list lineage`); GitHub Actions run [#1571](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018582985) is in progress. Resource qualification lineage run #1570 and reanalysis execution lineage run #1569 succeeded. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `7e37b12` (`Record Phase A journey regression evidence`); GitHub Actions run [#1572](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018665232) is in progress. Runs #1570 and #1571 succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -60,6 +60,14 @@
 - **CI:** resource qualification ownership commit `7f688b1` passed run #1570; candidate-list commit `d2267fe` run #1571 remains in progress.
 - **Status:** source/test verification for these contracts passed; Phase A remains PARTIAL because no configured Firebase identity, interactive browser E2E, deployed two-tenant lab, or full report signout journey has been exercised.
 - **Next action:** continue notification lineage and direct object route review; run live auth/tenant journey only when configured test identity and deployment are available, then exercise reviewer-to-authorized-report signout and recovery against the integrated stack.
+
+## 2026-10-17 full-suite verification checkpoint
+
+- **Backend:** full `pytest tests -q`: 805 passed, 37 skipped, 1 failed in 47.99s. The sole failure is `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`: this Windows runtime cannot load native `libgobject-2.0-0`, required by WeasyPrint. PDF render therefore remains unverified locally; CI/container or supported Linux execution evidence is required.
+- **Frontend:** `npm run test:session`: 20 passed. `npm run build` passed the i18n architecture guard, then could not run `next build` because the `next` executable is absent from this checkout. No production build claim is made locally.
+- **CI:** candidate-list commit `d2267fe` passed run #1571; ledger-only commit `7e37b12` run #1572 is in progress.
+- **Status:** suite evidence recorded; these results do not establish browser E2E, PDF correctness, clinical validation, or Phase A completion.
+- **Next action:** continue notification and remaining API lineage audit; use the CI production build and PDF-render-capable environment as actual evidence when available, then perform integrated review/signout and failure recovery journeys.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.

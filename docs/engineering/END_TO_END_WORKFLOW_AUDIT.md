@@ -1,6 +1,6 @@
 # End-to-End Workflow Audit Matrix
 
-**Current committed code baseline:** `main` commit `d2267fe`, 2026-10-17; GitHub Actions run [#1571](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018582985) is in progress. Run #1570 passed for resource qualification ownership. The local backend account/invitation/membership, signout/report, and recovery matrix suites passed 58 tests; frontend session/signout/workspace tests passed 13. This does not constitute live Firebase/browser E2E or deployed tenant isolation. Phase A remains PARTIAL.
+**Current committed code baseline:** `main` commit `7e37b12`, 2026-10-17; GitHub Actions run [#1572](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018665232) is in progress. CI #1570–#1571 passed. Full local backend: 805 passed, 37 skipped, 1 failed due to unavailable Windows WeasyPrint native `libgobject-2.0-0`; full frontend session tests: 20 passed; local production build could not invoke absent `next` binary after the i18n guard passed. No live Firebase/browser E2E or deployed tenant isolation. Phase A remains PARTIAL.
 **Status convention:** PASS requires verified implementation and relevant executed tests. PARTIAL means source/tests exist but the complete user journey or required boundary is not proven. NOT RUN means no execution evidence. BLOCKED identifies an unavailable dependency. This matrix is a live audit record, not a readiness claim.
 
 | Stage / user action | Frontend route or component | API / backend path | Durable effects and guards observed | Relevant test evidence | Status / remaining verification |
@@ -22,10 +22,11 @@
 ## Cross-cutting checks
 
 - API route authentication inventory exists in `tests/test_api_route_authentication_coverage.py`; object-level authorization tests cover shared accessors. These do not by themselves prove all route-specific object ownership or background worker query scope.
-- Backend CI workflow is `.github/workflows/ci.yml`: SQLite-backed full backend tests plus separate PostgreSQL/Redis integration job; frontend behavior tests, localization guard, production build/container and Compose config checks. Run #1542 for `a270237` passed all three jobs; current uncommitted workspace changes are not included yet.
+- Backend CI workflow is `.github/workflows/ci.yml`: SQLite-backed full backend tests plus separate PostgreSQL/Redis integration job; frontend behavior tests, localization guard, production build/container and Compose config checks. Latest run #1571 passed all jobs for `d2267fe`; run #1572 for the ledger-only commit is in progress.
 - GitHub Actions run #1533 succeeded for backend, PostgreSQL/Celery integration and frontend. Local Windows full suite had 807 passed, 37 skipped and one unrelated runtime dependency failure in WeasyPrint (`libgobject-2.0-0`).
 - At baseline `dc3be3e`, full local backend suite reported 816 passed, 37 skipped, and 1 PDF-render test failure because WeasyPrint could not load native `libgobject-2.0-0` on this Windows runtime. GitHub Actions run #1541 for `12ed477` subsequently passed all three jobs; its frontend production build and PostgreSQL/Celery integration passed.
 - No full browser E2E harness is configured in `frontend/package.json`; only the Node safe-redirect session helper test command is exposed. A production build is not an end-to-end workflow test.
+- Full local suite on 2026-10-17: 805 passed, 37 skipped, 1 failed because WeasyPrint could not load native Windows `libgobject-2.0-0`; frontend `npm run test:session` passed 20, while `npm run build` stopped after i18n validation because `next` is not installed in this checkout. CI/container execution is required to cover these environment-dependent checks.
 
 ## Acceptance summary
 
