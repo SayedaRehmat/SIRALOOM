@@ -862,14 +862,19 @@ export default function Home() {
   const finalize = async () => {
     if (!reportId) return;
     try {
-      await apiFetch(`/reports/${reportId}/finalize`, {
+      const finalized = await apiFetch(`/reports/${reportId}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ expected_version: 0, reason: reviewReason || t("workspace.finalReportApproved") }),
       });
-      const next = await apiFetch(`/reports/${reportId}`);
-      setReport(next);
-      setMessage(t("workspace.reportFinalized"));
+      setReport((current: any) => current ? { ...current, status: finalized.status ?? "FINAL", approved_at: finalized.approved_at ?? current.approved_at } : current);
+      try {
+        const next = await apiFetch(`/reports/${reportId}`);
+        setReport(next);
+        setMessage(t("workspace.reportFinalized"));
+      } catch {
+        setMessage(t("workspace.reportRefreshFailed"));
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.reportFinalizationFailed"));
     }

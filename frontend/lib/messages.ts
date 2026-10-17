@@ -481,6 +481,7 @@ export type TranslationKey =
   | "workspace.finalReportApproved"
   | "workspace.reportFinalized"
   | "workspace.reportFinalizationFailed"
+  | "workspace.reportRefreshFailed"
   | "workspace.exportQueued"
   | "workspace.exportFailed"
   | "workspace.backendReconnectingPrefix"
@@ -1475,6 +1476,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.finalReportApproved": "Final report approved by reviewer.",
     "workspace.reportFinalized": "Report finalized.",
     "workspace.reportFinalizationFailed": "Report finalization failed.",
+    "workspace.reportRefreshFailed": "Report sign-out succeeded, but the latest report status could not be loaded. Refresh to confirm it.",
     "workspace.exportQueued": "Complete case-history export queued. It is independent of the browser session.",
     "workspace.exportFailed": "Case export failed.",
     "workspace.backendReconnectingPrefix": "Backend reconnecting: ",
@@ -2296,6 +2298,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.finalReportApproved": "اعتمد المراجع التقرير النهائي.",
     "workspace.reportFinalized": "تم اعتماد التقرير نهائيًا.",
     "workspace.reportFinalizationFailed": "فشل اعتماد التقرير نهائيًا.",
+    "workspace.reportRefreshFailed": "تم اعتماد التقرير نهائيًا، لكن تعذر تحميل الحالة الأحدث. حدّث الصفحة للتحقق.",
     "workspace.exportQueued": "تم وضع تصدير سجل الحالة الكامل في قائمة الانتظار. وهو مستقل عن جلسة المتصفح.",
     "workspace.exportFailed": "فشل تصدير الحالة.",
     "workspace.backendReconnectingPrefix": "جارٍ إعادة اتصال الخادم الخلفي: ",
