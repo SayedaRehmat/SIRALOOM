@@ -151,6 +151,8 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         select(QCAssessment).where(QCAssessment.analysis_id == analysis_id).order_by(QCAssessment.created_at.desc())
     ))
     assay = db.get(Assay, analysis.assay_id) if analysis.assay_id else None
+    if assay is not None and (case is None or assay.organization_id != case.organization_id):
+        raise ReviewError("Analysis assay reference is outside its organization")
     reportability = db.scalar(
         select(ReportabilityDecision).where(ReportabilityDecision.analysis_id == analysis_id, ReportabilityDecision.variant_id == variant_id).order_by(ReportabilityDecision.version.desc())
     )

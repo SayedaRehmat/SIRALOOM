@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Case, AnalysisPartition, Classification, Evidence, Organization, ReviewAction, User, Variant, WorkflowStep
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Assay, Case, AnalysisPartition, Classification, Evidence, Organization, ReviewAction, User, Variant, WorkflowStep
 from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, propose_manual_classification, review_criterion, request_more_evidence
 from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
 
@@ -269,6 +269,22 @@ def test_review_bundle_is_analysis_scoped():
     bundle = get_review_bundle(db, analysis_id=analysis.id, variant_id=variant.id)
     assert bundle["analysis_id"] == str(analysis.id)
     assert len(bundle["criteria"]) == 1
+
+
+def test_review_bundle_rejects_assay_from_another_organization():
+    db, _reviewer, _analyst, analysis, variant, *_ = seed()
+    foreign_org = Organization(id=uuid4(), name="Other lab")
+    assay = Assay(
+        id=uuid4(), organization_id=foreign_org.id, name="Foreign assay",
+        version="1", assay_type="WGS", configuration={"private": "other-lab"},
+        status="ACTIVE",
+    )
+    db.add_all([foreign_org, assay])
+    analysis.assay_id = assay.id
+    db.commit()
+
+    with pytest.raises(ReviewError, match="assay reference is outside its organization"):
+        get_review_bundle(db, analysis_id=analysis.id, variant_id=variant.id)
 
 def test_start_review_creates_auditable_state_transition():
     db, reviewer, _, analysis, variant, _, classification = seed()

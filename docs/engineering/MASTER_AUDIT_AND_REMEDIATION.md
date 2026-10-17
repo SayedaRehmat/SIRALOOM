@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `b3412e4` (`Reject reports without draft artifacts`); CI #1602 passed, and #1603 is running the missing-draft-artifact regression. Current uncommitted checkpoint makes committed signout retries independent of current storage-profile resolution, retaining the durable analysis resume path and extending the lost-response regression. Local Python verification is unavailable in this Windows runtime; CI must execute focused and full suites after push. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `e424d3b` (`Make signed report retries storage independent`); CI #1602 passed, #1603 is running, and #1604 is queued. Current uncommitted checkpoint rejects review bundles linked to another organization's assay and adds a SQLite regression. Local Python verification is unavailable in this Windows runtime; CI must execute focused and full suites after push. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.

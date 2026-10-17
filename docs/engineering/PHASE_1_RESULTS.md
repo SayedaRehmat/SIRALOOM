@@ -121,6 +121,12 @@ Earlier Phase A changes and their evidence remain in [`PHASE_A_AUDIT_LEDGER.md`]
 - **Correction:** already-final reports return their existing signed state without resolving storage; resumable analysis states still invoke the existing idempotent durable resume path. Non-DRAFT/non-FINAL reports fail before storage resolution. The lost-response regression now injects storage-resolution failure on retry.
 - **Verification:** `git diff --check` passed. Python tests cannot execute locally in this Windows checkout. Awaiting push-triggered CI.
 
+### 2026-10-17 reviewer assay-tenant lineage guard
+
+- **Finding:** review-bundle construction returned the linked assay's configuration without confirming that the assay belonged to the reviewed case's organization. Analysis creation validates this relationship, but inconsistent persisted lineage could expose another laboratory's assay configuration in reviewer context.
+- **Correction:** review-bundle construction now rejects a linked assay whose organization differs from the case. Added a SQLite service regression with a foreign-organization assay.
+- **Verification:** awaiting CI; local Python interpreter is unavailable. Phase A remains PARTIAL.
+
 ### Additional sign-in state routing fix
 
 - Changed `backend/app/auth/principal.py`, `backend/app/main.py`, `frontend/lib/session.ts`, `frontend/lib/session-destination.mjs`, `frontend/components/auth-form.tsx`, and English/Arabic auth messages. Added a backend regression for the unprovisioned marker and frontend behavior tests.
