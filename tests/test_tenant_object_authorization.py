@@ -79,6 +79,44 @@ def test_report_access_rejects_analysis_from_another_case_in_same_tenant():
     assert error.value.status_code == 404
 
 
+@pytest.mark.parametrize("broken_link", ["case", "analysis", "type", "report_id", "version", "state"])
+def test_report_access_rejects_misbound_draft_artifact(broken_link):
+    tenant_id, case_id, analysis_id, report_id, artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(),
+    )
+    report = SimpleNamespace(
+        id=report_id, case_id=case_id, analysis_id=analysis_id,
+        artifact_id=artifact_id, status="DRAFT", report_version=2,
+    )
+    artifact = SimpleNamespace(
+        id=artifact_id,
+        case_id=uuid4() if broken_link == "case" else case_id,
+        analysis_id=uuid4() if broken_link == "analysis" else analysis_id,
+        artifact_type="OTHER" if broken_link == "type" else "REPORT_PDF",
+        validation_status="VALID",
+        metadata_json={
+            "report_state": "FINAL" if broken_link == "state" else "DRAFT",
+            "report_id": str(uuid4()) if broken_link == "report_id" else str(report_id),
+            "report_version": 3 if broken_link == "version" else 2,
+        },
+    )
+    db = TenantObjectSession({
+        Report: report,
+        Artifact: artifact,
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_report(report_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
 def test_artifact_access_rejects_analysis_from_another_case_in_same_tenant():
     tenant_id = uuid4()
     artifact_case_id, analysis_case_id = uuid4(), uuid4()

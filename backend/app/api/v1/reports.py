@@ -143,6 +143,8 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
                 "rendered_format": "PDF",
                 "report_schema_version": content["report_schema_version"],
                 "report_state": "DRAFT",
+                "report_id": str(report.id),
+                "report_version": report.report_version,
             },
             validation_status="VALID",
             artifact_id=draft_artifact_id,

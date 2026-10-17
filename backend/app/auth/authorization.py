@@ -6,7 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
-from backend.app.domain.report_integrity import has_valid_signed_artifact
+from backend.app.domain.report_integrity import (
+    has_valid_draft_artifact,
+    has_valid_signed_artifact,
+)
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -112,6 +115,8 @@ def get_accessible_report(report_id: UUID, db: Session = Depends(get_db), princi
     require_case_tenant(case, principal)
     analysis = db.get(Analysis, report.analysis_id)
     if analysis is None or analysis.case_id != report.case_id:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if not has_valid_draft_artifact(db, report):
         raise HTTPException(status_code=404, detail="Report not found")
     if getattr(report, "status", None) == "FINAL" and not has_valid_signed_artifact(db, report):
         raise HTTPException(status_code=404, detail="Report not found")
