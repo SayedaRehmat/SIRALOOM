@@ -345,7 +345,11 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
     try:
         out = finalize_reportability(db, decision_id=decision_id, reviewer_id=principal.user_id, expected_version=payload.expected_version, disposition=payload.disposition, reason=payload.reason)
         resume_queued = False
-        if out.status == "FINAL":
+        if out.status == "FINAL" and analysis.status in {
+            AnalysisStatus.REQUIRES_REVIEW,
+            AnalysisStatus.QUEUED,
+            AnalysisStatus.RUNNING,
+        }:
             try:
                 # Persist reportability sign-off and durable resume intent in the
                 # same transaction; the outbox closes the post-commit publish gap.
@@ -353,8 +357,10 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
             except ValueError as exc:
                 db.rollback()
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
-        else:
-            db.commit()
+        # resume_analysis commits when it creates a dispatch, but its idempotent
+        # QUEUED/RUNNING paths return without committing this sign-off mutation.
+        # Commit here as well; this is a no-op after a dispatch commit.
+        db.commit()
         return {"decision_id": str(out.id), "analysis_id": str(analysis.id), "variant_id": str(out.variant_id), "version": out.version, "review_version": out.review_version, "status": out.status, "disposition": out.disposition, "priority_score": out.priority_score, "priority_band": out.priority_band, "reviewed_by": str(out.reviewed_by), "approved_at": out.approved_at.isoformat() if out.approved_at else None, "workflow_resume_queued": resume_queued}
     except ValueError as exc:
         db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc

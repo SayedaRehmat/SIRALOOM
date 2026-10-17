@@ -20,7 +20,7 @@ class TenantObjectSession:
 
     def get(self, model, object_id):
         value = self.rows.get(model)
-        if model is Artifact and isinstance(value, dict):
+        if isinstance(value, dict):
             return value.get(object_id)
         return value
 
@@ -47,7 +47,8 @@ def test_shared_object_accessors_enforce_case_tenant_boundary(object_kind, same_
     )
     report = SimpleNamespace(
         id=object_id, case_id=case_id, analysis_id=object_id,
-        artifact_id=object_id, report_version=1, status="DRAFT",
+        artifact_id=object_id, signed_artifact_id=None, signed_sha256=None,
+        report_version=1, status="DRAFT",
     )
     db = TenantObjectSession({
         Case: case,
@@ -210,7 +211,7 @@ def test_report_pdf_artifact_access_requires_owning_report_lineage(broken_link):
     )
     db = TenantObjectSession({
         Artifact: artifact,
-        Report: report,
+        Report: {report_id: report} if broken_link == "report_missing" else report,
         Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
         Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
     })

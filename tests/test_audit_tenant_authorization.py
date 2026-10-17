@@ -17,6 +17,7 @@ from backend.app.api.v1 import (
 )
 from backend.app.api.v1.audit import audit
 from backend.app.auth.principal import Principal
+from backend.app.domain.enums import AnalysisStatus
 
 
 class _Db:
@@ -292,6 +293,60 @@ def test_reportability_signoff_rejects_variant_outside_analysis(monkeypatch):
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Reportability decision references a variant outside its analysis"
+
+
+@pytest.mark.parametrize(
+    ("analysis_status", "should_resume"),
+    [
+        (AnalysisStatus.SUCCEEDED, False),
+        (AnalysisStatus.REQUIRES_REVIEW, True),
+        (AnalysisStatus.QUEUED, True),
+        (AnalysisStatus.RUNNING, True),
+    ],
+)
+def test_reportability_final_retry_is_idempotent_after_analysis_terminal(
+    monkeypatch, analysis_status, should_resume
+):
+    from backend.app.infrastructure.db.models import Analysis, ReportabilityDecision
+
+    analysis = SimpleNamespace(id=uuid4(), status=analysis_status)
+    decision = SimpleNamespace(
+        id=uuid4(), analysis_id=analysis.id, variant_id=uuid4(), status="FINAL",
+        version=2, review_version=3, disposition="REPORT", priority_score=100,
+        priority_band="HIGH", reviewed_by=uuid4(), approved_at=None,
+    )
+    resume_calls = []
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(reports, "_require_reportability_variant", lambda *_args: None)
+    monkeypatch.setattr(reports, "finalize_reportability", lambda *_args, **_kwargs: decision)
+    monkeypatch.setattr(
+        reports,
+        "resume_analysis",
+        lambda *_args: resume_calls.append(analysis.id) or "dispatch-id",
+    )
+
+    class _Db:
+        commits = 0
+
+        def get(self, model, _object_id):
+            assert model is ReportabilityDecision
+            return decision
+
+        def commit(self):
+            self.commits += 1
+
+    db = _Db()
+    result = reports.finalize_reportability_decision(
+        decision.id,
+        SimpleNamespace(expected_version=2, disposition="REPORT", reason="Reviewed"),
+        db,
+        _principal(uuid4(), role="lab_director"),
+    )
+
+    assert result["status"] == "FINAL"
+    assert result["workflow_resume_queued"] is should_resume
+    assert bool(resume_calls) is should_resume
+    assert db.commits == 1
 
 
 def test_reportability_listing_rejects_variant_outside_analysis(monkeypatch):
