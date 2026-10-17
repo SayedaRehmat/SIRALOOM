@@ -611,6 +611,70 @@ def test_notification_list_rejects_cross_tenant_or_inconsistent_links(broken_lin
     assert exc.value.status_code == 409
 
 
+def test_notification_read_rejects_invalid_case_lineage_before_mutation():
+    from backend.app.infrastructure.db.models import Case, Notification
+
+    organization_id = uuid4()
+    principal = _principal(organization_id)
+    row = SimpleNamespace(
+        id=uuid4(), organization_id=organization_id, user_id=principal.user_id,
+        case_id=uuid4(), analysis_id=None, candidate_id=None,
+        notification_type="REANALYSIS_CANDIDATE", metadata_json={}, status="UNREAD",
+        read_at=None,
+    )
+
+    class _Db:
+        commits = 0
+
+        def get(self, model, object_id):
+            if model is Notification and object_id == row.id:
+                return row
+            if model is Case and object_id == row.case_id:
+                return SimpleNamespace(id=row.case_id, organization_id=uuid4())
+            return None
+
+        def commit(self):
+            self.commits += 1
+
+    db = _Db()
+    with pytest.raises(HTTPException) as exc:
+        reanalysis_api.mark_notification_read(row.id, db, principal)
+
+    assert exc.value.status_code == 409
+    assert row.status == "UNREAD"
+    assert db.commits == 0
+
+
+def test_notification_read_retry_preserves_first_read_timestamp():
+    from datetime import datetime, timezone
+
+    from backend.app.infrastructure.db.models import Notification
+
+    principal = _principal(uuid4())
+    first_read_at = datetime(2026, 10, 17, tzinfo=timezone.utc)
+    row = SimpleNamespace(
+        id=uuid4(), organization_id=principal.organization_id, user_id=principal.user_id,
+        case_id=None, analysis_id=None, candidate_id=None,
+        notification_type="SYSTEM", metadata_json={}, status="READ", read_at=first_read_at,
+    )
+
+    class _Db:
+        commits = 0
+
+        def get(self, model, object_id):
+            return row if model is Notification and object_id == row.id else None
+
+        def commit(self):
+            self.commits += 1
+
+    db = _Db()
+    result = reanalysis_api.mark_notification_read(row.id, db, principal)
+
+    assert result == {"notification_id": str(row.id), "status": "READ"}
+    assert row.read_at is first_read_at
+    assert db.commits == 0
+
+
 def test_secondary_finding_list_rejects_variant_outside_analysis(monkeypatch):
     analysis_id, variant_id = uuid4(), uuid4()
     principal = _principal(uuid4())

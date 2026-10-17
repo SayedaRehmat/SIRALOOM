@@ -24,6 +24,15 @@
 - **Status:** implementation in progress on `main`; CI pending. Phase A remains PARTIAL.
 - **Next action:** validate this export-lineage change and previous artifact-access regression in CI when observable, then continue direct-object and integrated review/signout/recovery audit.
 
+## 2026-10-17 continuation checkpoint — notification read integrity
+
+- **Finding:** notification listing enforced case/analysis/candidate/resource lineage, but the read mutation did not. Repeating an already successful read request also replaced the original `read_at` timestamp.
+- **Correction:** the read endpoint now applies the listing lineage validator before mutation. It sets a missing first-read timestamp once and treats an already-read notification as a no-op, preserving the original timestamp.
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py` now verifies malformed case lineage is rejected before mutation and an already-read retry preserves `read_at` without another commit.
+- **Verification:** `git diff --check` passed. Focused pytest cannot run locally because no usable Python/pytest runtime is available. Remote CI status remains unavailable from this environment.
+- **Status:** implementation in progress on `main`; CI pending. Phase A remains PARTIAL.
+- **Next action:** run the notification, authorization, artifact, and case-export tests in CI when status is accessible; continue remaining direct-object and reviewer/signout/recovery checks.
+
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
 
 ## 2026-10-17 case phenotype lineage checkpoint

@@ -164,10 +164,12 @@ def mark_notification_read(
     row = db.get(Notification, notification_id)
     if not row or row.organization_id != principal.organization_id or row.user_id != principal.user_id:
         raise HTTPException(status_code=404, detail="Notification not found")
+    _validate_notification_lineage(row, db)
     from datetime import datetime, timezone
-    row.status = "READ"
-    row.read_at = datetime.now(timezone.utc)
-    db.commit()
+    if row.status != "READ" or row.read_at is None:
+        row.status = "READ"
+        row.read_at = row.read_at or datetime.now(timezone.utc)
+        db.commit()
     return {"notification_id": str(row.id), "status": row.status}
 
 
