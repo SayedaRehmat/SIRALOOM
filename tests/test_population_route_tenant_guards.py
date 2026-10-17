@@ -42,6 +42,47 @@ def test_population_query_checks_analysis_tenant_before_reading_rows(monkeypatch
     assert exc.value.status_code == 404
 
 
+def test_population_query_checks_variant_membership_before_reading_rows(monkeypatch):
+    from backend.app.api.v1 import populations
+
+    analysis_id, variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id)
+    principal = SimpleNamespace(organization_id=uuid4(), role="read_only")
+
+    def reject_nonmember(*_args):
+        raise HTTPException(status_code=404, detail="Variant is not part of this analysis")
+
+    class ForbiddenDB:
+        def scalars(self, *_args, **_kwargs):
+            pytest.fail("Population observations were read before variant membership validation")
+
+    monkeypatch.setattr(populations, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(populations, "get_analysis_variant", reject_nonmember)
+    with pytest.raises(HTTPException) as exc:
+        populations.query(
+            SimpleNamespace(
+                analysis_id=analysis_id,
+                variant_ids=[variant_id],
+                requested_populations=["GLOBAL"],
+            ),
+            ForbiddenDB(),
+            principal,
+        )
+    assert exc.value.status_code == 404
+
+
+def test_population_query_rejects_unbounded_variant_lists():
+    from pydantic import ValidationError
+
+    from backend.app.domain.schemas import PopulationQueryRequest
+
+    with pytest.raises(ValidationError):
+        PopulationQueryRequest(
+            analysis_id=uuid4(),
+            variant_ids=[uuid4() for _ in range(501)],
+        )
+
+
 def test_artifact_download_checks_tenant_before_resolving_storage(monkeypatch):
     from backend.app.api.v1 import artifacts
 

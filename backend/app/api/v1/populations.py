@@ -2,7 +2,12 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.authorization import READ_ROLES, get_accessible_analysis, require_role
+from backend.app.auth.authorization import (
+    READ_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.schemas import PopulationQueryRequest
 from backend.app.infrastructure.db.models import PopulationObservation, Resource
@@ -17,7 +22,9 @@ def query(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    get_accessible_analysis(payload.analysis_id, db, principal)
+    analysis = get_accessible_analysis(payload.analysis_id, db, principal)
+    for variant_id in payload.variant_ids:
+        get_analysis_variant(analysis, variant_id, db)
     rows = db.scalars(
         select(PopulationObservation).where(
             PopulationObservation.analysis_id == payload.analysis_id,

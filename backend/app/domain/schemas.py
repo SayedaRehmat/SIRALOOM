@@ -50,7 +50,7 @@ class AnalysisResponse(BaseModel):
 
 class PopulationQueryRequest(BaseModel):
     analysis_id: UUID
-    variant_ids: list[UUID]
+    variant_ids: list[UUID] = Field(max_length=500)
     requested_populations: list[str] = Field(default_factory=lambda: ["GLOBAL", "MID"])
 
 class ACMGReviewRequest(BaseModel):

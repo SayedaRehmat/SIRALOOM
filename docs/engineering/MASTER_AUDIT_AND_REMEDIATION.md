@@ -447,3 +447,10 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Regression / verification:** new cases cover missing, cross-case, and cross-analysis artifact links and the quality endpoint's fail-closed response. QC lineage, clinical-governance, and review workflow/queue suites passed **40**; `git diff --check` passed.
 - **Status / next:** committed and pushed to `main` as `ce80f1d`; local focused tests passed. CI has not yet been confirmed. Continue route-by-route direct-object review and reviewer-to-signed-report recovery. Phase A remains PARTIAL; live browser/Firebase and deployed two-tenant verification remain unexecuted.
 - **Full-suite check on `main` (`c2a75eb`):** **869 passed, 37 skipped, 1 failed**. The sole failure is `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes`: the isolated local test runtime does not include the project-declared WeasyPrint package. This leaves PDF rendering unverified in this local run; no test was weakened.
+
+### 2026-10-17 population query direct-object boundary
+
+- **Finding:** `/populations/query` authorized the analysis tenant but accepted arbitrary variant IDs without establishing their membership in the requested analysis. It also accepted an unbounded ID list, allowing expensive repeated membership lookups.
+- **Correction:** each requested variant is checked with the analysis membership guard before observation reads, and request validation caps the list at 500 IDs.
+- **Regression / verification:** added tests proving a nonmember is rejected before population rows are read and a 501-item list is rejected. Population route, tenant/direct-object, audit-authorization, and QC-lineage suites passed **81**; `git diff --check` passed.
+- **Status / next:** commit/push this correction; continue remaining route-by-route audit and integrated reviewer-to-signed-report/recovery validation. Phase A remains PARTIAL pending live browser/Firebase and deployed two-tenant evidence.
