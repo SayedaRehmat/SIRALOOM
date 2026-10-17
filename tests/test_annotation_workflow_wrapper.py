@@ -24,6 +24,7 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisPartition,
     Annotation,
+    Artifact,
     Case,
     Evidence,
     Organization,
@@ -453,6 +454,119 @@ def test_run_variant_analysis_resolves_case_without_local_name_shadowing(
         # Case lookup succeeded; the regression was an UnboundLocalError first.
         with pytest.raises(KeyError, match="input_artifact_id"):
             workflow.run_variant_analysis(analysis_id)
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.parametrize(
+    ("foreign_case", "artifact_type", "validation_status", "artifact_build", "message"),
+    [
+        (True, "VCF", "VALID", "GRCh38", "different case"),
+        (False, "NORMALIZED_VCF", "VALID", "GRCh38", "not a primary VCF"),
+        (False, "VCF", "INVALID", "GRCh38", "pass ingestion validation"),
+        (False, "VCF", "VALID", "GRCh37", "reference assembly must match"),
+    ],
+)
+def test_worker_rejects_unbound_or_invalid_analysis_input_before_reading(
+    monkeypatch,
+    tmp_path,
+    foreign_case,
+    artifact_type,
+    validation_status,
+    artifact_build,
+    message,
+):
+    import importlib
+    import hashlib
+
+    db_module = importlib.import_module("backend.app.infrastructure.db.session")
+    workflow = importlib.import_module("backend.app.workflows.variant")
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'worker-input-lineage.db'}")
+    Base.metadata.create_all(engine)
+    LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
+    organization_id, foreign_organization_id = uuid4(), uuid4()
+    user_id, foreign_user_id = uuid4(), uuid4()
+    case_id, foreign_case_id, analysis_id, artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    try:
+        with LocalSession() as db:
+            db.add_all([
+                Organization(id=organization_id, name="Input Owner Lab"),
+                Organization(id=foreign_organization_id, name="Other Lab"),
+            ])
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@test.local",
+                display_name="Input Lineage Test", role="ADMIN", status="ACTIVE",
+            ))
+            db.add(User(
+                id=foreign_user_id, organization_id=foreign_organization_id,
+                external_subject=str(foreign_user_id), email=f"{foreign_user_id}@test.local",
+                display_name="Foreign Input Test", role="ADMIN", status="ACTIVE",
+            ))
+            db.flush()
+            db.add_all([
+                Case(
+                    id=case_id, organization_id=organization_id,
+                    case_identifier=f"INPUT-{case_id}", status="OPEN",
+                    clinical_context={}, language="en", created_by=user_id,
+                ),
+                Case(
+                    id=foreign_case_id, organization_id=foreign_organization_id,
+                    case_identifier=f"FOREIGN-{foreign_case_id}", status="OPEN",
+                    clinical_context={}, language="en", created_by=foreign_user_id,
+                ),
+            ])
+            db.flush()
+            db.add(Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=None,
+                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1", workflow_version="test",
+                status=AnalysisStatus.RUNNING, queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={"input_artifact_id": str(artifact_id)},
+                started_at=None, completed_at=None, created_by=user_id, analysis_version=1,
+            ))
+            db.flush()
+            db.add(Artifact(
+                id=artifact_id,
+                case_id=foreign_case_id if foreign_case else case_id,
+                analysis_id=None,
+                artifact_type=artifact_type,
+                filename="input.vcf",
+                media_type="text/plain",
+                size_bytes=0,
+                sha256=hashlib.sha256(b"").hexdigest(),
+                storage_uri="siraloom://must-not-be-read/input.vcf",
+                genome_build=artifact_build,
+                validation_status=validation_status,
+                metadata_json={},
+            ))
+            db.commit()
+
+        monkeypatch.setattr(db_module, "SessionLocal", LocalSession)
+
+        def _store(_db, *, organization_id):
+            assert organization_id == expected_organization_id
+            return SimpleNamespace()
+
+        expected_organization_id = organization_id
+        monkeypatch.setattr(workflow, "artifact_store_for_organization", _store)
+        monkeypatch.setattr(
+            workflow,
+            "_materialize_artifact_for_worker",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                AssertionError("invalid input must be rejected before reading bytes")
+            ),
+        )
+
+        with pytest.raises(RuntimeError, match=message):
+            workflow.run_variant_analysis(analysis_id)
+
+        with LocalSession() as db:
+            assert db.get(Analysis, analysis_id).status == AnalysisStatus.FAILED
     finally:
         engine.dispose()
 

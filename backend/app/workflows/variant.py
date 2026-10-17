@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.app.acmg.source_assertions import persist_clingen_source_assertions
+from backend.app.application.analysis import validate_analysis_input_artifact
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
@@ -1120,6 +1121,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         input_artifact = db.get(Artifact, UUID(str(input_artifact_id)))
         if not input_artifact:
             raise RuntimeError("Input artifact not found")
+        if input_artifact.case_id != analysis.case_id:
+            raise RuntimeError("Analysis input artifact belongs to a different case")
+        # The public analysis-creation path accepts only validated primary VCFs.
+        # Keep the historical SOURCE_VCF worker path for pre-ingestion analyses;
+        # those inputs are checked by the strict on-disk validator below.
+        if input_artifact.artifact_type == "VCF":
+            try:
+                validate_analysis_input_artifact(input_artifact, analysis.reference_build)
+            except ValueError as exc:
+                raise RuntimeError(str(exc)) from exc
+        elif input_artifact.artifact_type != "SOURCE_VCF":
+            raise RuntimeError("Analysis input artifact is not a primary VCF")
+        elif input_artifact.validation_status == "INVALID":
+            raise RuntimeError("Analysis input VCF failed ingestion validation")
         input_path = _materialize_artifact_for_worker(input_artifact, temporary_artifact_paths)
 
         if analysis.status not in {AnalysisStatus.SUCCEEDED, AnalysisStatus.REQUIRES_REVIEW}:
