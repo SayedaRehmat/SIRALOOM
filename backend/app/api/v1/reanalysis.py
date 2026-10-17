@@ -21,6 +21,8 @@ from backend.app.infrastructure.db.session import get_db
 from backend.app.application.analysis import enqueue_analysis, preflight_analysis_resources
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.domain.reanalysis import (
+    RESOURCE_TRIGGER_TYPE,
+    affected_step_for_trigger,
     create_reanalysis,
     detect_change,
     snapshot_analysis_resources,
@@ -134,10 +136,23 @@ def _validate_candidate_event_lineage(candidate: ReanalysisCandidate, db: Sessio
         event is None
         or event.organization_id != candidate.organization_id
         or event.trigger_type != candidate.trigger_type
+        or RESOURCE_TRIGGER_TYPE.get(str(event.resource_kind).upper()) != event.trigger_type
     ):
         raise HTTPException(
             status_code=409,
             detail="Reanalysis candidate does not match its change event",
+        )
+    try:
+        expected_step = affected_step_for_trigger(candidate.trigger_type)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Reanalysis candidate has an unsupported trigger",
+        ) from exc
+    if candidate.earliest_affected_step != expected_step:
+        raise HTTPException(
+            status_code=409,
+            detail="Reanalysis candidate recomputation step does not match its trigger",
         )
     if event.resource_id is not None:
         resource = db.get(Resource, event.resource_id)
@@ -516,6 +531,11 @@ def register_change(
     resource_name = str(payload.get("resource_name") or "").strip()
     if not trigger_type or not resource_kind or not resource_name:
         raise HTTPException(status_code=400, detail="trigger_type, resource_kind and resource_name are required")
+    if RESOURCE_TRIGGER_TYPE.get(resource_kind) != trigger_type:
+        raise HTTPException(
+            status_code=422,
+            detail="resource_kind and trigger_type do not form a supported resource-change pair",
+        )
 
     resource_id = UUID(str(payload["resource_id"])) if payload.get("resource_id") else None
     candidates = detect_change(

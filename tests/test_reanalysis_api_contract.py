@@ -39,7 +39,7 @@ def test_change_driven_candidate_endpoint_contract_allows_pending_and_started_re
     assert {"PENDING", "STARTED"}.issubset({"PENDING", "STARTED"})
 
 
-@pytest.mark.parametrize("mismatch", ["organization", "trigger"])
+@pytest.mark.parametrize("mismatch", ["organization", "trigger", "resource_kind"])
 def test_reanalysis_candidate_event_lineage_fails_closed(mismatch):
     organization_id = uuid4()
     candidate = type(
@@ -49,6 +49,7 @@ def test_reanalysis_candidate_event_lineage_fails_closed(mismatch):
             "organization_id": organization_id,
             "change_event_id": uuid4(),
             "trigger_type": "EVIDENCE_UPDATE",
+            "earliest_affected_step": "build_evidence",
         },
     )()
     event = type(
@@ -57,6 +58,7 @@ def test_reanalysis_candidate_event_lineage_fails_closed(mismatch):
         {
             "organization_id": uuid4() if mismatch == "organization" else organization_id,
             "trigger_type": "ANNOTATION_UPDATE" if mismatch == "trigger" else "EVIDENCE_UPDATE",
+            "resource_kind": "ANNOTATION" if mismatch == "resource_kind" else "EVIDENCE",
             "resource_id": None,
         },
     )()
@@ -79,12 +81,12 @@ def test_reanalysis_candidate_event_rejects_foreign_resource():
     candidate = type(
         "Candidate",
         (),
-        {"organization_id": organization_id, "change_event_id": event_id, "trigger_type": "EVIDENCE_UPDATE"},
+        {"organization_id": organization_id, "change_event_id": event_id, "trigger_type": "EVIDENCE_UPDATE", "earliest_affected_step": "build_evidence"},
     )()
     event = type(
         "Event",
         (),
-        {"organization_id": organization_id, "trigger_type": "EVIDENCE_UPDATE", "resource_id": resource_id},
+        {"organization_id": organization_id, "trigger_type": "EVIDENCE_UPDATE", "resource_kind": "EVIDENCE", "resource_id": resource_id},
     )()
 
     class FakeDB:
@@ -94,6 +96,40 @@ def test_reanalysis_candidate_event_rejects_foreign_resource():
             if model is reanalysis_api.Resource and object_id == resource_id:
                 return type("Resource", (), {"organization_id": uuid4()})()
             raise AssertionError(f"Unexpected lookup: {model!r} {object_id!r}")
+
+    with pytest.raises(reanalysis_api.HTTPException) as exc_info:
+        reanalysis_api._validate_candidate_event_lineage(candidate, FakeDB())
+
+    assert exc_info.value.status_code == 409
+
+
+def test_reanalysis_candidate_rejects_stale_recomputation_step():
+    organization_id = uuid4()
+    candidate = type(
+        "Candidate",
+        (),
+        {
+            "organization_id": organization_id,
+            "change_event_id": uuid4(),
+            "trigger_type": "POPULATION_UPDATE",
+            "earliest_affected_step": "build_evidence",
+        },
+    )()
+    event = type(
+        "Event",
+        (),
+        {
+            "organization_id": organization_id,
+            "trigger_type": "POPULATION_UPDATE",
+            "resource_kind": "POPULATION",
+            "resource_id": None,
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, _object_id):
+            assert model is reanalysis_api.ReanalysisChangeEvent
+            return event
 
     with pytest.raises(reanalysis_api.HTTPException) as exc_info:
         reanalysis_api._validate_candidate_event_lineage(candidate, FakeDB())
