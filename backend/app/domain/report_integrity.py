@@ -38,7 +38,10 @@ def has_valid_draft_artifact(db: Session, report: Report) -> bool:
     """
     artifact_id = getattr(report, "artifact_id", None)
     if artifact_id is None:
-        return True
+        # Every persisted report exposed to reviewers must have its immutable
+        # draft PDF. Treat a missing link as broken lineage, including legacy
+        # rows, so list/read endpoints cannot present an unusable draft as valid.
+        return False
 
     artifact = db.get(Artifact, artifact_id)
     if artifact is None:

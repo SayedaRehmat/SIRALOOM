@@ -108,6 +108,13 @@ Earlier Phase A changes and their evidence remain in [`PHASE_A_AUDIT_LEDGER.md`]
 
 **Phase 1 is not complete.** Source and existing test coverage support partial confidence in several backend guards, but the full signup-to-signout journey and all tenant/security boundaries have not been verified end to end. Continue from the ordered remaining work in [`MASTER_AUDIT_AND_REMEDIATION.md`](MASTER_AUDIT_AND_REMEDIATION.md); use [`END_TO_END_WORKFLOW_AUDIT.md`](END_TO_END_WORKFLOW_AUDIT.md) as the live requirement matrix.
 
+### 2026-10-17 report-read lineage correction
+
+- **Finding:** `has_valid_draft_artifact` accepted a report with no `artifact_id`, so direct report access could return a draft that had no immutable PDF. Report generation always creates the draft artifact, and signout already rejects a missing artifact; the permissive read behavior could hide a partial/corrupt record.
+- **Correction:** missing draft artifact linkage now fails closed. Added a tenant-authorized direct report read regression in `tests/test_tenant_object_authorization.py`.
+- **Verification:** `git diff --check` passed. Local Python execution remains unavailable; run the focused regression and full relevant suites in CI after this push.
+- **Status:** code change is pending push-triggered CI. Phase A remains PARTIAL pending end-to-end review/signout recovery and live Firebase/browser and deployed two-tenant validation.
+
 ### Additional sign-in state routing fix
 
 - Changed `backend/app/auth/principal.py`, `backend/app/main.py`, `frontend/lib/session.ts`, `frontend/lib/session-destination.mjs`, `frontend/components/auth-form.tsx`, and English/Arabic auth messages. Added a backend regression for the unprovisioned marker and frontend behavior tests.

@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `9d14ef7` (`Fix clinical governance and QC persistence`); GitHub Actions run [#1583](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39021934019) succeeded across backend (**878 passed, 24 skipped**), PostgreSQL/Celery integration, frontend behavior/build/container, and Compose validation. Local backend verification remains unavailable because this Windows runtime has no usable Python interpreter; the prior full local suite was 805 passed, 37 skipped, and one WeasyPrint native dependency failure. A local follow-up validates governance status enums and awaits CI. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `c3d0cb1` (`Preserve workspace report signout success`); CI #1593, #1594, #1596, and #1598 passed all jobs; CI #1602 for the workspace signout refresh correction is running. Current uncommitted checkpoint corrects report reads accepting drafts without an artifact and adds a regression test. Local Python verification is unavailable in this Windows runtime; CI must execute the focused and full suites after push. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.

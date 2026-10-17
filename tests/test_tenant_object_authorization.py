@@ -117,6 +117,27 @@ def test_report_access_rejects_misbound_draft_artifact(broken_link):
     assert error.value.status_code == 404
 
 
+def test_report_access_rejects_missing_draft_artifact():
+    tenant_id, case_id, analysis_id, report_id = uuid4(), uuid4(), uuid4(), uuid4()
+    db = TenantObjectSession({
+        Report: SimpleNamespace(
+            id=report_id, case_id=case_id, analysis_id=analysis_id,
+            artifact_id=None, status="DRAFT", report_version=1,
+        ),
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_report(report_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
 def test_artifact_access_rejects_analysis_from_another_case_in_same_tenant():
     tenant_id = uuid4()
     artifact_case_id, analysis_case_id = uuid4(), uuid4()
