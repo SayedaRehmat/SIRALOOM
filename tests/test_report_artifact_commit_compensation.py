@@ -105,6 +105,40 @@ def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkey
     assert store.deleted == ["file:///artifact/draft-report.pdf"]
 
 
+def test_report_route_removes_draft_bytes_after_audit_flush_failure(monkeypatch):
+    case_id = uuid4()
+    analysis_id = uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=uuid4())
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id, reference_build="GRCh38")
+    db = _Database(case)
+    store = _Store()
+    monkeypatch.setattr(reports_api, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(reports_api, "require_role", lambda *_args: None)
+    monkeypatch.setattr(reports_api, "final_report_eligibility", lambda *_args, **_kwargs: (True, []))
+    monkeypatch.setattr(reports_api, "build_report_content", lambda *_args, **_kwargs: {"report_schema_version": "1"})
+    monkeypatch.setattr(reports_api, "render_pdf", lambda _content: b"pdf")
+    monkeypatch.setattr(reports_api, "artifact_store_for_organization", lambda *_args, **_kwargs: store)
+    monkeypatch.setattr(
+        reports_api,
+        "AuditService",
+        lambda _db: SimpleNamespace(
+            record=lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("audit flush failed"))
+        ),
+    )
+    monkeypatch.setattr(compensation_api, "SessionLocal", _VerificationSession)
+
+    with pytest.raises(RuntimeError, match="audit flush failed"):
+        reports_api.create_report(
+            analysis_id,
+            ReportCreate(),
+            db,
+            Principal(user_id=uuid4(), organization_id=case.organization_id, role="lab_scientist", subject="test"),
+        )
+
+    assert db.rollbacks == 1
+    assert store.deleted == ["file:///artifact/draft-report.pdf"]
+
+
 def test_signout_route_compensates_signed_pdf_when_finalization_fails(monkeypatch):
     case_id = uuid4()
     report_id = uuid4()

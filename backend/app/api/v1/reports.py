@@ -157,18 +157,25 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
         draft_path.unlink(missing_ok=True)
 
     report.artifact_id = artifact.id
-    AuditService(db).record(
-        event_type="REPORT_GENERATED",
-        case_id=analysis.case_id,
-        analysis_id=analysis.id,
-        actor_type="SYSTEM",
-        actor_id="reporting",
-        subject_type="REPORT",
-        subject_id=str(report.id),
-        operation="CREATE",
-        output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
-        payload={"draft": True, "reportability_final": True},
-    )
+    try:
+        AuditService(db).record(
+            event_type="REPORT_GENERATED",
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            actor_type="SYSTEM",
+            actor_id="reporting",
+            subject_type="REPORT",
+            subject_id=str(report.id),
+            operation="CREATE",
+            output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
+            payload={"draft": True, "reportability_final": True},
+        )
+    except Exception:
+        # put_file may already have written external bytes. An audit-flush
+        # failure aborts the report transaction, so remove those bytes only
+        # after a fresh session confirms the artifact row did not commit.
+        compensate_uncommitted_artifact(db, store, artifact.id, artifact.storage_uri)
+        raise
     try:
         commit_with_artifact_compensation(db, store, artifact)
     except IntegrityError as exc:

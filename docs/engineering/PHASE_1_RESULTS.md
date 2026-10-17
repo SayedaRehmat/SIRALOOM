@@ -133,6 +133,12 @@ Earlier Phase A changes and their evidence remain in [`PHASE_A_AUDIT_LEDGER.md`]
 - **Correction:** shared-accessor and valid-final-report fixtures now include explicit valid draft artifact metadata. The FINAL fixture separately models both draft and signed artifacts. The negative missing-artifact regression remains unchanged.
 - **Next verification:** commits `e424d3b` and `c7fa1ea` are in CI runs #1604 and #1605 respectively. This fixture correction will be pushed as a new main commit for fresh full CI. Do not treat the failed #1603 run as a passing implementation verification.
 
+### 2026-10-17 draft report audit-flush recovery
+
+- **Finding:** draft report generation compensated storage bytes when the final DB commit failed, but not when the earlier audit-event flush failed after PDF upload.
+- **Correction:** audit flush failure now rolls back and invokes the existing fresh-session artifact compensation guard. Added a deterministic injected audit-flush failure test asserting that uncommitted draft bytes are deleted.
+- **Verification:** `git diff --check` passed. Python execution is unavailable locally; regression awaits CI.
+
 ### Additional sign-in state routing fix
 
 - Changed `backend/app/auth/principal.py`, `backend/app/main.py`, `frontend/lib/session.ts`, `frontend/lib/session-destination.mjs`, `frontend/components/auth-form.tsx`, and English/Arabic auth messages. Added a backend regression for the unprovisioned marker and frontend behavior tests.
