@@ -2,7 +2,7 @@
 
 ## Current checkpoint — 2026-10-17
 
-**Latest pushed application baseline:** `main` commit `9e29256`. CI #1593, #1594, and #1596 passed all jobs for draft artifact lineage, report signout UI refresh recovery, and report-list artifact validation. For #1598, backend and PostgreSQL/Celery integration passed; frontend behavior, localization, and production build passed, with container/Compose steps still running at this checkpoint. It covers signed PDF integrity for both `FINAL` and `SUPERSEDED` reports.
+**Latest pushed application baseline:** `main` commit `9e29256`. CI #1593, #1594, #1596, and #1598 passed all jobs, covering draft artifact lineage, signout UI refresh recovery, report-list lineage, and signed artifact integrity for both `FINAL` and `SUPERSEDED` reports.
 
 This continuation repaired two real clinical-governance defects: the secondary-finding request schema lacked the `status` field the route dereferenced, and four create routes serialized ORM-generated timestamps before flushing new rows. Regression coverage now exercises confirmation, follow-up, secondary finding, and QC observation creation with a SQLite session and checks their audit snapshots. The status-field regression first caused run #1582 to fail and identified the route defect; the correction passed run #1583.
 
@@ -19,7 +19,7 @@ Commit `147062a` constrains governance states; CI #1584 passed. Commits `5a5e788
 - **Regression coverage:** six parameter cases reject a draft artifact with wrong case, analysis, type, report ID, version, or state. CI #1593 passed all jobs. Local backend pytest was unavailable (`python.exe` is only a Windows Store stub).
 - **Signout UI recovery finding:** reports UI mutation handlers always displayed success after `load()` even though `load()` swallowed refresh errors. Commit `4458859` checks the refresh outcome and shows a new English/Arabic “mutation succeeded, latest status unavailable” message. Frontend behavior tests passed 20/20; i18n validation and `git diff --check` passed. CI #1594 passed.
 - **Report list follow-up:** `GET /analyses/{analysis_id}/reports` previously returned draft/signed artifact references after only checking case linkage. Commit `e4573a9` validates draft artifact lineage on every row and rejects finalized rows whose signed artifact fails integrity checks; CI #1596 passed all jobs.
-- **Historical report follow-up:** direct reads and lists require valid signed artifacts for `SUPERSEDED` reports as well as `FINAL` reports. Commit `9e29256` adds regression coverage. In CI #1598 backend and PostgreSQL/Celery passed; frontend behavior/localization/build passed, with production container/Compose still running.
+- **Historical report follow-up:** direct reads and lists require valid signed artifacts for `SUPERSEDED` reports as well as `FINAL` reports. Commit `9e29256` adds regression coverage; CI #1598 passed all jobs.
 - **Next:** continue route-by-route direct-object review and integrated reviewer-to-signout/retry recovery tests. Live Firebase and deployed two-tenant evidence is still required. Phase A remains PARTIAL.
 
 **Historical baseline recorded below:** 2026-10-15, application commit `324283be87d28d209d7319e1e599ab898266853d`; audit-record follow-up `dd4c1e6`.
