@@ -17,11 +17,11 @@ class _Db:
         return self.case
 
 
-def _principal(organization_id):
+def _principal(organization_id, role="reviewer"):
     return Principal(
         user_id=uuid4(),
         organization_id=organization_id,
-        role="reviewer",
+        role=role,
         subject="verified-firebase-subject",
     )
 
@@ -222,3 +222,61 @@ def test_reportability_signoff_hides_foreign_decision_like_missing_decision(monk
         (404, "Reportability decision not found"),
         (404, "Reportability decision not found"),
     ]
+
+
+def test_reportability_signoff_rejects_variant_outside_analysis(monkeypatch):
+    analysis = SimpleNamespace(id=uuid4())
+    decision = SimpleNamespace(id=uuid4(), analysis_id=analysis.id, variant_id=uuid4())
+    principal = _principal(uuid4(), role="lab_director")
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        reports,
+        "get_analysis_variant",
+        lambda *_args: (_ for _ in ()).throw(
+            HTTPException(404, "Variant is not part of this analysis")
+        ),
+    )
+
+    class _DecisionDb:
+        def get(self, model, _object_id):
+            from backend.app.infrastructure.db.models import ReportabilityDecision
+
+            assert model is ReportabilityDecision
+            return decision
+
+    with pytest.raises(HTTPException) as exc:
+        reports.finalize_reportability_decision(
+            decision.id, SimpleNamespace(), _DecisionDb(), principal
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Reportability decision references a variant outside its analysis"
+
+
+def test_reportability_listing_rejects_variant_outside_analysis(monkeypatch):
+    analysis = SimpleNamespace(id=uuid4())
+    decision = SimpleNamespace(variant_id=uuid4())
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        reports,
+        "get_analysis_variant",
+        lambda *_args: (_ for _ in ()).throw(
+            HTTPException(404, "Variant is not part of this analysis")
+        ),
+    )
+
+    class _Rows:
+        def __iter__(self):
+            return iter([decision])
+
+    class _Db:
+        def scalars(self, _query):
+            return _Rows()
+
+    with pytest.raises(HTTPException) as exc:
+        reports.list_reportability(
+            analysis.id, _Db(), _principal(uuid4())
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Reportability decision references a variant outside its analysis"

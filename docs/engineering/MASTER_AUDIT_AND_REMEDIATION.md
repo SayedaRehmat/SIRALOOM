@@ -14,6 +14,15 @@
 - **Phase A status:** NOT COMPLETE. The stage matrix remains PARTIAL. CI success verifies the committed test suite only; configured Firebase/browser sign-up-to-signout, live two-tenant behavior, end-to-end reviewer/report signout, and deployed lab infrastructure remain unexercised.
 - **Next implementation action:** resume the API object-authorization inventory from the nested reportability, report, case-export, and worker entrypoints; add regression tests for confirmed linkage/tenant defects. Then continue the outstanding A1–A10 journeys and recovery cases. Do not switch to Phase B/C or declare readiness before Phase A gate evidence is complete.
 
+## 2026-10-17 reportability linkage authorization batch (local, pending push)
+
+- **Finding:** reportability listing and signoff trusted a decision's `analysis_id` without verifying that its `variant_id` belongs to that analysis. Existing finalization validates the linked classification but does not establish analysis membership for the variant. Inconsistent/corrupted cross-links could therefore be presented or approved as analysis-scoped decisions.
+- **Correction:** `backend/app/api/v1/reports.py` now validates decision variant membership through the shared `get_analysis_variant` guard on both listing and signoff; inconsistent records fail closed with HTTP 409.
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py` covers both listing and signoff with a variant outside the analysis.
+- **Verification:** focused reportability/report/auth suite: 39 passed; Python compileall passed for the changed route; `git diff --check` passed. A Starlette/httpx deprecation warning is emitted by the test runtime.
+- **Status:** locally verified; push-triggered CI pending. Phase A remains PARTIAL.
+- **Next action:** continue nested report and clinical-governance link audit, then complete the remaining A1–A10 journey and failure-recovery checks.
+
 ## Verified current batch
 
 | Finding | Root cause | Correction | Evidence | Status |

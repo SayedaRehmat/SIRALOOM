@@ -16,6 +16,7 @@ from backend.app.auth.authorization import (
     REPORT_FINALIZE_ROLES,
     get_accessible_analysis,
     get_accessible_report,
+    get_analysis_variant,
     require_role,
 )
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
@@ -48,6 +49,18 @@ from backend.app.reporting.service import (
 )
 
 router = APIRouter(tags=["reports"])
+
+
+def _require_reportability_variant(analysis, variant_id: UUID, db: Session) -> None:
+    try:
+        get_analysis_variant(analysis, variant_id, db)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise HTTPException(
+                status_code=409,
+                detail="Reportability decision references a variant outside its analysis",
+            ) from exc
+        raise
 
 
 def _accessible_case_export(export_id: UUID, db: Session, principal: Principal):
@@ -243,7 +256,9 @@ def list_reportability(analysis_id: UUID, db: Session = Depends(get_db), princip
     from backend.app.infrastructure.db.models import ReportabilityDecision
     rows = list(db.scalars(select(ReportabilityDecision).where(ReportabilityDecision.analysis_id == analysis_id).order_by(ReportabilityDecision.variant_id, ReportabilityDecision.version)))
     latest = {}
-    for row in rows: latest[row.variant_id] = row
+    for row in rows:
+        _require_reportability_variant(analysis, row.variant_id, db)
+        latest[row.variant_id] = row
     return {"analysis_id": str(analysis_id), "items": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "priority_score": d.priority_score, "priority_band": d.priority_band, "reasons": d.reasons, "policy_name": d.policy_name, "policy_version": d.policy_version, "review_version": d.review_version, "reviewed_by": str(d.reviewed_by) if d.reviewed_by else None, "approved_at": d.approved_at.isoformat() if d.approved_at else None} for d in latest.values()]}
 
 @router.post("/reportability/{decision_id}/finalize")
@@ -258,6 +273,7 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
             raise HTTPException(status_code=404, detail="Reportability decision not found") from exc
         raise
     require_role(principal, REPORT_FINALIZE_ROLES)
+    _require_reportability_variant(analysis, decision.variant_id, db)
     try:
         out = finalize_reportability(db, decision_id=decision_id, reviewer_id=principal.user_id, expected_version=payload.expected_version, disposition=payload.disposition, reason=payload.reason)
         resume_queued = False
