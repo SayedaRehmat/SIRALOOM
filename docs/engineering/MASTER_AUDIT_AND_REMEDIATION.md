@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed commit:** `main` commit `b2a31ee` (`Make notification reads lineage-safe and idempotent`). The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. CI status for `96ab9db`, `127dfa1`, and later commits could not be retrieved in this environment (`gh` is unavailable and GitHub API access is blocked). Local Python/pytest verification is unavailable. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed commit:** `main` commit `4eedd33` (`Require current classification at reportability gate`). The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. CI status for `96ab9db`, `127dfa1`, `b2a31ee`, and later commits could not be retrieved in this environment (`gh` is unavailable and GitHub API access is blocked). Local Python/pytest verification is unavailable. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
