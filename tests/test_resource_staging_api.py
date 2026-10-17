@@ -235,6 +235,36 @@ def test_create_resource_staging_rejects_cross_organization_resource(monkeypatch
         engine.dispose()
 
 
+
+@pytest.mark.parametrize("storage_backend", ["", "ORGANIZATION_UNKNOWN", "LOCAL_FILESYSTEM"])
+def test_resource_staging_rejects_unsupported_storage_backend(monkeypatch, tmp_path, storage_backend):
+    engine, db = _db()
+    try:
+        organization_id = uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        db.flush()
+        root = tmp_path / "cache"
+        monkeypatch.setattr(settings, "resource_cache_root", str(root))
+        monkeypatch.setattr(settings, "resource_staging_allowed_hosts", "ftp.example.test")
+        resource, payload = _seed_remote_resource(db, organization_id, root)
+        db.commit()
+
+        with pytest.raises((HTTPException, ValueError)):
+            resources_api.create_resource_staging(
+                resource.id,
+                resources_api.ResourceStagingCreateRequest(
+                    expected_size_bytes=len(payload),
+                    storage_backend=storage_backend,
+                ),
+                db,
+                _principal(organization_id),
+            )
+        assert db.query(ResourceStaging).count() == 0
+    finally:
+        db.close()
+        engine.dispose()
+
+
 def test_execute_resource_staging_queues_durable_task(monkeypatch, tmp_path):
     engine, db = _db()
     published = []
