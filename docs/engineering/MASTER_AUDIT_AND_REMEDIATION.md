@@ -15,6 +15,15 @@
 - **Status:** implementation in progress on `main`; do not mark verified until CI completes. Phase A remains PARTIAL.
 - **Next action:** run the focused authorization and artifact-route suite in CI, then continue the report-export and remaining direct-object, review/signout, and recovery audit.
 
+## 2026-10-17 continuation checkpoint — case-export report lineage
+
+- **Finding:** case export selected reports by `case_id` and serialized report content and analysis IDs without validating that each linked analysis belonged to the case or that draft/final PDFs had valid report lineage.
+- **Correction:** when reports are included, export now requires each report's analysis to be among the case analyses, requires a valid draft artifact, and requires a valid immutable signed artifact for FINAL/SUPERSEDED reports. Invalid records fail the export with a controlled `CaseExportError` before the archive is persisted.
+- **Regression coverage:** `tests/test_case_export.py::test_case_export_rejects_report_linked_to_another_cases_analysis` covers a case-scoped report pointing to another case's analysis.
+- **Verification:** `git diff --check` passed. Python/pytest remain unavailable locally. GitHub CLI is not installed, and the unauthenticated Actions API was inaccessible from this environment, so CI status for `96ab9db` could not be retrieved.
+- **Status:** implementation in progress on `main`; CI pending. Phase A remains PARTIAL.
+- **Next action:** validate this export-lineage change and previous artifact-access regression in CI when observable, then continue direct-object and integrated review/signout/recovery audit.
+
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
 
 ## 2026-10-17 case phenotype lineage checkpoint

@@ -17,6 +17,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     CaseExport,
     Organization,
+    Report,
     User,
 )
 from backend.app.reporting.export_service import CaseExportError, build_case_export
@@ -182,4 +183,36 @@ def test_case_export_rejects_artifact_linked_to_another_cases_analysis(tmp_path)
     db.commit()
 
     with pytest.raises(CaseExportError, match="inconsistent analysis linkage"):
+        build_case_export(db, export=export, store=ArtifactStore(str(tmp_path)))
+
+
+def test_case_export_rejects_report_linked_to_another_cases_analysis(tmp_path):
+    db, case, export = _case_export_fixture(include_artifacts=False)
+    export.include_reports = True
+    foreign_org = Organization(id=uuid4(), name="Other lab")
+    foreign_user = User(
+        id=uuid4(), organization_id=foreign_org.id, display_name="Other user",
+        role="AUDITOR", status="ACTIVE",
+    )
+    foreign_case = Case(
+        id=uuid4(), organization_id=foreign_org.id, case_identifier="FOREIGN-REPORT",
+        status="ACTIVE", clinical_context={}, language="en", created_by=foreign_user.id,
+    )
+    foreign_analysis = Analysis(
+        id=uuid4(), case_id=foreign_case.id, parent_analysis_id=None, assay_id=None,
+        analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+        workflow_version="1", status="SUCCEEDED", queue_task_id=None,
+        reference_build="GRCh38", configuration={}, started_at=None,
+        completed_at=None, created_by=None, analysis_version=1,
+    )
+    report = Report(
+        id=uuid4(), case_id=case.id, analysis_id=foreign_analysis.id,
+        report_version=1, supersedes_report_id=None, language="en",
+        report_type="CLINICAL_INTERPRETATION", status="DRAFT", artifact_id=None,
+        signed_artifact_id=None, signed_sha256=None, content_json={"summary": "foreign"},
+    )
+    db.add_all([foreign_org, foreign_user, foreign_case, foreign_analysis, report])
+    db.commit()
+
+    with pytest.raises(CaseExportError, match="report with inconsistent analysis linkage"):
         build_case_export(db, export=export, store=ArtifactStore(str(tmp_path)))

@@ -10,6 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.artifact_integrity import verify_artifact_file
+from backend.app.domain.report_integrity import (
+    has_valid_draft_artifact,
+    has_valid_signed_artifact,
+)
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -142,6 +146,13 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
 
         if export.include_reports:
             reports = list(db.scalars(select(Report).where(Report.case_id == case.id).order_by(Report.report_version)))
+            for report in reports:
+                if report.analysis_id not in analysis_ids:
+                    raise CaseExportError("Case contains a report with inconsistent analysis linkage")
+                if not has_valid_draft_artifact(db, report):
+                    raise CaseExportError("Case contains a report with invalid draft artifact lineage")
+                if report.status in {"FINAL", "SUPERSEDED"} and not has_valid_signed_artifact(db, report):
+                    raise CaseExportError("Case contains a report with invalid signed artifact lineage")
             (root / "reports.json").write_text(json.dumps([
                 {
                     "report_id": str(r.id), "analysis_id": str(r.analysis_id), "version": r.report_version,
