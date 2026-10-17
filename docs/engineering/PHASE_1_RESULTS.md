@@ -138,6 +138,7 @@ Earlier Phase A changes and their evidence remain in [`PHASE_A_AUDIT_LEDGER.md`]
 - **Finding:** draft report generation compensated storage bytes when the final DB commit failed, but not when the earlier audit-event flush failed after PDF upload.
 - **Correction:** audit flush failure now rolls back and invokes the existing fresh-session artifact compensation guard. Added a deterministic injected audit-flush failure test asserting that uncommitted draft bytes are deleted.
 - **Verification:** `git diff --check` passed. Python execution is unavailable locally; regression awaits CI.
+- **CI follow-up:** run #1607 found one existing signout-compensation test stub omitted `status`; it must model the DRAFT state now required by the route. The backend run otherwise had 896 passed and 24 skipped; PostgreSQL/Celery passed. The fixture correction is being pushed for fresh verification.
 
 ### Additional sign-in state routing fix
 

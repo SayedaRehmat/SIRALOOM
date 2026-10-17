@@ -144,7 +144,7 @@ def test_signout_route_compensates_signed_pdf_when_finalization_fails(monkeypatc
     report_id = uuid4()
     organization_id = uuid4()
     case = SimpleNamespace(id=case_id, organization_id=organization_id)
-    report = SimpleNamespace(id=report_id, case_id=case_id, report_version=3)
+    report = SimpleNamespace(id=report_id, case_id=case_id, report_version=3, status="DRAFT")
 
     class Database:
         def __init__(self):
