@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `7e37b12` (`Record Phase A journey regression evidence`); GitHub Actions run [#1572](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018665232) is in progress. Runs #1570 and #1571 succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `7e7d2c2` (`Record full Phase A verification limits`); GitHub Actions run [#1573](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018777355) is in progress. Runs #1570–#1572 succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -68,6 +68,15 @@
 - **CI:** candidate-list commit `d2267fe` passed run #1571; ledger-only commit `7e37b12` run #1572 is in progress.
 - **Status:** suite evidence recorded; these results do not establish browser E2E, PDF correctness, clinical validation, or Phase A completion.
 - **Next action:** continue notification and remaining API lineage audit; use the CI production build and PDF-render-capable environment as actual evidence when available, then perform integrated review/signout and failure recovery journeys.
+
+## 2026-10-17 pedigree observation lineage and interpretation guard
+
+- **Finding:** segregation reads used analysis/variant-scoped rows but serialized observations even when `pedigree_member_id` referred to a member outside the analysis case. Inheritance assessment silently filtered those rows from its input, potentially presenting a result computed from an incomplete family observation set without identifying the inconsistency.
+- **Correction:** `backend/app/api/v1/pedigree.py` now fails closed with 409 on both segregation reads and inheritance assessment whenever a stored observation's member is not in that analysis case.
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py::test_segregation_lineage_rejects_member_from_another_case` exercises both endpoints and asserts no partial inheritance result is returned.
+- **Verification:** authorization, analysis-variant access, mutation role, review, and pedigree/inheritance suites: 54 passed; `git diff --check` passed. CI #1570–#1572 passed; #1573 is in progress.
+- **Status:** local fix verified, pending commit/push. Phase A remains PARTIAL.
+- **Next action:** continue notification lineage and direct-object API inventory; then demonstrate the complete reviewer-to-authorized-signout journey and failure recovery against configured integration services.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.

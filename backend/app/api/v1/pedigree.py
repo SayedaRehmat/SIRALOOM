@@ -69,6 +69,13 @@ def _relationship(r):
 def _seg(o, member=None):
     return {"id":str(o.id),"pedigree_member_id":str(o.pedigree_member_id),"member_identifier":member.member_identifier if member else None,"genotype":o.genotype,"zygosity":o.zygosity,"phase":o.phase,"allele_observed":o.allele_observed,"phenotype_status":o.phenotype_status,"source":o.source,"notes":o.notes,"metadata":o.metadata_json or {}}
 
+def _validate_observation_members(rows, members):
+    if any(row.pedigree_member_id not in members for row in rows):
+        raise HTTPException(
+            status_code=409,
+            detail="Segregation observation member does not belong to the analysis case",
+        )
+
 @router.get("/cases/{case_id}/pedigree")
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     case=db.get(Case,case_id)
@@ -118,6 +125,7 @@ def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_d
     get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id).order_by(SegregationObservation.created_at)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
+    _validate_observation_members(rows, members)
     assessments=list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id==analysis_id,InheritanceAssessment.variant_id==variant_id).order_by(InheritanceAssessment.created_at.desc())))
     return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observations":[_seg(x,members.get(x.pedigree_member_id)) for x in rows],"assessments":[{"id":str(a.id),"model":a.model,"status":a.status,"score":a.score,"rationale":a.rationale,"fingerprint":a.observation_fingerprint,"reviewer_note":a.reviewer_note,"created_by":a.created_by,"created_at":a.created_at.isoformat()} for a in assessments]}
 
@@ -144,6 +152,7 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
+    _validate_observation_members(rows, members)
     obs=[FamilyObservation(member_id=members[r.pedigree_member_id].member_identifier,sex=members[r.pedigree_member_id].sex,affected_status=r.phenotype_status or members[r.pedigree_member_id].affected_status,genotype=r.genotype,zygosity=r.zygosity) for r in rows if r.pedigree_member_id in members]
     fp=fingerprint(obs); results=[]
     for raw in body.models:

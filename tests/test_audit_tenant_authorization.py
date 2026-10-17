@@ -382,3 +382,39 @@ def test_variant_details_require_analysis_membership(monkeypatch):
 
     assert exc.value.status_code == 404
     assert exc.value.detail == "Variant not found"
+
+
+@pytest.mark.parametrize("operation", ["read", "assess"])
+def test_segregation_lineage_rejects_member_from_another_case(monkeypatch, operation):
+    analysis_id, variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
+    foreign_member_id = uuid4()
+    observation = SimpleNamespace(pedigree_member_id=foreign_member_id)
+    principal = _principal(uuid4(), role="reviewer")
+
+    class _Db:
+        def __init__(self):
+            self.results = [[observation], []]
+
+        def scalars(self, _query):
+            return self.results.pop(0)
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    db = _Db()
+
+    with pytest.raises(HTTPException) as exc:
+        if operation == "read":
+            pedigree.get_segregation(analysis_id, variant_id, db, principal)
+        else:
+            pedigree.assess_inheritance(
+                analysis_id,
+                variant_id,
+                SimpleNamespace(models=[], reviewer_note=None),
+                db,
+                principal,
+            )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Segregation observation member does not belong to the analysis case"
