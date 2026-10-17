@@ -6,6 +6,15 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+## 2026-10-17 continuation — pedigree cycle prevention and integrated recovery checks
+
+- **Finding:** the pedigree relationship API accepted a directed parent→child edge that closed a cycle. Self-links were rejected, but longer ancestry loops were not; two simultaneous writes could also validate against stale graph state.
+- **Correction:** `backend/app/api/v1/pedigree.py` now checks reachability before adding an edge and returns 409 for a cycle. It locks and refreshes the case row before reading the relationship graph, serializing pedigree graph writes for that case.
+- **Regression:** `tests/test_audit_tenant_authorization.py::test_pedigree_relationship_rejects_cycle_before_persisting` builds an existing three-member chain, attempts the closing edge, and verifies rejection before persistence.
+- **Verification:** focused authorization, review-workflow, and direct-object suites: **91 passed**. Integrated report-generation/finalization/signout/failure-recovery/reportability set: **31 passed**. The first run of the latter hit a Windows temp-directory ACL error before affected tests ran; rerunning with a unique workspace-local pytest temp directory passed. Python syntax compilation and `git diff --check` passed. The test stack was installed under OS temporary storage only.
+- **Status:** implementation and tests pushed to `main` as `edcafca`; push-triggered CI is not yet confirmed. Phase A remains **PARTIAL**.
+- **Next:** continue artifact/pedigree/resource/membership direct-object route audit, then run deployed reviewer-to-signed-report, tenant-boundary and failure-recovery scenarios. Live Firebase/browser and deployed lab environment remain unavailable in this session.
+
 ## 2026-10-17 continuation — report, review, reanalysis and export dispatch audit
 
 - **Baseline:** `main` at `e48a8df`, aligned with `origin/main`; unrelated untracked backup artifact preserved.
