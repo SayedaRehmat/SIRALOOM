@@ -19,6 +19,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Classification,
     Report,
+    Specimen,
     Variant,
 )
 from backend.app.infrastructure.db.session import get_db
@@ -104,6 +105,16 @@ def get_accessible_artifact(artifact_id: UUID, db: Session = Depends(get_db), pr
     if artifact.analysis_id is not None:
         analysis = db.get(Analysis, artifact.analysis_id)
         if analysis is None or analysis.case_id != artifact.case_id:
+            raise HTTPException(status_code=404, detail="Artifact not found")
+    specimen_id = getattr(artifact, "specimen_id", None)
+    if specimen_id is not None:
+        specimen = db.get(Specimen, specimen_id)
+        if specimen is None or specimen.case_id != artifact.case_id:
+            raise HTTPException(status_code=404, detail="Artifact not found")
+    paired_artifact_id = getattr(artifact, "paired_artifact_id", None)
+    if paired_artifact_id is not None:
+        paired_artifact = db.get(Artifact, paired_artifact_id)
+        if paired_artifact is None or paired_artifact.case_id != artifact.case_id:
             raise HTTPException(status_code=404, detail="Artifact not found")
     # Report PDFs are also exposed through the generic case artifact listing
     # and download route. Bind either role of PDF to its owning report so a

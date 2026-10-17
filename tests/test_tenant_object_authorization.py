@@ -11,7 +11,7 @@ from backend.app.auth.authorization import (
     get_accessible_report,
 )
 from backend.app.auth.principal import Principal
-from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Report
+from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Report, Specimen
 
 
 class TenantObjectSession:
@@ -163,6 +163,38 @@ def test_artifact_access_rejects_analysis_from_another_case_in_same_tenant():
         Artifact: SimpleNamespace(id=artifact_id, case_id=artifact_case_id, analysis_id=analysis_id),
         Case: SimpleNamespace(id=artifact_case_id, organization_id=tenant_id),
         Analysis: SimpleNamespace(id=analysis_id, case_id=analysis_case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_artifact(artifact_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
+@pytest.mark.parametrize("broken_link", ["specimen", "paired_artifact"])
+def test_artifact_access_rejects_specimen_or_pair_from_another_case(broken_link):
+    tenant_id, case_id, artifact_id, linked_id = uuid4(), uuid4(), uuid4(), uuid4()
+    artifact = SimpleNamespace(
+        id=artifact_id,
+        case_id=case_id,
+        analysis_id=None,
+        specimen_id=linked_id if broken_link == "specimen" else None,
+        paired_artifact_id=linked_id if broken_link == "paired_artifact" else None,
+        artifact_type="VCF",
+    )
+    foreign_link = (
+        SimpleNamespace(id=linked_id, case_id=uuid4())
+        if broken_link == "specimen"
+        else SimpleNamespace(id=linked_id, case_id=uuid4(), artifact_type="VCF")
+    )
+    db = TenantObjectSession({
+        Artifact: {artifact_id: artifact, linked_id: foreign_link},
+        Specimen: foreign_link if broken_link == "specimen" else None,
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
     })
     principal = Principal(
         user_id=uuid4(), organization_id=tenant_id,
