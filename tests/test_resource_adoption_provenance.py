@@ -433,3 +433,47 @@ def test_multiple_rejected_releases_leave_bound_release_and_reanalysis_history_u
         assert binding.resource_id == baseline.id
         assert db.query(ReanalysisCandidate).count() == 0
         assert db.query(ReanalysisChangeEvent).count() == 0
+
+
+def test_adoption_decision_rejects_foreign_tenant_resource_lineage():
+    engine = _engine()
+    with Session(engine) as db:
+        owner = Organization(id=uuid4(), name="Resource Owner", external_identifier=None)
+        requester = Organization(id=uuid4(), name="Requesting Lab", external_identifier=None)
+        actor = User(
+            id=uuid4(), organization_id=requester.id, display_name="Director",
+            role="lab_director", status="ACTIVE",
+        )
+        db.add_all([owner, requester, actor])
+        db.flush()
+
+        resource = _qualified(db, name="TenantOnly", version="1", checksum="f" * 64)
+        resource.organization_id = owner.id
+        qualification = db.scalar(
+            select(ResourceQualification).where(
+                ResourceQualification.resource_id == resource.id
+            )
+        )
+        approval = ResourceApproval(
+            id=uuid4(), resource_id=resource.id, organization_id=requester.id,
+            qualification_id=qualification.id, status="PENDING", version=1,
+        )
+        db.add(approval)
+        db.commit()
+
+        with pytest.raises(ResourceRegistryError, match="owned by another organization"):
+            decide_resource_approval(
+                db, approval_id=approval.id, organization_id=requester.id,
+                actor_id=actor.id, decision="APPROVED", expected_version=1,
+                reason="Attempt invalid cross-tenant adoption",
+            )
+
+        db.rollback()
+        assert db.get(ResourceApproval, approval.id).status == "PENDING"
+        assert db.scalar(select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == requester.id,
+        )) is None
+        assert db.scalar(select(ResourceApprovalAction).where(
+            ResourceApprovalAction.approval_id == approval.id,
+        )) is None
+    engine.dispose()

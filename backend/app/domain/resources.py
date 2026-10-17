@@ -324,6 +324,8 @@ def decide_resource_approval(
     qualification = db.get(ResourceQualification, approval.qualification_id)
     if resource is None:
         raise ResourceRegistryError("resource not found")
+    if resource.organization_id is not None and resource.organization_id != organization_id:
+        raise ResourceRegistryError("resource is owned by another organization")
     if (
         qualification is None
         or qualification.status != "QUALIFIED"

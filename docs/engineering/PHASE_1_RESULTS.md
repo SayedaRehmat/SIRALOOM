@@ -46,6 +46,8 @@ Full backend suite on `main` at `c2a75eb`: **869 passed, 37 skipped, 1 failed**.
 
 **2026-10-17 integrated reviewer/signout recovery:** a local SQLite integration test now exercises human classification approval, exact reportability linkage, report snapshot, injected signed-artifact persistence failure with DRAFT preservation, successful signout, signed-artifact integrity/audit verification, and idempotent retry. The combined focused authorization/review/signout/recovery suite passed **179** with one dependency deprecation warning, including this journey. CI #1638 passed backend, PostgreSQL integration, and frontend jobs. It uses deterministic artifact persistence and does not establish browser/Firebase, real object storage, deployed tenant isolation, or production rendering. Phase A remains **PARTIAL**.
 
+**2026-10-17 resource approval ownership revalidation:** resource approval decisions now re-check private resource ownership before mutating approval state or tenant binding. The adoption plus staging/API/dispatch/recovery suite passed **48**; `git diff --check` pending final review. Phase A remains **PARTIAL**.
+
 **Additional review dossier audit (CI verified):** the review service independently assembled pedigree context without checking that included segregation observations, relationship endpoints, and member specimens belonged to the analysis case. It now fails closed on those broken links; three parameterized SQLite regressions passed in CI #1610. This does not replace deployed two-tenant or browser verification.
 
 ### 2026-10-17 direct-object and signout recovery continuation
