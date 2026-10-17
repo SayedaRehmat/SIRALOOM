@@ -35,7 +35,7 @@ class ResourceStagingCreateRequest(BaseModel):
     source_uri: str | None = Field(default=None, min_length=1)
     expected_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     expected_size_bytes: int | None = Field(default=None, gt=0)
-    storage_backend: str = "ORGANIZATION_LOCAL_FILESYSTEM"
+    storage_backend: str = Field(default="ORGANIZATION_LOCAL_FILESYSTEM", min_length=1, max_length=64)
     metadata: dict = Field(default_factory=dict)
 
 
@@ -401,6 +401,8 @@ def create_resource_staging(
         "platform_admin", "organization_admin", "lab_director", "bioinformatician",
     }))
     resource = _require_resource_owner(db.get(Resource, resource_id), principal)
+    if payload.storage_backend != "ORGANIZATION_LOCAL_FILESYSTEM":
+        raise HTTPException(status_code=422, detail="Unsupported organization resource staging backend")
     if resource.status not in {"CANDIDATE", "QUALIFIED"}:
         raise HTTPException(status_code=409, detail=f"Resource status {resource.status} cannot be staged")
     if not resource.location:
