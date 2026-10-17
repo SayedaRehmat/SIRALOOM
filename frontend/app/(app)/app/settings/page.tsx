@@ -43,6 +43,7 @@ export default function SettingsPage() {
     Promise.all([apiFetch("/auth/session"), apiFetch("/health")])
       .then(async ([s, h]) => {
         setSession(s); setHealth(h);
+        if (s?.role !== "organization_admin" && s?.role !== "lab_director") return;
         try {
           await loadMembers();
         } catch (error) {

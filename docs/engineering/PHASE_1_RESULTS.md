@@ -36,6 +36,12 @@
 - **Regression evidence:** Frontend behavior suite: 20 passed, including success/rejection behavior; localization guard passed. CI pending.
 - **Commit:** Current local batch; awaiting CI.
 
+### Membership roster privacy
+
+- **Defect:** Any authenticated tenant member could query all member emails and roles even though the settings UI exposes the roster only to organization admins and lab directors.
+- **Fix:** Enforced the administrator role policy in the server route and skipped the roster call in settings for other roles.
+- **Regression evidence:** `tests/test_membership_roster_authorization.py`, membership mutation, invitation, principal authorization, and API route-auth coverage: 30 passed locally. CI pending.
+
 ### Signed report artifact recovery
 
 - **Defect:** Signout uploads the signed PDF before report and audit changes are flushed and committed. A failed audit flush, API commit, or durable resume-intent commit could leave untracked signed bytes.
