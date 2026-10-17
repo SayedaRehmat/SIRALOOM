@@ -108,6 +108,65 @@ def test_pedigree_member_cannot_reference_specimen_from_another_case(monkeypatch
     assert exc.value.detail == "Specimen not found in this case"
 
 
+def test_pedigree_relationship_rejects_cycle_before_persisting(monkeypatch):
+    from backend.app.infrastructure.db.models import Case, PedigreeMember, PedigreeRelationship
+
+    organization_id = uuid4()
+    case_id = uuid4()
+    member_a_id, member_b_id, member_c_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+    members = {
+        member_a_id: SimpleNamespace(id=member_a_id, case_id=case_id),
+        member_b_id: SimpleNamespace(id=member_b_id, case_id=case_id),
+        member_c_id: SimpleNamespace(id=member_c_id, case_id=case_id),
+    }
+    existing = [
+        SimpleNamespace(parent_member_id=member_a_id, child_member_id=member_b_id),
+        SimpleNamespace(parent_member_id=member_b_id, child_member_id=member_c_id),
+    ]
+
+    class _PedigreeDb:
+        added = None
+
+        def get(self, model, object_id, **_kwargs):
+            if model is Case:
+                return case if object_id == case_id else None
+            if model is PedigreeMember:
+                return members.get(object_id)
+            return None
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
+        def scalars(self, _statement):
+            return SimpleNamespace(all=lambda: existing)
+
+        def scalar(self, _statement):
+            return None
+
+        def add(self, row):
+            self.added = row
+
+    db = _PedigreeDb()
+    monkeypatch.setattr(pedigree, "require_case_tenant", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+
+    with pytest.raises(HTTPException) as exc:
+        pedigree.add_relationship(
+            case_id=case_id,
+            body=pedigree.RelationshipInput(
+                parent_member_id=member_c_id,
+                child_member_id=member_a_id,
+            ),
+            db=db,
+            principal=_principal(organization_id),
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Pedigree relationship would create a parentage cycle"
+    assert db.added is None
+
+
 @pytest.mark.parametrize("route", [reports.get_export, reports.download_case_export])
 def test_case_export_hides_foreign_exports_like_missing_exports(route):
     from backend.app.infrastructure.db.models import Case, CaseExport

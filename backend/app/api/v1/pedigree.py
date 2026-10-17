@@ -106,6 +106,27 @@ def _validate_pedigree_lineage(members, relationships, case_id, db):
             detail="Pedigree member specimen does not belong to this case",
         )
 
+
+def _would_create_pedigree_cycle(relationships, parent_member_id, child_member_id) -> bool:
+    """Check whether adding parent -> child would create an ancestry cycle."""
+    children_by_parent = {}
+    for relationship in relationships:
+        children_by_parent.setdefault(relationship.parent_member_id, set()).add(
+            relationship.child_member_id
+        )
+
+    pending = [child_member_id]
+    visited = set()
+    while pending:
+        member_id = pending.pop()
+        if member_id == parent_member_id:
+            return True
+        if member_id in visited:
+            continue
+        visited.add(member_id)
+        pending.extend(children_by_parent.get(member_id, ()))
+    return False
+
 @router.get("/cases/{case_id}/pedigree")
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     case=db.get(Case,case_id)
@@ -137,12 +158,23 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
 
 @router.post("/cases/{case_id}/pedigree/relationships",status_code=201)
 def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    case=db.get(Case,case_id)
+    # Serialize edits to one pedigree so concurrent writes cannot each pass a
+    # cycle check against a stale graph and jointly create a cycle.
+    case=db.get(Case,case_id,with_for_update=True)
     if not case: raise HTTPException(404,"Case not found")
+    db.refresh(case,with_for_update=True)
     require_case_tenant(case,principal)
     require_role(principal, CASE_WRITE_ROLES)
     parent=db.get(PedigreeMember,body.parent_member_id); child=db.get(PedigreeMember,body.child_member_id)
     if not parent or not child or parent.case_id!=case_id or child.case_id!=case_id or parent.id==child.id: raise HTTPException(400,"Parent and child must be distinct members in the same case")
+    relationships = db.scalars(
+        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
+    ).all()
+    if _would_create_pedigree_cycle(relationships, parent.id, child.id):
+        raise HTTPException(
+            status_code=409,
+            detail="Pedigree relationship would create a parentage cycle",
+        )
     if db.scalar(select(PedigreeRelationship).where(PedigreeRelationship.case_id==case_id,PedigreeRelationship.parent_member_id==parent.id,PedigreeRelationship.child_member_id==child.id)):
         raise HTTPException(409,"Pedigree relationship already exists")
     row=PedigreeRelationship(id=uuid4(),case_id=case_id,parent_member_id=parent.id,child_member_id=child.id,relationship_type=body.relationship_type,metadata_json=body.metadata)
