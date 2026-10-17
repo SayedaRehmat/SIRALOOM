@@ -21,9 +21,11 @@ def _resource(
     genome_build="GRCh38",
     provider="GeneBe",
     status="ACTIVE",
+    organization_id=None,
 ):
     return SimpleNamespace(
         id=resource_id,
+        organization_id=organization_id,
         resource_type=resource_type,
         genome_build=genome_build,
         provider=provider,
@@ -96,6 +98,27 @@ def test_annotation_resource_rejects_build_mismatch():
         )
 
     assert exc.value.code == "RESOURCE_BUILD_MISMATCH"
+
+
+def test_annotation_resource_rejects_another_organizations_resource():
+    resource_id = uuid4()
+    analysis_organization_id, resource_organization_id = uuid4(), uuid4()
+    resource = _resource(
+        resource_id=resource_id,
+        organization_id=resource_organization_id,
+    )
+
+    with pytest.raises(ResourceConsumptionError) as exc:
+        _require_registered_resource(
+            FakeDB({resource_id: resource}),
+            resource_id=resource_id,
+            organization_id=analysis_organization_id,
+            expected_type="ANNOTATION",
+            expected_build="GRCh38",
+            expected_provider="GeneBe",
+        )
+
+    assert exc.value.code == "RESOURCE_TENANT_MISMATCH"
 
 
 def test_annotation_resource_allows_explicitly_pinned_superseded_version():

@@ -2924,9 +2924,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     # Legacy, non-profile analyses retain the explicit resource
                     # ID path and old deployment capability discovery.
                     if configured_clinvar_id:
+                        case_for_resources = db.get(Case, analysis.case_id)
+                        if case_for_resources is None:
+                            raise ResourceConsumptionError(
+                                "CASE_NOT_FOUND",
+                                "The analysis case was not found while resolving its ClinVar resource.",
+                            )
                         clinvar_resource = _require_registered_resource(
                             db,
                             resource_id=configured_clinvar_id,
+                            organization_id=case_for_resources.organization_id,
                             expected_type="EVIDENCE",
                             expected_build=analysis.reference_build,
                             expected_provider="NCBI ClinVar",
@@ -4222,6 +4229,7 @@ def _require_registered_resource(
     db: Session,
     *,
     resource_id: object,
+    organization_id: UUID | None = None,
     expected_type: str,
     expected_build: str,
     expected_provider: str | None = None,
@@ -4252,6 +4260,15 @@ def _require_registered_resource(
         raise ResourceConsumptionError(
             "RESOURCE_NOT_FOUND",
             f"Registered resource {rid} was not found.",
+        )
+    if (
+        organization_id is not None
+        and row.organization_id is not None
+        and row.organization_id != organization_id
+    ):
+        raise ResourceConsumptionError(
+            "RESOURCE_TENANT_MISMATCH",
+            f"Organization-scoped resource {rid} does not belong to the analysis organization.",
         )
     if row.resource_type != expected_type:
         raise ResourceConsumptionError(
