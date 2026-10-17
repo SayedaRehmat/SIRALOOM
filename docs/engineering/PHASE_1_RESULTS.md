@@ -1,5 +1,19 @@
 # SIRALOOM Phase 1 Results
 
+## Current checkpoint — 2026-10-17 continuation
+
+Inspected on `main` at `c724bdb`; tracked files were clean before this documentation update, and the unrelated untracked backup artifact was preserved. Four recently pushed backend fixes have regression tests but no observable CI result in this environment: report PDF ownership checks (`96ab9db`), report/analysis/PDF lineage validation in case exports (`127dfa1`), notification read lineage and timestamp idempotency (`b2a31ee`), and stale classification rejection at the reportability human gate (`4eedd33`). Local Python/pytest is unavailable because only the WindowsApps Python stub is present and no repository virtual environment exists.
+
+Actual frontend session/workspace test command, run from `frontend/`:
+
+```powershell
+D:\nodejs\node.exe --test lib/safe-redirect.test.mjs lib/session-destination.test.mjs lib/case-artifacts.test.mjs lib/workspace-context.test.mjs lib/validated-upload.test.mjs lib/signout.test.mjs
+```
+
+Result: exit 0; 20 passed, 0 failed, 0 skipped. This does not constitute live Firebase, browser, backend-authorization, token-revocation, or deployment verification. Phase 1 remains **PARTIAL**; no production or clinical-readiness claim is supported. See `END_TO_END_WORKFLOW_AUDIT.md` for stage-by-stage status and `MASTER_AUDIT_AND_REMEDIATION.md` for the next task.
+
+Logout source review: `AppShell.handleSignOut` calls Firebase client `signOut`; backend `get_current_principal` verifies Firebase tokens with `check_revoked=True`, but there is no application logout endpoint that invokes Admin token revocation. Firebase documents Admin refresh-token revocation as user-wide across sessions, with existing ID tokens potentially valid until expiry absent revocation checking ([Firebase session management](https://firebase.google.com/docs/auth/admin/manage-sessions)). Do not silently make ordinary logout revoke every device; this product behavior needs a decision and a live Firebase/browser test.
+
 ## Current checkpoint — 2026-10-17
 
 **Latest pushed application baseline:** `main` commit `0e2e372`. GitHub Actions run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) passed all jobs: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose checks passed. This verifies the report artifact guards and fixtures, storage-independent retry of an already signed report, reviewer assay tenant-lineage rejection, reviewer pedigree-lineage rejection, and compensation after draft-report audit flush failure.

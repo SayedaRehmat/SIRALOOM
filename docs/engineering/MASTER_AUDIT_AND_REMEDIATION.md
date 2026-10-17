@@ -1,10 +1,20 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed commit:** `main` commit `4eedd33` (`Require current classification at reportability gate`). The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. CI status for `96ab9db`, `127dfa1`, `b2a31ee`, and later commits could not be retrieved in this environment (`gh` is unavailable and GitHub API access is blocked). Local Python/pytest verification is unavailable. The pre-existing untracked backup artifact remains untouched.
+**Current branch/commit:** `main` at `c724bdb` (`Update Phase A pushed checkpoint`), aligned with `origin/main`. The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. Follow-up commits `96ab9db`, `127dfa1`, `b2a31ee`, and `4eedd33` add report PDF/export lineage, notification mutation integrity, and reportability gate freshness changes; CI status for them could not be retrieved (`gh` is unavailable and GitHub API access is blocked). Local Python/pytest is unavailable. The frontend session/workspace suite passed 20/20 with the command recorded below. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
+
+## 2026-10-17 pasted-criteria continuation — current verification
+
+- **Current inspection:** confirmed `main` at `c724bdb`, clean tracked tree, and preserved unrelated untracked backup. Re-read the complete account-to-signout matrix and actual frontend auth shell, Firebase session routing, API principal, report/export, review, notification, and workflow gate paths.
+- **Executed test:** from `frontend/`, `D:\nodejs\node.exe --test lib/safe-redirect.test.mjs lib/session-destination.test.mjs lib/case-artifacts.test.mjs lib/workspace-context.test.mjs lib/validated-upload.test.mjs lib/signout.test.mjs` — exit 0, 20 passed, 0 failed, 0 skipped.
+- **Additional check:** from `frontend/`, `D:\nodejs\node.exe ../scripts/validate-i18n.mjs` — exit 0, `SIRALOOM i18n architecture guard: PASS`.
+- **Logout finding / product boundary:** `frontend/components/app-shell.tsx` calls Firebase client `signOut`, and `backend/app/auth/principal.py` verifies tokens with `check_revoked=True`; no backend logout/revoke route is implemented. Firebase documents Admin refresh-token revocation as user-wide (all sessions), and already issued ID tokens may otherwise last up to one hour. Do not add user-wide revocation to ordinary logout without a product decision about expected cross-device behavior; live token/browser behavior remains NOT RUN. Reference: [Firebase Manage User Sessions](https://firebase.google.com/docs/auth/admin/manage-sessions).
+- **Scope limit:** this is frontend behavior coverage. It does not exercise Firebase, browser history/cached protected pages, backend authorization, or token revocation. Backend Python regression tests for recent commits and their CI results are not available in this environment.
+- **Phase status:** PARTIAL. All 13 matrix rows remain partial until the missing integration/E2E requirements and recent regression tests are verified.
+- **Next action:** verify the recent authorization/export/notification/reportability backend tests in CI or a Python-capable environment, then continue the remaining direct-object and integrated reviewer-to-signout/recovery audit. Resolve whether product logout should revoke only this browser's Firebase state or all of the user's sessions before implementing server-side revocation.
 
 ## 2026-10-17 continuation checkpoint — generic report-PDF object authorization
 
