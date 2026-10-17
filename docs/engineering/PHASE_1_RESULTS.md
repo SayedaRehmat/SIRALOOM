@@ -42,7 +42,7 @@ Commit `147062a` constrains governance states; CI #1584 passed. Commits `5a5e788
 
 Full backend suite on `main` at `c2a75eb`: **869 passed, 37 skipped, 1 failed**. The sole failure is the PDF renderer test because the isolated local Python runtime lacks the declared WeasyPrint dependency. Report rendering remains unverified by this local run; Phase A remains **PARTIAL**.
 
-**2026-10-17 population query boundary:** population queries now reject variant IDs absent from the requested analysis before reading observations and cap the input list at 500. Population/direct-object/tenant/QC-related suites passed **81**. This code is pending commit/CI; Phase A remains **PARTIAL**.
+**2026-10-17 population query boundary:** population queries now reject variant IDs absent from the requested analysis before reading observations and cap the input list at 500. Population/direct-object/tenant/QC-related suites passed **81**. Committed and pushed to `main` as `c03a835`; CI has not been confirmed. Phase A remains **PARTIAL**.
 
 **Additional review dossier audit (CI verified):** the review service independently assembled pedigree context without checking that included segregation observations, relationship endpoints, and member specimens belonged to the analysis case. It now fails closed on those broken links; three parameterized SQLite regressions passed in CI #1610. This does not replace deployed two-tenant or browser verification.
 
