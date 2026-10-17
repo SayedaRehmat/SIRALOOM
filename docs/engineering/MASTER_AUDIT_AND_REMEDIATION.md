@@ -1,10 +1,18 @@
 # SIRALOOM Master Audit and Remediation
 
-**Updated:** 2026-10-15
-**Latest pushed baseline:** `main` commit `088ef5d` (`Restrict member roster to administrators`), 2026-10-17; CI run [#1558](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014715123) queued at checkpoint. Run #1557 passed all three CI jobs. Member roster authorization tests: 30 passed locally; case export integrity/recovery tests: 17 passed locally in the current batch.
+**Updated:** 2026-10-17
+**Latest pushed baseline:** `main` commit `4c43ad9` (`Verify and recover case export artifacts`); GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) passed backend, PostgreSQL/Celery integration, and frontend jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
+
+## 2026-10-17 continuation checkpoint — case-export recovery verified
+
+- **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
+- **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
+- **Current code batch:** case-export cloud artifact packaging/download integrity and compensation on failed persistence are pushed; locally focused export suite: 17 passed. Earlier authorization changes (analysis/case artifact linkage and administrator-only member roster) are also pushed and covered by focused tests.
+- **Phase A status:** NOT COMPLETE. The stage matrix remains PARTIAL. CI success verifies the committed test suite only; configured Firebase/browser sign-up-to-signout, live two-tenant behavior, end-to-end reviewer/report signout, and deployed lab infrastructure remain unexercised.
+- **Next implementation action:** resume the API object-authorization inventory from the nested reportability, report, case-export, and worker entrypoints; add regression tests for confirmed linkage/tenant defects. Then continue the outstanding A1–A10 journeys and recovery cases. Do not switch to Phase B/C or declare readiness before Phase A gate evidence is complete.
 
 ## Verified current batch
 
