@@ -52,6 +52,15 @@
 - **Status:** implementation in progress on `main`; CI pending. Phase A remains PARTIAL.
 - **Next action:** run this gate regression and relevant reportability/finalization suites in CI; continue direct-object and integrated reviewer/signout/recovery audit.
 
+## 2026-10-17 continuation checkpoint — stale final reportability retry
+
+- **Finding:** `finalize_reportability` returned an already-FINAL decision before checking whether the decision was still latest and linked to the latest approved classification. A retry could therefore be reported as successful after a newer classification invalidated its scientific context. The reportability list similarly serialized stale decisions without validating that lineage.
+- **Correction:** finalization now locks/refreshes the analysis before the decision, verifies current decision and latest approved classification lineage before the idempotent FINAL return, and the list endpoint fails with 409 for stale/misbound decisions.
+- **Regression coverage:** `tests/test_reportability.py` now checks that stale FINAL retry is rejected and stale decision listing fails closed. Existing reportability evaluation/finalization and workflow-gate tests remain relevant.
+- **Verification:** `git diff --check` passed. Focused command `python -m pytest -q tests/test_reportability.py tests/test_workflow_human_gate_api.py` could not start: WindowsApps `python.exe` is inaccessible; CI status is not available in this environment.
+- **Status:** code and regression are in progress on `main`; not verified. Phase A remains PARTIAL.
+- **Next action:** finish diff review, push the bounded fix under the existing main-branch authorization, then obtain the focused test result from CI or a Python-capable environment.
+
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
 
 ## 2026-10-17 case phenotype lineage checkpoint

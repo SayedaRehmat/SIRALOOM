@@ -52,6 +52,28 @@ def latest_decision(db: Session, analysis_id: UUID, variant_id: UUID) -> Reporta
     )
 
 
+def is_current_approved_reportability_decision(
+    db: Session,
+    decision: ReportabilityDecision,
+) -> bool:
+    """Check that a decision is attached to the latest approved classification."""
+    classification = db.execute(
+        select(Classification.id, Classification.state, Classification.review_status)
+        .where(
+            Classification.analysis_id == decision.analysis_id,
+            Classification.variant_id == decision.variant_id,
+        )
+        .order_by(Classification.version.desc())
+        .limit(1)
+    ).first()
+    return bool(
+        classification is not None
+        and classification.id == decision.classification_id
+        and classification.state == "FINAL"
+        and classification.review_status == "APPROVED"
+    )
+
+
 def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDecision]:
     # Serialize proposal generation for the whole analysis. Locking the existing
     # classification rows alone does not protect the no-decision-yet case: two
@@ -121,11 +143,23 @@ def finalize_reportability(
     # The review-version check is optimistic concurrency protection, but the
     # row lock is required to prevent two workers from both observing PROPOSED
     # and creating conflicting FINAL mutations in the same transaction window.
-    decision = db.get(ReportabilityDecision, decision_id, with_for_update=True)
+    observed = db.get(ReportabilityDecision, decision_id)
+    if observed is None:
+        raise ValueError("Reportability decision not found")
+
+    # Classification approval serializes on the analysis row. Acquire that
+    # lock before the decision row to keep the same lock order as evaluation
+    # and classification updates, then refresh both rows before checking state.
+    analysis = db.get(Analysis, observed.analysis_id, with_for_update=True)
+    if analysis is None:
+        raise ValueError("Analysis not found")
+    db.refresh(analysis, with_for_update=True)
+    decision = db.get(ReportabilityDecision, decision_id)
     if decision is None:
         raise ValueError("Reportability decision not found")
-    if decision.status == "FINAL":
-        return decision
+    db.refresh(decision, with_for_update=True)
+    if decision.analysis_id != analysis.id:
+        raise ValueError("Reportability decision analysis changed during finalization")
 
     current_latest = latest_decision(db, decision.analysis_id, decision.variant_id)
     if current_latest is None or current_latest.id != decision.id:
@@ -133,29 +167,14 @@ def finalize_reportability(
             "Reportability decision is no longer the latest decision for this variant; "
             "finalize the current latest proposal instead"
         )
-    classification = db.get(Classification, decision.classification_id)
-    if (
-        classification is None
-        or classification.analysis_id != decision.analysis_id
-        or classification.variant_id != decision.variant_id
-        or classification.state != "FINAL"
-        or classification.review_status != "APPROVED"
-    ):
+    if not is_current_approved_reportability_decision(db, decision):
         raise ValueError(
-            "Reportability decision is no longer backed by the current approved classification"
+            "Reportability decision is stale because it is not linked to the latest "
+            "approved classification"
         )
-    latest_classification = db.scalar(
-        select(Classification)
-        .where(
-            Classification.analysis_id == decision.analysis_id,
-            Classification.variant_id == decision.variant_id,
-        )
-        .order_by(Classification.version.desc())
-    )
-    if latest_classification is None or latest_classification.id != classification.id:
-        raise ValueError(
-            "Reportability decision is stale because a newer classification exists"
-        )
+    if decision.status == "FINAL":
+        return decision
+
     if decision.review_version != expected_version:
         raise ValueError(
             f"Reportability review version conflict: expected {expected_version}, current {decision.review_version}"

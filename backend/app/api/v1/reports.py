@@ -45,6 +45,7 @@ from backend.app.reporting.finalization import ReportFinalizationError, finalize
 from backend.app.reporting.reportability import (
     evaluate_analysis,
     finalize_reportability,
+    is_current_approved_reportability_decision,
 )
 from backend.app.reporting.service import (
     build_report_content,
@@ -318,6 +319,14 @@ def list_reportability(analysis_id: UUID, db: Session = Depends(get_db), princip
     for row in rows:
         _require_reportability_variant(analysis, row.variant_id, db)
         latest[row.variant_id] = row
+    if any(
+        not is_current_approved_reportability_decision(db, decision)
+        for decision in latest.values()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Reportability decision is not linked to the latest approved classification",
+        )
     return {"analysis_id": str(analysis_id), "items": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "priority_score": d.priority_score, "priority_band": d.priority_band, "reasons": d.reasons, "policy_name": d.policy_name, "policy_version": d.policy_version, "review_version": d.review_version, "reviewed_by": str(d.reviewed_by) if d.reviewed_by else None, "approved_at": d.approved_at.isoformat() if d.approved_at else None} for d in latest.values()]}
 
 @router.post("/reportability/{decision_id}/finalize")

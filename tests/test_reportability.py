@@ -120,7 +120,7 @@ def test_reportability_finalization_rejects_stale_decision_after_new_classificat
         finalize_reportability(db, decision_id=first[0].id, reviewer_id=user.id, expected_version=first[0].review_version, disposition="REPORT", reason="Stale decision")
 
 
-def test_final_reportability_state_rejects_decision_linked_to_stale_classification():
+def test_final_reportability_state_rejects_decision_linked_to_stale_classification(monkeypatch):
     db = make_db()
     org = Organization(id=uuid4(), name="Lab")
     user = User(id=uuid4(), organization_id=org.id, display_name="Reviewer", role="MEDICAL_REVIEWER", status="ACTIVE")
@@ -137,3 +137,24 @@ def test_final_reportability_state_rejects_decision_linked_to_stale_classificati
     ok, errors = final_reportability_state(db, analysis.id)
     assert not ok
     assert any("stale classification" in error for error in errors)
+    from pytest import raises
+    with raises(ValueError, match="stale because it is not linked"):
+        finalize_reportability(
+            db,
+            decision_id=decision.id,
+            reviewer_id=user.id,
+            expected_version=decision.review_version,
+            disposition="REPORT",
+            reason="Do not accept a stale sign-off retry",
+        )
+    from fastapi import HTTPException
+    from backend.app.api.v1 import reports as reports_api
+    monkeypatch.setattr(reports_api, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(reports_api, "_require_reportability_variant", lambda *_args: None)
+    with raises(HTTPException) as exc_info:
+        reports_api.list_reportability(
+            analysis.id,
+            db,
+            type("Principal", (), {"organization_id": org.id})(),
+        )
+    assert exc_info.value.status_code == 409
