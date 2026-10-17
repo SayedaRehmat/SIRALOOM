@@ -24,6 +24,12 @@ class TenantObjectSession:
             return value.get(object_id)
         return value
 
+    def scalars(self, _statement):
+        reports = self.rows.get(Report, [])
+        if not isinstance(reports, list):
+            reports = [reports]
+        return SimpleNamespace(all=lambda: reports)
+
 
 @pytest.mark.parametrize("object_kind", ["case", "analysis", "artifact", "report"])
 @pytest.mark.parametrize("same_tenant", [True, False])
@@ -165,6 +171,94 @@ def test_artifact_access_rejects_analysis_from_another_case_in_same_tenant():
     with pytest.raises(HTTPException) as error:
         get_accessible_artifact(artifact_id, db=db, principal=principal)
 
+    assert error.value.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "broken_link",
+    ["draft_other_artifact", "signed_other_artifact", "signed_hash", "version", "report_missing"],
+)
+def test_report_pdf_artifact_access_requires_owning_report_lineage(broken_link):
+    tenant_id, case_id, analysis_id, report_id, artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(),
+    )
+    is_signed = broken_link != "draft_other_artifact"
+    report = SimpleNamespace(
+        id=report_id,
+        case_id=case_id,
+        analysis_id=analysis_id,
+        report_version=2,
+        status="FINAL" if is_signed else "DRAFT",
+        artifact_id=uuid4() if broken_link == "draft_other_artifact" else artifact_id,
+        signed_artifact_id=uuid4() if broken_link == "signed_other_artifact" else artifact_id if is_signed else None,
+        signed_sha256="b" * 64,
+    )
+    metadata = {
+        "report_id": str(uuid4()) if broken_link == "report_missing" else str(report_id),
+        "report_version": 3 if broken_link == "version" else 2,
+        "report_state": "FINAL" if is_signed else "DRAFT",
+    }
+    if is_signed:
+        metadata["signed"] = True
+    artifact = SimpleNamespace(
+        id=artifact_id,
+        case_id=case_id,
+        analysis_id=analysis_id,
+        artifact_type="REPORT_PDF",
+        metadata_json=metadata,
+        sha256="c" * 64 if broken_link == "signed_hash" else "b" * 64,
+    )
+    db = TenantObjectSession({
+        Artifact: artifact,
+        Report: report,
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_accessible_artifact(artifact_id, db=db, principal=principal)
+
+    assert error.value.status_code == 404
+
+
+def test_report_pdf_without_metadata_requires_unique_persisted_report_link():
+    tenant_id, case_id, analysis_id, report_id, artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(),
+    )
+    artifact = SimpleNamespace(
+        id=artifact_id, case_id=case_id, analysis_id=analysis_id,
+        artifact_type="REPORT_PDF", metadata_json={}, sha256="a" * 64,
+    )
+    report = SimpleNamespace(
+        id=report_id, case_id=case_id, analysis_id=analysis_id,
+        report_version=1, status="DRAFT", artifact_id=artifact_id,
+        signed_artifact_id=None, signed_sha256=None,
+    )
+    db = TenantObjectSession({
+        Artifact: artifact,
+        Report: [report],
+        Case: SimpleNamespace(id=case_id, organization_id=tenant_id),
+        Analysis: SimpleNamespace(id=analysis_id, case_id=case_id),
+    })
+    principal = Principal(
+        user_id=uuid4(), organization_id=tenant_id,
+        role="read_only", subject="verified-subject",
+    )
+
+    assert get_accessible_artifact(artifact_id, db=db, principal=principal) is artifact
+
+    db.rows[Report] = []
+    with pytest.raises(HTTPException) as error:
+        get_accessible_artifact(artifact_id, db=db, principal=principal)
+    assert error.value.status_code == 404
+
+    db.rows[Report] = [report, SimpleNamespace(**{**vars(report), "id": uuid4()})]
+    with pytest.raises(HTTPException) as error:
+        get_accessible_artifact(artifact_id, db=db, principal=principal)
     assert error.value.status_code == 404
 
 

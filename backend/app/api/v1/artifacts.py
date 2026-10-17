@@ -84,6 +84,10 @@ def list_case_artifacts(case_id: UUID, db: Session = Depends(get_db), principal:
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_tenant(case, principal)
     rows = db.scalars(select(Artifact).where(Artifact.case_id == case_id).order_by(Artifact.created_at.desc())).all()
+    for artifact in rows:
+        # Apply the same ownership and report-lineage checks used by downloads
+        # before exposing artifact identifiers or hashes in the case dossier.
+        get_accessible_artifact(artifact.id, db=db, principal=principal)
     return [
         {
             "artifact_id": str(a.id), "filename": a.filename, "artifact_type": a.artifact_type,

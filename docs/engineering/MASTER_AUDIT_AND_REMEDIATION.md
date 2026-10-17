@@ -6,6 +6,15 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+## 2026-10-17 continuation checkpoint — generic report-PDF object authorization
+
+- **Finding:** the generic case artifact listing/download accessor accepted report PDFs with an explicit `report_id` only when their links matched, but report PDFs without that metadata bypassed report ownership checks. Such a legacy or malformed row could be listed/downloaded without any report owning it.
+- **Correction:** `get_accessible_artifact` now requires a unique persisted report link for metadata-free report PDFs; explicit metadata must resolve to the owning report. Draft and signed identity, case/analysis lineage, available version/state metadata, signed status, and signed SHA-256 are checked. Case artifact listing uses the same accessor before disclosing artifact identifiers or hashes.
+- **Regression coverage:** `tests/test_tenant_object_authorization.py` covers forged draft/signed links, hash/version/report mismatch, and valid, orphaned, and ambiguous metadata-free PDFs.
+- **Verification:** `git diff --check` passed. Focused pytest could not run locally because this Windows runtime exposes only the WindowsApps Python stub and no project virtual environment. CI verification is pending this change's push.
+- **Status:** implementation in progress on `main`; do not mark verified until CI completes. Phase A remains PARTIAL.
+- **Next action:** run the focused authorization and artifact-route suite in CI, then continue the report-export and remaining direct-object, review/signout, and recovery audit.
+
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
 
 ## 2026-10-17 case phenotype lineage checkpoint

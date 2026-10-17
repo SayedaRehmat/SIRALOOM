@@ -2,7 +2,7 @@
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
@@ -104,6 +104,56 @@ def get_accessible_artifact(artifact_id: UUID, db: Session = Depends(get_db), pr
     if artifact.analysis_id is not None:
         analysis = db.get(Analysis, artifact.analysis_id)
         if analysis is None or analysis.case_id != artifact.case_id:
+            raise HTTPException(status_code=404, detail="Artifact not found")
+    # Report PDFs are also exposed through the generic case artifact listing
+    # and download route. Bind either role of PDF to its owning report so a
+    # malformed same-tenant artifact link cannot make another report's PDF
+    # appear as this report's signed or draft output.
+    if artifact.artifact_type == "REPORT_PDF":
+        metadata = dict(artifact.metadata_json or {})
+        report_id_raw = metadata.get("report_id")
+        if report_id_raw is not None:
+            try:
+                report_id = UUID(str(report_id_raw))
+            except (TypeError, ValueError) as exc:
+                raise HTTPException(status_code=404, detail="Artifact not found") from exc
+            report = db.get(Report, report_id)
+        else:
+            # Older report PDFs predate explicit report_id metadata. Accept
+            # them only when exactly one persisted report points at this PDF.
+            matches = list(db.scalars(
+                select(Report).where(
+                    or_(Report.artifact_id == artifact.id, Report.signed_artifact_id == artifact.id)
+                )
+            ).all())
+            report = matches[0] if len(matches) == 1 else None
+        if report_id_raw is not None or report is not None:
+            if (
+                report is None
+                or report.case_id != artifact.case_id
+                or report.analysis_id != artifact.analysis_id
+                or (
+                    metadata.get("report_version") is not None
+                    and metadata.get("report_version") != report.report_version
+                )
+            ):
+                raise HTTPException(status_code=404, detail="Artifact not found")
+            is_signed_artifact = report.signed_artifact_id == artifact.id
+            if is_signed_artifact:
+                if (
+                    report.status not in {"FINAL", "SUPERSEDED"}
+                    or report.signed_sha256 != artifact.sha256
+                    or metadata.get("signed") not in (None, True)
+                    or metadata.get("report_state") not in (None, "FINAL")
+                ):
+                    raise HTTPException(status_code=404, detail="Artifact not found")
+            elif (
+                report.artifact_id != artifact.id
+                or metadata.get("signed") is True
+                or metadata.get("report_state") not in (None, "DRAFT")
+            ):
+                raise HTTPException(status_code=404, detail="Artifact not found")
+        else:
             raise HTTPException(status_code=404, detail="Artifact not found")
     return artifact
 
