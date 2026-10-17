@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.auth.authorization import get_analysis_variant
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -27,6 +28,15 @@ def get_variant(variant_id: UUID, db: Session = Depends(get_db), principal: Prin
     annotation = db.scalar(select(Annotation).join(Analysis, Annotation.analysis_id == Analysis.id).join(Case, Analysis.case_id == Case.id).where(Annotation.variant_id == v.id, Case.organization_id == principal.organization_id).order_by(Annotation.created_at.desc()))
     if not annotation: raise HTTPException(status_code=404, detail="Variant not found")
     aid = annotation.analysis_id
+    analysis = db.get(Analysis, aid)
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Variant not found")
+    try:
+        get_analysis_variant(analysis, v.id, db)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise HTTPException(status_code=404, detail="Variant not found") from exc
+        raise
     anns = db.scalars(select(Annotation).where(Annotation.variant_id == v.id, Annotation.analysis_id == aid)).all()
     pops = db.scalars(select(PopulationObservation).where(PopulationObservation.variant_id == v.id, PopulationObservation.analysis_id == aid)).all()
     ev = db.scalars(select(Evidence).where(Evidence.variant_id == v.id, Evidence.analysis_id == aid)).all()

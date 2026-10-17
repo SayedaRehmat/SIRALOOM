@@ -1,6 +1,6 @@
 # End-to-End Workflow Audit Matrix
 
-**Current committed code baseline:** `main` commit `f631433`, 2026-10-17; GitHub Actions run [#1562](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015773837) is in progress. The case-export cloud artifact integrity and failed-persistence compensation changes are pushed; 17 focused tests passed locally. The roster and shared-artifact authorization corrections are also pushed. Phase A remains PARTIAL; CI is not an end-to-end clinical workflow demonstration.
+**Current committed code baseline:** `main` commit `2f9d415`, 2026-10-17; GitHub Actions run [#1565](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39016873355) is in progress for that commit. The latest local change adds membership validation to `GET /variants/{variant_id}` before returning analysis-scoped result rows; related authorization, review, tenant-object, and population suites passed 58 tests. This change and its regression are pending commit/push. Phase A remains PARTIAL; CI is not an end-to-end clinical workflow demonstration.
 **Status convention:** PASS requires verified implementation and relevant executed tests. PARTIAL means source/tests exist but the complete user journey or required boundary is not proven. NOT RUN means no execution evidence. BLOCKED identifies an unavailable dependency. This matrix is a live audit record, not a readiness claim.
 
 | Stage / user action | Frontend route or component | API / backend path | Durable effects and guards observed | Relevant test evidence | Status / remaining verification |

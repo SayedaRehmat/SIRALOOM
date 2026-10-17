@@ -1,12 +1,21 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `4ba0df4` (`Enforce review variant membership`); GitHub Actions run [#1565](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39016798602) is queued. Runs #1563 (clinical follow-up) and #1562 (case-export lineage) passed all three jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `2f9d415` (`Validate clinical evidence variant lineage`); GitHub Actions run [#1565](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39016873355) is in progress. Run #1564 for review variant membership passed all three jobs. Current local variant-detail authorization regression plus related tenant/review suites: 58 passed. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
 ## 2026-10-17 continuation checkpoint — case-export recovery verified
+
+## 2026-10-17 continuation checkpoint — global variant detail lineage
+
+- **Finding:** `GET /variants/{variant_id}` chose the latest tenant-owned annotation and then returned analysis-scoped populations, evidence, ACMG assessments, and classifications without verifying that the requested variant belonged to the selected analysis. Corrupt or inconsistent lineage could therefore produce a response assembled for a variant outside the selected analysis.
+- **Correction:** `backend/app/api/v1/variants.py` now resolves the selected analysis and checks variant membership using the shared `get_analysis_variant` guard before loading any analysis-scoped result rows; non-members receive the same 404 as a missing variant.
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py::test_variant_details_require_analysis_membership` injects a non-member and asserts a not-found response.
+- **Verification:** authorization, review, tenant-object, and population route suites: 58 passed. Focused regression file after import cleanup: 12 passed. `git diff --check` passed. Ruff reports pre-existing dependency-default and loop-capture findings in these files; the newly introduced unused imports were removed.
+- **Status:** locally verified; this batch is not yet pushed and has no CI result. Phase A remains PARTIAL.
+- **Next action:** continue direct-ID route audit across every analysis-scoped API and background entrypoint, then proceed through remaining signup-to-signout and recovery acceptance gaps.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.

@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from backend.app.api.v1 import acmg, clinical_followup, evidence, pedigree, reports
+from backend.app.api.v1 import acmg, clinical_followup, evidence, pedigree, reports, variants
 from backend.app.api.v1.audit import audit
 from backend.app.auth.principal import Principal
 
@@ -307,3 +307,47 @@ def test_followup_update_rejects_case_mismatch_with_its_analysis(monkeypatch):
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Follow-up plan case does not match its analysis"
+
+
+def test_variant_details_require_analysis_membership(monkeypatch):
+    from backend.app.infrastructure.db.models import Analysis, Variant
+
+    variant_id, analysis_id = uuid4(), uuid4()
+    annotation = SimpleNamespace(analysis_id=analysis_id)
+    variant = SimpleNamespace(id=variant_id)
+    analysis = SimpleNamespace(id=analysis_id)
+    principal = _principal(uuid4())
+
+    class _ScalarRows:
+        def __init__(self, value):
+            self.value = value
+
+        def first(self):
+            return self.value
+
+        def all(self):
+            return []
+
+    class _Db:
+        def get(self, model, _object_id):
+            return {Variant: variant, Analysis: analysis}.get(model)
+
+        def scalar(self, _query):
+            return annotation
+
+        def scalars(self, _query):
+            return _ScalarRows(None)
+
+    monkeypatch.setattr(
+        variants,
+        "get_analysis_variant",
+        lambda *_args: (_ for _ in ()).throw(
+            HTTPException(404, "Variant is not part of this analysis")
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        variants.get_variant(variant_id, _Db(), principal)
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Variant not found"
