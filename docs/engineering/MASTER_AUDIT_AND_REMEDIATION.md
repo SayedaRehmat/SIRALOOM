@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `2f9d415` (`Validate clinical evidence variant lineage`); GitHub Actions run [#1565](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39016873355) is in progress. Run #1564 for review variant membership passed all three jobs. Current local variant-detail authorization regression plus related tenant/review suites: 58 passed. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `818da15` (`Validate evidence variant lineage on reads`); GitHub Actions run [#1567](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017086560) is in progress. Run #1566 for variant-detail membership is also in progress; run #1564 for review variant membership passed all three jobs. The latest related suites passed 50 tests for evidence lineage and 58 tests for variant-detail/authorization regression. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -23,7 +23,7 @@
 - **Correction:** `backend/app/api/v1/evidence.py` now validates the variant lineage on direct reads (using indistinguishable 404 for absent, foreign, or mismatched records) and refuses to return an analysis evidence list containing mismatched variant links (409).
 - **Regression coverage:** `tests/test_audit_tenant_authorization.py::test_evidence_endpoint_hides_variant_outside_analysis` covers direct read rejection.
 - **Verification:** evidence binding, tenant-route, review, and object-authorization suites: 50 passed; `git diff --check` passed. Commit `2592a95` was pushed directly to `main`; its GitHub Actions run #1566 is in progress. No CI result exists yet for this local evidence-lineage change.
-- **Status:** local fix verified; pending commit/push. Phase A remains PARTIAL.
+- **Status:** fix committed and pushed in `818da15`; GitHub Actions run #1567 in progress. Phase A remains PARTIAL.
 - **Next action:** continue analysis-scoped direct-ID and list-response lineage checks, then complete remaining A1–A10 journey and recovery acceptance requirements.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
