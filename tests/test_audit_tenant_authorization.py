@@ -451,3 +451,20 @@ def test_pedigree_dossier_rejects_cross_case_links(monkeypatch, broken_link):
         pedigree.get_pedigree(case_id, _Db(), _principal(case.organization_id))
 
     assert exc.value.status_code == 409
+
+
+def test_report_list_rejects_case_link_different_from_analysis(monkeypatch):
+    analysis_id, case_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    malformed_report = SimpleNamespace(case_id=uuid4())
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+
+    class _Db:
+        def scalars(self, _query):
+            return [malformed_report]
+
+    with pytest.raises(HTTPException) as exc:
+        reports.list_reports(analysis_id, _Db(), _principal(uuid4()))
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Report case does not match its analysis"

@@ -87,6 +87,15 @@
 - **Status:** locally verified; pending commit/push. Phase A remains PARTIAL.
 - **Next action:** continue notification and remaining direct-object lineage audit, then verify reviewer-to-signout and recovery against integrated services.
 
+## 2026-10-17 report-list case lineage (local checkpoint)
+
+- **Finding:** the analysis report-list route authorized the analysis and filtered reports by `analysis_id`, but serialized each report's redundant `case_id` without confirming it matched the authorized analysis. Single-report reads already enforce this link through `get_accessible_report`; list reads did not.
+- **Correction:** `backend/app/api/v1/reports.py::list_reports` now returns 409 if any linked report has a different case, rather than returning inconsistent case/report metadata.
+- **Regression coverage:** added `test_report_list_rejects_case_link_different_from_analysis` in `tests/test_audit_tenant_authorization.py`.
+- **Verification status:** `compileall` and `git diff --check` passed. The current bundled Python executable no longer contains pytest or ruff in `site-packages`, although it remains executable; focused pytest could not be rerun after that runtime change. Prior full suite was 805 passed, 37 skipped, and one environment-dependent WeasyPrint failure. This regression therefore awaits CI verification.
+- **Status:** implementation and regression are pending commit/push; do not mark verified until CI runs. Phase A remains PARTIAL.
+- **Next action:** push this small fix and inspect its CI result, restore a repository-supported test runtime if available, then continue direct-object inventory and notification lineage.
+
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
 - **Current code batch:** case-export cloud artifact packaging/download integrity and compensation on failed persistence are pushed; locally focused export suite: 17 passed. Earlier authorization changes (analysis/case artifact linkage and administrator-only member roster) are also pushed and covered by focused tests.

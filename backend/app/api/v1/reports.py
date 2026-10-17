@@ -180,6 +180,11 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
 def list_reports(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal)
     rows = list(db.scalars(select(Report).where(Report.analysis_id == analysis.id).order_by(Report.report_version.desc())))
+    if any(row.case_id != analysis.case_id for row in rows):
+        raise HTTPException(
+            status_code=409,
+            detail="Report case does not match its analysis",
+        )
     return {"analysis_id": str(analysis_id), "items": [{"report_id": str(r.id), "case_id": str(r.case_id), "version": r.report_version, "status": r.status, "language": r.language, "report_type": r.report_type, "artifact_id": str(r.artifact_id) if r.artifact_id else None, "signed_artifact_id": str(r.signed_artifact_id) if r.signed_artifact_id else None, "signed_sha256": r.signed_sha256, "signout_reason": r.signout_reason, "approved_by": str(r.approved_by) if r.approved_by else None, "approved_at": r.approved_at.isoformat() if r.approved_at else None, "supersedes_report_id": str(r.supersedes_report_id) if r.supersedes_report_id else None, "created_at": r.created_at.isoformat() if r.created_at else None} for r in rows]}
 
 @router.get("/reports/{report_id}")
