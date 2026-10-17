@@ -237,6 +237,19 @@ def auto_assess(
         row.id: row
         for row in db.scalars(select(Resource).where(Resource.id.in_(resource_ids))).all()
     } if resource_ids else {}
+    if resource_ids - resource_rows.keys():
+        raise HTTPException(
+            status_code=409,
+            detail="Population observation references a missing resource",
+        )
+    if any(
+        row.organization_id not in {None, principal.organization_id}
+        for row in resource_rows.values()
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Population observation references a resource outside this organization",
+        )
 
     service = ACMGSpecificationAssessmentService()
     result = service.assess_variant(

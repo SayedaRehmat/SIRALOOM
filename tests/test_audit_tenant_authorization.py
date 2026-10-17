@@ -78,6 +78,55 @@ def test_acmg_auto_assessment_rejects_variant_outside_analysis(monkeypatch):
     assert exc.value.detail == "Variant is not part of this analysis"
 
 
+@pytest.mark.parametrize("broken_link", ["foreign_resource", "missing_resource"])
+def test_acmg_auto_assessment_rejects_invalid_population_resource_lineage(
+    monkeypatch, broken_link
+):
+    from backend.app.infrastructure.db.models import Annotation, PopulationObservation, Resource
+
+    analysis_id, variant_id, resource_id = uuid4(), uuid4(), uuid4()
+    organization_id = uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
+    annotation = SimpleNamespace(payload={})
+    observation = SimpleNamespace(resource_id=resource_id)
+    resource = (
+        SimpleNamespace(id=resource_id, organization_id=uuid4())
+        if broken_link == "foreign_resource"
+        else None
+    )
+
+    class _AssessmentDb:
+        def scalar(self, statement):
+            assert statement.column_descriptions[0]["entity"] is Annotation
+            return annotation
+
+        def scalars(self, statement):
+            entity = statement.column_descriptions[0]["entity"]
+            rows = [observation] if entity is PopulationObservation else ([resource] if resource else [])
+            return SimpleNamespace(all=lambda: rows)
+
+    monkeypatch.setattr(acmg, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(acmg, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(acmg, "require_role", lambda *_args: None)
+    monkeypatch.setattr(
+        acmg,
+        "ACMGSpecificationAssessmentService",
+        lambda: (_ for _ in ()).throw(AssertionError("assessment must not run")),
+        raising=False,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        acmg.auto_assess(
+            analysis_id=analysis_id,
+            variant_id=variant_id,
+            payload=acmg.ACMGAutoAssessRequest(gene="GENE1"),
+            db=_AssessmentDb(),
+            principal=_principal(organization_id),
+        )
+
+    assert exc.value.status_code == 409
+
+
 def test_pedigree_member_cannot_reference_specimen_from_another_case(monkeypatch):
     from backend.app.infrastructure.db.models import Case, Specimen
 
