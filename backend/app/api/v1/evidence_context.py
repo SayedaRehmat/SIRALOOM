@@ -1,15 +1,21 @@
 from uuid import UUID, uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_analysis, require_role
+
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.infrastructure.db.models import Analysis, Annotation, Evidence
-from backend.app.infrastructure.db.session import get_db
-from backend.app.infrastructure.audit.service import AuditService
 from backend.app.domain.evidence import evidence_fingerprint
-from backend.app.evidence.engine import EvidenceEngine
+from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.models import Annotation, Evidence
+from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["evidence-context"])
 class ContextEvidenceRequest(BaseModel):
@@ -24,6 +30,7 @@ class ContextEvidenceRequest(BaseModel):
 def add_context_evidence(analysis_id: UUID, variant_id: UUID, body: ContextEvidenceRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal)
     require_role(principal, CASE_WRITE_ROLES)
+    get_analysis_variant(analysis, variant_id, db)
     ann = db.scalar(select(Annotation).where(Annotation.analysis_id == analysis_id, Annotation.variant_id == variant_id))
     if not ann: raise HTTPException(404, "Variant annotation not found in analysis")
     typ = body.evidence_type.upper()

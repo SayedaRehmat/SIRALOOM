@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `558eb20` (`Validate clinical follow-up lineage`); GitHub Actions run [#1563](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015850493) passed backend, PostgreSQL/Celery integration, and frontend. Run #1562 for `f631433` also passed all three jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `4ba0df4` (`Enforce review variant membership`); GitHub Actions run [#1565](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39016798602) is queued. Runs #1563 (clinical follow-up) and #1562 (case-export lineage) passed all three jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -49,6 +49,14 @@
 - **Verification:** review workflow, queue, signout integration, and route mutation tenant tests: 47 passed; changed service import lint and compileall passed; `git diff --check` passed.
 - **Status:** locally verified; push-triggered CI pending. Phase A remains PARTIAL.
 - **Next action:** audit review queue/criterion lineage and the rest of clinical governance; then continue user-journey and failure-recovery verification from signup through signout.
+
+## 2026-10-17 clinical governance and context-evidence lineage batch (local, pending push)
+
+- **Finding:** the clinical-governance dossier selected confirmation and secondary-finding histories by analysis/variant but did not check row variant linkage; the context-evidence write route only inferred variant membership from an annotation row rather than the shared normalization/analysis membership policy.
+- **Correction:** `backend/app/api/v1/clinical_followup.py` validates record variant linkage in returned histories (and the follow-up case linkage remains checked); `backend/app/api/v1/evidence_context.py` now calls `get_analysis_variant` before writing human context evidence.
+- **Verification:** combined object-authorization, review, clinical-governance, report-signout, evidence, and route mutation suites: 65 passed. Import lint and Python compileall passed for changed routes/services; `git diff --check` passed.
+- **Status:** locally verified, pending push; Phase A remains PARTIAL.
+- **Next action:** add explicit route regressions for confirmation/secondary-finding malformed row links and context-evidence nonmember IDs; then continue audit of review queue and every analysis-scoped API and complete signup-to-signout recovery evidence.
 
 ## Verified current batch
 

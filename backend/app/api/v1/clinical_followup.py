@@ -74,14 +74,26 @@ def _validate_followup_case_link(row, analysis) -> None:
             detail="Follow-up plan case does not match its analysis",
         )
 
+def _validate_variant_link(row, variant_id: UUID, record_type: str) -> None:
+    if row.variant_id != variant_id:
+        raise HTTPException(
+            status_code=409,
+            detail=f"{record_type} variant does not match the requested variant",
+        )
+
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/clinical-governance")
 def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db)
     confirmations=list(db.scalars(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id==analysis_id,ConfirmationRecord.variant_id==variant_id).order_by(ConfirmationRecord.version.desc())))
+    for confirmation in confirmations:
+        _validate_variant_link(confirmation, variant_id, "Confirmation record")
     followups=list(db.scalars(select(FollowUpPlan).where(FollowUpPlan.analysis_id==analysis_id,FollowUpPlan.variant_id==variant_id).order_by(FollowUpPlan.created_at.desc())))
     for followup in followups:
         _validate_followup_case_link(followup, analysis)
+        _validate_variant_link(followup, variant_id, "Follow-up plan")
     secondary=list(db.scalars(select(SecondaryFindingDecision).where(SecondaryFindingDecision.analysis_id==analysis_id,SecondaryFindingDecision.variant_id==variant_id).order_by(SecondaryFindingDecision.version.desc())))
+    for decision in secondary:
+        _validate_variant_link(decision, variant_id, "Secondary-finding decision")
     return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"confirmation":_confirmation(confirmations[0]) if confirmations else None,"confirmation_history":[_confirmation(x) for x in confirmations],"follow_up":[_followup(x) for x in followups],"secondary_finding":_secondary(secondary[0]) if secondary else None,"secondary_finding_history":[_secondary(x) for x in secondary]}
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/confirmation",status_code=201)
