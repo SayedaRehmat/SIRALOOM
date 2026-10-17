@@ -1,10 +1,18 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Current branch/commit:** `main` at `5f343da` (`Validate artifact case-linked objects on access`), aligned with `origin/main`. Full backend tests on this checkout: **908 passed, 37 skipped, 1 failed**; the only failure is the Windows runtime missing WeasyPrint for `test_pdf_renderer_returns_pdf_bytes`. Focused direct-object/tenant/mutation tests passed **68**, and integrated report/finalization/signout/recovery/reportability tests passed **31**. CI on prior code commit `1e26330` has backend and PostgreSQL integration success; its frontend check was still in progress at last observable query. CI lookup for `5f343da` was blocked by GitHub's anonymous API rate limit, so its result is unknown. The pre-existing untracked backup artifact remains untouched.
+**Current branch/commit:** `main` at `5ac9546` (`Enforce tenant resource lineage in ACMG review`), aligned with `origin/main`. The latest complete full backend run on preceding commit `5f343da` was **908 passed, 37 skipped, 1 failed**; the sole failure is the Windows runtime missing WeasyPrint for `test_pdf_renderer_returns_pdf_bytes`. On current code, focused direct-object/tenant/mutation tests passed **70**, and integrated report/finalization/signout/recovery/reportability tests passed **31**. Backend and PostgreSQL CI passed on `1e26330`; its frontend check was in progress at last observable query. CI lookup for later commits was blocked by GitHub's anonymous API rate limit, so their results are unknown. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
+
+## 2026-10-17 continuation — ACMG population resource tenant lineage
+
+- **Finding:** `/analyses/{analysis_id}/variants/{variant_id}/acmg/auto-assess` loaded resource rows referenced by analysis population observations using IDs alone. It did not reject a missing row or a resource owned by another organization before passing those rows into the assessment service.
+- **Correction:** the route now fails with 409 when any referenced resource is missing or organization-scoped to another tenant. Globally governed resources (`organization_id is None`) and resources owned by the analysis organization remain eligible.
+- **Regression:** `tests/test_audit_tenant_authorization.py` covers both a foreign-tenant resource and a missing resource, asserting the assessment service is not called.
+- **Verification:** combined direct-object, tenant-lineage, and mutation-authorization suite: **70 passed**; ACMG-focused selection: **3 passed**. Syntax compilation and `git diff --check` passed. Pushed to `main` as `5ac9546`; CI status was not retrievable because the unauthenticated GitHub API rate limit had been exhausted.
+- **Status:** Phase A remains **PARTIAL**. Continue the source audit and pursue live browser/two-tenant and deployed reviewer-to-signout/recovery evidence.
 
 ## 2026-10-17 continuation — direct artifact lineage and CI recovery
 

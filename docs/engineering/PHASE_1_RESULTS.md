@@ -2,7 +2,7 @@
 
 ## Latest main checkpoint — 2026-10-17
 
-Current pushed baseline: `main` at `5f343da`. Full local backend suite: **908 passed, 37 skipped, 1 failed**, with the only failure caused by WeasyPrint being unavailable in the Windows runtime. Current direct-object/tenant/mutation suite: **68 passed**; integrated report/finalization/signout/recovery/reportability suite: **31 passed**. CI on `1e26330` passed backend and PostgreSQL integration; frontend was still running at last observation. GitHub API rate limiting prevented checking CI for `5f343da`.
+Current pushed baseline: `main` at `5ac9546`. Current direct-object/tenant/mutation suite passed **70**; integrated report/finalization/signout/recovery/reportability suite passed **31**. The full local backend suite on prior commit `5f343da` was **908 passed, 37 skipped, 1 failed**, with the only failure caused by WeasyPrint being unavailable in the Windows runtime. CI on `1e26330` passed backend and PostgreSQL integration; later CI checks could not be retrieved after GitHub API rate limiting.
 
 Phase A remains **PARTIAL**, not complete. Browser-based Firebase signup/verification/password recovery/signout, deployed two-tenant object/storage boundary checks, and a complete live reviewer-to-signed-report and failure-recovery journey have not been run. The local browser surface is disabled and no deployed Firebase/laboratory test environment was supplied in this session. No clinical validation, regulatory authorization, or production-readiness claim is supported. Preserve the unrelated untracked backup artifact.
 
