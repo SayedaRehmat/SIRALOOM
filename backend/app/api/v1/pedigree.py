@@ -158,13 +158,13 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
 
 @router.post("/cases/{case_id}/pedigree/relationships",status_code=201)
 def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
+    require_role(principal, CASE_WRITE_ROLES)
     # Serialize edits to one pedigree so concurrent writes cannot each pass a
     # cycle check against a stale graph and jointly create a cycle.
     case=db.get(Case,case_id,with_for_update=True)
     if not case: raise HTTPException(404,"Case not found")
     db.refresh(case,with_for_update=True)
     require_case_tenant(case,principal)
-    require_role(principal, CASE_WRITE_ROLES)
     parent=db.get(PedigreeMember,body.parent_member_id); child=db.get(PedigreeMember,body.child_member_id)
     if not parent or not child or parent.case_id!=case_id or child.case_id!=case_id or parent.id==child.id: raise HTTPException(400,"Parent and child must be distinct members in the same case")
     relationships = db.scalars(
