@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import zipfile
-from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from uuid import UUID
@@ -11,11 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.artifact_integrity import verify_artifact_file
-from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
-    Annotation,
     Artifact,
     AuditEvent,
     Case,
@@ -25,16 +22,26 @@ from backend.app.infrastructure.db.models import (
     PopulationObservation,
     Report,
     ReportabilityDecision,
-    Resource,
     ReviewAction,
     ToolRun,
-    Variant,
     WorkflowStep,
 )
 
 
 class CaseExportError(ValueError):
     pass
+
+
+def _validate_artifact_analysis_lineage(db: Session, case_id: UUID, artifacts: list[Artifact]) -> None:
+    analysis_ids = set(
+        db.scalars(select(Analysis.id).where(Analysis.case_id == case_id))
+    )
+    if any(
+        artifact.case_id != case_id
+        or (artifact.analysis_id is not None and artifact.analysis_id not in analysis_ids)
+        for artifact in artifacts
+    ):
+        raise CaseExportError("Case contains an artifact with inconsistent analysis linkage")
 
 
 def _iso(value):
@@ -45,6 +52,7 @@ def build_manifest(db: Session, case: Case) -> dict:
     analyses = list(db.scalars(select(Analysis).where(Analysis.case_id == case.id).order_by(Analysis.created_at, Analysis.id)))
     analysis_ids = [a.id for a in analyses]
     artifacts = list(db.scalars(select(Artifact).where(Artifact.case_id == case.id).order_by(Artifact.created_at, Artifact.id)))
+    _validate_artifact_analysis_lineage(db, case.id, artifacts)
     return {
         "export_schema_version": "1.0.0",
         "case": {
@@ -90,6 +98,7 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
     analyses = list(db.scalars(select(Analysis).where(Analysis.case_id == case.id).order_by(Analysis.created_at, Analysis.id)))
     analysis_ids = [a.id for a in analyses]
     artifacts = list(db.scalars(select(Artifact).where(Artifact.case_id == case.id).order_by(Artifact.created_at, Artifact.id)))
+    _validate_artifact_analysis_lineage(db, case.id, artifacts)
 
     with TemporaryDirectory(prefix="siraloom-export-") as tmp:
         root = Path(tmp)

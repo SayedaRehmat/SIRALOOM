@@ -29,11 +29,11 @@ from backend.app.domain.enums import AnalysisStatus
 from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
 from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
-from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.compensation import (
     commit_with_artifact_compensation,
     compensate_uncommitted_artifact,
 )
+from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, CaseExport, Report
 from backend.app.infrastructure.db.session import get_db

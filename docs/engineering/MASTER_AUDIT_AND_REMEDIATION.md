@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `4c43ad9` (`Verify and recover case export artifacts`); GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) passed backend, PostgreSQL/Celery integration, and frontend jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `2041fcb` (`Validate reportability variant ownership`); GitHub Actions run [#1561](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39015567065) passed backend, PostgreSQL/Celery integration, and frontend jobs. Focused verification in the current batches: member roster authorization 30 passed; case export integrity/recovery 17 passed locally. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -20,8 +20,17 @@
 - **Correction:** `backend/app/api/v1/reports.py` now validates decision variant membership through the shared `get_analysis_variant` guard on both listing and signoff; inconsistent records fail closed with HTTP 409.
 - **Regression coverage:** `tests/test_audit_tenant_authorization.py` covers both listing and signoff with a variant outside the analysis.
 - **Verification:** focused reportability/report/auth suite: 39 passed; Python compileall passed for the changed route; `git diff --check` passed. A Starlette/httpx deprecation warning is emitted by the test runtime.
-- **Status:** locally verified; push-triggered CI pending. Phase A remains PARTIAL.
+- **Status:** fixed in `2041fcb`; GitHub Actions run #1561 passed all three jobs. Phase A remains PARTIAL.
 - **Next action:** continue nested report and clinical-governance link audit, then complete the remaining A1–A10 journey and failure-recovery checks.
+
+## 2026-10-17 nested artifact lineage batch (local, pending push)
+
+- **Finding:** case export selected `Artifact` rows by `case_id` and copied their bytes without verifying that a non-null `analysis_id` belonged to that same case. A malformed row could cause a tenant-authorized export to include another case's artifact bytes.
+- **Correction:** `backend/app/reporting/export_service.py` validates every case artifact's analysis linkage before creating the manifest or packaging bytes. An inconsistent link fails the export with `CaseExportError`; no artifact bytes are read or packaged.
+- **Regression coverage:** `tests/test_case_export.py::test_case_export_rejects_artifact_linked_to_another_cases_analysis` creates a foreign-tenant analysis linked from a local case artifact and confirms fail-closed export behavior.
+- **Verification:** case export build, cloud/local download integrity, compensation, error redaction and dispatch tests: 19 passed; `git diff --check` passed.
+- **Status:** code and regression pass locally; push-triggered CI pending. Phase A remains PARTIAL.
+- **Next action:** resume direct object-linkage inventory for clinical-governance and worker exports; verify the newly pushed reportability check's frontend job, then continue the remaining A1–A10 workflows and failure injection.
 
 ## Verified current batch
 

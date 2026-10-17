@@ -2,15 +2,25 @@ import hashlib
 import zipfile
 from pathlib import Path
 from uuid import uuid4
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+
 from backend.app.domain.artifact_integrity import ArtifactIntegrityError
-from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Artifact, Organization, User, Case, CaseExport
-from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.domain.local_uri import local_path_from_uri
-from backend.app.reporting.export_service import build_case_export
+from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Artifact,
+    Case,
+    CaseExport,
+    Organization,
+    User,
+)
+from backend.app.reporting.export_service import CaseExportError, build_case_export
+
 
 def test_case_export_contains_core_manifests(tmp_path):
     e=create_engine("sqlite+pysqlite:///:memory:"); Base.metadata.create_all(e); db=Session(e)
@@ -141,3 +151,35 @@ def test_case_export_downloads_and_verifies_cloud_artifacts(tmp_path):
     build_case_export(db, export=export, store=cloud_store)
     with zipfile.ZipFile(cloud_store.package_path) as archive:
         assert archive.read(f"artifacts/{artifact.id}-{artifact.filename}") == content
+
+
+def test_case_export_rejects_artifact_linked_to_another_cases_analysis(tmp_path):
+    db, case, export = _case_export_fixture()
+    foreign_org = Organization(id=uuid4(), name="Other lab")
+    foreign_user = User(
+        id=uuid4(), organization_id=foreign_org.id, display_name="Other user",
+        role="AUDITOR", status="ACTIVE",
+    )
+    foreign_case = Case(
+        id=uuid4(), organization_id=foreign_org.id, case_identifier="FOREIGN",
+        status="ACTIVE", clinical_context={}, language="en", created_by=foreign_user.id,
+    )
+    foreign_analysis = Analysis(
+        id=uuid4(), case_id=foreign_case.id, parent_analysis_id=None, assay_id=None,
+        analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+        workflow_version="1", status="SUCCEEDED", queue_task_id=None,
+        reference_build="GRCh38", configuration={}, started_at=None,
+        completed_at=None, created_by=None, analysis_version=1,
+    )
+    artifact = Artifact(
+        id=uuid4(), case_id=case.id, analysis_id=foreign_analysis.id,
+        artifact_type="VCF", filename="foreign.vcf", media_type="text/plain",
+        size_bytes=0, sha256=hashlib.sha256(b"").hexdigest(),
+        storage_uri="siraloom://missing/foreign.vcf", genome_build="GRCh38",
+        validation_status="VALID", metadata_json={},
+    )
+    db.add_all([foreign_org, foreign_user, foreign_case, foreign_analysis, artifact])
+    db.commit()
+
+    with pytest.raises(CaseExportError, match="inconsistent analysis linkage"):
+        build_case_export(db, export=export, store=ArtifactStore(str(tmp_path)))
