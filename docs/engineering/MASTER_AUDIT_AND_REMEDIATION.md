@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `f714f3b` (`Record Phase A report recovery verification`); GitHub Actions run [#1608](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024112606) passed all jobs: backend **897 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. Local follow-up makes reviewer dossier pedigree-member, relationship-endpoint, and specimen case lineage fail closed and adds three SQLite regressions; this change awaits push and CI. Local Python verification remains unavailable in this Windows runtime. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `0e2e372` (`Validate pedigree lineage in reviewer dossiers`); GitHub Actions run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) passed all jobs: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. This verifies report draft/signed artifact integrity, signed-report retry recovery, assay tenant lineage, and pedigree member/specimen/relationship case lineage in review context. Local Python verification remains unavailable in this Windows runtime. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
