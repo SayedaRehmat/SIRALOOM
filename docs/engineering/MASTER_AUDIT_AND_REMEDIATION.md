@@ -1,10 +1,18 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Current branch/commit:** `main` at `c724bdb` (`Update Phase A pushed checkpoint`), aligned with `origin/main`. The most recent confirmed full CI result is run [#1610](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39024386804) on `0e2e372`: backend **900 passed, 24 skipped**, PostgreSQL/Celery worker-loss integration passed, and frontend behavior/build/container/Compose passed. Follow-up commits `96ab9db`, `127dfa1`, `b2a31ee`, and `4eedd33` add report PDF/export lineage, notification mutation integrity, and reportability gate freshness changes; CI status for them could not be retrieved (`gh` is unavailable and GitHub API access is blocked). Local Python/pytest is unavailable. The frontend session/workspace suite passed 20/20 with the command recorded below. The pre-existing untracked backup artifact remains untouched.
+**Current branch/commit:** `main` at `e48a8df` (`Update Phase A verification checkpoint`), aligned with `origin/main`. GitHub Actions run [#39028090674](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39028090674) passed all jobs on the immediately preceding application commit `fb21c38`: backend, PostgreSQL/Celery integration, frontend behavior/build/container, and Compose validation. On that code baseline, focused authorization/worker/reportability tests passed **76**, reportability/signout/recovery tests passed **14**, and the full local backend suite was **905 passed, 37 skipped, 1 failed**; the sole local failure was Windows WeasyPrint's unavailable native `libgobject-2.0-0`. Frontend behavior tests passed **20/20** and the i18n guard passed. `e48a8df` updates documentation only. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
+
+## 2026-10-17 continuation — report, review, reanalysis and export dispatch audit
+
+- **Baseline:** `main` at `e48a8df`, aligned with `origin/main`; unrelated untracked backup artifact preserved.
+- **Inspected:** report access/finalization, reportability decisions, reviewer API and service transitions, reanalysis candidate execution and notification lineage, case-export creation/dispatch/recovery, and shared direct-object accessors.
+- **Findings in this slice:** report access validates tenant, report-to-case/analysis lineage and draft/signed artifact integrity; review mutations validate analysis/variant/evidence membership and use expected review versions; reanalysis execution validates candidate/parent/child lineage and preserves pending candidates on queue errors. Case-export dispatch commits an outbox record before broker publication; a periodic outbox relay republishes pending dispatches, and a recovery task creates a dispatch for legacy orphaned queued exports. The suspected stranded-export path is therefore covered in code. No new defect was confirmed in these inspected paths.
+- **Verification evidence:** latest code CI is run `39028090674` on `fb21c38` (all jobs passed); local focused tests are **76** and **14** passed as recorded above. This audit slice itself did not add code or tests. It does not demonstrate a live browser journey, a deployed two-tenant boundary, or integrated signout/recovery.
+- **Next:** continue the remaining API direct-object audit through artifact, pedigree, quality, resource staging/governance, and administrative membership endpoints; then exercise an integrated reviewer-to-signed-report and recovery journey where the environment permits. Phase A remains **PARTIAL**.
 
 ## 2026-10-17 pasted-criteria continuation — current verification
 
