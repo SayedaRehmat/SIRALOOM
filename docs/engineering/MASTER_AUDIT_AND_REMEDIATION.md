@@ -307,3 +307,11 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Verification:** `git diff --check` and frontend tests/localization guard pass. Python tests are unavailable locally. Main commit `9d14ef7` passed CI #1583; it predates this status-validation extension.
 - **Status:** this extension is local and awaits push-triggered CI; Phase A remains PARTIAL.
 - **Next action:** push the state-contract validation as part of the next bounded batch, verify its backend/frontend/PostgreSQL jobs, and continue remaining direct-object and integrated signout/recovery audit.
+
+
+## 2026-10-17 governance validation and resource staging contract
+
+- **Governance state validation:** commit `147062a` constrains confirmation, follow-up, and secondary-finding statuses to their supported lifecycle values. Invalid-state schema regressions were added. CI #1584 passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container, and Compose validation. The preceding backend run #1583 recorded 878 passed and 24 skipped.
+- **Resource staging contract finding:** the organization staging API accepted any backend beginning `ORGANIZATION_`, although the current API/worker implementation only stages files on `ORGANIZATION_LOCAL_FILESYSTEM`. This allowed arbitrary labels to be persisted as if configured backends existed.
+- **Correction:** commits `5a5e788` and `32f8e84` add regression cases and restrict the API request to the implemented backend with bounded field length. CI #1585 and #1586 are in progress; the results ledger records this pending verification.
+- **Overall:** Phase A remains PARTIAL. Continue direct-object authorization and remaining signout/recovery audit after the staging CI result. Live Firebase/browser validation, deployed two-tenant verification, and integrated reviewer-to-signed-report failure recovery remain unverified.
