@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `818da15` (`Validate evidence variant lineage on reads`); GitHub Actions run [#1567](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017086560) is in progress. Run #1566 for variant-detail membership is also in progress; run #1564 for review variant membership passed all three jobs. The latest related suites passed 50 tests for evidence lineage and 58 tests for variant-detail/authorization regression. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `5b54f17` (`Update Phase A authorization checkpoint`); GitHub Actions runs [#1566](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017022599), [#1567](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017086560), and [#1568](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39017130620) succeeded. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -25,6 +25,15 @@
 - **Verification:** evidence binding, tenant-route, review, and object-authorization suites: 50 passed; `git diff --check` passed. Commit `2592a95` was pushed directly to `main`; its GitHub Actions run #1566 is in progress. No CI result exists yet for this local evidence-lineage change.
 - **Status:** fix committed and pushed in `818da15`; GitHub Actions run #1567 in progress. Phase A remains PARTIAL.
 - **Next action:** continue analysis-scoped direct-ID and list-response lineage checks, then complete remaining A1–A10 journey and recovery acceptance requirements.
+
+## 2026-10-17 reanalysis candidate lineage check
+
+- **Finding:** candidate execution authorized the parent analysis by tenant but trusted the candidate's independent case link and any pre-linked child analysis. Inconsistent rows could cause a reanalysis request to return or dispatch a child associated with a different case or parent.
+- **Correction:** `backend/app/api/v1/reanalysis.py` now fails closed with 409 when the candidate case does not match the authorized parent, or when an existing child does not match both the parent case and `parent_analysis_id`. Checks run before child status reuse, resource preflight, or task dispatch.
+- **Regression coverage:** `tests/test_reanalysis_api_contract.py` injects each mismatched candidate-case, child-case, and child-parent relationship and asserts rejection before enqueue.
+- **Verification:** reanalysis API, reanalysis workflow/completion, case-change reanalysis, resource snapshot, and discovery suites: 34 passed; `git diff --check` passed. Latest main CI runs #1566–#1568 all succeeded.
+- **Status:** locally verified; this batch is not yet pushed. Phase A remains PARTIAL.
+- **Next action:** inspect notification/candidate list lineage and remaining direct-object APIs, then continue reviewer-to-signout and end-to-end recovery acceptance.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.

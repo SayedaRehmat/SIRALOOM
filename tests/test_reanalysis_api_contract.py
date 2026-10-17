@@ -103,6 +103,7 @@ def test_change_candidate_endpoint_requeues_existing_resource_failure_child(monk
             "id": candidate_id,
             "organization_id": uuid4(),
             "parent_analysis_id": parent_id,
+            "case_id": parent.case_id,
             "child_analysis_id": child_id,
             "status": "STARTED",
             "acted_at": None,
@@ -122,6 +123,7 @@ def test_change_candidate_endpoint_requeues_existing_resource_failure_child(monk
             "queue_task_id": None,
             "configuration": {},
             "case_id": parent.case_id,
+            "parent_analysis_id": parent_id,
         },
     )()
     principal = type(
@@ -163,6 +165,72 @@ def test_change_candidate_endpoint_requeues_existing_resource_failure_child(monk
     assert response["task_id"] == "candidate-resource-retry-task"
     assert response["candidate_id"] == str(candidate_id)
     assert calls == [AnalysisStatus.RESOURCE_FAILURE]
+
+
+@pytest.mark.parametrize("broken_link", ["candidate_case", "child_case", "child_parent"])
+def test_change_candidate_endpoint_rejects_inconsistent_case_or_parent_links(
+    monkeypatch, broken_link
+):
+    candidate_id, parent_id, child_id = uuid4(), uuid4(), uuid4()
+    case_id = uuid4()
+    parent = type("Parent", (), {"id": parent_id, "status": "SUCCEEDED", "case_id": case_id})()
+    candidate_case_id = uuid4() if broken_link == "candidate_case" else case_id
+    child_case_id = uuid4() if broken_link == "child_case" else case_id
+    child_parent_id = uuid4() if broken_link == "child_parent" else parent_id
+    candidate = type(
+        "Candidate",
+        (),
+        {
+            "id": candidate_id,
+            "organization_id": uuid4(),
+            "parent_analysis_id": parent_id,
+            "case_id": candidate_case_id,
+            "child_analysis_id": child_id,
+            "status": "STARTED",
+            "acted_at": None,
+            "trigger_type": "EVIDENCE_UPDATE",
+            "reason": "Approved resource release change.",
+            "change_event_id": uuid4(),
+            "earliest_affected_step": "build_evidence",
+        },
+    )()
+    child = type(
+        "Child",
+        (),
+        {
+            "id": child_id,
+            "parent_analysis_id": child_parent_id,
+            "case_id": child_case_id,
+        },
+    )()
+    principal = type(
+        "Principal", (), {"organization_id": candidate.organization_id}
+    )()
+
+    class FakeDB:
+        def get(self, model, received_id):
+            if model is reanalysis_api.ReanalysisCandidate and received_id == candidate_id:
+                return candidate
+            if model is reanalysis_api.Analysis and received_id == child_id:
+                return child
+            raise AssertionError(f"Unexpected lookup: {model!r} {received_id!r}")
+
+    monkeypatch.setattr(reanalysis_api, "require_role", lambda *_args: None)
+    monkeypatch.setattr(reanalysis_api, "get_accessible_analysis", lambda *_args: parent)
+    monkeypatch.setattr(
+        reanalysis_api,
+        "enqueue_analysis",
+        lambda *_args: pytest.fail("inconsistent reanalysis lineage must not dispatch"),
+    )
+
+    with pytest.raises(reanalysis_api.HTTPException) as exc:
+        reanalysis_api.execute_reanalysis_candidate(
+            candidate_id,
+            db=FakeDB(),
+            principal=principal,
+        )
+
+    assert exc.value.status_code == 409
 
 
 @pytest.mark.parametrize(
@@ -241,6 +309,7 @@ def test_change_candidate_endpoint_preserves_non_retryable_child_state(monkeypat
             "id": candidate_id,
             "organization_id": uuid4(),
             "parent_analysis_id": parent_id,
+            "case_id": parent.case_id,
             "child_analysis_id": child_id,
             "status": "STARTED",
             "acted_at": None,
@@ -260,6 +329,7 @@ def test_change_candidate_endpoint_preserves_non_retryable_child_state(monkeypat
             "queue_task_id": None,
             "configuration": {},
             "case_id": parent.case_id,
+            "parent_analysis_id": parent_id,
         },
     )()
     principal = type(

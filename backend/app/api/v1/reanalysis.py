@@ -232,10 +232,22 @@ def execute_reanalysis_candidate(
         raise HTTPException(status_code=409, detail="This reanalysis candidate has already been completed.")
 
     parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal)
+    if candidate.case_id != parent.case_id:
+        raise HTTPException(
+            status_code=409,
+            detail="Reanalysis candidate case does not match its parent analysis",
+        )
     if parent.status != "SUCCEEDED":
         raise HTTPException(status_code=409, detail="Only a successfully completed parent analysis can be reanalyzed.")
 
     child = db.get(Analysis, candidate.child_analysis_id) if candidate.child_analysis_id else None
+    if child is not None and (
+        child.case_id != parent.case_id or child.parent_analysis_id != parent.id
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Reanalysis child does not match its candidate parent and case",
+        )
 
     if child is None:
         try:
