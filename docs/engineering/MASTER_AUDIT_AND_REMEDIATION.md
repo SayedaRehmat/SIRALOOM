@@ -1,10 +1,19 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Current branch/commit:** `main` at `e48a8df` (`Update Phase A verification checkpoint`), aligned with `origin/main`. GitHub Actions run [#39028090674](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39028090674) passed all jobs on the immediately preceding application commit `fb21c38`: backend, PostgreSQL/Celery integration, frontend behavior/build/container, and Compose validation. On that code baseline, focused authorization/worker/reportability tests passed **76**, reportability/signout/recovery tests passed **14**, and the full local backend suite was **905 passed, 37 skipped, 1 failed**; the sole local failure was Windows WeasyPrint's unavailable native `libgobject-2.0-0`. Frontend behavior tests passed **20/20** and the i18n guard passed. `e48a8df` updates documentation only. The pre-existing untracked backup artifact remains untouched.
+**Current branch/commit:** `main` at `5f343da` (`Validate artifact case-linked objects on access`), aligned with `origin/main`. Full backend tests on this checkout: **908 passed, 37 skipped, 1 failed**; the only failure is the Windows runtime missing WeasyPrint for `test_pdf_renderer_returns_pdf_bytes`. Focused direct-object/tenant/mutation tests passed **68**, and integrated report/finalization/signout/recovery/reportability tests passed **31**. CI on prior code commit `1e26330` has backend and PostgreSQL integration success; its frontend check was still in progress at last observable query. CI lookup for `5f343da` was blocked by GitHub's anonymous API rate limit, so its result is unknown. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
+
+## 2026-10-17 continuation — direct artifact lineage and CI recovery
+
+- **Finding:** the shared artifact accessor validated tenant and analysis/report lineage but did not verify optional specimen or paired-artifact references. Malformed persisted links could therefore pass generic case listing/download authorization.
+- **Correction:** `get_accessible_artifact` now requires referenced specimens and paired artifacts to exist in the same case before returning an artifact.
+- **Regression:** `tests/test_tenant_object_authorization.py::test_artifact_access_rejects_specimen_or_pair_from_another_case` covers foreign specimen and paired-artifact links.
+- **Verification:** direct-object, tenant-lineage, and mutation-authorization suites: **68 passed**. Full backend suite: **908 passed, 37 skipped, 1 failed**, solely because Windows lacks WeasyPrint. Syntax compilation and `git diff --check` passed. Change pushed as `5f343da`; its CI result could not be retrieved because GitHub's unauthenticated API rate limit was exhausted.
+- **CI recovery:** initial pedigree cycle commit `edcafca` had a backend test failure because its case lock/refresh ran before role authorization. The role gate was moved ahead of database access in `1e26330`; that commit's backend and PostgreSQL checks passed. Its frontend check remained in progress at last observation.
+- **Overall:** Phase A remains **PARTIAL**. Live Firebase/browser, deployed two-tenant, and deployed reviewer-to-signed-report/failure-recovery evidence remains outstanding.
 
 ## 2026-10-17 continuation — pedigree cycle prevention and integrated recovery checks
 
@@ -12,7 +21,7 @@
 - **Correction:** `backend/app/api/v1/pedigree.py` now checks reachability before adding an edge and returns 409 for a cycle. It locks and refreshes the case row before reading the relationship graph, serializing pedigree graph writes for that case.
 - **Regression:** `tests/test_audit_tenant_authorization.py::test_pedigree_relationship_rejects_cycle_before_persisting` builds an existing three-member chain, attempts the closing edge, and verifies rejection before persistence.
 - **Verification:** focused authorization, review-workflow, and direct-object suites: **91 passed**. Integrated report-generation/finalization/signout/failure-recovery/reportability set: **31 passed**. The first run of the latter hit a Windows temp-directory ACL error before affected tests ran; rerunning with a unique workspace-local pytest temp directory passed. Python syntax compilation and `git diff --check` passed. The test stack was installed under OS temporary storage only.
-- **Status:** implementation and tests pushed to `main` as `edcafca`; push-triggered CI is not yet confirmed. Phase A remains **PARTIAL**.
+- **Status:** implementation and tests pushed as `edcafca`; its backend check failed because of authorization ordering. The correction was pushed in `1e26330`, where backend and PostgreSQL checks passed; frontend was still running at last status check. Phase A remains **PARTIAL**.
 - **Next:** continue artifact/pedigree/resource/membership direct-object route audit, then run deployed reviewer-to-signed-report, tenant-boundary and failure-recovery scenarios. Live Firebase/browser and deployed lab environment remain unavailable in this session.
 
 ## 2026-10-17 continuation — report, review, reanalysis and export dispatch audit

@@ -2,7 +2,7 @@
 
 ## Latest main checkpoint — 2026-10-17
 
-Current pushed baseline: `main` at `edcafca`. Latest confirmed CI run `39028090674` passed all jobs on the earlier application baseline `fb21c38`; CI for `edcafca` is pending. Local follow-up suites passed **91** authorization/review/direct-object tests and **31** report/finalization/signout/recovery tests. The earlier full backend suite on `fb21c38` had **905 passed, 37 skipped, 1 failed**, with only the Windows WeasyPrint native-library failure. Frontend session/workspace suite: **20 passed**; localization guard: **PASS**.
+Current pushed baseline: `main` at `5f343da`. Full local backend suite: **908 passed, 37 skipped, 1 failed**, with the only failure caused by WeasyPrint being unavailable in the Windows runtime. Current direct-object/tenant/mutation suite: **68 passed**; integrated report/finalization/signout/recovery/reportability suite: **31 passed**. CI on `1e26330` passed backend and PostgreSQL integration; frontend was still running at last observation. GitHub API rate limiting prevented checking CI for `5f343da`.
 
 Phase A remains **PARTIAL**, not complete. Browser-based Firebase signup/verification/password recovery/signout, deployed two-tenant object/storage boundary checks, and a complete live reviewer-to-signed-report and failure-recovery journey have not been run. The local browser surface is disabled and no deployed Firebase/laboratory test environment was supplied in this session. No clinical validation, regulatory authorization, or production-readiness claim is supported. Preserve the unrelated untracked backup artifact.
 
