@@ -418,3 +418,36 @@ def test_segregation_lineage_rejects_member_from_another_case(monkeypatch, opera
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Segregation observation member does not belong to the analysis case"
+
+
+@pytest.mark.parametrize("broken_link", ["relationship", "specimen"])
+def test_pedigree_dossier_rejects_cross_case_links(monkeypatch, broken_link):
+    case_id, member_id, specimen_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=uuid4())
+    member = SimpleNamespace(
+        id=member_id,
+        specimen_id=specimen_id if broken_link == "specimen" else None,
+    )
+    relationship = (
+        SimpleNamespace(parent_member_id=uuid4(), child_member_id=member_id)
+        if broken_link == "relationship"
+        else None
+    )
+
+    class _Db:
+        def __init__(self):
+            self.results = [[member], [relationship] if relationship else []]
+            if broken_link == "specimen":
+                self.results.append([SimpleNamespace(id=specimen_id, case_id=uuid4())])
+
+        def get(self, _model, _object_id):
+            return case
+
+        def scalars(self, _query):
+            return self.results.pop(0)
+
+    monkeypatch.setattr(pedigree, "require_case_tenant", lambda *_args: None)
+    with pytest.raises(HTTPException) as exc:
+        pedigree.get_pedigree(case_id, _Db(), _principal(case.organization_id))
+
+    assert exc.value.status_code == 409

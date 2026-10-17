@@ -76,6 +76,36 @@ def _validate_observation_members(rows, members):
             detail="Segregation observation member does not belong to the analysis case",
         )
 
+def _validate_pedigree_lineage(members, relationships, case_id, db):
+    member_ids = {member.id for member in members}
+    if any(
+        relationship.parent_member_id not in member_ids
+        or relationship.child_member_id not in member_ids
+        for relationship in relationships
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Pedigree relationship members do not belong to this case",
+        )
+
+    specimen_ids = {member.specimen_id for member in members if member.specimen_id}
+    if not specimen_ids:
+        return
+    specimens = {
+        specimen.id: specimen
+        for specimen in db.scalars(
+            select(Specimen).where(Specimen.id.in_(specimen_ids))
+        )
+    }
+    if any(
+        specimen_id not in specimens or specimens[specimen_id].case_id != case_id
+        for specimen_id in specimen_ids
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Pedigree member specimen does not belong to this case",
+        )
+
 @router.get("/cases/{case_id}/pedigree")
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     case=db.get(Case,case_id)
@@ -83,6 +113,7 @@ def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principa
     require_case_tenant(case,principal)
     members=list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==case_id).order_by(PedigreeMember.created_at,PedigreeMember.member_identifier)))
     rels=list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id==case_id).order_by(PedigreeRelationship.created_at)))
+    _validate_pedigree_lineage(members, rels, case_id, db)
     return {"case_id":str(case_id),"members":[_member(m) for m in members],"relationships":[_relationship(r) for r in rels]}
 
 @router.post("/cases/{case_id}/pedigree/members",status_code=201)

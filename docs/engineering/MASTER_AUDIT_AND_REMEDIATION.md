@@ -1,7 +1,7 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-17
-**Latest pushed baseline:** `main` commit `7e7d2c2` (`Record full Phase A verification limits`); GitHub Actions run [#1573](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018777355) is in progress. Runs #1570–#1572 succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. The pre-existing untracked backup artifact remains untouched.
+**Latest pushed baseline:** `main` commit `a5c61c6` (`Reject cross-case pedigree observations`); GitHub Actions run [#1574](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39018883781) is in progress. Runs #1570–#1573 succeeded. The full local backend suite reported 805 passed, 37 skipped, and one Windows-native WeasyPrint dependency failure; full frontend session tests passed 20, while production build stopped because the `next` executable is absent after the i18n guard passed. The pre-existing untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
@@ -77,6 +77,15 @@
 - **Verification:** authorization, analysis-variant access, mutation role, review, and pedigree/inheritance suites: 54 passed; `git diff --check` passed. CI #1570–#1572 passed; #1573 is in progress.
 - **Status:** local fix verified, pending commit/push. Phase A remains PARTIAL.
 - **Next action:** continue notification lineage and direct-object API inventory; then demonstrate the complete reviewer-to-authorized-signout journey and failure recovery against configured integration services.
+
+## 2026-10-17 pedigree dossier relationship/specimen lineage
+
+- **Finding:** pedigree dossier reads trusted `PedigreeMember.case_id` and `PedigreeRelationship.case_id` filters, but did not verify a member's linked specimen belonged to the same case or that relationship endpoints referred to members in the returned case. The write route already enforces these links; malformed persisted rows could still be presented on read.
+- **Correction:** `backend/app/api/v1/pedigree.py` now checks all relationship member IDs against the case's loaded member set and loads/validates each linked specimen before returning the dossier. Mismatches fail closed with 409.
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py::test_pedigree_dossier_rejects_cross_case_links` covers foreign relationship endpoints and cross-case specimen linkage.
+- **Verification:** focused authorization, analysis variant access, role mutation, and pedigree/inheritance suites: 31 passed; `git diff --check` passed. Previous pedigree observation batch is pushed as `a5c61c6`; CI #1574 is in progress.
+- **Status:** locally verified; pending commit/push. Phase A remains PARTIAL.
+- **Next action:** continue notification and remaining direct-object lineage audit, then verify reviewer-to-signout and recovery against integrated services.
 
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
