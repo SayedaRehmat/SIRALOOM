@@ -17,6 +17,15 @@
 - **Status:** locally verified; this batch is not yet pushed and has no CI result. Phase A remains PARTIAL.
 - **Next action:** continue direct-ID route audit across every analysis-scoped API and background entrypoint, then proceed through remaining signup-to-signout and recovery acceptance gaps.
 
+## 2026-10-17 evidence-to-variant lineage check
+
+- **Finding:** evidence reads verified tenant access through `analysis_id`, but did not check that the evidence row's `variant_id` was part of that analysis. The list response could also serialize inconsistent evidence rows.
+- **Correction:** `backend/app/api/v1/evidence.py` now validates the variant lineage on direct reads (using indistinguishable 404 for absent, foreign, or mismatched records) and refuses to return an analysis evidence list containing mismatched variant links (409).
+- **Regression coverage:** `tests/test_audit_tenant_authorization.py::test_evidence_endpoint_hides_variant_outside_analysis` covers direct read rejection.
+- **Verification:** evidence binding, tenant-route, review, and object-authorization suites: 50 passed; `git diff --check` passed. Commit `2592a95` was pushed directly to `main`; its GitHub Actions run #1566 is in progress. No CI result exists yet for this local evidence-lineage change.
+- **Status:** local fix verified; pending commit/push. Phase A remains PARTIAL.
+- **Next action:** continue analysis-scoped direct-ID and list-response lineage checks, then complete remaining A1–A10 journey and recovery acceptance requirements.
+
 - **Current repository:** `main` at `4c43ad953a48e7360b1371d5ef79ad513143b01a`, matching `origin/main`; unrelated pre-existing untracked backup artifact preserved.
 - **Latest validation:** GitHub Actions run [#1559](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39014895300) succeeded in backend, PostgreSQL/Celery integration, and frontend jobs. The workflow includes frontend behavior tests, production build/container, Compose validation, DB migrations and real worker-loss integration.
 - **Current code batch:** case-export cloud artifact packaging/download integrity and compensation on failed persistence are pushed; locally focused export suite: 17 passed. Earlier authorization changes (analysis/case artifact linkage and administrator-only member roster) are also pushed and covered by focused tests.

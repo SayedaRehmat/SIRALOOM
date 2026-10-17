@@ -156,6 +156,37 @@ def test_evidence_endpoint_hides_foreign_evidence_like_missing_evidence(monkeypa
     assert responses == [(404, "Evidence not found"), (404, "Evidence not found")]
 
 
+def test_evidence_endpoint_hides_variant_outside_analysis(monkeypatch):
+    from backend.app.infrastructure.db.models import Evidence
+
+    evidence_id = uuid4()
+    row = SimpleNamespace(
+        id=evidence_id,
+        analysis_id=uuid4(),
+        variant_id=uuid4(),
+    )
+    analysis = SimpleNamespace(id=row.analysis_id)
+    monkeypatch.setattr(evidence, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        evidence,
+        "get_analysis_variant",
+        lambda *_args: (_ for _ in ()).throw(
+            HTTPException(404, "Variant is not part of this analysis")
+        ),
+    )
+
+    class _EvidenceDb:
+        def get(self, model, _object_id):
+            assert model is Evidence
+            return row
+
+    with pytest.raises(HTTPException) as exc:
+        evidence.get_evidence(evidence_id, _EvidenceDb(), _principal(uuid4()))
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Evidence not found"
+
+
 def test_followup_endpoint_hides_foreign_plan_like_missing_plan(monkeypatch):
     from backend.app.infrastructure.db.models import FollowUpPlan
 

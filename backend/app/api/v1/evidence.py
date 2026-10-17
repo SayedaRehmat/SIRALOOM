@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.authorization import get_accessible_analysis
+from backend.app.auth.authorization import get_accessible_analysis, get_analysis_variant
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import Evidence
 from backend.app.infrastructure.db.session import get_db
@@ -14,12 +14,22 @@ router = APIRouter(tags=["evidence"])
 
 @router.get("/analyses/{analysis_id}/evidence")
 def list_analysis_evidence(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    get_accessible_analysis(analysis_id, db, principal)
+    analysis = get_accessible_analysis(analysis_id, db, principal)
     rows = db.scalars(
         select(Evidence)
         .where(Evidence.analysis_id == analysis_id)
         .order_by(Evidence.created_at.asc(), Evidence.id.asc())
     ).all()
+    for row in rows:
+        try:
+            get_analysis_variant(analysis, row.variant_id, db)
+        except HTTPException as exc:
+            if exc.status_code == 404:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Evidence variant does not match its analysis",
+                ) from exc
+            raise
     return {
         "analysis_id": str(analysis_id),
         "count": len(rows),
@@ -52,10 +62,19 @@ def get_evidence(evidence_id: UUID, db: Session = Depends(get_db), principal: Pr
     if not row:
         raise HTTPException(status_code=404, detail="Evidence not found")
     try:
-        get_accessible_analysis(row.analysis_id, db, principal)
+        analysis = get_accessible_analysis(row.analysis_id, db, principal)
     except HTTPException as exc:
         if exc.status_code == 404:
             raise HTTPException(status_code=404, detail="Evidence not found") from exc
+        raise
+    try:
+        get_analysis_variant(analysis, row.variant_id, db)
+    except HTTPException as exc:
+        if exc.status_code == 404:
+            raise HTTPException(
+                status_code=404,
+                detail="Evidence not found",
+            ) from exc
         raise
     return {
         "evidence_id": str(row.id),
