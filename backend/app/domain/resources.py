@@ -516,7 +516,10 @@ def get_active_resource_for_organization(
         OrganizationResourceBinding.identity_key == "|".join([name, provider, resource_type, genome_build or "UNSPECIFIED"]),
     ))
     if binding:
-        return db.get(Resource, binding.resource_id)
+        resource = db.get(Resource, binding.resource_id)
+        if resource is None or resource.organization_id not in {None, organization_id}:
+            return None
+        return resource
     return db.scalar(select(Resource).where(
         Resource.organization_id.is_(None), Resource.name == name, Resource.provider == provider,
         Resource.resource_type == resource_type, Resource.genome_build == genome_build,

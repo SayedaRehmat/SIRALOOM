@@ -410,6 +410,52 @@ def test_one_lab_can_approve_new_version_without_changing_another_lab():
         assert v2.status == "QUALIFIED"
 
 
+def test_active_resource_lookup_rejects_cross_tenant_corrupt_binding():
+    engine = _engine()
+    with Session(engine) as db:
+        org_a = Organization(id=uuid4(), name="Lab A", external_identifier=None)
+        org_b = Organization(id=uuid4(), name="Lab B", external_identifier=None)
+        db.add_all([org_a, org_b])
+        db.flush()
+        foreign_resource = _candidate(
+            db,
+            name="TenantScopedDB",
+            version="1",
+            checksum="a" * 64,
+            org=org_b.id,
+        )
+        db.add(OrganizationResourceBinding(
+            id=uuid4(),
+            organization_id=org_a.id,
+            resource_id=foreign_resource.id,
+            resource_name=foreign_resource.name,
+            provider=foreign_resource.provider,
+            resource_type=foreign_resource.resource_type,
+            genome_build=foreign_resource.genome_build,
+            identity_key="|".join([
+                foreign_resource.name,
+                foreign_resource.provider,
+                foreign_resource.resource_type,
+                foreign_resource.genome_build,
+            ]),
+            bound_by=None,
+            reason="Corrupted cross-tenant binding fixture",
+            version=1,
+        ))
+        db.flush()
+
+        active = get_active_resource_for_organization(
+            db,
+            organization_id=org_a.id,
+            name=foreign_resource.name,
+            provider=foreign_resource.provider,
+            resource_type=foreign_resource.resource_type,
+            genome_build=foreign_resource.genome_build,
+        )
+
+        assert active is None
+
+
 def test_approval_requires_qualification_and_rejects_stale_version():
     engine = _engine()
     with Session(engine) as db:
