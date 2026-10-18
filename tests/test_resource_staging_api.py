@@ -216,6 +216,41 @@ def test_resource_activation_is_recorded_with_lifecycle_before_and_after(monkeyp
         engine.dispose()
 
 
+def test_resource_adoption_request_audits_actor_and_is_idempotent(tmp_path):
+    engine, db = _db()
+    try:
+        organization_id = uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        resource, _ = _seed_remote_resource(db, organization_id, tmp_path / "cache")
+        qualification = ResourceQualification(
+            id=uuid4(), resource_id=resource.id,
+            qualification_version="qualification-test-v1", status="QUALIFIED",
+            checks_json={"passed": True}, qualified_by=None,
+        )
+        db.add(qualification)
+        db.commit()
+        principal = _principal(organization_id)
+        payload = {"qualification_version": "qualification-test-v1"}
+
+        first = resources_api.create_resource_approval_request(
+            resource.id, payload, db, principal,
+        )
+        second = resources_api.create_resource_approval_request(
+            resource.id, payload, db, principal,
+        )
+
+        assert first["approval_id"] == second["approval_id"]
+        event = db.query(AuditEvent).filter_by(event_type="RESOURCE_ADOPTION_REQUESTED").one()
+        assert event.actor_id == str(principal.user_id)
+        assert event.subject_id == str(resource.id)
+        assert event.workflow["organization_id"] == str(organization_id)
+        assert event.after_state["approval_id"] == first["approval_id"]
+        assert event.after_state["status"] == "PENDING"
+    finally:
+        db.close()
+        engine.dispose()
+
+
 def test_create_resource_staging_persists_capacity_preflight(monkeypatch, tmp_path):
     engine, db = _db()
     try:

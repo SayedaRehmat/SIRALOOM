@@ -260,7 +260,14 @@ def activate_resource_version(
 
 
 
-def request_resource_approval(db: Session, *, resource_id: UUID, organization_id: UUID, qualification_version: str) -> ResourceApproval:
+def request_resource_approval(
+    db: Session,
+    *,
+    resource_id: UUID,
+    organization_id: UUID,
+    qualification_version: str,
+    actor_id: UUID | None = None,
+) -> ResourceApproval:
     resource = db.get(Resource, resource_id)
     if resource is None:
         raise ResourceRegistryError("resource not found")
@@ -298,6 +305,37 @@ def request_resource_approval(db: Session, *, resource_id: UUID, organization_id
         if existing is None:
             raise
         return existing
+    if actor_id is not None:
+        from backend.app.infrastructure.audit.service import AuditService
+
+        AuditService(db).record(
+            event_type="RESOURCE_ADOPTION_REQUESTED",
+            case_id=None,
+            analysis_id=None,
+            actor_type="HUMAN",
+            actor_id=str(actor_id),
+            subject_type="RESOURCE",
+            subject_id=str(resource.id),
+            operation="REQUEST_APPROVAL",
+            after_state={
+                "approval_id": str(approval.id),
+                "approval_version": approval.version,
+                "status": approval.status,
+                "qualification_id": str(qualification.id),
+                "qualification_version": qualification.qualification_version,
+            },
+            workflow={
+                "domain": "resource_registry",
+                "organization_id": str(organization_id),
+            },
+            resource_versions={
+                "requested": {
+                    "resource_id": str(resource.id),
+                    "version": resource.version,
+                    "checksum": resource.checksum,
+                },
+            },
+        )
     return approval
 
 

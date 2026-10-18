@@ -325,6 +325,7 @@ def create_resource_approval_request(
             resource_id=resource_id,
             organization_id=principal.organization_id,
             qualification_version=str(payload.get("qualification_version") or ""),
+            actor_id=principal.user_id,
         )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
