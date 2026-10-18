@@ -97,20 +97,44 @@ def mark_reanalysis_completed(db: Session, analysis: Analysis) -> bool:
 
 def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool = True) -> int:
     """Persist the exact external resource identities observed by a completed analysis."""
-    existing = db.scalar(
-        select(AnalysisResourceSnapshot.id)
-        .where(AnalysisResourceSnapshot.analysis_id == analysis.id)
-        .limit(1)
-    )
-    if existing:
-        return int(db.query(AnalysisResourceSnapshot).filter(
+    case = db.get(Case, analysis.case_id)
+    if case is None:
+        raise ValueError("Analysis resource provenance references a missing case")
+
+    def resolve_resource(resource_id, *, source: str) -> Resource | None:
+        if resource_id is None:
+            return None
+        resource = db.get(Resource, resource_id)
+        if resource is None:
+            raise ValueError(f"{source} references a missing resource")
+        if resource.organization_id not in {None, case.organization_id}:
+            raise ValueError(f"{source} references a resource outside the analysis organization")
+        return resource
+
+    existing_rows = db.scalars(
+        select(AnalysisResourceSnapshot).where(
             AnalysisResourceSnapshot.analysis_id == analysis.id
-        ).count())
+        )
+    ).all()
+    if existing_rows:
+        for snapshot in existing_rows:
+            resolve_resource(
+                snapshot.resource_id,
+                source="Existing analysis resource snapshot",
+            )
+        return len(existing_rows)
 
     count = 0
     reference_resource_id = (analysis.configuration or {}).get("reference_resource_id")
     if reference_resource_id:
-        resource = db.get(Resource, UUID(str(reference_resource_id)))
+        try:
+            parsed_reference_resource_id = UUID(str(reference_resource_id))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Analysis reference resource ID is invalid") from exc
+        resource = resolve_resource(
+            parsed_reference_resource_id,
+            source="Analysis reference configuration",
+        )
         if resource:
             db.add(AnalysisResourceSnapshot(
                 id=uuid4(), analysis_id=analysis.id, resource_id=resource.id,
@@ -127,7 +151,7 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         .distinct()
     ).all()
     for rid in resource_ids:
-        resource = db.get(Resource, rid)
+        resource = resolve_resource(rid, source="Population observation")
         if resource:
             db.add(AnalysisResourceSnapshot(
                 id=uuid4(), analysis_id=analysis.id, resource_id=resource.id,
@@ -147,7 +171,10 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         if key in seen:
             continue
         seen.add(key)
-        registered_resource = db.get(Resource, row.resource_id) if row.resource_id else None
+        registered_resource = resolve_resource(
+            row.resource_id,
+            source="Annotation",
+        )
         db.add(AnalysisResourceSnapshot(
             id=uuid4(), analysis_id=analysis.id,
             resource_id=registered_resource.id if registered_resource else None,
@@ -174,7 +201,10 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         if key in seen:
             continue
         seen.add(key)
-        registered_resource = db.get(Resource, row.resource_id) if row.resource_id else None
+        registered_resource = resolve_resource(
+            row.resource_id,
+            source="Evidence",
+        )
         db.add(AnalysisResourceSnapshot(
             id=uuid4(), analysis_id=analysis.id,
             resource_id=registered_resource.id if registered_resource else None,
@@ -206,6 +236,10 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
                 Resource.name == row.specification_id,
                 Resource.version == specification_version,
                 Resource.provider == row.specification_provider,
+                or_(
+                    Resource.organization_id.is_(None),
+                    Resource.organization_id == case.organization_id,
+                ),
             ).limit(1)
         )
         db.add(AnalysisResourceSnapshot(

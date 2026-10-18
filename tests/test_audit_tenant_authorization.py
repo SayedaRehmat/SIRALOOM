@@ -51,6 +51,24 @@ def test_audit_hides_absent_and_cross_tenant_case_ids_identically():
     assert responses == [(404, "Case not found"), (404, "Case not found")]
 
 
+def test_read_only_user_cannot_create_analysis_resource_provenance_snapshot(monkeypatch):
+    organization_id = uuid4()
+    analysis_id = uuid4()
+    principal = _principal(organization_id, role="read_only")
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4(), status="SUCCEEDED")
+    monkeypatch.setattr(reanalysis_api, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        reanalysis_api,
+        "snapshot_analysis_resources",
+        lambda *_args, **_kwargs: pytest.fail("read-only request must not create snapshots"),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        reanalysis_api.snapshot(analysis_id, object(), principal)
+
+    assert exc.value.status_code == 403
+
+
 def test_acmg_auto_assessment_rejects_variant_outside_analysis(monkeypatch):
     analysis_id = uuid4()
     variant_id = uuid4()

@@ -561,7 +561,20 @@ def snapshot(
     principal: Principal = Depends(get_current_principal),
 ):
     analysis = get_accessible_analysis(analysis_id, db, principal)
+    require_role(principal, CASE_WRITE_ROLES)
     if analysis.status != "SUCCEEDED":
         raise HTTPException(status_code=409, detail="Only completed analyses can be snapshotted.")
-    count = snapshot_analysis_resources(db, analysis)
+    count = snapshot_analysis_resources(db, analysis, commit=False)
+    AuditService(db).record(
+        event_type="ANALYSIS_RESOURCE_PROVENANCE_SNAPSHOTTED",
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="ANALYSIS_RESOURCE_SNAPSHOT",
+        subject_id=str(analysis.id),
+        operation="SNAPSHOT",
+        after_state={"snapshot_count": count},
+    )
+    db.commit()
     return {"analysis_id": str(analysis.id), "snapshot_count": count}

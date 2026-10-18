@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -184,5 +185,95 @@ def test_resource_snapshots_retain_registered_checksums_for_annotation_evidence_
                 assert snapshot.resource_id == resource.id
                 assert snapshot.checksum == resource.checksum
                 assert snapshot.version == resource.version
+    finally:
+        engine.dispose()
+
+
+def test_resource_snapshot_rejects_reference_resource_from_another_organization(tmp_path):
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'cross-tenant-resource-snapshot.db'}")
+    Base.metadata.create_all(engine)
+    organization_id, foreign_organization_id, user_id, case_id, analysis_id, resource_id = (
+        uuid4() for _ in range(6)
+    )
+    try:
+        with Session(engine) as db:
+            db.add_all([
+                Organization(
+                    id=organization_id,
+                    name="Analysis Lab",
+                    external_identifier=str(organization_id),
+                ),
+                Organization(
+                    id=foreign_organization_id,
+                    name="Resource Owner Lab",
+                    external_identifier=str(foreign_organization_id),
+                ),
+            ])
+            db.flush()
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@test.local",
+                display_name="Snapshot Test",
+                role="ADMIN",
+                status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier="CROSS-TENANT-SNAPSHOT",
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.flush()
+            analysis = Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1",
+                workflow_version="snapshot-test",
+                status="SUCCEEDED",
+                queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={"reference_resource_id": str(resource_id)},
+                started_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(timezone.utc),
+                created_by=user_id,
+                analysis_version=1,
+            )
+            db.add(analysis)
+            db.add(Resource(
+                id=resource_id,
+                organization_id=foreign_organization_id,
+                name="Foreign reference",
+                provider="Test",
+                resource_type="REFERENCE_GENOME",
+                version="1",
+                genome_build="GRCh38",
+                access_method="LOCAL",
+                license_text=None,
+                checksum="a" * 64,
+                location="/resources/foreign.fa",
+                status="ACTIVE",
+                population_definition=None,
+                metadata_json={},
+            ))
+            db.commit()
+
+            with pytest.raises(ValueError, match="outside the analysis organization"):
+                snapshot_analysis_resources(db, analysis, commit=False)
+
+            db.rollback()
+            assert db.scalars(
+                select(AnalysisResourceSnapshot).where(
+                    AnalysisResourceSnapshot.analysis_id == analysis_id
+                )
+            ).all() == []
     finally:
         engine.dispose()
