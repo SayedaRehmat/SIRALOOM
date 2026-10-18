@@ -1,12 +1,21 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-18
-**Current branch/commit:** `main` at `62d634a1599689ea88f7fa144818e5c78753c614`, aligned with `origin/main`. Resource provenance snapshots reject foreign/missing links; the manual snapshot endpoint requires case-write authorization and is audited. Preflight, runtime and the shared active-resource accessor reject foreign tenant binding targets. The latest full backend suite, excluding only the Windows-native PDF renderer test, passed **924 tests with 36 skipped** (one Starlette/httpx deprecation warning). Recent GitHub Actions status is not verified. Phase A remains **PARTIAL**. Live Firebase/browser identity, deployed two-tenant API and object-storage isolation, and real-storage reviewer-to-signout recovery have not been verified. The unrelated untracked backup artifact remains untouched.
+**Current branch/commit:** `main` at `621543f4d842ce291824598d274caf2a6c2fa6db`, aligned with `origin/main`. Resource snapshots and execution reject foreign/missing tenant links. Human resource registration, qualification and activation now append hash-chained audit events in their state-change transactions. The full backend suite excluding only the Windows-native PDF renderer passed **926 tests, 36 skipped** (one Starlette/httpx deprecation warning). Recent GitHub Actions status is not verified. Phase A remains **PARTIAL**. Live Firebase/browser identity, deployed two-tenant API and object-storage isolation, and real-storage reviewer-to-signout recovery have not been verified. The unrelated untracked backup artifact remains untouched.
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+## 2026-10-18 continuation — resource lifecycle audit trail
+
+- **Finding:** the authenticated resource API registered versions, ran technical qualification and activated resources without appending corresponding events to the central hash-chained audit log. Qualification rows included some actor/time provenance, but registration and activation did not have an equivalent immutable event; activation could also supersede another version without an audit before/after record.
+- **Correction:** `backend/app/api/v1/resources.py` now records human resource registration (only when a new version is created), qualification, and activation events through `AuditService` before the same transaction commits. Events include actor, organization, resource/version identity and relevant lifecycle before/after state; activation records affected sibling statuses. Existing idempotent registration does not create duplicate events.
+- **Regression / verification:** focused resource staging/registry/organization-audit command passed **25 tests**. Full backend suite excluding `tests/test_report_pdf.py` passed **926 passed, 36 skipped, 1 warning in 48.77s**; warning is Starlette's httpx TestClient deprecation. Python compilation and `git diff --check` passed. The PDF-renderer test remains unverified on this Windows host because WeasyPrint's native `libgobject-2.0-0` library is unavailable.
+- **Checkpoint:** code and regression tests pushed to `main` as `621543f`. CI status is not verified. Phase A remains PARTIAL; live identity/browser, deployed two-tenant API/object storage and real-storage reviewer-to-signout/recovery remain unverified.
+
 ## 2026-10-18 continuation — current full backend regression run
+
+- **Superseded:** this checkpoint at `62d634a` is retained as historical verification; see the resource lifecycle audit below for current results.
 
 - **Baseline verified:** working tree is on `main` at `62d634a1599689ea88f7fa144818e5c78753c614`, aligned with `origin/main`. The existing untracked backup artifact was preserved.
 - **Verification:** using Python 3.12.14 and the existing temporary dependency directory, ran `python <temp-deps>\\pytest\\__main__.py tests -q -p no:cacheprovider --ignore=tests/test_report_pdf.py --basetemp <temp>`. Result: **924 passed, 36 skipped, 1 warning in 48.83s**. The warning is Starlette's deprecation notice for using `httpx` with `starlette.testclient`. The PDF renderer test was excluded because this Windows runtime cannot load WeasyPrint's native `libgobject-2.0-0` dependency; this run does not verify PDF rendering.

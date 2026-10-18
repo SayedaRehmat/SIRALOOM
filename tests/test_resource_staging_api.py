@@ -127,6 +127,9 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
         assert event.subject_id == str(resource.id)
         assert event.after_state["status"] == "CANDIDATE"
         assert event.workflow["organization_id"] == str(organization_id)
+        duplicate = resources_api.register_resource(payload, db, principal)
+        assert duplicate["created"] is False
+        assert db.query(AuditEvent).filter_by(event_type="RESOURCE_VERSION_REGISTERED").count() == 1
     finally:
         db.close()
         engine.dispose()
