@@ -75,7 +75,7 @@ def _bound_resources(db: Session, organization_id: UUID) -> list[Resource]:
     resources: list[Resource] = []
     for binding in bindings:
         resource = db.get(Resource, binding.resource_id)
-        if resource is not None:
+        if resource is not None and resource.organization_id in {None, organization_id}:
             resources.append(resource)
     return resources
 

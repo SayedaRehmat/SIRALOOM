@@ -6,16 +6,24 @@ import pytest
 from backend.app.domain import profile_runtime_resources as runtime
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.resource_execution import ResolvedResourceExecution
+from backend.app.infrastructure.db.models import Analysis, Case
 
 
 class FakeDB:
-    def __init__(self, analysis, resources=None):
+    def __init__(self, analysis, resources=None, *, organization_id=None):
         self.analysis = analysis
         self.resources = resources or {}
+        self.organization_id = organization_id or uuid4()
+        self.case = SimpleNamespace(
+            id=analysis.case_id,
+            organization_id=self.organization_id,
+        )
 
     def get(self, model, object_id):
-        if object_id == self.analysis.id:
+        if model is Analysis and object_id == self.analysis.id:
             return self.analysis
+        if model is Case and object_id == self.analysis.case_id:
+            return self.case
         return self.resources.get(object_id)
 
 
@@ -42,6 +50,7 @@ def _resolved(resource_id, *, version="1", qualification_id=None, qualification_
 def _analysis(resource_id, execution, *, capability="POPULATION"):
     return SimpleNamespace(
         id=uuid4(),
+        case_id=uuid4(),
         configuration={
             "resource_profile_id": "WES_GRCh38_STANDARD",
             "resource_plan": {
@@ -112,6 +121,48 @@ def test_resolver_rejects_stale_execution_contract(monkeypatch):
         )
 
 
+@pytest.mark.parametrize(
+    ("resolver", "capability"),
+    [
+        ("resolve_profile_runtime_resource", "POPULATION"),
+        ("resolve_profile_runtime_resources", "POPULATION_SECONDARY"),
+    ],
+)
+def test_runtime_resolvers_reject_resource_from_another_organization(
+    monkeypatch, resolver, capability
+):
+    resource_id = uuid4()
+    execution = _resolved(resource_id)
+    analysis = _analysis(resource_id, execution, capability=capability)
+    organization_id = uuid4()
+    foreign_resource = SimpleNamespace(
+        id=resource_id,
+        provider="GNOMAD",
+        version="1",
+        organization_id=uuid4(),
+    )
+    db = FakeDB(
+        analysis,
+        {resource_id: foreign_resource},
+        organization_id=organization_id,
+    )
+    monkeypatch.setattr(
+        runtime,
+        "resolve_resource_execution",
+        lambda *_args, **_kwargs: pytest.fail("foreign resource must not execute"),
+    )
+
+    with pytest.raises(
+        runtime.ProfileRuntimeResourceError,
+        match="outside the analysis organization",
+    ):
+        getattr(runtime, resolver)(
+            db,
+            analysis_id=analysis.id,
+            capability=capability,
+        )
+
+
 
 def test_plural_resolver_returns_all_selected_secondary_resources(monkeypatch):
     resource_ids = [uuid4(), uuid4(), uuid4()]
@@ -122,6 +173,7 @@ def test_plural_resolver_returns_all_selected_secondary_resources(monkeypatch):
     }
     analysis = SimpleNamespace(
         id=uuid4(),
+        case_id=uuid4(),
         configuration={
             "resource_profile_id": "WES_GRCh38_STANDARD",
             "resource_plan": {
@@ -161,6 +213,7 @@ def test_plural_resolver_rejects_one_stale_selected_secondary_resource(monkeypat
     resources = {rid: SimpleNamespace(id=rid, provider="SECONDARY", version="1") for rid in resource_ids}
     analysis = SimpleNamespace(
         id=uuid4(),
+        case_id=uuid4(),
         configuration={
             "resource_profile_id": "WES_GRCh38_STANDARD",
             "resource_plan": {
@@ -182,6 +235,7 @@ def test_plural_resolver_rejects_one_stale_selected_secondary_resource(monkeypat
 def test_plural_resolver_returns_empty_for_intentionally_absent_optional_capability():
     analysis = SimpleNamespace(
         id=uuid4(),
+        case_id=uuid4(),
         configuration={
             "resource_profile_id": "WES_GRCh38_STANDARD",
             "resource_plan": {"status": "READY", "selected": [], "issues": []},
@@ -199,6 +253,7 @@ def test_plural_resolver_returns_empty_for_intentionally_absent_optional_capabil
 def test_plural_resolver_raises_for_unavailable_optional_resource_that_was_configured():
     analysis = SimpleNamespace(
         id=uuid4(),
+        case_id=uuid4(),
         configuration={
             "resource_profile_id": "WES_GRCh38_STANDARD",
             "resource_plan": {

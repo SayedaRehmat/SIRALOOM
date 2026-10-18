@@ -16,7 +16,7 @@ from backend.app.domain.resource_execution import (
     ResolvedResourceExecution,
     resolve_resource_execution,
 )
-from backend.app.infrastructure.db.models import Analysis, Resource
+from backend.app.infrastructure.db.models import Analysis, Case, Resource
 
 
 class ProfileRuntimeResourceError(RuntimeError):
@@ -32,6 +32,25 @@ class ProfileRuntimeResource:
     capability: str
     resource: Resource
     execution: ResolvedResourceExecution
+
+
+def _analysis_case(db: Session, analysis: Analysis) -> Case:
+    case_id = getattr(analysis, "case_id", None)
+    case = db.get(Case, case_id) if case_id is not None else None
+    if case is None:
+        raise ProfileRuntimeResourceError(
+            "ANALYSIS_CASE_NOT_FOUND",
+            "The resource plan's analysis does not resolve to a case.",
+        )
+    return case
+
+
+def _require_resource_tenant(resource: Resource, case: Case) -> None:
+    if getattr(resource, "organization_id", None) not in {None, case.organization_id}:
+        raise ProfileRuntimeResourceError(
+            "RESOURCE_TENANT_MISMATCH",
+            "The preflight-selected resource is outside the analysis organization.",
+        )
 
 
 def resolve_profile_runtime_resources(
@@ -53,6 +72,7 @@ def resolve_profile_runtime_resources(
             "ANALYSIS_NOT_FOUND",
             f"Analysis {analysis_id} was not found.",
         )
+    case = _analysis_case(db, analysis)
 
     configuration = dict(analysis.configuration or {})
     if not configuration.get("resource_profile_id"):
@@ -117,6 +137,7 @@ def resolve_profile_runtime_resources(
                 "RESOURCE_NOT_FOUND",
                 f"Preflight-selected resource {resource_id} no longer exists.",
             )
+        _require_resource_tenant(resource, case)
 
         try:
             execution = resolve_resource_execution(db, resource=resource)
@@ -175,6 +196,7 @@ def resolve_profile_runtime_resource(
             "ANALYSIS_NOT_FOUND",
             f"Analysis {analysis_id} was not found.",
         )
+    case = _analysis_case(db, analysis)
 
     configuration = dict(analysis.configuration or {})
     if not configuration.get("resource_profile_id"):
@@ -223,6 +245,7 @@ def resolve_profile_runtime_resource(
             "RESOURCE_NOT_FOUND",
             f"Preflight-selected resource {resource_id} no longer exists.",
         )
+    _require_resource_tenant(resource, case)
 
     try:
         execution = resolve_resource_execution(db, resource=resource)
