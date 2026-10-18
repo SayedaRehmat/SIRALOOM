@@ -7,7 +7,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.auth.authorization import get_analysis_variant_ids
 from backend.app.infrastructure.db.models import (
+    Analysis,
     ACMGAssessment,
     Annotation,
     Classification,
@@ -15,7 +17,6 @@ from backend.app.infrastructure.db.models import (
     PopulationObservation,
     Variant,
     ReportabilityDecision,
-    AnalysisPartition,
 )
 
 
@@ -49,31 +50,14 @@ def _text(value: object | None) -> str:
 
 
 def build_variant_rows(db: Session, analysis_id: UUID) -> list[dict[str, object]]:
-    partitions = db.scalars(
-        select(AnalysisPartition)
-        .where(
-            AnalysisPartition.analysis_id == analysis_id,
-            AnalysisPartition.step_id == "normalize",
-        )
-        .order_by(AnalysisPartition.ordinal)
-    ).all()
-
-    variant_ids: list[UUID] = []
-    seen: set[UUID] = set()
-    for partition in partitions:
-        for raw_id in ((partition.metadata_json or {}).get("variant_ids") or []):
-            try:
-                variant_id = UUID(str(raw_id))
-            except (TypeError, ValueError):
-                continue
-            if variant_id not in seen:
-                seen.add(variant_id)
-                variant_ids.append(variant_id)
-
-    if variant_ids:
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        raise ValueError("Analysis not found")
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None:
         variants = db.scalars(
             select(Variant)
-            .where(Variant.id.in_(variant_ids))
+            .where(Variant.id.in_(manifest_variant_ids))
             .order_by(
                 Variant.chromosome,
                 Variant.position,

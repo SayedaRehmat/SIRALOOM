@@ -2,7 +2,7 @@ from uuid import uuid4
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Annotation, Classification, Evidence, PopulationObservation, Resource, ReportabilityDecision
+from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Annotation, Classification, Evidence, PopulationObservation, Resource, ReportabilityDecision, AnalysisPartition
 from backend.app.auth.principal import Principal
 from backend.app.api.v1.review import review_queue
 
@@ -56,3 +56,22 @@ def test_review_queue_blocks_cross_tenant_access():
         assert exc.status_code == 404
     else:
         raise AssertionError("cross-tenant review queue access must be rejected")
+
+
+def test_review_queue_rejects_downstream_variant_absent_from_normalization_manifest():
+    from fastapi import HTTPException
+
+    db, principal, analysis, _ = seed()
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
+        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    ))
+    db.commit()
+
+    try:
+        review_queue(analysis.id, db=db, principal=principal)
+    except HTTPException as exc:
+        assert exc.status_code == 409
+    else:
+        raise AssertionError("review queue must reject downstream rows absent from the input manifest")

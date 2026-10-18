@@ -1,3 +1,5 @@
+import pytest
+
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 
 
@@ -42,6 +44,7 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
         AuditEvent,
         Case,
         Organization,
+        ResourceExecutionRecord,
         User,
         WorkflowStep,
     )
@@ -58,6 +61,7 @@ def test_interrupted_worker_recovery_requeues_running_step_and_partition():
             WorkflowStep.__table__,
             AnalysisPartition.__table__,
             AuditEvent.__table__,
+            ResourceExecutionRecord.__table__,
         ],
     )
 
@@ -672,6 +676,7 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
         AuditEvent,
         Case,
         Organization,
+        ResourceExecutionRecord,
         User,
         WorkflowStep,
     )
@@ -693,6 +698,7 @@ def test_celery_redelivery_with_real_durable_recovery_state(monkeypatch):
             WorkflowStep.__table__,
             AnalysisPartition.__table__,
             AuditEvent.__table__,
+            ResourceExecutionRecord.__table__,
         ],
     )
 
@@ -907,6 +913,7 @@ def test_celery_recovery_requeues_partition_for_scheduler_resume():
         AuditEvent,
         Case,
         Organization,
+        ResourceExecutionRecord,
         User,
         WorkflowStep,
     )
@@ -924,6 +931,7 @@ def test_celery_recovery_requeues_partition_for_scheduler_resume():
             WorkflowStep.__table__,
             AnalysisPartition.__table__,
             AuditEvent.__table__,
+            ResourceExecutionRecord.__table__,
         ],
     )
 
@@ -1235,6 +1243,7 @@ def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monk
         AuditEvent,
         Case,
         Organization,
+        ResourceExecutionRecord,
         User,
         WorkflowStep,
     )
@@ -1256,6 +1265,7 @@ def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monk
             WorkflowStep.__table__,
             AnalysisPartition.__table__,
             AuditEvent.__table__,
+            ResourceExecutionRecord.__table__,
         ],
     )
 
@@ -1703,6 +1713,44 @@ def test_celery_retry_exhaustion_persists_terminal_failure():
         assert audit
 
 
+@pytest.mark.parametrize(
+    ("status", "queue_task_id", "active_task_id"),
+    [
+        ("REQUIRES_REVIEW", "dispatch-current", "dispatch-current"),
+        ("RUNNING", "dispatch-current", "dispatch-stale"),
+    ],
+)
+def test_retry_exhaustion_does_not_overwrite_newer_analysis_state(
+    status, queue_task_id, active_task_id
+):
+    from uuid import uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+
+    analysis = type(
+        "Analysis",
+        (),
+        {"status": status, "queue_task_id": queue_task_id},
+    )()
+
+    class DB:
+        def get(self, model, _analysis_id, **kwargs):
+            from backend.app.infrastructure.db.models import Analysis
+
+            assert model is Analysis
+            assert kwargs == {"with_for_update": True}
+            return analysis
+
+        def scalars(self, *_args):
+            raise AssertionError("stale terminalizer must stop before mutating steps")
+
+    assert celery_module._finalize_transient_retry_exhaustion(
+        DB(), uuid4(), "provider retries exhausted", task_id=active_task_id
+    ) is False
+    assert analysis.status == status
+    assert analysis.queue_task_id == queue_task_id
+
+
 def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypatch):
     from uuid import UUID, uuid4
 
@@ -1755,6 +1803,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         assert isinstance(db, FakeTerminalSession)
         assert received_analysis_id == UUID(analysis_id)
         assert error_message == str(transient)
+        assert kwargs["task_id"] == task_id
         events.append("finalize")
 
     def fail_if_retry_called(*_args, **_kwargs):

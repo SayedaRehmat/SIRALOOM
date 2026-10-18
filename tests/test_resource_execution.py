@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -12,6 +13,62 @@ from backend.app.domain.resource_execution import ResourceExecutionError, resolv
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Analysis, Annotation, Resource, ResourceQualification
+
+
+def test_annotation_batch_provenance_is_consistent_across_all_payloads():
+    from backend.app.workflows.variant import _ensure_annotation_request_fingerprint
+
+    analysis = SimpleNamespace(id=uuid4(), reference_build="GRCh38")
+    resource = SimpleNamespace(id=uuid4(), version="release-1", checksum="a" * 64)
+
+    def payload(request_fingerprint, response_sha256):
+        return {
+            "chr": "1", "pos": 555, "ref": "T", "alt": "C",
+            "_siraloom_annotation_provenance": {
+                "provider": "GeneBe",
+                "provider_version": "api-public-v1",
+                "request_fingerprint": request_fingerprint,
+                "response_sha256": response_sha256,
+            },
+        }
+
+    records = [payload("request-v1", "e" * 64), payload(None, "e" * 64)]
+    fingerprint = _ensure_annotation_request_fingerprint(
+        records,
+        analysis=analysis,
+        start=0,
+        end=2,
+        resource=resource,
+        provider_id="GeneBe",
+        provider_version="api-public-v1",
+    )
+    assert fingerprint == "request-v1"
+    assert all(
+        record["_siraloom_annotation_provenance"]["request_fingerprint"] == fingerprint
+        for record in records
+    )
+
+    with pytest.raises(ValueError, match="conflicting request fingerprints"):
+        _ensure_annotation_request_fingerprint(
+            [payload("request-v1", "e" * 64), payload("request-v2", "e" * 64)],
+            analysis=analysis,
+            start=0,
+            end=2,
+            resource=resource,
+            provider_id="GeneBe",
+            provider_version="api-public-v1",
+        )
+
+    with pytest.raises(ValueError, match="response fingerprint"):
+        _ensure_annotation_request_fingerprint(
+            [payload(None, "e" * 64), payload(None, "f" * 64)],
+            analysis=analysis,
+            start=0,
+            end=2,
+            resource=resource,
+            provider_id="GeneBe",
+            provider_version="api-public-v1",
+        )
 
 
 def _db():

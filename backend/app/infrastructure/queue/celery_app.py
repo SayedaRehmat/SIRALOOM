@@ -48,7 +48,7 @@ if Celery is not None:
 
     def _finalize_transient_retry_exhaustion(
         db, analysis_id, error_message, *, error_code="ANNOTATION_PROVIDER_RETRY_EXHAUSTED",
-        max_retries=3,
+        max_retries=3, task_id: str | None = None,
     ):
         from datetime import datetime, timezone
         from sqlalchemy import select
@@ -56,8 +56,15 @@ if Celery is not None:
         from backend.app.infrastructure.audit.service import AuditService
         from backend.app.infrastructure.db.models import Analysis, AnalysisPartition, WorkflowStep
 
-        analysis = db.get(Analysis, analysis_id)
+        analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
+            return False
+        # Retry exhaustion is a terminal state transition. Recheck the live
+        # workflow state and dispatch generation under the row lock so a stale
+        # task cannot overwrite a newer review, retry, or terminal outcome.
+        if analysis.status != AnalysisStatus.RUNNING:
+            return False
+        if task_id is not None and analysis.queue_task_id != task_id:
             return False
 
         retrying_steps = list(db.scalars(
@@ -336,6 +343,7 @@ if Celery is not None:
                             str(exc),
                             error_code=exc.error_code,
                             max_retries=exc.max_retries,
+                            task_id=self.request.id,
                         )
                     finally:
                         terminal_db.close()

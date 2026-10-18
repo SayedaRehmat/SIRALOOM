@@ -14,9 +14,12 @@ class _Rows:
 
 
 class _DB:
-    def __init__(self, variant, partition_metadata=()):
+    def __init__(self, variant, partition_metadata=(), downstream_member=False, normalization_step=None):
         self.variant = variant
         self.partition_metadata = list(partition_metadata)
+        self.downstream_member = downstream_member
+        self.normalization_step = normalization_step
+        self.scalar_calls = 0
 
     def get(self, model, _variant_id):
         from backend.app.infrastructure.db.models import Variant
@@ -28,7 +31,12 @@ class _DB:
         return _Rows(self.partition_metadata)
 
     def scalar(self, _statement):
-        return None
+        self.scalar_calls += 1
+        from backend.app.infrastructure.db.models import WorkflowStep
+
+        if _statement.column_descriptions[0].get("entity") is WorkflowStep:
+            return self.normalization_step
+        return "downstream-row" if self.downstream_member else None
 
 
 def test_analysis_variant_guard_accepts_normalization_manifest_membership():
@@ -50,6 +58,73 @@ def test_analysis_variant_guard_rejects_variant_outside_analysis():
     with pytest.raises(HTTPException) as exc:
         get_analysis_variant(analysis, variant_id, _DB(SimpleNamespace(id=variant_id), []))
     assert exc.value.status_code == 404
+
+
+def test_analysis_variant_guard_does_not_allow_downstream_rows_to_override_manifest():
+    from backend.app.auth.authorization import get_analysis_variant
+
+    analysis = SimpleNamespace(id=uuid4())
+    variant_id = uuid4()
+    db = _DB(
+        SimpleNamespace(id=variant_id),
+        [{"variant_ids": [str(uuid4())]}],
+        downstream_member=True,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_analysis_variant(analysis, variant_id, db)
+
+    assert exc.value.status_code == 404
+    assert db.scalar_calls == 0
+
+
+@pytest.mark.parametrize("manifest_value", [None, "malformed", 42])
+def test_analysis_variant_guard_treats_malformed_manifest_as_present_and_authoritative(manifest_value):
+    from backend.app.auth.authorization import get_analysis_variant
+
+    analysis = SimpleNamespace(id=uuid4())
+    variant_id = uuid4()
+    db = _DB(
+        SimpleNamespace(id=variant_id),
+        [{"variant_ids": manifest_value}],
+        downstream_member=True,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_analysis_variant(analysis, variant_id, db)
+
+    assert exc.value.status_code == 404
+    assert db.scalar_calls == 0
+
+
+def test_analysis_variant_guard_keeps_legacy_fallback_without_manifest():
+    from backend.app.auth.authorization import get_analysis_variant
+
+    variant_id = uuid4()
+    variant = SimpleNamespace(id=variant_id)
+    db = _DB(variant, downstream_member=True)
+
+    assert get_analysis_variant(SimpleNamespace(id=uuid4()), variant_id, db) is variant
+
+
+def test_analysis_variant_guard_treats_completed_zero_record_normalization_as_empty_manifest():
+    from backend.app.auth.authorization import get_analysis_variant
+
+    analysis = SimpleNamespace(id=uuid4())
+    variant_id = uuid4()
+    db = _DB(
+        SimpleNamespace(id=variant_id),
+        downstream_member=True,
+        normalization_step=SimpleNamespace(
+            status="SUCCEEDED", metadata_json={"streaming": True, "partition_count": 0}
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        get_analysis_variant(analysis, variant_id, db)
+
+    assert exc.value.status_code == 404
+    assert db.scalar_calls == 1
 
 
 def test_pedigree_write_denies_variant_from_another_analysis_before_mutation(monkeypatch):

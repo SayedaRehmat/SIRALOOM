@@ -580,6 +580,35 @@ def update_organization_membership(
     if payload.role is not None:
         _require_invitation_role(current_principal, payload.role)
 
+    target_user_id = db.scalar(
+        select(OrganizationMembership.user_id).where(
+            OrganizationMembership.id == membership_uuid,
+            OrganizationMembership.organization_id == principal.organization_id,
+        )
+    )
+    if target_user_id is None:
+        raise HTTPException(status_code=404, detail="Membership not found")
+
+    # User account fields are global, while membership rows are tenant scoped.
+    # Serialize against identity provisioning before locking the account and
+    # membership, then refuse stale rows retained after reprovisioning.
+    target_user_snapshot = db.scalar(
+        select(User).where(User.id == target_user_id)
+    )
+    if target_user_snapshot is None:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    if target_user_snapshot.external_subject:
+        _lock_identity_provisioning(db, target_user_snapshot.external_subject)
+
+    target_user = db.scalar(
+        select(User)
+        .where(User.id == target_user_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if target_user is None or target_user.organization_id != principal.organization_id:
+        raise HTTPException(status_code=404, detail="Membership not found")
+
     target = db.scalar(
         select(OrganizationMembership)
         .where(
@@ -588,7 +617,7 @@ def update_organization_membership(
         )
         .with_for_update()
     )
-    if not target:
+    if not target or target.user_id != target_user.id:
         raise HTTPException(status_code=404, detail="Membership not found")
     if target.user_id == current_principal.user_id and payload.status in {"SUSPENDED", "REVOKED"}:
         raise HTTPException(status_code=409, detail="You cannot suspend or revoke your own active membership")
@@ -608,15 +637,11 @@ def update_organization_membership(
 
     if payload.role is not None:
         target.role = payload.role
-        user = db.get(User, target.user_id)
-        if user:
-            user.role = payload.role
+        target_user.role = payload.role
 
     if payload.status is not None:
         target.status = payload.status
-        user = db.get(User, target.user_id)
-        if user:
-            user.status = "ACTIVE" if payload.status == "ACTIVE" else "INACTIVE"
+        target_user.status = "ACTIVE" if payload.status == "ACTIVE" else "INACTIVE"
 
     after_state = {"role": target.role, "status": target.status}
     if after_state != before_state:

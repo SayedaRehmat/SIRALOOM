@@ -8,6 +8,7 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
+    AnalysisPartition,
     Artifact,
     Case,
     Classification,
@@ -221,6 +222,52 @@ def test_report_content_persists_exact_classification_identity():
     )
     assert finding["classification_id"] == str(classification.id)
     assert finding["classification_version"] == classification.version
+
+
+def test_report_generation_and_signout_eligibility_reject_classification_outside_manifest():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
+        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    ))
+    db.commit()
+
+    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+    assert not eligible
+    assert any("absent from the analysis input" in error for error in errors)
+    with pytest.raises(ValueError, match="absent from the analysis input"):
+        build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+
+
+def test_report_generation_and_signout_reject_reportable_secondary_variant_outside_manifest():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+        variant_count=1, status="SUCCEEDED", metadata_json={"variant_ids": [str(classification.variant_id)]},
+    ))
+    outside_variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="17", position=2,
+        reference="C", alternate="T", normalization_status="NORMALIZED",
+        canonical_key="GRCh38:17:2:C:T", identifiers={},
+    )
+    secondary = SecondaryFindingDecision(
+        id=uuid4(), analysis_id=analysis.id, variant_id=outside_variant.id,
+        version=1, policy_name="TEST_POLICY", policy_version="1.0",
+        eligibility="ELIGIBLE", consent_status="DOCUMENTED",
+        disposition="REPORT", status="FINAL", rationale="Approved fixture",
+        gene_disease_context={}, reviewed_by=_reviewer.id,
+    )
+    db.add_all([outside_variant, secondary])
+    db.commit()
+
+    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+    assert not eligible
+    assert any("Secondary-finding decisions reference variants absent" in error for error in errors)
+    with pytest.raises(ValueError, match="Secondary-finding decisions reference variants absent"):
+        build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
 
 
 

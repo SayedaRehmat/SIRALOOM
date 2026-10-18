@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, require_role
+from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, get_analysis_variant_ids, require_role
 from sqlalchemy import func, select
 
 from backend.app.infrastructure.db.models import ACMGAssessment, Annotation, Classification, Evidence, PopulationObservation, User, Variant, ReportabilityDecision
@@ -88,6 +88,7 @@ def review_queue(
     # after selecting the latest classification to keep the queue portable.
     if reportability:
         rows = list(db.execute(query).all())
+        _require_manifest_membership(analysis, rows, db)
         filtered = []
         for variant, cls in rows:
             decision = db.scalar(select(ReportabilityDecision).where(ReportabilityDecision.analysis_id == analysis_id, ReportabilityDecision.variant_id == variant.id).order_by(ReportabilityDecision.version.desc()))
@@ -100,6 +101,7 @@ def review_queue(
         count_stmt = select(func.count()).select_from(stmt.order_by(None).subquery())
         total = int(db.scalar(count_stmt) or 0)
         rows = list(db.execute(query.offset(offset).limit(limit)).all())
+        _require_manifest_membership(analysis, rows, db)
 
     items = []
     for variant, cls in rows:
@@ -146,6 +148,17 @@ def review_queue(
             "reportability_version": decision.version if decision else None,
         })
     return {"analysis_id": str(analysis.id), "case_id": str(analysis.case_id), "count": len(items), "total": total, "offset": offset, "limit": limit, "items": items}
+
+
+def _require_manifest_membership(analysis, rows, db):
+    """Fail closed if downstream review rows claim variants absent from input."""
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    # Legacy rows already satisfy the analysis-scoped Annotation and
+    # Classification joins in review_queue; no per-row lookup is needed.
+    if manifest_variant_ids is None:
+        return
+    if any(variant.id not in manifest_variant_ids for variant, _classification in rows):
+        raise HTTPException(status_code=409, detail="Review data references a variant absent from the analysis input")
 
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/review", response_model=ReviewResponse)

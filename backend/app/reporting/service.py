@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
 from backend.app.reporting.reportability import final_reportability_state, latest_decision
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -75,6 +77,36 @@ def _latest_by_variant(rows: list[Classification]) -> list[Classification]:
     return list(latest.values())
 
 
+def _variants_outside_analysis(
+    db: Session,
+    analysis: Analysis,
+    variant_ids: set[UUID],
+    *,
+    validate_legacy_lineage: bool = True,
+) -> set[UUID]:
+    """Identify downstream variant references absent from this analysis input."""
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None:
+        return variant_ids - manifest_variant_ids
+    if not validate_legacy_lineage:
+        # The caller's analysis-scoped Classification query is itself the
+        # historical lineage accepted by the legacy compatibility contract.
+        return set()
+
+    # Legacy analyses have no normalization manifest; preserve the shared
+    # analysis-scoped lineage fallback for each distinct downstream variant.
+    missing: set[UUID] = set()
+    for variant_id in variant_ids:
+        try:
+            get_analysis_variant(analysis, variant_id, db)
+        except HTTPException as exc:
+            if exc.status_code == 404:
+                missing.add(variant_id)
+            else:
+                raise
+    return missing
+
+
 def final_report_eligibility(db: Session, *, analysis_id: UUID) -> tuple[bool, list[str]]:
     analysis = db.get(Analysis, analysis_id)
     if analysis is None:
@@ -88,6 +120,14 @@ def final_report_eligibility(db: Session, *, analysis_id: UUID) -> tuple[bool, l
     for row in classifications:
         if row.variant_id not in latest or row.version > latest[row.variant_id].version:
             latest[row.variant_id] = row
+    unlinked_variants = _variants_outside_analysis(
+        db, analysis, set(latest), validate_legacy_lineage=False
+    )
+    if unlinked_variants:
+        errors.append(
+            "Classification records reference variants absent from the analysis input: "
+            + ", ".join(sorted(str(value) for value in unlinked_variants))
+        )
     if not latest:
         errors.append("No variant classification is available for final reporting")
     for variant_id, row in latest.items():
@@ -109,6 +149,22 @@ def final_report_eligibility(db: Session, *, analysis_id: UUID) -> tuple[bool, l
     reportability_ok, reportability_errors = final_reportability_state(db, analysis_id)
     if not reportability_ok:
         errors.extend(reportability_errors)
+    secondary_reportable = {
+        row.variant_id
+        for row in db.scalars(
+            select(SecondaryFindingDecision).where(
+                SecondaryFindingDecision.analysis_id == analysis_id,
+                SecondaryFindingDecision.status == "FINAL",
+                SecondaryFindingDecision.disposition == "REPORT",
+            )
+        )
+    }
+    unlinked_secondary = _variants_outside_analysis(db, analysis, secondary_reportable)
+    if unlinked_secondary:
+        errors.append(
+            "Secondary-finding decisions reference variants absent from the analysis input: "
+            + ", ".join(sorted(str(value) for value in unlinked_secondary))
+        )
     return not errors, errors
 
 def _criterion_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> list[dict[str, Any]]:
@@ -344,6 +400,15 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     latest_rows = _latest_by_variant(
         list(db.scalars(select(Classification).where(Classification.analysis_id == analysis.id)))
     )
+    unlinked_variants = _variants_outside_analysis(
+        db, analysis, {row.variant_id for row in latest_rows},
+        validate_legacy_lineage=False,
+    )
+    if unlinked_variants:
+        raise ValueError(
+            "Classification records reference variants absent from the analysis input: "
+            + ", ".join(sorted(str(value) for value in unlinked_variants))
+        )
     latest_rows.sort(key=lambda row: str(row.variant_id))
 
     findings: list[dict[str, Any]] = []
@@ -458,6 +523,16 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         findings.append(finding)
 
     secondary_rows = list(db.scalars(select(SecondaryFindingDecision).where(SecondaryFindingDecision.analysis_id == analysis.id).order_by(SecondaryFindingDecision.variant_id, SecondaryFindingDecision.version)))
+    reportable_secondary_ids = {
+        row.variant_id for row in secondary_rows
+        if row.status == "FINAL" and row.disposition == "REPORT"
+    }
+    unlinked_secondary = _variants_outside_analysis(db, analysis, reportable_secondary_ids)
+    if unlinked_secondary:
+        raise ValueError(
+            "Secondary-finding decisions reference variants absent from the analysis input: "
+            + ", ".join(sorted(str(value) for value in unlinked_secondary))
+        )
     secondary_latest = {}
     for row in secondary_rows:
         secondary_latest[row.variant_id] = row

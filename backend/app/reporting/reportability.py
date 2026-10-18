@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.auth.authorization import get_analysis_variant_ids
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Classification, ReportabilityDecision, Variant
 
@@ -95,6 +96,15 @@ def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDeci
     for row in classifications:
         latest_cls.setdefault(row.variant_id, row)
 
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None:
+        unlinked = set(latest_cls) - manifest_variant_ids
+        if unlinked:
+            raise ValueError(
+                "Cannot evaluate reportability for classifications outside the normalized input: "
+                + ", ".join(sorted(str(value) for value in unlinked))
+            )
+
     created: list[ReportabilityDecision] = []
     for variant_id, cls in latest_cls.items():
         # Reportability is downstream of the human classification gate. Never
@@ -160,6 +170,9 @@ def finalize_reportability(
     db.refresh(decision, with_for_update=True)
     if decision.analysis_id != analysis.id:
         raise ValueError("Reportability decision analysis changed during finalization")
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None and decision.variant_id not in manifest_variant_ids:
+        raise ValueError("Reportability decision references a variant outside the normalized analysis input")
 
     current_latest = latest_decision(db, decision.analysis_id, decision.variant_id)
     if current_latest is None or current_latest.id != decision.id:
@@ -209,11 +222,39 @@ def final_reportability_state(db: Session, analysis_id: UUID) -> tuple[bool, lis
         if row.variant_id not in latest or row.version > latest[row.variant_id].version:
             latest[row.variant_id] = row
     errors: list[str] = []
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None and set(latest) != manifest_variant_ids:
+        errors.append(
+            "Classifications do not exactly match the normalized input variant set"
+        )
+    decision_rows = list(
+        db.scalars(
+            select(ReportabilityDecision)
+            .where(ReportabilityDecision.analysis_id == analysis_id)
+            .order_by(ReportabilityDecision.variant_id, ReportabilityDecision.version.desc())
+        )
+    )
+    latest_decisions: dict[UUID, ReportabilityDecision] = {}
+    for row in decision_rows:
+        latest_decisions.setdefault(row.variant_id, row)
+    orphan_decision_variants = set(latest_decisions) - set(latest)
+    if orphan_decision_variants:
+        errors.append(
+            "Reportability decisions reference variants without a classification: "
+            + ", ".join(sorted(str(value) for value in orphan_decision_variants))
+        )
+    if manifest_variant_ids is not None:
+        out_of_manifest_decisions = set(latest_decisions) - manifest_variant_ids
+        if out_of_manifest_decisions:
+            errors.append(
+                "Reportability decisions reference variants outside the normalized input: "
+                + ", ".join(sorted(str(value) for value in out_of_manifest_decisions))
+            )
     for variant_id, cls in latest.items():
         if cls.state != "FINAL" or cls.review_status != "APPROVED":
             errors.append(f"Variant {variant_id} classification is not FINAL + APPROVED")
             continue
-        decision = latest_decision(db, analysis_id, variant_id)
+        decision = latest_decisions.get(variant_id)
         if decision is None:
             errors.append(f"Variant {variant_id} has no reportability decision")
         elif decision.status != "FINAL":

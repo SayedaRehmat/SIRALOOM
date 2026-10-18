@@ -3,6 +3,8 @@
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -20,6 +22,220 @@ from backend.app.infrastructure.db.models import (
     User,
     WorkflowStep,
 )
+
+
+@pytest.mark.parametrize("status", ["SUCCEEDED", "REQUIRES_REVIEW", "CANCELLED"])
+def test_analysis_start_rejects_nonstartable_states_before_preflight(monkeypatch, status):
+    from backend.app.api.v1 import analyses as analyses_api
+
+    analysis = SimpleNamespace(
+        id=uuid4(), status=status, configuration={}, queue_task_id=None,
+    )
+    monkeypatch.setattr(
+        analyses_api, "get_accessible_analysis",
+        lambda *_args, **_kwargs: analysis,
+    )
+    monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_resources",
+        lambda *_args, **_kwargs: pytest.fail("nonstartable analysis must stop before preflight"),
+    )
+    events = []
+    db = SimpleNamespace(
+        refresh=lambda row, **kwargs: events.append((row, kwargs)),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        analyses_api.start(
+            analysis.id,
+            db=db,
+            principal=SimpleNamespace(organization_id=uuid4(), user_id=uuid4()),
+        )
+
+    assert error.value.status_code == 409
+    assert analysis.status == status
+    assert events == [(analysis, {"with_for_update": True})]
+
+
+def test_analysis_start_does_not_restart_unclassified_blocked_state(monkeypatch):
+    from backend.app.api.v1 import analyses as analyses_api
+
+    analysis = SimpleNamespace(
+        id=uuid4(), status="BLOCKED", configuration={
+            "resource_plan": {"status": "READY"},
+        }, queue_task_id=None,
+    )
+    monkeypatch.setattr(
+        analyses_api, "get_accessible_analysis",
+        lambda *_args, **_kwargs: analysis,
+    )
+    monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_resources",
+        lambda *_args, **_kwargs: pytest.fail("unclassified block must not enter preflight"),
+    )
+    events = []
+    db = SimpleNamespace(
+        refresh=lambda row, **kwargs: events.append(("lock", row, kwargs)),
+        scalar=lambda _statement: None,
+    )
+
+    with pytest.raises(HTTPException) as error:
+        analyses_api.start(
+            analysis.id,
+            db=db,
+            principal=SimpleNamespace(organization_id=uuid4(), user_id=uuid4()),
+        )
+
+    assert error.value.status_code == 409
+    assert analysis.status == "BLOCKED"
+    assert events == [("lock", analysis, {"with_for_update": True})]
+
+
+@pytest.mark.parametrize("status", ["QUEUED", "RUNNING"])
+def test_analysis_start_returns_existing_execution_without_rechecking_capacity(
+    monkeypatch, status
+):
+    from backend.app.api.v1 import analyses as analyses_api
+
+    analysis = SimpleNamespace(
+        id=uuid4(), status=status, queue_task_id="existing-dispatch",
+        configuration={
+            "resource_plan": {"status": "READY_WITH_LIMITATIONS", "issues": []},
+            "capacity_preflight": {"status": "READY"},
+        },
+    )
+    monkeypatch.setattr(
+        analyses_api, "get_accessible_analysis",
+        lambda *_args, **_kwargs: analysis,
+    )
+    monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_resources",
+        lambda *_args, **_kwargs: pytest.fail("active analysis must not be re-preflighted"),
+    )
+    events = []
+    db = SimpleNamespace(
+        refresh=lambda row, **kwargs: events.append((row, kwargs)),
+    )
+
+    result = analyses_api.start(
+        analysis.id,
+        db=db,
+        principal=SimpleNamespace(organization_id=uuid4(), user_id=uuid4()),
+    )
+
+    assert result["status"] == status
+    assert result["task_id"] == "existing-dispatch"
+    assert analysis.status == status
+    assert events == [(analysis, {"with_for_update": True})]
+
+
+def test_capacity_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
+    """A resolved capacity-only block returns to a startable state and queues once."""
+    from backend.app.api.v1 import analyses as analyses_api
+    from backend.app.infrastructure.queue import celery_app
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
+    capacity_ready = {
+        "status": "READY", "enabled": True, "issues": [],
+        "reservation_supported": False, "roots": [],
+    }
+    monkeypatch.setattr(
+        analyses_api,
+        "get_accessible_analysis",
+        lambda aid, db, _p: db.get(Analysis, aid),
+    )
+    monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_resources",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(analyses_api, "preflight_analysis_capacity", lambda _size: capacity_ready)
+    monkeypatch.setattr(
+        analyses_api,
+        "resolve_resource_deployment_policy",
+        lambda *_args, **_kwargs: SimpleNamespace(is_laboratory=False),
+    )
+    monkeypatch.setattr(
+        analyses_api,
+        "enforce_laboratory_capacity_policy",
+        lambda capacity, **_kwargs: capacity,
+    )
+    monkeypatch.setattr(
+        analysis_application,
+        "resolve_resource_deployment_policy",
+        lambda *_args, **_kwargs: SimpleNamespace(is_laboratory=False),
+    )
+    published = []
+    monkeypatch.setattr(
+        celery_app, "publish_analysis_dispatch",
+        lambda dispatch_id: published.append(str(dispatch_id)) or str(dispatch_id),
+    )
+    principal = SimpleNamespace(organization_id=organization_id, user_id=user_id)
+
+    with Session(engine) as db:
+        db.add(Organization(
+            id=organization_id,
+            name="Capacity Recovery Lab",
+            external_identifier=None,
+        ))
+        db.add(User(
+            id=user_id, organization_id=organization_id, external_subject="capacity-user",
+            email="capacity@example.test", display_name="Capacity User",
+            role="bioinformatician", status="ACTIVE",
+        ))
+        db.flush()
+        db.add(Case(
+            id=case_id, organization_id=organization_id,
+            case_identifier="CAPACITY-RECOVERY", status="ACTIVE",
+            clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(Analysis(
+            id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+            analysis_type="GERMLINE", workflow_id="variant", workflow_version="1",
+            status="BLOCKED", queue_task_id=None, reference_build="GRCh38",
+            configuration={
+                "resource_plan": {"status": "READY", "issues": []},
+                "capacity_preflight": {"status": "BLOCKED"},
+            },
+            started_at=None, completed_at=None, created_by=user_id,
+        ))
+        db.add(WorkflowStep(
+            id=uuid4(), analysis_id=analysis_id, step_id="preflight", step_order=1,
+            status="BLOCKED", attempt=0, input_artifacts=[], output_artifacts=[],
+            error_code="STORAGE_CAPACITY_PREFLIGHT_BLOCKED",
+            error_message="Capacity was unavailable on the previous start attempt.",
+            metadata_json={},
+        ))
+        db.commit()
+
+        result = analyses_api.start(analysis_id, db, principal)
+
+        persisted = db.get(Analysis, analysis_id)
+        preflight_step = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis_id,
+            WorkflowStep.step_id == "preflight",
+        ))
+        dispatches = db.scalars(select(AnalysisDispatch).where(
+            AnalysisDispatch.analysis_id == analysis_id,
+        )).all()
+        assert result["status"] == AnalysisStatus.QUEUED
+        assert result["task_id"] is not None
+        assert persisted.status == AnalysisStatus.QUEUED
+        assert persisted.completed_at is None
+        assert preflight_step.status == "SUCCEEDED"
+        assert preflight_step.error_code is None
+        assert len(dispatches) == 1
+        assert len(published) == 1
+
+    engine.dispose()
 
 
 def _plan(*, status: str, plan_hash: str, issues=()):

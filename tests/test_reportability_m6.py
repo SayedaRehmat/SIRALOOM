@@ -1,8 +1,9 @@
 from uuid import uuid4
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, Report, ReportabilityDecision
+from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, Report, ReportabilityDecision, AnalysisPartition
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, final_reportability_state
 from backend.app.reporting.service import build_report_content, final_report_eligibility
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
@@ -37,6 +38,83 @@ def test_evaluate_creates_first_class_decision():
     assert not ok and any("not FINAL" in e for e in errors)
 
 
+def test_reportability_evaluation_rejects_classification_outside_normalization_manifest():
+    db, _, _, analysis, _, _ = seed("PATHOGENIC")
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
+        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    ))
+    db.commit()
+
+    with pytest.raises(ValueError, match="outside the normalized input"):
+        evaluate_analysis(db, analysis)
+    assert db.query(ReportabilityDecision).filter_by(analysis_id=analysis.id).count() == 0
+
+
+def test_reportability_evaluation_route_returns_conflict_for_manifest_mismatch(monkeypatch):
+    from fastapi import HTTPException
+    from backend.app.api.v1 import reports
+
+    db, _, _, analysis, _, _ = seed("PATHOGENIC")
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
+        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    ))
+    db.commit()
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(reports, "require_role", lambda *_args: None)
+
+    with pytest.raises(HTTPException) as exc:
+        reports.evaluate_reportability(analysis.id, db=db, principal=object())
+
+    assert exc.value.status_code == 409
+    assert db.query(ReportabilityDecision).filter_by(analysis_id=analysis.id).count() == 0
+
+
+def test_reportability_state_requires_classification_coverage_of_manifest():
+    db, _, _, analysis, _, _ = seed("PATHOGENIC")
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
+        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    ))
+    db.commit()
+
+    ready, errors = final_reportability_state(db, analysis.id)
+    assert not ready
+    assert any("do not exactly match" in error for error in errors)
+
+
+def test_reportability_state_rejects_orphan_decision_without_classification():
+    db, _, _, analysis, variant, classification = seed("PATHOGENIC")
+    outside_variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=11,
+        reference="C", alternate="T", normalization_status="NORMALIZED",
+        canonical_key="GRCh38:1:11:C:T", identifiers={},
+    )
+    orphan = ReportabilityDecision(
+        id=uuid4(), analysis_id=analysis.id, variant_id=outside_variant.id,
+        classification_id=classification.id, version=1, policy_name="TEST_POLICY",
+        policy_version="1", disposition="REPORT", priority_score=100,
+        priority_band="HIGH", reasons=[], status="FINAL", review_version=1,
+    )
+    db.add(outside_variant)
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+        variant_count=1, status="SUCCEEDED", metadata_json={"variant_ids": [str(variant.id)]},
+    ))
+    db.add(orphan)
+    db.commit()
+
+    ready, errors = final_reportability_state(db, analysis.id)
+    assert not ready
+    assert any("without a classification" in error for error in errors)
+    assert any("outside the normalized input" in error for error in errors)
+
+
 def test_reportability_finalize_is_version_checked_and_audited():
     db, user, _, analysis, _, _ = seed("VUS")
     decision = evaluate_analysis(db, analysis)[0]
@@ -48,6 +126,25 @@ def test_reportability_finalize_is_version_checked_and_audited():
     assert out.reviewed_by == user.id
     ok, errors = final_reportability_state(db, analysis.id)
     assert ok, errors
+
+
+def test_reportability_finalize_rejects_variant_outside_normalization_manifest():
+    db, user, _, analysis, _, _ = seed("PATHOGENIC")
+    decision = evaluate_analysis(db, analysis)[0]
+    db.commit()
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
+        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    ))
+    db.commit()
+
+    with pytest.raises(ValueError, match="outside the normalized analysis input"):
+        finalize_reportability(
+            db, decision_id=decision.id, reviewer_id=user.id,
+            expected_version=decision.review_version, disposition="REPORT",
+            reason="Must not finalize an out-of-input variant",
+        )
 
 
 def test_clinical_report_contains_only_final_report_findings():

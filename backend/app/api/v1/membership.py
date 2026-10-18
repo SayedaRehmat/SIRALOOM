@@ -20,7 +20,10 @@ def list_organization_memberships(
     rows = db.execute(
         select(OrganizationMembership, User)
         .join(User, User.id == OrganizationMembership.user_id)
-        .where(OrganizationMembership.organization_id == principal.organization_id)
+        .where(
+            OrganizationMembership.organization_id == principal.organization_id,
+            User.organization_id == principal.organization_id,
+        )
         .order_by(OrganizationMembership.created_at.asc(), OrganizationMembership.id.asc())
     ).all()
     return {

@@ -21,6 +21,7 @@ from backend.app.infrastructure.db.models import (
     Report,
     Specimen,
     Variant,
+    WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 
@@ -48,12 +49,8 @@ def get_accessible_analysis(analysis_id: UUID, db: Session = Depends(get_db), pr
     require_case_tenant(case, principal)
     return analysis
 
-def get_analysis_variant(analysis: Analysis, variant_id: UUID, db: Session) -> Variant:
-    """Return a variant only when its identity is present in this analysis."""
-    variant = db.get(Variant, variant_id)
-    if variant is None:
-        raise HTTPException(status_code=404, detail="Variant not found")
-
+def get_analysis_variant_ids(analysis: Analysis, db: Session) -> set[UUID] | None:
+    """Return manifest membership, or None for legacy analyses without a manifest."""
     # The normalization partition manifest is authoritative before annotation.
     partitions = db.scalars(
         select(AnalysisPartition.metadata_json).where(
@@ -61,15 +58,60 @@ def get_analysis_variant(analysis: Analysis, variant_id: UUID, db: Session) -> V
             AnalysisPartition.step_id == "normalize",
         )
     ).all()
+    if not partitions:
+        normalization_step = db.scalar(
+            select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis.id,
+                WorkflowStep.step_id == "normalize",
+            )
+        )
+        step_metadata = (
+            normalization_step.metadata_json
+            if normalization_step and isinstance(normalization_step.metadata_json, dict)
+            else {}
+        )
+        if not (
+            normalization_step
+            and normalization_step.status == "SUCCEEDED"
+            and (
+                "partition_count" in step_metadata
+                or step_metadata.get("streaming") is True
+                or step_metadata.get("normalization") == "REFERENCE_AWARE"
+            )
+        ):
+            return None
+        # The current streaming normalizer can successfully produce an empty
+        # input. Its successful step metadata is an explicit empty manifest;
+        # downstream annotation rows must not activate the legacy fallback.
+        return set()
+
+    variant_ids: set[UUID] = set()
     for metadata in partitions:
-        variant_ids = metadata.get("variant_ids", []) if isinstance(metadata, dict) else []
-        for item in variant_ids:
+        raw_variant_ids = metadata.get("variant_ids", []) if isinstance(metadata, dict) else []
+        if not isinstance(raw_variant_ids, (list, tuple)):
+            continue
+        for item in raw_variant_ids:
             try:
-                if UUID(str(item)) == variant_id:
-                    return variant
+                variant_ids.add(UUID(str(item)))
             except (TypeError, ValueError):
                 # Ignore malformed manifest entries; they cannot establish membership.
                 continue
+    return variant_ids
+
+
+def get_analysis_variant(analysis: Analysis, variant_id: UUID, db: Session) -> Variant:
+    """Return a variant only when its identity is present in this analysis."""
+    variant = db.get(Variant, variant_id)
+    if variant is None:
+        raise HTTPException(status_code=404, detail="Variant not found")
+
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None:
+        if variant_id in manifest_variant_ids:
+            return variant
+        # A present normalization manifest is the durable input-membership
+        # record. Downstream rows cannot add variants that were absent from it.
+        raise HTTPException(status_code=404, detail="Variant is not part of this analysis")
 
     # Older analyses may not have normalization partitions. Accept only their
     # persisted analysis-scoped annotation/classification lineage as a fallback.

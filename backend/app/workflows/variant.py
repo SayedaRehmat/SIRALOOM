@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.app.acmg.source_assertions import persist_clingen_source_assertions
+from backend.app.auth.authorization import get_analysis_variant_ids
 from backend.app.application.analysis import validate_analysis_input_artifact
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
@@ -354,13 +355,35 @@ def _ensure_annotation_request_fingerprint(
     provider_version: str,
 ) -> str:
     """Ensure API and local providers share a stable, governed request identity."""
-    sample = next(
-        (item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)),
-        {},
-    )
-    existing = sample.get("request_fingerprint")
-    if existing:
-        return str(existing)
+    if not isinstance(payloads, list) or not payloads or not all(isinstance(item, dict) for item in payloads):
+        raise ValueError("Annotation provider response must be a non-empty list of objects.")
+    provenances = []
+    for item in payloads:
+        provenance = item.get("_siraloom_annotation_provenance")
+        if not isinstance(provenance, dict):
+            raise ValueError("Annotation response record is missing provider provenance.")
+        if provenance.get("provider") != provider_id or provenance.get("provider_version") != provider_version:
+            raise ValueError("Annotation response provenance does not match the selected provider.")
+        if not isinstance(provenance.get("response_sha256"), str) or not provenance["response_sha256"]:
+            raise ValueError("Annotation response record is missing its response fingerprint.")
+        provenances.append(provenance)
+    response_hashes = {provenance["response_sha256"] for provenance in provenances}
+    if len(response_hashes) != 1:
+        raise ValueError("Annotation response records do not share one provider response fingerprint.")
+    existing_fingerprints = {
+        str(provenance["request_fingerprint"])
+        for provenance in provenances
+        if provenance.get("request_fingerprint")
+    }
+    if len(existing_fingerprints) > 1:
+        raise ValueError("Annotation response records have conflicting request fingerprints.")
+    if existing_fingerprints:
+        fingerprint = next(iter(existing_fingerprints))
+        for item, provenance in zip(payloads, provenances):
+            normalized_provenance = dict(provenance)
+            normalized_provenance["request_fingerprint"] = fingerprint
+            item["_siraloom_annotation_provenance"] = normalized_provenance
+        return fingerprint
     variants = []
     for item in payloads:
         provenance = dict(item.get("_siraloom_annotation_provenance") or {})
@@ -413,10 +436,24 @@ def _persist_annotation_response_checkpoint(
     """
     if not isinstance(payloads, list) or not payloads or not all(isinstance(x, dict) for x in payloads):
         raise ValueError("Annotation provider response must be a non-empty list of objects.")
-    provenance = dict(payloads[0].get("_siraloom_annotation_provenance") or {})
-    if provenance.get("provider") != provider_id or provenance.get("provider_version") != provider_version:
-        raise ValueError("Annotation response provenance does not match the selected provider.")
-    if not provenance.get("request_fingerprint") or not provenance.get("response_sha256"):
+    provenances = [
+        item.get("_siraloom_annotation_provenance")
+        for item in payloads
+    ]
+    if any(not isinstance(item, dict) for item in provenances):
+        raise ValueError("Annotation response record is missing provider provenance.")
+    provenance = provenances[0]
+    request_fingerprint = provenance.get("request_fingerprint")
+    response_sha256 = provenance.get("response_sha256")
+    if any(
+        item.get("provider") != provider_id
+        or item.get("provider_version") != provider_version
+        or item.get("request_fingerprint") != request_fingerprint
+        or item.get("response_sha256") != response_sha256
+        for item in provenances
+    ):
+        raise ValueError("Annotation response records have inconsistent provider provenance.")
+    if not request_fingerprint or not response_sha256:
         raise ValueError("Annotation response is missing its request/response fingerprint.")
     response_material = {
         "schema_version": 1,
@@ -801,8 +838,16 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
         )
         .with_for_update()
     ).all()
+    started_resource_executions = db.scalars(
+        select(ResourceExecutionRecord)
+        .where(
+            ResourceExecutionRecord.analysis_id == analysis_id,
+            ResourceExecutionRecord.status == "STARTED",
+        )
+        .with_for_update()
+    ).all()
 
-    if not running_steps and not running_partitions:
+    if not running_steps and not running_partitions and not started_resource_executions:
         return False
 
     recovery_time = _now()
@@ -830,6 +875,16 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
         partition.updated_at = recovery_time
         db.add(partition)
 
+    # A worker can die after an external call or durable checkpoint without
+    # finalizing its execution row. Close that attempt as interrupted so a
+    # later successful replay does not leave an indefinitely STARTED record.
+    for execution in started_resource_executions:
+        execution.status = "INTERRUPTED"
+        execution.error_code = "WORKER_INTERRUPTED"
+        execution.error_message = "Worker stopped before finalizing the resource execution record."
+        execution.completed_at = recovery_time
+        db.add(execution)
+
     analysis.status = AnalysisStatus.RUNNING
     analysis.completed_at = None
     db.add(analysis)
@@ -844,6 +899,7 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
         payload={
             "recovered_steps": [step.step_id for step in running_steps],
             "recovered_partitions": len(running_partitions),
+            "recovered_resource_executions": len(started_resource_executions),
             "next_step": running_steps[0].step_id if running_steps else None,
         },
     )
@@ -2018,8 +2074,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 provider_version=provider.provider_version,
                             )
                             sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
-                            complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
-                            db.commit()
                             _persist_annotation_response_checkpoint(
                                 db,
                                 artifacts,
@@ -2032,6 +2086,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 provider_id=provider.provider_id,
                                 provider_version=provider.provider_version,
                             )
+                            # The response artifact and replay checkpoint are the
+                            # durable evidence that the provider execution completed.
+                            # Do not mark the execution successful before both exist.
+                            complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
+                            db.commit()
                         else:
                             sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                             complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
@@ -4110,6 +4169,13 @@ def _latest_classifications_by_variant(db: Session, analysis_id: UUID) -> dict[U
     return latest
 
 
+def _manifest_variant_membership(db: Session, analysis_id: UUID) -> set[UUID] | None:
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        return None
+    return get_analysis_variant_ids(analysis, db)
+
+
 def _manual_acmg_review_complete(db: Session, analysis_id: UUID) -> bool:
     """Whether every annotated variant has a final, approved classification and any
     variant without persisted ACMG criteria was explicitly classified manually.
@@ -4119,6 +4185,11 @@ def _manual_acmg_review_complete(db: Session, analysis_id: UUID) -> bool:
         .where(Annotation.analysis_id == analysis_id)
         .distinct()
     ).all())
+    manifest_variant_ids = _manifest_variant_membership(db, analysis_id)
+    if manifest_variant_ids is not None:
+        if annotated_variant_ids != manifest_variant_ids:
+            return False
+        annotated_variant_ids = manifest_variant_ids
     if not annotated_variant_ids:
         return False
 
@@ -4149,6 +4220,11 @@ def _classification_review_gate_ready(db: Session, analysis_id: UUID) -> bool:
         .where(Annotation.analysis_id == analysis_id)
         .distinct()
     ).all())
+    manifest_variant_ids = _manifest_variant_membership(db, analysis_id)
+    if manifest_variant_ids is not None:
+        if annotated_variant_ids != manifest_variant_ids:
+            return False
+        annotated_variant_ids = manifest_variant_ids
     if not annotated_variant_ids:
         return False
 
@@ -4176,6 +4252,9 @@ def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
     for row in classifications:
         latest.setdefault(row.variant_id, row)
 
+    manifest_variant_ids = _manifest_variant_membership(db, analysis_id)
+    if manifest_variant_ids is not None and set(latest) != manifest_variant_ids:
+        return False
     if not latest:
         return False
 

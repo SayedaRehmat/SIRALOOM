@@ -306,7 +306,11 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
 @router.post("/analyses/{analysis_id}/reportability/evaluate")
 def evaluate_reportability(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, CASE_WRITE_ROLES)
-    decisions = evaluate_analysis(db, analysis)
+    try:
+        decisions = evaluate_analysis(db, analysis)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     db.commit()
     return {"analysis_id": str(analysis_id), "created": len(decisions), "decisions": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "priority_score": d.priority_score, "priority_band": d.priority_band, "reasons": d.reasons} for d in decisions]}
 

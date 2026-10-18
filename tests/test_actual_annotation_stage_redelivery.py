@@ -5,7 +5,6 @@ stage, response artifact checkpointing, row persistence, partition scheduling, a
 redelivery recovery remain production code. This is orchestration coverage, not a
 live provider or clinical truth-set validation.
 """
-import shutil
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -21,9 +20,12 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisPartition,
     Annotation,
+    Artifact,
+    AuditEvent,
     Case,
     Organization,
     Resource,
+    ResourceExecutionRecord,
     User,
     Variant,
     WorkflowStep,
@@ -34,8 +36,6 @@ from backend.app.partition_scheduler import configure_partition
 def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
     monkeypatch, tmp_path
 ):
-    if shutil.which("bcftools") is None:
-        pytest.skip("bcftools is required to build the indexed annotation fixture")
     import importlib
 
     queue = importlib.import_module("backend.app.infrastructure.queue.celery_app")
@@ -64,17 +64,11 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             "1\t555\t.\tT\tC\t.\tPASS\t.\n",
             encoding="utf-8",
         )
-        # Use a plain VCF here: this fixture is testing annotation recovery,
-        # not BGZF/index handling by bcftools.
-        import subprocess
-
-        normalized = tmp_path / "normalized.vcf.gz"
-        subprocess.run(
-            ["bcftools", "view", "-Oz", "-o", str(normalized), str(source)],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        # The normalized stage is seeded as a durable completed checkpoint and
+        # variant iteration is replaced below, so this test needs a plain fixture
+        # file and must not depend on an installed bcftools executable.
+        normalized = tmp_path / "normalized.vcf"
+        normalized.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
         with LocalSession() as db:
             db.add(Organization(
@@ -102,8 +96,8 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             )
             normalized_artifact = store.put_file(
                 db=db, case_id=case_id, analysis_id=analysis_id,
-                source_path=normalized, filename="normalized.vcf.gz",
-                artifact_type="NORMALIZED_VCF", media_type="application/gzip",
+                source_path=normalized, filename="normalized.vcf",
+                artifact_type="NORMALIZED_VCF", media_type="text/plain",
                 genome_build="GRCh38", metadata={},
             )
             db.flush()
@@ -264,6 +258,33 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
         )
         monkeypatch.setattr(workflow, "record_workflow_decision", lambda *_a, **_k: None)
 
+        real_response_checkpoint = workflow._persist_annotation_response_checkpoint
+        response_checkpoint_execution_states = []
+        response_checkpoint_crashes = {"count": 0}
+
+        def assert_execution_not_successful_before_checkpoint_commit(*args, **kwargs):
+            db = args[0]
+            execution_rows = db.scalars(
+                select(ResourceExecutionRecord).where(
+                    ResourceExecutionRecord.analysis_id == analysis_id,
+                    ResourceExecutionRecord.step_id == "annotate",
+                )
+            ).all()
+            response_checkpoint_execution_states.extend(row.status for row in execution_rows)
+            artifact = real_response_checkpoint(*args, **kwargs)
+            response_checkpoint_crashes["count"] += 1
+            if response_checkpoint_crashes["count"] == 1:
+                # The artifact and RESPONSE_PERSISTED checkpoint have committed,
+                # but the resource execution is still STARTED. Model abrupt worker
+                # loss before the subsequent success-record commit.
+                raise SystemExit(75)
+            return artifact
+
+        monkeypatch.setattr(
+            workflow,
+            "_persist_annotation_response_checkpoint",
+            assert_execution_not_successful_before_checkpoint_commit,
+        )
         real_persist = workflow._persist_annotation_batch_rows
 
         def crash_once_after_durable_annotation_rows(*args, **kwargs):
@@ -291,8 +312,8 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
 
         monkeypatch.setattr(workflow, "_step", stop_after_annotation_is_reconciled)
 
-        # Delivery 1 simulates a worker dying after the annotation-row commit.
-        # The broker, not the first task invocation, performs redelivery.
+        # Delivery 1 simulates worker loss after the durable response checkpoint
+        # commit but before ResourceExecutionRecord is marked successful.
         queue.run_analysis_task.push_request(
             id=task_id, retries=0, delivery_info={"redelivered": False}
         )
@@ -315,16 +336,44 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                     ).all()
                 ]
             pytest.fail(
-                "First delivery did not reach the injected post-commit worker-loss boundary; "
+                "First delivery did not reach the injected response-checkpoint worker-loss boundary; "
                 f"provider_calls={provider_calls['count']}, "
                 f"persistence_calls={persistence_calls['count']}, "
                 f"analysis_status={current_analysis.status if current_analysis else None}, "
                 f"step_states={step_states}"
             )
-        assert str(first_delivery_exit.code) == "73"
+        assert str(first_delivery_exit.code) == "75"
 
-        # Delivery 2 must use the same task ID with Celery's redelivered flag so
-        # the production wrapper runs interrupted-execution reconciliation.
+        with LocalSession() as db:
+            execution_row = db.scalar(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.step_id == "annotate",
+            ))
+            step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "annotate",
+            ))
+            response_artifacts = db.scalars(select(Artifact).where(
+                Artifact.analysis_id == analysis_id,
+                Artifact.artifact_type == "ANNOTATION_PROVIDER_RESPONSE",
+            )).all()
+            assert execution_row is not None and execution_row.status == "STARTED"
+            assert step.metadata_json["batches"]["0:1"]["status"] == "RESPONSE_PERSISTED"
+            assert len(response_artifacts) == 1
+
+        # Delivery 2 must replay the checkpoint, mark that execution successful,
+        # and then simulate worker loss after annotation-row persistence.
+        queue.run_analysis_task.push_request(
+            id=task_id, retries=0, delivery_info={"redelivered": True}
+        )
+        try:
+            with pytest.raises(SystemExit, match="73"):
+                queue.run_analysis_task.run(str(analysis_id))
+        finally:
+            queue.run_analysis_task.pop_request()
+
+        # Delivery 3 reconciles the persisted rows and completes the batch without
+        # another provider call or duplicate annotation row.
         queue.run_analysis_task.push_request(
             id=task_id, retries=0, delivery_info={"redelivered": True}
         )
@@ -354,7 +403,25 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             assert step.metadata_json["batches"]["0:1"]["status"] == "SUCCEEDED"
             assert partitions and all(p.status == "SUCCEEDED" for p in partitions)
             assert db.get(Analysis, analysis_id).parent_analysis_id is None
+            executions = db.scalars(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.step_id == "annotate",
+            )).all()
+            assert sorted(row.status for row in executions) == ["INTERRUPTED", "SUCCEEDED"]
+            interrupted = next(row for row in executions if row.status == "INTERRUPTED")
+            assert interrupted.error_code == "WORKER_INTERRUPTED"
+            assert interrupted.completed_at is not None
+            recovery_events = db.scalars(select(AuditEvent).where(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+            )).all()
+            assert any(
+                event.payload.get("recovered_resource_executions") == 1
+                for event in recovery_events
+            )
         assert provider_calls["count"] == 1
+        assert response_checkpoint_execution_states
+        assert all(status != "SUCCEEDED" for status in response_checkpoint_execution_states)
         assert 1 <= persistence_calls["count"] <= 2
     finally:
         engine.dispose()

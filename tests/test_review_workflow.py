@@ -216,6 +216,41 @@ def test_classification_gate_blocks_if_any_annotated_variant_has_no_classificati
     assert _classification_review_gate_ready(db, analysis.id) is False
 
 
+def test_worker_review_gates_reject_downstream_variants_outside_normalization_manifest():
+    from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete, _reportability_gate_ready
+
+    db, _reviewer, _, analysis, variant, assessment, classification = seed()
+    classification.criterion_ids = []
+    classification.state = "FINAL"
+    classification.review_status = "APPROVED"
+    classification.metadata_json = {"decision_mode": "MANUAL"}
+    db.delete(assessment)
+    _add_annotation(db, analysis, variant)
+
+    extra_variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="17", position=2,
+        reference="C", alternate="T", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:17:2:C:T", identifiers={},
+    )
+    extra_classification = Classification(
+        id=uuid4(), variant_id=extra_variant.id, analysis_id=analysis.id,
+        framework_name="ACMG/AMP", framework_version="2015", result="VUS",
+        criterion_ids=[], metadata_json={"decision_mode": "MANUAL"},
+        state="FINAL", review_status="APPROVED", version=1, review_version=1,
+    )
+    db.add_all([extra_variant, extra_classification])
+    db.flush()
+    _add_annotation(db, analysis, extra_variant)
+    db.commit()
+
+    # The normalization manifest seeded for this analysis contains only `variant`.
+    # A complete-looking annotation/classification for another variant cannot
+    # make either workflow human gate ready.
+    assert _manual_acmg_review_complete(db, analysis.id) is False
+    assert _classification_review_gate_ready(db, analysis.id) is False
+    assert _reportability_gate_ready(db, analysis.id) is False
+
+
 def test_criterion_review_is_versioned_and_append_only_history():
     db, reviewer, _, analysis, variant, assessment, _ = seed()
     out = review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("MODIFY", "MODERATE", "Reviewed evidence", tuple(), 0), reviewer=reviewer)

@@ -17,6 +17,7 @@ from backend.app.application.entitlements import (
 from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
     get_accessible_analysis,
+    get_analysis_variant_ids,
     require_role,
 )
 from backend.app.auth.principal import (
@@ -32,7 +33,6 @@ from backend.app.domain.storage_capacity import (
 )
 from backend.app.infrastructure.db.models import (
     Analysis,
-    AnalysisPartition,
     Annotation,
     Artifact,
     Assay,
@@ -177,6 +177,56 @@ def start(
         CASE_WRITE_ROLES,
     )
 
+    # Preflight can persist BLOCKED and capacity state without dispatching a
+    # task. Serialize that branch against duplicate starts and worker claims,
+    # then make the lifecycle decision from the current database row.
+    db.refresh(analysis, with_for_update=True)
+    current_status = str(analysis.status)
+    configuration = dict(analysis.configuration or {})
+    if current_status in {"QUEUED", "RUNNING"}:
+        resource_plan = configuration.get("resource_plan")
+        resource_plan = resource_plan if isinstance(resource_plan, dict) else {}
+        return {
+            "analysis_id": str(analysis_id),
+            "status": analysis.status,
+            "task_id": analysis.queue_task_id,
+            "resource_plan_status": resource_plan.get("status"),
+            "resource_issues": resource_plan.get("issues", []),
+            "capacity_preflight": configuration.get("capacity_preflight"),
+        }
+
+    if current_status not in {"CREATED", "FAILED", "RESOURCE_FAILURE", "BLOCKED"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Analysis cannot be started from status {current_status}",
+        )
+
+    blocked_for_capacity = False
+    if current_status == "BLOCKED":
+        previous_plan = configuration.get("resource_plan")
+        previous_plan = previous_plan if isinstance(previous_plan, dict) else {}
+        preflight_step = db.scalar(
+            select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis.id,
+                WorkflowStep.step_id == "preflight",
+            )
+        )
+        blocked_for_capacity = bool(
+            preflight_step
+            and preflight_step.error_code == "STORAGE_CAPACITY_PREFLIGHT_BLOCKED"
+        )
+        if (
+            str(previous_plan.get("status") or "").upper() != "BLOCKED"
+            and not blocked_for_capacity
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "A blocked analysis can only be restarted after its persisted "
+                    "preflight blocker is resolved"
+                ),
+            )
+
     try:
         plan = preflight_analysis_resources(
             db,
@@ -235,12 +285,18 @@ def start(
             preflight_step.error_message = None
         db.add(preflight_step)
 
-    if capacity.get("status") == "BLOCKED":
-        analysis.status = "BLOCKED"
-    db.add(analysis)
-
     resource_blocked = plan is not None and not plan.is_ready
     capacity_blocked = capacity.get("status") == "BLOCKED"
+    if capacity_blocked:
+        analysis.status = "BLOCKED"
+        analysis.completed_at = None
+    elif blocked_for_capacity and not resource_blocked:
+        # Capacity is an operational preflight blocker, not a scientific result.
+        # Restore only this explicitly identified state before durable dispatch.
+        analysis.status = "CREATED"
+        analysis.completed_at = None
+    db.add(analysis)
+
     resource_issues = [
         {
             "capability": issue.capability,
@@ -262,6 +318,9 @@ def start(
             "capacity_preflight": capacity,
         }
 
+    # Persist preflight recovery inside this transaction before enqueue_analysis
+    # refreshes the locked row to fence concurrent starts.
+    db.flush()
     task_id = enqueue_analysis(db, analysis)
 
     return {
@@ -341,7 +400,7 @@ def list_variants(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    get_accessible_analysis(
+    analysis = get_accessible_analysis(
         analysis_id,
         db,
         principal,
@@ -349,34 +408,13 @@ def list_variants(
 
     aid = analysis_id
 
-    # The normalization manifest is the durable source of truth for which
-    # variants belong to this analysis. Annotation is a downstream enrichment
-    # layer and must not be required merely to render the variant workspace.
-    partitions = db.scalars(
-        select(AnalysisPartition)
-        .where(
-            AnalysisPartition.analysis_id == aid,
-            AnalysisPartition.step_id == "normalize",
-        )
-        .order_by(AnalysisPartition.ordinal)
-    ).all()
-
-    variant_ids: list[UUID] = []
-    seen: set[UUID] = set()
-    for partition in partitions:
-        for raw_id in ((partition.metadata_json or {}).get("variant_ids") or []):
-            try:
-                variant_id = UUID(str(raw_id))
-            except (TypeError, ValueError):
-                continue
-            if variant_id not in seen:
-                seen.add(variant_id)
-                variant_ids.append(variant_id)
-
-    if variant_ids:
+    # The shared helper distinguishes current manifests (including an empty
+    # completed normalization) from legacy analyses that have no manifest.
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None:
         rows = db.scalars(
             select(Variant)
-            .where(Variant.id.in_(variant_ids))
+            .where(Variant.id.in_(manifest_variant_ids))
             .order_by(
                 Variant.chromosome,
                 Variant.position,
