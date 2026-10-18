@@ -277,3 +277,77 @@ def test_resource_snapshot_rejects_reference_resource_from_another_organization(
             ).all() == []
     finally:
         engine.dispose()
+
+
+def test_duplicate_annotation_row_cannot_hide_foreign_resource_reference():
+    from types import SimpleNamespace
+
+    from backend.app.infrastructure.db.models import Case, Resource
+
+    organization_id, foreign_organization_id, case_id, analysis_id = (
+        uuid4() for _ in range(4)
+    )
+    foreign_resource_id = uuid4()
+    analysis = SimpleNamespace(
+        id=analysis_id,
+        case_id=case_id,
+        configuration={},
+        reference_build="GRCh38",
+    )
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+    foreign_resource = SimpleNamespace(
+        id=foreign_resource_id,
+        organization_id=foreign_organization_id,
+        name="VEP cache",
+        provider="VEP",
+        version="115",
+        checksum="f" * 64,
+        genome_build="GRCh38",
+        resource_type="ANNOTATION_CACHE",
+    )
+    duplicate_annotations = [
+        SimpleNamespace(
+            resource_id=None,
+            resource_name="VEP cache",
+            provider_name="VEP",
+            provider_version="115",
+            resource_version="115",
+        ),
+        SimpleNamespace(
+            resource_id=foreign_resource_id,
+            resource_name="VEP cache",
+            provider_name="VEP",
+            provider_version="115",
+            resource_version="115",
+        ),
+    ]
+
+    class FakeDB:
+        def __init__(self):
+            self.scalars_calls = 0
+            self.added = []
+
+        def get(self, model, object_id):
+            if model is Case and object_id == case_id:
+                return case
+            if model is Resource and object_id == foreign_resource_id:
+                return foreign_resource
+            return None
+
+        def scalars(self, _query):
+            self.scalars_calls += 1
+            rows = {
+                1: [],  # Existing snapshots
+                2: [],  # Population resource IDs
+                3: duplicate_annotations,
+            }.get(self.scalars_calls, [])
+            return SimpleNamespace(all=lambda: rows)
+
+        def add(self, row):
+            self.added.append(row)
+
+    db = FakeDB()
+    with pytest.raises(ValueError, match="outside the analysis organization"):
+        snapshot_analysis_resources(db, analysis, commit=False)
+
+    assert db.added  # The caller's transaction must roll back these pending rows.

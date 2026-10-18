@@ -125,6 +125,18 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         return len(existing_rows)
 
     count = 0
+
+    def already_snapshotted(seen, *, key, identity, source: str) -> bool:
+        previous_identity = seen.get(key)
+        if previous_identity is None:
+            seen[key] = identity
+            return False
+        if previous_identity != identity:
+            raise ValueError(
+                f"{source} rows resolve to conflicting resources for the same snapshot identity"
+            )
+        return True
+
     reference_resource_id = (analysis.configuration or {}).get("reference_resource_id")
     if reference_resource_id:
         try:
@@ -165,24 +177,28 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
     annotations = db.scalars(
         select(Annotation).where(Annotation.analysis_id == analysis.id)
     ).all()
-    seen = set()
+    seen = {}
     for row in annotations:
-        key = ("ANNOTATION", row.resource_name or row.provider_name, row.provider_version, row.resource_version)
-        if key in seen:
-            continue
-        seen.add(key)
         registered_resource = resolve_resource(
             row.resource_id,
             source="Annotation",
         )
+        resource_name = registered_resource.name if registered_resource else (row.resource_name or row.provider_name)
+        provider = registered_resource.provider if registered_resource else row.provider_name
+        version = row.resource_version or (registered_resource.version if registered_resource else None) or row.provider_version
+        checksum = registered_resource.checksum if registered_resource else None
+        key = ("ANNOTATION", resource_name, version, checksum)
+        identity = (registered_resource.id if registered_resource else None, provider)
+        if already_snapshotted(seen, key=key, identity=identity, source="Annotation"):
+            continue
         db.add(AnalysisResourceSnapshot(
             id=uuid4(), analysis_id=analysis.id,
             resource_id=registered_resource.id if registered_resource else None,
             resource_kind="ANNOTATION",
-            resource_name=registered_resource.name if registered_resource else (row.resource_name or row.provider_name),
-            provider=registered_resource.provider if registered_resource else row.provider_name,
-            version=row.resource_version or (registered_resource.version if registered_resource else None) or row.provider_version,
-            checksum=registered_resource.checksum if registered_resource else None,
+            resource_name=resource_name,
+            provider=provider,
+            version=version,
+            checksum=checksum,
             genome_build=analysis.reference_build,
             metadata_json={
                 "provider_version": row.provider_version,
@@ -193,26 +209,30 @@ def snapshot_analysis_resources(db: Session, analysis: Analysis, *, commit: bool
         count += 1
 
     evidence = db.scalars(select(Evidence).where(Evidence.analysis_id == analysis.id)).all()
-    seen = set()
+    seen = {}
     for row in evidence:
         if not row.source_name:
             continue
-        key = ("EVIDENCE", row.source_name, row.source_version)
-        if key in seen:
-            continue
-        seen.add(key)
         registered_resource = resolve_resource(
             row.resource_id,
             source="Evidence",
         )
+        resource_name = registered_resource.name if registered_resource else row.source_name
+        provider = registered_resource.provider if registered_resource else None
+        version = row.source_version or (registered_resource.version if registered_resource else None)
+        checksum = registered_resource.checksum if registered_resource else None
+        key = ("EVIDENCE", resource_name, version, checksum)
+        identity = (registered_resource.id if registered_resource else None, provider)
+        if already_snapshotted(seen, key=key, identity=identity, source="Evidence"):
+            continue
         db.add(AnalysisResourceSnapshot(
             id=uuid4(), analysis_id=analysis.id,
             resource_id=registered_resource.id if registered_resource else None,
             resource_kind="EVIDENCE",
-            resource_name=registered_resource.name if registered_resource else row.source_name,
-            provider=registered_resource.provider if registered_resource else None,
-            version=row.source_version or (registered_resource.version if registered_resource else None),
-            checksum=registered_resource.checksum if registered_resource else None,
+            resource_name=resource_name,
+            provider=provider,
+            version=version,
+            checksum=checksum,
             genome_build=analysis.reference_build,
             metadata_json={
                 "source_version": row.source_version,
