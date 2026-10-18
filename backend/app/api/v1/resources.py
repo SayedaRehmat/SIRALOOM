@@ -19,6 +19,7 @@ from backend.app.domain.resources import (
     ResourceRegistryError, decide_resource_approval, register_resource_version,
     request_resource_approval,
 )
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Resource, ResourceApproval, ResourceQualification, ResourceStaging
 from backend.app.infrastructure.db.session import get_db
 from backend.app.domain.resource_staging import (
@@ -209,6 +210,27 @@ def register_resource(
         execution["access_method"] = access_method
         execution["location"] = location
         metadata_json["execution"] = execution
+    resource_identity = {
+        "organization_id": organization_id,
+        "name": str(payload.get("name") or "").strip(),
+        "provider": provider,
+        "resource_type": str(payload.get("resource_type") or "").strip().upper(),
+        "genome_build": str(payload["genome_build"]).strip() if payload.get("genome_build") else None,
+    }
+    superseded_before = list(db.scalars(
+        select(Resource).where(
+            Resource.organization_id == organization_id,
+            Resource.name == resource_identity["name"],
+            Resource.provider == provider,
+            Resource.resource_type == resource_identity["resource_type"],
+            Resource.genome_build == resource_identity["genome_build"],
+            Resource.status == "ACTIVE",
+        )
+    ).all())
+    superseded_before_state = [
+        {"resource_id": str(item.id), "version": item.version, "status": item.status}
+        for item in superseded_before
+    ]
     try:
         resource, created = register_resource_version(
             db,
@@ -229,6 +251,35 @@ def register_resource(
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    if created:
+        superseded_after_state = [
+            {"resource_id": str(item.id), "version": item.version, "status": item.status}
+            for item in superseded_before
+        ]
+        AuditService(db).record(
+            event_type="RESOURCE_VERSION_REGISTERED",
+            case_id=None,
+            analysis_id=None,
+            actor_type="HUMAN",
+            actor_id=str(principal.user_id),
+            subject_type="RESOURCE",
+            subject_id=str(resource.id),
+            operation="CREATE",
+            before_state={"active_resources": superseded_before_state},
+            after_state={
+                "resource_id": str(resource.id),
+                "name": resource.name,
+                "provider": resource.provider,
+                "resource_type": resource.resource_type,
+                "version": resource.version,
+                "genome_build": resource.genome_build,
+                "checksum": resource.checksum,
+                "status": resource.status,
+                "superseded_resources": superseded_after_state,
+            },
+            workflow={"domain": "resource_registry", "organization_id": str(organization_id) if organization_id else None},
+            payload={"created": True},
+        )
     db.commit()
 
     # Resource registration is durable first. The scan is advisory and must
@@ -627,6 +678,7 @@ def qualify_resource(
 ):
     require_role(principal, frozenset({"platform_admin", "lab_director", "bioinformatician"}))
     row = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
+    before_status = row.status
     try:
         from backend.app.domain.resource_qualification import qualify_resource as run_qualification
         from backend.app.domain.resources import qualify_resource_version
@@ -657,6 +709,26 @@ def qualify_resource(
         )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    AuditService(db).record(
+        event_type="RESOURCE_QUALIFICATION_RECORDED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="RESOURCE",
+        subject_id=str(row.id),
+        operation="QUALIFY",
+        before_state={"status": before_status},
+        after_state={
+            "status": row.status,
+            "qualification_id": str(qualification.id),
+            "qualification_version": qualification.qualification_version,
+            "qualification_status": qualification.status,
+            "passed": result.passed,
+            "outcome": result.checks.get("qualification_outcome"),
+        },
+        workflow={"domain": "resource_registry", "organization_id": str(row.organization_id) if row.organization_id else None},
+    )
     db.commit()
     return {
         "resource_id": str(resource_id),
@@ -679,6 +751,21 @@ def activate_resource(
 ):
     require_role(principal, frozenset({"platform_admin", "lab_director"}))
     row = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
+    before_state = {"resource_id": str(row.id), "version": row.version, "status": row.status}
+    active_siblings = list(db.scalars(
+        select(Resource).where(
+            Resource.organization_id == row.organization_id,
+            Resource.name == row.name,
+            Resource.provider == row.provider,
+            Resource.resource_type == row.resource_type,
+            Resource.genome_build == row.genome_build,
+            Resource.status == "ACTIVE",
+        )
+    ).all())
+    sibling_states = [
+        {"resource_id": str(item.id), "version": item.version, "status": item.status}
+        for item in active_siblings
+    ]
     try:
         from backend.app.domain.resources import activate_resource_version
         row = activate_resource_version(
@@ -688,6 +775,26 @@ def activate_resource(
         )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    AuditService(db).record(
+        event_type="RESOURCE_VERSION_ACTIVATED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="RESOURCE",
+        subject_id=str(row.id),
+        operation="ACTIVATE",
+        before_state={"resource": before_state, "active_resources": sibling_states},
+        after_state={
+            "resource": {"resource_id": str(row.id), "version": row.version, "status": row.status},
+            "superseded_resources": [
+                {"resource_id": str(item.id), "version": item.version, "status": item.status}
+                for item in active_siblings
+            ],
+        },
+        workflow={"domain": "resource_registry", "organization_id": str(row.organization_id) if row.organization_id else None},
+        payload={"qualification_version": str(payload.get("qualification_version") or "")},
+    )
     db.commit()
     return {
         "resource_id": str(row.id),

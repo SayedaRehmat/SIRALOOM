@@ -12,7 +12,13 @@ from sqlalchemy.orm import Session
 from backend.app.api.v1 import resources as resources_api
 from backend.app.config import settings
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, Resource, ResourceStaging
+from backend.app.infrastructure.db.models import (
+    AuditEvent,
+    Organization,
+    Resource,
+    ResourceQualification,
+    ResourceStaging,
+)
 
 
 def _db():
@@ -110,11 +116,98 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
             "backend.app.infrastructure.queue.celery_app.scan_reanalysis_resources",
             SimpleNamespace(delay=lambda: None),
         )
-        result = resources_api.register_resource(payload, db, _principal(organization_id))
+        principal = _principal(organization_id)
+        result = resources_api.register_resource(payload, db, principal)
         destination = Path(result["location"])
         assert destination.is_relative_to((tmp_path / "cache" / str(organization_id)).resolve())
         resource = db.get(Resource, UUID(result["resource_id"]))
         assert resource.metadata_json["execution"]["location"] == str(destination)
+        event = db.query(AuditEvent).filter_by(event_type="RESOURCE_VERSION_REGISTERED").one()
+        assert event.actor_id == str(principal.user_id)
+        assert event.subject_id == str(resource.id)
+        assert event.after_state["status"] == "CANDIDATE"
+        assert event.workflow["organization_id"] == str(organization_id)
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_resource_qualification_is_recorded_in_the_audit_chain(monkeypatch, tmp_path):
+    from backend.app.domain import resource_qualification
+
+    engine, db = _db()
+    try:
+        organization_id = uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        root = tmp_path / "cache"
+        monkeypatch.setattr(settings, "resource_cache_root", str(root))
+        resource, _ = _seed_remote_resource(db, organization_id, root)
+        db.commit()
+        monkeypatch.setattr(
+            resource_qualification,
+            "qualify_resource",
+            lambda *_args, **_kwargs: SimpleNamespace(
+                qualification_version="qualification-test-v1",
+                checks={"passed": True, "qualification_outcome": "PASS"},
+                passed=True,
+                blockers=[],
+            ),
+        )
+        principal = _principal(organization_id)
+
+        result = resources_api.qualify_resource(
+            resource.id,
+            {"qualification_version": "qualification-test-v1"},
+            db,
+            principal,
+        )
+
+        event = db.query(AuditEvent).filter_by(event_type="RESOURCE_QUALIFICATION_RECORDED").one()
+        assert event.actor_id == str(principal.user_id)
+        assert event.subject_id == str(resource.id)
+        assert event.before_state == {"status": "CANDIDATE"}
+        assert event.after_state["status"] == "QUALIFIED"
+        assert event.after_state["qualification_id"] == result["qualification_id"]
+        assert event.after_state["qualification_status"] == "QUALIFIED"
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_resource_activation_is_recorded_with_lifecycle_before_and_after(monkeypatch, tmp_path):
+    engine, db = _db()
+    try:
+        organization_id, user_id = uuid4(), uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        resource = Resource(
+            id=uuid4(), organization_id=organization_id, name="Qualified release",
+            provider="TestProvider", resource_type="CLINICAL_DATABASE", version="1",
+            genome_build="GRCh38", access_method="LOCAL", checksum="d" * 64,
+            location=str(tmp_path / "qualified-release"), status="QUALIFIED",
+            metadata_json={}, population_definition=None,
+        )
+        qualification = ResourceQualification(
+            id=uuid4(), resource_id=resource.id,
+            qualification_version="qualification-test-v1", status="QUALIFIED",
+            checks_json={"passed": True}, qualified_by=user_id,
+        )
+        db.add_all([resource, qualification])
+        db.commit()
+        principal = _principal(organization_id)
+
+        resources_api.activate_resource(
+            resource.id,
+            {"qualification_version": "qualification-test-v1"},
+            db,
+            principal,
+        )
+
+        event = db.query(AuditEvent).filter_by(event_type="RESOURCE_VERSION_ACTIVATED").one()
+        assert event.actor_id == str(principal.user_id)
+        assert event.subject_id == str(resource.id)
+        assert event.before_state["resource"]["status"] == "QUALIFIED"
+        assert event.after_state["resource"]["status"] == "ACTIVE"
+        assert event.workflow["organization_id"] == str(organization_id)
     finally:
         db.close()
         engine.dispose()
