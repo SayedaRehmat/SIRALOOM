@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid5
 
@@ -521,7 +521,7 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     signed_result["release_state"] = "AUTHORIZED_SIGNOUT"
     signed_result["clinical_use_status"] = "LABORATORY_VALIDATION_REQUIRED"
     signed_result["signed_out_by"] = str(approver_id)
-    signed_result["signed_out_at"] = datetime.now(timezone.utc).isoformat()
+    signed_result["signed_out_at"] = datetime.now(UTC).isoformat()
     signed_result["signout_reason"] = reason.strip()
     signed_content["report_status"] = "FINAL"
     signed_content["final_result"] = signed_result
@@ -535,7 +535,7 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
 
     report.status = REPORT_STATUS_FINAL
     report.approved_by = approver_id
-    report.approved_at = datetime.now(timezone.utc)
+    report.approved_at = datetime.now(UTC)
     report.signed_artifact_id = signed_artifact.id
     report.signed_sha256 = signed_artifact.sha256
     report.signout_reason = reason.strip()
@@ -548,8 +548,8 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
             event_type="REPORT_SUPERSEDED",
             case_id=report.case_id,
             analysis_id=report.analysis_id,
-            actor_type="SYSTEM",
-            actor_id="reporting",
+            actor_type="HUMAN",
+            actor_id=str(approver_id),
             subject_type="REPORT",
             subject_id=str(prior.id),
             operation="SUPERSEDE",

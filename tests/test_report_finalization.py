@@ -9,6 +9,7 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
     Artifact,
+    AuditEvent,
     Case,
     Classification,
     ConfirmationRecord,
@@ -46,12 +47,41 @@ def test_final_report_requires_approved_classification():
 
 def test_finalize_report_sets_final_and_supersedes(monkeypatch):
     monkeypatch.setattr("backend.app.reporting.finalization.render_pdf", lambda _content: b"%PDF-test%")
-    db,u,c,a,v=seed(True)
+    db,u,c,a,_v=seed(True)
+    draft_artifact = db.query(Artifact).first()
+    prior_report_id = uuid4()
+    prior_signed_artifact = Artifact(
+        id=uuid4(), case_id=c.id, analysis_id=a.id, artifact_type="REPORT_PDF",
+        filename="report_v1_signed.pdf", media_type="application/pdf", size_bytes=100,
+        sha256="b" * 64, storage_uri="file:///tmp/report_v1_signed.pdf",
+        genome_build="GRCh38", validation_status="VALID",
+        metadata_json={
+            "report_id": str(prior_report_id), "report_version": 1,
+            "report_state": "FINAL", "signed": True,
+        },
+    )
+    prior = Report(
+        id=prior_report_id, case_id=c.id, analysis_id=a.id, report_version=1,
+        language="en", report_type="CLINICAL_INTERPRETATION", status="FINAL",
+        artifact_id=draft_artifact.id, signed_artifact_id=prior_signed_artifact.id,
+        signed_sha256=prior_signed_artifact.sha256, approved_by=u.id,
+        content_json={},
+    )
+    db.add_all([prior_signed_artifact, prior])
+    db.flush()
     content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
-    r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=1,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=db.query(Artifact).first().id,content_json=content)
+    r=Report(id=uuid4(),case_id=c.id,analysis_id=a.id,report_version=2,language='en',report_type='CLINICAL_INTERPRETATION',status='DRAFT',artifact_id=draft_artifact.id,content_json=content)
     db.add(r); db.commit()
     out=finalize_report(db,report_id=r.id,approver_id=u.id,reason='Reviewed and approved'); db.commit()
     assert out.status=='FINAL'; assert out.approved_by==u.id
+    assert db.get(Report, prior_report_id).status == "SUPERSEDED"
+    audit_rows = db.query(AuditEvent).filter(
+        AuditEvent.event_type.in_(["REPORT_SUPERSEDED", "REPORT_APPROVED"])
+    ).all()
+    assert {(row.event_type, row.actor_type, row.actor_id) for row in audit_rows} == {
+        ("REPORT_SUPERSEDED", "HUMAN", str(u.id)),
+        ("REPORT_APPROVED", "HUMAN", str(u.id)),
+    }
 
 
 def test_repeated_signout_requires_durable_linked_signed_artifact():
@@ -98,7 +128,6 @@ def test_repeated_signout_returns_only_when_signed_artifact_lineage_is_valid():
 def test_finalize_report_rejects_stale_classification_snapshot():
     db,u,c,a,v=seed(True)
     classification = db.query(Classification).filter_by(analysis_id=a.id, variant_id=v.id).one()
-    decision = db.query(ReportabilityDecision).filter_by(analysis_id=a.id, variant_id=v.id).one()
     content = build_report_content(db, a, "en", report_type="CLINICAL_INTERPRETATION")
     newer = Classification(
         id=uuid4(), variant_id=v.id, analysis_id=a.id, framework_name=classification.framework_name,
@@ -115,7 +144,7 @@ def test_finalize_report_rejects_stale_classification_snapshot():
 
 
 def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, monkeypatch):
-    db, u, c, a, _ = seed(True)
+    db, _u, c, a, _ = seed(True)
     r = Report(
         id=uuid4(), case_id=c.id, analysis_id=a.id, report_version=1,
         language="en", report_type="CLINICAL_INTERPRETATION", status="DRAFT",
