@@ -382,18 +382,18 @@
 - **Verification:** Python 3.12 syntax compilation and `git diff --check` passed. The new backend pytest regressions and full backend suite were not run locally because pytest and backend dependencies are unavailable in the bundled interpreter. Exact-SHA GitHub CI is unverified due the public Actions API rate limit.
 - **Status:** committed and pushed to `main` as `c71222b`. Phase A remains PARTIAL; live Firebase/browser tests still need a configured test project.
 
-### 2026-10-19 report signout version fencing (working tree; push blocked)
+### 2026-10-19 report signout version fencing (pushed to main)
 
 - **Finding:** the report signout request schema required `expected_version`, but the API ignored it. Both frontend signout entry points sent a constant `0`, even though report creation/list/detail responses expose the durable report version. A stale report view could therefore submit an approval without proving which report version the reviewer had open.
 - **Correction:** the API rejects a DRAFT signout with HTTP 409 when the submitted version differs from `Report.report_version`, before resolving the artifact store or generating a signed PDF. Both frontend entry points now submit the loaded report version. The already-FINAL idempotent retry branch remains before this check so a lost successful response can still be replayed.
 - **Regression coverage:** `tests/test_report_signout_resume.py::test_stale_report_version_cannot_be_signed_out` verifies HTTP 409, no signed artifact/status mutation, no approval audit, and no storage lookup for a stale version.
 - **Verification:** Python 3.12 `py_compile` passed for the API and test module. `node scripts/validate-i18n.mjs` passed. The configured frontend Node suite passed **24 tests**. `git diff --check` passed. The focused pytest and Next/TypeScript build could not run because pytest and frontend dependencies/compiler are absent from this environment.
-- **Git state:** working tree on local `main` at `56f19bb`; these four implementation/test files are modified and uncommitted. Staging/commit/push was not executed: the automatic approval review rejected the operation after the Codex account usage limit was reached. Do not report this fix as present on `origin/main`; retry the authorized main-branch checkpoint only after the approval path is available.
-- **Next:** restore Git write approval, run the focused backend test and full CI for this fix, then continue the remaining worker/source and frontend-to-API journey audit. Phase A remains PARTIAL.
+- **Git state:** committed and pushed to `main` as `1af9c05` (exact SHA `1af9c055032c1b541c3b2729fc07cba4d9e366b7`). `git ls-remote origin refs/heads/main` confirmed the remote ref matches. The unrelated untracked backup was not staged.
+- **Next:** obtain exact-SHA CI results for `1af9c05`, run the focused backend regression in a pytest-capable environment, then continue the remaining worker/source and frontend-to-API journey audit. Phase A remains PARTIAL.
 
 ### 2026-10-19 mask protected case content during foreground session revalidation
 
 - **Finding:** `AppShell` ran a backend session check when a background tab became visible but kept rendering its prior protected content while waiting for the response. If membership had been revoked while the tab was hidden, stale case data could briefly reappear before the backend returned 403 and the client signed out.
 - **Correction:** visibility-triggered session refresh now sets the gate to `CHECKING`, hiding protected content until the backend confirms the active session. The 60-second background poll still checks without interrupting the current view; any revoked/inactive result immediately blocks content and signs out.
 - **Verification:** existing `canShowProtectedContent` regression explicitly denies rendering in `CHECKING`, `RESTRICTED`, and `UNAVAILABLE` states. `node scripts/validate-i18n.mjs` passed; frontend suite passed **24 tests**; `git diff --check` passed. No React component test harness or frontend build dependencies are installed, so no browser-render test was run.
-- **Git state:** refinement is uncommitted on local `main` at `56f19bb`; included with the pending report signout version-fencing patch. Push remains blocked by the approval-review account usage limit described above.
+- **Git state:** included in commit `1af9c05`, pushed to `main`; exact remote SHA verified.
