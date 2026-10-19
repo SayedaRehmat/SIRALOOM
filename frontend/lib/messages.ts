@@ -27,6 +27,8 @@ export type TranslationKey =
   | "language.arabic"
   | "language.bilingual"
   | "session.checking"
+  | "session.unavailable"
+  | "session.retry"
   | "development.notice"
   | "dashboard.eyebrow"
   | "dashboard.title"
@@ -1163,6 +1165,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "language.arabic": "Arabic",
     "language.bilingual": "Bilingual",
     "session.checking": "Checking secure session…",
+    "session.unavailable": "SIRALOOM cannot verify your laboratory access right now. Protected case data is hidden until the connection is restored.",
+    "session.retry": "Retry access check",
     "development.notice": "Development mode: Firebase client configuration is absent. Production requires Firebase authentication and server-side membership provisioning.",
     "dashboard.eyebrow": "DASHBOARD",
     "dashboard.title": "Laboratory workspace",
@@ -2001,6 +2005,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "language.arabic": "العربية",
     "language.bilingual": "ثنائي اللغة",
     "session.checking": "جارٍ التحقق من الجلسة الآمنة…",
+    "session.unavailable": "يتعذر على SIRALOOM التحقق من صلاحية وصولك إلى المختبر حالياً. ستظل بيانات الحالات المحمية مخفية حتى استعادة الاتصال.",
+    "session.retry": "إعادة التحقق من الصلاحية",
     "development.notice": "وضع التطوير: إعدادات Firebase للعميل غير موجودة. يتطلب الإنتاج مصادقة Firebase وتوفير العضوية على الخادم.",
     "dashboard.eyebrow": "لوحة المعلومات",
     "dashboard.title": "مساحة عمل المختبر",

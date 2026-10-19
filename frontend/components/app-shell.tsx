@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
 import { useLanguage } from "../lib/i18n";
+import { apiBase } from "../lib/session";
+import { canShowProtectedContent, verifyBackendSession } from "../lib/backend-session.mjs";
 import { syncWorkspaceContext, workspaceIdentityKey } from "../lib/workspace-context.mjs";
 import { Brand } from "./brand";
 import { LanguageSwitcher } from "./language-switcher";
@@ -13,6 +15,8 @@ import { LanguageSwitcher } from "./language-switcher";
 export function AppShell({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [backendSession, setBackendSession] = useState<"CHECKING" | "ACTIVE" | "UNAVAILABLE" | "RESTRICTED">("CHECKING");
+  const [sessionRetry, setSessionRetry] = useState(0);
   const [authUid, setAuthUid] = useState<string | null>(null);
   const [signOutError, setSignOutError] = useState(false);
   const pathname = usePathname();
@@ -22,10 +26,44 @@ export function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!firebaseAuth) {
       setReady(true);
+      setBackendSession("ACTIVE");
       return;
     }
 
-    return onAuthStateChanged(firebaseAuth, (user) => {
+    let mounted = true;
+    let validationInProgress = false;
+
+    const validateSession = async (user: User, maskContent = false) => {
+      if (validationInProgress) return;
+      validationInProgress = true;
+      if (maskContent) setBackendSession("CHECKING");
+      try {
+        const token = await user.getIdToken();
+        const result = await verifyBackendSession(token, { apiBase });
+        if (!mounted || firebaseAuth.currentUser?.uid !== user.uid) return;
+        if (result === "RESTRICTED") {
+          setBackendSession("RESTRICTED");
+          await signOut(firebaseAuth).catch(() => undefined);
+          window.location.assign("/login?access=restricted");
+          return;
+        }
+        setBackendSession(result);
+      } catch {
+        if (mounted && firebaseAuth.currentUser?.uid === user.uid) {
+          setBackendSession("UNAVAILABLE");
+        }
+      } finally {
+        validationInProgress = false;
+        const latestUser = firebaseAuth.currentUser;
+        if (mounted && latestUser?.emailVerified && latestUser.uid !== user.uid) {
+          void validateSession(latestUser, true);
+        } else if (mounted) {
+          setReady(true);
+        }
+      }
+    };
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       try {
         syncWorkspaceContext(window.localStorage, user?.uid ?? null);
       } catch {
@@ -33,11 +71,37 @@ export function AppShell({ children }: { children: ReactNode }) {
       }
       setAuthUid(user?.uid ?? null);
       setSignedIn(Boolean(user));
-      setReady(true);
-      if (!user) window.location.assign("/login");
-      else if (!user.emailVerified) window.location.assign("/onboarding");
+      setBackendSession("CHECKING");
+      setReady(false);
+      if (!user) {
+        setBackendSession("RESTRICTED");
+        setReady(true);
+        window.location.assign("/login");
+      } else if (!user.emailVerified) {
+        setBackendSession("RESTRICTED");
+        setReady(true);
+        window.location.assign("/onboarding");
+      } else {
+        void validateSession(user, true);
+      }
     });
-  }, []);
+
+    const refreshWhenVisible = () => {
+      const user = firebaseAuth.currentUser;
+      if (document.visibilityState === "visible" && user?.emailVerified) {
+        void validateSession(user);
+      }
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    const interval = window.setInterval(refreshWhenVisible, 60_000);
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.clearInterval(interval);
+    };
+  }, [sessionRetry]);
 
   async function handleSignOut() {
     if (!firebaseAuth) return;
@@ -50,7 +114,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   if (!ready) return <main className="loading">{t("session.checking")}</main>;
-  if (firebaseConfigured && !signedIn) return null;
+  if (firebaseConfigured && backendSession === "UNAVAILABLE") {
+    return (
+      <main className="loading" role="alert">
+        <p>{t("session.unavailable")}</p>
+        <button className="button" onClick={() => {
+          setReady(false);
+          setBackendSession("CHECKING");
+          setSessionRetry((attempt) => attempt + 1);
+        }}>{t("session.retry")}</button>
+      </main>
+    );
+  }
+  if (!canShowProtectedContent({ firebaseConfigured, signedIn, backendSession })) return null;
 
   return (
     <div className="app-frame siraloom-workspace">
