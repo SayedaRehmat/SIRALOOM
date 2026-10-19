@@ -147,3 +147,11 @@ The change is committed and pushed on local/remote `main` at [`c68e0f2`](https:/
 | GVCF and symbolic SV inputs explicitly blocked with durable provenance | PASS (automated workflow scope) | Commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c) plus a test-only follow-up invokes `run_variant_analysis` against SQLite for GVCF `<NON_REF>`, symbolic `<DEL>`, breakend, and `*` records, asserting `BLOCKED`, typed codes, next-step/profile metadata, audit record, and no reference lookup. Focused worker/VCF/intake tests: 29 passed; full backend suite: 968 passed, 39 skipped, excluding the Windows-native PDF renderer. This verifies safe rejection only, not SV/GVCF analysis support. |
 
 This code is on local and remote `main`; exact-SHA CI and all live/deployed, independent scientific benchmark, and laboratory storage/restore gates remain unverified. Overall release status remains BLOCKED for laboratory use; Phase A remains PARTIAL.
+
+## 2026-10-19 ACMG engine status gate (local checkpoint)
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Non-proposed ACMG criteria cannot contribute to a classification | PARTIAL | `ACMGEngine.validate_assessments` now accepts only `PROPOSED`; regression cases cover `NOT_MET`, `REJECTED`, `REQUIRES_REVIEW`, and `NOT_APPLICABLE`. Python compilation, `git diff --check`, and five isolated runtime assertions passed. Pytest was NOT RUN because the available Python interpreter has no pytest or project dependencies. Exact-SHA CI has not yet run. |
+
+This local guard protects the engine boundary; it does not prove evidence assignment or clinical validity. Phase A remains PARTIAL and the laboratory deployment release gate remains BLOCKED.

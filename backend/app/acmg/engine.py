@@ -51,6 +51,11 @@ class ACMGEngine:
         for a in assessments:
             validate_strength(a.criterion, a.strength)
             validate_direction(a.criterion, a.direction)
+            if a.status != "PROPOSED":
+                raise ValueError(
+                    f"Only PROPOSED criterion assessments may be combined; "
+                    f"{a.criterion} has status {a.status!r}"
+                )
             if a.criterion in seen:
                 raise ValueError(f"Duplicate ACMG criterion assessment: {a.criterion}")
             seen.add(a.criterion)

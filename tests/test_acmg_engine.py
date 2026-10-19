@@ -69,3 +69,17 @@ def test_conflicting_pathogenic_and_benign_requires_review():
 def test_ba1_requires_standalone_strength():
     ba1 = CriterionAssessment("BA1", "STANDALONE", CriterionDirection.BENIGN, reason="benchmark")
     assert ACMGEngine().classify([ba1]).classification == "BENIGN"
+
+
+@pytest.mark.parametrize("status", ["NOT_MET", "REJECTED", "REQUIRES_REVIEW", "NOT_APPLICABLE"])
+def test_non_proposed_criteria_cannot_contribute_to_classification(status):
+    criterion = CriterionAssessment(
+        "PVS1",
+        "VERY_STRONG",
+        CriterionDirection.PATHOGENIC,
+        status=status,
+        evidence_ids=("persisted-evidence",),
+        reason="must not be counted",
+    )
+    with pytest.raises(ValueError, match="Only PROPOSED criterion assessments may be combined"):
+        ACMGEngine().classify([criterion])
