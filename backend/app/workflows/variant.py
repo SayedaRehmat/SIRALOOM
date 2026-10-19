@@ -245,6 +245,44 @@ def _resources_by_ids(db: Session, resource_ids) -> dict[UUID, Resource]:
     }
 
 
+def _require_population_resource_rows(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    organization_id: UUID,
+    observations: list[PopulationObservation],
+) -> dict[UUID, Resource]:
+    """Require every persisted population observation to retain tenant-safe provenance."""
+    if any(observation.analysis_id != analysis_id for observation in observations):
+        raise ResourceConsumptionError(
+            "POPULATION_ANALYSIS_LINEAGE_INVALID",
+            "A population observation is not linked to the current analysis.",
+        )
+
+    resource_ids = {observation.resource_id for observation in observations}
+    if None in resource_ids:
+        raise ResourceConsumptionError(
+            "POPULATION_RESOURCE_MISSING",
+            "A population observation has no source resource.",
+        )
+
+    resource_rows = _resources_by_ids(db, resource_ids)
+    if resource_ids - resource_rows.keys():
+        raise ResourceConsumptionError(
+            "POPULATION_RESOURCE_MISSING",
+            "A population observation references a missing source resource.",
+        )
+    if any(
+        resource.organization_id not in {None, organization_id}
+        for resource in resource_rows.values()
+    ):
+        raise ResourceConsumptionError(
+            "POPULATION_RESOURCE_TENANT_MISMATCH",
+            "A population observation references a resource outside this organization.",
+        )
+    return resource_rows
+
+
 def _succeeded_population_execution(
     db: Session,
     *,
@@ -3078,7 +3116,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     annotations = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id).order_by(Annotation.created_at, Annotation.id).offset(start_i).limit(end_i - start_i)).all()
                     variant_ids_for_batch = [a.variant_id for a in annotations]
                     population_rows = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id.in_(variant_ids_for_batch))).all() if variant_ids_for_batch else []
-                    resource_rows = _resources_by_ids(db, (obs.resource_id for obs in population_rows))
+                    resource_rows = _require_population_resource_rows(
+                        db,
+                        analysis_id=analysis.id,
+                        organization_id=case.organization_id,
+                        observations=population_rows,
+                    )
                     population_by_variant: dict[str, list[dict]] = {}
                     for obs in population_rows:
                         resource = resource_rows.get(obs.resource_id)
@@ -3587,15 +3630,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if variant_row is None:
                             blocked_variants += 1; batch_blocked += 1; continue
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
+                        population_resource_rows = _require_population_resource_rows(
+                            db,
+                            analysis_id=analysis.id,
+                            organization_id=case.organization_id,
+                            observations=population_rows_for_variant,
+                        )
                         result = assessment_service.assess_variant(
                             db,
                             analysis=analysis,
                             variant=variant_row,
                             annotation=ann,
                             population_rows=population_rows_for_variant,
-                            resource_rows=_resources_by_ids(
-                                db, (obs.resource_id for obs in population_rows_for_variant)
-                            ),
+                            resource_rows=population_resource_rows,
                             gene=gene,
                             disease=disease,
                             specification_resource=acmg_runtime_resource,
