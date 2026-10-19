@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
 from backend.app.acmg.engine import ACMGEngine
 from backend.app.acmg.rules import ALL_CRITERIA
 from backend.app.auth.authorization import (
@@ -222,7 +223,6 @@ def auto_assess(
     validated, applicable specification cannot be selected or when the selected
     specification requires an unsupported combination method.
     """
-    from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
     from backend.app.infrastructure.db.models import Annotation, PopulationObservation, Resource
 
     analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, REVIEW_ROLES)
