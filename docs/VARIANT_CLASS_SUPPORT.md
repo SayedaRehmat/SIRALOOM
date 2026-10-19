@@ -18,7 +18,7 @@ This matrix describes the repository code at commit `72cf5b703c1d0ce48d18ba2b14a
 | Symbolic ALT (e.g. `<DEL>`, `<DUP>`, `<INS>`) | Can be structurally profiled | Workflow rejects before normalization | Unsupported in Phase 1; must not be reported as normalized/analyzed | Ensure user-visible state and report cannot imply success |
 | Breakend ALT | Can be structurally profiled | Workflow rejects with unsupported structural-variant handling | Unsupported in Phase 1 | Paired breakend/SV workflow is out of scope |
 | Star ALT (`*`) | Classifier currently groups it with symbolic records | Workflow's symbolic-record guard rejects it | Unsupported in Phase 1 | Confirm exact message and no downstream record creation |
-| GVCF reference-confidence blocks / `<NON_REF>` | Header markers are profiled | Workflow rejects GVCF markers before normalization | Unsupported as analysis input; requires appropriate upstream genotyping/joint genotyping | Add direct integration fixture for record/header combinations and error state |
+| GVCF reference-confidence blocks / `<NON_REF>` | Header and record markers are profiled | Production worker persists a typed `BLOCKED` normalization state before reference-resource resolution | Unsupported as analysis input; requires appropriate upstream genotyping/joint genotyping | Worker-wrapper fixtures cover a `<NON_REF>` reference block and assert the durable state/audit event; external genotyping workflow is out of scope |
 | Phased / multi-sample genotypes | VCF parser accepts sample columns where supported; BCFtools handles normalization semantics | Must preserve GT and FORMAT semantics during splitting | Not fully qualified by the existing basic multiallelic fixture | Add multi-sample phased/unphased/missing genotype golden tests and independently reviewed truth-set comparisons |
 | VCF version | Strict validator allowlist is VCFv4.2 and VCFv4.3 | BCFtools has its own parser support | Explicitly limited by current validator | Decide and test whether VCFv4.4/v4.5 should be supported; do not imply latest-spec conformance without tests |
 | Malformed records / REF mismatch | Validation/reference checks | Fail closed | Unsupported invalid input | Maintain stable error codes and regression tests |
@@ -30,6 +30,7 @@ This matrix describes the repository code at commit `72cf5b703c1d0ce48d18ba2b14a
 - `backend/app/workflows/variant.py`: explicitly raises `UNSUPPORTED_GVCF_INPUT` for GVCF markers and `UNSUPPORTED_STRUCTURAL_VARIANT` for symbolic/breakend records before normalization.
 - `tests/test_vcf_tools.py`: basic reference-aware multiallelic splitting/left-alignment fixture, artifact-preservation tests, and a genotype-bearing 1/2 split fixture covering INFO Number=A and FORMAT Number=R/G cardinality. [PR #137 CI](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928636733) passed backend, PostgreSQL integration and frontend jobs.
 - `tests/test_vcf_validation.py`: malformed record, genotype index and profiling tests.
+- `tests/test_unsupported_vcf_worker_routing.py`: invokes the production `run_variant_analysis` wrapper with SQLite persistence and proves GVCF and symbolic SV inputs are blocked with typed error codes, normalization metadata, and an audit event before reference resource resolution. This does not validate an SV/GVCF analysis capability.
 
 ## Scientific policy
 

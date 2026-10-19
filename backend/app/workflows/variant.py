@@ -1318,7 +1318,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
+            profile: dict[str, int] = {}
             try:
+                # Determine whether this pipeline supports the input before
+                # consulting a reference resource. Unsupported GVCF/SV input
+                # should have a stable scientific disposition even when a
+                # laboratory has not configured a reference package.
+                profile = classify_records(input_path)
+                if profile["gvcf_markers"]:
+                    raise UnsupportedVariantError(
+                        "GVCF input detected. Phase 1 requires a genotyped VCF; "
+                        "GVCF reference blocks must first pass the appropriate "
+                        "genotyping/joint-genotyping workflow.",
+                        code="UNSUPPORTED_GVCF_INPUT",
+                    )
+                if profile["symbolic_records"]:
+                    raise UnsupportedVariantError(
+                        "Symbolic/breakend variants detected. Phase 1 currently "
+                        "normalizes SNVs and short indels; SV/CNV records require "
+                        "the dedicated structural-variant workflow.",
+                        code="UNSUPPORTED_STRUCTURAL_VARIANT",
+                    )
+
                 case = db.get(Case, analysis.case_id)
                 if case is None:
                     raise ReferencePackageError(
@@ -1464,6 +1485,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     str(input_path),
                     reference_contigs=reference_contigs,
                 )
+            except UnsupportedVariantError as exc:
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.BLOCKED,
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    metadata={
+                        "next_step": "SUPPORTED_INPUT_REQUIRED",
+                        "input_profile": profile,
+                    },
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                analysis.completed_at = None
+                db.commit()
+                audit.record(
+                    event_type="NORMALIZATION_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    input_artifacts=[
+                        {"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}
+                    ],
+                    reason=str(exc),
+                    payload={
+                        "error_code": exc.code,
+                        "next_step": "SUPPORTED_INPUT_REQUIRED",
+                        "input_profile": profile,
+                    },
+                )
+                db.commit()
+                return
             except ReferencePackageError as exc:
                 mark_step(
                     db,
@@ -1550,22 +1604,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 suffix = ".vcf.gz"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
                     temp_path = Path(temp.name)
-
-                profile = classify_records(input_path)
-                if profile["gvcf_markers"]:
-                    raise UnsupportedVariantError(
-                        "GVCF input detected. Phase 1 requires a genotyped VCF; "
-                        "GVCF reference blocks must first pass the appropriate "
-                        "genotyping/joint-genotyping workflow.",
-                        code="UNSUPPORTED_GVCF_INPUT",
-                    )
-                if profile["symbolic_records"]:
-                    raise UnsupportedVariantError(
-                        "Symbolic/breakend variants detected. Phase 1 currently "
-                        "normalizes SNVs and short indels; SV/CNV records require "
-                        "the dedicated structural-variant workflow.",
-                        code="UNSUPPORTED_STRUCTURAL_VARIANT",
-                    )
 
                 request_material = {
                     "input_artifact_sha256": input_artifact.sha256,
