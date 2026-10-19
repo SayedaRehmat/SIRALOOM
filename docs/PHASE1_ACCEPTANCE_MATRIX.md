@@ -1,5 +1,7 @@
 # SIRALOOM Variant — Phase 1 Acceptance Matrix
 
+> The evidence snapshot dated 2026-10-13 below is historical. The current evidence-backed release decision is in the 2026-10-19 snapshot at the end of this document.
+
 | Requirement | Implementation | Automated evidence | Live validation | Qualification status |
 |---|---|---|---|---|
 | Valid VCF accepted | Strict VCFv4.2/v4.3 validation at artifact intake plus artifact ingestion | `tests/test_vcf_validation.py tests/test_ingestion.py`: 25 passed locally | Required | BLOCKED |
@@ -85,7 +87,7 @@ This snapshot supersedes the historical 2026-10-13 snapshot below for current so
 - **Operations UI/source trace:** [PR #173](https://github.com/SayedaRehmat/SIRALOOM/pull/173), merge `94d4625fc85e8803ce096fe802228dcfd682b0e2`. The source/CI evidence does not prove the production domain runs the current main revision.
 
 ### Open pull requests requiring explicit disposition
-- [PR #179](https://github.com/SayedaRehmat/SIRALOOM/pull/179): keep open until the current recovery test passes without weakening assertions.
+- [PR #179](https://github.com/SayedaRehmat/SIRALOOM/pull/179): OPEN but stale and explicitly excluded from current main. The production annotation recovery logic and expanded `tests/test_actual_annotation_stage_redelivery.py` are present on main in/after `3385b69`; exact-main CI #392288 passed that version. The PR head is based on `6cfc89b` and its backend check fails. Do not merge this stale branch; its current-main equivalent is already covered. The PR itself remains open for maintainer disposition.
 - [PR #169](https://github.com/SayedaRehmat/SIRALOOM/pull/169): not release evidence; ClinVar monthly archive discovery only, with publisher checksum and licensing gates still blocking generic staging/activation. Other publishers are not implemented by this PR.
 - [PR #166](https://github.com/SayedaRehmat/SIRALOOM/pull/166): draft; preview readiness does not prove production deployment, and earlier Vercel deployment quota exhaustion prevented reliable production-revision confirmation.
 - [PR #1](https://github.com/SayedaRehmat/SIRALOOM/pull/1), [PR #2](https://github.com/SayedaRehmat/SIRALOOM/pull/2), and [PR #10](https://github.com/SayedaRehmat/SIRALOOM/pull/10): closed as superseded after comparing their relevant changes with current main. Current main has the governed reference-package contract, `bcftools` normalization in `backend/app/workflows/variant.py`, durable next-step resolution in `backend/app/api/v1/analyses.py`, and current workspace recovery routing. Their closure does not pass the deployed-reference or end-to-end gates.
@@ -93,7 +95,7 @@ This snapshot supersedes the historical 2026-10-13 snapshot below for current so
 ### Release blockers not satisfied by CI
 - No captured authenticated production signup/email-verification/logout/session-expiry run or deployed cross-tenant denial evidence.
 - No captured live deployed VCF → worker → population/evidence → human review → report/sign-out → provenance workflow with artifact hashes and deployment revision.
-- Annotation stage-body recovery is pending PR #179; population/evidence/ACMG/review/report/provenance recovery has not been demonstrated end-to-end at every durable boundary.
+- Current main contains deterministic annotation-stage worker-loss/redelivery recovery coverage (CI #392288 passed), but live-provider recovery and end-to-end real-storage recovery across population/evidence/ACMG/review/report/provenance remain NOT TESTED.
 - No pinned GIAB truth-set comparison artifact with TP/FP/FN, precision/recall or concordance, confident-region/scope declaration and excluded variant classes.
 - The current Render blueprint is explicitly staging/free, sets `ARTIFACT_ROOT=/tmp/siraloom/artifacts`, disables Firebase Storage, and declares no persistent disk/reference mount. That configuration does not establish artifact/reference durability across restart or redeploy; qualify a durable storage target and restore before any lab trial. Source: [render.yaml](https://github.com/SayedaRehmat/SIRALOOM/blob/main/render.yaml).
 - No production backup/restore proof, host-mounted reference/artifact storage evidence, health/readiness evidence or representative concurrency/load report for 10 labs × 5–6 users and the scale path toward 100 labs.
@@ -102,3 +104,28 @@ This snapshot supersedes the historical 2026-10-13 snapshot below for current so
 ## Release rule
 
 The GitHub repository may describe the software as a **Phase-1 release candidate** only while the rows marked BLOCKED/NOT TESTED remain explicitly disclosed. It may be described as a clinically validated diagnostic system only after separate laboratory validation, which is outside this software release gate. Keep the release gate open until the deployed end-to-end workflow, scientific benchmark, authorization/isolation, recovery, and deployment gates have evidence.
+
+## Current release-gate snapshot — 2026-10-19
+
+### Source and CI reconciliation
+
+- **Current branch / exact SHA:** `main` at [`2bcd22c11c1a6aeba85d05ccc742846cd309cb1d`](https://github.com/SayedaRehmat/SIRALOOM/commit/2bcd22c11c1a6aeba85d05ccc742846cd309cb1d); local `main` and `origin/main` match.
+- **Exact-SHA CI:** [run #392315](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39231528013) passed backend, PostgreSQL integration and frontend. The PostgreSQL job exercised the concurrent VCF readiness and versioned clinical-governance integration regressions.
+- **Issue #171:** OPEN; its live/deployed workflow, scientific benchmark and deployment/restore requirements remain unsatisfied.
+- **PR #179:** OPEN at head `76d8b3460bedcac5d38f01bbd3b81666ea9a29fa`, based on `6cfc89b4f2b9abfae5b4908ff1cedac58ecdbc7e`; current PR backend check fails. Its annotation recovery logic and test are superseded by the current main implementation/test already verified in run #392288. **Disposition: exclude the stale PR branch from this release candidate; do not merge it.** Leave closing the PR to the repository maintainer.
+
+### Evidence status by release dimension
+
+| Dimension | Status | Evidence / remaining requirement |
+|---|---|---|
+| API/backend/frontend regression CI | PASS | Exact-SHA run #392315 passed all three jobs. This is software evidence only. |
+| VCF intake and concurrent case readiness | PASS (automated scope) | Strict VCF validation tests passed locally; PostgreSQL concurrent valid/invalid VCF regression passed in run #392315. Supported VCF versions remain 4.2 and 4.3; newer versions are rejected. |
+| Versioned confirmation and secondary-finding concurrency | PASS (automated scope) | Local focused tests: 6 passed, 2 PostgreSQL cases skipped locally; both PostgreSQL cases passed in run #392315. |
+| Authentication/signup/verification/recovery/logout in a live browser | NOT TESTED | No configured Firebase/browser journey evidence. |
+| Deployed two-lab API and artifact isolation | NOT TESTED | Requires deployed test tenants and verified storage permissions. |
+| Reviewer-to-authorized-signout recovery with lab object storage | NOT TESTED | Deterministic orchestration tests exist; real-storage/deployed recovery is unverified. |
+| Independent scientific truth-set benchmark | NOT TESTED | No versioned TP/FP/FN and concordance report is recorded. |
+| Production deployment, backup restore and rollback | NOT TESTED | No controlled lab deployment/restore evidence is recorded. |
+| Clinical validity, utility, accreditation or regulatory authorization | NOT ESTABLISHED | These are not established by code tests or CI. |
+
+**Current decision: BLOCKED for laboratory trial or clinical workflow.** Phase A remains PARTIAL; Phases B and C remain incomplete. Use only with an explicit non-clinical development/demo description; do not represent the system as clinically validated or production-qualified.

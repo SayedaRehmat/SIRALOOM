@@ -318,4 +318,10 @@
 
 - Three consecutive main runs failed only in `postgres-integration` after the VCF concurrency regression was added: [#392298](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39229846552), [#392307](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39230702456), [#392310](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39231005975). Backend and frontend jobs passed. The public Actions log endpoint returned HTTP 403, so exact test output was not retrievable.
 - Source-level diagnosis: child artifact inserts acquire PostgreSQL parent KEY SHARE locks before the concurrent test requests a case `FOR UPDATE` lock. The lock upgrade can deadlock. Updated the case serialization query to SQLAlchemy `with_for_update(key_share=True)`, which emits PostgreSQL `FOR NO KEY UPDATE` and still serializes competing status writers while remaining compatible with the foreign-key lock.
-- This correction is pending its PostgreSQL CI rerun. It is not yet considered verified. Phase A remains PARTIAL.
+- At the time of this checkpoint, this correction was pending its PostgreSQL CI rerun. The following 2026-10-19 entry supersedes this status with the exact-SHA passing result. Phase A remains PARTIAL.
+
+### 2026-10-19 PostgreSQL lock correction and release-gate reconciliation
+
+- The VCF upload lock correction is committed/pushed as `2bcd22c`; exact-SHA [run #392315](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39231528013) passed backend, PostgreSQL integration, and frontend jobs. This verifies the added PostgreSQL concurrent valid/invalid upload case in CI.
+- Issue #171 remains open. PR #179 remains open on an old base with a failed backend check. Its annotation recovery implementation/test is superseded by the more recent current-main implementation in `3385b69` and tracked recovery test; main exact-SHA run #392288 passed. PR #179 is explicitly excluded from the current release candidate and should not be merged in its stale form.
+- Phase A remains PARTIAL: live Firebase/browser identity, deployed two-tenant API/artifact isolation, and reviewer-to-signed-report recovery with real laboratory storage remain NOT TESTED. Independent scientific benchmark and actual deployment/restore gates also remain NOT TESTED.
