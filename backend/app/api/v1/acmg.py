@@ -293,27 +293,29 @@ def auto_assess(
             "classification": None,
         }
 
-    service.persist(db, analysis=analysis, variant=variant, result=result)
-    db.commit()
-
-    AuditService(db).record(
-        event_type="ACMG_SPECIFICATION_ASSESSMENT_COMPLETED",
-        case_id=analysis.case_id,
-        analysis_id=analysis.id,
-        actor_type="SERVICE",
-        actor_id="siraloom-acmg-specification-engine",
-        subject_type="VARIANT",
-        subject_id=str(variant_id),
-        operation="ASSESS",
-        after_state={
-            "specification_id": result.binding.specification_id,
-            "specification_version": result.binding.specification_version,
-            "status": result.status,
-            "classification": result.classification.classification if result.classification else None,
-        },
-        reason=result.binding.reason,
-    )
-    db.commit()
+    try:
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        AuditService(db).record(
+            event_type="ACMG_SPECIFICATION_ASSESSMENT_COMPLETED",
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            actor_type="SERVICE",
+            actor_id="siraloom-acmg-specification-engine",
+            subject_type="VARIANT",
+            subject_id=str(variant_id),
+            operation="ASSESS",
+            after_state={
+                "specification_id": result.binding.specification_id,
+                "specification_version": result.binding.specification_version,
+                "status": result.status,
+                "classification": result.classification.classification if result.classification else None,
+            },
+            reason=result.binding.reason,
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     return {
         "status": result.status,

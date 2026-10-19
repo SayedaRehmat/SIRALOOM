@@ -690,5 +690,13 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Finding:** `POST /analyses/{analysis_id}/reports` is a human-authorized action that creates a draft and artifact, but the `REPORT_GENERATED` audit event attributed it to the generic `reporting` system actor. The requesting user was not identified in that event.
 - **Correction:** the audit event now records actor type `HUMAN` and the authenticated principal's user ID. PDF rendering and artifact persistence remain system-produced and retain their resource/artifact provenance.
 - **Regression coverage:** extended the existing production-route draft artifact compensation test to capture the emitted audit event and assert the event type and authenticated human actor. Its injected commit failure still verifies that uncommitted artifact bytes are compensated.
-- **Verification:** Python 3.12 `py_compile` and `git diff --check` passed. The focused pytest is not runnable in the current local interpreter because pytest and project dependencies are unavailable. Exact-SHA CI is pending.
-- **Status / next:** run the route regression in CI and continue auditing report review/sign-out mutations. Phase A remains PARTIAL.
+- **Verification:** Python 3.12 `py_compile` and `git diff --check` passed. The focused pytest is not runnable in the current local interpreter because pytest and project dependencies are unavailable. The production-route regression passed the backend job in exact-SHA [CI run #392465](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39246597739); at this checkpoint the overall run's frontend job was still in progress.
+- **Status / next:** the report actor regression passed exact-SHA backend CI. Continue auditing report review/sign-out mutations. Phase A remains PARTIAL.
+
+### 2026-10-19 ACMG result/audit atomicity checkpoint
+
+- **Finding:** `/analyses/{analysis_id}/variants/{variant_id}/acmg/auto-assess` committed criterion/classification persistence before appending `ACMG_SPECIFICATION_ASSESSMENT_COMPLETED`. An audit-write failure could therefore leave a durable assessment with no matching audit event.
+- **Correction:** assessment rows and the audit event now share one SQL transaction. Any persistence/audit/commit exception triggers rollback and is re-raised.
+- **Regression coverage:** `tests/test_acmg_assessment_audit_atomicity.py` calls the production route with SQLite persistence, injects an audit failure after assessment/classification flush, and asserts both rows are absent after rollback.
+- **Verification:** Python 3.12 `py_compile` and `git diff --check` passed. Local pytest cannot run because this environment has no pytest or project dependencies; the regression test and exact-SHA CI are pending.
+- **Status / next:** verify the SQLite failure-injection regression and broader backend suite in GitHub CI. Phase A remains PARTIAL.
