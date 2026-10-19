@@ -1,9 +1,74 @@
+import sys
+from types import ModuleType, SimpleNamespace
 from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException, Request
 
 from backend.app.auth import principal
+
+
+def _firebase_admin_stub(monkeypatch, verify_id_token):
+    class FirebaseError(Exception):
+        pass
+
+    class InvalidIdTokenError(Exception):
+        pass
+
+    class UserDisabledError(Exception):
+        pass
+
+    class UserNotFoundError(Exception):
+        pass
+
+    class CertificateFetchError(FirebaseError):
+        pass
+
+    fake = ModuleType("firebase_admin")
+    fake._apps = [object()]
+    fake.auth = SimpleNamespace(
+        InvalidIdTokenError=InvalidIdTokenError,
+        UserDisabledError=UserDisabledError,
+        UserNotFoundError=UserNotFoundError,
+        CertificateFetchError=CertificateFetchError,
+        verify_id_token=verify_id_token,
+    )
+    fake.credentials = SimpleNamespace()
+    fake.exceptions = SimpleNamespace(FirebaseError=FirebaseError)
+    monkeypatch.setitem(sys.modules, "firebase_admin", fake)
+    return SimpleNamespace(
+        InvalidIdTokenError=InvalidIdTokenError,
+        UserDisabledError=UserDisabledError,
+        UserNotFoundError=UserNotFoundError,
+        FirebaseError=FirebaseError,
+        CertificateFetchError=CertificateFetchError,
+    )
+
+
+@pytest.mark.parametrize("error_name", ["InvalidIdTokenError", "UserDisabledError", "UserNotFoundError"])
+def test_firebase_identity_errors_are_unauthorized(monkeypatch, error_name):
+    error_types = _firebase_admin_stub(
+        monkeypatch,
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(getattr(error_types, error_name)("invalid identity")),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        principal._verify_firebase_token("bad-token")
+
+    assert error.value.status_code == 401
+
+
+@pytest.mark.parametrize("error_name", ["FirebaseError", "CertificateFetchError"])
+def test_firebase_verification_service_errors_are_unavailable(monkeypatch, error_name):
+    error_types = _firebase_admin_stub(
+        monkeypatch,
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(getattr(error_types, error_name)("provider unavailable")),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        principal._verify_firebase_token("valid-token")
+
+    assert error.value.status_code == 503
 
 
 def _bearer_request() -> Request:

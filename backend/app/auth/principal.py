@@ -25,7 +25,7 @@ class Principal:
 def _verify_firebase_token(token: str) -> dict:
     try:
         import firebase_admin
-        from firebase_admin import auth, credentials
+        from firebase_admin import auth, credentials, exceptions
     except ImportError as exc:
         raise HTTPException(status_code=503, detail="Firebase Admin SDK is not installed") from exc
     if not firebase_admin._apps:
@@ -33,8 +33,13 @@ def _verify_firebase_token(token: str) -> dict:
         firebase_admin.initialize_app(credential, {"projectId": settings.firebase_project_id} if settings.firebase_project_id else None)
     try:
         return auth.verify_id_token(token, check_revoked=True)
-    except Exception as exc:
+    except (auth.InvalidIdTokenError, auth.UserDisabledError, auth.UserNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired Firebase token") from exc
+    except exceptions.FirebaseError as exc:
+        # Provider/key-fetch failures are service outages, not proof that the
+        # user's identity is invalid. Keep them distinct so clients can fail
+        # closed without unnecessarily signing out every active user.
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Firebase authentication is temporarily unavailable") from exc
 
 def _development_principal(db: Session) -> Principal:
     # This path is deliberately unavailable when Firebase authentication is required.
