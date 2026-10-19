@@ -89,11 +89,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     const refreshWhenVisible = () => {
       const user = firebaseAuth.currentUser;
       if (document.visibilityState === "visible" && user?.emailVerified) {
-        void validateSession(user);
+        void validateSession(user, true);
       }
     };
     document.addEventListener("visibilitychange", refreshWhenVisible);
-    const interval = window.setInterval(refreshWhenVisible, 60_000);
+    const interval = window.setInterval(() => {
+      const user = firebaseAuth.currentUser;
+      if (document.visibilityState === "visible" && user?.emailVerified) {
+        void validateSession(user);
+      }
+    }, 60_000);
 
     return () => {
       mounted = false;

@@ -860,12 +860,12 @@ export default function Home() {
   };
 
   const finalize = async () => {
-    if (!reportId) return;
+    if (!reportId || !report) return;
     try {
       const finalized = await apiFetch(`/reports/${reportId}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expected_version: 0, reason: reviewReason || t("workspace.finalReportApproved") }),
+        body: JSON.stringify({ expected_version: report.version, reason: reviewReason || t("workspace.finalReportApproved") }),
       });
       setReport((current: any) => current ? { ...current, status: finalized.status ?? "FINAL", approved_at: finalized.approved_at ?? current.approved_at } : current);
       try {

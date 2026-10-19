@@ -250,6 +250,11 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
         }
     if report.status != "DRAFT":
         raise HTTPException(status_code=409, detail=f"Report cannot be finalized from status {report.status}")
+    if payload.expected_version != report.report_version:
+        raise HTTPException(
+            status_code=409,
+            detail="Report version changed. Refresh the report before signing out.",
+        )
     case = db.get(Case, report.case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Report case not found")

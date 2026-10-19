@@ -118,7 +118,7 @@ export default function ReportsPage() {
 
   const finalize = async (report: Report) => {
     if (!reason.trim()) { setMessage(t("reports.messageSignoutReason")); return; }
-    try { await apiFetch(`/reports/${report.report_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_version: 0, reason: reason.trim() }) }); setReason(""); setMessage(await load() ? t("reports.messageFinalize") : t("reports.messageRefreshFailed")); }
+    try { await apiFetch(`/reports/${report.report_id}/finalize`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected_version: report.version, reason: reason.trim() }) }); setReason(""); setMessage(await load() ? t("reports.messageFinalize") : t("reports.messageRefreshFailed")); }
     catch (e) { setMessage(e instanceof Error ? e.message : t("reports.messageErrorFinalize")); }
   };
 

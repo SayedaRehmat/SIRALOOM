@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+import pytest
 from sqlalchemy import select
 
 from backend.app.domain.enums import AnalysisStatus
@@ -138,4 +140,53 @@ def test_repeated_signout_after_analysis_succeeded_is_idempotent(monkeypatch, tm
     assert analysis.status == AnalysisStatus.SUCCEEDED
     assert len(list(db.scalars(select(Artifact)))) == artifact_count_before_retry
     assert list(db.scalars(select(AnalysisDispatch).where(AnalysisDispatch.analysis_id == analysis.id))) == []
+    db.close()
+
+
+def test_stale_report_version_cannot_be_signed_out(monkeypatch):
+    from backend.app.api.v1 import reports as reports_api
+    from backend.app.infrastructure.db.models import AuditEvent
+
+    db, reviewer, _analysis, report = seed_finalizable_report()
+    monkeypatch.setattr(
+        reports_api,
+        "get_accessible_report",
+        lambda report_id, session, _principal: session.get(Report, report_id),
+    )
+    monkeypatch.setattr(reports_api, "require_role", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        reports_api,
+        "artifact_store_for_organization",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("stale sign-out must be rejected before resolving storage")
+        ),
+    )
+    principal = type(
+        "Principal",
+        (),
+        {"user_id": reviewer.id, "organization_id": reviewer.organization_id},
+    )()
+
+    with pytest.raises(HTTPException) as error:
+        reports_api.finalize(
+            report.id,
+            reports_api.ClassificationReviewRequest(
+                expected_version=report.report_version + 1,
+                reason="Stale approval must not sign out this report version.",
+            ),
+            db,
+            principal,
+        )
+
+    db.refresh(report)
+    assert error.value.status_code == 409
+    assert "Refresh the report" in error.value.detail
+    assert report.status == "DRAFT"
+    assert report.signed_artifact_id is None
+    assert db.scalar(
+        select(AuditEvent.id).where(
+            AuditEvent.event_type == "REPORT_APPROVED",
+            AuditEvent.analysis_id == report.analysis_id,
+        )
+    ) is None
     db.close()
