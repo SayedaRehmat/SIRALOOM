@@ -20,24 +20,24 @@ export default function InvitationAcceptancePage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setToken(params.get("token") ?? "");
-    if (!firebaseAuth) { setChecking(false); setMessage("Firebase authentication is not configured."); return; }
+    if (!firebaseAuth) { setChecking(false); setMessage(t("invite.firebaseMissing")); return; }
     return onAuthStateChanged(firebaseAuth, async (currentUser) => {
       if (!currentUser) { setChecking(false); return; }
       try { await reload(currentUser); } catch {}
       setUser(currentUser); setChecking(false);
     });
-  }, []);
+  }, [t]);
 
   async function acceptInvitation() {
     const currentUser = firebaseAuth?.currentUser;
     if (!currentUser) { window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`); return; }
-    if (!token) { setMessage("This invitation link is missing its token."); return; }
+    if (!token) { setMessage(t("invite.tokenMissing")); return; }
     setBusy(true); setMessage("");
     try {
       await reload(currentUser);
       const refreshed = firebaseAuth?.currentUser;
       if (!refreshed) { window.location.assign("/login"); return; }
-      if (!refreshed.emailVerified) { setMessage("Verify your Firebase email before accepting the invitation."); return; }
+      if (!refreshed.emailVerified) { setMessage(t("invite.verifyRequired")); return; }
       const idToken = await refreshed.getIdToken(true);
       const response = await fetch(`${API_BASE}/auth/invitations/accept`, {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` }, body: JSON.stringify({ token }),
@@ -47,7 +47,7 @@ export default function InvitationAcceptancePage() {
       window.localStorage.removeItem("siraloom.case_id");
       window.localStorage.removeItem("siraloom.analysis_id");
       window.location.assign("/app/dashboard");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to accept invitation."); }
+    } catch (error) { setMessage(error instanceof Error ? error.message : t("invite.acceptFailed")); }
     finally { setBusy(false); }
   }
 
@@ -64,18 +64,18 @@ export default function InvitationAcceptancePage() {
     }
   }
 
-  if (checking) return <main className="loading">Checking invitation…</main>;
-  if (!firebaseConfigured) return <main className="auth-page"><Brand /><section className="auth-card"><h1>Invitation unavailable</h1><p>Firebase authentication is not configured for this deployment.</p></section></main>;
+  if (checking) return <main className="loading">{t("invite.checking")}</main>;
+  if (!firebaseConfigured) return <main className="auth-page"><Brand /><section className="auth-card"><h1>{t("invite.unavailable")}</h1><p>{t("invite.firebaseMissing")}</p></section></main>;
 
   return (
     <main className="auth-page"><Brand /><section className="auth-card">
-      <p className="eyebrow">SIRALOOM organization access</p><h1>Accept laboratory invitation</h1>
-      <p>This invitation can only be accepted by the verified Firebase account whose email address was invited.</p>
-      {user ? <div className="configuration-notice"><strong>{user.displayName || user.email}</strong><br />{user.email}</div> : <a className="button" href={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}>Sign in to continue</a>}
-      {user && !user.emailVerified && <button className="button" onClick={() => sendEmailVerification(user).then(() => setMessage("Verification email sent. Verify your address, then return to this invitation." )).catch(error => setMessage(error instanceof Error ? error.message : "Unable to send verification email."))}>Resend verification email</button>}
-      {user && <button className="button" onClick={acceptInvitation} disabled={busy || !token || !user.emailVerified}>{busy ? "Accepting…" : "Accept invitation"}</button>}
+      <p className="eyebrow">{t("invite.eyebrow")}</p><h1>{t("invite.title")}</h1>
+      <p>{t("invite.description")}</p>
+      {user ? <div className="configuration-notice"><strong>{user.displayName || user.email}</strong><br />{user.email}</div> : <a className="button" href={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}>{t("invite.signIn")}</a>}
+      {user && !user.emailVerified && <button className="button" onClick={() => sendEmailVerification(user).then(() => setMessage(t("invite.verificationSent"))).catch(() => setMessage(t("invite.resendFailed")))}>{t("invite.resend")}</button>}
+      {user && <button className="button" onClick={acceptInvitation} disabled={busy || !token || !user.emailVerified}>{busy ? t("invite.accepting") : t("invite.accept")}</button>}
       {message && <p className="form-message" role="status">{message}</p>}
-      {user && <button type="button" className="text-button" onClick={() => void switchAccount()} disabled={busy}>Use a different account</button>}
+      {user && <button type="button" className="text-button" onClick={() => void switchAccount()} disabled={busy}>{t("invite.switchAccount")}</button>}
     </section></main>
   );
 }

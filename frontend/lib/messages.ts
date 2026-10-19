@@ -355,6 +355,22 @@ export type TranslationKey =
   | "onboarding.verifySent"
   | "onboarding.notVerified"
   | "onboarding.createFailed"
+  | "invite.checking"
+  | "invite.firebaseMissing"
+  | "invite.unavailable"
+  | "invite.eyebrow"
+  | "invite.title"
+  | "invite.description"
+  | "invite.tokenMissing"
+  | "invite.verifyRequired"
+  | "invite.acceptFailed"
+  | "invite.verificationSent"
+  | "invite.resendFailed"
+  | "invite.signIn"
+  | "invite.resend"
+  | "invite.accepting"
+  | "invite.accept"
+  | "invite.switchAccount"
   | "workflow.case"
   | "workflow.specimen"
   | "workflow.variantFile"
@@ -1350,6 +1366,22 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "onboarding.verifySent": "Verification email sent.",
     "onboarding.notVerified": "Your email is not verified yet. Open the Firebase verification email and try again.",
     "onboarding.createFailed": "Unable to create your SIRALOOM workspace.",
+    "invite.checking": "Checking invitation…",
+    "invite.firebaseMissing": "Firebase authentication is not configured for this deployment.",
+    "invite.unavailable": "Invitation unavailable",
+    "invite.eyebrow": "SIRALOOM organization access",
+    "invite.title": "Accept laboratory invitation",
+    "invite.description": "This invitation can only be accepted by the verified Firebase account whose email address was invited.",
+    "invite.tokenMissing": "This invitation link is missing its token.",
+    "invite.verifyRequired": "Verify your Firebase email before accepting the invitation.",
+    "invite.acceptFailed": "Unable to accept invitation.",
+    "invite.verificationSent": "Verification email sent. Verify your address, then return to this invitation.",
+    "invite.resendFailed": "Unable to send verification email.",
+    "invite.signIn": "Sign in to continue",
+    "invite.resend": "Resend verification email",
+    "invite.accepting": "Accepting…",
+    "invite.accept": "Accept invitation",
+    "invite.switchAccount": "Use a different account",
     "workflow.case": "Case",
     "workflow.specimen": "Specimen",
     "workflow.variantFile": "Variant file",
@@ -2172,6 +2204,22 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "onboarding.verifySent": "تم إرسال رسالة التحقق.",
     "onboarding.notVerified": "لم يتم توثيق بريدك الإلكتروني بعد. افتح رسالة التحقق من Firebase وحاول مرة أخرى.",
     "onboarding.createFailed": "تعذر إنشاء مساحة عمل SIRALOOM.",
+    "invite.checking": "جارٍ التحقق من الدعوة…",
+    "invite.firebaseMissing": "لم تتم تهيئة مصادقة Firebase لهذا النشر.",
+    "invite.unavailable": "الدعوة غير متاحة",
+    "invite.eyebrow": "الوصول إلى مؤسسة SIRALOOM",
+    "invite.title": "قبول دعوة المختبر",
+    "invite.description": "لا يمكن قبول هذه الدعوة إلا باستخدام حساب Firebase موثق يطابق عنوان البريد الإلكتروني الذي تلقى الدعوة.",
+    "invite.tokenMissing": "رابط الدعوة لا يحتوي على رمز الدعوة.",
+    "invite.verifyRequired": "يرجى توثيق بريدك الإلكتروني في Firebase قبل قبول الدعوة.",
+    "invite.acceptFailed": "تعذر قبول الدعوة.",
+    "invite.verificationSent": "تم إرسال رسالة التوثيق. وثّق عنوانك ثم عد إلى هذه الدعوة.",
+    "invite.resendFailed": "تعذر إرسال رسالة التوثيق.",
+    "invite.signIn": "سجّل الدخول للمتابعة",
+    "invite.resend": "إعادة إرسال رسالة التوثيق",
+    "invite.accepting": "جارٍ قبول الدعوة…",
+    "invite.accept": "قبول الدعوة",
+    "invite.switchAccount": "استخدام حساب آخر",
     "workflow.case": "الحالة",
     "workflow.specimen": "العينة",
     "workflow.variantFile": "ملف المتغيرات",
