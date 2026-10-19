@@ -107,6 +107,8 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ## Current release-gate snapshot — 2026-10-19
 
+> **Superseding checkpoint (2026-10-19):** repository `main` and `origin/main` now match at [`14e9afcf0f828eee7d7dcbd67b1908b9d82a0117`](https://github.com/SayedaRehmat/SIRALOOM/commit/14e9afcf0f828eee7d7dcbd67b1908b9d82a0117). Frontend session tests (29), i18n validation, and production build passed locally on that commit. Exact-SHA CI has not been verified; the CI run cited in the older snapshot below predates this commit. Phase A remains PARTIAL. See the latest checkpoint in [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md).
+
 ### Source and CI reconciliation
 
 - **Current branch / exact SHA:** `main` at [`c71222b6511e52a2a6383d002dc5bbf03688d827`](https://github.com/SayedaRehmat/SIRALOOM/commit/c71222b6511e52a2a6383d002dc5bbf03688d827); local `main` and `origin/main` match. The only local untracked path is the preserved unrelated backup artifact.
