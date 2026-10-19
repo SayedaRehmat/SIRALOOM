@@ -487,8 +487,15 @@ def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
     assert finalized.signed_sha256
     assert finalized.signout_reason == "Authorized laboratory sign-out"
     assert finalized.content_json["report_status"] == "FINAL"
-    assert finalized.content_json["final_result"]["release_state"] == "CLINICALLY_RELEASED"
+    assert finalized.content_json["final_result"]["release_state"] == "AUTHORIZED_SIGNOUT"
+    assert finalized.content_json["final_result"]["clinical_use_status"] == "LABORATORY_VALIDATION_REQUIRED"
     assert finalized.content_json["final_result"]["signed_out_by"] == str(reviewer.id)
+    from backend.app.reporting.service import render_html
+
+    signed_html = render_html(finalized.content_json).decode("utf-8")
+    assert "Authorized sign-out is recorded." in signed_html
+    assert "Clinical use remains subject to laboratory-specific validation" in signed_html
+    assert "not a clinical release until an authorized sign-out is recorded" not in signed_html
 
     signed_artifact = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact, finalized.signed_artifact_id)
     assert signed_artifact is not None

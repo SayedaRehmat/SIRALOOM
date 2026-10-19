@@ -516,7 +516,10 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     }
     signed_result = dict(signed_content.get("final_result") or {})
     signed_result["status"] = "FINAL"
-    signed_result["release_state"] = "CLINICALLY_RELEASED"
+    # Sign-out records an authorized human decision. It does not prove that
+    # this software or the laboratory's specific workflow has been validated.
+    signed_result["release_state"] = "AUTHORIZED_SIGNOUT"
+    signed_result["clinical_use_status"] = "LABORATORY_VALIDATION_REQUIRED"
     signed_result["signed_out_by"] = str(approver_id)
     signed_result["signed_out_at"] = datetime.now(timezone.utc).isoformat()
     signed_result["signout_reason"] = reason.strip()

@@ -158,6 +158,12 @@ def test_clinical_report_contains_only_final_report_findings():
     assert content["findings"][0]["reportability"]["disposition"] == "REPORT"
     assert content["report_schema_version"] == "1.1.0"
     assert content["final_result"]["release_state"] == "NOT_FOR_CLINICAL_RELEASE"
+    assert content["final_result"]["clinical_use_status"] == "LABORATORY_VALIDATION_REQUIRED"
+    from backend.app.reporting.service import render_html
+
+    draft_html = render_html(content).decode("utf-8")
+    assert "This draft is not authorized for release." in draft_html
+    assert "Clinical use remains subject to laboratory-specific validation" not in draft_html
 
 
 def test_finalization_blocked_until_reportability_final():

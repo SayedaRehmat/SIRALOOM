@@ -131,3 +131,11 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 | Clinical validity, utility, accreditation or regulatory authorization | NOT ESTABLISHED | These are not established by code tests or CI. |
 
 **Current decision: BLOCKED for laboratory trial or clinical workflow.** Phase A remains PARTIAL; Phases B and C remain incomplete. Use only with an explicit non-clinical development/demo description; do not represent the system as clinically validated or production-qualified.
+
+## 2026-10-19 report sign-out integrity addendum
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Authorized sign-out distinguished from clinical validation | PASS (automated source/test scope) | Finalization now records `AUTHORIZED_SIGNOUT` and `clinical_use_status=LABORATORY_VALIDATION_REQUIRED`; rendered signed reports retain the lab-validation limitation. Focused report/sign-out suite: 35 passed; full backend suite excluding the Windows-native PDF renderer: 964 passed, 39 skipped. This does not establish laboratory validation or live report delivery. |
+
+The change is in the working tree based on local/remote `main` at `9abb0a4`; its commit/push state is pending. It does not change the overall release decision: Phase A remains PARTIAL and controlled laboratory use remains blocked pending deployed and scientific evidence.

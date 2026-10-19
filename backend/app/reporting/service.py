@@ -578,6 +578,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         "final_result": {
             "status": "DRAFT",
             "release_state": "NOT_FOR_CLINICAL_RELEASE",
+            "clinical_use_status": "LABORATORY_VALIDATION_REQUIRED",
             "findings_count": len(findings),
             "reportable_findings_count": sum(1 for f in findings if f.get("reportability", {}).get("disposition") == "REPORT"),
             "reportability_complete": reportability_complete,
@@ -659,6 +660,13 @@ def _html_document(content: dict[str, Any]) -> str:
     case_identifier = content.get("case_identifier", content.get("case_id", "-"))
     reference_build = content.get("reference_build", "-")
     final_result = content.get("final_result", {"findings_count": len(content.get("findings", []))})
+    if final_result.get("signed_out_at"):
+        release_notice = (
+            "Authorized sign-out is recorded. Clinical use remains subject to "
+            "laboratory-specific validation and applicable quality/regulatory controls."
+        )
+    else:
+        release_notice = "This draft is not authorized for release."
     generated_at = content.get("generated_at", _utc_now().isoformat())
     report_schema_version = content.get("report_schema_version", "1.0.0")
     report_version = content.get("report_version", 1)
@@ -691,7 +699,7 @@ th,td {{ border:1px solid #bbb; padding:4px; vertical-align:top; }} th {{ backgr
 <div><strong>Findings:</strong> {final_result.get('findings_count', 0)}</div>
 </div></div>
 <h2>{'Final Result' if not bilingual else 'Final Result / النتيجة النهائية'}</h2>
-<p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — This generated artifact is not a clinical release until an authorized sign-out is recorded.</p>
+<p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — {html.escape(release_notice)}</p>
 {''.join(findings_html)}
 <h2>{'Methodology' if not bilingual else 'Methodology / المنهجية'}</h2>
 <p>{html.escape(content['methodology'])}</p>
