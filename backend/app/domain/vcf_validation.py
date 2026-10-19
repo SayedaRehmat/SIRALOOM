@@ -95,13 +95,20 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
         keys = fmt.split(":")
         if len(keys) != len(set(keys)) or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", k) for k in keys):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
+        if "GT" in keys and keys[0] != "GT":
+            raise StrictVCFValidationError(
+                f"GT must be the first FORMAT key when present at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
         for sample_index, sample in enumerate(fields[9:], start=1):
             values = sample.split(":")
-            if len(values) != len(keys):
+            if not sample or any(value == "" for value in values) or len(values) > len(keys):
                 raise StrictVCFValidationError(
-                    f"Sample {sample_index} has {len(values)} FORMAT values but {len(keys)} keys at line {line_no}",
+                    f"Sample {sample_index} has malformed FORMAT values for {len(keys)} keys at line {line_no}",
                     code="VCF_SAMPLE_INVALID",
                 )
+            # VCF permits trailing FORMAT fields to be omitted. A missing value
+            # within the supplied values must still use the explicit '.' token.
             if "GT" in keys:
                 gt = values[keys.index("GT")]
                 if gt != ".":
@@ -157,6 +164,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         "The #CHROM header must begin with CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO",
                         code="VCF_HEADER_INVALID",
                     )
+                if any(column == "" for column in columns):
+                    raise StrictVCFValidationError(
+                        "The #CHROM header cannot contain empty columns",
+                        code="VCF_HEADER_INVALID",
+                    )
                 if len(columns) >= 9 and columns[8] != "FORMAT":
                     raise StrictVCFValidationError("Column 9 must be FORMAT when sample columns are present", code="VCF_HEADER_INVALID")
                 if len(columns) > 9 and len(columns[9:]) != len(set(columns[9:])):
@@ -179,6 +191,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_HEADER_INVALID",
                 )
             fields = line.split("\t")
+            if chrom_header is None or len(fields) != len(chrom_header):
+                expected = len(chrom_header) if chrom_header is not None else 0
+                raise StrictVCFValidationError(
+                    f"VCF record has {len(fields)} columns but the #CHROM header declares {expected} at line {line_no}",
+                    code="VCF_RECORD_INVALID",
+                )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
             records += 1
             if len(alts) > 1:

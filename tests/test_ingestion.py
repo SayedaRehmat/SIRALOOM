@@ -55,6 +55,36 @@ def test_invalid_vcf_header_is_rejected(tmp_path: Path):
     assert result.errors
 
 
+def test_upload_validation_rejects_sample_count_mismatch(tmp_path: Path):
+    path = tmp_path / "sample-count-mismatch.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert "header declares 10" in result.errors[0]
+
+
+def test_upload_validation_accepts_omitted_trailing_format_values(tmp_path: Path):
+    path = tmp_path / "trailing-format-omission.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\tGT:GQ:DP\t0/1:40\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.sample_names == ["SAMPLE1"]
+
+
 def test_index_filename_and_magic_validation(tmp_path: Path):
     primary = "sample.vcf.gz"
     tbi = tmp_path / "sample.vcf.gz.tbi"

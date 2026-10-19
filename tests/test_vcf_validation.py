@@ -72,6 +72,58 @@ def test_strict_validation_checks_genotype_allele_indexes(tmp_path: Path):
     assert exc.value.code == "VCF_GENOTYPE_INVALID"
 
 
+@pytest.mark.parametrize(
+    ("columns", "body"),
+    [
+        (
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+            "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        ),
+        (
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+            "1\t2\t.\tA\tG\t.\tPASS\t.\tGT\n",
+        ),
+    ],
+)
+def test_strict_validation_requires_record_column_count_to_match_header(
+    tmp_path: Path, columns: str, body: str
+):
+    path = tmp_path / "wrong-column-count.vcf"
+    write_vcf(path, body, columns=columns)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_RECORD_INVALID"
+
+
+def test_strict_validation_requires_gt_to_be_first_format_key(tmp_path: Path):
+    path = tmp_path / "gt-not-first.vcf"
+    write_vcf(
+        path,
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGQ:GT\t20:0/1\n",
+        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FORMAT_INVALID"
+
+
+def test_strict_validation_accepts_omitted_trailing_format_values(tmp_path: Path):
+    path = tmp_path / "trailing-format-omission.vcf"
+    write_vcf(
+        path,
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT:GQ:DP\t0/1:40\n",
+        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
 def test_strict_validation_profiles_multiallelic_and_symbolic_records(tmp_path: Path):
     path = tmp_path / "profile.vcf"
     write_vcf(

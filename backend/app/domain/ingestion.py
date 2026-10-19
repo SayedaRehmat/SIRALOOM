@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
+from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 PRIMARY_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
 INDEX_SUFFIXES = (".tbi", ".csi")
@@ -118,6 +119,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
+        validate_vcf_strict(p)
         bcftools_error = _bcftools_validate(p)
         if bcftools_error:
             raise VCFValidationError(
@@ -166,7 +168,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "genotyping workflow and are not treated as ordinary Phase 1 variant records."
             )
         return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings)
-    except (VCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
+    except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [])
 
 
