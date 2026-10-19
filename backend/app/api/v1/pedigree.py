@@ -217,14 +217,21 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     analysis=get_accessible_analysis(analysis_id,db,principal)
     require_role(principal, REVIEW_ROLES)
     get_analysis_variant(analysis,variant_id,db)
+    models = []
+    for raw_model in body.models:
+        try:
+            model = normalize_model(raw_model)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        if model in models:
+            raise HTTPException(400, f"Duplicate inheritance model: {model}")
+        models.append(model)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     _validate_observation_members(rows, members)
     obs=[FamilyObservation(member_id=members[r.pedigree_member_id].member_identifier,sex=members[r.pedigree_member_id].sex,affected_status=r.phenotype_status or members[r.pedigree_member_id].affected_status,genotype=r.genotype,zygosity=r.zygosity) for r in rows if r.pedigree_member_id in members]
     fp=fingerprint(obs); results=[]
-    for raw in body.models:
-        try: model=normalize_model(raw)
-        except ValueError as exc: raise HTTPException(400,str(exc))
+    for model in models:
         result=assess_model(model,obs)
         row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=result["score"],rationale=result["rationale"],observation_fingerprint=fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
         db.add(row); results.append({"id":str(row.id),**result,"fingerprint":fp,"reviewer_note":body.reviewer_note})

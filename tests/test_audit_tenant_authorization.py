@@ -611,6 +611,27 @@ def test_segregation_lineage_rejects_member_from_another_case(monkeypatch, opera
     assert exc.value.detail == "Segregation observation member does not belong to the analysis case"
 
 
+def test_inheritance_assessment_rejects_duplicate_normalized_models_before_reads(monkeypatch):
+    analysis_id, variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
+    principal = _principal(uuid4(), role="reviewer")
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+
+    class _Db:
+        def scalars(self, _query):
+            pytest.fail("duplicate model request must be rejected before database reads")
+
+    payload = pedigree.AssessmentInput(models=["AD", "autosomal dominant"])
+    with pytest.raises(HTTPException) as exc:
+        pedigree.assess_inheritance(analysis_id, variant_id, payload, _Db(), principal)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Duplicate inheritance model: AD"
+
+
 @pytest.mark.parametrize("broken_link", ["relationship", "specimen"])
 def test_pedigree_dossier_rejects_cross_case_links(monkeypatch, broken_link):
     case_id, member_id, specimen_id = uuid4(), uuid4(), uuid4()
