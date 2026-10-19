@@ -3,7 +3,7 @@
 **Updated:** 2026-10-14  
 **Audit baseline:** current main after merges of PRs #185–#211, including worker dispatch fencing, report artifact replay safety, reproducibility manifests, and laboratory preflight.  
 **Active batch:** A2, A4/A5, and A8 — API tenant authorization, stage-body replay, and reanalysis resource ownership.
-**Current verified baseline (2026-10-19):** `main` and `origin/main` match at `4ac43c356c0276485a50235baf88bfad74539300`. Exact-SHA [CI run #392334](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39233424737) passed backend, PostgreSQL integration, and frontend jobs. The PostgreSQL job passed. **Phase A remains PARTIAL**: live Firebase/browser identity, deployed two-tenant API/artifact isolation, and reviewer-to-signed-report recovery with real laboratory storage are not verified; scientific truth-set and controlled deployment/restore work are also outstanding. The unrelated untracked backup artifact remains preserved.
+**Current main checkpoint (2026-10-19):** local `main` and `origin/main` match at `6d4c1e751e577695d374a9fd75fdd29a8f4f57be`. Exact-SHA CI run #392334 passed on parent `4ac43c356c0276485a50235baf88bfad74539300`; CI for the two newer documentation/frontend commits has not yet been verified because the unauthenticated Actions API rate limit was reached. The invitation-page localization change passes the i18n guard and 20 frontend Node regression tests locally. **Phase A remains PARTIAL**: live Firebase/browser identity, deployed two-tenant API/artifact isolation, and reviewer-to-signed-report recovery with real laboratory storage are not verified; scientific truth-set and controlled deployment/restore work are also outstanding. The unrelated untracked backup artifact remains preserved.
 
 ## Confirmed findings and corrections
 
@@ -357,3 +357,10 @@
 - **Evidence limit:** these are automated local-storage/test-adapter checks. They do not prove live Firebase/browser identity, deployed tenant separation, real laboratory object-storage durability, or a deployed worker-loss recovery journey. The bundled Python runtime lacks pytest, so no local rerun was possible in this session; exact-SHA CI #392334 passed the repository suite.
 - **Source review:** report/export/variant/clinical-governance/pedigree object paths were checked for tenant and parent lineage. No further confirmed direct-object defect was found in these inspected paths; this is not a proof of complete authorization correctness.
 - **Next:** continue the remaining route/worker source sweep and frontend-to-API journey audit, fixing confirmed defects with regressions. Phase A remains PARTIAL until all code-level journeys and required external/deployed validation evidence are complete.
+
+### 2026-10-19 invitation acceptance localization
+
+- **Finding:** the invitation acceptance UI hard-coded English for verification, token, Firebase configuration, resend, acceptance, and account-switch states even though the rest of the app uses the centralized English/Arabic catalog.
+- **Correction:** all static invitation-flow copy now uses typed `invite.*` message IDs with English and Arabic translations. Provider resend failures use a localized generic message instead of exposing raw provider error text.
+- **Verification:** `node ../scripts/validate-i18n.mjs` passed; all configured frontend Node session/workspace tests passed (**20 passed**); `git diff --check` passed. The full Next build is not available locally because frontend dependencies are not installed. Exact-SHA CI has not been verified for this commit; the Actions API rate limit was reached after the documentation checkpoint run.
+- **Status:** pushed to `main` as `6d4c1e7`. Continue identity and frontend-to-API journey review. Phase A remains PARTIAL; live Firebase/browser identity and deployed tenant/storage validations remain NOT TESTED.

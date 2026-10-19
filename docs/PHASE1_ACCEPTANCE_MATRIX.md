@@ -109,8 +109,8 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ### Source and CI reconciliation
 
-- **Current branch / exact SHA:** `main` at [`4ac43c356c0276485a50235baf88bfad74539300`](https://github.com/SayedaRehmat/SIRALOOM/commit/4ac43c356c0276485a50235baf88bfad74539300); local `main` and `origin/main` match. The only local untracked path is the preserved unrelated backup artifact.
-- **Exact-SHA CI:** [run #392334](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39233424737) passed backend, PostgreSQL integration and frontend. The preceding exact-SHA run #392315 passed the PostgreSQL concurrent VCF-readiness and versioned clinical-governance regressions.
+- **Current branch / exact SHA:** `main` at [`6d4c1e751e577695d374a9fd75fdd29a8f4f57be`](https://github.com/SayedaRehmat/SIRALOOM/commit/6d4c1e751e577695d374a9fd75fdd29a8f4f57be); local `main` and `origin/main` match. The only local untracked path is the preserved unrelated backup artifact.
+- **Exact-SHA CI:** [run #392334](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39233424737) passed on parent `4ac43c3`. CI for current `6d4c1e7` is not verified; the available GitHub Actions API became rate limited. The invitation acceptance localization change passed local i18n and Node session/workspace checks.
 - **Issue #171:** OPEN; its live/deployed workflow, scientific benchmark and deployment/restore requirements remain unsatisfied.
 - **PR #179:** OPEN at head `76d8b3460bedcac5d38f01bbd3b81666ea9a29fa`, based on `6cfc89b4f2b9abfae5b4908ff1cedac58ecdbc7e`; current PR backend check fails. Its annotation recovery logic and test are superseded by the current main implementation/test already verified in run #392288. **Disposition: exclude the stale PR branch from this release candidate; do not merge it.** Leave closing the PR to the repository maintainer.
 
@@ -118,7 +118,7 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 | Dimension | Status | Evidence / remaining requirement |
 |---|---|---|
-| API/backend/frontend regression CI | PASS | Exact-SHA run #392334 passed all three jobs. This is software evidence only. |
+| API/backend/frontend regression CI | PARTIAL | Exact-SHA run #392334 passed on parent `4ac43c3`; current `6d4c1e7` CI is unverified. This is software evidence only. |
 | VCF intake and concurrent case readiness | PASS (automated scope) | Strict VCF validation tests passed locally; PostgreSQL concurrent valid/invalid VCF regression passed in run #392315. Supported VCF versions remain 4.2 and 4.3; newer versions are rejected. |
 | Versioned confirmation and secondary-finding concurrency | PASS (automated scope) | Local focused tests: 6 passed, 2 PostgreSQL cases skipped locally; both PostgreSQL cases passed in run #392315. |
 | Authentication/signup/verification/recovery/logout in a live browser | NOT TESTED | No configured Firebase/browser journey evidence. |
