@@ -47,7 +47,7 @@ def test_readiness_fails_when_required_firebase_is_unconfigured(monkeypatch):
 
     client = TestClient(app)
     response = client.get("/api/v1/ready")
-    assert response.status_code == 200
+    assert response.status_code == 503
     payload = response.json()
     assert payload["status"] == "not_ready"
     assert payload["checks"]["firebase"]["status"] == "error"
@@ -69,7 +69,7 @@ def test_readiness_does_not_expose_dependency_exception_details(monkeypatch):
     monkeypatch.setattr(health.settings, "firebase_project_id", None)
 
     response = TestClient(app).get("/api/v1/ready")
-    assert response.status_code == 200
+    assert response.status_code == 503
     assert secret not in response.text
     assert "super-secret" not in response.text
     assert response.json()["checks"]["database"] == {

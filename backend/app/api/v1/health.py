@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from sqlalchemy import text
 
 from backend.app.config import settings
@@ -55,7 +55,7 @@ def _check_artifact_root() -> tuple[str, str | None]:
 
 
 @router.get("/ready")
-def ready():
+def ready(response: Response):
     """Readiness probe for load balancers/orchestrators.
 
     Liveness and readiness are intentionally separate: a process can be alive while
@@ -81,6 +81,8 @@ def ready():
         checks["firebase"] = {"status": "ok" if firebase["configured"] else "not_required", "configured": firebase["configured"], "required": firebase["required"]}
 
     overall = "ok" if all(c["status"] in {"ok", "not_required"} for c in checks.values()) else "not_ready"
+    if overall != "ok":
+        response.status_code = 503
     return {
         "status": overall,
         "service": "SIRALOOM Variant API",
