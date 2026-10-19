@@ -30,7 +30,7 @@ This matrix describes the repository code at commit [`07fffb9`](https://github.c
 - `backend/app/workflows/variant.py`: profiles the input and persists `UNSUPPORTED_GVCF_INPUT` or `UNSUPPORTED_STRUCTURAL_VARIANT` before reference-resource resolution and normalization.
 - `tests/test_vcf_tools.py`: basic reference-aware multiallelic splitting/left-alignment fixture, artifact-preservation tests, and a genotype-bearing 1/2 split fixture covering INFO Number=A and FORMAT Number=R/G cardinality. [PR #137 CI](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928636733) passed backend, PostgreSQL integration and frontend jobs.
 - `tests/test_vcf_validation.py`: malformed record, genotype index and profiling tests.
-- `tests/test_unsupported_vcf_worker_routing.py`: invokes the production `run_variant_analysis` wrapper with SQLite persistence and proves GVCF and symbolic SV inputs are blocked with typed error codes, normalization metadata, and an audit event before reference resource resolution. This does not validate an SV/GVCF analysis capability.
+- `tests/test_unsupported_vcf_worker_routing.py`: invokes the production `run_variant_analysis` wrapper with SQLite persistence for GVCF `<NON_REF>`, symbolic `<DEL>`, breakend, and `*` spanning-deletion inputs. Each must be blocked with a typed code, normalization metadata, and audit event before reference-resource resolution. This does not validate an SV/GVCF analysis capability.
 
 ## Scientific policy
 

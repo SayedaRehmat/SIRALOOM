@@ -107,7 +107,7 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ## Current release-gate snapshot — 2026-10-19
 
-> **Superseding checkpoint (2026-10-19):** local and remote `main` are verified at [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c). Full backend suite on this code passed **966**, with **39 skipped**, excluding the Windows-native PDF renderer. Exact-SHA CI is unverified. The latest code also durably blocks GVCF and symbolic SV input before reference-resource lookup. Phase A remains PARTIAL. See [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md) for exact commands, limitations and remaining gates.
+> **Superseding checkpoint (2026-10-19):** application-code commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c) and test-only commit [`a37b662`](https://github.com/SayedaRehmat/SIRALOOM/commit/a37b662) are on synchronized local/remote `main`. The full backend suite passed **968**, with **39 skipped**, excluding the Windows-native PDF renderer. Exact-SHA CI is unverified. GVCF `<NON_REF>`, symbolic SV, breakend, and `*` inputs are durably blocked before reference-resource lookup. Phase A remains PARTIAL. See [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md) for exact commands, limitations and remaining gates.
 
 ### Source and CI reconciliation
 
@@ -120,7 +120,7 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 | Dimension | Status | Evidence / remaining requirement |
 |---|---|---|
-| API/backend/frontend regression CI | PARTIAL | Full local backend suite on `07fffb9`: 966 passed, 39 skipped, excluding the Windows-native PDF renderer. Exact-SHA CI for this commit is unverified. This is software evidence only. |
+| API/backend/frontend regression CI | PARTIAL | Full local backend suite on the `07fffb9` source plus test-only follow-up: 968 passed, 39 skipped, excluding the Windows-native PDF renderer. Exact-SHA CI for `07fffb9` is unverified. This is software evidence only. |
 | VCF intake and concurrent case readiness | PASS (automated scope) | Strict VCF validation tests passed locally; PostgreSQL concurrent valid/invalid VCF regression passed in run #392315. Supported VCF versions remain 4.2 and 4.3; newer versions are rejected. |
 | Versioned confirmation and secondary-finding concurrency | PASS (automated scope) | Local focused tests: 6 passed, 2 PostgreSQL cases skipped locally; both PostgreSQL cases passed in run #392315. |
 | Authentication/signup/verification/recovery/logout in a live browser | NOT TESTED | No configured Firebase/browser journey evidence. |
@@ -144,6 +144,6 @@ The change is committed and pushed on local/remote `main` at [`c68e0f2`](https:/
 
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
-| GVCF and symbolic SV inputs explicitly blocked with durable provenance | PASS (automated workflow scope) | Commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c) runs `run_variant_analysis` against SQLite for a GVCF `<NON_REF>` reference block and symbolic `<DEL>`, asserting `BLOCKED`, the typed code, next-step/profile metadata, audit record, and no reference lookup. Focused VCF/intake/worker set: 29 passed, 5 skipped; full backend suite: 966 passed, 39 skipped, excluding the Windows-native PDF renderer. This verifies safe rejection only, not SV/GVCF analysis support. |
+| GVCF and symbolic SV inputs explicitly blocked with durable provenance | PASS (automated workflow scope) | Commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c) plus a test-only follow-up invokes `run_variant_analysis` against SQLite for GVCF `<NON_REF>`, symbolic `<DEL>`, breakend, and `*` records, asserting `BLOCKED`, typed codes, next-step/profile metadata, audit record, and no reference lookup. Focused worker/VCF/intake tests: 29 passed; full backend suite: 968 passed, 39 skipped, excluding the Windows-native PDF renderer. This verifies safe rejection only, not SV/GVCF analysis support. |
 
 This code is on local and remote `main`; exact-SHA CI and all live/deployed, independent scientific benchmark, and laboratory storage/restore gates remain unverified. Overall release status remains BLOCKED for laboratory use; Phase A remains PARTIAL.
