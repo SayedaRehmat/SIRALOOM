@@ -2,7 +2,8 @@
 
 | Requirement | Implementation | Automated evidence | Live validation | Qualification status |
 |---|---|---|---|---|
-| Valid VCF accepted | VCF parser + artifact ingestion | Backend tests | Required | BLOCKED |
+| Valid VCF accepted | Strict VCFv4.2/v4.3 validation at artifact intake plus artifact ingestion | `tests/test_vcf_validation.py tests/test_ingestion.py`: 25 passed locally | Required | BLOCKED |
+| VCF version scope | Strict validator accepts VCFv4.2 and VCFv4.3; VCFv4.4/v4.5 are not accepted | Unsupported-version behavior in strict validator; latest code CI not yet verified | Reconcile version support with lab inputs before qualification | PARTIAL |
 | Invalid VCF rejected with actionable error | VCF validation + workflow failure state | Backend tests | Required | BLOCKED |
 | Genome build explicit/verified | GRCh37/GRCh38 artifact metadata + normalization | Backend tests | Required | BLOCKED |
 | Reference-aware normalization | Streaming normalizer | Backend tests | Required | BLOCKED |
@@ -40,7 +41,8 @@ This snapshot supersedes the historical 2026-10-13 snapshot below for current so
 
 ### Current main source and CI
 
-- **Current code-bearing main checkpoint:** [`9a81ac1111c28aa06ad220ef89a1bc267489216d`](https://github.com/SayedaRehmat/SIRALOOM/commit/9a81ac1111c28aa06ad220ef89a1bc267489216d). GitHub Actions [run #392269](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39226927997) passed `backend`, `postgres-integration`, and `frontend` for this exact SHA. `/api/v1/ready` returns HTTP 503 on failed required checks, and Docker Compose and Render health probes target readiness; CI passed the API and deployment-config regressions.
+- **Current code-bearing main checkpoint:** [`0eb61a49f2f2f0e115f56436cb5640e05350599e`](https://github.com/SayedaRehmat/SIRALOOM/commit/0eb61a49f2f2f0e115f56436cb5640e05350599e). The local strict-validation/intake suites passed 25 tests; CI status for this exact SHA is unverified because the unauthenticated Actions API is rate limited.
+- **Previous configured-CI checkpoint:** [`9a81ac1111c28aa06ad220ef89a1bc267489216d`](https://github.com/SayedaRehmat/SIRALOOM/commit/9a81ac1111c28aa06ad220ef89a1bc267489216d), verified by [run #392269](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39226927997) across `backend`, `postgres-integration`, and `frontend`. It points Docker Compose and Render probes at `/api/v1/ready`; that endpoint returns HTTP 503 on failed required checks.
 - **Readiness API code checkpoint:** [`0533276957a8e329a1df328bc2d14df128c1e48a`](https://github.com/SayedaRehmat/SIRALOOM/commit/0533276957a8e329a1df328bc2d14df128c1e48a), verified by run #392261.
 - **Previous inheritance assessment code checkpoint:** [`75ccd44565ee6bc5e1f952644f8fed746dddc891`](https://github.com/SayedaRehmat/SIRALOOM/commit/75ccd44565ee6bc5e1f952644f8fed746dddc891), verified by run #392245. Its following ledger checkpoint `30421af87caefac93920ad6301c50bc823c1c419` passed run #392246.
 - **Following ledger checkpoint:** [`30421af87caefac93920ad6301c50bc823c1c419`](https://github.com/SayedaRehmat/SIRALOOM/commit/30421af87caefac93920ad6301c50bc823c1c419). GitHub Actions [run #392246](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39224623844) passed all three jobs for that exact SHA. The code fix itself is covered by run #392245.
@@ -57,13 +59,13 @@ This snapshot supersedes the historical 2026-10-13 snapshot below for current so
 
 | Gate | Status | Evidence and remaining requirement |
 |---|---|---|
-| Exact main source and configured CI | **PASS** for code checkpoint `9a81ac1`; **PARTIAL** for full release reconciliation | Run #392269 passed all configured jobs on the exact SHA. PR #184 and #166 remain stale/open and need selective disposition. |
+| Exact main source and configured CI | **PARTIAL** for current code checkpoint `0eb61a4`; **PASS** for parent `9a81ac1` | The current VCF changes passed 25 focused local tests; exact-SHA CI is unverified. Parent run #392269 passed all configured jobs. PR #184 and #166 remain stale/open and need selective disposition. |
 | Signup, email verification, recovery, login/logout and protected-page revisit against Firebase | **NOT RUN** | No configured Firebase test project/credentials and no authenticated live browser journey are recorded. |
 | Two-laboratory API, membership, object and artifact isolation in deployment | **NOT RUN** | Requires two controlled lab identities and deployed API/storage configuration. Unit/API guards are not a deployed tenant test. |
 | Complete deployed VCF-to-review-to-authorized-signout workflow | **NOT RUN** | No deployment revision, real provider response, artifact hashes, or authenticated end-to-end evidence recorded. |
 | Failure/recovery on real PostgreSQL, Redis, workers and object storage | **PARTIAL** | CI includes PostgreSQL/Celery integration and current-main annotation-stage worker-redelivery coverage; real provider/storage, queue outage and complete reviewer/signout recovery remain unverified. |
 | Independent scientific truth-set benchmark | **NOT RUN** | No pinned GIAB truth set, reference checksum, comparison command, or measured TP/FP/FN and precision/recall result recorded. |
-| Production deployment, durable storage, health/readiness, backup/restore and rollback | **PARTIAL** | Readiness HTTP status semantics and Docker Compose/Render probe configuration passed CI #392269. There is no deployed host, measured capacity, backup/restore exercise, or live readiness evidence. PR #184 remains unreconciled. |
+| Production deployment, durable storage, health/readiness, backup/restore and rollback | **PARTIAL** | Readiness HTTP status semantics and Docker Compose/Render probe configuration passed CI #392269 on parent `9a81ac1`. There is no deployed host, measured capacity, backup/restore exercise, or live readiness evidence. PR #184 remains unreconciled. |
 | Clinical validity, utility, accreditation or regulatory authorization | **NOT ESTABLISHED** | Outside what software CI or these engineering tests can demonstrate. |
 
 **Release decision:** BLOCKED for a laboratory trial or clinical workflow pending the NOT RUN gates above. Automated CI supports a software development/research demonstration only; it does not establish clinical readiness or a production-qualified laboratory installation.
