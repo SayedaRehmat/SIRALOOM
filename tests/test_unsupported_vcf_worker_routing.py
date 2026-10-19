@@ -38,6 +38,22 @@ from backend.app.infrastructure.db.models import (
             "UNSUPPORTED_STRUCTURAL_VARIANT",
             "symbolic_records",
         ),
+        (
+            "input.breakend.vcf",
+            "##fileformat=VCFv4.3\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            "1\t100\tbnd1\tA\tA]2:200]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\n",
+            "UNSUPPORTED_STRUCTURAL_VARIANT",
+            "symbolic_records",
+        ),
+        (
+            "input.spanning-deletion.vcf",
+            "##fileformat=VCFv4.3\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            "1\t100\t.\tA\t*\t.\tPASS\t.\n",
+            "UNSUPPORTED_STRUCTURAL_VARIANT",
+            "symbolic_records",
+        ),
     ],
 )
 def test_production_worker_blocks_unsupported_vcf_before_reference_resolution(
