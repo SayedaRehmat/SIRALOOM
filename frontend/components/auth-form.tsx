@@ -10,7 +10,7 @@ import { safeRedirectPath } from "../lib/safe-redirect.mjs";
 import { useLanguage } from "../lib/i18n";
 
 export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; trial?: boolean }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -26,15 +26,17 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!firebaseAuth) return setMessage(t("auth.firebaseMissing"));
+    const auth = firebaseAuth;
+    if (!auth) return setMessage(t("auth.firebaseMissing"));
     setBusy(true); setMessage("");
     try {
       if (mode === "signup") {
-        const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        auth.languageCode = language === "ar" ? "ar" : "en";
         await sendEmailVerification(credential.user);
         window.location.assign(onboardingHref);
       } else {
-        const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+        const credential = await signInWithEmailAndPassword(auth, email, password);
         const redirectPath = requestedRedirect();
         if (!credential.user.emailVerified) { window.location.assign(redirectPath ?? "/onboarding"); return; }
         const token = await credential.user.getIdToken();
@@ -78,6 +80,7 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
     if (!auth) { setMessage(t("auth.firebaseMissing")); return; }
     setBusy(true); setMessage("");
     try {
+      auth.languageCode = language === "ar" ? "ar" : "en";
       await sendPasswordResetEmail(auth, email.trim());
       setMessage(t("auth.resetSent"));
     } catch (error) {

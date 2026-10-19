@@ -9,7 +9,7 @@ import { useLanguage } from "../../../lib/i18n";
 import { attemptSignOut } from "../../../lib/signout.mjs";
 
 export default function Onboarding() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isTrial, setIsTrial] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
@@ -81,6 +81,7 @@ export default function Onboarding() {
     if (!currentUser) { window.location.assign("/login"); return; }
     setBusy(true); setMessage("");
     try {
+      auth.languageCode = language === "ar" ? "ar" : "en";
       await sendEmailVerification(currentUser);
       setMessage(t("onboarding.verifySent"));
     } catch {

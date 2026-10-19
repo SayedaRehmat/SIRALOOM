@@ -10,7 +10,7 @@ import { attemptSignOut } from "../../../../lib/signout.mjs";
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
 export default function InvitationAcceptancePage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -64,6 +64,23 @@ export default function InvitationAcceptancePage() {
     }
   }
 
+  async function resendVerification() {
+    const auth = firebaseAuth;
+    const currentUser = auth?.currentUser;
+    if (!auth) { setMessage(t("invite.firebaseMissing")); return; }
+    if (!currentUser) { window.location.assign("/login"); return; }
+    setBusy(true); setMessage("");
+    try {
+      auth.languageCode = language === "ar" ? "ar" : "en";
+      await sendEmailVerification(currentUser);
+      setMessage(t("invite.verificationSent"));
+    } catch {
+      setMessage(t("invite.resendFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (checking) return <main className="loading">{t("invite.checking")}</main>;
   if (!firebaseConfigured) return <main className="auth-page"><Brand /><section className="auth-card"><h1>{t("invite.unavailable")}</h1><p>{t("invite.firebaseMissing")}</p></section></main>;
 
@@ -72,7 +89,7 @@ export default function InvitationAcceptancePage() {
       <p className="eyebrow">{t("invite.eyebrow")}</p><h1>{t("invite.title")}</h1>
       <p>{t("invite.description")}</p>
       {user ? <div className="configuration-notice"><strong>{user.displayName || user.email}</strong><br />{user.email}</div> : <a className="button" href={`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`}>{t("invite.signIn")}</a>}
-      {user && !user.emailVerified && <button className="button" onClick={() => sendEmailVerification(user).then(() => setMessage(t("invite.verificationSent"))).catch(() => setMessage(t("invite.resendFailed")))}>{t("invite.resend")}</button>}
+      {user && !user.emailVerified && <button className="button" onClick={() => void resendVerification()} disabled={busy}>{t("invite.resend")}</button>}
       {user && <button className="button" onClick={acceptInvitation} disabled={busy || !token || !user.emailVerified}>{busy ? t("invite.accepting") : t("invite.accept")}</button>}
       {message && <p className="form-message" role="status">{message}</p>}
       {user && <button type="button" className="text-button" onClick={() => void switchAccount()} disabled={busy}>{t("invite.switchAccount")}</button>}
