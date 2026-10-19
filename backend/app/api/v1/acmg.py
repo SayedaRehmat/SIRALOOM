@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.acmg.engine import ACMGEngine
+from backend.app.acmg.rules import ALL_CRITERIA
 from backend.app.auth.authorization import (
     REVIEW_ROLES,
     get_accessible_analysis,
@@ -21,16 +22,16 @@ from backend.app.infrastructure.db.session import get_db
 router = APIRouter(tags=["acmg"])
 
 class ACMGCriterionInput(BaseModel):
-    criterion: str = Field(pattern=r"^(PVS1|PS1|PS2|PS3|PS4|PM1|PM2|PM3|PM4|PM5|PM6|PP1|PP2|PP3|PP4|PP5|BA1|BS1|BS2|BS3|BS4|BP1|BP2|BP3|BP4|BP5|BP6|BP7)$")
+    criterion: str = Field(pattern=f"^({'|'.join(sorted(ALL_CRITERIA))})$")
     strength: str
     direction: Literal["PATHOGENIC", "BENIGN"]
-    evidence_ids: list[UUID] = Field(default_factory=list)
+    evidence_ids: list[UUID] = Field(default_factory=list, max_length=100)
     reason: str = Field(min_length=1)
     metadata: dict = Field(default_factory=dict)
 
 class ACMGAssessRequest(BaseModel):
     variant_id: UUID
-    criteria: list[ACMGCriterionInput]
+    criteria: list[ACMGCriterionInput] = Field(min_length=1, max_length=len(ALL_CRITERIA))
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/acmg/assess")
 def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
