@@ -109,8 +109,8 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ### Source and CI reconciliation
 
-- **Current branch / exact SHA:** `main` at [`2bcd22c11c1a6aeba85d05ccc742846cd309cb1d`](https://github.com/SayedaRehmat/SIRALOOM/commit/2bcd22c11c1a6aeba85d05ccc742846cd309cb1d); local `main` and `origin/main` match.
-- **Exact-SHA CI:** [run #392315](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39231528013) passed backend, PostgreSQL integration and frontend. The PostgreSQL job exercised the concurrent VCF readiness and versioned clinical-governance integration regressions.
+- **Current branch / exact SHA:** `main` at [`4ac43c356c0276485a50235baf88bfad74539300`](https://github.com/SayedaRehmat/SIRALOOM/commit/4ac43c356c0276485a50235baf88bfad74539300); local `main` and `origin/main` match. The only local untracked path is the preserved unrelated backup artifact.
+- **Exact-SHA CI:** [run #392334](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39233424737) passed backend, PostgreSQL integration and frontend. The preceding exact-SHA run #392315 passed the PostgreSQL concurrent VCF-readiness and versioned clinical-governance regressions.
 - **Issue #171:** OPEN; its live/deployed workflow, scientific benchmark and deployment/restore requirements remain unsatisfied.
 - **PR #179:** OPEN at head `76d8b3460bedcac5d38f01bbd3b81666ea9a29fa`, based on `6cfc89b4f2b9abfae5b4908ff1cedac58ecdbc7e`; current PR backend check fails. Its annotation recovery logic and test are superseded by the current main implementation/test already verified in run #392288. **Disposition: exclude the stale PR branch from this release candidate; do not merge it.** Leave closing the PR to the repository maintainer.
 
@@ -118,12 +118,12 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 | Dimension | Status | Evidence / remaining requirement |
 |---|---|---|
-| API/backend/frontend regression CI | PASS | Exact-SHA run #392315 passed all three jobs. This is software evidence only. |
+| API/backend/frontend regression CI | PASS | Exact-SHA run #392334 passed all three jobs. This is software evidence only. |
 | VCF intake and concurrent case readiness | PASS (automated scope) | Strict VCF validation tests passed locally; PostgreSQL concurrent valid/invalid VCF regression passed in run #392315. Supported VCF versions remain 4.2 and 4.3; newer versions are rejected. |
 | Versioned confirmation and secondary-finding concurrency | PASS (automated scope) | Local focused tests: 6 passed, 2 PostgreSQL cases skipped locally; both PostgreSQL cases passed in run #392315. |
 | Authentication/signup/verification/recovery/logout in a live browser | NOT TESTED | No configured Firebase/browser journey evidence. |
 | Deployed two-lab API and artifact isolation | NOT TESTED | Requires deployed test tenants and verified storage permissions. |
-| Reviewer-to-authorized-signout recovery with lab object storage | NOT TESTED | Deterministic orchestration tests exist; real-storage/deployed recovery is unverified. |
+| Reviewer-to-authorized-signout recovery with lab object storage | PARTIAL | Automated recovery tests cover storage failure rollback, retry, durable local artifact, integrity, approval audit, resume dispatch and idempotency; live laboratory object-storage/deployed recovery remains unverified. |
 | Independent scientific truth-set benchmark | NOT TESTED | No versioned TP/FP/FN and concordance report is recorded. |
 | Production deployment, backup restore and rollback | NOT TESTED | No controlled lab deployment/restore evidence is recorded. |
 | Clinical validity, utility, accreditation or regulatory authorization | NOT ESTABLISHED | These are not established by code tests or CI. |
