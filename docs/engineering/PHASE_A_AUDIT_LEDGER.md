@@ -305,3 +305,11 @@
 - Regression evidence: `pytest -q tests/test_auth_foundation.py tests/test_auth_onboarding_security.py tests/test_auth_environment_boundary.py tests/test_principal_membership_authorization.py tests/test_api_route_authentication_coverage.py tests/test_tenant_object_authorization.py tests/test_authorization_matrix.py` => **68 passed**. `npm run test:session` => **7 passed**. `npm run validate:i18n` => **PASS**. `node --check` on the new session helper and tests => **PASS**.
 - Build limitation: `npm run build` passed the i18n guard but could not start Next.js because `next` is not installed in this local checkout. GitHub frontend CI must verify the TypeScript/Next production build after this change is pushed.
 - Full Phase 1 remains PARTIAL: real Firebase/browser session and complete end-to-end journeys are not exercised here.
+
+### 2026-10-19 concurrency and source-of-truth checkpoint
+
+- Verified branch `main`, HEAD `72f30a94b02b4cf17deb266e0584529470105bf2`, and `origin/main` equality after push.
+- The VCF readiness correction is pushed in `4f05f3b`; version allocation serialization for confirmation and secondary-finding records is pushed in `72f30a9`.
+- Local evidence: VCF/artifact focused tests **15 passed, 1 skipped**; clinical governance focused tests **6 passed, 2 skipped**. PostgreSQL-only tests were skipped locally, so those row-lock behaviors still require the configured PostgreSQL integration CI result.
+- Exact-SHA CI status was not obtained in this session. `gh` CLI is absent; public web retrieval of the repository issue/PR/action pages was unavailable. Do not infer CI or Issue #171 / PR #179 state.
+- Phase A remains PARTIAL. The live Firebase/browser journey, deployed two-lab API/artifact isolation, and real-storage reviewer-to-signout recovery are not evidenced in this checkout.
