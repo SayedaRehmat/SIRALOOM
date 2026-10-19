@@ -34,6 +34,38 @@
 | Scientific benchmark validation | Validation corpus + expected outputs | Harness | Required | NOT TESTED |
 | Live frontend/backend deployment | Vercel/public backend | CI/deployment | Required | NOT TESTED |
 
+## Current release-gate evidence snapshot — 2026-10-19
+
+This snapshot supersedes the historical 2026-10-13 snapshot below for current source and CI state. The release gate in Issue [#171](https://github.com/SayedaRehmat/SIRALOOM/issues/171) remains **OPEN / BLOCKED** because the required deployed workflow, scientific benchmark, and laboratory deployment evidence have not been produced.
+
+### Current main source and CI
+
+- **Code-bearing main checkpoint:** [`75ccd44565ee6bc5e1f952644f8fed746dddc891`](https://github.com/SayedaRehmat/SIRALOOM/commit/75ccd44565ee6bc5e1f952644f8fed746dddc891). GitHub Actions [run #392245](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39224507530) passed `backend`, `postgres-integration`, and `frontend` for this exact SHA.
+- **Following ledger checkpoint:** [`30421af87caefac93920ad6301c50bc823c1c419`](https://github.com/SayedaRehmat/SIRALOOM/commit/30421af87caefac93920ad6301c50bc823c1c419). GitHub Actions [run #392246](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39224623844) passed all three jobs for that exact SHA. The code fix itself is covered by run #392245.
+- The CI workflow applies migrations in its PostgreSQL integration job and validates production Compose/container configuration in the frontend job. These are CI checks only; they do not prove an actual laboratory deployment, durable host storage, backup restoration, Firebase identity flows, or a live two-tenant boundary.
+- Local Python evidence at the code checkpoint: **984 passed, 36 skipped** across the backend suite excluding `tests/test_report_pdf.py`. The unfiltered run had one failure because the Windows host could not load WeasyPrint native `libgobject-2.0-0`. This is not a claim that PDF rendering passed locally; Linux CI passed its configured checks.
+
+### Open pull requests and disposition
+
+- **PR #184 — production readiness hardening:** [open, head `31fd423`](https://github.com/SayedaRehmat/SIRALOOM/pull/184), based on `e6e80ad`. Its CI [run #38385341613](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38385341613) passed on that PR head. The branch is stale relative to current main (184 main-only commits and 27 PR-only commits in the local comparison); its current tree would remove many later source and regression-test files. **Do not merge this branch as-is.** Its readiness HTTP status, strict VCF column cardinality, startup configuration, package pinning and persistent-mount changes require review and selective reconciliation after the earlier workflow/scientific gates; they are not verified in the current deployment.
+- **PR #179 — annotation recovery:** [open, head `76d8b34`](https://github.com/SayedaRehmat/SIRALOOM/pull/179), based on `6cfc89b`. Its old backend check failed in [run #38378949929](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38378949929). The current main tree has a later production-workflow/Celery-wrapper recovery test at `tests/test_actual_annotation_stage_redelivery.py` and corresponding worker recovery changes; those current-main tests passed run #392245. **Disposition: the old PR head is superseded for code integration; no merge is required.** Its deterministic-provider test remains orchestration evidence, not a live provider or scientific benchmark.
+- **PR #166 — laboratory UI/operations design:** [open, head `8a86c8a`](https://github.com/SayedaRehmat/SIRALOOM/pull/166), based on `3ae4c6f`. Its CI [run #38134595226](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/38134595226) passed on the old head. The branch is stale relative to current main (199 main-only commits and 27 PR-only commits in the local comparison). Its capacity policy is present on current main; the remaining UI changes are not accepted as evidence for deployment or for the live workflow. **Do not merge the stale branch as-is; rebase and review only if that UI work remains a product requirement.**
+
+### Required acceptance status
+
+| Gate | Status | Evidence and remaining requirement |
+|---|---|---|
+| Exact main source and configured CI | **PASS** for code checkpoint `75ccd44`; **PARTIAL** for full release reconciliation | Runs #392245 and #392246 passed configured jobs. PR #184 and #166 remain stale/open and need selective disposition. |
+| Signup, email verification, recovery, login/logout and protected-page revisit against Firebase | **NOT RUN** | No configured Firebase test project/credentials and no authenticated live browser journey are recorded. |
+| Two-laboratory API, membership, object and artifact isolation in deployment | **NOT RUN** | Requires two controlled lab identities and deployed API/storage configuration. Unit/API guards are not a deployed tenant test. |
+| Complete deployed VCF-to-review-to-authorized-signout workflow | **NOT RUN** | No deployment revision, real provider response, artifact hashes, or authenticated end-to-end evidence recorded. |
+| Failure/recovery on real PostgreSQL, Redis, workers and object storage | **PARTIAL** | CI includes PostgreSQL/Celery integration and current-main annotation-stage worker-redelivery coverage; real provider/storage, queue outage and complete reviewer/signout recovery remain unverified. |
+| Independent scientific truth-set benchmark | **NOT RUN** | No pinned GIAB truth set, reference checksum, comparison command, or measured TP/FP/FN and precision/recall result recorded. |
+| Production deployment, durable storage, health/readiness, backup/restore and rollback | **PARTIAL** | CI validates configuration/builds; there is no deployed host, measured capacity, backup/restore exercise, or live readiness evidence. PR #184 remains unreconciled. |
+| Clinical validity, utility, accreditation or regulatory authorization | **NOT ESTABLISHED** | Outside what software CI or these engineering tests can demonstrate. |
+
+**Release decision:** BLOCKED for a laboratory trial or clinical workflow pending the NOT RUN gates above. Automated CI supports a software development/research demonstration only; it does not establish clinical readiness or a production-qualified laboratory installation.
+
 ## Release-gate evidence snapshot (2026-10-13)
 
 ### Exact source and CI evidence
