@@ -171,7 +171,7 @@ def test_signout_route_compensates_signed_pdf_when_finalization_fails(monkeypatc
     with pytest.raises(RuntimeError, match="audit flush failed"):
         reports_api.finalize(
             report_id,
-            SimpleNamespace(reason="Reviewed"),
+            SimpleNamespace(expected_version=report.report_version, reason="Reviewed"),
             db,
             Principal(user_id=uuid4(), organization_id=organization_id, role="lab_director", subject="test"),
         )
