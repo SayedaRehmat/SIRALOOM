@@ -152,6 +152,7 @@ This code is on local and remote `main`; exact-SHA CI and all live/deployed, ind
 
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
-| Non-proposed ACMG criteria cannot contribute to a classification | PARTIAL | `ACMGEngine.validate_assessments` now accepts only `PROPOSED`; regression cases cover `NOT_MET`, `REJECTED`, `REQUIRES_REVIEW`, and `NOT_APPLICABLE`. Python compilation, `git diff --check`, and five isolated runtime assertions passed. Pytest was NOT RUN because the available Python interpreter has no pytest or project dependencies. Exact-SHA CI has not yet run. |
+| Non-proposed ACMG criteria cannot contribute to a classification | PASS (automated scope) | `ACMGEngine.validate_assessments` now accepts only `PROPOSED`; regression cases cover `NOT_MET`, `REJECTED`, `REQUIRES_REVIEW`, and `NOT_APPLICABLE`. Python compilation, `git diff --check`, and five isolated runtime assertions passed. Exact-SHA CI run #392456 passed backend, PostgreSQL integration, and frontend jobs for `e416a4e`. |
+| Manual ACMG decision audit identifies the authenticated reviewer | PARTIAL | The manual assessment route now records the principal as `HUMAN`; route regression `tests/test_acmg_audit_actor.py` is added and syntax-compiled but has not yet executed in CI. |
 
-This local guard protects the engine boundary; it does not prove evidence assignment or clinical validity. Phase A remains PARTIAL and the laboratory deployment release gate remains BLOCKED.
+These changes protect interpretation status handling and reviewer audit attribution; they do not prove evidence assignment or clinical validity. Phase A remains PARTIAL and the laboratory deployment release gate remains BLOCKED.

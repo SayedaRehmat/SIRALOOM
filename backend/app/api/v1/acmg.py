@@ -160,7 +160,23 @@ def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: 
                 ),
             )
         )
-        AuditService(db).record(event_type="ACMG_ASSESSMENT_CREATED", case_id=analysis.case_id, analysis_id=analysis_id, actor_type="SYSTEM", actor_id="siraloom-acmg-engine", subject_type="VARIANT", subject_id=str(variant_id), operation="CREATE", after_state={"classification": result.classification, "state": result.state, "profile_id": result.profile_id, "profile_version": result.profile_version}, reason="Versioned ACMG/AMP 2015 baseline combination assessment")
+        AuditService(db).record(
+            event_type="ACMG_ASSESSMENT_CREATED",
+            case_id=analysis.case_id,
+            analysis_id=analysis_id,
+            actor_type="HUMAN",
+            actor_id=str(principal.user_id),
+            subject_type="VARIANT",
+            subject_id=str(variant_id),
+            operation="CREATE",
+            after_state={
+                "classification": result.classification,
+                "state": result.state,
+                "profile_id": result.profile_id,
+                "profile_version": result.profile_version,
+            },
+            reason="Versioned ACMG/AMP 2015 baseline combination assessment",
+        )
         db.commit()
         return {
             "analysis_id": str(analysis_id),
