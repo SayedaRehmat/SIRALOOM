@@ -9,13 +9,19 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.application.analysis import resume_analysis
-from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, require_role
+from backend.app.auth.authorization import (
+    REVIEW_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant_ids,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.workflow_human_gate import HumanGateDecision, resolve_human_gate
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
+    Annotation,
     Classification,
     Report,
     ReportabilityDecision,
@@ -34,6 +40,25 @@ class HumanGateRequest(BaseModel):
 
 
 def _classification_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        return False
+    annotated_variant_ids = set(
+        db.scalars(
+            select(Annotation.variant_id)
+            .where(Annotation.analysis_id == analysis_id)
+            .distinct()
+        ).all()
+    )
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if manifest_variant_ids is not None and annotated_variant_ids != manifest_variant_ids:
+        return False
+    expected_variant_ids = (
+        manifest_variant_ids if manifest_variant_ids is not None else annotated_variant_ids
+    )
+    if not expected_variant_ids:
+        return False
+
     rows = list(
         db.scalars(
             select(Classification)
@@ -44,13 +69,20 @@ def _classification_gate_ready(db: Session, analysis_id: UUID) -> bool:
     latest: dict[UUID, Classification] = {}
     for row in rows:
         latest.setdefault(row.variant_id, row)
-    return bool(latest) and all(
-        row.state == "FINAL" and row.review_status == "APPROVED"
-        for row in latest.values()
+    return (
+        set(latest) == expected_variant_ids
+        and all(
+            latest[variant_id].state == "FINAL"
+            and latest[variant_id].review_status == "APPROVED"
+            for variant_id in expected_variant_ids
+        )
     )
 
 
 def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
+    analysis = db.get(Analysis, analysis_id)
+    if analysis is None:
+        return False
     rows = list(
         db.scalars(
             select(Classification)
@@ -61,7 +93,14 @@ def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
     latest: dict[UUID, Classification] = {}
     for row in rows:
         latest.setdefault(row.variant_id, row)
-    if not latest:
+    manifest_variant_ids = get_analysis_variant_ids(analysis, db)
+    if (
+        not latest
+        or (
+            manifest_variant_ids is not None
+            and set(latest) != manifest_variant_ids
+        )
+    ):
         return False
     for variant_id, classification in latest.items():
         if classification.state != "FINAL" or classification.review_status != "APPROVED":

@@ -14,6 +14,8 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisDispatch,
+    AnalysisPartition,
+    Annotation,
     AuditEvent,
     Case,
     Classification,
@@ -176,6 +178,71 @@ def test_review_gate_cannot_be_accepted_without_final_approved_classification(mo
     engine.dispose()
 
 
+def test_review_gate_rejects_classifications_missing_from_normalized_input_manifest(
+    monkeypatch,
+):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    published = []
+
+    with Session(engine) as db:
+        seeded = _seed_gate(db, step_id="review", with_classification=True)
+        classification = db.scalar(select(Classification).where(
+            Classification.analysis_id == seeded.analysis_id,
+        ))
+        classification.state = "FINAL"
+        classification.review_status = "APPROVED"
+        missing_variant_id = uuid4()
+        missing_variant = Variant(
+            id=missing_variant_id, genome_build="GRCh38", chromosome="2",
+            position=23456, reference="C", alternate="T",
+            normalization_status="NORMALIZED",
+            canonical_key=f"GRCh38:2:23456:C:T:{missing_variant_id}",
+            identifiers={},
+        )
+        db.add(missing_variant)
+        db.add_all([
+            Annotation(
+                id=uuid4(), analysis_id=seeded.analysis_id,
+                variant_id=classification.variant_id,
+                provider_name="fixture", provider_version="1", payload={},
+            ),
+            Annotation(
+                id=uuid4(), analysis_id=seeded.analysis_id,
+                variant_id=missing_variant_id,
+                provider_name="fixture", provider_version="1", payload={},
+            ),
+        ])
+        db.add(AnalysisPartition(
+            id=uuid4(), analysis_id=seeded.analysis_id, step_id="normalize",
+            partition_key="normalize:0:2", ordinal=0, record_start=0,
+            record_end=2, variant_count=2, status="SUCCEEDED",
+            metadata_json={
+                "variant_ids": [str(classification.variant_id), str(missing_variant_id)],
+            },
+        ))
+        db.commit()
+
+        workflow_api, principal = _wire_route(monkeypatch, db, seeded, published)
+        payload = workflow_api.HumanGateRequest(
+            decision=HumanGateDecision.ACCEPT,
+            reason="Attempted to release review with incomplete input coverage.",
+            expected_attempt=1,
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            workflow_api.resolve_human_gate_endpoint(
+                seeded.analysis_id, "review", payload, db, principal
+            )
+
+        assert exc_info.value.status_code == 409
+        assert exc_info.value.detail["code"] == "CLASSIFICATION_REVIEW_INCOMPLETE"
+        assert db.scalar(select(AnalysisDispatch.id)) is None
+        assert published == []
+
+    engine.dispose()
+
+
 def test_reportability_gate_rejects_final_decision_for_superseded_classification():
     from backend.app.api.v1 import workflow as workflow_api
 
@@ -213,6 +280,35 @@ def test_reportability_gate_rejects_final_decision_for_superseded_classification
         decision.classification_id = latest.id
         db.commit()
         assert workflow_api._reportability_gate_ready(db, seeded.analysis_id) is True
+
+    engine.dispose()
+
+
+def test_reportability_gate_rejects_missing_classification_from_input_manifest():
+    from backend.app.api.v1 import workflow as workflow_api
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as db:
+        seeded = _seed_gate(db, step_id="reportability", with_classification=True)
+        classification = db.scalar(select(Classification).where(
+            Classification.analysis_id == seeded.analysis_id,
+        ))
+        classification.state = "FINAL"
+        classification.review_status = "APPROVED"
+        missing_variant_id = uuid4()
+        db.add(AnalysisPartition(
+            id=uuid4(), analysis_id=seeded.analysis_id, step_id="normalize",
+            partition_key="normalize:0:2", ordinal=0, record_start=0,
+            record_end=2, variant_count=2, status="SUCCEEDED",
+            metadata_json={
+                "variant_ids": [str(classification.variant_id), str(missing_variant_id)],
+            },
+        ))
+        db.commit()
+
+        assert workflow_api._reportability_gate_ready(db, seeded.analysis_id) is False
 
     engine.dispose()
 
