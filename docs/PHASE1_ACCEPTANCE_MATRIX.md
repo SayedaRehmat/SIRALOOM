@@ -111,7 +111,7 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ### Source and CI reconciliation
 
-- **Current branch / exact SHA:** `main` at [`07fffb972a7c07a068f097dc818c6394f42b288c`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c); local `main` and `origin/main` match. The unrelated untracked backup artifact remains preserved.
+- **Latest code-bearing SHA:** [`07fffb972a7c07a068f097dc818c6394f42b288c`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c), included in synchronized local and remote `main`; a later commit updates documentation only. The unrelated untracked backup artifact remains preserved.
 - **Exact-SHA CI:** CI for `07fffb9` is unverified. Previously linked run #392334 passed on ancestor `4ac43c3`; it is not evidence for the current SHA. The Actions API had previously been rate limited.
 - **Issue #171:** OPEN; its live/deployed workflow, scientific benchmark and deployment/restore requirements remain unsatisfied.
 - **PR #179:** OPEN at head `76d8b3460bedcac5d38f01bbd3b81666ea9a29fa`, based on `6cfc89b4f2b9abfae5b4908ff1cedac58ecdbc7e`; current PR backend check fails. Its annotation recovery logic and test are superseded by the current main implementation/test already verified in run #392288. **Disposition: exclude the stale PR branch from this release candidate; do not merge it.** Leave closing the PR to the repository maintainer.
