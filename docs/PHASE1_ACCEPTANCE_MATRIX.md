@@ -37,9 +37,9 @@
 | Scientific benchmark validation | Validation corpus + expected outputs | Harness | Required | NOT TESTED |
 | Live frontend/backend deployment | Vercel/public backend | CI/deployment | Required | NOT TESTED |
 
-## Current release-gate evidence snapshot — 2026-10-19
+## Earlier release-gate evidence snapshot — 2026-10-19 (superseded)
 
-This snapshot supersedes the historical 2026-10-13 snapshot below for current source and CI state. The release gate in Issue [#171](https://github.com/SayedaRehmat/SIRALOOM/issues/171) remains **OPEN / BLOCKED** because the required deployed workflow, scientific benchmark, and laboratory deployment evidence have not been produced.
+This snapshot records the source state at `0eb61a4` and is retained as history. The later snapshot titled “Current release-gate snapshot” near the end of this document supersedes it. Issue [#171](https://github.com/SayedaRehmat/SIRALOOM/issues/171) remains **OPEN / BLOCKED** because deployed workflow, scientific benchmark, and laboratory deployment evidence have not been produced.
 
 ### Current main source and CI
 
@@ -107,12 +107,12 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ## Current release-gate snapshot — 2026-10-19
 
-> **Superseding checkpoint (2026-10-19):** latest code-bearing commit on `main` is [`4b494b2`](https://github.com/SayedaRehmat/SIRALOOM/commit/4b494b2). Full backend suite on that source passed 964 tests, with 39 PostgreSQL/bcftools-dependent skips; the Windows-native PDF renderer test was excluded. Exact-SHA CI for recent commits is not verified. Frontend tests/build evidence at `14e9afc` is recorded in the ledger. Phase A remains PARTIAL. See [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md) for exact commands, limitations and remaining gates.
+> **Superseding checkpoint (2026-10-19):** local and remote `main` are verified at [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c). Full backend suite on this code passed **966**, with **39 skipped**, excluding the Windows-native PDF renderer. Exact-SHA CI is unverified. The latest code also durably blocks GVCF and symbolic SV input before reference-resource lookup. Phase A remains PARTIAL. See [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md) for exact commands, limitations and remaining gates.
 
 ### Source and CI reconciliation
 
-- **Current branch / exact SHA:** `main` at [`c71222b6511e52a2a6383d002dc5bbf03688d827`](https://github.com/SayedaRehmat/SIRALOOM/commit/c71222b6511e52a2a6383d002dc5bbf03688d827); local `main` and `origin/main` match. The only local untracked path is the preserved unrelated backup artifact.
-- **Exact-SHA CI:** [run #392334](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39233424737) passed on ancestor `4ac43c3`. CI for current `c71222b` and later commits is not verified; the unauthenticated GitHub Actions API is rate limited. Invitation localization and backend-session behavior passed local frontend checks (**24 tests**); Firebase verifier regression code passed Python syntax compilation but pytest was unavailable locally.
+- **Current branch / exact SHA:** `main` at [`07fffb972a7c07a068f097dc818c6394f42b288c`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c); local `main` and `origin/main` match. The unrelated untracked backup artifact remains preserved.
+- **Exact-SHA CI:** CI for `07fffb9` is unverified. Previously linked run #392334 passed on ancestor `4ac43c3`; it is not evidence for the current SHA. The Actions API had previously been rate limited.
 - **Issue #171:** OPEN; its live/deployed workflow, scientific benchmark and deployment/restore requirements remain unsatisfied.
 - **PR #179:** OPEN at head `76d8b3460bedcac5d38f01bbd3b81666ea9a29fa`, based on `6cfc89b4f2b9abfae5b4908ff1cedac58ecdbc7e`; current PR backend check fails. Its annotation recovery logic and test are superseded by the current main implementation/test already verified in run #392288. **Disposition: exclude the stale PR branch from this release candidate; do not merge it.** Leave closing the PR to the repository maintainer.
 
@@ -120,7 +120,7 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 | Dimension | Status | Evidence / remaining requirement |
 |---|---|---|
-| API/backend/frontend regression CI | PARTIAL | Exact-SHA run #392334 passed on ancestor `4ac43c3`; current `c71222b` CI is unverified. This is software evidence only. |
+| API/backend/frontend regression CI | PARTIAL | Full local backend suite on `07fffb9`: 966 passed, 39 skipped, excluding the Windows-native PDF renderer. Exact-SHA CI for this commit is unverified. This is software evidence only. |
 | VCF intake and concurrent case readiness | PASS (automated scope) | Strict VCF validation tests passed locally; PostgreSQL concurrent valid/invalid VCF regression passed in run #392315. Supported VCF versions remain 4.2 and 4.3; newer versions are rejected. |
 | Versioned confirmation and secondary-finding concurrency | PASS (automated scope) | Local focused tests: 6 passed, 2 PostgreSQL cases skipped locally; both PostgreSQL cases passed in run #392315. |
 | Authentication/signup/verification/recovery/logout in a live browser | NOT TESTED | No configured Firebase/browser journey evidence. |
@@ -139,3 +139,11 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 | Authorized sign-out distinguished from clinical validation | PASS (automated source/test scope) | Finalization now records `AUTHORIZED_SIGNOUT` and `clinical_use_status=LABORATORY_VALIDATION_REQUIRED`; rendered signed reports retain the lab-validation limitation. Focused report/sign-out suite: 35 passed; full backend suite excluding the Windows-native PDF renderer: 964 passed, 39 skipped. This does not establish laboratory validation or live report delivery. |
 
 The change is committed and pushed on local/remote `main` at [`c68e0f2`](https://github.com/SayedaRehmat/SIRALOOM/commit/c68e0f24325f950a9f13e5f1a778fee8eb0d055a). Exact-SHA CI is unverified. It does not change the overall release decision: Phase A remains PARTIAL and controlled laboratory use remains blocked pending deployed and scientific evidence.
+
+## 2026-10-19 unsupported VCF scope routing addendum
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| GVCF and symbolic SV inputs explicitly blocked with durable provenance | PASS (automated workflow scope) | Commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c) runs `run_variant_analysis` against SQLite for a GVCF `<NON_REF>` reference block and symbolic `<DEL>`, asserting `BLOCKED`, the typed code, next-step/profile metadata, audit record, and no reference lookup. Focused VCF/intake/worker set: 29 passed, 5 skipped; full backend suite: 966 passed, 39 skipped, excluding the Windows-native PDF renderer. This verifies safe rejection only, not SV/GVCF analysis support. |
+
+This code is on local and remote `main`; exact-SHA CI and all live/deployed, independent scientific benchmark, and laboratory storage/restore gates remain unverified. Overall release status remains BLOCKED for laboratory use; Phase A remains PARTIAL.

@@ -1,4 +1,4 @@
-# Variant-class support matrix (mainline snapshot: 2026-10-09)
+# Variant-class support matrix (mainline snapshot: 2026-10-19)
 
 ## Status semantics
 
@@ -7,7 +7,7 @@
 - **Not independently validated:** no suitable truth-set/expert benchmark evidence has been reviewed.
 - **Unsupported:** must fail visibly rather than be silently dropped or reported as analyzed.
 
-This matrix describes the repository code at commit `72cf5b703c1d0ce48d18ba2b14a1abb376b3298f`; it is not a clinical validation statement.
+This matrix describes the repository code at commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c); it is not a clinical validation statement.
 
 | Input class | Intake / validation | Normalization behavior | Current disposition | Remaining qualification |
 |---|---|---|---|---|
@@ -27,7 +27,7 @@ This matrix describes the repository code at commit `72cf5b703c1d0ce48d18ba2b14a
 
 - `backend/app/domain/vcf_validation.py`: strict structural and semantic validation, including version allowlist and record profiling.
 - `backend/app/domain/vcf_tools.py`: `classify_records` and `normalize_vcf_with_bcftools`; the latter uses `bcftools norm -f REF -c e -m -any`, sorting, and CSI indexing before publishing.
-- `backend/app/workflows/variant.py`: explicitly raises `UNSUPPORTED_GVCF_INPUT` for GVCF markers and `UNSUPPORTED_STRUCTURAL_VARIANT` for symbolic/breakend records before normalization.
+- `backend/app/workflows/variant.py`: profiles the input and persists `UNSUPPORTED_GVCF_INPUT` or `UNSUPPORTED_STRUCTURAL_VARIANT` before reference-resource resolution and normalization.
 - `tests/test_vcf_tools.py`: basic reference-aware multiallelic splitting/left-alignment fixture, artifact-preservation tests, and a genotype-bearing 1/2 split fixture covering INFO Number=A and FORMAT Number=R/G cardinality. [PR #137 CI](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/37928636733) passed backend, PostgreSQL integration and frontend jobs.
 - `tests/test_vcf_validation.py`: malformed record, genotype index and profiling tests.
 - `tests/test_unsupported_vcf_worker_routing.py`: invokes the production `run_variant_analysis` wrapper with SQLite persistence and proves GVCF and symbolic SV inputs are blocked with typed error codes, normalization metadata, and an audit event before reference resource resolution. This does not validate an SV/GVCF analysis capability.
