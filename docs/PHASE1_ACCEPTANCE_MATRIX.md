@@ -107,7 +107,7 @@ The GitHub repository may describe the software as a **Phase-1 release candidate
 
 ## Current release-gate snapshot — 2026-10-19
 
-> **Superseding checkpoint (2026-10-19):** repository `main` and `origin/main` now match at [`14e9afcf0f828eee7d7dcbd67b1908b9d82a0117`](https://github.com/SayedaRehmat/SIRALOOM/commit/14e9afcf0f828eee7d7dcbd67b1908b9d82a0117). Frontend session tests (29), i18n validation, and production build passed locally on that commit. Exact-SHA CI has not been verified; the CI run cited in the older snapshot below predates this commit. Phase A remains PARTIAL. See the latest checkpoint in [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md).
+> **Superseding checkpoint (2026-10-19):** latest code-bearing commit on `main` is [`4b494b2`](https://github.com/SayedaRehmat/SIRALOOM/commit/4b494b2). Its focused ACMG API/engine/evidence/resource-binding suite passed 18 tests. The preceding auth email-localization code at `14e9afc` passed 29 frontend session tests, i18n validation, and production build. Exact-SHA CI for the recent commits is not verified; the CI run cited in the older snapshot below predates them. Phase A remains PARTIAL. See the latest details in [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md).
 
 ### Source and CI reconciliation
 
