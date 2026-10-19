@@ -79,17 +79,23 @@ class _VerificationSession:
 def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkeypatch):
     case_id = uuid4()
     analysis_id = uuid4()
+    user_id = uuid4()
     case = SimpleNamespace(id=case_id, organization_id=uuid4())
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id, reference_build="GRCh38")
     db = _Database(case)
     store = _Store()
+    audit_events = []
     monkeypatch.setattr(reports_api, "get_accessible_analysis", lambda *_args: analysis)
     monkeypatch.setattr(reports_api, "require_role", lambda *_args: None)
     monkeypatch.setattr(reports_api, "final_report_eligibility", lambda *_args, **_kwargs: (True, []))
     monkeypatch.setattr(reports_api, "build_report_content", lambda *_args, **_kwargs: {"report_schema_version": "1"})
     monkeypatch.setattr(reports_api, "render_pdf", lambda _content: b"pdf")
     monkeypatch.setattr(reports_api, "artifact_store_for_organization", lambda *_args, **_kwargs: store)
-    monkeypatch.setattr(reports_api, "AuditService", lambda _db: SimpleNamespace(record=lambda **_kwargs: None))
+    monkeypatch.setattr(
+        reports_api,
+        "AuditService",
+        lambda _db: SimpleNamespace(record=lambda **kwargs: audit_events.append(kwargs)),
+    )
     monkeypatch.setattr(compensation_api, "SessionLocal", _VerificationSession)
 
     with pytest.raises(HTTPException) as error:
@@ -97,12 +103,15 @@ def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkey
             analysis_id,
             ReportCreate(),
             db,
-            Principal(user_id=uuid4(), organization_id=case.organization_id, role="lab_scientist", subject="test"),
+            Principal(user_id=user_id, organization_id=case.organization_id, role="lab_scientist", subject="test"),
         )
 
     assert error.value.status_code == 409
     assert db.rollbacks == 1
     assert store.deleted == ["file:///artifact/draft-report.pdf"]
+    assert audit_events[0]["event_type"] == "REPORT_GENERATED"
+    assert audit_events[0]["actor_type"] == "HUMAN"
+    assert audit_events[0]["actor_id"] == str(user_id)
 
 
 def test_report_route_removes_draft_bytes_after_audit_flush_failure(monkeypatch):

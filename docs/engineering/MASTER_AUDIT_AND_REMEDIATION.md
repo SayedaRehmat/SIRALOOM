@@ -684,3 +684,11 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Regression coverage:** `tests/test_acmg_audit_actor.py` invokes the production route function with a test database boundary and asserts the event type, human actor type, authenticated user ID, and persistence of ACMG assessment/classification rows.
 - **Verification:** bundled Python 3.12 `py_compile` passed for the changed route and new regression test; `git diff --check` passed. The route regression could not run locally because this runtime lacks pytest and the project dependencies. Exact-SHA [CI run #392460](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39246075755) passed all jobs, including the backend test step, PostgreSQL/Celery integration, and frontend behavior/build checks.
 - **Status / next:** automated audit attribution regression passes in exact-SHA CI. Continue the remaining review and sign-out route audit. Phase A remains PARTIAL.
+
+### 2026-10-19 draft report audit actor attribution checkpoint
+
+- **Finding:** `POST /analyses/{analysis_id}/reports` is a human-authorized action that creates a draft and artifact, but the `REPORT_GENERATED` audit event attributed it to the generic `reporting` system actor. The requesting user was not identified in that event.
+- **Correction:** the audit event now records actor type `HUMAN` and the authenticated principal's user ID. PDF rendering and artifact persistence remain system-produced and retain their resource/artifact provenance.
+- **Regression coverage:** extended the existing production-route draft artifact compensation test to capture the emitted audit event and assert the event type and authenticated human actor. Its injected commit failure still verifies that uncommitted artifact bytes are compensated.
+- **Verification:** Python 3.12 `py_compile` and `git diff --check` passed. The focused pytest is not runnable in the current local interpreter because pytest and project dependencies are unavailable. Exact-SHA CI is pending.
+- **Status / next:** run the route regression in CI and continue auditing report review/sign-out mutations. Phase A remains PARTIAL.
