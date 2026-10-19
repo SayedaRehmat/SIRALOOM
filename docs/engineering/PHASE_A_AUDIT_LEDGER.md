@@ -313,3 +313,9 @@
 - Local evidence: VCF/artifact focused tests **15 passed, 1 skipped**; clinical governance focused tests **6 passed, 2 skipped**. PostgreSQL-only tests were skipped locally, so those row-lock behaviors still require the configured PostgreSQL integration CI result.
 - Exact-SHA CI status was not obtained in this session. `gh` CLI is absent; public web retrieval of the repository issue/PR/action pages was unavailable. Do not infer CI or Issue #171 / PR #179 state.
 - Phase A remains PARTIAL. The live Firebase/browser journey, deployed two-lab API/artifact isolation, and real-storage reviewer-to-signout recovery are not evidenced in this checkout.
+
+### 2026-10-19 PostgreSQL CI failure investigation
+
+- Three consecutive main runs failed only in `postgres-integration` after the VCF concurrency regression was added: [#392298](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39229846552), [#392307](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39230702456), [#392310](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39231005975). Backend and frontend jobs passed. The public Actions log endpoint returned HTTP 403, so exact test output was not retrievable.
+- Source-level diagnosis: child artifact inserts acquire PostgreSQL parent KEY SHARE locks before the concurrent test requests a case `FOR UPDATE` lock. The lock upgrade can deadlock. Updated the case serialization query to SQLAlchemy `with_for_update(key_share=True)`, which emits PostgreSQL `FOR NO KEY UPDATE` and still serializes competing status writers while remaining compatible with the foreign-key lock.
+- This correction is pending its PostgreSQL CI rerun. It is not yet considered verified. Phase A remains PARTIAL.

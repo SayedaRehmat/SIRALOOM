@@ -82,7 +82,11 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
     case = db.scalar(
         select(Case)
         .where(Case.id == case_id)
-        .with_for_update()
+        # PostgreSQL artifacts already hold a KEY SHARE lock on their parent
+        # case through the foreign key. NO KEY UPDATE still serializes status
+        # writers, while avoiding an UPDATE/KEY SHARE lock-upgrade deadlock
+        # when two uploads have both inserted their artifact rows.
+        .with_for_update(key_share=True)
         .execution_options(populate_existing=True)
     )
     if case is None:
