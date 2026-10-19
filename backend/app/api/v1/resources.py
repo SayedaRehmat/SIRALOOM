@@ -129,6 +129,50 @@ def _staging_payload(row: ResourceStaging) -> dict:
     }
 
 
+def _staging_dispatch_is_definitively_dead(
+    dispatch: dict,
+    *,
+    now: datetime,
+    task_state_lookup,
+    stale_after_seconds: int = 120,
+) -> bool:
+    """Only replace an old staging dispatch after Celery proves it is dead.
+
+    PENDING/UNKNOWN are ambiguous: the broker may have accepted the task, or
+    the result backend may not know about it. Replacing those dispatches could
+    start duplicate resource acquisition against the same destination.
+    """
+    status = str(dispatch.get("status") or "").upper()
+    if status not in {"QUEUING", "PUBLISHED"}:
+        return False
+    timestamp = dispatch.get("published_at") if status == "PUBLISHED" else dispatch.get("queued_at")
+    if not timestamp:
+        return False
+    try:
+        recorded_at = datetime.fromisoformat(str(timestamp))
+        if recorded_at.tzinfo is None:
+            recorded_at = recorded_at.replace(tzinfo=timezone.utc)
+        age_seconds = (now - recorded_at).total_seconds()
+    except (TypeError, ValueError):
+        return False
+    if age_seconds <= stale_after_seconds:
+        return False
+    task_id = dispatch.get("task_id")
+    if not isinstance(task_id, str) or not task_id.strip():
+        return False
+    try:
+        task_state = str(task_state_lookup(task_id)).upper()
+    except Exception:
+        return False
+    return task_state in {"FAILURE", "REVOKED"}
+
+
+def _celery_task_state(task_id: str) -> str:
+    from backend.app.infrastructure.queue.celery_app import celery_app
+
+    return str(celery_app.AsyncResult(task_id).state)
+
+
 @router.get("")
 def list_resources(
     resource_type: str | None = None,
@@ -576,14 +620,12 @@ def execute_resource_staging(
     metadata = dict(row.metadata_json or {})
     dispatch = dict(metadata.get("staging_dispatch") or {})
     dispatch_status = str(dispatch.get("status") or "").upper()
-    queued_at = dispatch.get("queued_at")
-    stale_queuing = False
-    if dispatch_status == "QUEUING" and queued_at:
-        try:
-            stale_queuing = (datetime.now(timezone.utc) - datetime.fromisoformat(str(queued_at))).total_seconds() > 120
-        except ValueError:
-            stale_queuing = True
-    if dispatch_status in {"QUEUING", "PUBLISHED", "RUNNING"} and not stale_queuing:
+    dispatch_dead = _staging_dispatch_is_definitively_dead(
+        dispatch,
+        now=datetime.now(timezone.utc),
+        task_state_lookup=_celery_task_state,
+    ) if dispatch_status in {"QUEUING", "PUBLISHED"} else False
+    if dispatch_status in {"QUEUING", "PUBLISHED", "RUNNING"} and not dispatch_dead:
         return _staging_payload(row)
 
     dispatch_task_id = f"siraloom-resource-stage-{row.id}-{uuid4()}"

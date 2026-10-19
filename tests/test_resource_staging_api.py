@@ -1,4 +1,5 @@
 """API tests for tenant-scoped, capacity-aware resource staging."""
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,6 +20,59 @@ from backend.app.infrastructure.db.models import (
     ResourceQualification,
     ResourceStaging,
 )
+
+
+@pytest.mark.parametrize(
+    ("dispatch_status", "task_state", "lookup_fails", "expected"),
+    [
+        ("QUEUING", "PENDING", False, False),
+        ("QUEUING", "UNKNOWN", False, False),
+        ("PUBLISHED", "PENDING", False, False),
+        ("PUBLISHED", "FAILURE", False, True),
+        ("QUEUING", "REVOKED", False, True),
+        ("PUBLISHED", "FAILURE", True, False),
+        ("RUNNING", "FAILURE", False, False),
+    ],
+)
+def test_stale_staging_dispatch_is_retried_only_when_celery_proves_dead(
+    dispatch_status, task_state, lookup_fails, expected,
+):
+    now = datetime.now(timezone.utc)
+    timestamp_name = "published_at" if dispatch_status == "PUBLISHED" else "queued_at"
+    dispatch = {
+        "status": dispatch_status,
+        "task_id": "staging-task-1",
+        timestamp_name: (now - timedelta(minutes=10)).isoformat(),
+    }
+
+    def lookup(task_id):
+        assert task_id == "staging-task-1"
+        if lookup_fails:
+            raise RuntimeError("result backend unavailable")
+        return task_state
+
+    assert resources_api._staging_dispatch_is_definitively_dead(
+        dispatch,
+        now=now,
+        task_state_lookup=lookup,
+    ) is expected
+
+
+@pytest.mark.parametrize("timestamp", [None, "not-a-timestamp"])
+def test_staging_dispatch_without_valid_timestamp_is_not_replaced(timestamp):
+    lookup_calls = []
+    dispatch = {
+        "status": "QUEUING",
+        "task_id": "staging-task-1",
+        "queued_at": timestamp,
+    }
+
+    assert resources_api._staging_dispatch_is_definitively_dead(
+        dispatch,
+        now=datetime.now(timezone.utc),
+        task_state_lookup=lambda task_id: lookup_calls.append(task_id) or "FAILURE",
+    ) is False
+    assert lookup_calls == []
 
 
 def _db():
@@ -428,6 +482,24 @@ def test_execute_resource_staging_queues_durable_task(monkeypatch, tmp_path):
         assert result["dispatch"]["status"] == "PUBLISHED"
         assert len(published) == 1
         assert published[0]["args"] == [staged["staging_id"]]
+
+        dispatch = dict(db.get(ResourceStaging, UUID(staged["staging_id"])).metadata_json["staging_dispatch"])
+        original_task_id = dispatch["task_id"]
+        dispatch["published_at"] = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+        staging_row = db.get(ResourceStaging, UUID(staged["staging_id"]))
+        staging_row.metadata_json = {**staging_row.metadata_json, "staging_dispatch": dispatch}
+        db.commit()
+        monkeypatch.setattr(resources_api, "_celery_task_state", lambda _task_id: "PENDING")
+
+        duplicate_retry = resources_api.execute_resource_staging(
+            resource.id,
+            UUID(staged["staging_id"]),
+            db,
+            _principal(organization_id),
+        )
+        assert duplicate_retry["dispatch"]["task_id"] == original_task_id
+        assert duplicate_retry["dispatch"]["status"] == "PUBLISHED"
+        assert len(published) == 1
     finally:
         db.close()
         engine.dispose()
