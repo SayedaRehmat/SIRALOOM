@@ -24,7 +24,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   useEffect(() => {
-    if (!firebaseAuth) {
+    const auth = firebaseAuth;
+    if (!auth) {
       setReady(true);
       setBackendSession("ACTIVE");
       return;
@@ -40,21 +41,21 @@ export function AppShell({ children }: { children: ReactNode }) {
       try {
         const token = await user.getIdToken();
         const result = await verifyBackendSession(token, { apiBase });
-        if (!mounted || firebaseAuth.currentUser?.uid !== user.uid) return;
+        if (!mounted || auth.currentUser?.uid !== user.uid) return;
         if (result === "RESTRICTED") {
           setBackendSession("RESTRICTED");
-          await signOut(firebaseAuth).catch(() => undefined);
+          await signOut(auth).catch(() => undefined);
           window.location.assign("/login?access=restricted");
           return;
         }
         setBackendSession(result);
       } catch {
-        if (mounted && firebaseAuth.currentUser?.uid === user.uid) {
+        if (mounted && auth.currentUser?.uid === user.uid) {
           setBackendSession("UNAVAILABLE");
         }
       } finally {
         validationInProgress = false;
-        const latestUser = firebaseAuth.currentUser;
+        const latestUser = auth.currentUser;
         if (mounted && latestUser?.emailVerified && latestUser.uid !== user.uid) {
           void validateSession(latestUser, true);
         } else if (mounted) {
@@ -63,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       }
     };
 
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       try {
         syncWorkspaceContext(window.localStorage, user?.uid ?? null);
       } catch {
@@ -87,14 +88,14 @@ export function AppShell({ children }: { children: ReactNode }) {
     });
 
     const refreshWhenVisible = () => {
-      const user = firebaseAuth.currentUser;
+      const user = auth.currentUser;
       if (document.visibilityState === "visible" && user?.emailVerified) {
         void validateSession(user, true);
       }
     };
     document.addEventListener("visibilitychange", refreshWhenVisible);
     const interval = window.setInterval(() => {
-      const user = firebaseAuth.currentUser;
+      const user = auth.currentUser;
       if (document.visibilityState === "visible" && user?.emailVerified) {
         void validateSession(user);
       }
