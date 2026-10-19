@@ -56,7 +56,11 @@ class SegregationInput(BaseModel):
     metadata: dict = Field(default_factory=dict)
 
 class AssessmentInput(BaseModel):
-    models: list[str] = Field(default_factory=lambda:["AD","AR","X_LINKED","MITOCHONDRIAL","DE_NOVO"])
+    models: list[str] = Field(
+        default_factory=lambda: ["AD", "AR", "X_LINKED", "MITOCHONDRIAL", "DE_NOVO"],
+        min_length=1,
+        max_length=6,
+    )
     reviewer_note: str | None = Field(default=None, max_length=5000)
 
 

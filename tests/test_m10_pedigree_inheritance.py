@@ -1,3 +1,7 @@
+import pytest
+from pydantic import ValidationError
+
+from backend.app.api.v1.pedigree import AssessmentInput
 from backend.app.inheritance import FamilyObservation, assess_model, fingerprint, normalize_model
 
 
@@ -49,3 +53,15 @@ def test_m10_supported_models_are_explicit():
     assert {normalize_model(x) for x in ["AD", "AR", "XL", "mito", "de_novo"]} == {
         "AD", "AR", "X_LINKED", "MITOCHONDRIAL", "DE_NOVO"
     }
+
+
+@pytest.mark.parametrize(
+    "models",
+    [
+        [],
+        ["AD", "AR", "X_LINKED", "MITOCHONDRIAL", "DE_NOVO", "UNKNOWN", "AD"],
+    ],
+)
+def test_m10_assessment_request_bounds_model_count(models):
+    with pytest.raises(ValidationError):
+        AssessmentInput(models=models)
