@@ -14,9 +14,11 @@ from backend.app.auth.authorization import (
     get_analysis_variant,
     require_role,
 )
-from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
+    Analysis,
+    Case,
     ConfirmationRecord,
     FollowUpPlan,
     SecondaryFindingDecision,
@@ -88,6 +90,24 @@ def _validate_variant_link(row, variant_id: UUID, record_type: str) -> None:
             detail=f"{record_type} variant does not match the requested variant",
         )
 
+
+def _lock_analysis_for_governance_version(db, analysis_id: UUID, principal: Principal):
+    """Serialize per-analysis version allocation for immutable governance records."""
+    analysis = db.scalar(
+        select(Analysis)
+        .where(Analysis.id == analysis_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    case = db.get(Case, analysis.case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    require_case_tenant(case, principal)
+    return analysis
+
+
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/clinical-governance")
 def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db)
@@ -106,6 +126,7 @@ def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), prin
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/confirmation",status_code=201)
 def record_confirmation(analysis_id: UUID, variant_id: UUID, body: ConfirmationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
+    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal)
     previous=db.scalar(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id==analysis_id,ConfirmationRecord.variant_id==variant_id).order_by(ConfirmationRecord.version.desc()))
     row=ConfirmationRecord(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,version=(previous.version+1 if previous else 1),supersedes_record_id=previous.id if previous else None,required=body.required,method=body.method,status=body.status,result=body.result,laboratory=body.laboratory,accession=body.accession,performed_at=body.performed_at,reviewed_by=principal.user_id,reviewed_at=datetime.now(timezone.utc),notes=body.notes,metadata_json=body.metadata)
     db.add(row)
@@ -152,6 +173,7 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/secondary-finding",status_code=201)
 def record_secondary_finding(analysis_id: UUID, variant_id: UUID, body: SecondaryFindingInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db); require_role(principal,REPORT_FINALIZE_ROLES)
+    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal)
     allowed_consent={"ACCEPTED","DECLINED","NOT_DOCUMENTED","NOT_APPLICABLE"}; allowed_disp={"REPORT","DO_NOT_REPORT","REVIEW"}; allowed_status={"DRAFT","FINAL"}
     if body.consent_status not in allowed_consent or body.disposition not in allowed_disp or body.status not in allowed_status: raise HTTPException(400,"Invalid secondary-finding governance value")
     if body.status=="FINAL" and body.disposition=="REPORT" and body.consent_status!="ACCEPTED": raise HTTPException(409,"A secondary finding cannot be finalized for reporting without documented accepted consent")
