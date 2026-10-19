@@ -32,8 +32,8 @@ from backend.app.domain.storage_profiles import (
     StorageProfileError,
     resolve_storage_profile,
 )
-from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.compensation import compensate_uncommitted_artifact
+from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
@@ -75,6 +75,32 @@ def _store(db: Session, organization_id: UUID):
 
 def _safe_filename(filename: str) -> str:
     return Path(filename).name
+
+
+def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, str]:
+    """Recompute intake state under a case-row lock after a primary VCF insert."""
+    case = db.scalar(
+        select(Case)
+        .where(Case.id == case_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    before_status = case.status
+    vcf_statuses = db.scalars(
+        select(Artifact.validation_status).where(
+            Artifact.case_id == case_id,
+            Artifact.artifact_type == ArtifactType.VCF,
+        )
+    ).all()
+    case.status = case_status_after_vcf_upload(
+        case.status,
+        has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
+        has_vcf=bool(vcf_statuses),
+    )
+    return case, before_status
 
 
 @router.get("/cases/{case_id}/artifacts")
@@ -231,17 +257,11 @@ async def upload_artifact(
                 # Derive case readiness from all durable primary VCFs. A later
                 # rejected upload must not hide an earlier valid input, and
                 # new intake must not reset a case already in a later lifecycle.
-                vcf_statuses = db.scalars(
-                    select(Artifact.validation_status).where(
-                        Artifact.case_id == case_id,
-                        Artifact.artifact_type == ArtifactType.VCF,
-                    )
-                ).all()
-                case.status = case_status_after_vcf_upload(
-                    case.status,
-                    has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
-                    has_vcf=bool(vcf_statuses),
-                )
+                # Serialize this read/modify/write on the case row. Concurrent
+                # uploads otherwise can each compute readiness from a snapshot
+                # that excludes the other's uncommitted artifact, allowing a
+                # later invalid upload to overwrite READY with INVALID.
+                case, before_status = _refresh_case_vcf_intake_status(db, case_id)
             elif primary:
                 # An optional index cannot change the primary VCF's intake state.
                 vcf_statuses = db.scalars(
