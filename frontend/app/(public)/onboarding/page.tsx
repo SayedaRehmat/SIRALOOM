@@ -55,7 +55,7 @@ export default function Onboarding() {
 
       const responseBody = await response.json().catch(() => null);
       setMessage(responseBody?.detail || t("onboarding.createFailed"));
-    } catch (error) { setMessage(error instanceof Error ? error.message : t("onboarding.createFailed")); }
+    } catch { setMessage(t("onboarding.createFailed")); }
     finally { setBusy(false); }
   };
 
@@ -70,8 +70,24 @@ export default function Onboarding() {
       setVerified(isVerified);
       if (isVerified) await startWorkspace();
       else setMessage(t("onboarding.notVerified"));
-    } catch (error) { setMessage(error instanceof Error ? error.message : t("onboarding.createFailed")); }
+    } catch { setMessage(t("onboarding.verifyCheckFailed")); }
     finally { setBusy(false); }
+  };
+
+  const resendVerification = async () => {
+    const auth = firebaseAuth;
+    if (!auth) { setMessage(t("onboarding.firebaseMissing")); return; }
+    const currentUser = auth.currentUser;
+    if (!currentUser) { window.location.assign("/login"); return; }
+    setBusy(true); setMessage("");
+    try {
+      await sendEmailVerification(currentUser);
+      setMessage(t("onboarding.verifySent"));
+    } catch {
+      setMessage(t("onboarding.verifyFailed"));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const leaveOnboarding = async () => {
@@ -110,7 +126,7 @@ export default function Onboarding() {
         <p>{isTrial ? t("onboarding.trialBody") : t("onboarding.orgBody")}</p>
         <div className="configuration-notice"><strong>{user.displayName || user.email}</strong><br />{user.email}</div>
         {isTrial && <label>{t("onboarding.labName")} ({t("onboarding.optional")})<input value={name} onChange={e => setName(e.target.value)} disabled={busy} /></label>}
-        {!verified ? <><p>{t("onboarding.verifyBody")}</p><button className="button" onClick={refreshVerification} disabled={busy}>{busy ? t("onboarding.checking") : t("onboarding.verified")}</button><button type="button" className="text-button" onClick={() => firebaseAuth?.currentUser && sendEmailVerification(firebaseAuth.currentUser).then(() => setMessage(t("onboarding.verifySent"))).catch(error => setMessage(error instanceof Error ? error.message : t("onboarding.createFailed")))} disabled={busy}>{t("onboarding.resend")}</button></> : <button className="button" onClick={startWorkspace} disabled={busy}>{busy ? t("onboarding.creating") : isTrial ? t("onboarding.create") : t("onboarding.createOrg")}</button>}
+        {!verified ? <><p>{t("onboarding.verifyBody")}</p><button className="button" onClick={refreshVerification} disabled={busy}>{busy ? t("onboarding.checking") : t("onboarding.verified")}</button><button type="button" className="text-button" onClick={() => void resendVerification()} disabled={busy}>{t("onboarding.resend")}</button></> : <button className="button" onClick={startWorkspace} disabled={busy}>{busy ? t("onboarding.creating") : isTrial ? t("onboarding.create") : t("onboarding.createOrg")}</button>}
         {message && <p className="form-message" role="status">{message}</p>}
         <button type="button" className="text-button" onClick={() => void leaveOnboarding()} disabled={busy}>{t("onboarding.signOut")}</button>
       </section>

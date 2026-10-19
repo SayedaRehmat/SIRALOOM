@@ -325,6 +325,9 @@ export type TranslationKey =
   | "auth.haveAccount"
   | "auth.firebaseMissing"
   | "auth.failed"
+  | "auth.invalidCredentials"
+  | "auth.invalidEmail"
+  | "auth.weakPassword"
   | "auth.accessRestricted"
   | "auth.sessionUnavailable"
   | "auth.enterEmail"
@@ -355,6 +358,8 @@ export type TranslationKey =
   | "onboarding.signInFirst"
   | "onboarding.firebaseMissing"
   | "onboarding.verifySent"
+  | "onboarding.verifyCheckFailed"
+  | "onboarding.verifyFailed"
   | "onboarding.notVerified"
   | "onboarding.createFailed"
   | "invite.checking"
@@ -1338,10 +1343,13 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "auth.haveAccount": "Already have an account?",
     "auth.firebaseMissing": "Firebase is not configured for this deployment.",
     "auth.failed": "Authentication could not be completed.",
+    "auth.invalidCredentials": "The email address or password is incorrect.",
+    "auth.invalidEmail": "Enter a valid email address.",
+    "auth.weakPassword": "Choose a password that meets the account security requirements.",
     "auth.accessRestricted": "This account is not currently authorized for a SIRALOOM workspace. Contact your laboratory administrator.",
     "auth.sessionUnavailable": "SIRALOOM could not verify workspace access. Check the service connection and sign in again.",
     "auth.enterEmail": "Enter your email address first.",
-    "auth.resetSent": "Password-reset email sent.",
+    "auth.resetSent": "If an account uses this address, a password-reset email will be sent.",
     "auth.resetFailed": "Unable to send reset email.",
     "auth.googleFailed": "Google sign-in could not be completed.",
     "auth.signOutFailed": "Could not sign out. Please try again.",
@@ -1368,6 +1376,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "onboarding.signInFirst": "Please sign in before starting your SIRALOOM workspace.",
     "onboarding.firebaseMissing": "Firebase is not configured for this deployment.",
     "onboarding.verifySent": "Verification email sent.",
+    "onboarding.verifyCheckFailed": "Unable to check email verification. Please try again.",
+    "onboarding.verifyFailed": "Unable to send the verification email. Please try again.",
     "onboarding.notVerified": "Your email is not verified yet. Open the Firebase verification email and try again.",
     "onboarding.createFailed": "Unable to create your SIRALOOM workspace.",
     "invite.checking": "Checking invitation…",
@@ -2178,10 +2188,13 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "auth.haveAccount": "لديك حساب بالفعل؟",
     "auth.firebaseMissing": "لم يتم إعداد Firebase لهذا النشر.",
     "auth.failed": "تعذر إكمال المصادقة.",
+    "auth.invalidCredentials": "عنوان البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "auth.invalidEmail": "أدخل عنوان بريد إلكتروني صالحاً.",
+    "auth.weakPassword": "اختر كلمة مرور تستوفي متطلبات أمان الحساب.",
     "auth.accessRestricted": "هذا الحساب غير مخول حالياً للوصول إلى مساحة عمل SIRALOOM. تواصل مع مسؤول المختبر.",
     "auth.sessionUnavailable": "تعذر على SIRALOOM التحقق من الوصول إلى مساحة العمل. تحقق من اتصال الخدمة وسجل الدخول مجدداً.",
     "auth.enterEmail": "أدخل عنوان بريدك الإلكتروني أولاً.",
-    "auth.resetSent": "تم إرسال رسالة إعادة تعيين كلمة المرور.",
+    "auth.resetSent": "إذا كان هناك حساب يستخدم هذا العنوان، فسيتم إرسال رسالة لإعادة تعيين كلمة المرور.",
     "auth.resetFailed": "تعذر إرسال إعادة التعيين.",
     "auth.googleFailed": "تعذر إكمال تسجيل الدخول باستخدام Google.",
     "auth.signOutFailed": "تعذر تسجيل الخروج. حاول مرة أخرى.",
@@ -2208,6 +2221,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "onboarding.signInFirst": "يرجى تسجيل الدخول قبل بدء مساحة عمل SIRALOOM.",
     "onboarding.firebaseMissing": "لم يتم إعداد Firebase لهذا النشر.",
     "onboarding.verifySent": "تم إرسال رسالة التحقق.",
+    "onboarding.verifyCheckFailed": "تعذر التحقق من حالة توثيق البريد الإلكتروني. حاول مرة أخرى.",
+    "onboarding.verifyFailed": "تعذر إرسال رسالة التحقق. حاول مرة أخرى.",
     "onboarding.notVerified": "لم يتم توثيق بريدك الإلكتروني بعد. افتح رسالة التحقق من Firebase وحاول مرة أخرى.",
     "onboarding.createFailed": "تعذر إنشاء مساحة عمل SIRALOOM.",
     "invite.checking": "جارٍ التحقق من الدعوة…",

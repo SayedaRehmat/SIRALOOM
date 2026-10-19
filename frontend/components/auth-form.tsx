@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { firebaseAuth, firebaseConfigured, googleProvider } from "../lib/firebase";
+import { authErrorMessageKey } from "../lib/auth-errors.mjs";
 import { resolveSessionDestination } from "../lib/session";
 import { safeRedirectPath } from "../lib/safe-redirect.mjs";
 import { useLanguage } from "../lib/i18n";
@@ -45,7 +46,7 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
         window.location.assign(destination);
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t("auth.failed"));
+      setMessage(t(authErrorMessageKey(error, mode)));
     } finally { setBusy(false); }
   };
 
@@ -67,14 +68,23 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
       }
       window.location.assign(destination === "/onboarding" ? onboardingHref : destination);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : t("auth.googleFailed"));
+      setMessage(t(authErrorMessageKey(error, "google")));
     } finally { setBusy(false); }
   };
 
   const reset = async () => {
-    if (!firebaseAuth || !email) return setMessage(t("auth.enterEmail"));
-    try { await sendPasswordResetEmail(firebaseAuth, email); setMessage(t("auth.resetSent")); }
-    catch (error) { setMessage(error instanceof Error ? error.message : t("auth.resetFailed")); }
+    const auth = firebaseAuth;
+    if (!email.trim()) { setMessage(t("auth.enterEmail")); return; }
+    if (!auth) { setMessage(t("auth.firebaseMissing")); return; }
+    setBusy(true); setMessage("");
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setMessage(t("auth.resetSent"));
+    } catch (error) {
+      setMessage(t(authErrorMessageKey(error, "reset")));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -88,7 +98,7 @@ export function AuthForm({ mode, trial = true }: { mode: "login" | "signup"; tri
       <label>{t("auth.password")}<input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} value={password} onChange={e => setPassword(e.target.value)} required /></label>
       {message && <p className="form-message" role="status">{message}</p>}
       <button className="button" disabled={busy || !firebaseConfigured}>{busy ? t("auth.working") : mode === "login" ? t("auth.signIn") : trial ? t("auth.startTrial") : t("auth.createAccount")}</button>
-      {mode === "login" ? <><button type="button" className="text-button" onClick={reset}>{t("auth.resetPassword")}</button><p>{t("auth.newUser")} <Link href="/signup">{t("auth.startFreeTrial")}</Link></p></> : <p>{t("auth.haveAccount")} <Link href="/login">{t("auth.signIn")}</Link></p>}
+      {mode === "login" ? <><button type="button" className="text-button" onClick={reset} disabled={busy}>{t("auth.resetPassword")}</button><p>{t("auth.newUser")} <Link href="/signup">{t("auth.startFreeTrial")}</Link></p></> : <p>{t("auth.haveAccount")} <Link href="/login">{t("auth.signIn")}</Link></p>}
     </form>
   );
 }
