@@ -86,3 +86,13 @@ def test_artifact_readiness_probe_writes_and_removes_only_probe(tmp_path, monkey
     assert status == "ok"
     assert error is None
     assert not (Path(tmp_path) / ".siraloom-readiness-probe").exists()
+
+
+def test_deployment_health_checks_use_readiness_not_liveness():
+    repo_root = Path(__file__).resolve().parents[1]
+    compose = (repo_root / "docker-compose.production.yml").read_text(encoding="utf-8")
+    render = (repo_root / "render.yaml").read_text(encoding="utf-8")
+
+    assert "http://127.0.0.1:8000/api/v1/ready" in compose
+    assert "http://127.0.0.1:8000/api/v1/health" not in compose
+    assert "healthCheckPath: /api/v1/ready" in render

@@ -4,7 +4,7 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./docker/backend.Dockerfile
-    healthCheckPath: /api/v1/health
+    healthCheckPath: /api/v1/ready
 
     envVars:
       - key: APP_ENV
