@@ -1688,6 +1688,7 @@ def test_postgres_concurrent_case_create_returns_one_durable_case():
                 role="bioinformatician",
                 status="ACTIVE",
             ))
+            db.flush()
             db.add(OrganizationMembership(
                 id=uuid4(),
                 organization_id=organization_id,

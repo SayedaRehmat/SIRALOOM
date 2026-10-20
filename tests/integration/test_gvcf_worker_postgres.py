@@ -132,8 +132,11 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 genome_build="GRCh38",
                 validation_status="VALID",
             )
+            source_artifact_id = source_artifact.id
+            source_artifact_sha256 = source_artifact.sha256
+            source_artifact_storage_uri = source_artifact.storage_uri
             analysis.configuration = {
-                "input_artifact_id": str(source_artifact.id),
+                "input_artifact_id": str(source_artifact_id),
                 "reference_resource_id": str(resource_id),
             }
             db.add(Resource(
@@ -237,14 +240,14 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             assert records[0][9] == "0/1:15,9:100,50,60"
             assert block is not None and store.exists(block.storage_uri)
             assert block.metadata_json["record_count"] == 1
-            assert block.metadata_json["source_artifact_id"] == str(source_artifact.id)
-            assert block.metadata_json["source_sha256"] == source_artifact.sha256
+            assert block.metadata_json["source_artifact_id"] == str(source_artifact_id)
+            assert block.metadata_json["source_sha256"] == source_artifact_sha256
             assert "END=10" in store.read_bytes(block.storage_uri).decode("utf-8")
             assert completion is not None
             audit_output_ids = {item["artifact_id"] for item in completion.output_artifacts}
             assert {str(normalized.id), str(block.id)}.issubset(audit_output_ids)
             assert audit_output_ids.issubset(set(normalization.output_artifacts))
             assert analysis is not None
-            assert store.read_bytes(source_artifact.storage_uri) == source.read_bytes()
+            assert store.read_bytes(source_artifact_storage_uri) == source.read_bytes()
     finally:
         engine.dispose()

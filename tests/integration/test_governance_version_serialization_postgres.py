@@ -57,6 +57,7 @@ def test_postgres_concurrent_governance_versions_form_a_serial_lineage(
             role="lab_director",
             status="ACTIVE",
         ))
+        db.flush()
         db.add(OrganizationMembership(
             id=uuid4(),
             organization_id=organization_id,
