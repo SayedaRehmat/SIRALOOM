@@ -105,9 +105,9 @@ This snapshot records the source state at `0eb61a4` and is retained as history. 
 
 The GitHub repository may describe the software as a **Phase-1 release candidate** only while the rows marked BLOCKED/NOT TESTED remain explicitly disclosed. It may be described as a clinically validated diagnostic system only after separate laboratory validation, which is outside this software release gate. Keep the release gate open until the deployed end-to-end workflow, scientific benchmark, authorization/isolation, recovery, and deployment gates have evidence.
 
-## Current release-gate snapshot — 2026-10-20
+## Historical exact-CI baseline — 2026-10-20
 
-> **Source and exact CI evidence:** current remote `main` is at [`e732841`](https://github.com/SayedaRehmat/SIRALOOM/commit/e73284193cda4d1e5a7a847d5ec0ccb007d76612), a ledger/matrix documentation checkpoint. Application and regression-test code at [`300eae3`](https://github.com/SayedaRehmat/SIRALOOM/commit/300eae382d780fb8fda8062a7eb5b31aa3935af6) passed exact-SHA [GitHub Actions run 39395036911](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39395036911): backend **1,046 passed, 27 skipped**, PostgreSQL integration **26 passed**, frontend passed, startup-script validation and Python compilation passed, the laboratory backend Docker image built, and its runtime BCFtools version assertion passed for **1.19**. The run exercised the actual pinned BCFtools 1.19 golden test for gVCF wildcard trimming and allele-indexed fields. The docs-only run for `e732841` was still in progress at last observation; its application code is unchanged from tested `300eae3`.
+> **Historical source and exact CI evidence:** at this checkpoint, `main` was at [`e732841`](https://github.com/SayedaRehmat/SIRALOOM/commit/e73284193cda4d1e5a7a847d5ec0ccb007d76612), a ledger/matrix documentation commit. Application and regression-test code at [`300eae3`](https://github.com/SayedaRehmat/SIRALOOM/commit/300eae382d780fb8fda8062a7eb5b31aa3935af6) passed exact-SHA [GitHub Actions run 39395036911](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39395036911): backend **1,046 passed, 27 skipped**, PostgreSQL integration **26 passed**, frontend passed, startup-script validation and Python compilation passed, the laboratory backend Docker image built, and its runtime BCFtools version assertion passed for **1.19**. The run exercised the actual pinned BCFtools 1.19 golden test for gVCF wildcard trimming and allele-indexed fields. This does not verify subsequent main commits.
 
 ### Evidence status by release dimension
 
@@ -160,9 +160,9 @@ At this checkpoint these changes are committed locally on `main` as `baff5ff`, b
 
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
-| Case write/review grants agree with the current member role | PASS (local automated scope) | Assignment API rejects incompatible capabilities; case creator's review grant is role-aware. Focused case access/create/mutation suite: 15 passed; broad backend suite: 1,050 passed, 40 skipped. Deployed identity and tenant tests remain NOT RUN. |
+| Case write/review grants agree with the current member role | PASS (local automated scope) | Assignment API rejects incompatible capabilities; case creator's review grant is role-aware. Follow-up migration clears role-incompatible legacy flags while preserving effective access. Focused migration/case-access/membership suite: 20 passed; broad backend suite: 1,050 passed, 40 skipped. PostgreSQL migration execution and deployed identity/tenant tests remain NOT RUN. |
 
-Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. The role/grant fix is committed locally as `884e334e42de53a99d5770b16ae3b785a7b08538` on top of remote `24eda6e`; push remains pending.
+Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. The migration is committed locally as `3e95248de7370173eb2290c75dd3c63067761979`, based on remote `73d1d345181379829038f2c1a59b106d7dcb2aef`; push remains pending.
 
 ## 2026-10-19 ACMG engine status gate (local checkpoint)
 
