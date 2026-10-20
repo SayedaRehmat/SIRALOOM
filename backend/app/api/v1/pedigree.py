@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
+    READ_ROLES,
     REVIEW_ROLES,
     get_accessible_analysis,
     get_analysis_variant,
@@ -189,7 +190,8 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/segregation")
 def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal, "write")
+    analysis=get_accessible_analysis(analysis_id,db,principal)
+    require_role(principal, READ_ROLES)
     get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id).order_by(SegregationObservation.created_at)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}

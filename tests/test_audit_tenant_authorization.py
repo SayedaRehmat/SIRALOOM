@@ -650,6 +650,41 @@ def test_segregation_lineage_rejects_member_from_another_case(monkeypatch, opera
     assert exc.value.detail == "Segregation observation member does not belong to the analysis case"
 
 
+def test_segregation_read_requires_read_access_not_case_write(monkeypatch):
+    analysis_id, variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
+    principal = _principal(uuid4(), role="reviewer")
+    access_calls = []
+    role_calls = []
+
+    class _Db:
+        def scalars(self, _query):
+            return []
+
+    monkeypatch.setattr(
+        pedigree,
+        "get_accessible_analysis",
+        lambda *args: access_calls.append(args) or analysis,
+    )
+    monkeypatch.setattr(
+        pedigree,
+        "require_role",
+        lambda _principal, roles: role_calls.append(roles),
+    )
+    monkeypatch.setattr(
+        pedigree,
+        "get_analysis_variant",
+        lambda *_args: SimpleNamespace(id=variant_id),
+    )
+
+    db = _Db()
+    result = pedigree.get_segregation(analysis_id, variant_id, db, principal)
+
+    assert result["observations"] == []
+    assert access_calls == [(analysis_id, db, principal)]
+    assert role_calls == [pedigree.READ_ROLES]
+
+
 def test_inheritance_assessment_rejects_duplicate_normalized_models_before_reads(monkeypatch):
     analysis_id, variant_id = uuid4(), uuid4()
     analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())

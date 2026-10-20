@@ -288,4 +288,6 @@ Phase A remains PARTIAL. Live Firebase/browser identity, deployed two-tenant API
 
 | Broad non-integration backend regression at `e5832d5d6222084d2db91a59d9dd12fdb2f79dc9` | PARTIAL | `.venv\Scripts\python.exe -m pytest -q -m "not integration"`: **1,106 passed, 15 skipped, 1 failed, 27 deselected**. The sole failure is `tests/test_report_pdf.py::test_pdf_renderer_returns_pdf_bytes` because Windows cannot load WeasyPrint's native `libgobject-2.0-0`; this is an environment dependency failure, not established as unrelated to production PDF behavior. GitHub Actions exact-SHA result remains pending connection/verification. |
 
+| Reviewer/read-only case members can inspect segregation evidence | PASS (focused automated permission scope) | Corrected segregation GET to use case read permission and `READ_ROLES`; assessment and mutation endpoints retain their stricter review/write checks. Tenant/object suites: **79 passed**; focused segregation tests: **3 passed**. No live reviewer browser journey or deployed case-grant check was run. |
+
 Phase A remains PARTIAL. Scientific threshold qualification, live identity, deployed tenant/storage isolation, and real-storage report recovery are still unverified.
