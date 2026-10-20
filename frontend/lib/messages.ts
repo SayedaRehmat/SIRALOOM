@@ -619,6 +619,10 @@ export type TranslationKey =
   | "reports.reportHelp"
   | "reports.pdf"
   | "reports.signout"
+  | "reports.authorizationChecking"
+  | "reports.authorizationUnavailable"
+  | "reports.writeRoleHelp"
+  | "reports.signoutRoleHelp"
   | "audit.eyebrow"
   | "audit.title"
   | "audit.lead"
@@ -1055,6 +1059,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.reportHelp": "Generate a clinical or analytical draft after the analysis is available.",
     "reports.pdf": "PDF",
     "reports.signout": "Approve / sign out",
+    "reports.authorizationChecking": "Checking your laboratory permissions…",
+    "reports.authorizationUnavailable": "Your permissions could not be confirmed. Report actions are unavailable.",
+    "reports.writeRoleHelp": "Reportability evaluation and draft generation require an assigned case write role.",
+    "reports.signoutRoleHelp": "Only authorized laboratory signatories can finalize reportability or sign out reports.",
     "audit.eyebrow": "GOVERNANCE · AUDIT",
     "audit.title": "Audit & provenance",
     "audit.lead": "Tenant-scoped case history with persisted workflow, evidence, reviewer, report, and provenance events.",
@@ -1920,6 +1928,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.reportHelp": "أنشئ مسودة سريرية أو تحليلية بعد توفر التحليل.",
     "reports.pdf": "PDF",
     "reports.signout": "اعتماد / اعتماد نهائي",
+    "reports.authorizationChecking": "جارٍ التحقق من صلاحيات المختبر…",
+    "reports.authorizationUnavailable": "تعذر تأكيد صلاحياتك. إجراءات التقرير غير متاحة.",
+    "reports.writeRoleHelp": "يتطلب تقييم قابلية الإبلاغ وإنشاء المسودة دور كتابة معيّنًا للحالة.",
+    "reports.signoutRoleHelp": "يقتصر اعتماد قابلية الإبلاغ والتوقيع النهائي على الموقّعين المصرح لهم في المختبر.",
     "audit.eyebrow": "الحوكمة · التدقيق",
     "audit.title": "التدقيق وسلسلة المصدر",
     "audit.lead": "سجل تاريخ الحالات ضمن المؤسسة مع سير العمل المحفوظ، والأدلة، والمراجع، والتقارير، وأحداث سلسلة المصدر.",

@@ -597,3 +597,10 @@
 - **Verified defect:** backend `CASE_ACCESS_ADMIN_ROLES` includes `platform_admin`, but the case detail UI exposed grant management only for `organization_admin` and `lab_director`. Platform administrators with the matching active organization membership could exercise the authorized API but had no UI path to manage assignments.
 - **Fix:** centralized the frontend capability in `frontend/lib/case-access.mjs` with the same three roles as the server; case detail uses this helper. Added a regression test for all allowed and representative denied roles.
 - **Verification:** frontend suite now **32 passed** including role parity; localization guard **PASS**; production Next build/typecheck is running. Backend remains authoritative; this UI check does not grant authorization. Exact-SHA CI for the commit is pending.
+
+### 2026-10-20 report action role parity
+
+- **Verified defect:** the reports page displayed reportability evaluation/draft generation to all users, and allowed reportability disposition editing and sign-out buttons without resolving the user's server role. Backend routes enforce `CASE_WRITE_ROLES` for evaluation/generation and `REPORT_FINALIZE_ROLES` for reportability finalization and signed-report finalization.
+- **Fix:** the page now resolves `/auth/session`, matches those server role sets, gates the corresponding controls, and gives users a localized explanation when their role cannot perform the action or session permissions cannot be confirmed. Backend authorization remains mandatory and authoritative.
+- **Regression coverage:** Node tests cover allowed/denied roles for both case-write operations and final signatory operations.
+- **Verification:** `cd frontend && npm run validate:i18n` PASS; `npm run test:session` PASS (**34 tests**); `npm run build` PASS (Next.js production compile/type-check and 24 static pages); `git diff --check` PASS. No live signout or deployed role journey was exercised. Exact-SHA CI and push are pending.

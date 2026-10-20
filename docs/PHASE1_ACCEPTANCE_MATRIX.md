@@ -250,3 +250,9 @@ Phase A remains PARTIAL. Live browser identity, deployed tenant isolation, real-
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | UI exposes case assignment management to all and only the backend's case-access admin roles | PASS (local frontend regression scope) | Frontend role helper matches server `CASE_ACCESS_ADMIN_ROLES`: platform admin, organization admin, and lab director. Regression test covers those and representative denied roles. Frontend 32 tests and i18n guard pass; production build/typecheck and 24 static pages pass; exact-SHA CI for this role-parity change is pending. Server authorization remains authoritative. |
+
+## 2026-10-20 report action role parity
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Reportability evaluation/draft generation and reportability/report sign-out controls match backend roles | PASS (local frontend regression scope) | UI now resolves authenticated server session role; generation/evaluation follow backend case-write roles and finalization follows signatory roles. Tests cover both role sets; i18n guard and production build/typecheck pass; frontend suite 34 passed. API authorization remains authoritative. No live or deployed role/sign-out test was run. |
