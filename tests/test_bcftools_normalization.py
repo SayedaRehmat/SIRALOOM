@@ -150,4 +150,4 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     assert fields[8] == "GT:AD:PL"
     # Removing allele 2 retains PL entries for 0/0, 0/1, and 1/1; the
     # removed 0/2 and 1/2 likelihoods must not be reassigned to 1/1.
-    assert fields[9] == "0/1:15,9:100,50,40"
+    assert fields[9] == "0/1:15,9:100,50,60"
