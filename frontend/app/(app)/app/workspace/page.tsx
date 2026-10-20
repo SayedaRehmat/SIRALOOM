@@ -487,7 +487,7 @@ export default function Home() {
     const load = async () => {
       try {
         const [detail, reviewBundle] = await Promise.all([
-          apiFetch(`/variants/${selectedVariantId}`),
+          apiFetch(`/variants/${selectedVariantId}?analysis_id=${analysisId}`),
           apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`).catch(() => null),
         ]);
         if (cancelled) return;

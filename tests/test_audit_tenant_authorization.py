@@ -531,48 +531,87 @@ def test_followup_update_rejects_case_mismatch_with_its_analysis(monkeypatch):
     assert exc.value.detail == "Follow-up plan case does not match its analysis"
 
 
-def test_variant_details_require_analysis_membership(monkeypatch):
-    from backend.app.infrastructure.db.models import Analysis, Variant
-
+def test_variant_details_hide_unassigned_case_even_for_org_member(monkeypatch):
     variant_id, analysis_id = uuid4(), uuid4()
-    annotation = SimpleNamespace(analysis_id=analysis_id)
-    variant = SimpleNamespace(id=variant_id)
-    analysis = SimpleNamespace(id=analysis_id)
     principal = _principal(uuid4())
 
     class _ScalarRows:
-        def __init__(self, value):
-            self.value = value
-
-        def first(self):
-            return self.value
+        def __init__(self, values):
+            self.values = values
 
         def all(self):
-            return []
+            return self.values
 
     class _Db:
-        def get(self, model, _object_id):
-            return {Variant: variant, Analysis: analysis}.get(model)
-
-        def scalar(self, _query):
-            return annotation
+        calls = 0
 
         def scalars(self, _query):
-            return _ScalarRows(None)
+            self.calls += 1
+            return _ScalarRows([analysis_id] if self.calls == 1 else [])
 
+    db = _Db()
+    monkeypatch.setattr(
+        variants,
+        "get_accessible_analysis",
+        lambda *_args: (_ for _ in ()).throw(HTTPException(404, "Case not found")),
+    )
     monkeypatch.setattr(
         variants,
         "get_analysis_variant",
-        lambda *_args: (_ for _ in ()).throw(
-            HTTPException(404, "Variant is not part of this analysis")
-        ),
+        lambda *_args: pytest.fail("variant membership must not be read before case access"),
     )
 
     with pytest.raises(HTTPException) as exc:
-        variants.get_variant(variant_id, _Db(), principal)
+        variants.get_variant(variant_id, db, principal, analysis_id=analysis_id)
 
-    assert exc.value.status_code == 404
-    assert exc.value.detail == "Variant not found"
+    assert (exc.value.status_code, exc.value.detail) == (404, "Variant not found")
+    assert db.calls == 1
+
+
+def test_variant_details_select_newest_analysis_the_user_can_read(monkeypatch):
+    variant_id = uuid4()
+    newest_unassigned_id, older_assigned_id = uuid4(), uuid4()
+    principal = _principal(uuid4())
+    analysis = SimpleNamespace(id=older_assigned_id)
+    variant = SimpleNamespace(
+        id=variant_id, genome_build="GRCh38", chromosome="1", position=123,
+        reference="A", alternate="G", normalization_status="NORMALIZED",
+        canonical_key="GRCh38:1:123:A:G", identifiers={},
+    )
+
+    class _ScalarRows:
+        def __init__(self, values):
+            self.values = values
+
+        def all(self):
+            return self.values
+
+    class _Db:
+        calls = 0
+
+        def scalars(self, _query):
+            self.calls += 1
+            return _ScalarRows(
+                [newest_unassigned_id, older_assigned_id] if self.calls == 1 else []
+            )
+
+    db = _Db()
+    visited = []
+
+    def accessible(analysis_id, *_args):
+        visited.append(analysis_id)
+        if analysis_id == newest_unassigned_id:
+            raise HTTPException(404, "Case not found")
+        return analysis
+
+    monkeypatch.setattr(variants, "get_accessible_analysis", accessible)
+    monkeypatch.setattr(variants, "get_analysis_variant", lambda *_args: variant)
+
+    response = variants.get_variant(variant_id, db, principal)
+
+    assert visited == [newest_unassigned_id, older_assigned_id]
+    assert response["variant"]["id"] == str(variant_id)
+    assert db.calls == 6
 
 
 @pytest.mark.parametrize("operation", ["read", "assess"])

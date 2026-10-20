@@ -1,10 +1,10 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.authorization import get_analysis_variant
+from backend.app.auth.authorization import get_accessible_analysis, get_analysis_variant
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -21,22 +21,48 @@ from backend.app.infrastructure.db.session import get_db
 router = APIRouter(tags=["variants"])
 
 @router.get("/variants/{variant_id}")
-def get_variant(variant_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    v = db.get(Variant, variant_id)
-    if not v:
+def get_variant(
+    variant_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+    analysis_id: UUID | None = None,
+):
+    analysis_query = (
+        select(Annotation.analysis_id)
+        .join(Analysis, Annotation.analysis_id == Analysis.id)
+        .join(Case, Analysis.case_id == Case.id)
+        .where(
+            Annotation.variant_id == variant_id,
+            Case.organization_id == principal.organization_id,
+        )
+        .group_by(Annotation.analysis_id)
+        .order_by(func.max(Annotation.created_at).desc())
+    )
+    if analysis_id is not None:
+        # The workspace knows its selected analysis; keep details bound to it.
+        analysis_query = analysis_query.where(Annotation.analysis_id == analysis_id)
+    analysis_ids = db.scalars(analysis_query).all()
+
+    # Variant UUIDs can be shared across analyses. Resolve the newest analysis
+    # the caller may actually read; organization membership alone is not enough
+    # after case assignments are enabled.
+    analysis = None
+    v = None
+    for candidate_id in analysis_ids:
+        try:
+            candidate = get_accessible_analysis(candidate_id, db, principal)
+            candidate_variant = get_analysis_variant(candidate, variant_id, db)
+        except HTTPException as exc:
+            if exc.status_code == 404:
+                continue
+            raise
+        analysis = candidate
+        v = candidate_variant
+        break
+
+    if analysis is None or v is None:
         raise HTTPException(status_code=404, detail="Variant not found")
-    annotation = db.scalar(select(Annotation).join(Analysis, Annotation.analysis_id == Analysis.id).join(Case, Analysis.case_id == Case.id).where(Annotation.variant_id == v.id, Case.organization_id == principal.organization_id).order_by(Annotation.created_at.desc()))
-    if not annotation: raise HTTPException(status_code=404, detail="Variant not found")
-    aid = annotation.analysis_id
-    analysis = db.get(Analysis, aid)
-    if analysis is None:
-        raise HTTPException(status_code=404, detail="Variant not found")
-    try:
-        get_analysis_variant(analysis, v.id, db)
-    except HTTPException as exc:
-        if exc.status_code == 404:
-            raise HTTPException(status_code=404, detail="Variant not found") from exc
-        raise
+    aid = analysis.id
     anns = db.scalars(select(Annotation).where(Annotation.variant_id == v.id, Annotation.analysis_id == aid)).all()
     pops = db.scalars(select(PopulationObservation).where(PopulationObservation.variant_id == v.id, PopulationObservation.analysis_id == aid)).all()
     ev = db.scalars(select(Evidence).where(Evidence.variant_id == v.id, Evidence.analysis_id == aid)).all()
