@@ -1,5 +1,11 @@
 # SIRALOOM Phase 1 Deployment Release Candidate
 
+## Current germline VCF processing boundary (2026-10-20)
+
+The working tree now partitions records before reference lookup. Reference-aware BCFtools normalization is intended for sequence-resolved SNVs and small indels, including a GVCF concrete ALT only when complete sample genotypes establish that wildcard alleles are unseen. GVCF reference blocks, wildcard-called/unresolved variants, symbolic SVs, breakends, and spanning-deletion `*` records are retained as provenance-linked artifacts and require an appropriate review/processing stage. They are not interpreted by the current workflow, and final report sign-out is blocked while these records remain unreviewed. This is an explicit partial-processing boundary, not complete GVCF or SV support.
+
+Local production-wrapper regression evidence: **44 passed, 5 skipped** in the focused suite; broad backend suite **986 passed, 40 skipped** excluding the PDF-renderer test. The real BCFtools 1.19 golden tests, PostgreSQL workflow integration, Docker image build, deployed tenant/storage checks, and independent scientific benchmarks have not run for this working tree. CI is configured to assert BCFtools 1.19 and build/check the backend container; successful configuration is not execution evidence. Current changes are uncommitted on local `main` and are absent from `origin/main`.
+
 ## Baseline
 
 M15 is the frozen Phase-1 software baseline. Backend verification remains 113/113 tests passed.

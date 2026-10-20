@@ -19,6 +19,7 @@ from backend.app.infrastructure.db.models import (
     SecondaryFindingDecision,
     User,
     Variant,
+    WorkflowStep,
 )
 from backend.app.reporting.finalization import finalize_report
 from backend.app.reporting.service import build_report_content, final_report_eligibility
@@ -222,6 +223,27 @@ def test_report_content_persists_exact_classification_identity():
     )
     assert finding["classification_id"] == str(classification.id)
     assert finding["classification_version"] == classification.version
+
+
+def test_signout_rejects_reports_when_gvcf_or_sv_records_were_preserved_uninterpreted():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    db.add(WorkflowStep(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize", step_order=2,
+        status="SUCCEEDED", attempt=1, input_artifacts=[], output_artifacts=[],
+        metadata_json={
+            "routing": {
+                "gvcf_reference_blocks": 2,
+                "gvcf_unresolved_variant_records": 0,
+                "structural_variant_records": 1,
+            },
+        },
+    ))
+    db.commit()
+
+    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+
+    assert not eligible
+    assert any("3 preserved GVCF/SV record(s)" in error for error in errors)
 
 
 def test_report_generation_and_signout_eligibility_reject_classification_outside_manifest():

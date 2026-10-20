@@ -1,10 +1,128 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
+from contextlib import ExitStack
 from pathlib import Path
+
+
+GVCF_WILDCARD_ALLELES = {"<NON_REF>", "<*>"}
+
+
+def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
+    """Partition a validated VCF without changing records or sample semantics.
+
+    Only sequence-resolved records are sent to ordinary normalization. GVCF
+    reference blocks and structural records are copied byte-for-text unchanged
+    into separate review artifacts. A GVCF variant is eligible for the
+    sequence path only when every sample has a complete GT that does not call
+    a wildcard allele; bcftools 1.19 ``view -A`` then removes that unseen
+    wildcard while updating allele-indexed fields.
+    """
+    import gzip
+
+    source = Path(input_path)
+    output = Path(output_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    names = {
+        "sequence": output / "sequence-input.vcf",
+        "gvcf_blocks": output / "gvcf-reference-blocks.vcf",
+        "gvcf_unresolved": output / "gvcf-unresolved-variants.vcf",
+        "structural": output / "structural-variants.vcf",
+        "spanning_deletions": output / "spanning-deletion-records.vcf",
+    }
+    opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
+    headers: list[str] = []
+    counts = {key: 0 for key in names}
+    handles = {}
+    sample_count = 0
+    with ExitStack() as stack:
+        def emit(key: str, record: str) -> None:
+            handle = handles.get(key)
+            if handle is None:
+                handle = stack.enter_context(names[key].open("w", encoding="utf-8", newline="\n"))
+                handles[key] = handle
+                for header in headers:
+                    handle.write(header + "\n")
+            handle.write(record + "\n")
+            counts[key] += 1
+
+        with opener(source, "rt", encoding="utf-8-sig") as handle:
+            for raw in handle:
+                line = raw.rstrip("\r\n")
+                if line.startswith("#"):
+                    headers.append(line)
+                    if line.startswith("#CHROM\t"):
+                        sample_count = max(0, len(line.split("\t")) - 9)
+                    continue
+                fields = line.split("\t")
+                if len(fields) < 8:
+                    raise VCFToolError("Cannot route malformed VCF record with fewer than 8 columns.")
+                alts = fields[4].split(",")
+                wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
+                if any(alt == "*" for alt in alts):
+                    emit("spanning_deletions", line)
+                    continue
+                is_structural = any(
+                    alt not in GVCF_WILDCARD_ALLELES and
+                    (alt.startswith("<") or "[" in alt or "]" in alt)
+                    for alt in alts
+                )
+                if is_structural:
+                    emit("structural", line)
+                    continue
+                if wildcard_indexes:
+                    concrete_alts = [alt for alt in alts if alt not in GVCF_WILDCARD_ALLELES]
+                    if not concrete_alts:
+                        emit("gvcf_blocks", line)
+                        continue
+                    format_keys = fields[8].split(":") if len(fields) > 8 else []
+                    gt_index = format_keys.index("GT") if "GT" in format_keys else None
+                    fully_unseen = sample_count > 0 and gt_index is not None
+                    if fully_unseen:
+                        for sample in fields[9:]:
+                            sample_values = sample.split(":")
+                            if gt_index >= len(sample_values):
+                                fully_unseen = False
+                                break
+                            gt = sample_values[gt_index]
+                            if gt in {".", "./.", ".|."}:
+                                fully_unseen = False
+                                break
+                            for allele in re.split(r"[/|]", gt):
+                                if allele == ".":
+                                    fully_unseen = False
+                                    break
+                                try:
+                                    if int(allele) in wildcard_indexes:
+                                        fully_unseen = False
+                                        break
+                                except ValueError:
+                                    fully_unseen = False
+                                    break
+                            if not fully_unseen:
+                                break
+                    emit("sequence" if fully_unseen else "gvcf_unresolved", line)
+                    continue
+                emit("sequence", line)
+    return {
+        "routing_version": "1",
+        "records_total": sum(counts.values()),
+        "sequence_records": counts["sequence"],
+        "gvcf_reference_blocks": counts["gvcf_blocks"],
+        "gvcf_unresolved_variant_records": counts["gvcf_unresolved"],
+        "structural_variant_records": counts["structural"],
+        "spanning_deletion_records": counts["spanning_deletions"],
+        "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
+        "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
+        "gvcf_unresolved_path": str(names["gvcf_unresolved"]) if counts["gvcf_unresolved"] else None,
+        "structural_path": str(names["structural"]) if counts["structural"] else None,
+        "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
+        "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
+    }
 
 
 MNV_POLICY = "PRESERVE"
@@ -135,12 +253,33 @@ def normalize_vcf_with_bcftools(
         sorted_path = work / "sorted.vcf.gz"
         staged_index_path = Path(str(sorted_path) + ".csi")
         normalized_stderr = ""
+        view_stderr = ""
         sorted_stderr = ""
         indexed_stderr = ""
 
+        # ``view -A`` is available in the pinned 1.19 release. The router only
+        # places records here when the GVCF wildcard is provably uncalled.
+        prepared_path = work / "prepared.vcf.gz"
+        view_command = ["bcftools", "view", "-A", "-Oz", "-o", str(prepared_path), str(input_path)]
+        try:
+            viewed = subprocess.run(
+                view_command, capture_output=True, text=True, timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise VCFToolError(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
+        except OSError as exc:
+            raise VCFToolError(f"Unable to execute bcftools GVCF wildcard preparation: {exc}") from exc
+        view_stderr = (viewed.stderr or "").strip()
+        if viewed.returncode != 0:
+            detail = (viewed.stderr or viewed.stdout or "unknown bcftools view error").strip()
+            raise VCFToolError(f"bcftools could not remove unseen GVCF wildcard alleles: {detail}")
+        if not prepared_path.is_file() or prepared_path.stat().st_size == 0:
+            raise VCFToolError("bcftools reported success but produced no prepared VCF.")
+
         normalize_command = [
             "bcftools", "norm", "-f", str(reference_fasta), "-c", "e",
-            "-m", "-any", "-Oz", "-o", str(normalized_path), str(input_path),
+            "-m", "-any", "-Oz", "-o", str(normalized_path), str(prepared_path),
         ]
         try:
             completed = subprocess.run(
@@ -241,7 +380,7 @@ def normalize_vcf_with_bcftools(
             "tool_version": version_line,
             "expected_tool_version": expected_bcftools_version,
             "operation": "reference_aware_normalization_sort_index",
-            "command": " && ".join([" ".join(normalize_command), " ".join(sort_command), " ".join(index_command)]),
+            "command": " && ".join([" ".join(view_command), " ".join(normalize_command), " ".join(sort_command), " ".join(index_command)]),
             "reference_fasta": str(reference_fasta),
             "reference_check": "error",
             "multiallelic_mode": MULTIALLELIC_POLICY,
@@ -249,7 +388,8 @@ def normalize_vcf_with_bcftools(
             "compression": "BGZF",
             "index": "CSI",
             "index_path": str(index_path),
-            "stderr": "\n".join(x for x in (normalized_stderr, sorted_stderr, indexed_stderr) if x),
+            "gvcf_wildcard_command": "bcftools view -A",
+            "stderr": "\n".join(x for x in (view_stderr, normalized_stderr, sorted_stderr, indexed_stderr) if x),
         }
 
 def classify_records(path: str | Path) -> dict:
@@ -264,8 +404,6 @@ def classify_records(path: str | Path) -> dict:
     with opener(p, "rt", encoding="utf-8-sig") as fh:
         for raw in fh:
             line = raw.rstrip("\n")
-            if line.startswith("##GVCFBlock") or "##ALT=<ID=NON_REF" in line:
-                gvcf_markers += 1
             if line.startswith("#"):
                 continue
             fields = line.split("\t")
@@ -280,6 +418,8 @@ def classify_records(path: str | Path) -> dict:
                 for alt in alts
             ):
                 symbolic += 1
+            if any(alt in GVCF_WILDCARD_ALLELES for alt in alts):
+                gvcf_markers += 1
     return {
         "records": records,
         "multiallelic_records": multiallelic,

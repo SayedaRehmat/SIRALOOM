@@ -8,7 +8,10 @@ SUPPORTED_VCF_VERSIONS = {"VCFv4.2", "VCFv4.3"}
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 SYMBOLIC_RE = re.compile(r"^<[^>]+>$")
-BREAKEND_RE = re.compile(r"[][A-Za-z0-9_.:-]+[][]")
+BREAKEND_RE = re.compile(
+    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=left)|"
+    r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
+)
 
 
 class StrictVCFValidationError(ValueError):
@@ -36,6 +39,62 @@ def _validate_info(value: str, line_no: int) -> None:
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         elif not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", item):
             raise StrictVCFValidationError(f"Malformed INFO flag at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
+
+
+def _info_values(value: str) -> dict[str, str | None]:
+    if value == ".":
+        return {}
+    result: dict[str, str | None] = {}
+    for item in value.split(";"):
+        key, separator, raw = item.partition("=")
+        result[key] = raw if separator else None
+    return result
+
+
+def _validate_structural_alt(alt: str, *, alt_index: int, alts: list[str], info: dict[str, str | None], pos: int, line_no: int) -> None:
+    if alt in {"<NON_REF>", "<*>"} or alt == "*" or "[" in alt or "]" in alt:
+        return
+    if not SYMBOLIC_RE.fullmatch(alt):
+        return
+    end_value = info.get("END")
+    if end_value is not None:
+        try:
+            end = int(end_value)
+        except ValueError as exc:
+            raise StrictVCFValidationError(f"Symbolic ALT has a non-integer END at line {line_no}", code="VCF_SV_INVALID") from exc
+        if end < pos:
+            raise StrictVCFValidationError(f"Symbolic ALT END precedes POS at line {line_no}", code="VCF_SV_INVALID")
+    svlen_value = info.get("SVLEN")
+    svlen_values = svlen_value.split(",") if svlen_value is not None else []
+    if svlen_value is not None and len(svlen_values) != len(alts):
+        raise StrictVCFValidationError(f"SVLEN cardinality does not match ALT alleles at line {line_no}", code="VCF_SV_INVALID")
+    svlen_for_alt = svlen_values[alt_index] if svlen_values else None
+    if svlen_for_alt not in {None, "."}:
+        try:
+            int(svlen_for_alt)
+        except ValueError as exc:
+            raise StrictVCFValidationError(f"Symbolic ALT has a non-integer SVLEN at line {line_no}", code="VCF_SV_INVALID") from exc
+    if end_value is None and svlen_for_alt in {None, "."}:
+        raise StrictVCFValidationError(
+            f"Symbolic structural ALT {alt} requires END or allele-specific SVLEN at line {line_no}",
+            code="VCF_SV_SPAN_MISSING",
+        )
+
+
+def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int] | None:
+    prefix = 0
+    while prefix < min(len(ref), len(alt)) and ref[prefix] == alt[prefix]:
+        prefix += 1
+    suffix = 0
+    while (
+        suffix < len(ref) - prefix
+        and suffix < len(alt) - prefix
+        and ref[len(ref) - suffix - 1] == alt[len(alt) - suffix - 1]
+    ):
+        suffix += 1
+    start = pos + prefix
+    end = pos + len(ref) - suffix - 1
+    return (start, end) if end >= start else None
 
 
 def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str] | None) -> tuple[str, int, list[str]]:
@@ -87,6 +146,20 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
             raise StrictVCFValidationError(f"Malformed FILTER at line {line_no}: {filt!r}", code="VCF_FILTER_INVALID")
 
     _validate_info(info, line_no)
+    info_values = _info_values(info)
+    for alt_index, alternate in enumerate(alts):
+        _validate_structural_alt(
+            alternate, alt_index=alt_index, alts=alts, info=info_values, pos=pos, line_no=line_no,
+        )
+    if alts and all(alt in {"<NON_REF>", "<*>"} for alt in alts):
+        end_value = info_values.get("END")
+        if end_value is None:
+            raise StrictVCFValidationError(f"GVCF reference block requires END at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
+        try:
+            if int(end_value) < pos:
+                raise StrictVCFValidationError(f"GVCF block END precedes POS at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
+        except ValueError as exc:
+            raise StrictVCFValidationError(f"GVCF block END must be an integer at line {line_no}", code="VCF_GVCF_BLOCK_INVALID") from exc
 
     if len(fields) >= 9:
         fmt = fields[8]
@@ -141,6 +214,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     breakends = 0
     gvcf_markers = 0
     singleton_headers: set[str] = set()
+    deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
+    spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -198,6 +273,43 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            format_keys = fields[8].split(":") if len(fields) > 8 else []
+            gt_index = format_keys.index("GT") if "GT" in format_keys else None
+
+            def carriers(alt_index: int) -> set[int] | None:
+                if len(fields) <= 9 or gt_index is None:
+                    return None
+                result: set[int] = set()
+                for sample_index, sample in enumerate(fields[9:]):
+                    values = sample.split(":")
+                    if gt_index >= len(values):
+                        continue
+                    gt = values[gt_index]
+                    if gt == ".":
+                        continue
+                    try:
+                        called = {int(item) for item in re.split(r"[/|]", gt) if item != "."}
+                    except ValueError:
+                        continue
+                    if alt_index in called:
+                        result.add(sample_index)
+                return result
+
+            if "*" in alts:
+                spanning_deletion_records.append((_chrom, _pos, line_no, carriers(alts.index("*") + 1)))
+            for alt_index, alternate in enumerate(alts, start=1):
+                if DNA_RE.fullmatch(alternate):
+                    interval = _deleted_reference_interval(_pos, fields[3].upper(), alternate)
+                    if interval is not None:
+                        deletion_intervals.setdefault(_chrom, []).append((*interval, carriers(alt_index)))
+                elif alternate == "<DEL>":
+                    structural_end = _info_values(fields[7]).get("END")
+                    if structural_end is not None:
+                        end = int(structural_end)  # checked by _validate_record
+                        if end > _pos:
+                            deletion_intervals.setdefault(_chrom, []).append(
+                                (_pos + 1, end, carriers(alt_index))
+                            )
             records += 1
             if len(alts) > 1:
                 multiallelic += 1
@@ -218,6 +330,24 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
+    for chrom, pos, line_no, star_carriers in spanning_deletion_records:
+        if star_carriers is not None and not star_carriers:
+            continue
+        overlaps = [
+            deletion_carriers
+            for start, end, deletion_carriers in deletion_intervals.get(chrom, ())
+            if start <= pos <= end
+        ]
+        context_exists = any(
+            deletion_carriers is None
+            or bool(star_carriers & deletion_carriers)
+            for deletion_carriers in overlaps
+        )
+        if not overlaps or not context_exists:
+            raise StrictVCFValidationError(
+                f"Spanning-deletion ALT '*' has no overlapping deletion record on {chrom} at line {line_no}",
+                code="VCF_SPANNING_DELETION_CONTEXT_MISSING",
+            )
 
     return {
         "fileformat": fileformat,

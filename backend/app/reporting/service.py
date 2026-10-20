@@ -34,7 +34,7 @@ from backend.app.infrastructure.db.models import (
     User,
     PhenotypeObservation,
     PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment,
-    ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision,
+    ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision, WorkflowStep,
 )
 
 REPORT_STATUS_DRAFT = "DRAFT"
@@ -114,6 +114,28 @@ def final_report_eligibility(db: Session, *, analysis_id: UUID) -> tuple[bool, l
     errors: list[str] = []
     if analysis.status not in {"REQUIRES_REVIEW", "SUCCEEDED"}:
         errors.append(f"Analysis status {analysis.status} is not report-eligible")
+
+    normalization_step = db.scalar(
+        select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis_id,
+            WorkflowStep.step_id == "normalize",
+        )
+    )
+    routing = (normalization_step.metadata_json or {}).get("routing", {}) if normalization_step else {}
+    unprocessed_count = sum(
+        int(routing.get(key, 0) or 0)
+        for key in (
+            "gvcf_reference_blocks",
+            "gvcf_unresolved_variant_records",
+            "structural_variant_records",
+            "spanning_deletion_records",
+        )
+    )
+    if unprocessed_count:
+        errors.append(
+            f"Analysis contains {unprocessed_count} preserved GVCF/SV record(s) that were not interpreted; "
+            "a report cannot imply complete analysis until a qualified workflow addresses them."
+        )
 
     classifications = list(db.scalars(select(Classification).where(Classification.analysis_id == analysis_id)))
     latest: dict[UUID, Classification] = {}

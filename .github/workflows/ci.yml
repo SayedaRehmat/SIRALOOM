@@ -32,6 +32,10 @@ jobs:
         run: sh -n scripts/start_worker.sh scripts/start_beat.sh
       - name: Compile Python
         run: python -m compileall backend scripts
+      - name: Build laboratory backend image
+        run: docker build --file docker/backend.Dockerfile --tag siraloom-backend:ci .
+      - name: Verify container BCFtools version
+        run: test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | head -n1)" = "bcftools 1.19"
 
   postgres-integration:
     runs-on: ubuntu-latest

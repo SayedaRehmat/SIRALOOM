@@ -88,7 +88,7 @@ def test_golden_ref_mismatch_fails_closed(tmp_path: Path):
     output = tmp_path / "normalized.vcf.gz"
     write_vcf(source, "1\t2\t.\tC\tG\t.\tPASS\t.\n")
     with pytest.raises(VCFToolError, match="reference-aware normalization failed"):
-        normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
+        normalize_vcf_with_bcftools(source, output, reference_fasta=reference, expected_bcftools_version="1.19")
 
 
 def test_golden_unknown_contig_fails_bcftools(tmp_path: Path):
@@ -109,3 +109,43 @@ def test_golden_normalization_is_idempotent_at_variant_representation_level(tmp_
     normalize_vcf_with_bcftools(source, first, reference_fasta=reference)
     normalize_vcf_with_bcftools(first, second, reference_fasta=reference)
     assert records(first) == records(second)
+
+
+def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_genotype(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    reference = make_reference(tmp_path)
+    source = tmp_path / "sample.g.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+        "##INFO=<ID=AF,Number=A,Type=Float,Description=Allele frequency>\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=Genotype>\n"
+        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
+        "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=Phred likelihoods>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t1\t.\tC\t<NON_REF>\t.\tPASS\t.\tGT:AD:PL\t0/0:20,0:0,40,400\n"
+        "1\t2\trsG\tA\tG,<NON_REF>\t50\tPASS\tAF=0.2,0\tGT:AD:PL\t0/1:15,9,0:100,50,60,40,0,30\n",
+        encoding="utf-8",
+    )
+    routed = route_vcf_records(source, tmp_path / "routed-gvcf")
+    assert routed["gvcf_reference_blocks"] == 1
+    assert routed["sequence_records"] == 1
+
+    output = tmp_path / "called-variants.normalized.vcf.gz"
+    stats = normalize_vcf_with_bcftools(
+        routed["sequence_path"], output, reference_fasta=reference,
+        expected_bcftools_version="1.19",
+    )
+
+    assert stats["tool_version"].split()[1] == "1.19"
+    assert stats["gvcf_wildcard_command"] == "bcftools view -A"
+    assert records(output) == [("1", 2, "A", "G")]
+    with gzip.open(output, "rt", encoding="utf-8") as handle:
+        variant = next(line for line in handle if not line.startswith("#"))
+    fields = variant.rstrip("\n").split("\t")
+    assert fields[4] == "G"
+    assert fields[7] == "AF=0.2"
+    assert fields[8] == "GT:AD:PL"
+    assert fields[9] == "0/1:15,9:100,50,0"

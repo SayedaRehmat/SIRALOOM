@@ -129,8 +129,70 @@ def test_strict_validation_profiles_multiallelic_and_symbolic_records(tmp_path: 
     write_vcf(
         path,
         "1\t2\t.\tA\tC,G\t.\tPASS\t.\n"
-        "1\t3\t.\tA\t<DEL>\t.\tPASS\t.\n",
+        "1\t3\t.\tA\t<DEL>\t.\tPASS\tEND=9\n",
     )
     profile = validate_vcf_strict(path)
     assert profile["multiallelic_records"] == 1
     assert profile["symbolic_records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("record", "code"),
+    [
+        ("1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL\n", "VCF_SV_SPAN_MISSING"),
+        ("1\t5\t.\tA\t<DEL>\t.\tPASS\tEND=4\n", "VCF_SV_INVALID"),
+        ("1\t5\t.\tA\t<DEL>\t.\tPASS\tEND=bad\n", "VCF_SV_INVALID"),
+        ("1\t5\t.\tA\tA]2:0]\t.\tPASS\tSVTYPE=BND\n", "VCF_ALT_INVALID"),
+    ],
+)
+def test_strict_validation_rejects_malformed_structural_representation(tmp_path, record, code):
+    path = tmp_path / "malformed-sv.vcf"
+    write_vcf(path, record)
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == code
+
+
+def test_strict_validation_requires_context_for_spanning_deletion_allele(tmp_path):
+    path = tmp_path / "orphan-star.vcf"
+    write_vcf(path, "1\t11\t.\tT\t*\t.\tPASS\t.\n")
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_SPANNING_DELETION_CONTEXT_MISSING"
+
+
+def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_record(tmp_path):
+    path = tmp_path / "contextual-star.vcf"
+    write_vcf(
+        path,
+        "1\t10\tdel1\tAT\tA\t.\tPASS\t.\n"
+        "1\t11\tstar1\tT\t*\t.\tPASS\t.\n",
+    )
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 2
+
+
+def test_strict_validation_rejects_spanning_deletion_carried_by_different_sample(tmp_path):
+    path = tmp_path / "wrong-sample-star.vcf"
+    columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1"
+    write_vcf(
+        path,
+        "1\t10\tdel1\tAT\tA\t.\tPASS\t.\tGT\t0/0\n"
+        "1\t11\tstar1\tT\t*\t.\tPASS\t.\tGT\t0/1\n",
+        columns=columns,
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_SPANNING_DELETION_CONTEXT_MISSING"
+
+
+def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span(tmp_path):
+    path = tmp_path / "symbolic-context-star.vcf"
+    columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1"
+    write_vcf(
+        path,
+        "1\t10\tdel1\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=11\tGT\t0/1\n"
+        "1\t11\tstar1\tA\t*\t.\tPASS\t.\tGT\t0/1\n",
+        columns=columns,
+    )
+    assert validate_vcf_strict(path)["records"] == 2

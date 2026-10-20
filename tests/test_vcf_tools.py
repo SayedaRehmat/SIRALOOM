@@ -147,7 +147,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
     def fake_run(command, **kwargs):
         if command[1] == "--version":
             return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.19\n", stderr="")
-        if command[1] in {"norm", "sort"}:
+        if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             target.write_bytes(b"staged-" + command[1].encode())
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
@@ -189,6 +189,35 @@ def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_pat
         "symbolic_records": 2,
         "gvcf_markers": 1,
     }
+
+
+def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "mixed.g.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##ALT=<ID=NON_REF,Description="Any possible allele">\n'
+        "##INFO=<ID=DP,Number=1,Type=Integer,Description=Depth>\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=Genotype>\n"
+        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD\t0/0:30,0\n"
+        "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"
+        "1\t12\trs2\tA\tG,<NON_REF>\t50\tPASS\tDP=21\tGT:AD\t0/2:10,0,11\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed")
+
+    assert routed["records_total"] == 3
+    assert routed["sequence_records"] == 1
+    assert routed["gvcf_reference_blocks"] == 1
+    assert routed["gvcf_unresolved_variant_records"] == 1
+    assert routed["structural_variant_records"] == 0
+    assert "0/1:15,9,0" in Path(routed["sequence_path"]).read_text(encoding="utf-8")
+    assert "0/0:30,0" in Path(routed["gvcf_blocks_path"]).read_text(encoding="utf-8")
+    assert "0/2:10,0,11" in Path(routed["gvcf_unresolved_path"]).read_text(encoding="utf-8")
 
 
 def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(tmp_path: Path):

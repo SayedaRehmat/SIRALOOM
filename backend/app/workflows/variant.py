@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -66,7 +68,12 @@ from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.domain.variant_identity import canonical_key, normalize_build, stable_variant_uuid
-from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+from backend.app.domain.vcf_tools import (
+    VCFToolError,
+    classify_records,
+    normalize_vcf_with_bcftools,
+    route_vcf_records,
+)
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
@@ -1319,26 +1326,95 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
             profile: dict[str, int] = {}
+            routing: dict = {}
+            routed_artifacts: list[Artifact] = []
             try:
-                # Determine whether this pipeline supports the input before
-                # consulting a reference resource. Unsupported GVCF/SV input
-                # should have a stable scientific disposition even when a
-                # laboratory has not configured a reference package.
                 profile = classify_records(input_path)
-                if profile["gvcf_markers"]:
-                    raise UnsupportedVariantError(
-                        "GVCF input detected. Phase 1 requires a genotyped VCF; "
-                        "GVCF reference blocks must first pass the appropriate "
-                        "genotyping/joint-genotyping workflow.",
-                        code="UNSUPPORTED_GVCF_INPUT",
+                routing_dir = Path(tempfile.mkdtemp(prefix=f"siraloom-vcf-routing-{analysis.id}-"))
+                temporary_artifact_paths.append(routing_dir)
+                routing = route_vcf_records(input_path, routing_dir)
+                routed_artifact_specs = (
+                    ("gvcf_blocks_path", "GVCF_REFERENCE_BLOCKS", "gvcf-reference-blocks.vcf"),
+                    ("gvcf_unresolved_path", "UNRESOLVED_GVCF_VARIANTS", "gvcf-unresolved-variants.vcf"),
+                    ("structural_path", "STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf"),
+                    ("spanning_deletions_path", "SPANNING_DELETION_RECORDS", "spanning-deletion-records.vcf"),
+                )
+                for path_key, artifact_type, filename in routed_artifact_specs:
+                    routed_path = routing.get(path_key)
+                    if not routed_path:
+                        continue
+                    routed_artifacts.append(_put_idempotent_stage_artifact(
+                        artifacts,
+                        artifact_id=uuid5(analysis.id, f"siraloom:normalization:routed:{artifact_type.lower()}:v1"),
+                        db=db,
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        source_path=Path(routed_path),
+                        filename=filename,
+                        artifact_type=artifact_type,
+                        media_type="text/vcf",
+                        genome_build=reference_build,
+                        metadata={
+                            "routing_version": routing["routing_version"],
+                            "source_artifact_id": str(input_artifact.id),
+                            "source_sha256": input_artifact.sha256,
+                            "record_count": routing[{
+                                "GVCF_REFERENCE_BLOCKS": "gvcf_reference_blocks",
+                                "UNRESOLVED_GVCF_VARIANTS": "gvcf_unresolved_variant_records",
+                                "STRUCTURAL_VARIANT_RECORDS": "structural_variant_records",
+                                "SPANNING_DELETION_RECORDS": "spanning_deletion_records",
+                            }[artifact_type]],
+                            "interpretation_status": "NOT_ANALYZED",
+                        },
+                    ))
+                db.commit()
+
+                if not routing["sequence_records"]:
+                    reason = (
+                        "The source contains only preserved GVCF reference blocks and/or records requiring a "
+                        "GVCF/SV-aware review path; no sequence-resolved variant records were eligible for "
+                        "ordinary normalization. Original records are retained in the source artifact and "
+                        "routed artifacts."
                     )
-                if profile["symbolic_records"]:
-                    raise UnsupportedVariantError(
-                        "Symbolic/breakend variants detected. Phase 1 currently "
-                        "normalizes SNVs and short indels; SV/CNV records require "
-                        "the dedicated structural-variant workflow.",
-                        code="UNSUPPORTED_STRUCTURAL_VARIANT",
+                    routed_count = (
+                        routing["gvcf_reference_blocks"]
+                        + routing["gvcf_unresolved_variant_records"]
+                        + routing["structural_variant_records"]
+                        + routing["spanning_deletion_records"]
                     )
+                    mark_step(
+                        db,
+                        normalization_step,
+                        StepStatus.REQUIRES_REVIEW,
+                        error_code="NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
+                        error_message=reason,
+                        metadata={
+                            "next_step": "GVCF_OR_STRUCTURAL_VARIANT_REVIEW",
+                            "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
+                            "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
+                            "human_action_required": True,
+                        },
+                    )
+                    analysis.status = AnalysisStatus.REQUIRES_REVIEW
+                    analysis.completed_at = None
+                    db.commit()
+                    audit.record(
+                        event_type="VCF_RECORDS_ROUTED_TO_REVIEW",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="siraloom-vcf-router",
+                        input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
+                        output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts],
+                        reason=reason,
+                        payload={
+                            "error_code": "NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
+                            "routed_record_count": routed_count,
+                            "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
+                        },
+                    )
+                    db.commit()
+                    return
 
                 case = db.get(Case, analysis.case_id)
                 if case is None:
@@ -1611,6 +1687,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fasta_sha256": reference_package["fasta_sha256"],
                     "bcftools_version": settings.bcftools_version,
                     "execution_contract_hash": reference_execution.contract_hash,
+                    "normalization_version": "3.0",
+                    "record_routing": {
+                        key: value for key, value in routing.items() if not key.endswith("_path")
+                    },
                 }
                 request_fingerprint = hashlib.sha256(
                     json.dumps(request_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -1635,7 +1715,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 try:
                     normalization_stats = normalize_vcf_with_bcftools(
-                        input_path,
+                        routing["sequence_path"],
                         temp_path,
                         reference_fasta=reference_fasta_path,
                         expected_bcftools_version=settings.bcftools_version,
@@ -1662,14 +1742,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 normalized_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v2"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v3"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip",
                     genome_build=reference_build,
                     metadata={
-                        "normalization_version": "2.2",
-                        "record_count": profile["records"],
+                        "normalization_version": "3.0",
+                        "source_artifact_id": str(input_artifact.id),
+                        "source_sha256": input_artifact.sha256,
+                        "record_count": routing["sequence_records"],
+                        "source_record_count": profile["records"],
+                        "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
+                        "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
                         "streaming": True,
                         "reference_source": "PINNED_REFERENCE_PACKAGE",
                         "reference_package_id": reference_package["resource_id"],
@@ -1691,7 +1776,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 index_path = Path(normalization_stats["index_path"])
                 index_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v2"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v3"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=index_path,
                     filename="normalized.vcf.gz.csi",
                     artifact_type="VCF_INDEX", media_type="application/octet-stream",
@@ -1707,15 +1792,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 normalized_artifact.paired_artifact_id = index_artifact.id
                 db.add(normalized_artifact)
                 normalization_step.input_artifacts = [str(input_artifact.id)]
-                normalization_step.output_artifacts = [str(normalized_artifact.id), str(index_artifact.id)]
+                normalization_step.output_artifacts = [
+                    str(normalized_artifact.id), str(index_artifact.id),
+                    *(str(item.id) for item in routed_artifacts),
+                ]
                 fallback_metadata = {
                     "requested_resource_id": str(resolution.requested_resource_id),
                     "selected_resource_id": str(selected_reference_resource.id),
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE", "resource_resolution": fallback_metadata, "record_count": profile["records"], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}], workflow={"step": "normalize", "version": "2.1"}, payload={"record_count": profile["records"], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
                 mark_step(
@@ -4235,7 +4323,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         db.close()
         for temporary_path in temporary_artifact_paths:
             try:
-                temporary_path.unlink(missing_ok=True)
+                if temporary_path.is_dir():
+                    shutil.rmtree(temporary_path, ignore_errors=True)
+                else:
+                    temporary_path.unlink(missing_ok=True)
             except OSError:
                 # Cleanup failure must not mask the scientific workflow outcome.
                 pass
