@@ -2,7 +2,7 @@ from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from backend.app.domain.enums import CaseStatus, UserRole
-from backend.app.infrastructure.db.models import Case, Organization, User
+from backend.app.infrastructure.db.models import Case, CaseAccessGrant, Organization, User
 from backend.app.infrastructure.audit.service import AuditService
 
 DEV_ORG_ID = uuid4()
@@ -29,6 +29,10 @@ def create_case(db: Session, *, case_identifier: str, language: str, clinical_co
         return existing, user, False
     case = Case(id=uuid4(), organization_id=org.id, case_identifier=case_identifier, status=CaseStatus.DRAFT, clinical_context=clinical_context, language=language, created_by=user.id)
     db.add(case)
+    db.add(CaseAccessGrant(
+        id=uuid4(), case_id=case.id, user_id=user.id,
+        can_read=True, can_write=True, can_review=True, granted_by=user.id,
+    ))
     audit = AuditService(db)
     audit.record(event_type="CASE_CREATED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(user.id), subject_type="CASE", subject_id=str(case.id), operation="CREATE", after_state={"case_identifier": case_identifier})
     db.commit()

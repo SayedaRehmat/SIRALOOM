@@ -65,6 +65,7 @@ def test_download_rejects_export_artifact_with_invalid_lineage(
         raise AssertionError("Invalid export lineage must fail before storage access")
 
     monkeypatch.setattr(reports, "artifact_store_for_organization", storage_must_not_be_opened)
+    monkeypatch.setattr(reports, "require_case_permission", lambda *_args: None)
 
     with pytest.raises(HTTPException) as error:
         reports.download_case_export(
@@ -133,6 +134,7 @@ def test_download_accepts_export_artifact_with_matching_lineage(monkeypatch, tmp
             return expected_path
 
     monkeypatch.setattr(reports, "artifact_store_for_organization", lambda *a, **k: FakeStore())
+    monkeypatch.setattr(reports, "require_case_permission", lambda *_args: None)
 
     response = reports.download_case_export(
         export_id,

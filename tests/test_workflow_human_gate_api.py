@@ -135,7 +135,7 @@ def _wire_route(monkeypatch, db, seeded, published):
     monkeypatch.setattr(
         workflow_api,
         "get_accessible_analysis",
-        lambda analysis_id, session, _principal: session.get(Analysis, analysis_id),
+        lambda analysis_id, session, _principal, *_permission: session.get(Analysis, analysis_id),
     )
     monkeypatch.setattr(workflow_api, "require_role", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(

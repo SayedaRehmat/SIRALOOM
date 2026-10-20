@@ -69,7 +69,7 @@ def list_assays(db=Depends(get_db), principal: Principal=Depends(get_current_pri
 
 @router.post("/analyses/{analysis_id}/quality/observations", status_code=201)
 def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id, db, principal)
+    analysis=get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
     row=TechnicalQCObservation(id=uuid4(), analysis_id=analysis.id, metric_name=body.metric_name.strip(), metric_value=body.metric_value,
         metric_unit=body.metric_unit, source=body.source, source_version=body.source_version, metadata_json=body.metadata)
@@ -101,7 +101,7 @@ def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depe
 
 @router.post("/analyses/{analysis_id}/quality/assess")
 def assess_quality(analysis_id: UUID, body: QCAssessmentInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id, db, principal)
+    analysis=get_accessible_analysis(analysis_id, db, principal, "review")
     require_role(principal, REVIEW_ROLES)
     assay=db.get(Assay, analysis.assay_id) if analysis.assay_id else None
     if assay and assay.organization_id != principal.organization_id:

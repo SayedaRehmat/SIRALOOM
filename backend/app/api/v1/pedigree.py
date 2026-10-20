@@ -10,9 +10,10 @@ from backend.app.auth.authorization import (
     REVIEW_ROLES,
     get_accessible_analysis,
     get_analysis_variant,
+    require_case_permission,
     require_role,
 )
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Case,
@@ -135,7 +136,7 @@ def _would_create_pedigree_cycle(relationships, parent_member_id, child_member_i
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     case=db.get(Case,case_id)
     if not case: raise HTTPException(404,"Case not found")
-    require_case_tenant(case,principal)
+    require_case_permission(case, principal, db, "read")
     members=list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==case_id).order_by(PedigreeMember.created_at,PedigreeMember.member_identifier)))
     rels=list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id==case_id).order_by(PedigreeRelationship.created_at)))
     _validate_pedigree_lineage(members, rels, case_id, db)
@@ -145,7 +146,7 @@ def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principa
 def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     case=db.get(Case,case_id)
     if not case: raise HTTPException(404,"Case not found")
-    require_case_tenant(case,principal)
+    require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     if body.specimen_id:
         specimen = db.get(Specimen, body.specimen_id)
@@ -168,7 +169,7 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
     case=db.get(Case,case_id,with_for_update=True)
     if not case: raise HTTPException(404,"Case not found")
     db.refresh(case,with_for_update=True)
-    require_case_tenant(case,principal)
+    require_case_permission(case, principal, db, "write")
     parent=db.get(PedigreeMember,body.parent_member_id); child=db.get(PedigreeMember,body.child_member_id)
     if not parent or not child or parent.case_id!=case_id or child.case_id!=case_id or parent.id==child.id: raise HTTPException(400,"Parent and child must be distinct members in the same case")
     relationships = db.scalars(
@@ -188,7 +189,7 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/segregation")
 def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal)
+    analysis=get_accessible_analysis(analysis_id,db,principal, "write")
     get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id).order_by(SegregationObservation.created_at)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
@@ -214,7 +215,7 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/inheritance/assess")
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal)
+    analysis=get_accessible_analysis(analysis_id,db,principal, "review")
     require_role(principal, REVIEW_ROLES)
     get_analysis_variant(analysis,variant_id,db)
     models = []

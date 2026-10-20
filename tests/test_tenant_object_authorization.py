@@ -17,6 +17,15 @@ from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Repor
 class TenantObjectSession:
     def __init__(self, rows):
         self.rows = rows
+        self.scalar_calls = 0
+
+    def scalar(self, _statement):
+        self.scalar_calls += 1
+        if self.scalar_calls == 1:
+            return SimpleNamespace(role="read_only")
+        if self.scalar_calls == 2:
+            return "case-grant"
+        return None
 
     def get(self, model, object_id):
         value = self.rows.get(model)

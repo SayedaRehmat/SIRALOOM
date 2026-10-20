@@ -264,7 +264,7 @@ def test_real_registry_recovery_queues_one_durable_dispatch_and_duplicate_start_
     monkeypatch.setattr(
         analyses_api,
         "get_accessible_analysis",
-        lambda requested_id, db, _principal: db.get(Analysis, requested_id),
+        lambda requested_id, db, _principal, *_args: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
     # This test isolates resource-plan recovery; capacity readiness has its own

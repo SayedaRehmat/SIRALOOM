@@ -199,7 +199,7 @@ def resolve_human_gate_endpoint(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    analysis = get_accessible_analysis(analysis_id, db, principal)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "review")
     require_role(principal, REVIEW_ROLES)
     step = db.scalar(
         select(WorkflowStep)

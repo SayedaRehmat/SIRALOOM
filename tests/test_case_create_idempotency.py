@@ -46,18 +46,26 @@ def _principal() -> Principal:
     )
 
 
-def test_concurrent_duplicate_case_create_returns_existing_case():
+def test_concurrent_duplicate_case_create_returns_existing_case(monkeypatch):
     existing = SimpleNamespace(
         id=uuid4(),
+        organization_id=uuid4(),
         case_identifier="CASE-2026-001",
         status="DRAFT",
     )
     db = ConcurrentDuplicateSession(existing_case=existing)
+    principal = Principal(
+        user_id=uuid4(),
+        organization_id=existing.organization_id,
+        role="bioinformatician",
+        subject="test-subject",
+    )
+    monkeypatch.setattr("backend.app.api.v1.cases.require_case_permission", lambda *_args: None)
 
     result = create(
         CaseCreate(case_identifier="CASE-2026-001"),
         db=db,
-        principal=_principal(),
+        principal=principal,
     )
 
     assert result == {

@@ -56,7 +56,7 @@ def review_queue(
     if not isinstance(reportability, str): reportability = None
     if not isinstance(limit, int): limit = 100
     if not isinstance(offset, int): offset = 0
-    analysis = get_accessible_analysis(analysis_id, db, principal)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "review")
     latest_version = (
         select(Classification.variant_id, func.max(Classification.version).label("max_version"))
         .where(Classification.analysis_id == analysis_id)
@@ -163,7 +163,7 @@ def _require_manifest_membership(analysis, rows, db):
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/review", response_model=ReviewResponse)
 def get_review(analysis_id: UUID, variant_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    get_accessible_analysis(analysis_id, db, principal)
+    get_accessible_analysis(analysis_id, db, principal, "review")
     try:
         return get_review_bundle(db, analysis_id=analysis_id, variant_id=variant_id)
     except ReviewError as exc:
@@ -178,7 +178,7 @@ def propose_manual(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    get_accessible_analysis(analysis_id, db, principal)
+    get_accessible_analysis(analysis_id, db, principal, "review")
     reviewer = _reviewer(db, principal)
     try:
         classification = propose_manual_classification(
@@ -211,7 +211,7 @@ def propose_manual(
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/review/start")
 def start(analysis_id: UUID, variant_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    get_accessible_analysis(analysis_id, db, principal); reviewer = _reviewer(db, principal)
+    get_accessible_analysis(analysis_id, db, principal, "review"); reviewer = _reviewer(db, principal)
     try:
         classification = start_review(db, analysis_id=analysis_id, variant_id=variant_id, reviewer=reviewer)
         db.commit()
@@ -236,7 +236,7 @@ def review(
     payload: CriterionReviewRequest,
     db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal),
 ):
-    get_accessible_analysis(analysis_id, db, principal); reviewer = _reviewer(db, principal)
+    get_accessible_analysis(analysis_id, db, principal, "review"); reviewer = _reviewer(db, principal)
     try:
         assessment = review_criterion(
             db,
@@ -278,7 +278,7 @@ def approve(
     payload: ClassificationReviewRequest,
     db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal),
 ):
-    get_accessible_analysis(analysis_id, db, principal); reviewer = _reviewer(db, principal)
+    get_accessible_analysis(analysis_id, db, principal, "review"); reviewer = _reviewer(db, principal)
     try:
         classification = approve_classification(
             db,
@@ -328,7 +328,7 @@ def more_evidence(
     payload: ClassificationReviewRequest,
     db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal),
 ):
-    get_accessible_analysis(analysis_id, db, principal); reviewer = _reviewer(db, principal)
+    get_accessible_analysis(analysis_id, db, principal, "review"); reviewer = _reviewer(db, principal)
     try:
         classification = request_more_evidence(
             db,

@@ -252,7 +252,7 @@ def test_missing_clingen_resource_routes_acmg_to_resumable_human_review(tmp_path
             try:
                 monkeypatch.setattr(
                     workflow_api, "get_accessible_analysis",
-                    lambda requested_id, session, _principal: session.get(Analysis, requested_id),
+                    lambda requested_id, session, _principal, *_args: session.get(Analysis, requested_id),
                 )
                 monkeypatch.setattr(workflow_api, "require_role", lambda *_args, **_kwargs: None)
                 monkeypatch.setattr(

@@ -17,9 +17,10 @@ from backend.app.auth.authorization import (
     get_accessible_analysis,
     get_accessible_report,
     get_analysis_variant,
+    require_case_permission,
     require_role,
 )
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.artifact_integrity import (
     ArtifactIntegrityError,
     stage_verified_cloud_artifact,
@@ -73,11 +74,12 @@ def _accessible_case_export(export_id: UUID, db: Session, principal: Principal):
     case = db.get(Case, export.case_id) if export is not None else None
     if export is None or case is None or case.organization_id != principal.organization_id:
         raise HTTPException(status_code=404, detail="Export not found")
+    require_case_permission(case, principal, db, "read")
     return export, case
 
 @router.post("/analyses/{analysis_id}/reports", status_code=201)
 def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    analysis = get_accessible_analysis(analysis_id, db, principal)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
 
     # Report version allocation is a case-scoped clinical history mutation.
@@ -219,7 +221,7 @@ def get_report(report_id: UUID, db: Session = Depends(get_db), principal: Princi
 
 @router.post("/reports/{report_id}/finalize")
 def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    report = get_accessible_report(report_id, db, principal); require_role(principal, REPORT_FINALIZE_ROLES)
+    report = get_accessible_report(report_id, db, principal, "review"); require_role(principal, REPORT_FINALIZE_ROLES)
     if report.status == "FINAL":
         if not payload.reason.strip():
             raise HTTPException(status_code=409, detail="Approval reason is required")
@@ -310,7 +312,7 @@ def finalize(report_id: UUID, payload: ClassificationReviewRequest, db: Session 
 
 @router.post("/analyses/{analysis_id}/reportability/evaluate")
 def evaluate_reportability(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, CASE_WRITE_ROLES)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "write"); require_role(principal, CASE_WRITE_ROLES)
     try:
         decisions = evaluate_analysis(db, analysis)
     except ValueError as exc:
@@ -344,7 +346,7 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
     decision = db.get(ReportabilityDecision, decision_id)
     if decision is None: raise HTTPException(status_code=404, detail="Reportability decision not found")
     try:
-        analysis = get_accessible_analysis(decision.analysis_id, db, principal)
+        analysis = get_accessible_analysis(decision.analysis_id, db, principal, "review")
     except HTTPException as exc:
         if exc.status_code == 404:
             raise HTTPException(status_code=404, detail="Reportability decision not found") from exc
@@ -378,7 +380,7 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
 def create_case_export(case_id: UUID, payload: ExportCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     case = db.get(Case, case_id)
     if not case: raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal); require_role(principal, CASE_WRITE_ROLES)
+    require_case_permission(case, principal, db, "write"); require_role(principal, CASE_WRITE_ROLES)
     exp=CaseExport(id=uuid4(), case_id=case_id, requested_by=principal.user_id, status="QUEUED", include_artifacts=payload.include_artifacts, include_reports=payload.include_reports, include_evidence=payload.include_evidence, include_audit=payload.include_audit, include_provenance=payload.include_provenance)
     db.add(exp)
     AuditService(db).record(

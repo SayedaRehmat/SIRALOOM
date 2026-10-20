@@ -35,7 +35,7 @@ def test_read_only_cannot_create_case():
 
 
 def test_read_only_cannot_update_case_or_register_specimen(monkeypatch):
-    monkeypatch.setattr(cases, "require_case_tenant", lambda _case, _principal: None)
+    monkeypatch.setattr(cases, "require_case_permission", lambda *_args: None)
     db = _Db()
     principal = _read_only_principal()
 
@@ -50,7 +50,7 @@ def test_read_only_cannot_update_case_or_register_specimen(monkeypatch):
 
 
 def test_read_only_cannot_add_case_phenotype(monkeypatch):
-    monkeypatch.setattr(phenotypes, "require_case_tenant", lambda _case, _principal: None)
+    monkeypatch.setattr(phenotypes, "require_case_permission", lambda *_args: None)
     _assert_forbidden(
         lambda: phenotypes.add_case_phenotype(
             case_id=uuid4(), body=None, db=_Db(), principal=_read_only_principal()
@@ -59,11 +59,11 @@ def test_read_only_cannot_add_case_phenotype(monkeypatch):
 
 
 def test_read_only_cannot_mutate_pedigree_or_inheritance(monkeypatch):
-    monkeypatch.setattr(pedigree, "require_case_tenant", lambda _case, _principal: None)
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(
         pedigree,
         "get_accessible_analysis",
-        lambda _analysis_id, _db, _principal: SimpleNamespace(case_id=uuid4()),
+        lambda *_args: SimpleNamespace(case_id=uuid4()),
     )
     principal = _read_only_principal()
     db = _Db()

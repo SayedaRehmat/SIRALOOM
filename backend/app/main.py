@@ -17,6 +17,7 @@ from backend.app.api.v1.quality import router as quality_router
 from backend.app.api.v1.clinical_followup import router as clinical_followup_router
 from backend.app.api.v1.reanalysis import router as reanalysis_router
 from backend.app.api.v1.membership import router as membership_router
+from backend.app.api.v1.case_access import router as case_access_router
 
 app = FastAPI(title=f"{settings.app_name} Variant API", version="0.1.0")
 
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(health_router, prefix="/api/v1")
 secured = [Depends(get_current_principal)]
 app.include_router(cases_router, prefix="/api/v1", dependencies=secured)
+app.include_router(case_access_router, prefix="/api/v1", dependencies=secured)
 app.include_router(artifacts_router, prefix="/api/v1", dependencies=secured)
 app.include_router(analyses_router, prefix="/api/v1", dependencies=secured)
 app.include_router(variants_router, prefix="/api/v1", dependencies=secured)

@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
 from backend.app.application.entitlements import effective_max_upload_bytes
-from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_artifact, require_role
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_artifact, require_case_permission, require_role
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.config import settings
 from backend.app.domain.artifact_integrity import (
     ArtifactIntegrityError,
@@ -112,7 +112,7 @@ def list_case_artifacts(case_id: UUID, db: Session = Depends(get_db), principal:
     case = db.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "read")
     rows = db.scalars(select(Artifact).where(Artifact.case_id == case_id).order_by(Artifact.created_at.desc())).all()
     for artifact in rows:
         # Apply the same ownership and report-lineage checks used by downloads
@@ -144,7 +144,7 @@ async def upload_artifact(
     case = db.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     max_bytes = effective_max_upload_bytes(db, principal.organization_id, MAX_BYTES)
 

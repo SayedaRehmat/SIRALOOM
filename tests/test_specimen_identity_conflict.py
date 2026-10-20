@@ -50,6 +50,7 @@ def test_duplicate_specimen_identity_is_a_conflict_not_a_server_error(monkeypatc
     existing = SimpleNamespace(id=uuid4(), specimen_identifier="S-001")
     db = DuplicateSpecimenSession(case, existing)
     monkeypatch.setattr(cases_api, "AuditService", NoopAudit)
+    monkeypatch.setattr(cases_api, "require_case_permission", lambda *_args: None)
 
     with pytest.raises(HTTPException) as error:
         cases_api.create_specimen(

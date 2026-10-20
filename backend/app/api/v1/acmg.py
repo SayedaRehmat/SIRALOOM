@@ -38,7 +38,7 @@ class ACMGAssessRequest(BaseModel):
 def assess(analysis_id: UUID, variant_id: UUID, payload: ACMGAssessRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     if payload.variant_id != variant_id:
         raise HTTPException(status_code=400, detail="Payload variant_id does not match path variant_id")
-    analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, REVIEW_ROLES)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "review"); require_role(principal, REVIEW_ROLES)
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
         raise HTTPException(status_code=404, detail="Analysis not found")
@@ -225,7 +225,7 @@ def auto_assess(
     """
     from backend.app.infrastructure.db.models import Annotation, PopulationObservation, Resource
 
-    analysis = get_accessible_analysis(analysis_id, db, principal); require_role(principal, REVIEW_ROLES)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "review"); require_role(principal, REVIEW_ROLES)
     variant = get_analysis_variant(analysis, variant_id, db)
     if not analysis or analysis.id != analysis_id or not variant:
         raise HTTPException(status_code=404, detail="Analysis or variant not found")

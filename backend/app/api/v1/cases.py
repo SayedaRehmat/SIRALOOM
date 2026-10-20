@@ -5,12 +5,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.session import get_db
-from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.authorization import CASE_WRITE_ROLES, case_access_predicate, require_case_permission, require_role
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.enums import CaseStatus
 from backend.app.domain.schemas import CaseCreate
 from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
-from backend.app.infrastructure.db.models import Case, Specimen, Analysis
+from backend.app.infrastructure.db.models import Case, CaseAccessGrant, Specimen, Analysis
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.domain.case_change import create_case_change_candidates
 
@@ -44,6 +44,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
         Case.organization_id == principal.organization_id, Case.case_identifier == payload.case_identifier,
     ))
     if existing:
+        require_case_permission(existing, principal, db, "read")
         return {"case_id": str(existing.id), "case_identifier": existing.case_identifier, "status": existing.status, "created": False}
     case = Case(
         id=uuid4(), organization_id=principal.organization_id, case_identifier=payload.case_identifier,
@@ -63,6 +64,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
             Case.case_identifier == payload.case_identifier,
         ))
         if existing is not None:
+            require_case_permission(existing, principal, db, "read")
             return {
                 "case_id": str(existing.id),
                 "case_identifier": existing.case_identifier,
@@ -70,6 +72,10 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
                 "created": False,
             }
         raise
+    db.add(CaseAccessGrant(
+        id=uuid4(), case_id=case.id, user_id=principal.user_id,
+        can_read=True, can_write=True, can_review=True, granted_by=principal.user_id,
+    ))
     AuditService(db).record(
         event_type="CASE_CREATED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
         subject_type="CASE", subject_id=str(case.id), operation="CREATE", after_state={"case_identifier": case.case_identifier},
@@ -81,7 +87,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
 
 @router.get("")
 def list_cases(db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    rows = db.scalars(select(Case).where(Case.organization_id == principal.organization_id).order_by(Case.updated_at.desc())).all()
+    rows = db.scalars(select(Case).where(case_access_predicate(principal)).order_by(Case.updated_at.desc())).all()
     return [_case_payload(db, case) for case in rows]
 
 
@@ -90,7 +96,7 @@ def get_case(case_id: UUID, db: Session = Depends(get_db), principal: Principal 
     case = db.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "read")
     return _case_payload(db, case)
 
 
@@ -101,7 +107,7 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
     case = db.get(Case, case_id, with_for_update=True)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     before = {"language": case.language, "clinical_context": case.clinical_context or {}}
     before_updated_at = case.updated_at.isoformat() if case.updated_at else None
@@ -132,7 +138,7 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
     case = db.get(Case, case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     specimen = Specimen(
         id=uuid4(), case_id=case.id, specimen_identifier=payload.specimen_identifier, specimen_type=payload.specimen_type,

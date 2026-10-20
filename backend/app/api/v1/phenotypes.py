@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_analysis, require_role
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_analysis, require_case_permission, require_role
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import Case, Analysis, PhenotypeObservation
 from backend.app.infrastructure.db.session import get_db
 from backend.app.infrastructure.audit.service import AuditService
@@ -30,7 +30,7 @@ def _payload(row):
 def list_case_phenotypes(case_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     case = db.get(Case, case_id)
     if not case: raise HTTPException(404, "Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "read")
     rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == case_id).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)).all()
     for row in rows:
         if row.analysis_id is not None:
@@ -43,7 +43,7 @@ def list_case_phenotypes(case_id: UUID, db: Session = Depends(get_db), principal
 def add_case_phenotype(case_id: UUID, body: PhenotypeInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     case = db.get(Case, case_id)
     if not case: raise HTTPException(404, "Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     try: hpo = normalize_hpo_id(body.hpo_id)
     except ValueError as exc: raise HTTPException(400, str(exc))

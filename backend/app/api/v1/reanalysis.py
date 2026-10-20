@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, aliased
 
-from backend.app.auth.authorization import CASE_WRITE_ROLES, require_role, get_accessible_analysis
+from backend.app.auth.authorization import CASE_WRITE_ROLES, case_access_predicate, require_case_permission, require_role, get_accessible_analysis
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -166,6 +166,23 @@ def _validate_candidate_event_lineage(candidate: ReanalysisCandidate, db: Sessio
             )
 
 
+def _require_notification_case_access(
+    row: Notification, db: Session, principal: Principal
+) -> None:
+    """Recheck case grants when a notification is read, including after creation."""
+    case = db.get(Case, row.case_id) if row.case_id is not None else None
+    if case is None and row.analysis_id is not None:
+        analysis = db.get(Analysis, row.analysis_id)
+        case = db.get(Case, analysis.case_id) if analysis is not None else None
+    if case is None and row.candidate_id is not None:
+        candidate = db.get(ReanalysisCandidate, row.candidate_id)
+        case = db.get(Case, candidate.case_id) if candidate is not None else None
+    if case is not None:
+        require_case_permission(case, principal, db, "read")
+    elif any(value is not None for value in (row.case_id, row.analysis_id, row.candidate_id)):
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+
 @router.get("/notifications")
 def notifications(
     db: Session = Depends(get_db),
@@ -182,6 +199,7 @@ def notifications(
     ).all()
     for row in rows:
         _validate_notification_lineage(row, db)
+        _require_notification_case_access(row, db, principal)
     return [{
         "notification_id": str(row.id),
         "notification_type": row.notification_type,
@@ -207,6 +225,7 @@ def mark_notification_read(
     if not row or row.organization_id != principal.organization_id or row.user_id != principal.user_id:
         raise HTTPException(status_code=404, detail="Notification not found")
     _validate_notification_lineage(row, db)
+    _require_notification_case_access(row, db, principal)
     from datetime import datetime, timezone
     if row.status != "READ" or row.read_at is None:
         row.status = "READ"
@@ -228,7 +247,7 @@ def list_candidates(
         .outerjoin(child_analysis, child_analysis.id == ReanalysisCandidate.child_analysis_id)
         .where(
             ReanalysisCandidate.organization_id == principal.organization_id,
-            Case.organization_id == principal.organization_id,
+            case_access_predicate(principal, "read"),
             ReanalysisCandidate.case_id == Analysis.case_id,
             or_(
                 ReanalysisCandidate.child_analysis_id.is_(None),
@@ -265,7 +284,7 @@ def request_reanalysis(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    parent = get_accessible_analysis(analysis_id, db, principal)
+    parent = get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
     reason = payload.reason
     try:
@@ -385,7 +404,7 @@ def execute_reanalysis_candidate(
     if candidate.status not in {"PENDING", "STARTED"}:
         raise HTTPException(status_code=409, detail="This reanalysis candidate has already been completed.")
 
-    parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal)
+    parent = get_accessible_analysis(candidate.parent_analysis_id, db, principal, "write")
     if candidate.case_id != parent.case_id:
         raise HTTPException(
             status_code=409,
@@ -560,7 +579,7 @@ def snapshot(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    analysis = get_accessible_analysis(analysis_id, db, principal)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
     if analysis.status != "SUCCEEDED":
         raise HTTPException(status_code=409, detail="Only completed analyses can be snapshotted.")

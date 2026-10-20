@@ -2,7 +2,7 @@
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
-from sqlalchemy import or_, select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
@@ -17,11 +17,13 @@ from backend.app.infrastructure.db.models import (
     Annotation,
     Artifact,
     Case,
+    CaseAccessGrant,
     Classification,
     Report,
     Specimen,
     Variant,
     WorkflowStep,
+    OrganizationMembership,
 )
 from backend.app.infrastructure.db.session import get_db
 
@@ -29,24 +31,116 @@ READ_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director", 
 CASE_WRITE_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director", "clinical_geneticist", "bioinformatician", "lab_scientist"})
 REVIEW_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director", "clinical_geneticist", "reviewer"})
 REPORT_FINALIZE_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director", "clinical_geneticist"})
+CASE_ACCESS_ADMIN_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director"})
+CASE_ACCESS_COLUMNS = {
+    "read": CaseAccessGrant.can_read,
+    "write": CaseAccessGrant.can_write,
+    "review": CaseAccessGrant.can_review,
+}
+CASE_ROLE_COLUMNS = {
+    "read": READ_ROLES,
+    "write": CASE_WRITE_ROLES,
+    "review": REVIEW_ROLES,
+}
 
 def require_role(principal: Principal, roles: frozenset[str]) -> Principal:
     if principal.role not in roles:
         raise HTTPException(status_code=403, detail="Your organization role is not authorized for this operation")
     return principal
 
-def get_accessible_case(case_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)) -> Case:
+def require_case_permission(case: Case, principal: Principal, db: Session, permission: str = "read") -> None:
+    """Enforce tenant isolation and a per-case capability, bounded by org role."""
+    require_case_tenant(case, principal)
+    permission_column = CASE_ACCESS_COLUMNS.get(permission)
+    role_set = CASE_ROLE_COLUMNS.get(permission)
+    if permission_column is None or role_set is None:
+        raise ValueError(f"Unsupported case permission: {permission}")
+    membership_query = select(OrganizationMembership).where(
+        OrganizationMembership.organization_id == case.organization_id,
+        OrganizationMembership.user_id == principal.user_id,
+        OrganizationMembership.status == "ACTIVE",
+    )
+    if permission != "read":
+        membership_query = membership_query.with_for_update()
+    membership = db.scalar(membership_query)
+    if membership is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    effective_role = membership.role
+    if effective_role in CASE_ACCESS_ADMIN_ROLES:
+        return
+    grant_query = (
+        select(CaseAccessGrant.id)
+        .join(
+            OrganizationMembership,
+            OrganizationMembership.user_id == CaseAccessGrant.user_id,
+        )
+        .where(
+            CaseAccessGrant.case_id == case.id,
+            CaseAccessGrant.user_id == principal.user_id,
+            permission_column.is_(True),
+            OrganizationMembership.organization_id == case.organization_id,
+            OrganizationMembership.status == "ACTIVE",
+        )
+        .limit(1)
+    )
+    if permission != "read":
+        grant_query = grant_query.with_for_update()
+    granted = db.scalar(grant_query)
+    if granted is None:
+        # Hide both foreign-tenant and unassigned cases behind the same response.
+        raise HTTPException(status_code=404, detail="Case not found")
+    if effective_role not in role_set:
+        raise HTTPException(status_code=403, detail="Your organization role is not authorized for this operation")
+
+
+def case_access_predicate(principal: Principal, permission: str = "read"):
+    """SQL predicate for tenant-scoped list endpoints, including grant filtering."""
+    permission_column = CASE_ACCESS_COLUMNS.get(permission)
+    if permission_column is None:
+        raise ValueError(f"Unsupported case permission: {permission}")
+    assigned = exists(
+            select(CaseAccessGrant.id)
+            .join(
+                OrganizationMembership,
+                OrganizationMembership.user_id == CaseAccessGrant.user_id,
+            )
+            .where(
+                CaseAccessGrant.case_id == Case.id,
+                CaseAccessGrant.user_id == principal.user_id,
+                permission_column.is_(True),
+                OrganizationMembership.organization_id == Case.organization_id,
+                OrganizationMembership.status == "ACTIVE",
+            )
+        )
+    current_admin = exists(
+        select(OrganizationMembership.id).where(
+            OrganizationMembership.organization_id == Case.organization_id,
+            OrganizationMembership.user_id == principal.user_id,
+            OrganizationMembership.status == "ACTIVE",
+            OrganizationMembership.role.in_(CASE_ACCESS_ADMIN_ROLES),
+        )
+    )
+    # Determine administrative bypass from the current membership row inside
+    # the query. A role change after authentication must not leave a stale
+    # administrator principal able to enumerate every case in the tenant.
+    return (
+        (Case.organization_id == principal.organization_id)
+        & (assigned | current_admin)
+    )
+
+
+def get_accessible_case(case_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal), permission: str = "read") -> Case:
     case = db.get(Case, case_id)
     if not case: raise HTTPException(status_code=404, detail="Case not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, permission)
     return case
 
-def get_accessible_analysis(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)) -> Analysis:
+def get_accessible_analysis(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal), permission: str = "read") -> Analysis:
     analysis = db.get(Analysis, analysis_id)
     if not analysis: raise HTTPException(status_code=404, detail="Analysis not found")
     case = db.get(Case, analysis.case_id)
     if not case: raise HTTPException(status_code=404, detail="Analysis not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, permission)
     return analysis
 
 def get_analysis_variant_ids(analysis: Analysis, db: Session) -> set[UUID] | None:
@@ -138,12 +232,12 @@ def get_analysis_variant(analysis: Analysis, variant_id: UUID, db: Session) -> V
         return variant
     raise HTTPException(status_code=404, detail="Variant is not part of this analysis")
 
-def get_accessible_artifact(artifact_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)) -> Artifact:
+def get_accessible_artifact(artifact_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal), permission: str = "read") -> Artifact:
     artifact = db.get(Artifact, artifact_id)
     if not artifact: raise HTTPException(status_code=404, detail="Artifact not found")
     case = db.get(Case, artifact.case_id)
     if not case: raise HTTPException(status_code=404, detail="Artifact not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, permission)
     if artifact.analysis_id is not None:
         analysis = db.get(Analysis, artifact.analysis_id)
         if analysis is None or analysis.case_id != artifact.case_id:
@@ -224,12 +318,12 @@ def require_analysis_artifact(analysis: Analysis, artifact_id: UUID, db: Session
         )
     return artifact
 
-def get_accessible_report(report_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)) -> Report:
+def get_accessible_report(report_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal), permission: str = "read") -> Report:
     report = db.get(Report, report_id)
     if not report: raise HTTPException(status_code=404, detail="Report not found")
     case = db.get(Case, report.case_id)
     if not case: raise HTTPException(status_code=404, detail="Report not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, permission)
     analysis = db.get(Analysis, report.analysis_id)
     if analysis is None or analysis.case_id != report.case_id:
         raise HTTPException(status_code=404, detail="Report not found")

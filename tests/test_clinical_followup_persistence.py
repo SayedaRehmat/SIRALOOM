@@ -13,9 +13,11 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     AuditEvent,
     Case,
+    CaseAccessGrant,
     ConfirmationRecord,
     FollowUpPlan,
     Organization,
+    OrganizationMembership,
     SecondaryFindingDecision,
     TechnicalQCObservation,
     User,
@@ -58,6 +60,11 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
                 status="ACTIVE",
             ))
             db.flush()
+            db.add(OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=user_id,
+                role="lab_director", status="ACTIVE",
+            ))
+            db.flush()
             db.add(Case(
                 id=case_id,
                 organization_id=organization_id,
@@ -66,6 +73,11 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
                 clinical_context={},
                 language="en",
                 created_by=user_id,
+            ))
+            db.flush()
+            db.add(CaseAccessGrant(
+                id=uuid4(), case_id=case_id, user_id=user_id,
+                can_read=True, can_write=True, can_review=True, granted_by=user_id,
             ))
             db.flush()
             analysis = Analysis(
@@ -97,7 +109,7 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             monkeypatch.setattr(
                 clinical_followup,
                 "get_accessible_analysis",
-                lambda requested_id, session, _principal: session.get(Analysis, requested_id),
+                lambda requested_id, session, _principal, *_permission: session.get(Analysis, requested_id),
             )
             monkeypatch.setattr(
                 clinical_followup,
@@ -108,7 +120,7 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             monkeypatch.setattr(
                 quality,
                 "get_accessible_analysis",
-                lambda requested_id, session, _principal: session.get(Analysis, requested_id),
+                lambda requested_id, session, _principal, *_permission: session.get(Analysis, requested_id),
             )
             monkeypatch.setattr(quality, "require_role", lambda *_args: None)
 

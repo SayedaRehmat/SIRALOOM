@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from uuid import UUID
-from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Index, Integer, Text, JSON, UniqueConstraint, text
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, Text, JSON, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 from backend.app.infrastructure.db.base import Base
 
@@ -118,6 +118,28 @@ class Case(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
     __table_args__ = (UniqueConstraint("organization_id", "case_identifier"),)
+
+
+class CaseAccessGrant(Base):
+    """Per-user case capabilities, bounded by the user's organization role."""
+    __tablename__ = "case_access_grants"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    can_read: Mapped[bool] = mapped_column(nullable=False, default=True)
+    can_write: Mapped[bool] = mapped_column(nullable=False, default=False)
+    can_review: Mapped[bool] = mapped_column(nullable=False, default=False)
+    granted_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        UniqueConstraint("case_id", "user_id", name="uq_case_access_grants_case_user"),
+        CheckConstraint("can_read OR can_write OR can_review", name="ck_case_access_grants_nonempty"),
+        CheckConstraint(
+            "(NOT can_write OR can_read) AND (NOT can_review OR can_read)",
+            name="ck_case_access_grants_capabilities_include_read",
+        ),
+    )
 
 class Specimen(Base):
     __tablename__ = "specimens"

@@ -43,6 +43,7 @@ def test_case_update_locks_row_before_mutating_clinical_metadata(monkeypatch):
     )
     db = CaseUpdateSession(case)
     monkeypatch.setattr(cases_api, "AuditService", NoopAudit)
+    monkeypatch.setattr(cases_api, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(cases_api, "_case_payload", lambda session, row: {"case_id": str(row.id)})
 
     result = cases_api.update_case(

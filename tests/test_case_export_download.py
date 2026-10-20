@@ -54,7 +54,7 @@ def test_case_export_download_uses_organization_cloud_store(monkeypatch):
     db = FakeDB(export, case, artifact)
     store = FirebaseArtifactStore("test-bucket")
     monkeypatch.setattr(reports, "artifact_store_for_organization", lambda _db, *, organization_id: store)
-    monkeypatch.setattr(reports, "require_case_tenant", lambda _case, _principal: None)
+    monkeypatch.setattr(reports, "require_case_permission", lambda *_args: None)
     def download_to_file(uri, destination, *, expected_sha256, expected_size_bytes):
         assert uri == artifact.storage_uri
         assert expected_sha256 == artifact.sha256

@@ -2,7 +2,7 @@ from uuid import uuid4
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Annotation, Classification, Evidence, PopulationObservation, Resource, ReportabilityDecision, AnalysisPartition
+from backend.app.infrastructure.db.models import Organization, User, OrganizationMembership, Case, CaseAccessGrant, Analysis, Variant, Annotation, Classification, Evidence, PopulationObservation, Resource, ReportabilityDecision, AnalysisPartition
 from backend.app.auth.principal import Principal
 from backend.app.api.v1.review import review_queue
 
@@ -22,7 +22,15 @@ def seed():
     evidence = Evidence(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, evidence_type="POPULATION", statement="Rare", direction="PATHOGENIC", source_name="gnomAD", source_version="4", source_record_id="x", observation_ids=[str(pop.id)], payload={}, created_by_type="SYSTEM", created_by_id="test", evidence_fingerprint="fp-1")
     classification = Classification(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", result="VUS", criterion_ids=[], metadata_json={}, state="PROPOSED", review_status="IN_REVIEW", version=1, review_version=0)
     reportability = ReportabilityDecision(id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, classification_id=classification.id, version=1, policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY", policy_version="1.0.0", disposition="REVIEW", priority_score=60, priority_band="REVIEW", reasons=["VUS requires explicit review"], status="PROPOSED", review_version=0)
-    db.add_all([org, user, case, analysis, variant, annotation, resource, pop, evidence, classification, reportability]); db.commit()
+    membership = OrganizationMembership(
+        id=uuid4(), organization_id=org.id, user_id=user.id,
+        role="reviewer", status="ACTIVE",
+    )
+    grant = CaseAccessGrant(
+        id=uuid4(), case_id=case.id, user_id=user.id,
+        can_read=True, can_write=False, can_review=True,
+    )
+    db.add_all([org, user, membership, case, grant, analysis, variant, annotation, resource, pop, evidence, classification, reportability]); db.commit()
     return db, Principal(user_id=user.id, organization_id=org.id, role="reviewer", subject="firebase-reviewer") , analysis, variant
 
 

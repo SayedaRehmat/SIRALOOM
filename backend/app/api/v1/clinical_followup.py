@@ -12,9 +12,10 @@ from backend.app.auth.authorization import (
     REPORT_FINALIZE_ROLES,
     get_accessible_analysis,
     get_analysis_variant,
+    require_case_permission,
     require_role,
 )
-from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -91,7 +92,7 @@ def _validate_variant_link(row, variant_id: UUID, record_type: str) -> None:
         )
 
 
-def _lock_analysis_for_governance_version(db, analysis_id: UUID, principal: Principal):
+def _lock_analysis_for_governance_version(db, analysis_id: UUID, principal: Principal, permission: str):
     """Serialize per-analysis version allocation for immutable governance records."""
     analysis = db.scalar(
         select(Analysis)
@@ -104,7 +105,7 @@ def _lock_analysis_for_governance_version(db, analysis_id: UUID, principal: Prin
     case = db.get(Case, analysis.case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Analysis not found")
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, permission)
     return analysis
 
 
@@ -125,8 +126,8 @@ def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), prin
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/confirmation",status_code=201)
 def record_confirmation(analysis_id: UUID, variant_id: UUID, body: ConfirmationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
-    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal)
+    analysis=get_accessible_analysis(analysis_id,db,principal, "write"); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
+    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal, "write")
     previous=db.scalar(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id==analysis_id,ConfirmationRecord.variant_id==variant_id).order_by(ConfirmationRecord.version.desc()))
     row=ConfirmationRecord(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,version=(previous.version+1 if previous else 1),supersedes_record_id=previous.id if previous else None,required=body.required,method=body.method,status=body.status,result=body.result,laboratory=body.laboratory,accession=body.accession,performed_at=body.performed_at,reviewed_by=principal.user_id,reviewed_at=datetime.now(timezone.utc),notes=body.notes,metadata_json=body.metadata)
     db.add(row)
@@ -138,7 +139,7 @@ def record_confirmation(analysis_id: UUID, variant_id: UUID, body: ConfirmationI
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/follow-up",status_code=201)
 def create_followup(analysis_id: UUID, variant_id: UUID, body: FollowUpInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
+    analysis=get_accessible_analysis(analysis_id,db,principal, "write"); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
     row=FollowUpPlan(id=uuid4(),case_id=analysis.case_id,analysis_id=analysis_id,variant_id=variant_id,action_type=body.action_type.strip(),status=body.status,due_date=body.due_date,responsible_role=body.responsible_role,outcome=body.outcome,notes=body.notes,metadata_json=body.metadata,created_by=principal.user_id,completed_by=principal.user_id if body.status in {"COMPLETED","CANCELLED"} else None,completed_at=datetime.now(timezone.utc) if body.status in {"COMPLETED","CANCELLED"} else None)
     db.add(row)
     db.flush()
@@ -149,7 +150,7 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
     row=db.get(FollowUpPlan,follow_up_id)
     if not row: raise HTTPException(404,"Follow-up plan not found")
     try:
-        analysis=get_accessible_analysis(row.analysis_id,db,principal)
+        analysis=get_accessible_analysis(row.analysis_id,db,principal, "write")
     except HTTPException as exc:
         if exc.status_code == 404:
             raise HTTPException(404,"Follow-up plan not found") from exc
@@ -172,8 +173,8 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/secondary-finding",status_code=201)
 def record_secondary_finding(analysis_id: UUID, variant_id: UUID, body: SecondaryFindingInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal); _variant_access(analysis,variant_id,db); require_role(principal,REPORT_FINALIZE_ROLES)
-    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal)
+    analysis=get_accessible_analysis(analysis_id,db,principal, "review"); _variant_access(analysis,variant_id,db); require_role(principal,REPORT_FINALIZE_ROLES)
+    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal, "review")
     allowed_consent={"ACCEPTED","DECLINED","NOT_DOCUMENTED","NOT_APPLICABLE"}; allowed_disp={"REPORT","DO_NOT_REPORT","REVIEW"}; allowed_status={"DRAFT","FINAL"}
     if body.consent_status not in allowed_consent or body.disposition not in allowed_disp or body.status not in allowed_status: raise HTTPException(400,"Invalid secondary-finding governance value")
     if body.status=="FINAL" and body.disposition=="REPORT" and body.consent_status!="ACCEPTED": raise HTTPException(409,"A secondary finding cannot be finalized for reporting without documented accepted consent")

@@ -27,7 +27,7 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     monkeypatch.setattr(
         reports_api,
         "get_accessible_report",
-        lambda report_id, session, _principal: session.get(Report, report_id),
+        lambda report_id, session, _principal, *_args: session.get(Report, report_id),
     )
     monkeypatch.setattr(reports_api, "require_role", lambda *_args, **_kwargs: None)
 
@@ -91,7 +91,7 @@ def test_repeated_signout_after_analysis_succeeded_is_idempotent(monkeypatch, tm
     monkeypatch.setattr(
         reports_api,
         "get_accessible_report",
-        lambda report_id, session, _principal: session.get(Report, report_id),
+        lambda report_id, session, _principal, *_args: session.get(Report, report_id),
     )
     monkeypatch.setattr(reports_api, "require_role", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
@@ -151,7 +151,7 @@ def test_stale_report_version_cannot_be_signed_out(monkeypatch):
     monkeypatch.setattr(
         reports_api,
         "get_accessible_report",
-        lambda report_id, session, _principal: session.get(Report, report_id),
+        lambda report_id, session, _principal, *_args: session.get(Report, report_id),
     )
     monkeypatch.setattr(reports_api, "require_role", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(

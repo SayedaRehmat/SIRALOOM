@@ -14,6 +14,8 @@ type Analysis = { analysis_id: string; status: string; analysis_type?: string; w
 type CaseRecord = { case_id: string; case_identifier: string; status: string; language?: string; clinical_context?: Record<string, unknown>; created_at?: string; updated_at?: string; specimens?: Specimen[]; analyses?: Analysis[] };
 type Artifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; specimen_id?: string | null; validation_status: string; created_at?: string; metadata?: Record<string, unknown> };
 type Report = { report_id: string; analysis_id: string; version: number; status: string; language?: string; report_type?: string; artifact_id?: string | null; signed_artifact_id?: string | null; signed_sha256?: string | null; approved_at?: string | null; created_at?: string | null };
+type CaseMember = { user_id: string; email?: string | null; display_name?: string | null; role: string; status: string };
+type CaseGrant = { user_id: string; can_read: boolean; can_write: boolean; can_review: boolean };
 
 async function apiFetch(path: string, init?: RequestInit) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
@@ -61,6 +63,10 @@ export default function CaseDossierPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [canManageCaseAccess, setCanManageCaseAccess] = useState(false);
+  const [caseMembers, setCaseMembers] = useState<CaseMember[]>([]);
+  const [caseGrants, setCaseGrants] = useState<CaseGrant[]>([]);
+  const [accessSaving, setAccessSaving] = useState(false);
 
   const load = useCallback(async (quiet = false) => {
     if (!caseId) return;
@@ -98,6 +104,48 @@ export default function CaseDossierPage() {
   }, [caseId, t]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const loadCaseAccess = useCallback(async () => {
+    if (!caseId) return;
+    try {
+      const session = await apiFetch("/auth/session");
+      const allowed = session?.role === "organization_admin" || session?.role === "lab_director";
+      setCanManageCaseAccess(allowed);
+      if (!allowed) return;
+      const [roster, access] = await Promise.all([
+        apiFetch("/auth/memberships"),
+        apiFetch(`/cases/${caseId}/access`),
+      ]);
+      setCaseMembers((roster.members ?? []).filter((member: CaseMember) => member.status === "ACTIVE"));
+      setCaseGrants((access.items ?? []).filter((grant: CaseGrant & { membership_status?: string }) => grant.membership_status === "ACTIVE"));
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Unable to load case access.");
+    }
+  }, [caseId]);
+
+  useEffect(() => { void loadCaseAccess(); }, [loadCaseAccess]);
+
+  const saveCaseAccess = async (userId: string, capabilities: CaseGrant | null) => {
+    setAccessSaving(true);
+    setMessage("");
+    try {
+      if (capabilities) {
+        await apiFetch(`/cases/${caseId}/access/${userId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ can_read: capabilities.can_read, can_write: capabilities.can_write, can_review: capabilities.can_review }),
+        });
+      } else {
+        await apiFetch(`/cases/${caseId}/access/${userId}`, { method: "DELETE" });
+      }
+      await loadCaseAccess();
+      setMessage(capabilities ? "Case access updated." : "Case access revoked.");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Unable to update case access.");
+    } finally {
+      setAccessSaving(false);
+    }
+  };
 
   const selectAnalysis = (analysis: Analysis) => {
     if (!record) return;
@@ -195,6 +243,27 @@ export default function CaseDossierPage() {
         <div><span>{t("workspace.files")}</span><strong>{artifacts.length}</strong></div>
         <div><span>{t("workspace.reportSection")}</span><strong>{reports.length}</strong></div>
       </section>
+
+      {canManageCaseAccess && <section className="panel case-dossier-panel">
+        <div className="panel-head"><div><p className="eyebrow">Laboratory access</p><h2>Assigned case access</h2><p className="muted">Organization administrators and lab directors retain administrative access. Case grants cannot exceed each member’s organization role.</p></div></div>
+        <div className="context-list">
+          {caseMembers.map((member) => {
+            const grant = caseGrants.find((item) => item.user_id === member.user_id);
+            const defaults = grant ?? { user_id: member.user_id, can_read: false, can_write: false, can_review: false };
+            const label = member.display_name || member.email || member.user_id;
+            return <div className="keyline" key={member.user_id}>
+              <span>{label}<small style={{ display: "block" }}>{member.role}</small></span>
+              <div className="form-stack">
+                <label><input type="checkbox" checked={defaults.can_read} disabled={accessSaving || defaults.can_write || defaults.can_review} onChange={(event) => void saveCaseAccess(member.user_id, { ...defaults, can_read: event.target.checked })} /> Read</label>
+                <label><input type="checkbox" checked={defaults.can_write} disabled={accessSaving} onChange={(event) => void saveCaseAccess(member.user_id, { ...defaults, can_read: defaults.can_read || event.target.checked, can_write: event.target.checked })} /> Write</label>
+                <label><input type="checkbox" checked={defaults.can_review} disabled={accessSaving} onChange={(event) => void saveCaseAccess(member.user_id, { ...defaults, can_read: defaults.can_read || event.target.checked, can_review: event.target.checked })} /> Review</label>
+                {grant && <button className="secondary small" type="button" disabled={accessSaving} onClick={() => void saveCaseAccess(member.user_id, null)}>Revoke case grant</button>}
+              </div>
+            </div>;
+          })}
+          {caseMembers.length === 0 && <p className="muted">No active organization members are available.</p>}
+        </div>
+      </section>}
 
       <section className="panel case-dossier-panel">
         <div className="panel-head"><div><p className="eyebrow">{t("workspace.caseSection")}</p><h2>{t("workspace.caseSection")}</h2></div></div>

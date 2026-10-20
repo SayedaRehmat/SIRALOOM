@@ -18,12 +18,12 @@ from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
     get_accessible_analysis,
     get_analysis_variant_ids,
+    require_case_permission,
     require_role,
 )
 from backend.app.auth.principal import (
     Principal,
     get_current_principal,
-    require_case_tenant,
 )
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.schemas import AnalysisCreate
@@ -92,7 +92,7 @@ def create(
             detail="Case not found",
         )
 
-    require_case_tenant(case, principal)
+    require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
 
     require_analysis_quota(
@@ -170,6 +170,7 @@ def start(
         analysis_id,
         db,
         principal,
+        "write",
     )
 
     require_role(

@@ -77,7 +77,7 @@ def test_export_failure_persists_and_audits_only_safe_diagnostics(monkeypatch):
     )
 
 
-def test_export_status_never_returns_persisted_raw_failure_text():
+def test_export_status_never_returns_persisted_raw_failure_text(monkeypatch):
     export_id, case_id, organization_id, user_id = (uuid4() for _ in range(4))
     export = type(
         "Export",
@@ -99,6 +99,8 @@ def test_export_status_never_returns_persisted_raw_failure_text():
         def get(self, model, requested_id):
             return export if requested_id == export_id else case
 
+    from backend.app.api.v1 import reports
+    monkeypatch.setattr(reports, "require_case_permission", lambda *_args: None)
     result = get_export(
         export_id,
         db=FakeDB(),

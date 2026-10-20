@@ -341,7 +341,9 @@ def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
     from backend.app.infrastructure.db.models import (
         Analysis,
         Case,
+        CaseAccessGrant,
         Organization,
+        OrganizationMembership,
         ReanalysisCandidate,
         User,
     )
@@ -369,6 +371,10 @@ def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
             ]
         )
         db.flush()
+        db.add(OrganizationMembership(
+            id=uuid4(), organization_id=organization_id, user_id=actor_id,
+            role="reviewer", status="ACTIVE",
+        ))
         db.add_all(
             [
                 Case(
@@ -387,6 +393,11 @@ def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
                 ),
             ]
         )
+        db.flush()
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=actor_id,
+            can_read=True, can_write=False, can_review=True,
+        ))
         db.flush()
 
         def make_analysis(analysis_id, related_case_id, parent=None):
@@ -448,7 +459,7 @@ def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
 
         result = reanalysis_api.list_candidates(
             db,
-            SimpleNamespace(organization_id=organization_id),
+            SimpleNamespace(organization_id=organization_id, role="reviewer", user_id=actor_id),
         )
 
         assert [row["candidate_id"] for row in result] == [str(valid_candidate_id)]

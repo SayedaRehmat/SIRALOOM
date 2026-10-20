@@ -28,7 +28,7 @@ class ContextEvidenceRequest(BaseModel):
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/context-evidence", status_code=201)
 def add_context_evidence(analysis_id: UUID, variant_id: UUID, body: ContextEvidenceRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    analysis = get_accessible_analysis(analysis_id, db, principal)
+    analysis = get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
     get_analysis_variant(analysis, variant_id, db)
     ann = db.scalar(select(Annotation).where(Annotation.analysis_id == analysis_id, Annotation.variant_id == variant_id))

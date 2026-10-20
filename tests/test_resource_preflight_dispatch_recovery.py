@@ -149,7 +149,7 @@ def test_capacity_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
     monkeypatch.setattr(
         analyses_api,
         "get_accessible_analysis",
-        lambda aid, db, _p: db.get(Analysis, aid),
+        lambda aid, db, _p, *_args: db.get(Analysis, aid),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(
@@ -288,7 +288,7 @@ def test_resource_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
     monkeypatch.setattr(
         analyses_api,
         "get_accessible_analysis",
-        lambda requested_id, db, _principal: db.get(Analysis, requested_id),
+        lambda requested_id, db, _principal, *_args: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
     # Isolate resource recovery/dispatch from the independent laboratory storage gate.
@@ -449,7 +449,7 @@ def test_optional_resource_gap_does_not_block_preflight_or_dispatch(monkeypatch)
     monkeypatch.setattr(
         analyses_api,
         "get_accessible_analysis",
-        lambda requested_id, db, _principal: db.get(Analysis, requested_id),
+        lambda requested_id, db, _principal, *_args: db.get(Analysis, requested_id),
     )
     monkeypatch.setattr(analyses_api, "require_role", lambda *_args, **_kwargs: None)
     # Isolate resource recovery/dispatch from the independent laboratory storage gate.

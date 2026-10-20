@@ -156,7 +156,7 @@ def test_pedigree_member_cannot_reference_specimen_from_another_case(monkeypatch
         def get(self, model, _object_id):
             return {Case: case, Specimen: foreign_specimen}.get(model)
 
-    monkeypatch.setattr(pedigree, "require_case_tenant", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
     payload = pedigree.MemberInput(
         member_identifier="family-member",
@@ -215,7 +215,7 @@ def test_pedigree_relationship_rejects_cycle_before_persisting(monkeypatch):
             self.added = row
 
     db = _PedigreeDb()
-    monkeypatch.setattr(pedigree, "require_case_tenant", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
 
     with pytest.raises(HTTPException) as exc:
@@ -658,7 +658,7 @@ def test_pedigree_dossier_rejects_cross_case_links(monkeypatch, broken_link):
         def scalars(self, _query):
             return self.results.pop(0)
 
-    monkeypatch.setattr(pedigree, "require_case_tenant", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     with pytest.raises(HTTPException) as exc:
         pedigree.get_pedigree(case_id, _Db(), _principal(case.organization_id))
 
@@ -940,7 +940,7 @@ def test_case_phenotype_list_rejects_analysis_from_another_case(monkeypatch):
     case = SimpleNamespace(id=case_id, organization_id=organization_id)
     row = SimpleNamespace(case_id=case_id, analysis_id=uuid4())
     foreign_analysis = SimpleNamespace(case_id=foreign_case_id)
-    monkeypatch.setattr(phenotypes, "require_case_tenant", lambda *_args: None)
+    monkeypatch.setattr(phenotypes, "require_case_permission", lambda *_args: None)
 
     class _Db:
         def get(self, model, _object_id):
