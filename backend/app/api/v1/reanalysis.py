@@ -29,6 +29,9 @@ from backend.app.domain.reanalysis import (
 )
 
 router = APIRouter(tags=["reanalysis"])
+RESOURCE_CHANGE_ROLES = frozenset({
+    "platform_admin", "organization_admin", "lab_director", "bioinformatician",
+})
 
 
 class ManualReanalysisRequest(BaseModel):
@@ -197,9 +200,19 @@ def notifications(
         .order_by(Notification.created_at.desc())
         .limit(100)
     ).all()
+    visible_rows = []
     for row in rows:
         _validate_notification_lineage(row, db)
-        _require_notification_case_access(row, db, principal)
+        try:
+            _require_notification_case_access(row, db, principal)
+        except HTTPException as exc:
+            # Notifications created before case access was revoked (or before
+            # recipient scoping was enforced) must not poison the whole inbox.
+            # The unread item remains durable for authorized case readers.
+            if exc.status_code != 404:
+                raise
+            continue
+        visible_rows.append(row)
     return [{
         "notification_id": str(row.id),
         "notification_type": row.notification_type,
@@ -212,7 +225,7 @@ def notifications(
         "metadata": row.metadata_json,
         "created_at": row.created_at,
         "read_at": row.read_at,
-    } for row in rows]
+    } for row in visible_rows]
 
 
 @router.post("/notifications/{notification_id}/read")
@@ -544,7 +557,7 @@ def register_change(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    require_role(principal, CASE_WRITE_ROLES)
+    require_role(principal, RESOURCE_CHANGE_ROLES)
     trigger_type = str(payload.get("trigger_type") or "").upper()
     resource_kind = str(payload.get("resource_kind") or "").upper()
     resource_name = str(payload.get("resource_name") or "").strip()
@@ -556,7 +569,19 @@ def register_change(
             detail="resource_kind and trigger_type do not form a supported resource-change pair",
         )
 
-    resource_id = UUID(str(payload["resource_id"])) if payload.get("resource_id") else None
+    try:
+        resource_id = UUID(str(payload["resource_id"])) if payload.get("resource_id") else None
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail="resource_id must be a valid UUID") from exc
+    if resource_id is not None:
+        resource = db.get(Resource, resource_id)
+        if resource is None or resource.organization_id not in {None, principal.organization_id}:
+            raise HTTPException(status_code=404, detail="Resource not found")
+        if str(resource.resource_type).upper() != resource_kind or resource.name != resource_name:
+            raise HTTPException(
+                status_code=422,
+                detail="resource_id must match resource_kind and resource_name",
+            )
     candidates = detect_change(
         db,
         organization_id=principal.organization_id,
@@ -566,10 +591,34 @@ def register_change(
         new_version=payload.get("new_version"),
         new_checksum=payload.get("new_checksum"),
         resource_id=resource_id,
+        commit=False,
     )
+    try:
+        AuditService(db).record(
+            event_type="REANALYSIS_RESOURCE_CHANGE_REGISTERED",
+            case_id=None,
+            analysis_id=None,
+            actor_type="HUMAN",
+            actor_id=str(principal.user_id),
+            subject_type="RESOURCE",
+            subject_id=str(resource_id) if resource_id is not None else f"{resource_kind}:{resource_name}",
+            operation="REGISTER_CHANGE_EVENT",
+            after_state={
+                "trigger_type": trigger_type,
+                "resource_kind": resource_kind,
+                "resource_name": resource_name,
+                "resource_id": str(resource_id) if resource_id is not None else None,
+                "new_version": payload.get("new_version"),
+                "candidate_count": len(candidates),
+            },
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return {
+        "change_registered": True,
         "candidates_created": len(candidates),
-        "candidate_ids": [str(x.id) for x in candidates],
     }
 
 

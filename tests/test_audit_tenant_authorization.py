@@ -877,6 +877,40 @@ def test_notification_read_retry_preserves_first_read_timestamp():
     assert db.commits == 0
 
 
+def test_notification_list_omits_case_notifications_after_access_revocation(monkeypatch):
+    principal = _principal(uuid4())
+    visible_case_id, revoked_case_id = uuid4(), uuid4()
+    visible = SimpleNamespace(
+        id=uuid4(), organization_id=principal.organization_id, user_id=principal.user_id,
+        notification_type="REANALYSIS_CANDIDATE", status="UNREAD", title="Visible case",
+        body="Review is available", case_id=visible_case_id, analysis_id=uuid4(),
+        candidate_id=uuid4(), metadata_json={}, created_at=None, read_at=None,
+    )
+    revoked = SimpleNamespace(
+        id=uuid4(), organization_id=principal.organization_id, user_id=principal.user_id,
+        notification_type="REANALYSIS_CANDIDATE", status="UNREAD", title="Revoked case",
+        body="No longer assigned", case_id=revoked_case_id, analysis_id=uuid4(),
+        candidate_id=uuid4(), metadata_json={}, created_at=None, read_at=None,
+    )
+
+    class _NotificationDb:
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [visible, revoked])
+
+    monkeypatch.setattr(reanalysis_api, "_validate_notification_lineage", lambda *_args: None)
+
+    def require_case_access(row, _db, _principal):
+        if row.id == revoked.id:
+            raise HTTPException(status_code=404, detail="Case not found")
+
+    monkeypatch.setattr(reanalysis_api, "_require_notification_case_access", require_case_access)
+
+    result = reanalysis_api.notifications(_NotificationDb(), principal)
+
+    assert len(result) == 1
+    assert result[0]["notification_id"] == str(visible.id)
+
+
 def test_secondary_finding_list_rejects_variant_outside_analysis(monkeypatch):
     analysis_id, variant_id = uuid4(), uuid4()
     principal = _principal(uuid4())

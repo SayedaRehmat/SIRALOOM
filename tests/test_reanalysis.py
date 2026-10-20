@@ -18,6 +18,7 @@ from backend.app.infrastructure.db.models import (
     AnalysisResourceSnapshot,
     AnalysisDispatch,
     Case,
+    CaseAccessGrant,
     Notification,
     Organization,
     OrganizationMembership,
@@ -169,26 +170,38 @@ def test_change_detector_creates_durable_candidate_and_notifications_idempotentl
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Organization.__table__, User.__table__, OrganizationMembership.__table__, CaseAccessGrant.__table__,
             Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
             ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__, AuditEvent.__table__,
         ],
     )
 
-    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    organization_id, user_id, unassigned_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Reanalysis Test Lab", external_identifier=None))
         db.add(User(
             id=user_id, organization_id=organization_id, external_subject=None,
-            email="analyst@test.local", display_name="Analyst", role="ANALYST", status="ACTIVE",
+            email="analyst@test.local", display_name="Analyst", role="bioinformatician", status="ACTIVE",
         ))
         db.add(OrganizationMembership(
             id=uuid4(), organization_id=organization_id, user_id=user_id,
-            role="ANALYST", status="ACTIVE",
+            role="bioinformatician", status="ACTIVE",
+        ))
+        db.add(User(
+            id=unassigned_id, organization_id=organization_id, external_subject=None,
+            email="unassigned@test.local", display_name="Unassigned", role="reviewer", status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(), organization_id=organization_id, user_id=unassigned_id,
+            role="reviewer", status="ACTIVE",
         ))
         db.add(Case(
             id=case_id, organization_id=organization_id, case_identifier="REAN-001",
             status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=user_id,
+            can_read=True, can_write=True, can_review=False, granted_by=user_id,
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
@@ -219,6 +232,7 @@ def test_change_detector_creates_durable_candidate_and_notifications_idempotentl
             Notification.candidate_id == candidate.id
         ).all()
         assert len(notifications) == 1
+        assert notifications[0].user_id == user_id
         assert notifications[0].status == "UNREAD"
 
         # Re-registering the identical change must not create another candidate
@@ -239,7 +253,7 @@ def test_active_resource_scanner_detects_registered_resource_changes():
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Organization.__table__, User.__table__, OrganizationMembership.__table__, CaseAccessGrant.__table__,
             Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
             ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
             Resource.__table__,
@@ -251,15 +265,19 @@ def test_active_resource_scanner_detects_registered_resource_changes():
         db.add(Organization(id=organization_id, name="Scanner Test Lab", external_identifier=None))
         db.add(User(
             id=user_id, organization_id=organization_id, external_subject=None,
-            email="scanner@test.local", display_name="Scanner", role="ANALYST", status="ACTIVE",
+            email="scanner@test.local", display_name="Scanner", role="bioinformatician", status="ACTIVE",
         ))
         db.add(OrganizationMembership(
             id=uuid4(), organization_id=organization_id, user_id=user_id,
-            role="ANALYST", status="ACTIVE",
+            role="bioinformatician", status="ACTIVE",
         ))
         db.add(Case(
             id=case_id, organization_id=organization_id, case_identifier="SCAN-001",
             status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=user_id,
+            can_read=True, can_write=True, can_review=False, granted_by=user_id,
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
@@ -300,7 +318,7 @@ def test_tenant_resource_release_does_not_create_candidates_for_same_named_other
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Organization.__table__, User.__table__, OrganizationMembership.__table__, CaseAccessGrant.__table__,
             Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
             ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
             Resource.__table__,
@@ -425,7 +443,7 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Organization.__table__, User.__table__, OrganizationMembership.__table__, CaseAccessGrant.__table__,
             Case.__table__, Analysis.__table__, WorkflowStep.__table__,
             Artifact.__table__, AnalysisPartition.__table__, Variant.__table__,
             Annotation.__table__, AnalysisResourceSnapshot.__table__,
@@ -444,11 +462,15 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         ))
         db.add(OrganizationMembership(
             id=uuid4(), organization_id=organization_id, user_id=user_id,
-            role="ANALYST", status="ACTIVE",
+            role="bioinformatician", status="ACTIVE",
         ))
         db.add(Case(
             id=case_id, organization_id=organization_id, case_identifier="LIFE-001",
             status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=user_id,
+            can_read=True, can_write=True, can_review=False, granted_by=user_id,
         ))
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
@@ -615,7 +637,7 @@ def test_registered_resource_release_drives_change_aware_candidate():
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Organization.__table__, User.__table__, OrganizationMembership.__table__, CaseAccessGrant.__table__,
             Case.__table__, Analysis.__table__, AnalysisResourceSnapshot.__table__,
             ReanalysisChangeEvent.__table__, ReanalysisCandidate.__table__, Notification.__table__,
             Resource.__table__,
@@ -627,15 +649,19 @@ def test_registered_resource_release_drives_change_aware_candidate():
         db.add(Organization(id=organization_id, name="Release Test Lab", external_identifier=None))
         db.add(User(
             id=user_id, organization_id=organization_id, external_subject=None,
-            email="release@test.local", display_name="Release", role="ANALYST", status="ACTIVE",
+            email="release@test.local", display_name="Release", role="bioinformatician", status="ACTIVE",
         ))
         db.add(OrganizationMembership(
             id=uuid4(), organization_id=organization_id, user_id=user_id,
-            role="ANALYST", status="ACTIVE",
+            role="bioinformatician", status="ACTIVE",
         ))
         db.add(Case(
             id=case_id, organization_id=organization_id, case_identifier="REL-001",
             status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=user_id,
+            can_read=True, can_write=True, can_review=False, granted_by=user_id,
         ))
 
         old_resource, created = register_resource_version(

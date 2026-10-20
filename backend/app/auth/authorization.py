@@ -2,7 +2,7 @@
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
-from sqlalchemy import exists, or_, select
+from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.principal import Principal, get_current_principal, require_case_tenant
@@ -127,6 +127,28 @@ def case_access_predicate(principal: Principal, permission: str = "read"):
         (Case.organization_id == principal.organization_id)
         & (assigned | current_admin)
     )
+
+
+def case_read_recipient_user_ids(db: Session, *, case_id: UUID, organization_id: UUID) -> set[UUID]:
+    """Return active members allowed to read a case for case-scoped notifications."""
+    granted_read = exists(
+        select(CaseAccessGrant.id).where(
+            CaseAccessGrant.case_id == case_id,
+            CaseAccessGrant.user_id == OrganizationMembership.user_id,
+            CaseAccessGrant.can_read.is_(True),
+        )
+    )
+    rows = db.scalars(
+        select(OrganizationMembership.user_id).where(
+            OrganizationMembership.organization_id == organization_id,
+            OrganizationMembership.status == "ACTIVE",
+            or_(
+                OrganizationMembership.role.in_(CASE_ACCESS_ADMIN_ROLES),
+                and_(OrganizationMembership.role.in_(READ_ROLES), granted_read),
+            ),
+        )
+    ).all()
+    return set(rows)
 
 
 def get_accessible_case(case_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal), permission: str = "read") -> Case:

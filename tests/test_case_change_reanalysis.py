@@ -10,6 +10,7 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     Annotation,
     Case,
+    CaseAccessGrant,
     Evidence,
     Notification,
     Organization,
@@ -31,12 +32,12 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
     Base.metadata.create_all(
         engine,
         tables=[
-            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            Organization.__table__, User.__table__, OrganizationMembership.__table__, CaseAccessGrant.__table__,
             Case.__table__, Analysis.__table__, ReanalysisChangeEvent.__table__,
             ReanalysisCandidate.__table__, Notification.__table__,
         ],
     )
-    organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
+    organization_id, user_id, admin_id, unassigned_id, case_id = uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     parent_one, parent_two = uuid4(), uuid4()
     phenotype_id = uuid4()
     change_metadata = {"hpo_id": "HP:0001250", "phenotype_id": str(phenotype_id)}
@@ -45,17 +46,39 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         db.add(Organization(id=organization_id, name="Case Change Lab", external_identifier=None))
         db.add(User(
             id=user_id, organization_id=organization_id, external_subject=None,
-            email="reviewer@test.local", display_name="Reviewer", role="REVIEWER", status="ACTIVE",
+            email="reviewer@test.local", display_name="Reviewer", role="reviewer", status="ACTIVE",
         ))
         db.add(OrganizationMembership(
             id=uuid4(), organization_id=organization_id, user_id=user_id,
-            role="REVIEWER", status="ACTIVE",
+            role="reviewer", status="ACTIVE",
         ))
+        db.add_all([
+            User(
+                id=admin_id, organization_id=organization_id, external_subject=None,
+                email="admin@test.local", display_name="Admin", role="organization_admin", status="ACTIVE",
+            ),
+            OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=admin_id,
+                role="organization_admin", status="ACTIVE",
+            ),
+            User(
+                id=unassigned_id, organization_id=organization_id, external_subject=None,
+                email="unassigned@test.local", display_name="Unassigned", role="bioinformatician", status="ACTIVE",
+            ),
+            OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=unassigned_id,
+                role="bioinformatician", status="ACTIVE",
+            ),
+        ])
         case = Case(
             id=case_id, organization_id=organization_id, case_identifier="CASE-CHANGE-001",
             status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
         )
         db.add(case)
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=user_id,
+            can_read=True, can_write=False, can_review=True, granted_by=admin_id,
+        ))
         for analysis_id in (parent_one, parent_two):
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
@@ -76,7 +99,8 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert {c.parent_analysis_id for c in candidates} == {parent_one, parent_two}
         assert all(c.earliest_affected_step == "build_evidence" for c in candidates)
         assert db.query(ReanalysisChangeEvent).count() == 1
-        assert db.query(Notification).count() == 2
+        assert db.query(Notification).count() == 4
+        assert {row.user_id for row in db.query(Notification).all()} == {user_id, admin_id}
 
         again = create_case_change_candidates(
             db, case=case, trigger_type="PHENOTYPE_UPDATE",
@@ -85,7 +109,7 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert {c.id for c in again} == {c.id for c in candidates}
         assert db.query(ReanalysisChangeEvent).count() == 1
         assert db.query(ReanalysisCandidate).count() == 2
-        assert db.query(Notification).count() == 2
+        assert db.query(Notification).count() == 4
 
         # The same request payload is idempotent, but a later transition with
         # a distinct prior case version must create a new event and candidates.
@@ -99,7 +123,7 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert len(later) == 2
         assert db.query(ReanalysisChangeEvent).count() == 2
         assert db.query(ReanalysisCandidate).count() == 4
-        assert db.query(Notification).count() == 4
+        assert db.query(Notification).count() == 8
 
 
 def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance():

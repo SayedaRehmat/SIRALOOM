@@ -8,11 +8,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from backend.app.auth.authorization import case_read_recipient_user_ids
 from backend.app.infrastructure.db.models import (
     Analysis,
     Case,
     Notification,
-    OrganizationMembership,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
 )
@@ -105,12 +105,11 @@ def create_case_change_candidates(
                 raise
 
     candidates: list[ReanalysisCandidate] = []
-    users = db.scalars(
-        select(OrganizationMembership.user_id).where(
-            OrganizationMembership.organization_id == case.organization_id,
-            OrganizationMembership.status == "ACTIVE",
-        )
-    ).all()
+    users = case_read_recipient_user_ids(
+        db,
+        case_id=case.id,
+        organization_id=case.organization_id,
+    )
 
     for parent in parents:
         candidate = db.scalar(

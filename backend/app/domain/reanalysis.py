@@ -8,6 +8,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, aliased
 
+from backend.app.auth.authorization import case_read_recipient_user_ids
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -19,7 +20,6 @@ from backend.app.infrastructure.db.models import (
     Classification,
     Evidence,
     Notification,
-    OrganizationMembership,
     PopulationObservation,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
@@ -307,7 +307,7 @@ def create_change_event(db: Session, *, organization_id: UUID, trigger_type: str
     return event
 
 
-def detect_change(db: Session, *, organization_id: UUID, trigger_type: str, resource_kind: str, resource_name: str, new_version: str | None, new_checksum: str | None, resource_id: UUID | None = None) -> list[ReanalysisCandidate]:
+def detect_change(db: Session, *, organization_id: UUID, trigger_type: str, resource_kind: str, resource_name: str, new_version: str | None, new_checksum: str | None, resource_id: UUID | None = None, commit: bool = True) -> list[ReanalysisCandidate]:
     statement = (
         select(AnalysisResourceSnapshot)
         .join(Analysis, Analysis.id == AnalysisResourceSnapshot.analysis_id)
@@ -354,6 +354,7 @@ def detect_change(db: Session, *, organization_id: UUID, trigger_type: str, reso
         statement = statement.where(ownership_scope)
     snapshots = db.scalars(statement).all()
     candidates: list[ReanalysisCandidate] = []
+    notification_recipients: dict[UUID, set[UUID]] = {}
     for snapshot in snapshots:
         if snapshot.version == new_version and snapshot.checksum == new_checksum:
             continue
@@ -376,11 +377,18 @@ def detect_change(db: Session, *, organization_id: UUID, trigger_type: str, reso
             if candidate is None:
                 raise
         if created_candidate:
-            users = db.scalars(select(OrganizationMembership.user_id).where(OrganizationMembership.organization_id == organization_id, OrganizationMembership.status == "ACTIVE")).all()
+            if parent.case_id not in notification_recipients:
+                notification_recipients[parent.case_id] = case_read_recipient_user_ids(
+                    db,
+                    case_id=parent.case_id,
+                    organization_id=organization_id,
+                )
+            users = notification_recipients[parent.case_id]
             for user_id in users:
                 db.add(Notification(id=uuid4(), organization_id=organization_id, user_id=user_id, notification_type="REANALYSIS_CANDIDATE", status="UNREAD", title="Case reanalysis may be required", body=candidate.reason, case_id=parent.case_id, analysis_id=parent.id, candidate_id=candidate.id, metadata_json={"trigger_type": trigger_type, "resource_kind": resource_kind, "resource_name": resource_name, "previous_version": snapshot.version, "new_version": new_version, "earliest_affected_step": candidate.earliest_affected_step}))
             candidates.append(candidate)
-    db.commit()
+    if commit:
+        db.commit()
     return candidates
 
 
