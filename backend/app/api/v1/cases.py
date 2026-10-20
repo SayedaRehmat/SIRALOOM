@@ -1,18 +1,25 @@
 from uuid import UUID, uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from backend.app.infrastructure.db.session import get_db
-from backend.app.auth.authorization import CASE_WRITE_ROLES, case_access_predicate, require_case_permission, require_role
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    REVIEW_ROLES,
+    case_access_predicate,
+    require_case_permission,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.case_change import create_case_change_candidates
+from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
 from backend.app.domain.enums import CaseStatus
 from backend.app.domain.schemas import CaseCreate
-from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
-from backend.app.infrastructure.db.models import Case, CaseAccessGrant, Specimen, Analysis
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.domain.case_change import create_case_change_candidates
+from backend.app.infrastructure.db.models import Analysis, Case, CaseAccessGrant, Specimen
+from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -74,7 +81,9 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
         raise
     db.add(CaseAccessGrant(
         id=uuid4(), case_id=case.id, user_id=principal.user_id,
-        can_read=True, can_write=True, can_review=True, granted_by=principal.user_id,
+        can_read=True, can_write=True,
+        can_review=principal.role in REVIEW_ROLES,
+        granted_by=principal.user_id,
     ))
     AuditService(db).record(
         event_type="CASE_CREATED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),

@@ -192,6 +192,34 @@ def test_case_access_admin_grants_updates_and_revokes_with_audit(case_access_db)
 
 
 @pytest.mark.parametrize(
+    ("role", "payload"),
+    [
+        ("read_only", CaseAccessGrantInput(can_read=True, can_write=True, can_review=False)),
+        ("bioinformatician", CaseAccessGrantInput(can_read=True, can_write=False, can_review=True)),
+    ],
+)
+def test_case_assignment_rejects_grants_outside_member_role(case_access_db, role, payload):
+    db, org, _other_org, users, case, _foreign_case = case_access_db
+    target = users["unassigned"]
+    target.role = role
+    membership = db.scalar(select(OrganizationMembership).where(
+        OrganizationMembership.organization_id == org.id,
+        OrganizationMembership.user_id == target.id,
+    ))
+    membership.role = role
+    db.commit()
+
+    with pytest.raises(HTTPException) as denied:
+        set_case_access(case.id, target.id, payload, db, _principal(users["admin"], org.id))
+
+    assert denied.value.status_code == 403
+    assert db.scalar(select(CaseAccessGrant).where(
+        CaseAccessGrant.case_id == case.id,
+        CaseAccessGrant.user_id == target.id,
+    )) is None
+
+
+@pytest.mark.parametrize(
     "payload",
     [
         {"can_read": False, "can_write": True, "can_review": False},

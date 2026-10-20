@@ -7,7 +7,13 @@ from pydantic import BaseModel, model_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.authorization import CASE_ACCESS_ADMIN_ROLES, require_case_permission, require_role
+from backend.app.auth.authorization import (
+    CASE_ACCESS_ADMIN_ROLES,
+    CASE_WRITE_ROLES,
+    REVIEW_ROLES,
+    require_case_permission,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Case, CaseAccessGrant, OrganizationMembership, User
@@ -118,6 +124,10 @@ def set_case_access(
     )
     if membership is None:
         raise HTTPException(status_code=404, detail="Active organization member not found")
+    if payload.can_write and membership.role not in CASE_WRITE_ROLES:
+        raise HTTPException(status_code=403, detail="This member's role cannot be granted case write access")
+    if payload.can_review and membership.role not in REVIEW_ROLES:
+        raise HTTPException(status_code=403, detail="This member's role cannot be granted case review access")
     grant = db.scalar(
         select(CaseAccessGrant)
         .where(CaseAccessGrant.case_id == case.id, CaseAccessGrant.user_id == user_id)

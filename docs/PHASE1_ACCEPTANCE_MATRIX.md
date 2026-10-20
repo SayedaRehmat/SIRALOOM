@@ -156,6 +156,14 @@ This code is on local and remote `main`; exact-SHA CI and all live/deployed, ind
 
 At this checkpoint these changes are committed locally on `main` as `baff5ff`, based on `86008358caae94898ceaedf3be9449e55e9936b6`; remote-push status must be verified separately. Phase A remains PARTIAL and the laboratory release decision remains BLOCKED.
 
+## 2026-10-20 case assignment role/grant alignment addendum
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Case write/review grants agree with the current member role | PASS (local automated scope) | Assignment API rejects incompatible capabilities; case creator's review grant is role-aware. Focused case access/create/mutation suite: 15 passed; broad backend suite: 1,050 passed, 40 skipped. Deployed identity and tenant tests remain NOT RUN. |
+
+Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. Current code SHA and remote status are recorded after push.
+
 ## 2026-10-19 ACMG engine status gate (local checkpoint)
 
 | Requirement | Status | Evidence / limitation |
