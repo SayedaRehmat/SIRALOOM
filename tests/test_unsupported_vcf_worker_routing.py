@@ -252,6 +252,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     import importlib
     from types import SimpleNamespace
 
+    from backend.app.domain.vcf_tools import bcftools_available
+
     workflow = importlib.import_module("backend.app.workflows.variant")
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'gvcf-positive.db'}")
@@ -274,12 +276,13 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         '##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
-        "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD\t0/0:30,0\n"
-        "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"
-        "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD\t0/1:10,10\n"
-        "1\t21\tstar1\tT\t*\t50\tPASS\t.\tGT:AD\t0/1:10,10\n"
-        + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD\t0/1:10,10\n",
+        "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD:PL\t0/0:30,0:0,40,400\n"
+        "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9,0:100,50,60,40,0,30\n"
+        "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
+        "1\t21\tstar1\tT\t*\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
+        + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD:PL\t0/1:10,10:0,20,200\n",
         encoding="utf-8",
     )
     try:
@@ -361,9 +364,10 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     "##fileformat=VCFv4.3\n##contig=<ID=1,length=1000>\n"
                     '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
                     '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+                    '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
                     "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
-                    "1\t11\trs1\tA\tC\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9\n"
-                    "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD\t0/1:10,10\n"
+                    "1\t11\trs1\tA\tC\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9:100,50,60\n"
+                    "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
                 )
             index.write_bytes(b"fixture-csi")
             return {
@@ -373,7 +377,9 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 "compression": "BGZF", "index": "CSI", "index_path": str(index),
             }
 
-        monkeypatch.setattr(workflow, "normalize_vcf_with_bcftools", fake_normalize)
+        used_real_bcftools = bcftools_available()
+        if not used_real_bcftools:
+            monkeypatch.setattr(workflow, "normalize_vcf_with_bcftools", fake_normalize)
         workflow.run_variant_analysis(analysis_id)
 
         with local_session() as db:
@@ -447,6 +453,17 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
                 assert normalized.metadata_json["record_count"] == 2
                 assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
+                if used_real_bcftools:
+                    assert "bcftools view -A" in normalized.metadata_json["normalization_command"]
+                    normalized_text = gzip.decompress(store.read_bytes(normalized.storage_uri)).decode("utf-8")
+                    normalized_records = [
+                        line.split("\t") for line in normalized_text.splitlines()
+                        if line and not line.startswith("#")
+                    ]
+                    called_variant = next(record for record in normalized_records if record[1] == "11")
+                    assert called_variant[4] == "C"
+                    assert called_variant[8] == "GT:AD:PL"
+                    assert called_variant[9] == "0/1:15,9:100,50,60"
                 assert analysis.status == AnalysisStatus.BLOCKED
                 annotation = db.scalar(select(WorkflowStep).where(
                     WorkflowStep.analysis_id == analysis_id,
