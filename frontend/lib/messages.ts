@@ -695,6 +695,7 @@ export type TranslationKey =
   | "review.qcSaveObservation"
   | "review.qcObservations"
   | "review.qcReviewerNote"
+  | "review.qcRuleResults"
   | "review.qcAssess"
   | "review.saving"
   | "review.assessing"
@@ -1130,6 +1131,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.qcSaveObservation": "Record QC observation",
     "review.qcObservations": "Technical QC observations",
     "review.qcReviewerNote": "Reviewer note",
+    "review.qcRuleResults": "Assay rule results",
     "review.qcAssess": "Assess against assay rules",
     "review.saving": "Saving…",
     "review.assessing": "Assessing…",
@@ -1994,6 +1996,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.qcSaveObservation": "تسجيل ملاحظة ضبط الجودة",
     "review.qcObservations": "ملاحظات ضبط الجودة التقنية",
     "review.qcReviewerNote": "ملاحظة المراجع",
+    "review.qcRuleResults": "نتائج قواعد الفحص",
     "review.qcAssess": "التقييم وفق قواعد الفحص",
     "review.saving": "جارٍ الحفظ…",
     "review.assessing": "جارٍ التقييم…",

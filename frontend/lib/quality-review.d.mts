@@ -5,6 +5,16 @@ export type QualityAssessment = {
   profile_name?: string | null;
   profile_version?: string | null;
   reviewer_note?: string | null;
+  evaluated_rules?: Array<{
+    metric: string;
+    value: number | null;
+    status: string;
+    direction: string;
+    threshold?: number | null;
+    minimum?: number | null;
+    maximum?: number | null;
+    severity?: string;
+  }>;
 };
 
 export function latestQualityAssessment(
