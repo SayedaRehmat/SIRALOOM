@@ -686,6 +686,25 @@ export type TranslationKey =
   | "review.version"
   | "review.qcGate"
   | "review.qcObsNone"
+  | "review.qcPolicyRequired"
+  | "review.qcMetricName"
+  | "review.qcMetricValue"
+  | "review.qcValueUnavailable"
+  | "review.qcUnit"
+  | "review.qcSourceVersion"
+  | "review.qcSaveObservation"
+  | "review.qcObservations"
+  | "review.qcReviewerNote"
+  | "review.qcAssess"
+  | "review.saving"
+  | "review.assessing"
+  | "review.latestAssessment"
+  | "review.noAssayProfile"
+  | "review.qcInvalidValue"
+  | "review.qcObservationSaved"
+  | "review.qcAssessmentSaved"
+  | "review.qcSaveFailed"
+  | "review.qcAssessFailed"
   | "review.evidence"
   | "review.evidenceNone"
   | "review.acmg"
@@ -1102,6 +1121,25 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.version": "Version",
     "review.qcGate": "QC gate",
     "review.qcObsNone": "No technical QC observations recorded for this analysis.",
+    "review.qcPolicyRequired": "Record laboratory-provided measurements. A gate is assessed only against the assigned assay profile; missing values stay unavailable.",
+    "review.qcMetricName": "QC metric name",
+    "review.qcMetricValue": "QC metric value (leave blank if unavailable)",
+    "review.qcValueUnavailable": "Unavailable",
+    "review.qcUnit": "Unit",
+    "review.qcSourceVersion": "Source or policy version",
+    "review.qcSaveObservation": "Record QC observation",
+    "review.qcObservations": "Technical QC observations",
+    "review.qcReviewerNote": "Reviewer note",
+    "review.qcAssess": "Assess against assay rules",
+    "review.saving": "Saving…",
+    "review.assessing": "Assessing…",
+    "review.latestAssessment": "Latest assessment",
+    "review.noAssayProfile": "No assay profile",
+    "review.qcInvalidValue": "Enter a valid number or leave the measurement unavailable.",
+    "review.qcObservationSaved": "QC observation recorded.",
+    "review.qcAssessmentSaved": "Assay QC assessment recorded.",
+    "review.qcSaveFailed": "Unable to record QC observation.",
+    "review.qcAssessFailed": "Unable to assess technical QC.",
     "review.evidence": "CLINVAR / CLINGEN / LITERATURE / FUNCTIONAL",
     "review.evidenceNone": "No literature or functional/computational context evidence is attached to this variant.",
     "review.acmg": "ACMG / CLINGEN HUMAN ASSESSMENT",
@@ -1947,6 +1985,25 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.version": "الإصدار",
     "review.qcGate": "بوابة ضبط الجودة",
     "review.qcObsNone": "لم تُسجل ملاحظات ضبط جودة تقنية لهذا التحليل.",
+    "review.qcPolicyRequired": "سجّل القياسات المقدمة من المختبر. يُقيّم الاجتياز وفق ملف الفحص المعيّن فقط؛ وتظل القيم المفقودة غير متاحة.",
+    "review.qcMetricName": "اسم مقياس ضبط الجودة",
+    "review.qcMetricValue": "قيمة مقياس ضبط الجودة (اتركها فارغة إن لم تتوفر)",
+    "review.qcValueUnavailable": "غير متاح",
+    "review.qcUnit": "الوحدة",
+    "review.qcSourceVersion": "إصدار المصدر أو السياسة",
+    "review.qcSaveObservation": "تسجيل ملاحظة ضبط الجودة",
+    "review.qcObservations": "ملاحظات ضبط الجودة التقنية",
+    "review.qcReviewerNote": "ملاحظة المراجع",
+    "review.qcAssess": "التقييم وفق قواعد الفحص",
+    "review.saving": "جارٍ الحفظ…",
+    "review.assessing": "جارٍ التقييم…",
+    "review.latestAssessment": "أحدث تقييم",
+    "review.noAssayProfile": "لا يوجد ملف فحص",
+    "review.qcInvalidValue": "أدخل رقمًا صالحًا أو اترك القياس غير متاح.",
+    "review.qcObservationSaved": "تم تسجيل ملاحظة ضبط الجودة.",
+    "review.qcAssessmentSaved": "تم تسجيل تقييم ضبط جودة الفحص.",
+    "review.qcSaveFailed": "تعذر تسجيل ملاحظة ضبط الجودة.",
+    "review.qcAssessFailed": "تعذر تقييم ضبط الجودة التقنية.",
     "review.evidence": "ClinVar / ClinGen / الأدبيات / الوظائف",
     "review.evidenceNone": "لا توجد أدلة سياقية أدبية أو وظيفية/حسابية مرفقة بهذا المتغير.",
     "review.acmg": "التقييم البشري لـ ACMG / ClinGen",

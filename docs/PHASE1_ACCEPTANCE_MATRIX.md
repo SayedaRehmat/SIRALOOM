@@ -235,3 +235,11 @@ Commits [`0afbb1b`](https://github.com/SayedaRehmat/SIRALOOM/commit/0afbb1bc6786
 | Local source and routing smoke | PASS (narrow helper scope) | Bundled Python 3.12 compileall passed; a direct smoke call to `route_vcf_records` preserved and counted 9 representative rows across sequence, GVCF block, unresolved wildcard, symbolic DEL, reciprocal BND and `*` routes. This does not exercise database persistence, the production worker, BCFtools or PostgreSQL. |
 
 Research: pinned [BCFtools 1.19 manual](https://raw.githubusercontent.com/samtools/bcftools/1.19/doc/bcftools.txt) and [1.19 release notes](https://raw.githubusercontent.com/samtools/bcftools/1.19/NEWS); current [HTS VCFv4.5 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex). Repository validator currently accepts only VCFv4.2/v4.3; VCFv4.5 is not claimed as supported. The reference-block/SV processing boundary is intentional because those downstream analytical stages are not implemented. Exact-SHA run [`39414744914`](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39414744914) passed at `e908bae`: backend 1,093 passed/28 skipped; PostgreSQL integration 27 passed with pinned BCFtools 1.19; frontend 29 tests and production build passed. This is software workflow evidence only, not GVCF-reference-confidence/SV clinical interpretation, truth-set validation, live identity, deployed tenant isolation or laboratory deployment. Phase A remains PARTIAL.
+
+## 2026-10-20 review-page technical QC wiring
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Review page displays and records assay-specific technical QC using persisted API data | PASS (frontend automated scope) | Corrected display to consume newest-first `assessments[]`; added controls for recording QC observations and submitting metrics to the existing assay-rule assessment endpoint. Regression tests cover latest assessment, latest metric value and null/unavailable preservation. i18n guard PASS; frontend suite 31 passed; Next production build/typecheck PASS; diff check PASS. No live Firebase/deployed endpoint interaction or laboratory QC policy qualification was performed. |
+
+Phase A remains PARTIAL. Live browser identity, deployed tenant isolation, real-storage reviewer/signout recovery, and actual scientific/laboratory qualification remain unverified.
