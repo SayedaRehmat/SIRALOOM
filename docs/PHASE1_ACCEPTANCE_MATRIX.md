@@ -290,4 +290,6 @@ Phase A remains PARTIAL. Live Firebase/browser identity, deployed two-tenant API
 
 | Reviewer/read-only case members can inspect segregation evidence | PASS (focused automated permission scope) | Corrected segregation GET to use case read permission and `READ_ROLES`; assessment and mutation endpoints retain their stricter review/write checks. Tenant/object suites: **79 passed**; focused segregation tests: **3 passed**. No live reviewer browser journey or deployed case-grant check was run. |
 
+| Notification and reanalysis candidate direct-object access | PASS (local automated scope) | Inspected organization/recipient scoping, linked-record lineage, case-grant rechecks, candidate ownership, parent/child consistency, trigger/resource binding and queue-failure recovery. Four focused API/lifecycle suites: **73 passed**. Deployed two-tenant validation and PostgreSQL concurrency remain NOT RUN. |
+
 Phase A remains PARTIAL. Scientific threshold qualification, live identity, deployed tenant/storage isolation, and real-storage report recovery are still unverified.

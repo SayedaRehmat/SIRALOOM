@@ -675,3 +675,12 @@
 - **Fix:** the GET route now checks case read permission and `READ_ROLES`; writes remain protected by case-write authorization and `CASE_WRITE_ROLES`. Added a regression test asserting the read route uses the read grant/role contract.
 - **Executed tests:** `.venv\Scripts\python.exe -m pytest tests/test_audit_tenant_authorization.py -k segregation -q -rs`: **3 passed, 40 deselected**. Broader tenant/object suite `.venv\Scripts\python.exe -m pytest tests/test_audit_tenant_authorization.py tests/test_tenant_object_authorization.py tests/test_case_access_control.py -q`: **79 passed**. `git diff --check` passed after review.
 - **Limits:** this establishes route-level permission contract under automated test doubles plus neighboring object-authorization regression coverage; no deployed reviewer account/browser journey was run. Phase A remains PARTIAL.
+
+## 2026-10-20 notification and reanalysis direct-object audit
+
+- **Paths inspected:** notification list/read, candidate list/execute, manual reanalysis, change-event registration, and resource-provenance snapshot routes in `backend/app/api/v1/reanalysis.py`.
+- **Checks:** notifications are scoped to the authenticated organization and recipient, linked case/analysis/candidate/resource/discovery lineage is checked, and case grants are rechecked when listing or marking read. Candidate execution verifies organization, trigger-event lineage, current case write access, parent/case consistency, successful parent state and child-parent consistency before reuse or dispatch. Resource change registration validates role, trigger-kind pairing and optional resource ownership/type/name.
+- **Finding:** no additional direct-object authorization defect was confirmed in the inspected routes. Current local route tests cover notification lineage, revoked access, candidate execution and queue-failure recovery.
+- **Executed command:** `.venv\Scripts\python.exe -m pytest tests/test_reanalysis_api_contract.py tests/test_reanalysis_change_event_api.py tests/test_case_change_reanalysis.py tests/test_audit_tenant_authorization.py -q -rs`
+- **Result:** **73 passed** in 1.29s; one Starlette/httpx deprecation warning.
+- **Limits:** this is local automated route/lifecycle evidence; PostgreSQL concurrency, deployed two-tenant access and real queue/storage failures remain unverified. Phase A remains PARTIAL.
