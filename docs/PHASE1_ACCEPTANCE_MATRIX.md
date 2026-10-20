@@ -271,3 +271,11 @@ Phase A remains PARTIAL. Live browser identity, deployed tenant isolation, real-
 | Resource-registry tenant access, approval roles and staging ownership | PASS (local automated scope) | Inspected organization/global resource boundaries, staging record resource/version binding and organization cache path validation. Eight focused registry/staging test files: 61 passed. Live provider qualification, PostgreSQL dispatch integration and deployed laboratory storage isolation are NOT RUN. |
 
 | Live Firebase identity and controlled Docker deployment journey | BLOCKED (environment) | Verified no local `.env`/`frontend/.env.local`, no Firebase public web config variables in process, no Firebase Auth emulator in `firebase.json`, and no Docker CLI. No live identity/deployment check was run. Requires a configured Firebase test project and deployment-capable host. |
+
+## 2026-10-20 VCF intake regression evidence
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| VCF parsing, intake validation, case idempotency, upload capacity policy, and unsupported-class routing | PASS (local automated scope) | Command: `.venv\Scripts\python.exe -m pytest tests/test_ingestion.py tests/test_vcf_validation.py tests/test_vcf_tools.py tests/test_vcf.py tests/test_case_create_idempotency.py tests/test_upload_capacity_policy.py tests/test_unsupported_vcf_worker_routing.py -q -rs`; **83 passed, 5 skipped**. The five skips are BCFtools-gated production normalization tests because BCFtools is unavailable locally. This does not establish independent scientific benchmark concordance, deployed storage behavior, or laboratory QC qualification. |
+
+Phase A remains PARTIAL. Live Firebase/browser identity, deployed two-tenant API and artifact isolation, real-storage reviewer/signout recovery, and scientific/laboratory qualification remain unverified or blocked as recorded above.

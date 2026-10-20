@@ -651,3 +651,10 @@
 
 - **Observed configuration:** the checkout has no root `.env` or `frontend/.env.local`; the four required public Firebase web configuration variables are absent from this process; `firebase.json` does not configure the Firebase Auth emulator; and the Docker CLI is unavailable.
 - **Disposition:** live Firebase signup/login/recovery/logout and controlled Docker deployment journeys are **BLOCKED in this execution environment**, not passed. No credentials were printed or inspected. A Firebase project/web configuration and an available deployment host/toolchain are required for those checks. Deployed two-lab isolation and real cloud storage recovery remain NOT RUN.
+
+## 2026-10-20 VCF intake and validation regression checkpoint
+
+- **Paths and behavior inspected:** `backend/app/api/v1/artifacts.py`, `backend/app/domain/ingestion.py`, VCF validation/tool routing, case/specimen-bound upload behavior, capacity handling, and duplicate case creation idempotency. These tests cover application-level parsing and intake behavior; they do not independently validate scientific correctness.
+- **Executed command:** `.venv\Scripts\python.exe -m pytest tests/test_ingestion.py tests/test_vcf_validation.py tests/test_vcf_tools.py tests/test_vcf.py tests/test_case_create_idempotency.py tests/test_upload_capacity_policy.py tests/test_unsupported_vcf_worker_routing.py -q -rs`
+- **Result:** **83 passed, 5 skipped** in 5.37s. All five skips are `tests/test_vcf_tools.py:12` because `bcftools` is required for production normalization tests and is not available in this local environment. One Starlette/httpx deprecation warning was emitted by the installed test client.
+- **Disposition:** intake/parser and deterministic policy tests pass locally. Actual BCFtools normalization is NOT RUN locally; prior exact-SHA CI evidence for pinned BCFtools applies only to its recorded commit and must not be generalized to later revisions without GitHub Actions verification. No independent truth-set concordance, deployed upload/storage exercise, or laboratory assay QC qualification is established by this test run. Phase A remains PARTIAL.
