@@ -140,7 +140,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
-        validate_vcf_strict(p)
+        strict_profile = validate_vcf_strict(p)
         bcftools_error = _bcftools_validate(p)
         if bcftools_error:
             raise VCFValidationError(
@@ -187,6 +187,14 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             warnings.append(
                 "GVCF markers detected. GVCF reference blocks require a genotyping/joint-"
                 "genotyping workflow and are not treated as ordinary Phase 1 variant records."
+            )
+        unchecked_info_number_g = strict_profile["unchecked_info_number_g_fields"]
+        if unchecked_info_number_g:
+            warnings.append(
+                "INFO fields declared with Number=G are present, but their genotype-value "
+                "cardinality cannot be verified without a sample-specific ploidy: "
+                + ", ".join(unchecked_info_number_g)
+                + "."
             )
         return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings)
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:

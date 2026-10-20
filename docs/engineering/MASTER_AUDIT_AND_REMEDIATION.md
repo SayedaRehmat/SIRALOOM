@@ -1,10 +1,14 @@
 # SIRALOOM Master Audit and Remediation
 
 **Updated:** 2026-10-20
-**Repository state observed in this continuation:** local `main` and `origin/main` are verified at [`3c1b1ac`](https://github.com/SayedaRehmat/SIRALOOM/commit/3c1b1acf3e82bf064660247fd9d74927cee2e33b). The role-aware migration code is commit `3e95248`; exact-SHA CI has not been verified. The broad backend suite on this code reports **1,050 passed, 40 skipped**. The unfiltered suite's known Windows PDF renderer dependency issue remains. Live identity journeys, deployed tenant isolation, laboratory storage recovery, independent truth-set concordance, and full lab deployment/restore remain unverified. No complete GVCF/SV interpretation, clinical validation, or production readiness is claimed. Unrelated untracked backup and `siraloom.egg-info/` remain untouched. See the [acceptance matrix](../PHASE1_ACCEPTANCE_MATRIX.md) and [Phase A ledger](PHASE_A_AUDIT_LEDGER.md).
+**Repository state observed in this continuation:** local `main` and `origin/main` were verified at `3e76fd8abb6c143209a32632fc7a931d45603232` before the current uncommitted VCF cardinality change. The broad backend suite for the current working tree reports **1,032 passed, 40 skipped** with `tests/test_report_pdf.py` excluded because Windows-native WeasyPrint libraries are unavailable; environment-dependent PostgreSQL/BCFtools coverage remains skipped. Exact-SHA CI has not been verified. Live identity journeys, deployed tenant isolation, laboratory storage recovery, independent truth-set concordance, and full lab deployment/restore remain unverified. No complete GVCF/SV interpretation, clinical validation, or production readiness is claimed. Unrelated untracked backup and `siraloom.egg-info/` remain untouched. See the [acceptance matrix](../PHASE1_ACCEPTANCE_MATRIX.md) and [Phase A ledger](PHASE_A_AUDIT_LEDGER.md).
 **Working tree note:** an unrelated pre-existing untracked backup artifact is present; it has been preserved.
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
+
+## 2026-10-20 VCF declared INFO/FORMAT cardinality
+
+The working-tree implementation now validates declared INFO/FORMAT schemas, numeric/character payload types and A/R/G/fixed cardinalities, rejects duplicate INFO keys, and surfaces an intake warning for INFO/Number=G values whose ploidy-dependent cardinality cannot be verified. The official VCF v4.3 contract is linked in the [Phase A ledger](PHASE_A_AUDIT_LEDGER.md#2026-10-20-vcf-declared-field-cardinality-and-allele-specific-integrity). Focused tests: 73 passed, 5 skipped. Broad backend suite: 1,032 passed, 40 skipped; native PDF rendering excluded and exact-SHA CI unverified. Changes are not yet committed or pushed. Phase A remains PARTIAL.
 
 ## 2026-10-20 case-assigned reanalysis notification and change-governance fix
 

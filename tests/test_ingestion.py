@@ -30,6 +30,22 @@ def test_vcf_validation_reads_real_content(tmp_path: Path):
     assert result.detected_build == "GRCh38"
 
 
+def test_vcf_validation_warns_when_info_number_g_cannot_be_checked(tmp_path: Path):
+    path = tmp_path / "info-number-g.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=GL,Number=G,Type=Float,Description="Genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\tGL=0,-1,-2\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert any("Number=G" in warning and "GL" in warning for warning in result.warnings)
+
+
 @pytest.mark.parametrize(
     "assembly_headers",
     [

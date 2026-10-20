@@ -271,9 +271,9 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=1000>\n"
         '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
-        "##INFO=<ID=DP,Number=1,Type=Integer,Description=Depth>\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description=Genotype>\n"
-        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
+        '##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
         "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD\t0/0:30,0\n"
         "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"
@@ -359,8 +359,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             with gzip.open(output_path, "wt", encoding="utf-8", newline="\n") as handle:
                 handle.write(
                     "##fileformat=VCFv4.3\n##contig=<ID=1,length=1000>\n"
-                    "##FORMAT=<ID=GT,Number=1,Type=String,Description=Genotype>\n"
-                    "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
+                    '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+                    '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
                     "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
                     "1\t11\trs1\tA\tC\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9\n"
                     "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD\t0/1:10,10\n"

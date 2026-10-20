@@ -199,3 +199,11 @@ Source: [HTS VCF v4.5 specification](https://github.com/samtools/hts-specs/blob/
 | VCFv4.2/v4.3 fileformat header is first; UTF-8 BOM is rejected | PASS (local automated scope) | Strict validator and shared record parser reject misplaced fileformat and BOM for plain/gzip files. Focused VCF suite: 58 passed, 5 skipped; full backend suite excluding Windows-native PDF renderer: 1,017 passed, 40 skipped. Exact-SHA CI and BCFtools executable cases remain unverified locally. |
 
 Sources: official [HTS VCF v4.2](https://github.com/samtools/hts-specs/blob/master/VCFv4.2.tex) and [v4.3](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex) specifications, read 2026-10-20. The fileformat line must be first; v4.3 forbids a BOM. Implementation commit `76eb5fabb9a32098a190b206364dfac368d8ba00` is pushed to `main`; exact-SHA CI is unverified. Phase A remains PARTIAL.
+
+## 2026-10-20 declared INFO/FORMAT cardinality
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Declared INFO/FORMAT types and A/R/G/fixed cardinalities preserve allele/sample correspondence | PASS (local automated scope) | Validator checks Integer/Float/Character payload syntax and Number=A/R against ALT count, Number=R against REF+ALT count, FORMAT Number=G against per-sample GT ploidy, and fixed counts; duplicate INFO keys are rejected. Regression suite: 73 passed, 5 skipped; broad backend suite: 1,032 passed, 40 skipped with native PDF renderer excluded. INFO/Number=G remains unverifiable without a sample-specific ploidy and produces an explicit intake warning. Exact-SHA CI is not verified; BCFtools/PostgreSQL and deployed laboratory validation remain outstanding. |
+
+Source: official [HTS VCF v4.3 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex), read 2026-10-20. Changes are in the working tree and have not yet been committed or pushed. Phase A remains PARTIAL.

@@ -20,6 +20,21 @@ def write_vcf(path: Path, body: str, *, version: str = "VCFv4.3", columns: str |
     )
 
 
+def write_vcf_with_metadata(path: Path, metadata: list[str], body: str, *, sample: bool = False) -> None:
+    columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO"
+    if sample:
+        columns += "\tFORMAT\tSAMPLE1"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        + "\n".join(metadata)
+        + "\n"
+        + columns
+        + "\n"
+        + body,
+        encoding="utf-8",
+    )
+
+
 def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     path = tmp_path / "valid.vcf"
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n")
@@ -92,6 +107,130 @@ def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_BOM_FORBIDDEN"
+
+
+def test_info_number_a_and_r_cardinality_is_checked_for_multiallelic_records(tmp_path: Path):
+    path = tmp_path / "info-cardinality.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##INFO=<Description="Per-ALT frequency, with comma",Type=Float,Number=A,ID=AF>',
+            '##INFO=<ID=AD,Number=R,Type=Integer,Description="Read depths">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\tAF=0.1,0.2;AD=10,3,4\n",
+    )
+
+    assert validate_vcf_strict(path)["multiallelic_records"] == 1
+
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("AF=0.1,0.2", "AF=0.1"),
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("genotype", "pl_values", "expected_count"),
+    [
+        ("0/1", "0,1,2,3,4,5", 6),
+        ("0/1/2", "0,1,2,3,4,5,6,7,8,9", 10),
+    ],
+)
+def test_format_number_g_cardinality_uses_sample_ploidy(
+    tmp_path: Path, genotype: str, pl_values: str, expected_count: int,
+):
+    path = tmp_path / "format-number-g.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">',
+        ],
+        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t{genotype}:{pl_values}\n",
+        sample=True,
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+    assert len(pl_values.split(",")) == expected_count
+
+
+def test_format_number_r_rejects_wrong_per_sample_allele_count(tmp_path: Path):
+    path = tmp_path / "format-number-r.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Read depths">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:AD\t0/1:12,4\n",
+        sample=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+def test_format_number_g_rejects_wrong_genotype_cardinality(tmp_path: Path):
+    path = tmp_path / "format-number-g-invalid.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1:0,1,2,3,4\n",
+        sample=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+def test_strict_validation_rejects_duplicate_info_keys(tmp_path: Path):
+    path = tmp_path / "duplicate-info-key.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\tDP=10;DP=11\n")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_INFO_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("field_type", "value"),
+    [
+        ("Integer", "1.5"),
+        ("Integer", "2147483648"),
+        ("Float", "not-a-number"),
+        ("Character", "too-long"),
+    ],
+)
+def test_declared_info_payload_type_is_enforced(tmp_path: Path, field_type: str, value: str):
+    path = tmp_path / "invalid-declared-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        [f'##INFO=<ID=X,Number=1,Type={field_type},Description="Typed value">'],
+        f"1\t2\t.\tA\tG\t.\tPASS\tX={value}\n",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize("value", ["1.25e-3", "-INF", "nan", "."])
+def test_declared_float_accepts_vcf_numeric_forms(tmp_path: Path, value: str):
+    path = tmp_path / "valid-declared-float.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=X,Number=1,Type=Float,Description="Typed value">'],
+        f"1\t2\t.\tA\tG\t.\tPASS\tX={value}\n",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
 
 
 def test_strict_validation_rejects_contig_mismatch(tmp_path: Path):

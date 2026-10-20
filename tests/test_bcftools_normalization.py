@@ -120,10 +120,10 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
         '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
-        "##INFO=<ID=AF,Number=A,Type=Float,Description=Allele frequency>\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description=Genotype>\n"
-        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
-        "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=Phred likelihoods>\n"
+        '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
         "1\t1\t.\tC\t<NON_REF>\t.\tPASS\t.\tGT:AD:PL\t0/0:20,0:0,40,400\n"
         "1\t2\trsG\tA\tG,<NON_REF>\t50\tPASS\tAF=0.2,0\tGT:AD:PL\t0/1:15,9,0:100,50,60,40,0,30\n",

@@ -198,9 +198,9 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
     source.write_text(
         "##fileformat=VCFv4.3\n"
         '##ALT=<ID=NON_REF,Description="Any possible allele">\n'
-        "##INFO=<ID=DP,Number=1,Type=Integer,Description=Depth>\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description=Genotype>\n"
-        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
+        '##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
         "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD\t0/0:30,0\n"
         "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"

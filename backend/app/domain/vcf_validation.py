@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import re
+from math import comb
 from pathlib import Path
 
 SUPPORTED_VCF_VERSIONS = {"VCFv4.2", "VCFv4.3"}
@@ -30,15 +31,25 @@ def _validate_info(value: str, line_no: int) -> None:
         return
     if not value:
         raise StrictVCFValidationError(f"INFO is empty at line {line_no}", code="VCF_INFO_INVALID")
+    seen: set[str] = set()
     for item in value.split(";"):
         if not item:
             raise StrictVCFValidationError(f"Empty INFO entry at line {line_no}", code="VCF_INFO_INVALID")
         if "=" in item:
             key, val = item.split("=", 1)
-            if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", key) or val == "":
+            if (
+                not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", key)
+                or val == ""
+                or any(value == "" for value in val.split(","))
+            ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         elif not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", item):
             raise StrictVCFValidationError(f"Malformed INFO flag at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
+        else:
+            key = item
+        if key in seen:
+            raise StrictVCFValidationError(f"Duplicate INFO key {key!r} at line {line_no}", code="VCF_INFO_INVALID")
+        seen.add(key)
 
 
 def _info_values(value: str) -> dict[str, str | None]:
@@ -49,6 +60,178 @@ def _info_values(value: str) -> dict[str, str | None]:
         key, separator, raw = item.partition("=")
         result[key] = raw if separator else None
     return result
+
+
+def _parse_field_definition(line: str, kind: str, line_no: int) -> tuple[str, dict[str, str]]:
+    """Parse INFO/FORMAT metadata without splitting commas inside quoted descriptions."""
+    prefix = f"##{kind}=<"
+    if not line.startswith(prefix) or not line.endswith(">"):
+        raise StrictVCFValidationError(
+            f"Malformed {kind} header definition at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    body = line[len(prefix):-1]
+    attributes: list[str] = []
+    current: list[str] = []
+    quoted = False
+    escaped = False
+    for char in body:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == "\\" and quoted:
+            current.append(char)
+            escaped = True
+        elif char == '"':
+            current.append(char)
+            quoted = not quoted
+        elif char == "," and not quoted:
+            attributes.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    if quoted or escaped:
+        raise StrictVCFValidationError(
+            f"Malformed quoted {kind} header value at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    attributes.append("".join(current))
+
+    parsed: dict[str, str] = {}
+    for attribute in attributes:
+        key, separator, value = attribute.partition("=")
+        key, value = key.strip(), value.strip()
+        if not separator or not key or not value or key in parsed:
+            raise StrictVCFValidationError(
+                f"Malformed or duplicate {kind} header attribute at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if key == "Description" and not (value.startswith('"') and value.endswith('"')):
+            raise StrictVCFValidationError(
+                f"{kind} Description must be quoted at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if value.startswith('"'):
+            if len(value) < 2 or not value.endswith('"'):
+                raise StrictVCFValidationError(
+                    f"Malformed quoted {kind} header attribute at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
+            value = value[1:-1]
+        elif '"' in value:
+            raise StrictVCFValidationError(
+                f"Malformed quoted {kind} header attribute at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        parsed[key] = value
+
+    required = {"ID", "Number", "Type", "Description"}
+    if not required.issubset(parsed):
+        raise StrictVCFValidationError(
+            f"{kind} header definition lacks required attributes at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    identifier = parsed["ID"]
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", identifier):
+        raise StrictVCFValidationError(
+            f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    number = parsed["Number"]
+    if number not in {"A", "R", "G", "."} and not re.fullmatch(r"[0-9]+", number):
+        raise StrictVCFValidationError(
+            f"Invalid {kind} field Number at line {line_no}: {number!r}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    if parsed["Type"] not in {"Integer", "Float", "Flag", "Character", "String"}:
+        raise StrictVCFValidationError(
+            f"Invalid {kind} field Type at line {line_no}: {parsed['Type']!r}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    if (parsed["Type"] == "Flag") != (number == "0") or (kind == "FORMAT" and parsed["Type"] == "Flag"):
+        raise StrictVCFValidationError(
+            f"{kind} Flag fields require Number=0 and INFO scope at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    return identifier, {"Number": number, "Type": parsed["Type"]}
+
+
+def _expected_cardinality(number: str, alternate_count: int, ploidy: int | None) -> int | None:
+    if number == ".":
+        return None
+    if number == "A":
+        return alternate_count
+    if number == "R":
+        return alternate_count + 1
+    if number == "G":
+        if ploidy is None:
+            return None
+        # Number=G contains one value for each unordered genotype with
+        # replacement from REF plus all ALT alleles.
+        return comb(alternate_count + ploidy, ploidy)
+    return int(number)
+
+
+def _validate_declared_value(
+    *,
+    kind: str,
+    key: str,
+    value: str | None,
+    definition: dict[str, str],
+    alternate_count: int,
+    line_no: int,
+    ploidy: int | None = None,
+) -> None:
+    number = definition["Number"]
+    field_type = definition["Type"]
+    if field_type == "Flag":
+        if value is not None:
+            raise StrictVCFValidationError(
+                f"{kind}/{key} is a Flag and must not have a value at line {line_no}",
+                code="VCF_FIELD_CARDINALITY_INVALID",
+            )
+        return
+    if value is None:
+        raise StrictVCFValidationError(
+            f"{kind}/{key} requires a value at line {line_no}",
+            code="VCF_FIELD_CARDINALITY_INVALID",
+        )
+    if value == ".":
+        return
+    expected = _expected_cardinality(number, alternate_count, ploidy)
+    if expected is None:
+        return
+    observed = value.split(",")
+    if any(item == "" for item in observed) or len(observed) != expected:
+        raise StrictVCFValidationError(
+            f"{kind}/{key} has {len(observed)} values but Number={number} requires {expected} at line {line_no}",
+            code="VCF_FIELD_CARDINALITY_INVALID",
+        )
+    for item in observed:
+        if item == ".":
+            continue
+        valid = True
+        if field_type == "Integer":
+            if not re.fullmatch(r"[+-]?[0-9]+", item):
+                valid = False
+            else:
+                integer_value = int(item)
+                valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
+        elif field_type == "Float":
+            valid = bool(
+                re.fullmatch(
+                    r"[-+]?(?:[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)",
+                    item,
+                    flags=re.IGNORECASE,
+                )
+            )
+        elif field_type == "Character":
+            valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
+        if not valid:
+            raise StrictVCFValidationError(
+                f"{kind}/{key} value {item!r} does not conform to declared Type={field_type} at line {line_no}",
+                code="VCF_FIELD_TYPE_INVALID",
+            )
 
 
 def _validate_structural_alt(alt: str, *, alt_index: int, alts: list[str], info: dict[str, str | None], pos: int, line_no: int) -> None:
@@ -213,7 +396,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     symbolic = 0
     breakends = 0
     gvcf_markers = 0
+    unchecked_info_number_g_fields: set[str] = set()
     singleton_headers: set[str] = set()
+    info_definitions: dict[str, dict[str, str]] = {}
+    format_definitions: dict[str, dict[str, str]] = {}
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
     spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
     breakend_records_by_id: dict[str, dict] = {}
@@ -239,6 +425,22 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     if fileformat is not None:
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
                     fileformat = line.split("=", 1)[1]
+                if line.startswith("##INFO="):
+                    identifier, definition = _parse_field_definition(line, "INFO", line_no)
+                    if identifier in info_definitions:
+                        raise StrictVCFValidationError(
+                            f"Duplicate INFO definition for {identifier!r} at line {line_no}",
+                            code="VCF_HEADER_DEFINITION_INVALID",
+                        )
+                    info_definitions[identifier] = definition
+                elif line.startswith("##FORMAT="):
+                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no)
+                    if identifier in format_definitions:
+                        raise StrictVCFValidationError(
+                            f"Duplicate FORMAT definition for {identifier!r} at line {line_no}",
+                            code="VCF_HEADER_DEFINITION_INVALID",
+                        )
+                    format_definitions[identifier] = definition
                 if line.startswith("##ALT=<ID=NON_REF"):
                     gvcf_markers += 1
                 continue
@@ -286,6 +488,21 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
             info_values = _info_values(fields[7])
+            for key, value in info_values.items():
+                definition = info_definitions.get(key)
+                if definition is not None:
+                    # INFO/Number=G has no single sample ploidy to use when a
+                    # record carries multiple samples; leave it unresolved here.
+                    if definition["Number"] == "G" and value not in {None, "."}:
+                        unchecked_info_number_g_fields.add(key)
+                    _validate_declared_value(
+                        kind="INFO",
+                        key=key,
+                        value=value,
+                        definition=definition,
+                        alternate_count=len(alts),
+                        line_no=line_no,
+                    )
             breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
             if breakend_alts:
                 if info_values.get("SVTYPE") != "BND":
@@ -340,6 +557,26 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
+            for sample_index, sample in enumerate(fields[9:], start=1):
+                sample_values = sample.split(":")
+                if gt_index is None:
+                    genotype_ploidy = 2
+                elif gt_index >= len(sample_values) or sample_values[gt_index] == ".":
+                    genotype_ploidy = None
+                else:
+                    genotype_ploidy = len(re.split(r"[/|]", sample_values[gt_index]))
+                for key, value in zip(format_keys, sample_values):
+                    definition = format_definitions.get(key)
+                    if definition is not None:
+                        _validate_declared_value(
+                            kind=f"FORMAT sample {sample_index}",
+                            key=key,
+                            value=value,
+                            definition=definition,
+                            alternate_count=len(alts),
+                            line_no=line_no,
+                            ploidy=genotype_ploidy,
+                        )
 
             def carriers(alt_index: int) -> set[int] | None:
                 if len(fields) <= 9 or gt_index is None:
@@ -448,6 +685,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "symbolic_records": symbolic,
         "breakend_records": breakends,
         "gvcf_markers": gvcf_markers,
+        "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
     }
