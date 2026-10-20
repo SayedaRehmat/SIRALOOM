@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -28,7 +29,10 @@ def _configured_manifest(tmp_path: Path) -> Path:
     module = _load_runner()
     assets = {}
     for name in module.REQUIRED_ASSETS:
-        asset = tmp_path / f"{name}.dat"
+        if name == "reference_fai":
+            asset = Path(str(assets["reference_fasta"]["path"]) + ".fai")
+        else:
+            asset = tmp_path / f"{name}.dat"
         asset.write_text(f"fixture:{name}\n", encoding="utf-8")
         assets[name] = {"path": str(asset), "sha256": _sha256(asset)}
 
@@ -144,8 +148,11 @@ def test_tool_version_pin_requires_version_command_output_match():
     module = _load_runner()
 
     module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "Hap.py v0.3.15\n"})
+    module.verify_version_pin("bcftools", "1.19", {"exit_code": 0, "output": "bcftools 1.19\nUsing htslib 1.19\n"})
     with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
         module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "usage: hap.py"})
+    with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
+        module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "Hap.py v0.3.150"})
     with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
         module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 2, "output": "Hap.py v0.3.15"})
 
@@ -241,3 +248,87 @@ def test_happy_summary_rejects_nonfinite_or_out_of_range_metrics(tmp_path):
 
     with pytest.raises(RuntimeError, match="must be finite and between 0 and 1"):
         module.parse_happy_summary(summary)
+
+
+def test_manifest_requires_the_fasta_index_used_by_bcftools(tmp_path):
+    module = _load_runner()
+    path = _configured_manifest(tmp_path)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    other_index = tmp_path / "other.fai"
+    other_index.write_text("index\n", encoding="utf-8")
+    manifest["assets"]["reference_fai"] = {"path": str(other_index), "sha256": _sha256(other_index)}
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(module.BenchmarkConfigurationError, match="adjacent FASTA index"):
+        module.load_and_verify_manifest(path)
+
+
+@pytest.mark.skipif(shutil.which("bcftools") is None, reason="pinned bcftools required for derivation integration")
+def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
+    from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
+
+    module = _load_runner()
+    reference = tmp_path / "ref.fa"
+    reference.write_text(">1\nCAAAAAC\n", encoding="utf-8")
+    (tmp_path / "ref.fa.fai").write_text("1\t7\t3\t7\t8\n", encoding="utf-8")
+    source = tmp_path / "input.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n##contig=<ID=1,length=7>\n"
+        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+        '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t1\t.\tC\t<NON_REF>\t.\tPASS\tEND=3\tGT\t0/0\n"
+        "1\t2\trsMix\tA\tG,<NON_REF>\t50\tPASS\t.\tGT\t0/1\n"
+        "1\t4\t.\tAA\tA\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t5\t.\tA\t<DEL>\t.\tPASS\tEND=6\tGT\t0/1\n"
+        "1\t6\t.\tA\tA]1:7]\t.\tPASS\tSVTYPE=BND\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    production_routing = route_vcf_records(source, tmp_path / "production-routed")
+    assert production_routing["sequence_records"] == 2
+    assert production_routing["gvcf_reference_blocks"] == 1
+    assert production_routing["structural_variant_records"] == 2
+    normalized = tmp_path / "normalized.vcf.gz"
+    normalize_vcf_with_bcftools(
+        production_routing["sequence_path"], normalized, reference_fasta=reference,
+        expected_bcftools_version="1.19",
+    )
+
+    lineage = module.verify_normalization_derivation(
+        input_vcf=source,
+        normalized_vcf=normalized,
+        reference_fasta=reference,
+        bcftools=shutil.which("bcftools"),
+        expected_version="1.19",
+    )
+
+    assert lineage["status"] == "REPRODUCED_RECORDS_MATCH"
+    assert lineage["record_count"] == 2
+    assert len(lineage["ordered_record_sha256"]) == 64
+    assert lineage["input_routing"] == {
+        "routing_version": "1",
+        "records_total": 5,
+        "sequence_records": 2,
+        "gvcf_reference_blocks": 1,
+        "gvcf_unresolved_variant_records": 0,
+        "structural_variant_records": 2,
+        "spanning_deletion_records": 0,
+        "policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
+    }
+
+    tampered = tmp_path / "unrelated.vcf"
+    tampered.write_text(
+        "##fileformat=VCFv4.3\n##contig=<ID=1,length=7>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(module.BenchmarkConfigurationError, match="do not match the pinned BCFtools"):
+        module.verify_normalization_derivation(
+            input_vcf=source,
+            normalized_vcf=tampered,
+            reference_fasta=reference,
+            bcftools=shutil.which("bcftools"),
+            expected_version="1.19",
+        )

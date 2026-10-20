@@ -9,11 +9,14 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -24,6 +27,7 @@ REQUIRED_ASSETS = (
     "truth_vcf",
     "confident_regions_bed",
     "reference_fasta",
+    "reference_fai",
     "input_vcf",
     "siraloom_normalized_vcf",
 )
@@ -35,11 +39,85 @@ class BenchmarkConfigurationError(ValueError):
 
 def verify_version_pin(tool: str, expected: str, version_result: dict[str, Any]) -> None:
     output = str(version_result.get("output") or "")
-    if version_result.get("exit_code") != 0 or expected not in output:
+    version_pattern = r"^bcftools\s+(\S+)" if tool == "bcftools" else r"^Hap\.py\s+v?(\S+)"
+    observed = next(
+        (match.group(1) for line in output.splitlines() if (match := re.match(version_pattern, line.strip(), re.IGNORECASE))),
+        None,
+    )
+    if version_result.get("exit_code") != 0 or observed != expected:
         raise BenchmarkConfigurationError(
             f"{tool} version could not be confirmed against manifest pin {expected!r}; "
-            f"version command output was: {output[:1000]!r}"
+            f"observed version was {observed!r}; version command output was: {output[:1000]!r}"
         )
+
+
+def hash_vcf_records(path: Path) -> tuple[int, str]:
+    """Hash VCF record lines in order, excluding headers and compression bytes."""
+    opener = gzip.open if path.suffix.lower() in {".gz", ".bgz"} else open
+    digest = hashlib.sha256()
+    count = 0
+    with opener(path, "rt", encoding="utf-8", newline="") as handle:
+        for line in handle:
+            if line.startswith("#"):
+                continue
+            digest.update(line.encode("utf-8"))
+            count += 1
+    return count, digest.hexdigest()
+
+
+def verify_normalization_derivation(
+    *, input_vcf: Path, normalized_vcf: Path, reference_fasta: Path,
+    bcftools: str, expected_version: str,
+) -> dict[str, Any]:
+    """Reproduce production routing and BCFtools sequence normalization, then compare records."""
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    version = run_command([bcftools, "--version"])
+    verify_version_pin("bcftools", expected_version, version)
+    with tempfile.TemporaryDirectory(prefix="siraloom-giab-normalization-") as temporary:
+        work = Path(temporary)
+        routing = route_vcf_records(input_vcf, work / "routed")
+        if not routing["sequence_path"]:
+            raise BenchmarkConfigurationError(
+                "Raw input has no supported sequence-variant records for the configured benchmark."
+            )
+        prepared = work / "prepared.vcf.gz"
+        normalized = work / "normalized.vcf.gz"
+        sorted_vcf = work / "sorted.vcf.gz"
+        commands = [
+            [bcftools, "view", "-A", "-Oz", "-o", str(prepared), routing["sequence_path"]],
+            [bcftools, "norm", "-f", str(reference_fasta), "-c", "e", "-m", "-any", "-Oz", "-o", str(normalized), str(prepared)],
+            [bcftools, "sort", "-Oz", "-o", str(sorted_vcf), str(normalized)],
+        ]
+        for command in commands:
+            run_command(command)
+        if not sorted_vcf.is_file() or sorted_vcf.stat().st_size == 0:
+            raise RuntimeError("Pinned BCFtools normalization produced no reproducible VCF.")
+        reproduced_count, reproduced_sha256 = hash_vcf_records(sorted_vcf)
+    observed_count, observed_sha256 = hash_vcf_records(normalized_vcf)
+    if (observed_count, observed_sha256) != (reproduced_count, reproduced_sha256):
+        raise BenchmarkConfigurationError(
+            "Normalized query records do not match the pinned BCFtools transformation of input_vcf "
+            "against the manifest reference."
+        )
+    return {
+        "status": "REPRODUCED_RECORDS_MATCH",
+        "record_count": observed_count,
+        "ordered_record_sha256": observed_sha256,
+        "input_routing": {
+            "routing_version": routing["routing_version"],
+            "records_total": routing["records_total"],
+            "sequence_records": routing["sequence_records"],
+            "gvcf_reference_blocks": routing["gvcf_reference_blocks"],
+            "gvcf_unresolved_variant_records": routing["gvcf_unresolved_variant_records"],
+            "structural_variant_records": routing["structural_variant_records"],
+            "spanning_deletion_records": routing["spanning_deletion_records"],
+            "policy": routing["gvcf_wildcard_policy"],
+        },
+        "bcftools_version": version["output"],
+        "commands": commands,
+        "comparison_scope": "Production-routed sequence VCF data-record lines only; headers/compression bytes are excluded",
+    }
 
 
 def parse_happy_summary(path: Path) -> dict[str, Any]:
@@ -156,6 +234,10 @@ def load_and_verify_manifest(path: Path) -> tuple[dict[str, Any], dict[str, Path
             )
         paths[name] = asset_path
         observed_hashes[name] = observed
+    if paths["reference_fai"] != Path(str(paths["reference_fasta"]) + ".fai"):
+        raise BenchmarkConfigurationError(
+            "reference_fai must be the adjacent FASTA index at <reference_fasta>.fai used by BCFtools."
+        )
     return manifest, paths, observed_hashes
 
 
@@ -207,6 +289,14 @@ def main() -> int:
         expected_hap_py = (manifest.get("toolchain") or {}).get("hap_py_version")
         verify_version_pin("hap.py", expected_hap_py, hap_py_version)
 
+        normalization_lineage = verify_normalization_derivation(
+            input_vcf=assets["input_vcf"],
+            normalized_vcf=assets["siraloom_normalized_vcf"],
+            reference_fasta=assets["reference_fasta"],
+            bcftools=bcftools,
+            expected_version=expected_bcftools,
+        )
+
         comparison = run_command([
             hap_py,
             str(assets["truth_vcf"]),
@@ -230,6 +320,7 @@ def main() -> int:
             "manifest_path": str(manifest_path),
             "manifest_sha256": sha256_file(manifest_path),
             "asset_sha256": hashes,
+            "normalization_lineage": normalization_lineage,
             "toolchain": {
                 "bcftools_executable": bcftools,
                 "bcftools_version_output": bcftools_version["output"],

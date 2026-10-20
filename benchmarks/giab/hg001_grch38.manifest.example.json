@@ -13,6 +13,7 @@
     "truth_vcf": { "path": null, "sha256": null },
     "confident_regions_bed": { "path": null, "sha256": null },
     "reference_fasta": { "path": null, "sha256": null },
+    "reference_fai": { "path": null, "sha256": null },
     "input_vcf": { "path": null, "sha256": null },
     "siraloom_normalized_vcf": { "path": null, "sha256": null }
   },
@@ -27,7 +28,8 @@
     "criteria": null
   },
   "notes": [
-    "Replace all nulls with exact paths, SHA-256 hashes, and verified tool versions.",
+    "Replace all nulls with exact paths and SHA-256 hashes for the truth VCF, confident BED, FASTA, adjacent FASTA .fai, raw input VCF, and normalized VCF; record verified bcftools/hap.py versions.",
+    "The runner reproduces the production bcftools view -A, norm, and sort record transformation from input_vcf and requires ordered normalized record lines to match.",
     "Record upstream README/license/usage terms for the exact selected assets.",
     "Do not change status to CONFIGURED until every required asset hash and the acceptance policy are approved.",
     "A completed comparison is not a clinical validation or automatic PASS."
