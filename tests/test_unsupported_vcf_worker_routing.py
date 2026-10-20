@@ -155,8 +155,16 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
             assert routed.metadata_json["source_artifact_id"] == str(source_row.id)
             assert routed.metadata_json["source_sha256"] == source_sha256
             assert routed.metadata_json["record_count"] == normalization.metadata_json["routing"][count_key]
+            assert routed.metadata_json["interpretation_status"] == "NOT_ANALYZED"
             assert store.exists(source_row.storage_uri)
             assert store.exists(routed.storage_uri)
+            routed_bytes = store.read_bytes(routed.storage_uri)
+            assert sha256(routed_bytes).hexdigest() == routed.sha256
+            routed_records = [line for line in routed_bytes.decode("utf-8").splitlines() if line and not line.startswith("#")]
+            source_records = [line for line in vcf.splitlines() if line and not line.startswith("#")]
+            assert routed_records == source_records
+            assert source_row.sha256 == source_sha256
+            assert sha256(store.read_bytes(source_row.storage_uri)).hexdigest() == source_sha256
             assert event.payload["routing"][count_key] > 0
             assert event.output_artifacts[0]["artifact_id"] == str(routed.id)
             assert db.scalar(select(Artifact).where(
