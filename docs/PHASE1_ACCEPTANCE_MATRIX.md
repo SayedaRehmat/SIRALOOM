@@ -162,7 +162,7 @@ At this checkpoint these changes are committed locally on `main` as `baff5ff`, b
 |---|---|---|
 | Case write/review grants agree with the current member role | PASS (local automated scope) | Assignment API rejects incompatible capabilities; case creator's review grant is role-aware. Focused case access/create/mutation suite: 15 passed; broad backend suite: 1,050 passed, 40 skipped. Deployed identity and tenant tests remain NOT RUN. |
 
-Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. Current code SHA and remote status are recorded after push.
+Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. The role/grant fix is committed locally as `884e334e42de53a99d5770b16ae3b785a7b08538` on top of remote `24eda6e`; push remains pending.
 
 ## 2026-10-19 ACMG engine status gate (local checkpoint)
 
