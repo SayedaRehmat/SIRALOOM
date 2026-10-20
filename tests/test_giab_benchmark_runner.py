@@ -91,6 +91,8 @@ def test_giab_runner_rejects_asset_hash_drift(tmp_path):
             "sample_id": "HG001",
             "release": "NISTv4.2.1",
             "reference_build": "GRCh38",
+            "truth_sample_name": "HG001",
+            "query_sample_name": "SAMPLE",
         },
         "assets": {
             name: {"path": str(asset), "sha256": "0" * 64}
@@ -188,6 +190,59 @@ def test_benchmark_sample_columns_must_be_explicit(tmp_path, sample_field):
 
     with pytest.raises(module.BenchmarkConfigurationError, match=sample_field):
         module.load_and_verify_manifest(path)
+
+
+def test_sample_selection_publishes_verified_output_atomically(tmp_path, monkeypatch):
+    module = _load_runner()
+    source = tmp_path / "input.vcf"
+    source.write_text("input\n", encoding="utf-8")
+    destination = tmp_path / "selected.vcf"
+    destination.write_text("previous verified artifact\n", encoding="utf-8")
+
+    def fake_run(command, *, help_mode=False):
+        if command[1:3] == ["query", "-l"] and command[-1] == str(source):
+            return {"command": command, "exit_code": 0, "output": "S1\nS2\n"}
+        if command[1] == "view":
+            Path(command[command.index("-o") + 1]).write_text("selected S2\n", encoding="utf-8")
+            return {"command": command, "exit_code": 0, "output": ""}
+        if command[1:3] == ["query", "-l"]:
+            return {"command": command, "exit_code": 0, "output": "S2\n"}
+        raise AssertionError(f"unexpected command: {command}")
+
+    monkeypatch.setattr(module, "run_command", fake_run)
+    selected = module.select_benchmark_sample(
+        vcf=source, sample_name="S2", bcftools="bcftools", output_path=destination
+    )
+
+    assert destination.read_text(encoding="utf-8") == "selected S2\n"
+    assert selected["selected_vcf_sha256"] == _sha256(destination)
+    assert selected["publication"] == "validated_staged_file_atomically_replaced_destination"
+
+
+def test_sample_selection_failure_preserves_previous_output(tmp_path, monkeypatch):
+    module = _load_runner()
+    source = tmp_path / "input.vcf"
+    source.write_text("input\n", encoding="utf-8")
+    destination = tmp_path / "selected.vcf"
+    destination.write_text("preserve me\n", encoding="utf-8")
+
+    def fake_run(command, *, help_mode=False):
+        if command[1:3] == ["query", "-l"] and command[-1] == str(source):
+            return {"command": command, "exit_code": 0, "output": "S1\nS2\n"}
+        if command[1] == "view":
+            Path(command[command.index("-o") + 1]).write_text("partial output\n", encoding="utf-8")
+            return {"command": command, "exit_code": 0, "output": ""}
+        if command[1:3] == ["query", "-l"]:
+            return {"command": command, "exit_code": 0, "output": "S1\nS2\n"}
+        raise AssertionError(f"unexpected command: {command}")
+
+    monkeypatch.setattr(module, "run_command", fake_run)
+    with pytest.raises(RuntimeError, match="expected only 'S2'"):
+        module.select_benchmark_sample(
+            vcf=source, sample_name="S2", bcftools="bcftools", output_path=destination
+        )
+
+    assert destination.read_text(encoding="utf-8") == "preserve me\n"
 
 
 def test_happy_summary_reports_observed_snp_and_indel_metrics(tmp_path):

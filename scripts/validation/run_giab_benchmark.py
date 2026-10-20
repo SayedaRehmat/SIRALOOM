@@ -12,6 +12,7 @@ import csv
 import gzip
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -132,20 +133,26 @@ def select_benchmark_sample(
             f"available sample columns: {sample_names}"
         )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    command = [bcftools, "view", "-s", sample_name, "-Ov", "-o", str(output_path), str(vcf)]
-    selection = run_command(command)
-    verified = run_command([bcftools, "query", "-l", str(output_path)])
-    selected_names = [line.strip() for line in verified["output"].splitlines() if line.strip()]
-    if selected_names != [sample_name]:
-        raise RuntimeError(
-            f"bcftools sample selection produced columns {selected_names}, expected only {sample_name!r}."
-        )
+    with tempfile.TemporaryDirectory(prefix=f".{output_path.name}.", dir=output_path.parent) as temporary:
+        staged_path = Path(temporary) / output_path.name
+        command = [bcftools, "view", "-s", sample_name, "-Ov", "-o", str(staged_path), str(vcf)]
+        selection = run_command(command)
+        verified = run_command([bcftools, "query", "-l", str(staged_path)])
+        selected_names = [line.strip() for line in verified["output"].splitlines() if line.strip()]
+        if selected_names != [sample_name]:
+            raise RuntimeError(
+                f"bcftools sample selection produced columns {selected_names}, expected only {sample_name!r}."
+            )
+        if not staged_path.is_file() or staged_path.stat().st_size == 0:
+            raise RuntimeError("bcftools sample selection produced no VCF artifact.")
+        os.replace(staged_path, output_path)
     return {
         "sample_name": sample_name,
         "available_samples": sample_names,
         "selected_vcf": str(output_path),
         "selected_vcf_sha256": sha256_file(output_path),
         "commands": [available["command"], selection["command"], verified["command"]],
+        "publication": "validated_staged_file_atomically_replaced_destination",
     }
 
 
