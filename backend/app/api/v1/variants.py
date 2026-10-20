@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,7 +15,6 @@ from backend.app.infrastructure.db.models import (
     Classification,
     Evidence,
     PopulationObservation,
-    Variant,
 )
 from backend.app.infrastructure.db.session import get_db
 
@@ -23,8 +23,8 @@ router = APIRouter(tags=["variants"])
 @router.get("/variants/{variant_id}")
 def get_variant(
     variant_id: UUID,
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
+    db: Annotated[Session, Depends(get_db)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
     analysis_id: UUID | None = None,
 ):
     analysis_query = (
