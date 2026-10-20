@@ -1,4 +1,5 @@
 from pathlib import Path
+import gzip
 
 import pytest
 
@@ -54,6 +55,43 @@ def test_strict_validation_rejects_missing_fileformat(tmp_path: Path):
     )
     with pytest.raises(StrictVCFValidationError, match="fileformat"):
         validate_vcf_strict(path)
+
+
+@pytest.mark.parametrize("prefix", ["##source=test\n", "\n", "#comment\n"])
+def test_strict_validation_requires_fileformat_on_first_line(tmp_path: Path, prefix: str):
+    path = tmp_path / "misplaced-fileformat.vcf"
+    path.write_text(
+        prefix
+        + "##fileformat=VCFv4.3\n"
+        + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FILEFORMAT_POSITION_INVALID"
+
+
+@pytest.mark.parametrize("compressed", [False, True])
+def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
+    path = tmp_path / ("bom.vcf.gz" if compressed else "bom.vcf")
+    content = (
+        "\ufeff##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n"
+    )
+    if compressed:
+        with gzip.open(path, "wt", encoding="utf-8") as stream:
+            stream.write(content)
+    else:
+        path.write_text(content, encoding="utf-8")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BOM_FORBIDDEN"
 
 
 def test_strict_validation_rejects_contig_mismatch(tmp_path: Path):

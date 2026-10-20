@@ -23,7 +23,7 @@ Milestone 3 connects the secured SIRALOOM tenant/application foundation to the f
 
 ## Validation policy
 
-The ingestion validator requires the VCF `##fileformat` header and the standard eight required columns. It validates actual records and rejects malformed compressed input. Recognized GRCh37/GRCh38 declarations in `##reference` and `##contig` `assembly` tags are recorded as detected context; contradictory recognized declarations invalidate the upload. These optional VCF header fields do not prove assembly identity, so SIRALOOM does not silently select the analysis build: the user must explicitly select GRCh37 or GRCh38, and a conflicting detected build invalidates the upload. The selected analysis reference package is checked separately against its declared identity, integrity hashes, contigs and every record's REF allele before normalization.
+The ingestion validator requires `##fileformat` as the first VCF line and rejects UTF-8 BOMs, missing required columns, malformed records and malformed compressed input. Recognized GRCh37/GRCh38 declarations in `##reference` and `##contig` `assembly` tags are recorded as detected context; contradictory recognized declarations invalidate the upload. These optional VCF header fields do not prove assembly identity, so SIRALOOM does not silently select the analysis build: the user must explicitly select GRCh37 or GRCh38, and a conflicting detected build invalidates the upload. The selected analysis reference package is checked separately against its declared identity, integrity hashes, contigs and every record's REF allele before normalization.
 
 ## Storage architecture
 

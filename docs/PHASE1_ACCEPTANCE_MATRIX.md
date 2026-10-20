@@ -191,3 +191,11 @@ Phase A remains PARTIAL; live Firebase/browser journeys, deployed two-lab API/ar
 | Contradictory recognized VCF assembly declarations fail intake | PASS (local automated scope) | Ingestion checks `##reference` and `##contig` assembly tags, rejects conflicts, and preserves explicit user build selection. Focused tests: 47 passed; full backend excluding Windows-native PDF renderer: 1,011 passed, 40 skipped. Header metadata is self-reported and optional; actual reference identity still depends on the selected, integrity-checked package and REF validation. |
 
 Source: [HTS VCF v4.5 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex), read 2026-10-20; reference/contig metadata is recommended but optional, and metadata lines may occur in any order. Implementation commit `92057a89511bb770e74a09de54af8fe689f412ed` is pushed to `main`; exact-SHA CI is unverified. Phase A remains PARTIAL.
+
+## 2026-10-20 VCF header framing conformance
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| VCFv4.2/v4.3 fileformat header is first; UTF-8 BOM is rejected | PASS (local automated scope) | Strict validator and shared record parser reject misplaced fileformat and BOM for plain/gzip files. Focused VCF suite: 58 passed, 5 skipped; full backend suite excluding Windows-native PDF renderer: 1,017 passed, 40 skipped. Exact-SHA CI and BCFtools executable cases remain unverified locally. |
+
+Sources: official [HTS VCF v4.2](https://github.com/samtools/hts-specs/blob/master/VCFv4.2.tex) and [v4.3](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex) specifications, read 2026-10-20. The fileformat line must be first; v4.3 forbids a BOM. Phase A remains PARTIAL.

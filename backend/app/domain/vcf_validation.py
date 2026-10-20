@@ -22,7 +22,7 @@ class StrictVCFValidationError(ValueError):
 
 def _open(path: str | Path):
     p = Path(path)
-    return gzip.open(p, "rt", encoding="utf-8-sig") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8-sig")
+    return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
 
 
 def _validate_info(value: str, line_no: int) -> None:
@@ -222,6 +222,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
             line = raw.rstrip("\n\r")
+            if line_no == 1 and line.startswith("\ufeff"):
+                raise StrictVCFValidationError(
+                    "VCF files must not contain a UTF-8 byte-order mark",
+                    code="VCF_BOM_FORBIDDEN",
+                )
+            if line_no == 1 and not line.startswith("##fileformat="):
+                raise StrictVCFValidationError(
+                    "The ##fileformat line must be the first line in a VCF file",
+                    code="VCF_FILEFORMAT_POSITION_INVALID",
+                )
             if not line:
                 continue
             if line.startswith("##"):

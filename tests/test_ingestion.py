@@ -2,6 +2,7 @@ from pathlib import Path
 import gzip
 import pytest
 
+from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.ingestion import classify_filename, validate_index, validate_vcf
 
 VALID_VCF = """##fileformat=VCFv4.3
@@ -87,6 +88,14 @@ def test_vcf_validation_rejects_empty_reference_metadata(tmp_path: Path):
 
     assert result.status == "INVALID"
     assert "reference metadata cannot have an empty value" in result.errors[0]
+
+
+def test_vcf_record_parser_does_not_silently_strip_a_bom(tmp_path: Path):
+    path = tmp_path / "bom-parser.vcf"
+    path.write_bytes(b"\xef\xbb\xbf" + VALID_VCF.encode("utf-8"))
+
+    with pytest.raises(VCFValidationError, match="must not contain a UTF-8 byte-order mark"):
+        list(parse_vcf(str(path)))
 
 
 def test_vcfgz_validation_reads_real_content(tmp_path: Path):

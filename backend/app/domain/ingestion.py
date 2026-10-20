@@ -54,8 +54,8 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
 
     opener = gzip.open if path.name.lower().endswith((".gz", ".bgz")) else open
     try:
-        # utf-8-sig: see the matching comment in domain/vcf.py's open_text -- strips a
-        # leading BOM transparently, no effect on files that don't have one.
+        # This preliminary scan tolerates a BOM only to extract headers consistently;
+        # validate_vcf_strict subsequently rejects BOM-prefixed input per VCF spec.
         with opener(path, "rt", encoding="utf-8-sig") as fh:
             for line in fh:
                 line = line.rstrip("\n")

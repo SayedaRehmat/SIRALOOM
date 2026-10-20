@@ -16,21 +16,19 @@ class VCFValidationError(ValueError):
     pass
 
 def open_text(path: str):
-    # utf-8-sig transparently strips a leading UTF-8 byte-order-mark if one is present
-    # (common in files that have passed through Windows/Excel/some download tools) and
-    # behaves identically to plain utf-8 for files that don't have one -- so this is a
-    # strict improvement, not a behavior change for already-working files. Without this,
-    # a BOM-prefixed file fails validation with a misleading "missing ##fileformat
-    # header" error, because the BOM sits invisibly in front of the first line.
+    # Preserve BOMs so the parser can reject them: the VCF specification forbids a
+    # byte-order mark, and silently stripping it would make malformed input look valid.
     if path.endswith((".gz", ".bgz")):
-        return gzip.open(path, "rt", encoding="utf-8-sig")
-    return open(path, "rt", encoding="utf-8-sig")
+        return gzip.open(path, "rt", encoding="utf-8")
+    return open(path, "rt", encoding="utf-8")
 
 def parse_vcf(path: str) -> Iterator[VCFRecord]:
     found_header = False
     with open_text(path) as fh:
         for line_no, line in enumerate(fh, start=1):
             line = line.rstrip("\n")
+            if line_no == 1 and line.startswith("\ufeff"):
+                raise VCFValidationError("VCF files must not contain a UTF-8 byte-order mark")
             if not line:
                 continue
             if line.startswith("##"):
