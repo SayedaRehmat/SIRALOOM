@@ -1,5 +1,6 @@
 from pathlib import Path
 import gzip
+import pytest
 
 from backend.app.domain.ingestion import classify_filename, validate_index, validate_vcf
 
@@ -26,6 +27,66 @@ def test_vcf_validation_reads_real_content(tmp_path: Path):
     assert result.status == "VALID"
     assert result.record_count == 1
     assert result.detected_build == "GRCh38"
+
+
+@pytest.mark.parametrize(
+    "assembly_headers",
+    [
+        ("##reference=GRCh38", "##reference=GRCh37"),
+        ("##reference=GRCh38", '##contig=<ID=chr1,length=10,assembly="GRCh37">'),
+        ("##reference=file:///references/GRCh38_and_GRCh37.fa",),
+    ],
+)
+def test_vcf_validation_rejects_conflicting_reference_assembly_declarations(
+    tmp_path: Path, assembly_headers: tuple[str, ...],
+):
+    path = tmp_path / "conflicting-reference.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        + "\n".join(assembly_headers)
+        + "\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "chr1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.detected_build is None
+    assert "conflicting reference assembly declarations" in result.errors[0]
+
+
+def test_vcf_validation_accepts_consistent_reference_and_contig_assembly_tags(tmp_path: Path):
+    path = tmp_path / "consistent-reference.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=file:///references/GRCh38.fa\n"
+        '##contig=<ID=chr1,length=10,assembly="GRCh38">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.detected_build == "GRCh38"
+
+
+def test_vcf_validation_rejects_empty_reference_metadata(tmp_path: Path):
+    path = tmp_path / "empty-reference.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference= \n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert "reference metadata cannot have an empty value" in result.errors[0]
 
 
 def test_vcfgz_validation_reads_real_content(tmp_path: Path):

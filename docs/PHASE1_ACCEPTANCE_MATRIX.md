@@ -183,3 +183,11 @@ These changes protect interpretation status handling and reviewer audit attribut
 | Role changes cannot leave latent case write/review grants that reactivate after promotion | PASS (local automated scope) | Membership mutation clears role-incompatible capabilities only for cases in the member's tenant, preserves read access, and audits the aggregate revocation. Regression verifies foreign-tenant grants are untouched and later promotion does not restore permissions. Focused suite: 17 passed; full backend suite excluding Windows-native PDF renderer: 1,006 passed, 40 skipped. PostgreSQL and deployed tenant verification remain NOT RUN. |
 
 Phase A remains PARTIAL; live Firebase/browser journeys, deployed two-lab API/artifact isolation, real-storage reviewer/sign-out recovery, independent scientific benchmark, and deployment/restore remain unverified.
+
+## 2026-10-20 VCF reference-declaration consistency
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Contradictory recognized VCF assembly declarations fail intake | PASS (local automated scope) | Ingestion checks `##reference` and `##contig` assembly tags, rejects conflicts, and preserves explicit user build selection. Focused tests: 47 passed; full backend excluding Windows-native PDF renderer: 1,011 passed, 40 skipped. Header metadata is self-reported and optional; actual reference identity still depends on the selected, integrity-checked package and REF validation. |
+
+Source: [HTS VCF v4.5 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex), read 2026-10-20; reference/contig metadata is recommended but optional, and metadata lines may occur in any order. Phase A remains PARTIAL.

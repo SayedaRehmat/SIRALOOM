@@ -13,6 +13,11 @@ from backend.app.domain.vcf_validation import StrictVCFValidationError, validate
 PRIMARY_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
 INDEX_SUFFIXES = (".tbi", ".csi")
 SUPPORTED_BUILDS = {"GRCh37", "GRCh38"}
+_BUILD_MARKERS = (
+    (re.compile(r"(?<![A-Za-z0-9])(?:GRCh38|hg38)(?![A-Za-z0-9])", re.IGNORECASE), "GRCh38"),
+    (re.compile(r"(?<![A-Za-z0-9])(?:GRCh37|hg19)(?![A-Za-z0-9])", re.IGNORECASE), "GRCh37"),
+)
+_CONTIG_ASSEMBLY = re.compile(r'(?:^|,)assembly=(?:"([^"]*)"|([^,>]*))')
 
 
 @dataclass(frozen=True)
@@ -39,8 +44,14 @@ def classify_filename(filename: str) -> str:
 
 def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
     headers: list[str] = []
-    detected_build = None
+    declared_builds: set[str] = set()
     has_fileformat = False
+
+    def record_assembly(value: str) -> None:
+        for marker, build in _BUILD_MARKERS:
+            if marker.search(value):
+                declared_builds.add(build)
+
     opener = gzip.open if path.name.lower().endswith((".gz", ".bgz")) else open
     try:
         # utf-8-sig: see the matching comment in domain/vcf.py's open_text -- strips a
@@ -52,17 +63,27 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
                     has_fileformat = True
                 elif line.startswith("##reference="):
                     value = line.split("=", 1)[1].strip()
-                    if value in SUPPORTED_BUILDS:
-                        detected_build = value
-                    elif "GRCh38" in value or "hg38" in value:
-                        detected_build = "GRCh38"
-                    elif "GRCh37" in value or "hg19" in value:
-                        detected_build = "GRCh37"
+                    if not value:
+                        raise VCFValidationError("VCF reference metadata cannot have an empty value")
+                    record_assembly(value)
+                elif line.startswith("##contig=<"):
+                    contig_metadata = line[len("##contig=<"):]
+                    if contig_metadata.endswith(">"):
+                        contig_metadata = contig_metadata[:-1]
+                    assembly = _CONTIG_ASSEMBLY.search(contig_metadata)
+                    if assembly:
+                        record_assembly((assembly.group(1) or assembly.group(2) or "").strip())
                 elif line.startswith("#CHROM"):
                     headers = line.split("\t")
                     break
     except (OSError, UnicodeDecodeError) as exc:
         raise VCFValidationError(f"Unable to read VCF text: {exc}") from exc
+    if len(declared_builds) > 1:
+        raise VCFValidationError(
+            "VCF header contains conflicting reference assembly declarations: "
+            + ", ".join(sorted(declared_builds))
+        )
+    detected_build = next(iter(declared_builds), None)
     return headers, detected_build, has_fileformat
 
 
