@@ -12,6 +12,8 @@ from backend.app.config import settings
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     AuditEvent,
+    Case,
+    CaseAccessGrant,
     Organization,
     OrganizationMembership,
     User,
@@ -142,5 +144,93 @@ def test_self_onboarding_audits_organization_and_owner_provisioning(monkeypatch)
         assert event.after_state["owner_role"] == "organization_admin"
         assert event.actor_id == event.after_state["owner_user_id"]
         assert db.get(Organization, UUID(result["organization_id"])) is not None
+
+    engine.dispose()
+
+
+def test_role_demotion_clears_incompatible_case_grants_and_promotion_does_not_restore_them():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    organization_id, other_organization_id = uuid4(), uuid4()
+    admin_id, member_id = uuid4(), uuid4()
+    membership_id = uuid4()
+    case_id, other_case_id = uuid4(), uuid4()
+    with Session(engine) as db:
+        db.add_all([
+            Organization(id=organization_id, name="Assigned Lab", external_identifier=None),
+            Organization(id=other_organization_id, name="Other Lab", external_identifier=None),
+            User(
+                id=admin_id, organization_id=organization_id,
+                external_subject="admin-subject", email="admin@example.test",
+                display_name="Administrator", role="organization_admin", status="ACTIVE",
+            ),
+            User(
+                id=member_id, organization_id=organization_id,
+                external_subject="reviewer-subject", email="reviewer@example.test",
+                display_name="Reviewer", role="reviewer", status="ACTIVE",
+            ),
+            OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=admin_id,
+                role="organization_admin", status="ACTIVE",
+            ),
+            OrganizationMembership(
+                id=membership_id, organization_id=organization_id, user_id=member_id,
+                role="reviewer", status="ACTIVE",
+            ),
+            Case(
+                id=case_id, organization_id=organization_id, case_identifier="CASE-1",
+                status="DRAFT", clinical_context={}, language="en", created_by=admin_id,
+            ),
+            Case(
+                id=other_case_id, organization_id=other_organization_id,
+                case_identifier="CASE-2", status="DRAFT", clinical_context={},
+                language="en", created_by=member_id,
+            ),
+            CaseAccessGrant(
+                id=uuid4(), case_id=case_id, user_id=member_id, granted_by=admin_id,
+                can_read=True, can_write=True, can_review=True,
+            ),
+            CaseAccessGrant(
+                id=uuid4(), case_id=other_case_id, user_id=member_id, granted_by=member_id,
+                can_read=True, can_write=True, can_review=True,
+            ),
+        ])
+        db.commit()
+        admin = Principal(
+            user_id=admin_id, organization_id=organization_id,
+            role="organization_admin", subject="admin-subject",
+        )
+
+        auth_api.update_organization_membership(
+            membership_id=str(membership_id),
+            payload=auth_api.MembershipUpdate(role="read_only"),
+            principal=admin,
+            db=db,
+        )
+
+        local_grant = db.scalar(select(CaseAccessGrant).where(CaseAccessGrant.case_id == case_id))
+        foreign_grant = db.scalar(select(CaseAccessGrant).where(CaseAccessGrant.case_id == other_case_id))
+        assert (local_grant.can_read, local_grant.can_write, local_grant.can_review) == (True, False, False)
+        assert (foreign_grant.can_read, foreign_grant.can_write, foreign_grant.can_review) == (True, True, True)
+        revocation = db.scalar(select(AuditEvent).where(
+            AuditEvent.event_type == "CASE_ACCESS_CAPABILITIES_REVOKED_ROLE_CHANGE",
+        ))
+        assert revocation is not None
+        assert revocation.actor_id == str(admin_id)
+        assert revocation.subject_id == str(member_id)
+        assert revocation.after_state == {
+            "role": "read_only",
+            "capabilities_revoked": ["can_review", "can_write"],
+            "grant_rows_updated": 1,
+        }
+
+        auth_api.update_organization_membership(
+            membership_id=str(membership_id),
+            payload=auth_api.MembershipUpdate(role="reviewer"),
+            principal=admin,
+            db=db,
+        )
+        db.refresh(local_grant)
+        assert (local_grant.can_read, local_grant.can_write, local_grant.can_review) == (True, False, False)
 
     engine.dispose()

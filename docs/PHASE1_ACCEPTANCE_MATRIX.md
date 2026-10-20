@@ -175,3 +175,11 @@ Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, rea
 | ACMG automatic assessment and its audit event persist atomically | PASS (automated scope) | Production-route SQLite failure injection verifies assessment and classification rows are rolled back if audit persistence fails. Focused ACMG and authorization suite: 60 passed. Exact-SHA CI run [#39247884133](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39247884133) passed backend, PostgreSQL integration, and frontend for `eaab71d`. Local full backend suite: 1,020 passed, 39 skipped, and one unrelated Windows WeasyPrint native-library failure (`libgobject-2.0-0`). |
 
 These changes protect interpretation status handling and reviewer audit attribution; they do not prove evidence assignment or clinical validity. Phase A remains PARTIAL and the laboratory deployment release gate remains BLOCKED.
+
+## 2026-10-20 role-demotion capability revocation
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Role changes cannot leave latent case write/review grants that reactivate after promotion | PASS (local automated scope) | Membership mutation clears role-incompatible capabilities only for cases in the member's tenant, preserves read access, and audits the aggregate revocation. Regression verifies foreign-tenant grants are untouched and later promotion does not restore permissions. Focused suite: 17 passed; full backend suite excluding Windows-native PDF renderer: 1,006 passed, 40 skipped. PostgreSQL and deployed tenant verification remain NOT RUN. |
+
+Phase A remains PARTIAL; live Firebase/browser journeys, deployed two-lab API/artifact isolation, real-storage reviewer/sign-out recovery, independent scientific benchmark, and deployment/restore remain unverified.

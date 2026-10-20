@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import func, select, text
+from sqlalchemy import func, or_, select, text, update
 from sqlalchemy.orm import Session
 
 from backend.app.application.entitlements import (
@@ -14,9 +14,16 @@ from backend.app.application.entitlements import (
     summarize,
 )
 from backend.app.auth.principal import Principal, _verify_firebase_token, get_current_principal
+from backend.app.auth.authorization import CASE_WRITE_ROLES, REVIEW_ROLES
 from backend.app.config import settings
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Organization, OrganizationMembership, User
+from backend.app.infrastructure.db.models import (
+    Case,
+    CaseAccessGrant,
+    Organization,
+    OrganizationMembership,
+    User,
+)
 from backend.app.infrastructure.db.organization_invitations import OrganizationInvitation
 from backend.app.infrastructure.db.session import get_db
 
@@ -634,6 +641,57 @@ def update_organization_membership(
         effective_role=effective_role,
         effective_status=effective_status,
     )
+
+    # A role change permanently removes capabilities the new role cannot use.
+    # Otherwise a later promotion could silently reactivate stale case grants.
+    revoked_capabilities = {}
+    if payload.role is not None and effective_role != target.role:
+        if effective_role not in CASE_WRITE_ROLES:
+            revoked_capabilities["can_write"] = CaseAccessGrant.can_write.is_(True)
+        if effective_role not in REVIEW_ROLES:
+            revoked_capabilities["can_review"] = CaseAccessGrant.can_review.is_(True)
+    if revoked_capabilities:
+        revoked_rows = db.scalar(
+            select(func.count(CaseAccessGrant.id))
+            .join(Case, Case.id == CaseAccessGrant.case_id)
+            .where(
+                Case.organization_id == principal.organization_id,
+                CaseAccessGrant.user_id == target.user_id,
+                or_(*revoked_capabilities.values()),
+            )
+        ) or 0
+        if revoked_rows:
+            db.execute(
+                update(CaseAccessGrant)
+                .where(
+                    CaseAccessGrant.user_id == target.user_id,
+                    CaseAccessGrant.case_id.in_(
+                        select(Case.id).where(Case.organization_id == principal.organization_id)
+                    ),
+                    or_(*revoked_capabilities.values()),
+                )
+                .values(
+                    **{name: False for name in revoked_capabilities},
+                    updated_at=func.now(),
+                )
+            )
+            AuditService(db).record(
+                event_type="CASE_ACCESS_CAPABILITIES_REVOKED_ROLE_CHANGE",
+                case_id=None,
+                analysis_id=None,
+                actor_type="HUMAN",
+                actor_id=str(current_principal.user_id),
+                subject_type="USER",
+                subject_id=str(target.user_id),
+                operation="REVOKE_ROLE_INCOMPATIBLE_CASE_CAPABILITIES",
+                before_state={"role": target.role},
+                after_state={
+                    "role": effective_role,
+                    "capabilities_revoked": sorted(revoked_capabilities),
+                    "grant_rows_updated": revoked_rows,
+                },
+                reason="Role changes remove incompatible case capabilities; later promotion requires explicit reassignment.",
+            )
 
     if payload.role is not None:
         target.role = payload.role
