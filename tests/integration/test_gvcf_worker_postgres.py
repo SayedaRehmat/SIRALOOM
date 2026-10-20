@@ -102,6 +102,25 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 created_by=user_id,
             ))
             db.flush()
+            analysis = Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1",
+                workflow_version="integration",
+                status=AnalysisStatus.QUEUED,
+                queue_task_id=f"gvcf-worker-{analysis_id}",
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            )
+            db.add(analysis)
+            db.flush()
             source_artifact = store.put_file(
                 db=db,
                 case_id=case_id,
@@ -113,6 +132,10 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 genome_build="GRCh38",
                 validation_status="VALID",
             )
+            analysis.configuration = {
+                "input_artifact_id": str(source_artifact.id),
+                "reference_resource_id": str(resource_id),
+            }
             db.add(Resource(
                 id=resource_id,
                 organization_id=organization_id,
@@ -128,26 +151,6 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 status="ACTIVE",
                 population_definition=None,
                 metadata_json={},
-            ))
-            db.add(Analysis(
-                id=analysis_id,
-                case_id=case_id,
-                parent_analysis_id=None,
-                assay_id=None,
-                analysis_type="VARIANT_INTERPRETATION",
-                workflow_id="variant-v1",
-                workflow_version="integration",
-                status=AnalysisStatus.QUEUED,
-                queue_task_id=f"gvcf-worker-{analysis_id}",
-                reference_build="GRCh38",
-                configuration={
-                    "input_artifact_id": str(source_artifact.id),
-                    "reference_resource_id": str(resource_id),
-                },
-                started_at=None,
-                completed_at=None,
-                created_by=user_id,
-                analysis_version=1,
             ))
             db.commit()
 

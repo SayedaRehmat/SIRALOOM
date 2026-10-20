@@ -1646,7 +1646,7 @@ def test_postgres_concurrent_case_create_returns_one_durable_case():
     from backend.app.api.v1.cases import create as create_case
     from backend.app.auth.principal import Principal
     from backend.app.domain.schemas import CaseCreate
-    from backend.app.infrastructure.db.models import AuditEvent
+    from backend.app.infrastructure.db.models import AuditEvent, OrganizationMembership
 
     engine = create_engine(database_url, pool_pre_ping=True)
     organization_id = uuid4()
@@ -1685,6 +1685,13 @@ def test_postgres_concurrent_case_create_returns_one_durable_case():
                 external_subject=str(user_id),
                 email=f"{user_id}@example.test",
                 display_name="Case Creation Race Test",
+                role="bioinformatician",
+                status="ACTIVE",
+            ))
+            db.add(OrganizationMembership(
+                id=uuid4(),
+                organization_id=organization_id,
+                user_id=user_id,
                 role="bioinformatician",
                 status="ACTIVE",
             ))
@@ -1740,6 +1747,10 @@ def test_postgres_concurrent_case_create_returns_one_durable_case():
             if case_ids:
                 db.query(AuditEvent).filter(AuditEvent.case_id.in_(case_ids)).delete(synchronize_session=False)
                 db.query(Case).filter(Case.id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(OrganizationMembership).filter(
+                OrganizationMembership.organization_id == organization_id,
+                OrganizationMembership.user_id == user_id,
+            ).delete(synchronize_session=False)
             db.query(User).filter(User.id == user_id).delete()
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()

@@ -14,6 +14,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     ConfirmationRecord,
     Organization,
+    OrganizationMembership,
     SecondaryFindingDecision,
     User,
     Variant,
@@ -53,6 +54,13 @@ def test_postgres_concurrent_governance_versions_form_a_serial_lineage(
             external_subject=str(user_id),
             email=f"{user_id}@example.test",
             display_name="Governance Version Integration",
+            role="lab_director",
+            status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(),
+            organization_id=organization_id,
+            user_id=user_id,
             role="lab_director",
             status="ACTIVE",
         ))
@@ -177,6 +185,10 @@ def test_postgres_concurrent_governance_versions_form_a_serial_lineage(
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
             db.query(Variant).filter(Variant.id == variant_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
+            db.query(OrganizationMembership).filter(
+                OrganizationMembership.organization_id == organization_id,
+                OrganizationMembership.user_id == user_id,
+            ).delete(synchronize_session=False)
             db.query(User).filter(User.id == user_id).delete()
             db.query(Organization).filter(Organization.id == organization_id).delete()
             db.commit()
