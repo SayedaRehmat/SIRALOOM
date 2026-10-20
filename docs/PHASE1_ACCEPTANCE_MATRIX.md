@@ -154,7 +154,7 @@ This code is on local and remote `main`; exact-SHA CI and all live/deployed, ind
 | Resource-change event registration is role- and resource-governed and audited | PASS (local automated scope) | Case-writer role denial, tenant/kind/name validation, aggregate-only response, authenticated human audit, and audit-failure rollback are covered; combined workflow/API/resource-adoption regressions: 24 passed. PostgreSQL/deployed workflow remains unverified. |
 | Broad backend regression after this change | PASS (local automated scope) | `pytest -q --ignore=tests/test_report_pdf.py`: 1,047 passed, 40 skipped, one deprecation warning. PDF renderer excluded for unavailable Windows-native WeasyPrint libraries; PostgreSQL and BCFtools dependent tests skipped where services/executable are unavailable. |
 
-At this checkpoint these implementation changes were in the local `main` working tree, based on `86008358caae94898ceaedf3be9449e55e9936b6`; commit and remote-push status must be verified separately. Phase A remains PARTIAL and the laboratory release decision remains BLOCKED.
+At this checkpoint these changes are committed locally on `main` as `baff5ff`, based on `86008358caae94898ceaedf3be9449e55e9936b6`; remote-push status must be verified separately. Phase A remains PARTIAL and the laboratory release decision remains BLOCKED.
 
 ## 2026-10-19 ACMG engine status gate (local checkpoint)
 
