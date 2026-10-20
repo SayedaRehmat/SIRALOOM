@@ -45,6 +45,14 @@ def _int(value: Any) -> int | None:
         return None
 
 
+def _population_code_allowed(code: str | None, configured_codes: set[str]) -> bool:
+    if configured_codes:
+        return code in configured_codes
+    # Keep cohort-specific values visible without implicitly mixing them into
+    # criteria that otherwise consume the resource's joint population record.
+    return not (code or "").endswith(("_EXOMES", "_GENOMES"))
+
+
 def evaluate_pm2(
     observations: list[dict[str, Any]],
     *,
@@ -74,7 +82,7 @@ def evaluate_pm2(
             continue
         if required_level and obs.get("population_level") != required_level:
             continue
-        if required_codes and obs.get("population_code") not in required_codes:
+        if not _population_code_allowed(obs.get("population_code"), required_codes):
             continue
         af = _finite_float(obs.get("allele_frequency"))
         an = _int(obs.get("allele_number"))
@@ -139,7 +147,7 @@ def evaluate_ba1_bs1(
             continue
         if level and obs.get("population_level") != level:
             continue
-        if population_codes and obs.get("population_code") not in population_codes:
+        if not _population_code_allowed(obs.get("population_code"), population_codes):
             continue
         af = _finite_float(obs.get("allele_frequency"))
         an = _int(obs.get("allele_number"))

@@ -47,6 +47,28 @@ def test_pm2_missing_data_is_not_zero():
     assert result.metadata["unavailable_population_data"] is True
 
 
+def test_pm2_does_not_implicitly_mix_gnomad_cohort_with_joint_observations():
+    result = evaluate_pm2(
+        [obs(code="MID_EXOMES", af=0.000001, an=20000)],
+        profile={"PM2": {"max_allele_frequency": 0.00005, "minimum_allele_number": 10000}},
+    )
+    assert result.applicable is False
+    assert result.status == "REQUIRES_REVIEW"
+
+
+def test_pm2_can_use_cohort_observation_when_explicitly_configured():
+    result = evaluate_pm2(
+        [obs(code="MID_EXOMES", af=0.000001, an=20000)],
+        profile={"PM2": {
+            "max_allele_frequency": 0.00005,
+            "minimum_allele_number": 10000,
+            "population_codes": ["MID_EXOMES"],
+        }},
+    )
+    assert result.applicable is True
+    assert result.status == "PROPOSED"
+
+
 def test_bs1_uses_explicit_threshold():
     result = evaluate_ba1_bs1(
         [obs(af=0.01)],

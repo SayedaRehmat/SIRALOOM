@@ -28,7 +28,8 @@ from backend.app.infrastructure.db.models import (
 )
 
 
-def test_population_stage_reentry_skips_provider_after_durable_success(monkeypatch, tmp_path):
+@pytest.mark.parametrize("no_match", [False, True], ids=["available-frequency", "successful-no-match"])
+def test_population_stage_reentry_skips_provider_after_durable_success(monkeypatch, tmp_path, no_match):
     import importlib
 
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
@@ -277,18 +278,36 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
 
             def query_variant(self, _variant):
                 provider_calls["count"] += 1
-                return [PopulationObservationData(
-                    population_level="GLOBAL",
-                    population_code="GLOBAL",
-                    population_label="Global",
-                    allele_count=1,
-                    allele_number=100,
-                    allele_frequency=0.01,
-                    homozygote_count=0,
-                    request_fingerprint="d" * 64,
-                    response_sha256="e" * 64,
-                    request_metadata={"fixture": True},
-                )]
+                if not no_match:
+                    return [PopulationObservationData(
+                        population_level="GLOBAL",
+                        population_code="GLOBAL",
+                        population_label="Global",
+                        allele_count=1,
+                        allele_number=100,
+                        allele_frequency=0.01,
+                        homozygote_count=0,
+                        request_fingerprint="d" * 64,
+                        response_sha256="e" * 64,
+                        request_metadata={"fixture": True},
+                    )]
+                return [
+                    PopulationObservationData(
+                        population_level="GLOBAL",
+                        population_code=f"GLOBAL_{cohort.upper()}S",
+                        population_label=f"gnomAD {cohort}s",
+                        allele_count=None,
+                        allele_number=None,
+                        allele_frequency=None,
+                        homozygote_count=None,
+                        availability="NOT_FOUND",
+                        quality_status="NO_MATCH",
+                        request_fingerprint="d" * 64,
+                        response_sha256="e" * 64,
+                        request_metadata={"fixture": True},
+                    )
+                    for cohort in ("exome", "genome")
+                ]
 
         class FakeClinVarProvider:
             def query_variant(self, **_kwargs):
@@ -354,7 +373,12 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
             )).all()
             assert len(executions) == 1
             assert executions[0].status == "SUCCEEDED"
-            assert len(observations) == 1
+            assert len(observations) == (2 if no_match else 1)
+            if no_match:
+                assert all(row.availability == "NOT_FOUND" for row in observations)
+                assert all(row.allele_count is None and row.allele_number is None and row.allele_frequency is None for row in observations)
+            assert executions[0].request_fingerprint == "d" * 64
+            assert executions[0].response_sha256 == "e" * 64
             assert provider_calls["count"] == 1
 
         # Simulate worker loss after evidence and resource-execution rows commit,
@@ -411,7 +435,7 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "build_evidence",
             ))
-            assert evidence_rows
+            assert bool(evidence_rows) is (not no_match)
             assert evidence_step.metadata_json["batches"]["0:1"]["status"] == "RUNNING"
             assert clinvar_calls["count"] == 1
         assert evidence_worker_loss["injected"]
@@ -439,7 +463,7 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
             )) == 1
             assert db.scalar(select(func.count(PopulationObservation.id)).where(
                 PopulationObservation.analysis_id == analysis_id,
-            )) == 1
+            )) == (2 if no_match else 1)
             clinvar_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
                 ResourceExecutionRecord.analysis_id == analysis_id,
                 ResourceExecutionRecord.step_id == "build_evidence",

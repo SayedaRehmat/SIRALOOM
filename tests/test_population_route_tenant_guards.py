@@ -83,6 +83,13 @@ def test_population_query_rejects_unbounded_variant_lists():
         )
 
 
+def test_default_population_query_includes_joint_and_cohort_specific_gnomad_codes():
+    from backend.app.domain.schemas import PopulationQueryRequest
+
+    request = PopulationQueryRequest(analysis_id=uuid4(), variant_ids=[uuid4()])
+    assert {"GLOBAL", "MID", "GLOBAL_EXOMES", "GLOBAL_GENOMES", "MID_EXOMES", "MID_GENOMES"} <= set(request.requested_populations)
+
+
 def test_artifact_download_checks_tenant_before_resolving_storage(monkeypatch):
     from backend.app.api.v1 import artifacts
 

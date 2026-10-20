@@ -23,7 +23,8 @@ from backend.app.infrastructure.db.models import (
 CSV_COLUMNS = [
     "variant_id", "canonical_key", "genome_build", "chromosome", "position", "reference", "alternate",
     "normalization_status", "gene", "transcript", "consequence", "protein_change", "clinvar_significance",
-    "global_af", "mid_af", "local_af", "functional_summary", "splice_summary", "literature_evidence_count",
+    "global_af", "mid_af", "local_af", "gnomad_exomes_af", "gnomad_genomes_af",
+    "gnomad_mid_exomes_af", "gnomad_mid_genomes_af", "functional_summary", "splice_summary", "literature_evidence_count",
     "evidence_count", "acmg_criteria", "classification", "classification_state", "review_status", "reportability",
 ]
 
@@ -120,6 +121,10 @@ def build_variant_rows(db: Session, analysis_id: UUID) -> list[dict[str, object]
         global_pop = by_code.get("GLOBAL")
         mid_pop = by_code.get("MID")
         local_pop = by_code.get("LOCAL")
+        exomes_pop = by_code.get("GLOBAL_EXOMES")
+        genomes_pop = by_code.get("GLOBAL_GENOMES")
+        mid_exomes_pop = by_code.get("MID_EXOMES")
+        mid_genomes_pop = by_code.get("MID_GENOMES")
         variant_evidence = ev_by_variant.get(variant.id, [])
         criteria = acmg_by_variant.get(variant.id, [])
         ordered_cls = sorted(cls_by_variant.get(variant.id, []), key=lambda c: c.version)
@@ -134,6 +139,10 @@ def build_variant_rows(db: Session, analysis_id: UUID) -> list[dict[str, object]
             "transcript": _text(transcript), "consequence": _text(consequence), "protein_change": _text(protein_change),
             "clinvar_significance": _text(clinvar), "global_af": global_pop.allele_frequency if global_pop else None,
             "mid_af": mid_pop.allele_frequency if mid_pop else None, "local_af": local_pop.allele_frequency if local_pop else None,
+            "gnomad_exomes_af": exomes_pop.allele_frequency if exomes_pop else None,
+            "gnomad_genomes_af": genomes_pop.allele_frequency if genomes_pop else None,
+            "gnomad_mid_exomes_af": mid_exomes_pop.allele_frequency if mid_exomes_pop else None,
+            "gnomad_mid_genomes_af": mid_genomes_pop.allele_frequency if mid_genomes_pop else None,
             "functional_summary": _text(functional), "splice_summary": _text(splice),
             "literature_evidence_count": sum(1 for e in variant_evidence if str(e.evidence_type).upper() == "LITERATURE"),
             "evidence_count": len(variant_evidence), "acmg_criteria": ",".join(sorted({a.criterion for a in criteria})),
@@ -154,4 +163,4 @@ def render_csv(rows: list[dict[str, object]]) -> bytes:
 
 
 def render_json(rows: list[dict[str, object]]) -> bytes:
-    return json.dumps({"schema_version": "1.0.0", "variant_count": len(rows), "variants": rows}, ensure_ascii=False, indent=2).encode("utf-8")
+    return json.dumps({"schema_version": "1.1.0", "variant_count": len(rows), "variants": rows}, ensure_ascii=False, indent=2).encode("utf-8")

@@ -51,7 +51,12 @@ class AnalysisResponse(BaseModel):
 class PopulationQueryRequest(BaseModel):
     analysis_id: UUID
     variant_ids: list[UUID] = Field(max_length=500)
-    requested_populations: list[str] = Field(default_factory=lambda: ["GLOBAL", "MID"])
+    requested_populations: list[str] = Field(
+        default_factory=lambda: [
+            "GLOBAL", "MID", "LOCAL", "GLOBAL_EXOMES", "GLOBAL_GENOMES",
+            "MID_EXOMES", "MID_GENOMES",
+        ]
+    )
 
 class ACMGReviewRequest(BaseModel):
     decision: Literal["ACCEPT", "MODIFY", "REJECT"]

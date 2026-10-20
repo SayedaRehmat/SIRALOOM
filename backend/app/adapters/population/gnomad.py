@@ -92,25 +92,23 @@ class GnomADGraphQLProvider:
         query = """
         query Variant($variantId: String!, $dataset: DatasetId!) {
           variant(variantId: $variantId, dataset: $dataset) {
-            variantId
-            ac
-            an
-            populations {
-              id
+            joint {
               ac
               an
-              ac_hom
-              ac_hemi
+              homozygote_count
+              populations { id ac an homozygote_count }
             }
             exome {
               ac
               an
-              populations { id ac an ac_hom ac_hemi }
+              homozygote_count
+              populations { id ac an homozygote_count }
             }
             genome {
               ac
               an
-              populations { id ac an ac_hom ac_hemi }
+              homozygote_count
+              populations { id ac an homozygote_count }
             }
           }
         }
@@ -157,57 +155,180 @@ class GnomADGraphQLProvider:
                 retryable=False,
             ) from exc
 
-        if body.get("errors"):
-            raise GnomADProviderError(f"gnoMAD GraphQL errors: {body['errors']}")
         response_sha256 = hashlib.sha256(
             json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
-        details = (body.get("data") or {}).get("variant")
+        if not isinstance(body, dict):
+            raise GnomADProviderError("gnoMAD GraphQL response must be a JSON object")
+        data = body.get("data")
+        if not isinstance(data, dict) or "variant" not in data:
+            raise GnomADProviderError("gnoMAD GraphQL response is missing data.variant")
+        details = data["variant"]
+        if details is not None and not isinstance(details, dict):
+            raise GnomADProviderError("gnoMAD GraphQL data.variant must be an object or null")
+        errors = body.get("errors") or []
+        if not isinstance(errors, list):
+            raise GnomADProviderError("gnoMAD GraphQL errors field must be a list")
+        if errors:
+            if any(not isinstance(item, dict) or not isinstance(item.get("message"), str) for item in errors):
+                raise GnomADProviderError("gnoMAD GraphQL response contains malformed errors")
+            messages = [item["message"] for item in errors]
+            is_not_found = details is None and messages and all(
+                message.strip().casefold() == "variant not found" for message in messages
+            )
+            if not is_not_found:
+                raise GnomADProviderError(f"gnoMAD GraphQL errors: {errors}")
         if details is None:
-            return []
-
-        observations: list[PopulationObservationData] = []
-        for pop in details.get("populations") or []:
-            if pop.get("id") == "mid":
-                ac = _int_or_none(pop.get("ac"))
-                an = _int_or_none(pop.get("an"))
-                observations.append(
-                    PopulationObservationData(
-                        population_level="ANCESTRY",
-                        population_code="MID",
-                        population_label="Middle Eastern",
-                        allele_count=ac,
-                        allele_number=an,
-                        allele_frequency=_af(ac, an),
-                        homozygote_count=_int_or_none(pop.get("ac_hom")),
-                        source_record_id=details.get("variantId"),
-                        request_fingerprint=request_fingerprint,
-                        response_sha256=response_sha256,
-                        request_metadata=request_metadata,
-                        observed_at=observed_at,
-                    )
-                )
-
-        # Global joint observation, when present in the API response.
-        ac = _int_or_none(details.get("ac"))
-        an = _int_or_none(details.get("an"))
-        if ac is not None or an is not None:
-            observations.insert(
-                0,
+            if self.delay_seconds:
+                time.sleep(self.delay_seconds)
+            return [
                 PopulationObservationData(
-                    population_level="GLOBAL",
-                    population_code="GLOBAL",
-                    population_label="Global",
-                    allele_count=ac,
-                    allele_number=an,
-                    allele_frequency=_af(ac, an),
+                    population_level=level,
+                    population_code=code,
+                    population_label=label,
+                    allele_count=None,
+                    allele_number=None,
+                    allele_frequency=None,
                     homozygote_count=None,
-                    source_record_id=details.get("variantId"),
+                    availability="NOT_FOUND",
+                    quality_status="NO_MATCH",
                     request_fingerprint=request_fingerprint,
                     response_sha256=response_sha256,
                     request_metadata=request_metadata,
                     observed_at=observed_at,
+                )
+                for level, code, label in (
+                    ("GLOBAL", "GLOBAL", "gnomAD joint"),
+                    ("ANCESTRY", "MID", "Middle Eastern (joint)"),
+                    ("GLOBAL", "GLOBAL_EXOMES", "gnomAD exomes"),
+                    ("GLOBAL", "GLOBAL_GENOMES", "gnomAD genomes"),
+                    ("ANCESTRY", "MID_EXOMES", "Middle Eastern (exomes)"),
+                    ("ANCESTRY", "MID_GENOMES", "Middle Eastern (genomes)"),
+                )
+            ]
+
+        observations: list[PopulationObservationData] = []
+        source_record_id = variant_id.replace(":", "-")
+        joint_details = details.get("joint")
+        if joint_details is None:
+            joint_details = {}
+        elif not isinstance(joint_details, dict):
+            raise GnomADProviderError("gnoMAD GraphQL joint result must be an object or null")
+        joint_ac = _int_or_none(joint_details.get("ac"))
+        joint_an = _int_or_none(joint_details.get("an"))
+        joint_hom = _int_or_none(joint_details.get("homozygote_count"))
+        joint_values_available = any(value is not None for value in (joint_ac, joint_an, joint_hom))
+        observations.append(
+            PopulationObservationData(
+                population_level="GLOBAL",
+                population_code="GLOBAL",
+                population_label="gnomAD joint",
+                allele_count=joint_ac,
+                allele_number=joint_an,
+                allele_frequency=_af(joint_ac, joint_an),
+                homozygote_count=joint_hom,
+                availability="AVAILABLE" if joint_values_available else "NOT_AVAILABLE",
+                quality_status="PASS" if joint_values_available else "NO_OBSERVATION",
+                source_record_id=source_record_id,
+                request_fingerprint=request_fingerprint,
+                response_sha256=response_sha256,
+                request_metadata=request_metadata,
+                observed_at=observed_at,
+            )
+        )
+        joint_populations = joint_details.get("populations") or []
+        if not isinstance(joint_populations, list) or any(not isinstance(pop, dict) for pop in joint_populations):
+            raise GnomADProviderError("gnoMAD GraphQL joint.populations must be a list of objects")
+        mid_joint = next(
+            (pop for pop in joint_populations if str(pop.get("id", "")).casefold() == "mid"),
+            None,
+        )
+        if mid_joint is not None:
+            mid_ac = _int_or_none(mid_joint.get("ac"))
+            mid_an = _int_or_none(mid_joint.get("an"))
+            mid_hom = _int_or_none(mid_joint.get("homozygote_count"))
+        else:
+            mid_ac = mid_an = mid_hom = None
+        mid_joint_available = any(value is not None for value in (mid_ac, mid_an, mid_hom))
+        observations.append(
+            PopulationObservationData(
+                population_level="ANCESTRY",
+                population_code="MID",
+                population_label="Middle Eastern (joint)",
+                allele_count=mid_ac,
+                allele_number=mid_an,
+                allele_frequency=_af(mid_ac, mid_an),
+                homozygote_count=mid_hom,
+                availability="AVAILABLE" if mid_joint_available else "NOT_AVAILABLE",
+                quality_status="PASS" if mid_joint_available else "NO_ANCESTRY_OBSERVATION",
+                source_record_id=source_record_id,
+                request_fingerprint=request_fingerprint,
+                response_sha256=response_sha256,
+                request_metadata=request_metadata,
+                observed_at=observed_at,
+            )
+        )
+        for cohort in ("exome", "genome"):
+            cohort_details = details.get(cohort)
+            if cohort_details is None:
+                cohort_details = {}
+            elif not isinstance(cohort_details, dict):
+                raise GnomADProviderError(f"gnoMAD GraphQL {cohort} result must be an object or null")
+            cohort_code = f"{cohort.upper()}S"
+            global_ac = _int_or_none(cohort_details.get("ac"))
+            global_an = _int_or_none(cohort_details.get("an"))
+            global_hom = _int_or_none(cohort_details.get("homozygote_count"))
+            observations.append(
+                PopulationObservationData(
+                    population_level="GLOBAL",
+                    population_code=f"GLOBAL_{cohort_code}",
+                    population_label=f"gnomAD {cohort}s",
+                    allele_count=global_ac,
+                    allele_number=global_an,
+                    allele_frequency=_af(global_ac, global_an),
+                    homozygote_count=global_hom,
+                    availability=("AVAILABLE" if any(value is not None for value in (global_ac, global_an, global_hom)) else "NOT_AVAILABLE"),
+                    quality_status=("PASS" if any(value is not None for value in (global_ac, global_an, global_hom)) else "NO_OBSERVATION"),
+                    source_record_id=source_record_id,
+                    request_fingerprint=request_fingerprint,
+                    response_sha256=response_sha256,
+                    request_metadata=request_metadata,
+                    observed_at=observed_at,
+                )
+            )
+            populations = cohort_details.get("populations") or []
+            if not isinstance(populations, list) or any(not isinstance(pop, dict) for pop in populations):
+                raise GnomADProviderError(f"gnoMAD GraphQL {cohort}.populations must be a list of objects")
+            mid_pop = next(
+                (
+                    pop for pop in populations
+                    if str(pop.get("id", "")).casefold() == "mid"
                 ),
+                None,
+            )
+            if mid_pop is not None:
+                ac = _int_or_none(mid_pop.get("ac"))
+                an = _int_or_none(mid_pop.get("an"))
+                hom = _int_or_none(mid_pop.get("homozygote_count"))
+            else:
+                ac = an = hom = None
+            observations.append(
+                PopulationObservationData(
+                    population_level="ANCESTRY",
+                    population_code=f"MID_{cohort_code}",
+                    population_label=f"Middle Eastern ({cohort}s)",
+                    allele_count=ac,
+                    allele_number=an,
+                    allele_frequency=_af(ac, an),
+                    homozygote_count=hom,
+                    availability=("AVAILABLE" if any(value is not None for value in (ac, an, hom)) else "NOT_AVAILABLE"),
+                    quality_status=("PASS" if any(value is not None for value in (ac, an, hom)) else "NO_ANCESTRY_OBSERVATION"),
+                    source_record_id=source_record_id,
+                    request_fingerprint=request_fingerprint,
+                    response_sha256=response_sha256,
+                    request_metadata=request_metadata,
+                    observed_at=observed_at,
+                )
             )
         if self.delay_seconds:
             time.sleep(self.delay_seconds)
@@ -297,6 +418,30 @@ class LocalGnomADTabixProvider:
         if proc.returncode not in (0, 1):
             raise GnomADProviderError((stderr or "").strip() or f"tabix failed with code {proc.returncode}")
 
+        from datetime import datetime, timezone
+
+        request_metadata = {
+            "provider": self.provider_id,
+            "provider_version": self.provider_version,
+            "resource_location": self.vcf_path,
+            "region": region,
+            "genome_build": variant.genome_build,
+            "execution_scope": self.execution_scope,
+        }
+        request_fingerprint = hashlib.sha256(
+            json.dumps(
+                {
+                    **request_metadata,
+                    "reference": variant.reference,
+                    "alternate": variant.alternate,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        response_sha256 = hashlib.sha256(stdout.encode("utf-8")).hexdigest()
+        observed_at = datetime.now(timezone.utc).isoformat()
+
         best: dict[str, Any] | None = None
         for line in stdout.splitlines():
             fields = line.split("\t")
@@ -316,7 +461,27 @@ class LocalGnomADTabixProvider:
             break
 
         if best is None:
-            return []
+            return [
+                PopulationObservationData(
+                    population_level=level,
+                    population_code=code,
+                    population_label=label,
+                    allele_count=None,
+                    allele_number=None,
+                    allele_frequency=None,
+                    homozygote_count=None,
+                    availability="NOT_FOUND",
+                    quality_status="NO_MATCH",
+                    request_fingerprint=request_fingerprint,
+                    response_sha256=response_sha256,
+                    request_metadata=request_metadata,
+                    observed_at=observed_at,
+                )
+                for level, code, label in (
+                    ("GLOBAL", "GLOBAL", "Global"),
+                    ("ANCESTRY", "MID", "Middle Eastern"),
+                )
+            ]
 
         observations: list[PopulationObservationData] = []
         info = best["info"]
@@ -340,6 +505,10 @@ class LocalGnomADTabixProvider:
                     homozygote_count=hom,
                     availability=availability,
                     source_record_id=best["variant_id"],
+                    request_fingerprint=request_fingerprint,
+                    response_sha256=response_sha256,
+                    request_metadata=request_metadata,
+                    observed_at=observed_at,
                 )
             )
         return observations

@@ -96,6 +96,31 @@ def test_evidence_fingerprint_is_deterministic():
     assert evidence_fingerprint(**kwargs) == evidence_fingerprint(**kwargs)
 
 
+def test_population_no_match_snapshot_does_not_become_frequency_evidence():
+    engine = EvidenceEngine()
+    records = engine.build_from_annotation(
+        variant_id=uuid4(),
+        annotation={},
+        provider_name="gnomAD",
+        provider_version="graphql",
+        resource_name="gnomAD release",
+        resource_version="test-release",
+        context=EvidenceContext(analysis_id=uuid4()),
+        population_observations=[
+            {
+                "observation_id": uuid4(),
+                "population_code": "GLOBAL_EXOMES",
+                "availability": "NOT_FOUND",
+                "allele_count": None,
+                "allele_number": None,
+                "allele_frequency": None,
+                "homozygote_count": None,
+            }
+        ],
+    )
+    assert not any(record.evidence_type == "POPULATION" for record in records)
+
+
 def test_direct_clinvar_evidence_preserves_release_scv_and_rcv_identity():
     from types import SimpleNamespace
 

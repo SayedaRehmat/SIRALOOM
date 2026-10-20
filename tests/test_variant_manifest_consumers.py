@@ -1,10 +1,11 @@
+import json
 from uuid import uuid4
 
 import pytest
 
 from backend.app.api.v1.analyses import list_variants
-from backend.app.infrastructure.db.models import AnalysisPartition, WorkflowStep
-from backend.app.reporting.variant_report import build_variant_rows
+from backend.app.infrastructure.db.models import AnalysisPartition, Case, PopulationObservation, Resource, WorkflowStep
+from backend.app.reporting.variant_report import build_variant_rows, render_json
 from tests.test_review_queue import seed
 
 
@@ -43,3 +44,36 @@ def test_completed_empty_normalization_step_does_not_enable_legacy_fallback():
 
     assert list_variants(analysis.id, db=db, principal=principal) == []
     assert build_variant_rows(db, analysis.id) == []
+
+
+def test_variant_csv_rows_keep_gnomad_exome_and_genome_frequencies_distinct():
+    db, _principal, analysis, variant = seed()
+    resource = Resource(
+        id=uuid4(), organization_id=db.get(Case, analysis.case_id).organization_id, name="gNOMAD",
+        provider="gnomAD", resource_type="POPULATION", version="test-release",
+        genome_build="GRCh38", access_method="API", status="APPROVED",
+    )
+    db.add(resource)
+    db.add_all([
+        PopulationObservation(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            resource_id=resource.id, population_level="GLOBAL",
+            population_code="GLOBAL_EXOMES", population_label="gnomAD exomes",
+            allele_count=2, allele_number=500, allele_frequency=0.004,
+            availability="AVAILABLE", quality_status="PASS",
+        ),
+        PopulationObservation(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            resource_id=resource.id, population_level="GLOBAL",
+            population_code="GLOBAL_GENOMES", population_label="gnomAD genomes",
+            allele_count=0, allele_number=500, allele_frequency=0.0,
+            availability="AVAILABLE", quality_status="PASS",
+        ),
+    ])
+    db.commit()
+
+    row = build_variant_rows(db, analysis.id)[0]
+    assert row["gnomad_exomes_af"] == 0.004
+    assert row["gnomad_genomes_af"] == 0.0
+    assert row["global_af"] == 0.0001
+    assert json.loads(render_json([row]))["schema_version"] == "1.1.0"
