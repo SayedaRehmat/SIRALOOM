@@ -1,6 +1,6 @@
 # SIRALOOM Variant — Phase 1 Acceptance Matrix
 
-> The evidence snapshot dated 2026-10-13 below is historical. The current evidence-backed release decision is in the 2026-10-19 snapshot at the end of this document.
+> The evidence snapshot dated 2026-10-13 below is historical. The current evidence-backed release decision is in the 2026-10-20 snapshot near the end of this document.
 
 | Requirement | Implementation | Automated evidence | Live validation | Qualification status |
 |---|---|---|---|---|
@@ -105,32 +105,30 @@ This snapshot records the source state at `0eb61a4` and is retained as history. 
 
 The GitHub repository may describe the software as a **Phase-1 release candidate** only while the rows marked BLOCKED/NOT TESTED remain explicitly disclosed. It may be described as a clinically validated diagnostic system only after separate laboratory validation, which is outside this software release gate. Keep the release gate open until the deployed end-to-end workflow, scientific benchmark, authorization/isolation, recovery, and deployment gates have evidence.
 
-## Current release-gate snapshot — 2026-10-19
+## Current release-gate snapshot — 2026-10-20
 
-> **Superseding checkpoint (2026-10-19):** application-code commit [`07fffb9`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c) and test-only commit [`a37b662`](https://github.com/SayedaRehmat/SIRALOOM/commit/a37b662) are on synchronized local/remote `main`. The full backend suite passed **968**, with **39 skipped**, excluding the Windows-native PDF renderer. Exact-SHA CI is unverified. GVCF `<NON_REF>`, symbolic SV, breakend, and `*` inputs are durably blocked before reference-resource lookup. Phase A remains PARTIAL. See [the Phase A ledger](engineering/PHASE_A_AUDIT_LEDGER.md) for exact commands, limitations and remaining gates.
-
-### Source and CI reconciliation
-
-- **Latest code-bearing SHA:** [`07fffb972a7c07a068f097dc818c6394f42b288c`](https://github.com/SayedaRehmat/SIRALOOM/commit/07fffb972a7c07a068f097dc818c6394f42b288c), included in synchronized local and remote `main`; a later commit updates documentation only. The unrelated untracked backup artifact remains preserved.
-- **Exact-SHA CI:** CI for `07fffb9` is unverified. Previously linked run #392334 passed on ancestor `4ac43c3`; it is not evidence for the current SHA. The Actions API had previously been rate limited.
-- **Issue #171:** OPEN; its live/deployed workflow, scientific benchmark and deployment/restore requirements remain unsatisfied.
-- **PR #179:** OPEN at head `76d8b3460bedcac5d38f01bbd3b81666ea9a29fa`, based on `6cfc89b4f2b9abfae5b4908ff1cedac58ecdbc7e`; current PR backend check fails. Its annotation recovery logic and test are superseded by the current main implementation/test already verified in run #392288. **Disposition: exclude the stale PR branch from this release candidate; do not merge it.** Leave closing the PR to the repository maintainer.
+> **Source and exact CI evidence:** current remote `main` is at [`e732841`](https://github.com/SayedaRehmat/SIRALOOM/commit/e73284193cda4d1e5a7a847d5ec0ccb007d76612), a ledger/matrix documentation checkpoint. Application and regression-test code at [`300eae3`](https://github.com/SayedaRehmat/SIRALOOM/commit/300eae382d780fb8fda8062a7eb5b31aa3935af6) passed exact-SHA [GitHub Actions run 39395036911](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39395036911): backend **1,046 passed, 27 skipped**, PostgreSQL integration **26 passed**, frontend passed, startup-script validation and Python compilation passed, the laboratory backend Docker image built, and its runtime BCFtools version assertion passed for **1.19**. The run exercised the actual pinned BCFtools 1.19 golden test for gVCF wildcard trimming and allele-indexed fields. The docs-only run for `e732841` was still in progress at last observation; its application code is unchanged from tested `300eae3`.
 
 ### Evidence status by release dimension
 
-| Dimension | Status | Evidence / remaining requirement |
+| Capability | Status | Evidence and remaining limitation |
 |---|---|---|
-| API/backend/frontend regression CI | PARTIAL | Full local backend suite on the `07fffb9` source plus test-only follow-up: 968 passed, 39 skipped, excluding the Windows-native PDF renderer. Exact-SHA CI for `07fffb9` is unverified. This is software evidence only. |
-| VCF intake and concurrent case readiness | PASS (automated scope) | Strict VCF validation tests passed locally; PostgreSQL concurrent valid/invalid VCF regression passed in run #392315. Supported VCF versions remain 4.2 and 4.3; newer versions are rejected. |
-| Versioned confirmation and secondary-finding concurrency | PASS (automated scope) | Local focused tests: 6 passed, 2 PostgreSQL cases skipped locally; both PostgreSQL cases passed in run #392315. |
-| Authentication/signup/verification/recovery/logout in a live browser | NOT TESTED | No configured Firebase/browser journey evidence. |
-| Deployed two-lab API and artifact isolation | NOT TESTED | Requires deployed test tenants and verified storage permissions. |
-| Reviewer-to-authorized-signout recovery with lab object storage | PARTIAL | Automated recovery tests cover storage failure rollback, retry, durable local artifact, integrity, approval audit, resume dispatch and idempotency; live laboratory object-storage/deployed recovery remains unverified. |
-| Independent scientific truth-set benchmark | NOT TESTED | No versioned TP/FP/FN and concordance report is recorded. |
-| Production deployment, backup restore and rollback | NOT TESTED | No controlled lab deployment/restore evidence is recorded. |
-| Clinical validity, utility, accreditation or regulatory authorization | NOT ESTABLISHED | These are not established by code tests or CI. |
+| Backend, frontend, PostgreSQL integration CI | **PASS (automated scope)** | Exact-SHA run [39395036911](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/39395036911) on `300eae3`: backend 1,046 passed/27 skipped; PostgreSQL integration 26 passed; frontend, startup scripts, Python compile, backend image build and container BCFtools 1.19 assertion succeeded. |
+| Sequence-resolved SNV/small-indel normalization | **PASS (automated scope)** | Pinned BCFtools 1.19 synthetic goldens verify reference check, left alignment, multiallelic split and preserved MNV behavior. This is not an independent truth-set benchmark or broad clinical validation. |
+| Concrete GVCF variant with uncalled wildcard | **PASS (automated scope)** | The production wrapper routes the variant to normalization only when every sample genotype is complete and does not use the wildcard. Actual BCFtools 1.19 golden verifies resulting ALT, INFO/AF, GT, AD and PL fields. |
+| GVCF reference blocks and wildcard-called/unresolved variants | **PARTIAL** | Input records are preserved in provenance-linked review artifacts and never treated as variants. No GVCF reference-confidence interpretation or block-aware downstream analysis is implemented. |
+| Symbolic SVs, breakends and spanning-deletion `*` | **PARTIAL** | Valid records are validated, preserved byte-for-text in separate artifacts with source/output hashes, counts and `NOT_ANALYZED` status. They enter `REQUIRES_REVIEW`; report sign-out remains blocked until interpretation. No SV/CNV/breakend downstream interpretation is implemented. |
+| Malformed structural records and reference mismatch | **PASS (automated scope)** | Regression tests assert precise malformed-SV rejection and fail-closed reference-mismatch state while preserving source/routed artifacts. The positive reference-aware output is exercised with BCFtools in CI. |
+| VCF routing provenance and artifact persistence | **PASS (automated scope)** | Production-wrapper SQLite tests verify unchanged source records, exact routed record lines, record counts, source lineage, `NOT_ANALYZED`, and SHA-256 consistency for persisted artifacts. This does not establish durability of a deployed laboratory object store. |
+| Authentication, signup/recovery/logout in a real browser | **NOT RUN** | Unit/API coverage exists; no configured Firebase project and authenticated live identity journey evidence are recorded. |
+| Tenant isolation in deployed APIs, jobs, and artifact storage | **NOT RUN** | Automated authorization checks do not substitute for deployed two-laboratory API and object-store boundary verification. |
+| Reviewer-to-authorized-signout complete workflow | **PARTIAL** | Local/CI review, report-version fencing and sign-out tests exist. Full deployed review through signed report, with laboratory object storage and injected recovery failures, is not demonstrated. |
+| Worker recovery and PostgreSQL behavior | **PARTIAL** | PostgreSQL integration passed 26 tests in CI; this does not prove every provider/storage/report stage's loss and retry behavior in a deployed lab environment. |
+| Scientific truth-set concordance | **NOT RUN** | No pinned GIAB truth set and benchmark configuration with measured TP/FP/FN and precision/recall is recorded. Synthetic normalization goldens are not truth-set validation. |
+| Laboratory deployment, backup/restore and rollback | **PARTIAL** | Backend image builds reproducibly in CI with pinned BCFtools 1.19. No controlled laboratory deployment, external durable-storage restart, backup restore, capacity measurements, or rollback exercise is evidenced. |
+| Clinical validity, clinical utility, accreditation or regulatory authorization | **NOT ESTABLISHED** | These require separate laboratory evidence and authorization; CI and software workflow tests cannot establish them. |
 
-**Current decision: BLOCKED for laboratory trial or clinical workflow.** Phase A remains PARTIAL; Phases B and C remain incomplete. Use only with an explicit non-clinical development/demo description; do not represent the system as clinically validated or production-qualified.
+**Release decision: BLOCKED for laboratory trial or clinical workflow.** The scoped sequence-variant preprocessing and safe GVCF/SV routing boundary have automated and exact-CI evidence, but Phase A is **PARTIAL**, Phases B/C remain incomplete, and the product must not be represented as clinically validated or production-qualified. Issue [#171](https://github.com/SayedaRehmat/SIRALOOM/issues/171) remains open. Open PR #179 is not evidence for current main; current-main recovery tests are separate from its stale PR head.
 
 ## 2026-10-19 report sign-out integrity addendum
 
