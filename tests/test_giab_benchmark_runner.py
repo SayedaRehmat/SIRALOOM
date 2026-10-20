@@ -144,3 +144,77 @@ def test_wrong_benchmark_identity_fails_closed(tmp_path, field, value, message):
 
     with pytest.raises(module.BenchmarkConfigurationError, match=message):
         module.load_and_verify_manifest(path)
+
+
+def test_happy_summary_reports_observed_snp_and_indel_metrics(tmp_path):
+    module = _load_runner()
+    summary = tmp_path / "summary.csv"
+    summary.write_text(
+        "Type,Filter,TRUTH.TOTAL,TRUTH.TP,TRUTH.FN,QUERY.TOTAL,QUERY.TP,QUERY.FP,QUERY.UNK,METRIC.Recall,METRIC.Precision,METRIC.F1_Score\n"
+        "SNP,ALL,100,90,10,95,90,5,2,0.9,0.947368,0.923077\n"
+        "INDEL,PASS,40,36,4,38,36,2,1,0.9,0.947368,0.923077\n",
+        encoding="utf-8",
+    )
+
+    metrics = module.parse_happy_summary(summary)
+
+    assert metrics["SNP"]["filter"] == "ALL"
+    assert metrics["SNP"]["truth_fn"] == 10
+    assert metrics["SNP"]["query_fp"] == 5
+    assert metrics["SNP"]["recall"] == 0.9
+    assert metrics["INDEL"]["filter"] == "PASS"
+    assert metrics["INDEL"]["f1_score"] == pytest.approx(0.923077)
+
+
+def test_happy_summary_prefers_pass_rows_when_both_are_present(tmp_path):
+    module = _load_runner()
+    summary = tmp_path / "summary.csv"
+    header = "Type,Filter,TRUTH.TOTAL,TRUTH.TP,TRUTH.FN,QUERY.TOTAL,QUERY.TP,QUERY.FP,QUERY.UNK,METRIC.Recall,METRIC.Precision,METRIC.F1_Score\n"
+    summary.write_text(
+        header
+        + "SNP,ALL,100,90,10,95,90,5,2,0.9,0.947368,0.923077\n"
+        + "SNP,PASS,80,78,2,79,78,1,0,0.975,0.987342,0.981132\n"
+        + "INDEL,ALL,40,36,4,38,36,2,1,0.9,0.947368,0.923077\n",
+        encoding="utf-8",
+    )
+
+    metrics = module.parse_happy_summary(summary)
+
+    assert metrics["SNP"]["filter"] == "PASS"
+    assert metrics["SNP"]["truth_total"] == 80
+
+
+def test_happy_summary_rejects_missing_metric_rows_or_columns(tmp_path):
+    module = _load_runner()
+    summary = tmp_path / "summary.csv"
+    summary.write_text("Type,Filter\nSNP,PASS\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="missing required columns"):
+        module.parse_happy_summary(summary)
+
+
+def test_happy_summary_rejects_absent_indel_row(tmp_path):
+    module = _load_runner()
+    summary = tmp_path / "summary.csv"
+    summary.write_text(
+        "Type,Filter,TRUTH.TOTAL,TRUTH.TP,TRUTH.FN,QUERY.TOTAL,QUERY.TP,QUERY.FP,QUERY.UNK,METRIC.Recall,METRIC.Precision,METRIC.F1_Score\n"
+        "SNP,PASS,100,90,10,95,90,5,2,0.9,0.947368,0.923077\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="must contain SNP and INDEL"):
+        module.parse_happy_summary(summary)
+
+
+def test_happy_summary_rejects_nonfinite_or_out_of_range_metrics(tmp_path):
+    module = _load_runner()
+    summary = tmp_path / "summary.csv"
+    summary.write_text(
+        "Type,Filter,TRUTH.TOTAL,TRUTH.TP,TRUTH.FN,QUERY.TOTAL,QUERY.TP,QUERY.FP,QUERY.UNK,METRIC.Recall,METRIC.Precision,METRIC.F1_Score\n"
+        "SNP,PASS,100,90,10,95,90,5,2,Infinity,0.95,0.92\n"
+        "INDEL,PASS,40,36,4,38,36,2,1,0.9,0.95,0.92\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="must be finite and between 0 and 1"):
+        module.parse_happy_summary(summary)

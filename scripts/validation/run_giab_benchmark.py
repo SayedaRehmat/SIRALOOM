@@ -8,12 +8,14 @@ and discrepancy review are required before the result can be accepted.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +31,67 @@ REQUIRED_ASSETS = (
 
 class BenchmarkConfigurationError(ValueError):
     pass
+
+
+def parse_happy_summary(path: Path) -> dict[str, Any]:
+    """Extract observed hap.py counts/metrics without deciding acceptance.
+
+    hap.py's summary schema is documented by the upstream project. Keep raw
+    CSV as the source artifact and fail closed if its expected fields/rows are
+    absent, rather than emitting a deceptively successful empty report.
+    """
+    required = {
+        "Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
+        "QUERY.TOTAL", "QUERY.TP", "QUERY.FP", "QUERY.UNK",
+        "METRIC.Recall", "METRIC.Precision", "METRIC.F1_Score",
+    }
+    rows_by_type: dict[str, dict[str, Any]] = {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            missing = sorted(required - set(reader.fieldnames or []))
+            raise RuntimeError(f"hap.py summary is missing required columns: {missing}")
+        for row in reader:
+            variant_type = (row.get("Type") or "").strip().upper()
+            filter_name = (row.get("Filter") or "").strip()
+            if variant_type not in {"SNP", "INDEL"} or filter_name not in {"PASS", "ALL"}:
+                continue
+            if filter_name in rows_by_type.setdefault(variant_type, {}):
+                raise RuntimeError(f"hap.py summary has duplicate {variant_type}/{filter_name} rows")
+            try:
+                counts = {
+                    name: int(row[column])
+                    for name, column in {
+                        "truth_total": "TRUTH.TOTAL", "truth_tp": "TRUTH.TP",
+                        "truth_fn": "TRUTH.FN", "query_total": "QUERY.TOTAL",
+                        "query_tp": "QUERY.TP", "query_fp": "QUERY.FP",
+                        "query_unk": "QUERY.UNK",
+                    }.items()
+                }
+                metrics: dict[str, float | None] = {}
+                for name, column in {
+                    "recall": "METRIC.Recall", "precision": "METRIC.Precision",
+                    "f1_score": "METRIC.F1_Score",
+                }.items():
+                    raw_metric = row[column].strip()
+                    if raw_metric.lower() in {"", "nan", "na"}:
+                        metrics[name] = None
+                        continue
+                    metric = Decimal(raw_metric)
+                    if not metric.is_finite() or not 0 <= metric <= 1:
+                        raise ValueError(f"{column} must be finite and between 0 and 1")
+                    metrics[name] = float(metric)
+            except (ValueError, KeyError, InvalidOperation) as exc:
+                raise RuntimeError(f"Invalid hap.py summary values for {variant_type}: {exc}") from exc
+            if any(value < 0 for value in counts.values()):
+                raise RuntimeError(f"Negative hap.py count in {variant_type} row")
+            rows_by_type[variant_type][filter_name] = {"filter": filter_name, **counts, **metrics}
+    if not {"SNP", "INDEL"}.issubset(rows_by_type):
+        raise RuntimeError("hap.py summary must contain SNP and INDEL rows for PASS or ALL")
+    return {
+        variant_type: (filters.get("PASS") or filters.get("ALL"))
+        for variant_type, filters in rows_by_type.items()
+    }
 
 
 def sha256_file(path: Path) -> str:
@@ -150,6 +213,7 @@ def main() -> int:
             raise RuntimeError(
                 f"hap.py completed but expected summary output was not found: {summary_csv}"
             )
+        observed_metrics = parse_happy_summary(summary_csv)
         finished = datetime.now(timezone.utc)
         report = {
             "status": "RUN_COMPLETE_REVIEW_REQUIRED",
@@ -171,6 +235,7 @@ def main() -> int:
                 "confident_regions_bed": str(assets["confident_regions_bed"]),
                 "reference_fasta": str(assets["reference_fasta"]),
                 "summary_csv": str(summary_csv),
+                "observed_metrics": observed_metrics,
                 "command": comparison["command"],
                 "exit_code": comparison["exit_code"],
             },
