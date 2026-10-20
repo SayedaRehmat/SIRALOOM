@@ -74,7 +74,11 @@ from backend.app.domain.vcf_tools import (
     normalize_vcf_with_bcftools,
     route_vcf_records,
 )
-from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    validate_vcf_reference_alleles,
+    validate_vcf_strict,
+)
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
@@ -1367,6 +1371,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "interpretation_status": "NOT_ANALYZED",
                         },
                     ))
+                normalization_step.input_artifacts = [str(input_artifact.id)]
+                normalization_step.output_artifacts = [str(item.id) for item in routed_artifacts]
+                db.add(normalization_step)
                 db.commit()
 
                 if not routing["sequence_records"]:
@@ -1561,6 +1568,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     str(input_path),
                     reference_contigs=reference_contigs,
                 )
+                reference_allele_profile = validate_vcf_reference_alleles(
+                    str(input_path),
+                    reference_fasta_path,
+                )
             except UnsupportedVariantError as exc:
                 mark_step(
                     db,
@@ -1616,13 +1627,22 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except StrictVCFValidationError as exc:
+                reference_mismatch = exc.code.startswith((
+                    "VCF_REFERENCE_",
+                    "VCF_BREAKEND_REFERENCE_",
+                ))
+                next_step = (
+                    "REFERENCE_OR_INPUT_REVIEW"
+                    if reference_mismatch
+                    else "VALID_VCF_REQUIRED"
+                )
                 mark_step(
                     db,
                     normalization_step,
                     StepStatus.BLOCKED,
                     error_code=exc.code,
                     error_message=str(exc),
-                    metadata={"next_step": "VALID_VCF_REQUIRED"},
+                    metadata={"next_step": next_step},
                 )
                 analysis.status = AnalysisStatus.BLOCKED
                 db.commit()
@@ -1632,11 +1652,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
                     actor_id="vcf-validator",
+                    input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
+                    output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts],
                     reason=str(exc),
                     payload={
                         "error_code": exc.code,
                         "reference_build": reference_build,
-                        "next_step": "VALID_VCF_REQUIRED",
+                        "next_step": next_step,
+                        "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
                     },
                 )
                 db.commit()
@@ -1763,6 +1786,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "reference_fasta_sha256": reference_package["fasta_sha256"],
                         "reference_fai_sha256": reference_package["fai_sha256"],
                         "reference_contigs_sha256": reference_package["contigs_sha256"],
+                        "source_reference_allele_profile": reference_allele_profile,
                         "normalization_tool": normalization_stats["tool"],
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
@@ -1802,8 +1826,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
                 mark_step(

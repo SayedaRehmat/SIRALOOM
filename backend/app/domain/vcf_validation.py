@@ -216,6 +216,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     singleton_headers: set[str] = set()
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
     spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
+    breakend_records_by_id: dict[str, dict] = {}
+    breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -273,6 +275,59 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            info_values = _info_values(fields[7])
+            breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
+            if breakend_alts:
+                if info_values.get("SVTYPE") != "BND":
+                    raise StrictVCFValidationError(
+                        f"Breakend ALT requires INFO/SVTYPE=BND at line {line_no}",
+                        code="VCF_BREAKEND_SVTYPE_INVALID",
+                    )
+                record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
+                mate_value = info_values.get("MATEID")
+                mate_ids = set(mate_value.split(",")) if mate_value else set()
+                # The ALT grammar above already requires one complete bracket
+                # pair. Retain its remote coordinates for MATEID checks after
+                # the whole file has been read; the VCF-defined orientations
+                # are preserved but are not constrained by a local heuristic.
+                remote_loci = [
+                    (match.group(2), int(match.group(3)))
+                    for alt in breakend_alts
+                    for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
+                    if match is not None
+                ]
+                if len(remote_loci) != len(breakend_alts):
+                    raise StrictVCFValidationError(
+                        f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
+                        code="VCF_BREAKEND_ALT_INVALID",
+                    )
+                if mate_ids:
+                    if not record_ids:
+                        raise StrictVCFValidationError(
+                            f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
+                            code="VCF_BREAKEND_MATE_INVALID",
+                        )
+                    if len(mate_ids) != len(breakend_alts):
+                        raise StrictVCFValidationError(
+                            f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
+                            code="VCF_BREAKEND_MATE_INVALID",
+                        )
+                    breakend_links.append((
+                        fields[2], _chrom, _pos, mate_ids, remote_loci, line_no,
+                    ))
+                for record_id in record_ids:
+                    if record_id in breakend_records_by_id:
+                        raise StrictVCFValidationError(
+                            f"Breakend record ID {record_id!r} is not unique at line {line_no}",
+                            code="VCF_BREAKEND_MATE_INVALID",
+                        )
+                    breakend_records_by_id[record_id] = {
+                        "chrom": _chrom,
+                        "pos": _pos,
+                        "remote_loci": remote_loci,
+                        "mate_ids": mate_ids,
+                        "line_no": line_no,
+                    }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
 
@@ -330,6 +385,33 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
+    for source_id, chrom, pos, mate_ids, remote_loci, line_no in breakend_links:
+        source_ids = set(source_id.split(";"))
+        for mate_id in mate_ids:
+            mate = breakend_records_by_id.get(mate_id)
+            if mate is None:
+                raise StrictVCFValidationError(
+                    f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
+                    code="VCF_BREAKEND_MATE_MISSING",
+                )
+            if (mate["chrom"], mate["pos"]) not in remote_loci:
+                raise StrictVCFValidationError(
+                    f"Breakend MATEID {mate_id!r} does not match the ALT mate coordinate at line {line_no}",
+                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                )
+            if not (mate["mate_ids"] & source_ids):
+                raise StrictVCFValidationError(
+                    f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                    code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+                )
+            if not any(
+                (remote_chrom, remote_pos) == (chrom, pos)
+                for remote_chrom, remote_pos in mate["remote_loci"]
+            ):
+                raise StrictVCFValidationError(
+                    f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
+                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                )
     for chrom, pos, line_no, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
@@ -358,4 +440,81 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "gvcf_markers": gvcf_markers,
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
+    }
+
+
+def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path) -> dict:
+    """Check every source record's REF and reference-span coordinates.
+
+    This deliberately includes records routed away from sequence normalization
+    (GVCF blocks, symbolic SVs, breakends, and spanning-deletion records), so a
+    successful partial analysis cannot conceal a selected-reference mismatch.
+    """
+    from backend.app.domain.reference import FastaReference, ReferenceError
+
+    checked_records = 0
+    checked_breakend_mates = 0
+    try:
+        with FastaReference(reference_fasta) as reference, _open(path) as handle:
+            for line_no, raw in enumerate(handle, 1):
+                if not raw or raw.startswith("#"):
+                    continue
+                fields = raw.rstrip("\r\n").split("\t")
+                if len(fields) < 8:
+                    continue  # validate_vcf_strict reports the structural error first.
+                chrom, pos_text, _identifier, ref, alt_text = fields[:5]
+                pos = int(pos_text)
+                try:
+                    observed = reference.fetch(chrom, pos - 1, pos - 1 + len(ref))
+                except ReferenceError as exc:
+                    raise StrictVCFValidationError(
+                        f"Reference interval is invalid at {chrom}:{pos} line {line_no}: {exc}",
+                        code="VCF_REFERENCE_COORDINATE_INVALID",
+                    ) from exc
+                if observed != ref.upper():
+                    raise StrictVCFValidationError(
+                        f"Reference allele mismatch at {chrom}:{pos} line {line_no}: "
+                        f"VCF REF={ref.upper()}, selected reference={observed}",
+                        code="VCF_REFERENCE_MISMATCH",
+                    )
+                contig_length = reference.contig_length(chrom)
+                info = _info_values(fields[7])
+                if info.get("END") is not None:
+                    end = int(info["END"])
+                    if end > contig_length:
+                        raise StrictVCFValidationError(
+                            f"Reference span END={end} exceeds contig {chrom} length {contig_length} at line {line_no}",
+                            code="VCF_REFERENCE_SPAN_OUT_OF_BOUNDS",
+                        )
+                for alt in alt_text.split(","):
+                    if "[" not in alt and "]" not in alt:
+                        continue
+                    match = re.search(r"[\[\]]([^:\[\]]+):([1-9][0-9]*)[\[\]]", alt)
+                    if match is None:
+                        continue
+                    mate_contig, mate_position = match.group(1), int(match.group(2))
+                    try:
+                        mate_length = reference.contig_length(mate_contig)
+                    except ReferenceError as exc:
+                        raise StrictVCFValidationError(
+                            f"Breakend mate contig {mate_contig!r} is absent from the selected reference at line {line_no}",
+                            code="VCF_BREAKEND_REFERENCE_MISMATCH",
+                        ) from exc
+                    if mate_position > mate_length:
+                        raise StrictVCFValidationError(
+                            f"Breakend mate coordinate {mate_contig}:{mate_position} exceeds selected reference length {mate_length} at line {line_no}",
+                            code="VCF_BREAKEND_REFERENCE_MISMATCH",
+                        )
+                    checked_breakend_mates += 1
+                checked_records += 1
+    except ReferenceError as exc:
+        raise StrictVCFValidationError(
+            f"Selected reference cannot validate VCF REF alleles: {exc}",
+            code="REFERENCE_PACKAGE_INVALID",
+        ) from exc
+    return {
+        "checked_record_count": checked_records,
+        "checked_breakend_mate_count": checked_breakend_mates,
+        "reference_fasta": str(reference_fasta),
+        "result": "PASS",
     }

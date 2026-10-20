@@ -21,7 +21,6 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
 )
-from backend.app.domain.vcf_tools import VCFToolError
 
 
 def _vcf(columns: str, records: str, *, headers: str = "") -> str:
@@ -264,7 +263,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     )
     sequence = "A" * 20 + "T" + "A" * 979
     fasta = tmp_path / "reference.fa"
-    fasta.write_text(f">1\n{sequence}\n", encoding="utf-8")
+    fasta.write_text(f">1\n{sequence}\n", encoding="utf-8", newline="\n")
     fai = tmp_path / "reference.fa.fai"
     fai.write_text(f"1\t{len(sequence)}\t3\t{len(sequence)}\t{len(sequence)+1}\n", encoding="utf-8")
     source = tmp_path / "sample.g.vcf"
@@ -277,9 +276,10 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=Allelic depths>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
         "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD\t0/0:30,0\n"
-        f"1\t11\trs1\t{'G' if reference_mismatch else 'A'}\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"
+        "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"
         "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD\t0/1:10,10\n"
-        "1\t21\tstar1\tT\t*\t50\tPASS\t.\tGT:AD\t0/1:10,10\n",
+        "1\t21\tstar1\tT\t*\t50\tPASS\t.\tGT:AD\t0/1:10,10\n"
+        + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD\t0/1:10,10\n",
         encoding="utf-8",
     )
     try:
@@ -351,14 +351,10 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
         def fake_normalize(input_path, output_path, **kwargs):
             routed_text = Path(input_path).read_text(encoding="utf-8")
-            assert ("G\tC,<NON_REF>" if reference_mismatch else "A\tC,<NON_REF>") in routed_text
+            assert "A\tC,<NON_REF>" in routed_text
             assert "AT\tA" in routed_text
             assert "\t*\t" not in routed_text
             assert "<NON_REF>\t.\tPASS\tEND=10" not in routed_text
-            if reference_mismatch:
-                raise VCFToolError(
-                    "bcftools reference-aware normalization failed (exit 1): REF allele mismatch"
-                )
             index = Path(str(output_path) + ".csi")
             with gzip.open(output_path, "wt", encoding="utf-8", newline="\n") as handle:
                 handle.write(
@@ -397,39 +393,60 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "SPANNING_DELETION_RECORDS",
             ))
+            sv_artifact = db.scalar(select(Artifact).where(
+                Artifact.analysis_id == analysis_id,
+                Artifact.artifact_type == "STRUCTURAL_VARIANT_RECORDS",
+            ))
             analysis = db.get(Analysis, analysis_id)
             assert block_artifact is not None and store.exists(block_artifact.storage_uri)
             assert star_artifact is not None and store.exists(star_artifact.storage_uri)
+            assert sv_artifact is not None and store.exists(sv_artifact.storage_uri)
             assert block_artifact.metadata_json["source_artifact_id"] == str(input_artifact.id)
             assert star_artifact.metadata_json["source_sha256"] == input_artifact.sha256
+            assert sv_artifact.metadata_json["source_sha256"] == input_artifact.sha256
             assert block_artifact.metadata_json["record_count"] == 1
             assert star_artifact.metadata_json["record_count"] == 1
+            assert sv_artifact.metadata_json["record_count"] == 1
             assert sha256(store.read_bytes(block_artifact.storage_uri)).hexdigest() == block_artifact.sha256
             assert sha256(store.read_bytes(star_artifact.storage_uri)).hexdigest() == star_artifact.sha256
+            assert sha256(store.read_bytes(sv_artifact.storage_uri)).hexdigest() == sv_artifact.sha256
             assert "END=10" in store.read_bytes(block_artifact.storage_uri).decode("utf-8")
             assert "\t*\t" in store.read_bytes(star_artifact.storage_uri).decode("utf-8")
+            assert "<DEL>" in store.read_bytes(sv_artifact.storage_uri).decode("utf-8")
             if reference_mismatch:
-                assert analysis.status == AnalysisStatus.FAILED
-                assert step.status == StepStatus.FAILED
-                assert step.error_code == "NORMALIZATION_FAILED"
+                assert analysis.status == AnalysisStatus.BLOCKED
+                assert step.status == StepStatus.BLOCKED
+                assert step.error_code == "VCF_REFERENCE_MISMATCH"
+                assert step.metadata_json["next_step"] == "REFERENCE_OR_INPUT_REVIEW"
                 assert normalized is None
-                assert db.scalar(select(AuditEvent).where(
+                blocked_event = db.scalar(select(AuditEvent).where(
                     AuditEvent.analysis_id == analysis_id,
-                    AuditEvent.event_type == "NORMALIZATION_FAILED",
-                )) is not None
+                    AuditEvent.event_type == "NORMALIZATION_BLOCKED",
+                ))
+                assert blocked_event is not None
+                assert {item["artifact_id"] for item in blocked_event.output_artifacts} == {
+                    str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id)
+                }
+                assert set(step.output_artifacts) == {
+                    str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id)
+                }
             else:
-                assert step.status == StepStatus.SUCCEEDED
+                assert step.status == StepStatus.SUCCEEDED, (step.error_code, step.error_message, step.metadata_json)
                 assert step.metadata_json["record_count"] == 2
-                assert step.metadata_json["source_record_count"] == 4
+                assert step.metadata_json["source_record_count"] == 5
                 assert step.metadata_json["routing"]["gvcf_reference_blocks"] == 1
                 assert step.metadata_json["routing"]["sequence_records"] == 2
                 assert step.metadata_json["routing"]["spanning_deletion_records"] == 1
+                assert step.metadata_json["routing"]["structural_variant_records"] == 1
+                assert step.metadata_json["source_reference_allele_profile"]["result"] == "PASS"
+                assert step.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 assert normalized is not None and store.exists(normalized.storage_uri)
                 assert sha256(store.read_bytes(normalized.storage_uri)).hexdigest() == normalized.sha256
                 assert normalized.metadata_json["source_artifact_id"] == str(input_artifact.id)
-                assert normalized.metadata_json["source_record_count"] == 4
+                assert normalized.metadata_json["source_record_count"] == 5
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
                 assert normalized.metadata_json["record_count"] == 2
+                assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 assert analysis.status == AnalysisStatus.BLOCKED
                 annotation = db.scalar(select(WorkflowStep).where(
                     WorkflowStep.analysis_id == analysis_id,

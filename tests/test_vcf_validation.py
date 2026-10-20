@@ -2,7 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    validate_vcf_reference_alleles,
+    validate_vcf_strict,
+)
 
 
 def write_vcf(path: Path, body: str, *, version: str = "VCFv4.3", columns: str | None = None) -> None:
@@ -153,6 +157,31 @@ def test_strict_validation_rejects_malformed_structural_representation(tmp_path,
     assert exc.value.code == code
 
 
+@pytest.mark.parametrize(
+    ("records", "code"),
+    [
+        ("1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n", "VCF_BREAKEND_SVTYPE_INVALID"),
+        (
+            "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=missing\n",
+            "VCF_BREAKEND_MATE_MISSING",
+        ),
+        (
+            "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\n"
+            "2\t10\tbnd2\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\n",
+            "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        ),
+    ],
+)
+def test_strict_validation_checks_breakend_type_and_mate_relationships(tmp_path, records, code):
+    path = tmp_path / "invalid-breakend-pair.vcf"
+    write_vcf(path, records)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == code
+
+
 def test_strict_validation_requires_context_for_spanning_deletion_allele(tmp_path):
     path = tmp_path / "orphan-star.vcf"
     write_vcf(path, "1\t11\t.\tT\t*\t.\tPASS\t.\n")
@@ -196,3 +225,54 @@ def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span
         columns=columns,
     )
     assert validate_vcf_strict(path)["records"] == 2
+
+
+def test_reference_validation_checks_preserved_gvcf_sv_breakend_and_spanning_records(tmp_path):
+    fasta = tmp_path / "reference.fa"
+    sequence = "A" * 30
+    fasta.write_text(f">1\n{sequence}\n>2\n{sequence}\n", encoding="ascii", newline="\n")
+    # FAI offsets are byte offsets to each sequence's first base. Both
+    # sequences occupy one line, so line_width includes its newline byte.
+    second_sequence_offset = len(f">1\n{sequence}\n>2\n".encode("ascii"))
+    (tmp_path / "reference.fa.fai").write_text(
+        f"1\t30\t3\t30\t31\n2\t30\t{second_sequence_offset}\t30\t31\n",
+        encoding="ascii",
+    )
+    source = tmp_path / "mixed.g.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=30>\n##contig=<ID=2,length=30>\n"
+        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=4\tGT\t0/0\n"
+        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=10\tGT\t0/1\n"
+        "1\t11\tseqdel\tAA\tA\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t12\tstar1\tA\t*\t.\tPASS\t.\tGT\t0/1\n"
+        # This same-bracket reciprocal pair follows the VCFv4.3 example
+        # (bnd_W/bnd_Y); orientation is encoded by each ALT, not by requiring
+        # the two records to use opposite bracket characters.
+        "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1\n"
+        "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1\n",
+        encoding="ascii",
+    )
+
+    assert validate_vcf_strict(source)["records"] == 6
+    profile = validate_vcf_reference_alleles(source, fasta)
+
+    assert profile["result"] == "PASS"
+    assert profile["checked_record_count"] == 6
+    assert profile["checked_breakend_mate_count"] == 2
+
+
+def test_reference_validation_rejects_ref_mismatch_in_preserved_symbolic_record(tmp_path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\n" + "A" * 30 + "\n", encoding="ascii", newline="\n")
+    (tmp_path / "reference.fa.fai").write_text("1\t30\t3\t30\t31\n", encoding="ascii")
+    source = tmp_path / "mismatched-sv.vcf"
+    write_vcf(source, "1\t5\tdel1\tC\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=10\n")
+    validate_vcf_strict(source)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_reference_alleles(source, fasta)
+
+    assert exc.value.code == "VCF_REFERENCE_MISMATCH"
