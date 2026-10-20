@@ -42,8 +42,8 @@ def _configured_manifest(tmp_path: Path) -> Path:
         },
         "assets": assets,
         "toolchain": {
-            "bcftools_version": "bcftools 1.19",
-            "hap_py_version": "hap.py 0.3.15",
+            "bcftools_version": "1.19",
+            "hap_py_version": "0.3.15",
         },
         "acceptance_policy": {
             "id": "LAB-SNV-BENCHMARK-001",
@@ -125,6 +125,28 @@ def test_missing_approval_metadata_fails_closed(tmp_path):
 
     with pytest.raises(module.BenchmarkConfigurationError, match="acceptance_policy"):
         module.load_and_verify_manifest(path)
+
+
+@pytest.mark.parametrize("tool_pin", ["bcftools_version", "hap_py_version"])
+def test_toolchain_version_pins_are_required(tmp_path, tool_pin):
+    module = _load_runner()
+    path = _configured_manifest(tmp_path)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["toolchain"][tool_pin] = None
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(module.BenchmarkConfigurationError, match=f"toolchain.{tool_pin} pin is required"):
+        module.load_and_verify_manifest(path)
+
+
+def test_tool_version_pin_requires_version_command_output_match():
+    module = _load_runner()
+
+    module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "Hap.py v0.3.15\n"})
+    with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
+        module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "usage: hap.py"})
+    with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
+        module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 2, "output": "Hap.py v0.3.15"})
 
 
 @pytest.mark.parametrize(

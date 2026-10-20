@@ -33,6 +33,15 @@ class BenchmarkConfigurationError(ValueError):
     pass
 
 
+def verify_version_pin(tool: str, expected: str, version_result: dict[str, Any]) -> None:
+    output = str(version_result.get("output") or "")
+    if version_result.get("exit_code") != 0 or expected not in output:
+        raise BenchmarkConfigurationError(
+            f"{tool} version could not be confirmed against manifest pin {expected!r}; "
+            f"version command output was: {output[:1000]!r}"
+        )
+
+
 def parse_happy_summary(path: Path) -> dict[str, Any]:
     """Extract observed hap.py counts/metrics without deciding acceptance.
 
@@ -120,6 +129,12 @@ def load_and_verify_manifest(path: Path) -> tuple[dict[str, Any], dict[str, Path
         raise BenchmarkConfigurationError(
             "An approved acceptance_policy id, approver, and criteria must be declared before execution."
         )
+    toolchain = manifest.get("toolchain") or {}
+    for name in ("bcftools_version", "hap_py_version"):
+        if not isinstance(toolchain.get(name), str) or not toolchain[name].strip():
+            raise BenchmarkConfigurationError(
+                f"A verified toolchain.{name} pin is required before benchmark execution."
+            )
 
     paths: dict[str, Path] = {}
     observed_hashes: dict[str, str] = {}
@@ -186,18 +201,11 @@ def main() -> int:
         output_dir.mkdir(parents=True, exist_ok=True)
         prefix = output_dir / "hg001_grch38"
         bcftools_version = run_command([bcftools, "--version"])
-        hap_py_help = run_command([hap_py, "--help"], help_mode=True)
+        hap_py_version = run_command([hap_py, "--version"])
         expected_bcftools = (manifest.get("toolchain") or {}).get("bcftools_version")
-        if expected_bcftools and expected_bcftools not in bcftools_version["output"]:
-            raise BenchmarkConfigurationError(
-                f"bcftools version does not match the manifest pin {expected_bcftools!r}."
-            )
+        verify_version_pin("bcftools", expected_bcftools, bcftools_version)
         expected_hap_py = (manifest.get("toolchain") or {}).get("hap_py_version")
-        if expected_hap_py and expected_hap_py not in hap_py_help["output"]:
-            raise BenchmarkConfigurationError(
-                f"hap.py version could not be confirmed against the manifest pin {expected_hap_py!r}; "
-                "record the verified container/package version in the manifest."
-            )
+        verify_version_pin("hap.py", expected_hap_py, hap_py_version)
 
         comparison = run_command([
             hap_py,
@@ -226,7 +234,7 @@ def main() -> int:
                 "bcftools_executable": bcftools,
                 "bcftools_version_output": bcftools_version["output"],
                 "hap_py_executable": hap_py,
-                "hap_py_help_excerpt": hap_py_help["output"][:4000],
+                "hap_py_version_command": hap_py_version,
             },
             "comparison": {
                 "engine": "hap.py / vcfeval",
