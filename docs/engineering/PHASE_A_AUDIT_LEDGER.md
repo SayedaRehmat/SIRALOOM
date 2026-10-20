@@ -646,3 +646,8 @@
 - **Finding:** no additional tenant-boundary defect was confirmed in these source paths. Tenant resources are filtered by organization; global resources use a separate lifecycle access check; staging records must belong to the requested resource and exact version; destination paths are constrained to the organization cache. This is software access-control evidence, not qualification of any scientific resource.
 - **Executed tests:** `.venv\\Scripts\\python.exe -m pytest tests/test_global_resource_lifecycle_authorization.py tests/test_resource_execution_plan_tenant_scope.py tests/test_resource_staging_api.py tests/test_resource_staging_dispatch_fence.py tests/test_resource_staging_orchestration.py tests/test_resource_remote_staging.py tests/test_resource_registry.py tests/test_resource_lifecycle.py -q`: **61 passed**.
 - **Limits:** resource approval/qualification against live providers, concurrent PostgreSQL staging, laboratory storage boundaries and network-restricted deployment remain NOT RUN. Phase A remains PARTIAL.
+
+## 2026-10-20 live validation environment check
+
+- **Observed configuration:** the checkout has no root `.env` or `frontend/.env.local`; the four required public Firebase web configuration variables are absent from this process; `firebase.json` does not configure the Firebase Auth emulator; and the Docker CLI is unavailable.
+- **Disposition:** live Firebase signup/login/recovery/logout and controlled Docker deployment journeys are **BLOCKED in this execution environment**, not passed. No credentials were printed or inspected. A Firebase project/web configuration and an available deployment host/toolchain are required for those checks. Deployed two-lab isolation and real cloud storage recovery remain NOT RUN.
