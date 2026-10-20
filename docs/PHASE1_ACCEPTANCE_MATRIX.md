@@ -198,4 +198,4 @@ Source: [HTS VCF v4.5 specification](https://github.com/samtools/hts-specs/blob/
 |---|---|---|
 | VCFv4.2/v4.3 fileformat header is first; UTF-8 BOM is rejected | PASS (local automated scope) | Strict validator and shared record parser reject misplaced fileformat and BOM for plain/gzip files. Focused VCF suite: 58 passed, 5 skipped; full backend suite excluding Windows-native PDF renderer: 1,017 passed, 40 skipped. Exact-SHA CI and BCFtools executable cases remain unverified locally. |
 
-Sources: official [HTS VCF v4.2](https://github.com/samtools/hts-specs/blob/master/VCFv4.2.tex) and [v4.3](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex) specifications, read 2026-10-20. The fileformat line must be first; v4.3 forbids a BOM. Phase A remains PARTIAL.
+Sources: official [HTS VCF v4.2](https://github.com/samtools/hts-specs/blob/master/VCFv4.2.tex) and [v4.3](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex) specifications, read 2026-10-20. The fileformat line must be first; v4.3 forbids a BOM. Implementation commit `76eb5fabb9a32098a190b206364dfac368d8ba00` is pushed to `main`; exact-SHA CI is unverified. Phase A remains PARTIAL.
