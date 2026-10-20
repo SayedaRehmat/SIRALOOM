@@ -120,6 +120,35 @@ def verify_normalization_derivation(
     }
 
 
+def select_benchmark_sample(
+    *, vcf: Path, sample_name: str, bcftools: str, output_path: Path,
+) -> dict[str, Any]:
+    """Create a single-sample VCF only after confirming the requested sample exists."""
+    available = run_command([bcftools, "query", "-l", str(vcf)])
+    sample_names = [line.strip() for line in available["output"].splitlines() if line.strip()]
+    if sample_name not in sample_names:
+        raise BenchmarkConfigurationError(
+            f"Requested benchmark sample {sample_name!r} is absent from {vcf}; "
+            f"available sample columns: {sample_names}"
+        )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    command = [bcftools, "view", "-s", sample_name, "-Ov", "-o", str(output_path), str(vcf)]
+    selection = run_command(command)
+    verified = run_command([bcftools, "query", "-l", str(output_path)])
+    selected_names = [line.strip() for line in verified["output"].splitlines() if line.strip()]
+    if selected_names != [sample_name]:
+        raise RuntimeError(
+            f"bcftools sample selection produced columns {selected_names}, expected only {sample_name!r}."
+        )
+    return {
+        "sample_name": sample_name,
+        "available_samples": sample_names,
+        "selected_vcf": str(output_path),
+        "selected_vcf_sha256": sha256_file(output_path),
+        "commands": [available["command"], selection["command"], verified["command"]],
+    }
+
+
 def parse_happy_summary(path: Path) -> dict[str, Any]:
     """Extract observed hap.py counts/metrics without deciding acceptance.
 
@@ -202,6 +231,11 @@ def load_and_verify_manifest(path: Path) -> tuple[dict[str, Any], dict[str, Path
         raise BenchmarkConfigurationError("This protocol currently expects reference build GRCh38.")
     if benchmark.get("release") != "NISTv4.2.1":
         raise BenchmarkConfigurationError("The declared benchmark release must be NISTv4.2.1.")
+    for name in ("truth_sample_name", "query_sample_name"):
+        if not isinstance(benchmark.get(name), str) or not benchmark[name].strip():
+            raise BenchmarkConfigurationError(
+                f"benchmark.{name} must explicitly identify the VCF sample column to compare."
+            )
     policy = manifest.get("acceptance_policy") or {}
     if not policy.get("id") or not policy.get("approved_by") or not policy.get("criteria"):
         raise BenchmarkConfigurationError(
@@ -296,11 +330,23 @@ def main() -> int:
             bcftools=bcftools,
             expected_version=expected_bcftools,
         )
+        truth_selection = select_benchmark_sample(
+            vcf=assets["truth_vcf"],
+            sample_name=manifest["benchmark"]["truth_sample_name"],
+            bcftools=bcftools,
+            output_path=output_dir / "hg001_grch38.truth-selected.vcf",
+        )
+        query_selection = select_benchmark_sample(
+            vcf=assets["siraloom_normalized_vcf"],
+            sample_name=manifest["benchmark"]["query_sample_name"],
+            bcftools=bcftools,
+            output_path=output_dir / "hg001_grch38.query-selected.vcf",
+        )
 
         comparison = run_command([
             hap_py,
-            str(assets["truth_vcf"]),
-            str(assets["siraloom_normalized_vcf"]),
+            truth_selection["selected_vcf"],
+            query_selection["selected_vcf"],
             "-f", str(assets["confident_regions_bed"]),
             "-r", str(assets["reference_fasta"]),
             "-o", str(prefix),
@@ -321,6 +367,7 @@ def main() -> int:
             "manifest_sha256": sha256_file(manifest_path),
             "asset_sha256": hashes,
             "normalization_lineage": normalization_lineage,
+            "sample_selection": {"truth": truth_selection, "query": query_selection},
             "toolchain": {
                 "bcftools_executable": bcftools,
                 "bcftools_version_output": bcftools_version["output"],

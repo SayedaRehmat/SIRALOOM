@@ -3,6 +3,8 @@
   "benchmark": {
     "name": "Genome in a Bottle HG001 small-variant benchmark",
     "sample_id": "HG001",
+    "truth_sample_name": "HG001",
+    "query_sample_name": null,
     "release": "NISTv4.2.1",
     "reference_build": "GRCh38",
     "scope": "small-variant concordance within the selected benchmark-confidence BED",
@@ -28,7 +30,7 @@
     "criteria": null
   },
   "notes": [
-    "Replace all nulls with exact paths and SHA-256 hashes for the truth VCF, confident BED, FASTA, adjacent FASTA .fai, raw input VCF, and normalized VCF; record verified bcftools/hap.py versions.",
+    "Replace all nulls with exact paths and SHA-256 hashes for the truth VCF, confident BED, FASTA, adjacent FASTA .fai, raw input VCF, and normalized VCF; set the actual truth/query VCF sample column names and record verified bcftools/hap.py versions.",
     "The runner reproduces the production bcftools view -A, norm, and sort record transformation from input_vcf and requires ordered normalized record lines to match.",
     "Record upstream README/license/usage terms for the exact selected assets.",
     "Do not change status to CONFIGURED until every required asset hash and the acceptance policy are approved.",

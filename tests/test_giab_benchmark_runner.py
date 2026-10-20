@@ -41,6 +41,8 @@ def _configured_manifest(tmp_path: Path) -> Path:
         "benchmark": {
             "name": "Genome in a Bottle HG001 small-variant benchmark",
             "sample_id": "HG001",
+            "truth_sample_name": "HG001",
+            "query_sample_name": "S1",
             "release": "NISTv4.2.1",
             "reference_build": "GRCh38",
         },
@@ -173,6 +175,18 @@ def test_wrong_benchmark_identity_fails_closed(tmp_path, field, value, message):
     path.write_text(json.dumps(manifest), encoding="utf-8")
 
     with pytest.raises(module.BenchmarkConfigurationError, match=message):
+        module.load_and_verify_manifest(path)
+
+
+@pytest.mark.parametrize("sample_field", ["truth_sample_name", "query_sample_name"])
+def test_benchmark_sample_columns_must_be_explicit(tmp_path, sample_field):
+    module = _load_runner()
+    path = _configured_manifest(tmp_path)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["benchmark"][sample_field] = None
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(module.BenchmarkConfigurationError, match=sample_field):
         module.load_and_verify_manifest(path)
 
 
@@ -316,6 +330,22 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
         "spanning_deletion_records": 0,
         "policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
     }
+    selection = module.select_benchmark_sample(
+        vcf=normalized,
+        sample_name="S1",
+        bcftools=shutil.which("bcftools"),
+        output_path=tmp_path / "selected.vcf",
+    )
+    assert selection["sample_name"] == "S1"
+    assert selection["available_samples"] == ["S1"]
+    assert selection["selected_vcf_sha256"] == _sha256(tmp_path / "selected.vcf")
+    with pytest.raises(module.BenchmarkConfigurationError, match="absent"):
+        module.select_benchmark_sample(
+            vcf=normalized,
+            sample_name="WRONG_SAMPLE",
+            bcftools=shutil.which("bcftools"),
+            output_path=tmp_path / "wrong-sample.vcf",
+        )
 
     tampered = tmp_path / "unrelated.vcf"
     tampered.write_text(
