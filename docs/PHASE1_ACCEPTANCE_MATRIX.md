@@ -263,3 +263,5 @@ Phase A remains PARTIAL. Live browser identity, deployed tenant isolation, real-
 
 | Identity and membership role authorization | PASS (focused automated scope) | Inspected principal resolution, invitations, membership roster, serialized membership changes, role hierarchy and case-grant revocation. Focused suite: 31 passed. This does not establish live Firebase/browser identity or deployed access behavior. |
 | Analysis worker dispatch identity and redelivery fencing | PASS (focused local test scope) | Inspected persisted queue-task identity and execution claim gates. Outbox, generation-fence and annotation/population redelivery tests: 22 passed. PostgreSQL worker-loss integration and deployed recovery remain NOT RUN. |
+
+| Report review, authorization, sign-out and reportability recovery guards | PASS (local unit/source scope) | Inspected API authorization, version checks, serialized finalization, immutable signed artifact lineage, supersession, idempotent sign-out retry and durable reanalysis resume. Focused report/signout suite: 29 passed. PostgreSQL concurrent sign-out, live cloud storage failures/retry and deployed retrieval are NOT RUN. |
