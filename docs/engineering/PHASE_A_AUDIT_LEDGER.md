@@ -632,3 +632,10 @@
 - **Finding:** no additional defect was confirmed in these inspected paths. The code distinguishes draft from final reports and binds finalization to the persisted report snapshot and signed artifact. This source audit does not prove the live storage/queue path.
 - **Executed tests:** `.venv\\Scripts\\python.exe -m pytest tests/test_reporting_signout.py tests/test_reporting_contract.py tests/test_reportability.py tests/test_reportability_m6.py tests/test_workflow_reportability_fail_closed.py -q`: **29 passed**. The earlier tenant/auth route suite additionally passed 99 tests. PostgreSQL concurrent sign-out integration, cloud storage failure/retry, and deployed report retrieval were not run.
 - **Status:** source and local unit coverage PASS for the narrow tested scope; live/deployed sign-out recovery remains NOT RUN. Phase A remains PARTIAL.
+
+## 2026-10-20 case-export archive and storage audit
+
+- **Paths inspected:** case export creation authorization; worker dispatch claim; export builder's case/analysis/artifact lineage; case-scoped audit/provenance/evidence/report queries; artifact streaming and checksum verification; organization-specific storage selection; idempotent export artifact identity; failed-commit compensation and public error redaction.
+- **Finding:** no additional cross-case export defect was confirmed in these paths. Archive contents are selected by the export's case or its analysis IDs, linked artifact analysis lineage is checked, retrieved bytes are hash/size verified, and downloads pass current case read authorization. Source review does not establish deployed cloud-storage isolation.
+- **Executed tests:** `.venv\\Scripts\\python.exe -m pytest tests/test_case_export.py tests/test_case_export_artifact_compensation.py tests/test_case_export_download.py tests/test_case_export_download_integrity.py tests/test_case_export_dispatch.py tests/test_case_export_error_redaction.py -q`: **20 passed**.
+- **Limits:** PostgreSQL concurrent worker-loss integration, real object-storage outage/recovery and deployed two-lab export/download isolation remain NOT RUN. Phase A remains PARTIAL.
