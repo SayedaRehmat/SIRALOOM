@@ -36,7 +36,7 @@ def _vcf(columns: str, records: str, *, headers: str = "") -> str:
 
 
 @pytest.mark.parametrize(
-    ("filename", "vcf", "artifact_type", "count_key"),
+    ("filename", "vcf", "artifact_type", "count_key", "review_reason_code"),
     [
         (
             "blocks.g.vcf",
@@ -47,6 +47,7 @@ def _vcf(columns: str, records: str, *, headers: str = "") -> str:
             ),
             "GVCF_REFERENCE_BLOCKS",
             "gvcf_reference_blocks",
+            "GVCF_REFERENCE_CONFIDENCE_ANALYSIS_UNSUPPORTED",
         ),
         (
             "deletion.vcf",
@@ -57,6 +58,7 @@ def _vcf(columns: str, records: str, *, headers: str = "") -> str:
             ),
             "STRUCTURAL_VARIANT_RECORDS",
             "structural_variant_records",
+            "STRUCTURAL_VARIANT_INTERPRETATION_UNSUPPORTED",
         ),
         (
             "breakends.vcf",
@@ -67,11 +69,29 @@ def _vcf(columns: str, records: str, *, headers: str = "") -> str:
             ),
             "STRUCTURAL_VARIANT_RECORDS",
             "structural_variant_records",
+            "STRUCTURAL_VARIANT_INTERPRETATION_UNSUPPORTED",
+        ),
+        (
+            "unresolved.g.vcf",
+            _vcf(
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+                "1\t5\tvar1\tA\tC,<NON_REF>\t50\tPASS\tDP=20\tGT:AD:PL\t0/2:10,0,10:0,50,100,80,0,80\n",
+                headers=(
+                    '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+                    '##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+                    '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+                    '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+                    '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
+                ),
+            ),
+            "UNRESOLVED_GVCF_VARIANTS",
+            "gvcf_unresolved_variant_records",
+            "GVCF_VARIANT_ALLELE_UNRESOLVED",
         ),
     ],
 )
 def test_production_worker_preserves_valid_non_sequence_records_for_review(
-    monkeypatch, tmp_path, filename, vcf, artifact_type, count_key
+    monkeypatch, tmp_path, filename, vcf, artifact_type, count_key, review_reason_code
 ):
     """The real worker routes valid GVCF/SV records instead of blanket-blocking them."""
     import importlib
@@ -149,12 +169,19 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
             assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
             assert normalization.status == StepStatus.REQUIRES_REVIEW
             assert normalization.error_code == "NO_SEQUENCE_VARIANTS_TO_NORMALIZE"
+            assert normalization.metadata_json["review_reason_codes"] == [review_reason_code]
             assert normalization.metadata_json["routing"][count_key] > 0
             assert routed is not None
             assert routed.metadata_json["source_artifact_id"] == str(source_row.id)
             assert routed.metadata_json["source_sha256"] == source_sha256
             assert routed.metadata_json["record_count"] == normalization.metadata_json["routing"][count_key]
             assert routed.metadata_json["interpretation_status"] == "NOT_ANALYZED"
+            assert routed.metadata_json["review_status"] == "REQUIRES_SPECIALIZED_REVIEW"
+            assert routed.metadata_json["review_reason_code"] == review_reason_code
+            assert routed.metadata_json["reference_validation_status"] == "NOT_RUN"
+            assert routed.metadata_json["reference_validation_reason_code"] == (
+                "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION"
+            )
             assert store.exists(source_row.storage_uri)
             assert store.exists(routed.storage_uri)
             routed_bytes = store.read_bytes(routed.storage_uri)
@@ -165,6 +192,7 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
             assert source_row.sha256 == source_sha256
             assert sha256(store.read_bytes(source_row.storage_uri)).hexdigest() == source_sha256
             assert event.payload["routing"][count_key] > 0
+            assert event.payload["review_reason_codes"] == [review_reason_code]
             assert event.output_artifacts[0]["artifact_id"] == str(routed.id)
             assert db.scalar(select(Artifact).where(
                 Artifact.analysis_id == analysis_id,
@@ -420,6 +448,9 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert "\t*\t" in store.read_bytes(star_artifact.storage_uri).decode("utf-8")
             assert "<DEL>" in store.read_bytes(sv_artifact.storage_uri).decode("utf-8")
             if reference_mismatch:
+                for artifact in (block_artifact, star_artifact, sv_artifact):
+                    assert artifact.metadata_json["reference_validation_status"] == "FAILED"
+                    assert artifact.metadata_json["reference_validation_reason_code"] == "VCF_REFERENCE_MISMATCH"
                 assert analysis.status == AnalysisStatus.BLOCKED
                 assert step.status == StepStatus.BLOCKED
                 assert step.error_code == "VCF_REFERENCE_MISMATCH"
@@ -437,6 +468,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id)
                 }
             else:
+                for artifact in (block_artifact, star_artifact, sv_artifact):
+                    assert artifact.metadata_json["reference_validation_status"] == "PASS"
+                    assert artifact.metadata_json["reference_package_id"] == str(resource_id)
+                    assert artifact.metadata_json["reference_package_version"] == "fixture-1"
+                    assert artifact.metadata_json["reference_fasta_sha256"] == "b" * 64
                 assert step.status == StepStatus.SUCCEEDED, (step.error_code, step.error_message, step.metadata_json)
                 assert step.metadata_json["record_count"] == 2
                 assert step.metadata_json["source_record_count"] == 5

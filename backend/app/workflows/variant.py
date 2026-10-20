@@ -1332,18 +1332,63 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             profile: dict[str, int] = {}
             routing: dict = {}
             routed_artifacts: list[Artifact] = []
+
+            def set_routed_reference_validation(
+                status: str,
+                reason_code: str,
+                *,
+                reference_package: dict | None = None,
+                reference_profile: dict | None = None,
+            ) -> None:
+                for artifact in routed_artifacts:
+                    metadata = dict(artifact.metadata_json or {})
+                    metadata.update({
+                        "reference_validation_status": status,
+                        "reference_validation_reason_code": reason_code,
+                    })
+                    if reference_package is not None:
+                        metadata.update({
+                            "reference_package_id": reference_package.get("resource_id"),
+                            "reference_package_version": reference_package.get("version"),
+                            "reference_fasta_sha256": reference_package.get("fasta_sha256"),
+                        })
+                    if reference_profile is not None:
+                        metadata["source_reference_allele_profile"] = reference_profile
+                    artifact.metadata_json = metadata
+                    db.add(artifact)
+
             try:
                 profile = classify_records(input_path)
                 routing_dir = Path(tempfile.mkdtemp(prefix=f"siraloom-vcf-routing-{analysis.id}-"))
                 temporary_artifact_paths.append(routing_dir)
                 routing = route_vcf_records(input_path, routing_dir)
                 routed_artifact_specs = (
-                    ("gvcf_blocks_path", "GVCF_REFERENCE_BLOCKS", "gvcf-reference-blocks.vcf"),
-                    ("gvcf_unresolved_path", "UNRESOLVED_GVCF_VARIANTS", "gvcf-unresolved-variants.vcf"),
-                    ("structural_path", "STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf"),
-                    ("spanning_deletions_path", "SPANNING_DELETION_RECORDS", "spanning-deletion-records.vcf"),
+                    (
+                        "gvcf_blocks_path",
+                        "GVCF_REFERENCE_BLOCKS",
+                        "gvcf-reference-blocks.vcf",
+                        "GVCF_REFERENCE_CONFIDENCE_ANALYSIS_UNSUPPORTED",
+                    ),
+                    (
+                        "gvcf_unresolved_path",
+                        "UNRESOLVED_GVCF_VARIANTS",
+                        "gvcf-unresolved-variants.vcf",
+                        "GVCF_VARIANT_ALLELE_UNRESOLVED",
+                    ),
+                    (
+                        "structural_path",
+                        "STRUCTURAL_VARIANT_RECORDS",
+                        "structural-variants.vcf",
+                        "STRUCTURAL_VARIANT_INTERPRETATION_UNSUPPORTED",
+                    ),
+                    (
+                        "spanning_deletions_path",
+                        "SPANNING_DELETION_RECORDS",
+                        "spanning-deletion-records.vcf",
+                        "SPANNING_DELETION_NOT_INTERPRETED",
+                    ),
                 )
-                for path_key, artifact_type, filename in routed_artifact_specs:
+                for path_key, artifact_type, filename, review_reason_code in routed_artifact_specs:
                     routed_path = routing.get(path_key)
                     if not routed_path:
                         continue
@@ -1369,6 +1414,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "SPANNING_DELETION_RECORDS": "spanning_deletion_records",
                             }[artifact_type]],
                             "interpretation_status": "NOT_ANALYZED",
+                            "review_status": "REQUIRES_SPECIALIZED_REVIEW",
+                            "review_reason_code": review_reason_code,
+                            "reference_validation_status": "PENDING",
                         },
                     ))
                 normalization_step.input_artifacts = [str(input_artifact.id)]
@@ -1377,6 +1425,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
 
                 if not routing["sequence_records"]:
+                    set_routed_reference_validation(
+                        "NOT_RUN",
+                        "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION",
+                    )
                     reason = (
                         "The source contains only preserved GVCF reference blocks and/or records requiring a "
                         "GVCF/SV-aware review path; no sequence-resolved variant records were eligible for "
@@ -1389,6 +1441,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         + routing["structural_variant_records"]
                         + routing["spanning_deletion_records"]
                     )
+                    review_reason_codes = sorted({
+                        item.metadata_json["review_reason_code"]
+                        for item in routed_artifacts
+                    })
                     mark_step(
                         db,
                         normalization_step,
@@ -1399,6 +1455,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "next_step": "GVCF_OR_STRUCTURAL_VARIANT_REVIEW",
                             "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
                             "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
+                            "review_reason_codes": review_reason_codes,
                             "human_action_required": True,
                         },
                     )
@@ -1417,6 +1474,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         payload={
                             "error_code": "NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
                             "routed_record_count": routed_count,
+                            "review_reason_codes": review_reason_codes,
                             "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
                         },
                     )
@@ -1491,6 +1549,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 if resolution.resource is None:
+                    set_routed_reference_validation(
+                        "NOT_RUN",
+                        resolution.decision.code or "REFERENCE_PACKAGE_UNAVAILABLE",
+                    )
                     status = (
                         StepStatus.REQUIRES_REVIEW
                         if resolution.decision.action is WorkflowAction.REQUIRE_HUMAN_REVIEW
@@ -1572,7 +1634,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     str(input_path),
                     reference_fasta_path,
                 )
+                set_routed_reference_validation(
+                    "PASS",
+                    "SELECTED_REFERENCE_CHECKS_PASSED",
+                    reference_package=reference_package,
+                    reference_profile=reference_allele_profile,
+                )
             except UnsupportedVariantError as exc:
+                set_routed_reference_validation("FAILED", exc.code)
                 mark_step(
                     db,
                     normalization_step,
@@ -1606,6 +1675,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except ReferencePackageError as exc:
+                set_routed_reference_validation("NOT_RUN", exc.code)
                 mark_step(
                     db,
                     normalization_step,
@@ -1627,6 +1697,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except StrictVCFValidationError as exc:
+                set_routed_reference_validation("FAILED", exc.code)
                 reference_mismatch = exc.code.startswith((
                     "VCF_REFERENCE_",
                     "VCF_BREAKEND_REFERENCE_",
@@ -1665,6 +1736,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except ResourceExecutionError as exc:
+                set_routed_reference_validation(
+                    "NOT_RUN",
+                    "REFERENCE_EXECUTION_CONTRACT_INVALID",
+                )
                 mark_step(
                     db,
                     normalization_step,

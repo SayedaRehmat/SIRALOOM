@@ -242,6 +242,10 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             assert block.metadata_json["record_count"] == 1
             assert block.metadata_json["source_artifact_id"] == str(source_artifact_id)
             assert block.metadata_json["source_sha256"] == source_artifact_sha256
+            assert block.metadata_json["reference_validation_status"] == "PASS"
+            assert block.metadata_json["reference_package_id"] == str(resource_id)
+            assert block.metadata_json["reference_package_version"] == "fixture-1"
+            assert block.metadata_json["reference_fasta_sha256"] == "b" * 64
             assert "END=10" in store.read_bytes(block.storage_uri).decode("utf-8")
             assert completion is not None
             audit_output_ids = {item["artifact_id"] for item in completion.output_artifacts}
