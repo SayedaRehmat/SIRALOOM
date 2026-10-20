@@ -162,7 +162,7 @@ At this checkpoint these changes are committed locally on `main` as `baff5ff`, b
 |---|---|---|
 | Case write/review grants agree with the current member role | PASS (local automated scope) | Assignment API rejects incompatible capabilities; case creator's review grant is role-aware. Follow-up migration clears role-incompatible legacy flags while preserving effective access. Focused migration/case-access/membership suite: 20 passed; broad backend suite: 1,050 passed, 40 skipped. PostgreSQL migration execution and deployed identity/tenant tests remain NOT RUN. |
 
-Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. The migration is committed locally as `3e95248de7370173eb2290c75dd3c63067761979`, based on remote `73d1d345181379829038f2c1a59b106d7dcb2aef`; push remains pending.
+Phase A remains PARTIAL; live Firebase journeys, deployed two-lab isolation, real-storage reviewer/sign-out recovery, scientific benchmark, and deployment/restore remain unverified. The migration is pushed as `3e95248de7370173eb2290c75dd3c63067761979`; local and remote `main` were verified equal at ledger commit `3c1b1acf3e82bf064660247fd9d74927cee2e33b`.
 
 ## 2026-10-19 ACMG engine status gate (local checkpoint)
 
