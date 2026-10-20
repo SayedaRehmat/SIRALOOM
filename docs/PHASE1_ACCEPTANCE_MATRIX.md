@@ -244,3 +244,9 @@ Research: pinned [BCFtools 1.19 manual](https://raw.githubusercontent.com/samtoo
 | Review QC per-rule transparency | PASS (automated frontend scope) | Latest persisted `evaluated_rules` render with value and configured direction/threshold or range; local frontend tests (31), localization guard, and production build/typecheck pass. No live assay profile or lab deployment was exercised. |
 
 Phase A remains PARTIAL. Live browser identity, deployed tenant isolation, real-storage reviewer/signout recovery, and actual scientific/laboratory qualification remain unverified.
+
+## 2026-10-20 case-access manager role parity
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| UI exposes case assignment management to all and only the backend's case-access admin roles | PASS (local frontend regression scope) | Frontend role helper matches server `CASE_ACCESS_ADMIN_ROLES`: platform admin, organization admin, and lab director. Regression test covers those and representative denied roles. Frontend 32 tests and i18n guard pass; production build/typecheck and 24 static pages pass; exact-SHA CI for this role-parity change is pending. Server authorization remains authoritative. |

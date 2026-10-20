@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { firebaseAuth } from "../../../../../lib/firebase";
 import { useLanguage } from "../../../../../lib/i18n";
+import { canManageCaseAccessRole } from "../../../../../lib/case-access.mjs";
 
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 const LARGE_DOWNLOAD_BYTES = 512 * 1024 * 1024;
@@ -109,7 +110,7 @@ export default function CaseDossierPage() {
     if (!caseId) return;
     try {
       const session = await apiFetch("/auth/session");
-      const allowed = session?.role === "organization_admin" || session?.role === "lab_director";
+      const allowed = canManageCaseAccessRole(session?.role);
       setCanManageCaseAccess(allowed);
       if (!allowed) return;
       const [roster, access] = await Promise.all([

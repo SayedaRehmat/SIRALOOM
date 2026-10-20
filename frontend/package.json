@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm run validate:i18n && next build",
-    "test:session": "node --test lib/safe-redirect.test.mjs lib/session-destination.test.mjs lib/backend-session.test.mjs lib/case-artifacts.test.mjs lib/workspace-context.test.mjs lib/validated-upload.test.mjs lib/signout.test.mjs lib/auth-errors.test.mjs lib/quality-review.test.mjs",
+    "test:session": "node --test lib/safe-redirect.test.mjs lib/session-destination.test.mjs lib/backend-session.test.mjs lib/case-artifacts.test.mjs lib/workspace-context.test.mjs lib/validated-upload.test.mjs lib/signout.test.mjs lib/auth-errors.test.mjs lib/quality-review.test.mjs lib/case-access.test.mjs",
     "start": "next start",
     "validate:i18n": "node ../scripts/validate-i18n.mjs"
   },
