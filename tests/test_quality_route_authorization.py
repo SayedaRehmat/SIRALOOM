@@ -45,3 +45,13 @@ def test_read_only_member_cannot_mutate_assay_or_quality_records(monkeypatch, en
         getattr(quality, endpoint)(*args(quality), principal)
     assert exc.value.status_code == 403
 
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan")])
+def test_qc_request_models_reject_non_finite_values(value):
+    from backend.app.api.v1.quality import QCObservationInput, QCAssessmentInput
+
+    with pytest.raises(ValueError):
+        QCObservationInput(metric_name="mean_depth", metric_value=value)
+    with pytest.raises(ValueError):
+        QCAssessmentInput(metrics={"mean_depth": value})
+

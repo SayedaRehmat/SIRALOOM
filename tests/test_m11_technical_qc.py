@@ -1,3 +1,7 @@
+import math
+
+import pytest
+
 from backend.app.quality import assess_metrics, evaluate_metric, normalize_rules, overall_qc_status, QCRule
 
 
@@ -41,3 +45,26 @@ def test_m11_rule_validation_is_strict():
     else:
         raise AssertionError("Invalid QC direction was accepted")
     assert overall_qc_status([]) == "NOT_ASSESSED"
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, True, 10**1000])
+def test_m11_non_finite_or_boolean_qc_metric_is_rejected(value):
+    with pytest.raises(ValueError, match="finite number"):
+        assess_metrics({"mean_depth": value}, {
+            "rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 30}],
+        })
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        {"metric": "mean_depth", "direction": "MIN"},
+        {"metric": "mean_depth", "direction": "MIN", "threshold": math.inf},
+        {"metric": "fraction", "direction": "RANGE", "minimum": 1.1, "maximum": 0.9},
+        {"metric": "fraction", "direction": "RANGE", "minimum": 0, "maximum": math.nan},
+        {"metric": "", "direction": "MIN", "threshold": 0},
+    ],
+)
+def test_m11_invalid_qc_rule_bounds_are_rejected(rule):
+    with pytest.raises(ValueError):
+        normalize_rules({"rules": [rule]})

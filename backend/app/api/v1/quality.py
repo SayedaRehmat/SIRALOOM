@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, FiniteFloat
 from sqlalchemy import select
 from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
@@ -30,14 +30,14 @@ class AssayInput(BaseModel):
 
 class QCObservationInput(BaseModel):
     metric_name: str = Field(min_length=1, max_length=150)
-    metric_value: float | None = None
+    metric_value: FiniteFloat | None = None
     metric_unit: str | None = Field(default=None, max_length=50)
     source: str = Field(default="LAB_QC", max_length=100)
     source_version: str | None = Field(default=None, max_length=100)
     metadata: dict = Field(default_factory=dict)
 
 class QCAssessmentInput(BaseModel):
-    metrics: dict[str, float | int | None]
+    metrics: dict[str, FiniteFloat | int | None]
     reviewer_note: str | None = Field(default=None, max_length=5000)
 
 

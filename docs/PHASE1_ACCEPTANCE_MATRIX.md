@@ -279,3 +279,11 @@ Phase A remains PARTIAL. Live browser identity, deployed tenant isolation, real-
 | VCF parsing, intake validation, case idempotency, upload capacity policy, and unsupported-class routing | PASS (local automated scope) | Command: `.venv\Scripts\python.exe -m pytest tests/test_ingestion.py tests/test_vcf_validation.py tests/test_vcf_tools.py tests/test_vcf.py tests/test_case_create_idempotency.py tests/test_upload_capacity_policy.py tests/test_unsupported_vcf_worker_routing.py -q -rs`; **83 passed, 5 skipped**. The five skips are BCFtools-gated production normalization tests because BCFtools is unavailable locally. This does not establish independent scientific benchmark concordance, deployed storage behavior, or laboratory QC qualification. |
 
 Phase A remains PARTIAL. Live Firebase/browser identity, deployed two-tenant API and artifact isolation, real-storage reviewer/signout recovery, and scientific/laboratory qualification remain unverified or blocked as recorded above.
+
+## 2026-10-20 technical QC non-finite input safeguard
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Reject non-finite QC observations, assessed metrics, and assay rule bounds | PASS (focused local regression scope) | QC evaluator/API now reject NaN, infinities, booleans, oversized integers, incomplete/non-finite thresholds, invalid ranges, and blank metric names. Command: `.venv\Scripts\python.exe -m pytest tests/test_m11_technical_qc.py tests/test_quality_route_authorization.py tests/test_qc_artifact_lineage.py tests/test_clinical_followup_persistence.py -q -rs`; **29 passed**. This validates input integrity only; it does not qualify laboratory thresholds or the assay. Exact-SHA CI pending. |
+
+Phase A remains PARTIAL. Scientific threshold qualification, live identity, deployed tenant/storage isolation, and real-storage report recovery are still unverified.
