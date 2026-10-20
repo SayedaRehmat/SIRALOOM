@@ -90,6 +90,7 @@ def test_giab_runner_rejects_asset_hash_drift(tmp_path):
             name: {"path": str(asset), "sha256": "0" * 64}
             for name in module.REQUIRED_ASSETS
         },
+        "toolchain": {"bcftools_version": "1.19", "hap_py_version": "0.3.15"},
         "acceptance_policy": {
             "id": "LAB-POLICY-001",
             "approved_by": "test-reviewer",
