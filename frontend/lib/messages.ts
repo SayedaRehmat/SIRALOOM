@@ -710,6 +710,10 @@ export type TranslationKey =
   | "review.qcAssessmentSaved"
   | "review.qcSaveFailed"
   | "review.qcAssessFailed"
+  | "review.roleChecking"
+  | "review.permissionsUnavailable"
+  | "review.caseWriteRoleHelp"
+  | "review.signatoryRoleHelp"
   | "review.evidence"
   | "review.evidenceNone"
   | "review.acmg"
@@ -1150,6 +1154,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.qcAssessmentSaved": "Assay QC assessment recorded.",
     "review.qcSaveFailed": "Unable to record QC observation.",
     "review.qcAssessFailed": "Unable to assess technical QC.",
+    "review.roleChecking": "Checking laboratory permissions…",
+    "review.permissionsUnavailable": "Permissions could not be confirmed. Editing controls are unavailable.",
+    "review.caseWriteRoleHelp": "Case notes, pedigree, QC observations, confirmation, and follow-up changes require an assigned case write role.",
+    "review.signatoryRoleHelp": "Secondary-finding decisions require an authorized laboratory signatory role.",
     "review.evidence": "CLINVAR / CLINGEN / LITERATURE / FUNCTIONAL",
     "review.evidenceNone": "No literature or functional/computational context evidence is attached to this variant.",
     "review.acmg": "ACMG / CLINGEN HUMAN ASSESSMENT",
@@ -2019,6 +2027,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.qcAssessmentSaved": "تم تسجيل تقييم ضبط جودة الفحص.",
     "review.qcSaveFailed": "تعذر تسجيل ملاحظة ضبط الجودة.",
     "review.qcAssessFailed": "تعذر تقييم ضبط الجودة التقنية.",
+    "review.roleChecking": "جارٍ التحقق من صلاحيات المختبر…",
+    "review.permissionsUnavailable": "تعذر تأكيد الصلاحيات. أدوات التعديل غير متاحة.",
+    "review.caseWriteRoleHelp": "تتطلب تعديلات الملاحظات والنسب وضبط الجودة والتأكيد والمتابعة دور كتابة معيّنًا للحالة.",
+    "review.signatoryRoleHelp": "تتطلب قرارات النتائج الثانوية دور موقّع مختبري مخول.",
     "review.evidence": "ClinVar / ClinGen / الأدبيات / الوظائف",
     "review.evidenceNone": "لا توجد أدلة سياقية أدبية أو وظيفية/حسابية مرفقة بهذا المتغير.",
     "review.acmg": "التقييم البشري لـ ACMG / ClinGen",
