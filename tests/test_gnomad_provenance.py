@@ -1,3 +1,7 @@
+from copy import deepcopy
+
+import pytest
+
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider
 from backend.app.domain.schemas import CanonicalVariant
 import httpx
@@ -177,3 +181,194 @@ def test_gnomad_malformed_success_response_is_not_recorded_as_variant_absence(mo
         provider.query_variant(CanonicalVariant(
             genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
         ))
+
+
+@pytest.mark.parametrize(
+    ("scope", "field", "invalid_value", "message"),
+    [
+        ("joint", "ac", "2", "non-negative integer"),
+        ("joint", "ac", True, "non-negative integer"),
+        ("joint", "ac", -1, "non-negative integer"),
+        ("joint", "ac", 1001, "exceeds allele number"),
+        ("joint.populations.0", "ac", "1", "non-negative integer"),
+    ],
+)
+def test_gnomad_rejects_malformed_or_inconsistent_counts(
+    monkeypatch, scope, field, invalid_value, message
+):
+    from backend.app.adapters.population.gnomad import GnomADProviderError
+
+    body = {
+        "data": {
+            "variant": {
+                "joint": {
+                    "ac": 2,
+                    "an": 1000,
+                    "homozygote_count": 0,
+                    "populations": [
+                        {"id": "mid", "ac": 1, "an": 100, "homozygote_count": 0}
+                    ],
+                },
+                "exome": {
+                    "ac": 2,
+                    "an": 500,
+                    "homozygote_count": 0,
+                    "populations": [],
+                },
+                "genome": {
+                    "ac": 0,
+                    "an": 500,
+                    "homozygote_count": 0,
+                    "populations": [],
+                },
+            }
+        }
+    }
+    body = deepcopy(body)
+    parts = scope.split(".")
+    target = body["data"]["variant"]
+    for part in parts:
+        target = target[part] if not part.isdigit() else target[int(part)]
+    target[field] = invalid_value
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return body
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, *args, **kwargs):
+            return FakeResponse()
+
+    monkeypatch.setattr(httpx, "Client", FakeClient)
+    provider = GnomADGraphQLProvider(endpoint="https://example.test/api", dataset_id="gnomad_r4")
+    with pytest.raises(GnomADProviderError, match=message):
+        provider.query_variant(CanonicalVariant(
+            genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+        ))
+
+
+def test_gnomad_zero_count_with_missing_allele_number_is_not_zero_frequency(monkeypatch):
+    body = {
+        "data": {
+            "variant": {
+                "joint": {
+                    "ac": 2, "an": 1000, "homozygote_count": 0,
+                    "populations": [{"id": "mid", "ac": 0, "an": None, "homozygote_count": 0}],
+                },
+                "exome": {"ac": 0, "an": 0, "homozygote_count": 0, "populations": []},
+                "genome": {"ac": 0, "an": None, "homozygote_count": 0, "populations": []},
+            }
+        }
+    }
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return body
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def post(self, *args, **kwargs): return FakeResponse()
+
+    monkeypatch.setattr(httpx, "Client", FakeClient)
+    provider = GnomADGraphQLProvider(endpoint="https://example.test/api", dataset_id="gnomad_r4")
+    observations = provider.query_variant(CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+    ))
+
+    mid = next(item for item in observations if item.population_code == "MID")
+    exomes = next(item for item in observations if item.population_code == "GLOBAL_EXOMES")
+    genomes = next(item for item in observations if item.population_code == "GLOBAL_GENOMES")
+    assert (mid.allele_count, mid.allele_number, mid.allele_frequency) == (0, None, None)
+    assert mid.availability == "NOT_AVAILABLE"
+    assert mid.quality_status == "NO_ANCESTRY_OBSERVATION"
+    assert exomes.allele_frequency is None
+    assert exomes.availability == "NOT_AVAILABLE"
+    assert genomes.allele_count == 0
+    assert genomes.allele_number is None
+    assert genomes.allele_frequency is None
+    assert genomes.availability == "NOT_AVAILABLE"
+
+
+def test_gnomad_null_dataset_sections_are_persistable_unavailable_observations(monkeypatch):
+    body = {
+        "data": {
+            "variant": {
+                "joint": None,
+                "exome": None,
+                "genome": {
+                    "ac": 1,
+                    "an": 100,
+                    "homozygote_count": 0,
+                    "populations": [],
+                },
+            }
+        }
+    }
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return body
+
+    class FakeClient:
+        def __init__(self, *args, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def post(self, *args, **kwargs): return FakeResponse()
+
+    monkeypatch.setattr(httpx, "Client", FakeClient)
+    provider = GnomADGraphQLProvider(endpoint="https://example.test/api", dataset_id="gnomad_r4")
+    observations = provider.query_variant(CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+    ))
+
+    assert len(observations) == 6
+    unavailable = [item for item in observations if item.population_code in {
+        "GLOBAL", "MID", "GLOBAL_EXOMES", "MID_EXOMES"
+    }]
+    assert all(item.availability == "NOT_AVAILABLE" for item in unavailable)
+    assert all(item.allele_frequency is None for item in unavailable)
+
+
+def test_gnomad_rejects_duplicate_population_ids_case_insensitively():
+    from backend.app.adapters.population.gnomad import (
+        GnomADProviderError,
+        _graphql_populations,
+    )
+
+    population = {"id": "mid", "ac": 0, "an": None, "homozygote_count": 0}
+    with pytest.raises(GnomADProviderError, match="duplicate population id"):
+        _graphql_populations(
+            [population, {**population, "id": "MID"}], context="joint"
+        )
+
+
+def test_gnomad_rejects_missing_count_field_in_nonnull_dataset_section():
+    from backend.app.adapters.population.gnomad import (
+        GnomADProviderError,
+        _graphql_counts,
+    )
+
+    with pytest.raises(GnomADProviderError, match="missing an"):
+        _graphql_counts(
+            {"ac": 1, "homozygote_count": 0}, context="joint", nullable=True
+        )

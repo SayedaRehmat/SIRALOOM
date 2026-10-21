@@ -211,13 +211,13 @@ class GnomADGraphQLProvider:
         source_record_id = variant_id.replace(":", "-")
         joint_details = details.get("joint")
         if joint_details is None:
-            joint_details = {}
+            joint_details = {"ac": None, "an": None, "homozygote_count": None}
         elif not isinstance(joint_details, dict):
             raise GnomADProviderError("gnoMAD GraphQL joint result must be an object or null")
-        joint_ac = _int_or_none(joint_details.get("ac"))
-        joint_an = _int_or_none(joint_details.get("an"))
-        joint_hom = _int_or_none(joint_details.get("homozygote_count"))
-        joint_values_available = any(value is not None for value in (joint_ac, joint_an, joint_hom))
+        joint_ac, joint_an, joint_hom = _graphql_counts(
+            joint_details, context="joint", nullable=True
+        )
+        joint_values_available = _frequency_available(joint_ac, joint_an)
         observations.append(
             PopulationObservationData(
                 population_level="GLOBAL",
@@ -236,20 +236,15 @@ class GnomADGraphQLProvider:
                 observed_at=observed_at,
             )
         )
-        joint_populations = joint_details.get("populations") or []
-        if not isinstance(joint_populations, list) or any(not isinstance(pop, dict) for pop in joint_populations):
-            raise GnomADProviderError("gnoMAD GraphQL joint.populations must be a list of objects")
-        mid_joint = next(
-            (pop for pop in joint_populations if str(pop.get("id", "")).casefold() == "mid"),
-            None,
+        joint_populations = _graphql_populations(
+            joint_details.get("populations"), context="joint"
         )
+        mid_joint = joint_populations.get("mid")
         if mid_joint is not None:
-            mid_ac = _int_or_none(mid_joint.get("ac"))
-            mid_an = _int_or_none(mid_joint.get("an"))
-            mid_hom = _int_or_none(mid_joint.get("homozygote_count"))
+            mid_ac, mid_an, mid_hom = mid_joint
         else:
             mid_ac = mid_an = mid_hom = None
-        mid_joint_available = any(value is not None for value in (mid_ac, mid_an, mid_hom))
+        mid_joint_available = _frequency_available(mid_ac, mid_an)
         observations.append(
             PopulationObservationData(
                 population_level="ANCESTRY",
@@ -271,13 +266,14 @@ class GnomADGraphQLProvider:
         for cohort in ("exome", "genome"):
             cohort_details = details.get(cohort)
             if cohort_details is None:
-                cohort_details = {}
+                cohort_details = {"ac": None, "an": None, "homozygote_count": None}
             elif not isinstance(cohort_details, dict):
                 raise GnomADProviderError(f"gnoMAD GraphQL {cohort} result must be an object or null")
             cohort_code = f"{cohort.upper()}S"
-            global_ac = _int_or_none(cohort_details.get("ac"))
-            global_an = _int_or_none(cohort_details.get("an"))
-            global_hom = _int_or_none(cohort_details.get("homozygote_count"))
+            global_ac, global_an, global_hom = _graphql_counts(
+                cohort_details, context=cohort, nullable=True
+            )
+            global_available = _frequency_available(global_ac, global_an)
             observations.append(
                 PopulationObservationData(
                     population_level="GLOBAL",
@@ -287,8 +283,8 @@ class GnomADGraphQLProvider:
                     allele_number=global_an,
                     allele_frequency=_af(global_ac, global_an),
                     homozygote_count=global_hom,
-                    availability=("AVAILABLE" if any(value is not None for value in (global_ac, global_an, global_hom)) else "NOT_AVAILABLE"),
-                    quality_status=("PASS" if any(value is not None for value in (global_ac, global_an, global_hom)) else "NO_OBSERVATION"),
+                    availability=("AVAILABLE" if global_available else "NOT_AVAILABLE"),
+                    quality_status=("PASS" if global_available else "NO_OBSERVATION"),
                     source_record_id=source_record_id,
                     request_fingerprint=request_fingerprint,
                     response_sha256=response_sha256,
@@ -296,22 +292,15 @@ class GnomADGraphQLProvider:
                     observed_at=observed_at,
                 )
             )
-            populations = cohort_details.get("populations") or []
-            if not isinstance(populations, list) or any(not isinstance(pop, dict) for pop in populations):
-                raise GnomADProviderError(f"gnoMAD GraphQL {cohort}.populations must be a list of objects")
-            mid_pop = next(
-                (
-                    pop for pop in populations
-                    if str(pop.get("id", "")).casefold() == "mid"
-                ),
-                None,
+            populations = _graphql_populations(
+                cohort_details.get("populations"), context=cohort
             )
+            mid_pop = populations.get("mid")
             if mid_pop is not None:
-                ac = _int_or_none(mid_pop.get("ac"))
-                an = _int_or_none(mid_pop.get("an"))
-                hom = _int_or_none(mid_pop.get("homozygote_count"))
+                ac, an, hom = mid_pop
             else:
                 ac = an = hom = None
+            ancestry_available = _frequency_available(ac, an)
             observations.append(
                 PopulationObservationData(
                     population_level="ANCESTRY",
@@ -321,8 +310,8 @@ class GnomADGraphQLProvider:
                     allele_number=an,
                     allele_frequency=_af(ac, an),
                     homozygote_count=hom,
-                    availability=("AVAILABLE" if any(value is not None for value in (ac, an, hom)) else "NOT_AVAILABLE"),
-                    quality_status=("PASS" if any(value is not None for value in (ac, an, hom)) else "NO_ANCESTRY_OBSERVATION"),
+                    availability=("AVAILABLE" if ancestry_available else "NOT_AVAILABLE"),
+                    quality_status=("PASS" if ancestry_available else "NO_ANCESTRY_OBSERVATION"),
                     source_record_id=source_record_id,
                     request_fingerprint=request_fingerprint,
                     response_sha256=response_sha256,
@@ -344,6 +333,75 @@ def _int_or_none(value: Any) -> int | None:
         return None
 
 
+def _graphql_counts(
+    values: dict[str, Any], *, context: str, nullable: bool
+) -> tuple[int | None, int | None, int | None]:
+    counts = tuple(
+        _graphql_count(values, field=field, context=context, nullable=nullable)
+        for field in ("ac", "an", "homozygote_count")
+    )
+    ac, an, _homozygotes = counts
+    if ac is not None and an is not None and ac > an:
+        raise GnomADProviderError(
+            f"gnoMAD GraphQL {context} allele count exceeds allele number"
+        )
+    return counts
+
+
+def _graphql_count(
+    values: dict[str, Any], *, field: str, context: str, nullable: bool
+) -> int | None:
+    if field not in values:
+        raise GnomADProviderError(
+            f"gnoMAD GraphQL {context} result is missing {field}"
+        )
+    value = values[field]
+    if value is None and nullable:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise GnomADProviderError(
+            f"gnoMAD GraphQL {context}.{field} must be a non-negative integer"
+        )
+    return value
+
+
+def _graphql_populations(
+    populations: Any, *, context: str
+) -> dict[str, tuple[int | None, int | None, int | None]]:
+    if populations is None:
+        return {}
+    if not isinstance(populations, list):
+        raise GnomADProviderError(
+            f"gnoMAD GraphQL {context}.populations must be a list"
+        )
+    result: dict[str, tuple[int | None, int | None, int | None]] = {}
+    for population in populations:
+        if not isinstance(population, dict):
+            raise GnomADProviderError(
+                f"gnoMAD GraphQL {context}.populations must contain objects"
+            )
+        population_id = population.get("id")
+        if not isinstance(population_id, str) or not population_id.strip():
+            raise GnomADProviderError(
+                f"gnoMAD GraphQL {context} population is missing a valid id"
+            )
+        key = population_id.casefold()
+        if key in result:
+            raise GnomADProviderError(
+                f"gnoMAD GraphQL {context} contains duplicate population id {population_id!r}"
+            )
+        counts = _graphql_counts(
+            population, context=f"{context}.population[{population_id}]", nullable=True
+        )
+        result[key] = counts
+    return result
+
+
+def _frequency_available(ac: int | None, an: int | None) -> bool:
+    """A frequency is interpretable only when a positive allele number exists."""
+    return ac is not None and ac >= 0 and an is not None and an > 0 and ac <= an
+
+
 def _float_or_none(value: Any) -> float | None:
     if value is None or value == "":
         return None
@@ -354,7 +412,7 @@ def _float_or_none(value: Any) -> float | None:
 
 
 def _af(ac: int | None, an: int | None) -> float | None:
-    if ac is None or an in (None, 0):
+    if not _frequency_available(ac, an):
         return None
     return ac / an
 
@@ -491,9 +549,13 @@ class LocalGnomADTabixProvider:
             an = _scalar_int(info.get(f"AN{suffix}"))
             af = _array_float(info.get(f"AF{suffix}"), best["alt_index"])
             hom = _array_value(info.get(f"nhomalt{suffix}"), best["alt_index"])
-            if af is None:
+            # A source AF is not interpretable without a callable denominator.
+            # Never expose it as a frequency when AN is missing or zero.
+            if not _frequency_available(ac, an):
+                af = None
+            elif af is None:
                 af = _af(ac, an)
-            availability = "AVAILABLE" if any(v is not None for v in (ac, an, af, hom)) else "NOT_AVAILABLE"
+            availability = "AVAILABLE" if _frequency_available(ac, an) else "NOT_AVAILABLE"
             observations.append(
                 PopulationObservationData(
                     population_level="GLOBAL" if code == "GLOBAL" else "ANCESTRY",
