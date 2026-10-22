@@ -1,6 +1,6 @@
-"""Prove population provider calls are not repeated after durable observation commit."""
-from datetime import datetime, timezone
+"""Exercise population, evidence, and ACMG stage replay after durable commits."""
 import gzip
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -14,9 +14,13 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
     Analysis,
     Annotation,
+    AuditEvent,
     Case,
+    Classification,
+    ClinGenSpecification,
     Evidence,
     Organization,
     PopulationObservation,
@@ -29,7 +33,9 @@ from backend.app.infrastructure.db.models import (
 
 
 @pytest.mark.parametrize("no_match", [False, True], ids=["available-frequency", "successful-no-match"])
-def test_population_stage_reentry_skips_provider_after_durable_success(monkeypatch, tmp_path, no_match):
+def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
+    monkeypatch, tmp_path, no_match
+):
     import importlib
 
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
@@ -81,7 +87,9 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
                 organization_id=organization_id,
                 case_identifier=f"POP-REPLAY-{case_id}",
                 status="OPEN",
-                clinical_context={},
+                clinical_context=(
+                    {"disease": "Disease X"} if not no_match else {}
+                ),
                 language="en",
                 created_by=user_id,
             ))
@@ -124,7 +132,7 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
                     "input_artifact_id": str(source_artifact.id),
                     "clinvar_resource_id": str(clinvar_resource_id),
                 },
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
                 completed_at=None,
                 created_by=user_id,
                 analysis_version=1,
@@ -186,8 +194,39 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
                 request_fingerprint="request",
                 response_sha256="b" * 64,
                 request_metadata={},
-                payload={"normalized": {}},
+                payload={"normalized": (
+                    {
+                        "gene": {"symbol": "GENE1"},
+                        "computational": {},
+                        "splice": {},
+                    }
+                    if not no_match
+                    else {}
+                )},
             ))
+            if not no_match:
+                db.add(ClinGenSpecification(
+                    id=uuid4(),
+                    specification_id="SPEC-REPLAY",
+                    version="1.0",
+                    provider="ClinGen",
+                    framework="ACMG/AMP",
+                    gene_scope=["GENE1"],
+                    disease_scope=["Disease X"],
+                    criteria={
+                        "PM2": {
+                            "max_allele_frequency": 0.0001,
+                            "minimum_allele_number": 1000,
+                            "population_level": "GLOBAL",
+                            "population_codes": ["GLOBAL"],
+                            "strength": "MODERATE",
+                        }
+                    },
+                    raw_payload={"fixture": "approved test specification"},
+                    retrieved_at=datetime.now(UTC),
+                    validated_for_automation=True,
+                    validation_status="APPROVED_FOR_AUTOMATION",
+                ))
             for order, step_id in enumerate((
                 "validate_input", "normalize", "annotate", "population",
                 "build_evidence", "acmg_assessment", "review", "reportability",
@@ -283,9 +322,9 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
                         population_level="GLOBAL",
                         population_code="GLOBAL",
                         population_label="Global",
-                        allele_count=1,
-                        allele_number=100,
-                        allele_frequency=0.01,
+                        allele_count=0,
+                        allele_number=5000,
+                        allele_frequency=0.0,
                         homozygote_count=0,
                         request_fingerprint="d" * 64,
                         response_sha256="e" * 64,
@@ -346,7 +385,7 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
             ),
         )
 
-        real_mark_step = workflow.mark_step
+        actual_mark_step = workflow.mark_step
         worker_loss = {"injected": False}
 
         def crash_after_provider_commit(db, step, status, **kwargs):
@@ -357,7 +396,7 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
             ):
                 worker_loss["injected"] = True
                 raise SystemExit(73)
-            return real_mark_step(db, step, status, **kwargs)
+            return actual_mark_step(db, step, status, **kwargs)
 
         monkeypatch.setattr(workflow, "mark_step", crash_after_provider_commit)
         with pytest.raises(SystemExit, match="73"):
@@ -473,5 +512,103 @@ def test_population_stage_reentry_skips_provider_after_durable_success(monkeypat
             assert clinvar_execution_rows[0].status == "NO_DATA"
             assert provider_calls["count"] == 1
             assert clinvar_calls["count"] == 1
+
+        if not no_match:
+            # The real ACMG stage commits criterion/classification rows before
+            # its successful batch checkpoint. Simulate worker loss in that gap,
+            # then redeliver through the workflow entry point.
+            monkeypatch.setattr(workflow, "_step", real_step)
+            acmg_worker_loss = {"injected": False}
+            acmg_persisted_ids = {"assessments": (), "classifications": ()}
+
+            def crash_after_acmg_rows_commit(db, step, start, end, **kwargs):
+                if (
+                    step.step_id == "acmg_assessment"
+                    and kwargs.get("status") == "SUCCEEDED"
+                    and not acmg_worker_loss["injected"]
+                ):
+                    acmg_worker_loss["injected"] = True
+                    acmg_persisted_ids["assessments"] = tuple(db.scalars(
+                        select(ACMGAssessment.id).where(
+                            ACMGAssessment.analysis_id == analysis_id,
+                        ).order_by(ACMGAssessment.id)
+                    ).all())
+                    acmg_persisted_ids["classifications"] = tuple(db.scalars(
+                        select(Classification.id).where(
+                            Classification.analysis_id == analysis_id,
+                        ).order_by(Classification.id)
+                    ).all())
+                    assert acmg_persisted_ids["assessments"]
+                    assert acmg_persisted_ids["classifications"]
+                    raise SystemExit(77)
+                return real_save_batch_checkpoint(db, step, start, end, **kwargs)
+
+            monkeypatch.setattr(
+                workflow, "_save_batch_checkpoint", crash_after_acmg_rows_commit
+            )
+            try:
+                workflow.run_variant_analysis(analysis_id)
+            except SystemExit as exc:
+                assert str(exc.code) == "77"
+            else:
+                with LocalSession() as db:
+                    acmg_step = db.scalar(select(WorkflowStep).where(
+                        WorkflowStep.analysis_id == analysis_id,
+                        WorkflowStep.step_id == "acmg_assessment",
+                    ))
+                    assessment_count = db.scalar(select(func.count(ACMGAssessment.id)).where(
+                        ACMGAssessment.analysis_id == analysis_id,
+                    ))
+                pytest.fail(
+                    "ACMG success checkpoint hook was not reached; "
+                    f"step={acmg_step.status if acmg_step else None}, "
+                    f"error={acmg_step.error_code if acmg_step else None}, "
+                    f"message={acmg_step.error_message if acmg_step else None}, "
+                    f"assessments={assessment_count}"
+                )
+
+            with LocalSession() as db:
+                acmg_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "acmg_assessment",
+                ))
+                stage_event_count = db.scalar(select(func.count(AuditEvent.id)).where(
+                    AuditEvent.analysis_id == analysis_id,
+                    AuditEvent.event_type.in_((
+                        "ACMG_ASSESSMENT_COMPLETED",
+                        "ACMG_ASSESSMENT_REQUIRES_MANUAL_REVIEW",
+                    )),
+                ))
+                assert acmg_step.metadata_json["batches"]["0:1"]["status"] == "RUNNING"
+                assert stage_event_count == 0
+                assert tuple(db.scalars(select(ACMGAssessment.id).where(
+                    ACMGAssessment.analysis_id == analysis_id,
+                ).order_by(ACMGAssessment.id)).all()) == acmg_persisted_ids["assessments"]
+
+            workflow.run_variant_analysis(analysis_id)
+
+            with LocalSession() as db:
+                acmg_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "acmg_assessment",
+                ))
+                final_assessment_ids = tuple(db.scalars(select(ACMGAssessment.id).where(
+                    ACMGAssessment.analysis_id == analysis_id,
+                ).order_by(ACMGAssessment.id)).all())
+                final_classification_ids = tuple(db.scalars(select(Classification.id).where(
+                    Classification.analysis_id == analysis_id,
+                ).order_by(Classification.id)).all())
+                stage_event_count = db.scalar(select(func.count(AuditEvent.id)).where(
+                    AuditEvent.analysis_id == analysis_id,
+                    AuditEvent.event_type.in_((
+                        "ACMG_ASSESSMENT_COMPLETED",
+                        "ACMG_ASSESSMENT_REQUIRES_MANUAL_REVIEW",
+                    )),
+                ))
+                assert acmg_worker_loss["injected"]
+                assert acmg_step.metadata_json["batches"]["0:1"]["status"] == "SUCCEEDED"
+                assert final_assessment_ids == acmg_persisted_ids["assessments"]
+                assert final_classification_ids == acmg_persisted_ids["classifications"]
+                assert stage_event_count == 1
     finally:
         engine.dispose()
