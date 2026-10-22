@@ -3,19 +3,26 @@
 Upstream scientific stages are represented by durable successful checkpoints so this
 test targets the production reportability gate, not the full VCF-to-report pipeline.
 """
-from datetime import datetime, timezone
-from pathlib import Path
-from uuid import uuid4
 import gzip
+from datetime import UTC, datetime
+from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine, func, select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, AuditEvent, Case, Organization, Report, User, WorkflowStep,
+    Analysis,
+    AuditEvent,
+    Case,
+    Organization,
+    Report,
+    User,
+    WorkflowStep,
 )
 
 
@@ -84,7 +91,7 @@ def test_missing_reportability_disposition_blocks_report_creation_on_reexecution
                 status=AnalysisStatus.RUNNING, queue_task_id="reportability-gate-test",
                 reference_build="GRCh38",
                 configuration={"input_artifact_id": str(input_artifact.id)},
-                started_at=datetime.now(timezone.utc), completed_at=None,
+                started_at=datetime.now(UTC), completed_at=None,
                 created_by=user_id, analysis_version=1,
             ))
             db.flush()
@@ -117,11 +124,45 @@ def test_missing_reportability_disposition_blocks_report_creation_on_reexecution
         monkeypatch.setattr(workflow, "_classification_review_gate_ready", lambda *_args: True)
         # Exercise the workflow's real gate orchestration while deterministically
         # modeling the domain service's fail-closed result for missing dispositions.
-        monkeypatch.setattr(reportability, "evaluate_analysis", lambda *_args: None)
+        evaluation_calls = {"count": 0}
+
+        def fail_reportability_database_once(*_args):
+            evaluation_calls["count"] += 1
+            if evaluation_calls["count"] == 1:
+                raise OperationalError(
+                    "SELECT reportability decisions",
+                    {},
+                    RuntimeError("injected temporary database outage"),
+                )
+
+        monkeypatch.setattr(reportability, "evaluate_analysis", fail_reportability_database_once)
         monkeypatch.setattr(
             reportability, "final_reportability_state",
             lambda *_args: (False, ["missing_final_reportability_disposition"]),
         )
+
+        with pytest.raises(workflow.TransientWorkflowError) as retry_error:
+            workflow.run_variant_analysis(analysis_id)
+        assert retry_error.value.error_code == "REPORTABILITY_PERSISTENCE_RETRY_EXHAUSTED"
+
+        with LocalSession() as db:
+            analysis = db.get(Analysis, analysis_id)
+            gate = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "reportability",
+            ))
+            assert analysis.status == AnalysisStatus.RUNNING
+            assert analysis.completed_at is None
+            assert gate.status == StepStatus.RETRYING
+            assert gate.error_code == "REPORTABILITY_PERSISTENCE_RETRYING"
+            assert gate.metadata_json["next_step"] == "reportability"
+            assert db.scalar(select(func.count(Report.id)).where(
+                Report.analysis_id == analysis_id,
+            )) == 0
+            assert db.scalar(select(func.count(AuditEvent.id)).where(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "REPORTABILITY_PERSISTENCE_RETRY_SCHEDULED",
+            )) == 1
 
         for _attempt in range(2):
             workflow.run_variant_analysis(analysis_id)

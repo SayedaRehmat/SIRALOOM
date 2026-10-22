@@ -4167,6 +4167,23 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     payload={"next_step": "report"},
                 )
                 db.commit()
+            except SQLAlchemyError as exc:
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="reportability",
+                    error_code="REPORTABILITY_PERSISTENCE_RETRYING",
+                    error_message=str(exc),
+                    event_type="REPORTABILITY_PERSISTENCE_RETRY_SCHEDULED",
+                    actor_id="workflow",
+                    next_step="reportability",
+                )
+                raise TransientWorkflowError(
+                    "Reportability persistence failed; retrying without creating a report.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="REPORTABILITY_PERSISTENCE_RETRY_EXHAUSTED",
+                ) from exc
             except Exception as exc:
                 mark_step(
                     db,
