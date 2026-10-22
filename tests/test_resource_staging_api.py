@@ -281,7 +281,7 @@ def test_resource_activation_is_recorded_with_lifecycle_before_and_after(monkeyp
         engine.dispose()
 
 
-def test_resource_activation_survives_reanalysis_dispatch_failure(monkeypatch, tmp_path, caplog):
+def test_resource_activation_survives_reanalysis_dispatch_failure(monkeypatch, tmp_path):
     engine, db = _db()
     try:
         organization_id, user_id = uuid4(), uuid4()
@@ -300,6 +300,13 @@ def test_resource_activation_survives_reanalysis_dispatch_failure(monkeypatch, t
         )
         db.add_all([resource, qualification])
         db.commit()
+
+        log_calls = []
+
+        def capture_warning(message, *args):
+            log_calls.append((message, args))
+
+        monkeypatch.setattr(resources_api.logger, "warning", capture_warning)
 
         def fail_dispatch(*_args):
             raise OperationalError("broker unavailable; credential=must-not-be-logged")
@@ -321,9 +328,12 @@ def test_resource_activation_survives_reanalysis_dispatch_failure(monkeypatch, t
         assert result["status"] == "ACTIVE"
         assert result["reanalysis_scan_queued"] is False
         assert db.query(AuditEvent).filter_by(event_type="RESOURCE_VERSION_ACTIVATED").count() == 1
-        assert "daily scan will recover" in caplog.text
-        assert "OperationalError" in caplog.text
-        assert "must-not-be-logged" not in caplog.text
+        assert log_calls == [(
+            "Reanalysis scan dispatch failed; daily scan will recover "
+            "(error_type=%s)",
+            ("OperationalError",),
+        )]
+        assert "must-not-be-logged" not in repr(log_calls)
     finally:
         db.close()
         engine.dispose()
