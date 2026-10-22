@@ -1559,7 +1559,14 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
     ]
 
 
-def test_celery_retry_exhaustion_persists_terminal_failure():
+@pytest.mark.parametrize(
+    ("step_id", "error_code"),
+    [
+        ("annotate", "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"),
+        ("reportability", "REPORTABILITY_PERSISTENCE_RETRY_EXHAUSTED"),
+    ],
+)
+def test_celery_retry_exhaustion_persists_terminal_failure(step_id, error_code):
     from uuid import uuid4
 
     from sqlalchemy import create_engine, select
@@ -1649,49 +1656,54 @@ def test_celery_retry_exhaustion_persists_terminal_failure():
             WorkflowStep(
                 id=uuid4(),
                 analysis_id=analysis_id,
-                step_id="annotate",
-                step_order=3,
+                step_id=step_id,
+                step_order=3 if step_id == "annotate" else 9,
                 status=StepStatus.RETRYING,
                 attempt=3,
-                metadata_json={"next_step": "annotate"},
+                metadata_json={"next_step": step_id},
             )
         )
-        db.add(
-            AnalysisPartition(
-                id=uuid4(),
-                analysis_id=analysis_id,
-                step_id="annotate",
-                partition_key="0:1",
-                ordinal=0,
-                record_start=0,
-                record_end=1,
-                variant_count=1,
-                status="READY",
-                input_artifact_id=None,
-                metadata_json={},
-                resource_class="STANDARD",
-                cpu_request=1.0,
-                memory_mb=1024,
-                attempt=3,
-                lease_owner=None,
-                lease_expires_at=None,
-                error_code=None,
-                error_message=None,
-                started_at=None,
-                completed_at=None,
+        if step_id == "annotate":
+            db.add(
+                AnalysisPartition(
+                    id=uuid4(),
+                    analysis_id=analysis_id,
+                    step_id="annotate",
+                    partition_key="0:1",
+                    ordinal=0,
+                    record_start=0,
+                    record_end=1,
+                    variant_count=1,
+                    status="READY",
+                    input_artifact_id=None,
+                    metadata_json={},
+                    resource_class="STANDARD",
+                    cpu_request=1.0,
+                    memory_mb=1024,
+                    attempt=3,
+                    lease_owner=None,
+                    lease_expires_at=None,
+                    error_code=None,
+                    error_message=None,
+                    started_at=None,
+                    completed_at=None,
+                )
             )
-        )
         db.commit()
 
         assert celery_module._finalize_transient_retry_exhaustion(
             db,
             analysis_id,
             "provider remained unavailable after bounded retries",
+            error_code=error_code,
         ) is True
 
         analysis = db.get(Analysis, analysis_id)
         step = db.scalar(
-            select(WorkflowStep).where(WorkflowStep.analysis_id == analysis_id)
+            select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == step_id,
+            )
         )
         partition = db.scalar(
             select(AnalysisPartition).where(AnalysisPartition.analysis_id == analysis_id)
@@ -1706,11 +1718,15 @@ def test_celery_retry_exhaustion_persists_terminal_failure():
         assert analysis.status == AnalysisStatus.FAILED
         assert analysis.completed_at is not None
         assert step.status == StepStatus.FAILED
-        assert step.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+        assert step.error_code == error_code
         assert step.metadata_json["retry_exhausted"] is True
-        assert partition.status == "FAILED"
-        assert partition.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
-        assert audit
+        if step_id == "annotate":
+            assert partition.status == "FAILED"
+            assert partition.error_code == error_code
+        else:
+            assert partition is None
+        assert len(audit) == 1
+        assert audit[0].payload["error_code"] == error_code
 
 
 @pytest.mark.parametrize(
@@ -1762,6 +1778,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
     transient = variant_module.TransientWorkflowError(
         "provider remained unavailable",
         countdown=60,
+        error_code="REPORTABILITY_PERSISTENCE_RETRY_EXHAUSTED",
     )
     events = []
 
@@ -1804,6 +1821,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         assert received_analysis_id == UUID(analysis_id)
         assert error_message == str(transient)
         assert kwargs["task_id"] == task_id
+        assert kwargs["error_code"] == "REPORTABILITY_PERSISTENCE_RETRY_EXHAUSTED"
         events.append("finalize")
 
     def fail_if_retry_called(*_args, **_kwargs):
