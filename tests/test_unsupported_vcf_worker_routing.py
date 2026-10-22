@@ -1,6 +1,6 @@
 from hashlib import sha256
 from pathlib import Path
-from uuid import uuid4
+from uuid import uuid4, uuid5
 
 import pytest
 from sqlalchemy import create_engine, select
@@ -21,6 +21,69 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
 )
+from backend.app.workflows.variant import _check_routed_artifact_validation_replay
+
+
+def test_routed_artifact_replay_rejects_reference_package_replacement():
+    metadata = {
+        "reference_validation_status": "PASS",
+        "reference_package_id": "resource-v1",
+        "reference_package_version": "1",
+        "reference_fasta_sha256": "a" * 64,
+        "source_reference_allele_profile": {"result": "PASS"},
+    }
+
+    with pytest.raises(RuntimeError, match="different reference package identity"):
+        _check_routed_artifact_validation_replay(
+            metadata,
+            status="PASS",
+            reference_package={
+                "resource_id": "resource-v1",
+                "version": "2",
+                "fasta_sha256": "b" * 64,
+            },
+            active_reference_package=None,
+            reference_profile={"result": "PASS"},
+        )
+
+
+def test_routed_artifact_replay_rejects_changed_reference_allele_profile():
+    metadata = {
+        "reference_validation_status": "PASS",
+        "reference_package_id": "resource-v1",
+        "reference_package_version": "1",
+        "reference_fasta_sha256": "a" * 64,
+        "source_reference_allele_profile": {"result": "PASS"},
+    }
+
+    with pytest.raises(RuntimeError, match="different source allele profile"):
+        _check_routed_artifact_validation_replay(
+            metadata,
+            status="PASS",
+            reference_package={
+                "resource_id": "resource-v1",
+                "version": "1",
+                "fasta_sha256": "a" * 64,
+            },
+            active_reference_package=None,
+            reference_profile={"result": "PASS", "checked_record_count": 1},
+        )
+
+
+def test_routed_artifact_replay_preserves_validation_when_resource_is_unavailable():
+    assert _check_routed_artifact_validation_replay(
+        {
+            "reference_validation_status": "PASS",
+            "reference_package_id": "resource-v1",
+            "reference_package_version": "1",
+            "reference_fasta_sha256": "a" * 64,
+            "source_reference_allele_profile": {"result": "PASS"},
+        },
+        status="NOT_RUN",
+        reference_package=None,
+        active_reference_package=None,
+        reference_profile=None,
+    )
 
 
 def _vcf(columns: str, records: str, *, headers: str = "") -> str:
@@ -271,9 +334,12 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
         engine.dispose()
 
 
-@pytest.mark.parametrize("reference_mismatch", [False, True])
+@pytest.mark.parametrize(
+    ("reference_mismatch", "worker_loss"),
+    [(False, False), (True, False), (False, True)],
+)
 def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_block(
-    monkeypatch, tmp_path, reference_mismatch
+    monkeypatch, tmp_path, reference_mismatch, worker_loss
 ):
     """Exercise routing, reference validation, normalization persistence, and variant indexing in the worker."""
     import gzip
@@ -406,9 +472,82 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             }
 
         used_real_bcftools = bcftools_available()
+        if worker_loss and not used_real_bcftools:
+            pytest.skip("normalization worker-loss recovery requires pinned BCFtools")
         if not used_real_bcftools:
             monkeypatch.setattr(workflow, "normalize_vcf_with_bcftools", fake_normalize)
-        workflow.run_variant_analysis(analysis_id)
+        if worker_loss:
+            queue_module = importlib.import_module(
+                "backend.app.infrastructure.queue.celery_app"
+            )
+            monkeypatch.setattr(db_module, "engine", engine)
+            task_id = "gvcf-positive-test"
+            normalized_id = uuid5(
+                analysis_id, "siraloom:normalization:normalized-vcf:v3"
+            )
+            normalized_uri = store.uri_for_artifact(
+                case_id=case_id,
+                artifact_id=normalized_id,
+                filename="normalized.vcf.gz",
+            )
+            original_put_file = store.put_file
+            artifact_write_losses = {"remaining": 1}
+
+            def lose_worker_after_normalized_artifact_flush(**kwargs):
+                artifact = original_put_file(**kwargs)
+                if (
+                    kwargs.get("artifact_type") == "NORMALIZED_VCF"
+                    and artifact_write_losses["remaining"]
+                ):
+                    artifact_write_losses["remaining"] -= 1
+                    raise SystemExit("simulated worker loss after normalized file and row flush")
+                return artifact
+
+            monkeypatch.setattr(store, "put_file", lose_worker_after_normalized_artifact_flush)
+            normalization_calls = {"count": 0}
+            original_normalize = workflow.normalize_vcf_with_bcftools
+
+            def count_real_normalization(*args, **kwargs):
+                normalization_calls["count"] += 1
+                return original_normalize(*args, **kwargs)
+
+            monkeypatch.setattr(
+                workflow, "normalize_vcf_with_bcftools", count_real_normalization
+            )
+
+            def deliver(*, redelivered):
+                queue_module.run_analysis_task.push_request(
+                    id=task_id,
+                    retries=0,
+                    delivery_info={"redelivered": redelivered},
+                )
+                try:
+                    return queue_module.run_analysis_task.run(str(analysis_id))
+                finally:
+                    queue_module.run_analysis_task.pop_request()
+
+            with pytest.raises(SystemExit, match="simulated worker loss"):
+                deliver(redelivered=False)
+
+            with local_session() as db:
+                interrupted = db.get(Analysis, analysis_id)
+                interrupted_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "normalize",
+                ))
+                assert interrupted.status == AnalysisStatus.RUNNING
+                assert interrupted_step.status == StepStatus.RUNNING
+                assert db.scalar(select(Artifact).where(
+                    Artifact.analysis_id == analysis_id,
+                    Artifact.artifact_type == "NORMALIZED_VCF",
+                )) is None
+                assert store.exists(normalized_uri)
+                assert normalization_calls["count"] == 1
+
+            monkeypatch.setattr(store, "put_file", original_put_file)
+            deliver(redelivered=True)
+        else:
+            workflow.run_variant_analysis(analysis_id)
 
         with local_session() as db:
             step = db.scalar(select(WorkflowStep).where(
@@ -487,6 +626,24 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["source_artifact_id"] == str(input_artifact.id)
                 assert normalized.metadata_json["source_record_count"] == 5
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
+                if worker_loss:
+                    assert normalization_calls["count"] == 2
+                    normalized_rows = db.scalars(select(Artifact).where(
+                        Artifact.analysis_id == analysis_id,
+                        Artifact.artifact_type == "NORMALIZED_VCF",
+                    )).all()
+                    completed_events = db.scalars(select(AuditEvent).where(
+                        AuditEvent.analysis_id == analysis_id,
+                        AuditEvent.event_type == "NORMALIZATION_COMPLETED",
+                    )).all()
+                    recovery_events = db.scalars(select(AuditEvent).where(
+                        AuditEvent.analysis_id == analysis_id,
+                        AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
+                    )).all()
+                    assert len(normalized_rows) == 1
+                    assert len(completed_events) == 1
+                    assert len(recovery_events) == 1
+                    assert recovery_events[0].payload["recovered_steps"] == ["normalize"]
                 assert normalized.metadata_json["record_count"] == 2
                 assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 if used_real_bcftools:

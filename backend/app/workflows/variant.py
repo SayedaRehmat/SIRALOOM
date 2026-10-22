@@ -1332,6 +1332,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             profile: dict[str, int] = {}
             routing: dict = {}
             routed_artifacts: list[Artifact] = []
+            validated_reference_package: dict | None = None
 
             def set_routed_reference_validation(
                 status: str,
@@ -1342,6 +1343,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             ) -> None:
                 for artifact in routed_artifacts:
                     metadata = dict(artifact.metadata_json or {})
+                    preserve_prior_validation = _check_routed_artifact_validation_replay(
+                        metadata,
+                        status=status,
+                        reference_package=reference_package,
+                        active_reference_package=validated_reference_package,
+                        reference_profile=reference_profile,
+                    )
+                    if preserve_prior_validation:
+                        # The prior successful validation remains provenance for
+                        # these immutable source bytes. The current attempt's blocked
+                        # state is recorded on the workflow step.
+                        continue
                     metadata.update({
                         "reference_validation_status": status,
                         "reference_validation_reason_code": reason_code,
@@ -1599,6 +1612,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     expected_genome_build=reference_build,
                     allow_approved_qualified=resolution.used_fallback,
                 )
+                validated_reference_package = reference_package
                 reference_fasta_path = Path(reference_package["fasta_path"])
 
                 # The reference package is a governed executable resource. The
@@ -4673,6 +4687,56 @@ def _existing_normalized_artifact(db: Session, analysis_id: UUID) -> Artifact | 
     )
 
 
+def _check_routed_artifact_validation_replay(
+    metadata: dict,
+    *,
+    status: str,
+    reference_package: dict | None,
+    active_reference_package: dict | None,
+    reference_profile: dict | None,
+) -> bool:
+    """Check a replay against prior successful validation provenance.
+
+    Returns whether an earlier successful validation should be retained because
+    the current attempt could not rerun validation. A new reference identity or
+    source profile must never silently replace the one already recorded.
+    """
+    if metadata.get("reference_validation_status") != "PASS":
+        return False
+
+    current_package = reference_package or active_reference_package
+    if current_package is None:
+        if status == "PASS":
+            raise RuntimeError(
+                "A routed artifact cannot be marked reference-validated without a resolved package."
+            )
+        return status in {"PENDING", "NOT_RUN"}
+
+    prior_identity = (
+        metadata.get("reference_package_id"),
+        metadata.get("reference_package_version"),
+        metadata.get("reference_fasta_sha256"),
+    )
+    current_identity = (
+        current_package.get("resource_id"),
+        current_package.get("version"),
+        current_package.get("fasta_sha256"),
+    )
+    if prior_identity != current_identity:
+        raise RuntimeError(
+            "A previously reference-validated routed artifact cannot be reused with "
+            "a different reference package identity."
+        )
+
+    if status == "PASS" and reference_profile is not None:
+        if metadata.get("source_reference_allele_profile") != reference_profile:
+            raise RuntimeError(
+                "A previously reference-validated routed artifact produced a different "
+                "source allele profile on replay."
+            )
+    return status in {"PENDING", "NOT_RUN"}
+
+
 def _put_idempotent_stage_artifact(
     store,
     *,
@@ -4709,6 +4773,48 @@ def _put_idempotent_stage_artifact(
         # and normalization provenance must remain identical.
         expected_metadata.pop("normalization_command", None)
         existing_metadata.pop("normalization_command", None)
+        routed_validation_keys = {
+            "reference_validation_status",
+            "reference_validation_reason_code",
+            "reference_package_id",
+            "reference_package_version",
+            "reference_fasta_sha256",
+            "source_reference_allele_profile",
+        }
+        if expected_type in {
+            "GVCF_REFERENCE_BLOCKS",
+            "UNRESOLVED_GVCF_VARIANTS",
+            "STRUCTURAL_VARIANT_RECORDS",
+            "SPANNING_DELETION_RECORDS",
+        }:
+            existing_validation = {
+                key: existing_metadata.pop(key)
+                for key in routed_validation_keys
+                if key in existing_metadata
+            }
+            for key in routed_validation_keys:
+                expected_metadata.pop(key, None)
+            if existing_validation:
+                status = existing_validation.get("reference_validation_status")
+                if status not in {"PENDING", "PASS", "FAILED", "NOT_RUN"}:
+                    raise RuntimeError(
+                        f"Routed artifact {artifact_id} has invalid reference validation provenance."
+                    )
+                package_fields = {
+                    "reference_package_id",
+                    "reference_package_version",
+                    "reference_fasta_sha256",
+                }
+                present_package_fields = package_fields.intersection(existing_validation)
+                if present_package_fields and present_package_fields != package_fields:
+                    raise RuntimeError(
+                        f"Routed artifact {artifact_id} has incomplete reference package provenance."
+                    )
+                profile = existing_validation.get("source_reference_allele_profile")
+                if profile is not None and not isinstance(profile, dict):
+                    raise RuntimeError(
+                        f"Routed artifact {artifact_id} has invalid reference allele profile provenance."
+                    )
         if (
             existing.case_id != case_id
             or existing.analysis_id != analysis_id
