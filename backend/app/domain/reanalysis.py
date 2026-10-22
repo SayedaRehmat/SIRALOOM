@@ -458,8 +458,27 @@ def _previous_step(step: str) -> str | None:
 RESOURCE_TRIGGER_TYPE = {"REFERENCE": "REFERENCE_UPDATE", "POPULATION": "POPULATION_UPDATE", "ANNOTATION": "ANNOTATION_UPDATE", "EVIDENCE": "EVIDENCE_UPDATE", "ACMG_RULE": "ACMG_RULE_UPDATE"}
 
 
-def scan_active_resources_for_reanalysis(db: Session) -> int:
-    resources = db.scalars(select(Resource).where(Resource.status == "ACTIVE").order_by(Resource.name, Resource.version)).all()
+def scan_active_resources_for_reanalysis(
+    db: Session, *, organization_id: UUID | None = None
+) -> int:
+    """Create candidates for active resource changes.
+
+    The daily system scan is global. A scan requested by a laboratory resource
+    activation is scoped to that organization, including shared resources used
+    by its analyses, so a tenant action cannot create another lab's candidates.
+    """
+    requested_organization_id = organization_id
+    resource_query = select(Resource).where(Resource.status == "ACTIVE")
+    if requested_organization_id is not None:
+        resource_query = resource_query.where(
+            or_(
+                Resource.organization_id.is_(None),
+                Resource.organization_id == requested_organization_id,
+            )
+        )
+    resources = db.scalars(
+        resource_query.order_by(Resource.name, Resource.version)
+    ).all()
     total_candidates = 0
     for resource in resources:
         trigger_type = RESOURCE_TRIGGER_TYPE.get(str(resource.resource_type).upper())
@@ -467,6 +486,8 @@ def scan_active_resources_for_reanalysis(db: Session) -> int:
             continue
         if resource.organization_id is not None:
             organization_ids = [resource.organization_id]
+        elif requested_organization_id is not None:
+            organization_ids = [requested_organization_id]
         else:
             snapshot_resource = aliased(Resource)
             organization_ids = db.scalars(
@@ -490,8 +511,9 @@ def scan_active_resources_for_reanalysis(db: Session) -> int:
                     ),
                 )
                 .distinct()
+                .order_by(Case.organization_id)
             ).all()
-        for organization_id in organization_ids:
-            candidates = detect_change(db, organization_id=organization_id, trigger_type=trigger_type, resource_kind=str(resource.resource_type).upper(), resource_name=resource.name, new_version=resource.version, new_checksum=resource.checksum, resource_id=resource.id)
+        for candidate_organization_id in organization_ids:
+            candidates = detect_change(db, organization_id=candidate_organization_id, trigger_type=trigger_type, resource_kind=str(resource.resource_type).upper(), resource_name=resource.name, new_version=resource.version, new_checksum=resource.checksum, resource_id=resource.id)
             total_candidates += len(candidates)
     return total_candidates

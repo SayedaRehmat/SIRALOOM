@@ -602,13 +602,17 @@ if Celery is not None:
 
 
     @celery_app.task(name="siraloom.scan_reanalysis_resources", autoretry_for=(), acks_late=True)
-    def scan_reanalysis_resources():
+    def scan_reanalysis_resources(organization_id: str | None = None):
+        from uuid import UUID
         from backend.app.domain.reanalysis import scan_active_resources_for_reanalysis
         from backend.app.infrastructure.db.session import SessionLocal
 
+        scoped_organization_id = UUID(organization_id) if organization_id else None
         db = SessionLocal()
         try:
-            candidates_created = scan_active_resources_for_reanalysis(db)
+            candidates_created = scan_active_resources_for_reanalysis(
+                db, organization_id=scoped_organization_id
+            )
             return {"candidates_created": candidates_created}
         finally:
             db.close()

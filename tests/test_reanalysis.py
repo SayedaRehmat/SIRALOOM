@@ -415,6 +415,111 @@ def test_tenant_resource_release_does_not_create_candidates_for_same_named_other
         assert db.query(ReanalysisChangeEvent).count() == 0
 
 
+def test_tenant_scoped_scan_of_shared_resource_creates_candidates_only_for_requested_lab():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, User.__table__, OrganizationMembership.__table__,
+            CaseAccessGrant.__table__, Case.__table__, Analysis.__table__,
+            AnalysisResourceSnapshot.__table__, ReanalysisChangeEvent.__table__,
+            ReanalysisCandidate.__table__, Notification.__table__, Resource.__table__,
+        ],
+    )
+    organizations = [uuid4(), uuid4(), uuid4()]
+
+    with Session(engine) as db:
+        db.add_all([
+            Organization(id=organization_id, name=f"Lab {index}", external_identifier=None)
+            for index, organization_id in enumerate(organizations)
+        ])
+        for index, organization_id in enumerate(organizations):
+            user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4()
+            db.add(User(
+                id=user_id, organization_id=organization_id, external_subject=None,
+                email=f"lab{index}@test.local", display_name=f"Lab {index} user",
+                role="bioinformatician", status="ACTIVE",
+            ))
+            db.add(OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=user_id,
+                role="bioinformatician", status="ACTIVE",
+            ))
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"SCOPED-{index}", status="ACTIVE",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.add(CaseAccessGrant(
+                id=uuid4(), case_id=case_id, user_id=user_id, can_read=True,
+                can_write=True, can_review=False, granted_by=user_id,
+            ))
+            db.add(Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=None,
+                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1", workflow_version="2.1",
+                status="SUCCEEDED", queue_task_id=None, reference_build="GRCh38",
+                configuration={}, started_at=None, completed_at=None,
+                created_by=user_id, analysis_version=1,
+            ))
+            db.add_all([
+                AnalysisResourceSnapshot(
+                    id=uuid4(), analysis_id=analysis_id, resource_id=None,
+                    resource_kind="POPULATION", resource_name="A Shared gnomAD",
+                    provider="gnomAD", version="v3", checksum="old-population",
+                    genome_build="GRCh38", metadata_json={},
+                ),
+                AnalysisResourceSnapshot(
+                    id=uuid4(), analysis_id=analysis_id, resource_id=None,
+                    resource_kind="EVIDENCE", resource_name="B Shared ClinVar",
+                    provider="ClinVar", version="2025", checksum="old-evidence",
+                    genome_build="GRCh38", metadata_json={},
+                ),
+            ])
+        db.add_all([
+            Resource(
+                id=uuid4(), organization_id=None, name="A Shared gnomAD",
+                provider="gnomAD", resource_type="POPULATION", version="v4",
+                genome_build="GRCh38", access_method="GRAPHQL", license_text=None,
+                checksum="new-population", location=None, status="ACTIVE",
+                population_definition={}, metadata_json={},
+            ),
+            Resource(
+                id=uuid4(), organization_id=None, name="B Shared ClinVar",
+                provider="ClinVar", resource_type="EVIDENCE", version="2026",
+                genome_build="GRCh38", access_method="API", license_text=None,
+                checksum="new-evidence", location=None, status="ACTIVE",
+                population_definition=None, metadata_json={},
+            ),
+        ])
+        db.commit()
+
+        assert scan_active_resources_for_reanalysis(
+            db, organization_id=organizations[0]
+        ) == 2
+        candidates = db.query(ReanalysisCandidate).all()
+        assert len(candidates) == 2
+        assert {candidate.organization_id for candidate in candidates} == {organizations[0]}
+        assert {notice.organization_id for notice in db.query(Notification).all()} == {
+            organizations[0]
+        }
+
+        assert scan_active_resources_for_reanalysis(
+            db, organization_id=organizations[1]
+        ) == 2
+        candidates = db.query(ReanalysisCandidate).all()
+        assert {candidate.organization_id for candidate in candidates} == set(organizations[:2])
+        assert {notice.organization_id for notice in db.query(Notification).all()} == set(organizations[:2])
+
+        # A daily global scan must continue across shared resources and find
+        # every lab. Reusing the organization loop variable used to narrow the
+        # next resource query to only the final lab visited.
+        assert scan_active_resources_for_reanalysis(db) == 2
+        candidates = db.query(ReanalysisCandidate).all()
+        assert len(candidates) == 6
+        assert {candidate.organization_id for candidate in candidates} == set(organizations)
+        assert {notice.organization_id for notice in db.query(Notification).all()} == set(organizations)
+
+
 def test_celery_reanalysis_scan_is_registered_on_daily_utc_schedule():
     from backend.app.infrastructure.queue.celery_app import celery_app
 

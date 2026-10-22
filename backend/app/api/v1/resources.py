@@ -1,35 +1,46 @@
 from __future__ import annotations
 
-from uuid import UUID, uuid4
+import logging
+import re
 from datetime import datetime, timezone
 from pathlib import Path
-import re
 from urllib.parse import urlparse
+from uuid import UUID, uuid4
 
+from celery.exceptions import CeleryError
 from fastapi import APIRouter, Depends, HTTPException
+from kombu.exceptions import KombuError
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field
 
 from backend.app.auth.authorization import require_role
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.config import settings
-from backend.app.domain.resources import (
-    ResourceRegistryError, decide_resource_approval, register_resource_version,
-    request_resource_approval,
-)
-from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Resource, ResourceApproval, ResourceQualification, ResourceStaging
-from backend.app.infrastructure.db.session import get_db
+from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.domain.resource_staging import (
     ResourceStagingError,
     create_staging_candidate,
     prepare_staging,
 )
-from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.resources import (
+    ResourceRegistryError,
+    decide_resource_approval,
+    register_resource_version,
+    request_resource_approval,
+)
+from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.models import (
+    Resource,
+    ResourceApproval,
+    ResourceQualification,
+    ResourceStaging,
+)
+from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/resources", tags=["resources"])
+logger = logging.getLogger(__name__)
 
 
 class ResourceStagingCreateRequest(BaseModel):
@@ -326,18 +337,12 @@ def register_resource(
         )
     db.commit()
 
-    # Resource registration is durable first. The scan is advisory and must
-    # never make a successful registry write look failed if the queue is
-    # temporarily unavailable; the daily Beat schedule remains the recovery
-    # path.
+    # Only a platform administrator can register an ACTIVE resource. A
+    # laboratory's CANDIDATE resource has no effect on active-release scans;
+    # its organization-scoped scan is queued only after authorized activation.
     scan_queued = False
-    if created:
-        try:
-            from backend.app.infrastructure.queue.celery_app import scan_reanalysis_resources
-            scan_reanalysis_resources.delay()
-            scan_queued = True
-        except Exception:
-            scan_queued = False
+    if created and resource.status == "ACTIVE" and principal.role == "platform_admin":
+        scan_queued = _queue_reanalysis_scan(resource.organization_id)
 
     return {
         "resource_id": str(resource.id),
@@ -839,9 +844,33 @@ def activate_resource(
         payload={"qualification_version": str(payload.get("qualification_version") or "")},
     )
     db.commit()
+    scan_queued = _queue_reanalysis_scan(row.organization_id)
     return {
         "resource_id": str(row.id),
         "organization_id": str(row.organization_id) if row.organization_id else None,
         "status": row.status,
         "version": row.version,
+        "reanalysis_scan_queued": scan_queued,
     }
+
+
+def _queue_reanalysis_scan(organization_id: UUID | None) -> bool:
+    """Queue a scoped scan; daily global scanning recovers broker outages."""
+    try:
+        from backend.app.infrastructure.queue.celery_app import scan_reanalysis_resources
+
+        if organization_id is None:
+            scan_reanalysis_resources.delay()
+        else:
+            scan_reanalysis_resources.delay(str(organization_id))
+    except (CeleryError, KombuError, ImportError) as exc:
+        # The resource change is already committed. Keep its API result honest
+        # without logging broker URLs or other exception text that may contain
+        # credentials; the daily system scan is the recovery path.
+        logger.warning(
+            "Reanalysis scan dispatch failed; daily scan will recover "
+            "(error_type=%s)",
+            type(exc).__name__,
+        )
+        return False
+    return True

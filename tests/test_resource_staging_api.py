@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
+from kombu.exceptions import OperationalError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -166,9 +167,10 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
                 "execution": {"provider_id": "NCBI", "provider_version": "2026-10"},
             },
         }
+        scheduled_scans = []
         monkeypatch.setattr(
             "backend.app.infrastructure.queue.celery_app.scan_reanalysis_resources",
-            SimpleNamespace(delay=lambda: None),
+            SimpleNamespace(delay=lambda *args: scheduled_scans.append(args)),
         )
         principal = _principal(organization_id)
         result = resources_api.register_resource(payload, db, principal)
@@ -181,6 +183,8 @@ def test_register_public_file_resource_assigns_organization_scoped_destination(m
         assert event.subject_id == str(resource.id)
         assert event.after_state["status"] == "CANDIDATE"
         assert event.workflow["organization_id"] == str(organization_id)
+        assert result["reanalysis_scan_queued"] is False
+        assert scheduled_scans == []
         duplicate = resources_api.register_resource(payload, db, principal)
         assert duplicate["created"] is False
         assert db.query(AuditEvent).filter_by(event_type="RESOURCE_VERSION_REGISTERED").count() == 1
@@ -251,8 +255,13 @@ def test_resource_activation_is_recorded_with_lifecycle_before_and_after(monkeyp
         db.add_all([resource, qualification])
         db.commit()
         principal = _principal(organization_id)
+        scheduled_scans = []
+        monkeypatch.setattr(
+            "backend.app.infrastructure.queue.celery_app.scan_reanalysis_resources",
+            SimpleNamespace(delay=lambda *args: scheduled_scans.append(args)),
+        )
 
-        resources_api.activate_resource(
+        result = resources_api.activate_resource(
             resource.id,
             {"qualification_version": "qualification-test-v1"},
             db,
@@ -265,6 +274,56 @@ def test_resource_activation_is_recorded_with_lifecycle_before_and_after(monkeyp
         assert event.before_state["resource"]["status"] == "QUALIFIED"
         assert event.after_state["resource"]["status"] == "ACTIVE"
         assert event.workflow["organization_id"] == str(organization_id)
+        assert result["reanalysis_scan_queued"] is True
+        assert scheduled_scans == [(str(organization_id),)]
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_resource_activation_survives_reanalysis_dispatch_failure(monkeypatch, tmp_path, caplog):
+    engine, db = _db()
+    try:
+        organization_id, user_id = uuid4(), uuid4()
+        db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
+        resource = Resource(
+            id=uuid4(), organization_id=organization_id, name="Qualified release",
+            provider="TestProvider", resource_type="CLINICAL_DATABASE", version="1",
+            genome_build="GRCh38", access_method="LOCAL", checksum="d" * 64,
+            location=str(tmp_path / "qualified-release"), status="QUALIFIED",
+            metadata_json={}, population_definition=None,
+        )
+        qualification = ResourceQualification(
+            id=uuid4(), resource_id=resource.id,
+            qualification_version="qualification-test-v1", status="QUALIFIED",
+            checks_json={"passed": True}, qualified_by=user_id,
+        )
+        db.add_all([resource, qualification])
+        db.commit()
+
+        def fail_dispatch(*_args):
+            raise OperationalError("broker unavailable; credential=must-not-be-logged")
+
+        monkeypatch.setattr(
+            "backend.app.infrastructure.queue.celery_app.scan_reanalysis_resources",
+            SimpleNamespace(delay=fail_dispatch),
+        )
+
+        result = resources_api.activate_resource(
+            resource.id,
+            {"qualification_version": "qualification-test-v1"},
+            db,
+            _principal(organization_id),
+        )
+
+        db.refresh(resource)
+        assert resource.status == "ACTIVE"
+        assert result["status"] == "ACTIVE"
+        assert result["reanalysis_scan_queued"] is False
+        assert db.query(AuditEvent).filter_by(event_type="RESOURCE_VERSION_ACTIVATED").count() == 1
+        assert "daily scan will recover" in caplog.text
+        assert "OperationalError" in caplog.text
+        assert "must-not-be-logged" not in caplog.text
     finally:
         db.close()
         engine.dispose()

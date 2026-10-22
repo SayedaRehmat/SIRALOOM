@@ -1,6 +1,6 @@
 """Regression tests for Celery task registration and durable dispatch fencing."""
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -39,6 +39,64 @@ def test_every_periodic_beat_entry_references_a_registered_task():
 
     assert scheduled_names
     assert scheduled_names <= set(app.tasks.keys())
+
+
+def test_every_registered_application_task_has_an_explicit_scope_classification():
+    app = queue.celery_app
+    workload_tasks = {
+        "backend.app.infrastructure.queue.celery_app.run_analysis_task",
+        "backend.app.infrastructure.queue.celery_app.run_case_export_task",
+        "siraloom.stage_resource_release",
+    }
+    system_tasks = {
+        "siraloom.discover_scientific_resources",
+        "siraloom.scan_reanalysis_resources",
+        "siraloom.dispatch_pending_analysis_outbox",
+        "siraloom.recover_orphaned_analysis_dispatches",
+        "siraloom.dispatch_pending_case_export_outbox",
+        "siraloom.recover_orphaned_case_export_dispatches",
+    }
+
+    registered = {
+        name for name in app.tasks
+        if name in workload_tasks | system_tasks
+    }
+    scheduled = {
+        entry["task"] for entry in app.conf.beat_schedule.values()
+    }
+
+    assert registered == workload_tasks | system_tasks
+    assert scheduled == system_tasks
+    assert not scheduled & workload_tasks
+
+
+@pytest.mark.parametrize("organization_id", [None, str(uuid4())])
+def test_reanalysis_scan_task_passes_scope_to_domain_scanner(monkeypatch, organization_id):
+    from backend.app.infrastructure.db import session as session_module
+
+    class FakeDatabase:
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    db = FakeDatabase()
+    calls = []
+    monkeypatch.setattr(session_module, "SessionLocal", lambda: db)
+
+    def scan(actual_db, *, organization_id):
+        calls.append((actual_db, organization_id))
+        return 3
+
+    monkeypatch.setattr(
+        "backend.app.domain.reanalysis.scan_active_resources_for_reanalysis", scan
+    )
+
+    result = queue.scan_reanalysis_resources.run(organization_id)
+
+    assert result == {"candidates_created": 3}
+    assert calls == [(db, UUID(organization_id) if organization_id else None)]
+    assert db.closed is True
 
 
 def test_worker_delivery_configuration_rejects_lost_worker_tasks():
