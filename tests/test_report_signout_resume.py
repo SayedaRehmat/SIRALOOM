@@ -1,9 +1,16 @@
-from fastapi import HTTPException
 import pytest
-from sqlalchemy import select
+from fastapi import HTTPException
+from sqlalchemy import func, select
 
 from backend.app.domain.enums import AnalysisStatus
-from backend.app.infrastructure.db.models import Analysis, AnalysisDispatch, Artifact, Report
+from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.report_integrity import has_valid_signed_artifact
+from backend.app.infrastructure.db.models import (
+    AnalysisDispatch,
+    Artifact,
+    AuditEvent,
+    Report,
+)
 from tests.test_reporting_signout import seed_finalizable_report
 
 
@@ -70,6 +77,75 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     assert dispatches[0].status == "PENDING"
     assert analysis.queue_task_id == str(dispatches[0].id)
     assert published == [str(dispatches[0].id)]
+    db.close()
+
+
+def test_signout_recovers_after_filesystem_write_before_database_commit(
+    monkeypatch, tmp_path
+):
+    """A retry repairs the DB link after a worker dies with a signed file on disk."""
+    from backend.app.reporting import finalization
+
+    db, reviewer, _analysis, report = seed_finalizable_report()
+    monkeypatch.setattr(
+        "backend.app.config.settings.artifact_root",
+        str(tmp_path / "artifacts"),
+    )
+    monkeypatch.setattr(finalization, "render_pdf", lambda _content: b"%PDF-filesystem-replay%")
+    real_persist_pdf_artifact = finalization._persist_pdf_artifact
+    worker_loss = {"artifact": None}
+
+    def lose_worker_after_artifact_flush(*args, **kwargs):
+        artifact = real_persist_pdf_artifact(*args, **kwargs)
+        worker_loss["artifact"] = artifact
+        raise SystemExit(87)
+
+    monkeypatch.setattr(
+        finalization, "_persist_pdf_artifact", lose_worker_after_artifact_flush
+    )
+    with pytest.raises(SystemExit, match="87"):
+        finalization.finalize_report(
+            db,
+            report_id=report.id,
+            approver_id=reviewer.id,
+            reason="Authorized laboratory sign-out",
+        )
+
+    orphan_path = local_path_from_uri(worker_loss["artifact"].storage_uri)
+    assert orphan_path is not None and orphan_path.is_file()
+    assert db.get(Artifact, worker_loss["artifact"].id) is not None
+    db.rollback()
+    db.refresh(report)
+    assert report.status == "DRAFT"
+    assert report.signed_artifact_id is None
+    assert db.get(Artifact, worker_loss["artifact"].id) is None
+    # The filesystem write cannot participate in the SQL transaction. A real
+    # process loss leaves an orphan until this deterministic retry reuses it.
+    assert orphan_path.is_file()
+
+    monkeypatch.setattr(
+        finalization, "_persist_pdf_artifact", real_persist_pdf_artifact
+    )
+    signed = finalization.finalize_report(
+        db,
+        report_id=report.id,
+        approver_id=reviewer.id,
+        reason="Authorized laboratory sign-out",
+    )
+    db.commit()
+
+    assert signed.status == "FINAL"
+    assert signed.signed_artifact_id == worker_loss["artifact"].id
+    assert signed.signed_sha256 == worker_loss["artifact"].sha256
+    assert has_valid_signed_artifact(db, signed)
+    assert db.scalar(select(func.count(Artifact.id)).where(
+        Artifact.id == signed.signed_artifact_id,
+    )) == 1
+    assert db.scalar(select(func.count(AuditEvent.id)).where(
+        AuditEvent.analysis_id == signed.analysis_id,
+        AuditEvent.event_type == "REPORT_APPROVED",
+    )) == 1
+    assert orphan_path.read_bytes() == b"%PDF-filesystem-replay%"
     db.close()
 
 
