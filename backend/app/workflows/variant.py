@@ -661,6 +661,7 @@ def _apply_reanalysis_reuse(db: Session, analysis: Analysis) -> None:
     parent_steps = {s.step_id: s for s in db.scalars(select(WorkflowStep).where(WorkflowStep.analysis_id == parent_id)).all()}
     child_steps = {s.step_id: s for s in db.scalars(select(WorkflowStep).where(WorkflowStep.analysis_id == analysis.id)).all()}
     from uuid import uuid4
+    artifact_id_map: dict[str, str] = {}
 
     for step_id, order in WORKFLOW_STEPS:
         if order > max_order:
@@ -683,7 +684,7 @@ def _apply_reanalysis_reuse(db: Session, analysis: Analysis) -> None:
     if max_order >= STEP_ORDER["normalize"]:
         parent_normalized = _existing_normalized_artifact(db, parent_id)
         if parent_normalized and _existing_normalized_artifact(db, analysis.id) is None:
-            db.add(Artifact(
+            copied_normalized = Artifact(
                 id=uuid4(), analysis_id=analysis.id, case_id=analysis.case_id,
                 artifact_type=parent_normalized.artifact_type, filename=parent_normalized.filename,
                 media_type=parent_normalized.media_type, size_bytes=parent_normalized.size_bytes,
@@ -692,7 +693,151 @@ def _apply_reanalysis_reuse(db: Session, analysis: Analysis) -> None:
                 paired_artifact_id=parent_normalized.paired_artifact_id,
                 validation_status=parent_normalized.validation_status,
                 metadata_json={**(parent_normalized.metadata_json or {}), "reused_from_analysis_id": str(parent_id)},
-            ))
+                created_at=parent_normalized.created_at,
+            )
+            db.add(copied_normalized)
+            artifact_id_map[str(parent_normalized.id)] = str(copied_normalized.id)
+        elif parent_normalized:
+            child_normalized = _existing_normalized_artifact(db, analysis.id)
+            artifact_id_map[str(parent_normalized.id)] = str(child_normalized.id)
+
+        # Workflow step records are copied before their artifact rows. Remap
+        # every analysis-scoped artifact they reference into the child analysis;
+        # case-scoped source inputs remain shared and keep their original IDs.
+        referenced_ids: set[UUID] = set()
+        for step_id, order in WORKFLOW_STEPS:
+            if order > max_order:
+                continue
+            source = parent_steps.get(step_id)
+            if source is None or source.status != StepStatus.SUCCEEDED:
+                continue
+            for references in (source.input_artifacts or [], source.output_artifacts or []):
+                for reference in references:
+                    raw_id = reference.get("artifact_id") if isinstance(reference, dict) else reference
+                    try:
+                        referenced_ids.add(UUID(str(raw_id)))
+                    except (TypeError, ValueError):
+                        continue
+        for partition in db.scalars(select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == parent_id,
+            AnalysisPartition.step_id.in_([
+                name for name, order in WORKFLOW_STEPS if order <= max_order
+            ]),
+        )).all():
+            if partition.input_artifact_id is not None:
+                referenced_ids.add(partition.input_artifact_id)
+
+        pending_artifact_ids = list(referenced_ids)
+        while pending_artifact_ids:
+            referenced_id = pending_artifact_ids.pop()
+            referenced_artifact = db.get(Artifact, referenced_id)
+            if referenced_artifact is None or referenced_artifact.case_id != analysis.case_id:
+                raise RuntimeError("Reused workflow step references an artifact outside its case")
+            if referenced_artifact.analysis_id not in {None, parent_id}:
+                raise RuntimeError(
+                    "Reused workflow step references an artifact outside its parent analysis"
+                )
+            paired_id = referenced_artifact.paired_artifact_id
+            if paired_id is not None and paired_id not in referenced_ids:
+                referenced_ids.add(paired_id)
+                pending_artifact_ids.append(paired_id)
+
+        for source_id in referenced_ids:
+            key = str(source_id)
+            if key in artifact_id_map:
+                continue
+            source_artifact = db.get(Artifact, source_id)
+            if source_artifact is None or source_artifact.case_id != analysis.case_id:
+                raise RuntimeError("Reused workflow step references an artifact outside its case")
+            if source_artifact.analysis_id is None:
+                continue
+            if source_artifact.analysis_id != parent_id:
+                raise RuntimeError(
+                    "Reused workflow step references an artifact outside its parent analysis"
+                )
+            copied_artifact = Artifact(
+                id=uuid4(), analysis_id=analysis.id, case_id=source_artifact.case_id,
+                artifact_type=source_artifact.artifact_type,
+                filename=source_artifact.filename, media_type=source_artifact.media_type,
+                size_bytes=source_artifact.size_bytes, sha256=source_artifact.sha256,
+                storage_uri=source_artifact.storage_uri, genome_build=source_artifact.genome_build,
+                specimen_id=source_artifact.specimen_id,
+                paired_artifact_id=source_artifact.paired_artifact_id,
+                validation_status=source_artifact.validation_status,
+                metadata_json={
+                    **(source_artifact.metadata_json or {}),
+                    "reused_from_analysis_id": str(parent_id),
+                },
+                created_at=source_artifact.created_at,
+            )
+            db.add(copied_artifact)
+            artifact_id_map[key] = str(copied_artifact.id)
+
+        db.flush()
+
+        def remap_artifact_metadata(value):
+            if isinstance(value, dict):
+                result = {}
+                for key, item in value.items():
+                    if key in {"artifact_id", "indexed_artifact_id", "paired_artifact_id"}:
+                        result[key] = artifact_id_map.get(str(item), item)
+                    else:
+                        result[key] = remap_artifact_metadata(item)
+                return result
+            if isinstance(value, list):
+                return [remap_artifact_metadata(item) for item in value]
+            return value
+
+        for _source_id, copied_id in artifact_id_map.items():
+            copied_artifact = db.get(Artifact, UUID(copied_id))
+            if copied_artifact is None:
+                raise RuntimeError("Reused child artifact was not persisted")
+            if copied_artifact.paired_artifact_id is not None:
+                paired_id = artifact_id_map.get(str(copied_artifact.paired_artifact_id))
+                if paired_id is not None:
+                    copied_artifact.paired_artifact_id = UUID(paired_id)
+            copied_artifact.metadata_json = remap_artifact_metadata(
+                copied_artifact.metadata_json or {}
+            )
+            db.add(copied_artifact)
+
+        def remap_references(references):
+            remapped = []
+            for reference in references or []:
+                if isinstance(reference, dict):
+                    item = dict(reference)
+                    if item.get("artifact_id") is not None:
+                        item["artifact_id"] = artifact_id_map.get(
+                            str(item["artifact_id"]), str(item["artifact_id"])
+                        )
+                    remapped.append(item)
+                elif isinstance(reference, str):
+                    remapped.append(artifact_id_map.get(reference, reference))
+                else:
+                    remapped.append(reference)
+            return remapped
+
+        for step_id, order in WORKFLOW_STEPS:
+            if order > max_order:
+                continue
+            target = child_steps.get(step_id)
+            if target is not None and target.status == StepStatus.SUCCEEDED:
+                target.input_artifacts = remap_references(target.input_artifacts)
+                target.output_artifacts = remap_references(target.output_artifacts)
+                db.add(target)
+
+        for partition in db.scalars(select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == analysis.id,
+            AnalysisPartition.step_id.in_([
+                name for name, order in WORKFLOW_STEPS if order <= max_order
+            ]),
+        )).all():
+            if partition.input_artifact_id is not None:
+                mapped = artifact_id_map.get(str(partition.input_artifact_id))
+                if mapped is not None:
+                    partition.input_artifact_id = UUID(mapped)
+                    db.add(partition)
+
         for src in db.scalars(select(AnalysisPartition).where(
             AnalysisPartition.analysis_id == parent_id,
             AnalysisPartition.step_id == "normalize",
@@ -708,7 +853,10 @@ def _apply_reanalysis_reuse(db: Session, analysis: Analysis) -> None:
                     partition_key=src.partition_key, ordinal=src.ordinal,
                     record_start=src.record_start, record_end=src.record_end,
                     variant_count=src.variant_count, status="SUCCEEDED",
-                    input_artifact_id=src.input_artifact_id,
+                    input_artifact_id=UUID(artifact_id_map[str(src.input_artifact_id)])
+                    if src.input_artifact_id is not None
+                    and str(src.input_artifact_id) in artifact_id_map
+                    else src.input_artifact_id,
                     metadata_json={**(src.metadata_json or {}), "reused_from_analysis_id": str(parent_id)},
                     resource_class=src.resource_class, cpu_request=src.cpu_request,
                     memory_mb=src.memory_mb, attempt=src.attempt,

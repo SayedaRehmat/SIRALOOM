@@ -557,7 +557,9 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
     )
 
     organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
-    variant_id, normalized_artifact_id = uuid4(), uuid4()
+    variant_id, normalized_artifact_id, source_artifact_id, index_artifact_id = (
+        uuid4(), uuid4(), uuid4(), uuid4()
+    )
 
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Lifecycle Test Lab", external_identifier=None))
@@ -598,6 +600,13 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
                 metadata_json={},
             ))
 
+        db.add(Artifact(
+            id=source_artifact_id, analysis_id=None, case_id=case_id,
+            artifact_type="VCF", filename="input.vcf", media_type="text/vcf",
+            size_bytes=10, sha256="source-sha", storage_uri="file:///immutable/input.vcf",
+            genome_build="GRCh38", validation_status="VALIDATED", metadata_json={},
+        ))
+
         db.add(Variant(
             id=variant_id, genome_build="GRCh38", chromosome="1", position=100,
             reference="A", alternate="G", normalization_status="NORMALIZED",
@@ -613,12 +622,43 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
             artifact_type="NORMALIZED_VCF", filename="normalized.vcf.gz",
             media_type="application/gzip", size_bytes=10, sha256="normalized-sha",
             storage_uri="file:///immutable/normalized.vcf.gz", genome_build="GRCh38",
+            paired_artifact_id=index_artifact_id,
             validation_status="VALIDATED", metadata_json={},
         ))
+        db.add(Artifact(
+            id=index_artifact_id, analysis_id=analysis_id, case_id=case_id,
+            artifact_type="VCF_INDEX", filename="normalized.vcf.gz.csi",
+            media_type="application/octet-stream", size_bytes=5, sha256="index-sha",
+            storage_uri="file:///immutable/normalized.vcf.gz.csi", genome_build="GRCh38",
+            paired_artifact_id=normalized_artifact_id,
+            validation_status="VALIDATED",
+            metadata_json={"indexed_artifact_id": str(normalized_artifact_id)},
+        ))
+        validation_step = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis_id,
+            WorkflowStep.step_id == "validate_input",
+        ))
+        validation_step.input_artifacts = [{
+            "artifact_id": str(source_artifact_id), "sha256": "source-sha",
+        }]
+        validation_step.output_artifacts = [{
+            "artifact_id": str(source_artifact_id), "sha256": "source-sha",
+        }]
+        normalize_step = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis_id,
+            WorkflowStep.step_id == "normalize",
+        ))
+        normalize_step.input_artifacts = [{
+            "artifact_id": str(source_artifact_id), "sha256": "source-sha",
+        }]
+        normalize_step.output_artifacts = [
+            {"artifact_id": str(normalized_artifact_id), "sha256": "normalized-sha"},
+            {"artifact_id": str(index_artifact_id), "sha256": "index-sha"},
+        ]
         db.add(AnalysisPartition(
             id=uuid4(), analysis_id=analysis_id, step_id="normalize",
             partition_key="part-0001", ordinal=0, record_start=1, record_end=1,
-            variant_count=1, status="SUCCEEDED", input_artifact_id=None,
+            variant_count=1, status="SUCCEEDED", input_artifact_id=normalized_artifact_id,
             metadata_json={}, resource_class="LIGHT", cpu_request=0.1,
             memory_mb=128, attempt=1,
         ))
@@ -664,7 +704,8 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         _apply_reanalysis_reuse(db, child)
 
         child_validation = db.scalar(select(WorkflowStep).where(
-            WorkflowStep.analysis_id == child.id, WorkflowStep.step_id == "validate_input",
+            WorkflowStep.analysis_id == child.id,
+            WorkflowStep.step_id == "validate_input",
         ))
         child_normalize = db.scalar(select(WorkflowStep).where(
             WorkflowStep.analysis_id == child.id, WorkflowStep.step_id == "normalize",
@@ -672,10 +713,46 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
         child_annotation = db.scalars(select(Annotation).where(
             Annotation.analysis_id == child.id,
         )).all()
+        child_normalize_step = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == child.id,
+            WorkflowStep.step_id == "normalize",
+        ))
+        copied_normalized_artifact = db.scalar(select(Artifact).where(
+            Artifact.analysis_id == child.id,
+            Artifact.artifact_type == "NORMALIZED_VCF",
+        ))
+        copied_index_artifact = db.scalar(select(Artifact).where(
+            Artifact.analysis_id == child.id,
+            Artifact.artifact_type == "VCF_INDEX",
+        ))
 
         assert child_validation.status == "SUCCEEDED"
         assert child_normalize.status == "SUCCEEDED"
         assert child_annotation and child_annotation[0].payload == {"gene": "TEST"}
+        assert child_validation.input_artifacts == [{
+            "artifact_id": str(source_artifact_id), "sha256": "source-sha",
+        }]
+        assert child_normalize_step.input_artifacts == [{
+            "artifact_id": str(source_artifact_id), "sha256": "source-sha",
+        }]
+        assert copied_normalized_artifact is not None
+        assert copied_normalized_artifact.id != normalized_artifact_id
+        assert copied_index_artifact is not None
+        assert child_normalize_step.output_artifacts == [{
+            "artifact_id": str(copied_normalized_artifact.id), "sha256": "normalized-sha",
+        }, {
+            "artifact_id": str(copied_index_artifact.id), "sha256": "index-sha",
+        }]
+        assert copied_normalized_artifact.paired_artifact_id == copied_index_artifact.id
+        assert copied_index_artifact.paired_artifact_id == copied_normalized_artifact.id
+        assert copied_index_artifact.metadata_json["indexed_artifact_id"] == str(
+            copied_normalized_artifact.id
+        )
+        reused_partition = db.scalar(select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == child.id,
+            AnalysisPartition.step_id == "normalize",
+        ))
+        assert reused_partition.input_artifact_id == copied_normalized_artifact.id
 
         # Population is the first affected stage, so its output is not inherited.
         assert db.query(AnalysisPartition).filter(
