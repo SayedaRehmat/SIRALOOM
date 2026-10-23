@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import re
-from datetime import datetime, timezone
 import hashlib
 import json
+import re
+from datetime import UTC, datetime, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
@@ -11,12 +11,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import (
+    AuditEvent,
     OrganizationResourceBinding,
     Resource,
     ResourceApproval,
     ResourceApprovalAction,
     ResourceQualification,
-    AuditEvent,
 )
 
 _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -28,7 +28,7 @@ _ALLOWED_TYPES = frozenset({
     # workflow_resource_contracts and resource_profile_resolver so a resource
     # registered through the laboratory registry can actually satisfy the
     # capability it is intended to provide.
-    "REFERENCE_PACKAGE", "ANNOTATION_ENGINE", "ANNOTATION_CACHE",
+    "ANNOTATION_ENGINE", "ANNOTATION_CACHE",
     "POPULATION_SECONDARY", "CLINICAL_DATABASE", "GENE_DISEASE",
     "PHENOTYPE_ONTOLOGY", "COMPUTATIONAL_PREDICTOR", "SPLICING_PREDICTOR",
     "FUNCTIONAL_EVIDENCE", "LITERATURE_PROVIDER", "ACMG_RULE_SPECIFICATION",
@@ -38,10 +38,18 @@ _ALLOWED_TYPES = frozenset({
 RESOURCE_STATUSES = frozenset({
     "CANDIDATE", "QUALIFIED", "ACTIVE", "SUPERSEDED", "REJECTED", "QUARANTINED",
 })
+_APPROVABLE_RESOURCE_STATUSES = frozenset({"ACTIVE", "QUALIFIED", "SUPERSEDED"})
 
 
 class ResourceRegistryError(ValueError):
     pass
+
+
+def _require_approvable_resource_status(resource: Resource) -> None:
+    if resource.status not in _APPROVABLE_RESOURCE_STATUSES:
+        raise ResourceRegistryError(
+            f"resource status {resource.status!r} cannot be approved for organization use"
+        )
 
 
 def _normalize_checksum(checksum: str | None) -> str | None:
@@ -175,7 +183,7 @@ def qualify_resource_version(
     checks: dict,
     qualified_by: UUID | None,
 ) -> ResourceQualification:
-    resource = db.get(Resource, resource_id)
+    resource = db.get(Resource, resource_id, with_for_update=True)
     if resource is None:
         raise ResourceRegistryError("resource not found")
     if resource.status not in {"CANDIDATE", "QUALIFIED"}:
@@ -203,14 +211,14 @@ def qualify_resource_version(
             status=qualification_status,
             checks_json=checks,
             qualified_by=qualified_by,
-            qualified_at=datetime.now(timezone.utc),
+            qualified_at=datetime.now(UTC),
         )
         db.add(qualification)
     else:
         qualification.status = qualification_status
         qualification.checks_json = checks
         qualification.qualified_by = qualified_by
-        qualification.qualified_at = datetime.now(timezone.utc)
+        qualification.qualified_at = datetime.now(UTC)
 
     if passed:
         resource.status = "QUALIFIED"
@@ -268,7 +276,7 @@ def request_resource_approval(
     qualification_version: str,
     actor_id: UUID | None = None,
 ) -> ResourceApproval:
-    resource = db.get(Resource, resource_id)
+    resource = db.get(Resource, resource_id, with_for_update=True)
     if resource is None:
         raise ResourceRegistryError("resource not found")
     if resource.organization_id is not None and resource.organization_id != organization_id:
@@ -277,9 +285,10 @@ def request_resource_approval(
         ResourceQualification.resource_id == resource_id,
         ResourceQualification.qualification_version == qualification_version.strip(),
         ResourceQualification.status == "QUALIFIED",
-    ))
+    ).with_for_update())
     if qualification is None:
         raise ResourceRegistryError("matching successful qualification is required before approval")
+    _require_approvable_resource_status(resource)
     existing = db.scalar(select(ResourceApproval).where(
         ResourceApproval.resource_id == resource_id,
         ResourceApproval.organization_id == organization_id,
@@ -351,17 +360,20 @@ def decide_resource_approval(
         raise ResourceRegistryError("a documented reason is required for resource adoption decisions")
     approval = db.scalar(select(ResourceApproval).where(
         ResourceApproval.id == approval_id, ResourceApproval.organization_id == organization_id,
-    ))
+    ).with_for_update())
     if approval is None:
         raise ResourceRegistryError("approval request not found")
     if approval.status != "PENDING":
         raise ResourceRegistryError(f"approval request is already {approval.status}")
     if approval.version != expected_version:
         raise ResourceRegistryError("approval request changed; refresh before deciding")
-    resource = db.get(Resource, approval.resource_id)
-    qualification = db.get(ResourceQualification, approval.qualification_id)
+    resource = db.get(Resource, approval.resource_id, with_for_update=True)
+    qualification = db.get(
+        ResourceQualification, approval.qualification_id, with_for_update=True
+    )
     if resource is None:
         raise ResourceRegistryError("resource not found")
+    _require_approvable_resource_status(resource)
     if resource.organization_id is not None and resource.organization_id != organization_id:
         raise ResourceRegistryError("resource is owned by another organization")
     if (
@@ -378,7 +390,7 @@ def decide_resource_approval(
         ResourceApproval.status == "PENDING",
         ResourceApproval.version == expected_version,
     ).values(
-        status=decision, version=next_version, decided_at=datetime.now(timezone.utc),
+        status=decision, version=next_version, decided_at=datetime.now(UTC),
         decided_by=actor_id, reason=reason,
     ))
     if result.rowcount != 1:
@@ -419,7 +431,7 @@ def decide_resource_approval(
             binding.previous_resource_id = previous_resource_id
             binding.resource_id = resource.id
             binding.bound_by = actor_id
-            binding.bound_at = datetime.now(timezone.utc)
+            binding.bound_at = datetime.now(UTC)
             binding.reason = reason
             binding.version += 1
 

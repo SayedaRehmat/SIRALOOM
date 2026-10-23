@@ -192,6 +192,70 @@ def test_repeated_adoption_request_reuses_the_same_pending_approval():
         assert second.version == 1
 
 
+@pytest.mark.parametrize("resource_status", ["CANDIDATE", "REJECTED", "QUARANTINED"])
+def test_resource_in_blocked_lifecycle_state_cannot_be_submitted_for_approval(
+    resource_status,
+):
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab Blocked Resource", external_identifier=None)
+        db.add(org)
+        db.flush()
+        resource = _qualified(
+            db, name="BlockedDB", version="1", checksum="7" * 64
+        )
+        resource.status = resource_status
+
+        with pytest.raises(ResourceRegistryError, match="cannot be approved"):
+            request_resource_approval(
+                db,
+                resource_id=resource.id,
+                organization_id=org.id,
+                qualification_version="qualification-v1",
+            )
+
+        assert db.scalars(select(ResourceApproval)).all() == []
+        assert db.scalars(select(OrganizationResourceBinding)).all() == []
+    engine.dispose()
+
+
+def test_resource_quarantined_after_request_cannot_be_approved():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab Quarantine Race", external_identifier=None)
+        user = User(
+            id=uuid4(), organization_id=org.id, display_name="Director",
+            role="lab_director", status="ACTIVE",
+        )
+        db.add_all([org, user])
+        db.flush()
+        resource = _qualified(
+            db, name="QuarantinedDB", version="1", checksum="6" * 64
+        )
+        approval = request_resource_approval(
+            db,
+            resource_id=resource.id,
+            organization_id=org.id,
+            qualification_version="qualification-v1",
+        )
+        resource.status = "QUARANTINED"
+
+        with pytest.raises(ResourceRegistryError, match="cannot be approved"):
+            decide_resource_approval(
+                db,
+                approval_id=approval.id,
+                organization_id=org.id,
+                actor_id=user.id,
+                decision="APPROVED",
+                expected_version=1,
+                reason="Attempt adoption of quarantined resource",
+            )
+
+        assert approval.status == "PENDING"
+        assert db.scalars(select(OrganizationResourceBinding)).all() == []
+    engine.dispose()
+
+
 def test_rejection_records_release_decision_without_changing_existing_binding():
     engine = _engine()
     with Session(engine) as db:
