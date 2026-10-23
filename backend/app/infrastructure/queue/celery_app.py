@@ -962,7 +962,14 @@ if Celery is not None:
         metadata = dict(getattr(row, "metadata_json", None) or {})
         dispatch = dict(metadata.get("staging_dispatch") or {})
         status = str(dispatch.get("status") or "").upper()
-        return dispatch.get("task_id") == task_id and status in {"QUEUING", "PUBLISHED", "RUNNING"}
+        if dispatch.get("task_id") != task_id:
+            return False
+        if status in {"QUEUING", "PUBLISHED", "RUNNING"}:
+            return True
+        # A redelivery after the state/artifact commit is still the same
+        # capability. Permit its idempotent terminal response, but only when
+        # both durable records agree that this exact dispatch completed.
+        return status == "COMPLETED" and getattr(row, "status", None) == "STAGED"
 
 
     @celery_app.task(bind=True, name="siraloom.stage_resource_release", autoretry_for=(), acks_late=True, max_retries=3)
@@ -1024,10 +1031,10 @@ if Celery is not None:
             row = db.get(ResourceStaging, staging_uuid, with_for_update=True)
             if row is None:
                 return {"staging_id": staging_id, "status": "NOT_FOUND"}
-            if row.status == "STAGED":
-                return {"staging_id": staging_id, "status": "STAGED"}
             if not _resource_staging_dispatch_matches(row, self.request.id):
                 return {"staging_id": staging_id, "status": "REJECTED_STALE_DISPATCH"}
+            if row.status == "STAGED":
+                return {"staging_id": staging_id, "status": "STAGED"}
             if row.status == "STAGING":
                 recover_interrupted_staging(db, row)
                 db.commit()

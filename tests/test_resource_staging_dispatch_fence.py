@@ -15,11 +15,68 @@ from backend.app.infrastructure.queue import celery_app as queue
         ("dispatch-current", {"status": "PUBLISHED", "task_id": "dispatch-current"}, True),
         ("dispatch-current", {"status": "RUNNING", "task_id": "dispatch-current"}, True),
         ("dispatch-current", {"status": "QUEUING", "task_id": "dispatch-current"}, True),
+        ("dispatch-current", {"status": "COMPLETED", "task_id": "dispatch-current"}, True),
+        ("stale-dispatch", {"status": "COMPLETED", "task_id": "dispatch-current"}, False),
     ],
 )
 def test_resource_staging_worker_requires_current_persisted_dispatch(task_id, dispatch, expected):
     row = SimpleNamespace(metadata_json={"staging_dispatch": dispatch})
+    if dispatch["status"] == "COMPLETED":
+        row.status = "STAGED" if dispatch["task_id"] == task_id else "STAGING"
     assert queue._resource_staging_dispatch_matches(row, task_id) is expected
+
+
+@pytest.mark.parametrize(
+    ("task_id", "dispatch_status", "expected"),
+    [
+        ("stale-dispatch", "PUBLISHED", "REJECTED_STALE_DISPATCH"),
+        ("stale-dispatch", "COMPLETED", "REJECTED_STALE_DISPATCH"),
+        ("current-dispatch", "COMPLETED", "STAGED"),
+    ],
+)
+def test_terminal_resource_staging_result_still_requires_owning_dispatch(
+    monkeypatch, task_id, dispatch_status, expected
+):
+    from importlib import import_module
+    from uuid import uuid4
+
+    from backend.app.infrastructure.db.models import ResourceStaging
+
+    session_module = import_module("backend.app.infrastructure.db.session")
+    staging_id = uuid4()
+    row = SimpleNamespace(
+        id=staging_id,
+        status="STAGED",
+        metadata_json={"staging_dispatch": {"status": dispatch_status, "task_id": "current-dispatch"}},
+    )
+
+    class Engine:
+        dialect = SimpleNamespace(name="sqlite")
+
+    class DB:
+        closed = False
+
+        def get(self, model, object_id, **_kwargs):
+            assert model is ResourceStaging
+            assert object_id == staging_id
+            return row
+
+        def close(self):
+            self.closed = True
+
+    db = DB()
+    monkeypatch.setattr(session_module, "engine", Engine())
+    monkeypatch.setattr(session_module, "SessionLocal", lambda: db)
+
+    task = queue.run_resource_staging_task
+    task.push_request(id=task_id, retries=0, delivery_info={"redelivered": True})
+    try:
+        result = task.run(str(staging_id))
+    finally:
+        task.pop_request()
+
+    assert result["status"] == expected
+    assert db.closed is True
 
 
 def test_duplicate_resource_staging_delivery_is_fenced_by_postgres_lock(monkeypatch):
@@ -90,7 +147,7 @@ def test_duplicate_resource_staging_delivery_is_fenced_by_postgres_lock(monkeypa
 
 def test_resource_staging_worker_rejects_tampered_destination_before_writing(monkeypatch, tmp_path):
     import importlib
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
     from uuid import uuid4
 
     from backend.app.infrastructure.db.models import Resource, ResourceStaging
@@ -181,5 +238,5 @@ def test_resource_staging_worker_rejects_tampered_destination_before_writing(mon
     assert result["status"] == "PREFLIGHT_FAILED"
     assert result["error_code"] == "RESOURCE_DESTINATION_MISMATCH"
     assert row.updated_at is not None
-    assert row.updated_at <= datetime.now(timezone.utc)
+    assert row.updated_at <= datetime.now(UTC)
     assert db.closed is True
