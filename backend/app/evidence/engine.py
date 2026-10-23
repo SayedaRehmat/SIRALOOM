@@ -103,6 +103,8 @@ class EvidenceEngine:
                 annotation=annotation,
                 provider_name=provider_name,
                 provider_version=provider_version,
+                resource_name=resource_name,
+                resource_version=resource_version,
             )
         )
         evidence.extend(
@@ -723,7 +725,7 @@ class EvidenceEngine:
             )
         ]
 
-    def _consequence(self, *, variant_id: UUID, annotation: dict[str, Any], provider_name: str, provider_version: str | None) -> list[EvidenceRecord]:
+    def _consequence(self, *, variant_id: UUID, annotation: dict[str, Any], provider_name: str, provider_version: str | None, resource_name: str | None, resource_version: str | None) -> list[EvidenceRecord]:
         gene = annotation.get("gene") or {}
         transcript = annotation.get("transcript") or {}
         effect = annotation.get("effect")
@@ -736,8 +738,8 @@ class EvidenceEngine:
                 evidence_type="CONSEQUENCE",
                 statement="Gene, transcript, and consequence annotations describe the predicted molecular consequence of the variant.",
                 direction="NEUTRAL",
-                source_name=provider_name,
-                source_version=provider_version,
+                source_name=resource_name or provider_name,
+                source_version=resource_version or provider_version,
                 payload={
                     "gene": gene,
                     "transcript": transcript,
