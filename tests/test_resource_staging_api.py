@@ -345,6 +345,9 @@ def test_resource_adoption_request_audits_actor_and_is_idempotent(tmp_path):
         organization_id = uuid4()
         db.add(Organization(id=organization_id, name="Resource Lab", external_identifier="resource-lab"))
         resource, _ = _seed_remote_resource(db, organization_id, tmp_path / "cache")
+        # This fixture represents a successfully qualified resource. Keep its
+        # lifecycle state consistent with the qualification record below.
+        resource.status = "QUALIFIED"
         qualification = ResourceQualification(
             id=uuid4(), resource_id=resource.id,
             qualification_version="qualification-test-v1", status="QUALIFIED",

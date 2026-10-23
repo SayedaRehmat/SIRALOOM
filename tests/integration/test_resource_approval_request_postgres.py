@@ -5,7 +5,7 @@ import threading
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, event, func, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.resources import request_resource_approval
@@ -39,14 +39,13 @@ def test_concurrent_duplicate_adoption_requests_return_one_durable_approval():
     barrier = threading.Barrier(2)
     approval_ids, errors = [], []
 
-    def synchronize_pending_approval_flush(session, _flush_context, _instances):
-        if any(isinstance(row, ResourceApproval) for row in session.new):
-            barrier.wait(timeout=10)
-
-    event.listen(Session, "before_flush", synchronize_pending_approval_flush)
-
     def request():
         try:
+            # Start both API-equivalent calls together. The service locks the
+            # resource before creating a pending row, so a flush hook would
+            # deadlock here: the first transaction owns the lock while waiting
+            # for the second transaction, which cannot reach flush.
+            barrier.wait(timeout=10)
             with Session(engine) as db:
                 approval = request_resource_approval(
                     db,
@@ -75,7 +74,6 @@ def test_concurrent_duplicate_adoption_requests_return_one_durable_approval():
                 ResourceApproval.organization_id == organization_id,
             )) == 1
     finally:
-        event.remove(Session, "before_flush", synchronize_pending_approval_flush)
         with Session(engine) as db:
             db.query(ResourceApproval).filter(ResourceApproval.resource_id == resource_id).delete()
             db.query(ResourceQualification).filter(ResourceQualification.id == qualification_id).delete()
