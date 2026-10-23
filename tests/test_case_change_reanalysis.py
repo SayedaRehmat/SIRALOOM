@@ -12,12 +12,15 @@ from backend.app.infrastructure.db.models import (
     Case,
     CaseAccessGrant,
     Evidence,
+    InheritanceAssessment,
     Notification,
     Organization,
     OrganizationMembership,
+    PedigreeMember,
     PopulationObservation,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
+    SegregationObservation,
     User,
     Variant,
 )
@@ -133,6 +136,8 @@ def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance
         tables=[
             Organization.__table__, Case.__table__, Analysis.__table__, Variant.__table__,
             Annotation.__table__, Evidence.__table__, PopulationObservation.__table__,
+            PedigreeMember.__table__, SegregationObservation.__table__,
+            InheritanceAssessment.__table__,
         ],
     )
     organization_id, case_id, parent_id, child_id, user_id, variant_id = (

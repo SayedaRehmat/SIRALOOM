@@ -15,9 +15,12 @@ from backend.app.infrastructure.db.models import (
     Annotation,
     Case,
     Evidence,
+    InheritanceAssessment,
     Organization,
+    PedigreeMember,
     PopulationObservation,
     Resource,
+    SegregationObservation,
     User,
     Variant,
 )
@@ -226,7 +229,10 @@ def test_reanalysis_reuses_only_upstream_observations_with_exact_provenance(
         engine.dispose()
 
 
-def test_reanalysis_reuse_rejects_acmg_evidence_reference_outside_parent_analysis(tmp_path):
+@pytest.mark.parametrize("invalid_reference", ["evidence", "observation"])
+def test_reanalysis_reuse_rejects_references_outside_parent_analysis(
+    tmp_path, invalid_reference
+):
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'unowned-evidence.db'}")
     Base.metadata.create_all(engine)
     organization_id, user_id, case_id, variant_id, parent_id, child_id = (
@@ -277,11 +283,14 @@ def test_reanalysis_reuse_rejects_acmg_evidence_reference_outside_parent_analysi
                 ),
             ])
             db.flush()
+            evidence_id = uuid4()
             db.add(Evidence(
-                id=uuid4(), variant_id=variant_id, analysis_id=parent_id,
+                id=evidence_id, variant_id=variant_id, analysis_id=parent_id,
                 evidence_type="POPULATION", statement="Frequency evidence",
                 direction="NEUTRAL", source_name="gnomAD", source_version="v4.1",
-                request_metadata={}, observation_ids=[], payload={},
+                request_metadata={},
+                observation_ids=[str(uuid4())] if invalid_reference == "observation" else [],
+                payload={},
                 created_by_type="SYSTEM", created_by_id="evidence-engine",
                 evidence_fingerprint="parent-evidence-fingerprint",
             ))
@@ -290,17 +299,151 @@ def test_reanalysis_reuse_rejects_acmg_evidence_reference_outside_parent_analysi
                 framework_name="ACMG/AMP", framework_version="2015",
                 specification_provider="ClinGen", specification_id="test-spec",
                 specification_version="1", criterion="PM2",
-                automated_assessment={"evidence_ids": [str(uuid4())]},
+                automated_assessment={
+                    "evidence_ids": [
+                        str(uuid4()) if invalid_reference == "evidence" else str(evidence_id)
+                    ]
+                },
                 reviewed_assessment=None, final_assessment=None,
                 state="DRAFT", review_version=0,
             ))
             db.commit()
 
-            with pytest.raises(ValueError, match="outside its parent analysis"):
+            message = "evidence outside its parent analysis" if invalid_reference == "evidence" else "observation outside its parent analysis"
+            with pytest.raises(ValueError, match=message):
                 _copy_rows(db, parent_id, child_id, "reportability")
             db.rollback()
             assert db.scalar(select(func.count(Evidence.id)).where(
                 Evidence.analysis_id == child_id
             )) == 0
+    finally:
+        engine.dispose()
+
+
+def test_reanalysis_reuse_preserves_segregation_lineage_for_copied_evidence(tmp_path):
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'segregation-lineage.db'}")
+    Base.metadata.create_all(engine)
+    organization_id, user_id, case_id, variant_id, member_id, parent_id, child_id = (
+        uuid4() for _ in range(7)
+    )
+    parent_observation_id = uuid4()
+    parent_evidence_id = uuid4()
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id, name="Segregation Lineage Lab",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@test.local",
+                display_name="Segregation Lineage", role="ADMIN", status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"SEG-{case_id}", status="OPEN",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.flush()
+            db.add_all([
+                Analysis(
+                    id=parent_id, case_id=case_id, parent_analysis_id=None,
+                    assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                    workflow_id="variant-v1", workflow_version="2.1",
+                    status="SUCCEEDED", queue_task_id=None,
+                    reference_build="GRCh38", configuration={}, started_at=None,
+                    completed_at=datetime.now(UTC), created_by=user_id,
+                    analysis_version=1,
+                ),
+                Analysis(
+                    id=child_id, case_id=case_id, parent_analysis_id=parent_id,
+                    assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                    workflow_id="variant-v1", workflow_version="2.1",
+                    status="CREATED", queue_task_id=None,
+                    reference_build="GRCh38", configuration={}, started_at=None,
+                    completed_at=None, created_by=user_id, analysis_version=2,
+                ),
+                Variant(
+                    id=variant_id, genome_build="GRCh38", chromosome="1",
+                    position=555, reference="T", alternate="C",
+                    normalization_status="NORMALIZED",
+                    canonical_key="GRCh38:1:555:T:C", identifiers={},
+                ),
+            ])
+            db.flush()
+            db.add(PedigreeMember(
+                id=member_id, case_id=case_id, member_identifier="parent-1",
+                relationship_to_proband="parent", sex="FEMALE",
+                affected_status="UNAFFECTED", is_proband=False, sampled=True,
+            ))
+            db.flush()
+            db.add(SegregationObservation(
+                id=parent_observation_id, analysis_id=parent_id,
+                variant_id=variant_id, pedigree_member_id=member_id,
+                genotype="0/1", zygosity="HETEROZYGOUS", phase="UNKNOWN",
+                allele_observed=None, phenotype_status="UNAFFECTED",
+                source="HUMAN_REVIEW", notes="Parent sample reviewed",
+                metadata_json={"review_source": "fixture"},
+            ))
+            db.add(InheritanceAssessment(
+                id=uuid4(), analysis_id=parent_id, variant_id=variant_id,
+                model="AUTOSOMAL_DOMINANT", status="INCONSISTENT", score=0,
+                rationale="Segregation observation does not support the model",
+                observation_fingerprint="segregation-observation-fingerprint",
+                reviewer_note="Reviewed family genotype",
+                created_by=str(user_id),
+            ))
+            db.add(Evidence(
+                id=parent_evidence_id, variant_id=variant_id,
+                analysis_id=parent_id, evidence_type="SEGREGATION",
+                statement="Inheritance model AUTOSOMAL_DOMINANT: INCONSISTENT",
+                direction="CONTEXTUAL", source_name="SIRALOOM Inheritance Engine",
+                source_version="M10", request_metadata={},
+                observation_ids=[str(parent_observation_id)],
+                payload={"observation_fingerprint": "segregation-observation-fingerprint"},
+                created_by_type="SYSTEM", created_by_id="inheritance",
+                evidence_fingerprint="segregation-evidence-fingerprint",
+            ))
+            db.commit()
+
+            _copy_rows(db, parent_id, child_id, "reportability")
+            db.commit()
+
+            child_observation = db.scalar(select(SegregationObservation).where(
+                SegregationObservation.analysis_id == child_id
+            ))
+            child_assessment = db.scalar(select(InheritanceAssessment).where(
+                InheritanceAssessment.analysis_id == child_id
+            ))
+            child_evidence = db.scalar(select(Evidence).where(
+                Evidence.analysis_id == child_id,
+                Evidence.evidence_type == "SEGREGATION",
+            ))
+            assert child_observation is not None
+            assert child_observation.id != parent_observation_id
+            assert child_observation.genotype == "0/1"
+            assert child_assessment is not None
+            assert child_assessment.observation_fingerprint == "segregation-observation-fingerprint"
+            assert child_assessment.reviewer_note == "Reviewed family genotype"
+            assert child_evidence is not None
+            assert child_evidence.observation_ids == [str(child_observation.id)]
+            assert child_evidence.observation_ids != [str(parent_observation_id)]
+            assert child_evidence.evidence_fingerprint == evidence_fingerprint(
+                variant_id=variant_id,
+                analysis_id=child_id,
+                evidence_type=child_evidence.evidence_type,
+                statement=child_evidence.statement,
+                direction=child_evidence.direction,
+                source_name=child_evidence.source_name,
+                source_version=child_evidence.source_version,
+                observation_ids=(child_observation.id,),
+                payload=child_evidence.payload,
+                resource_id=child_evidence.resource_id,
+                source_record_id=child_evidence.source_record_id,
+                request_fingerprint=child_evidence.request_fingerprint,
+                response_sha256=child_evidence.response_sha256,
+            )
     finally:
         engine.dispose()

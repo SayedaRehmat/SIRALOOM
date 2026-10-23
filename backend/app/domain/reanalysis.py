@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import and_, or_, select
@@ -20,11 +20,13 @@ from backend.app.infrastructure.db.models import (
     Case,
     Classification,
     Evidence,
+    InheritanceAssessment,
     Notification,
     PopulationObservation,
     ReanalysisCandidate,
     ReanalysisChangeEvent,
     Resource,
+    SegregationObservation,
     WorkflowStep,
 )
 
@@ -396,6 +398,7 @@ def detect_change(db: Session, *, organization_id: UUID, trigger_type: str, reso
 def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> None:
     start = STEP_ORDER[earliest]
     population_observation_ids: dict[str, str] = {}
+    segregation_observation_ids: dict[str, str] = {}
     evidence_ids: dict[str, str] = {}
     if start > STEP_ORDER["annotate"]:
         for row in db.scalars(select(Annotation).where(Annotation.analysis_id == parent_id)).all():
@@ -408,11 +411,49 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
     if start > STEP_ORDER["build_evidence"]:
         from backend.app.acmg.source_assertions import persist_clingen_source_assertions
 
+        for row in db.scalars(
+            select(SegregationObservation).where(
+                SegregationObservation.analysis_id == parent_id
+            )
+        ).all():
+            copied = SegregationObservation(
+                id=uuid4(), analysis_id=child_id, variant_id=row.variant_id,
+                pedigree_member_id=row.pedigree_member_id, genotype=row.genotype,
+                zygosity=row.zygosity, phase=row.phase,
+                allele_observed=row.allele_observed,
+                phenotype_status=row.phenotype_status, source=row.source,
+                notes=row.notes, metadata_json=dict(row.metadata_json or {}),
+                created_at=row.created_at,
+            )
+            segregation_observation_ids[str(row.id)] = str(copied.id)
+            db.add(copied)
+
+        for row in db.scalars(
+            select(InheritanceAssessment).where(
+                InheritanceAssessment.analysis_id == parent_id
+            )
+        ).all():
+            db.add(InheritanceAssessment(
+                id=uuid4(), analysis_id=child_id, variant_id=row.variant_id,
+                model=row.model, status=row.status, score=row.score,
+                rationale=row.rationale,
+                observation_fingerprint=row.observation_fingerprint,
+                reviewer_note=row.reviewer_note, created_by=row.created_by,
+                created_at=row.created_at,
+            ))
+
         for row in db.scalars(select(Evidence).where(Evidence.analysis_id == parent_id)).all():
-            observation_ids = [
-                population_observation_ids.get(str(observation_id), str(observation_id))
-                for observation_id in (row.observation_ids or [])
-            ]
+            observation_ids = []
+            for observation_id in row.observation_ids or []:
+                observation_id = str(observation_id)
+                copied_id = population_observation_ids.get(observation_id)
+                if copied_id is None:
+                    copied_id = segregation_observation_ids.get(observation_id)
+                if copied_id is None:
+                    raise ValueError(
+                        "Reused evidence references an observation outside its parent analysis"
+                    )
+                observation_ids.append(copied_id)
             try:
                 fingerprint_observation_ids = tuple(UUID(value) for value in observation_ids)
             except (TypeError, ValueError) as exc:
