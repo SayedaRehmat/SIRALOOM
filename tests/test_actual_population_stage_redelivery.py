@@ -74,7 +74,11 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
         "data-version: hp/releases/2026-09-01/hp-base.owl\n\n"
         "[Term]\nid: HP:0000001\nname: Root\n\n"
         "[Term]\nid: HP:0000002\nname: Parent\nis_a: HP:0000001 ! Root\n\n"
-        "[Term]\nid: HP:0000003\nname: Child\nis_a: HP:0000002 {xref=\"PMID:1\"} ! Parent\n",
+        "[Term]\nid: HP:0000003\nname: Child\nis_a: HP:0000002 {xref=\"PMID:1\"} ! Parent\n"
+        "\n[Term]\nid: HP:0000004\nname: Absent finding\n"
+        "\n[Term]\nid: HP:0000005\nname: Excluded finding\n"
+        "\n[Term]\nid: HP:0000006\nname: Uncertain finding\n"
+        "\n[Term]\nid: HP:0000007\nname: Unassessed finding\n",
         encoding="utf-8",
     )
     hpo_checksum = hashlib.sha256(hpo_path.read_bytes()).hexdigest()
@@ -141,6 +145,23 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 source="CLINICAL_INPUT",
                 evidence={},
             ))
+            for hpo_id, status in (
+                ("HP:0000004", "ABSENT"),
+                ("HP:0000005", "EXCLUDED"),
+                ("HP:0000006", "UNKNOWN"),
+                ("HP:0000007", "NOT_ASSESSED"),
+            ):
+                db.add(PhenotypeObservation(
+                    id=uuid4(),
+                    case_id=case_id,
+                    analysis_id=None,
+                    hpo_id=hpo_id,
+                    label=status.title(),
+                    present=False,
+                    phenotype_status=status,
+                    source="CLINICAL_INPUT",
+                    evidence={},
+                ))
             db.flush()
             source_artifact = store.put_file(
                 db=db,
@@ -598,6 +619,21 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             phenotype_evidence = next(
                 row for row in evidence_rows if row.evidence_type == "PHENOTYPE"
             )
+            assert [term["hpo_id"] for term in phenotype_evidence.payload["present_terms"]] == [
+                "HP:0000002"
+            ]
+            assert [term["hpo_id"] for term in phenotype_evidence.payload["negative_terms"]] == [
+                "HP:0000004"
+            ]
+            assert [term["hpo_id"] for term in phenotype_evidence.payload["excluded_terms"]] == [
+                "HP:0000005"
+            ]
+            assert [term["hpo_id"] for term in phenotype_evidence.payload["uncertain_terms"]] == [
+                "HP:0000006"
+            ]
+            assert [term["hpo_id"] for term in phenotype_evidence.payload["not_assessed_terms"]] == [
+                "HP:0000007"
+            ]
             if ontology_valid:
                 assert phenotype_evidence.source_name == "HPO"
                 assert phenotype_evidence.resource_id == hpo_resource_id
