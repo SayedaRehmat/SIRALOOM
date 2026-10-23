@@ -408,7 +408,7 @@ export type TranslationKey =
   | "workspace.startAnalysis"
   | "workspace.durableWorkflow"
   | "workspace.checkpointPersisted"
-  | "workspace.prioritizedVariants"
+  | "workspace.analyzedVariants"
   | "workspace.waitingAnalysis"
   | "workspace.variantsWillPopulate"
   | "workspace.completeReport"
@@ -1496,7 +1496,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.startAnalysis": "Start analysis",
     "workspace.durableWorkflow": "Durable workflow",
     "workspace.checkpointPersisted": "Checkpoint state is persisted server-side",
-    "workspace.prioritizedVariants": "Prioritized variants",
+    "workspace.analyzedVariants": "Analyzed variants",
     "workspace.waitingAnalysis": "Waiting for a completed analysis",
     "workspace.variantsWillPopulate": "The table will populate from durable server state once annotation has produced variant records.",
     "workspace.completeReport": "COMPLETE VARIANT REPORT",
@@ -2376,7 +2376,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.startAnalysis": "بدء التحليل",
     "workspace.durableWorkflow": "سير عمل مستمر",
     "workspace.checkpointPersisted": "تُحفظ حالة نقاط التحقق على الخادم.",
-    "workspace.prioritizedVariants": "المتغيرات ذات الأولوية",
+    "workspace.analyzedVariants": "المتغيرات التي تم تحليلها",
     "workspace.waitingAnalysis": "بانتظار اكتمال التحليل",
     "workspace.variantsWillPopulate": "سيُملأ الجدول من حالة الخادم المستمرة بعد أن ينتج التعليق سجلات المتغيرات.",
     "workspace.completeReport": "تقرير المتغيرات الكامل",

@@ -1159,7 +1159,7 @@ export default function Home() {
       </section>
 
       <section id="variants" className="panel variants-panel">
-        <div className="panel-head"><div><div className="section-kicker">{t("workspace.interpretationSection")}</div><h3>{t("workspace.prioritizedVariants")}</h3></div><span className="badge neutral">{variants.length} {t("workspace.variantsCount")}</span></div>
+        <div className="panel-head"><div><div className="section-kicker">{t("workspace.interpretationSection")}</div><h3>{t("workspace.analyzedVariants")}</h3></div><span className="badge neutral">{variants.length} {t("workspace.variantsCount")}</span></div>
         {variants.length === 0 ? <div className="empty"><strong>{t("workspace.waitingAnalysis")}</strong><p>{t("workspace.variantsWillPopulate")}</p></div> : <div className="table-wrap"><table><thead><tr><th>{t("workflow.variantFile")}</th><th>{t("workspace.position")}</th><th>{t("workspace.refAlt")}</th><th>{t("workspace.build")}</th><th>{t("workspace.review")}</th></tr></thead><tbody>{variants.map((v) => <tr key={v.variant_id} onClick={() => setSelectedVariantId(v.variant_id)} className={selectedVariantId === v.variant_id ? "selected" : ""}><td><code>{v.variant_id.slice(0, 12)}…</code></td><td>{v.chromosome}:{v.position.toLocaleString()}</td><td><code>{v.reference} → {v.alternate}</code></td><td>{v.genome_build}</td><td>{selectedVariantId === v.variant_id ? <span className="badge active">{t("workspace.selected")}</span> : <span className="badge neutral">{t("workspace.open")}</span>}</td></tr>)}</tbody></table></div>}
       </section>
 
