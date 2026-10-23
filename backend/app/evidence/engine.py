@@ -330,6 +330,8 @@ class EvidenceEngine:
     def build_case_context_evidence(
         self, *, variant_id: UUID, case_hpo_terms: list[dict[str, Any]], gene: str | None,
         gene_disease_records: list[dict[str, Any]] = (), literature_records: list[dict[str, Any]] = (),
+        hpo_ontology: Any | None = None,
+        hpo_provenance: dict[str, Any] | None = None,
     ) -> list[EvidenceRecord]:
         """Create contextual evidence without turning phenotype/literature into pathogenicity."""
         out: list[EvidenceRecord] = []
@@ -338,27 +340,161 @@ class EvidenceEngine:
             terms = normalize_terms(case_hpo_terms)
             present = [t for t in terms if t.present]
             absent = [t for t in terms if not t.present]
-            out.append(self._record(
+            resolution_payload = None
+            unresolved_case_terms: list[dict[str, str]] = []
+            if hpo_ontology is not None:
+                resolution_payload = []
+                for term in terms:
+                    resolution = hpo_ontology.resolve(term.hpo_id)
+                    resolution_payload.append({
+                        "hpo_id": term.hpo_id,
+                        "status": resolution.status,
+                        "canonical_id": resolution.canonical_id,
+                        "replacement_candidates": list(resolution.replacement_candidates),
+                        "consider": list(resolution.consider),
+                        "ambiguous_candidates": list(resolution.ambiguous_candidates),
+                    })
+                    if resolution.status not in {"CURRENT", "ALTERNATE_ID", "OBSOLETE_REPLACED"}:
+                        unresolved_case_terms.append({"hpo_id": term.hpo_id, "status": resolution.status})
+            case_payload = {
+                "gene": gene,
+                "present_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in present],
+                "negative_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in absent],
+                "interpretive_use": "CASE_RELEVANCE_AND_PRIORITIZATION",
+                "ontology_release": getattr(hpo_ontology, "release", None),
+                "ontology_term_resolutions": resolution_payload,
+                "unresolved_terms_require_review": unresolved_case_terms,
+            }
+            case_record = self._record(
                 variant_id=variant_id, evidence_type="PHENOTYPE",
                 statement="Structured HPO phenotype context is available for case-level relevance and prioritization; it is not pathogenicity evidence by itself.",
-                direction="NEUTRAL", source_name="HPO_CASE_CONTEXT", source_version=None,
-                payload={"gene": gene, "present_terms":[{"hpo_id":t.hpo_id,"label":t.label} for t in present],
-                         "negative_terms":[{"hpo_id":t.hpo_id,"label":t.label} for t in absent],
-                         "interpretive_use":"CASE_RELEVANCE_AND_PRIORITIZATION"},
-            ))
+                direction="NEUTRAL",
+                source_name="HPO" if hpo_provenance else "HPO_CASE_CONTEXT",
+                source_version=(hpo_provenance or {}).get("resource_version"),
+                payload=case_payload,
+                resource_id=(
+                    UUID(str(hpo_provenance["resource_id"]))
+                    if hpo_provenance and hpo_provenance.get("resource_id")
+                    else None
+                ),
+                request_fingerprint=(hpo_provenance or {}).get("request_fingerprint"),
+                response_sha256=(hpo_provenance or {}).get("response_sha256"),
+                request_metadata=dict(hpo_provenance or {}),
+            )
+            out.append(case_record)
         for item in gene_disease_records:
             if gene and item.get("gene") and str(item.get("gene")).upper() != gene.upper():
                 continue
             disease = str(item.get("disease") or "").strip()
             if not disease: continue
             payload = dict(item)
+            # A caller-provided hierarchy is not authoritative ontology data.
+            payload.pop("hpo_ancestor_map", None)
             payload["gene"] = gene or item.get("gene")
             payload["interpretive_use"] = "GENE_DISEASE_RELEVANCE_REVIEW"
             target_hpo = item.get("hpo_terms") or item.get("associated_hpo_terms") or []
             if target_hpo and case_hpo_terms:
                 from backend.app.phenotype import match_hpo, priority_adjustment
-                match = match_hpo(case_hpo_terms, target_hpo, ancestor_map=item.get("hpo_ancestor_map"))
-                payload["phenotype_match"] = {"score": match.score, "matched_terms": list(match.matched), "query_count": match.query_count, "target_count": match.target_count, "method": match.method, "priority_adjustment": priority_adjustment(match.score)}
+                case_unresolved = bool(unresolved_case_terms) if hpo_ontology is not None else False
+                target_ids = [
+                    str(term.get("hpo_id") or term.get("id") or "") if isinstance(term, dict) else str(term)
+                    for term in target_hpo
+                ]
+                target_resolutions = [hpo_ontology.resolve(term) for term in target_ids] if hpo_ontology is not None else []
+                unresolved_targets = [
+                    {"hpo_id": term, "status": result.status}
+                    for term, result in zip(target_ids, target_resolutions)
+                    if result.status not in {"CURRENT", "ALTERNATE_ID", "OBSOLETE_REPLACED"}
+                ]
+                present_ids = [term.hpo_id for term in present]
+                absent_ids = [term.hpo_id for term in absent]
+                if hpo_ontology is not None:
+                    present_ids = [
+                        hpo_ontology.resolve(term).canonical_id or term
+                        for term in present_ids
+                    ]
+                    absent_ids = [
+                        hpo_ontology.resolve(term).canonical_id or term
+                        for term in absent_ids
+                    ]
+                contradictory_patient_terms = sorted(set(present_ids) & set(absent_ids))
+                if contradictory_patient_terms:
+                    payload["phenotype_match"] = {
+                        "status": "REQUIRES_REVIEW",
+                        "reason": "The patient phenotype record marks the same HPO term both present and absent.",
+                        "contradictory_patient_terms": contradictory_patient_terms,
+                        "ontology_release": getattr(hpo_ontology, "release", None),
+                        "ontology_provenance": dict(hpo_provenance or {}),
+                    }
+                elif not present:
+                    payload["phenotype_match"] = {
+                        "status": "REQUIRES_REVIEW",
+                        "reason": "No positive patient HPO terms are available for similarity calculation.",
+                        "negative_patient_terms": [term.hpo_id for term in absent],
+                        "ontology_release": getattr(hpo_ontology, "release", None),
+                        "ontology_provenance": dict(hpo_provenance or {}),
+                    }
+                elif hpo_ontology is not None and (case_unresolved or unresolved_targets):
+                    payload["phenotype_match"] = {
+                        "status": "REQUIRES_REVIEW",
+                        "reason": "One or more patient or disease HPO terms do not resolve in the pinned ontology release.",
+                        "unresolved_patient_terms": unresolved_case_terms,
+                        "unresolved_disease_terms": unresolved_targets,
+                        "ontology_release": hpo_ontology.release,
+                        "ontology_provenance": dict(hpo_provenance or {}),
+                    }
+                else:
+                    if hpo_ontology is not None:
+                        canonical_case_terms = []
+                        for term in case_hpo_terms:
+                            value = term.get("hpo_id") or term.get("id") if isinstance(term, dict) else term
+                            resolution = hpo_ontology.resolve(str(value))
+                            canonical_case_terms.append(
+                                {
+                                    **term,
+                                    "hpo_id": resolution.canonical_id,
+                                    "original_hpo_id": str(value),
+                                    "normalization_status": resolution.status,
+                                }
+                                if isinstance(term, dict)
+                                else resolution.canonical_id
+                            )
+                        canonical_target_terms = [result.canonical_id for result in target_resolutions]
+                        ancestor_map = {
+                            term: sorted(hpo_ontology.ancestors(term))
+                            for term in canonical_target_terms
+                            if term
+                        }
+                    else:
+                        canonical_case_terms = case_hpo_terms
+                        canonical_target_terms = target_hpo
+                        ancestor_map = None
+                    match = match_hpo(canonical_case_terms, canonical_target_terms, ancestor_map=ancestor_map)
+                    match_payload = {
+                        "matched_terms": list(match.matched),
+                        "query_count": match.query_count,
+                        "target_count": match.target_count,
+                        "ontology_release": getattr(hpo_ontology, "release", None),
+                        "ontology_provenance": dict(hpo_provenance or {}),
+                    }
+                    if hpo_ontology is not None:
+                        match_payload.update({
+                            "status": "SCORED",
+                            "score": match.score,
+                            "method": match.method,
+                            "priority_adjustment": priority_adjustment(match.score),
+                        })
+                    else:
+                        # Exact string overlap is useful for triage but cannot
+                        # validate term status or ontology semantics. Keep it
+                        # explicitly non-scientific and out of ranking fields.
+                        match_payload.update({
+                            "status": "REQUIRES_REVIEW",
+                            "reason": "No pinned HPO ontology was available to validate terms or compute ontology-aware similarity.",
+                            "exact_overlap_score": match.score,
+                            "method": "EXACT_HPO_OVERLAP_UNVALIDATED",
+                        })
+                    payload["phenotype_match"] = match_payload
             out.append(self._record(
                 variant_id=variant_id, evidence_type="GENE_DISEASE",
                 statement="A structured gene-disease association is recorded as contextual evidence; validity and strength require source-specific review.",
@@ -390,6 +526,10 @@ class EvidenceEngine:
         source_version: str | None,
         payload: dict[str, Any],
         observation_ids: tuple[UUID, ...] = (),
+        resource_id: UUID | None = None,
+        request_fingerprint: str | None = None,
+        response_sha256: str | None = None,
+        request_metadata: dict[str, Any] | None = None,
     ) -> EvidenceRecord:
         if evidence_type not in EVIDENCE_TYPES:
             raise EvidenceEngineError(f"Unsupported evidence type: {evidence_type}")
@@ -405,6 +545,10 @@ class EvidenceEngine:
             source_version=source_version,
             observation_ids=observation_ids,
             payload=payload,
+            resource_id=resource_id,
+            request_fingerprint=request_fingerprint,
+            response_sha256=response_sha256,
+            request_metadata=request_metadata,
         )
 
     def _population(

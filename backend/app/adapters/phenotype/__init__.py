@@ -1,0 +1,1 @@
+"""Governed phenotype ontology adapters."""

@@ -1,5 +1,6 @@
 """Exercise population, evidence, and ACMG stage replay after durable commits."""
 import gzip
+import hashlib
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from uuid import uuid4
@@ -8,8 +9,10 @@ import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
 
+from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
 from backend.app.adapters.population.gnomad import PopulationObservationData
 from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
@@ -23,18 +26,34 @@ from backend.app.infrastructure.db.models import (
     ClinGenSpecification,
     Evidence,
     Organization,
+    PhenotypeObservation,
     PopulationObservation,
     Resource,
     ResourceExecutionRecord,
+    ResourceQualification,
     User,
     Variant,
     WorkflowStep,
 )
 
 
-@pytest.mark.parametrize("no_match", [False, True], ids=["available-frequency", "successful-no-match"])
+@pytest.mark.parametrize(
+    ("no_match", "ontology_valid"),
+    [
+        (False, True),
+        (True, True),
+        (False, False),
+        (True, False),
+    ],
+    ids=[
+        "available-frequency-hpo-ready",
+        "successful-no-match-hpo-ready",
+        "available-frequency-hpo-checksum-failure",
+        "successful-no-match-hpo-checksum-failure",
+    ],
+)
 def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
-    monkeypatch, tmp_path, no_match
+    monkeypatch, tmp_path, no_match, ontology_valid
 ):
     import importlib
 
@@ -48,6 +67,17 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
         uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
     clinvar_resource_id = uuid4()
+    hpo_resource_id, hpo_qualification_id = uuid4(), uuid4()
+    hpo_path = tmp_path / "hp.obo"
+    hpo_path.write_text(
+        "format-version: 1.2\n"
+        "data-version: hp/releases/2026-09-01/hp-base.owl\n\n"
+        "[Term]\nid: HP:0000001\nname: Root\n\n"
+        "[Term]\nid: HP:0000002\nname: Parent\nis_a: HP:0000001 ! Root\n\n"
+        "[Term]\nid: HP:0000003\nname: Child\nis_a: HP:0000002 {xref=\"PMID:1\"} ! Parent\n",
+        encoding="utf-8",
+    )
+    hpo_checksum = hashlib.sha256(hpo_path.read_bytes()).hexdigest()
     variant_key = canonical_key("GRCh38", "1", 555, "T", "C")
     variant_id = stable_variant_uuid(variant_key)
     provider_calls = {"count": 0}
@@ -88,10 +118,28 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 case_identifier=f"POP-REPLAY-{case_id}",
                 status="OPEN",
                 clinical_context=(
-                    {"disease": "Disease X"} if not no_match else {}
+                    {
+                        "disease": "Disease X" if not no_match else None,
+                        "gene_disease_evidence": [{
+                            "gene": "GENE1",
+                            "disease": "Disease X",
+                            "hpo_terms": ["HP:0000003"],
+                        }],
+                    }
                 ),
                 language="en",
                 created_by=user_id,
+            ))
+            db.flush()
+            db.add(PhenotypeObservation(
+                id=uuid4(),
+                case_id=case_id,
+                analysis_id=None,
+                hpo_id="HP:0000002",
+                label="Parent",
+                present=True,
+                source="CLINICAL_INPUT",
+                evidence={},
             ))
             db.flush()
             source_artifact = store.put_file(
@@ -166,6 +214,40 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 metadata_json={},
             )
             db.add(resource)
+            hpo_resource = Resource(
+                id=hpo_resource_id,
+                organization_id=organization_id,
+                name="Fixture HPO OBO",
+                provider="HPO",
+                resource_type="PHENOTYPE_ONTOLOGY",
+                version="2026-09-01",
+                genome_build=None,
+                access_method="LOCAL",
+                license_text=None,
+                checksum=hpo_checksum if ontology_valid else "0" * 64,
+                location=str(hpo_path),
+                status="ACTIVE",
+                population_definition=None,
+                metadata_json={},
+            )
+            db.add(hpo_resource)
+            db.flush()
+            db.add(ResourceQualification(
+                id=hpo_qualification_id,
+                resource_id=hpo_resource_id,
+                qualification_version="fixture-qualification-v1",
+                status="QUALIFIED",
+                checks_json={"execution_contract": {
+                    "provider_id": "HPO",
+                    "provider_version": "OBO",
+                    "access_method": "LOCAL",
+                    "location": str(hpo_path),
+                    "dataset": "2026-09-01",
+                    "toolchain": {"sha256": hpo_checksum, "release": "2026-09-01"},
+                }},
+                qualified_by=user_id,
+                qualified_at=datetime.now(UTC),
+            ))
             db.add(Resource(
                 id=clinvar_resource_id,
                 organization_id=organization_id,
@@ -286,6 +368,24 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             contract=contract,
             contract_hash="c" * 64,
         )
+        hpo_contract = ResourceExecutionContract(
+            provider_id="HPO",
+            provider_version="OBO",
+            access_method="LOCAL",
+            endpoint=None,
+            location=str(hpo_path),
+            dataset="2026-09-01",
+            execution_scope="LABORATORY",
+            toolchain={"sha256": hpo_checksum, "release": "2026-09-01"},
+        )
+        hpo_execution = SimpleNamespace(
+            resource_id=hpo_resource_id,
+            resource_version="2026-09-01",
+            qualification_id=hpo_qualification_id,
+            qualification_version="fixture-qualification-v1",
+            contract=hpo_contract,
+            contract_hash="f" * 64,
+        )
         clinvar_contract = SimpleNamespace(
             provider_id="NCBI ClinVar",
             provider_version="v1",
@@ -355,22 +455,38 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
 
         provider = FakeProvider()
         candidate = SimpleNamespace(resource=resource, execution=execution)
-        monkeypatch.setattr(
-            workflow,
-            "build_resource_execution_plan",
-            lambda *_args, **_kwargs: SimpleNamespace(
+        hpo_candidate = SimpleNamespace(
+            resource=hpo_resource,
+            execution=hpo_execution,
+        )
+
+        def fake_execution_plan(*_args, **kwargs):
+            capability = kwargs["requirements"][0].capability
+            if capability == workflow.ResourceCapability.PHENOTYPE:
+                candidates = [hpo_candidate]
+            elif capability == workflow.ResourceCapability.POPULATION_FREQUENCY:
+                candidates = [candidate]
+            else:
+                candidates = []
+            return SimpleNamespace(
                 profile_type="TRIAL_PUBLIC",
                 profile_version="test",
                 unavailable_optional=[],
-                for_capability=lambda _capability: [candidate],
-            ),
+                for_capability=lambda _capability: candidates,
+            )
+
+        monkeypatch.setattr(
+            workflow,
+            "build_resource_execution_plan",
+            fake_execution_plan,
         )
         monkeypatch.setattr(
             workflow,
             "resolve_resource_execution",
-            lambda _db, *, resource: (
-                clinvar_execution if resource.id == clinvar_resource_id else execution
-            ),
+            lambda _db, *, resource: {
+                clinvar_resource_id: clinvar_execution,
+                hpo_resource_id: hpo_execution,
+            }.get(resource.id, execution),
         )
         monkeypatch.setattr(
             workflow.ClinVarVCVProvider,
@@ -381,7 +497,10 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             workflow,
             "register_builtin_providers",
             lambda: SimpleNamespace(
-                resolve=lambda **_kwargs: SimpleNamespace(factory=lambda _contract: provider)
+                resolve=lambda **_kwargs: SimpleNamespace(factory=lambda _contract: provider),
+                require=lambda **_kwargs: SimpleNamespace(
+                    factory=HPOOboProvider.from_execution_contract
+                ),
             ),
         )
 
@@ -470,13 +589,58 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             evidence_rows = db.scalars(select(Evidence).where(
                 Evidence.analysis_id == analysis_id,
             )).all()
+            evidence_ids_before_replay = tuple(sorted(row.id for row in evidence_rows))
             evidence_step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "build_evidence",
             ))
-            assert bool(evidence_rows) is (not no_match)
+            assert evidence_rows
+            phenotype_evidence = next(
+                row for row in evidence_rows if row.evidence_type == "PHENOTYPE"
+            )
+            if ontology_valid:
+                assert phenotype_evidence.source_name == "HPO"
+                assert phenotype_evidence.resource_id == hpo_resource_id
+                assert phenotype_evidence.source_version == "2026-09-01"
+                assert phenotype_evidence.payload["ontology_term_resolutions"][0]["status"] == "CURRENT"
+            else:
+                assert phenotype_evidence.source_name == "HPO_CASE_CONTEXT"
+                assert phenotype_evidence.resource_id is None
+                assert phenotype_evidence.payload["ontology_term_resolutions"] is None
+            disease_evidence = next(
+                row for row in evidence_rows if row.evidence_type == "GENE_DISEASE"
+            )
+            if ontology_valid:
+                assert disease_evidence.payload["phenotype_match"]["status"] == "SCORED"
+                assert disease_evidence.payload["phenotype_match"]["score"] == 1.0
+            else:
+                assert disease_evidence.payload["phenotype_match"]["status"] == "REQUIRES_REVIEW"
+                assert "score" not in disease_evidence.payload["phenotype_match"]
+            hpo_executions = db.scalars(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.resource_id == hpo_resource_id,
+            )).all()
+            assert hpo_executions
+            if ontology_valid:
+                assert len(hpo_executions) == 1
+                assert hpo_executions[0].status == "SUCCESS"
+                assert len(hpo_executions[0].request_fingerprint) == 64
+                assert len(hpo_executions[0].response_sha256) == 64
+            else:
+                assert all(row.status == "FAILED" for row in hpo_executions)
+                assert all(row.error_code == "HPO_ONTOLOGY_RESOURCE_INVALID" for row in hpo_executions)
             assert evidence_step.metadata_json["batches"]["0:1"]["status"] == "RUNNING"
             assert clinvar_calls["count"] == 1
+            hpo_execution_count = db.scalar(select(func.count(ResourceExecutionRecord.id)).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.resource_id == hpo_resource_id,
+            ))
+            if ontology_valid:
+                assert hpo_execution_count == 1
+            else:
+                # This is the first pass, before the injected worker loss and
+                # redelivery below. The retry must create the next attempt.
+                assert hpo_execution_count == 1
         assert evidence_worker_loss["injected"]
 
         # On redelivery, the pending checkpoint causes evidence reconstruction;
@@ -512,6 +676,24 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             assert clinvar_execution_rows[0].status == "NO_DATA"
             assert provider_calls["count"] == 1
             assert clinvar_calls["count"] == 1
+            replayed_evidence_ids = tuple(sorted(db.scalars(
+                select(Evidence.id).where(Evidence.analysis_id == analysis_id)
+            ).all()))
+            assert replayed_evidence_ids == evidence_ids_before_replay
+            hpo_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.resource_id == hpo_resource_id,
+            )).all()
+            if ontology_valid:
+                assert len(hpo_execution_rows) == 1
+                assert hpo_execution_rows[0].status == "SUCCESS"
+            else:
+                assert len(hpo_execution_rows) >= 2
+                assert all(row.status == "FAILED" for row in hpo_execution_rows)
+                assert all(
+                    row.error_code == "HPO_ONTOLOGY_RESOURCE_INVALID"
+                    for row in hpo_execution_rows
+                )
 
         if not no_match:
             # The real ACMG stage commits criterion/classification rows before

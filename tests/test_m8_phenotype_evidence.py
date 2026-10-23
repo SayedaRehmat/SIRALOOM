@@ -20,7 +20,9 @@ def test_hpo_gene_disease_context_produces_match_metadata_without_pathogenicity(
     types={r.evidence_type for r in records}
     assert {"PHENOTYPE","GENE_DISEASE","LITERATURE"} == types
     gd=next(r for r in records if r.evidence_type=="GENE_DISEASE")
-    assert gd.payload["phenotype_match"]["score"] == 1.0
+    assert gd.payload["phenotype_match"]["status"] == "REQUIRES_REVIEW"
+    assert gd.payload["phenotype_match"]["exact_overlap_score"] == 1.0
+    assert "score" not in gd.payload["phenotype_match"]
     assert gd.direction == "NEUTRAL"
     lit=next(r for r in records if r.evidence_type=="LITERATURE")
     assert lit.payload["source_id"] == "PMID:123"

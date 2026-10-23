@@ -121,6 +121,12 @@ def infer_capabilities(
         ("ClinGen CSpec", "ACMG_SPECIFICATION"): {
             ResourceCapability.ACMG_SPECIFICATION,
         },
+        ("HPO", "PHENOTYPE_ONTOLOGY"): {
+            ResourceCapability.PHENOTYPE,
+        },
+        ("HPO", "PHENOTYPE"): {
+            ResourceCapability.PHENOTYPE,
+        },
     }
     return frozenset(mapping.get((p, r), set()))
 
@@ -310,7 +316,7 @@ _SCIENTIFIC_PROVIDERS = {
     "GNOMAD": ScientificProvider("GNOMAD", POPULATION, ("LOCAL", "API", "HTTPS")),
     "GNOMAD-GRAPHL": ScientificProvider("GNOMAD-GRAPHL", POPULATION, ("LOCAL", "API", "HTTPS")),
     "CLINGEN": ScientificProvider("CLINGEN", ACMG_RULE_SPECIFICATION, ("LOCAL", "API", "HTTPS")),
-    "HPO": ScientificProvider("HPO", PHENOTYPE_ONTOLOGY, ("LOCAL", "API", "HTTPS")),
+    "HPO": ScientificProvider("HPO", PHENOTYPE_ONTOLOGY, ("LOCAL", "FILE", "LOCAL_ONLY")),
     "PUBMED": ScientificProvider("PUBMED", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "PMC": ScientificProvider("PMC", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "OMIM": ScientificProvider("OMIM", GENE_DISEASE, ("LOCAL", "API", "HTTPS"), True),

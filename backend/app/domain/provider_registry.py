@@ -6,8 +6,9 @@ plan as executable.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from backend.app.domain.resource_capabilities import ProviderCapability
 
@@ -90,15 +91,19 @@ def register_builtin_providers() -> ProviderRegistry:
         return registry
 
     from backend.app.adapters.annotation.genebe import GeneBeProvider
+    from backend.app.adapters.annotation.vep import VEPProvider
+    from backend.app.adapters.clingen.cspec_provider import ClinGenCSpecProvider
+    from backend.app.adapters.clingen.gene_disease_validity import (
+        ClinGenGeneDiseaseValidityProvider,
+    )
+    from backend.app.adapters.clingen.variant_pathogenicity import (
+        ClinGenVariantPathogenicityProvider,
+    )
+    from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
     from backend.app.adapters.population.gnomad import (
         GnomADGraphQLProvider,
         LocalGnomADTabixProvider,
     )
-    from backend.app.adapters.annotation.vep import VEPProvider
-    from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
-    from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
-    from backend.app.adapters.clingen.cspec_provider import ClinGenCSpecProvider
-
     from backend.app.domain.resource_capabilities import ResourceCapability
 
     registry.register(
@@ -173,6 +178,15 @@ def register_builtin_providers() -> ProviderRegistry:
             provider_id=LocalGnomADTabixProvider.provider_id,
             capabilities=frozenset({ResourceCapability.POPULATION_FREQUENCY}),
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
+        ),
+    )
+    registry.register(
+        provider_id=HPOOboProvider.provider_id,
+        provider_version="*",
+        factory=HPOOboProvider.from_execution_contract,
+        descriptor=ProviderCapability(
+            provider_id=HPOOboProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.PHENOTYPE}),
         ),
     )
     return registry

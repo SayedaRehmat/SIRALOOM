@@ -3318,6 +3318,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clingen_gdv_provider = None
                 clingen_gdv_execution = None
                 clingen_gdv_metadata = None
+                hpo_resource = None
+                hpo_execution = None
+                hpo_ontology = None
+                hpo_resource_metadata = None
                 case_for_clingen = db.get(Case, analysis.case_id)
                 if case_for_clingen is not None:
                     vp_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),))
@@ -3334,6 +3338,109 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         clingen_gdv_execution = resolve_resource_execution(db, resource=clingen_gdv_resource)
                         clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
                         clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
+                    try:
+                        if profile_bound_analysis:
+                            hpo_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="PHENOTYPE_ONTOLOGY",
+                            )
+                            hpo_candidates = [
+                                (item.resource, item.execution) for item in hpo_runtime
+                                if item.resource.provider == "HPO"
+                            ]
+                            if hpo_runtime and not hpo_candidates:
+                                raise ResourceExecutionError(
+                                    "The pinned phenotype resource has no executable HPO OBO adapter."
+                                )
+                        else:
+                            hpo_plan = build_resource_execution_plan(
+                                db,
+                                organization_id=case_for_clingen.organization_id,
+                                requirements=(CapabilityRequirement(ResourceCapability.PHENOTYPE),),
+                            )
+                            planned_hpo = [
+                                item for item in hpo_plan.for_capability(ResourceCapability.PHENOTYPE)
+                                if item.resource.provider == "HPO"
+                            ]
+                            hpo_candidates = [
+                                (
+                                    item.resource,
+                                    resolve_resource_execution(db, resource=item.resource),
+                                )
+                                for item in planned_hpo
+                            ]
+                        if hpo_candidates:
+                            if len(hpo_candidates) != 1:
+                                raise ResourceExecutionError(
+                                    "The analysis plan selected multiple HPO ontology resources."
+                                )
+                            hpo_resource, hpo_execution = hpo_candidates[0]
+                            contract_checksum = str(
+                                (hpo_execution.contract.toolchain or {}).get("sha256")
+                                or (hpo_execution.contract.toolchain or {}).get("checksum")
+                                or ""
+                            ).lower()
+                            if contract_checksum.startswith("sha256:"):
+                                contract_checksum = contract_checksum.partition(":")[2]
+                            resource_checksum = str(hpo_resource.checksum or "").lower()
+                            if resource_checksum.startswith("sha256:"):
+                                resource_checksum = resource_checksum.partition(":")[2]
+                            if not resource_checksum or contract_checksum != resource_checksum:
+                                raise ResourceExecutionError(
+                                    "HPO resource checksum must be present and match the qualified execution contract."
+                                )
+                            implementation = register_builtin_providers().require(
+                                provider_id="HPO",
+                                provider_version=hpo_execution.contract.provider_version,
+                            )
+                            hpo_ontology = implementation.factory(hpo_execution.contract)
+                            if hpo_resource.version != hpo_ontology.release:
+                                raise ResourceExecutionError(
+                                    "HPO resource version does not match the release declared by its OBO artifact."
+                                )
+                            hpo_resource_metadata = {
+                                "resource_id": str(hpo_resource.id),
+                                "resource_name": hpo_resource.name,
+                                "resource_version": hpo_resource.version,
+                                "resource_checksum": hpo_resource.checksum,
+                                "qualification_id": str(hpo_execution.qualification_id),
+                                "qualification_version": hpo_execution.qualification_version,
+                                "contract_hash": hpo_execution.contract_hash,
+                                "ontology_release": hpo_ontology.release,
+                            }
+                    except Exception as exc:
+                        if hpo_resource is not None and hpo_execution is not None:
+                            failed_execution = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="build_evidence",
+                                attempt=max(1, int(evidence_step.attempt or 0)),
+                                batch_key="ontology-load",
+                                resolved=hpo_execution,
+                                requested_resource_id=hpo_resource.id,
+                                fallback_resource_id=None,
+                                metadata={
+                                    "execution_kind": "HPO_ONTOLOGY_RESOURCE_VALIDATION",
+                                    "resource_name": hpo_resource.name,
+                                    "resource_version": hpo_resource.version,
+                                    "resource_checksum": hpo_resource.checksum,
+                                },
+                            )
+                            complete_resource_execution(
+                                db,
+                                failed_execution,
+                                status="FAILED",
+                                error_code="HPO_ONTOLOGY_RESOURCE_INVALID",
+                                error_message=str(exc),
+                            )
+                        provider_limitations.append({
+                            "code": "HPO_ONTOLOGY_RESOURCE_UNAVAILABLE",
+                            "message": str(exc),
+                            "resource_capability": "PHENOTYPE_ONTOLOGY",
+                        })
+                        hpo_resource = hpo_execution = hpo_ontology = None
+                        hpo_resource_metadata = None
                 from backend.app.infrastructure.db.models import PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
@@ -3352,6 +3459,81 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     attempt = int((_batch_checkpoint(evidence_step, start_i, end_i).get("attempt") or 0)) + 1
                     _save_batch_checkpoint(db, evidence_step, start_i, end_i, status="RUNNING", attempt=attempt)
                     batch_created = 0
+                    hpo_provenance = None
+                    if hpo_resource is not None and hpo_execution is not None and hpo_ontology is not None:
+                        disease_terms = [
+                            str(term.get("hpo_id") or term.get("id") or "") if isinstance(term, dict) else str(term)
+                            for item in gene_disease_records
+                            for term in (item.get("hpo_terms") or item.get("associated_hpo_terms") or [])
+                        ]
+                        hpo_request = {
+                            "analysis_id": str(analysis.id),
+                            "resource_id": str(hpo_execution.resource_id),
+                            "resource_version": hpo_execution.resource_version,
+                            "contract_hash": hpo_execution.contract_hash,
+                            "patient_terms": sorted(str(term.get("hpo_id") or "") for term in case_hpo_terms),
+                            "disease_terms": sorted(disease_terms),
+                        }
+                        hpo_request_fingerprint = hashlib.sha256(
+                            json.dumps(hpo_request, sort_keys=True, separators=(",", ":")).encode()
+                        ).hexdigest()
+                        resolved_terms = sorted(set(hpo_request["patient_terms"] + disease_terms))
+                        hpo_output = {}
+                        for term in resolved_terms:
+                            resolution = hpo_ontology.resolve(term)
+                            hpo_output[term] = {
+                                "resolution": resolution.status,
+                                "canonical_id": resolution.canonical_id,
+                                "label": resolution.label,
+                                "replacement_candidates": list(resolution.replacement_candidates),
+                                "consider": list(resolution.consider),
+                                "ambiguous_candidates": list(resolution.ambiguous_candidates),
+                                "ancestors": sorted(hpo_ontology.ancestors(term)),
+                            }
+                        hpo_response_sha256 = hashlib.sha256(
+                            json.dumps(hpo_output, sort_keys=True, separators=(",", ":")).encode()
+                        ).hexdigest()
+                        if not _succeeded_evidence_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            resource_id=hpo_execution.resource_id,
+                            batch_key=key,
+                            request_fingerprint=hpo_request_fingerprint,
+                            execution_kind="HPO_ONTOLOGY_TERM_RESOLUTION",
+                        ):
+                            hpo_execution_row = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="build_evidence",
+                                attempt=attempt,
+                                batch_key=key,
+                                resolved=hpo_execution,
+                                requested_resource_id=hpo_resource.id,
+                                fallback_resource_id=None,
+                                metadata={
+                                    "execution_kind": "HPO_ONTOLOGY_TERM_RESOLUTION",
+                                    "patient_term_count": len(case_hpo_terms),
+                                    "disease_term_count": len(disease_terms),
+                                    "input_sha256": hpo_request_fingerprint,
+                                    "output_sha256": hpo_response_sha256,
+                                    "ontology_release": hpo_ontology.release,
+                                    "ontology_sha256": hpo_ontology.sha256,
+                                },
+                            )
+                            complete_resource_execution(
+                                db,
+                                hpo_execution_row,
+                                status="SUCCESS",
+                                request_fingerprint=hpo_request_fingerprint,
+                                response_sha256=hpo_response_sha256,
+                            )
+                        hpo_provenance = {
+                            **(hpo_resource_metadata or {}),
+                            "resource_id": str(hpo_resource.id),
+                            "resource_version": hpo_resource.version,
+                            "request_fingerprint": hpo_request_fingerprint,
+                            "response_sha256": hpo_response_sha256,
+                        }
                     annotations = db.scalars(select(Annotation).where(Annotation.analysis_id == analysis.id).order_by(Annotation.created_at, Annotation.id).offset(start_i).limit(end_i - start_i)).all()
                     variant_ids_for_batch = [a.variant_id for a in annotations]
                     population_rows = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id.in_(variant_ids_for_batch))).all() if variant_ids_for_batch else []
@@ -3381,6 +3563,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         records.extend(engine.build_case_context_evidence(
                             variant_id=row.id, case_hpo_terms=case_hpo_terms, gene=gene_symbol,
                             gene_disease_records=gene_disease_records, literature_records=literature_records,
+                            hpo_ontology=hpo_ontology,
+                            hpo_provenance=hpo_provenance,
                         ))
 
                         gene = ((ann.payload or {}).get("gene") or {}).get("symbol") or (ann.payload or {}).get("gene_symbol")
