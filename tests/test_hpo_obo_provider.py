@@ -16,6 +16,7 @@ from backend.app.evidence.engine import EvidenceEngine
 
 OBO = """format-version: 1.2
 data-version: releases/2026-09-01
+ontology: hp.obo
 
 [Term]
 id: HP:0000001
@@ -69,6 +70,7 @@ def test_hpo_obo_resolves_canonical_and_alternate_ids_and_is_a_ancestors(tmp_pat
 def test_hpo_obo_accepts_obo_relationship_modifiers_and_diamond_dag(tmp_path):
     obo = """format-version: 1.2
 data-version: releases/2026-09-01
+ontology: hp.obo
 
 [Term]
 id: HP:0000001
@@ -120,6 +122,7 @@ def test_hpo_obo_uses_only_explicit_unambiguous_obsolete_replacement(tmp_path):
 def test_hpo_obo_marks_conflicting_obsolete_and_alternate_ids_ambiguous(tmp_path):
     obo = """format-version: 1.2
 data-version: releases/2026-09-01
+ontology: hp.obo
 
 [Term]
 id: HP:0000001
@@ -149,6 +152,29 @@ consider: HP:0000002
     assert resolution.ambiguous_candidates == ("HP:0000002", "HP:0000003")
 
 
+@pytest.mark.parametrize(
+    ("header", "message"),
+    [
+        ("format-version: 1.2\n", "ontology identity"),
+        ("format-version: 1.2\nontology: other.obo\n", "ontology identity"),
+        ("format-version: 1.0\nontology: hp.obo\n", "Unsupported HPO OBO format version"),
+        ("format-version: 1.2\nformat-version: 1.2\n", "repeats field format-version"),
+        ("ontology: hp.obo\nontology: hp.obo\n", "repeats field ontology"),
+    ],
+)
+def test_hpo_obo_requires_supported_unambiguous_header(tmp_path, header, message):
+    path = tmp_path / "header-check.obo"
+    path.write_text(
+        f"{header}data-version: releases/2026-09-01\n\n"
+        "[Term]\nid: HP:0000001\nname: Root\n",
+        encoding="utf-8",
+    )
+    checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    with pytest.raises(HPOOntologyError, match=message):
+        HPOOboProvider(path, expected_sha256=checksum, expected_release="2026-09-01")
+
+
 def test_hpo_obo_requires_matching_checksum_and_release(tmp_path):
     path = tmp_path / "hp.obo"
     path.write_text(OBO, encoding="utf-8")
@@ -165,7 +191,7 @@ def test_hpo_obo_requires_matching_checksum_and_release(tmp_path):
 def test_hpo_obo_rejects_cyclic_is_a_graph(tmp_path):
     path = tmp_path / "cyclic.obo"
     path.write_text(
-        "data-version: releases/2026-09-01\n\n"
+        "format-version: 1.2\nontology: hp.obo\ndata-version: releases/2026-09-01\n\n"
         "[Term]\nid: HP:0000001\nname: One\nis_a: HP:0000002\n\n"
         "[Term]\nid: HP:0000002\nname: Two\nis_a: HP:0000001\n",
         encoding="utf-8",
@@ -179,7 +205,7 @@ def test_hpo_obo_rejects_cyclic_is_a_graph(tmp_path):
 def test_hpo_obo_rejects_invalid_or_duplicate_obsolete_flags(tmp_path, field_value):
     path = tmp_path / "invalid-obsolete.obo"
     path.write_text(
-        "data-version: releases/2026-09-01\n\n"
+        "format-version: 1.2\nontology: hp.obo\ndata-version: releases/2026-09-01\n\n"
         "[Term]\nid: HP:0000001\nname: Term\n"
         f"is_obsolete: {field_value}\n",
         encoding="utf-8",

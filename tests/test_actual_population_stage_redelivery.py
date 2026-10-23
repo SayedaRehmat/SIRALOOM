@@ -72,6 +72,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
     hpo_path.write_text(
         "format-version: 1.2\n"
         "data-version: hp/releases/2026-09-01/hp-base.owl\n\n"
+        "ontology: hp.obo\n\n"
         "[Term]\nid: HP:0000001\nname: Root\n\n"
         "[Term]\nid: HP:0000002\nname: Parent\nis_a: HP:0000001 ! Root\n\n"
         "[Term]\nid: HP:0000003\nname: Child\nis_a: HP:0000002 {xref=\"PMID:1\"} ! Parent\n"

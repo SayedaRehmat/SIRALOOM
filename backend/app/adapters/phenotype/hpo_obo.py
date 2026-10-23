@@ -133,6 +133,9 @@ class HPOOboProvider:
     def _parse(cls, path: Path) -> tuple[dict[str, HpoTerm], str]:
         terms: dict[str, HpoTerm] = {}
         header_release: str | None = None
+        header_format: str | None = None
+        header_ontology: str | None = None
+        seen_header_fields: set[str] = set()
         current: dict[str, object] | None = None
 
         def finish() -> None:
@@ -167,8 +170,18 @@ class HPOOboProvider:
                 if not line or line.startswith("!"):
                     continue
                 if current is None:
-                    if line.startswith("data-version:"):
-                        header_release = line.partition(":")[2].strip()
+                    key, sep, value = line.partition(":")
+                    if sep and key in {"format-version", "data-version", "ontology"}:
+                        if key in seen_header_fields:
+                            raise HPOOntologyError(f"HPO OBO header repeats field {key}")
+                        seen_header_fields.add(key)
+                        value = value.strip()
+                        if key == "format-version":
+                            header_format = value
+                        elif key == "data-version":
+                            header_release = value
+                        else:
+                            header_ontology = value
                     continue
                 key, sep, value = line.partition(":")
                 if not sep:
@@ -206,6 +219,14 @@ class HPOOboProvider:
         finish()
         if not terms:
             raise HPOOntologyError("HPO OBO contains no phenotype terms")
+        if header_format != "1.2":
+            raise HPOOntologyError(
+                f"Unsupported HPO OBO format version {header_format!r}; expected '1.2'"
+            )
+        if header_ontology != "hp.obo":
+            raise HPOOntologyError(
+                f"HPO OBO ontology identity must be 'hp.obo', got {header_ontology!r}"
+            )
         if not header_release:
             raise HPOOntologyError("HPO OBO header has no data-version release")
         release = _release_date(header_release)
