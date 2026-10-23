@@ -8,6 +8,7 @@ def test_builtin_registry_contains_only_real_implementations():
     assert ("GeneBe", "api-public-v1") in ids
     assert ("gnomad-graphql", "graphql") in ids
     assert ("gnomad-local-tabix", "vcf-tabix") in ids
+    assert ("HPOA", "HPOA_TSV") in ids
 
 
 def test_unknown_provider_is_not_executable():

@@ -100,6 +100,7 @@ def register_builtin_providers() -> ProviderRegistry:
         ClinGenVariantPathogenicityProvider,
     )
     from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
+    from backend.app.adapters.phenotype.hpoa import HPOAProvider
     from backend.app.adapters.population.gnomad import (
         GnomADGraphQLProvider,
         LocalGnomADTabixProvider,
@@ -187,6 +188,15 @@ def register_builtin_providers() -> ProviderRegistry:
         descriptor=ProviderCapability(
             provider_id=HPOOboProvider.provider_id,
             capabilities=frozenset({ResourceCapability.PHENOTYPE}),
+        ),
+    )
+    registry.register(
+        provider_id=HPOAProvider.provider_id,
+        provider_version=HPOAProvider.provider_version,
+        factory=HPOAProvider.from_execution_contract,
+        descriptor=ProviderCapability(
+            provider_id=HPOAProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.DISEASE_PHENOTYPE}),
         ),
     )
     return registry

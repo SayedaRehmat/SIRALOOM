@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
 
 from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
+from backend.app.adapters.phenotype.hpoa import HPOAProvider
 from backend.app.adapters.population.gnomad import PopulationObservationData
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
@@ -38,22 +39,30 @@ from backend.app.infrastructure.db.models import (
 
 
 @pytest.mark.parametrize(
-    ("no_match", "ontology_valid"),
+    ("no_match", "ontology_valid", "hpoa_license"),
     [
-        (False, True),
-        (True, True),
-        (False, False),
-        (True, False),
+        (False, True, True),
+        (True, True, True),
+        (False, False, True),
+        (True, False, True),
+        (False, True, False),
+        (True, True, False),
+        (False, False, False),
+        (True, False, False),
     ],
     ids=[
-        "available-frequency-hpo-ready",
-        "successful-no-match-hpo-ready",
-        "available-frequency-hpo-checksum-failure",
-        "successful-no-match-hpo-checksum-failure",
+        "available-frequency-licensed-hpoa-hpo-ready",
+        "no-match-licensed-hpoa-hpo-ready",
+        "available-frequency-licensed-hpoa-ontology-failure",
+        "no-match-ontology-failure-licensed-hpoa",
+        "available-frequency-unlicensed-hpoa",
+        "no-match-unlicensed-hpoa",
+        "ontology-failure-unlicensed-hpoa",
+        "no-match-ontology-failure-unlicensed-hpoa",
     ],
 )
 def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
-    monkeypatch, tmp_path, no_match, ontology_valid
+    monkeypatch, tmp_path, no_match, ontology_valid, hpoa_license
 ):
     import importlib
 
@@ -68,6 +77,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
     )
     clinvar_resource_id = uuid4()
     hpo_resource_id, hpo_qualification_id = uuid4(), uuid4()
+    hpoa_resource_id, hpoa_qualification_id = uuid4(), uuid4()
     hpo_path = tmp_path / "hp.obo"
     hpo_path.write_text(
         "format-version: 1.2\n"
@@ -83,6 +93,19 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
         encoding="utf-8",
     )
     hpo_checksum = hashlib.sha256(hpo_path.read_bytes()).hexdigest()
+    hpoa_path = tmp_path / "phenotype.hpoa"
+    hpoa_path.write_text(
+        "#version: 2026-09-02\n"
+        "#hpo-version: http://purl.obolibrary.org/obo/hp/releases/2026-09-01/hp.json\n"
+        "database_id\tdisease_name\tqualifier\thpo_id\treference\tevidence\t"
+        "onset\tfrequency\tsex\tmodifier\taspect\tbiocuration\n"
+        "MONDO:0000001\tDisease X\t\tHP:0000003\tPMID:123\tPCS\t"
+        "\t1/2\t\t\tP\tHPO:curator[2026-01-01]\n"
+        "MONDO:0000001\tDisease X\tNOT\tHP:0000004\tPMID:124\tTAS\t"
+        "\t0/3\t\t\tP\tHPO:curator[2026-01-02]\n",
+        encoding="utf-8",
+    )
+    hpoa_checksum = hashlib.sha256(hpoa_path.read_bytes()).hexdigest()
     variant_key = canonical_key("GRCh38", "1", 555, "T", "C")
     variant_id = stable_variant_uuid(variant_key)
     provider_calls = {"count": 0}
@@ -128,6 +151,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                         "gene_disease_evidence": [{
                             "gene": "GENE1",
                             "disease": "Disease X",
+                            "disease_id": "MONDO:0000001",
                             "hpo_terms": ["HP:0000003"],
                         }],
                     }
@@ -253,6 +277,23 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 metadata_json={},
             )
             db.add(hpo_resource)
+            hpoa_resource = Resource(
+                id=hpoa_resource_id,
+                organization_id=organization_id,
+                name="Fixture HPO disease annotations",
+                provider="HPOA",
+                resource_type="DISEASE_PHENOTYPE_ASSOCIATION",
+                version="2026-09-02",
+                genome_build=None,
+                access_method="LOCAL",
+                license_text=("Fixture license declaration" if hpoa_license else None),
+                checksum=hpoa_checksum,
+                location=str(hpoa_path),
+                status="ACTIVE",
+                population_definition=None,
+                metadata_json={},
+            )
+            db.add(hpoa_resource)
             db.flush()
             db.add(ResourceQualification(
                 id=hpo_qualification_id,
@@ -266,6 +307,26 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                     "location": str(hpo_path),
                     "dataset": "2026-09-01",
                     "toolchain": {"sha256": hpo_checksum, "release": "2026-09-01"},
+                }},
+                qualified_by=user_id,
+                qualified_at=datetime.now(UTC),
+            ))
+            db.add(ResourceQualification(
+                id=hpoa_qualification_id,
+                resource_id=hpoa_resource_id,
+                qualification_version="fixture-hpoa-qualification-v1",
+                status="QUALIFIED",
+                checks_json={"execution_contract": {
+                    "provider_id": "HPOA",
+                    "provider_version": "HPOA_TSV",
+                    "access_method": "LOCAL",
+                    "location": str(hpoa_path),
+                    "dataset": "2026-09-02",
+                    "toolchain": {
+                        "sha256": hpoa_checksum,
+                        "release": "2026-09-02",
+                        "hpo_release": "2026-09-01",
+                    },
                 }},
                 qualified_by=user_id,
                 qualified_at=datetime.now(UTC),
@@ -408,6 +469,18 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             contract=hpo_contract,
             contract_hash="f" * 64,
         )
+        hpoa_contract = ResourceExecutionContract(
+            provider_id="HPOA", provider_version="HPOA_TSV", access_method="LOCAL",
+            endpoint=None, location=str(hpoa_path), dataset="2026-09-02",
+            execution_scope="LABORATORY",
+            toolchain={"sha256": hpoa_checksum, "release": "2026-09-02", "hpo_release": "2026-09-01"},
+        )
+        hpoa_execution = SimpleNamespace(
+            resource_id=hpoa_resource_id, resource_version="2026-09-02",
+            qualification_id=hpoa_qualification_id,
+            qualification_version="fixture-hpoa-qualification-v1",
+            contract=hpoa_contract, contract_hash="a" * 64,
+        )
         clinvar_contract = SimpleNamespace(
             provider_id="NCBI ClinVar",
             provider_version="v1",
@@ -481,11 +554,14 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             resource=hpo_resource,
             execution=hpo_execution,
         )
+        hpoa_candidate = SimpleNamespace(resource=hpoa_resource, execution=hpoa_execution)
 
         def fake_execution_plan(*_args, **kwargs):
             capability = kwargs["requirements"][0].capability
             if capability == workflow.ResourceCapability.PHENOTYPE:
                 candidates = [hpo_candidate]
+            elif capability == workflow.ResourceCapability.DISEASE_PHENOTYPE:
+                candidates = [hpoa_candidate]
             elif capability == workflow.ResourceCapability.POPULATION_FREQUENCY:
                 candidates = [candidate]
             else:
@@ -508,6 +584,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             lambda _db, *, resource: {
                 clinvar_resource_id: clinvar_execution,
                 hpo_resource_id: hpo_execution,
+                hpoa_resource_id: hpoa_execution,
             }.get(resource.id, execution),
         )
         monkeypatch.setattr(
@@ -520,8 +597,10 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             "register_builtin_providers",
             lambda: SimpleNamespace(
                 resolve=lambda **_kwargs: SimpleNamespace(factory=lambda _contract: provider),
-                require=lambda **_kwargs: SimpleNamespace(
-                    factory=HPOOboProvider.from_execution_contract
+                require=lambda **kwargs: SimpleNamespace(
+                    factory=(HPOAProvider.from_execution_contract
+                        if kwargs.get("provider_id") == "HPOA"
+                        else HPOOboProvider.from_execution_contract)
                 ),
             ),
         )
@@ -618,7 +697,9 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             ))
             assert evidence_rows
             phenotype_evidence = next(
-                row for row in evidence_rows if row.evidence_type == "PHENOTYPE"
+                row for row in evidence_rows
+                if row.evidence_type == "PHENOTYPE"
+                and row.source_name in {"HPO", "HPO_CASE_CONTEXT"}
             )
             assert [term["hpo_id"] for term in phenotype_evidence.payload["present_terms"]] == [
                 "HP:0000002"
@@ -644,6 +725,30 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 assert phenotype_evidence.source_name == "HPO_CASE_CONTEXT"
                 assert phenotype_evidence.resource_id is None
                 assert phenotype_evidence.payload["ontology_term_resolutions"] is None
+            hpoa_evidence_rows = [row for row in evidence_rows if row.source_name == "HPOA"]
+            hpoa_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.resource_id == hpoa_resource_id,
+            )).all()
+            if hpoa_license:
+                hpoa_evidence = hpoa_evidence_rows[0]
+                assert hpoa_evidence.evidence_type == "PHENOTYPE"
+                assert hpoa_evidence.resource_id == hpoa_resource_id
+                assert hpoa_evidence.source_version == "2026-09-02"
+                assert hpoa_evidence.payload["disease_id"] == "MONDO:0000001"
+                assert hpoa_evidence.payload["score"] is None
+                assert hpoa_evidence.payload["clinical_prioritization_validated"] is False
+                assert [row["qualifier"] for row in hpoa_evidence.payload["assertions"]] == ["", "NOT"]
+                assert [row["frequency"] for row in hpoa_evidence.payload["assertions"]] == ["1/2", "0/3"]
+                assert len(hpoa_evidence.request_fingerprint) == 64
+                assert len(hpoa_evidence.response_sha256) == 64
+                assert len(hpoa_execution_rows) == 1
+                assert hpoa_execution_rows[0].status == "SUCCESS"
+            else:
+                assert hpoa_evidence_rows == []
+                assert hpoa_execution_rows
+                assert all(row.status == "FAILED" for row in hpoa_execution_rows)
+                assert all(row.error_code == "HPOA_RESOURCE_INVALID" for row in hpoa_execution_rows)
             disease_evidence = next(
                 row for row in evidence_rows if row.evidence_type == "GENE_DISEASE"
             )
@@ -731,6 +836,16 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                     row.error_code == "HPO_ONTOLOGY_RESOURCE_INVALID"
                     for row in hpo_execution_rows
                 )
+            replayed_hpoa_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.resource_id == hpoa_resource_id,
+            )).all()
+            if hpoa_license:
+                assert len(replayed_hpoa_execution_rows) == 1
+                assert replayed_hpoa_execution_rows[0].status == "SUCCESS"
+            else:
+                assert len(replayed_hpoa_execution_rows) >= 2
+                assert all(row.status == "FAILED" for row in replayed_hpoa_execution_rows)
 
         if not no_match:
             # The real ACMG stage commits criterion/classification rows before

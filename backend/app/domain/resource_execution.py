@@ -140,6 +140,7 @@ def _assert_profile_bound_resource_execution(
             "CLINICAL_DATABASE",
             "GENE_DISEASE",
             "PHENOTYPE_ONTOLOGY",
+            "DISEASE_PHENOTYPE_ASSOCIATION",
             "COMPUTATIONAL_PREDICTOR",
             "SPLICING_PREDICTOR",
             "FUNCTIONAL_EVIDENCE",

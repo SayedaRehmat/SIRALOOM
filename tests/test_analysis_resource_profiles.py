@@ -6,6 +6,7 @@ from backend.app.domain.resource_capabilities import (
     ACMG_RULE_SPECIFICATION,
     ANNOTATION_ENGINE,
     CLINICAL_DATABASE,
+    DISEASE_PHENOTYPE_ASSOCIATION,
     POPULATION,
     REFERENCE_PACKAGE,
 )
@@ -29,6 +30,18 @@ def test_standard_profile_treats_external_evidence_as_optional():
     optional = profile.optional_capabilities
     assert CLINICAL_DATABASE in optional
     assert REFERENCE_PACKAGE not in optional
+
+
+def test_hpoa_is_an_optional_local_licensed_disease_phenotype_resource():
+    profile = get_analysis_resource_profile("WES_GRCh38_STANDARD")
+    requirement = next(
+        item for item in profile.requirements
+        if item.capability == DISEASE_PHENOTYPE_ASSOCIATION
+    )
+    assert requirement.required is False
+    assert requirement.preferred_providers == ("HPOA",)
+    assert requirement.genome_build_required is False
+    assert requirement.license_required is True
 
 
 def test_profiles_are_explicitly_versioned():

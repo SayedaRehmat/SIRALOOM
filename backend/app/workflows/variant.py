@@ -4,7 +4,7 @@ import hashlib
 import json
 import shutil
 import tempfile
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -3470,6 +3470,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 hpo_execution = None
                 hpo_ontology = None
                 hpo_resource_metadata = None
+                hpoa_resource = None
+                hpoa_execution = None
+                hpoa_provider = None
+                hpoa_resource_metadata = None
                 case_for_clingen = db.get(Case, analysis.case_id)
                 if case_for_clingen is not None:
                     vp_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),))
@@ -3589,6 +3593,133 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         })
                         hpo_resource = hpo_execution = hpo_ontology = None
                         hpo_resource_metadata = None
+                    try:
+                        if profile_bound_analysis:
+                            hpoa_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="DISEASE_PHENOTYPE_ASSOCIATION",
+                            )
+                            hpoa_candidates = [
+                                (item.resource, item.execution)
+                                for item in hpoa_runtime
+                                if item.resource.provider == "HPOA"
+                            ]
+                            if hpoa_runtime and not hpoa_candidates:
+                                raise ResourceExecutionError(
+                                    "The pinned disease-phenotype resource has no executable HPOA adapter."
+                                )
+                        else:
+                            hpoa_plan = build_resource_execution_plan(
+                                db,
+                                organization_id=case_for_clingen.organization_id,
+                                requirements=(
+                                    CapabilityRequirement(ResourceCapability.DISEASE_PHENOTYPE),
+                                ),
+                            )
+                            planned_hpoa = [
+                                item for item in hpoa_plan.for_capability(
+                                    ResourceCapability.DISEASE_PHENOTYPE
+                                )
+                                if item.resource.provider == "HPOA"
+                            ]
+                            hpoa_candidates = [
+                                (
+                                    item.resource,
+                                    resolve_resource_execution(db, resource=item.resource),
+                                )
+                                for item in planned_hpoa
+                            ]
+                        if hpoa_candidates:
+                            if len(hpoa_candidates) != 1:
+                                raise ResourceExecutionError(
+                                    "The analysis plan selected multiple HPOA disease-phenotype resources."
+                                )
+                            hpoa_resource, hpoa_execution = hpoa_candidates[0]
+                            if (
+                                hpoa_resource.organization_id
+                                != case_for_clingen.organization_id
+                            ):
+                                raise ResourceExecutionError(
+                                    "HPOA must be an organization-bound laboratory resource."
+                                )
+                            if not str(hpoa_resource.license_text or "").strip():
+                                raise ResourceExecutionError(
+                                    "HPOA execution requires the laboratory's documented license permission."
+                                )
+                            contract_checksum = str(
+                                (hpoa_execution.contract.toolchain or {}).get("sha256")
+                                or (hpoa_execution.contract.toolchain or {}).get("checksum")
+                                or ""
+                            ).lower()
+                            resource_checksum = str(hpoa_resource.checksum or "").lower()
+                            if contract_checksum.startswith("sha256:"):
+                                contract_checksum = contract_checksum.partition(":")[2]
+                            if resource_checksum.startswith("sha256:"):
+                                resource_checksum = resource_checksum.partition(":")[2]
+                            if not resource_checksum or contract_checksum != resource_checksum:
+                                raise ResourceExecutionError(
+                                    "HPOA checksum must match the approved resource and execution contract."
+                                )
+                            implementation = register_builtin_providers().require(
+                                provider_id="HPOA",
+                                provider_version=hpoa_execution.contract.provider_version,
+                            )
+                            hpoa_provider = implementation.factory(hpoa_execution.contract)
+                            if hpoa_resource.version != hpoa_provider.release:
+                                raise ResourceExecutionError(
+                                    "HPOA resource version does not match the release declared by its file."
+                                )
+                            contract_hpo_release = str(
+                                (hpoa_execution.contract.toolchain or {}).get("hpo_release") or ""
+                            )
+                            if hpoa_provider.hpo_release != contract_hpo_release:
+                                raise ResourceExecutionError(
+                                    "HPOA file ontology release does not match its qualified resource contract."
+                                )
+                            hpoa_resource_metadata = {
+                                "resource_id": str(hpoa_resource.id),
+                                "resource_name": hpoa_resource.name,
+                                "resource_version": hpoa_resource.version,
+                                "resource_checksum": hpoa_resource.checksum,
+                                "qualification_id": str(hpoa_execution.qualification_id),
+                                "qualification_version": hpoa_execution.qualification_version,
+                                "contract_hash": hpoa_execution.contract_hash,
+                                "hpoa_release": hpoa_provider.release,
+                                "hpo_release": hpoa_provider.hpo_release,
+                            }
+                    except Exception as exc:
+                        if hpoa_resource is not None and hpoa_execution is not None:
+                            failed_execution = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="build_evidence",
+                                attempt=max(1, int(evidence_step.attempt or 0)),
+                                batch_key="hpoa-load",
+                                resolved=hpoa_execution,
+                                requested_resource_id=hpoa_resource.id,
+                                fallback_resource_id=None,
+                                metadata={
+                                    "execution_kind": "HPOA_RESOURCE_VALIDATION",
+                                    "resource_name": hpoa_resource.name,
+                                    "resource_version": hpoa_resource.version,
+                                    "resource_checksum": hpoa_resource.checksum,
+                                },
+                            )
+                            complete_resource_execution(
+                                db,
+                                failed_execution,
+                                status="FAILED",
+                                error_code="HPOA_RESOURCE_INVALID",
+                                error_message=str(exc),
+                            )
+                        provider_limitations.append({
+                            "code": "HPOA_RESOURCE_UNAVAILABLE",
+                            "message": str(exc),
+                            "resource_capability": "DISEASE_PHENOTYPE_ASSOCIATION",
+                        })
+                        hpoa_resource = hpoa_execution = hpoa_provider = None
+                        hpoa_resource_metadata = None
                 from backend.app.infrastructure.db.models import PhenotypeObservation
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
@@ -3601,6 +3732,83 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 } for x in phenotype_rows]
                 gene_disease_records = list(case_context.get("gene_disease_evidence") or [])
                 literature_records = list(case_context.get("literature_evidence") or [])
+                hpoa_disease_annotations: dict[str, tuple] = {}
+                hpoa_provenance = None
+                if hpoa_provider is not None and hpoa_resource is not None and hpoa_execution is not None:
+                    disease_ids = sorted({
+                        str(item.get("disease_id") or item.get("disease_identifier") or "").strip()
+                        for item in gene_disease_records
+                        if isinstance(item, dict)
+                        and str(item.get("disease_id") or item.get("disease_identifier") or "").strip()
+                    })
+                    if disease_ids:
+                        hpoa_disease_annotations = {
+                            disease_id: hpoa_provider.query_disease(disease_id)
+                            for disease_id in disease_ids
+                        }
+                        hpoa_request = {
+                            "analysis_id": str(analysis.id),
+                            "resource_id": str(hpoa_execution.resource_id),
+                            "resource_version": hpoa_execution.resource_version,
+                            "contract_hash": hpoa_execution.contract_hash,
+                            "disease_ids": disease_ids,
+                        }
+                        hpoa_request_fingerprint = hashlib.sha256(
+                            json.dumps(hpoa_request, sort_keys=True, separators=(",", ":")).encode()
+                        ).hexdigest()
+                        hpoa_response_material = {
+                            disease_id: [asdict(item) for item in annotations]
+                            for disease_id, annotations in hpoa_disease_annotations.items()
+                        }
+                        hpoa_response_sha256 = hashlib.sha256(
+                            json.dumps(
+                                hpoa_response_material,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            ).encode()
+                        ).hexdigest()
+                        hpoa_provenance = {
+                            **(hpoa_resource_metadata or {}),
+                            "request_fingerprint": hpoa_request_fingerprint,
+                            "response_sha256": hpoa_response_sha256,
+                        }
+                        if not _succeeded_evidence_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            resource_id=hpoa_execution.resource_id,
+                            batch_key="disease-annotations",
+                            request_fingerprint=hpoa_request_fingerprint,
+                            execution_kind="HPOA_DISEASE_ANNOTATION_QUERY",
+                        ):
+                            hpoa_execution_row = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="build_evidence",
+                                attempt=max(1, int(evidence_step.attempt or 0)),
+                                batch_key="disease-annotations",
+                                resolved=hpoa_execution,
+                                requested_resource_id=hpoa_resource.id,
+                                fallback_resource_id=None,
+                                metadata={
+                                    "execution_kind": "HPOA_DISEASE_ANNOTATION_QUERY",
+                                    "disease_count": len(disease_ids),
+                                    "input_sha256": hpoa_request_fingerprint,
+                                    "output_sha256": hpoa_response_sha256,
+                                    "hpoa_release": hpoa_provider.release,
+                                    "hpo_release": hpoa_provider.hpo_release,
+                                },
+                            )
+                            complete_resource_execution(
+                                db,
+                                hpoa_execution_row,
+                                status=(
+                                    "SUCCESS"
+                                    if any(hpoa_disease_annotations.values())
+                                    else "NO_DATA"
+                                ),
+                                request_fingerprint=hpoa_request_fingerprint,
+                                response_sha256=hpoa_response_sha256,
+                            )
 
                 created = 0
                 batch_size = int(analysis.configuration.get("evidence_batch_size", 250) or 250)
@@ -3734,6 +3942,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             hpo_ontology=hpo_ontology,
                             hpo_provenance=hpo_provenance,
                         ))
+                        if hpoa_provenance is not None:
+                            records.extend(engine.build_hpoa_disease_phenotype_evidence(
+                                variant_id=row.id,
+                                gene=gene_symbol,
+                                gene_disease_records=gene_disease_records,
+                                annotations_by_disease=hpoa_disease_annotations,
+                                provenance=hpoa_provenance,
+                            ))
 
                         gene = ((ann.payload or {}).get("gene") or {}).get("symbol") or (ann.payload or {}).get("gene_symbol")
                         hgvs_values = list((ann.payload or {}).get("hgvs_consequences") or [])

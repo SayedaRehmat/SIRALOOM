@@ -303,6 +303,18 @@ tbody tr.selected { background: #eff8f5; }
 .clinical-evidence-card strong { display:block; font-size:11px; overflow-wrap:anywhere; }
 .clinical-evidence-card p { margin:7px 0; color:var(--muted); font-size:10px; line-height:1.5; }
 .clinical-evidence-card small { color:var(--muted); font-size:9px; }
+.hpoa-assertions { margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--surface); }
+.hpoa-assertions ul { list-style:none; display:grid; gap:8px; margin:8px 0; padding:0; }
+.hpoa-assertions li { display:grid; grid-template-columns:auto 1fr; gap:5px 8px; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--border); }
+.hpoa-assertions li:last-child { padding-bottom:0; border-bottom:0; }
+.hpoa-assertions li > span, .hpoa-assertions li > small { grid-column:1 / -1; }
+.hpoa-review-note { margin-bottom:0 !important; }
+.evidence-provenance { margin-top:9px; color:var(--muted); font-size:9px; }
+.evidence-provenance summary { cursor:pointer; }
+.evidence-provenance dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 8px; overflow-wrap:anywhere; }
+.evidence-provenance dt { font-weight:600; }
+.evidence-provenance dd { margin:0; }
+.evidence-provenance code { word-break:break-all; }
 .term-list { display:flex; gap:6px; flex-wrap:wrap; }
 .term-chip { display:inline-flex; align-items:center; padding:6px 8px; border-radius:999px; border:1px solid var(--border); font-size:9px; background:#fafafa; }
 .term-chip.positive { background:#f4fbf8; border-color:#cfe7de; }

@@ -529,6 +529,75 @@ class EvidenceEngine:
             ))
         return out
 
+    def build_hpoa_disease_phenotype_evidence(
+        self,
+        *,
+        variant_id: UUID,
+        gene: str | None,
+        gene_disease_records: Iterable[dict[str, Any]],
+        annotations_by_disease: dict[str, Iterable[Any]],
+        provenance: dict[str, Any],
+    ) -> list[EvidenceRecord]:
+        """Persist source assertions without turning frequency into a score.
+
+        HPOA's NOT qualifiers and frequency fields are preserved verbatim. This
+        record is contextual evidence for human review and is not an ACMG
+        criterion or a calibrated phenotype-prioritization result.
+        """
+        from dataclasses import asdict, is_dataclass
+
+        out: list[EvidenceRecord] = []
+        eligible_disease_ids = {
+            str(item.get("disease_id") or item.get("disease_identifier") or "").strip()
+            for item in gene_disease_records
+            if isinstance(item, dict)
+            and str(item.get("disease_id") or item.get("disease_identifier") or "").strip()
+            and (
+                not gene
+                or not item.get("gene")
+                or str(item["gene"]).upper() == gene.upper()
+            )
+        }
+        for disease_id, disease_assertions in sorted(annotations_by_disease.items()):
+            if disease_id not in eligible_disease_ids:
+                continue
+            material = [
+                asdict(annotation) if is_dataclass(annotation) else dict(annotation)
+                for annotation in disease_assertions
+            ]
+            if not material:
+                continue
+            out.append(
+                self._record(
+                    variant_id=variant_id,
+                    evidence_type="PHENOTYPE",
+                    statement=(
+                        "Versioned HPO disease-phenotype assertions are available for review; "
+                        "they are not independently validated diagnostic or classification evidence."
+                    ),
+                    direction="NEUTRAL",
+                    source_name="HPOA",
+                    source_version=str(provenance.get("resource_version") or ""),
+                    payload={
+                        "disease_id": disease_id,
+                        "gene": gene,
+                        "assertions": material,
+                        "interpretive_use": "DISEASE_PHENOTYPE_EVIDENCE_REVIEW",
+                        "score": None,
+                        "clinical_prioritization_validated": False,
+                    },
+                    resource_id=(
+                        UUID(str(provenance["resource_id"]))
+                        if provenance.get("resource_id")
+                        else None
+                    ),
+                    request_fingerprint=provenance.get("request_fingerprint"),
+                    response_sha256=provenance.get("response_sha256"),
+                    request_metadata=dict(provenance),
+                )
+            )
+        return out
+
     def _record(
         self,
         *,

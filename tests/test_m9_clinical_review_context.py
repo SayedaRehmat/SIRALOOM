@@ -5,15 +5,22 @@ from backend.app.infrastructure.db.models import Evidence
 
 
 def test_m9_evidence_context_preserves_source_and_payload():
+    resource_id = uuid4()
     row = Evidence(
         id=uuid4(), variant_id=uuid4(), analysis_id=uuid4(),
         evidence_type="LITERATURE", statement="Published functional evidence",
         direction="SUPPORTS", source_name="PubMed", source_version="2026-01",
         source_record_id="PMID:123", observation_ids=[], payload={"gene":"GENE1"},
+        resource_id=resource_id, request_fingerprint="a" * 64,
+        response_sha256="b" * 64, request_metadata={"resource_version": "r1"},
         created_by_type="SYSTEM", created_by_id="workflow",
         created_at=datetime.now(timezone.utc),
     )
     out = _evidence_context_dict(row)
     assert out["type"] == "LITERATURE"
     assert out["source_record_id"] == "PMID:123"
+    assert out["resource_id"] == str(resource_id)
+    assert out["request_fingerprint"] == "a" * 64
+    assert out["response_sha256"] == "b" * 64
+    assert out["request_metadata"]["resource_version"] == "r1"
     assert out["payload"]["gene"] == "GENE1"

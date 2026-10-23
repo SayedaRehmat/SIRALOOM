@@ -664,6 +664,20 @@ export type TranslationKey =
   | "review.addingHpo"
   | "review.addHpo"
   | "review.phenotype"
+  | "review.hpoaAssertions"
+  | "review.hpoaDisease"
+  | "review.hpoaNot"
+  | "review.hpoaReported"
+  | "review.hpoaEvidence"
+  | "review.hpoaFrequency"
+  | "review.hpoaOnset"
+  | "review.hpoaSex"
+  | "review.hpoaReviewOnly"
+  | "review.provenance"
+  | "review.resourceId"
+  | "review.requestDigest"
+  | "review.responseDigest"
+  | "review.sourceRecord"
   | "review.geneDiseaseNone"
   | "review.inheritance"
   | "review.family"
@@ -1115,6 +1129,20 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.addingHpo": "Adding…",
     "review.addHpo": "Add HPO observation",
     "review.phenotype": "Phenotype match & gene–disease relationship",
+    "review.hpoaAssertions": "HPO disease-phenotype assertions",
+    "review.hpoaDisease": "Disease identifier",
+    "review.hpoaNot": "NOT reported",
+    "review.hpoaReported": "Reported",
+    "review.hpoaEvidence": "Evidence code",
+    "review.hpoaFrequency": "Source frequency",
+    "review.hpoaOnset": "Onset",
+    "review.hpoaSex": "Sex context",
+    "review.hpoaReviewOnly": "Source assertions are shown for review; they are not a validated diagnostic score or classification.",
+    "review.provenance": "Resource and query provenance",
+    "review.resourceId": "Resource ID",
+    "review.requestDigest": "Request SHA-256",
+    "review.responseDigest": "Response SHA-256",
+    "review.sourceRecord": "Source record",
     "review.geneDiseaseNone": "No gene–disease context evidence attached.",
     "review.inheritance": "INHERITANCE, PEDIGREE & SEGREGATION",
     "review.family": "Family structure",
@@ -1995,6 +2023,20 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.addingHpo": "جارٍ الإضافة…",
     "review.addHpo": "إضافة ملاحظة HPO",
     "review.phenotype": "تطابق النمط الظاهري وعلاقة الجين بالمرض",
+    "review.hpoaAssertions": "تأكيدات HPO للنمط الظاهري المرتبط بالمرض",
+    "review.hpoaDisease": "معرّف المرض",
+    "review.hpoaNot": "منفي صراحةً (NOT)",
+    "review.hpoaReported": "مذكور في المصدر",
+    "review.hpoaEvidence": "رمز الدليل",
+    "review.hpoaFrequency": "التواتر كما ورد في المصدر",
+    "review.hpoaOnset": "بداية الظهور",
+    "review.hpoaSex": "السياق الجنسي",
+    "review.hpoaReviewOnly": "تُعرض تأكيدات المصدر للمراجعة؛ وهي ليست درجة تشخيصية أو تصنيفًا معتمدًا.",
+    "review.provenance": "مصدر المورد والاستعلام",
+    "review.resourceId": "معرّف المورد",
+    "review.requestDigest": "SHA-256 للطلب",
+    "review.responseDigest": "SHA-256 للاستجابة",
+    "review.sourceRecord": "سجل المصدر",
     "review.geneDiseaseNone": "لا توجد أدلة سياقية مرفقة لعلاقة الجين بالمرض.",
     "review.inheritance": "الوراثة، شجرة النسب، والتشارك",
     "review.family": "بنية الأسرة",

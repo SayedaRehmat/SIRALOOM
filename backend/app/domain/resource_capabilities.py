@@ -21,6 +21,7 @@ class ResourceCapability(StrEnum):
     CLINICAL_VARIANT = "CLINICAL_VARIANT"
     GENE_DISEASE = "GENE_DISEASE"
     PHENOTYPE = "PHENOTYPE"
+    DISEASE_PHENOTYPE = "DISEASE_PHENOTYPE"
     COMPUTATIONAL = "COMPUTATIONAL"
     SPLICING = "SPLICING"
     LITERATURE = "LITERATURE"
@@ -127,6 +128,9 @@ def infer_capabilities(
         ("HPO", "PHENOTYPE"): {
             ResourceCapability.PHENOTYPE,
         },
+        ("HPOA", "DISEASE_PHENOTYPE_ASSOCIATION"): {
+            ResourceCapability.DISEASE_PHENOTYPE,
+        },
     }
     return frozenset(mapping.get((p, r), set()))
 
@@ -173,6 +177,7 @@ POPULATION = "POPULATION"
 POPULATION_SECONDARY = "POPULATION_SECONDARY"
 CLINICAL_DATABASE = "CLINICAL_DATABASE"
 PHENOTYPE_ONTOLOGY = "PHENOTYPE_ONTOLOGY"
+DISEASE_PHENOTYPE_ASSOCIATION = "DISEASE_PHENOTYPE_ASSOCIATION"
 COMPUTATIONAL_PREDICTOR = "COMPUTATIONAL_PREDICTOR"
 SPLICING_PREDICTOR = "SPLICING_PREDICTOR"
 FUNCTIONAL_EVIDENCE = "FUNCTIONAL_EVIDENCE"
@@ -259,6 +264,13 @@ _RESOURCE_PROFILE_CAPABILITIES = {
         ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), False, True, False,
         (), (), ("PHENOTYPE",), False, True, True,
     ),
+    DISEASE_PHENOTYPE_ASSOCIATION: ScientificResourceCapability(
+        DISEASE_PHENOTYPE_ASSOCIATION,
+        "Versioned disease-to-phenotype assertions with source evidence and frequency semantics.",
+        ("disease_identifier",), ("phenotype_assertion", "assertion_provenance"),
+        ("LOCAL", "FILE", "LOCAL_ONLY"), ("LOCAL",), False, True, True,
+        (), (), ("DISEASE_PHENOTYPE",), False, True, True,
+    ),
     COMPUTATIONAL_PREDICTOR: ScientificResourceCapability(
         COMPUTATIONAL_PREDICTOR,
         "Calibrated computational evidence.",
@@ -317,6 +329,9 @@ _SCIENTIFIC_PROVIDERS = {
     "GNOMAD-GRAPHL": ScientificProvider("GNOMAD-GRAPHL", POPULATION, ("LOCAL", "API", "HTTPS")),
     "CLINGEN": ScientificProvider("CLINGEN", ACMG_RULE_SPECIFICATION, ("LOCAL", "API", "HTTPS")),
     "HPO": ScientificProvider("HPO", PHENOTYPE_ONTOLOGY, ("LOCAL", "FILE", "LOCAL_ONLY")),
+    "HPOA": ScientificProvider(
+        "HPOA", DISEASE_PHENOTYPE_ASSOCIATION, ("LOCAL", "FILE", "LOCAL_ONLY"), True
+    ),
     "PUBMED": ScientificProvider("PUBMED", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "PMC": ScientificProvider("PMC", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "OMIM": ScientificProvider("OMIM", GENE_DISEASE, ("LOCAL", "API", "HTTPS"), True),
@@ -352,6 +367,7 @@ def supported_resource_types() -> tuple[str, ...]:
     return tuple(sorted({
         REFERENCE_PACKAGE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
         POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, PHENOTYPE_ONTOLOGY,
+        DISEASE_PHENOTYPE_ASSOCIATION,
         COMPUTATIONAL_PREDICTOR, SPLICING_PREDICTOR, FUNCTIONAL_EVIDENCE,
         LITERATURE_PROVIDER, ACMG_RULE_SPECIFICATION, VARIANT_IDENTITY,
         INTERNAL_LAB_EVIDENCE, DISEASE_ONTOLOGY, GENE_PANEL, DOSAGE_SENSITIVITY,
