@@ -9,6 +9,7 @@ from backend.app.auth.authorization import (
     require_role,
 )
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.population import qualified_allele_frequency
 from backend.app.domain.schemas import PopulationQueryRequest
 from backend.app.infrastructure.db.models import PopulationObservation, Resource
 from backend.app.infrastructure.db.session import get_db
@@ -41,7 +42,7 @@ def query(
                 "population": row.population_code,
                 "label": row.population_label,
                 "availability": row.availability,
-                "af": row.allele_frequency,
+                "af": qualified_allele_frequency(row.allele_frequency, row.allele_number),
                 "ac": row.allele_count,
                 "an": row.allele_number,
             }

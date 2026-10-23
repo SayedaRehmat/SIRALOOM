@@ -1,13 +1,14 @@
 from __future__ import annotations
+from copy import deepcopy
 from typing import Any
 
 
 def normalize_gene_be_variant(raw: dict[str, Any]) -> dict[str, Any]:
     """Map current GeneBe variant API fields to a SIRALOOM-neutral representation.
 
-    GeneBe documents frequency_reference_population as a current gnomAD total
-    (exome + genome) population frequency. It is stored as provider-derived global
-    population evidence; it is not labeled as Middle Eastern/country-specific.
+    GeneBe documents AF fields but does not provide the matching allele-number
+    denominator in this response schema. The values remain in the preserved raw
+    provider snapshot, not in normalized frequency evidence or display.
     """
     consequences = raw.get("consequences") or []
     return {
@@ -24,11 +25,14 @@ def normalize_gene_be_variant(raw: dict[str, Any]) -> dict[str, Any]:
         "dbsnp": raw.get("dbsnp"),
         "hgvs_consequences": consequences,
         "population": {
-            "reference_population_af": raw.get("frequency_reference_population"),
+            "reference_population_af": None,
+            "reference_population_af_status": "DENOMINATOR_UNAVAILABLE",
             "reference_population_ac": raw.get("allele_count_reference_population"),
             "reference_population_hom": raw.get("hom_count_reference_population"),
-            "gnomad_exomes_af": raw.get("gnomad_exomes_af"),
-            "gnomad_genomes_af": raw.get("gnomad_genomes_af"),
+            "gnomad_exomes_af": None,
+            "gnomad_exomes_af_status": "DENOMINATOR_UNAVAILABLE",
+            "gnomad_genomes_af": None,
+            "gnomad_genomes_af_status": "DENOMINATOR_UNAVAILABLE",
             "gnomad_exomes_ac": raw.get("gnomad_exomes_ac"),
             "gnomad_genomes_ac": raw.get("gnomad_genomes_ac"),
             "gnomad_exomes_homalt": raw.get("gnomad_exomes_homalt"),
@@ -73,3 +77,22 @@ def normalize_gene_be_variant(raw: dict[str, Any]) -> dict[str, Any]:
             "provider_field_schema": "current-api-response-fields",
         },
     }
+
+
+def gene_be_display_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Suppress denominator-free GeneBe AFs on user-facing surfaces.
+
+    The database retains the exact provider response for provenance.
+    """
+    result = deepcopy(payload)
+    raw = result.get("raw")
+    if isinstance(raw, dict):
+        for key in ("frequency_reference_population", "gnomad_exomes_af", "gnomad_genomes_af"):
+            if key in raw:
+                raw[key] = None
+    normalized = result.get("normalized")
+    population = normalized.get("population") if isinstance(normalized, dict) else None
+    if isinstance(population, dict):
+        for key in ("reference_population_af", "gnomad_exomes_af", "gnomad_genomes_af"):
+            population[key] = None
+    return result

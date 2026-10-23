@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant_ids
+from backend.app.domain.population import qualified_allele_frequency
 from backend.app.infrastructure.db.models import (
     Analysis,
     ACMGAssessment,
@@ -137,12 +138,12 @@ def build_variant_rows(db: Session, analysis_id: UUID) -> list[dict[str, object]
             "chromosome": variant.chromosome, "position": variant.position, "reference": variant.reference,
             "alternate": variant.alternate, "normalization_status": variant.normalization_status, "gene": _text(gene),
             "transcript": _text(transcript), "consequence": _text(consequence), "protein_change": _text(protein_change),
-            "clinvar_significance": _text(clinvar), "global_af": global_pop.allele_frequency if global_pop else None,
-            "mid_af": mid_pop.allele_frequency if mid_pop else None, "local_af": local_pop.allele_frequency if local_pop else None,
-            "gnomad_exomes_af": exomes_pop.allele_frequency if exomes_pop else None,
-            "gnomad_genomes_af": genomes_pop.allele_frequency if genomes_pop else None,
-            "gnomad_mid_exomes_af": mid_exomes_pop.allele_frequency if mid_exomes_pop else None,
-            "gnomad_mid_genomes_af": mid_genomes_pop.allele_frequency if mid_genomes_pop else None,
+            "clinvar_significance": _text(clinvar), "global_af": qualified_allele_frequency(global_pop.allele_frequency, global_pop.allele_number) if global_pop else None,
+            "mid_af": qualified_allele_frequency(mid_pop.allele_frequency, mid_pop.allele_number) if mid_pop else None, "local_af": qualified_allele_frequency(local_pop.allele_frequency, local_pop.allele_number) if local_pop else None,
+            "gnomad_exomes_af": qualified_allele_frequency(exomes_pop.allele_frequency, exomes_pop.allele_number) if exomes_pop else None,
+            "gnomad_genomes_af": qualified_allele_frequency(genomes_pop.allele_frequency, genomes_pop.allele_number) if genomes_pop else None,
+            "gnomad_mid_exomes_af": qualified_allele_frequency(mid_exomes_pop.allele_frequency, mid_exomes_pop.allele_number) if mid_exomes_pop else None,
+            "gnomad_mid_genomes_af": qualified_allele_frequency(mid_genomes_pop.allele_frequency, mid_genomes_pop.allele_number) if mid_genomes_pop else None,
             "functional_summary": _text(functional), "splice_summary": _text(splice),
             "literature_evidence_count": sum(1 for e in variant_evidence if str(e.evidence_type).upper() == "LITERATURE"),
             "evidence_count": len(variant_evidence), "acmg_criteria": ",".join(sorted({a.criterion for a in criteria})),

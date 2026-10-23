@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
+from backend.app.domain.population import qualified_allele_frequency
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -244,7 +245,7 @@ def _population_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> lis
             "population_label": obs.population_label,
             "allele_count": obs.allele_count,
             "allele_number": obs.allele_number,
-            "allele_frequency": obs.allele_frequency,
+            "allele_frequency": qualified_allele_frequency(obs.allele_frequency, obs.allele_number),
             "homozygote_count": obs.homozygote_count,
             "availability": obs.availability,
             "quality_status": obs.quality_status,

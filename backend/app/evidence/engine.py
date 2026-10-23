@@ -5,6 +5,7 @@ from typing import Any, Iterable
 from uuid import UUID, uuid4
 
 from backend.app.domain.evidence import EvidenceRecord
+from backend.app.domain.population import qualified_allele_frequency
 
 
 class EvidenceEngineError(ValueError):
@@ -580,7 +581,9 @@ class EvidenceEngine:
             availability = _normalize_text(obs.get("availability"))
             if availability not in {None, "AVAILABLE"}:
                 continue
-            if all(obs.get(k) in (None, "") for k in ("allele_frequency", "allele_count", "allele_number", "homozygote_count")):
+            allele_number = _int(obs.get("allele_number"))
+            af = qualified_allele_frequency(obs.get("allele_frequency"), allele_number)
+            if all(value in (None, "") for value in (af, obs.get("allele_count"), obs.get("allele_number"), obs.get("homozygote_count"))):
                 continue
             population_code = _normalize_text(obs.get("population_code")) or "UNKNOWN"
             label = _normalize_text(obs.get("population_label")) or population_code
@@ -600,9 +603,9 @@ class EvidenceEngine:
                     payload={
                         "population_code": population_code,
                         "population_label": label,
-                        "allele_frequency": _float(obs.get("allele_frequency")),
+                        "allele_frequency": af,
                         "allele_count": _int(obs.get("allele_count")),
-                        "allele_number": _int(obs.get("allele_number")),
+                        "allele_number": allele_number,
                         "homozygote_count": _int(obs.get("homozygote_count")),
                         "quality_status": obs.get("quality_status"),
                         "availability": availability,
@@ -615,12 +618,13 @@ class EvidenceEngine:
         # Also preserve provider-derived aggregate frequencies that may not be
         # persisted as direct population observations yet.
         population = annotation.get("population") or {}
-        for label_key, af_key, ac_key, hom_key in (
-            ("GLOBAL", "reference_population_af", "reference_population_ac", "reference_population_hom"),
-            ("GNOMAD_EXOMES", "gnomad_exomes_af", "gnomad_exomes_ac", "gnomad_exomes_homalt"),
-            ("GNOMAD_GENOMES", "gnomad_genomes_af", "gnomad_genomes_ac", "gnomad_genomes_homalt"),
+        for label_key, af_key, an_key, ac_key, hom_key in (
+            ("GLOBAL", "reference_population_af", "reference_population_an", "reference_population_ac", "reference_population_hom"),
+            ("GNOMAD_EXOMES", "gnomad_exomes_af", "gnomad_exomes_an", "gnomad_exomes_ac", "gnomad_exomes_homalt"),
+            ("GNOMAD_GENOMES", "gnomad_genomes_af", "gnomad_genomes_an", "gnomad_genomes_ac", "gnomad_genomes_homalt"),
         ):
-            af = _float(population.get(af_key))
+            an = _int(population.get(an_key))
+            af = qualified_allele_frequency(population.get(af_key), an)
             ac = _int(population.get(ac_key))
             hom = _int(population.get(hom_key))
             if af is None and ac is None and hom is None:
@@ -637,7 +641,7 @@ class EvidenceEngine:
                         "population_code": label_key,
                         "allele_frequency": af,
                         "allele_count": ac,
-                        "allele_number": None,
+                        "allele_number": an,
                         "homozygote_count": hom,
                         "interpretive_use": "OBSERVATION_ONLY_UNTIL_RULE_EVALUATION",
                     },

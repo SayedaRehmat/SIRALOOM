@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from backend.app.domain.evidence import evidence_fingerprint
 from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
+from backend.app.domain.population import qualified_allele_frequency
 
 
 def test_evidence_engine_builds_traceable_facts_without_final_classification():
@@ -119,6 +120,31 @@ def test_population_no_match_snapshot_does_not_become_frequency_evidence():
         ],
     )
     assert not any(record.evidence_type == "POPULATION" for record in records)
+
+
+def test_population_frequency_requires_positive_allele_number():
+    engine = EvidenceEngine()
+    records = engine.build_from_annotation(
+        variant_id=uuid4(),
+        annotation={"population": {"reference_population_af": 0.01, "reference_population_ac": 1}},
+        provider_name="GeneBe", provider_version="test", resource_name="GeneBe",
+        resource_version="test", context=EvidenceContext(analysis_id=uuid4()),
+        population_observations=[
+            {"population_code": "NO_AN", "availability": "AVAILABLE", "allele_frequency": 0.01, "allele_count": 1, "allele_number": None},
+            {"population_code": "ZERO_AN", "availability": "AVAILABLE", "allele_frequency": 0.01, "allele_count": 1, "allele_number": 0},
+        ],
+    )
+    population_records = [record for record in records if record.evidence_type == "POPULATION"]
+    assert population_records
+    assert all(record.payload["allele_frequency"] is None for record in population_records)
+
+
+def test_display_allele_frequency_requires_valid_positive_denominator():
+    assert qualified_allele_frequency(0.0, 10) == 0.0
+    assert qualified_allele_frequency(0.01, None) is None
+    assert qualified_allele_frequency(0.01, 0) is None
+    assert qualified_allele_frequency(0.01, -1) is None
+    assert qualified_allele_frequency(float("nan"), 10) is None
 
 
 def test_direct_clinvar_evidence_preserves_release_scv_and_rcv_identity():

@@ -75,5 +75,25 @@ def test_variant_csv_rows_keep_gnomad_exome_and_genome_frequencies_distinct():
     row = build_variant_rows(db, analysis.id)[0]
     assert row["gnomad_exomes_af"] == 0.004
     assert row["gnomad_genomes_af"] == 0.0
-    assert row["global_af"] == 0.0001
+    # The legacy fixture's global row has an AF without its denominator.
+    assert row["global_af"] is None
     assert json.loads(render_json([row]))["schema_version"] == "1.1.0"
+
+
+def test_variant_report_hides_stored_frequency_without_denominator():
+    db, _principal, analysis, variant = seed()
+    resource = Resource(
+        id=uuid4(), organization_id=db.get(Case, analysis.case_id).organization_id,
+        name="provider", provider="GeneBe", resource_type="POPULATION",
+        version="test", genome_build="GRCh38", access_method="API", status="APPROVED",
+    )
+    db.add(resource)
+    db.add(PopulationObservation(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, resource_id=resource.id,
+        population_level="GLOBAL", population_code="GLOBAL_EXOMES", population_label="gnomAD exomes",
+        allele_count=1, allele_number=None, allele_frequency=0.01,
+        availability="AVAILABLE", quality_status="PROVIDER_DERIVED",
+    ))
+    db.commit()
+    row = build_variant_rows(db, analysis.id)[0]
+    assert row["gnomad_exomes_af"] is None
