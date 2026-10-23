@@ -57,9 +57,13 @@ def test_every_registered_application_task_has_an_explicit_scope_classification(
         "siraloom.recover_orphaned_case_export_dispatches",
     }
 
+    # Enumerate the full application-owned namespace before comparing against
+    # the scope inventory. Filtering through the expected set first would make
+    # this guard blind to a newly registered but unclassified task.
     registered = {
-        name for name in app.tasks
-        if name in workload_tasks | system_tasks
+        name
+        for name in app.tasks
+        if name.startswith(("siraloom.", "backend.app.infrastructure.queue.celery_app."))
     }
     scheduled = {
         entry["task"] for entry in app.conf.beat_schedule.values()
