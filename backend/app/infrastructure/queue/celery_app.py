@@ -541,8 +541,11 @@ if Celery is not None:
 
     @celery_app.task(name="siraloom.recover_orphaned_case_export_dispatches", autoretry_for=(), acks_late=True)
     def recover_orphaned_case_export_dispatches():
-        from sqlalchemy import select, func
+        from datetime import UTC, datetime
         from uuid import uuid4
+
+        from sqlalchemy import func, select
+
         from backend.app.infrastructure.audit.service import AuditService
         from backend.app.infrastructure.db.models import CaseExport, CaseExportDispatch
         from backend.app.infrastructure.db.session import SessionLocal
@@ -550,6 +553,7 @@ if Celery is not None:
         db = SessionLocal()
         inspected = 0
         recovered = 0
+        max_dispatch_generations = 4
         try:
             export_ids = list(db.scalars(
                 select(CaseExport.id).where(
@@ -595,6 +599,116 @@ if Celery is not None:
                 )
                 db.commit()
                 if publish_case_export_dispatch(dispatch.id):
+                    recovered += 1
+
+            # A task that failed while its DB was unavailable can leave the
+            # export RUNNING because its failure state/audit transaction could
+            # not be committed. Recover only when the current persisted task is
+            # definitively dead; PENDING/STARTED/unknown broker states are not
+            # evidence that the task is absent.
+            running_ids = list(db.scalars(
+                select(CaseExport.id).where(
+                    CaseExport.status == "RUNNING",
+                    CaseExport.queue_task_id.is_not(None),
+                )
+            ))
+            for export_id in running_ids:
+                export = db.get(CaseExport, export_id, with_for_update=True)
+                if (
+                    export is None
+                    or export.status != "RUNNING"
+                    or not export.queue_task_id
+                ):
+                    continue
+
+                current_task_id = str(export.queue_task_id)
+                dispatch = db.scalar(
+                    select(CaseExportDispatch)
+                    .where(
+                        CaseExportDispatch.case_export_id == export.id,
+                        CaseExportDispatch.task_id == current_task_id,
+                        CaseExportDispatch.status == "PUBLISHED",
+                    )
+                    .with_for_update()
+                )
+                if dispatch is None:
+                    continue
+
+                inspected += 1
+                task_state = celery_app.AsyncResult(current_task_id).state
+                if task_state not in {"FAILURE", "REVOKED"}:
+                    continue
+
+                if dispatch.dispatch_generation >= max_dispatch_generations:
+                    dispatch.status = "FAILED"
+                    dispatch.last_error = "Case export task retries were exhausted."
+                    export.status = "FAILED"
+                    export.error_code = "CASE_EXPORT_RETRY_EXHAUSTED"
+                    export.error_message = (
+                        "Case export failed after the configured number of attempts. "
+                        "Contact a laboratory administrator."
+                    )
+                    export.completed_at = datetime.now(UTC)
+                    db.add(dispatch)
+                    db.add(export)
+                    AuditService(db).record(
+                        event_type="CASE_EXPORT_FAILED",
+                        case_id=export.case_id,
+                        analysis_id=None,
+                        actor_type="SYSTEM",
+                        actor_id="case-export-recovery",
+                        subject_type="CASE_EXPORT",
+                        subject_id=str(export.id),
+                        operation="RETRY_EXHAUSTED",
+                        reason="Case export task retries were exhausted.",
+                        payload={
+                            "last_task_id": current_task_id,
+                            "celery_state": task_state,
+                            "dispatch_generation": dispatch.dispatch_generation,
+                        },
+                    )
+                    db.commit()
+                    continue
+
+                generation = (
+                    db.scalar(
+                        select(func.coalesce(func.max(CaseExportDispatch.dispatch_generation), 0))
+                        .where(CaseExportDispatch.case_export_id == export.id)
+                    )
+                    or 0
+                ) + 1
+                replacement = CaseExportDispatch(
+                    id=uuid4(),
+                    case_export_id=export.id,
+                    dispatch_generation=generation,
+                    status="PENDING",
+                    task_id=None,
+                    attempts=0,
+                )
+                dispatch.status = "SUPERSEDED"
+                dispatch.last_error = "Celery reported the prior task as failed or revoked."
+                export.status = "QUEUED"
+                export.queue_task_id = str(replacement.id)
+                export.completed_at = None
+                export.error_code = None
+                export.error_message = None
+                db.add_all([dispatch, replacement, export])
+                AuditService(db).record(
+                    event_type="CASE_EXPORT_DISPATCH_RECOVERED",
+                    case_id=export.case_id,
+                    analysis_id=None,
+                    actor_type="SYSTEM",
+                    actor_id="case-export-recovery",
+                    operation="RECOVER_FAILED_EXPORT_TASK",
+                    payload={
+                        "previous_task_id": current_task_id,
+                        "replacement_dispatch_id": str(replacement.id),
+                        "dispatch_generation": generation,
+                        "celery_state": task_state,
+                    },
+                )
+                db.commit()
+                if publish_case_export_dispatch(replacement.id):
                     recovered += 1
             return {"inspected": inspected, "recovered": recovered}
         finally:
