@@ -404,7 +404,7 @@ class EvidenceEngine:
             payload["interpretive_use"] = "GENE_DISEASE_RELEVANCE_REVIEW"
             target_hpo = item.get("hpo_terms") or item.get("associated_hpo_terms") or []
             if target_hpo and case_hpo_terms:
-                from backend.app.phenotype import match_hpo, priority_adjustment
+                from backend.app.phenotype import match_hpo
                 case_unresolved = bool(unresolved_case_terms) if hpo_ontology is not None else False
                 target_ids = [
                     str(term.get("hpo_id") or term.get("id") or "") if isinstance(term, dict) else str(term)
@@ -494,8 +494,9 @@ class EvidenceEngine:
                         match_payload.update({
                             "status": "SCORED",
                             "score": match.score,
+                            "score_semantics": "fraction_of_present_patient_terms_matching_a_disease_term_or_ancestor",
+                            "clinical_prioritization_validated": False,
                             "method": match.method,
-                            "priority_adjustment": priority_adjustment(match.score),
                         })
                     else:
                         # Exact string overlap is useful for triage but cannot

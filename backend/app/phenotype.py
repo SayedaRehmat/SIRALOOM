@@ -71,9 +71,3 @@ def match_hpo(query_terms: Iterable[Any], target_terms: Iterable[Any], *, ancest
     matched = tuple(sorted(query & expanded))
     score = len(matched) / len(query) if query else 0.0
     return PhenotypeMatch(matched, len(query), len(target), round(score, 6), method)
-
-def priority_adjustment(score: float) -> int:
-    if score >= 0.8: return 25
-    if score >= 0.5: return 15
-    if score > 0: return 5
-    return 0

@@ -245,6 +245,8 @@ def test_ontology_hierarchy_is_used_with_provenance_and_untrusted_map_is_ignored
     assert phenotype.source_version == "2026-09-01"
     assert phenotype.response_sha256 == "b" * 64
     assert disease.payload["phenotype_match"]["status"] == "SCORED"
+    assert disease.payload["phenotype_match"]["clinical_prioritization_validated"] is False
+    assert "priority_adjustment" not in disease.payload["phenotype_match"]
     assert disease.payload["phenotype_match"]["method"] == "HPO_OVERLAP_WITH_ANCESTORS"
     assert disease.payload["phenotype_match"]["matched_terms"] == ["HP:0000002"]
     assert disease.payload["phenotype_match"]["ontology_provenance"]["resource_checksum"] == ontology.sha256
