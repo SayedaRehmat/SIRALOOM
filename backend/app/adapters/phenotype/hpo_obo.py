@@ -20,6 +20,7 @@ class HPOOntologyError(ValueError):
 
 
 _TERM_ID = re.compile(r"^HP:\d{7}$")
+_SUPPORTED_ONTOLOGY_IDS = {"hp.obo", "hp/hp-base"}
 _RELEASE = re.compile(
     r"(?:(?:hp/)?releases/)?(\d{4}-\d{2}-\d{2})(?:/hp(?:-base)?\.(?:obo|owl))?$"
 )
@@ -223,9 +224,10 @@ class HPOOboProvider:
             raise HPOOntologyError(
                 f"Unsupported HPO OBO format version {header_format!r}; expected '1.2'"
             )
-        if header_ontology != "hp.obo":
+        if header_ontology not in _SUPPORTED_ONTOLOGY_IDS:
             raise HPOOntologyError(
-                f"HPO OBO ontology identity must be 'hp.obo', got {header_ontology!r}"
+                "HPO OBO ontology identity must be one of the official "
+                f"release artifacts {sorted(_SUPPORTED_ONTOLOGY_IDS)!r}, got {header_ontology!r}"
             )
         if not header_release:
             raise HPOOntologyError("HPO OBO header has no data-version release")

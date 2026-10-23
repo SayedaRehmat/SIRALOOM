@@ -67,6 +67,22 @@ def test_hpo_obo_resolves_canonical_and_alternate_ids_and_is_a_ancestors(tmp_pat
     }
 
 
+def test_hpo_obo_accepts_official_base_ontology_identity(tmp_path):
+    obo = OBO.replace("ontology: hp.obo", "ontology: hp/hp-base").replace(
+        "data-version: releases/2026-09-01",
+        "data-version: hp/releases/2026-09-01/hp-base.owl",
+    )
+    path = tmp_path / "hp-base.obo"
+    path.write_text(obo, encoding="utf-8")
+    checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    provider = HPOOboProvider(path, expected_sha256=checksum, expected_release="2026-09-01")
+
+    assert provider.release == "2026-09-01"
+    assert provider.resolve("HP:0000003").status == "CURRENT"
+    assert provider.ancestors("HP:0000003") == {"HP:0000001", "HP:0000002"}
+
+
 def test_hpo_obo_accepts_obo_relationship_modifiers_and_diamond_dag(tmp_path):
     obo = """format-version: 1.2
 data-version: releases/2026-09-01
