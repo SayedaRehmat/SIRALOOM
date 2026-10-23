@@ -63,7 +63,6 @@ def run_case_export(export_id: UUID) -> None:
             export.error_code = "CASE_EXPORT_FAILED"
             export.error_message = "Case export failed. Contact a laboratory administrator."
             export.completed_at = datetime.now(timezone.utc)
-            db.commit()
             AuditService(db).record(
                 event_type="CASE_EXPORT_FAILED",
                 case_id=export.case_id,
@@ -76,6 +75,9 @@ def run_case_export(export_id: UUID) -> None:
                 reason="Case export failed.",
                 payload={"error_type": type(exc).__name__},
             )
+            # Keep the terminal state and its audit event in one transaction;
+            # a worker loss between separate commits would leave an unaudited
+            # failed export that cannot be distinguished from an older failure.
             db.commit()
     finally:
         db.close()

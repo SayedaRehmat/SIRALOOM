@@ -69,6 +69,16 @@ def test_export_failure_persists_and_audits_only_safe_diagnostics(monkeypatch):
     audit = next(payload for kind, payload in events if kind == "audit")
     assert audit["reason"] == "Case export failed."
     assert audit["payload"] == {"error_type": "FakeError"}
+    audit_index = next(index for index, (kind, payload) in enumerate(events) if kind == "audit")
+    failure_rollback_index = max(
+        index for index, (kind, _payload) in enumerate(events) if kind == "rollback"
+    )
+    terminal_commit_index = next(
+        index
+        for index, (kind, _payload) in enumerate(events)
+        if index > failure_rollback_index and kind == "commit"
+    )
+    assert audit_index < terminal_commit_index
     assert all(
         "secret-token" not in str(value)
         and "/srv/private" not in str(value)
