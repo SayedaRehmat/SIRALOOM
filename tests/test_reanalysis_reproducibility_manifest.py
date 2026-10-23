@@ -1,10 +1,14 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import create_engine, select
+import pytest
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from backend.app.domain.reproducibility import compare_reanalysis_outputs
+from backend.app.domain.reproducibility import (
+    ReanalysisComparisonError,
+    compare_reanalysis_outputs,
+)
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -30,8 +34,8 @@ def _seed_analysis(db, *, organization_id, user_id, case_id, analysis_id, parent
         queue_task_id=None,
         reference_build="GRCh38",
         configuration={},
-        started_at=datetime.now(timezone.utc),
-        completed_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
+        completed_at=datetime.now(UTC),
         created_by=user_id,
         analysis_version=version,
     ))
@@ -222,7 +226,9 @@ def test_reanalysis_manifest_flags_scientific_output_drift(tmp_path):
 def test_reanalysis_manifest_is_ineligible_without_checksums(tmp_path):
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'reproducibility-unpinned.db'}")
     Base.metadata.create_all(engine)
-    organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
+    organization_id, user_id, case_id, parent_id, child_id = (
+        uuid4() for _ in range(5)
+    )
     try:
         with Session(engine) as db:
             db.add(Organization(
@@ -252,7 +258,7 @@ def test_reanalysis_manifest_is_ineligible_without_checksums(tmp_path):
             ))
             db.flush()
             db.add(Analysis(
-                id=analysis_id,
+                id=parent_id,
                 case_id=case_id,
                 parent_analysis_id=None,
                 assay_id=None,
@@ -264,13 +270,43 @@ def test_reanalysis_manifest_is_ineligible_without_checksums(tmp_path):
                 reference_build="GRCh38",
                 configuration={},
                 started_at=None,
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
                 created_by=user_id,
                 analysis_version=1,
             ))
+            db.flush()
+            db.add(Analysis(
+                id=child_id,
+                case_id=case_id,
+                parent_analysis_id=parent_id,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1",
+                workflow_version="2",
+                status="SUCCEEDED",
+                queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=datetime.now(UTC),
+                created_by=user_id,
+                analysis_version=2,
+            ))
             db.add(AnalysisResourceSnapshot(
                 id=uuid4(),
-                analysis_id=analysis_id,
+                analysis_id=parent_id,
+                resource_id=None,
+                resource_kind="ANNOTATION",
+                resource_name="Example provider",
+                provider="Example provider",
+                version="1.0",
+                checksum=None,
+                genome_build="GRCh38",
+                metadata_json={},
+            ))
+            db.add(AnalysisResourceSnapshot(
+                id=uuid4(),
+                analysis_id=child_id,
                 resource_id=None,
                 resource_kind="ANNOTATION",
                 resource_name="Example provider",
@@ -283,10 +319,98 @@ def test_reanalysis_manifest_is_ineligible_without_checksums(tmp_path):
             db.commit()
 
             result = compare_reanalysis_outputs(
-                db, parent_analysis_id=analysis_id, child_analysis_id=analysis_id
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
             )
             assert result["reproducible"] is False
             assert result["decision"] == "INELIGIBLE_UNPINNED_RESOURCES"
             assert result["parent"]["unpinned_resources"] == ["ANNOTATION:Example provider"]
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.parametrize("invalid_relation", ["not_direct_parent", "different_case"])
+def test_reanalysis_comparison_rejects_unrelated_analysis_pairs(
+    tmp_path, invalid_relation
+):
+    engine = create_engine(
+        f"sqlite+pysqlite:///{tmp_path / f'reproducibility-{invalid_relation}.db'}"
+    )
+    Base.metadata.create_all(engine)
+    organization_id, user_id, case_id, other_case_id, parent_id, child_id = (
+        uuid4() for _ in range(6)
+    )
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name="Comparison Relationship Lab",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@test.local",
+                display_name="Comparison Relationship Test",
+                role="ADMIN",
+                status="ACTIVE",
+            ))
+            db.flush()
+            for row_case_id in (case_id, other_case_id):
+                db.add(Case(
+                    id=row_case_id,
+                    organization_id=organization_id,
+                    case_identifier=f"RELATION-{row_case_id}",
+                    status="OPEN",
+                    clinical_context={},
+                    language="en",
+                    created_by=user_id,
+                ))
+            db.flush()
+            db.add_all([
+                Analysis(
+                    id=parent_id,
+                    case_id=case_id,
+                    parent_analysis_id=None,
+                    assay_id=None,
+                    analysis_type="VARIANT_INTERPRETATION",
+                    workflow_id="variant-v1",
+                    workflow_version="1",
+                    status="SUCCEEDED",
+                    queue_task_id=None,
+                    reference_build="GRCh38",
+                    configuration={},
+                    started_at=None,
+                    completed_at=datetime.now(UTC),
+                    created_by=user_id,
+                    analysis_version=1,
+                ),
+                Analysis(
+                    id=child_id,
+                    case_id=(other_case_id if invalid_relation == "different_case" else case_id),
+                    parent_analysis_id=(None if invalid_relation == "not_direct_parent" else parent_id),
+                    assay_id=None,
+                    analysis_type="VARIANT_INTERPRETATION",
+                    workflow_id="variant-v1",
+                    workflow_version="2",
+                    status="SUCCEEDED",
+                    queue_task_id=None,
+                    reference_build="GRCh38",
+                    configuration={},
+                    started_at=None,
+                    completed_at=datetime.now(UTC),
+                    created_by=user_id,
+                    analysis_version=2,
+                ),
+            ])
+            db.commit()
+
+            with pytest.raises(ReanalysisComparisonError):
+                compare_reanalysis_outputs(
+                    db,
+                    parent_analysis_id=parent_id,
+                    child_analysis_id=child_id,
+                )
     finally:
         engine.dispose()

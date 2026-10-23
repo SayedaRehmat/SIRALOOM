@@ -12,7 +12,10 @@ import json
 import sys
 from uuid import UUID
 
-from backend.app.domain.reproducibility import compare_reanalysis_outputs
+from backend.app.domain.reproducibility import (
+    ReanalysisComparisonError,
+    compare_reanalysis_outputs,
+)
 from backend.app.infrastructure.db.session import SessionLocal
 
 
@@ -24,12 +27,15 @@ def main() -> int:
     parser.add_argument("--child-analysis-id", required=True, type=UUID)
     args = parser.parse_args()
 
-    with SessionLocal() as db:
-        result = compare_reanalysis_outputs(
-            db,
-            parent_analysis_id=args.parent_analysis_id,
-            child_analysis_id=args.child_analysis_id,
-        )
+    try:
+        with SessionLocal() as db:
+            result = compare_reanalysis_outputs(
+                db,
+                parent_analysis_id=args.parent_analysis_id,
+                child_analysis_id=args.child_analysis_id,
+            )
+    except ReanalysisComparisonError as exc:
+        parser.error(str(exc))
     print(json.dumps(result, indent=2, sort_keys=True))
     if result["decision"] == "MATCH":
         return 0

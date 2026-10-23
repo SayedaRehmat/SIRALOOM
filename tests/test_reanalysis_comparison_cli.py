@@ -14,6 +14,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from backend.app.domain.reproducibility import ReanalysisComparisonError
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -101,6 +102,39 @@ def test_comparison_cli_requires_both_analysis_ids(monkeypatch):
         cli.main()
 
     assert exc.value.code == 2
+
+
+def test_comparison_cli_reports_invalid_parent_child_relationship(monkeypatch, capsys):
+    cli = importlib.import_module("scripts.compare_reanalysis_outputs")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "compare_reanalysis_outputs.py",
+            "--parent-analysis-id",
+            str(uuid4()),
+            "--child-analysis-id",
+            str(uuid4()),
+        ],
+    )
+
+    @contextmanager
+    def fake_session_local():
+        yield object()
+
+    monkeypatch.setattr(cli, "SessionLocal", fake_session_local)
+    monkeypatch.setattr(
+        cli,
+        "compare_reanalysis_outputs",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            ReanalysisComparisonError("Child is not a direct reanalysis of parent.")
+        ),
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main()
+    assert exc.value.code == 2
+    assert "Child is not a direct reanalysis of parent." in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(

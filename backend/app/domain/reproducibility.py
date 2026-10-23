@@ -30,6 +30,10 @@ from backend.app.infrastructure.db.models import (
 )
 
 
+class ReanalysisComparisonError(ValueError):
+    """Raised when two analyses do not form a valid parent/child comparison."""
+
+
 def _json_value(value: Any) -> Any:
     """Return JSON-safe data with deterministic handling for non-JSON values."""
     if isinstance(value, dict):
@@ -266,6 +270,20 @@ def compare_reanalysis_outputs(
     child_analysis_id: UUID,
 ) -> dict[str, Any]:
     """Compare parent/child resource pins and scientific outputs without guessing."""
+    parent_analysis = db.get(Analysis, parent_analysis_id)
+    child_analysis = db.get(Analysis, child_analysis_id)
+    if parent_analysis is None or child_analysis is None:
+        missing_id = parent_analysis_id if parent_analysis is None else child_analysis_id
+        raise ReanalysisComparisonError(f"Analysis {missing_id} does not exist.")
+    if parent_analysis.case_id != child_analysis.case_id:
+        raise ReanalysisComparisonError(
+            "Parent and child analyses must belong to the same case."
+        )
+    if child_analysis.parent_analysis_id != parent_analysis.id:
+        raise ReanalysisComparisonError(
+            "Child analysis is not a direct reanalysis of the selected parent."
+        )
+
     parent = build_reproducibility_manifest(db, parent_analysis_id)
     child = build_reproducibility_manifest(db, child_analysis_id)
     resources_match = parent["resource_snapshot_sha256"] == child["resource_snapshot_sha256"]
