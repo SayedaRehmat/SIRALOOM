@@ -387,6 +387,14 @@ if Celery is not None:
                     claim_lock_connection.close()
 
 
+    def _case_export_execution_lock_key(export_id) -> int:
+        return int.from_bytes(
+            hashlib.sha256(str(export_id).encode("utf-8")).digest()[:8],
+            byteorder="big",
+            signed=True,
+        )
+
+
     def _claim_case_export_execution(
         db,
         export_id,
@@ -405,11 +413,7 @@ if Celery is not None:
         get_bind = getattr(db, "get_bind", None)
         bind = get_bind() if callable(get_bind) else None
         if bind is not None and bind.dialect.name == "postgresql":
-            lock_key = int.from_bytes(
-                hashlib.sha256(str(export_id).encode("utf-8")).digest()[:8],
-                byteorder="big",
-                signed=True,
-            )
+            lock_key = _case_export_execution_lock_key(export_id)
             lock_statement = text("SELECT pg_try_advisory_lock(:lock_key)")
             lock_parameters = {"lock_key": lock_key}
             if lock_connection is not None:
@@ -544,11 +548,11 @@ if Celery is not None:
         from datetime import UTC, datetime
         from uuid import uuid4
 
-        from sqlalchemy import func, select
+        from sqlalchemy import func, select, text
 
         from backend.app.infrastructure.audit.service import AuditService
         from backend.app.infrastructure.db.models import CaseExport, CaseExportDispatch
-        from backend.app.infrastructure.db.session import SessionLocal
+        from backend.app.infrastructure.db.session import SessionLocal, engine
 
         db = SessionLocal()
         inspected = 0
@@ -613,102 +617,177 @@ if Celery is not None:
                 )
             ))
             for export_id in running_ids:
-                export = db.get(CaseExport, export_id, with_for_update=True)
-                if (
-                    export is None
-                    or export.status != "RUNNING"
-                    or not export.queue_task_id
-                ):
+                current_task_id = db.scalar(
+                    select(CaseExport.queue_task_id).where(CaseExport.id == export_id)
+                )
+                if not current_task_id:
                     continue
-
-                current_task_id = str(export.queue_task_id)
-                dispatch = db.scalar(
-                    select(CaseExportDispatch)
-                    .where(
-                        CaseExportDispatch.case_export_id == export.id,
+                current_task_id = str(current_task_id)
+                dispatch_snapshot = db.scalar(
+                    select(CaseExportDispatch).where(
+                        CaseExportDispatch.case_export_id == export_id,
                         CaseExportDispatch.task_id == current_task_id,
                         CaseExportDispatch.status == "PUBLISHED",
                     )
-                    .with_for_update()
                 )
-                if dispatch is None:
+                if dispatch_snapshot is None:
                     continue
 
                 inspected += 1
                 task_state = celery_app.AsyncResult(current_task_id).state
-                if task_state not in {"FAILURE", "REVOKED"}:
+                if task_state == "SUCCESS":
+                    # A successful broker result with a nonterminal database
+                    # export is inconsistent, but it is not proof of worker
+                    # loss. Keep it visible for reconciliation instead of
+                    # automatically creating another export.
+                    continue
+                lock_connection = None
+                lock_key = None
+                execution_lock_acquired = False
+                if engine.dialect.name == "postgresql":
+                    # The worker holds this session-level lock for its entire
+                    # export. It provides durable liveness evidence even when
+                    # the Celery result has expired or the result backend is
+                    # unavailable. Keep it until the replacement generation is
+                    # committed so a redelivery cannot claim the stale task in
+                    # the recovery/commit race.
+                    lock_connection = engine.connect()
+                    lock_key = _case_export_execution_lock_key(export_id)
+                    try:
+                        execution_lock_acquired = bool(
+                            lock_connection.execute(
+                                text("SELECT pg_try_advisory_lock(:lock_key)"),
+                                {"lock_key": lock_key},
+                            ).scalar_one()
+                        )
+                        lock_connection.commit()
+                    except Exception:
+                        lock_connection.invalidate()
+                        lock_connection.close()
+                        raise
+                    if not execution_lock_acquired:
+                        lock_connection.close()
+                        continue
+                elif task_state not in {"FAILURE", "REVOKED"}:
+                    # SQLite and other non-PostgreSQL deployments have no
+                    # equivalent cross-process worker lock; retain the
+                    # conservative terminal-result-only recovery behavior.
                     continue
 
-                if dispatch.dispatch_generation >= max_dispatch_generations:
-                    dispatch.status = "FAILED"
-                    dispatch.last_error = "Case export task retries were exhausted."
-                    export.status = "FAILED"
-                    export.error_code = "CASE_EXPORT_RETRY_EXHAUSTED"
-                    export.error_message = (
-                        "Case export failed after the configured number of attempts. "
-                        "Contact a laboratory administrator."
+                replacement_id = None
+                try:
+                    export = db.get(CaseExport, export_id, with_for_update=True)
+                    if (
+                        export is None
+                        or export.status != "RUNNING"
+                        or str(export.queue_task_id or "") != current_task_id
+                    ):
+                        continue
+                    dispatch = db.scalar(
+                        select(CaseExportDispatch)
+                        .where(
+                            CaseExportDispatch.case_export_id == export.id,
+                            CaseExportDispatch.task_id == current_task_id,
+                            CaseExportDispatch.status == "PUBLISHED",
+                        )
+                        .with_for_update()
                     )
-                    export.completed_at = datetime.now(UTC)
-                    db.add(dispatch)
-                    db.add(export)
+                    if dispatch is None:
+                        continue
+
+                    if dispatch.dispatch_generation >= max_dispatch_generations:
+                        dispatch.status = "FAILED"
+                        dispatch.last_error = "Case export task retries were exhausted."
+                        export.status = "FAILED"
+                        export.error_code = "CASE_EXPORT_RETRY_EXHAUSTED"
+                        export.error_message = (
+                            "Case export failed after the configured number of attempts. "
+                            "Contact a laboratory administrator."
+                        )
+                        export.completed_at = datetime.now(UTC)
+                        db.add(dispatch)
+                        db.add(export)
+                        AuditService(db).record(
+                            event_type="CASE_EXPORT_FAILED",
+                            case_id=export.case_id,
+                            analysis_id=None,
+                            actor_type="SYSTEM",
+                            actor_id="case-export-recovery",
+                            subject_type="CASE_EXPORT",
+                            subject_id=str(export.id),
+                            operation="RETRY_EXHAUSTED",
+                            reason="Case export task retries were exhausted.",
+                            payload={
+                                "last_task_id": current_task_id,
+                                "celery_state": task_state,
+                                "dispatch_generation": dispatch.dispatch_generation,
+                            },
+                        )
+                        db.commit()
+                        continue
+
+                    generation = (
+                        db.scalar(
+                            select(func.coalesce(func.max(CaseExportDispatch.dispatch_generation), 0))
+                            .where(CaseExportDispatch.case_export_id == export.id)
+                        )
+                        or 0
+                    ) + 1
+                    replacement = CaseExportDispatch(
+                        id=uuid4(),
+                        case_export_id=export.id,
+                        dispatch_generation=generation,
+                        status="PENDING",
+                        task_id=None,
+                        attempts=0,
+                    )
+                    dispatch.status = "SUPERSEDED"
+                    dispatch.last_error = (
+                        "Execution lock was unheld after dispatch."
+                        if execution_lock_acquired and task_state not in {"FAILURE", "REVOKED"}
+                        else "Celery reported the prior task as failed or revoked."
+                    )
+                    export.status = "QUEUED"
+                    export.queue_task_id = str(replacement.id)
+                    export.completed_at = None
+                    export.error_code = None
+                    export.error_message = None
+                    db.add_all([dispatch, replacement, export])
                     AuditService(db).record(
-                        event_type="CASE_EXPORT_FAILED",
+                        event_type="CASE_EXPORT_DISPATCH_RECOVERED",
                         case_id=export.case_id,
                         analysis_id=None,
                         actor_type="SYSTEM",
                         actor_id="case-export-recovery",
-                        subject_type="CASE_EXPORT",
-                        subject_id=str(export.id),
-                        operation="RETRY_EXHAUSTED",
-                        reason="Case export task retries were exhausted.",
+                        operation="RECOVER_FAILED_EXPORT_TASK",
                         payload={
-                            "last_task_id": current_task_id,
+                            "previous_task_id": current_task_id,
+                            "replacement_dispatch_id": str(replacement.id),
+                            "dispatch_generation": generation,
                             "celery_state": task_state,
-                            "dispatch_generation": dispatch.dispatch_generation,
+                            "recovery_reason": (
+                                "EXECUTION_LOCK_UNHELD"
+                                if execution_lock_acquired and task_state not in {"FAILURE", "REVOKED"}
+                                else "CELERY_TERMINAL_FAILURE"
+                            ),
                         },
                     )
                     db.commit()
-                    continue
+                    replacement_id = replacement.id
+                finally:
+                    if lock_connection is not None:
+                        try:
+                            lock_connection.execute(
+                                text("SELECT pg_advisory_unlock(:lock_key)"),
+                                {"lock_key": lock_key},
+                            ).scalar_one()
+                            lock_connection.commit()
+                        except Exception:
+                            lock_connection.invalidate()
+                        finally:
+                            lock_connection.close()
 
-                generation = (
-                    db.scalar(
-                        select(func.coalesce(func.max(CaseExportDispatch.dispatch_generation), 0))
-                        .where(CaseExportDispatch.case_export_id == export.id)
-                    )
-                    or 0
-                ) + 1
-                replacement = CaseExportDispatch(
-                    id=uuid4(),
-                    case_export_id=export.id,
-                    dispatch_generation=generation,
-                    status="PENDING",
-                    task_id=None,
-                    attempts=0,
-                )
-                dispatch.status = "SUPERSEDED"
-                dispatch.last_error = "Celery reported the prior task as failed or revoked."
-                export.status = "QUEUED"
-                export.queue_task_id = str(replacement.id)
-                export.completed_at = None
-                export.error_code = None
-                export.error_message = None
-                db.add_all([dispatch, replacement, export])
-                AuditService(db).record(
-                    event_type="CASE_EXPORT_DISPATCH_RECOVERED",
-                    case_id=export.case_id,
-                    analysis_id=None,
-                    actor_type="SYSTEM",
-                    actor_id="case-export-recovery",
-                    operation="RECOVER_FAILED_EXPORT_TASK",
-                    payload={
-                        "previous_task_id": current_task_id,
-                        "replacement_dispatch_id": str(replacement.id),
-                        "dispatch_generation": generation,
-                        "celery_state": task_state,
-                    },
-                )
-                db.commit()
-                if publish_case_export_dispatch(replacement.id):
+                if replacement_id is not None and publish_case_export_dispatch(replacement_id):
                     recovered += 1
             return {"inspected": inspected, "recovered": recovered}
         finally:
