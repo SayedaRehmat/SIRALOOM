@@ -16,8 +16,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from backend.app.acmg.source_assertions import persist_clingen_source_assertions
-from backend.app.auth.authorization import get_analysis_variant_ids
-from backend.app.application.analysis import validate_analysis_input_artifact
 from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
@@ -34,6 +32,8 @@ from backend.app.adapters.population.secondary import (
     LocalTabixSecondaryPopulationProvider,
     SecondaryPopulationProviderError,
 )
+from backend.app.application.analysis import validate_analysis_input_artifact
+from backend.app.auth.authorization import get_analysis_variant_ids
 from backend.app.config import settings
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
@@ -3445,7 +3445,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 case = db.get(Case, analysis.case_id)
                 case_context = case.clinical_context if case else {}
                 phenotype_rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == analysis.case_id, (PhenotypeObservation.analysis_id == analysis.id) | (PhenotypeObservation.analysis_id.is_(None)))).all()
-                case_hpo_terms = [{"hpo_id": x.hpo_id, "label": x.label, "present": x.present} for x in phenotype_rows]
+                case_hpo_terms = [{
+                    "hpo_id": x.hpo_id,
+                    "label": x.label,
+                    "present": x.present,
+                    "phenotype_status": x.phenotype_status,
+                } for x in phenotype_rows]
                 gene_disease_records = list(case_context.get("gene_disease_evidence") or [])
                 literature_records = list(case_context.get("literature_evidence") or [])
 
@@ -3471,13 +3476,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "resource_id": str(hpo_execution.resource_id),
                             "resource_version": hpo_execution.resource_version,
                             "contract_hash": hpo_execution.contract_hash,
-                            "patient_terms": sorted(str(term.get("hpo_id") or "") for term in case_hpo_terms),
+                            "patient_terms": sorted(
+                                [
+                                    {
+                                        "hpo_id": str(term.get("hpo_id") or ""),
+                                        "phenotype_status": str(
+                                            term.get("phenotype_status")
+                                            or ("PRESENT" if term.get("present", True) else "ABSENT")
+                                        ),
+                                    }
+                                    for term in case_hpo_terms
+                                ],
+                                key=lambda term: (term["hpo_id"], term["phenotype_status"]),
+                            ),
                             "disease_terms": sorted(disease_terms),
                         }
                         hpo_request_fingerprint = hashlib.sha256(
                             json.dumps(hpo_request, sort_keys=True, separators=(",", ":")).encode()
                         ).hexdigest()
-                        resolved_terms = sorted(set(hpo_request["patient_terms"] + disease_terms))
+                        resolved_terms = sorted(
+                            {term["hpo_id"] for term in hpo_request["patient_terms"]}
+                            | set(disease_terms)
+                        )
                         hpo_output = {}
                         for term in resolved_terms:
                             resolution = hpo_ontology.resolve(term)

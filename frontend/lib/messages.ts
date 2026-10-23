@@ -656,6 +656,13 @@ export type TranslationKey =
   | "review.hpo"
   | "review.hpoNone"
   | "review.present"
+  | "review.phenotypeState"
+  | "review.stateAbsent"
+  | "review.stateExcluded"
+  | "review.stateUnknown"
+  | "review.stateNotAssessed"
+  | "review.addingHpo"
+  | "review.addHpo"
   | "review.phenotype"
   | "review.geneDiseaseNone"
   | "review.inheritance"
@@ -1100,6 +1107,13 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.hpo": "Observed HPO phenotype",
     "review.hpoNone": "No HPO observations recorded for this case.",
     "review.present": "Present",
+    "review.phenotypeState": "Observation state",
+    "review.stateAbsent": "Absent",
+    "review.stateExcluded": "Excluded after assessment",
+    "review.stateUnknown": "Unknown",
+    "review.stateNotAssessed": "Not assessed",
+    "review.addingHpo": "Adding…",
+    "review.addHpo": "Add HPO observation",
     "review.phenotype": "Phenotype match & gene–disease relationship",
     "review.geneDiseaseNone": "No gene–disease context evidence attached.",
     "review.inheritance": "INHERITANCE, PEDIGREE & SEGREGATION",
@@ -1973,6 +1987,13 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.hpo": "النمط الظاهري المرصود وفق HPO",
     "review.hpoNone": "لم تُسجل ملاحظات HPO لهذه الحالة.",
     "review.present": "موجود",
+    "review.phenotypeState": "حالة الملاحظة",
+    "review.stateAbsent": "غير موجود",
+    "review.stateExcluded": "مستبعد بعد التقييم",
+    "review.stateUnknown": "غير معروف",
+    "review.stateNotAssessed": "لم يتم تقييمه",
+    "review.addingHpo": "جارٍ الإضافة…",
+    "review.addHpo": "إضافة ملاحظة HPO",
     "review.phenotype": "تطابق النمط الظاهري وعلاقة الجين بالمرض",
     "review.geneDiseaseNone": "لا توجد أدلة سياقية مرفقة لعلاقة الجين بالمرض.",
     "review.inheritance": "الوراثة، شجرة النسب، والتشارك",

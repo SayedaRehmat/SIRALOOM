@@ -227,7 +227,20 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         "history": [_review_action_dict(x) for x in actions],
         "clinical_context": clinical_context,
         "clinical_indication": clinical_context.get("clinical_indication") or clinical_context.get("indication") or clinical_context.get("clinical_question"),
-        "phenotypes": [{"hpo_id": p.hpo_id, "label": p.label, "present": p.present, "onset": p.onset, "severity": p.severity, "source": p.source, "evidence": p.evidence or {}} for p in phenotypes],
+        "phenotypes": [{
+            "hpo_id": p.hpo_id,
+            "label": p.label,
+            "present": (
+                True if p.phenotype_status == "PRESENT"
+                else False if p.phenotype_status in {"ABSENT", "EXCLUDED"}
+                else None
+            ),
+            "phenotype_status": p.phenotype_status,
+            "onset": p.onset,
+            "severity": p.severity,
+            "source": p.source,
+            "evidence": p.evidence or {},
+        } for p in phenotypes],
         "quality": {
             "assay": {"id": str(assay.id), "name": assay.name, "version": assay.version, "assay_type": assay.assay_type, "configuration": assay.configuration or {}} if assay else None,
             "observations": [{"id": str(q.id), "metric_name": q.metric_name, "metric_value": q.metric_value, "metric_unit": q.metric_unit, "status": q.status, "source": q.source, "source_version": q.source_version, "metadata": q.metadata_json or {}, "created_at": q.created_at.isoformat()} for q in qc_observations],

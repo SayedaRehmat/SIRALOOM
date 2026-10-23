@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import json
-import hashlib
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -15,7 +15,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
-from backend.app.reporting.reportability import final_reportability_state, latest_decision
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -24,18 +23,25 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Case,
     Classification,
+    ConfirmationRecord,
     Evidence,
+    FollowUpPlan,
+    InheritanceAssessment,
+    PedigreeMember,
+    PedigreeRelationship,
+    PhenotypeObservation,
     PopulationObservation,
     Report,
     Resource,
     ReviewAction,
-    Variant,
+    SecondaryFindingDecision,
+    SegregationObservation,
     Specimen,
     User,
-    PhenotypeObservation,
-    PedigreeMember, PedigreeRelationship, SegregationObservation, InheritanceAssessment,
-    ConfirmationRecord, FollowUpPlan, SecondaryFindingDecision, WorkflowStep,
+    Variant,
+    WorkflowStep,
 )
+from backend.app.reporting.reportability import final_reportability_state, latest_decision
 
 REPORT_STATUS_DRAFT = "DRAFT"
 REPORT_STATUS_FINAL = "FINAL"
@@ -435,7 +441,19 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
 
     findings: list[dict[str, Any]] = []
     phenotype_rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == case.id, (PhenotypeObservation.analysis_id == analysis.id) | (PhenotypeObservation.analysis_id.is_(None))).order_by(PhenotypeObservation.created_at)).all()
-    phenotype_context = [{"hpo_id": r.hpo_id, "label": r.label, "present": r.present, "onset": r.onset, "severity": r.severity, "source": r.source} for r in phenotype_rows]
+    phenotype_context = [{
+        "hpo_id": r.hpo_id,
+        "label": r.label,
+        "present": (
+            True if r.phenotype_status == "PRESENT"
+            else False if r.phenotype_status in {"ABSENT", "EXCLUDED"}
+            else None
+        ),
+        "phenotype_status": r.phenotype_status,
+        "onset": r.onset,
+        "severity": r.severity,
+        "source": r.source,
+    } for r in phenotype_rows]
     pedigree_members = list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id == case.id).order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)))
     pedigree_relationships = list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id == case.id).order_by(PedigreeRelationship.created_at)))
     pedigree_context = {

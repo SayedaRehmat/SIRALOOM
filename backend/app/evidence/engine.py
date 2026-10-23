@@ -338,8 +338,11 @@ class EvidenceEngine:
         if case_hpo_terms:
             from backend.app.phenotype import normalize_terms
             terms = normalize_terms(case_hpo_terms)
-            present = [t for t in terms if t.present]
-            absent = [t for t in terms if not t.present]
+            present = [t for t in terms if t.status == "PRESENT"]
+            absent = [t for t in terms if t.status == "ABSENT"]
+            excluded = [t for t in terms if t.status == "EXCLUDED"]
+            uncertain = [t for t in terms if t.status == "UNKNOWN"]
+            not_assessed = [t for t in terms if t.status == "NOT_ASSESSED"]
             resolution_payload = None
             unresolved_case_terms: list[dict[str, str]] = []
             if hpo_ontology is not None:
@@ -348,6 +351,7 @@ class EvidenceEngine:
                     resolution = hpo_ontology.resolve(term.hpo_id)
                     resolution_payload.append({
                         "hpo_id": term.hpo_id,
+                        "phenotype_status": term.status,
                         "status": resolution.status,
                         "canonical_id": resolution.canonical_id,
                         "replacement_candidates": list(resolution.replacement_candidates),
@@ -358,8 +362,11 @@ class EvidenceEngine:
                         unresolved_case_terms.append({"hpo_id": term.hpo_id, "status": resolution.status})
             case_payload = {
                 "gene": gene,
-                "present_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in present],
+                "present_terms": [{"hpo_id": t.hpo_id, "label": t.label, "phenotype_status": t.status} for t in present],
                 "negative_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in absent],
+                "excluded_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in excluded],
+                "uncertain_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in uncertain],
+                "not_assessed_terms": [{"hpo_id": t.hpo_id, "label": t.label} for t in not_assessed],
                 "interpretive_use": "CASE_RELEVANCE_AND_PRIORITIZATION",
                 "ontology_release": getattr(hpo_ontology, "release", None),
                 "ontology_term_resolutions": resolution_payload,
@@ -407,7 +414,7 @@ class EvidenceEngine:
                     if result.status not in {"CURRENT", "ALTERNATE_ID", "OBSOLETE_REPLACED"}
                 ]
                 present_ids = [term.hpo_id for term in present]
-                absent_ids = [term.hpo_id for term in absent]
+                absent_ids = [term.hpo_id for term in [*absent, *excluded]]
                 if hpo_ontology is not None:
                     present_ids = [
                         hpo_ontology.resolve(term).canonical_id or term
@@ -431,6 +438,9 @@ class EvidenceEngine:
                         "status": "REQUIRES_REVIEW",
                         "reason": "No positive patient HPO terms are available for similarity calculation.",
                         "negative_patient_terms": [term.hpo_id for term in absent],
+                        "excluded_patient_terms": [term.hpo_id for term in excluded],
+                        "uncertain_patient_terms": [term.hpo_id for term in uncertain],
+                        "not_assessed_patient_terms": [term.hpo_id for term in not_assessed],
                         "ontology_release": getattr(hpo_ontology, "release", None),
                         "ontology_provenance": dict(hpo_provenance or {}),
                     }

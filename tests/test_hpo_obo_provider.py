@@ -300,6 +300,7 @@ def test_hpo_explicit_obsolete_replacement_keeps_original_id_and_scores_canonica
     disease = next(record for record in records if record.evidence_type == "GENE_DISEASE")
     assert phenotype.payload["ontology_term_resolutions"] == [{
         "hpo_id": "HP:0000004",
+        "phenotype_status": "PRESENT",
         "status": "OBSOLETE_REPLACED",
         "canonical_id": "HP:0000003",
         "replacement_candidates": ["HP:0000003"],
@@ -308,6 +309,33 @@ def test_hpo_explicit_obsolete_replacement_keeps_original_id_and_scores_canonica
     }]
     assert disease.payload["phenotype_match"]["status"] == "SCORED"
     assert disease.payload["phenotype_match"]["score"] == 1.0
+
+
+def test_nonpresent_and_uncertain_patient_statuses_are_preserved_not_scored(tmp_path):
+    ontology = _provider(tmp_path)
+    records = EvidenceEngine().build_case_context_evidence(
+        variant_id=uuid4(),
+        case_hpo_terms=[
+            {"hpo_id": "HP:0000002", "phenotype_status": "ABSENT", "present": False},
+            {"hpo_id": "HP:0000003", "phenotype_status": "EXCLUDED", "present": False},
+            {"hpo_id": "HP:0000004", "phenotype_status": "UNKNOWN", "present": False},
+            {"hpo_id": "HP:0000005", "phenotype_status": "NOT_ASSESSED", "present": False},
+        ],
+        gene="GENE1",
+        gene_disease_records=[{
+            "gene": "GENE1", "disease": "Example disorder", "hpo_terms": ["HP:0000003"]
+        }],
+        hpo_ontology=ontology,
+    )
+
+    phenotype = next(record for record in records if record.evidence_type == "PHENOTYPE")
+    disease = next(record for record in records if record.evidence_type == "GENE_DISEASE")
+    assert [item["hpo_id"] for item in phenotype.payload["negative_terms"]] == ["HP:0000002"]
+    assert [item["hpo_id"] for item in phenotype.payload["excluded_terms"]] == ["HP:0000003"]
+    assert [item["hpo_id"] for item in phenotype.payload["uncertain_terms"]] == ["HP:0000004"]
+    assert [item["hpo_id"] for item in phenotype.payload["not_assessed_terms"]] == ["HP:0000005"]
+    assert disease.payload["phenotype_match"]["status"] == "REQUIRES_REVIEW"
+    assert "score" not in disease.payload["phenotype_match"]
 
 
 def test_caller_supplied_ancestor_map_is_never_used_without_ontology(tmp_path):

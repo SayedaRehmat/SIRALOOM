@@ -1,8 +1,23 @@
 from datetime import datetime, timezone
 from uuid import UUID
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, Float, ForeignKey, Index, Integer, Text, JSON, UniqueConstraint, text
+
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
+
 from backend.app.infrastructure.db.base import Base
+
 
 def now() -> datetime:
     return datetime.now(timezone.utc)
@@ -604,12 +619,37 @@ class PhenotypeObservation(Base):
     hpo_id: Mapped[str] = mapped_column(Text)
     label: Mapped[str | None] = mapped_column(Text)
     present: Mapped[bool] = mapped_column(default=True)
+    phenotype_status: Mapped[str] = mapped_column(Text, default="PRESENT", server_default="PRESENT")
     onset: Mapped[str | None] = mapped_column(Text)
     severity: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str] = mapped_column(Text, default="CLINICAL_INPUT")
     evidence: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    __table_args__ = (UniqueConstraint("case_id", "analysis_id", "hpo_id", "present"),)
+    __table_args__ = (
+        CheckConstraint(
+            "phenotype_status IN ('PRESENT', 'ABSENT', 'EXCLUDED', 'UNKNOWN', 'NOT_ASSESSED')",
+            name="ck_phenotype_observations_status",
+        ),
+        CheckConstraint(
+            "(phenotype_status = 'PRESENT' AND present) OR "
+            "(phenotype_status <> 'PRESENT' AND NOT present)",
+            name="ck_phenotype_observations_present_consistency",
+        ),
+        Index(
+            "uq_phenotype_case_term_status",
+            "case_id", "hpo_id", "phenotype_status",
+            unique=True,
+            sqlite_where=text("analysis_id IS NULL"),
+            postgresql_where=text("analysis_id IS NULL"),
+        ),
+        Index(
+            "uq_phenotype_analysis_term_status",
+            "case_id", "analysis_id", "hpo_id", "phenotype_status",
+            unique=True,
+            sqlite_where=text("analysis_id IS NOT NULL"),
+            postgresql_where=text("analysis_id IS NOT NULL"),
+        ),
+    )
 
 class PedigreeMember(Base):
     __tablename__ = "pedigree_members"

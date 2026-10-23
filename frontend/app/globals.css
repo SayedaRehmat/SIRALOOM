@@ -307,6 +307,7 @@ tbody tr.selected { background: #eff8f5; }
 .term-chip { display:inline-flex; align-items:center; padding:6px 8px; border-radius:999px; border:1px solid var(--border); font-size:9px; background:#fafafa; }
 .term-chip.positive { background:#f4fbf8; border-color:#cfe7de; }
 .term-chip.negative { background:#fff5f5; border-color:#efd2d2; }
+.term-chip.uncertain { background:#fff9e9; border-color:#ead9a8; }
 .hpo-add { display:grid; grid-template-columns:150px 1fr auto auto; gap:7px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
 .inline-check { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--muted); white-space:nowrap; }
 .inline-check input { width:auto; }
