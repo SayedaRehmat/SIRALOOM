@@ -545,10 +545,22 @@ class LocalGnomADTabixProvider:
         info = best["info"]
         for code, label in (("GLOBAL", "Global"), ("MID", "Middle Eastern")):
             suffix = "" if code == "GLOBAL" else "_mid"
-            ac = _array_value(info.get(f"AC{suffix}"), best["alt_index"])
-            an = _scalar_int(info.get(f"AN{suffix}"))
+            ac = _array_count(
+                info.get(f"AC{suffix}"),
+                best["alt_index"],
+                field=f"AC{suffix}",
+            )
+            an = _nonnegative_count(info.get(f"AN{suffix}"), field=f"AN{suffix}")
             af = _array_float(info.get(f"AF{suffix}"), best["alt_index"])
-            hom = _array_value(info.get(f"nhomalt{suffix}"), best["alt_index"])
+            hom = _array_count(
+                info.get(f"nhomalt{suffix}"),
+                best["alt_index"],
+                field=f"nhomalt{suffix}",
+            )
+            if ac is not None and an is not None and ac > an:
+                raise GnomADProviderError(
+                    f"Local gnomAD {suffix or 'global'} allele count exceeds allele number"
+                )
             # A source AF is not interpretable without a callable denominator.
             # Never expose it as a frequency when AN is missing or zero.
             if not _frequency_available(ac, an):
@@ -596,6 +608,28 @@ def _array_value(value: str | None, index: int) -> int | None:
     return _int_or_none(parts[index])
 
 
+def _nonnegative_count(value: str | None, *, field: str) -> int | None:
+    if value in (None, "", "."):
+        return None
+    digits = value.removeprefix("+")
+    if not digits or not digits.isascii() or not digits.isdigit():
+        raise GnomADProviderError(
+            f"Local gnomAD {field} must be a non-negative integer or missing"
+        )
+    return int(digits)
+
+
+def _array_count(value: str | None, index: int, *, field: str) -> int | None:
+    if value in (None, "", "."):
+        return None
+    parts = value.split(",")
+    if index >= len(parts):
+        raise GnomADProviderError(
+            f"Local gnomAD {field} has no value for the requested alternate allele"
+        )
+    return _nonnegative_count(parts[index], field=field)
+
+
 def _array_float(value: str | None, index: int) -> float | None:
     if value is None:
         return None
@@ -603,7 +637,3 @@ def _array_float(value: str | None, index: int) -> float | None:
     if index >= len(parts) or parts[index] in {"", "."}:
         return None
     return _float_or_none(parts[index])
-
-
-def _scalar_int(value: str | None) -> int | None:
-    return _int_or_none(value)
