@@ -97,6 +97,31 @@ def test_local_gnomad_rejects_invalid_count_fields(monkeypatch, info):
         ))
 
 
+@pytest.mark.parametrize("frequency", ["-0.01", "1.01", "nan", "inf", "not-a-float"])
+def test_local_gnomad_rejects_invalid_source_allele_frequency(monkeypatch, frequency):
+    import backend.app.adapters.population.gnomad as gnomad
+
+    info = (
+        f"AC=1;AN=100;AF={frequency};nhomalt=0;"
+        "AC_mid=1;AN_mid=100;AF_mid=0.01;nhomalt_mid=0"
+    )
+    monkeypatch.setattr(
+        gnomad.subprocess,
+        "Popen",
+        lambda *args, **kwargs: SimpleNamespace(
+            pid=123,
+            returncode=0,
+            communicate=lambda timeout: (f"1\t555\t.\tT\tC\t.\tPASS\t{info}\n", ""),
+        ),
+    )
+    provider = LocalGnomADTabixProvider("/qualified/gnomad.vcf.gz")
+
+    with pytest.raises(gnomad.GnomADProviderError, match="Local gnomAD AF"):
+        provider.query_variant(CanonicalVariant(
+            genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+        ))
+
+
 def test_local_gnomad_does_not_expose_source_af_without_allele_count(monkeypatch):
     import backend.app.adapters.population.gnomad as gnomad
 

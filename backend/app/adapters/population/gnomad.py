@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import signal
 import subprocess
@@ -402,15 +403,6 @@ def _frequency_available(ac: int | None, an: int | None) -> bool:
     return ac is not None and ac >= 0 and an is not None and an > 0 and ac <= an
 
 
-def _float_or_none(value: Any) -> float | None:
-    if value is None or value == "":
-        return None
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
 def _af(ac: int | None, an: int | None) -> float | None:
     if not _frequency_available(ac, an):
         return None
@@ -634,6 +626,17 @@ def _array_float(value: str | None, index: int) -> float | None:
     if value is None:
         return None
     parts = value.split(",")
-    if index >= len(parts) or parts[index] in {"", "."}:
+    if index >= len(parts):
+        raise GnomADProviderError(
+            "Local gnomAD AF has no value for the requested alternate allele"
+        )
+    raw_value = parts[index]
+    if raw_value in {"", "."}:
         return None
-    return _float_or_none(parts[index])
+    try:
+        parsed = float(raw_value)
+    except ValueError as exc:
+        raise GnomADProviderError("Local gnomAD AF must be a finite frequency") from exc
+    if not math.isfinite(parsed) or not 0 <= parsed <= 1:
+        raise GnomADProviderError("Local gnomAD AF must be between zero and one")
+    return parsed
