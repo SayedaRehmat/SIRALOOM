@@ -149,15 +149,24 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
+    specimen_metadata = dict(payload.metadata or {})
+    if payload.vcf_sample_name is not None:
+        declared_sample = payload.vcf_sample_name.strip()
+        if not declared_sample:
+            raise HTTPException(status_code=422, detail="vcf_sample_name cannot be blank")
+        existing_sample = specimen_metadata.get("vcf_sample_name")
+        if existing_sample is not None and existing_sample != declared_sample:
+            raise HTTPException(status_code=422, detail="vcf_sample_name conflicts with specimen metadata")
+        specimen_metadata["vcf_sample_name"] = declared_sample
     specimen = Specimen(
         id=uuid4(), case_id=case.id, specimen_identifier=payload.specimen_identifier, specimen_type=payload.specimen_type,
-        collection_datetime=payload.collection_datetime, received_datetime=payload.received_datetime, metadata_json=payload.metadata,
+        collection_datetime=payload.collection_datetime, received_datetime=payload.received_datetime, metadata_json=specimen_metadata,
     )
     db.add(specimen)
     AuditService(db).record(
         event_type="SPECIMEN_REGISTERED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
         subject_type="SPECIMEN", subject_id=str(specimen.id), operation="CREATE",
-        after_state={"specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type},
+        after_state={"specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type, "vcf_sample_name": specimen_metadata.get("vcf_sample_name")},
     )
     try:
         db.commit()
@@ -173,4 +182,4 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
                 detail="A specimen with this identifier already exists in the case",
             ) from exc
         raise
-    return {"specimen_id": str(specimen.id), "case_id": str(case.id), "specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type}
+    return {"specimen_id": str(specimen.id), "case_id": str(case.id), "specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type, "vcf_sample_name": specimen_metadata.get("vcf_sample_name")}

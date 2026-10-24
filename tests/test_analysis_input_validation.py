@@ -53,3 +53,16 @@ def test_analysis_rejects_vcfs_without_one_explicit_sample(sample_names):
 
     with pytest.raises(ValueError, match="exactly one named sample"):
         validate_analysis_input_artifact(artifact, "GRCh38")
+
+
+def test_analysis_requires_exact_explicit_specimen_sample_mapping():
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={"validation": {"sample_names": ["VCF-PATIENT-01"]}},
+    )
+
+    validate_analysis_input_artifact(artifact, "GRCh38", "VCF-PATIENT-01")
+    with pytest.raises(ValueError, match="does not match the sample explicitly mapped"):
+        validate_analysis_input_artifact(artifact, "GRCh38", "VCF-FAMILY-02")

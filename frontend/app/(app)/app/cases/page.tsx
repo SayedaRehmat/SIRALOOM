@@ -27,6 +27,7 @@ type CaseSummary = {
     specimen_id: string;
     specimen_identifier: string;
     specimen_type?: string | null;
+    metadata?: Record<string, unknown>;
   }>;
 };
 
@@ -115,6 +116,7 @@ export default function Cases() {
   const [caseData, setCaseData] = useState<CaseSummary | null>(null);
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
+  const [vcfSampleName, setVcfSampleName] = useState("");
   const [specimenId, setSpecimenId] = useState("");
   const [build, setBuild] = useState("GRCh38");
   const [variantFile, setVariantFile] = useState<File | null>(null);
@@ -272,7 +274,7 @@ export default function Cases() {
   };
 
   const createSpecimen = async () => {
-    if (!caseId || !specimenIdentifier.trim()) {
+    if (!caseId || !specimenIdentifier.trim() || !vcfSampleName.trim()) {
       setError("Enter a specimen identifier before continuing.");
       return;
     }
@@ -289,6 +291,7 @@ export default function Cases() {
         body: JSON.stringify({
           specimen_identifier: specimenIdentifier.trim(),
           specimen_type: specimenType,
+          vcf_sample_name: vcfSampleName.trim(),
         }),
       });
 
@@ -296,6 +299,7 @@ export default function Cases() {
 
       setSpecimenId(createdSpecimenId);
       setSpecimenIdentifier("");
+      setVcfSampleName("");
       setMessage(t("cases.registered"));
 
       await refreshCase();
@@ -572,6 +576,14 @@ export default function Cases() {
                   <option>{t("cases.other")}</option>
                 </select>
               </label>
+              <label>
+                {t("cases.vcfSampleName")}
+                <input
+                  value={vcfSampleName}
+                  onChange={(e) => setVcfSampleName(e.target.value)}
+                  placeholder={t("cases.vcfSampleName")}
+                />
+              </label>
             </div>
 
             <div className="actions-row">
@@ -604,6 +616,9 @@ export default function Cases() {
                     <span>{s.specimen_identifier}</span>
                     <small>
                       {s.specimen_type || t("cases.specimenNotSpecified")}
+                    </small>
+                    <small>
+                      {t("cases.vcfSampleName")}: {String(s.metadata?.vcf_sample_name ?? t("workspace.sampleNameUnavailable"))}
                     </small>
                   </button>
                 ))}

@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Organization,
     OrganizationEntitlement,
+    Specimen,
     User,
 )
 
@@ -27,6 +28,7 @@ def _database():
             Organization.__table__,
             User.__table__,
             Case.__table__,
+            Specimen.__table__,
             Artifact.__table__,
             OrganizationEntitlement.__table__,
             Analysis.__table__,
@@ -40,6 +42,7 @@ def _seed(db: Session, *, max_analyses: int = 1):
     user_id = uuid4()
     case_id = uuid4()
     artifact_id = uuid4()
+    specimen_id = uuid4()
 
     db.add(
         Organization(
@@ -71,6 +74,15 @@ def _seed(db: Session, *, max_analyses: int = 1):
         )
     )
     db.add(
+        Specimen(
+            id=specimen_id,
+            case_id=case_id,
+            specimen_identifier="SPEC-001",
+            specimen_type="Blood",
+            metadata_json={"vcf_sample_name": "PROBAND"},
+        )
+    )
+    db.add(
         Artifact(
             id=artifact_id,
             analysis_id=None,
@@ -82,7 +94,7 @@ def _seed(db: Session, *, max_analyses: int = 1):
             sha256="a" * 64,
             storage_uri="memory://input.vcf",
             genome_build="GRCh38",
-            specimen_id=None,
+            specimen_id=specimen_id,
             paired_artifact_id=None,
             validation_status="VALID",
             metadata_json={"validation": {"sample_names": ["PROBAND"]}},
@@ -279,6 +291,31 @@ def test_unsupported_sample_scope_does_not_create_analysis_or_consume_quota(samp
         db.commit()
 
         with pytest.raises(ValueError, match="exactly one named sample"):
+            _create(db, case_id, artifact_id, user_id)
+
+        assert db.scalar(select(func.count(Analysis.id))) == 0
+        entitlement = db.scalar(
+            select(OrganizationEntitlement).where(
+                OrganizationEntitlement.organization_id == organization_id
+            )
+        )
+        assert entitlement.analyses_used == 0
+
+
+@pytest.mark.parametrize("specimen_mapping", [None, "OTHER-SAMPLE"])
+def test_missing_or_mismatched_specimen_sample_mapping_blocks_analysis(specimen_mapping):
+    engine = _database()
+
+    with Session(engine) as db:
+        organization_id, case_id, artifact_id, user_id = _seed(db)
+        artifact = db.get(Artifact, artifact_id)
+        specimen = db.get(Specimen, artifact.specimen_id)
+        specimen.metadata_json = (
+            {} if specimen_mapping is None else {"vcf_sample_name": specimen_mapping}
+        )
+        db.commit()
+
+        with pytest.raises(ValueError, match="explicit VCF sample name mapping|does not match"):
             _create(db, case_id, artifact_id, user_id)
 
         assert db.scalar(select(func.count(Analysis.id))) == 0

@@ -65,7 +65,7 @@ type CaseWorkspace = {
   status: string;
   language: string;
   clinical_context: Record<string, unknown>;
-  specimens: Array<Record<string, unknown>>;
+  specimens: Array<Record<string, unknown> & { metadata?: Record<string, unknown> }>;
   analyses: Array<Record<string, unknown>>;
 };
 
@@ -196,6 +196,7 @@ export default function Home() {
   const caseIdRef = useRef("");
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
+  const [vcfSampleName, setVcfSampleName] = useState("");
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
   const [genomeBuild, setGenomeBuild] = useState("GRCh38");
   const [resourceProfileId, setResourceProfileId] = useState("WES_GRCh38_STANDARD");
@@ -606,7 +607,7 @@ export default function Home() {
   };
 
   const registerSpecimen = async () => {
-    if (!caseId || !specimenIdentifier.trim()) {
+    if (!caseId || !specimenIdentifier.trim() || !vcfSampleName.trim()) {
       setMessage(t("workspace.caseSpecimenRequired"));
       return;
     }
@@ -615,12 +616,13 @@ export default function Home() {
       const next = await apiFetch(`/cases/${caseId}/specimens`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ specimen_identifier: specimenIdentifier.trim(), specimen_type: specimenType }),
+        body: JSON.stringify({ specimen_identifier: specimenIdentifier.trim(), specimen_type: specimenType, vcf_sample_name: vcfSampleName.trim() }),
       });
       const refreshed = await apiFetch(`/cases/${caseId}`);
       setCaseWorkspace(refreshed);
       setSelectedSpecimenId(String(next.specimen_id));
       setSpecimenIdentifier("");
+      setVcfSampleName("");
       setMessage(t("workspace.specimenRegistered"));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.specimenRegistrationFailed"));
@@ -1043,7 +1045,7 @@ export default function Home() {
           {caseId && <div className="keyline"><span>{t("workspace.caseId")}</span><code>{caseId}</code></div>}
           {caseId && <div className="case-context">
             <div className="section-kicker">{t("workspace.specimenSection")}</div>
-            <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>{t("workspace.blood")}</option><option>{t("workspace.saliva")}</option><option>{t("workspace.buccal")}</option><option>{t("workspace.other")}</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim()}>{t("workspace.registerSpecimen")}</button></div>
+            <div className="specimen-form"><input value={specimenIdentifier} onChange={(e) => setSpecimenIdentifier(e.target.value)} placeholder="Specimen ID" /><input value={vcfSampleName} onChange={(e) => setVcfSampleName(e.target.value)} placeholder={t("workspace.vcfSampleName")} /><select value={specimenType} onChange={(e) => setSpecimenType(e.target.value)}><option>{t("workspace.blood")}</option><option>{t("workspace.saliva")}</option><option>{t("workspace.buccal")}</option><option>{t("workspace.other")}</option></select><button className="secondary" onClick={registerSpecimen} disabled={busy || !specimenIdentifier.trim() || !vcfSampleName.trim()}>{t("workspace.registerSpecimen")}</button></div>
             {caseWorkspace?.specimens?.map((specimen, index) => {
               const id = String(specimen.specimen_id ?? "");
               const selected = id && id === selectedSpecimenId;
@@ -1055,7 +1057,7 @@ export default function Home() {
                   onClick={() => id && setSelectedSpecimenId(id)}
                 >
                   <span>{String(specimen.specimen_type ?? "Specimen")}</span>
-                  <strong>{String(specimen.specimen_identifier ?? "—")}{selected ? " · selected" : ""}</strong>
+                  <strong>{String(specimen.specimen_identifier ?? "—")}{selected ? " · selected" : ""}{` · ${t("workspace.vcfSampleName")}: ${String(specimen.metadata?.vcf_sample_name ?? t("workspace.sampleNameUnavailable"))}`}</strong>
                 </button>
               );
             })}
@@ -1069,7 +1071,7 @@ export default function Home() {
               <option value="">{t("workspace.selectSpecimen")}</option>
               {caseWorkspace?.specimens?.map((specimen, index) => (
                 <option key={String(specimen.specimen_id ?? index)} value={String(specimen.specimen_id ?? "")}>
-                  {String(specimen.specimen_identifier ?? "Specimen")} ({String(specimen.specimen_type ?? "—")})
+                  {String(specimen.specimen_identifier ?? "Specimen")} ({String(specimen.specimen_type ?? "—")}) · {String(specimen.metadata?.vcf_sample_name ?? t("workspace.sampleNameUnavailable"))}
                 </option>
               ))}
             </select>

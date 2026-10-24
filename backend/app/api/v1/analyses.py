@@ -32,11 +32,11 @@ from backend.app.domain.storage_capacity import (
     preflight_analysis_capacity,
 )
 from backend.app.infrastructure.db.models import (
-    Analysis,
     Annotation,
     Artifact,
     Assay,
     Case,
+    Specimen,
     Variant,
     WorkflowStep,
 )
@@ -249,7 +249,21 @@ def start(
         if input_artifact is None or input_artifact.case_id != analysis.case_id:
             raise HTTPException(status_code=409, detail="Analysis input artifact is missing or no longer belongs to this case")
         try:
-            validate_analysis_input_artifact(input_artifact, analysis.reference_build)
+            expected_sample_name = configuration.get("vcf_sample_name")
+            specimen_id = configuration.get("specimen_id")
+            specimen = db.get(Specimen, input_artifact.specimen_id) if input_artifact.specimen_id else None
+            if (
+                specimen is None
+                or specimen.case_id != analysis.case_id
+                or str(specimen.id) != str(specimen_id)
+                or (specimen.metadata_json or {}).get("vcf_sample_name") != expected_sample_name
+            ):
+                raise ValueError("Analysis specimen/sample mapping is missing or has changed")
+            validate_analysis_input_artifact(
+                input_artifact,
+                analysis.reference_build,
+                str(expected_sample_name) if expected_sample_name else None,
+            )
         except ValueError as exc:
             db.rollback()
             raise HTTPException(status_code=409, detail=str(exc)) from exc

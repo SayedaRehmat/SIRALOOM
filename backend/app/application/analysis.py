@@ -23,19 +23,24 @@ from backend.app.infrastructure.db.models import (
     AnalysisDispatch,
     Artifact,
     Case,
+    Specimen,
     WorkflowStep,
 )
 
 SUPPORTED_ANALYSIS_BUILDS = frozenset({"GRCh37", "GRCh38"})
 
 
-def validate_analysis_input_artifact(artifact: Artifact, reference_build: str) -> None:
-    """Require a validated, single-sample VCF on the analysis reference build.
+def validate_analysis_input_artifact(
+    artifact: Artifact,
+    reference_build: str,
+    expected_sample_name: str | None = None,
+) -> None:
+    """Require a validated, specimen-matched, single-sample VCF.
 
     The current variant workflow does not select a proband from a multisample
     callset. Accepting such an input would treat family alleles as if they
-    belonged to the case subject, so defer it until explicit sample mapping is
-    implemented.
+    belonged to the case subject. The sample name is matched against the specimen's explicit
+    VCF sample mapping; specimen identifiers are not assumed to equal VCF names.
     """
     if artifact.artifact_type != ArtifactType.VCF:
         raise ValueError("Analysis input must be a primary VCF artifact")
@@ -53,6 +58,10 @@ def validate_analysis_input_artifact(artifact: Artifact, reference_build: str) -
         raise ValueError(
             "Analysis currently requires a VCF with exactly one named sample; "
             "multisample and sites-only VCFs require explicit sample-to-case mapping."
+        )
+    if expected_sample_name is not None and sample_names[0] != expected_sample_name:
+        raise ValueError(
+            "VCF sample name does not match the sample explicitly mapped to the case specimen."
         )
 
     artifact_build = normalize_build(artifact.genome_build)
@@ -88,7 +97,13 @@ def create_analysis(
     if artifact.case_id != case_id:
         raise ValueError("Input artifact does not belong to this case")
 
-    validate_analysis_input_artifact(artifact, reference_build)
+    specimen = db.get(Specimen, artifact.specimen_id) if artifact.specimen_id else None
+    if specimen is None or specimen.case_id != case_id:
+        raise ValueError("Analysis input VCF must be linked to a specimen in this case")
+    expected_sample_name = str((specimen.metadata_json or {}).get("vcf_sample_name") or "").strip()
+    if not expected_sample_name:
+        raise ValueError("The specimen must have an explicit VCF sample name mapping before analysis")
+    validate_analysis_input_artifact(artifact, reference_build, expected_sample_name)
 
     analysis_configuration = dict(configuration or {})
     configured_profile_id = analysis_configuration.get("resource_profile_id")
@@ -97,6 +112,8 @@ def create_analysis(
     if resource_profile_id:
         analysis_configuration["resource_profile_id"] = str(resource_profile_id)
     analysis_configuration["input_artifact_id"] = str(input_artifact_id)
+    analysis_configuration["vcf_sample_name"] = expected_sample_name
+    analysis_configuration["specimen_id"] = str(specimen.id)
 
     analysis = Analysis(
         id=uuid4(),

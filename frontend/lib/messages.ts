@@ -499,6 +499,8 @@ export type TranslationKey =
   | "workspace.specimenRegistered"
   | "workspace.specimenRegistrationFailed"
   | "workspace.specimenRequired"
+  | "workspace.vcfSampleName"
+  | "workspace.sampleNameUnavailable"
   | "workspace.uploadFailed"
   | "workspace.downloadFailed"
   | "workspace.caseVcfRequired"
@@ -580,6 +582,7 @@ export type TranslationKey =
   | "cases.specimen"
   | "cases.specimenIdentifier"
   | "cases.specimenType"
+  | "cases.vcfSampleName"
   | "cases.registered"
   | "cases.typeUnspecified"
   | "cases.upload"
@@ -1045,6 +1048,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.specimen": "Register specimen",
     "cases.specimenIdentifier": "Specimen identifier",
     "cases.specimenType": "Specimen type",
+    "cases.vcfSampleName": "VCF sample name",
     "cases.registered": "Registered specimens",
     "cases.typeUnspecified": "Type not specified",
     "cases.upload": "Upload variant dataset",
@@ -1619,6 +1623,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.specimenRegistered": "Specimen registered to the case.",
     "workspace.specimenRegistrationFailed": "Specimen registration failed.",
     "workspace.specimenRequired": "Register or select a specimen before uploading the VCF.",
+    "workspace.vcfSampleName": "Exact VCF sample name",
+    "workspace.sampleNameUnavailable": "not mapped",
     "workspace.uploadFailed": "Upload failed.",
     "workspace.downloadFailed": "Download failed.",
     "workspace.caseVcfRequired": "Case and uploaded VCF are required.",
@@ -1950,6 +1956,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.specimen": "تسجيل العينة",
     "cases.specimenIdentifier": "معرّف العينة",
     "cases.specimenType": "نوع العينة",
+    "cases.vcfSampleName": "اسم العينة في ملف VCF",
     "cases.registered": "العينات المسجلة",
     "cases.typeUnspecified": "النوع غير محدد",
     "cases.upload": "رفع مجموعة بيانات المتغيرات",
@@ -2524,6 +2531,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.specimenRegistered": "تم تسجيل العينة للحالة.",
     "workspace.specimenRegistrationFailed": "فشل تسجيل العينة.",
     "workspace.specimenRequired": "سجّل عينة أو اخترها قبل رفع VCF.",
+    "workspace.vcfSampleName": "اسم العينة المطابق تمامًا في ملف VCF",
+    "workspace.sampleNameUnavailable": "غير محدد",
     "workspace.uploadFailed": "فشل الرفع.",
     "workspace.downloadFailed": "فشل التنزيل.",
     "workspace.caseVcfRequired": "يلزم وجود حالة وملف VCF مرفوع.",

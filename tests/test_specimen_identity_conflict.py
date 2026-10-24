@@ -55,7 +55,11 @@ def test_duplicate_specimen_identity_is_a_conflict_not_a_server_error(monkeypatc
     with pytest.raises(HTTPException) as error:
         cases_api.create_specimen(
             case_id=case_id,
-            payload=SpecimenCreate(specimen_identifier="S-001", specimen_type="blood"),
+            payload=SpecimenCreate(
+                specimen_identifier="S-001",
+                specimen_type="blood",
+                vcf_sample_name="VCF-PROBAND-01",
+            ),
             db=db,
             principal=Principal(
                 user_id=uuid4(),
@@ -69,3 +73,4 @@ def test_duplicate_specimen_identity_is_a_conflict_not_a_server_error(monkeypatc
     assert error.value.detail == "A specimen with this identifier already exists in the case"
     assert db.rolled_back is True
     assert db.scalar_calls == 1
+    assert db.added[0].metadata_json["vcf_sample_name"] == "VCF-PROBAND-01"
