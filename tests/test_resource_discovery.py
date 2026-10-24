@@ -6,8 +6,8 @@ from uuid import uuid4
 from backend.app.domain import resource_discovery
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Notification, Organization, OrganizationMembership, Resource, ResourceDiscovery,
-    ResourceStaging, User,
+    AuditEvent, Notification, Organization, OrganizationMembership, Resource,
+    ResourceDiscovery, ResourceStaging, User,
 )
 
 
@@ -94,6 +94,78 @@ def test_provider_discovery_persists_source_identity_and_never_activates(monkeyp
         assert discovery.authority_evidence_url == "https://example.org/resource/docs"
         assert db.query(ResourceStaging).count() == 0
         assert db.query(Resource).one().status == "CANDIDATE"
+
+
+def test_provider_discovery_failure_is_audited_without_persisting_exception_text(monkeypatch):
+    class FailingProvider:
+        def discover(self):
+            raise RuntimeError("credential=do-not-persist")
+
+    class FailingEntryPoint:
+        def load(self):
+            return FailingProvider
+
+    class FailingEntryPoints:
+        def select(self, *, group):
+            assert group == "siraloom.resource_providers"
+            return [FailingEntryPoint()]
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[AuditEvent.__table__])
+    monkeypatch.setattr(resource_discovery, "entry_points", lambda: FailingEntryPoints())
+
+    with Session(engine) as db:
+        result = resource_discovery.discover_resource_candidates(db)
+
+        assert result == {"candidates_discovered": 0, "providers_failed": 1}
+        event = db.query(AuditEvent).one()
+        assert event.event_type == "RESOURCE_DISCOVERY_PROVIDER_FAILED"
+        assert event.actor_type == "SYSTEM"
+        assert event.subject_type == "RESOURCE_PROVIDER"
+        assert event.subject_id.endswith(".FailingProvider")
+        assert event.payload == {
+            "provider_id": event.subject_id,
+            "error_type": "RuntimeError",
+        }
+        assert "credential" not in event.reason
+        assert len(event.event_hash) == 64
+
+
+def test_provider_load_failure_is_recorded_and_does_not_skip_other_providers(monkeypatch):
+    class BrokenEntryPoint:
+        value = "broken_provider:Provider"
+
+        def load(self):
+            raise ImportError("credential=do-not-persist")
+
+    class MixedEntryPoints:
+        def select(self, *, group):
+            assert group == "siraloom.resource_providers"
+            return [BrokenEntryPoint(), FakeEntryPoint()]
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[
+        AuditEvent.__table__,
+        Notification.__table__,
+        Organization.__table__,
+        OrganizationMembership.__table__,
+        Resource.__table__,
+        ResourceDiscovery.__table__,
+        ResourceStaging.__table__,
+        User.__table__,
+    ])
+    monkeypatch.setattr(resource_discovery, "entry_points", lambda: MixedEntryPoints())
+
+    with Session(engine) as db:
+        result = resource_discovery.discover_resource_candidates(db)
+
+        assert result == {"candidates_discovered": 1, "providers_failed": 1}
+        assert db.query(Resource).one().status == "CANDIDATE"
+        event = db.query(AuditEvent).one()
+        assert event.event_type == "RESOURCE_DISCOVERY_PROVIDER_FAILED"
+        assert event.subject_id == "broken_provider:Provider"
+        assert event.payload["error_type"] == "ImportError"
+        assert "credential" not in event.reason
 
 
 def test_scientific_resource_discovery_is_scheduled_daily():

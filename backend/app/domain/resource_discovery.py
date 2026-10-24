@@ -12,11 +12,11 @@ from sqlalchemy.orm import Session
 from backend.app.domain.resources import register_resource_version
 from backend.app.domain.resource_source_contract import validate_source_contract
 from backend.app.domain.resource_staging import create_staging_candidate
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Notification,
     OrganizationMembership,
     ResourceDiscovery,
-    ResourceStaging,
     User,
 )
 
@@ -26,17 +26,25 @@ RESOURCE_NOTIFICATION_ROLES = frozenset({
 })
 
 
-def _provider_instances() -> list[Any]:
+def _provider_entries() -> list[Any]:
     discovered = entry_points()
     if hasattr(discovered, "select"):
         entries = discovered.select(group=RESOURCE_PROVIDER_GROUP)
     else:
         entries = discovered.get(RESOURCE_PROVIDER_GROUP, [])
-    providers = []
-    for entry in entries:
-        provider = entry.load()
-        providers.append(provider() if isinstance(provider, type) else provider)
-    return providers
+    return list(entries)
+
+
+def _provider_identity(provider: Any) -> str:
+    return f"{provider.__class__.__module__}.{provider.__class__.__name__}"
+
+
+def _entry_point_identity(entry: Any) -> str:
+    return str(
+        getattr(entry, "value", None)
+        or getattr(entry, "name", None)
+        or f"{entry.__class__.__module__}.{entry.__class__.__name__}"
+    )
 
 
 def discover_resource_candidates(db: Session) -> dict[str, int]:
@@ -47,8 +55,12 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
     """
     discovered_count = 0
     failed_providers = 0
-    for provider in _provider_instances():
+    for entry in _provider_entries():
+        provider_id = _entry_point_identity(entry)
         try:
+            provider = entry.load()
+            provider = provider() if isinstance(provider, type) else provider
+            provider_id = _provider_identity(provider)
             candidates: Iterable[dict[str, Any]] = provider.discover()
             for candidate in candidates:
                 source_contract = validate_source_contract(dict(candidate.get("source_contract") or {}))
@@ -68,7 +80,7 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                     metadata_json={
                         **dict(candidate.get("metadata") or {}),
                         "source_contract": source_contract.as_dict(),
-                        "discovery_provider": provider.__class__.__module__ + "." + provider.__class__.__name__,
+                        "discovery_provider": provider_id,
                     },
                     organization_id=organization_id,
                     initial_status="CANDIDATE",
@@ -98,7 +110,7 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                         expected_size_bytes=candidate.get("expected_size_bytes"),
                         authority_evidence_url=source_contract.authority_evidence_url,
                         status="DISCOVERED",
-                        metadata_json={"discovery_provider": provider.__class__.__module__ + "." + provider.__class__.__name__},
+                        metadata_json={"discovery_provider": provider_id},
                     )
                     db.add(discovery)
                     db.flush()
@@ -112,9 +124,8 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                     discovery = existing_discovery
 
                 destination_uri = candidate.get("staging_destination")
-                staging = None
                 if destination_uri:
-                    staging = create_staging_candidate(
+                    create_staging_candidate(
                         db,
                         resource=resource,
                         source_uri=source_contract.artifact_url,
@@ -126,8 +137,23 @@ def discover_resource_candidates(db: Session) -> dict[str, int]:
                         metadata={"discovery_id": str(discovery.id), "publisher": source_contract.publisher},
                     )
                 discovered_count += 1
-        except Exception:
+        except Exception as exc:
             db.rollback()
+            error_type = type(exc).__name__
+            AuditService(db).record(
+                event_type="RESOURCE_DISCOVERY_PROVIDER_FAILED",
+                case_id=None,
+                analysis_id=None,
+                actor_type="SYSTEM",
+                actor_id="resource-discovery",
+                subject_type="RESOURCE_PROVIDER",
+                subject_id=provider_id,
+                operation="DISCOVER",
+                reason=f"Resource provider discovery failed ({error_type}).",
+                workflow={"domain": "scientific_resource_discovery"},
+                payload={"provider_id": provider_id, "error_type": error_type},
+            )
+            db.commit()
             failed_providers += 1
         else:
             db.commit()
