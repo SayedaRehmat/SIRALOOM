@@ -28,6 +28,25 @@ def test_hpo_gene_disease_context_produces_match_metadata_without_pathogenicity(
     lit=next(r for r in records if r.evidence_type=="LITERATURE")
     assert lit.payload["source_id"] == "PMID:123"
 
+
+def test_hpo_case_context_marks_terms_unverified_without_pinned_ontology():
+    records = EvidenceEngine().build_case_context_evidence(
+        variant_id=uuid4(),
+        case_hpo_terms=[
+            {"hpo_id": "HP:0001250", "label": "Seizure"},
+            {"hpo_id": "HP:0001263", "phenotype_status": "UNKNOWN"},
+        ],
+        gene="GENE1",
+    )
+
+    phenotype = next(record for record in records if record.evidence_type == "PHENOTYPE")
+    assert phenotype.payload["term_validation_status"] == "REQUIRES_REVIEW"
+    assert phenotype.payload["term_validation_reason"] == "PINNED_HPO_ONTOLOGY_UNAVAILABLE"
+    assert phenotype.payload["unresolved_terms_require_review"] == [
+        {"hpo_id": "HP:0001250", "status": "ONTOLOGY_UNAVAILABLE"},
+        {"hpo_id": "HP:0001263", "status": "ONTOLOGY_UNAVAILABLE"},
+    ]
+
 def test_nonmatching_gene_disease_record_is_not_attached():
     records=EvidenceEngine().build_case_context_evidence(
         variant_id=uuid4(), case_hpo_terms=["HP:0001250"], gene="GENE1",

@@ -363,6 +363,11 @@ class EvidenceEngine:
                     })
                     if resolution.status not in {"CURRENT", "ALTERNATE_ID", "OBSOLETE_REPLACED"}:
                         unresolved_case_terms.append({"hpo_id": term.hpo_id, "status": resolution.status})
+            else:
+                unresolved_case_terms = [
+                    {"hpo_id": term.hpo_id, "status": "ONTOLOGY_UNAVAILABLE"}
+                    for term in terms
+                ]
             case_payload = {
                 "gene": gene,
                 "present_terms": [{"hpo_id": t.hpo_id, "label": t.label, "phenotype_status": t.status} for t in present],
@@ -373,6 +378,18 @@ class EvidenceEngine:
                 "interpretive_use": "CASE_RELEVANCE_AND_PRIORITIZATION",
                 "ontology_release": getattr(hpo_ontology, "release", None),
                 "ontology_term_resolutions": resolution_payload,
+                "term_validation_status": (
+                    "VALIDATED"
+                    if hpo_ontology is not None and not unresolved_case_terms
+                    else "REQUIRES_REVIEW"
+                ),
+                "term_validation_reason": (
+                    "PINNED_HPO_ONTOLOGY_UNAVAILABLE"
+                    if hpo_ontology is None
+                    else "UNRESOLVED_TERMS"
+                    if unresolved_case_terms
+                    else None
+                ),
                 "unresolved_terms_require_review": unresolved_case_terms,
             }
             case_record = self._record(
