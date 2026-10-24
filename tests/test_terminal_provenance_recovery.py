@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.infrastructure.artifacts.store import ArtifactStore
@@ -20,6 +20,7 @@ from backend.app.infrastructure.db.models import (
     Classification,
     Organization,
     Report,
+    ReanalysisCandidate,
     User,
     Variant,
     WorkflowStep,
@@ -41,8 +42,8 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
     Base.metadata.create_all(engine)
     LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
     store = ArtifactStore(tmp_path / "artifacts")
-    organization_id, user_id, case_id, analysis_id = (
-        uuid4(), uuid4(), uuid4(), uuid4()
+    organization_id, user_id, case_id, parent_analysis_id, analysis_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
     variant_id = uuid4()
     task_id = "signed-out-provenance-retry"
@@ -75,10 +76,28 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
                 created_by=user_id,
             ))
             db.flush()
+            db.add(Analysis(
+                id=parent_analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1",
+                workflow_version="test",
+                status=AnalysisStatus.SUCCEEDED,
+                queue_task_id=None,
+                reference_build="GRCh38",
+                configuration={},
+                started_at=None,
+                completed_at=datetime.now(timezone.utc),
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.flush()
             analysis = Analysis(
                 id=analysis_id,
                 case_id=case_id,
-                parent_analysis_id=None,
+                parent_analysis_id=parent_analysis_id,
                 assay_id=None,
                 analysis_type="VARIANT_INTERPRETATION",
                 workflow_id="variant-v1",
@@ -90,10 +109,23 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
                 started_at=datetime.now(timezone.utc),
                 completed_at=None,
                 created_by=user_id,
-                analysis_version=1,
+                analysis_version=2,
             )
             db.add(analysis)
             db.flush()
+            db.add(ReanalysisCandidate(
+                id=uuid4(),
+                organization_id=organization_id,
+                case_id=case_id,
+                parent_analysis_id=parent_analysis_id,
+                child_analysis_id=analysis_id,
+                change_event_id=None,
+                trigger_type="POPULATION_UPDATE",
+                earliest_affected_step="population",
+                reason="Population resource update",
+                status="PENDING",
+                acted_at=None,
+            ))
 
             input_path = tmp_path / "signed-out-input.vcf"
             input_path.write_text(
@@ -269,12 +301,16 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
 
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)
+            candidate = db.scalar(select(ReanalysisCandidate).where(
+                ReanalysisCandidate.child_analysis_id == analysis_id,
+            ))
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "export_provenance",
             ))
             assert analysis.status == AnalysisStatus.RUNNING
             assert analysis.completed_at is None
+            assert candidate.status == "PENDING"
             if failure_mode == "worker_loss":
                 assert step.status == StepStatus.RUNNING
             else:
@@ -300,6 +336,9 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
         assert failures_remaining["count"] == 0
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)
+            candidate = db.scalar(select(ReanalysisCandidate).where(
+                ReanalysisCandidate.child_analysis_id == analysis_id,
+            ))
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "export_provenance",
@@ -309,6 +348,7 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
                 Artifact.filename == "provenance.json",
             )))
             assert analysis.status == AnalysisStatus.SUCCEEDED
+            assert candidate.status == "COMPLETED"
             assert analysis.completed_at is not None
             assert step.status == StepStatus.SUCCEEDED
             assert len(artifacts) == 1
@@ -344,5 +384,11 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
                 1 if failure_mode == "worker_loss" else 0
             )
             assert sum(event.event_type == "PROVENANCE_EXPORT_COMPLETED" for event in audit_events) == 1
+            reanalysis_events = [
+                event for event in audit_events
+                if event.event_type == "REANALYSIS_COMPLETED"
+            ]
+            assert len(reanalysis_events) == 1
+            assert reanalysis_events[0].payload["previous_status"] == "PENDING"
     finally:
         engine.dispose()

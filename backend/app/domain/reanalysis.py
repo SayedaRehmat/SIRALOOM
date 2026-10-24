@@ -68,33 +68,41 @@ def affected_step_for_trigger(trigger_type: str) -> str:
 
 
 def mark_reanalysis_completed(db: Session, analysis: Analysis) -> bool:
-    """Close the durable reanalysis candidate only after child completion is committed."""
-    candidate = db.scalar(
+    """Close a linked candidate when its child reaches successful completion.
+
+    A queue recovery path can return a candidate to PENDING while retaining its
+    child analysis. If that child is nevertheless delivered and completes, the
+    linked child is authoritative and the candidate must be reconciled too.
+    """
+    candidates = list(db.scalars(
         select(ReanalysisCandidate).where(
             ReanalysisCandidate.child_analysis_id == analysis.id,
-            ReanalysisCandidate.status == "STARTED",
+            ReanalysisCandidate.status.in_(("PENDING", "STARTED")),
         )
-    )
-    if candidate is None:
+    ))
+    if not candidates:
         return False
-    candidate.status = "COMPLETED"
-    candidate.acted_at = candidate.acted_at or _now()
-    db.add(candidate)
-    AuditService(db).record(
-        event_type="REANALYSIS_COMPLETED",
-        case_id=analysis.case_id,
-        analysis_id=analysis.id,
-        actor_type="SYSTEM",
-        actor_id="reanalysis",
-        subject_type="REANALYSIS_CANDIDATE",
-        subject_id=str(candidate.id),
-        operation="COMPLETE_REANALYSIS",
-        payload={
-            "candidate_id": str(candidate.id),
-            "parent_analysis_id": str(candidate.parent_analysis_id),
-            "child_analysis_id": str(analysis.id),
-        },
-    )
+    for candidate in candidates:
+        previous_status = candidate.status
+        candidate.status = "COMPLETED"
+        candidate.acted_at = candidate.acted_at or _now()
+        db.add(candidate)
+        AuditService(db).record(
+            event_type="REANALYSIS_COMPLETED",
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            actor_type="SYSTEM",
+            actor_id="reanalysis",
+            subject_type="REANALYSIS_CANDIDATE",
+            subject_id=str(candidate.id),
+            operation="COMPLETE_REANALYSIS",
+            payload={
+                "candidate_id": str(candidate.id),
+                "parent_analysis_id": str(candidate.parent_analysis_id),
+                "child_analysis_id": str(analysis.id),
+                "previous_status": previous_status,
+            },
+        )
     return True
 
 

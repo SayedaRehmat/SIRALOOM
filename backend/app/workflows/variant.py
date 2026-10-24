@@ -49,7 +49,11 @@ from backend.app.domain.profile_runtime_resources import (
     resolve_profile_runtime_resources,
 )
 from backend.app.domain.provider_registry import register_builtin_providers
-from backend.app.domain.reanalysis import STEP_ORDER, snapshot_analysis_resources
+from backend.app.domain.reanalysis import (
+    STEP_ORDER,
+    mark_reanalysis_completed,
+    snapshot_analysis_resources,
+)
 from backend.app.domain.reference import ReferenceError
 from backend.app.domain.reference_package import (
     ReferencePackageError,
@@ -1342,6 +1346,11 @@ def _persist_terminal_provenance(
         output_artifacts=[{"artifact_id": str(provenance_artifact.id), "sha256": provenance_artifact.sha256}],
         payload={"next_step": "analysis_complete"},
     )
+    # Close the linked candidate in the same transaction as the terminal
+    # provenance artifact and SUCCEEDED transition. This also reconciles a
+    # candidate returned to PENDING after a queue error when its child still
+    # reached successful completion.
+    mark_reanalysis_completed(db, analysis)
     db.commit()
     return provenance_artifact
 
