@@ -287,7 +287,12 @@ def scan_vcf_regions(input_path: str | Path):
             yield (chrom, pos1 - 1, pos1 - 1 + len(ref))
 
 
-def iter_normalized_vcf(path: str | Path, genome_build: str):
+def iter_normalized_vcf(
+    path: str | Path,
+    genome_build: str,
+    *,
+    exclusion_stats: dict[str, int] | None = None,
+):
     """Yield canonical variants one record at a time from a normalized VCF.
 
     The iterator deliberately does not materialize the full variant set. It is the
@@ -295,6 +300,27 @@ def iter_normalized_vcf(path: str | Path, genome_build: str):
     """
     from backend.app.domain.vcf import parse_vcf
     for record in parse_vcf(str(path)):
+        if exclusion_stats is not None:
+            exclusion_stats["normalized_allele_records"] = (
+                exclusion_stats.get("normalized_allele_records", 0) + 1
+            )
+        sample_call = (
+            next(iter(record.sample_calls.values()))
+            if len(record.sample_calls) == 1
+            else None
+        )
+        # A REF-only genotype is not evidence for the ALT allele in this sample.
+        # Keep it in the immutable source/normalized VCF artifacts, but do not
+        # create a canonical candidate that could be annotated or reported.
+        if sample_call and sample_call.get("zygosity") in {
+            "HOMOZYGOUS_REFERENCE",
+            "REFERENCE_CALL",
+        }:
+            if exclusion_stats is not None:
+                exclusion_stats["reference_only_genotype_alleles"] = (
+                    exclusion_stats.get("reference_only_genotype_alleles", 0) + 1
+                )
+            continue
         yield CanonicalVariant(
             genome_build=genome_build,
             chromosome=record.chrom,
@@ -303,9 +329,5 @@ def iter_normalized_vcf(path: str | Path, genome_build: str):
             alternate=record.alt,
             normalization_status="NORMALIZED",
             variant_key=canonical_key(genome_build, record.chrom, record.pos, record.ref, record.alt),
-            sample_call=(
-                next(iter(record.sample_calls.values()))
-                if len(record.sample_calls) == 1
-                else None
-            ),
+            sample_call=sample_call,
         )

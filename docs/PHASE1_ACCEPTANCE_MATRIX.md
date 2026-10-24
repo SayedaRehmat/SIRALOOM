@@ -355,6 +355,14 @@ The gate does not yet match the VCF sample name to a case specimen/pedigree memb
 
 This identity link does not yet parse or persist per-variant genotype/zygosity, exclude homozygous-reference calls, or establish sample identity independently of laboratory-supplied metadata. Those remain critical scientific workflow gaps. Existing specimens without this explicit mapping cannot start new analyses until corrected. Phase A remains PARTIAL.
 
+## 2026-10-24 reference-only genotype candidate exclusion
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| A single-sample reference-only genotype is not created as an analysis candidate | PASS (automated normalized-iterator scope) | The shared normalized VCF iterator filters all-reference calls (diploid `0/0` and haploid `0`); the original and normalized VCF artifacts remain intact. Normalization stage metadata records input allele-record and excluded reference-only genotype counts. Regression verifies reference calls are excluded while `0/1` remains. |
+| Reference-only records cannot block sign-out as if they were alternate findings | PASS (downstream iterator scope) | Annotation and population processing use the same filtered iterator as normalization, so excluded alleles do not acquire candidate rows or classifications. Combined report/reanalysis regression command: **56 passed**; normalization, VCF and unsupported-input regressions: **68 passed, 1 skipped**. |
+| Exclusion lineage identifies every source record individually | PARTIAL | Aggregate counts and immutable source/normalized artifacts are preserved; an individual excluded-record manifest is not yet persisted. The BCFtools-dependent multiallelic execution was skipped in this environment. This change does not establish clinical interpretation or validation. Phase A remains PARTIAL. |
+
 ## 2026-10-24 persisted genotype evidence and sign-out gate
 
 | Requirement | Status | Evidence / limitation |

@@ -108,7 +108,7 @@ def _zygosity(genotype: str | None) -> str:
     if any(index < 0 for index in indexes):
         return "INVALID_CALL"
     if all(index == 0 for index in indexes):
-        return "HOMOZYGOUS_REFERENCE"
+        return "HOMOZYGOUS_REFERENCE" if len(indexes) > 1 else "REFERENCE_CALL"
     if len(indexes) == 1:
         return "HAPLOID_ALTERNATE"
     if all(index != 0 for index in indexes):

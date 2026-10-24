@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from backend.app.domain.normalization import iter_normalized_vcf, normalize_vcf_file
+from backend.app.domain.vcf import parse_vcf
 from backend.app.domain.reference import FastaReference
 from backend.app.workflows.variant import _iter_variant_batches, _normalized_partition_metadata
 
@@ -92,15 +93,43 @@ def test_vcf_call_parser_distinguishes_reference_alt_haploid_and_no_calls(tmp_pa
         "1\t11\t.\tA\tG\t.\tPASS\t.\tGT\t1/1\n"
         "1\t12\t.\tA\tG\t.\tPASS\t.\tGT\t1\n"
         "1\t13\t.\tA\tG\t.\tPASS\t.\tGT\t./.\n"
-        "1\t14\t.\tA\tG\t.\tPASS\t.\tGT\t0/.\n",
+        "1\t14\t.\tA\tG\t.\tPASS\t.\tGT\t0/.\n"
+        "1\t15\t.\tA\tG\t.\tPASS\t.\tGT\t0\n",
         encoding="utf-8",
     )
 
-    calls = [variant.sample_call for _, batch in _iter_variant_batches(path, "GRCh38", 50) for variant in batch]
+    calls = [record.sample_calls["SAMPLE"] for record in parse_vcf(str(path))]
     assert [call["zygosity"] for call in calls] == [
         "HOMOZYGOUS_REFERENCE",
         "HOMOZYGOUS_ALTERNATE",
         "HAPLOID_ALTERNATE",
         "NO_CALL",
         "PARTIAL_CALL",
+        "REFERENCE_CALL",
     ]
+
+
+def test_homozygous_reference_records_are_excluded_from_candidates_and_counted(tmp_path):
+    path = tmp_path / "reference-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t10\t.\tA\tG\t50\tPASS\t.\tGT\t0/0\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tGT\t0\n"
+        "1\t11\t.\tA\tC\t50\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    exclusion_stats = {}
+
+    batches = list(
+        _iter_variant_batches(
+            path, "GRCh38", 50, exclusion_stats=exclusion_stats
+        )
+    )
+
+    assert [variant.position for _, batch in batches for variant in batch] == [11]
+    assert exclusion_stats == {
+        "normalized_allele_records": 3,
+        "reference_only_genotype_alleles": 2,
+    }

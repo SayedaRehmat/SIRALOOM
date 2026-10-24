@@ -2154,7 +2154,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
         ordinal = 0
         total_variants = 0
-        for start, batch in _iter_variant_batches(normalized_path, reference_build, partition_size):
+        normalization_exclusions: dict[str, int] = {}
+        for start, batch in _iter_variant_batches(
+            normalized_path,
+            reference_build,
+            partition_size,
+            exclusion_stats=normalization_exclusions,
+        ):
             end = start + len(batch)
             partition_key = _batch_key(start, end)
             part = db.scalar(select(AnalysisPartition).where(AnalysisPartition.analysis_id == analysis.id, AnalysisPartition.step_id == "normalize", AnalysisPartition.partition_key == partition_key))
@@ -2184,7 +2190,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             ordinal += 1
             db.commit()
 
-        normalization_step.metadata_json = {**(normalization_step.metadata_json or {}), "partition_count": ordinal, "record_count": total_variants, "partition_size": partition_size, "streaming": True}
+        normalization_step.metadata_json = {
+            **(normalization_step.metadata_json or {}),
+            "partition_count": ordinal,
+            "record_count": total_variants,
+            "partition_size": partition_size,
+            "streaming": True,
+            "normalized_allele_record_count": normalization_exclusions.get(
+                "normalized_allele_records", 0
+            ),
+            "excluded_reference_only_genotype_allele_count": normalization_exclusions.get(
+                "reference_only_genotype_alleles", 0
+            ),
+        }
         normalization_step.last_heartbeat = _now()
         db.commit()
         _ensure_execution_partitions(db, analysis.id, "normalize", "annotate")
@@ -5155,11 +5173,19 @@ def _reportability_gate_ready(db: Session, analysis_id: UUID) -> bool:
 
     return True
 
-def _iter_variant_batches(path: Path, genome_build: str, batch_size: int):
+def _iter_variant_batches(
+    path: Path,
+    genome_build: str,
+    batch_size: int,
+    *,
+    exclusion_stats: dict[str, int] | None = None,
+):
     """Yield (zero-based record start, bounded list) from a normalized VCF."""
     batch: list[CanonicalVariant] = []
     start = 0
-    for variant in iter_normalized_vcf(path, genome_build):
+    for variant in iter_normalized_vcf(
+        path, genome_build, exclusion_stats=exclusion_stats
+    ):
         batch.append(variant)
         if len(batch) >= batch_size:
             yield start, batch
