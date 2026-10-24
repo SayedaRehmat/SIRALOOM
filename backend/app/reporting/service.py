@@ -42,6 +42,7 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
 )
+from backend.app.inheritance import assessment_projection, evidence_projection
 from backend.app.reporting.reportability import final_reportability_state, latest_decision
 
 REPORT_STATUS_DRAFT = "DRAFT"
@@ -264,17 +265,27 @@ def _evidence_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> list[
         )
     )
     return [
-        {
-            "evidence_id": str(row.id),
-            "type": row.evidence_type,
-            "statement": row.statement,
-            "direction": row.direction,
-            "source": {"name": row.source_name, "version": row.source_version, "record_id": row.source_record_id},
-            "observation_ids": list(row.observation_ids or []),
-            "payload": row.payload or {},
-        }
+        _evidence_summary_row(row)
         for row in rows
     ]
+
+
+def _evidence_summary_row(row: Evidence) -> dict[str, Any]:
+    statement, payload = evidence_projection(
+        source_name=row.source_name,
+        source_version=row.source_version,
+        statement=row.statement,
+        payload=row.payload,
+    )
+    return {
+        "evidence_id": str(row.id),
+        "type": row.evidence_type,
+        "statement": statement,
+        "direction": row.direction,
+        "source": {"name": row.source_name, "version": row.source_version, "record_id": row.source_record_id},
+        "observation_ids": list(row.observation_ids or []),
+        "payload": payload,
+    }
 
 
 def _annotation_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> list[dict[str, Any]]:
@@ -538,7 +549,19 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 "contextual_evidence": contextual_evidence,
             },
             "inheritance_context": {
-                "assessments": [{"model": a.model, "status": a.status, "score": a.score, "rationale": a.rationale, "fingerprint": a.observation_fingerprint} for a in inheritance_rows],
+                "assessments": [
+                    {
+                        "model": a.model,
+                        "status": assessment_projection(
+                            status=a.status, rationale=a.rationale, score=a.score
+                        )[0],
+                        "rationale": assessment_projection(
+                            status=a.status, rationale=a.rationale, score=a.score
+                        )[1],
+                        "fingerprint": a.observation_fingerprint,
+                    }
+                    for a in inheritance_rows
+                ],
                 "segregation_observations": [{"pedigree_member_id": str(o.pedigree_member_id), "genotype": o.genotype, "zygosity": o.zygosity, "phase": o.phase, "phenotype_status": o.phenotype_status, "source": o.source, "notes": o.notes} for o in segregation_rows],
             },
             "confirmation_context": {

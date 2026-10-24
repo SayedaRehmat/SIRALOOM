@@ -36,6 +36,7 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
 )
+from backend.app.inheritance import assessment_projection, evidence_projection
 
 
 class ReviewError(ValueError):
@@ -97,10 +98,16 @@ def require_reviewer(user: User) -> None:
 
 
 def _evidence_context_dict(evidence: Evidence) -> dict:
+    statement, payload = evidence_projection(
+        source_name=evidence.source_name,
+        source_version=evidence.source_version,
+        statement=evidence.statement,
+        payload=evidence.payload,
+    )
     return {
         "id": str(evidence.id),
         "type": evidence.evidence_type,
-        "statement": evidence.statement,
+        "statement": statement,
         "direction": evidence.direction,
         "source": evidence.source_name,
         "source_version": evidence.source_version,
@@ -110,7 +117,7 @@ def _evidence_context_dict(evidence: Evidence) -> dict:
         "response_sha256": evidence.response_sha256,
         "request_metadata": evidence.request_metadata or {},
         "observation_ids": evidence.observation_ids or [],
-        "payload": evidence.payload or {},
+        "payload": payload,
         "created_at": evidence.created_at.isoformat(),
     }
 
@@ -210,7 +217,25 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         raise ReviewError("Segregation observation member does not belong to the analysis case")
     inheritance_assessments = list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id == analysis_id, InheritanceAssessment.variant_id == variant_id).order_by(InheritanceAssessment.created_at.desc())))
     pedigree = {**pedigree, "members": [{"id": str(m.id), "member_identifier": m.member_identifier, "relationship_to_proband": m.relationship_to_proband, "sex": m.sex, "affected_status": m.affected_status, "is_proband": m.is_proband, "sampled": m.sampled, "specimen_id": str(m.specimen_id) if m.specimen_id else None, "metadata": m.metadata_json or {}} for m in pedigree_members], "relationships": [{"id": str(r.id), "parent_member_id": str(r.parent_member_id), "child_member_id": str(r.child_member_id), "relationship_type": r.relationship_type, "metadata": r.metadata_json or {}} for r in pedigree_relationships]}
-    inheritance = {**inheritance, "assessments": [{"id": str(a.id), "model": a.model, "status": a.status, "score": a.score, "rationale": a.rationale, "fingerprint": a.observation_fingerprint, "reviewer_note": a.reviewer_note, "created_at": a.created_at.isoformat()} for a in inheritance_assessments]}
+    inheritance = {
+        **inheritance,
+        "assessments": [
+            {
+                "id": str(a.id),
+                "model": a.model,
+                "status": assessment_projection(
+                    status=a.status, rationale=a.rationale, score=a.score
+                )[0],
+                "rationale": assessment_projection(
+                    status=a.status, rationale=a.rationale, score=a.score
+                )[1],
+                "fingerprint": a.observation_fingerprint,
+                "reviewer_note": a.reviewer_note,
+                "created_at": a.created_at.isoformat(),
+            }
+            for a in inheritance_assessments
+        ],
+    }
     from backend.app.infrastructure.db.models import (
         ConfirmationRecord,
         FollowUpPlan,

@@ -701,7 +701,9 @@ class InheritanceAssessment(Base):
     variant_id: Mapped[UUID] = mapped_column(ForeignKey("variants.id"))
     model: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
-    score: Mapped[int] = mapped_column(Integer, default=0)
+    # Reserved nullable legacy field. No validated inheritance score is currently
+    # calculated or exposed by the application.
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rationale: Mapped[str] = mapped_column(Text)
     observation_fingerprint: Mapped[str] = mapped_column(Text)
     reviewer_note: Mapped[str | None] = mapped_column(Text)

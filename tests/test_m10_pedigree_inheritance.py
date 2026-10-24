@@ -1,8 +1,18 @@
 import pytest
 from pydantic import ValidationError
+from types import SimpleNamespace
+from uuid import uuid4
 
+from backend.app.api.v1 import pedigree
 from backend.app.api.v1.pedigree import AssessmentInput
-from backend.app.inheritance import FamilyObservation, assess_model, fingerprint, normalize_model
+from backend.app.inheritance import (
+    FamilyObservation,
+    assess_model,
+    assessment_projection,
+    evidence_projection,
+    fingerprint,
+    normalize_model,
+)
 
 
 def test_m10_model_aliases_and_fingerprint_are_deterministic():
@@ -14,39 +24,151 @@ def test_m10_model_aliases_and_fingerprint_are_deterministic():
     assert fingerprint(observations) == fingerprint(list(reversed(observations)))
 
 
-def test_m10_ad_consistency_requires_reviewable_family_observations():
+def test_inheritance_observations_do_not_produce_unvalidated_compatibility_claims():
     observations = [
         FamilyObservation("MOTHER", "FEMALE", "UNAFFECTED", "0/0", "HOM_REF"),
         FamilyObservation("PROBAND", "MALE", "AFFECTED", "0/1", "HET"),
     ]
     result = assess_model("AD", observations)
-    assert result["status"] == "CONSISTENT"
-    assert result["supporting_observations"] == 2
-    assert result["contradictory_observations"] == 0
+    assert result["status"] == "REQUIRES_REVIEW"
+    assert result["observations_available"] == 2
+    assert "score" not in result
+    assert "not implemented" in result["rationale"]
 
 
-def test_m10_ad_contradiction_is_explicit_not_silent():
+def test_unaffected_carrier_is_not_called_a_contradiction_without_penetrance_context():
     observations = [
         FamilyObservation("MOTHER", "FEMALE", "UNAFFECTED", "0/1", "HET"),
         FamilyObservation("PROBAND", "MALE", "AFFECTED", "0/1", "HET"),
     ]
     result = assess_model("AD", observations)
-    assert result["status"] == "CONTRADICTED"
-    assert result["contradictory_observations"] == 1
+    assert result["status"] == "REQUIRES_REVIEW"
+    assert "score" not in result
 
 
-def test_m10_ar_single_heterozygous_affected_member_is_not_called_consistent():
+def test_single_heterozygous_observation_does_not_claim_recessive_contradiction():
     observations = [FamilyObservation("PROBAND", "FEMALE", "AFFECTED", "0/1", "HET")]
     result = assess_model("AR", observations)
-    assert result["status"] == "CONTRADICTED"
-    assert result["contradictory_observations"] == 1
+    assert result["status"] == "REQUIRES_REVIEW"
 
 
 def test_m10_no_genotype_data_is_insufficient():
     observations = [FamilyObservation("PROBAND", "MALE", "AFFECTED", None, None)]
     result = assess_model("AD", observations)
     assert result["status"] == "INSUFFICIENT_DATA"
-    assert result["score"] == 0
+    assert "score" not in result
+
+
+def test_unknown_phenotype_and_missing_genotype_are_not_counted_as_interpretable():
+    result = assess_model(
+        "AD",
+        [
+            FamilyObservation("MEMBER1", "UNKNOWN", "UNKNOWN", "0/1", None),
+            FamilyObservation("MEMBER2", "UNKNOWN", "AFFECTED", "./.", None),
+        ],
+    )
+
+    assert result["status"] == "INSUFFICIENT_DATA"
+    assert result["observations_available"] == 0
+
+
+def test_de_novo_model_requires_review_without_parental_and_confirmation_inputs():
+    result = assess_model(
+        "DE_NOVO",
+        [FamilyObservation("PROBAND", "MALE", "AFFECTED", "0/1", "HET")],
+    )
+
+    assert result["status"] == "REQUIRES_REVIEW"
+    assert "parental" in result["rationale"]
+    assert "score" not in result
+
+
+def test_legacy_assessment_projection_retires_persisted_heuristic_claims():
+    status, rationale = assessment_projection(
+        status="CONSISTENT", rationale="Legacy status", score=80
+    )
+    assert status == "REQUIRES_REVIEW"
+    assert "Retired unvalidated heuristic" in rationale
+
+    statement, payload = evidence_projection(
+        source_name="SIRALOOM Inheritance Engine",
+        source_version="M10",
+        statement="Inheritance model AD: CONSISTENT",
+        payload={"status": "CONSISTENT", "score": 80},
+    )
+    assert "retired" in statement
+    assert payload["status"] == "REQUIRES_REVIEW"
+    assert "score" not in payload
+    assert payload["legacy_result_retired"] is True
+
+
+def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatch):
+    analysis_id, variant_id, case_id, member_id = uuid4(), uuid4(), uuid4(), uuid4()
+    principal = SimpleNamespace(user_id=uuid4())
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    observation = SimpleNamespace(
+        id=uuid4(),
+        pedigree_member_id=member_id,
+        genotype="0/1",
+        zygosity="HET",
+        phenotype_status="AFFECTED",
+    )
+    member = SimpleNamespace(
+        id=member_id,
+        member_identifier="PROBAND",
+        sex="UNKNOWN",
+        affected_status="AFFECTED",
+    )
+
+    class FakeDb:
+        def __init__(self):
+            self.rows = [[observation], [member]]
+            self.added = []
+            self.committed = False
+
+        def scalars(self, _query):
+            return self.rows.pop(0)
+
+        def scalar(self, _query):
+            return None
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.committed = True
+
+    class FakeAudit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+    db = FakeDb()
+
+    result = pedigree.assess_inheritance(
+        analysis_id,
+        variant_id,
+        AssessmentInput(models=["DE_NOVO"]),
+        db,
+        principal,
+    )
+
+    assert result["results"][0]["status"] == "REQUIRES_REVIEW"
+    assert "score" not in result["results"][0]
+    assert "score" not in result
+    assert db.committed is True
+    assessment = next(row for row in db.added if hasattr(row, "observation_fingerprint"))
+    evidence = next(row for row in db.added if getattr(row, "evidence_type", None) == "SEGREGATION")
+    assert assessment.score is None
+    assert evidence.source_version == "M11_OBSERVATIONS_ONLY"
+    assert "score" not in evidence.payload
+    assert evidence.payload["status"] == "REQUIRES_REVIEW"
 
 
 def test_m10_supported_models_are_explicit():

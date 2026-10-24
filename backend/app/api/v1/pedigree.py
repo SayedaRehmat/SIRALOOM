@@ -197,7 +197,7 @@ def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_d
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     _validate_observation_members(rows, members)
     assessments=list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id==analysis_id,InheritanceAssessment.variant_id==variant_id).order_by(InheritanceAssessment.created_at.desc())))
-    return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observations":[_seg(x,members.get(x.pedigree_member_id)) for x in rows],"assessments":[{"id":str(a.id),"model":a.model,"status":a.status,"score":a.score,"rationale":a.rationale,"fingerprint":a.observation_fingerprint,"reviewer_note":a.reviewer_note,"created_by":a.created_by,"created_at":a.created_at.isoformat()} for a in assessments]}
+    return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observations":[_seg(x,members.get(x.pedigree_member_id)) for x in rows],"assessments":[{"id":str(a.id),"model":a.model,"status":a.status,"rationale":a.rationale,"fingerprint":a.observation_fingerprint,"reviewer_note":a.reviewer_note,"created_by":a.created_by,"created_at":a.created_at.isoformat()} for a in assessments]}
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/segregation",status_code=201)
 def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
@@ -236,12 +236,13 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     fp=fingerprint(obs); results=[]
     for model in models:
         result=assess_model(model,obs)
-        row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=result["score"],rationale=result["rationale"],observation_fingerprint=fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
+        row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
         db.add(row); results.append({"id":str(row.id),**result,"fingerprint":fp,"reviewer_note":body.reviewer_note})
-        # Preserve segregation context for review, but never map it automatically to an ACMG strength.
-        payload={"model":model,"status":result["status"],"score":result["score"],"observation_fingerprint":fp,"reviewer_note":body.reviewer_note}
+        # Store only a neutral pointer to the recorded observations. This is
+        # not a calculated segregation or inheritance criterion.
+        payload={"model":model,"status":result["status"],"observations_available":result["observations_available"],"observation_fingerprint":fp,"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW"}
         stmt=select(Evidence).where(Evidence.analysis_id==analysis_id,Evidence.variant_id==variant_id,Evidence.evidence_type=="SEGREGATION",Evidence.evidence_fingerprint==__import__('hashlib').sha256(__import__('json').dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest())
         if not db.scalar(stmt):
-            db.add(Evidence(id=uuid4(),variant_id=variant_id,analysis_id=analysis_id,evidence_type="SEGREGATION",statement=f"Inheritance model {model}: {result['status']}",direction="CONTEXTUAL",source_name="SIRALOOM Inheritance Engine",source_version="M10",source_record_id=None,observation_ids=[str(r.id) for r in rows],payload=payload,created_by_type="SYSTEM",created_by_id="inheritance",evidence_fingerprint=__import__('hashlib').sha256(__import__('json').dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()))
+            db.add(Evidence(id=uuid4(),variant_id=variant_id,analysis_id=analysis_id,evidence_type="SEGREGATION",statement=f"Family observations recorded for {model}; disease-specific interpretation requires human review.",direction="CONTEXTUAL",source_name="SIRALOOM Pedigree Observation Workflow",source_version="M11_OBSERVATIONS_ONLY",source_record_id=None,observation_ids=[str(r.id) for r in rows],payload=payload,created_by_type="SYSTEM",created_by_id="inheritance",evidence_fingerprint=__import__('hashlib').sha256(__import__('json').dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()))
     AuditService(db).record(event_type="INHERITANCE_ASSESSMENT_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="VARIANT_INHERITANCE",subject_id=str(variant_id),operation="CREATE",after_state={"models":results,"observation_fingerprint":fp},reason=body.reviewer_note)
-    db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"results":results,"important_note":"Inheritance consistency is decision support and does not itself establish pathogenicity or an ACMG/ClinGen criterion strength."}
+    db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"results":results,"important_note":"No automated inheritance compatibility conclusion or ACMG/ClinGen criterion is generated. Review disease-specific mechanism, penetrance, phase, pedigree and required family evidence."}

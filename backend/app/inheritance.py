@@ -1,3 +1,10 @@
+"""Conservative pedigree observation handling.
+
+The current application records genotypes and family phenotype observations, but
+does not implement a disease/mechanism-aware segregation model. In particular,
+it must not infer de novo status, penetrance, phase, or pathogenicity from these
+observations alone.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -6,7 +13,7 @@ from dataclasses import dataclass
 
 
 VALID_MODELS = {"AD", "AR", "X_LINKED", "MITOCHONDRIAL", "DE_NOVO", "UNKNOWN"}
-VALID_STATUS = {"AFFECTED", "UNAFFECTED", "UNKNOWN"}
+
 
 @dataclass(frozen=True)
 class FamilyObservation:
@@ -16,62 +23,91 @@ class FamilyObservation:
     genotype: str | None
     zygosity: str | None
 
+
 def normalize_model(model: str) -> str:
     value = model.strip().upper().replace("-", "_").replace(" ", "_")
-    aliases = {"AUTOSOMAL_DOMINANT":"AD", "AUTOSOMAL_RECESSIVE":"AR", "X_LINKED":"X_LINKED", "XL":"X_LINKED", "MITO":"MITOCHONDRIAL", "MT":"MITOCHONDRIAL", "DE_NOVO":"DE_NOVO"}
+    aliases = {
+        "AUTOSOMAL_DOMINANT": "AD",
+        "AUTOSOMAL_RECESSIVE": "AR",
+        "XL": "X_LINKED",
+        "MITO": "MITOCHONDRIAL",
+        "MT": "MITOCHONDRIAL",
+        "DE_NOVO": "DE_NOVO",
+    }
     value = aliases.get(value, value)
     if value not in VALID_MODELS:
         raise ValueError(f"Unsupported inheritance model: {model}")
     return value
 
-def normalize_genotype(genotype: str | None) -> str | None:
-    if genotype is None: return None
-    g = genotype.strip().upper().replace(" ", "")
-    if g in {"", ".", "./.", ".|."}: return None
-    return g
 
-def carrier_state(obs: FamilyObservation) -> str:
-    g = normalize_genotype(obs.genotype)
-    z = (obs.zygosity or "").upper()
-    if g in {"1/1", "1|1", "HOM_ALT", "HOMOZYGOUS_ALT"} or z in {"HOM_ALT", "HOMOZYGOUS_ALT"}: return "BIALLELIC"
-    if g in {"0/1", "1/0", "0|1", "1|0", "HET", "HETEROZYGOUS", "CARRIER"} or z in {"HET", "HETEROZYGOUS", "CARRIER"}: return "HET"
-    if g in {"1", "HEMI", "HEMIZYGOUS"} or z in {"HEMI", "HEMIZYGOUS"}: return "HEMI"
-    if g in {"0/0", "0|0", "HOM_REF", "HOMOZYGOUS_REF"} or z in {"HOM_REF", "HOMOZYGOUS_REF"}: return "REF"
-    return "UNKNOWN"
+def _has_observation_data(observation: FamilyObservation) -> bool:
+    affected = str(observation.affected_status or "").strip().upper()
+    genotype = str(observation.genotype or "").strip().upper()
+    zygosity = str(observation.zygosity or "").strip().upper()
+    missing = {"", ".", "./.", ".|.", "UNKNOWN", "NA", "N/A"}
+    phenotype_known = affected in {"AFFECTED", "UNAFFECTED"}
+    genotype_known = genotype not in missing or zygosity not in missing
+    return phenotype_known and genotype_known
+
 
 def assess_model(model: str, observations: list[FamilyObservation]) -> dict:
-    model = normalize_model(model)
-    known = [o for o in observations if o.affected_status in VALID_STATUS and carrier_state(o) != "UNKNOWN"]
-    if not known:
-        return {"model": model, "status":"INSUFFICIENT_DATA", "score":0, "rationale":"No interpretable genotype/phenotype observations are available."}
-    supporting = contradictory = 0
-    reasons=[]
-    for o in known:
-        state=carrier_state(o); affected=o.affected_status == "AFFECTED"
-        if model == "AD":
-            if affected and state in {"HET","HEMI","BIALLELIC"}: supporting += 1; reasons.append(f"{o.member_id}: affected with variant")
-            elif not affected and state == "REF": supporting += 1; reasons.append(f"{o.member_id}: unaffected without observed variant")
-            elif not affected and state in {"HET","HEMI","BIALLELIC"}: contradictory += 1; reasons.append(f"{o.member_id}: unaffected despite observed variant")
-        elif model == "AR":
-            if affected and state == "BIALLELIC": supporting += 1; reasons.append(f"{o.member_id}: affected with biallelic state")
-            elif not affected and state in {"HET","REF"}: supporting += 1; reasons.append(f"{o.member_id}: unaffected compatible with recessive model")
-            elif affected and state == "HET": contradictory += 1; reasons.append(f"{o.member_id}: affected heterozygous state is not sufficient for AR")
-        elif model == "X_LINKED":
-            if affected and state in {"HEMI","BIALLELIC","HET"}: supporting += 1; reasons.append(f"{o.member_id}: affected compatible with X-linked state")
-            elif not affected and state == "REF": supporting += 1; reasons.append(f"{o.member_id}: unaffected without observed variant")
-            elif not affected and state == "HEMI": contradictory += 1; reasons.append(f"{o.member_id}: unaffected hemizygous variant requires review")
-        elif model == "MITOCHONDRIAL":
-            if affected and state in {"HET","BIALLELIC","HEMI"}: supporting += 1; reasons.append(f"{o.member_id}: affected with mitochondrial variant")
-            elif not affected and state == "REF": supporting += 1; reasons.append(f"{o.member_id}: unaffected without observed variant")
-        elif model == "DE_NOVO":
-            if affected and state in {"HET","HEMI","BIALLELIC"}: supporting += 1; reasons.append(f"{o.member_id}: affected proband/case carrier")
-            elif not affected and state == "REF": supporting += 1; reasons.append(f"{o.member_id}: unaffected reference-compatible member")
-    if contradictory: status="CONTRADICTED"
-    elif supporting >= 2: status="CONSISTENT"
-    else: status="INSUFFICIENT_DATA"
-    score=max(0,min(100, 60 + 10*supporting - 30*contradictory)) if status != "INSUFFICIENT_DATA" else 25
-    return {"model":model,"status":status,"score":score,"supporting_observations":supporting,"contradictory_observations":contradictory,"rationale":"; ".join(reasons) or "No model-specific interpretation available."}
+    """Return data sufficiency only; do not infer inheritance compatibility.
+
+    A compatibility decision needs disease-specific mechanism, penetrance and
+    relationship/phase information, and de novo assessment additionally needs
+    parental observations and the applicable confirmation policy. Those inputs
+    are not yet part of this function's contract.
+    """
+    normalized_model = normalize_model(model)
+    available = [observation for observation in observations if _has_observation_data(observation)]
+    if not available:
+        return {
+            "model": normalized_model,
+            "status": "INSUFFICIENT_DATA",
+            "observations_available": 0,
+            "rationale": "No interpretable genotype and family phenotype observations are available.",
+        }
+    return {
+        "model": normalized_model,
+        "status": "REQUIRES_REVIEW",
+        "observations_available": len(available),
+        "rationale": (
+            "Family observations are recorded, but automated compatibility is not implemented. "
+            "Review the disease-specific mechanism, penetrance, pedigree relationships, phase, "
+            "and required parental or segregation evidence."
+        ),
+    }
+
+
+def assessment_projection(*, status: str, rationale: str, score: int | None) -> tuple[str, str]:
+    """Do not expose persisted conclusions from the retired M10 heuristic."""
+    if score is not None or status in {"CONSISTENT", "CONTRADICTED"}:
+        return (
+            "REQUIRES_REVIEW",
+            "Retired unvalidated heuristic conclusion. Review the recorded family observations.",
+        )
+    if str(rationale or "").startswith("Retired unvalidated heuristic conclusion"):
+        return "REQUIRES_REVIEW", rationale
+    return status, rationale
+
+
+def evidence_projection(*, source_name: str | None, source_version: str | None,
+                        statement: str, payload: dict | None) -> tuple[str, dict]:
+    """Preserve old evidence records while preventing retired scores from display."""
+    result_payload = dict(payload or {})
+    if source_name == "SIRALOOM Inheritance Engine" and source_version == "M10":
+        result_payload.pop("score", None)
+        result_payload["status"] = "REQUIRES_REVIEW"
+        result_payload["legacy_result_retired"] = True
+        statement = (
+            "Legacy heuristic result retired; review the recorded family observations "
+            "without treating the prior model status as an inheritance conclusion."
+        )
+    return statement, result_payload
+
 
 def fingerprint(observations: list[FamilyObservation]) -> str:
-    payload=[o.__dict__ for o in sorted(observations,key=lambda x:x.member_id)]
-    return hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(",",":" )).encode()).hexdigest()
+    payload = [observation.__dict__ for observation in sorted(observations, key=lambda x: x.member_id)]
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
