@@ -729,8 +729,15 @@ def _html_document(content: dict[str, Any]) -> str:
             "Authorized sign-out is recorded. Clinical use remains subject to "
             "laboratory-specific validation and applicable quality/regulatory controls."
         )
+        signatory = html.escape(str(final_result.get("signed_out_by_display_name") or "Not recorded"))
+        signed_out_at = html.escape(str(final_result["signed_out_at"]))
+        signout_details = (
+            f"<p><strong>Authorized signatory:</strong> {signatory}</p>"
+            f"<p><strong>Report issued:</strong> {signed_out_at}</p>"
+        )
     else:
         release_notice = "This draft is not authorized for release."
+        signout_details = ""
     generated_at = content.get("generated_at", _utc_now().isoformat())
     report_schema_version = content.get("report_schema_version", "1.0.0")
     report_version = content.get("report_version", 1)
@@ -764,6 +771,7 @@ th,td {{ border:1px solid #bbb; padding:4px; vertical-align:top; }} th {{ backgr
 </div></div>
 <h2>{'Final Result' if not bilingual else 'Final Result / النتيجة النهائية'}</h2>
 <p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — {html.escape(release_notice)}</p>
+{signout_details}
 {''.join(findings_html)}
 <h2>{'Methodology' if not bilingual else 'Methodology / المنهجية'}</h2>
 <p>{html.escape(content['methodology'])}</p>

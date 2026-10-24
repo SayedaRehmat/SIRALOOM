@@ -1,6 +1,7 @@
-import pytest
+from datetime import UTC, datetime
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -494,6 +495,7 @@ def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
     db, reviewer, analysis, report = seed_finalizable_report()
     from backend.app.reporting import finalization
 
+    reviewer.display_name = "Sign-out <Reviewer>"
     monkeypatch.setattr(finalization, "render_pdf", lambda content: b"%PDF-SIRALOOM-SIGNED%")
 
     finalized = finalize_report(
@@ -512,10 +514,19 @@ def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
     assert finalized.content_json["final_result"]["release_state"] == "AUTHORIZED_SIGNOUT"
     assert finalized.content_json["final_result"]["clinical_use_status"] == "LABORATORY_VALIDATION_REQUIRED"
     assert finalized.content_json["final_result"]["signed_out_by"] == str(reviewer.id)
+    assert finalized.content_json["final_result"]["signed_out_by_display_name"] == "Sign-out <Reviewer>"
+    signed_out_at = datetime.fromisoformat(finalized.content_json["final_result"]["signed_out_at"])
+    approved_at = finalized.approved_at
+    if approved_at.tzinfo is None:
+        approved_at = approved_at.replace(tzinfo=UTC)
+    assert signed_out_at == approved_at
     from backend.app.reporting.service import render_html
 
     signed_html = render_html(finalized.content_json).decode("utf-8")
     assert "Authorized sign-out is recorded." in signed_html
+    assert "Authorized signatory:</strong> Sign-out &lt;Reviewer&gt;" in signed_html
+    assert "Authorized signatory:</strong> Sign-out <Reviewer>" not in signed_html
+    assert f"Report issued:</strong> {finalized.content_json['final_result']['signed_out_at']}" in signed_html
     assert "Clinical use remains subject to laboratory-specific validation" in signed_html
     assert "not a clinical release until an authorized sign-out is recorded" not in signed_html
 
@@ -535,6 +546,36 @@ def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
     assert second.signed_artifact_id == signed_id
     assert second.signed_sha256 == signed_sha
     assert second.signout_reason == "Authorized laboratory sign-out"
+    reviewer.status = "SUSPENDED"
+    db.commit()
+    replay = finalize_report(
+        db,
+        report_id=report.id,
+        approver_id=reviewer.id,
+        reason="Retry of already completed sign-out",
+    )
+    assert replay.signed_artifact_id == signed_id
+
+
+def test_signout_requires_active_signatory_bound_to_report_organization():
+    from backend.app.reporting.finalization import ReportFinalizationError
+
+    db, reviewer, _analysis, report = seed_finalizable_report()
+    reviewer.status = "SUSPENDED"
+    db.commit()
+
+    with pytest.raises(ReportFinalizationError, match="active, organization-bound signatory"):
+        finalize_report(
+            db,
+            report_id=report.id,
+            approver_id=reviewer.id,
+            reason="Attempted by suspended user",
+        )
+
+    db.refresh(report)
+    assert report.status == "DRAFT"
+    assert report.signed_artifact_id is None
+    db.close()
 
 
 def test_signed_report_requires_draft_artifact():

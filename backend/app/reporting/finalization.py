@@ -19,6 +19,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     ConfirmationRecord,
     Report,
+    User,
 )
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
@@ -467,6 +468,17 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     if report.status != "DRAFT":
         raise ReportFinalizationError(f"Report cannot be finalized from status {report.status}")
 
+    approver = db.get(User, approver_id)
+    if (
+        approver is None
+        or approver.status != "ACTIVE"
+        or approver.organization_id != case_lock.organization_id
+        or not approver.display_name.strip()
+    ):
+        raise ReportFinalizationError(
+            "An active, organization-bound signatory with a display name is required"
+        )
+
     eligible, errors = final_report_eligibility(db, analysis_id=report.analysis_id)
     if not eligible:
         raise ReportFinalizationError("; ".join(errors))
@@ -521,7 +533,9 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     signed_result["release_state"] = "AUTHORIZED_SIGNOUT"
     signed_result["clinical_use_status"] = "LABORATORY_VALIDATION_REQUIRED"
     signed_result["signed_out_by"] = str(approver_id)
-    signed_result["signed_out_at"] = datetime.now(UTC).isoformat()
+    signed_result["signed_out_by_display_name"] = approver.display_name.strip()
+    signed_out_at = datetime.now(UTC)
+    signed_result["signed_out_at"] = signed_out_at.isoformat()
     signed_result["signout_reason"] = reason.strip()
     signed_content["report_status"] = "FINAL"
     signed_content["final_result"] = signed_result
@@ -535,7 +549,7 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
 
     report.status = REPORT_STATUS_FINAL
     report.approved_by = approver_id
-    report.approved_at = datetime.now(UTC)
+    report.approved_at = signed_out_at
     report.signed_artifact_id = signed_artifact.id
     report.signed_sha256 = signed_artifact.sha256
     report.signout_reason = reason.strip()
