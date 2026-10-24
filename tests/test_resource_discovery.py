@@ -1,13 +1,24 @@
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
+from uuid import uuid4
+
+import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from uuid import uuid4
 
 from backend.app.domain import resource_discovery
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    AuditEvent, Notification, Organization, OrganizationMembership, Resource,
-    ResourceDiscovery, ResourceStaging, User,
+    AuditEvent,
+    Notification,
+    Organization,
+    OrganizationMembership,
+    Resource,
+    ResourceDiscovery,
+    ResourceStaging,
+    User,
 )
 
 
@@ -166,6 +177,40 @@ def test_provider_load_failure_is_recorded_and_does_not_skip_other_providers(mon
         assert event.subject_id == "broken_provider:Provider"
         assert event.payload["error_type"] == "ImportError"
         assert "credential" not in event.reason
+
+
+def test_provider_failure_history_is_platform_admin_only_and_sanitized():
+    from backend.app.api.v1.resources import list_provider_failures
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[AuditEvent.__table__])
+    with Session(engine) as db:
+        event = AuditEvent(
+            id=uuid4(), event_version="1", event_type="RESOURCE_DISCOVERY_PROVIDER_FAILED",
+            case_id=None, analysis_id=None, actor_type="SYSTEM", actor_id="resource-discovery",
+            subject_type="RESOURCE_PROVIDER", subject_id="trusted.provider.Adapter",
+            operation="DISCOVER", reason="Provider discovery failed (TimeoutError).",
+            payload={"provider_id": "trusted.provider.Adapter", "error_type": "TimeoutError", "secret": "must-not-leak"},
+            input_artifacts=[], output_artifacts=[], software={}, workflow={}, resource_versions={},
+            occurred_at=datetime(2026, 1, 1),
+            event_hash="a" * 64,
+        )
+        db.add(event)
+        db.commit()
+
+        with pytest.raises(HTTPException) as denied:
+            list_provider_failures(50, db, SimpleNamespace(role="organization_admin"))
+        assert denied.value.status_code == 403
+
+        rows = list_provider_failures(50, db, SimpleNamespace(role="platform_admin"))
+        assert rows == [{
+            "event_id": str(event.id),
+            "provider_id": "trusted.provider.Adapter",
+            "error_type": "TimeoutError",
+            "occurred_at": event.occurred_at,
+            "event_hash": "a" * 64,
+        }]
+        assert "secret" not in str(rows)
 
 
 def test_scientific_resource_discovery_is_scheduled_daily():

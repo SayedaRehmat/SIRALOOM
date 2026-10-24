@@ -32,9 +32,9 @@ from backend.app.domain.resources import (
 )
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
+    AuditEvent,
     Resource,
     ResourceApproval,
-    ResourceQualification,
     ResourceStaging,
 )
 from backend.app.infrastructure.db.session import get_db
@@ -176,6 +176,30 @@ def _staging_dispatch_is_definitively_dead(
     except Exception:
         return False
     return task_state in {"FAILURE", "REVOKED"}
+
+
+@router.get("/provider-failures")
+def list_provider_failures(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Expose sanitized global discovery failures to platform administrators."""
+    require_role(principal, frozenset({"platform_admin"}))
+    bounded_limit = min(max(limit, 1), 200)
+    rows = db.scalars(
+        select(AuditEvent)
+        .where(AuditEvent.event_type == "RESOURCE_DISCOVERY_PROVIDER_FAILED")
+        .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
+        .limit(bounded_limit)
+    ).all()
+    return [{
+        "event_id": str(row.id),
+        "provider_id": (row.payload or {}).get("provider_id") or row.subject_id,
+        "error_type": (row.payload or {}).get("error_type"),
+        "occurred_at": row.occurred_at,
+        "event_hash": row.event_hash,
+    } for row in rows]
 
 
 def _celery_task_state(task_id: str) -> str:
