@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.application.analysis import create_analysis
 from backend.app.application.entitlements import reserve_analysis_quota
-from backend.app.domain.enums import AnalysisStatus, EntitlementPlan, EntitlementStatus
+from backend.app.domain.enums import EntitlementPlan, EntitlementStatus
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -85,7 +85,7 @@ def _seed(db: Session, *, max_analyses: int = 1):
             specimen_id=None,
             paired_artifact_id=None,
             validation_status="VALID",
-            metadata_json={},
+            metadata_json={"validation": {"sample_names": ["PROBAND"]}},
         )
     )
     db.add(
@@ -266,3 +266,25 @@ def test_unrestricted_plan_does_not_consume_usage():
             raise AssertionError("unrestricted plans must not commit")
 
     reserve_analysis_quota(FakeDB(), organization_id)
+
+
+@pytest.mark.parametrize("sample_names", [[], ["PROBAND", "MOTHER"], None])
+def test_unsupported_sample_scope_does_not_create_analysis_or_consume_quota(sample_names):
+    engine = _database()
+
+    with Session(engine) as db:
+        organization_id, case_id, artifact_id, user_id = _seed(db)
+        artifact = db.get(Artifact, artifact_id)
+        artifact.metadata_json = {"validation": {"sample_names": sample_names}}
+        db.commit()
+
+        with pytest.raises(ValueError, match="exactly one named sample"):
+            _create(db, case_id, artifact_id, user_id)
+
+        assert db.scalar(select(func.count(Analysis.id))) == 0
+        entitlement = db.scalar(
+            select(OrganizationEntitlement).where(
+                OrganizationEntitlement.organization_id == organization_id
+            )
+        )
+        assert entitlement.analyses_used == 0

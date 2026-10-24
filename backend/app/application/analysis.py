@@ -30,11 +30,30 @@ SUPPORTED_ANALYSIS_BUILDS = frozenset({"GRCh37", "GRCh38"})
 
 
 def validate_analysis_input_artifact(artifact: Artifact, reference_build: str) -> None:
-    """Require a validated primary VCF on the exact assembly used by the analysis."""
+    """Require a validated, single-sample VCF on the analysis reference build.
+
+    The current variant workflow does not select a proband from a multisample
+    callset. Accepting such an input would treat family alleles as if they
+    belonged to the case subject, so defer it until explicit sample mapping is
+    implemented.
+    """
     if artifact.artifact_type != ArtifactType.VCF:
         raise ValueError("Analysis input must be a primary VCF artifact")
     if artifact.validation_status != "VALID":
         raise ValueError("Analysis input VCF must pass ingestion validation")
+
+    validation = (artifact.metadata_json or {}).get("validation")
+    sample_names = validation.get("sample_names") if isinstance(validation, dict) else None
+    if (
+        not isinstance(sample_names, list)
+        or len(sample_names) != 1
+        or not isinstance(sample_names[0], str)
+        or not sample_names[0].strip()
+    ):
+        raise ValueError(
+            "Analysis currently requires a VCF with exactly one named sample; "
+            "multisample and sites-only VCFs require explicit sample-to-case mapping."
+        )
 
     artifact_build = normalize_build(artifact.genome_build)
     requested_build = normalize_build(reference_build)

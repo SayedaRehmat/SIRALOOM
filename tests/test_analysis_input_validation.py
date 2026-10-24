@@ -12,6 +12,7 @@ def test_analysis_accepts_valid_primary_vcf_on_matching_supported_build(build):
         artifact_type="VCF",
         validation_status="VALID",
         genome_build=build,
+        metadata_json={"validation": {"sample_names": ["PROBAND"]}},
     )
 
     validate_analysis_input_artifact(artifact, canonical)
@@ -34,7 +35,21 @@ def test_analysis_rejects_unusable_input_artifact(
         artifact_type=artifact_type,
         validation_status=validation_status,
         genome_build=artifact_build,
+        metadata_json={"validation": {"sample_names": ["PROBAND"]}},
     )
 
     with pytest.raises(ValueError, match=message):
         validate_analysis_input_artifact(artifact, requested_build)
+
+
+@pytest.mark.parametrize("sample_names", [[], ["PROBAND", "MOTHER"], None])
+def test_analysis_rejects_vcfs_without_one_explicit_sample(sample_names):
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={"validation": {"sample_names": sample_names}},
+    )
+
+    with pytest.raises(ValueError, match="exactly one named sample"):
+        validate_analysis_input_artifact(artifact, "GRCh38")
