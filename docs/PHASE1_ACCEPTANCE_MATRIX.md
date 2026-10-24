@@ -330,3 +330,11 @@ This closes the unauthenticated broker configuration gap for the included Compos
 | Segregation/reanalysis provenance includes the pedigree graph used for family interpretation | PASS for new segregation writes; legacy observations are ineligible without a snapshot | Segregation writes now persist a server-generated versioned snapshot of stable family member attributes, specimen identifiers/types, and pedigree edges. The parent/child manifest fingerprints that snapshot; it reports missing legacy snapshots as incomplete provenance. The focused API, access-control, review, and reanalysis suite passed **127 tests**. This does not validate clinical inheritance logic or recover pedigree state that was never snapshotted for old analyses. |
 
 The CLI/service regression is database-backed but uses controlled fixtures. It does not demonstrate reproducibility against real laboratory data, scientific validation, or lab qualification. Overall Phase A remains PARTIAL.
+
+## 2026-10-24 pedigree-to-specimen workflow connection
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Review UI can associate a pedigree member marked as sampled with a specimen in the same case | PASS (API/UI implementation and controlled regression) | Review now loads specimens from the permission-checked case dossier, offers an optional specimen link, submits the selected `specimen_id`, and displays the linked specimen identifier. Backend regression verifies the case-scoped specimen link is persisted; cross-case specimen denial remains covered. Backend command covering pedigree authorization, observation, review and lineage: **98 passed**. Frontend session tests: **39 passed**; i18n guard and `tsc --noEmit` passed. Production frontend build was NOT RUN successfully: invoking the Windows Node executable from the WSL UNC working directory attempted Windows SWC and failed to spawn/build; a Linux Node runtime was unavailable. No UI browser journey or deployed VCF sample-to-specimen match was verified. |
+
+This connects the pedigree member to the case specimen record but does not establish that the specimen's VCF sample name matches the pedigree identifier, nor does it implement automated segregation or inheritance interpretation. Phase A remains PARTIAL; scientific validation and laboratory deployment qualification remain NOT COMPLETE.
