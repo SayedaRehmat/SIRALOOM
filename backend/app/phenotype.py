@@ -7,6 +7,7 @@ from typing import Any
 
 HPO_RE = re.compile(r"^HP:\d{7}$")
 
+
 @dataclass(frozen=True)
 class PhenotypeTerm:
     hpo_id: str
@@ -20,6 +21,7 @@ class PhenotypeTerm:
 
 PHENOTYPE_STATUSES = frozenset({"PRESENT", "ABSENT", "EXCLUDED", "UNKNOWN", "NOT_ASSESSED"})
 
+
 @dataclass(frozen=True)
 class PhenotypeMatch:
     matched: tuple[str, ...]
@@ -28,18 +30,22 @@ class PhenotypeMatch:
     score: float
     method: str = "EXACT_HPO_OVERLAP"
 
+
 def normalize_hpo_id(value: Any) -> str:
     text = str(value or "").strip().upper()
     if not HPO_RE.fullmatch(text):
         raise ValueError(f"Invalid HPO identifier: {value!r}")
     return text
 
+
 def normalize_terms(values: Iterable[Any]) -> tuple[PhenotypeTerm, ...]:
     out: list[PhenotypeTerm] = []
     seen: set[tuple[str, str]] = set()
     for item in values:
         if isinstance(item, str):
-            hpo = normalize_hpo_id(item); label = None; status = "PRESENT"
+            hpo = normalize_hpo_id(item)
+            label = None
+            status = "PRESENT"
         elif isinstance(item, dict):
             hpo = normalize_hpo_id(item.get("hpo_id") or item.get("id"))
             label = str(item.get("label")).strip() if item.get("label") else None
@@ -56,18 +62,41 @@ def normalize_terms(values: Iterable[Any]) -> tuple[PhenotypeTerm, ...]:
             raise TypeError("HPO terms must be strings or objects")
         key = (hpo, status)
         if key not in seen:
-            seen.add(key); out.append(PhenotypeTerm(hpo, label, status))
+            seen.add(key)
+            out.append(PhenotypeTerm(hpo, label, status))
     return tuple(out)
 
-def match_hpo(query_terms: Iterable[Any], target_terms: Iterable[Any], *, ancestor_map: dict[str, list[str]] | None = None) -> PhenotypeMatch:
+
+def match_hpo(
+    query_terms: Iterable[Any],
+    target_terms: Iterable[Any],
+    *,
+    ancestor_map: dict[str, list[str]] | None = None,
+) -> PhenotypeMatch:
+    """Compare present terms using exact overlap or patient-to-disease subsumption.
+
+    When an ontology ancestor map is supplied, a patient term is considered
+    compatible with a disease annotation when it is the same term or a more
+    specific descendant of that annotation. A broader patient term does not
+    imply a more specific disease annotation.
+    """
     query = {t.hpo_id for t in normalize_terms(query_terms) if t.status == "PRESENT"}
     target = {t.hpo_id for t in normalize_terms(target_terms) if t.status == "PRESENT"}
-    expanded = set(target)
     method = "EXACT_HPO_OVERLAP"
-    if ancestor_map:
-        method = "HPO_OVERLAP_WITH_ANCESTORS"
-        for term in list(target):
-            expanded.update(normalize_hpo_id(x) for x in ancestor_map.get(term, []))
-    matched = tuple(sorted(query & expanded))
+    if ancestor_map is None:
+        matched = tuple(sorted(query & target))
+    else:
+        method = "HPO_PATIENT_DESCENDANT_OVERLAP"
+        normalized_ancestors = {
+            normalize_hpo_id(term): {normalize_hpo_id(ancestor) for ancestor in ancestors}
+            for term, ancestors in ancestor_map.items()
+        }
+        matched = tuple(
+            sorted(
+                term
+                for term in query
+                if term in target or bool(normalized_ancestors.get(term, set()) & target)
+            )
+        )
     score = len(matched) / len(query) if query else 0.0
     return PhenotypeMatch(matched, len(query), len(target), round(score, 6), method)

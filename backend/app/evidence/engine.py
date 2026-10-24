@@ -473,9 +473,15 @@ class EvidenceEngine:
                                 else resolution.canonical_id
                             )
                         canonical_target_terms = [result.canonical_id for result in target_resolutions]
+                        canonical_case_ids = {
+                            str(term.get("hpo_id") or term.get("id") or "")
+                            if isinstance(term, dict)
+                            else str(term)
+                            for term in canonical_case_terms
+                        }
                         ancestor_map = {
                             term: sorted(hpo_ontology.ancestors(term))
-                            for term in canonical_target_terms
+                            for term in canonical_case_ids
                             if term
                         }
                     else:
@@ -494,7 +500,7 @@ class EvidenceEngine:
                         match_payload.update({
                             "status": "SCORED",
                             "score": match.score,
-                            "score_semantics": "fraction_of_present_patient_terms_matching_a_disease_term_or_ancestor",
+                            "score_semantics": "fraction_of_present_patient_terms_equal_to_or_more_specific_than_a_disease_phenotype_term",
                             "clinical_prioritization_validated": False,
                             "method": match.method,
                         })

@@ -258,7 +258,7 @@ def test_hpo_obo_rejects_invalid_or_duplicate_obsolete_flags(tmp_path, field_val
         HPOOboProvider(path, expected_sha256=checksum, expected_release="2026-09-01")
 
 
-def test_ontology_hierarchy_is_used_with_provenance_and_untrusted_map_is_ignored(tmp_path):
+def test_broader_patient_term_does_not_imply_specific_disease_term(tmp_path):
     ontology = _provider(tmp_path)
     resource_id = uuid4()
     provenance = {
@@ -289,10 +289,30 @@ def test_ontology_hierarchy_is_used_with_provenance_and_untrusted_map_is_ignored
     assert disease.payload["phenotype_match"]["status"] == "SCORED"
     assert disease.payload["phenotype_match"]["clinical_prioritization_validated"] is False
     assert "priority_adjustment" not in disease.payload["phenotype_match"]
-    assert disease.payload["phenotype_match"]["method"] == "HPO_OVERLAP_WITH_ANCESTORS"
-    assert disease.payload["phenotype_match"]["matched_terms"] == ["HP:0000002"]
+    assert disease.payload["phenotype_match"]["method"] == "HPO_PATIENT_DESCENDANT_OVERLAP"
+    assert disease.payload["phenotype_match"]["matched_terms"] == []
+    assert disease.payload["phenotype_match"]["score"] == 0.0
     assert disease.payload["phenotype_match"]["ontology_provenance"]["resource_checksum"] == ontology.sha256
     assert "hpo_ancestor_map" not in disease.payload
+
+
+def test_more_specific_patient_term_matches_broader_disease_annotation(tmp_path):
+    ontology = _provider(tmp_path)
+    records = EvidenceEngine().build_case_context_evidence(
+        variant_id=uuid4(),
+        case_hpo_terms=[{"hpo_id": "HP:0000003", "present": True}],
+        gene="GENE1",
+        gene_disease_records=[{
+            "gene": "GENE1", "disease": "Example disorder", "hpo_terms": ["HP:0000002"]
+        }],
+        hpo_ontology=ontology,
+    )
+    disease = next(record for record in records if record.evidence_type == "GENE_DISEASE")
+
+    assert disease.payload["phenotype_match"]["status"] == "SCORED"
+    assert disease.payload["phenotype_match"]["matched_terms"] == ["HP:0000003"]
+    assert disease.payload["phenotype_match"]["score"] == 1.0
+    assert disease.payload["phenotype_match"]["clinical_prioritization_validated"] is False
 
 
 def test_invalid_or_obsolete_phenotypes_require_review_in_pinned_ontology(tmp_path):

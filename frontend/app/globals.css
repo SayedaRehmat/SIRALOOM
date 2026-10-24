@@ -309,6 +309,8 @@ tbody tr.selected { background: #eff8f5; }
 .hpoa-assertions li:last-child { padding-bottom:0; border-bottom:0; }
 .hpoa-assertions li > span, .hpoa-assertions li > small { grid-column:1 / -1; }
 .hpoa-review-note { margin-bottom:0 !important; }
+.phenotype-match-review { margin-top:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--surface); }
+.phenotype-match-review-note { margin-bottom:0 !important; font-weight:600; }
 .evidence-provenance { margin-top:9px; color:var(--muted); font-size:9px; }
 .evidence-provenance summary { cursor:pointer; }
 .evidence-provenance dl { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:4px 8px; overflow-wrap:anywhere; }

@@ -152,7 +152,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                             "gene": "GENE1",
                             "disease": "Disease X",
                             "disease_id": "MONDO:0000001",
-                            "hpo_terms": ["HP:0000003"],
+                            "hpo_terms": ["HP:0000002"],
                         }],
                     }
                 ),
