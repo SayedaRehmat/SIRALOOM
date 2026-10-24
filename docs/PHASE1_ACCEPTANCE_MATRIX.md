@@ -293,3 +293,22 @@ Phase A remains PARTIAL. Live Firebase/browser identity, deployed two-tenant API
 | Notification and reanalysis candidate direct-object access | PASS (local automated scope) | Inspected organization/recipient scoping, linked-record lineage, case-grant rechecks, candidate ownership, parent/child consistency, trigger/resource binding and queue-failure recovery. Four focused API/lifecycle suites: **73 passed**. Deployed two-tenant validation and PostgreSQL concurrency remain NOT RUN. |
 
 Phase A remains PARTIAL. Scientific threshold qualification, live identity, deployed tenant/storage isolation, and real-storage report recovery are still unverified.
+
+## Current release-gate snapshot — 2026-10-24
+
+**Repository checkpoint:** `main` at [`2ef07b68f539f8f81d9f14c7eb42204ab33b09fe`](https://github.com/SayedaRehmat/SIRALOOM/commit/2ef07b68f539f8f81d9f14c7eb42204ab33b09fe). Linux `HEAD` and `origin/main` were verified equal. Exact-SHA GitHub Actions run [#40078518465](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40078518465) passed backend, PostgreSQL/Celery worker-loss integration, and frontend/container/Compose jobs. The exact-SHA Vercel status completed successfully; the production URL returned HTTP 200. This is application deployment evidence, not laboratory backend qualification.
+
+| Gate | Status | Current evidence and limitation |
+|---|---|---|
+| gnomAD missing-AN semantics (`AC=0`, `AN=null`/zero) | **PASS — automated scope** | Exact missing-value regression and downstream population/evidence consumers passed in Linux. gnomAD-focused tests: **29 passed**; adjacent population/evidence/consumer tests: **93 passed, 1 skipped**. No live gnomAD provider or independent scientific benchmark was run. |
+| HPO OBO checksum-to-parser integrity | **PASS — automated/resource-format scope** | Provider reads once, hashes and parses the same bytes. TOCTOU regression is included. Combined HPO/gnomAD suite: **81 passed**; official HPO base release `2026-09-01` parsed at the publisher's SHA-256, with 20,482 terms. This does not establish clinical phenotype-ranking validity or laboratory qualification. |
+| Worker redelivery regression relevant to the population stage | **PASS — deterministic integration scope** | `tests/test_actual_population_stage_redelivery.py`: **8 passed** locally. Separate exact-SHA PostgreSQL/Celery worker-loss CI job also passed. This is not end-to-end recovery through all stages on laboratory object storage. |
+| Authenticated Firebase signup, verification, recovery, login/logout and protected-page revisit | **NOT RUN** | No live authenticated browser journey against a configured Firebase test project is evidenced here. |
+| Deployed two-laboratory API, membership, object and artifact isolation | **NOT RUN** | No two-laboratory deployed test identities or lab storage configuration were exercised. |
+| Complete deployed VCF-to-review-to-authorized-signout workflow | **NOT RUN** | Current local fixtures and CI do not demonstrate a real laboratory case, qualified external resources, authenticated reviewers and authorized report delivery end to end. |
+| Failure/recovery with laboratory PostgreSQL, Redis, workers and object storage | **PARTIAL** | CI PostgreSQL/Celery worker-loss integration and local deterministic stage-redelivery tests passed; no lab object store, provider outage/recovery or deployed signout recovery was tested. |
+| Independent germline truth-set concordance | **NOT RUN** | No approved/pinned GIAB truth set, confidence regions and comparison run with TP/FP/FN metrics are recorded. |
+| Laboratory installation, backup/restore, capacity and rollback qualification | **NOT RUN** | CI container/Compose checks and a reachable Vercel frontend do not demonstrate lab-managed infrastructure, durable storage, measured capacity or a restore exercise. |
+| Clinical validity, clinical utility, accreditation or regulatory authorization | **NOT ESTABLISHED** | Requires separate scientific validation and laboratory governance; software tests and deployment checks cannot establish these claims. |
+
+**Release decision: BLOCKED for laboratory trial or clinical workflow. Phase A remains PARTIAL.** The gnomAD and HPO integrity fixes are verified within the stated automated scopes; live identity, deployed tenant isolation, full laboratory workflow/recovery, independent benchmark and laboratory deployment qualification remain outstanding. No clinical validation or production qualification is claimed.
