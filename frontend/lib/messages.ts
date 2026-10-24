@@ -146,6 +146,15 @@ export type TranslationKey =
   | "resources.sourceExecutionHelp"
   | "resources.loadError"
   | "resources.operationFailed"
+  | "resources.providerFailures"
+  | "resources.providerFailureRecords"
+  | "resources.providerFailuresHelp"
+  | "resources.loadingProviderFailures"
+  | "resources.providerFailuresLoadError"
+  | "resources.noProviderFailures"
+  | "resources.failureType"
+  | "resources.failureTime"
+  | "resources.auditHash"
   | "workspace.gateRequired"
   | "workspace.resolveGate"
   | "workspace.gateDecision"
@@ -1725,6 +1734,15 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.sourceExecutionHelp": "Provide publisher/source and runtime execution contracts in metadata JSON. Use exact release identities, URLs, access policy, and toolchain configuration; do not paste secrets.",
     "resources.loadError": "Unable to load resource data.",
     "resources.operationFailed": "Resource operation failed.",
+    "resources.providerFailures": "Scientific provider discovery failures",
+    "resources.providerFailureRecords": "provider failure records",
+    "resources.providerFailuresHelp": "Recent scheduled discovery failures are shown from the immutable audit trail. Exception messages are omitted.",
+    "resources.loadingProviderFailures": "Loading provider failure history…",
+    "resources.providerFailuresLoadError": "Unable to load provider failure history.",
+    "resources.noProviderFailures": "No provider failures are recorded.",
+    "resources.failureType": "Failure type",
+    "resources.failureTime": "Recorded at",
+    "resources.auditHash": "Audit event hash",
     "workspace.gateRequired": "Workflow steps awaiting human action",
     "workspace.resolveGate": "Resolve workflow gate",
     "workspace.gateDecision": "Decision",
@@ -2619,6 +2637,15 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.sourceExecutionHelp": "أدخل عقود المصدر/الناشر والتنفيذ في JSON. استخدم إصدارات وروابط وسياسات وصول وإعدادات أدوات دقيقة، ولا تُدخل الأسرار.",
     "resources.loadError": "تعذر تحميل بيانات الموارد.",
     "resources.operationFailed": "فشلت عملية المورد.",
+    "resources.providerFailures": "إخفاقات اكتشاف المزوّد العلمي",
+    "resources.providerFailureRecords": "سجل إخفاقات المزوّد",
+    "resources.providerFailuresHelp": "تُعرض إخفاقات الاكتشاف المجدولة الحديثة من سجل التدقيق غير القابل للتغيير. لا تُعرض رسائل الاستثناءات.",
+    "resources.loadingProviderFailures": "جارٍ تحميل سجل إخفاقات المزوّد…",
+    "resources.providerFailuresLoadError": "تعذر تحميل سجل إخفاقات المزوّد.",
+    "resources.noProviderFailures": "لا توجد إخفاقات مسجلة للمزوّدين.",
+    "resources.failureType": "نوع الإخفاق",
+    "resources.failureTime": "وقت التسجيل",
+    "resources.auditHash": "بصمة حدث التدقيق",
     "workspace.gateRequired": "خطوات سير العمل التي تنتظر إجراءً بشريًا",
     "workspace.resolveGate": "حسم بوابة سير العمل",
     "workspace.gateDecision": "القرار",

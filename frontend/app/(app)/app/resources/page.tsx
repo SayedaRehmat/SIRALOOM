@@ -44,6 +44,7 @@ type Approval = {
   requested_at?: string;
 };
 type StagingRecord = { staging_id: string; status: string; attempt?: number; expected_sha256?: string | null; observed_sha256?: string | null; expected_size_bytes?: number | null; observed_size_bytes?: number | null; error_code?: string | null; error_message?: string | null; storage_preflight?: Record<string, any>; dispatch?: Record<string, any>; metadata?: Record<string, any>; };
+type ProviderFailure = { event_id: string; provider_id: string | null; error_type: string | null; occurred_at: string; event_hash: string | null };
 
 async function apiFetch(path: string, init: RequestInit = {}) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
@@ -127,6 +128,9 @@ export default function ResourcesPage() {
   const [stagingConfig, setStagingConfig] = useState<Record<string, any> | null>(null);
   const [capacitySnapshot, setCapacitySnapshot] = useState<Record<string, any> | null>(null);
   const [stagingRows, setStagingRows] = useState<Record<string, StagingRecord[]>>({});
+  const [sessionRole, setSessionRole] = useState<string | null>(null);
+  const [providerFailures, setProviderFailures] = useState<ProviderFailure[]>([]);
+  const [providerFailuresLoading, setProviderFailuresLoading] = useState(false);
   const [stageOpenResourceId, setStageOpenResourceId] = useState<string | null>(null);
   const [stagingForm, setStagingForm] = useState({ source_uri: "", expected_size_bytes: "", expected_sha256: "" });
   const [form, setForm] = useState({
@@ -157,6 +161,31 @@ export default function ResourcesPage() {
   }, [t]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const loadProviderFailures = useCallback(async () => {
+    setProviderFailuresLoading(true);
+    try {
+      const rows = await apiFetch("/resources/provider-failures?limit=50");
+      setProviderFailures(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("resources.providerFailuresLoadError"));
+    } finally {
+      setProviderFailuresLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    let active = true;
+    apiFetch("/auth/session").then(session => {
+      if (!active) return;
+      const role = typeof session?.role === "string" ? session.role : null;
+      setSessionRole(role);
+      if (role === "platform_admin") void loadProviderFailures();
+    }).catch(() => {
+      if (active) setSessionRole(null);
+    });
+    return () => { active = false; };
+  }, [loadProviderFailures]);
 
   const loadStaging = useCallback(async (resourceId: string) => {
     try {
@@ -355,6 +384,15 @@ export default function ResourcesPage() {
         <p>{t("resources.stagingGap")}</p>
         <label className="resources-qualification-version">{t("resources.qualificationVersion")}<input value={qualificationVersion} onChange={e => setQualificationVersion(e.target.value)} /></label>
       </section>
+
+      {sessionRole === "platform_admin" && <section className="panel resources-provider-failures">
+        <div className="panel-head">
+          <div><p className="eyebrow">{t("resources.providerFailures")}</p><h2>{providerFailures.length} {t("resources.providerFailureRecords")}</h2></div>
+          <button type="button" className="secondary" onClick={() => void loadProviderFailures()} disabled={providerFailuresLoading}>{providerFailuresLoading ? t("cases.refreshing") : t("resources.refresh")}</button>
+        </div>
+        <p className="muted">{t("resources.providerFailuresHelp")}</p>
+        {providerFailuresLoading ? <p className="muted" role="status">{t("resources.loadingProviderFailures")}</p> : providerFailures.length === 0 ? <p className="muted">{t("resources.noProviderFailures")}</p> : <div className="resources-table-wrap"><table className="resources-table"><thead><tr><th>{t("resources.provider")}</th><th>{t("resources.failureType")}</th><th>{t("resources.failureTime")}</th><th>{t("resources.auditHash")}</th></tr></thead><tbody>{providerFailures.map(failure => <tr key={failure.event_id}><td><strong>{failure.provider_id ?? "—"}</strong></td><td><span className="badge danger">{failure.error_type ?? "—"}</span></td><td>{new Date(failure.occurred_at).toLocaleString()}</td><td><code>{failure.event_hash ?? "—"}</code></td></tr>)}</tbody></table></div>}
+      </section>}
 
       {capacitySnapshot && <section className="panel resources-capacity-panel">
         <div className="panel-head"><div><p className="eyebrow">{t("resources.storageCapacity")}</p><h2>{capacitySnapshot.capacity_preflight_enabled ? t("resources.capacityPreflightEnabled") : t("resources.capacityPreflightDisabled")}</h2></div><span className={`badge ${capacitySnapshot.status === "READY" ? "success" : "danger"}`}>{pretty(capacitySnapshot.status)}</span></div>
