@@ -333,18 +333,43 @@ def evaluate_pp3_bp4(
         raise ValueError("criterion must be PP3 or BP4")
     cfg = profile.get(criterion) or {}
     predictor = cfg.get("predictor")
-    minimum = _finite_float(cfg.get("minimum_score"))
-    maximum = _finite_float(cfg.get("maximum_score"))
+    raw_minimum = cfg.get("minimum_score")
+    raw_maximum = cfg.get("maximum_score")
+    minimum = _finite_float(raw_minimum)
+    maximum = _finite_float(raw_maximum)
     strength = cfg.get("strength", "SUPPORTING")
     if not predictor or (minimum is None and maximum is None):
         raise EvaluatorConfigurationError(
             f"{criterion} requires an explicitly calibrated predictor and score interval"
         )
-    score = _finite_float(predictor_observations.get(predictor))
+    if (raw_minimum is not None and minimum is None) or (
+        raw_maximum is not None and maximum is None
+    ):
+        raise EvaluatorConfigurationError(
+            f"{criterion} score bounds must be finite numeric values"
+        )
+    if minimum is not None and maximum is not None and minimum > maximum:
+        raise EvaluatorConfigurationError(
+            f"{criterion} minimum_score cannot exceed maximum_score"
+        )
+    if strength not in {"SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG"}:
+        raise EvaluatorConfigurationError(
+            f"{criterion} strength must be a valid ACMG evidence strength"
+        )
+    raw_score = predictor_observations.get(predictor)
+    score = _finite_float(raw_score)
     if score is None:
         return EvaluatorResult(
-            criterion, False, None, "PATHOGENIC" if criterion == "PP3" else "BENIGN", "NOT_MET",
-            f"Required calibrated predictor '{predictor}' is unavailable.",
+            criterion, False, None, "PATHOGENIC" if criterion == "PP3" else "BENIGN", "REQUIRES_REVIEW",
+            (
+                f"Required calibrated predictor '{predictor}' is unavailable."
+                if raw_score is None or raw_score == ""
+                else f"Calibrated predictor '{predictor}' returned an invalid score."
+            ),
+            metadata={
+                "predictor": predictor,
+                "input_status": "MISSING" if raw_score is None or raw_score == "" else "INVALID",
+            },
         )
     if (minimum is not None and score < minimum) or (
         maximum is not None and score > maximum

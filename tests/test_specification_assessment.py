@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy import create_engine
@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
     Analysis,
     Annotation,
+    Classification,
     ClinGenSpecification,
     Evidence,
     PopulationObservation,
@@ -153,3 +155,92 @@ def test_alternative_combination_method_fails_closed():
         )
         assert result.status == "REQUIRES_REVIEW"
         assert result.classification is None
+
+
+def test_review_required_criterion_blocks_combination_and_persists_no_classification():
+    engine = _db()
+    with Session(engine) as db:
+        case_id = uuid4()
+        analysis = _analysis(case_id)
+        variant = _variant()
+        db.add_all([analysis, variant])
+        db.add(ClinGenSpecification(
+            id=uuid4(), specification_id="SPEC-MIXED", version="1.0", provider="ClinGen",
+            framework="ACMG/AMP", gene_scope=["GENE1"], disease_scope=["Disease X"],
+            criteria={
+                "PM2": {
+                    "max_allele_frequency": 0.0001,
+                    "minimum_allele_number": 1000,
+                    "population_level": "ANCESTRY",
+                    "population_codes": ["MID"],
+                    "strength": "SUPPORTING",
+                },
+                "PP3": {
+                    "predictor": "REVEL",
+                    "minimum_score": 0.9,
+                    "strength": "SUPPORTING",
+                },
+            },
+            raw_payload={}, retrieved_at=datetime.now(UTC),
+            validated_for_automation=True, validation_status="APPROVED_FOR_AUTOMATION",
+        ))
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="test", provider_version="1", resource_name="test",
+            resource_version="1",
+            payload={"normalized": {
+                "gene": {"symbol": "GENE1"}, "computational": {}, "splice": {},
+            }},
+        )
+        resource = Resource(
+            id=uuid4(), name="Population fixture", provider="fixture",
+            resource_type="POPULATION_FREQUENCY", version="test",
+            genome_build="GRCh38", access_method="TEST", status="VALIDATED",
+            population_definition={"level": "ANCESTRY", "code": "MID"},
+            metadata_json={},
+        )
+        db.add_all([annotation, resource])
+        db.flush()
+        observation_id = uuid4()
+        db.add(PopulationObservation(
+            id=observation_id, analysis_id=analysis.id, variant_id=variant.id,
+            resource_id=resource.id, population_level="ANCESTRY", population_code="MID",
+            population_label="Middle Eastern", allele_count=0, allele_number=5000,
+            allele_frequency=0.0, homozygote_count=0, availability="AVAILABLE",
+            quality_status="PASS",
+        ))
+        db.add(Evidence(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            evidence_type="POPULATION_FREQUENCY", statement="Population observation",
+            direction="NEUTRAL", source_name="fixture", source_version="test",
+            resource_id=resource.id, source_record_id="fixture-record",
+            observation_ids=[str(observation_id)], payload={},
+            created_by_type="TEST", created_by_id="test", evidence_fingerprint=str(uuid4()),
+        ))
+        db.flush()
+
+        service = ACMGSpecificationAssessmentService()
+        result = service.assess_variant(
+            db, analysis=analysis, variant=variant, annotation=annotation,
+            population_rows=db.query(PopulationObservation).all(),
+            resource_rows={resource.id: resource}, gene="GENE1", disease="Disease X",
+        )
+
+        assert result.status == "REQUIRES_REVIEW"
+        assert result.classification is None
+        assert [row.criterion for row in result.criterion_assessments] == ["PM2"]
+        assert result.combination_metadata["review_reason"] == "CRITERION_EVIDENCE_REQUIRES_REVIEW"
+        assert result.combination_metadata["criteria_requiring_review"][0]["criterion"] == "PP3"
+
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        db.commit()
+        assert db.query(Classification).filter_by(
+            analysis_id=analysis.id, variant_id=variant.id
+        ).count() == 0
+        persisted = {
+            row.criterion: row.state
+            for row in db.query(ACMGAssessment).filter_by(
+                analysis_id=analysis.id, variant_id=variant.id
+            ).all()
+        }
+        assert persisted == {"PM2": "PROPOSED", "PP3": "REQUIRES_REVIEW"}

@@ -343,6 +343,41 @@ class ACMGSpecificationAssessmentService:
                 },
             )
 
+        criteria_requiring_review = [
+            {
+                "criterion": result.criterion,
+                "reason": result.reason,
+                "origin": "EVALUATOR",
+            }
+            for result in evaluator_results
+            if result.status == "REQUIRES_REVIEW"
+        ]
+        criteria_requiring_review.extend(
+            {
+                "criterion": result.criterion,
+                "reason": result.rationale,
+                "origin": "CLINGEN_SOURCE_ASSERTION",
+            }
+            for result in source_results
+            if result.status == "REQUIRES_REVIEW"
+        )
+        if criteria_requiring_review:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "CRITERION_EVIDENCE_REQUIRES_REVIEW",
+                    "criteria_requiring_review": criteria_requiring_review,
+                },
+            )
+
         if merge_error:
             return AutomatedAssessmentResult(
                 "REQUIRES_REVIEW",

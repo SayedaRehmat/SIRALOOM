@@ -252,6 +252,66 @@ def test_pp3_uses_calibrated_interval():
     assert result.direction == "PATHOGENIC"
 
 
+@pytest.mark.parametrize(
+    "predictor_observations",
+    [
+        {},
+        {"REVEL": None},
+        {"REVEL": "not-a-score"},
+        {"REVEL": float("nan")},
+        {"REVEL": float("inf")},
+        {"REVEL": True},
+    ],
+)
+def test_pp3_missing_or_invalid_predictor_score_requires_review(predictor_observations):
+    result = evaluate_pp3_bp4(
+        predictor_observations,
+        criterion="PP3",
+        profile={"PP3": {
+            "predictor": "REVEL",
+            "minimum_score": 0.9,
+            "strength": "SUPPORTING",
+        }},
+    )
+
+    assert result.status == "REQUIRES_REVIEW"
+    assert result.applicable is False
+    assert result.strength is None
+
+
+def test_pp3_valid_score_outside_calibrated_interval_is_not_met():
+    result = evaluate_pp3_bp4(
+        {"REVEL": 0.7},
+        criterion="PP3",
+        profile={"PP3": {
+            "predictor": "REVEL",
+            "minimum_score": 0.9,
+            "strength": "SUPPORTING",
+        }},
+    )
+
+    assert result.status == "NOT_MET"
+    assert result.applicable is False
+
+
+@pytest.mark.parametrize(
+    "configuration",
+    [
+        {"predictor": "REVEL", "minimum_score": "invalid"},
+        {"predictor": "REVEL", "minimum_score": 0.9, "maximum_score": "invalid"},
+        {"predictor": "REVEL", "minimum_score": 0.9, "maximum_score": 0.2},
+        {"predictor": "REVEL", "minimum_score": 0.9, "strength": "UNVALIDATED"},
+    ],
+)
+def test_pp3_rejects_invalid_calibration_configuration(configuration):
+    with pytest.raises(EvaluatorConfigurationError):
+        evaluate_pp3_bp4(
+            {"REVEL": 0.95},
+            criterion="PP3",
+            profile={"PP3": configuration},
+        )
+
+
 def test_pvs1_requires_lof_mechanism():
     try:
         evaluate_pvs1(
