@@ -247,7 +247,7 @@ tbody tr.selected { background: #eff8f5; }
 .queue-main span { margin-top:4px; color:var(--muted); font-size:9px; overflow-wrap:anywhere; }
 .queue-badges { display:flex; gap:5px; flex-wrap:wrap; margin-top:9px; }
 .queue-meta { display:flex; gap:10px; margin-top:9px; color:var(--muted); font-size:9px; }
-.review-summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:12px 0 20px; }
+.review-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0 20px; }
 .review-summary-grid > div { border:1px solid var(--border); border-radius:11px; padding:12px; background:var(--surface-2); }
 .review-summary-grid span,.review-summary-grid strong { display:block; }
 .review-summary-grid span { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:.08em; }

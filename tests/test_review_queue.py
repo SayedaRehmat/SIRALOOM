@@ -43,6 +43,8 @@ def test_review_queue_returns_interpretation_context():
     assert item["gene"] == "BRCA1"
     assert item["consequence"] == "missense_variant"
     assert item["reportability"] == "REVIEW"
+    assert "priority" not in item
+    assert "priority_band" not in item
     assert item["evidence_count"] == 1
     assert item["population_count"] == 1
 

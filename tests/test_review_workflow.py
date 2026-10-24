@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Assay, Case, AnalysisPartition, Classification, Evidence, Organization, PedigreeMember, PedigreeRelationship, ReviewAction, SegregationObservation, Specimen, User, Variant, WorkflowStep
+from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Assay, Case, AnalysisPartition, Classification, Evidence, Organization, PedigreeMember, PedigreeRelationship, ReportabilityDecision, ReviewAction, SegregationObservation, Specimen, User, Variant, WorkflowStep
 from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, propose_manual_classification, review_criterion, request_more_evidence
 from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
 
@@ -25,7 +25,7 @@ def seed():
     analyst = User(id=uuid4(), organization_id=org.id, display_name="Analyst", email="a@example.org", role=UserRole.ANALYST, status="ACTIVE")
     case = Case(id=uuid4(), organization_id=org.id, case_identifier="C1", status="ACTIVE", clinical_context={}, language="en", created_by=analyst.id)
     analysis = Analysis(id=uuid4(), case_id=case.id, analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1", workflow_version="1.0", status="REQUIRES_REVIEW", reference_build="GRCh38", configuration={})
-    variant = Variant(id=uuid4(), genome_build="GRCh38", chromosome="17", position=1, reference="A", alternate="G", normalization_status="NORMALIZED", canonical_key=f"GRCh38:17:1:A:G", identifiers={})
+    variant = Variant(id=uuid4(), genome_build="GRCh38", chromosome="17", position=1, reference="A", alternate="G", normalization_status="NORMALIZED", canonical_key="GRCh38:17:1:A:G", identifiers={})
     assessment = ACMGAssessment(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", criterion="PM2", automated_assessment={"strength": "SUPPORTING"}, state="PROPOSED", review_version=0)
     classification = Classification(id=uuid4(), variant_id=variant.id, analysis_id=analysis.id, framework_name="ACMG/AMP", framework_version="2015", result="VUS", criterion_ids=[str(assessment.id)], metadata_json={}, state="PROPOSED", review_status=ReviewStatus.IN_REVIEW, version=1, review_version=0)
     db.add_all([org, user, analyst, case, analysis, variant, assessment, classification])
@@ -106,7 +106,7 @@ def test_manual_classification_rejects_evidence_from_another_variant():
     other_variant = Variant(
         id=uuid4(), genome_build="GRCh38", chromosome="1", position=9,
         reference="C", alternate="T", normalization_status="NORMALIZED",
-        canonical_key=f"GRCh38:1:9:C:T", identifiers={},
+        canonical_key="GRCh38:1:9:C:T", identifiers={},
     )
     annotation = Annotation(
         id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
@@ -230,7 +230,7 @@ def test_worker_review_gates_reject_downstream_variants_outside_normalization_ma
     extra_variant = Variant(
         id=uuid4(), genome_build="GRCh38", chromosome="17", position=2,
         reference="C", alternate="T", normalization_status="NORMALIZED",
-        canonical_key=f"GRCh38:17:2:C:T", identifiers={},
+        canonical_key="GRCh38:17:2:C:T", identifiers={},
     )
     extra_classification = Classification(
         id=uuid4(), variant_id=extra_variant.id, analysis_id=analysis.id,
@@ -297,13 +297,25 @@ def test_approval_creates_new_immutable_classification_version():
 
 
 def test_review_bundle_is_analysis_scoped():
-    db, reviewer, _, analysis, variant, _, _ = seed()
+    db, _reviewer, _, analysis, variant, _, _ = seed()
+    classification = db.query(Classification).filter_by(analysis_id=analysis.id).one()
+    db.add(ReportabilityDecision(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+        classification_id=classification.id, version=1,
+        policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",
+        policy_version="1.0.0", disposition="REVIEW", priority_score=60,
+        priority_band="REVIEW", reasons=["Legacy test fixture"],
+        status="PROPOSED", review_version=0,
+    ))
+    db.commit()
     second_analysis = Analysis(id=uuid4(), case_id=analysis.case_id, analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1", workflow_version="1.0", status="REQUIRES_REVIEW", reference_build="GRCh38", configuration={})
     db.add(second_analysis)
     db.commit()
     bundle = get_review_bundle(db, analysis_id=analysis.id, variant_id=variant.id)
     assert bundle["analysis_id"] == str(analysis.id)
     assert len(bundle["criteria"]) == 1
+    assert "priority_score" not in bundle["reportability"]
+    assert "priority_band" not in bundle["reportability"]
 
 
 def test_review_bundle_rejects_assay_from_another_organization():

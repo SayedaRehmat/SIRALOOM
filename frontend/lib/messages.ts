@@ -616,7 +616,6 @@ export type TranslationKey =
   | "reports.selectHelp"
   | "reports.variant"
   | "reports.disposition"
-  | "reports.priority"
   | "reports.reviewVersion"
   | "reports.policy"
   | "reports.finalDisposition"
@@ -659,7 +658,6 @@ export type TranslationKey =
   | "review.select"
   | "review.dossier"
   | "review.clinicalClassification"
-  | "review.priority"
   | "review.build"
   | "review.noIndication"
   | "review.hpo"
@@ -863,7 +861,6 @@ export type TranslationKey =
   | "reports.reportable"
   | "reports.selectedDecision"
   | "reports.selectDecision"
-  | "reports.priorityLabel"
   | "reports.versionLabel"
   | "reports.supersedes"
   | "reports.downloadFailed"
@@ -887,7 +884,6 @@ export type TranslationKey =
   | "review.evidenceCount"
   | "review.criteriaCount"
   | "review.populationCount"
-  | "review.priorityLabel"
   | "review.noAnalysisFirst"
   | "review.loadQueueFailed"
   | "review.loadClinicalFailed"
@@ -939,7 +935,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.evidenceCount": "evidence",
     "review.criteriaCount": "criteria",
     "review.populationCount": "population",
-    "review.priorityLabel": "Priority",
     "review.noAnalysisFirst": "Enter an Analysis ID or open a completed analysis first.",
     "review.loadQueueFailed": "Unable to load review queue.",
     "review.loadClinicalFailed": "Unable to load clinical interpretation.",
@@ -982,7 +977,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.reportable": "reportable",
     "reports.selectedDecision": "Selected decision",
     "reports.selectDecision": "Select a decision",
-    "reports.priorityLabel": "Priority",
     "reports.versionLabel": "Version",
     "reports.supersedes": "Supersedes",
     "reports.downloadFailed": "Download failed",
@@ -1086,7 +1080,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.selectHelp": "Choose a reportability record to review its policy rationale and finalize its disposition.",
     "reports.variant": "Variant",
     "reports.disposition": "Disposition",
-    "reports.priority": "Priority",
     "reports.reviewVersion": "Review version",
     "reports.policy": "POLICY RATIONALE",
     "reports.finalDisposition": "Final disposition",
@@ -1129,7 +1122,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.select": "Select a variant",
     "review.dossier": "The clinical review dossier will appear here.",
     "review.clinicalClassification": "Clinical classification",
-    "review.priority": "Priority",
     "review.build": "Build",
     "review.noIndication": "No clinical indication recorded.",
     "review.hpo": "Observed HPO phenotype",
@@ -1847,7 +1839,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.evidenceCount": "أدلة",
     "review.criteriaCount": "معايير",
     "review.populationCount": "سكان",
-    "review.priorityLabel": "الأولوية",
     "review.noAnalysisFirst": "أدخل معرّف تحليل أو افتح تحليلًا مكتملًا أولًا.",
     "review.loadQueueFailed": "تعذر تحميل قائمة المراجعة.",
     "review.loadClinicalFailed": "تعذر تحميل التفسير السريري.",
@@ -1890,7 +1881,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.reportable": "قابلة للإبلاغ",
     "reports.selectedDecision": "القرار المحدد",
     "reports.selectDecision": "حدد قرارًا",
-    "reports.priorityLabel": "الأولوية",
     "reports.versionLabel": "الإصدار",
     "reports.supersedes": "يحل محل",
     "reports.downloadFailed": "فشل التنزيل",
@@ -1994,7 +1984,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "reports.selectHelp": "اختر سجل قابلية الإبلاغ لمراجعة مبرره واعتماد تصرفه النهائي.",
     "reports.variant": "المتغير",
     "reports.disposition": "التصرف النهائي",
-    "reports.priority": "الأولوية",
     "reports.reviewVersion": "إصدار المراجعة",
     "reports.policy": "مبررات السياسة",
     "reports.finalDisposition": "التصرف النهائي",
@@ -2037,7 +2026,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.select": "اختر متغيرًا",
     "review.dossier": "سيظهر ملف المراجعة السريرية هنا.",
     "review.clinicalClassification": "التصنيف السريري",
-    "review.priority": "الأولوية",
     "review.build": "البناء",
     "review.noIndication": "لم يتم تسجيل داعٍ سريري.",
     "review.hpo": "النمط الظاهري المرصود وفق HPO",

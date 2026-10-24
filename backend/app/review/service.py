@@ -126,7 +126,7 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
     analysis = db.get(Analysis, analysis_id)
     if not analysis:
         raise ReviewError("Analysis not found")
-    variant = _require_analysis_variant(db, analysis, variant_id)
+    _require_analysis_variant(db, analysis, variant_id)
 
     assessments = list(db.scalars(
         select(ACMGAssessment)
@@ -292,7 +292,7 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         "inheritance": inheritance,
         "pedigree": pedigree,
         "reportability": {
-            "disposition": reportability.disposition, "priority_score": reportability.priority_score, "priority_band": reportability.priority_band,
+            "disposition": reportability.disposition,
             "status": reportability.status, "version": reportability.version, "policy_name": reportability.policy_name, "policy_version": reportability.policy_version, "reasons": reportability.reasons or [],
         } if reportability else None,
         "confirmation": confirmation,
@@ -346,7 +346,7 @@ def propose_manual_classification(
     if acmg_step.error_code not in {"NO_AUTOMATABLE_CLINGEN_CONTEXT", "ACMG_VARIANTS_REQUIRE_REVIEW", "CLASSIFICATION_COMBINATION_REQUIRES_REVIEW"}:
         raise ReviewError("Manual classification is not enabled for this ACMG review state")
 
-    variant = _require_analysis_variant(db, analysis, variant_id)
+    _require_analysis_variant(db, analysis, variant_id)
     has_annotation = db.scalar(
         select(Annotation.id).where(
             Annotation.analysis_id == analysis_id,

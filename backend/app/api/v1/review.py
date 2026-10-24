@@ -142,8 +142,6 @@ def review_queue(
             "criteria_count": criteria_count,
             "evidence_count": evidence_count,
             "population_count": population_count,
-            "priority": decision.priority_score if decision else None,
-            "priority_band": decision.priority_band if decision else None,
             "reportability_status": decision.status if decision else "NOT_DETERMINED",
             "reportability_version": decision.version if decision else None,
         })

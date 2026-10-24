@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, Report, ReportabilityDecision, AnalysisPartition
 from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, final_reportability_state
-from backend.app.reporting.service import build_report_content, final_report_eligibility
+from backend.app.reporting.service import build_report_content
 from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 
 
@@ -32,10 +32,27 @@ def test_evaluate_creates_first_class_decision():
     created = evaluate_analysis(db, analysis)
     db.commit()
     assert len(created) == 1
-    assert created[0].disposition == "REPORT"
-    assert created[0].priority_score == 100
+    assert created[0].disposition == "REVIEW"
+    assert created[0].policy_version == "2.0.0"
+    assert created[0].priority_score is None
+    assert created[0].priority_band is None
+    assert "classification alone does not determine reportability" in created[0].reasons[0]
     ok, errors = final_reportability_state(db, analysis.id)
     assert not ok and any("not FINAL" in e for e in errors)
+
+
+@pytest.mark.parametrize(
+    "classification",
+    ["PATHOGENIC", "LIKELY_PATHOGENIC", "VUS", "LIKELY_BENIGN", "BENIGN", "UNKNOWN"],
+)
+def test_default_reportability_proposal_never_infers_disposition_from_classification(classification):
+    from types import SimpleNamespace
+
+    from backend.app.reporting.reportability import propose_reportability
+
+    proposal = propose_reportability(SimpleNamespace(result=classification))
+    assert proposal.disposition == "REVIEW"
+    assert "classification alone does not determine reportability" in proposal.reasons[0]
 
 
 def test_reportability_evaluation_rejects_classification_outside_normalization_manifest():
@@ -71,6 +88,23 @@ def test_reportability_evaluation_route_returns_conflict_for_manifest_mismatch(m
 
     assert exc.value.status_code == 409
     assert db.query(ReportabilityDecision).filter_by(analysis_id=analysis.id).count() == 0
+
+
+def test_reportability_api_does_not_expose_unvalidated_priority_values(monkeypatch):
+    from backend.app.api.v1 import reports
+
+    db, _, _, analysis, _, _ = seed("PATHOGENIC")
+    monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(reports, "require_role", lambda *_args: None)
+    created = reports.evaluate_reportability(analysis.id, db=db, principal=object())
+    assert "priority_score" not in created["decisions"][0]
+    assert "priority_band" not in created["decisions"][0]
+
+    monkeypatch.setattr(reports, "is_current_approved_reportability_decision", lambda *_args: True)
+    listed = reports.list_reportability(analysis.id, db=db, principal=object())
+    assert len(listed["items"]) == 1
+    assert "priority_score" not in listed["items"][0]
+    assert "priority_band" not in listed["items"][0]
 
 
 def test_reportability_state_requires_classification_coverage_of_manifest():
@@ -156,12 +190,15 @@ def test_clinical_report_contains_only_final_report_findings():
     content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
     assert len(content["findings"]) == 1
     assert content["findings"][0]["reportability"]["disposition"] == "REPORT"
+    assert "priority_score" not in content["findings"][0]["reportability"]
+    assert "priority_band" not in content["findings"][0]["reportability"]
     assert content["report_schema_version"] == "1.1.0"
     assert content["final_result"]["release_state"] == "NOT_FOR_CLINICAL_RELEASE"
     assert content["final_result"]["clinical_use_status"] == "LABORATORY_VALIDATION_REQUIRED"
     from backend.app.reporting.service import render_html
 
     draft_html = render_html(content).decode("utf-8")
+    assert "Priority:" not in draft_html
     assert "This draft is not authorized for release." in draft_html
     assert "Clinical use remains subject to laboratory-specific validation" not in draft_html
 

@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant_ids
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Classification, ReportabilityDecision, Variant
+from backend.app.infrastructure.db.models import Analysis, Classification, ReportabilityDecision
 
 POLICY_NAME = "SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY"
-POLICY_VERSION = "1.0.0"
+POLICY_VERSION = "2.0.0"
 DISPOSITIONS = {"REPORT", "DO_NOT_REPORT", "REVIEW"}
 STATUSES = {"PROPOSED", "FINAL"}
 
@@ -20,8 +20,6 @@ STATUSES = {"PROPOSED", "FINAL"}
 @dataclass(frozen=True)
 class ReportabilityProposal:
     disposition: str
-    priority_score: int
-    priority_band: str
     reasons: list[str]
 
 
@@ -29,20 +27,15 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def propose_reportability(classification: Classification) -> ReportabilityProposal:
-    """Deterministic default policy; this is decision support, not autonomous diagnosis."""
-    result = str(classification.result or "").upper()
-    if result == "PATHOGENIC":
-        return ReportabilityProposal("REPORT", 100, "HIGH", ["Final classification is PATHOGENIC"])
-    if result == "LIKELY_PATHOGENIC":
-        return ReportabilityProposal("REPORT", 90, "HIGH", ["Final classification is LIKELY_PATHOGENIC"])
-    if result == "VUS":
-        return ReportabilityProposal("REVIEW", 60, "REVIEW", ["VUS requires explicit laboratory reportability review"])
-    if result == "LIKELY_BENIGN":
-        return ReportabilityProposal("DO_NOT_REPORT", 20, "ROUTINE", ["Final classification is LIKELY_BENIGN"])
-    if result == "BENIGN":
-        return ReportabilityProposal("DO_NOT_REPORT", 10, "ROUTINE", ["Final classification is BENIGN"])
-    return ReportabilityProposal("REVIEW", 50, "REVIEW", ["Classification is outside the default policy vocabulary"])
+def propose_reportability(_classification: Classification) -> ReportabilityProposal:
+    """Require laboratory review because classification alone cannot set reportability."""
+    return ReportabilityProposal(
+        "REVIEW",
+        [
+            "Apply the laboratory's approved reporting policy to the test scope and "
+            "case context; variant classification alone does not determine reportability."
+        ],
+    )
 
 
 def latest_decision(db: Session, analysis_id: UUID, variant_id: UUID) -> ReportabilityDecision | None:
@@ -123,8 +116,8 @@ def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDeci
             id=uuid4(), analysis_id=analysis.id, variant_id=variant_id, classification_id=cls.id,
             version=version, supersedes_decision_id=current.id if current else None,
             policy_name=POLICY_NAME, policy_version=POLICY_VERSION,
-            disposition=proposal.disposition, priority_score=proposal.priority_score,
-            priority_band=proposal.priority_band, reasons=proposal.reasons,
+            disposition=proposal.disposition, priority_score=None,
+            priority_band=None, reasons=proposal.reasons,
             status="PROPOSED", review_version=0,
         )
         db.add(decision)
@@ -134,7 +127,7 @@ def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDeci
             actor_type="SYSTEM", actor_id="reportability", subject_type="REPORTABILITY_DECISION",
             subject_id=str(decision.id), operation="CREATE",
             before_state={"decision_id": str(current.id)} if current else None,
-            after_state={"disposition": decision.disposition, "priority_score": decision.priority_score,
+            after_state={"disposition": decision.disposition,
                           "policy": f"{POLICY_NAME}@{POLICY_VERSION}", "classification_id": str(cls.id)},
         )
     db.flush()

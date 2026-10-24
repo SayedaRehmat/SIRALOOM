@@ -143,7 +143,9 @@ def test_phenotype_state_migration_backfills_and_keeps_states_distinct(tmp_path,
             {"id": "10000000-0000-0000-0000-000000000002", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000002", "present": False},
         ])
 
-    command.upgrade(config, "head")
+    # Stop at the migration under test. Later migrations can be intentionally
+    # irreversible and must not mask this migration's downgrade behavior.
+    command.upgrade(config, "0050_phenotype_observation_status")
     with engine.begin() as connection:
         rows = connection.execute(text(
             "SELECT hpo_id, present, phenotype_status FROM phenotype_observations ORDER BY hpo_id"

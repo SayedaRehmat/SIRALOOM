@@ -319,7 +319,7 @@ def evaluate_reportability(analysis_id: UUID, db: Session = Depends(get_db), pri
         db.rollback()
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     db.commit()
-    return {"analysis_id": str(analysis_id), "created": len(decisions), "decisions": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "priority_score": d.priority_score, "priority_band": d.priority_band, "reasons": d.reasons} for d in decisions]}
+    return {"analysis_id": str(analysis_id), "created": len(decisions), "decisions": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "reasons": d.reasons} for d in decisions]}
 
 @router.get("/analyses/{analysis_id}/reportability")
 def list_reportability(analysis_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
@@ -338,7 +338,7 @@ def list_reportability(analysis_id: UUID, db: Session = Depends(get_db), princip
             status_code=409,
             detail="Reportability decision is not linked to the latest approved classification",
         )
-    return {"analysis_id": str(analysis_id), "items": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "priority_score": d.priority_score, "priority_band": d.priority_band, "reasons": d.reasons, "policy_name": d.policy_name, "policy_version": d.policy_version, "review_version": d.review_version, "reviewed_by": str(d.reviewed_by) if d.reviewed_by else None, "approved_at": d.approved_at.isoformat() if d.approved_at else None} for d in latest.values()]}
+    return {"analysis_id": str(analysis_id), "items": [{"decision_id": str(d.id), "variant_id": str(d.variant_id), "classification_id": str(d.classification_id), "version": d.version, "status": d.status, "disposition": d.disposition, "reasons": d.reasons, "policy_name": d.policy_name, "policy_version": d.policy_version, "review_version": d.review_version, "reviewed_by": str(d.reviewed_by) if d.reviewed_by else None, "approved_at": d.approved_at.isoformat() if d.approved_at else None} for d in latest.values()]}
 
 @router.post("/reportability/{decision_id}/finalize")
 def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDecisionRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
@@ -372,7 +372,7 @@ def finalize_reportability_decision(decision_id: UUID, payload: ReportabilityDec
         # QUEUED/RUNNING paths return without committing this sign-off mutation.
         # Commit here as well; this is a no-op after a dispatch commit.
         db.commit()
-        return {"decision_id": str(out.id), "analysis_id": str(analysis.id), "variant_id": str(out.variant_id), "version": out.version, "review_version": out.review_version, "status": out.status, "disposition": out.disposition, "priority_score": out.priority_score, "priority_band": out.priority_band, "reviewed_by": str(out.reviewed_by), "approved_at": out.approved_at.isoformat() if out.approved_at else None, "workflow_resume_queued": resume_queued}
+        return {"decision_id": str(out.id), "analysis_id": str(analysis.id), "variant_id": str(out.variant_id), "version": out.version, "review_version": out.review_version, "status": out.status, "disposition": out.disposition, "reviewed_by": str(out.reviewed_by), "approved_at": out.approved_at.isoformat() if out.approved_at else None, "workflow_resume_queued": resume_queued}
     except ValueError as exc:
         db.rollback(); raise HTTPException(status_code=409, detail=str(exc)) from exc
 

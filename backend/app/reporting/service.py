@@ -3,12 +3,11 @@ from __future__ import annotations
 import hashlib
 import html
 import json
-import subprocess
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -32,13 +31,11 @@ from backend.app.infrastructure.db.models import (
     PedigreeRelationship,
     PhenotypeObservation,
     PopulationObservation,
-    Report,
     Resource,
     ReviewAction,
     SecondaryFindingDecision,
     SegregationObservation,
     Specimen,
-    User,
     Variant,
     WorkflowStep,
 )
@@ -516,7 +513,6 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "hgvs": hgvs,
             "consequence": consequences,
             "zygosity": (normalized.get("genotype") or {}).get("zygosity"),
-            "classification_id": str(cls.id),
             "classification": cls.result,
             "classification_version": cls.version,
             "classification_snapshot_sha256": _classification_snapshot_sha256(cls),
@@ -528,8 +524,6 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 "version": decision.version if decision else None,
                 "disposition": decision.disposition if decision else "NOT_DETERMINED",
                 "status": decision.status if decision else "NOT_DETERMINED",
-                "priority_score": decision.priority_score if decision else None,
-                "priority_band": decision.priority_band if decision else None,
                 "reasons": list(decision.reasons or []) if decision else [],
                 "policy": f"{decision.policy_name}@{decision.policy_version}" if decision else None,
             },
@@ -710,7 +704,7 @@ def _html_document(content: dict[str, Any]) -> str:
               <p><strong>Genomic:</strong> {html.escape(genomic_text)}</p>
               <p><strong>Transcript:</strong> {tx}</p>
               <p><strong>HGVS c.:</strong> {c_hgvs}<br><strong>HGVS p.:</strong> {p_hgvs}</p>
-              <p><strong>Reportability:</strong> {html.escape(str((finding.get("reportability") or {}).get("disposition", "NOT_DETERMINED")))} · <strong>Priority:</strong> {html.escape(str((finding.get("reportability") or {}).get("priority_score", "-")))}</p>
+              <p><strong>Reportability:</strong> {html.escape(str((finding.get("reportability") or {}).get("disposition", "NOT_DETERMINED")))}</p>
               <h3>ACMG Evidence</h3>
               <table><thead><tr><th>Criterion</th><th>Assessment</th></tr></thead><tbody>{criterion_rows or '<tr><td colspan="2">No criterion records</td></tr>'}</tbody></table>
               <h3>Population Context</h3>
