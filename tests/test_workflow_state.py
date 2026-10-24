@@ -1603,6 +1603,7 @@ def test_celery_retry_exhaustion_persists_terminal_failure(step_id, error_code):
     user_id = uuid4()
     case_id = uuid4()
     analysis_id = uuid4()
+    dispatch_id = "retry-exhaustion-dispatch"
 
     with Session(engine) as db:
         db.add(
@@ -1644,7 +1645,7 @@ def test_celery_retry_exhaustion_persists_terminal_failure(step_id, error_code):
                 workflow_id="variant-analysis",
                 workflow_version="v1",
                 status=AnalysisStatus.RUNNING,
-                queue_task_id=None,
+                queue_task_id=dispatch_id,
                 reference_build="GRCh38",
                 configuration={},
                 started_at=None,
@@ -1695,6 +1696,7 @@ def test_celery_retry_exhaustion_persists_terminal_failure(step_id, error_code):
             db,
             analysis_id,
             "provider remained unavailable after bounded retries",
+            task_id=dispatch_id,
             error_code=error_code,
         ) is True
 
@@ -1765,6 +1767,41 @@ def test_retry_exhaustion_does_not_overwrite_newer_analysis_state(
     ) is False
     assert analysis.status == status
     assert analysis.queue_task_id == queue_task_id
+
+
+@pytest.mark.parametrize("task_id", [None, "", "   ", "stale-dispatch"])
+def test_retry_exhaustion_requires_the_current_dispatch_identity(task_id):
+    from uuid import uuid4
+
+    from backend.app.infrastructure.queue import celery_app as celery_module
+
+    analysis = type(
+        "Analysis",
+        (),
+        {"status": "RUNNING", "queue_task_id": "current-dispatch"},
+    )()
+
+    class DB:
+        get_calls = 0
+
+        def get(self, model, _analysis_id, **kwargs):
+            from backend.app.infrastructure.db.models import Analysis
+
+            assert model is Analysis
+            assert kwargs == {"with_for_update": True}
+            self.get_calls += 1
+            return analysis
+
+        def scalars(self, *_args):
+            raise AssertionError("invalid dispatch identity must not mutate workflow steps")
+
+    db = DB()
+    assert celery_module._finalize_transient_retry_exhaustion(
+        db, uuid4(), "provider retries exhausted", task_id=task_id
+    ) is False
+    assert analysis.status == "RUNNING"
+    assert analysis.queue_task_id == "current-dispatch"
+    assert db.get_calls == (0 if not task_id or not str(task_id).strip() else 1)
 
 
 def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypatch):
