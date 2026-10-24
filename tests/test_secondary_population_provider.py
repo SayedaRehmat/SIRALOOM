@@ -55,18 +55,78 @@ def test_contig_matching_is_exact_by_default(monkeypatch):
 
 def test_contig_aliasing_requires_explicit_contract_policy(monkeypatch):
     provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
-        info_fields={"AF": "AF"},
+        info_fields={"AF": "AF", "AN": "AN"},
         contig_policy="CHR_PREFIX",
     ))
     monkeypatch.setattr(
         "backend.app.adapters.population.secondary.subprocess.run",
         lambda *a, **k: SimpleNamespace(
             returncode=0, stderr="",
-            stdout="chr1	100	rs1	A	G	.	PASS	AF=0.02\n",
+            stdout="chr1	100	rs1	A	G	.	PASS	AF=0.02;AN=100\n",
         ),
     )
     variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
     assert provider.query_variant(variant)[0].allele_frequency == 0.02
+
+
+def test_af_without_allele_number_is_not_exposed(monkeypatch):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AF": "AF"},
+    ))
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stderr="",
+            stdout="1\t100\trs1\tA\tG\t.\tPASS\tAF=0.02\n",
+        ),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+    observation = provider.query_variant(variant)[0]
+    assert observation.allele_number is None
+    assert observation.allele_frequency is None
+    assert observation.availability == "NOT_AVAILABLE"
+
+
+@pytest.mark.parametrize(
+    ("info", "message"),
+    [
+        ("AC=2;AN=-1;AF=0.02", "allele number cannot be negative"),
+        ("AC=-1;AN=100;AF=0.02", "allele count cannot be negative"),
+        ("AC=101;AN=100;AF=1.0", "cannot exceed allele number"),
+        ("AC=1;AN=100;AF=0.02", "inconsistent with AC/AN"),
+        ("AC=1;AN=100;AF=1.2", "between 0 and 1"),
+        ("AC=1;AN=100;AF=NaN", "must be finite"),
+    ],
+)
+def test_rejects_invalid_or_inconsistent_population_frequency(monkeypatch, info, message):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
+    ))
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stderr="",
+            stdout=f"1\t100\trs1\tA\tG\t.\tPASS\t{info}\n",
+        ),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+    with pytest.raises(SecondaryPopulationProviderError, match=message):
+        provider.query_variant(variant)
+
+
+def test_zero_allele_number_never_produces_af(monkeypatch):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
+    ))
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stderr="",
+            stdout="1\t100\trs1\tA\tG\t.\tPASS\tAC=0;AN=0;AF=0\n",
+        ),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+    assert provider.query_variant(variant)[0].allele_frequency is None
 
 
 def test_rejects_unknown_contig_policy():

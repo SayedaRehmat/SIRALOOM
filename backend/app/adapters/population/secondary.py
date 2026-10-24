@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import math
 import subprocess
 from dataclasses import dataclass
+from decimal import Decimal
 
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 
@@ -99,10 +101,10 @@ class LocalTabixSecondaryPopulationProvider:
             info = _parse_info(fields[7])
             ac = _array_int(info.get(self.info_fields.get("AC", "")), index)
             an = _scalar_int(info.get(self.info_fields.get("AN", "")))
-            af = _array_float(info.get(self.info_fields.get("AF", "")), index)
+            af_text = _array_value(info.get(self.info_fields.get("AF", "")), index)
+            af = _parse_frequency(af_text)
             hom = _array_int(info.get(self.info_fields.get("HOM_ALT", "")), index)
-            if af is None and ac is not None and an not in (None, 0):
-                af = ac / an
+            af = _validate_population_metrics(ac=ac, an=an, af=af, af_text=af_text)
             return [SecondaryPopulationObservation(
                 "SECONDARY", self.population_code, self.population_label, ac, an, af, hom,
                 "AVAILABLE" if any(x is not None for x in (ac, an, af, hom)) else "NOT_AVAILABLE",
@@ -127,19 +129,7 @@ def _array_int(value, index):
     try:
         return int(parts[index])
     except ValueError:
-        return None
-
-
-def _array_float(value, index):
-    if value in (None, "", "."):
-        return None
-    parts = value.split(",")
-    if index >= len(parts) or parts[index] in ("", "."):
-        return None
-    try:
-        return float(parts[index])
-    except ValueError:
-        return None
+        raise SecondaryPopulationProviderError("Population allele-count field is not an integer.") from None
 
 
 def _scalar_int(value):
@@ -148,7 +138,58 @@ def _scalar_int(value):
     try:
         return int(value)
     except ValueError:
+        raise SecondaryPopulationProviderError("Population allele-number field is not an integer.") from None
+
+
+def _array_value(value, index):
+    if value in (None, "", "."):
         return None
+    parts = value.split(",")
+    if index >= len(parts) or parts[index] in ("", "."):
+        return None
+    return parts[index]
+
+
+def _parse_frequency(value):
+    if value is None:
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        raise SecondaryPopulationProviderError("Population allele-frequency field is not numeric.") from None
+    if not math.isfinite(result) or result < 0 or result > 1:
+        raise SecondaryPopulationProviderError("Population allele-frequency field must be finite and between 0 and 1.")
+    return result
+
+
+def _validate_population_metrics(*, ac, an, af, af_text):
+    if ac is not None and ac < 0:
+        raise SecondaryPopulationProviderError("Population allele count cannot be negative.")
+    if an is not None and an < 0:
+        raise SecondaryPopulationProviderError("Population allele number cannot be negative.")
+    if ac is not None and an is not None and ac > an:
+        raise SecondaryPopulationProviderError("Population allele count cannot exceed allele number.")
+    if an == 0:
+        if ac not in (None, 0):
+            raise SecondaryPopulationProviderError("Positive allele count is incompatible with zero allele number.")
+        return None
+    if an is None:
+        # Keep count-only observations, but never expose AF without its denominator.
+        return None
+    if af is not None and ac is not None:
+        expected = Decimal(ac) / Decimal(an)
+        # Source AF values are commonly rounded in VCFs. Accept only differences
+        # that fit the precision actually represented by the source field.
+        source_af = Decimal(af_text)
+        exponent = source_af.as_tuple().exponent
+        rounding_tolerance = Decimal(5).scaleb(exponent - 1)
+        if abs(source_af - expected) > rounding_tolerance:
+            raise SecondaryPopulationProviderError(
+                "Population allele frequency is inconsistent with AC/AN at the source precision."
+            )
+    if af is None and ac is not None:
+        return ac / an
+    return af
 
 
 def _contigs_match(resource_contig, variant_contig, policy):
