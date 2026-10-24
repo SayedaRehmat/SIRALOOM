@@ -1,3 +1,5 @@
+import pytest
+
 from backend.app.acmg.evaluators import (
     EvaluatorConfigurationError,
     evaluate_ba1_bs1,
@@ -34,8 +36,24 @@ def test_pm2_meets_configured_threshold():
         profile={"PM2": {"max_allele_frequency": 0.00005, "minimum_allele_number": 10000, "population_level": "ANCESTRY", "population_codes": ["MID"]}},
     )
     assert result.applicable is True
-    assert result.strength == "MODERATE"
+    assert result.strength == "SUPPORTING"
     assert result.direction == "PATHOGENIC"
+
+
+def test_pm2_honors_explicit_disease_specification_strength():
+    result = evaluate_pm2(
+        [obs(af=0.00001, an=20000)],
+        profile={"PM2": {
+            "max_allele_frequency": 0.00005,
+            "minimum_allele_number": 10000,
+            "population_level": "ANCESTRY",
+            "population_codes": ["MID"],
+            "strength": "MODERATE",
+        }},
+    )
+
+    assert result.applicable is True
+    assert result.strength == "MODERATE"
 
 
 def test_pm2_missing_data_is_not_zero():
@@ -78,6 +96,141 @@ def test_bs1_uses_explicit_threshold():
     assert result.applicable is True
     assert result.strength == "STRONG"
     assert result.direction == "BENIGN"
+
+
+@pytest.mark.parametrize(
+    "bad_observation",
+    [
+        {"allele_frequency": -0.01, "allele_number": 10000, "allele_count": 0},
+        {"allele_frequency": 1.01, "allele_number": 10000, "allele_count": 0},
+        {"allele_frequency": float("nan"), "allele_number": 10000, "allele_count": 0},
+        {"allele_frequency": float("inf"), "allele_number": 10000, "allele_count": 0},
+        {"allele_frequency": True, "allele_number": 10000, "allele_count": 0},
+        {"allele_frequency": 0.0, "allele_number": 100, "allele_count": 101},
+        {"allele_frequency": 0.0, "allele_number": 100, "allele_count": -1},
+        {"allele_frequency": 0.0, "allele_number": 100.5, "allele_count": 0},
+        {"allele_frequency": 0.0, "allele_number": True, "allele_count": 0},
+        {"allele_frequency": 0.0, "allele_number": 0, "allele_count": 0},
+        {"allele_frequency": 0.0, "allele_number": None, "allele_count": 0},
+    ],
+    ids=[
+        "negative-af", "af-over-one", "nan-af", "infinite-af", "boolean-af", "ac-over-an",
+        "negative-ac", "fractional-an", "boolean-an", "zero-denominator",
+        "missing-denominator",
+    ],
+)
+@pytest.mark.parametrize("criterion", ["PM2", "BS1"])
+def test_population_criteria_require_review_for_malformed_available_metrics(
+    bad_observation, criterion
+):
+    result = obs()
+    result.update(bad_observation)
+    profile = {
+        "PM2": {"max_allele_frequency": 0.00005, "minimum_allele_number": 100},
+        "BS1": {"minimum_allele_frequency": 0.005, "minimum_allele_number": 100},
+    }
+
+    if criterion == "PM2":
+        assessment = evaluate_pm2([result], profile=profile)
+    else:
+        assessment = evaluate_ba1_bs1([result], criterion="BS1", profile=profile)
+
+    assert assessment.status == "REQUIRES_REVIEW"
+    assert assessment.applicable is False
+    assert assessment.strength is None
+    assert assessment.metadata["invalid_population_observations"]
+
+
+def test_population_criteria_ignore_malformed_unselected_cohort():
+    valid = obs(code="MID", af=0.00001, an=20000, ac=0)
+    unselected = obs(code="MID_EXOMES", af=-1, an=1000, ac=0)
+    profile = {
+        "PM2": {
+            "max_allele_frequency": 0.00005,
+            "minimum_allele_number": 10000,
+            "population_codes": ["MID"],
+        }
+    }
+
+    result = evaluate_pm2([valid, unselected], profile=profile)
+
+    assert result.status == "PROPOSED"
+    assert result.evidence_ids == ("POBS-1",)
+
+
+def test_pm2_does_not_report_not_met_when_selected_population_data_is_missing():
+    sufficiently_rare = obs(af=0.00001, an=20000)
+    unavailable = {
+        **obs(code="SAU", af=None, an=None),
+        "availability": "NOT_AVAILABLE",
+    }
+    result = evaluate_pm2(
+        [sufficiently_rare, unavailable],
+        profile={"PM2": {
+            "max_allele_frequency": 0.00005,
+            "minimum_allele_number": 10000,
+        }},
+    )
+
+    assert result.status == "REQUIRES_REVIEW"
+    assert result.applicable is False
+    assert result.metadata["incomplete_population_observations"]
+
+
+def test_bs1_does_not_report_not_met_when_selected_population_data_is_missing():
+    below_threshold = obs(code="MID", af=0.001, an=20000)
+    unavailable = {
+        **obs(code="SAU", af=None, an=None),
+        "availability": "NOT_AVAILABLE",
+    }
+    result = evaluate_ba1_bs1(
+        [below_threshold, unavailable],
+        criterion="BS1",
+        profile={"BS1": {
+            "minimum_allele_frequency": 0.005,
+            "minimum_allele_number": 10000,
+        }},
+    )
+
+    assert result.status == "REQUIRES_REVIEW"
+    assert result.applicable is False
+    assert result.metadata["incomplete_population_observations"]
+
+
+def test_bs1_reports_not_met_only_when_sufficient_selected_data_is_below_threshold():
+    result = evaluate_ba1_bs1(
+        [obs(code="MID", af=0.001, an=20000)],
+        criterion="BS1",
+        profile={"BS1": {
+            "minimum_allele_frequency": 0.005,
+            "minimum_allele_number": 10000,
+        }},
+    )
+
+    assert result.status == "NOT_MET"
+    assert result.applicable is False
+
+
+@pytest.mark.parametrize("criterion,field,value", [
+    ("PM2", "max_allele_frequency", -0.1),
+    ("PM2", "max_allele_frequency", 1.1),
+    ("BS1", "minimum_allele_frequency", -0.1),
+    ("BS1", "minimum_allele_frequency", 1.1),
+])
+def test_population_criteria_reject_frequency_threshold_outside_unit_interval(
+    criterion, field, value
+):
+    with pytest.raises(EvaluatorConfigurationError, match=r"\[0, 1\]"):
+        if criterion == "PM2":
+            evaluate_pm2([obs()], profile={"PM2": {
+                "max_allele_frequency": value,
+                "minimum_allele_number": 100,
+            }})
+        else:
+            evaluate_ba1_bs1([obs()], criterion="BS1", profile={"BS1": {
+                "minimum_allele_frequency": value,
+                "minimum_allele_number": 100,
+            }})
 
 
 def test_pp3_requires_calibrated_profile():
