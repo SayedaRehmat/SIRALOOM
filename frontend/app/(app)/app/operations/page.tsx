@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
+import { reanalysisActionState } from "../../../../lib/reanalysis-status.mjs";
 
 const API_BASE = (process.env.NEXT_PUBLIC_SIRALOOM_API_BASE ?? "http://localhost:8000/api/v1").replace(/\/$/, "");
 
@@ -30,6 +31,7 @@ type Candidate = {
   earliest_affected_step?: string | null;
   reason: string;
   status: string;
+  child_analysis_status?: string | null;
   created_at?: string;
   acted_at?: string | null;
 };
@@ -94,7 +96,7 @@ export default function OperationsPage() {
   const englishCopy = {
     eyebrow: "LABORATORY OPERATIONS", title: "Notifications, reanalysis and capacity", lead: "One operational view for changes that require laboratory attention or action.",
     refresh: "Refresh", notifications: "Notifications", reanalysis: "Reanalysis candidates", capacity: "Storage capacity", storage: "Storage profiles",
-    unread: "Unread", markRead: "Mark read", openCase: "Open case", execute: "Execute reanalysis", pending: "Pending", noNotifications: "No notifications.", noCandidates: "No reanalysis candidates are waiting.",
+    unread: "Unread", markRead: "Mark read", openCase: "Open case", execute: "Execute reanalysis", retry: "Retry reanalysis", queuedState: "Queued", runningState: "Running", analysisComplete: "Analysis complete", unavailable: "Action unavailable", childStatus: "Child analysis", staleCandidates: "Reanalysis status could not be refreshed; the displayed state may be stale.", pending: "Pending", noNotifications: "No notifications.", noCandidates: "No reanalysis candidates are waiting.",
     capacityNote: "These figures come from the deployment capacity probe. SIRALOOM does not infer laboratory capacity from an upload-size setting.", active: "Active", activate: "Activate", activeProfile: "Active profile", noProfiles: "No storage profiles are registered.",
     queued: "Reanalysis dispatched", failed: "Action failed", source: "Source", affected: "Earliest affected stage", reason: "Reason", status: "Status", version: "Version",
     uploadLimit: "Upload limit", stagingLimit: "Resource staging limit", preflight: "Capacity preflight", enabled: "Enabled", disabled: "Disabled",
@@ -105,7 +107,7 @@ export default function OperationsPage() {
   const arabicCopy = {
     eyebrow: "عمليات المختبر", title: "التنبيهات وإعادة التحليل والسعة", lead: "نقطة تشغيل واحدة للإجراءات التي تتطلب انتباهاً من المختبر.",
     refresh: "تحديث", notifications: "التنبيهات", reanalysis: "مرشحو إعادة التحليل", capacity: "سعة التخزين", storage: "ملفات التخزين",
-    unread: "غير مقروء", markRead: "تحديد كمقروء", openCase: "فتح الحالة", execute: "تنفيذ إعادة التحليل", pending: "معلّق", noNotifications: "لا توجد تنبيهات.", noCandidates: "لا توجد حالات مرشحة لإعادة التحليل.",
+    unread: "غير مقروء", markRead: "تحديد كمقروء", openCase: "فتح الحالة", execute: "تنفيذ إعادة التحليل", retry: "إعادة محاولة التحليل", queuedState: "في قائمة الانتظار", runningState: "قيد التنفيذ", analysisComplete: "اكتمل التحليل", unavailable: "الإجراء غير متاح", childStatus: "التحليل الفرعي", staleCandidates: "تعذر تحديث حالة إعادة التحليل؛ قد تكون الحالة المعروضة قديمة.", pending: "معلّق", noNotifications: "لا توجد تنبيهات.", noCandidates: "لا توجد حالات مرشحة لإعادة التحليل.",
     capacityNote: "تعرض هذه القيم القياس الفعلي الذي يقدمه نشر المختبر؛ لا يتم استنتاج السعة من حد رفع الملفات.", active: "نشط", activate: "تفعيل", activeProfile: "ملف نشط", noProfiles: "لا توجد ملفات تخزين مسجلة.",
     queued: "تمت جدولة إعادة التحليل", failed: "تعذر تنفيذ الإجراء", source: "المصدر", affected: "أقدم مرحلة متأثرة", reason: "السبب", status: "الحالة", version: "الإصدار",
     uploadLimit: "حد الرفع", stagingLimit: "حد تجهيز الموارد", preflight: "فحص السعة", enabled: "مفعّل", disabled: "معطّل",
@@ -128,6 +130,7 @@ export default function OperationsPage() {
   const [storageBackend, setStorageBackend] = useState<"LOCAL_FILESYSTEM" | "FIREBASE_GCS">("LOCAL_FILESYSTEM");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [candidateRefreshFailed, setCandidateRefreshFailed] = useState(false);
 
   const load = useCallback(async () => {
     setBusy(true); setMessage("");
@@ -148,6 +151,25 @@ export default function OperationsPage() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const refreshCandidates = useCallback(async () => {
+    try {
+      const rows = await apiFetch("/reanalysis/candidates");
+      setCandidates(Array.isArray(rows) ? rows : []);
+      setCandidateRefreshFailed(false);
+    } catch {
+      setCandidateRefreshFailed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const hasActiveAnalysis = candidates.some(candidate =>
+      candidate.child_analysis_status === "QUEUED" || candidate.child_analysis_status === "RUNNING"
+    );
+    if (!hasActiveAnalysis) return;
+    const timer = window.setInterval(() => { void refreshCandidates(); }, 5000);
+    return () => window.clearInterval(timer);
+  }, [candidates, refreshCandidates]);
 
   const unreadCount = useMemo(() => notifications.filter(n => n.status !== "READ").length, [notifications]);
 
@@ -214,11 +236,20 @@ export default function OperationsPage() {
 
       <section className="panel">
         <div className="section-heading"><div><h2>{copy.reanalysis}</h2><p className="muted">{copy.lead}</p></div></div>
+        {candidateRefreshFailed && <div className="notice" role="status">{copy.staleCandidates}</div>}
         {candidates.length === 0 ? <p className="muted">{copy.noCandidates}</p> : <div className="operation-list">
-          {candidates.map(candidate => <article className="operation-row" key={candidate.candidate_id}>
-            <div className="operation-main"><div className="operation-title"><strong>{candidate.case_id}</strong><span className="badge neutral">{pretty(candidate.trigger_type)}</span><span className="badge active">{pretty(candidate.status)}</span></div><p>{candidate.reason}</p><div className="metadata-line"><span>{copy.affected}: <b>{pretty(candidate.earliest_affected_step)}</b></span><span>{copy.source}: <b>{candidate.parent_analysis_id}</b></span></div></div>
-            <div className="operation-actions">{candidate.status === "PENDING" || candidate.status === "STARTED" ? <button className="button" disabled={busy} onClick={() => void execute(candidate)}>{copy.execute}</button> : <span className="muted">{pretty(candidate.status)}</span>}</div>
-          </article>)}
+          {candidates.map(candidate => {
+            const actionState = reanalysisActionState(candidate.status, candidate.child_analysis_status);
+            return <article className="operation-row" key={candidate.candidate_id}>
+            <div className="operation-main"><div className="operation-title"><strong>{candidate.case_id}</strong><span className="badge neutral">{pretty(candidate.trigger_type)}</span><span className={`badge ${candidate.status === "COMPLETED" ? "success" : candidate.status === "STARTED" ? "active" : candidate.status === "PENDING" ? "neutral" : "danger"}`}>{pretty(candidate.status)}</span></div><p>{candidate.reason}</p><div className="metadata-line"><span>{copy.affected}: <b>{pretty(candidate.earliest_affected_step)}</b></span><span>{copy.source}: <b>{candidate.parent_analysis_id}</b></span></div></div>
+            <div className="operation-actions">
+              {candidate.child_analysis_status && <span className={`badge ${actionState === "COMPLETED" ? "success" : actionState === "BLOCKED" ? "danger" : "active"}`} title={copy.childStatus}>{pretty(candidate.child_analysis_status)}</span>}
+              {actionState === "EXECUTE" || actionState === "RETRY"
+                ? <button className="button" disabled={busy} onClick={() => void execute(candidate)}>{actionState === "RETRY" ? copy.retry : copy.execute}</button>
+                : <span className="muted">{actionState === "QUEUED" ? copy.queuedState : actionState === "RUNNING" ? copy.runningState : actionState === "COMPLETED" ? copy.analysisComplete : actionState === "BLOCKED" ? copy.unavailable : pretty(candidate.status)}</span>}
+            </div>
+          </article>;
+          })}
         </div>}
       </section>
 

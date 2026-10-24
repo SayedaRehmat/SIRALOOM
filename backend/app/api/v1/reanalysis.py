@@ -9,7 +9,6 @@ from backend.app.auth.authorization import CASE_WRITE_ROLES, case_access_predica
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.db.models import (
     Analysis,
-    AnalysisResourceSnapshot,
     Case,
     Notification,
     ReanalysisCandidate,
@@ -253,8 +252,11 @@ def list_candidates(
     principal: Principal = Depends(get_current_principal),
 ):
     child_analysis = aliased(Analysis)
-    rows = db.scalars(
-        select(ReanalysisCandidate)
+    rows = db.execute(
+        select(
+            ReanalysisCandidate,
+            child_analysis.status.label("child_analysis_status"),
+        )
         .join(Analysis, Analysis.id == ReanalysisCandidate.parent_analysis_id)
         .join(Case, Case.id == ReanalysisCandidate.case_id)
         .outerjoin(child_analysis, child_analysis.id == ReanalysisCandidate.child_analysis_id)
@@ -273,7 +275,7 @@ def list_candidates(
         .order_by(ReanalysisCandidate.created_at.desc())
         .limit(100)
     ).all()
-    for row in rows:
+    for row, _child_analysis_status in rows:
         _validate_candidate_event_lineage(row, db)
     return [{
         "candidate_id": str(row.id),
@@ -285,9 +287,10 @@ def list_candidates(
         "earliest_affected_step": row.earliest_affected_step,
         "reason": row.reason,
         "status": row.status,
+        "child_analysis_status": child_status,
         "created_at": row.created_at,
         "acted_at": row.acted_at,
-    } for row in rows]
+    } for row, child_status in rows]
 
 
 @router.post("/analyses/{analysis_id}/reanalysis")

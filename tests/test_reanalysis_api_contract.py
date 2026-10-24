@@ -456,6 +456,8 @@ def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
             ]
         )
         db.flush()
+        db.get(Analysis, child_id).status = "QUEUED"
+        db.flush()
 
         result = reanalysis_api.list_candidates(
             db,
@@ -463,6 +465,7 @@ def test_candidate_list_excludes_cross_case_and_cross_parent_lineage():
         )
 
         assert [row["candidate_id"] for row in result] == [str(valid_candidate_id)]
+        assert result[0]["child_analysis_status"] == "QUEUED"
 
 
 @pytest.mark.parametrize(
