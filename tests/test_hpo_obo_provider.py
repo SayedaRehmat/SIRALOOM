@@ -204,6 +204,32 @@ def test_hpo_obo_requires_matching_checksum_and_release(tmp_path):
         HPOOboProvider(path, expected_sha256="", expected_release="2026-09-01")
 
 
+def test_hpo_parser_uses_the_exact_bytes_that_passed_checksum_validation(tmp_path, monkeypatch):
+    path = tmp_path / "hp.obo"
+    path.write_text(OBO, encoding="utf-8")
+    checksum = hashlib.sha256(path.read_bytes()).hexdigest()
+    original_open = type(path).open
+    open_count = 0
+
+    def replace_between_reads(target, *args, **kwargs):
+        nonlocal open_count
+        if target == path:
+            open_count += 1
+            if open_count == 2:
+                with original_open(target, "wb") as stream:
+                    stream.write(OBO.replace("Current term", "Changed after checksum").encode("utf-8"))
+        return original_open(target, *args, **kwargs)
+
+    monkeypatch.setattr(type(path), "open", replace_between_reads)
+    provider = HPOOboProvider(
+        path, expected_sha256=checksum, expected_release="2026-09-01"
+    )
+
+    assert provider.sha256 == checksum
+    assert provider.resolve("HP:0000003").label == "Current term"
+    assert "Changed after checksum" in path.read_text(encoding="utf-8")
+
+
 def test_hpo_obo_rejects_cyclic_is_a_graph(tmp_path):
     path = tmp_path / "cyclic.obo"
     path.write_text(

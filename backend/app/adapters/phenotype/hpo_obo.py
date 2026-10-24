@@ -69,10 +69,18 @@ class HPOOboProvider:
             expected = expected.partition(":")[2]
         if not re.fullmatch(r"[0-9a-f]{64}", expected):
             raise HPOOntologyError("A valid SHA-256 pin is required for the HPO OBO file")
-        self.sha256 = self._sha256(self.path)
+        try:
+            content = self.path.read_bytes()
+        except OSError as exc:
+            raise HPOOntologyError("Pinned HPO OBO file is unavailable") from exc
+        self.sha256 = hashlib.sha256(content).hexdigest()
         if self.sha256 != expected:
             raise HPOOntologyError("HPO OBO checksum does not match the approved resource")
-        self.terms, self.release = self._parse(self.path)
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise HPOOntologyError("HPO OBO file is not valid UTF-8") from exc
+        self.terms, self.release = self._parse_text(text)
         release = _release_date(expected_release)
         if release != self.release:
             raise HPOOntologyError(
@@ -122,16 +130,12 @@ class HPOOboProvider:
             expected_release=str(release or ""),
         )
 
-    @staticmethod
-    def _sha256(path: Path) -> str:
-        digest = hashlib.sha256()
-        with path.open("rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
-        return digest.hexdigest()
-
     @classmethod
     def _parse(cls, path: Path) -> tuple[dict[str, HpoTerm], str]:
+        return cls._parse_text(path.read_text(encoding="utf-8"))
+
+    @classmethod
+    def _parse_text(cls, content: str) -> tuple[dict[str, HpoTerm], str]:
         terms: dict[str, HpoTerm] = {}
         header_release: str | None = None
         header_format: str | None = None
@@ -160,63 +164,62 @@ class HPOOboProvider:
             )
             current = None
 
-        with path.open("rt", encoding="utf-8") as stream:
-            for raw_line in stream:
-                line = raw_line.strip()
-                if line.startswith("[") and line.endswith("]"):
-                    finish()
-                    if line == "[Term]":
-                        current = {"parents": [], "alternate_ids": [], "replaced_by": [], "consider": []}
-                    continue
-                if not line or line.startswith("!"):
-                    continue
-                if current is None:
-                    key, sep, value = line.partition(":")
-                    if sep and key in {"format-version", "data-version", "ontology"}:
-                        if key in seen_header_fields:
-                            raise HPOOntologyError(f"HPO OBO header repeats field {key}")
-                        seen_header_fields.add(key)
-                        value = value.strip()
-                        if key == "format-version":
-                            header_format = value
-                        elif key == "data-version":
-                            header_release = value
-                        else:
-                            header_ontology = value
-                    continue
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if line.startswith("[") and line.endswith("]"):
+                finish()
+                if line == "[Term]":
+                    current = {"parents": [], "alternate_ids": [], "replaced_by": [], "consider": []}
+                continue
+            if not line or line.startswith("!"):
+                continue
+            if current is None:
                 key, sep, value = line.partition(":")
-                if not sep:
-                    continue
-                value = value.strip().split(" ! ", 1)[0].strip()
-                if key == "id" or key == "name":
-                    if key in current:
-                        raise HPOOntologyError(f"HPO OBO term repeats field {key}")
-                    current[key] = value
-                elif key == "is_a":
-                    target = _term_reference(value)
-                    if target is None:
-                        raise HPOOntologyError(f"HPO OBO has invalid is_a target {value!r}")
-                    current["parents"].append(target)
-                elif key == "alt_id":
-                    target = _term_reference(value)
-                    if target is None:
-                        raise HPOOntologyError(f"HPO OBO has invalid alt_id {value!r}")
-                    current["alternate_ids"].append(target)
-                elif key in {"replaced_by", "consider"}:
-                    target = _term_reference(value)
-                    if target is None:
-                        raise HPOOntologyError(f"HPO OBO has invalid {key} target {value!r}")
-                    current["replaced_by" if key == "replaced_by" else "consider"].append(target)
-                elif key == "is_obsolete":
-                    if value.lower() not in {"true", "false"}:
-                        raise HPOOntologyError(
-                            f"HPO OBO term {current.get('id', '<unknown>')} has invalid is_obsolete value"
-                        )
-                    if "obsolete" in current:
-                        raise HPOOntologyError(
-                            f"HPO OBO term {current.get('id', '<unknown>')} repeats field is_obsolete"
-                        )
-                    current["obsolete"] = value.lower() == "true"
+                if sep and key in {"format-version", "data-version", "ontology"}:
+                    if key in seen_header_fields:
+                        raise HPOOntologyError(f"HPO OBO header repeats field {key}")
+                    seen_header_fields.add(key)
+                    value = value.strip()
+                    if key == "format-version":
+                        header_format = value
+                    elif key == "data-version":
+                        header_release = value
+                    else:
+                        header_ontology = value
+                continue
+            key, sep, value = line.partition(":")
+            if not sep:
+                continue
+            value = value.strip().split(" ! ", 1)[0].strip()
+            if key == "id" or key == "name":
+                if key in current:
+                    raise HPOOntologyError(f"HPO OBO term repeats field {key}")
+                current[key] = value
+            elif key == "is_a":
+                target = _term_reference(value)
+                if target is None:
+                    raise HPOOntologyError(f"HPO OBO has invalid is_a target {value!r}")
+                current["parents"].append(target)
+            elif key == "alt_id":
+                target = _term_reference(value)
+                if target is None:
+                    raise HPOOntologyError(f"HPO OBO has invalid alt_id {value!r}")
+                current["alternate_ids"].append(target)
+            elif key in {"replaced_by", "consider"}:
+                target = _term_reference(value)
+                if target is None:
+                    raise HPOOntologyError(f"HPO OBO has invalid {key} target {value!r}")
+                current["replaced_by" if key == "replaced_by" else "consider"].append(target)
+            elif key == "is_obsolete":
+                if value.lower() not in {"true", "false"}:
+                    raise HPOOntologyError(
+                        f"HPO OBO term {current.get('id', '<unknown>')} has invalid is_obsolete value"
+                    )
+                if "obsolete" in current:
+                    raise HPOOntologyError(
+                        f"HPO OBO term {current.get('id', '<unknown>')} repeats field is_obsolete"
+                    )
+                current["obsolete"] = value.lower() == "true"
         finish()
         if not terms:
             raise HPOOntologyError("HPO OBO contains no phenotype terms")
