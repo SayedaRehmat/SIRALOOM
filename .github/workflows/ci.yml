@@ -128,6 +128,7 @@ jobs:
       - name: Validate production Compose configuration
         env:
           POSTGRES_PASSWORD: ci-only-password
+          REDIS_PASSWORD: ci-only-redis-password
           FIREBASE_ADMIN_CREDENTIALS_HOST_PATH: /tmp/siraloom-firebase-admin.json
           NEXT_PUBLIC_SIRALOOM_API_BASE: https://example.invalid/api/v1
           NEXT_PUBLIC_FIREBASE_API_KEY: ci-demo

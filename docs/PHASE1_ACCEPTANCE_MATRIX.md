@@ -312,3 +312,11 @@ Phase A remains PARTIAL. Scientific threshold qualification, live identity, depl
 | Clinical validity, clinical utility, accreditation or regulatory authorization | **NOT ESTABLISHED** | Requires separate scientific validation and laboratory governance; software tests and deployment checks cannot establish these claims. |
 
 **Release decision: BLOCKED for laboratory trial or clinical workflow. Phase A remains PARTIAL.** The gnomAD and HPO integrity fixes are verified within the stated automated scopes; live identity, deployed tenant isolation, full laboratory workflow/recovery, independent benchmark and laboratory deployment qualification remain outstanding. No clinical validation or production qualification is claimed.
+
+## 2026-10-24 production broker authentication follow-up
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Production Redis broker requires authentication and clients use the same credential | PASS (configuration and application-start guard) | Production Compose requires a Redis password, enables `requirepass`, keeps the port unpublished, authenticates its health probe, and injects the credential into API/worker/Beat URLs. Production settings reject missing/weak AUTH URLs. Focused deployment/security suite: **33 passed**. Local live Redis and Compose execution were unavailable; exact-SHA CI Compose validation is required. Redis ACL command restrictions, in-network TLS and laboratory qualification are not established. |
+
+This closes the unauthenticated broker configuration gap for the included Compose deployment. It does not establish deployed laboratory security or make the overall release ready; live tenant isolation, real workflow/recovery, truth-set validation and backup/restore remain unverified.

@@ -1,4 +1,6 @@
-from pydantic import Field
+from urllib.parse import urlsplit
+
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -86,6 +88,26 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
+
+    @model_validator(mode="after")
+    def require_authenticated_redis_in_production(self) -> "Settings":
+        if self.app_env.strip().lower() != "production":
+            return self
+        try:
+            parsed = urlsplit(self.redis_url)
+            authenticated = (
+                parsed.scheme in {"redis", "rediss"}
+                and bool(parsed.hostname)
+                and bool(parsed.password)
+                and len(parsed.password) >= 32
+            )
+        except ValueError:
+            authenticated = False
+        if not authenticated:
+            raise ValueError(
+                "Production REDIS_URL must use redis/rediss with an AUTH secret of at least 32 characters"
+            )
+        return self
 
 
 settings = Settings()

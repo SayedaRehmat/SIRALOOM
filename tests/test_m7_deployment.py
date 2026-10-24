@@ -1,8 +1,12 @@
 from pathlib import Path
 
+import pytest
+import yaml
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from backend.app.api.v1.health import _check_artifact_root
+from backend.app.config import Settings
 from backend.app.main import app
 
 
@@ -96,3 +100,67 @@ def test_deployment_health_checks_use_readiness_not_liveness():
     assert "http://127.0.0.1:8000/api/v1/ready" in compose
     assert "http://127.0.0.1:8000/api/v1/health" not in compose
     assert "healthCheckPath: /api/v1/ready" in render
+
+
+def test_production_compose_requires_redis_auth_for_all_celery_clients():
+    repo_root = Path(__file__).resolve().parents[1]
+    compose = yaml.safe_load(
+        (repo_root / "docker-compose.production.yml").read_text(encoding="utf-8")
+    )
+    redis = compose["services"]["redis"]
+    redis_password = "${REDIS_PASSWORD:?Set REDIS_PASSWORD}"
+    authenticated_url = "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
+
+    assert not redis.get("ports")
+    assert redis["environment"]["REDIS_PASSWORD"] == redis_password
+    assert redis["command"][-2:] == ["--requirepass", redis_password]
+    assert "REDISCLI_AUTH" in redis["healthcheck"]["test"][1]
+    for service_name in ("api", "worker", "beat"):
+        assert compose["services"][service_name]["environment"]["REDIS_URL"] == authenticated_url
+
+
+def test_production_settings_reject_unauthenticated_redis_url():
+    with pytest.raises(ValidationError, match="AUTH secret of at least 32 characters"):
+        Settings(
+            _env_file=None,
+            app_env="production",
+            database_url="postgresql+psycopg://user:pass@db/siraloom",
+            redis_url="redis://redis:6379/0",
+        )
+
+
+@pytest.mark.parametrize(
+    "redis_url",
+    [
+        "redis://:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6@redis:6379/0",
+        "rediss://default:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6@redis.example:6380/0",
+    ],
+)
+def test_production_settings_accept_authenticated_redis_urls(redis_url):
+    settings = Settings(
+        _env_file=None,
+        app_env="production",
+        database_url="postgresql+psycopg://user:pass@db/siraloom",
+        redis_url=redis_url,
+    )
+    assert settings.redis_url == redis_url
+
+
+def test_production_settings_reject_weak_redis_auth_secret():
+    with pytest.raises(ValidationError, match="AUTH secret of at least 32 characters"):
+        Settings(
+            _env_file=None,
+            app_env="production",
+            database_url="postgresql+psycopg://user:pass@db/siraloom",
+            redis_url="redis://:CHANGE_ME@redis:6379/0",
+        )
+
+
+def test_development_settings_allow_local_unauthenticated_redis():
+    settings = Settings(
+        _env_file=None,
+        app_env="development",
+        database_url="sqlite://",
+        redis_url="redis://localhost:6379/0",
+    )
+    assert settings.redis_url == "redis://localhost:6379/0"

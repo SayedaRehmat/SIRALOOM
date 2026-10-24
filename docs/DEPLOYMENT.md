@@ -90,7 +90,7 @@ Required production concepts:
 
 ```text
 DATABASE_URL
-REDIS_URL
+REDIS_PASSWORD
 ARTIFACT_ROOT
 PUBLIC_BASE_URL
 FRONTEND_ORIGIN
@@ -100,6 +100,10 @@ FIREBASE_CREDENTIALS_PATH
 REFERENCE_FASTA
 REFERENCE_FAI
 ```
+
+Set `REDIS_PASSWORD` to a cryptographically generated secret with at least 32 characters; for the included Compose deployment, use `openssl rand -hex 32`. Production Compose starts Redis with `requirepass` and injects an authenticated `REDIS_URL` into API, worker, and Beat. Do not publish Redis ports. The application rejects production startup with a missing or weak Redis AUTH secret. For an externally managed Redis service, set `REDIS_URL` directly to an authenticated `redis://` or `rediss://` URL with a 32-character minimum password; use TLS (`rediss://`) when traffic crosses an untrusted network. Protect the secret through the laboratory's secret-management process and rotate it in coordination with all application services.
+
+Redis authentication follows Redis's documented `AUTH`/`requirepass` behavior; Redis ACL users are an alternative for deployments that need command/key-level restrictions ([Redis AUTH](https://redis.io/docs/latest/commands/auth/), [Redis ACL](https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/)). This Compose setup authenticates the default user but does not impose a custom command allowlist.
 
 GeneBe is optional at the software level but required for the current development annotation path. Its credentials remain server-side.
 
@@ -120,8 +124,8 @@ curl https://YOUR-API-DOMAIN/api/v1/ready
 
 ## Production release order
 
-1. Build backend image.
-2. Start PostgreSQL and Redis.
+1. Generate and set the production `REDIS_PASSWORD`, then build the backend image.
+2. Start PostgreSQL and authenticated Redis.
 3. Start API; migration-safe startup applies Alembic migrations.
 4. Start worker.
 5. Start exactly one Celery Beat scheduler.
