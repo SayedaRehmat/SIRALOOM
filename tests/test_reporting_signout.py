@@ -74,6 +74,20 @@ def seed_finalizable_report():
         canonical_key="GRCh38:17:1:A:G",
         identifiers={},
     )
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+        variant_count=1, status="SUCCEEDED",
+        metadata_json={
+            "variant_ids": [str(variant.id)],
+            "sample_calls": [{
+                "variant_id": str(variant.id), "status": "AVAILABLE",
+                "sample_name": "SAMPLE-1", "genotype": "0/1",
+                "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                "phase_set": None, "format_values": {"DP": "30", "GQ": "60"},
+            }],
+        },
+    ))
     classification = Classification(
         id=uuid4(),
         variant_id=variant.id,
@@ -226,6 +240,61 @@ def test_report_content_persists_exact_classification_identity():
     assert finding["classification_version"] == classification.version
 
 
+def test_report_contains_genotype_from_persisted_normalization_partition():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+
+    assert content["findings"][0]["genotype"] == {
+        "gt": "0/1",
+        "zygosity": "HETEROZYGOUS",
+        "phase": "UNPHASED",
+        "phase_set": None,
+    }
+
+
+def test_signout_is_blocked_when_normalized_input_has_no_complete_genotype():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    partition = db.scalar(select(AnalysisPartition).where(
+        AnalysisPartition.analysis_id == analysis.id,
+        AnalysisPartition.step_id == "normalize",
+    ))
+    updated_metadata = dict(partition.metadata_json)
+    updated_calls = [dict(call) for call in updated_metadata["sample_calls"]]
+    updated_calls[0].update({
+        "status": "MISSING_OR_PARTIAL",
+        "genotype": "./.",
+        "zygosity": "NO_CALL",
+    })
+    updated_metadata["sample_calls"] = updated_calls
+    partition.metadata_json = updated_metadata
+    db.commit()
+
+    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+    assert not eligible
+    assert any("no complete sample genotype" in error for error in errors)
+
+
+def test_signout_is_blocked_for_homozygous_reference_record():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    partition = db.scalar(select(AnalysisPartition).where(
+        AnalysisPartition.analysis_id == analysis.id,
+        AnalysisPartition.step_id == "normalize",
+    ))
+    updated_metadata = dict(partition.metadata_json)
+    updated_calls = [dict(call) for call in updated_metadata["sample_calls"]]
+    updated_calls[0].update({
+        "genotype": "0/0",
+        "zygosity": "HOMOZYGOUS_REFERENCE",
+    })
+    updated_metadata["sample_calls"] = updated_calls
+    partition.metadata_json = updated_metadata
+    db.commit()
+
+    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+    assert not eligible
+    assert any("homozygous reference" in error for error in errors)
+
+
 def test_signout_rejects_reports_when_gvcf_or_sv_records_were_preserved_uninterpreted():
     db, _reviewer, analysis, _report = seed_finalizable_report()
     db.add(WorkflowStep(
@@ -249,11 +318,12 @@ def test_signout_rejects_reports_when_gvcf_or_sv_records_were_preserved_uninterp
 
 def test_report_generation_and_signout_eligibility_reject_classification_outside_manifest():
     db, _reviewer, analysis, _report = seed_finalizable_report()
-    db.add(AnalysisPartition(
-        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
-        partition_key="0:0", ordinal=0, record_start=0, record_end=0,
-        variant_count=0, status="SUCCEEDED", metadata_json={"variant_ids": []},
+    partition = db.scalar(select(AnalysisPartition).where(
+        AnalysisPartition.analysis_id == analysis.id,
+        AnalysisPartition.step_id == "normalize",
     ))
+    partition.metadata_json = {"variant_ids": [], "sample_calls": []}
+    partition.variant_count = 0
     db.commit()
 
     eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
@@ -266,11 +336,6 @@ def test_report_generation_and_signout_eligibility_reject_classification_outside
 def test_report_generation_and_signout_reject_reportable_secondary_variant_outside_manifest():
     db, _reviewer, analysis, _report = seed_finalizable_report()
     classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
-    db.add(AnalysisPartition(
-        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
-        partition_key="0:1", ordinal=0, record_start=0, record_end=1,
-        variant_count=1, status="SUCCEEDED", metadata_json={"variant_ids": [str(classification.variant_id)]},
-    ))
     outside_variant = Variant(
         id=uuid4(), genome_build="GRCh38", chromosome="17", position=2,
         reference="C", alternate="T", normalization_status="NORMALIZED",

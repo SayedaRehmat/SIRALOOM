@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant_ids
+from backend.app.domain.sample_call import get_analysis_sample_calls
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Classification, ReportabilityDecision
 
@@ -220,6 +221,17 @@ def final_reportability_state(db: Session, analysis_id: UUID) -> tuple[bool, lis
         errors.append(
             "Classifications do not exactly match the normalized input variant set"
         )
+    sample_calls = get_analysis_sample_calls(db, analysis_id)
+    for variant_id in latest:
+        call = sample_calls.get(variant_id)
+        if not call or call.get("status") != "AVAILABLE" or not call.get("genotype"):
+            errors.append(
+                f"Variant {variant_id} has no complete sample genotype from the normalized input"
+            )
+        elif call.get("zygosity") == "HOMOZYGOUS_REFERENCE":
+            errors.append(
+                f"Variant {variant_id} is homozygous reference in the analyzed sample"
+            )
     decision_rows = list(
         db.scalars(
             select(ReportabilityDecision)

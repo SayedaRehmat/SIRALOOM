@@ -12,6 +12,7 @@ from backend.app.domain.reproducibility import (
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AnalysisPartition,
     AnalysisResourceSnapshot,
     Artifact,
     Case,
@@ -277,6 +278,20 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
                     priority_score=0, priority_band="ROUTINE", reasons=["review"],
                     status="PENDING_REVIEW", review_version=0, reviewed_by=None,
                     approved_at=None,
+                ))
+                db.add(AnalysisPartition(
+                    id=uuid4(), analysis_id=analysis_id, step_id="normalize",
+                    partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+                    variant_count=1, status="SUCCEEDED",
+                    metadata_json={
+                        "variant_ids": [str(variant_id)],
+                        "sample_calls": [{
+                            "variant_id": str(variant_id), "status": "AVAILABLE",
+                            "sample_name": "SAMPLE-1", "genotype": "0/1",
+                            "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                            "phase_set": None, "format_values": {"DP": "30"},
+                        }],
+                    },
                 ))
             db.commit()
 
@@ -557,6 +572,21 @@ def test_reanalysis_manifest_flags_scientific_output_drift(tmp_path):
                 db, organization_id=organization_id, user_id=user_id,
                 case_id=case_id, analysis_id=child_id, parent_id=parent_id, version=2,
             )
+            for analysis_id in (parent_id, child_id):
+                db.add(AnalysisPartition(
+                    id=uuid4(), analysis_id=analysis_id, step_id="normalize",
+                    partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+                    variant_count=1, status="SUCCEEDED",
+                    metadata_json={
+                        "variant_ids": [str(variant_id)],
+                        "sample_calls": [{
+                            "variant_id": str(variant_id), "status": "AVAILABLE",
+                            "sample_name": "SAMPLE-1", "genotype": "0/1",
+                            "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                            "phase_set": None, "format_values": {"DP": "30"},
+                        }],
+                    },
+                ))
             parent_classification = Classification(
                 id=uuid4(), variant_id=variant_id, analysis_id=parent_id,
                 framework_name="ACMG/AMP", framework_version="2015",

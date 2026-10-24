@@ -18,6 +18,7 @@ from backend.app.domain.reproducibility import ReanalysisComparisonError
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AnalysisPartition,
     AnalysisResourceSnapshot,
     Artifact,
     Case,
@@ -255,6 +256,20 @@ def test_comparison_cli_uses_real_parent_child_database_rows(
                     review_status="PENDING",
                     version=1,
                     review_version=0,
+                ))
+                db.add(AnalysisPartition(
+                    id=uuid4(), analysis_id=analysis_id, step_id="normalize",
+                    partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+                    variant_count=1, status="SUCCEEDED",
+                    metadata_json={
+                        "variant_ids": [str(variant_id)],
+                        "sample_calls": [{
+                            "variant_id": str(variant_id), "status": "AVAILABLE",
+                            "sample_name": "SAMPLE-1", "genotype": "0/1",
+                            "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                            "phase_set": None, "format_values": {"DP": "30"},
+                        }],
+                    },
                 ))
             db.commit()
 

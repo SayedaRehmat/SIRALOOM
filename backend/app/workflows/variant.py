@@ -2179,7 +2179,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     db.add(row)
                     db.flush()
                 rows.append(row.id)
-            part.metadata_json = {**(part.metadata_json or {}), "variant_ids": [str(x) for x in rows]}
+            part.metadata_json = _normalized_partition_metadata(rows, batch)
             total_variants += len(batch)
             ordinal += 1
             db.commit()
@@ -5167,6 +5167,34 @@ def _iter_variant_batches(path: Path, genome_build: str, batch_size: int):
             batch = []
     if batch:
         yield start, batch
+
+
+def _normalized_partition_metadata(
+    variant_ids: list[UUID],
+    variants: list[CanonicalVariant],
+) -> dict:
+    """Persist analysis-scoped calls beside canonical IDs in each normalize partition."""
+    if len(variant_ids) != len(variants):
+        raise ValueError("Normalized partition variant IDs and calls must have equal lengths")
+    sample_calls = []
+    for variant_id, variant in zip(variant_ids, variants):
+        call = dict(variant.sample_call or {})
+        sample_calls.append({
+            "variant_id": str(variant_id),
+            "status": call.get("status", "GENOTYPE_UNAVAILABLE"),
+            "sample_name": call.get("sample_name"),
+            "genotype": call.get("genotype"),
+            "zygosity": call.get("zygosity", "UNKNOWN"),
+            "phase": call.get("phase", "UNSPECIFIED"),
+            "phase_set": call.get("phase_set"),
+            "format_values": call.get("format_values", {}),
+        })
+    return {
+        "schema_version": 2,
+        "genome_build": variants[0].genome_build if variants else None,
+        "variant_ids": [str(value) for value in variant_ids],
+        "sample_calls": sample_calls,
+    }
 
 
 def _partition_variant_ids(partition: AnalysisPartition) -> list[UUID]:

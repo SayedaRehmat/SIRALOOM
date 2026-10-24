@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
+    AnalysisPartition,
     AnalysisResourceSnapshot,
     Annotation,
     Artifact,
@@ -516,6 +517,43 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
         )).all()
     ]
 
+    sample_calls = []
+    called_variant_keys: set[str] = set()
+    for partition in db.scalars(
+        select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == analysis_id,
+            AnalysisPartition.step_id == "normalize",
+        )
+    ).all():
+        calls = (partition.metadata_json or {}).get("sample_calls")
+        if not isinstance(calls, list):
+            continue
+        for call in calls:
+            if not isinstance(call, dict):
+                continue
+            try:
+                call_variant_id = UUID(str(call.get("variant_id")))
+            except (TypeError, ValueError):
+                call_variant_id = None
+            call_variant = db.get(Variant, call_variant_id) if call_variant_id else None
+            key = variant_keys.get(call_variant_id) if call_variant_id else None
+            key = key or (call_variant.canonical_key if call_variant else None)
+            if key is None:
+                provenance_issues.append("SAMPLE_CALL_VARIANT_ID_MISSING_OR_INVALID")
+                continue
+            called_variant_keys.add(key)
+            sample_calls.append({
+                "variant": key,
+                "status": call.get("status"),
+                "genotype": call.get("genotype"),
+                "zygosity": call.get("zygosity"),
+                "phase": call.get("phase"),
+                "phase_set": call.get("phase_set"),
+                "format_values": call.get("format_values") or {},
+            })
+    if set(variant_keys.values()) - called_variant_keys:
+        provenance_issues.append("ANALYSIS_VARIANT_SAMPLE_CALLS_MISSING")
+
     reports = []
     for row in db.scalars(select(Report).where(
         Report.analysis_id == analysis_id
@@ -550,6 +588,7 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
         "evidence": sorted(evidence, key=_canonical_json),
         "acmg_assessments": sorted(acmg, key=_canonical_json),
         "classifications": sorted(classifications, key=_canonical_json),
+        "sample_calls": sorted(sample_calls, key=_canonical_json),
         "phenotype_observations": sorted(phenotypes, key=_canonical_json),
         "technical_qc_observations": sorted(technical_qc, key=_canonical_json),
         "qc_assessments": sorted(qc_assessments, key=_canonical_json),

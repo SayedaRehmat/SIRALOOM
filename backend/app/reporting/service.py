@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
+from backend.app.domain.sample_call import get_analysis_sample_calls
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -470,6 +471,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         "relationships": [{"parent_member_id": str(r.parent_member_id), "child_member_id": str(r.child_member_id), "relationship_type": r.relationship_type} for r in pedigree_relationships],
     }
     reportability_complete, reportability_errors = final_reportability_state(db, analysis.id)
+    sample_calls = get_analysis_sample_calls(db, analysis.id)
     for cls in latest_rows:
         decision = latest_decision(db, analysis.id, cls.variant_id)
         # Analytical reports retain the full reviewed variant set. Clinical reports
@@ -490,6 +492,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         consequences = normalized.get("consequence") or normalized.get("consequences") or {}
 
         contextual_evidence = [e for e in _evidence_summary(db, analysis.id, variant.id) if e.get("type") in {"PHENOTYPE", "GENE_DISEASE", "LITERATURE"}]
+        sample_call = sample_calls.get(variant.id)
         segregation_rows = list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id == analysis.id, SegregationObservation.variant_id == variant.id).order_by(SegregationObservation.created_at)))
         inheritance_rows = list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id == analysis.id, InheritanceAssessment.variant_id == variant.id).order_by(InheritanceAssessment.created_at.desc())))
         confirmation = db.scalar(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id == analysis.id, ConfirmationRecord.variant_id == variant.id).order_by(ConfirmationRecord.version.desc()))
@@ -512,7 +515,13 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "transcript": transcript,
             "hgvs": hgvs,
             "consequence": consequences,
-            "zygosity": (normalized.get("genotype") or {}).get("zygosity"),
+            "genotype": {
+                "gt": sample_call.get("genotype"),
+                "zygosity": sample_call.get("zygosity"),
+                "phase": sample_call.get("phase"),
+                "phase_set": sample_call.get("phase_set"),
+            } if sample_call else None,
+            "zygosity": sample_call.get("zygosity") if sample_call else None,
             "classification": cls.result,
             "classification_version": cls.version,
             "classification_snapshot_sha256": _classification_snapshot_sha256(cls),

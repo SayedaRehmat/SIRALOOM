@@ -16,6 +16,9 @@ class CanonicalVariant(BaseModel):
     original_reference: str | None = None
     original_alternate: str | None = None
     variant_key: str | None = None
+    # Analysis-specific sample call evidence is carried alongside the canonical
+    # allele while streaming. It is never part of the allele identity key.
+    sample_call: dict[str, Any] | None = None
 
 class CaseCreate(BaseModel):
     case_identifier: str = Field(min_length=1, max_length=200)

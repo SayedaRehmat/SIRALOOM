@@ -150,7 +150,22 @@ def test_reportability_state_rejects_orphan_decision_without_classification():
 
 
 def test_reportability_finalize_is_version_checked_and_audited():
-    db, user, _, analysis, _, _ = seed("VUS")
+    db, user, _, analysis, variant, _ = seed("VUS")
+    db.add(AnalysisPartition(
+        id=uuid4(), analysis_id=analysis.id, step_id="normalize",
+        partition_key="0:1", ordinal=0, record_start=0, record_end=1,
+        variant_count=1, status="SUCCEEDED",
+        metadata_json={
+            "variant_ids": [str(variant.id)],
+            "sample_calls": [{
+                "variant_id": str(variant.id), "status": "AVAILABLE",
+                "sample_name": "SAMPLE-1", "genotype": "0/1",
+                "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                "phase_set": None, "format_values": {},
+            }],
+        },
+    ))
+    db.commit()
     decision = evaluate_analysis(db, analysis)[0]
     db.commit()
     out = finalize_reportability(db, decision_id=decision.id, reviewer_id=user.id, expected_version=0, disposition="REPORT", reason="Explicitly report after clinical review")

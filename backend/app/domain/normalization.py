@@ -303,4 +303,9 @@ def iter_normalized_vcf(path: str | Path, genome_build: str):
             alternate=record.alt,
             normalization_status="NORMALIZED",
             variant_key=canonical_key(genome_build, record.chrom, record.pos, record.ref, record.alt),
+            sample_call=(
+                next(iter(record.sample_calls.values()))
+                if len(record.sample_calls) == 1
+                else None
+            ),
         )
