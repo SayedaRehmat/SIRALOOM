@@ -20,6 +20,7 @@ from backend.app.infrastructure.db.models import (
     InheritanceAssessment,
     Organization,
     PedigreeMember,
+    PedigreeRelationship,
     PhenotypeObservation,
     QCAssessment,
     ReportabilityDecision,
@@ -132,11 +133,23 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
                 case_id=case_id, analysis_id=child_id, parent_id=parent_id, version=2,
             )
             member_id = uuid4()
+            father_id = uuid4()
             db.add(PedigreeMember(
                 id=member_id, case_id=case_id, member_identifier="proband",
                 relationship_to_proband="PROBAND", sex="UNKNOWN",
                 affected_status="AFFECTED", is_proband=True, sampled=True,
                 specimen_id=None, metadata_json={},
+            ))
+            db.add(PedigreeMember(
+                id=father_id, case_id=case_id, member_identifier="father",
+                relationship_to_proband="FATHER", sex="MALE",
+                affected_status="UNAFFECTED", is_proband=False, sampled=True,
+                specimen_id=None, metadata_json={},
+            ))
+            db.add(PedigreeRelationship(
+                id=uuid4(), case_id=case_id, parent_member_id=father_id,
+                child_member_id=member_id, relationship_type="PARENT_CHILD",
+                metadata_json={},
             ))
             db.flush()
             for analysis_id in (parent_id, child_id):
@@ -194,7 +207,18 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
                     id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
                     pedigree_member_id=member_id, genotype="0/1", zygosity="HET",
                     phase="UNKNOWN", allele_observed="G", phenotype_status="AFFECTED",
-                    source="LAB_VCF", notes=None, metadata_json={},
+                    source="LAB_VCF", notes=None, metadata_json={
+                        "pedigree_context_snapshot": {
+                            "schema_version": 1,
+                            "members": [
+                                {"member_identifier": "father", "relationship_to_proband": "FATHER", "sex": "MALE", "affected_status": "UNAFFECTED", "is_proband": False, "sampled": True, "specimen_identifier": None, "specimen_type": None, "metadata": {}},
+                                {"member_identifier": "proband", "relationship_to_proband": "PROBAND", "sex": "UNKNOWN", "affected_status": "AFFECTED", "is_proband": True, "sampled": True, "specimen_identifier": None, "specimen_type": None, "metadata": {}},
+                            ],
+                            "relationships": [
+                                {"parent_member_identifier": "father", "child_member_identifier": "proband", "relationship_type": "PARENT_CHILD", "metadata": {}}
+                            ],
+                        },
+                    },
                 ))
                 db.add(InheritanceAssessment(
                     id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
@@ -288,6 +312,21 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
             ]
             child_source.sha256 = "b" * 64
 
+            child_segregation_snapshot = db.query(SegregationObservation).filter_by(
+                analysis_id=child_id
+            ).one()
+            saved_segregation_metadata = child_segregation_snapshot.metadata_json
+            child_segregation_snapshot.metadata_json = {}
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "INELIGIBLE_INCOMPLETE_PROVENANCE"
+            assert result["child"]["provenance_issues"] == [
+                "SEGREGATION_PEDIGREE_CONTEXT_SNAPSHOT_MISSING"
+            ]
+            child_segregation_snapshot.metadata_json = saved_segregation_metadata
+
             child_review = db.query(ReviewAction).filter_by(analysis_id=child_id).one()
             child_review.action_type = "REJECTED"
             db.flush()
@@ -355,9 +394,7 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
             assert result["decision"] == "MISMATCH"
 
             child_inheritance.status = "COMPATIBLE"
-            child_segregation = db.query(SegregationObservation).filter_by(
-                analysis_id=child_id
-            ).one()
+            child_segregation = child_segregation_snapshot
             child_segregation.genotype = "1/1"
             db.flush()
             result = compare_reanalysis_outputs(
@@ -366,6 +403,41 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
             assert result["decision"] == "MISMATCH"
 
             child_segregation.genotype = "0/1"
+            child_segregation.metadata_json = {
+                **child_segregation.metadata_json,
+                "pedigree_context_snapshot": {
+                    **child_segregation.metadata_json["pedigree_context_snapshot"],
+                    "relationships": [
+                        {
+                            "parent_member_identifier": "father",
+                            "child_member_identifier": "proband",
+                            "relationship_type": "ADOPTIVE_PARENT",
+                            "metadata": {},
+                        }
+                    ],
+                },
+            }
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_segregation.metadata_json = {
+                **child_segregation.metadata_json,
+                "pedigree_context_snapshot": {
+                    **child_segregation.metadata_json["pedigree_context_snapshot"],
+                    "relationships": [
+                        {
+                            "parent_member_identifier": "father",
+                            "child_member_identifier": "proband",
+                            "relationship_type": "PARENT_CHILD",
+                            "metadata": {},
+                        }
+                    ],
+                },
+            }
+            db.flush()
             child_reportability = db.query(ReportabilityDecision).filter_by(
                 analysis_id=child_id
             ).one()

@@ -1,10 +1,12 @@
-import pytest
-from pydantic import ValidationError
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
+from pydantic import ValidationError
+
 from backend.app.api.v1 import pedigree
 from backend.app.api.v1.pedigree import AssessmentInput
+from backend.app.infrastructure.db.models import SegregationObservation
 from backend.app.inheritance import (
     FamilyObservation,
     assess_model,
@@ -13,6 +15,97 @@ from backend.app.inheritance import (
     fingerprint,
     normalize_model,
 )
+
+
+def test_pedigree_snapshot_records_stable_member_and_relationship_context():
+    case_id, father_id, proband_id = uuid4(), uuid4(), uuid4()
+    father = SimpleNamespace(
+        id=father_id, member_identifier="father", relationship_to_proband="FATHER",
+        sex="MALE", affected_status="UNAFFECTED", is_proband=False, sampled=True,
+        specimen_id=None, metadata_json={},
+    )
+    proband = SimpleNamespace(
+        id=proband_id, member_identifier="proband", relationship_to_proband="PROBAND",
+        sex="UNKNOWN", affected_status="AFFECTED", is_proband=True, sampled=True,
+        specimen_id=None, metadata_json={},
+    )
+    relationship = SimpleNamespace(
+        parent_member_id=father_id, child_member_id=proband_id,
+        relationship_type="PARENT_CHILD", metadata_json={},
+    )
+
+    class FakeDb:
+        def __init__(self):
+            self.rows = [[proband, father], [relationship]]
+
+        def scalars(self, _query):
+            return self.rows.pop(0)
+
+    snapshot = pedigree._pedigree_context_snapshot(FakeDb(), case_id)
+
+    assert snapshot["schema_version"] == 1
+    assert [member["member_identifier"] for member in snapshot["members"]] == [
+        "father", "proband"
+    ]
+    assert snapshot["relationships"] == [{
+        "parent_member_identifier": "father",
+        "child_member_identifier": "proband",
+        "relationship_type": "PARENT_CHILD",
+        "metadata": {},
+    }]
+
+
+def test_segregation_write_overrides_client_pedigree_snapshot(monkeypatch):
+    analysis_id, variant_id, case_id, member_id = (uuid4() for _ in range(4))
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    member = SimpleNamespace(id=member_id, case_id=case_id, member_identifier="proband")
+    principal = SimpleNamespace(user_id=uuid4())
+    expected_snapshot = {"schema_version": 1, "members": [], "relationships": []}
+
+    class FakeDb:
+        def __init__(self):
+            self.added = []
+            self.committed = False
+
+        def get(self, model, _identifier):
+            assert model is pedigree.PedigreeMember
+            return member
+
+        def scalar(self, _query):
+            return None
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.committed = True
+
+    class FakeAudit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id)
+    )
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "_pedigree_context_snapshot", lambda *_args: expected_snapshot)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+    body = pedigree.SegregationInput(
+        pedigree_member_id=member_id,
+        genotype="0/1",
+        metadata={"pedigree_context_snapshot": {"schema_version": 999}},
+    )
+    db = FakeDb()
+
+    pedigree.add_segregation(analysis_id, variant_id, body, db, principal)
+
+    row = next(item for item in db.added if isinstance(item, SegregationObservation))
+    assert row.metadata_json["pedigree_context_snapshot"] == expected_snapshot
+    assert db.committed is True
 
 
 def test_m10_model_aliases_and_fingerprint_are_deterministic():

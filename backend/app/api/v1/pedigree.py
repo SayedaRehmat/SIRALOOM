@@ -133,6 +133,65 @@ def _would_create_pedigree_cycle(relationships, parent_member_id, child_member_i
         pending.extend(children_by_parent.get(member_id, ()))
     return False
 
+
+def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
+    """Capture the case pedigree used to contextualize a segregation observation."""
+    members = list(db.scalars(
+        select(PedigreeMember).where(PedigreeMember.case_id == case_id)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
+    ))
+    _validate_pedigree_lineage(members, relationships, case_id, db)
+    member_by_id = {member.id: member for member in members}
+    specimen_ids = {member.specimen_id for member in members if member.specimen_id}
+    specimens = {
+        specimen.id: specimen
+        for specimen in db.scalars(select(Specimen).where(Specimen.id.in_(specimen_ids)))
+    } if specimen_ids else {}
+    return {
+        "schema_version": 1,
+        "members": sorted(
+            [
+                {
+                    "member_identifier": member.member_identifier,
+                    "relationship_to_proband": member.relationship_to_proband,
+                    "sex": member.sex,
+                    "affected_status": member.affected_status,
+                    "is_proband": member.is_proband,
+                    "sampled": member.sampled,
+                    "specimen_identifier": (
+                        specimens[member.specimen_id].specimen_identifier
+                        if member.specimen_id in specimens else None
+                    ),
+                    "specimen_type": (
+                        specimens[member.specimen_id].specimen_type
+                        if member.specimen_id in specimens else None
+                    ),
+                    "metadata": member.metadata_json or {},
+                }
+                for member in members
+            ],
+            key=lambda item: item["member_identifier"],
+        ),
+        "relationships": sorted(
+            [
+                {
+                    "parent_member_identifier": member_by_id[relationship.parent_member_id].member_identifier,
+                    "child_member_identifier": member_by_id[relationship.child_member_id].member_identifier,
+                    "relationship_type": relationship.relationship_type,
+                    "metadata": relationship.metadata_json or {},
+                }
+                for relationship in relationships
+            ],
+            key=lambda item: (
+                item["parent_member_identifier"],
+                item["child_member_identifier"],
+                item["relationship_type"],
+            ),
+        ),
+    }
+
 @router.get("/cases/{case_id}/pedigree")
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     case=db.get(Case,case_id)
@@ -203,15 +262,19 @@ def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_d
 def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
     require_role(principal, CASE_WRITE_ROLES)
-    variant=get_analysis_variant(analysis,variant_id,db)
+    get_analysis_variant(analysis,variant_id,db)
     member=db.get(PedigreeMember,body.pedigree_member_id)
     if not member or member.case_id!=analysis.case_id: raise HTTPException(400,"Variant and pedigree member must belong to this analysis/case")
+    metadata_json = {
+        **body.metadata,
+        "pedigree_context_snapshot": _pedigree_context_snapshot(db, analysis.case_id),
+    }
     existing=db.scalar(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id,SegregationObservation.pedigree_member_id==member.id))
     if existing:
-        existing.genotype=body.genotype; existing.zygosity=body.zygosity; existing.phase=body.phase; existing.allele_observed=body.allele_observed; existing.phenotype_status=body.phenotype_status; existing.source=body.source; existing.notes=body.notes; existing.metadata_json=body.metadata
+        existing.genotype=body.genotype; existing.zygosity=body.zygosity; existing.phase=body.phase; existing.allele_observed=body.allele_observed; existing.phenotype_status=body.phenotype_status; existing.source=body.source; existing.notes=body.notes; existing.metadata_json=metadata_json
         row=existing; action="UPDATE"
     else:
-        row=SegregationObservation(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,pedigree_member_id=member.id,genotype=body.genotype,zygosity=body.zygosity,phase=body.phase,allele_observed=body.allele_observed,phenotype_status=body.phenotype_status,source=body.source,notes=body.notes,metadata_json=body.metadata); db.add(row); action="CREATE"
+        row=SegregationObservation(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,pedigree_member_id=member.id,genotype=body.genotype,zygosity=body.zygosity,phase=body.phase,allele_observed=body.allele_observed,phenotype_status=body.phenotype_status,source=body.source,notes=body.notes,metadata_json=metadata_json); db.add(row); action="CREATE"
     AuditService(db).record(event_type="SEGREGATION_OBSERVATION_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="SEGREGATION_OBSERVATION",subject_id=str(row.id),operation=action,after_state=_seg(row,member))
     db.commit(); return _seg(row,member)
 

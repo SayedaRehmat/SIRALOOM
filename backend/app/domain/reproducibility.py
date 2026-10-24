@@ -326,9 +326,15 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
         SegregationObservation.analysis_id == analysis_id
     )).all():
         member = db.get(PedigreeMember, row.pedigree_member_id)
+        metadata = row.metadata_json or {}
+        pedigree_context = metadata.get("pedigree_context_snapshot")
+        if not isinstance(pedigree_context, dict) or pedigree_context.get("schema_version") != 1:
+            provenance_issues.append("SEGREGATION_PEDIGREE_CONTEXT_SNAPSHOT_MISSING")
+            pedigree_context = None
         segregation.append({
             "variant": variant_keys.get(row.variant_id, "MISSING_CANONICAL_VARIANT"),
             "member_identifier": member.member_identifier if member else "MISSING_PEDIGREE_MEMBER",
+            "pedigree_context_snapshot": pedigree_context,
             "genotype": row.genotype,
             "zygosity": row.zygosity,
             "phase": row.phase,
@@ -336,7 +342,7 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
             "phenotype_status": row.phenotype_status,
             "source": row.source,
             "notes": row.notes,
-            "metadata": row.metadata_json or {},
+            "metadata": metadata,
         })
 
     inheritance = [
