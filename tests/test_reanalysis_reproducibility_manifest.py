@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -13,15 +13,38 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisResourceSnapshot,
+    Artifact,
     Case,
     Classification,
+    ConfirmationRecord,
+    InheritanceAssessment,
     Organization,
+    PedigreeMember,
+    PhenotypeObservation,
+    QCAssessment,
+    ReportabilityDecision,
+    ReviewAction,
+    SecondaryFindingDecision,
+    SegregationObservation,
+    TechnicalQCObservation,
+    ToolRun,
     User,
     Variant,
+    WorkflowDecisionRecord,
+    WorkflowStep,
 )
 
 
 def _seed_analysis(db, *, organization_id, user_id, case_id, analysis_id, parent_id, version):
+    source_artifact_id = uuid4()
+    db.add(Artifact(
+        id=source_artifact_id, analysis_id=None, case_id=case_id,
+        artifact_type="SOURCE_VCF", filename="source.vcf", media_type="text/vcf",
+        size_bytes=12, sha256="b" * 64, storage_uri="file:///fixture/source.vcf",
+        genome_build="GRCh38", specimen_id=None, paired_artifact_id=None,
+        validation_status="VALIDATED", metadata_json={},
+    ))
+    db.flush()
     db.add(Analysis(
         id=analysis_id,
         case_id=case_id,
@@ -33,7 +56,7 @@ def _seed_analysis(db, *, organization_id, user_id, case_id, analysis_id, parent
         status="SUCCEEDED",
         queue_task_id=None,
         reference_build="GRCh38",
-        configuration={},
+        configuration={"input_artifact_id": str(source_artifact_id)},
         started_at=datetime.now(UTC),
         completed_at=datetime.now(UTC),
         created_by=user_id,
@@ -108,8 +131,103 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
                 db, organization_id=organization_id, user_id=user_id,
                 case_id=case_id, analysis_id=child_id, parent_id=parent_id, version=2,
             )
+            member_id = uuid4()
+            db.add(PedigreeMember(
+                id=member_id, case_id=case_id, member_identifier="proband",
+                relationship_to_proband="PROBAND", sex="UNKNOWN",
+                affected_status="AFFECTED", is_proband=True, sampled=True,
+                specimen_id=None, metadata_json={},
+            ))
+            db.flush()
             for analysis_id in (parent_id, child_id):
-                db.add(Classification(
+                artifact_id = uuid4()
+                db.add(Artifact(
+                    id=artifact_id, analysis_id=analysis_id, case_id=case_id,
+                    artifact_type="NORMALIZED_VCF", filename="normalized.vcf",
+                    media_type="text/vcf", size_bytes=12, sha256="e" * 64,
+                    storage_uri=f"file:///fixture/{analysis_id}/normalized.vcf",
+                    genome_build="GRCh38", specimen_id=None, paired_artifact_id=None,
+                    validation_status="VALIDATED", metadata_json={"stage": "normalize"},
+                ))
+                db.add(WorkflowStep(
+                    id=uuid4(), analysis_id=analysis_id, step_id="normalize",
+                    step_order=1, status="SUCCEEDED", attempt=1,
+                    input_artifacts=[],
+                    output_artifacts=[{"artifact_id": str(artifact_id), "sha256": "e" * 64}],
+                    error_code=None, error_message=None,
+                    metadata_json={"tool": "bcftools", "tool_version": "1.19"},
+                ))
+                db.add(WorkflowDecisionRecord(
+                    id=uuid4(), analysis_id=analysis_id, step_id="normalize", attempt=1,
+                    outcome_kind="SUCCESS", action="CONTINUE", code="STAGE_COMPLETED",
+                    message="Normalization completed.", retryable=False,
+                    fallback_allowed=False, lab_action_required=False,
+                    resource_id=None, fallback_resource_id=None,
+                    metadata_json={"output_sha256": "e" * 64},
+                ))
+                db.add(PhenotypeObservation(
+                    id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+                    hpo_id="HP:0001250", label="Seizure", present=True,
+                    phenotype_status="PRESENT", onset="CHILDHOOD", severity="MODERATE",
+                    source="CLINICAL_INPUT", evidence={"source": "fixture"},
+                ))
+                db.add(TechnicalQCObservation(
+                    id=uuid4(), analysis_id=analysis_id, artifact_id=None,
+                    metric_name="mean_depth", metric_value=42.0, metric_unit="x",
+                    status="PASS", source="LAB_QC", source_version="qc-v1",
+                    metadata_json={"fixture": "known-answer"},
+                ))
+                db.add(QCAssessment(
+                    id=uuid4(), analysis_id=analysis_id, assay_id=None,
+                    status="PASS", profile_name="germline", profile_version="1",
+                    metrics_json={"mean_depth": 42.0},
+                    evaluated_rules=[{"rule": "minimum_depth", "status": "PASS"}],
+                    gate_status="PASS", reviewer_note=None,
+                ))
+                db.add(ToolRun(
+                    id=uuid4(), analysis_id=analysis_id, tool_name="normalizer",
+                    tool_version="1.19", container_digest="sha256:fixture",
+                    command_fingerprint="c" * 64, parameters={"reference": "GRCh38"},
+                    status="SUCCEEDED", exit_code=0,
+                ))
+                db.add(SegregationObservation(
+                    id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
+                    pedigree_member_id=member_id, genotype="0/1", zygosity="HET",
+                    phase="UNKNOWN", allele_observed="G", phenotype_status="AFFECTED",
+                    source="LAB_VCF", notes=None, metadata_json={},
+                ))
+                db.add(InheritanceAssessment(
+                    id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
+                    model="AUTOSOMAL_DOMINANT", status="COMPATIBLE", score=None,
+                    rationale="Heterozygous candidate; family phase unknown.",
+                    observation_fingerprint="d" * 64, reviewer_note=None,
+                    created_by="fixture-reviewer",
+                ))
+                db.add(ConfirmationRecord(
+                    id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
+                    version=1, supersedes_record_id=None, required=False,
+                    method=None, status="NOT_REQUIRED", result=None, laboratory=None,
+                    accession=None, performed_at=None, reviewed_by=None,
+                    reviewed_at=None, notes=None, metadata_json={},
+                ))
+                db.add(SecondaryFindingDecision(
+                    id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
+                    version=1, supersedes_decision_id=None,
+                    policy_name="secondary-policy", policy_version="1",
+                    eligibility="ELIGIBLE", consent_status="CONSENTED",
+                    disposition="REVIEW", status="PENDING_REVIEW",
+                    rationale="Requires human review.", gene_disease_context={"gene": "GENE1"},
+                    reviewed_by=None, reviewed_at=None,
+                ))
+                db.add(ReviewAction(
+                    id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+                    variant_id=variant_id, reviewer_id=user_id, action_type="NOTE_ADDED",
+                    sequence_number=1, reason="Review fixture", before_state=None,
+                    after_state={"note": "reviewed"}, expected_version=0,
+                    resulting_version=1,
+                ))
+            for analysis_id in (parent_id, child_id):
+                classification = Classification(
                     id=uuid4(),
                     variant_id=variant_id,
                     analysis_id=analysis_id,
@@ -125,6 +243,16 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
                     review_status="PENDING",
                     version=1,
                     review_version=0,
+                )
+                db.add(classification)
+                db.add(ReportabilityDecision(
+                    id=uuid4(), analysis_id=analysis_id, variant_id=variant_id,
+                    classification_id=classification.id, version=1,
+                    supersedes_decision_id=None, policy_name="fixture-policy",
+                    policy_version="1", disposition="REPORTABLE_CANDIDATE",
+                    priority_score=0, priority_band="ROUTINE", reasons=["review"],
+                    status="PENDING_REVIEW", review_version=0, reviewed_by=None,
+                    approved_at=None,
                 ))
             db.commit()
 
@@ -136,6 +264,170 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
             assert result["reproducible"] is True
             assert result["decision"] == "MATCH"
             assert result["parent"]["workflow_version"] != result["child"]["workflow_version"]
+
+            child_analysis = db.get(Analysis, child_id)
+            child_source = db.get(
+                Artifact, UUID(child_analysis.configuration["input_artifact_id"])
+            )
+            child_source.sha256 = "f" * 64
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+            child_source.sha256 = "b" * 64
+
+            child_source.sha256 = "z" * 64
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "INELIGIBLE_INCOMPLETE_PROVENANCE"
+            assert result["child"]["provenance_issues"] == [
+                "SOURCE_ARTIFACT_MISSING_OR_UNVERIFIED"
+            ]
+            child_source.sha256 = "b" * 64
+
+            child_review = db.query(ReviewAction).filter_by(analysis_id=child_id).one()
+            child_review.action_type = "REJECTED"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_review.action_type = "NOTE_ADDED"
+            child_secondary = db.query(SecondaryFindingDecision).filter_by(
+                analysis_id=child_id
+            ).one()
+            child_secondary.consent_status = "NOT_DOCUMENTED"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_secondary.consent_status = "CONSENTED"
+            child_step = db.query(WorkflowStep).filter_by(analysis_id=child_id).one()
+            child_step.status = "BLOCKED"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_step.status = "SUCCEEDED"
+            child_artifact = db.query(Artifact).filter_by(analysis_id=child_id).one()
+            child_artifact.sha256 = "f" * 64
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "INELIGIBLE_INCOMPLETE_PROVENANCE"
+            assert result["child"]["provenance_issues"] == [
+                "WORKFLOW_ARTIFACT_CHECKSUM_MISMATCH:normalize:output"
+            ]
+
+            child_artifact.sha256 = "e" * 64
+            child_step.output_artifacts = [
+                {"artifact_id": str(child_artifact.id), "sha256": "invalid"}
+            ]
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "INELIGIBLE_INCOMPLETE_PROVENANCE"
+            assert result["child"]["provenance_issues"] == [
+                "WORKFLOW_ARTIFACT_CHECKSUM_MISMATCH:normalize:output"
+            ]
+            child_step.output_artifacts = [
+                {"artifact_id": str(child_artifact.id), "sha256": "e" * 64}
+            ]
+
+            child_inheritance = db.query(InheritanceAssessment).filter_by(
+                analysis_id=child_id
+            ).one()
+            child_inheritance.status = "INCOMPATIBLE"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_inheritance.status = "COMPATIBLE"
+            child_segregation = db.query(SegregationObservation).filter_by(
+                analysis_id=child_id
+            ).one()
+            child_segregation.genotype = "1/1"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_segregation.genotype = "0/1"
+            child_reportability = db.query(ReportabilityDecision).filter_by(
+                analysis_id=child_id
+            ).one()
+            child_reportability.status = "APPROVED"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_reportability.status = "PENDING_REVIEW"
+            child_confirmation = db.query(ConfirmationRecord).filter_by(
+                analysis_id=child_id
+            ).one()
+            child_confirmation.status = "COMPLETED"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_phenotype = db.query(PhenotypeObservation).filter_by(
+                analysis_id=child_id
+            ).one()
+            child_phenotype.present = False
+            child_phenotype.phenotype_status = "ABSENT"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+            assert result["scientific_outputs_match"] is False
+
+            child_phenotype.present = True
+            child_phenotype.phenotype_status = "PRESENT"
+            child_qc = db.query(QCAssessment).filter_by(analysis_id=child_id).one()
+            child_qc.gate_status = "REVIEW_REQUIRED"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_qc.gate_status = "PASS"
+            child_tool = db.query(ToolRun).filter_by(analysis_id=child_id).one()
+            child_tool.tool_version = "1.20"
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
+
+            child_tool.tool_version = "1.19"
+            child_analysis.configuration = {
+                **child_analysis.configuration,
+                "normalization_policy": "different",
+            }
+            db.flush()
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            assert result["decision"] == "MISMATCH"
     finally:
         engine.dispose()
 
@@ -324,6 +616,9 @@ def test_reanalysis_manifest_is_ineligible_without_checksums(tmp_path):
             assert result["reproducible"] is False
             assert result["decision"] == "INELIGIBLE_UNPINNED_RESOURCES"
             assert result["parent"]["unpinned_resources"] == ["ANNOTATION:Example provider"]
+            assert result["parent"]["provenance_issues"] == [
+                "SOURCE_ARTIFACT_MISSING_OR_UNVERIFIED"
+            ]
     finally:
         engine.dispose()
 

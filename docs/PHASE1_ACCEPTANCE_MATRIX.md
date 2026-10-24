@@ -320,3 +320,12 @@ Phase A remains PARTIAL. Scientific threshold qualification, live identity, depl
 | Production Redis broker requires authentication and clients use the same credential | PASS (configuration and application-start guard) | Production Compose requires a Redis password, enables `requirepass`, keeps the port unpublished, authenticates its health probe, and injects the credential into API/worker/Beat URLs. Production settings reject missing/weak AUTH URLs. Focused deployment/security suite: **33 passed**. Local live Redis execution was unavailable. Exact-SHA GitHub Actions run [40079418085](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40079418085) passed its production Compose validation. Redis ACL command restrictions, in-network TLS and laboratory qualification are not established. |
 
 This closes the unauthenticated broker configuration gap for the included Compose deployment. It does not establish deployed laboratory security or make the overall release ready; live tenant isolation, real workflow/recovery, truth-set validation and backup/restore remain unverified.
+
+
+## 2026-10-24 reanalysis reproducibility fingerprint follow-up
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Reanalysis comparison accounts for source VCF and persisted scientific, QC, inheritance, review, reportability and stage execution state | PASS (controlled persisted SQLite scope) | Comparator fingerprints source checksum and relevant persisted outputs/decisions, excludes random row IDs, and rejects invalid/missing source or workflow artifact provenance as ineligible. Regression suite exercises these cases and scientific-output mismatches; exact command and **26 passed** are recorded in `MASTER_AUDIT_AND_REMEDIATION.md`. No real laboratory parent/child pair or PostgreSQL execution was available. |
+
+The CLI/service regression is database-backed but uses controlled fixtures. It does not demonstrate reproducibility against real laboratory data, scientific validation, or lab qualification. Overall Phase A remains PARTIAL.

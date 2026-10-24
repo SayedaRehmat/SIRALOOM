@@ -39,7 +39,10 @@ def main() -> int:
     print(json.dumps(result, indent=2, sort_keys=True))
     if result["decision"] == "MATCH":
         return 0
-    if result["decision"] == "INELIGIBLE_UNPINNED_RESOURCES":
+    if result["decision"] in {
+        "INELIGIBLE_UNPINNED_RESOURCES",
+        "INELIGIBLE_INCOMPLETE_PROVENANCE",
+    }:
         return 2
     return 1
 

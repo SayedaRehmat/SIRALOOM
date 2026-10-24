@@ -19,6 +19,7 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisResourceSnapshot,
+    Artifact,
     Case,
     Classification,
     Organization,
@@ -33,6 +34,7 @@ from backend.app.infrastructure.db.models import (
         ("MATCH", 0),
         ("MISMATCH", 1),
         ("INELIGIBLE_UNPINNED_RESOURCES", 2),
+        ("INELIGIBLE_INCOMPLETE_PROVENANCE", 2),
     ],
 )
 def test_comparison_cli_reports_decision_and_exit_code(
@@ -199,6 +201,15 @@ def test_comparison_cli_uses_real_parent_child_database_rows(
                 (parent_id, None, 1, parent_result),
                 (child_id, parent_id, 2, child_result),
             ):
+                source_artifact_id = uuid4()
+                db.add(Artifact(
+                    id=source_artifact_id, analysis_id=None, case_id=case_id,
+                    artifact_type="SOURCE_VCF", filename="source.vcf",
+                    media_type="text/vcf", size_bytes=12, sha256="b" * 64,
+                    storage_uri=f"file:///fixture/{source_artifact_id}.vcf",
+                    genome_build="GRCh38", specimen_id=None, paired_artifact_id=None,
+                    validation_status="VALIDATED", metadata_json={},
+                ))
                 db.add(Analysis(
                     id=analysis_id,
                     case_id=case_id,
@@ -210,7 +221,7 @@ def test_comparison_cli_uses_real_parent_child_database_rows(
                     status="SUCCEEDED",
                     queue_task_id=None,
                     reference_build="GRCh38",
-                    configuration={},
+                    configuration={"input_artifact_id": str(source_artifact_id)},
                     started_at=now,
                     completed_at=now,
                     created_by=user_id,
