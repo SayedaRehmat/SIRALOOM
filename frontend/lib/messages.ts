@@ -783,6 +783,7 @@ export type TranslationKey =
   | "review.analysisPlaceholder"
   | "review.hpoLabelPlaceholder"
   | "review.memberPlaceholder"
+  | "review.linkSpecimen"
   | "review.genotypePlaceholder"
   | "review.inheritancePlaceholder"
   | "review.rationalePlaceholder"
@@ -1247,6 +1248,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.analysisPlaceholder": "Analysis UUID",
     "review.hpoLabelPlaceholder": "Optional phenotype label",
     "review.memberPlaceholder": "Member ID e.g. FATHER",
+    "review.linkSpecimen": "Link case specimen (optional)",
     "review.genotypePlaceholder": "Genotype e.g. 0/1, 1/1, 0/0",
     "review.inheritancePlaceholder": "Optional reviewer note on inheritance interpretation",
     "review.rationalePlaceholder": "Reviewer rationale",
@@ -2151,6 +2153,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.analysisPlaceholder": "معرّف UUID للتحليل",
     "review.hpoLabelPlaceholder": "تسمية النمط الظاهري اختيارية",
     "review.memberPlaceholder": "معرّف الفرد، مثال: FATHER",
+    "review.linkSpecimen": "ربط بعينة الحالة (اختياري)",
     "review.genotypePlaceholder": "النمط الجيني، مثال: 0/1 أو 1/1 أو 0/0",
     "review.inheritancePlaceholder": "ملاحظة اختيارية للمراجع حول تفسير الوراثة",
     "review.rationalePlaceholder": "مبررات المراجع",

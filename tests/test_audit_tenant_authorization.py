@@ -175,6 +175,60 @@ def test_pedigree_member_cannot_reference_specimen_from_another_case(monkeypatch
     assert exc.value.detail == "Specimen not found in this case"
 
 
+def test_sampled_pedigree_member_persists_case_specimen_link(monkeypatch):
+    from backend.app.infrastructure.db.models import Case, PedigreeMember, Specimen
+
+    case_id, specimen_id, organization_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+    specimen = SimpleNamespace(id=specimen_id, case_id=case_id)
+
+    class _CaseDb:
+        def __init__(self):
+            self.added = []
+            self.committed = False
+
+        def get(self, model, _object_id):
+            return {Case: case, Specimen: specimen}.get(model)
+
+        def scalar(self, _statement):
+            return None
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.committed = True
+
+    class _Audit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "AuditService", _Audit)
+    db = _CaseDb()
+
+    result = pedigree.add_member(
+        case_id=case_id,
+        body=pedigree.MemberInput(
+            member_identifier="father-sample",
+            sampled=True,
+            specimen_id=specimen_id,
+        ),
+        db=db,
+        principal=_principal(organization_id),
+    )
+
+    member = next(row for row in db.added if isinstance(row, PedigreeMember))
+    assert member.sampled is True
+    assert member.specimen_id == specimen_id
+    assert result["specimen_id"] == str(specimen_id)
+    assert db.committed is True
+
+
 def test_pedigree_relationship_rejects_cycle_before_persisting(monkeypatch):
     from backend.app.infrastructure.db.models import Case, PedigreeMember, PedigreeRelationship
 
