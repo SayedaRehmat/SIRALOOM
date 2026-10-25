@@ -14,9 +14,12 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID, uuid4
 
-from backend.app.acmg.engine import ClassificationResult, CriterionAssessment
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from backend.app.acmg.classification_engine import ClassificationEngineRouter
 from backend.app.acmg.combination_method import STANDARD_ACMG
+from backend.app.acmg.engine import ClassificationResult, CriterionAssessment
 from backend.app.acmg.evaluators import (
     EvaluatorConfigurationError,
     EvaluatorResult,
@@ -25,16 +28,16 @@ from backend.app.acmg.evaluators import (
     evaluate_pp3_bp4,
     evaluate_pvs1,
 )
-from backend.app.acmg.specification_selection import ClinGenSpecificationSelector
 from backend.app.acmg.source_assessment import (
     SourceCriterionAssessment,
     assess_source_assertions,
 )
+from backend.app.acmg.specification_selection import ClinGenSpecificationSelector
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
+    ACMGSourceAssertion,
     Analysis,
     Annotation,
-    ACMGSourceAssertion,
     Classification,
     ClinGenSpecification,
     Evidence,
@@ -42,8 +45,6 @@ from backend.app.infrastructure.db.models import (
     Resource,
     Variant,
 )
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 SUPPORTED_AUTOMATED_CRITERIA = {"PM2", "BA1", "BS1", "PP3", "BP4", "PVS1"}
 @dataclass(frozen=True)
@@ -157,7 +158,7 @@ class ACMGSpecificationAssessmentService:
             specification_resource=specification_resource,
         )
         if binding.status != "SELECTED" or row is None:
-            return AutomatedAssessmentResult(binding.status, binding, tuple(), None)
+            return AutomatedAssessmentResult(binding.status, binding, (), None)
 
         profile = dict(row.criteria or {})
         # Combination-method detection governs only the final combination stage.
@@ -392,6 +393,24 @@ class ACMGSpecificationAssessmentService:
                     "classification_automation": "REQUIRES_REVIEW",
                     "review_reason": "CONFLICTING_CRITERION_PROPOSALS",
                     "merge_error": merge_error,
+                },
+            )
+
+        reused_evidence = _reused_evidence_across_criteria(merged)
+        if reused_evidence:
+            return AutomatedAssessmentResult(
+                "REQUIRES_REVIEW",
+                binding,
+                tuple(evaluator_results),
+                None,
+                tuple(merged),
+                tuple(source_results),
+                combination_method=combination.method,
+                combination_metadata={
+                    **combination_metadata,
+                    "classification_automation": "REQUIRES_REVIEW",
+                    "review_reason": "EVIDENCE_REUSED_ACROSS_CRITERIA",
+                    "reused_evidence": reused_evidence,
                 },
             )
 
@@ -687,6 +706,29 @@ def _merge_criterion_assessments(
     if conflicts:
         return list(merged.values()), "Conflicting criterion proposals require human review: " + "; ".join(conflicts)
     return list(merged.values()), None
+
+
+def _reused_evidence_across_criteria(
+    assessments: list[CriterionAssessment],
+) -> list[dict[str, Any]]:
+    """Find one persisted evidence record contributing to multiple criteria.
+
+    A source snapshot may support more than one scientific observation, but its
+    identity alone cannot establish that those uses are independent. Until an
+    explicitly qualified, specification-aware independence assessment exists,
+    such combinations must be reviewed rather than counted automatically.
+    """
+    evidence_criteria: dict[str, set[str]] = {}
+    for assessment in assessments:
+        for evidence_id in assessment.evidence_ids:
+            evidence_criteria.setdefault(str(evidence_id), set()).add(
+                assessment.criterion
+            )
+    return [
+        {"evidence_id": evidence_id, "criteria": sorted(criteria)}
+        for evidence_id, criteria in sorted(evidence_criteria.items())
+        if len(criteria) > 1
+    ]
 
 
 def _resolve_evidence_ids(
