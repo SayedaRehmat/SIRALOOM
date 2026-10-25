@@ -5,6 +5,14 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+### 2026-10-25 narrow HPO resource initialization failure handling
+
+- **Finding:** HPO ontology and HPOA initialization wrapped resource-plan resolution, execution-contract validation, provider registration and pinned-file parsing in `except Exception`. An unexpected internal/database/programming error could therefore be converted to an optional-resource limitation and the evidence stage could continue as if only the resource were unavailable.
+- **Correction:** these boundaries now catch only the expected profile/runtime resource, execution-contract, provider-registry, and respective HPO/HPOA validation exceptions. Unexpected exceptions reach the existing evidence-stage failure/retry path instead of being reported as missing scientific evidence.
+- **Regression evidence:** expanded the actual worker integration test with injected unexpected resolver errors for both `PHENOTYPE_ONTOLOGY` and `DISEASE_PHENOTYPE_ASSOCIATION`; each asserts a failed evidence stage (`EVIDENCE_BUILD_FAILED`) without provider-limitation metadata. Existing invalid-ontology behavior remains covered.
+- **Verification:** targeted HPO failure cases and invalid-resource fixture — **3 passed**. Related worker/recovery, resource, ClinGen, evidence, HPO OBO/HPOA provider and reanalysis suites — **84 passed**, one existing Starlette/httpx deprecation warning. `.venv/bin/python -m py_compile` and `git diff --check` passed. No live HPO resources or lab deployment were used.
+- **Repository state:** implementation is uncommitted on `main` at `709292b3c258306393a49b5dcfe11a818ab6a2d9`; unrelated untracked `ci.db` and `siraloom.egg-info/` are preserved. Phase A remains **PARTIAL**; this does not establish live authentication, deployed tenant isolation, truth-set validation, or deployment qualification.
+
 ### 2026-10-25 distinguish ClinGen provider failures from evidence-builder failures
 
 - **Finding:** three evidence-provider blocks caught every `Exception` around both the external/provider query and subsequent local persistence/evidence mapping. As a result, a programming error or a database failure after a successful provider response could be recorded as a provider limitation, obscuring the true stage failure and misrepresenting evidence availability.

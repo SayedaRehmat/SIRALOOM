@@ -29,6 +29,8 @@ from backend.app.adapters.clingen.variant_pathogenicity import (
     ClinGenVariantPathogenicityProvider,
 )
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
+from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
+from backend.app.adapters.phenotype.hpoa import HPOAError
 from backend.app.adapters.population.gnomad import (
     GnomADGraphQLProvider,
     GnomADProviderError,
@@ -54,7 +56,7 @@ from backend.app.domain.profile_runtime_resources import (
     resolve_profile_runtime_resource,
     resolve_profile_runtime_resources,
 )
-from backend.app.domain.provider_registry import register_builtin_providers
+from backend.app.domain.provider_registry import ProviderRegistryError, register_builtin_providers
 from backend.app.domain.reanalysis import (
     STEP_ORDER,
     mark_reanalysis_completed,
@@ -3659,7 +3661,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "contract_hash": hpo_execution.contract_hash,
                                 "ontology_release": hpo_ontology.release,
                             }
-                    except Exception as exc:
+                    except (
+                        ProfileRuntimeResourceError,
+                        ResourceExecutionError,
+                        ProviderRegistryError,
+                        HPOOntologyError,
+                    ) as exc:
                         if hpo_resource is not None and hpo_execution is not None:
                             failed_execution = start_resource_execution(
                                 db,
@@ -3786,7 +3793,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "hpoa_release": hpoa_provider.release,
                                 "hpo_release": hpoa_provider.hpo_release,
                             }
-                    except Exception as exc:
+                    except (
+                        ProfileRuntimeResourceError,
+                        ResourceExecutionError,
+                        ProviderRegistryError,
+                        HPOAError,
+                    ) as exc:
                         if hpoa_resource is not None and hpoa_execution is not None:
                             failed_execution = start_resource_execution(
                                 db,

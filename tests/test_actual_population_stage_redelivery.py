@@ -47,18 +47,21 @@ from backend.app.infrastructure.db.models import (
         "hpoa_license",
         "inject_internal_evidence_error",
         "inject_clingen_provider_error",
+        "inject_hpo_resource_resolution_error",
     ),
     [
-        (False, True, True, False, False),
-        (True, True, True, False, False),
-        (False, False, True, False, False),
-        (True, False, True, False, False),
-        (False, True, False, False, False),
-        (True, True, False, False, False),
-        (False, False, False, False, False),
-        (True, False, False, False, False),
-        (False, True, True, True, False),
-        (False, True, True, False, True),
+        (False, True, True, False, False, None),
+        (True, True, True, False, False, None),
+        (False, False, True, False, False, None),
+        (True, False, True, False, False, None),
+        (False, True, False, False, False, None),
+        (True, True, False, False, False, None),
+        (False, False, False, False, False, None),
+        (True, False, False, False, False, None),
+        (False, True, True, True, False, None),
+        (False, True, True, False, True, None),
+        (False, True, True, False, False, "PHENOTYPE_ONTOLOGY"),
+        (False, True, True, False, False, "DISEASE_PHENOTYPE_ASSOCIATION"),
     ],
     ids=[
         "available-frequency-licensed-hpoa-hpo-ready",
@@ -71,11 +74,14 @@ from backend.app.infrastructure.db.models import (
         "no-match-ontology-failure-unlicensed-hpoa",
         "internal-evidence-builder-failure-is-not-provider-limitation",
         "typed-clingen-provider-failure-is-recorded-as-limitation",
+        "internal-hpo-ontology-resolution-error-is-not-resource-limitation",
+        "internal-hpoa-resolution-error-is-not-resource-limitation",
     ],
 )
 def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
     monkeypatch, tmp_path, no_match, ontology_valid, hpoa_license,
     inject_internal_evidence_error, inject_clingen_provider_error,
+    inject_hpo_resource_resolution_error,
 ):
     import importlib
 
@@ -809,6 +815,35 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             return real_step(db, received_analysis_id, step_id)
 
         monkeypatch.setattr(workflow, "_step", stop_after_population)
+        if inject_hpo_resource_resolution_error:
+            real_resolver = workflow.resolve_profile_runtime_resources
+
+            def fail_hpo_resolution(db, *, analysis_id, capability, provider_id=None):
+                if capability == inject_hpo_resource_resolution_error:
+                    raise RuntimeError("injected internal resource resolver defect")
+                return real_resolver(
+                    db,
+                    analysis_id=analysis_id,
+                    capability=capability,
+                    provider_id=provider_id,
+                )
+
+            monkeypatch.setattr(
+                workflow,
+                "resolve_profile_runtime_resources",
+                fail_hpo_resolution,
+            )
+            workflow.run_variant_analysis(analysis_id)
+            with LocalSession() as db:
+                current = db.get(Analysis, analysis_id)
+                evidence_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "build_evidence",
+                ))
+                assert current.status == AnalysisStatus.FAILED
+                assert evidence_step.error_code == "EVIDENCE_BUILD_FAILED"
+                assert "provider_limitations" not in (evidence_step.metadata_json or {})
+            return
         if inject_internal_evidence_error:
             evidence_engine_module = importlib.import_module(
                 "backend.app.evidence.engine"
