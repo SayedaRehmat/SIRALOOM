@@ -233,3 +233,34 @@ def normalize_build(requested: str | None) -> str | None:
     value = requested.strip()
     aliases = {"hg38": "GRCh38", "hg19": "GRCh37", "grch38": "GRCh38", "grch37": "GRCh37"}
     return aliases.get(value.lower(), value)
+
+
+def validate_specimen_sample_identity(
+    result: ValidationResult,
+    expected_sample_name: str | None,
+) -> ValidationResult:
+    """Reject a structurally valid VCF that contradicts an explicit specimen mapping.
+
+    A missing mapping remains unresolved for downstream accession workflow; it is
+    never inferred from the specimen identifier. Analysis creation requires the
+    mapping before execution.
+    """
+    expected = (expected_sample_name or "").strip()
+    if result.status != "VALID" or not expected:
+        return result
+    if result.sample_names == [expected]:
+        return result
+    observed = ", ".join(result.sample_names) if result.sample_names else "no named samples"
+    error = (
+        f"VCF sample identity mismatch: specimen is mapped to {expected!r}, "
+        f"but the VCF contains {observed}."
+    )
+    return ValidationResult(
+        "INVALID",
+        result.file_kind,
+        result.record_count,
+        result.sample_names,
+        result.detected_build,
+        [*result.errors, error],
+        result.warnings,
+    )

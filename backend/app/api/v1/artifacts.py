@@ -11,7 +11,12 @@ from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
 from backend.app.application.entitlements import effective_max_upload_bytes
-from backend.app.auth.authorization import CASE_WRITE_ROLES, get_accessible_artifact, require_case_permission, require_role
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    get_accessible_artifact,
+    require_case_permission,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.config import settings
 from backend.app.domain.artifact_integrity import (
@@ -25,6 +30,7 @@ from backend.app.domain.ingestion import (
     classify_filename,
     normalize_build,
     validate_index,
+    validate_specimen_sample_identity,
     validate_vcf,
 )
 from backend.app.domain.storage_capacity import preflight_upload_capacity
@@ -223,8 +229,24 @@ async def upload_artifact(
 
         if kind == "VCF":
             result = validate_vcf(staged)
+            if specimen is not None:
+                result = validate_specimen_sample_identity(
+                    result,
+                    (specimen.metadata_json or {}).get("vcf_sample_name"),
+                )
             if result.detected_build and result.detected_build != requested_build:
-                result = type(result)("INVALID", result.file_kind, result.record_count, result.sample_names, result.detected_build, [f"VCF header indicates {result.detected_build}, but the selected genome build is {requested_build}."], result.warnings)
+                result = type(result)(
+                    "INVALID",
+                    result.file_kind,
+                    result.record_count,
+                    result.sample_names,
+                    result.detected_build,
+                    [
+                        *result.errors,
+                        f"VCF header indicates {result.detected_build}, but the selected genome build is {requested_build}.",
+                    ],
+                    result.warnings,
+                )
             artifact_type = ArtifactType.VCF
             validation_metadata = {
                 "validation": {

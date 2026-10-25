@@ -1,9 +1,16 @@
-from pathlib import Path
 import gzip
+from pathlib import Path
+
 import pytest
 
+from backend.app.domain.ingestion import (
+    ValidationResult,
+    classify_filename,
+    validate_index,
+    validate_specimen_sample_identity,
+    validate_vcf,
+)
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
-from backend.app.domain.ingestion import classify_filename, validate_index, validate_vcf
 
 VALID_VCF = """##fileformat=VCFv4.3
 ##reference=GRCh38
@@ -28,6 +35,37 @@ def test_vcf_validation_reads_real_content(tmp_path: Path):
     assert result.status == "VALID"
     assert result.record_count == 1
     assert result.detected_build == "GRCh38"
+
+
+def test_vcf_upload_validation_rejects_explicit_specimen_sample_mismatch():
+    result = ValidationResult(
+        "VALID", "VCF", 1, ["OTHER_SAMPLE"], "GRCh38", [], []
+    )
+
+    checked = validate_specimen_sample_identity(result, "EXPECTED_SAMPLE")
+
+    assert checked.status == "INVALID"
+    assert checked.sample_names == ["OTHER_SAMPLE"]
+    assert "sample identity mismatch" in checked.errors[0]
+
+
+def test_vcf_sample_identity_is_not_inferred_when_specimen_mapping_is_missing():
+    result = ValidationResult("VALID", "VCF", 1, ["VCF_SAMPLE"], "GRCh38", [], [])
+
+    checked = validate_specimen_sample_identity(result, None)
+
+    assert checked is result
+
+
+def test_vcf_sample_identity_validation_requires_exact_single_sample_match():
+    multi_sample = ValidationResult(
+        "VALID", "VCF", 1, ["EXPECTED_SAMPLE", "OTHER_SAMPLE"], "GRCh38", [], []
+    )
+
+    checked = validate_specimen_sample_identity(multi_sample, "EXPECTED_SAMPLE")
+
+    assert checked.status == "INVALID"
+    assert "EXPECTED_SAMPLE, OTHER_SAMPLE" in checked.errors[0]
 
 
 def test_vcf_validation_warns_when_info_number_g_cannot_be_checked(tmp_path: Path):
