@@ -10,9 +10,19 @@ from sqlalchemy.orm.attributes import flag_modified
 from backend.app.adapters.annotation.genebe import GeneBeProvider
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
+from backend.app.domain.resource_execution import ResolvedResourceExecution, start_resource_execution
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Analysis, Annotation, Resource, ResourceQualification
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Annotation,
+    Case,
+    Organization,
+    Resource,
+    ResourceExecutionRecord,
+    ResourceQualification,
+    User,
+)
 
 
 def test_annotation_batch_provenance_is_consistent_across_all_payloads():
@@ -178,6 +188,148 @@ def test_genebe_adapter_uses_only_contract_endpoint():
                 dataset=None,
             )
         )
+
+
+@pytest.mark.parametrize(
+    ("capability", "provider"),
+    [
+        ("CLINGEN_VARIANT_ASSERTION", "ClinGen Variant Pathogenicity"),
+        ("CLINGEN_GENE_DISEASE_VALIDITY", "ClinGen Gene-Disease Validity"),
+    ],
+)
+def test_profile_bound_clingen_execution_record_persists_for_evidence_stage(
+    capability, provider
+):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
+    resource_id, qualification_id = uuid4(), uuid4()
+    contract = ResourceExecutionContract(
+        provider_id=provider,
+        provider_version="fixture-v1",
+        access_method="LOCAL",
+        endpoint=None,
+        location=f"/lab/{capability}.tsv",
+        dataset="fixture-release",
+    )
+    resolved = ResolvedResourceExecution(
+        resource_id=resource_id,
+        resource_version="fixture-release",
+        qualification_id=qualification_id,
+        qualification_version="qualification-v1",
+        contract=contract,
+        contract_hash="a" * 64,
+    )
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id,
+                name="ClinGen resource execution test",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email="clingen-execution@test.local",
+                display_name="ClinGen execution test",
+                role="ADMIN",
+                status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=f"CLINGEN-{case_id}",
+                status="OPEN",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.flush()
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1",
+                workflow_version="test",
+                status="RUNNING",
+                queue_task_id="clingen-execution-test",
+                reference_build="GRCh38",
+                configuration={
+                    "resource_profile_id": "WES_GRCh38_STANDARD",
+                    "resource_plan": {
+                        "status": "READY_WITH_LIMITATIONS",
+                        "selected": [{
+                            "capability": capability,
+                            "resource_id": str(resource_id),
+                            "execution": resolved.snapshot,
+                        }],
+                    },
+                },
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.add(Resource(
+                id=resource_id,
+                organization_id=organization_id,
+                name=provider,
+                provider=provider,
+                resource_type="EVIDENCE",
+                version="fixture-release",
+                genome_build=None,
+                access_method="LOCAL",
+                license_text=None,
+                checksum="b" * 64,
+                location=contract.location,
+                status="ACTIVE",
+                population_definition=None,
+                metadata_json={},
+            ))
+            db.flush()
+            db.add(ResourceQualification(
+                id=qualification_id,
+                resource_id=resource_id,
+                qualification_version="qualification-v1",
+                status="QUALIFIED",
+                checks_json={"execution_contract": contract.as_dict()},
+                qualified_by=user_id,
+                qualified_at=None,
+            ))
+            db.flush()
+
+            row = start_resource_execution(
+                db,
+                analysis_id=analysis_id,
+                step_id="build_evidence",
+                attempt=1,
+                resolved=resolved,
+                requested_resource_id=resource_id,
+                fallback_resource_id=None,
+                batch_key="clingen-fixture",
+                metadata={"execution_kind": capability},
+            )
+            db.flush()
+            execution_id = row.id
+            db.commit()
+
+        with Session(engine) as db:
+            persisted = db.get(ResourceExecutionRecord, execution_id)
+            assert persisted is not None
+            assert persisted.resource_id == resource_id
+            assert persisted.qualification_id == qualification_id
+            assert persisted.step_id == "build_evidence"
+            assert persisted.provider_id == provider
+            assert persisted.status == "STARTED"
+            assert persisted.metadata_json == {"execution_kind": capability}
+    finally:
+        engine.dispose()
 
 
 def test_gnomad_adapter_uses_only_contract_endpoint_and_dataset():
