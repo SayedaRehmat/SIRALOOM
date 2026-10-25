@@ -6,15 +6,24 @@ import pytest
 from backend.app.domain.resource_execution import (
     ResourceExecutionError,
     _assert_profile_bound_resource_execution,
+    start_resource_execution,
 )
+from backend.app.domain.resource_source_contract import ResourceExecutionContract
 
 
 class _DB:
     def __init__(self, analysis):
         self.analysis = analysis
+        self.added = []
 
     def get(self, model, analysis_id):
         return self.analysis
+
+    def add(self, row):
+        self.added.append(row)
+
+    def flush(self):
+        pass
 
 
 def _resolved(resource_id, *, version="1", qualification_id=None, qualification_version="1", contract_hash="hash"):
@@ -24,6 +33,14 @@ def _resolved(resource_id, *, version="1", qualification_id=None, qualification_
         qualification_id=qualification_id or uuid4(),
         qualification_version=qualification_version,
         contract_hash=contract_hash,
+        contract=ResourceExecutionContract(
+            provider_id="ClinGen Variant Pathogenicity",
+            provider_version="ERepo",
+            access_method="LOCAL",
+            endpoint=None,
+            location="/lab/clingen-variant.tsv",
+            dataset="ERepo",
+        ),
     )
 
 
@@ -111,6 +128,22 @@ def test_profile_bound_clingen_evidence_is_executable_in_build_evidence(capabili
         step_id="build_evidence",
         resolved=resolved,
     )
+
+    execution = start_resource_execution(
+        db,
+        analysis_id=uuid4(),
+        step_id="build_evidence",
+        attempt=1,
+        resolved=resolved,
+        requested_resource_id=resource_id,
+        fallback_resource_id=None,
+        batch_key="fixture-clingen-evidence",
+        metadata={"execution_kind": capability},
+    )
+    assert execution.resource_id == resource_id
+    assert execution.step_id == "build_evidence"
+    assert execution.metadata_json == {"execution_kind": capability}
+    assert db.added == [execution]
 
 
 @pytest.mark.parametrize(
