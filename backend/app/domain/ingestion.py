@@ -241,13 +241,24 @@ def validate_specimen_sample_identity(
 ) -> ValidationResult:
     """Reject a structurally valid VCF that contradicts an explicit specimen mapping.
 
-    A missing mapping remains unresolved for downstream accession workflow; it is
-    never inferred from the specimen identifier. Analysis creation requires the
-    mapping before execution.
+    A missing mapping is an accession validation failure; it is never inferred
+    from the specimen identifier. This keeps case readiness aligned with the
+    precondition enforced by analysis creation.
     """
     expected = (expected_sample_name or "").strip()
-    if result.status != "VALID" or not expected:
+    if result.status != "VALID":
         return result
+    if not expected:
+        error = "The specimen must have an explicit VCF sample name mapping before intake can pass."
+        return ValidationResult(
+            "INVALID",
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            [*result.errors, error],
+            result.warnings,
+        )
     if result.sample_names == [expected]:
         return result
     observed = ", ".join(result.sample_names) if result.sample_names else "no named samples"

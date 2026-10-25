@@ -49,12 +49,14 @@ def test_vcf_upload_validation_rejects_explicit_specimen_sample_mismatch():
     assert "sample identity mismatch" in checked.errors[0]
 
 
-def test_vcf_sample_identity_is_not_inferred_when_specimen_mapping_is_missing():
+def test_vcf_sample_identity_requires_explicit_specimen_mapping():
     result = ValidationResult("VALID", "VCF", 1, ["VCF_SAMPLE"], "GRCh38", [], [])
 
     checked = validate_specimen_sample_identity(result, None)
 
-    assert checked is result
+    assert checked.status == "INVALID"
+    assert checked.sample_names == ["VCF_SAMPLE"]
+    assert "explicit VCF sample name mapping" in checked.errors[0]
 
 
 def test_vcf_sample_identity_validation_requires_exact_single_sample_match():
