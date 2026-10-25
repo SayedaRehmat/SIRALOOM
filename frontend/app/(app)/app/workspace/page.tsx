@@ -6,6 +6,7 @@ import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
+import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 
 type Step = {
   step_id: string;
@@ -217,6 +218,9 @@ export default function Home() {
   const [review, setReview] = useState<ReviewBundle | null>(null);
   const [reportId, setReportId] = useState("");
   const [report, setReport] = useState<any>(null);
+  const [reportSignoutReason, setReportSignoutReason] = useState("");
+  const [sessionRole, setSessionRole] = useState<string | null>(null);
+  const [sessionRoleResolved, setSessionRoleResolved] = useState(false);
   const [exportId, setExportId] = useState("");
   const [exportStatus, setExportStatus] = useState("");
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -313,6 +317,21 @@ export default function Home() {
     apiFetch("/health")
       .then(() => setConnection("online"))
       .catch(() => setConnection("offline"));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    apiFetch("/auth/session")
+      .then((session) => {
+        if (active) setSessionRole(typeof session?.role === "string" ? session.role : null);
+      })
+      .catch(() => {
+        if (active) setSessionRole(null);
+      })
+      .finally(() => {
+        if (active) setSessionRoleResolved(true);
+      });
+    return () => { active = false; };
   }, []);
 
   const refreshCaseArtifacts = useCallback(async () => {
@@ -856,6 +875,7 @@ export default function Home() {
         body: JSON.stringify({ report_type: "CLINICAL_INTERPRETATION", language, include_full_evidence: false }),
       });
       setReportId(result.report_id);
+      setReportSignoutReason("");
       const next = await apiFetch(`/reports/${result.report_id}`);
       setReport(next);
       setMessage(`Report draft ${result.version} generated.`);
@@ -868,22 +888,34 @@ export default function Home() {
 
   const finalize = async () => {
     if (!reportId || !report) return;
+    if (!canSubmitReportSignout(sessionRole, reportSignoutReason)) {
+      if (!canFinalizeClinicalReports(sessionRole)) {
+        setMessage(t("workspace.reportSignoutRoleHelp"));
+        return;
+      }
+      setMessage(t("workspace.reportSignoutReasonRequired"));
+      return;
+    }
+    setBusy(true);
     try {
       const finalized = await apiFetch(`/reports/${reportId}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ expected_version: report.version, reason: reviewReason || t("workspace.finalReportApproved") }),
+        body: JSON.stringify({ expected_version: report.version, reason: reportSignoutReason.trim() }),
       });
       setReport((current: any) => current ? { ...current, status: finalized.status ?? "FINAL", approved_at: finalized.approved_at ?? current.approved_at } : current);
       try {
         const next = await apiFetch(`/reports/${reportId}`);
         setReport(next);
+        setReportSignoutReason(next.signout_reason ?? reportSignoutReason.trim());
         setMessage(t("workspace.reportFinalized"));
       } catch {
         setMessage(t("workspace.reportRefreshFailed"));
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("workspace.reportFinalizationFailed"));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -1238,7 +1270,7 @@ export default function Home() {
       </section>
 
       <section className="bottom-grid">
-        <section id="report" className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.reportSection")}</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div><div className="actions-row"><button className="primary" onClick={finalize} disabled={report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
+        <section id="report" className="panel report-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.reportSection")}</div><h3>{t("workspace.finalReport")}</h3></div>{report?.status && <span className={`badge ${statusTone(report.status)}`}>{prettyStatus(report.status)}</span>}</div>{!report ? <div className="empty"><strong>{t("workspace.noReportGenerated")}</strong><p>{t("workspace.reportPending")}</p></div> : <div className="report-preview"><div className="report-title">SIRALOOM Variant Report v{String(report.version)}</div><div className="report-summary">{String(report.content?.summary?.overall_result ?? t("workspace.reportArtifact"))}</div>{report.status !== "FINAL" && <label>{t("workspace.reportSignoutReason")}<textarea value={reportSignoutReason} onChange={(event) => setReportSignoutReason(event.target.value)} rows={3} disabled={!canFinalizeClinicalReports(sessionRole)} placeholder={t("workspace.reportSignoutReasonRequired")} /></label>}{!sessionRoleResolved ? <p className="quiet">{t("workspace.reportSignoutRoleChecking")}</p> : report.status !== "FINAL" && !canFinalizeClinicalReports(sessionRole) ? <p className="quiet">{t("workspace.reportSignoutRoleHelp")}</p> : null}<div className="actions-row"><button className="primary" onClick={finalize} disabled={busy || !sessionRoleResolved || !canSubmitReportSignout(sessionRole, reportSignoutReason) || report.status === "FINAL"}>{t("workspace.finalizeReport")}</button>{report.artifact_id && <button className="secondary" onClick={() => report.artifact_id && downloadAuthenticated(`/artifacts/${report.artifact_id}/download`, `siraloom-report-${report.artifact_id}.pdf`)}>{t("workspace.downloadPdf")}</button>}</div></div>}</section>
         <section id="audit" className="panel audit-panel"><div className="panel-head"><div><div className="section-kicker">{t("workspace.auditSection")}</div><h3>{t("workspace.caseTimeline")}</h3></div><span className="badge neutral">{auditEvents.length} {t("workspace.eventsCount")}</span></div><div className="audit-callout"><strong>{t("workspace.auditReconstructable")}</strong><p>{t("workspace.auditLead")}</p></div><div className="audit-timeline">{auditEvents.length === 0 ? <div className="empty small"><strong>{t("workspace.noAuditEvents")}</strong></div> : auditEvents.slice().reverse().slice(0, 20).map((event) => { const expanded = expandedAuditId === event.event_id; return <div className={`audit-event ${expanded ? "expanded" : ""}`} key={event.event_id} onClick={() => setExpandedAuditId(expanded ? null : event.event_id)}><span>{formatDate(event.occurred_at)}</span><div><strong>{prettyStatus(event.event_type)}</strong><small>{event.actor_type ?? "SYSTEM"} · {event.actor_id ?? "siraloom"}{event.operation ? ` · ${event.operation}` : ""}</small>{event.reason && <p>{event.reason}</p>}{expanded && <pre className="audit-json">{JSON.stringify({ before_state: event.before_state, after_state: event.after_state, input_artifacts: event.input_artifacts, output_artifacts: event.output_artifacts, software: event.software, workflow: event.workflow, resource_versions: event.resource_versions, subject: { type: event.subject_type, id: event.subject_id } }, null, 2)}</pre>}</div><span className="audit-toggle">{expanded ? "−" : "+"}</span></div>; })}</div><button className="secondary full" onClick={exportHistory} disabled={!caseId}>{t("workspace.exportHistory")}</button>{exportId && <><div className="keyline"><span>{t("workspace.export")}</span><code>{exportId}</code></div><div className="keyline"><span>{t("workspace.status")}</span><strong>{exportStatus ? prettyStatus(exportStatus) : t("workspace.queued")}</strong></div>{exportStatus === "SUCCEEDED" && <button className="secondary full" onClick={() => downloadAuthenticated(`/exports/${exportId}/download`, `siraloom-case-history-${exportId}.zip`)}>{t("workspace.downloadHistoryZip")}</button>}</>}</section>
       </section>
 

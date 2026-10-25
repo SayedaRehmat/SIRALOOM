@@ -23,3 +23,9 @@ export function canGenerateOrEvaluateReports(role) {
 export function canFinalizeClinicalReports(role) {
   return REPORT_FINALIZE_ROLES.has(role);
 }
+
+export function canSubmitReportSignout(role, reason) {
+  return canFinalizeClinicalReports(role)
+    && typeof reason === "string"
+    && reason.trim().length > 0;
+}

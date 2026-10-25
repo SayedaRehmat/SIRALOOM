@@ -453,6 +453,10 @@ export type TranslationKey =
   | "workspace.finalReport"
   | "workspace.noReportGenerated"
   | "workspace.reportPending"
+  | "workspace.reportSignoutReason"
+  | "workspace.reportSignoutReasonRequired"
+  | "workspace.reportSignoutRoleHelp"
+  | "workspace.reportSignoutRoleChecking"
   | "workspace.finalizeReport"
   | "workspace.downloadPdf"
   | "workspace.caseTimeline"
@@ -515,7 +519,6 @@ export type TranslationKey =
   | "workspace.moreEvidenceRequested"
   | "workspace.approvalReasonRequired"
   | "workspace.classificationApproved"
-  | "workspace.finalReportApproved"
   | "workspace.reportFinalized"
   | "workspace.reportFinalizationFailed"
   | "workspace.reportRefreshFailed"
@@ -1583,6 +1586,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.finalReport": "Final report",
     "workspace.noReportGenerated": "No report generated",
     "workspace.reportPending": "Report generation is downstream of reviewer-approved interpretation.",
+    "workspace.reportSignoutReason": "Report sign-out rationale",
+    "workspace.reportSignoutReasonRequired": "Enter the rationale for authorizing this report version.",
+    "workspace.reportSignoutRoleHelp": "Your laboratory role cannot authorize report sign-out.",
+    "workspace.reportSignoutRoleChecking": "Checking report authorization…",
     "workspace.finalizeReport": "Finalize report",
     "workspace.downloadPdf": "Download PDF",
     "workspace.caseTimeline": "Case timeline",
@@ -1645,7 +1652,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.moreEvidenceRequested": "More evidence requested; classification remains pending.",
     "workspace.approvalReasonRequired": "An approval reason is required.",
     "workspace.classificationApproved": "Classification approved.",
-    "workspace.finalReportApproved": "Final report approved by reviewer.",
     "workspace.reportFinalized": "Report finalized.",
     "workspace.reportFinalizationFailed": "Report finalization failed.",
     "workspace.reportRefreshFailed": "Report sign-out succeeded, but the latest report status could not be loaded. Refresh to confirm it.",
@@ -2497,6 +2503,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.finalReport": "التقرير النهائي",
     "workspace.noReportGenerated": "لم يتم إنشاء تقرير",
     "workspace.reportPending": "إنشاء التقرير يأتي بعد التفسير المعتمد من المراجع.",
+    "workspace.reportSignoutReason": "مبرر اعتماد التقرير",
+    "workspace.reportSignoutReasonRequired": "أدخل مبرر اعتماد إصدار هذا التقرير.",
+    "workspace.reportSignoutRoleHelp": "دورك في المختبر لا يملك صلاحية اعتماد التقرير.",
+    "workspace.reportSignoutRoleChecking": "جارٍ التحقق من صلاحية اعتماد التقرير…",
     "workspace.finalizeReport": "اعتماد التقرير",
     "workspace.downloadPdf": "تنزيل PDF",
     "workspace.caseTimeline": "الخط الزمني للحالة",
@@ -2559,7 +2569,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.moreEvidenceRequested": "تم طلب مزيد من الأدلة؛ يظل التصنيف معلقًا.",
     "workspace.approvalReasonRequired": "يلزم إدخال سبب للموافقة.",
     "workspace.classificationApproved": "تم اعتماد التصنيف.",
-    "workspace.finalReportApproved": "اعتمد المراجع التقرير النهائي.",
     "workspace.reportFinalized": "تم اعتماد التقرير نهائيًا.",
     "workspace.reportFinalizationFailed": "فشل اعتماد التقرير نهائيًا.",
     "workspace.reportRefreshFailed": "تم اعتماد التقرير نهائيًا، لكن تعذر تحميل الحالة الأحدث. حدّث الصفحة للتحقق.",
