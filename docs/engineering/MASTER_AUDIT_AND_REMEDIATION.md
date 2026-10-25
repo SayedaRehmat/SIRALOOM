@@ -6,6 +6,14 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+### 2026-10-25 validate QC source artifact evidence
+
+- **Finding:** the QC UI listed validated VCFs, but the API accepted any same-case analysis artifact as a QC source. Such a link could cite an invalid VCF or even a report PDF as the source for a technical QC measurement. A previously persisted bad reference also surfaced as an unhandled error on the quality read.
+- **Correction:** a shared QC provenance contract now requires a same-case/current-analysis VCF or normalized VCF, accepted validation status, and a 64-character hexadecimal SHA-256. Observation writes and artifact choices enforce it; snapshot creation/report eligibility reuse it; quality reads return an explicit conflict for invalid existing references.
+- **Regression coverage:** route tests reject REPORT_PDF, INVALID VCF and PENDING VCF links; lineage tests cover invalid existing observations and foreign artifact references.
+- **Verification:** QC route, lineage, report generation/sign-out and reviewer integration tests — **71 passed**, one existing Starlette/httpx deprecation warning. Ruff, Python compilation and diff checks passed.
+- **Limitation:** artifact-source eligibility is scoped to VCF/normalized VCF because that is the current QC UI contract; external laboratory QC reports and their schemas are not integrated or qualified.
+
 ### 2026-10-25 serialize QC writes against report sign-out
 
 - **Finding:** report sign-out locks the analysis row before checking the QC snapshot, but QC observation and assessment routes did not take that lock. On PostgreSQL, a QC observation could race with sign-out after eligibility was evaluated.

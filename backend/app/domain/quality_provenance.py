@@ -12,6 +12,20 @@ from backend.app.infrastructure.db.models import (
 )
 
 
+def validate_qc_source_artifact(artifact: Artifact, analysis: Analysis) -> None:
+    """Only validated VCF inputs/outputs can substantiate a VCF QC observation."""
+    if (
+        artifact.case_id != analysis.case_id
+        or (artifact.analysis_id is not None and artifact.analysis_id != analysis.id)
+        or artifact.artifact_type not in {"VCF", "NORMALIZED_VCF"}
+        or artifact.validation_status not in {"VALID", "VALIDATED"}
+        or not isinstance(artifact.sha256, str)
+        or len(artifact.sha256) != 64
+        or any(character not in "0123456789abcdefABCDEF" for character in artifact.sha256)
+    ):
+        raise ValueError("QC source artifact must be a validated VCF linked to this analysis")
+
+
 def qc_observation_snapshot(
     db: Session,
     analysis: Analysis,
@@ -31,12 +45,9 @@ def qc_observation_snapshot(
         artifact_snapshot = None
         if row.artifact_id is not None:
             artifact = db.get(Artifact, row.artifact_id)
-            if (
-                artifact is None
-                or artifact.case_id != analysis.case_id
-                or (artifact.analysis_id is not None and artifact.analysis_id != analysis.id)
-            ):
+            if artifact is None:
                 raise ValueError("QC observation artifact does not belong to this analysis")
+            validate_qc_source_artifact(artifact, analysis)
             artifact_snapshot = {
                 "artifact_id": str(artifact.id),
                 "artifact_type": artifact.artifact_type,

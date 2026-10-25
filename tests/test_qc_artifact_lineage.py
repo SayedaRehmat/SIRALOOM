@@ -12,6 +12,7 @@ from backend.app.auth.authorization import require_analysis_artifact
 from backend.app.auth.principal import Principal
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Analysis, Artifact, Assay, Case, QCAssessment, TechnicalQCObservation
+from backend.app.domain.quality_provenance import validate_qc_source_artifact
 
 
 @pytest.mark.parametrize("mismatch", ["missing", "case", "analysis"])
@@ -35,6 +36,22 @@ def test_analysis_artifact_reference_rejects_broken_lineage(mismatch):
 
     assert exc.value.status_code == 409
     assert exc.value.detail == "Analysis artifact reference does not match its case and analysis"
+
+
+@pytest.mark.parametrize(
+    ("artifact_type", "validation_status"),
+    [("REPORT_PDF", "VALID"), ("VCF", "INVALID"), ("NORMALIZED_VCF", "PENDING")],
+)
+def test_qc_snapshot_source_contract_requires_validated_vcf(artifact_type, validation_status):
+    analysis = SimpleNamespace(id=uuid4(), case_id=uuid4())
+    artifact = SimpleNamespace(
+        id=uuid4(), case_id=analysis.case_id, analysis_id=analysis.id,
+        artifact_type=artifact_type, validation_status=validation_status,
+        sha256="a" * 64,
+    )
+
+    with pytest.raises(ValueError, match="validated VCF"):
+        validate_qc_source_artifact(artifact, analysis)
 
 
 def test_quality_read_fails_closed_on_foreign_qc_artifact(monkeypatch):
@@ -86,6 +103,50 @@ def test_quality_read_fails_closed_on_foreign_qc_artifact(monkeypatch):
 
     assert exc.value.status_code == 409
     assert "artifact reference" in exc.value.detail
+
+
+def test_quality_read_returns_conflict_for_invalid_qc_source_artifact(monkeypatch):
+    analysis = SimpleNamespace(id=uuid4(), case_id=uuid4(), assay_id=None)
+    principal = Principal(
+        user_id=uuid4(), organization_id=uuid4(), role="lab_director",
+        subject="invalid-qc-source",
+    )
+    observation = SimpleNamespace(
+        id=uuid4(), analysis_id=analysis.id, artifact_id=uuid4(),
+        metric_name="mean_depth", metric_value=40.0, metric_unit="x",
+        status="RECORDED", source="LAB_QC", source_version=None,
+        metadata_json={}, created_at=datetime.now(timezone.utc),
+    )
+    invalid_artifact = SimpleNamespace(
+        id=observation.artifact_id, case_id=analysis.case_id, analysis_id=analysis.id,
+        artifact_type="REPORT_PDF", validation_status="VALID", sha256="a" * 64,
+    )
+
+    class _Rows:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def __iter__(self):
+            return iter(self.rows)
+
+    class _Db:
+        def scalars(self, statement):
+            model = statement.column_descriptions[0]["entity"]
+            if model is TechnicalQCObservation:
+                return _Rows([observation])
+            return _Rows([])
+
+        def get(self, *_args):
+            return invalid_artifact
+
+    monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(quality, "require_role", lambda *_args: None)
+
+    with pytest.raises(HTTPException) as exc:
+        quality.get_quality(analysis.id, _Db(), principal)
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "QC observation source artifact lineage is invalid"
 
 
 def test_quality_artifact_choices_exclude_artifacts_from_other_analyses(monkeypatch):

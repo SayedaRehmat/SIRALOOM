@@ -153,7 +153,7 @@ def test_qc_assessment_persists_exact_observation_snapshot(monkeypatch):
     )
     artifact = SimpleNamespace(
         id=artifact_id, case_id=analysis.case_id, analysis_id=None,
-        artifact_type="VCF", sha256="b" * 64,
+        artifact_type="VCF", validation_status="VALIDATED", sha256="b" * 64,
     )
     db = _DB([observation], {artifact_id: artifact})
     monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
@@ -194,7 +194,7 @@ def test_qc_observation_write_persists_same_case_source_artifact(monkeypatch):
     artifact_id = uuid4()
     artifact = SimpleNamespace(
         id=artifact_id, case_id=analysis.case_id, analysis_id=None,
-        artifact_type="VCF", sha256="a" * 64,
+        artifact_type="VCF", validation_status="VALID", sha256="a" * 64,
     )
     db = _DB([], {artifact_id: artifact})
     principal = Principal(user_id=uuid4(), organization_id=uuid4(), role="bioinformatician", subject="test")
@@ -213,6 +213,38 @@ def test_qc_observation_write_persists_same_case_source_artifact(monkeypatch):
     assert result["artifact_id"] == str(artifact_id)
     assert db.added[0].artifact_id == artifact_id
     assert db.refresh_calls == [(analysis, True)]
+
+
+@pytest.mark.parametrize(
+    ("artifact_type", "validation_status"),
+    [("REPORT_PDF", "VALID"), ("VCF", "INVALID"), ("VCF", "PENDING")],
+)
+def test_qc_observation_rejects_non_vcf_or_unvalidated_source_artifact(
+    monkeypatch, artifact_type, validation_status
+):
+    from backend.app.api.v1 import quality
+
+    analysis = SimpleNamespace(id=uuid4(), case_id=uuid4(), assay_id=None)
+    artifact_id = uuid4()
+    artifact = SimpleNamespace(
+        id=artifact_id, case_id=analysis.case_id, analysis_id=None,
+        artifact_type=artifact_type, validation_status=validation_status,
+        sha256="a" * 64,
+    )
+    db = _DB([], {artifact_id: artifact})
+    principal = Principal(user_id=uuid4(), organization_id=uuid4(), role="bioinformatician", subject="test")
+    monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
+
+    with pytest.raises(HTTPException, match="validated VCF") as exc:
+        quality.record_qc_observation(
+            analysis.id,
+            quality.QCObservationInput(metric_name="mean_depth", metric_value=40, artifact_id=artifact_id),
+            db,
+            principal,
+        )
+
+    assert exc.value.status_code == 409
+    assert db.added == []
 
 
 def test_qc_observation_write_rejects_artifact_from_another_case(monkeypatch):

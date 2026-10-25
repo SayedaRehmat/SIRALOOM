@@ -16,7 +16,7 @@ from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Assay, TechnicalQCObservation, QCAssessment
 from backend.app.infrastructure.db.session import get_db
-from backend.app.domain.quality_provenance import qc_observation_snapshot
+from backend.app.domain.quality_provenance import qc_observation_snapshot, validate_qc_source_artifact
 from backend.app.quality import assess_metrics, normalize_rules
 
 router = APIRouter(tags=["technical-quality"])
@@ -87,7 +87,11 @@ def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depend
     require_role(principal, CASE_WRITE_ROLES)
     _lock_analysis_for_qc_write(db, analysis)
     if body.artifact_id is not None:
-        require_analysis_artifact(analysis, body.artifact_id, db)
+        artifact = require_analysis_artifact(analysis, body.artifact_id, db)
+        try:
+            validate_qc_source_artifact(artifact, analysis)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
     row=TechnicalQCObservation(id=uuid4(), analysis_id=analysis.id, artifact_id=body.artifact_id,
         metric_name=body.metric_name.strip(), metric_value=body.metric_value,
         metric_unit=body.metric_unit, source=body.source, source_version=body.source_version, metadata_json=body.metadata)
@@ -122,10 +126,20 @@ def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depe
     ))
     for artifact in qc_artifacts:
         require_analysis_artifact(analysis, artifact.id, db)
+        try:
+            validate_qc_source_artifact(artifact, analysis)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
     latest_metrics: dict[str, float | None] = {}
     for observation in observations:
         latest_metrics[observation.metric_name] = observation.metric_value
-    current_observation_snapshot = qc_observation_snapshot(db, analysis, observations)
+    try:
+        current_observation_snapshot = qc_observation_snapshot(db, analysis, observations)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="QC observation source artifact lineage is invalid",
+        ) from exc
 
     def assessment_is_current(assessment: QCAssessment) -> bool:
         if (

@@ -415,3 +415,12 @@ Verification command: Linux backend scope including migration, QC authorization/
 | QC concurrency guard regression coverage | PASS (unit/API scope) | Route tests assert both observation recording and assessment use the shared analysis lock; report/sign-out integration regression suite passes. SQLite ignores row-level `FOR UPDATE`, so production-dialect concurrency still requires PostgreSQL integration execution. |
 
 Verification: focused QC authorization, artifact lineage, report sign-out and reviewer/sign-out suite — **47 passed**, one existing Starlette/httpx deprecation warning. PostgreSQL race execution remains NOT RUN.
+
+### 2026-10-25 enforce QC source-artifact contract
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| QC provenance only cites valid VCF artifacts | PASS (route/unit scope) | API rejects non-VCF, invalid/pending, malformed-checksum, cross-case, and sibling-analysis artifact links. Existing invalid artifact lineage returns HTTP 409 instead of a server error, and report eligibility uses the same contract. |
+| QC source-artifact boundary regression tests | PASS (SQLite/API scope) | Tests cover REPORT_PDF, INVALID VCF, PENDING VCF, foreign lineage, and valid source/normalized VCFs. |
+
+Verification: QC route, lineage, report generation/sign-out and reviewer integration tests — **71 passed**, one existing Starlette/httpx deprecation warning. Ruff, Python compilation and diff checks passed.
