@@ -271,3 +271,57 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
     assert [sample[0] for sample in samples] == ["1/0", "0/1"]
     assert all(len(sample[1].split(",")) == 2 for sample in samples)
     assert all(len(sample[2].split(",")) == 3 for sample in samples)
+
+
+def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path: Path):
+    require_bcftools()
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "phased-multiallelic.vcf"
+    output_vcf = tmp_path / "normalized-phased.vcf.gz"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        "##INFO=<ID=AC,Number=A,Type=Integer,Description=\"Allele count\">\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+        "##FORMAT=<ID=PS,Number=1,Type=Integer,Description=\"Phase set\">\n"
+        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic depths\">\n"
+        "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE_A\tSAMPLE_B\tSAMPLE_MISSING\n"
+        "1\t4\trsPhased\tA\tC,G\t50\tPASS\tAC=2,3\tGT:PS:AD:PL\t"
+        "1|2:10:10,4,6:100,50,60,40,0,30\t2|0:20:8,3,5:50,40,30,20,10,0\t"
+        "./.:.:.,.,.:.,.,.,.,.,.\n",
+        encoding="utf-8",
+    )
+
+    normalize_vcf_with_bcftools(
+        input_vcf,
+        output_vcf,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.19",
+    )
+
+    import gzip
+
+    with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
+        header = None
+        lines = []
+        for line in handle:
+            if line.startswith("#CHROM"):
+                header = line.rstrip("\n").split("\t")
+            elif line and not line.startswith("#"):
+                lines.append(line)
+    records = [line.rstrip("\n").split("\t") for line in lines]
+
+    assert header is not None
+    assert header[9:12] == ["SAMPLE_A", "SAMPLE_B", "SAMPLE_MISSING"]
+    assert [record[4] for record in records] == ["C", "G"]
+    assert [record[9].split(":")[0] for record in records] == ["1|0", "0|1"]
+    assert [record[10].split(":")[0] for record in records] == ["0|0", "1|0"]
+    assert [record[9].split(":")[1] for record in records] == ["10", "10"]
+    assert [record[10].split(":")[1] for record in records] == ["20", "20"]
+    assert [record[11].split(":")[0] for record in records] == ["./.", "./."]
+    for record in records:
+        assert len(record[9].split(":")[2].split(",")) == 2
+        assert len(record[10].split(":")[2].split(",")) == 2
+        assert len(record[9].split(":")[3].split(",")) == 3
+        assert len(record[10].split(":")[3].split(",")) == 3
