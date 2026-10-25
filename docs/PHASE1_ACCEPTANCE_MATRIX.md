@@ -406,3 +406,12 @@ Verification: `PYTHONPATH=. DATABASE_URL=sqlite:////tmp/siraloom-assay-schema.sq
 | Migration upgrade/downgrade and analysis reproducibility include QC lineage | PASS (SQLite migration/reanalysis scope) | Full migration upgrade verifies the nullable column; downgrade to revision `0052` removes only the new column and retains the QC table. Reanalysis manifest includes the observation snapshot. |
 
 Verification command: Linux backend scope including migration, QC authorization/artifact lineage, report generation/sign-out/recovery, and reanalysis reproducibility — **119 passed**, one existing Starlette/httpx deprecation warning. Ruff `--select F`, Python compilation, and diff checks passed. This establishes software lineage controls only; it does not qualify the laboratory’s QC source or thresholds. Overall Phase A remains **PARTIAL**.
+
+### 2026-10-25 serialize QC mutations against clinical sign-out
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| QC observations and assessments serialize with sign-out's analysis lock | PASS (code-path/unit scope) | Both QC mutation routes refresh and lock the authorized analysis row before reading or writing QC state. Sign-out already takes `FOR UPDATE` on the same row before eligibility and snapshot checks. This prevents a QC write from committing concurrently inside the sign-out eligibility window on PostgreSQL. |
+| QC concurrency guard regression coverage | PASS (unit/API scope) | Route tests assert both observation recording and assessment use the shared analysis lock; report/sign-out integration regression suite passes. SQLite ignores row-level `FOR UPDATE`, so production-dialect concurrency still requires PostgreSQL integration execution. |
+
+Verification: focused QC authorization, artifact lineage, report sign-out and reviewer/sign-out suite — **47 passed**, one existing Starlette/httpx deprecation warning. PostgreSQL race execution remains NOT RUN.

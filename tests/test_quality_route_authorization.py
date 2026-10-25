@@ -74,6 +74,10 @@ class _DB:
         self.observations = observations
         self.artifacts = artifacts or {}
         self.added = []
+        self.refresh_calls = []
+
+    def refresh(self, row, *, with_for_update=False):
+        self.refresh_calls.append((row, with_for_update))
 
     def scalars(self, _query):
         return _Scalars(self.observations)
@@ -93,6 +97,17 @@ class _DB:
 
     def commit(self):
         pass
+
+
+def test_qc_mutations_use_the_analysis_lock_shared_by_report_signout():
+    from backend.app.api.v1.quality import _lock_analysis_for_qc_write
+
+    analysis = SimpleNamespace(id=uuid4())
+    db = _DB([])
+
+    _lock_analysis_for_qc_write(db, analysis)
+
+    assert db.refresh_calls == [(analysis, True)]
 
 
 def test_qc_assessment_rejects_values_not_backed_by_persisted_observations(monkeypatch):
@@ -169,6 +184,7 @@ def test_qc_assessment_persists_exact_observation_snapshot(monkeypatch):
             "sha256": "b" * 64,
         },
     }]
+    assert db.refresh_calls == [(analysis, True)]
 
 
 def test_qc_observation_write_persists_same_case_source_artifact(monkeypatch):
@@ -196,6 +212,7 @@ def test_qc_observation_write_persists_same_case_source_artifact(monkeypatch):
 
     assert result["artifact_id"] == str(artifact_id)
     assert db.added[0].artifact_id == artifact_id
+    assert db.refresh_calls == [(analysis, True)]
 
 
 def test_qc_observation_write_rejects_artifact_from_another_case(monkeypatch):

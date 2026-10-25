@@ -53,6 +53,10 @@ def _obs(o):
             "status": o.status, "source": o.source, "source_version": o.source_version,
             "metadata": o.metadata_json or {}, "created_at": o.created_at.isoformat()}
 
+def _lock_analysis_for_qc_write(db, analysis):
+    """Serialize QC mutations with report sign-out on the analysis row."""
+    db.refresh(analysis, with_for_update=True)
+
 @router.post("/assays", status_code=201)
 def create_assay(body: AssayInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     require_role(principal, ASSAY_ADMIN_ROLES)
@@ -81,6 +85,7 @@ def list_assays(db=Depends(get_db), principal: Principal=Depends(get_current_pri
 def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
+    _lock_analysis_for_qc_write(db, analysis)
     if body.artifact_id is not None:
         require_analysis_artifact(analysis, body.artifact_id, db)
     row=TechnicalQCObservation(id=uuid4(), analysis_id=analysis.id, artifact_id=body.artifact_id,
@@ -161,6 +166,7 @@ def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depe
 def assess_quality(analysis_id: UUID, body: QCAssessmentInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal, "review")
     require_role(principal, REVIEW_ROLES)
+    _lock_analysis_for_qc_write(db, analysis)
     assay=db.get(Assay, analysis.assay_id) if analysis.assay_id else None
     if assay and assay.organization_id != principal.organization_id:
         raise HTTPException(403,"Assay is not accessible")
