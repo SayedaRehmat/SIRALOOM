@@ -12,6 +12,8 @@ from typing import Final
 from backend.app.domain.resource_capabilities import (
     ACMG_RULE_SPECIFICATION,
     ANNOTATION_ENGINE,
+    CLINGEN_GENE_DISEASE_VALIDITY,
+    CLINGEN_VARIANT_ASSERTION,
     CLINICAL_DATABASE,
     COMPUTATIONAL_PREDICTOR,
     DISEASE_PHENOTYPE_ASSOCIATION,
@@ -68,13 +70,25 @@ _COMMON_OPTIONAL = (
     ProfileResourceRequirement(SPLICING_PREDICTOR, False, ("SPLICEAI",), license_required=True),
     ProfileResourceRequirement(LITERATURE_PROVIDER, False, ("PUBMED", "PMC"), genome_build_required=False),
     ProfileResourceRequirement(INTERNAL_LAB_EVIDENCE, False, (), genome_build_required=False, license_required=True),
+    ProfileResourceRequirement(
+        CLINGEN_VARIANT_ASSERTION,
+        False,
+        ("ClinGen Variant Pathogenicity",),
+        genome_build_required=False,
+    ),
+    ProfileResourceRequirement(
+        CLINGEN_GENE_DISEASE_VALIDITY,
+        False,
+        ("ClinGen Gene-Disease Validity",),
+        genome_build_required=False,
+    ),
 )
 
 
 ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
     "WES_GRCh38_STANDARD": AnalysisResourceProfile(
         profile_id="WES_GRCh38_STANDARD",
-        version="1",
+        version="2",
         assay_scope="WES",
         genome_build="GRCh38",
         requirements=(
@@ -94,7 +108,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
     ),
     "WGS_GRCh38_STANDARD": AnalysisResourceProfile(
         profile_id="WGS_GRCh38_STANDARD",
-        version="1",
+        version="2",
         assay_scope="WGS",
         genome_build="GRCh38",
         requirements=(
@@ -109,7 +123,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
     ),
     "WES_GRCh37_STANDARD": AnalysisResourceProfile(
         profile_id="WES_GRCh37_STANDARD",
-        version="1",
+        version="2",
         assay_scope="WES",
         genome_build="GRCh37",
         requirements=(

@@ -5,6 +5,8 @@ from backend.app.domain.analysis_resource_profiles import (
 from backend.app.domain.resource_capabilities import (
     ACMG_RULE_SPECIFICATION,
     ANNOTATION_ENGINE,
+    CLINGEN_GENE_DISEASE_VALIDITY,
+    CLINGEN_VARIANT_ASSERTION,
     CLINICAL_DATABASE,
     DISEASE_PHENOTYPE_ASSOCIATION,
     POPULATION,
@@ -29,6 +31,8 @@ def test_standard_profile_treats_external_evidence_as_optional():
     profile = get_analysis_resource_profile("WES_GRCh38_STANDARD")
     optional = profile.optional_capabilities
     assert CLINICAL_DATABASE in optional
+    assert CLINGEN_VARIANT_ASSERTION in optional
+    assert CLINGEN_GENE_DISEASE_VALIDITY in optional
     assert REFERENCE_PACKAGE not in optional
 
 
@@ -46,7 +50,7 @@ def test_hpoa_is_an_optional_local_licensed_disease_phenotype_resource():
 
 def test_profiles_are_explicitly_versioned():
     assert "WES_GRCh38_STANDARD" in supported_analysis_resource_profiles()
-    assert get_analysis_resource_profile("WES_GRCh38_STANDARD").version == "1"
+    assert get_analysis_resource_profile("WES_GRCh38_STANDARD").version == "2"
 
 
 def test_provider_preference_is_deterministic():

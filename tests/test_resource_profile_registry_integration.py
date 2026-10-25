@@ -251,6 +251,74 @@ def test_laboratory_profile_blocks_unbound_qualified_resource_then_recovers_from
         engine.dispose()
 
 
+def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    try:
+        organization_id = uuid4()
+        with Session(engine) as db:
+            db.add(
+                Organization(
+                    id=organization_id,
+                    name="ClinGen profile pinning lab",
+                    external_identifier="clingen-profile-pinning-lab",
+                )
+            )
+            db.add(
+                ResourceDeploymentProfile(
+                    id=uuid4(),
+                    organization_id=organization_id,
+                    profile_type="LABORATORY",
+                    profile_version="1",
+                    status="ACTIVE",
+                )
+            )
+            db.flush()
+            _seed_required_resources(db, organization_id)
+            _resource(
+                db,
+                organization_id=organization_id,
+                name="VEP cache for ClinGen profile test",
+                provider="VEP",
+                resource_type="ANNOTATION_ENGINE",
+                version="115",
+            )
+            vp = _resource(
+                db,
+                organization_id=organization_id,
+                name="ClinGen Variant Pathogenicity",
+                provider="ClinGen Variant Pathogenicity",
+                resource_type="EVIDENCE",
+                version="ERepo",
+            )
+            gdv = _resource(
+                db,
+                organization_id=organization_id,
+                name="ClinGen Gene-Disease Validity",
+                provider="ClinGen Gene-Disease Validity",
+                resource_type="EVIDENCE",
+                version="GeneValidity",
+            )
+            db.commit()
+
+            plan = resolve_analysis_resource_profile(
+                db,
+                organization_id=organization_id,
+                profile_id="WES_GRCh38_STANDARD",
+                analysis_reference_build="GRCh38",
+            )
+
+            assert plan.is_ready
+            selected = {item.capability: item for item in plan.selected}
+            assert selected["CLINGEN_VARIANT_ASSERTION"].resource.id == vp.id
+            assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].resource.id == gdv.id
+            assert selected["CLINGEN_VARIANT_ASSERTION"].execution.resource_id == vp.id
+            assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].execution.resource_id == gdv.id
+    finally:
+        engine.dispose()
+
+
 def test_real_registry_recovery_queues_one_durable_dispatch_and_duplicate_start_is_idempotent(monkeypatch):
     """Exercise actual resource resolution through block, recovery, and dispatch."""
     from backend.app.api.v1 import analyses as analyses_api

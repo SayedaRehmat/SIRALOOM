@@ -1,10 +1,11 @@
 from backend.app.domain.resource_capabilities import (
     ACMG_RULE_SPECIFICATION,
     ANNOTATION_ENGINE,
+    CLINGEN_GENE_DISEASE_VALIDITY,
+    CLINGEN_VARIANT_ASSERTION,
     CLINICAL_DATABASE,
     GENE_DISEASE,
     LITERATURE_PROVIDER,
-    POPULATION,
     REFERENCE_PACKAGE,
     SPLICING_PREDICTOR,
 )
@@ -39,6 +40,8 @@ def test_evidence_stage_knows_the_distinct_evidence_resource_classes():
     optional = set(get_workflow_stage_contract("build_evidence").optional_resources)
     assert {
         CLINICAL_DATABASE,
+        CLINGEN_VARIANT_ASSERTION,
+        CLINGEN_GENE_DISEASE_VALIDITY,
         GENE_DISEASE,
         LITERATURE_PROVIDER,
         SPLICING_PREDICTOR,

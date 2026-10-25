@@ -4,8 +4,8 @@ from uuid import uuid4
 import pytest
 
 from backend.app.domain import profile_runtime_resources as runtime
-from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.resource_execution import ResolvedResourceExecution
+from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.infrastructure.db.models import Analysis, Case
 
 
@@ -203,6 +203,14 @@ def test_plural_resolver_returns_all_selected_secondary_resources(monkeypatch):
     assert [item.resource.provider for item in resolved] == [
         "1000GENOMES", "TOPMED", "MIDDLE_EAST"
     ]
+
+    selected_provider = runtime.resolve_profile_runtime_resources(
+        db,
+        analysis_id=analysis.id,
+        capability="POPULATION_SECONDARY",
+        provider_id="TOPMED",
+    )
+    assert [item.resource.provider for item in selected_provider] == ["TOPMED"]
 
 
 def test_plural_resolver_rejects_one_stale_selected_secondary_resource(monkeypatch):

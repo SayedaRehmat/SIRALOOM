@@ -15,6 +15,8 @@ from typing import Final
 from backend.app.domain.resource_capabilities import (
     ACMG_RULE_SPECIFICATION,
     ANNOTATION_ENGINE,
+    CLINGEN_GENE_DISEASE_VALIDITY,
+    CLINGEN_VARIANT_ASSERTION,
     CLINICAL_DATABASE,
     COMPUTATIONAL_PREDICTOR,
     DISEASE_PHENOTYPE_ASSOCIATION,
@@ -83,6 +85,8 @@ WORKFLOW_STAGE_CONTRACTS: Final[tuple[WorkflowStageContract, ...]] = (
         (),
         (
             CLINICAL_DATABASE,
+            CLINGEN_VARIANT_ASSERTION,
+            CLINGEN_GENE_DISEASE_VALIDITY,
             GENE_DISEASE,
             PHENOTYPE_ONTOLOGY,
             DISEASE_PHENOTYPE_ASSOCIATION,

@@ -12,8 +12,8 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from backend.app.domain.resource_execution import (
-    ResourceExecutionError,
     ResolvedResourceExecution,
+    ResourceExecutionError,
     resolve_resource_execution,
 )
 from backend.app.infrastructure.db.models import Analysis, Case, Resource
@@ -58,6 +58,7 @@ def resolve_profile_runtime_resources(
     *,
     analysis_id: UUID,
     capability: str,
+    provider_id: str | None = None,
 ) -> tuple[ProfileRuntimeResource, ...]:
     """Return every exact qualified resource selected during analysis preflight.
 
@@ -173,6 +174,14 @@ def resolve_profile_runtime_resources(
             resource=resource,
             execution=execution,
         ))
+
+    if provider_id is not None:
+        expected_provider = str(provider_id).strip().casefold()
+        resolved = [
+            item
+            for item in resolved
+            if str(item.resource.provider).strip().casefold() == expected_provider
+        ]
 
     return tuple(resolved)
 

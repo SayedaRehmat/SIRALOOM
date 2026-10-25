@@ -14,11 +14,15 @@ from backend.app.domain.analysis_resource_profiles import (
     ProfileResourceRequirement,
     get_analysis_resource_profile,
 )
-from backend.app.domain.resource_capabilities import get_scientific_provider
+from backend.app.domain.resource_capabilities import (
+    CLINGEN_GENE_DISEASE_VALIDITY,
+    CLINGEN_VARIANT_ASSERTION,
+    get_scientific_provider,
+)
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.resource_execution import (
-    ResourceExecutionError,
     ResolvedResourceExecution,
+    ResourceExecutionError,
     resolve_resource_execution,
 )
 from backend.app.domain.workflow_resource_contracts import WORKFLOW_STAGE_CONTRACTS
@@ -185,8 +189,11 @@ def _candidate_resources(
     allow_global: bool,
     require_binding: bool,
 ) -> list[Resource]:
+    resource_types = {capability}
+    if capability in {CLINGEN_VARIANT_ASSERTION, CLINGEN_GENE_DISEASE_VALIDITY}:
+        resource_types.add("EVIDENCE")
     conditions = [
-        Resource.resource_type == capability,
+        Resource.resource_type.in_(resource_types),
         Resource.status == "ACTIVE",
     ]
     if genome_build:

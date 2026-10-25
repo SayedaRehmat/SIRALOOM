@@ -3503,18 +3503,71 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 hpoa_resource_metadata = None
                 case_for_clingen = db.get(Case, analysis.case_id)
                 if case_for_clingen is not None:
-                    vp_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),))
-                    vp_candidates = [x for x in vp_plan.for_capability(ResourceCapability.CLINICAL_VARIANT) if x.resource.provider == ClinGenVariantPathogenicityProvider.provider_id]
+                    if profile_bound_analysis:
+                        try:
+                            vp_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="CLINGEN_VARIANT_ASSERTION",
+                                provider_id=ClinGenVariantPathogenicityProvider.provider_id,
+                            )
+                            vp_candidates = [
+                                (item.resource, item.execution) for item in vp_runtime
+                            ]
+                        except ProfileRuntimeResourceError as exc:
+                            vp_candidates = []
+                            provider_limitations.append({
+                                "code": exc.code,
+                                "message": str(exc),
+                                "resource_capability": "CLINGEN_VARIANT_ASSERTION",
+                            })
+                    else:
+                        vp_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),))
+                        vp_candidates = [
+                            (item.resource, resolve_resource_execution(db, resource=item.resource))
+                            for item in vp_plan.for_capability(ResourceCapability.CLINICAL_VARIANT)
+                            if item.resource.provider == ClinGenVariantPathogenicityProvider.provider_id
+                        ]
                     if vp_candidates:
-                        clingen_vp_resource = vp_candidates[0].resource
-                        clingen_vp_execution = resolve_resource_execution(db, resource=clingen_vp_resource)
+                        if len(vp_candidates) != 1:
+                            raise ResourceExecutionError(
+                                "The analysis resource plan selected multiple ClinGen variant assertion resources."
+                            )
+                        clingen_vp_resource, clingen_vp_execution = vp_candidates[0]
                         clingen_vp_provider = ClinGenVariantPathogenicityProvider.from_execution_contract(resolved=clingen_vp_execution)
                         clingen_vp_metadata = {**clingen_vp_execution.snapshot, "resource_name": clingen_vp_resource.name, "resource_checksum": clingen_vp_resource.checksum}
-                    gdv_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.GENE_DISEASE),))
-                    gdv_candidates = [x for x in gdv_plan.for_capability(ResourceCapability.GENE_DISEASE) if x.resource.provider == ClinGenGeneDiseaseValidityProvider.provider_id]
+
+                    if profile_bound_analysis:
+                        try:
+                            gdv_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="CLINGEN_GENE_DISEASE_VALIDITY",
+                                provider_id=ClinGenGeneDiseaseValidityProvider.provider_id,
+                            )
+                            gdv_candidates = [
+                                (item.resource, item.execution) for item in gdv_runtime
+                            ]
+                        except ProfileRuntimeResourceError as exc:
+                            gdv_candidates = []
+                            provider_limitations.append({
+                                "code": exc.code,
+                                "message": str(exc),
+                                "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                            })
+                    else:
+                        gdv_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.GENE_DISEASE),))
+                        gdv_candidates = [
+                            (item.resource, resolve_resource_execution(db, resource=item.resource))
+                            for item in gdv_plan.for_capability(ResourceCapability.GENE_DISEASE)
+                            if item.resource.provider == ClinGenGeneDiseaseValidityProvider.provider_id
+                        ]
                     if gdv_candidates:
-                        clingen_gdv_resource = gdv_candidates[0].resource
-                        clingen_gdv_execution = resolve_resource_execution(db, resource=clingen_gdv_resource)
+                        if len(gdv_candidates) != 1:
+                            raise ResourceExecutionError(
+                                "The analysis resource plan selected multiple ClinGen gene-disease resources."
+                            )
+                        clingen_gdv_resource, clingen_gdv_execution = gdv_candidates[0]
                         clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
                         clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
                     try:
