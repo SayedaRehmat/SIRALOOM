@@ -5,6 +5,14 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+### 2026-10-25 distinguish ClinGen provider failures from evidence-builder failures
+
+- **Finding:** three evidence-provider blocks caught every `Exception` around both the external/provider query and subsequent local persistence/evidence mapping. As a result, a programming error or a database failure after a successful provider response could be recorded as a provider limitation, obscuring the true stage failure and misrepresenting evidence availability.
+- **Correction:** the ClinGen Variant Pathogenicity, ClinGen Gene-Disease Validity, and ClinVar blocks now catch only their adapters' declared provider error types. Unexpected builder, persistence, and programming exceptions propagate to the workflow's normal stage-failure handling.
+- **Regression evidence:** expanded the actual worker/replay integration test with injected internal evidence-mapping failure and typed ClinGen provider failure. The tests assert the internal failure produces `EVIDENCE_BUILD_FAILED` without provider-limitation metadata while preserving the successful provider execution record; a typed provider failure is recorded as `CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED` and leaves the evidence checkpoint recoverable for replay.
+- **Verification:** focused injected-failure cases — **2 passed**. Related worker, resource-execution, ClinGen-provenance, evidence-engine, reanalysis-provenance and recovery suites — **48 passed**, one existing Starlette/httpx TestClient deprecation warning. Python compilation using `.venv/bin/python` and `git diff --check` passed. Ruff `--select F` on the legacy workflow reports seven pre-existing unused imports/variables outside this correction; they were left untouched. No live external provider or deployed lab was used.
+- **Repository state:** changes are currently uncommitted on `main` at `ae1577070daa7be7b468bb050f1933603c85285d`; `origin/main` resolves to the same SHA. Preserve unrelated untracked `ci.db` and `siraloom.egg-info/`. Author config is `SayedaRehmat <siralooms@gmail.com>`. Phase A remains **PARTIAL**; this local worker failure distinction does not establish live identity, deployed tenant isolation, clinical validation, or laboratory deployment readiness.
+
 ### 2026-10-25 pin ClinGen evidence resources in profile-bound analyses
 
 - **Finding:** profile-bound evidence execution used the persisted resource plan for ClinVar, HPO/HPOA, and population providers, but ClinGen Variant Pathogenicity and Gene-Disease Validity were discovered from a fresh organization resource plan on every worker run. A retry could therefore use a different qualified ClinGen release from the one selected at analysis preflight; the ClinGen resources also had no distinct slots in the standard profiles or canonical stage resource contract.

@@ -41,16 +41,24 @@ from backend.app.infrastructure.db.models import (
 
 
 @pytest.mark.parametrize(
-    ("no_match", "ontology_valid", "hpoa_license"),
+    (
+        "no_match",
+        "ontology_valid",
+        "hpoa_license",
+        "inject_internal_evidence_error",
+        "inject_clingen_provider_error",
+    ),
     [
-        (False, True, True),
-        (True, True, True),
-        (False, False, True),
-        (True, False, True),
-        (False, True, False),
-        (True, True, False),
-        (False, False, False),
-        (True, False, False),
+        (False, True, True, False, False),
+        (True, True, True, False, False),
+        (False, False, True, False, False),
+        (True, False, True, False, False),
+        (False, True, False, False, False),
+        (True, True, False, False, False),
+        (False, False, False, False, False),
+        (True, False, False, False, False),
+        (False, True, True, True, False),
+        (False, True, True, False, True),
     ],
     ids=[
         "available-frequency-licensed-hpoa-hpo-ready",
@@ -61,10 +69,13 @@ from backend.app.infrastructure.db.models import (
         "no-match-unlicensed-hpoa",
         "ontology-failure-unlicensed-hpoa",
         "no-match-ontology-failure-unlicensed-hpoa",
+        "internal-evidence-builder-failure-is-not-provider-limitation",
+        "typed-clingen-provider-failure-is-recorded-as-limitation",
     ],
 )
 def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
-    monkeypatch, tmp_path, no_match, ontology_valid, hpoa_license
+    monkeypatch, tmp_path, no_match, ontology_valid, hpoa_license,
+    inject_internal_evidence_error, inject_clingen_provider_error,
 ):
     import importlib
 
@@ -798,6 +809,75 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             return real_step(db, received_analysis_id, step_id)
 
         monkeypatch.setattr(workflow, "_step", stop_after_population)
+        if inject_internal_evidence_error:
+            evidence_engine_module = importlib.import_module(
+                "backend.app.evidence.engine"
+            )
+
+            def fail_evidence_mapping(self, **_kwargs):
+                raise RuntimeError("injected evidence mapping defect")
+
+            monkeypatch.setattr(
+                evidence_engine_module.EvidenceEngine,
+                "build_from_clingen_variant_assertions",
+                fail_evidence_mapping,
+            )
+            workflow.run_variant_analysis(analysis_id)
+            with LocalSession() as db:
+                current = db.get(Analysis, analysis_id)
+                evidence_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "build_evidence",
+                ))
+                executions = db.scalars(select(ResourceExecutionRecord).where(
+                    ResourceExecutionRecord.analysis_id == analysis_id,
+                    ResourceExecutionRecord.resource_id == clingen_vp_resource_id,
+                    ResourceExecutionRecord.step_id == "build_evidence",
+                )).all()
+                assert current.status == AnalysisStatus.FAILED
+                assert evidence_step.error_code == "EVIDENCE_BUILD_FAILED"
+                assert "provider_limitations" not in (evidence_step.metadata_json or {})
+                assert len(executions) == 1
+                assert executions[0].status == "SUCCESS"
+                assert executions[0].response_sha256
+                assert db.scalar(select(func.count(Evidence.id)).where(
+                    Evidence.analysis_id == analysis_id,
+                    Evidence.resource_id == clingen_vp_resource_id,
+                )) == 0
+            return
+        if inject_clingen_provider_error:
+            clingen_module = importlib.import_module(
+                "backend.app.adapters.clingen.variant_pathogenicity"
+            )
+
+            def fail_clingen_query(self, **_kwargs):
+                raise clingen_module.ClinGenVariantPathogenicityError(
+                    "fixture provider response failure"
+                )
+
+            monkeypatch.setattr(
+                workflow.ClinGenVariantPathogenicityProvider,
+                "query_variant",
+                fail_clingen_query,
+            )
+            with pytest.raises(SystemExit, match="75"):
+                workflow.run_variant_analysis(analysis_id)
+            with LocalSession() as db:
+                executions = db.scalars(select(ResourceExecutionRecord).where(
+                    ResourceExecutionRecord.analysis_id == analysis_id,
+                    ResourceExecutionRecord.resource_id == clingen_vp_resource_id,
+                    ResourceExecutionRecord.step_id == "build_evidence",
+                )).all()
+                evidence_step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "build_evidence",
+                ))
+                assert len(executions) == 1
+                assert executions[0].status == "FAILED"
+                assert executions[0].error_code == "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED"
+                assert evidence_step.status == StepStatus.RUNNING
+                assert evidence_step.metadata_json["batches"]["0:1"]["status"] == "RUNNING"
+            return
         try:
             workflow.run_variant_analysis(analysis_id)
         except SystemExit as exc:

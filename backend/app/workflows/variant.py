@@ -20,8 +20,14 @@ from backend.app.adapters.annotation.genebe import GeneBeError, GeneBeProvider
 from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
 from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
 from backend.app.adapters.annotation.vep import VEPProviderError
-from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
-from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
+from backend.app.adapters.clingen.gene_disease_validity import (
+    ClinGenGeneDiseaseValidityError,
+    ClinGenGeneDiseaseValidityProvider,
+)
+from backend.app.adapters.clingen.variant_pathogenicity import (
+    ClinGenVariantPathogenicityError,
+    ClinGenVariantPathogenicityProvider,
+)
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
 from backend.app.adapters.population.gnomad import (
     GnomADGraphQLProvider,
@@ -4084,7 +4090,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
                                     complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
                                     records.extend(engine.build_from_clingen_variant_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_vp_execution.resource_id, resource_name=clingen_vp_resource.name, resource_version=clingen_vp_execution.resource_version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_vp_metadata, "query": query_material, "response_sha256": response_sha256}))
-                                except Exception as exc:
+                                except ClinGenVariantPathogenicityError as exc:
                                     complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED", error_message=str(exc))
                                     provider_limitations.append({
                                         "code": "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED",
@@ -4111,7 +4117,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
                                     complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
                                     records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_execution.resource_version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
-                                except Exception as exc:
+                                except ClinGenGeneDiseaseValidityError as exc:
                                     complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
                                     provider_limitations.append({
                                         "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
@@ -4198,7 +4204,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                             },
                                         )
                                     )
-                                except Exception as exc:
+                                except ClinVarProviderError as exc:
                                     complete_resource_execution(
                                         db,
                                         execution_row,
