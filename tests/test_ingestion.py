@@ -59,6 +59,16 @@ def test_vcf_sample_identity_requires_explicit_specimen_mapping():
     assert "explicit VCF sample name mapping" in checked.errors[0]
 
 
+@pytest.mark.parametrize("mapping", ["   ", 123, ["VCF_SAMPLE"]])
+def test_vcf_sample_identity_rejects_blank_or_malformed_specimen_mapping(mapping):
+    result = ValidationResult("VALID", "VCF", 1, ["VCF_SAMPLE"], "GRCh38", [], [])
+
+    checked = validate_specimen_sample_identity(result, mapping)
+
+    assert checked.status == "INVALID"
+    assert "explicit VCF sample name mapping" in checked.errors[0]
+
+
 def test_vcf_sample_identity_validation_requires_exact_single_sample_match():
     multi_sample = ValidationResult(
         "VALID", "VCF", 1, ["EXPECTED_SAMPLE", "OTHER_SAMPLE"], "GRCh38", [], []

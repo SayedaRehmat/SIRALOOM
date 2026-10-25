@@ -245,7 +245,7 @@ def validate_specimen_sample_identity(
     from the specimen identifier. This keeps case readiness aligned with the
     precondition enforced by analysis creation.
     """
-    expected = (expected_sample_name or "").strip()
+    expected = expected_sample_name.strip() if isinstance(expected_sample_name, str) else ""
     if result.status != "VALID":
         return result
     if not expected:
