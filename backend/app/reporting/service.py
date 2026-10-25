@@ -37,6 +37,7 @@ from backend.app.infrastructure.db.models import (
     SecondaryFindingDecision,
     SegregationObservation,
     Specimen,
+    TechnicalQCObservation,
     Variant,
     WorkflowStep,
     Assay,
@@ -44,6 +45,7 @@ from backend.app.infrastructure.db.models import (
 )
 from backend.app.inheritance import assessment_projection, evidence_projection
 from backend.app.quality import assess_metrics
+from backend.app.domain.quality_provenance import qc_observation_snapshot
 from backend.app.reporting.reportability import final_reportability_state, latest_decision
 
 REPORT_STATUS_DRAFT = "DRAFT"
@@ -148,19 +150,43 @@ def final_report_eligibility(
             )
             if qc is None:
                 errors.append("Clinical report requires a reviewed technical QC assessment")
-            elif (
-                qc.assay_id != assay.id
-                or qc.profile_name != assay.name
-                or qc.profile_version != assay.version
-            ):
-                errors.append("Technical QC assessment does not match the current assay profile version")
-            elif not qc.reviewed_by or not qc.reviewed_at:
-                errors.append("Technical QC assessment lacks reviewer attribution")
-            elif qc.gate_status != "PASS" or qc.status != "PASS":
-                errors.append(
-                    f"Clinical report requires a PASS technical QC assessment (current gate: {qc.gate_status})"
-                )
             else:
+                observation_lineage_valid = True
+                if qc.observation_snapshot is None:
+                    errors.append("Technical QC assessment requires reassessment with an observation snapshot")
+                    observation_lineage_valid = False
+                else:
+                    try:
+                        current_observations = qc_observation_snapshot(db, analysis)
+                    except ValueError:
+                        errors.append("Technical QC observation artifact lineage is invalid")
+                        observation_lineage_valid = False
+                    else:
+                        if qc.observation_snapshot != current_observations:
+                            errors.append("Technical QC observations changed after assessment")
+                            observation_lineage_valid = False
+                if (
+                    qc.assay_id != assay.id
+                    or qc.profile_name != assay.name
+                    or qc.profile_version != assay.version
+                ):
+                    errors.append("Technical QC assessment does not match the current assay profile version")
+                if not qc.reviewed_by or not qc.reviewed_at:
+                    errors.append("Technical QC assessment lacks reviewer attribution")
+                if qc.gate_status != "PASS" or qc.status != "PASS":
+                    errors.append(
+                        f"Clinical report requires a PASS technical QC assessment (current gate: {qc.gate_status})"
+                    )
+                if observation_lineage_valid:
+                    latest_metrics = {}
+                    for observation in db.scalars(
+                        select(TechnicalQCObservation)
+                        .where(TechnicalQCObservation.analysis_id == analysis_id)
+                        .order_by(TechnicalQCObservation.created_at, TechnicalQCObservation.id)
+                    ):
+                        latest_metrics[observation.metric_name] = observation.metric_value
+                    if latest_metrics != (qc.metrics_json or {}):
+                        errors.append("Technical QC metrics do not match the persisted observations")
                 try:
                     current_qc = assess_metrics(qc.metrics_json or {}, assay.configuration)
                 except (KeyError, TypeError, ValueError) as exc:
@@ -266,6 +292,7 @@ def technical_quality_snapshot(db: Session, analysis_id: UUID) -> dict[str, Any]
         "profile_version": assessment.profile_version,
         "metrics": assessment.metrics_json or {},
         "evaluated_rules": assessment.evaluated_rules or [],
+        "observation_snapshot": assessment.observation_snapshot,
         "reviewed_by": assessment.reviewed_by,
         "reviewed_at": assessment.reviewed_at.isoformat() if assessment.reviewed_at else None,
     }
@@ -804,6 +831,42 @@ def _html_document(content: dict[str, Any]) -> str:
     case_identifier = content.get("case_identifier", content.get("case_id", "-"))
     reference_build = content.get("reference_build", "-")
     final_result = content.get("final_result", {"findings_count": len(content.get("findings", []))})
+    quality = content.get("technical_quality")
+    if isinstance(quality, dict):
+        no_rule_row = "<tr><td colspan='4'>No rules evaluated</td></tr>"
+        no_observation_row = "<tr><td colspan='4'>No observation provenance recorded</td></tr>"
+        rule_rows = "".join(
+            "<tr>"
+            f"<td>{html.escape(str(rule.get('metric') or '-'))}</td>"
+            f"<td>{html.escape(str(rule.get('value') if rule.get('value') is not None else 'Unavailable'))}</td>"
+            f"<td>{html.escape(str(rule.get('status') or 'NOT_ASSESSED'))}</td>"
+            f"<td>{html.escape(str(rule.get('direction') or '-'))} "
+            f"{html.escape(str(rule.get('threshold') if rule.get('threshold') is not None else ''))}</td>"
+            "</tr>"
+            for rule in quality.get("evaluated_rules", [])
+            if isinstance(rule, dict)
+        )
+        observation_rows = "".join(
+            "<tr>"
+            f"<td>{html.escape(str(observation.get('metric_name') or '-'))}</td>"
+            f"<td>{html.escape(str(observation.get('source') or 'Unspecified'))}</td>"
+            f"<td>{html.escape(str(observation.get('source_version') or '-'))}</td>"
+            f"<td>{html.escape(str((observation.get('artifact') or {}).get('sha256') or '-'))}</td>"
+            "</tr>"
+            for observation in quality.get("observation_snapshot", [])
+            if isinstance(observation, dict)
+        )
+        quality_html = (
+            f"<p><strong>Gate:</strong> {html.escape(str(quality.get('gate_status') or 'NOT_ASSESSED'))} "
+            f"· {html.escape(str(quality.get('profile_name') or 'No assay profile'))} "
+            f"{html.escape(str(quality.get('profile_version') or ''))}</p>"
+            "<h3>Evaluated QC rules</h3><table><thead><tr><th>Metric</th><th>Value</th><th>Result</th><th>Rule</th></tr></thead>"
+            f"<tbody>{rule_rows or no_rule_row}</tbody></table>"
+            "<h3>QC observation provenance</h3><table><thead><tr><th>Metric</th><th>Source</th><th>Source version</th><th>Artifact SHA-256</th></tr></thead>"
+            f"<tbody>{observation_rows or no_observation_row}</tbody></table>"
+        )
+    else:
+        quality_html = "<p>No technical QC assessment recorded for this report.</p>"
     if final_result.get("signed_out_at"):
         release_notice = (
             "Authorized sign-out is recorded. Clinical use remains subject to "
@@ -853,6 +916,8 @@ th,td {{ border:1px solid #bbb; padding:4px; vertical-align:top; }} th {{ backgr
 <p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — {html.escape(release_notice)}</p>
 {signout_details}
 {''.join(findings_html)}
+<h2>{'Technical Quality Assessment' if not bilingual else 'Technical Quality Assessment / تقييم الجودة التقنية'}</h2>
+{quality_html}
 <h2>{'Methodology' if not bilingual else 'Methodology / المنهجية'}</h2>
 <p>{html.escape(content['methodology'])}</p>
 <h2>{'Limitations' if not bilingual else 'Limitations / القيود'}</h2>

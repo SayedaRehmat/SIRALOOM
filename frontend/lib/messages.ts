@@ -728,6 +728,7 @@ export type TranslationKey =
   | "review.profile"
   | "review.version"
   | "review.qcGate"
+  | "review.qcReassessmentRequired"
   | "review.qcObsNone"
   | "review.qcPolicyRequired"
   | "review.qcMetricName"
@@ -735,6 +736,8 @@ export type TranslationKey =
   | "review.qcValueUnavailable"
   | "review.qcUnit"
   | "review.qcSourceVersion"
+  | "review.qcSourceArtifact"
+  | "review.qcNoArtifact"
   | "review.qcSaveObservation"
   | "review.qcObservations"
   | "review.qcReviewerNote"
@@ -1194,6 +1197,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.profile": "Profile",
     "review.version": "Version",
     "review.qcGate": "QC gate",
+    "review.qcReassessmentRequired": "QC observations or assay settings changed; reassessment is required before sign-out.",
     "review.qcObsNone": "No technical QC observations recorded for this analysis.",
     "review.qcPolicyRequired": "Record laboratory-provided measurements. A gate is assessed only against the assigned assay profile; missing values stay unavailable.",
     "review.qcMetricName": "QC metric name",
@@ -1201,6 +1205,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.qcValueUnavailable": "Unavailable",
     "review.qcUnit": "Unit",
     "review.qcSourceVersion": "Source or policy version",
+    "review.qcSourceArtifact": "Source artifact (optional)",
+    "review.qcNoArtifact": "No source artifact linked",
     "review.qcSaveObservation": "Record QC observation",
     "review.qcObservations": "Technical QC observations",
     "review.qcReviewerNote": "Reviewer note",
@@ -2105,6 +2111,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.profile": "الملف",
     "review.version": "الإصدار",
     "review.qcGate": "بوابة ضبط الجودة",
+    "review.qcReassessmentRequired": "تغيّرت ملاحظات ضبط الجودة أو إعدادات الفحص؛ يجب إعادة التقييم قبل اعتماد التقرير.",
     "review.qcObsNone": "لم تُسجل ملاحظات ضبط جودة تقنية لهذا التحليل.",
     "review.qcPolicyRequired": "سجّل القياسات المقدمة من المختبر. يُقيّم الاجتياز وفق ملف الفحص المعيّن فقط؛ وتظل القيم المفقودة غير متاحة.",
     "review.qcMetricName": "اسم مقياس ضبط الجودة",
@@ -2112,6 +2119,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.qcValueUnavailable": "غير متاح",
     "review.qcUnit": "الوحدة",
     "review.qcSourceVersion": "إصدار المصدر أو السياسة",
+    "review.qcSourceArtifact": "ملف المصدر (اختياري)",
+    "review.qcNoArtifact": "لا يوجد ملف مصدر مرتبط",
     "review.qcSaveObservation": "تسجيل ملاحظة ضبط الجودة",
     "review.qcObservations": "ملاحظات ضبط الجودة التقنية",
     "review.qcReviewerNote": "ملاحظة المراجع",

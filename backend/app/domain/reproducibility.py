@@ -314,6 +314,7 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
             "profile_version": row.profile_version,
             "metrics": row.metrics_json or {},
             "evaluated_rules": row.evaluated_rules or [],
+            "observation_snapshot": row.observation_snapshot,
             "gate_status": row.gate_status,
             "reviewer_note": row.reviewer_note,
         }

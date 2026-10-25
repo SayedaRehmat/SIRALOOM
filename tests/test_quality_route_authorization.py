@@ -5,7 +5,7 @@ import pytest
 from fastapi import HTTPException
 from datetime import datetime, timezone
 
-from backend.app.infrastructure.db.models import TechnicalQCObservation
+from backend.app.infrastructure.db.models import Artifact, TechnicalQCObservation
 from backend.app.auth.principal import Principal
 
 
@@ -70,18 +70,26 @@ class _Scalars:
 
 
 class _DB:
-    def __init__(self, observations):
+    def __init__(self, observations, artifacts=None):
         self.observations = observations
+        self.artifacts = artifacts or {}
         self.added = []
 
     def scalars(self, _query):
         return _Scalars(self.observations)
 
-    def get(self, *_args):
+    def get(self, model, identifier):
+        if model is Artifact:
+            return self.artifacts.get(identifier)
         return None
 
     def add(self, row):
         self.added.append(row)
+
+    def flush(self):
+        for row in self.added:
+            if getattr(row, "created_at", None) is None:
+                row.created_at = datetime.now(timezone.utc)
 
     def commit(self):
         pass
@@ -111,6 +119,102 @@ def test_qc_assessment_rejects_values_not_backed_by_persisted_observations(monke
         )
 
     assert error.value.status_code == 409
+    assert not db.added
+
+
+def test_qc_assessment_persists_exact_observation_snapshot(monkeypatch):
+    from backend.app.api.v1 import quality
+
+    analysis_id = uuid4()
+    user_id = uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4(), assay_id=None)
+    principal = Principal(user_id=user_id, organization_id=uuid4(), role="lab_director", subject="test")
+    artifact_id = uuid4()
+    observation = TechnicalQCObservation(
+        id=uuid4(), analysis_id=analysis_id, metric_name="mean_depth",
+        metric_value=40, status="AVAILABLE", source="LAB_QC", source_version="run-7",
+        metadata_json={"record": "QC-7"}, created_at=datetime.now(timezone.utc),
+        artifact_id=artifact_id,
+    )
+    artifact = SimpleNamespace(
+        id=artifact_id, case_id=analysis.case_id, analysis_id=None,
+        artifact_type="VCF", sha256="b" * 64,
+    )
+    db = _DB([observation], {artifact_id: artifact})
+    monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(quality, "AuditService", lambda _db: SimpleNamespace(record=lambda **_kwargs: None))
+
+    result = quality.assess_quality(
+        analysis_id,
+        quality.QCAssessmentInput(metrics={"mean_depth": 40}),
+        db,
+        principal,
+    )
+
+    assessment = db.added[0]
+    assert result["status"] == "NOT_ASSESSED"  # No assay policy was supplied.
+    assert assessment.observation_snapshot == [{
+        "observation_id": str(observation.id),
+        "metric_name": "mean_depth",
+        "metric_value": 40,
+        "metric_unit": None,
+        "status": "AVAILABLE",
+        "source": "LAB_QC",
+        "source_version": "run-7",
+        "metadata": {"record": "QC-7"},
+        "created_at": observation.created_at.isoformat(),
+        "artifact": {
+            "artifact_id": str(artifact_id),
+            "artifact_type": "VCF",
+            "sha256": "b" * 64,
+        },
+    }]
+
+
+def test_qc_observation_write_persists_same_case_source_artifact(monkeypatch):
+    from backend.app.api.v1 import quality
+
+    analysis = SimpleNamespace(id=uuid4(), case_id=uuid4(), assay_id=None)
+    artifact_id = uuid4()
+    artifact = SimpleNamespace(
+        id=artifact_id, case_id=analysis.case_id, analysis_id=None,
+        artifact_type="VCF", sha256="a" * 64,
+    )
+    db = _DB([], {artifact_id: artifact})
+    principal = Principal(user_id=uuid4(), organization_id=uuid4(), role="bioinformatician", subject="test")
+    monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(quality, "AuditService", lambda _db: SimpleNamespace(record=lambda **_kwargs: None))
+
+    result = quality.record_qc_observation(
+        analysis.id,
+        quality.QCObservationInput(
+            metric_name="mean_depth", metric_value=40, artifact_id=artifact_id,
+        ),
+        db,
+        principal,
+    )
+
+    assert result["artifact_id"] == str(artifact_id)
+    assert db.added[0].artifact_id == artifact_id
+
+
+def test_qc_observation_write_rejects_artifact_from_another_case(monkeypatch):
+    from backend.app.api.v1 import quality
+
+    analysis = SimpleNamespace(id=uuid4(), case_id=uuid4(), assay_id=None)
+    principal = Principal(user_id=uuid4(), organization_id=uuid4(), role="bioinformatician", subject="test")
+    artifact_id = uuid4()
+    db = _DB([])
+    monkeypatch.setattr(quality, "get_accessible_analysis", lambda *_args: analysis)
+
+    with pytest.raises(HTTPException, match="artifact reference does not match"):
+        quality.record_qc_observation(
+            analysis.id,
+            quality.QCObservationInput(metric_name="mean_depth", metric_value=40, artifact_id=artifact_id),
+            db,
+            principal,
+        )
+
     assert not db.added
 
 

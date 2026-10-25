@@ -280,6 +280,7 @@ class QCAssessment(Base):
     profile_version: Mapped[str | None] = mapped_column(Text)
     metrics_json: Mapped[dict] = mapped_column("metrics", JSON, default=dict)
     evaluated_rules: Mapped[list] = mapped_column(JSON, default=list)
+    observation_snapshot: Mapped[list | None] = mapped_column(JSON, nullable=True)
     gate_status: Mapped[str] = mapped_column(Text, default="NOT_ASSESSED")
     reviewer_note: Mapped[str | None] = mapped_column(Text)
     reviewed_by: Mapped[str | None] = mapped_column(Text)

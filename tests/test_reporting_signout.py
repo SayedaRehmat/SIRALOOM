@@ -19,6 +19,7 @@ from backend.app.infrastructure.db.models import (
     Report,
     ReportabilityDecision,
     QCAssessment,
+    TechnicalQCObservation,
     SecondaryFindingDecision,
     User,
     Variant,
@@ -141,15 +142,25 @@ def seed_finalizable_report():
         validation_status="VALID",
         metadata_json={"report_state": "DRAFT"},
     )
+    qc_observation = TechnicalQCObservation(
+        id=uuid4(), analysis_id=analysis.id, metric_name="mean_depth",
+        metric_value=40, status="AVAILABLE", source="LAB_QC",
+        created_at=datetime.now(UTC),
+    )
     qc = QCAssessment(
         id=uuid4(), analysis_id=analysis.id, assay_id=assay.id,
         status="PASS", profile_name=assay.name, profile_version=assay.version,
         metrics_json={"mean_depth": 40},
         evaluated_rules=[{"metric": "mean_depth", "value": 40, "status": "PASS", "direction": "MIN", "threshold": 20, "minimum": None, "maximum": None, "severity": "FAIL"}],
+        observation_snapshot=[],
         gate_status="PASS", reviewed_by=str(reviewer.id),
         reviewed_at=datetime.now(UTC),
     )
-    db.add_all([org, reviewer, case, assay, analysis, variant, classification, decision, draft_artifact, qc])
+    db.add_all([org, reviewer, case, assay, analysis, variant, classification, decision, draft_artifact, qc_observation, qc])
+    db.flush()
+
+    from backend.app.domain.quality_provenance import qc_observation_snapshot
+    qc.observation_snapshot = qc_observation_snapshot(db, analysis, [qc_observation])
     db.flush()
 
     report_content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
@@ -312,6 +323,20 @@ def test_report_content_persists_exact_classification_identity():
     assert finding["classification_version"] == classification.version
 
 
+def test_rendered_report_contains_persisted_qc_gate_and_observation_provenance():
+    from backend.app.reporting.service import _html_document
+
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    rendered = _html_document(content)
+
+    assert "Technical Quality Assessment" in rendered
+    assert "mean_depth" in rendered
+    assert "LAB_QC" in rendered
+    assert "Evaluated QC rules" in rendered
+    assert "QC observation provenance" in rendered
+
+
 def test_report_contains_genotype_from_persisted_normalization_partition():
     db, _reviewer, analysis, _report = seed_finalizable_report()
     content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
@@ -384,8 +409,7 @@ def test_signout_is_blocked_when_qc_changes_after_draft_generation():
 def test_signout_rejects_changed_passing_qc_snapshot():
     db, reviewer, analysis, report = seed_finalizable_report()
     qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
-    qc.metrics_json = {"mean_depth": 41}
-    qc.evaluated_rules = [{"metric": "mean_depth", "value": 41, "status": "PASS", "direction": "MIN", "threshold": 20, "minimum": None, "maximum": None, "severity": "FAIL"}]
+    qc.reviewed_by = "different-reviewer"
     db.commit()
 
     with pytest.raises(Exception, match="Technical QC assessment changed after report draft generation"):
@@ -393,6 +417,23 @@ def test_signout_rejects_changed_passing_qc_snapshot():
             db, report_id=report.id, approver_id=reviewer.id,
             reason="Attempt sign-out after QC snapshot changed",
         )
+
+
+def test_clinical_qc_requires_reassessment_after_new_observation():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    db.add(TechnicalQCObservation(
+        id=uuid4(), analysis_id=analysis.id, metric_name="mean_depth",
+        metric_value=40, status="AVAILABLE", source="LAB_QC",
+        created_at=datetime.now(UTC),
+    ))
+    db.commit()
+
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type="CLINICAL_INTERPRETATION"
+    )
+
+    assert not eligible
+    assert any("observations changed after assessment" in error for error in errors)
 
 
 def test_signout_rejects_reports_when_gvcf_or_sv_records_were_preserved_uninterpreted():

@@ -274,7 +274,7 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         } for p in phenotypes],
         "quality": {
             "assay": {"id": str(assay.id), "name": assay.name, "version": assay.version, "assay_type": assay.assay_type, "configuration": assay.configuration or {}} if assay else None,
-            "observations": [{"id": str(q.id), "metric_name": q.metric_name, "metric_value": q.metric_value, "metric_unit": q.metric_unit, "status": q.status, "source": q.source, "source_version": q.source_version, "metadata": q.metadata_json or {}, "created_at": q.created_at.isoformat()} for q in qc_observations],
+            "observations": [{"id": str(q.id), "artifact_id": str(q.artifact_id) if q.artifact_id else None, "metric_name": q.metric_name, "metric_value": q.metric_value, "metric_unit": q.metric_unit, "status": q.status, "source": q.source, "source_version": q.source_version, "metadata": q.metadata_json or {}, "created_at": q.created_at.isoformat()} for q in qc_observations],
             "latest_assessment": {"id": str(qc_assessments[0].id), "status": qc_assessments[0].status, "gate_status": qc_assessments[0].gate_status, "profile_name": qc_assessments[0].profile_name, "profile_version": qc_assessments[0].profile_version, "metrics": qc_assessments[0].metrics_json or {}, "evaluated_rules": qc_assessments[0].evaluated_rules or [], "reviewer_note": qc_assessments[0].reviewer_note, "reviewed_by": qc_assessments[0].reviewed_by, "reviewed_at": qc_assessments[0].reviewed_at.isoformat() if qc_assessments[0].reviewed_at else None} if qc_assessments else None,
         },
         "variant_context": {

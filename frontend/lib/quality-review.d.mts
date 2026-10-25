@@ -2,6 +2,8 @@ export type QualityAssessment = {
   id?: string;
   status?: string;
   gate_status?: string;
+  clinical_gate_status?: string;
+  is_current?: boolean;
   profile_name?: string | null;
   profile_version?: string | null;
   reviewer_note?: string | null;

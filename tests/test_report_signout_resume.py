@@ -116,6 +116,7 @@ def test_signout_recovers_after_filesystem_write_before_database_commit(
         assay_id=prior_qc.assay_id, status=prior_qc.status,
         profile_name=prior_qc.profile_name, profile_version=prior_qc.profile_version,
         metrics_json=prior_qc.metrics_json, evaluated_rules=prior_qc.evaluated_rules,
+        observation_snapshot=prior_qc.observation_snapshot,
         gate_status=prior_qc.gate_status, reviewed_by=prior_qc.reviewed_by,
         reviewed_at=prior_qc.reviewed_at,
     ))
@@ -197,6 +198,7 @@ def test_repeated_signout_after_analysis_succeeded_is_idempotent(monkeypatch, tm
         assay_id=prior_qc.assay_id, status=prior_qc.status,
         profile_name=prior_qc.profile_name, profile_version=prior_qc.profile_version,
         metrics_json=prior_qc.metrics_json, evaluated_rules=prior_qc.evaluated_rules,
+        observation_snapshot=prior_qc.observation_snapshot,
         gate_status=prior_qc.gate_status, reviewed_by=prior_qc.reviewed_by,
         reviewed_at=prior_qc.reviewed_at,
     ))

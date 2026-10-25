@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     Report,
     ReportabilityDecision,
     QCAssessment,
+    TechnicalQCObservation,
     User,
     Variant,
 )
@@ -33,8 +34,12 @@ def seed(approved=True):
     v=Variant(id=uuid4(),genome_build='GRCh38',chromosome='1',position=1,reference='A',alternate='G',normalization_status='NORMALIZED',canonical_key='GRCh38:1:1:A:G',identifiers={})
     partition=AnalysisPartition(id=uuid4(),analysis_id=a.id,step_id='normalize',partition_key='0:1',ordinal=0,record_start=0,record_end=1,variant_count=1,status='SUCCEEDED',metadata_json={'variant_ids':[str(v.id)],'sample_calls':[{'variant_id':str(v.id),'status':'AVAILABLE','sample_name':'SAMPLE-1','genotype':'0/1','zygosity':'HETEROZYGOUS','phase':'UNPHASED','phase_set':None,'format_values':{}}]})
     cl=Classification(id=uuid4(),variant_id=v.id,analysis_id=a.id,framework_name='ACMG/AMP',framework_version='2015',result='VUS',criterion_ids=[],metadata_json={},state='FINAL' if approved else 'PROPOSED',review_status='APPROVED' if approved else 'IN_REVIEW',version=1,review_version=1)
-    qc=QCAssessment(id=uuid4(),analysis_id=a.id,assay_id=assay.id,status='PASS',profile_name=assay.name,profile_version=assay.version,metrics_json={'mean_depth':40},evaluated_rules=[{'metric':'mean_depth','value':40,'status':'PASS','direction':'MIN','threshold':20,'minimum':None,'maximum':None,'severity':'FAIL'}],gate_status='PASS',reviewed_by=str(u.id),reviewed_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc))
-    d.add_all([o,u,assay,c,a,v,cl,partition,qc])
+    qc_observation=TechnicalQCObservation(id=uuid4(),analysis_id=a.id,metric_name='mean_depth',metric_value=40,status='AVAILABLE',source='LAB_QC')
+    qc=QCAssessment(id=uuid4(),analysis_id=a.id,assay_id=assay.id,status='PASS',profile_name=assay.name,profile_version=assay.version,metrics_json={'mean_depth':40},evaluated_rules=[{'metric':'mean_depth','value':40,'status':'PASS','direction':'MIN','threshold':20,'minimum':None,'maximum':None,'severity':'FAIL'}],observation_snapshot=[],gate_status='PASS',reviewed_by=str(u.id),reviewed_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc))
+    d.add_all([o,u,assay,c,a,v,cl,partition,qc_observation,qc])
+    d.flush()
+    from backend.app.domain.quality_provenance import qc_observation_snapshot
+    qc.observation_snapshot=qc_observation_snapshot(d,a,[qc_observation])
     d.flush()
     rd=ReportabilityDecision(id=uuid4(),analysis_id=a.id,variant_id=v.id,classification_id=cl.id,version=1,policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",policy_version="1.0.0",disposition="REPORT",priority_score=100,priority_band="HIGH",reasons=["Test fixture"],status="FINAL",review_version=1,reviewed_by=u.id)
     art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=100,sha256="a"*64,storage_uri="file:///tmp/fixture.pdf",genome_build="GRCh38")
