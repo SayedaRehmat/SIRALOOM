@@ -233,6 +233,17 @@ def _license_is_sufficient(resource: Resource, requirement: ProfileResourceRequi
 
 
 def _matches_known_provider(resource: Resource, capability: str) -> bool:
+    provider_id = resource.provider.strip().casefold()
+    if capability == CLINGEN_VARIANT_ASSERTION:
+        return (
+            resource.resource_type == "EVIDENCE"
+            and provider_id == "clingen variant pathogenicity".casefold()
+        )
+    if capability == CLINGEN_GENE_DISEASE_VALIDITY:
+        return (
+            resource.resource_type == "EVIDENCE"
+            and provider_id == "clingen gene-disease validity".casefold()
+        )
     try:
         provider = get_scientific_provider(resource.provider)
     except Exception:

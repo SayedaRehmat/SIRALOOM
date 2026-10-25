@@ -91,6 +91,35 @@ def test_non_annotation_resources_keep_profile_provider_preferences():
     ) == ("GNOMAD",)
 
 
+def test_clingen_profile_capabilities_accept_only_their_matching_evidence_provider():
+    from types import SimpleNamespace
+
+    from backend.app.domain.resource_profile_resolver import _matches_known_provider
+
+    assert _matches_known_provider(
+        SimpleNamespace(
+            provider="ClinGen Variant Pathogenicity",
+            resource_type="EVIDENCE",
+        ),
+        CLINGEN_VARIANT_ASSERTION,
+    )
+    assert _matches_known_provider(
+        SimpleNamespace(
+            provider="ClinGen Gene-Disease Validity",
+            resource_type="EVIDENCE",
+        ),
+        CLINGEN_GENE_DISEASE_VALIDITY,
+    )
+    assert not _matches_known_provider(
+        SimpleNamespace(provider="NCBI ClinVar", resource_type="EVIDENCE"),
+        CLINGEN_VARIANT_ASSERTION,
+    )
+    assert not _matches_known_provider(
+        SimpleNamespace(provider="ClinGen Variant Pathogenicity", resource_type="OTHER"),
+        CLINGEN_VARIANT_ASSERTION,
+    )
+
+
 def test_unknown_profile_is_rejected():
     try:
         get_analysis_resource_profile("does_not_exist")

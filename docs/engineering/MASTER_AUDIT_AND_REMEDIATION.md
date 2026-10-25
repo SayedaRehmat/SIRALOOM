@@ -14,6 +14,13 @@
 - **Status/limitations:** exact profile pinning is **VERIFIED** within deterministic SQLite/runtime tests. No independent ClinGen content benchmark, live laboratory resource qualification, PostgreSQL race test, or deployed lab execution is established. Phase A remains **PARTIAL** and laboratory release remains **BLOCKED** pending the live/deployed, scientific benchmark, and backup/restore gates in the acceptance matrix.
 - **Repository status at this checkpoint:** implementation is under review on `main`; do not treat the untracked `ci.db` and `siraloom.egg-info/` as part of this change.
 
+### 2026-10-25 constrain ClinGen profile providers to their resource class
+
+- **Follow-up finding:** the new ClinGen profile capability slots search the shared `EVIDENCE` resource class. The profile resolver's generic unknown-provider behavior is permissive for laboratory-extensible providers, so without a capability-specific provider contract, another `EVIDENCE` provider could appear eligible for one of these ClinGen-only slots if provider preferences or matching logic changed.
+- **Correction:** profile selection now explicitly binds `CLINGEN_VARIANT_ASSERTION` to provider `ClinGen Variant Pathogenicity` and `CLINGEN_GENE_DISEASE_VALIDITY` to provider `ClinGen Gene-Disease Validity`, requiring the persisted resource type to be `EVIDENCE`. Added positive and negative matcher tests.
+- **Verification:** full backend suite excluding the Windows-native PDF renderer: **1,380 passed, 46 skipped**, one existing Starlette/httpx deprecation warning. This run began before the capability-specific guard was added, so it is baseline regression evidence only. After the guard and its regression were present, the focused resource/profile/ClinGen suite passed **56 tests**, with the same warning. Ruff import sorting on the changed resolver, Python compilation of changed modules, and `git diff --check` passed. The full-suite run's skipped tests include unavailable integration dependencies; the PDF renderer remained excluded.
+- **Status:** provider eligibility is **VERIFIED** by focused tests. No exact-SHA CI has run for this follow-up yet; no live ClinGen or laboratory dataset was exercised. The preceding ClinGen profile pinning commit is already on `main`; this follow-up is pending commit/push.
+
 ### 2026-10-25 report reference-build mismatch before sample mapping diagnostics
 
 - **Finding:** worker input validation rejected a reference assembly mismatch, but only after checking sample mapping. A VCF with both a mismatched build and missing sample metadata therefore surfaced the less fundamental sample error first, obscuring an assembly incompatibility.
