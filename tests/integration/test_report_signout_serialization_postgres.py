@@ -49,8 +49,9 @@ def test_signout_holds_analysis_lock_through_eligibility_and_snapshot(monkeypatc
     decision_lock_acquired = threading.Event()
     errors = []
 
-    def paused_eligibility(_db, *, analysis_id):
+    def paused_eligibility(_db, *, analysis_id, report_type):
         assert analysis_id == analysis_id_outer
+        assert report_type == "CLINICAL_INTERPRETATION"
         validation_entered.set()
         if not allow_signout.wait(timeout=10):
             raise TimeoutError("sign-out validation gate was not released")
@@ -82,7 +83,9 @@ def test_signout_holds_analysis_lock_through_eligibility_and_snapshot(monkeypatc
     writer_thread = threading.Thread(target=mutate_analysis_decision)
     try:
         signout_thread.start()
-        assert validation_entered.wait(timeout=5), "sign-out did not reach eligibility validation"
+        if not validation_entered.wait(timeout=5):
+            assert not errors, f"sign-out thread failed before eligibility: {errors!r}"
+            pytest.fail("sign-out did not reach eligibility validation")
         writer_thread.start()
         # The writer must remain blocked on the Analysis row until sign-out
         # commits its validation and signed report snapshot.
