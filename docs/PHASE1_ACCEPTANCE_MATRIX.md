@@ -386,3 +386,11 @@ Focused command: `pytest ... tests/test_m13_streaming_partitions.py tests/test_r
 | Laboratory assay QC qualification | NOT ESTABLISHED | Rules remain laboratory-configured and have not been qualified against a real assay/SOP or deployed lab data. This control does not establish clinical validity, sample identity, or regulatory compliance. |
 
 Verification: Linux command `PYTHONPATH=. DATABASE_URL=sqlite:////tmp/siraloom-qc-final4.sqlite REDIS_URL=redis://localhost:6379/0 GENEBE_ENABLED=false GNOMAD_ENABLED=false .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/tmp/siraloom-qc-final4 -q --tb=short tests/test_analysis_assay_qc_gate.py tests/test_m11_technical_qc.py tests/test_quality_route_authorization.py tests/test_reporting_signout.py tests/test_reporting_contract.py tests/test_report_finalization.py tests/test_report_signout_resume.py tests/test_report_finalization_order.py tests/test_reportability_m6.py tests/test_reviewer_to_signed_report_integration.py tests/test_route_mutation_tenant_guards.py tests/test_report_artifact_commit_compensation.py` — **101 passed**, one existing Starlette/httpx deprecation warning. Frontend session suite — **39 passed**. `npm run build` passed i18n, compilation and type-check stages but did not finish trace collection. Overall Phase A remains **PARTIAL**.
+
+### 2026-10-25 reject malformed legacy assay rules at analysis creation
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Analysis creation validates actual assay QC-rule schema, including pre-existing profiles | PASS (route guard tests) | Intake now normalizes and validates rules rather than checking only that the `rules` field is non-empty. Cross-organization, inactive, empty, null, and malformed-direction profiles all fail before analysis/quota mutation. |
+
+Verification: `PYTHONPATH=. DATABASE_URL=sqlite:////tmp/siraloom-assay-schema.sqlite REDIS_URL=redis://localhost:6379/0 GENEBE_ENABLED=false GNOMAD_ENABLED=false .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/tmp/siraloom-assay-schema -q --tb=short tests/test_analysis_assay_qc_gate.py tests/test_quality_route_authorization.py tests/test_reporting_signout.py` — **40 passed**, one existing Starlette/httpx deprecation warning. This is schema/authorization-path coverage, not laboratory QC qualification.

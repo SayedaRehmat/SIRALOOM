@@ -6,6 +6,12 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+### 2026-10-25 validate legacy assay rules before analysis
+
+- **Finding:** assay creation validation did not protect profiles already present in the database. Analysis creation only checked that `configuration.rules` was truthy, so malformed rules could enter a workflow and fail later during QC evaluation.
+- **Correction:** analysis creation now runs the existing QC rule normalizer and fails closed for malformed or empty rules, as well as foreign or inactive profiles. This occurs before analysis creation and quota reservation.
+- **Regression/verification:** `PYTHONPATH=. DATABASE_URL=sqlite:////tmp/siraloom-assay-schema.sqlite REDIS_URL=redis://localhost:6379/0 GENEBE_ENABLED=false GNOMAD_ENABLED=false .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/tmp/siraloom-assay-schema -q --tb=short tests/test_analysis_assay_qc_gate.py tests/test_quality_route_authorization.py tests/test_reporting_signout.py` — **40 passed**. Cases include cross-organization, inactive, empty, null and malformed-direction profiles. Laboratory QC policy qualification remains unverified.
+
 ### 2026-10-25 bind clinical sign-out to reviewed assay QC
 
 - **Starting state:** Linux `/home/usama/SIRALOOM`, branch `main`, HEAD `914d194a1e0733c49b2e63588547c365c66913dc`, matching `origin/main` at inspection. The worktree also contained existing user changes in `docs/VARIANT_CLASS_SUPPORT.md`, this ledger, and `tests/test_vcf_tools.py`, plus untracked `ci.db`, `docs/research/`, and `siraloom.egg-info/`; those are preserved and not included in this change.

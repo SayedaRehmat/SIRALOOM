@@ -30,6 +30,7 @@ class _DB:
         {"status": "INACTIVE"},
         {"configuration": {"rules": []}},
         {"configuration": None},
+        {"configuration": {"rules": [{"metric": "mean_depth", "direction": "INVALID", "threshold": 20}]}},
     ],
 )
 def test_analysis_creation_rejects_assays_without_current_tenant_qc_profile(monkeypatch, assay_changes):

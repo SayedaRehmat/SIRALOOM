@@ -41,6 +41,7 @@ from backend.app.infrastructure.db.models import (
     WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
+from backend.app.quality import normalize_rules
 
 router = APIRouter(tags=["analyses"])
 
@@ -102,12 +103,15 @@ def create(
 
     if payload.assay_id:
         assay = db.get(Assay, payload.assay_id)
+        try:
+            assay_rules = normalize_rules(assay.configuration) if assay and isinstance(assay.configuration, dict) else []
+        except (KeyError, TypeError, ValueError):
+            assay_rules = []
         if (
             not assay
             or assay.organization_id != case.organization_id
             or assay.status != "ACTIVE"
-            or not isinstance(assay.configuration, dict)
-            or not assay.configuration.get("rules")
+            or not assay_rules
         ):
             raise HTTPException(
                 status_code=400,
