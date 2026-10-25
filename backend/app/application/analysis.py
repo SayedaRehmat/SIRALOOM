@@ -47,6 +47,15 @@ def validate_analysis_input_artifact(
     if artifact.validation_status != "VALID":
         raise ValueError("Analysis input VCF must pass ingestion validation")
 
+    artifact_build = normalize_build(artifact.genome_build)
+    requested_build = normalize_build(reference_build)
+    if artifact_build not in SUPPORTED_ANALYSIS_BUILDS:
+        raise ValueError("Analysis input VCF must declare a supported reference assembly")
+    if requested_build not in SUPPORTED_ANALYSIS_BUILDS:
+        raise ValueError("Analysis reference assembly must be GRCh37 or GRCh38")
+    if artifact_build != requested_build:
+        raise ValueError("Analysis reference assembly must match the validated input VCF")
+
     validation = (artifact.metadata_json or {}).get("validation")
     sample_names = validation.get("sample_names") if isinstance(validation, dict) else None
     if (
@@ -63,16 +72,6 @@ def validate_analysis_input_artifact(
         raise ValueError(
             "VCF sample name does not match the sample explicitly mapped to the case specimen."
         )
-
-    artifact_build = normalize_build(artifact.genome_build)
-    requested_build = normalize_build(reference_build)
-    if artifact_build not in SUPPORTED_ANALYSIS_BUILDS:
-        raise ValueError("Analysis input VCF must declare a supported reference assembly")
-    if requested_build not in SUPPORTED_ANALYSIS_BUILDS:
-        raise ValueError("Analysis reference assembly must be GRCh37 or GRCh38")
-    if artifact_build != requested_build:
-        raise ValueError("Analysis reference assembly must match the validated input VCF")
-
 
 def create_analysis(
     db: Session,

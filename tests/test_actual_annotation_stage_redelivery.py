@@ -175,6 +175,7 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                     position=555,
                     reference="T",
                     alternate="C",
+                    sample_call={},
                 )],
             )]),
         )

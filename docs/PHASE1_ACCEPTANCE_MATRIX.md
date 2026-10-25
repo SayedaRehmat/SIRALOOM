@@ -424,3 +424,12 @@ Verification: focused QC authorization, artifact lineage, report sign-out and re
 | QC source-artifact boundary regression tests | PASS (SQLite/API scope) | Tests cover REPORT_PDF, INVALID VCF, PENDING VCF, foreign lineage, and valid source/normalized VCFs. |
 
 Verification: QC route, lineage, report generation/sign-out and reviewer integration tests — **71 passed**, one existing Starlette/httpx deprecation warning. Ruff, Python compilation and diff checks passed.
+
+### 2026-10-25 prioritize reference-build mismatch in analysis intake diagnostics
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| A declared VCF/reference build mismatch is reported before sample mapping problems | PASS (worker unit scope) | `validate_analysis_input_artifact` now validates supported build identity and exact assembly agreement before sample cardinality/mapping. This reports the high-risk reference incompatibility directly while still rejecting sites-only/multisample inputs. |
+| Broad backend regression suite | PASS (SQLite/local scope) | **1,373 passed, 46 skipped**; report PDF renderer module excluded because its native rendering environment was not exercised. Existing Starlette/httpx deprecation warning remains. |
+
+Focused prior failure set: **42 passed**. This diagnostic-ordering correction does not change accepted assemblies or sample scope. Live laboratory input qualification remains outstanding.

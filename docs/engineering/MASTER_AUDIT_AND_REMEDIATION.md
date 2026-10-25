@@ -6,6 +6,14 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+### 2026-10-25 report reference-build mismatch before sample mapping diagnostics
+
+- **Finding:** worker input validation rejected a reference assembly mismatch, but only after checking sample mapping. A VCF with both a mismatched build and missing sample metadata therefore surfaced the less fundamental sample error first, obscuring an assembly incompatibility.
+- **Correction:** validate supported assembly declarations and exact input/reference agreement immediately after artifact type/status checks, before sample cardinality and mapping. Sample-less and multisample VCFs remain rejected.
+- **Fixture corrections:** recovery tests now provide the declared one-sample mapping and normalized genotype evidence required by the workflow; the lock test forwards the report type parameter. The existing safeguard was retained.
+- **Verification:** five affected test modules — **42 passed**. Full backend suite excluding `tests/test_report_pdf.py` — **1,373 passed, 46 skipped**, one existing Starlette/httpx deprecation warning. PDF rendering was not part of this run.
+- **Status/limitation:** verified local backend regression scope. No live laboratory VCFs or production PostgreSQL deployment were tested.
+
 ### 2026-10-25 validate QC source artifact evidence
 
 - **Finding:** the QC UI listed validated VCFs, but the API accepted any same-case analysis artifact as a QC source. Such a link could cite an invalid VCF or even a report PDF as the source for a technical QC measurement. A previously persisted bad reference also surfaced as an unhandled error on the quality read.

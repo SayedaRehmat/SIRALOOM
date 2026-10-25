@@ -6,7 +6,6 @@ controlled workflow delegate avoids external scientific providers and focuses
 this test on the worker-recovery boundary; the full scientific benchmark is a
 separate gate.
 """
-from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -542,7 +541,7 @@ def test_worker_rejects_unbound_or_invalid_analysis_input_before_reading(
                 storage_uri="siraloom://must-not-be-read/input.vcf",
                 genome_build=artifact_build,
                 validation_status=validation_status,
-                metadata_json={},
+                metadata_json={"validation": {"sample_names": ["PROBAND"]}},
             ))
             db.commit()
 

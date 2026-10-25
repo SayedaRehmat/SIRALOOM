@@ -32,7 +32,15 @@ def seed():
     db.add(AnalysisPartition(
         id=uuid4(), analysis_id=analysis.id, step_id="normalize",
         partition_key="0:1", ordinal=0, record_start=0, record_end=1,
-        variant_count=1, status="SUCCEEDED", metadata_json={"variant_ids": [str(variant.id)]},
+        variant_count=1, status="SUCCEEDED", metadata_json={
+            "variant_ids": [str(variant.id)],
+            "sample_calls": [{
+                "variant_id": str(variant.id), "status": "AVAILABLE",
+                "sample_name": "PROBAND", "genotype": "0/1",
+                "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                "phase_set": None, "format_values": {},
+            }],
+        },
     ))
     db.commit()
     return db, reviewer_or_user(user), analyst, analysis, variant, assessment, classification

@@ -21,9 +21,9 @@ def test_report_finalization_locks_analysis_before_eligibility_validation(monkey
             events.append("analysis_locked")
         return real_get(entity, ident, **kwargs)
 
-    def observed_eligibility(session, *, analysis_id):
+    def observed_eligibility(session, *, analysis_id, report_type="CLINICAL_INTERPRETATION"):
         events.append("eligibility_checked")
-        return real_eligibility(session, analysis_id=analysis_id)
+        return real_eligibility(session, analysis_id=analysis_id, report_type=report_type)
 
     monkeypatch.setattr(db, "get", observed_get)
     monkeypatch.setattr(finalization, "final_report_eligibility", observed_eligibility)

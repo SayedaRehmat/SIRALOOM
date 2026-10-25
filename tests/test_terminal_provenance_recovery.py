@@ -130,8 +130,9 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
             input_path = tmp_path / "signed-out-input.vcf"
             input_path.write_text(
                 "##fileformat=VCFv4.2\n"
-                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-                "1\t555\t.\tT\tC\t.\tPASS\t.\n",
+                "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\n"
+                "1\t555\t.\tT\tC\t.\tPASS\t.\tGT\t0/1\n",
                 encoding="utf-8",
             )
             input_artifact = store.put_file(
@@ -143,6 +144,7 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
                 artifact_type="VCF",
                 media_type="text/vcf",
                 genome_build="GRCh38",
+                metadata={"validation": {"sample_names": ["PROBAND"]}},
                 validation_status="VALID",
             )
             analysis.configuration = {"input_artifact_id": str(input_artifact.id)}
@@ -227,7 +229,15 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
                     variant_count=1,
                     status="SUCCEEDED",
                     input_artifact_id=normalized_artifact.id,
-                    metadata_json={"variant_ids": [str(variant_id)]},
+                    metadata_json={
+                        "variant_ids": [str(variant_id)],
+                        "sample_calls": [{
+                            "variant_id": str(variant_id), "status": "AVAILABLE",
+                            "sample_name": "PROBAND", "genotype": "0/1",
+                            "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
+                            "phase_set": None, "format_values": {},
+                        }] if partition_step == "normalize" else [],
+                    },
                     resource_class="STANDARD",
                     cpu_request=1.0,
                     memory_mb=1024,
