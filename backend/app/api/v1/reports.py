@@ -89,7 +89,9 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
         raise HTTPException(status_code=404, detail="Case not found")
     db.refresh(case, with_for_update=True)
 
-    eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type=payload.report_type
+    )
     if not eligible:
         raise HTTPException(status_code=409, detail="Report generation is blocked until classification review and reportability are finalized: " + "; ".join(errors))
 

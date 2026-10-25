@@ -26,6 +26,7 @@ from backend.app.reporting.service import (
     REPORT_STATUS_SUPERSEDED,
     final_report_eligibility,
     render_pdf,
+    technical_quality_snapshot,
 )
 
 
@@ -36,6 +37,17 @@ class ReportFinalizationError(ValueError):
 def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
+    quality_snapshot = content.get("technical_quality")
+    if report.report_type == "CLINICAL_INTERPRETATION":
+        if not isinstance(quality_snapshot, dict):
+            raise ReportFinalizationError(
+                "Clinical report snapshot is missing technical QC assessment identity"
+            )
+        current_quality = technical_quality_snapshot(db, report.analysis_id)
+        if current_quality != quality_snapshot:
+            raise ReportFinalizationError(
+                "Technical QC assessment changed after report draft generation"
+            )
     findings = content.get("findings") or []
     from backend.app.infrastructure.db.models import (
         ACMGAssessment,
@@ -468,6 +480,25 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     if report.status != "DRAFT":
         raise ReportFinalizationError(f"Report cannot be finalized from status {report.status}")
 
+    prior = db.scalars(
+        select(Report)
+        .where(
+            Report.case_id == report.case_id,
+            Report.report_type == report.report_type,
+            Report.status == REPORT_STATUS_FINAL,
+        )
+        .order_by(Report.report_version.desc())
+    ).first()
+    if (
+        prior is not None
+        and prior.report_version > report.report_version
+        and report.report_type == "CLINICAL_INTERPRETATION"
+    ):
+        raise ReportFinalizationError(
+            f"Report version {report.report_version} cannot be finalized after "
+            f"newer finalized version {prior.report_version}."
+        )
+
     approver = db.get(User, approver_id)
     if (
         approver is None
@@ -479,29 +510,15 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
             "An active, organization-bound signatory with a display name is required"
         )
 
-    eligible, errors = final_report_eligibility(db, analysis_id=report.analysis_id)
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=report.analysis_id, report_type=report.report_type
+    )
     if not eligible:
         raise ReportFinalizationError("; ".join(errors))
     if not report.artifact_id:
         raise ReportFinalizationError("Report has no immutable draft artifact to approve")
 
     _verify_report_snapshot(db, report)
-
-    prior = db.scalars(
-        select(Report)
-        .where(
-            Report.case_id == report.case_id,
-            Report.report_type == report.report_type,
-            Report.status == REPORT_STATUS_FINAL,
-        )
-        .order_by(Report.report_version.desc())
-    ).first()
-
-    if prior is not None and prior.report_version > report.report_version:
-        raise ReportFinalizationError(
-            f"Report version {report.report_version} cannot be finalized after "
-            f"newer finalized version {prior.report_version}."
-        )
 
     before = {
         "status": report.status,

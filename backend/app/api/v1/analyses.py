@@ -102,14 +102,16 @@ def create(
 
     if payload.assay_id:
         assay = db.get(Assay, payload.assay_id)
-
         if (
             not assay
-            or assay.organization_id != principal.organization_id
+            or assay.organization_id != case.organization_id
+            or assay.status != "ACTIVE"
+            or not isinstance(assay.configuration, dict)
+            or not assay.configuration.get("rules")
         ):
             raise HTTPException(
                 status_code=400,
-                detail="Invalid assay_id for this organization",
+                detail="assay_id must identify an active, same-organization assay with QC rules",
             )
 
     try:

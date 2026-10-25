@@ -10,6 +10,7 @@ from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
     AnalysisPartition,
+    Assay,
     Artifact,
     Case,
     Classification,
@@ -17,6 +18,7 @@ from backend.app.infrastructure.db.models import (
     Organization,
     Report,
     ReportabilityDecision,
+    QCAssessment,
     SecondaryFindingDecision,
     User,
     Variant,
@@ -52,9 +54,15 @@ def seed_finalizable_report():
         language="en",
         created_by=reviewer.id,
     )
+    assay = Assay(
+        id=uuid4(), organization_id=org.id, name="Test Assay",
+        version="1", assay_type="WGS", status="ACTIVE",
+        configuration={"rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 20}]},
+    )
     analysis = Analysis(
         id=uuid4(),
         case_id=case.id,
+        assay_id=assay.id,
         analysis_type="VARIANT_INTERPRETATION",
         workflow_id="variant-v1",
         workflow_version="2.1",
@@ -133,7 +141,15 @@ def seed_finalizable_report():
         validation_status="VALID",
         metadata_json={"report_state": "DRAFT"},
     )
-    db.add_all([org, reviewer, case, analysis, variant, classification, decision, draft_artifact])
+    qc = QCAssessment(
+        id=uuid4(), analysis_id=analysis.id, assay_id=assay.id,
+        status="PASS", profile_name=assay.name, profile_version=assay.version,
+        metrics_json={"mean_depth": 40},
+        evaluated_rules=[{"metric": "mean_depth", "value": 40, "status": "PASS", "direction": "MIN", "threshold": 20, "minimum": None, "maximum": None, "severity": "FAIL"}],
+        gate_status="PASS", reviewed_by=str(reviewer.id),
+        reviewed_at=datetime.now(UTC),
+    )
+    db.add_all([org, reviewer, case, assay, analysis, variant, classification, decision, draft_artifact, qc])
     db.flush()
 
     report_content = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
@@ -219,6 +235,62 @@ def test_report_is_not_eligible_until_reportability_is_final():
     assert any("reportability is not FINAL" in error for error in errors)
 
 
+@pytest.mark.parametrize(
+    ("qc_change", "expected_error"),
+    [
+        ("missing", "reviewed technical QC assessment"),
+        ("failed", "requires a PASS technical QC assessment"),
+        ("stale_profile", "does not match the current assay profile version"),
+    ],
+)
+def test_clinical_report_eligibility_requires_current_passing_qc(qc_change, expected_error):
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
+    if qc_change == "missing":
+        db.delete(qc)
+    elif qc_change == "failed":
+        qc.status = "FAIL"
+        qc.gate_status = "FAIL"
+    else:
+        assay = db.get(Assay, qc.assay_id)
+        assay.version = "2"
+    db.commit()
+
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type="CLINICAL_INTERPRETATION"
+    )
+
+    assert not eligible
+    assert any(expected_error in error for error in errors)
+
+
+def test_clinical_report_eligibility_rejects_changed_rules_without_version_change():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    assay = db.get(Assay, analysis.assay_id)
+    assay.configuration = {"rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 50}]}
+    db.commit()
+
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type="CLINICAL_INTERPRETATION"
+    )
+
+    assert not eligible
+    assert any("does not match the current assay QC rules" in error for error in errors)
+
+
+def test_analytical_report_does_not_require_clinical_qc_gate():
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
+    db.delete(qc)
+    db.commit()
+
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type="ANALYTICAL"
+    )
+
+    assert eligible, errors
+
+
 def test_report_content_persists_exact_classification_identity():
     db, reviewer, analysis, report = seed_finalizable_report()
 
@@ -295,6 +367,34 @@ def test_signout_is_blocked_for_homozygous_reference_record():
     assert any("homozygous reference" in error for error in errors)
 
 
+def test_signout_is_blocked_when_qc_changes_after_draft_generation():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
+    qc.status = "WARN"
+    qc.gate_status = "WARN"
+    db.commit()
+
+    with pytest.raises(Exception, match="requires a PASS technical QC assessment"):
+        finalize_report(
+            db, report_id=report.id, approver_id=reviewer.id,
+            reason="Attempt sign-out after QC changed",
+        )
+
+
+def test_signout_rejects_changed_passing_qc_snapshot():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
+    qc.metrics_json = {"mean_depth": 41}
+    qc.evaluated_rules = [{"metric": "mean_depth", "value": 41, "status": "PASS", "direction": "MIN", "threshold": 20, "minimum": None, "maximum": None, "severity": "FAIL"}]
+    db.commit()
+
+    with pytest.raises(Exception, match="Technical QC assessment changed after report draft generation"):
+        finalize_report(
+            db, report_id=report.id, approver_id=reviewer.id,
+            reason="Attempt sign-out after QC snapshot changed",
+        )
+
+
 def test_signout_rejects_reports_when_gvcf_or_sv_records_were_preserved_uninterpreted():
     db, _reviewer, analysis, _report = seed_finalizable_report()
     db.add(WorkflowStep(
@@ -335,7 +435,6 @@ def test_report_generation_and_signout_eligibility_reject_classification_outside
 
 def test_report_generation_and_signout_reject_reportable_secondary_variant_outside_manifest():
     db, _reviewer, analysis, _report = seed_finalizable_report()
-    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
     outside_variant = Variant(
         id=uuid4(), genome_build="GRCh38", chromosome="17", position=2,
         reference="C", alternate="T", normalization_status="NORMALIZED",
@@ -561,6 +660,10 @@ def test_signout_creates_immutable_signed_artifact_and_provenance(monkeypatch):
     from backend.app.reporting import finalization
 
     reviewer.display_name = "Sign-out <Reviewer>"
+    report.content_json = build_report_content(
+        db, analysis, "en", report_type="CLINICAL_INTERPRETATION"
+    )
+    db.commit()
     monkeypatch.setattr(finalization, "render_pdf", lambda content: b"%PDF-SIRALOOM-SIGNED%")
 
     finalized = finalize_report(

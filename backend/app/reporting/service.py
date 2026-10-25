@@ -39,8 +39,11 @@ from backend.app.infrastructure.db.models import (
     Specimen,
     Variant,
     WorkflowStep,
+    Assay,
+    QCAssessment,
 )
 from backend.app.inheritance import assessment_projection, evidence_projection
+from backend.app.quality import assess_metrics
 from backend.app.reporting.reportability import final_reportability_state, latest_decision
 
 REPORT_STATUS_DRAFT = "DRAFT"
@@ -113,13 +116,63 @@ def _variants_outside_analysis(
     return missing
 
 
-def final_report_eligibility(db: Session, *, analysis_id: UUID) -> tuple[bool, list[str]]:
+def final_report_eligibility(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    report_type: str = "CLINICAL_INTERPRETATION",
+) -> tuple[bool, list[str]]:
     analysis = db.get(Analysis, analysis_id)
     if analysis is None:
         return False, ["Analysis not found"]
     errors: list[str] = []
     if analysis.status not in {"REQUIRES_REVIEW", "SUCCEEDED"}:
         errors.append(f"Analysis status {analysis.status} is not report-eligible")
+
+    if report_type == "CLINICAL_INTERPRETATION":
+        assay = db.get(Assay, analysis.assay_id) if analysis.assay_id else None
+        if assay is None:
+            errors.append("Clinical report requires an organization-bound assay QC profile")
+        elif (
+            (case := db.get(Case, analysis.case_id)) is None
+            or assay.organization_id != case.organization_id
+        ):
+            errors.append("Clinical report assay QC profile is outside the case organization")
+        elif assay.status != "ACTIVE" or not (assay.configuration or {}).get("rules"):
+            errors.append("Clinical report requires an active assay QC profile with configured rules")
+        else:
+            qc = db.scalar(
+                select(QCAssessment)
+                .where(QCAssessment.analysis_id == analysis_id)
+                .order_by(QCAssessment.created_at.desc(), QCAssessment.id.desc())
+            )
+            if qc is None:
+                errors.append("Clinical report requires a reviewed technical QC assessment")
+            elif (
+                qc.assay_id != assay.id
+                or qc.profile_name != assay.name
+                or qc.profile_version != assay.version
+            ):
+                errors.append("Technical QC assessment does not match the current assay profile version")
+            elif not qc.reviewed_by or not qc.reviewed_at:
+                errors.append("Technical QC assessment lacks reviewer attribution")
+            elif qc.gate_status != "PASS" or qc.status != "PASS":
+                errors.append(
+                    f"Clinical report requires a PASS technical QC assessment (current gate: {qc.gate_status})"
+                )
+            else:
+                try:
+                    current_qc = assess_metrics(qc.metrics_json or {}, assay.configuration)
+                except (KeyError, TypeError, ValueError) as exc:
+                    errors.append(f"Current assay QC rules are invalid: {exc}")
+                else:
+                    if (
+                        current_qc["status"] != qc.status
+                        or current_qc["metrics"] != (qc.evaluated_rules or [])
+                    ):
+                        errors.append(
+                            "Technical QC assessment does not match the current assay QC rules"
+                        )
 
     normalization_step = db.scalar(
         select(WorkflowStep).where(
@@ -194,6 +247,28 @@ def final_report_eligibility(db: Session, *, analysis_id: UUID) -> tuple[bool, l
             + ", ".join(sorted(str(value) for value in unlinked_secondary))
         )
     return not errors, errors
+
+
+def technical_quality_snapshot(db: Session, analysis_id: UUID) -> dict[str, Any] | None:
+    assessment = db.scalar(
+        select(QCAssessment)
+        .where(QCAssessment.analysis_id == analysis_id)
+        .order_by(QCAssessment.created_at.desc(), QCAssessment.id.desc())
+    )
+    if assessment is None:
+        return None
+    return {
+        "assessment_id": str(assessment.id),
+        "assay_id": str(assessment.assay_id) if assessment.assay_id else None,
+        "status": assessment.status,
+        "gate_status": assessment.gate_status,
+        "profile_name": assessment.profile_name,
+        "profile_version": assessment.profile_version,
+        "metrics": assessment.metrics_json or {},
+        "evaluated_rules": assessment.evaluated_rules or [],
+        "reviewed_by": assessment.reviewed_by,
+        "reviewed_at": assessment.reviewed_at.isoformat() if assessment.reviewed_at else None,
+    }
 
 def _criterion_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> list[dict[str, Any]]:
     assessments = list(
@@ -617,6 +692,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         )
     )
     versions = analysis.configuration.get("versions", {}) if isinstance(analysis.configuration, dict) else {}
+    technical_quality = technical_quality_snapshot(db, analysis.id)
 
     return {
         "report_schema_version": "1.1.0",
@@ -634,6 +710,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         "phenotype_context": phenotype_context,
         "pedigree_context": pedigree_context,
         "secondary_findings": secondary_findings,
+        "technical_quality": technical_quality,
         "specimen": {
             "specimen_id": str(specimen.id) if specimen else None,
             "specimen_identifier": specimen.specimen_identifier if specimen else None,

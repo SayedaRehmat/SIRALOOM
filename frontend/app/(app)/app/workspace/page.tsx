@@ -67,6 +67,7 @@ type CaseWorkspace = {
   clinical_context: Record<string, unknown>;
   specimens: Array<Record<string, unknown> & { metadata?: Record<string, unknown> }>;
   analyses: Array<Record<string, unknown>>;
+  assays?: Array<{ assay_id: string; name: string; version: string; assay_type: string; has_qc_rules: boolean }>;
 };
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
@@ -200,6 +201,7 @@ export default function Home() {
   const [selectedSpecimenId, setSelectedSpecimenId] = useState("");
   const [genomeBuild, setGenomeBuild] = useState("GRCh38");
   const [resourceProfileId, setResourceProfileId] = useState("WES_GRCh38_STANDARD");
+  const [assayId, setAssayId] = useState("");
   const [preflightResult, setPreflightResult] = useState<any>(null);
   const [indication, setIndication] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -356,6 +358,8 @@ export default function Home() {
         setCaseIdentifier(String(data?.case_identifier ?? ""));
         window.localStorage.setItem("siraloom.case_identifier", String(data?.case_identifier ?? ""));
         const specimens = Array.isArray(data?.specimens) ? data.specimens : [];
+        const assays = Array.isArray(data?.assays) ? data.assays : [];
+        setAssayId(assays.find((assay: any) => assay.has_qc_rules)?.assay_id ?? "");
         // A case deep-link must not retain a specimen or input artifact from the previously open case.
         setSelectedSpecimenId(specimens.length ? String(specimens[0].specimen_id) : "");
         setArtifactId("");
@@ -704,6 +708,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           input_artifact_id: artifactId,
+          assay_id: assayId || null,
           analysis_type: "VARIANT_INTERPRETATION",
           workflow_id: "variant-v1",
           workflow_version: "2.1",
@@ -1088,6 +1093,17 @@ export default function Home() {
               <option value="GRCh38">GRCh38</option>
               <option value="GRCh37">GRCh37</option>
             </select>
+          </label>
+          <label>{t("workspace.assayProfile")}
+            <select value={assayId} onChange={(event) => setAssayId(event.target.value)}>
+              <option value="">{t("workspace.noClinicalAssay")}</option>
+              {(caseWorkspace?.assays ?? []).filter((assay) => assay.has_qc_rules).map((assay) => (
+                <option key={assay.assay_id} value={assay.assay_id}>
+                  {assay.name} · {assay.assay_type} · v{assay.version}
+                </option>
+              ))}
+            </select>
+            {!assayId && <small>{t("workspace.assayQcGateNotice")}</small>}
           </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>

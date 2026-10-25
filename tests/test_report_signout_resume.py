@@ -9,9 +9,18 @@ from backend.app.infrastructure.db.models import (
     AnalysisDispatch,
     Artifact,
     AuditEvent,
+    Classification,
+    QCAssessment,
     Report,
+    ReportabilityDecision,
 )
 from tests.test_reporting_signout import seed_finalizable_report
+
+
+def _refresh_clinical_draft(db, analysis, report):
+    from backend.app.reporting.service import build_report_content
+
+    return build_report_content(db, analysis, "en", report_type=report.report_type)
 
 
 def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_path):
@@ -24,6 +33,20 @@ def test_final_report_signout_creates_durable_workflow_resume(monkeypatch, tmp_p
     analysis.status = AnalysisStatus.REQUIRES_REVIEW
     analysis.completed_at = None
     analysis.queue_task_id = None
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    decision = db.scalar(select(ReportabilityDecision).where(ReportabilityDecision.analysis_id == analysis.id))
+    classification.review_status = "IN_REVIEW"
+    classification.review_version = 0
+    db.commit()
+    from backend.app.review.service import approve_classification
+    approved = approve_classification(
+        db, analysis_id=analysis.id, variant_id=classification.variant_id,
+        reviewer=reviewer, expected_version=0, reason="Review completed",
+    )
+    decision.classification_id = approved.id
+    decision.review_version = approved.review_version
+    decision.status = "FINAL"
+    report.content_json = _refresh_clinical_draft(db, analysis, report)
     db.commit()
 
     monkeypatch.setattr(
@@ -86,7 +109,18 @@ def test_signout_recovers_after_filesystem_write_before_database_commit(
     """A retry repairs the DB link after a worker dies with a signed file on disk."""
     from backend.app.reporting import finalization
 
-    db, reviewer, _analysis, report = seed_finalizable_report()
+    db, reviewer, analysis, report = seed_finalizable_report()
+    prior_qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
+    db.add(QCAssessment(
+        id=__import__("uuid").uuid4(), analysis_id=analysis.id,
+        assay_id=prior_qc.assay_id, status=prior_qc.status,
+        profile_name=prior_qc.profile_name, profile_version=prior_qc.profile_version,
+        metrics_json=prior_qc.metrics_json, evaluated_rules=prior_qc.evaluated_rules,
+        gate_status=prior_qc.gate_status, reviewed_by=prior_qc.reviewed_by,
+        reviewed_at=prior_qc.reviewed_at,
+    ))
+    report.content_json = _refresh_clinical_draft(db, analysis, report)
+    db.commit()
     monkeypatch.setattr(
         "backend.app.config.settings.artifact_root",
         str(tmp_path / "artifacts"),
@@ -157,6 +191,16 @@ def test_repeated_signout_after_analysis_succeeded_is_idempotent(monkeypatch, tm
 
     db, reviewer, analysis, report = seed_finalizable_report()
     analysis.status = AnalysisStatus.SUCCEEDED
+    prior_qc = db.scalar(select(QCAssessment).where(QCAssessment.analysis_id == analysis.id))
+    db.add(QCAssessment(
+        id=__import__("uuid").uuid4(), analysis_id=analysis.id,
+        assay_id=prior_qc.assay_id, status=prior_qc.status,
+        profile_name=prior_qc.profile_name, profile_version=prior_qc.profile_version,
+        metrics_json=prior_qc.metrics_json, evaluated_rules=prior_qc.evaluated_rules,
+        gate_status=prior_qc.gate_status, reviewed_by=prior_qc.reviewed_by,
+        reviewed_at=prior_qc.reviewed_at,
+    ))
+    report.content_json = _refresh_clinical_draft(db, analysis, report)
     db.commit()
 
     monkeypatch.setattr(

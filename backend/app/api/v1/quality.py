@@ -14,9 +14,9 @@ from backend.app.auth.authorization import (
 )
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Assay, TechnicalQCObservation, QCAssessment
+from backend.app.infrastructure.db.models import Assay, TechnicalQCObservation, QCAssessment
 from backend.app.infrastructure.db.session import get_db
-from backend.app.quality import assess_metrics
+from backend.app.quality import assess_metrics, normalize_rules
 
 router = APIRouter(tags=["technical-quality"])
 ASSAY_ADMIN_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director"})
@@ -54,6 +54,14 @@ def _obs(o):
 @router.post("/assays", status_code=201)
 def create_assay(body: AssayInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     require_role(principal, ASSAY_ADMIN_ROLES)
+    if body.status not in {"ACTIVE", "INACTIVE"}:
+        raise HTTPException(400, "Assay status must be ACTIVE or INACTIVE")
+    try:
+        rules = normalize_rules(body.configuration)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(400, f"Invalid assay QC configuration: {exc}") from exc
+    if body.status == "ACTIVE" and not rules:
+        raise HTTPException(400, "An active assay QC profile requires at least one valid QC rule")
     row = Assay(id=uuid4(), organization_id=principal.organization_id, name=body.name.strip(), version=body.version.strip(),
                 assay_type=body.assay_type.strip(), configuration=body.configuration, status=body.status)
     db.add(row)
@@ -84,7 +92,7 @@ def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depend
 def get_quality(analysis_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal)
     require_role(principal, READ_ROLES)
-    observations=list(db.scalars(select(TechnicalQCObservation).where(TechnicalQCObservation.analysis_id==analysis.id).order_by(TechnicalQCObservation.created_at)))
+    observations=list(db.scalars(select(TechnicalQCObservation).where(TechnicalQCObservation.analysis_id==analysis.id).order_by(TechnicalQCObservation.created_at, TechnicalQCObservation.id)))
     assessments=list(db.scalars(select(QCAssessment).where(QCAssessment.analysis_id==analysis.id).order_by(QCAssessment.created_at.desc())))
     for observation in observations:
         if observation.artifact_id is not None:
@@ -107,6 +115,19 @@ def assess_quality(analysis_id: UUID, body: QCAssessmentInput, db=Depends(get_db
     if assay and assay.organization_id != principal.organization_id:
         raise HTTPException(403,"Assay is not accessible")
     config=assay.configuration if assay else {}
+    observations=list(db.scalars(
+        select(TechnicalQCObservation)
+        .where(TechnicalQCObservation.analysis_id == analysis.id)
+        .order_by(TechnicalQCObservation.created_at, TechnicalQCObservation.id)
+    ))
+    persisted_metrics: dict[str, float | None] = {}
+    for observation in observations:
+        persisted_metrics[observation.metric_name] = observation.metric_value
+    if body.metrics != persisted_metrics:
+        raise HTTPException(
+            409,
+            "QC assessment metrics must match the latest persisted technical QC observations",
+        )
     try:
         result=assess_metrics(body.metrics, config)
     except (KeyError, TypeError, ValueError) as exc:

@@ -18,7 +18,7 @@ from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
 from backend.app.domain.enums import CaseStatus
 from backend.app.domain.schemas import CaseCreate
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Case, CaseAccessGrant, Specimen
+from backend.app.infrastructure.db.models import Analysis, Assay, Case, CaseAccessGrant, Specimen
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/cases", tags=["cases"])
@@ -27,10 +27,23 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 def _case_payload(db: Session, case: Case) -> dict:
     specimens = db.scalars(select(Specimen).where(Specimen.case_id == case.id).order_by(Specimen.created_at)).all()
     analyses = db.scalars(select(Analysis).where(Analysis.case_id == case.id).order_by(Analysis.created_at.desc())).all()
+    assays = db.scalars(
+        select(Assay)
+        .where(
+            Assay.organization_id == case.organization_id,
+            Assay.status == "ACTIVE",
+        )
+        .order_by(Assay.name, Assay.version)
+    ).all()
     return {
         "case_id": str(case.id), "case_identifier": case.case_identifier, "organization_id": str(case.organization_id),
         "status": case.status, "language": case.language, "clinical_context": case.clinical_context or {},
         "created_by": str(case.created_by), "created_at": case.created_at.isoformat(), "updated_at": case.updated_at.isoformat(),
+        "assays": [{
+            "assay_id": str(assay.id), "name": assay.name,
+            "version": assay.version, "assay_type": assay.assay_type,
+            "has_qc_rules": bool((assay.configuration or {}).get("rules")),
+        } for assay in assays],
         "specimens": [{
             "specimen_id": str(s.id), "specimen_identifier": s.specimen_identifier, "specimen_type": s.specimen_type,
             "collection_datetime": s.collection_datetime.isoformat() if s.collection_datetime else None,
