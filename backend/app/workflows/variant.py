@@ -4058,7 +4058,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     provider_limitations.append({
                                         "code": "CLINGEN_VARIANT_PATHOGENICITY_QUERY_FAILED",
                                         "message": str(exc),
-                                        "resource_capability": "CLINICAL_VARIANT",
+                                        "resource_capability": "CLINGEN_VARIANT_ASSERTION",
                                         "variant_id": str(row.id),
                                     })
 
@@ -4085,7 +4085,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     provider_limitations.append({
                                         "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
                                         "message": str(exc),
-                                        "resource_capability": "GENE_DISEASE",
+                                        "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
                                         "variant_id": str(row.id),
                                     })
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:

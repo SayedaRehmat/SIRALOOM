@@ -96,6 +96,41 @@ def test_profile_bound_worker_rejects_cross_stage_resource_use():
         )
 
 
+@pytest.mark.parametrize(
+    "capability",
+    ["CLINGEN_VARIANT_ASSERTION", "CLINGEN_GENE_DISEASE_VALIDITY"],
+)
+def test_profile_bound_clingen_evidence_is_executable_in_build_evidence(capability):
+    resource_id = uuid4()
+    resolved = _resolved(resource_id)
+    db = _DB(_analysis([_selection(resource_id, capability, resolved)]))
+
+    _assert_profile_bound_resource_execution(
+        db,
+        analysis_id=uuid4(),
+        step_id="build_evidence",
+        resolved=resolved,
+    )
+
+
+@pytest.mark.parametrize(
+    "capability",
+    ["CLINGEN_VARIANT_ASSERTION", "CLINGEN_GENE_DISEASE_VALIDITY"],
+)
+def test_profile_bound_clingen_evidence_cannot_run_in_another_stage(capability):
+    resource_id = uuid4()
+    resolved = _resolved(resource_id)
+    db = _DB(_analysis([_selection(resource_id, capability, resolved)]))
+
+    with pytest.raises(ResourceExecutionError, match="not executable by workflow step 'annotate'"):
+        _assert_profile_bound_resource_execution(
+            db,
+            analysis_id=uuid4(),
+            step_id="annotate",
+            resolved=resolved,
+        )
+
+
 def test_profile_bound_worker_rejects_qualification_drift():
     resource_id = uuid4()
     planned = _resolved(resource_id, contract_hash="qualified-contract")

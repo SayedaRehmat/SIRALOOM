@@ -138,6 +138,8 @@ def _assert_profile_bound_resource_execution(
         "population": {"POPULATION", "POPULATION_SECONDARY"},
         "build_evidence": {
             "CLINICAL_DATABASE",
+            "CLINGEN_VARIANT_ASSERTION",
+            "CLINGEN_GENE_DISEASE_VALIDITY",
             "GENE_DISEASE",
             "PHENOTYPE_ONTOLOGY",
             "DISEASE_PHENOTYPE_ASSOCIATION",
