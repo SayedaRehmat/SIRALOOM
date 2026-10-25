@@ -5,6 +5,14 @@
 **Scope:** Phase 1 account-to-signout product workflow audit and repair.
 **Overall status:** IN PROGRESS — do not treat Phase 1 as complete or the product as clinically/production ready.
 
+### 2026-10-25 serialize worker report-version allocation by case
+
+- **Finding:** API report-draft creation locks and refreshes the case row before reading the latest case/report-type version. The report stage in `run_variant_analysis` read the maximum version without that lock. Concurrent analyses for one case could select the same next version; the uniqueness constraint would force one execution into retry and could complicate artifact reconciliation.
+- **Correction:** the worker now locks and refreshes the owning case before checking for an existing draft or allocating a new report version. Missing case lineage fails explicitly. This matches the API's existing lock protocol and the database uniqueness scope.
+- **Regression evidence:** the production worker report-stage failure/retry test now tracks row-lock requests and asserts the case lock is requested on the failed attempt and again on retry. PostgreSQL has a dedicated concurrent case-wide version allocation integration test; the latest CI run on prior commit passed, and this code change will be exercised by the next exact-SHA CI run.
+- **Verification:** report-stage recovery, sign-out, report contract/finalization, artifact compensation/replay, reviewer-to-signed-report and reportability tests — **66 passed**, one existing Starlette/httpx deprecation warning. Python compilation and `git diff --check` passed. This Linux run uses SQLite and does not itself demonstrate PostgreSQL lock behavior or simultaneous worker contention.
+- **Status:** local implementation/test is **VERIFIED** for lock request and retry flow. PostgreSQL contention evidence is pending exact-SHA CI after push. Phase A remains **PARTIAL**; live/deployed sign-out, storage recovery and laboratory qualification are not established.
+
 ### 2026-10-25 narrow HPO resource initialization failure handling
 
 - **Finding:** HPO ontology and HPOA initialization wrapped resource-plan resolution, execution-contract validation, provider registration and pinned-file parsing in `except Exception`. An unexpected internal/database/programming error could therefore be converted to an optional-resource limitation and the evidence stage could continue as if only the resource were unavailable.

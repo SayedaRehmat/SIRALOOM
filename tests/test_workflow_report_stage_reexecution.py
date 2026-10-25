@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine, func, select
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.infrastructure.artifacts.store import ArtifactStore
@@ -38,7 +38,19 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
 
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'report-stage-retry.db'}")
     Base.metadata.create_all(engine)
-    LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
+    case_lock_requests = []
+
+    class CaseLockTrackingSession(Session):
+        def get(self, entity, ident, **kwargs):
+            if entity is Case and kwargs.get("with_for_update"):
+                case_lock_requests.append(ident)
+            return super().get(entity, ident, **kwargs)
+
+    LocalSession = sessionmaker(
+        bind=engine,
+        class_=CaseLockTrackingSession,
+        expire_on_commit=False,
+    )
     store = ArtifactStore(tmp_path / "artifacts")
     organization_id, user_id, case_id, analysis_id = (
         uuid4(), uuid4(), uuid4(), uuid4()
@@ -154,6 +166,7 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
 
         with pytest.raises(workflow.TransientWorkflowError):
             workflow.run_variant_analysis(analysis_id)
+        assert case_lock_requests.count(case_id) >= 1
 
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)
@@ -179,6 +192,7 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
         # Re-enter through the production workflow function. The completed upstream
         # stages remain checkpoints; only the failed report artifact operation retries.
         workflow.run_variant_analysis(analysis_id)
+        assert case_lock_requests.count(case_id) >= 2
 
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)

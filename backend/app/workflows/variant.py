@@ -4926,6 +4926,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             mark_step(db, report_step, StepStatus.RUNNING)
             try:
                 from backend.app.reporting.service import build_report_content, render_pdf
+                # Match the API's case-scoped lock: report versions are unique
+                # across every analysis for a case and report type. Without
+                # this lock, concurrent worker runs can allocate the same next
+                # version before either report row commits.
+                case_for_report = db.get(
+                    Case,
+                    analysis.case_id,
+                    with_for_update=True,
+                )
+                if case_for_report is None:
+                    raise RuntimeError("Report case is missing during version allocation")
+                db.refresh(case_for_report, with_for_update=True)
                 existing_report = db.scalar(
                     select(Report)
                     .where(
