@@ -13,11 +13,13 @@ from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
 from backend.app.adapters.phenotype.hpoa import HPOAProvider
 from backend.app.adapters.population.gnomad import PopulationObservationData
 from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.resource_execution import resolve_resource_execution
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ACMGSourceAssertion,
     ACMGAssessment,
     Analysis,
     Annotation,
@@ -72,12 +74,15 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
     Base.metadata.create_all(engine)
     LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
     store = ArtifactStore(tmp_path / "artifacts")
+    clingen_enabled = not no_match and ontology_valid and hpoa_license
     organization_id, user_id, case_id, analysis_id, resource_id = (
         uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
     clinvar_resource_id = uuid4()
     hpo_resource_id, hpo_qualification_id = uuid4(), uuid4()
     hpoa_resource_id, hpoa_qualification_id = uuid4(), uuid4()
+    clingen_vp_resource_id, clingen_vp_qualification_id = uuid4(), uuid4()
+    clingen_gdv_resource_id, clingen_gdv_qualification_id = uuid4(), uuid4()
     hpo_path = tmp_path / "hp.obo"
     hpo_path.write_text(
         "format-version: 1.2\n"
@@ -106,6 +111,19 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
         encoding="utf-8",
     )
     hpoa_checksum = hashlib.sha256(hpoa_path.read_bytes()).hexdigest()
+    clingen_vp_path = tmp_path / "clingen-variant.tsv"
+    clingen_gdv_path = tmp_path / "clingen-gene-disease.csv"
+    if clingen_enabled:
+        clingen_vp_path.write_text(
+            "gene\thgvs\tclassification\tcondition\tmoi\texpert_panel\tmet_codes\tunmet_codes\tversion\n"
+            "GENE1\tNM_TEST.1:c.555T>C\tPathogenic\tDisease X\tAutosomal recessive\tFixture VCEP\tPM2\t\tfixture-v1\n",
+            encoding="utf-8",
+        )
+        clingen_gdv_path.write_text(
+            "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),MOI,SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP\n"
+            "GENE1,HGNC:1,Disease X,MONDO:0000001,Autosomal recessive,6,Definitive,https://example.test/report/fixture,2026-09-01,Fixture GCEP\n",
+            encoding="utf-8",
+        )
     variant_key = canonical_key("GRCh38", "1", 555, "T", "C")
     variant_id = stable_variant_uuid(variant_key)
     provider_calls = {"count": 0}
@@ -347,6 +365,121 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 population_definition=None,
                 metadata_json={},
             ))
+            if clingen_enabled:
+                clingen_vp_resource = Resource(
+                    id=clingen_vp_resource_id,
+                    organization_id=organization_id,
+                    name="Fixture ClinGen Variant Pathogenicity",
+                    provider="ClinGen Variant Pathogenicity",
+                    resource_type="EVIDENCE",
+                    version="fixture-v1",
+                    genome_build=None,
+                    access_method="LOCAL",
+                    license_text="Test fixture only",
+                    checksum=hashlib.sha256(clingen_vp_path.read_bytes()).hexdigest(),
+                    location=str(clingen_vp_path),
+                    status="ACTIVE",
+                    population_definition=None,
+                    metadata_json={},
+                )
+                clingen_gdv_resource = Resource(
+                    id=clingen_gdv_resource_id,
+                    organization_id=organization_id,
+                    name="Fixture ClinGen Gene-Disease Validity",
+                    provider="ClinGen Gene-Disease Validity",
+                    resource_type="EVIDENCE",
+                    version="fixture-v1",
+                    genome_build=None,
+                    access_method="LOCAL",
+                    license_text="Test fixture only",
+                    checksum=hashlib.sha256(clingen_gdv_path.read_bytes()).hexdigest(),
+                    location=str(clingen_gdv_path),
+                    status="ACTIVE",
+                    population_definition=None,
+                    metadata_json={},
+                )
+                db.add_all([clingen_vp_resource, clingen_gdv_resource])
+                for resource_row, qualification_id, provider_id, provider_version, path in (
+                    (clingen_vp_resource, clingen_vp_qualification_id, "ClinGen Variant Pathogenicity", "ERepo", clingen_vp_path),
+                    (clingen_gdv_resource, clingen_gdv_qualification_id, "ClinGen Gene-Disease Validity", "GeneValidity", clingen_gdv_path),
+                ):
+                    contract = ResourceExecutionContract(
+                        provider_id=provider_id,
+                        provider_version=provider_version,
+                        access_method="LOCAL",
+                        endpoint=None,
+                        location=str(path),
+                        dataset="fixture-v1",
+                        execution_scope="ORGANIZATION_MANAGED",
+                    )
+                    db.add(ResourceQualification(
+                        id=qualification_id,
+                        resource_id=resource_row.id,
+                        qualification_version="fixture-qualification-v1",
+                        status="QUALIFIED",
+                        checks_json={"execution_contract": contract.as_dict()},
+                        qualified_by=user_id,
+                        qualified_at=datetime.now(UTC),
+                    ))
+                population_contract = ResourceExecutionContract(
+                    provider_id="fixture-population",
+                    provider_version="v1",
+                    access_method="API",
+                    endpoint="https://fixture.invalid/population",
+                    location="https://fixture.invalid/population",
+                    dataset="release-v1",
+                    execution_scope="ORGANIZATION_MANAGED",
+                )
+                db.add(ResourceQualification(
+                    id=uuid4(), resource_id=resource_id,
+                    qualification_version="fixture-population-qualification-v1",
+                    status="QUALIFIED",
+                    checks_json={"execution_contract": population_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(UTC),
+                ))
+                clinvar_contract = ResourceExecutionContract(
+                    provider_id="NCBI ClinVar",
+                    provider_version="v1",
+                    access_method="API",
+                    endpoint="https://fixture.invalid/clinvar",
+                    location="https://fixture.invalid/clinvar",
+                    dataset="clinvar-v1",
+                    execution_scope="ORGANIZATION_MANAGED",
+                )
+                db.add(ResourceQualification(
+                    id=uuid4(), resource_id=clinvar_resource_id,
+                    qualification_version="fixture-clinvar-qualification-v1",
+                    status="QUALIFIED",
+                    checks_json={"execution_contract": clinvar_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(UTC),
+                ))
+                db.flush()
+                selected_resources = [
+                    ("POPULATION", resource),
+                    ("CLINICAL_DATABASE", db.get(Resource, clinvar_resource_id)),
+                    ("PHENOTYPE_ONTOLOGY", hpo_resource),
+                    ("DISEASE_PHENOTYPE_ASSOCIATION", hpoa_resource),
+                    ("CLINGEN_VARIANT_ASSERTION", clingen_vp_resource),
+                    ("CLINGEN_GENE_DISEASE_VALIDITY", clingen_gdv_resource),
+                ]
+                selected = []
+                for capability, selected_resource in selected_resources:
+                    resolved = resolve_resource_execution(db, resource=selected_resource)
+                    selected.append({
+                        "capability": capability,
+                        "resource_id": str(selected_resource.id),
+                        "execution": resolved.snapshot,
+                    })
+                analysis_row = db.get(Analysis, analysis_id)
+                analysis_row.configuration = {
+                    **(analysis_row.configuration or {}),
+                    "resource_profile_id": "WES_GRCh38_STANDARD",
+                    "resource_plan": {
+                        "status": "READY_WITH_LIMITATIONS",
+                        "profile_version": "2",
+                        "selected": selected,
+                    },
+                }
             db.add(Annotation(
                 id=uuid4(),
                 variant_id=variant_id,
@@ -362,6 +495,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 payload={"normalized": (
                     {
                         "gene": {"symbol": "GENE1"},
+                        "hgvs": {"c": "NM_TEST.1:c.555T>C", "p": None},
                         "computational": {},
                         "splice": {},
                     }
@@ -750,7 +884,9 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 assert all(row.status == "FAILED" for row in hpoa_execution_rows)
                 assert all(row.error_code == "HPOA_RESOURCE_INVALID" for row in hpoa_execution_rows)
             disease_evidence = next(
-                row for row in evidence_rows if row.evidence_type == "GENE_DISEASE"
+                row for row in evidence_rows
+                if row.evidence_type == "GENE_DISEASE"
+                and (row.payload or {}).get("phenotype_match")
             )
             if ontology_valid:
                 assert disease_evidence.payload["phenotype_match"]["status"] == "SCORED"
@@ -817,11 +953,59 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             assert len(clinvar_execution_rows) == 1
             assert clinvar_execution_rows[0].status == "NO_DATA"
             assert provider_calls["count"] == 1
+            population_step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "population",
+            ))
+            if clingen_enabled:
+                assert population_step.metadata_json["profile_version"] == "2"
             assert clinvar_calls["count"] == 1
             replayed_evidence_ids = tuple(sorted(db.scalars(
                 select(Evidence.id).where(Evidence.analysis_id == analysis_id)
             ).all()))
             assert replayed_evidence_ids == evidence_ids_before_replay
+            if clingen_enabled:
+                for resource_id, source_name, expected_type in (
+                    (clingen_vp_resource_id, "Fixture ClinGen Variant Pathogenicity", "CLINICAL_DATABASE"),
+                    (clingen_gdv_resource_id, "Fixture ClinGen Gene-Disease Validity", "GENE_DISEASE"),
+                ):
+                    executions = db.scalars(select(ResourceExecutionRecord).where(
+                        ResourceExecutionRecord.analysis_id == analysis_id,
+                        ResourceExecutionRecord.step_id == "build_evidence",
+                        ResourceExecutionRecord.resource_id == resource_id,
+                    )).all()
+                    assert len(executions) == 1, (
+                        source_name,
+                        db.scalar(select(WorkflowStep).where(
+                            WorkflowStep.analysis_id == analysis_id,
+                            WorkflowStep.step_id == "build_evidence",
+                        )).metadata_json.get("provider_limitations"),
+                    )
+                    assert executions[0].status == "SUCCESS"
+                    assert len(executions[0].request_fingerprint) == 64
+                    assert len(executions[0].response_sha256) == 64
+                    source_evidence = db.scalars(select(Evidence).where(
+                        Evidence.analysis_id == analysis_id,
+                        Evidence.resource_id == resource_id,
+                        Evidence.source_name == source_name,
+                    )).all()
+                    assert len(source_evidence) == 1
+                    assert source_evidence[0].evidence_type == expected_type
+                    assert source_evidence[0].source_version == "fixture-v1"
+                    assert len(source_evidence[0].response_sha256) == 64
+                assertions = db.scalars(select(ACMGSourceAssertion).where(
+                    ACMGSourceAssertion.analysis_id == analysis_id,
+                )).all()
+                assert len(assertions) == 1
+                assert assertions[0].criterion == "PM2"
+                assert assertions[0].status == "MET"
+                assert assertions[0].source_record_id
+                assert assertions[0].evidence_id in {
+                    row.id for row in evidence_rows
+                    if row.source_name == "Fixture ClinGen Variant Pathogenicity"
+                }
+                assert len(replayed_evidence_ids) == len(evidence_ids_before_replay)
+                return
             hpo_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
                 ResourceExecutionRecord.analysis_id == analysis_id,
                 ResourceExecutionRecord.resource_id == hpo_resource_id,

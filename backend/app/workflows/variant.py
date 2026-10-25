@@ -2756,8 +2756,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         )
                     except ProfileRuntimeResourceError as exc:
                         raise ResourceConsumptionError(exc.code, str(exc)) from exc
-                    deployment = dict(((analysis.configuration or {}).get("resource_plan") or {}).get("deployment") or {})
-                    plan = SimpleNamespace(profile_type=deployment.get("profile_type", "LABORATORY"))
+                    resource_plan_snapshot = dict(
+                        (analysis.configuration or {}).get("resource_plan") or {}
+                    )
+                    deployment = dict(resource_plan_snapshot.get("deployment") or {})
+                    plan = SimpleNamespace(
+                        profile_type=deployment.get("profile_type", "LABORATORY"),
+                        profile_version=deployment.get(
+                            "profile_version",
+                            resource_plan_snapshot.get("profile_version", "1"),
+                        ),
+                        unavailable_optional=resource_plan_snapshot.get(
+                            "unavailable_optional", []
+                        ),
+                    )
                     population_candidates = [SimpleNamespace(
                         resource=profile_runtime_population.resource,
                         execution=profile_runtime_population.execution,
@@ -4031,10 +4043,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 provenance=hpoa_provenance,
                             ))
 
-                        gene = ((ann.payload or {}).get("gene") or {}).get("symbol") or (ann.payload or {}).get("gene_symbol")
-                        hgvs_values = list((ann.payload or {}).get("hgvs_consequences") or [])
-                        if (ann.payload or {}).get("hgvs"):
-                            hgvs_values.append((ann.payload or {}).get("hgvs"))
+                        gene = gene_symbol or ((normalized.get("gene") or {}).get("symbol")) or normalized.get("gene_symbol")
+                        hgvs_values: list[str] = []
+                        for consequence in normalized.get("hgvs_consequences") or []:
+                            if isinstance(consequence, str):
+                                hgvs_values.append(consequence)
+                            elif isinstance(consequence, dict):
+                                hgvs_values.extend(
+                                    value
+                                    for key in ("hgvs", "hgvsc", "hgvsp")
+                                    if isinstance((value := consequence.get(key)), str)
+                                    and value.strip()
+                                )
+                        raw_hgvs = normalized.get("hgvs")
+                        if isinstance(raw_hgvs, str) and raw_hgvs.strip():
+                            hgvs_values.append(raw_hgvs)
+                        elif isinstance(raw_hgvs, dict):
+                            hgvs_values.extend(
+                                value
+                                for key in ("c", "p", "hgvsc", "hgvsp")
+                                if isinstance((value := raw_hgvs.get(key)), str)
+                                and value.strip()
+                            )
+                        hgvs_values = list(dict.fromkeys(hgvs_values))
                         if clingen_vp_provider is not None and clingen_vp_resource is not None and clingen_vp_execution is not None and gene:
                             query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "hgvs": hgvs_values, "resource_id": str(clingen_vp_execution.resource_id), "resource_version": clingen_vp_execution.resource_version, "contract_hash": clingen_vp_execution.contract_hash}
                             request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
