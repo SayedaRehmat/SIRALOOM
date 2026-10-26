@@ -53,8 +53,8 @@ def parse_vcf(path: str) -> Iterator[VCFRecord]:
                 pos = int(pos_s)
             except ValueError as exc:
                 raise VCFValidationError(f"Invalid POS at line {line_no}: {pos_s!r}") from exc
-            if pos <= 0:
-                raise VCFValidationError(f"POS must be > 0 at line {line_no}")
+            if pos < 0:
+                raise VCFValidationError(f"POS must be non-negative at line {line_no}")
             if not re.fullmatch(r"[A-Za-z*.]+", ref) or not re.fullmatch(r"[A-Za-z*.,<>\[\]():]+", alt):
                 raise VCFValidationError(f"Invalid REF/ALT allele syntax at line {line_no}")
             if not ref or not alt:
@@ -65,6 +65,10 @@ def parse_vcf(path: str) -> Iterator[VCFRecord]:
                 raise VCFValidationError(
                     f"ALT '.' cannot be combined with alternate alleles at line {line_no}"
                 )
+            if pos == 0:
+                # POS=0 is a VCF telomere sentinel, not an allele coordinate
+                # suitable for canonical small-variant processing.
+                continue
             sample_calls: dict[str, dict] = {}
             if len(fields) > 8 and sample_names:
                 format_keys = [] if fields[8] in {"", "."} else fields[8].split(":")

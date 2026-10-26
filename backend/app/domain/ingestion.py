@@ -151,6 +151,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         records = 0
         warnings: list[str] = []
         reference_only_records = strict_profile["reference_only_records"]
+        telomere_records = strict_profile["telomere_records"]
         saw_multiallelic = False
         saw_symbolic = False
         saw_gvcf_marker = False
@@ -178,7 +179,13 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                     "VCF contains no variant records: every row has ALT='.' (no alternate allele). "
                     "This cannot establish a negative clinical result; review the upstream callset."
                 )
-            raise VCFValidationError("VCF contains no variant records")
+            if not telomere_records:
+                raise VCFValidationError("VCF contains no variant records")
+        if telomere_records:
+            warnings.append(
+                f"{telomere_records} VCF telomere record(s) at POS=0 are structurally valid, "
+                "retained in the source, and excluded from small-variant analysis for explicit review."
+            )
         if reference_only_records:
             warnings.append(
                 f"{reference_only_records} reference-only VCF record(s) with ALT='.' were retained "

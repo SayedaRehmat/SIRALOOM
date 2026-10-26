@@ -53,6 +53,16 @@ def test_strict_validation_accepts_vcf_reference_only_alt_dot_record(tmp_path: P
     assert profile["reference_only_records"] == 1
 
 
+def test_strict_validation_accepts_vcf_telomere_sentinel_and_marks_it_for_review(tmp_path: Path):
+    path = tmp_path / "telomere.vcf"
+    write_vcf(path, "1\t0\t.\tA\tG\t.\tPASS\t.\n")
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert profile["telomere_records"] == 1
+
+
 def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: Path):
     path = tmp_path / "mixed-missing-alt.vcf"
     write_vcf(path, "1\t2\t.\tA\t.,G\t.\tPASS\t.\n")
@@ -67,7 +77,7 @@ def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: P
     ("body", "code"),
     [
         ("1\t2\t.\tA\tG\n", "VCF_RECORD_INVALID"),
-        ("1\t0\t.\tA\tG\t.\tPASS\t.\n", "VCF_POS_INVALID"),
+        ("1\t-1\t.\tA\tG\t.\tPASS\t.\n", "VCF_POS_INVALID"),
         ("1\t2\t.\tX\tG\t.\tPASS\t.\n", "VCF_REF_INVALID"),
         ("1\t2\t.\tA\tG\t-1\tPASS\t.\n", "VCF_QUAL_INVALID"),
         ("1\t2\t.\tA\tG\t.\tBAD;\t.\n", "VCF_FILTER_INVALID"),
@@ -492,3 +502,18 @@ def test_reference_validation_rejects_ref_mismatch_in_preserved_symbolic_record(
         validate_vcf_reference_alleles(source, fasta)
 
     assert exc.value.code == "VCF_REFERENCE_MISMATCH"
+
+
+def test_reference_validation_marks_telomere_record_unvalidated_without_invalid_fasta_fetch(tmp_path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\n" + "A" * 30 + "\n", encoding="ascii", newline="\n")
+    (tmp_path / "reference.fa.fai").write_text("1\t30\t3\t30\t31\n", encoding="ascii")
+    source = tmp_path / "telomere.vcf"
+    write_vcf(source, "1\t0\ttelo\tA\tG\t.\tPASS\t.\n")
+    validate_vcf_strict(source)
+
+    profile = validate_vcf_reference_alleles(source, fasta)
+
+    assert profile["result"] == "PARTIAL"
+    assert profile["checked_record_count"] == 0
+    assert profile["unvalidated_telomere_record_count"] == 1

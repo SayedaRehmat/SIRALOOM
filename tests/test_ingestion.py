@@ -55,6 +55,41 @@ def test_vcf_validation_excludes_reference_only_rows_and_reports_count(tmp_path:
     assert any("1 reference-only" in warning and "ALT='.'" in warning for warning in result.warnings)
 
 
+def test_vcf_validation_preserves_telomere_only_input_for_worker_review(tmp_path: Path):
+    path = tmp_path / "telomere-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t0\ttelo\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 0
+    assert any("telomere record" in warning and "POS=0" in warning for warning in result.warnings)
+
+
+def test_vcf_validation_reports_telomere_records_without_counting_them_as_variants(tmp_path: Path):
+    path = tmp_path / "telomere-and-snv.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t0\ttelo\tA\tG\t.\tPASS\t.\n"
+        "chr1\t100\trs1\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 1
+    assert any("1 VCF telomere" in warning for warning in result.warnings)
+
+
 def test_vcf_with_only_reference_rows_is_not_accepted_as_variant_analysis(tmp_path: Path):
     path = tmp_path / "reference-only.vcf"
     path.write_text(

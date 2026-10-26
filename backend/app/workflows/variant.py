@@ -1509,9 +1509,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             ) -> None:
                 for artifact in routed_artifacts:
                     metadata = dict(artifact.metadata_json or {})
+                    artifact_status = status
+                    artifact_reason_code = reason_code
+                    if metadata.get("review_reason_code") == "VCF_TELOMERE_COORDINATE_UNSUPPORTED":
+                        artifact_status = "NOT_VALIDATED_UNSUPPORTED_COORDINATE"
+                        artifact_reason_code = "VCF_TELOMERE_COORDINATE_UNSUPPORTED"
                     preserve_prior_validation = _check_routed_artifact_validation_replay(
                         metadata,
-                        status=status,
+                        status=artifact_status,
                         reference_package=reference_package,
                         active_reference_package=validated_reference_package,
                         reference_profile=reference_profile,
@@ -1522,8 +1527,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         # state is recorded on the workflow step.
                         continue
                     metadata.update({
-                        "reference_validation_status": status,
-                        "reference_validation_reason_code": reason_code,
+                        "reference_validation_status": artifact_status,
+                        "reference_validation_reason_code": artifact_reason_code,
                     })
                     if reference_package is not None:
                         metadata.update({
@@ -1566,6 +1571,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "spanning-deletion-records.vcf",
                         "SPANNING_DELETION_NOT_INTERPRETED",
                     ),
+                    (
+                        "telomere_path",
+                        "TELOMERE_COORDINATE_RECORDS",
+                        "telomere-records.vcf",
+                        "VCF_TELOMERE_COORDINATE_UNSUPPORTED",
+                    ),
                 )
                 for path_key, artifact_type, filename, review_reason_code in routed_artifact_specs:
                     routed_path = routing.get(path_key)
@@ -1591,6 +1602,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "UNRESOLVED_GVCF_VARIANTS": "gvcf_unresolved_variant_records",
                                 "STRUCTURAL_VARIANT_RECORDS": "structural_variant_records",
                                 "SPANNING_DELETION_RECORDS": "spanning_deletion_records",
+                                "TELOMERE_COORDINATE_RECORDS": "telomere_records",
                             }[artifact_type]],
                             "interpretation_status": "NOT_ANALYZED",
                             "review_status": "REQUIRES_SPECIALIZED_REVIEW",
@@ -1613,12 +1625,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         + routing["gvcf_unresolved_variant_records"]
                         + routing["structural_variant_records"]
                         + routing["spanning_deletion_records"]
+                        + routing["telomere_records"]
                     )
                     routed_count = specialized_review_count + routing["reference_only_records"]
                     if specialized_review_count:
                         reason = (
-                            "The source contains preserved GVCF/SV records requiring a specialized review path; "
-                            "no sequence-resolved variant records were eligible for ordinary normalization. "
+                            "The source contains preserved GVCF, structural, spanning-deletion, or telomere "
+                            "records requiring a specialized review path; no sequence-resolved variant records "
+                            "were eligible for ordinary normalization. "
                             "Original records remain in the source artifact and routed artifacts."
                         )
                         if routing["reference_only_records"]:
@@ -1626,7 +1640,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 f" {routing['reference_only_records']} reference-only ALT='.' record(s) "
                                 "were retained in the source and excluded from variant analysis."
                             )
-                        next_step = "GVCF_OR_STRUCTURAL_VARIANT_REVIEW"
+                        next_step = (
+                            "VCF_TELOMERE_COORDINATE_REVIEW"
+                            if routing["telomere_records"]
+                            and specialized_review_count == routing["telomere_records"]
+                            else "GVCF_OR_STRUCTURAL_VARIANT_REVIEW"
+                        )
                         review_reason_codes = sorted({
                             item.metadata_json["review_reason_code"]
                             for item in routed_artifacts
@@ -5549,6 +5568,7 @@ def _put_idempotent_stage_artifact(
             "UNRESOLVED_GVCF_VARIANTS",
             "STRUCTURAL_VARIANT_RECORDS",
             "SPANNING_DELETION_RECORDS",
+            "TELOMERE_COORDINATE_RECORDS",
         }:
             existing_validation = {
                 key: existing_metadata.pop(key)
@@ -5559,7 +5579,10 @@ def _put_idempotent_stage_artifact(
                 expected_metadata.pop(key, None)
             if existing_validation:
                 status = existing_validation.get("reference_validation_status")
-                if status not in {"PENDING", "PASS", "FAILED", "NOT_RUN"}:
+                if status not in {
+                    "PENDING", "PASS", "FAILED", "NOT_RUN",
+                    "NOT_VALIDATED_UNSUPPORTED_COORDINATE",
+                }:
                     raise RuntimeError(
                         f"Routed artifact {artifact_id} has invalid reference validation provenance."
                     )

@@ -32,6 +32,7 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
         "gvcf_unresolved": output / "gvcf-unresolved-variants.vcf",
         "structural": output / "structural-variants.vcf",
         "spanning_deletions": output / "spanning-deletion-records.vcf",
+        "telomere": output / "telomere-records.vcf",
     }
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
     headers: list[str] = []
@@ -64,6 +65,13 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
                 alts = fields[4].split(",")
                 if alts == ["."]:
                     counts["reference_only"] += 1
+                    continue
+                try:
+                    position = int(fields[1])
+                except ValueError as exc:
+                    raise VCFToolError("Cannot route VCF record with a non-integer POS.") from exc
+                if position == 0:
+                    emit("telomere", line)
                     continue
                 wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
                 if any(alt == "*" for alt in alts):
@@ -120,11 +128,13 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
         "gvcf_unresolved_variant_records": counts["gvcf_unresolved"],
         "structural_variant_records": counts["structural"],
         "spanning_deletion_records": counts["spanning_deletions"],
+        "telomere_records": counts["telomere"],
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
         "gvcf_unresolved_path": str(names["gvcf_unresolved"]) if counts["gvcf_unresolved"] else None,
         "structural_path": str(names["structural"]) if counts["structural"] else None,
         "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
+        "telomere_path": str(names["telomere"]) if counts["telomere"] else None,
         "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
     }
 

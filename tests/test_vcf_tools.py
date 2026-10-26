@@ -191,6 +191,27 @@ def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_pat
     }
 
 
+def test_router_preserves_telomere_records_outside_small_variant_stream(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "telomere.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t0\ttelo\tA\tG\t.\tPASS\t.\n"
+        "1\t1\trs1\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed")
+
+    assert routed["records_total"] == 2
+    assert routed["telomere_records"] == 1
+    assert routed["sequence_records"] == 1
+    assert "1\t0\ttelo" in Path(routed["telomere_path"]).read_text(encoding="utf-8")
+    assert "1\t0\ttelo" not in Path(routed["sequence_path"]).read_text(encoding="utf-8")
+
+
 def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(tmp_path: Path):
     from backend.app.domain.vcf_tools import route_vcf_records
 
@@ -217,6 +238,7 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
     assert routed["gvcf_reference_blocks"] == 1
     assert routed["gvcf_unresolved_variant_records"] == 1
     assert routed["structural_variant_records"] == 0
+    assert routed["telomere_records"] == 0
     assert "0/1:15,9,0" in Path(routed["sequence_path"]).read_text(encoding="utf-8")
     assert "0/0:30,0" in Path(routed["gvcf_blocks_path"]).read_text(encoding="utf-8")
     assert "0/2:10,0,11" in Path(routed["gvcf_unresolved_path"]).read_text(encoding="utf-8")

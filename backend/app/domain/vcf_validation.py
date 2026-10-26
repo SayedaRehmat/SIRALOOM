@@ -297,8 +297,8 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
         pos = int(pos_text)
     except ValueError as exc:
         raise StrictVCFValidationError(f"Invalid POS at line {line_no}: {pos_text!r}", code="VCF_POS_INVALID") from exc
-    if pos <= 0:
-        raise StrictVCFValidationError(f"POS must be > 0 at line {line_no}", code="VCF_POS_INVALID")
+    if pos < 0:
+        raise StrictVCFValidationError(f"POS must be non-negative at line {line_no}", code="VCF_POS_INVALID")
 
     if identifier == "":
         raise StrictVCFValidationError(f"ID is empty at line {line_no}", code="VCF_ID_INVALID")
@@ -400,6 +400,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     records = 0
     multiallelic = 0
     reference_only = 0
+    telomere_records = 0
     symbolic = 0
     breakends = 0
     gvcf_markers = 0
@@ -495,6 +496,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            if _pos == 0:
+                # VCF permits POS=0 as a telomere sentinel. It is not a
+                # sequence coordinate accepted by SIRALOOM's small-variant
+                # normalizer, so preserve it for explicit review routing.
+                telomere_records += 1
             if not alts:
                 reference_only += 1
             if fields[2] != ".":
@@ -622,9 +628,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         result.add(sample_index)
                 return result
 
-            if "*" in alts:
+            if _pos > 0 and "*" in alts:
                 spanning_deletion_records.append((_chrom, _pos, line_no, carriers(alts.index("*") + 1)))
             for alt_index, alternate in enumerate(alts, start=1):
+                if _pos == 0:
+                    continue
                 if DNA_RE.fullmatch(alternate):
                     interval = _deleted_reference_interval(_pos, fields[3].upper(), alternate)
                     if interval is not None:
@@ -707,6 +715,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "fileformat": fileformat,
         "records": records,
         "reference_only_records": reference_only,
+        "telomere_records": telomere_records,
         "multiallelic_records": multiallelic,
         "symbolic_records": symbolic,
         "breakend_records": breakends,
@@ -718,7 +727,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
 
 def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path) -> dict:
-    """Check every source record's REF and reference-span coordinates.
+    """Check reference spans and disclose records that cannot be REF-checked.
 
     This deliberately includes records routed away from sequence normalization
     (GVCF blocks, symbolic SVs, breakends, and spanning-deletion records), so a
@@ -728,6 +737,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
 
     checked_records = 0
     checked_breakend_mates = 0
+    telomere_records = 0
     try:
         with FastaReference(reference_fasta) as reference, _open(path) as handle:
             for line_no, raw in enumerate(handle, 1):
@@ -738,6 +748,19 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     continue  # validate_vcf_strict reports the structural error first.
                 chrom, pos_text, _identifier, ref, alt_text = fields[:5]
                 pos = int(pos_text)
+                if pos == 0:
+                    # POS=0 is a VCF telomere sentinel, not a 1-based FASTA
+                    # interval. Preserve it for review routing without
+                    # claiming that this record passed REF validation.
+                    try:
+                        reference.contig_length(chrom)
+                    except ReferenceError as exc:
+                        raise StrictVCFValidationError(
+                            f"Telomere record contig {chrom!r} is absent from the selected reference at line {line_no}",
+                            code="REFERENCE_CONTIG_MISMATCH",
+                        ) from exc
+                    telomere_records += 1
+                    continue
                 try:
                     observed = reference.fetch(chrom, pos - 1, pos - 1 + len(ref))
                 except ReferenceError as exc:
@@ -789,6 +812,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
     return {
         "checked_record_count": checked_records,
         "checked_breakend_mate_count": checked_breakend_mates,
+        "unvalidated_telomere_record_count": telomere_records,
         "reference_fasta": str(reference_fasta),
-        "result": "PASS",
+        "result": "PARTIAL" if telomere_records else "PASS",
     }
