@@ -134,7 +134,12 @@ def test_local_gnomad_rejects_invalid_source_allele_frequency(monkeypatch, frequ
 
 @pytest.mark.parametrize(
     ("ac", "an", "af"),
-    [("0", "100", "0.01"), ("1", "100", "0.02"), ("10", "100", "0.11")],
+    [
+        ("0", "100", "0.01"),
+        ("1", "100", "0.02"),
+        ("10", "100", "0.11"),
+        ("1", "100", "0"),
+    ],
 )
 def test_local_gnomad_rejects_source_af_inconsistent_with_counts(monkeypatch, ac, an, af):
     import backend.app.adapters.population.gnomad as gnomad

@@ -182,7 +182,7 @@ def _validate_population_metrics(*, ac, an, af, af_text):
         # that fit the precision actually represented by the source field.
         source_af = Decimal(af_text)
         exponent = source_af.as_tuple().exponent
-        rounding_tolerance = Decimal(5).scaleb(exponent - 1)
+        rounding_tolerance = Decimal(5).scaleb(exponent - 1) if exponent < 0 else Decimal(0)
         if abs(source_af - expected) > rounding_tolerance:
             raise SecondaryPopulationProviderError(
                 "Population allele frequency is inconsistent with AC/AN at the source precision."

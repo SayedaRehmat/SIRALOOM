@@ -94,6 +94,7 @@ def test_af_without_allele_number_is_not_exposed(monkeypatch):
         ("AC=-1;AN=100;AF=0.02", "allele count cannot be negative"),
         ("AC=101;AN=100;AF=1.0", "cannot exceed allele number"),
         ("AC=1;AN=100;AF=0.02", "inconsistent with AC/AN"),
+        ("AC=1;AN=100;AF=0", "inconsistent with AC/AN"),
         ("AC=1;AN=100;AF=1.2", "between 0 and 1"),
         ("AC=1;AN=100;AF=NaN", "must be finite"),
     ],

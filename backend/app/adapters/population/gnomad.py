@@ -630,7 +630,8 @@ def _validate_source_af_matches_counts(
     if not reported.is_finite() or reported < 0 or reported > 1:
         raise GnomADProviderError("Local gnomAD AF must be a finite frequency between 0 and 1")
     expected = Decimal(ac) / Decimal(an)
-    rounding_tolerance = Decimal(5).scaleb(reported.as_tuple().exponent - 1)
+    exponent = reported.as_tuple().exponent
+    rounding_tolerance = Decimal(5).scaleb(exponent - 1) if exponent < 0 else Decimal(0)
     if abs(reported - expected) > rounding_tolerance:
         raise GnomADProviderError(
             f"Local gnomAD {context} AF is inconsistent with AC/AN at the source precision"
