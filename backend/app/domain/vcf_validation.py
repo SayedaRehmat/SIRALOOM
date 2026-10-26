@@ -404,6 +404,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
+    record_ids_seen: set[str] = set()
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -487,6 +488,21 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            if fields[2] != ".":
+                record_ids = fields[2].split(";")
+                if len(record_ids) != len(set(record_ids)):
+                    raise StrictVCFValidationError(
+                        f"Record ID list contains duplicates at line {line_no}",
+                        code="VCF_ID_DUPLICATE",
+                    )
+                duplicate_ids = record_ids_seen.intersection(record_ids)
+                if duplicate_ids:
+                    duplicate_id = sorted(duplicate_ids)[0]
+                    raise StrictVCFValidationError(
+                        f"Record ID {duplicate_id!r} was already used before line {line_no}",
+                        code="VCF_ID_DUPLICATE",
+                    )
+                record_ids_seen.update(record_ids)
             info_values = _info_values(fields[7])
             for key, value in info_values.items():
                 definition = info_definitions.get(key)

@@ -1,5 +1,5 @@
-from pathlib import Path
 import gzip
+from pathlib import Path
 
 import pytest
 
@@ -70,6 +70,25 @@ def test_strict_validation_rejects_missing_fileformat(tmp_path: Path):
     )
     with pytest.raises(StrictVCFValidationError, match="fileformat"):
         validate_vcf_strict(path)
+
+
+@pytest.mark.parametrize(
+    ("body", "duplicate_id"),
+    [
+        ("1\t2\trs1\tA\tG\t.\tPASS\t.\n1\t3\trs1\tC\tT\t.\tPASS\t.\n", "rs1"),
+        ("1\t2\trs1;rs1\tA\tG\t.\tPASS\t.\n", "(?i)record id list"),
+    ],
+)
+def test_strict_validation_rejects_duplicate_record_identifiers(
+    tmp_path: Path, body: str, duplicate_id: str,
+):
+    path = tmp_path / "duplicate-record-id.vcf"
+    write_vcf(path, body)
+
+    with pytest.raises(StrictVCFValidationError, match=duplicate_id) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_ID_DUPLICATE"
 
 
 @pytest.mark.parametrize("prefix", ["##source=test\n", "\n", "#comment\n"])
