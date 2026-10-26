@@ -14,6 +14,7 @@ from scripts.laboratory_backup import (
     _extract_tree,
     _safe_members,
     _volume_sources,
+    create_backup,
     restore_backup,
     sha256_file,
     verify_bundle,
@@ -181,4 +182,36 @@ def test_restore_refuses_source_database_before_docker_access(tmp_path):
     }
 
     with pytest.raises(BackupError, match="differ from the source database"):
+        restore_backup(root, compose, bundle, "siraloom_restore_20261026", targets)
+
+
+def test_create_refuses_existing_backup_destination_before_docker_access(tmp_path):
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose = root / "compose.yml"
+    compose.write_text("services: {}")
+    destination = tmp_path / "existing-backup"
+    destination.mkdir()
+
+    with pytest.raises(BackupError, match="destination already exists"):
+        create_backup(root, compose, destination)
+
+
+def test_restore_refuses_existing_storage_target_before_docker_access(tmp_path):
+    bundle = _bundle(tmp_path)
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose = root / "compose.yml"
+    compose.write_text("services: {}")
+    parent = tmp_path / "restore"
+    parent.mkdir()
+    existing = parent / "artifacts"
+    existing.mkdir()
+    targets = {
+        "artifacts": existing,
+        "references": parent / "references",
+        "resource_cache": parent / "resource-cache",
+    }
+
+    with pytest.raises(BackupError, match="not-yet-existing path"):
         restore_backup(root, compose, bundle, "siraloom_restore_20261026", targets)
