@@ -121,8 +121,33 @@ Do not use identifiable patient data for the initial test. Do not call the syste
 
 ## 9. Backup and upgrade policy
 
-- Back up PostgreSQL consistently and test restore.
-- Back up artifact and resource-cache directories with hashes/retention policy.
-- Preserve the exact reference, provider versions, resource checksums, workflow versions and report artifacts needed to reproduce historical results.
+- Pause new submissions and wait for active analyses to reach a durable state. Create a bundle from the repository root; the script stops the currently running API, worker and Beat services with a 300-second graceful-shutdown timeout, dumps PostgreSQL in custom format, archives the configured artifact, reference and resource-cache bind mounts, verifies checksums and archive paths, then restarts the services that were running before backup:
+
+  ```bash
+  BACKUP="/srv/siraloom/backups/$(date -u +%Y%m%dT%H%M%SZ)"
+  python3 scripts/laboratory_backup.py create "$BACKUP"
+  python3 scripts/laboratory_backup.py verify "$BACKUP"
+  ```
+
+  The backup is written to a new directory and contains no `.env` or identity-provider credentials. Configure host-level encryption, off-host replication, access controls and retention for the backup destination. The tool requires artifacts, references and resource cache to be absolute host bind mounts; it refuses to silently omit named volumes or symlinks. PostgreSQL uses `pg_dump` custom format, which is restored with `pg_restore`.
+- Test restoration into a fresh database and new storage directories before changing the live deployment. Use an isolated Compose project and a separate environment file/Redis instance for the restore test so queued messages from the live system cannot execute against the restored database. Start from a secured copy of the laboratory environment file with unique paths and a dedicated PostgreSQL/Redis deployment:
+
+  ```bash
+  mkdir -p /srv/siraloom-restore
+  docker compose -p siraloom_restore \
+    --env-file /srv/siraloom-restore/.env \
+    -f docker-compose.production.yml up -d postgres redis
+  python3 scripts/laboratory_backup.py restore \
+    /srv/siraloom/backups/20261026T120000Z \
+    --database siraloom_restore_20261026 \
+    --artifacts-target /srv/siraloom-restore/artifacts \
+    --references-target /srv/siraloom-restore/references \
+    --resource-cache-target /srv/siraloom-restore/resource-cache \
+    --project-name siraloom_restore \
+    --env-file /srv/siraloom-restore/.env
+  ```
+
+  Before this command, configure the isolated `.env` with a new PostgreSQL data path, a new Redis data path, a bootstrap `POSTGRES_DB` different from the target restore database, and the target artifact/reference/cache bind paths. Restore targets must be new absolute paths; the database name must be distinct from both the backup source and the currently configured database. Review the output, change `POSTGRES_DB` and `DATABASE_URL` to the restored database, then start the API and worker in this isolated project. Run authenticated workflow checks and compare stored artifact hashes before calling the restore successful. The restore command does not modify `.env`, start application services, or prove that a laboratory recovery objective has been met. Record the tested backup ID, source commit, restore time, resulting database, artifact verification, operator and observed recovery time.
+- Do not count Redis queues, Beat schedule files, scratch files or provider credentials as the scientific system of record. Use a fresh broker for the isolated restore and run the application's durable dispatch recovery process after inspection. Preserve the exact reference, provider versions, resource checksums, workflow versions and report artifacts needed to reproduce historical results.
 - Upgrade frontend, API and worker as one versioned release; run migrations through the API/release step, then verify readiness before allowing new cases.
 - Keep the previous deployment image and database/artifact backups until rollback is tested.
