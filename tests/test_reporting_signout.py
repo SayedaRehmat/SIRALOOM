@@ -10,6 +10,7 @@ from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
     AnalysisPartition,
+    Annotation,
     Assay,
     Artifact,
     Case,
@@ -321,6 +322,39 @@ def test_report_content_persists_exact_classification_identity():
     )
     assert finding["classification_id"] == str(classification.id)
     assert finding["classification_version"] == classification.version
+
+
+def test_report_preserves_and_renders_unresolved_transcript_selection():
+    from backend.app.reporting.service import _html_document
+
+    db, _reviewer, analysis, _report = seed_finalizable_report()
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    db.add(Annotation(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        provider_name="VEP",
+        provider_version="115",
+        payload={"normalized": {
+            "gene": {"symbol": None},
+            "transcript": None,
+            "transcript_selection": {
+                "status": "AMBIGUOUS_CANONICAL",
+                "policy": "UNIQUE_MANE_SELECT_THEN_UNIQUE_CANONICAL",
+                "selected_transcript_id": None,
+            },
+        }},
+    ))
+    db.commit()
+
+    content = build_report_content(
+        db, analysis, "en", report_type="CLINICAL_INTERPRETATION"
+    )
+    finding = content["findings"][0]
+    rendered = _html_document(content)
+
+    assert finding["transcript_selection"]["status"] == "AMBIGUOUS_CANONICAL"
+    assert "Transcript selection:</strong> AMBIGUOUS_CANONICAL (-)" in rendered
 
 
 def test_rendered_report_contains_persisted_qc_gate_and_observation_provenance():

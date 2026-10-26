@@ -590,6 +590,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             normalized = annotations[-1].get("normalized", {}) or {}
         gene = (normalized.get("gene") or {}).get("symbol")
         transcript = (normalized.get("transcript") or {}).get("accession")
+        transcript_selection = normalized.get("transcript_selection") or {}
         hgvs = normalized.get("hgvs") or {}
         consequences = normalized.get("consequence") or normalized.get("consequences") or {}
 
@@ -615,6 +616,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             },
             "gene": gene,
             "transcript": transcript,
+            "transcript_selection": transcript_selection,
             "hgvs": hgvs,
             "consequence": consequences,
             "genotype": {
@@ -795,6 +797,13 @@ def _html_document(content: dict[str, Any]) -> str:
     for finding in content["findings"]:
         g = html.escape(str(finding.get("gene") or "-"))
         tx = html.escape(str(finding.get("transcript") or "-"))
+        transcript_selection = finding.get("transcript_selection") or {}
+        transcript_selection_status = html.escape(
+            str(transcript_selection.get("status") or "NOT_REPORTED")
+        )
+        selected_transcript_id = html.escape(
+            str(transcript_selection.get("selected_transcript_id") or "-")
+        )
         hgvs = finding.get("hgvs") or {}
         c_hgvs = html.escape(str(hgvs.get("coding") or "-"))
         p_hgvs = html.escape(str(hgvs.get("protein") or "-"))
@@ -816,6 +825,7 @@ def _html_document(content: dict[str, Any]) -> str:
               <h2>{g} — {cls}</h2>
               <p><strong>Genomic:</strong> {html.escape(genomic_text)}</p>
               <p><strong>Transcript:</strong> {tx}</p>
+              <p><strong>Transcript selection:</strong> {transcript_selection_status} ({selected_transcript_id})</p>
               <p><strong>HGVS c.:</strong> {c_hgvs}<br><strong>HGVS p.:</strong> {p_hgvs}</p>
               <p><strong>Reportability:</strong> {html.escape(str((finding.get("reportability") or {}).get("disposition", "NOT_DETERMINED")))}</p>
               <h3>ACMG Evidence</h3>
