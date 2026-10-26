@@ -709,6 +709,10 @@ export type TranslationKey =
   | "review.hpoaSourceTerm"
   | "review.hpoaQualifier"
   | "review.hpoaComparisonReviewOnly"
+  | "review.hpoaContradictoryPatientTerms"
+  | "review.hpoaUnresolvedPatientTerms"
+  | "review.hpoaUnresolvedSourceTerms"
+  | "review.hpoaNonPhenotypicSkipped"
   | "review.provenance"
   | "review.resourceId"
   | "review.requestDigest"
@@ -1195,6 +1199,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.hpoaSourceTerm": "Source term",
     "review.hpoaQualifier": "Source qualifier",
     "review.hpoaComparisonReviewOnly": "Potential discrepancies are context for human review. They are not diagnostic conclusions, validated phenotype scores, or classification criteria.",
+    "review.hpoaContradictoryPatientTerms": "Patient terms with conflicting recorded states",
+    "review.hpoaUnresolvedPatientTerms": "Patient HPO terms not resolved by the pinned ontology",
+    "review.hpoaUnresolvedSourceTerms": "Source HPO terms not resolved by the pinned ontology",
+    "review.hpoaNonPhenotypicSkipped": "Non-phenotypic HPOA assertions skipped",
     "review.provenance": "Resource and query provenance",
     "review.resourceId": "Resource ID",
     "review.requestDigest": "Request SHA-256",
@@ -2129,6 +2137,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.hpoaSourceTerm": "مصطلح المصدر",
     "review.hpoaQualifier": "محدد المصدر",
     "review.hpoaComparisonReviewOnly": "التباينات المحتملة سياق للمراجعة البشرية وليست استنتاجًا تشخيصيًا أو درجة ظاهرية معتمدة أو معيار تصنيف.",
+    "review.hpoaContradictoryPatientTerms": "مصطلحات المريض ذات الحالات المسجلة المتعارضة",
+    "review.hpoaUnresolvedPatientTerms": "مصطلحات HPO للمريض التي لم يحلها إصدار الأنطولوجيا المثبت",
+    "review.hpoaUnresolvedSourceTerms": "مصطلحات HPO المصدر التي لم يحلها إصدار الأنطولوجيا المثبت",
+    "review.hpoaNonPhenotypicSkipped": "تأكيدات HPOA غير الظاهرية التي تم تجاوزها",
     "review.provenance": "مصدر المورد والاستعلام",
     "review.resourceId": "معرّف المورد",
     "review.requestDigest": "SHA-256 للطلب",

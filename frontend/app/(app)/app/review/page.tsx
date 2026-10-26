@@ -57,6 +57,10 @@ function EvidenceCard({e}:{e:Evidence}){
     {Array.isArray(item.source_negative_semantics)&&item.source_negative_semantics.some((value:string)=>value!=="SOURCE_NOT")&&<p>{t("review.hpoaZeroFrequencyCaveat")}</p>}
     {item.reference&&<small>{t("review.sourceRecord")}: {item.reference}</small>}
    </li>)}</ul>}
+   {Array.isArray(patientComparison.contradictory_patient_terms)&&patientComparison.contradictory_patient_terms.length>0&&<div><strong>{t("review.hpoaContradictoryPatientTerms")}</strong><ul>{patientComparison.contradictory_patient_terms.map((item:any,index:number)=><li key={`${item.hpo_id}-${index}`}>{item.hpo_id}: {Array.isArray(item.statuses)?item.statuses.map(pretty).join(", "):"—"}</li>)}</ul></div>}
+   {Array.isArray(patientComparison.unresolved_patient_terms)&&patientComparison.unresolved_patient_terms.length>0&&<div><strong>{t("review.hpoaUnresolvedPatientTerms")}</strong><ul>{patientComparison.unresolved_patient_terms.map((item:any,index:number)=><li key={`${item.hpo_id}-${index}`}>{item.hpo_id}: {pretty(item.status)}</li>)}</ul></div>}
+   {Array.isArray(patientComparison.unresolved_assertion_terms)&&patientComparison.unresolved_assertion_terms.length>0&&<div><strong>{t("review.hpoaUnresolvedSourceTerms")}</strong><ul>{patientComparison.unresolved_assertion_terms.map((item:any,index:number)=><li key={`${item.hpo_id}-${item.reference||"ref"}-${index}`}>{item.hpo_id}: {pretty(item.status)}{item.reference?` · ${item.reference}`:""}</li>)}</ul></div>}
+   {patientComparison.non_phenotypic_assertions_skipped>0&&<p>{t("review.hpoaNonPhenotypicSkipped")}: {patientComparison.non_phenotypic_assertions_skipped}</p>}
    {patientComparison.reason&&<p>{String(patientComparison.reason)}</p>}
    <p className="hpoa-review-note">{t("review.hpoaComparisonReviewOnly")}</p>
   </section>}
