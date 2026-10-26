@@ -327,11 +327,7 @@ def restore_backup(
         else compose_file.resolve(strict=True)
     )
     if env_file is not None:
-        env_file = (
-            (root / env_file).resolve(strict=True)
-            if not env_file.is_absolute()
-            else env_file.resolve(strict=True)
-        )
+        env_file = (root / env_file).resolve() if not env_file.is_absolute() else env_file.resolve()
     bundle = bundle.resolve(strict=True)
     manifest = verify_bundle(bundle)
     if not re.fullmatch(r"siraloom_restore_[a-z0-9_]{1,48}", target_database):
@@ -352,7 +348,41 @@ def restore_backup(
                 f"Restore target parent directory must already exist: {target.parent}"
             )
 
+    if not project_name or not re.fullmatch(
+        r"siraloom_restore(?:[_-][a-z0-9][a-z0-9_-]{0,48})?", project_name
+    ):
+        raise BackupError(
+            "Restore requires a dedicated Compose project name beginning with siraloom_restore"
+        )
+    if env_file is None:
+        raise BackupError(
+            "Restore requires an explicit isolated environment file; do not use the live .env"
+        )
+    if not env_file.is_file():
+        raise BackupError("Isolated restore environment file is unavailable")
+
     config = _compose_config(root, compose_file, project_name=project_name, env_file=env_file)
+    running_result = _run(
+        [
+            *_compose_command(compose_file, project_name=project_name, env_file=env_file),
+            "ps",
+            "--services",
+            "--status",
+            "running",
+        ],
+        cwd=root,
+        capture=True,
+    )
+    running_application_services = {
+        name
+        for name in running_result.stdout.splitlines()
+        if name in {"api", "worker", "beat", "frontend"}
+    }
+    if running_application_services:
+        raise BackupError(
+            "Restore project must not run application services before the restored data is reviewed: "
+            + ", ".join(sorted(running_application_services))
+        )
     postgres = (config.get("services") or {}).get("postgres") or {}
     environment = postgres.get("environment") or {}
     user = str(environment.get("POSTGRES_USER") or "").strip()

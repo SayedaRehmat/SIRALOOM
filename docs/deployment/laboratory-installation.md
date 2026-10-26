@@ -130,7 +130,7 @@ Do not use identifiable patient data for the initial test. Do not call the syste
   ```
 
   The backup is written to a new directory and contains no `.env` or identity-provider credentials. Configure host-level encryption, off-host replication, access controls and retention for the backup destination. The tool requires artifacts, references and resource cache to be absolute host bind mounts; it refuses to silently omit named volumes or symlinks. PostgreSQL uses `pg_dump` custom format, which is restored with `pg_restore`.
-- Test restoration into a fresh database and new storage directories before changing the live deployment. Use an isolated Compose project and a separate environment file/Redis instance for the restore test so queued messages from the live system cannot execute against the restored database. Start from a secured copy of the laboratory environment file with unique paths and a dedicated PostgreSQL/Redis deployment:
+- Test restoration into a fresh database and new storage directories before changing the live deployment. Use an isolated Compose project and a separate environment file/Redis instance for the restore test so queued messages from the live system cannot execute against the restored database. The restore command requires a project name exactly `siraloom_restore` or beginning `siraloom_restore_`/`siraloom_restore-`, requires an explicit existing environment file, and refuses to proceed while API, worker, Beat, or frontend services are running in that project. Start from a secured copy of the laboratory environment file with unique paths and a dedicated PostgreSQL/Redis deployment:
 
   ```bash
   mkdir -p /srv/siraloom-restore

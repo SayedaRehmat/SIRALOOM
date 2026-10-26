@@ -2,6 +2,7 @@ import io
 import json
 import tarfile
 from pathlib import Path
+from subprocess import CompletedProcess
 
 import pytest
 
@@ -215,3 +216,93 @@ def test_restore_refuses_existing_storage_target_before_docker_access(tmp_path):
 
     with pytest.raises(BackupError, match="not-yet-existing path"):
         restore_backup(root, compose, bundle, "siraloom_restore_20261026", targets)
+
+
+@pytest.mark.parametrize(
+    ("project_name", "env_file", "message"),
+    [
+        (None, Path("restore.env"), "dedicated Compose project"),
+        ("siraloom", Path("restore.env"), "dedicated Compose project"),
+        ("siraloom_restoreevil", Path("restore.env"), "dedicated Compose project"),
+        ("siraloom_restore_test", None, "explicit isolated environment file"),
+    ],
+)
+def test_restore_requires_explicit_isolated_compose_project_and_environment(
+    tmp_path, project_name, env_file, message
+):
+    bundle = _bundle(tmp_path)
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "compose.yml").write_text("services: {}")
+    (root / "restore.env").write_text("POSTGRES_DB=siraloom_restore_bootstrap\n")
+    parent = tmp_path / "restore"
+    parent.mkdir()
+    targets = {
+        "artifacts": parent / "artifacts",
+        "references": parent / "references",
+        "resource_cache": parent / "resource-cache",
+    }
+
+    with pytest.raises(BackupError, match=message):
+        restore_backup(
+            root,
+            Path("compose.yml"),
+            bundle,
+            "siraloom_restore_20261026",
+            targets,
+            project_name=project_name,
+            env_file=env_file,
+        )
+
+
+def test_restore_refuses_running_application_services_in_isolated_project(tmp_path, monkeypatch):
+    from scripts import laboratory_backup
+
+    bundle = _bundle(tmp_path)
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose = root / "compose.yml"
+    compose.write_text("services: {}")
+    env_file = root / "restore.env"
+    env_file.write_text("POSTGRES_DB=siraloom_restore_bootstrap\n")
+    parent = tmp_path / "restore"
+    parent.mkdir()
+    targets = {
+        "artifacts": parent / "artifacts",
+        "references": parent / "references",
+        "resource_cache": parent / "resource-cache",
+    }
+    monkeypatch.setattr(
+        laboratory_backup,
+        "_compose_config",
+        lambda *_args, **_kwargs: {
+            "services": {
+                "postgres": {
+                    "environment": {
+                        "POSTGRES_DB": "siraloom_restore_bootstrap",
+                        "POSTGRES_USER": "siraloom",
+                    }
+                }
+            }
+        },
+    )
+    monkeypatch.setattr(
+        laboratory_backup,
+        "_run",
+        lambda *_args, **_kwargs: CompletedProcess(
+            args=[], returncode=0, stdout="api\npostgres\nredis\n", stderr=""
+        ),
+    )
+
+    with pytest.raises(BackupError, match="must not run application services"):
+        restore_backup(
+            root,
+            compose,
+            bundle,
+            "siraloom_restore_20261026",
+            targets,
+            project_name="siraloom_restore_test",
+            env_file=env_file,
+        )
+
+    assert not any(target.exists() for target in targets.values())
