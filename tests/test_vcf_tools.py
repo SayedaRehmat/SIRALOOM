@@ -156,7 +156,17 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
             return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.19\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
-            target.write_bytes(b"staged-" + command[1].encode())
+            if command[1] == "view":
+                import gzip
+
+                with gzip.open(target, "wt", encoding="utf-8") as handle:
+                    handle.write(
+                        "##fileformat=VCFv4.3\n"
+                        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                        "1\t1\t.\tA\tG\t.\tPASS\t.\n"
+                    )
+            else:
+                target.write_bytes(b"staged-" + command[1].encode())
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
         if command[1] == "index":
             return subprocess.CompletedProcess(command, 1, stdout="", stderr="injected index failure")

@@ -466,6 +466,16 @@ The guard reduces the risk of an operator accidentally restoring into the normal
 
 The official HPO references and implementation rationale are recorded in `docs/research/GERMLINE_LAB_WORKFLOW_AND_RESOURCE_RESEARCH.md` and the engineering ledger. This increment does not change the overall release decision: Phase A remains PARTIAL; live identity, deployed tenant/storage isolation, complete lab signout/recovery, independent truth-set benchmarking, and actual deployment/restore qualification are still unverified.
 
+### 2026-10-26 source-to-normalized variant lineage
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| BCFtools normalized allele retains source coordinates, alleles and source ALT index | PASS (synthetic BCFtools 1.19 scope) | `--old-rec-tag SIRALOOM_ORIG` is applied after declaring a variable-cardinality INFO header; unchanged biallelic rows are explicitly pre-tagged because BCFtools can omit the old-record field when no transformation occurs. Tests cover split multiallelic source indices and single-ALT records, then pass output through strict VCF validation and stream decoding. |
+| Source mapping is persisted in analysis-scoped partition metadata | PASS (local automated scope) | `CanonicalVariant` carries the mapping fields; partition schema 3 stores one mapping per mapped canonical variant ID. A regression checks the exact metadata content and rejects malformed indices. |
+| Mapping identity and retry compatibility | PASS (local automated scope) | Normalization fingerprint/artifact identities are bumped to v4. Existing mapping may be preserved only through an explicit option and validated contract; default collisions fail closed. Idempotency and worker routing tests are included in the focused run. |
+| Raw upload-to-routed-to-normalized lineage for all routed classes | PARTIAL | The source mapping records sequence-routed input coordinates; source and routed artifacts remain linked in artifact metadata. No normalized-allele mapping is asserted for GVCF reference blocks, unresolved wildcard records, structural records or other routed-out classes. |
+| Independent truth-set concordance | NOT RUN | No approved truth-set benchmark or performance/accuracy claim is made. Overall Phase A remains PARTIAL. |
+
 **Verified repository checkpoint:** implementation commits [`8f9626b185192709dd2f7974a9d2f271552ce33f`](https://github.com/SayedaRehmat/SIRALOOM/commit/8f9626b185192709dd2f7974a9d2f271552ce33f) and [`7fbf54a75168942b7faadae45413480da1789812`](https://github.com/SayedaRehmat/SIRALOOM/commit/7fbf54a75168942b7faadae45413480da1789812) are on `origin/main`; exact-SHA CI [40316000823](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40316000823) passed all three jobs. This verifies the automated repository checks only and does not change the live/deployed evidence statuses above.
 
 ### 2026-10-26 BCFtools multiallelic projection verification

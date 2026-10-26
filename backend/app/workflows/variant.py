@@ -2062,7 +2062,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fasta_sha256": reference_package["fasta_sha256"],
                     "bcftools_version": settings.bcftools_version,
                     "execution_contract_hash": reference_execution.contract_hash,
-                    "normalization_version": "3.0",
+                    "normalization_version": "4.0",
+                    "source_record_mapping_tag": "SIRALOOM_ORIG",
+                    "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
                     "record_routing": {
                         key: value for key, value in routing.items() if not key.endswith("_path")
                     },
@@ -2117,13 +2119,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 normalized_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v3"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v4"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip",
                     genome_build=reference_build,
                     metadata={
-                        "normalization_version": "3.0",
+                        "normalization_version": "4.0",
+                        "source_record_mapping_tag": normalization_stats["source_record_mapping_tag"],
+                        "source_record_mapping_policy": normalization_stats["source_record_mapping_policy"],
                         "source_artifact_id": str(input_artifact.id),
                         "source_sha256": input_artifact.sha256,
                         "record_count": routing["sequence_records"],
@@ -2152,7 +2156,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 index_path = Path(normalization_stats["index_path"])
                 index_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v3"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v4"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=index_path,
                     filename="normalized.vcf.gz.csi",
                     artifact_type="VCF_INDEX", media_type="application/octet-stream",
@@ -5430,10 +5434,22 @@ def _normalized_partition_metadata(
             "format_values": call.get("format_values", {}),
         })
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "genome_build": variants[0].genome_build if variants else None,
         "variant_ids": [str(value) for value in variant_ids],
         "sample_calls": sample_calls,
+        "source_record_mappings": [
+            {
+                "variant_id": str(variant_id),
+                "source_chromosome": variant.original_chromosome,
+                "source_position": variant.original_position,
+                "source_reference": variant.original_reference,
+                "source_alternate": variant.original_alternate,
+                "source_alt_index": variant.original_alt_index,
+            }
+            for variant_id, variant in zip(variant_ids, variants)
+            if variant.original_position is not None
+        ],
     }
 
 

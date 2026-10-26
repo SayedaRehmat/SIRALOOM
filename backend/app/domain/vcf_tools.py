@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import os
 import re
 import shutil
@@ -160,6 +161,7 @@ def route_vcf_records(
 MNV_POLICY = "PRESERVE"
 MULTIALLELIC_POLICY = "SPLIT_WITH_BCFTOOLS"
 MULTIALLELIC_OVERLAP_POLICY = "REFERENCE_ALLELE_ZERO"
+ORIGINAL_RECORD_TAG = "SIRALOOM_ORIG"
 
 
 class VCFToolError(RuntimeError):
@@ -238,6 +240,7 @@ def normalize_vcf_with_bcftools(
     reference_fasta: str | Path,
     expected_bcftools_version: str | None = None,
     timeout_seconds: int = 1800,
+    preserve_existing_source_mapping: bool = False,
 ) -> dict:
     """Normalize, sort, and CSI-index a VCF before publishing either output.
 
@@ -256,6 +259,9 @@ def normalize_vcf_with_bcftools(
         raise VCFToolError(f"Reference FASTA does not exist: {reference_fasta}")
     if output_path.suffixes[-2:] != [".vcf", ".gz"]:
         raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
+    has_existing_source_mapping = _reject_original_record_tag_collision(
+        input_path, allow_existing=preserve_existing_source_mapping
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     index_path = Path(str(output_path) + ".csi")
 
@@ -313,9 +319,17 @@ def normalize_vcf_with_bcftools(
         if not prepared_path.is_file() or prepared_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no prepared VCF.")
 
+        provenance_input = prepared_path
+        header_injection = None
+        if not has_existing_source_mapping:
+            provenance_input = work / "provenance-input.vcf"
+            header_injection = _write_original_record_info_header(prepared_path, provenance_input)
+
         normalize_command = [
             "bcftools", "norm", "-f", str(reference_fasta), "-c", "e",
-            "-m", "-any", "--multi-overlaps", "0", "-Oz", "-o", str(normalized_path), str(prepared_path),
+            "-m", "-any", "--multi-overlaps", "0",
+            *( [] if has_existing_source_mapping else ["--old-rec-tag", ORIGINAL_RECORD_TAG] ),
+            "-Oz", "-o", str(normalized_path), str(provenance_input),
         ]
         try:
             completed = subprocess.run(
@@ -416,11 +430,19 @@ def normalize_vcf_with_bcftools(
             "tool_version": version_line,
             "expected_tool_version": expected_bcftools_version,
             "operation": "reference_aware_normalization_sort_index",
-            "command": " && ".join([" ".join(view_command), " ".join(normalize_command), " ".join(sort_command), " ".join(index_command)]),
+            "command": " && ".join([
+                " ".join(view_command),
+                header_injection or "preserve existing SIRALOOM_ORIG mapping",
+                " ".join(normalize_command),
+                " ".join(sort_command),
+                " ".join(index_command),
+            ]),
             "reference_fasta": str(reference_fasta),
             "reference_check": "error",
             "multiallelic_mode": MULTIALLELIC_POLICY,
             "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
+            "source_record_mapping_tag": ORIGINAL_RECORD_TAG,
+            "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
             "mnv_policy": MNV_POLICY,
             "compression": "BGZF",
             "index": "CSI",
@@ -428,6 +450,115 @@ def normalize_vcf_with_bcftools(
             "gvcf_wildcard_command": "bcftools view -A",
             "stderr": "\n".join(x for x in (view_stderr, normalized_stderr, sorted_stderr, indexed_stderr) if x),
         }
+
+
+def _write_original_record_info_header(source: Path, destination: Path) -> str:
+    """Declare source mapping and tag biallelic rows before normalization.
+
+    BCFtools emits ``--old-rec-tag`` when it splits or changes a record, but
+    unchanged biallelic rows may have no old-record tag. Pre-tagging only
+    biallelic rows covers that case; multiallelic rows are left for BCFtools so
+    each split child receives its own correct source ALT index.
+    """
+    opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
+    header_line = (
+        '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,'
+        'Description="Original source record CHROM|POS|REF|ALT|USED_ALT_IDX">\n'
+    )
+    found_chrom_header = False
+    with opener(source, "rt", encoding="utf-8-sig") as input_handle, destination.open(
+        "w", encoding="utf-8", newline=""
+    ) as output_handle:
+        for line in input_handle:
+            if line.startswith("#CHROM"):
+                output_handle.write(header_line)
+                found_chrom_header = True
+                output_handle.write(line)
+                continue
+            if line.startswith("#"):
+                output_handle.write(line)
+                continue
+            fields = line.rstrip("\r\n").split("\t")
+            if len(fields) < 8:
+                raise VCFToolError("Cannot add source mapping to a malformed prepared VCF record.")
+            if len(fields[4].split(",")) == 1:
+                try:
+                    position = int(fields[1])
+                except ValueError as exc:
+                    raise VCFToolError("Cannot add source mapping to a record with invalid POS.") from exc
+                if position < 1:
+                    raise VCFToolError("Cannot add source mapping to a record with invalid POS.")
+                source_value = f"{fields[0]}|{position}|{fields[3]}|{fields[4]}|1"
+                fields[7] = (
+                    f"{fields[7]};SIRALOOM_ORIG={source_value}"
+                    if fields[7] not in {"", "."}
+                    else f"SIRALOOM_ORIG={source_value}"
+                )
+                output_handle.write("\t".join(fields) + "\n")
+            else:
+                output_handle.write(line)
+    if not found_chrom_header:
+        destination.unlink(missing_ok=True)
+        raise VCFToolError("Cannot declare source mapping: prepared VCF has no #CHROM header.")
+    return "inject reserved SIRALOOM_ORIG header and source mappings for biallelic rows"
+
+
+def _reject_original_record_tag_collision(input_path: Path, *, allow_existing: bool) -> bool:
+    opener = gzip.open if input_path.name.lower().endswith((".gz", ".bgz")) else open
+    has_definition = False
+    header = None
+    with opener(input_path, "rt", encoding="utf-8-sig") as handle:
+        for line in handle:
+            if line.startswith("#CHROM"):
+                header = line
+                break
+            if line.startswith(f"##INFO=<ID={ORIGINAL_RECORD_TAG},"):
+                if not allow_existing:
+                    raise VCFToolError(
+                        f"Input VCF already declares reserved INFO tag {ORIGINAL_RECORD_TAG}."
+                    )
+                has_definition = line.startswith(
+                    '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record '
+                )
+                if not has_definition:
+                    raise VCFToolError("Existing source-mapping tag does not match the SIRALOOM mapping contract.")
+    if not has_definition:
+        return False
+
+    if header is None:
+        raise VCFToolError("Input VCF is missing its #CHROM header.")
+    columns = len(header.rstrip("\r\n").split("\t"))
+    with opener(input_path, "rt", encoding="utf-8-sig") as handle:
+        for line in handle:
+            if not line or line.startswith("#"):
+                continue
+            fields = line.rstrip("\r\n").split("\t")
+            if len(fields) != columns or len(fields) < 8:
+                raise VCFToolError("Existing source-mapping VCF has a malformed record.")
+            tags = [
+                item.partition("=")[2]
+                for item in fields[7].split(";")
+                if item.partition("=")[0] == ORIGINAL_RECORD_TAG
+            ]
+            if len(tags) != 1:
+                raise VCFToolError("Existing source-mapping VCF has a missing or malformed mapping.")
+            mapping = tags[0].split("|", 4)
+            if len(mapping) not in {4, 5}:
+                raise VCFToolError("Existing source-mapping VCF has a missing or malformed mapping.")
+            try:
+                source_position = int(mapping[1])
+                source_alt_index = int(mapping[4]) if len(mapping) == 5 else 1
+            except ValueError as exc:
+                raise VCFToolError("Existing source-mapping VCF has invalid coordinates or ALT index.") from exc
+            source_alternates = mapping[3].split(",")
+            if (
+                source_position < 1
+                or (len(mapping) == 4 and len(source_alternates) != 1)
+                or source_alt_index < 1
+                or source_alt_index > len(source_alternates)
+            ):
+                raise VCFToolError("Existing source-mapping VCF has invalid coordinates or ALT index.")
+    return True
 
 def classify_records(path: str | Path) -> dict:
     import gzip

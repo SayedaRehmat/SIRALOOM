@@ -1,9 +1,11 @@
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
+
 from backend.app.domain.normalization import iter_normalized_vcf, normalize_vcf_file
-from backend.app.domain.vcf import parse_vcf
 from backend.app.domain.reference import FastaReference
+from backend.app.domain.vcf import parse_vcf
 from backend.app.workflows.variant import _iter_variant_batches, _normalized_partition_metadata
 
 
@@ -69,7 +71,7 @@ def test_normalized_vcf_stream_preserves_sample_call_and_quality_fields(tmp_path
     metadata = _normalized_partition_metadata([variant_id], variants)
 
     assert start == 0
-    assert metadata["schema_version"] == 2
+    assert metadata["schema_version"] == 3
     assert metadata["genome_build"] == "GRCh38"
     assert metadata["sample_calls"] == [{
         "variant_id": str(variant_id),
@@ -81,6 +83,44 @@ def test_normalized_vcf_stream_preserves_sample_call_and_quality_fields(tmp_path
         "phase_set": "42",
         "format_values": {"DP": "35", "GQ": "99", "AD": "20,15", "PS": "42"},
     }]
+    assert metadata["source_record_mappings"] == []
+
+
+def test_partition_metadata_persists_analysis_scoped_original_allele_mapping(tmp_path):
+    path = tmp_path / "source-mapping.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|10|AA|A,AT|2\n",
+        encoding="utf-8",
+    )
+    variant = next(iter_normalized_vcf(path, "GRCh38"))
+    variant_id = uuid4()
+    metadata = _normalized_partition_metadata([variant_id], [variant])
+
+    assert metadata["source_record_mappings"] == [{
+        "variant_id": str(variant_id),
+        "source_chromosome": "1",
+        "source_position": 10,
+        "source_reference": "AA",
+        "source_alternate": "A,AT",
+        "source_alt_index": 2,
+    }]
+
+
+def test_normalized_vcf_rejects_malformed_source_allele_index(tmp_path):
+    path = tmp_path / "bad-source-mapping.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|10|AA|A,AT|3\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="invalid source-record mapping"):
+        next(iter_normalized_vcf(path, "GRCh38"))
 
 
 def test_vcf_call_parser_distinguishes_reference_alt_haploid_and_no_calls(tmp_path):

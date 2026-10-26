@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import gzip
 import os
-from pathlib import Path
 import tempfile
+from dataclasses import dataclass
+from pathlib import Path
 
-from backend.app.domain.reference import FastaReference, ReferenceError
+from backend.app.domain.reference import FastaReference
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.variant_identity import canonical_key
 
 DNA_ALLELES = set("ACGTN")
+ORIGINAL_RECORD_INFO_TAG = "SIRALOOM_ORIG"
 
 
 class NormalizationError(ValueError):
@@ -321,6 +322,7 @@ def iter_normalized_vcf(
                     exclusion_stats.get("reference_only_genotype_alleles", 0) + 1
                 )
             continue
+        original = _original_record_mapping(record.raw)
         yield CanonicalVariant(
             genome_build=genome_build,
             chromosome=record.chrom,
@@ -328,6 +330,44 @@ def iter_normalized_vcf(
             reference=record.ref,
             alternate=record.alt,
             normalization_status="NORMALIZED",
+            original_chromosome=original[0] if original else None,
+            original_position=original[1] if original else None,
+            original_reference=original[2] if original else None,
+            original_alternate=original[3] if original else None,
+            original_alt_index=original[4] if original else None,
             variant_key=canonical_key(genome_build, record.chrom, record.pos, record.ref, record.alt),
             sample_call=sample_call,
         )
+
+
+def _original_record_mapping(raw_record: str) -> tuple[str, int, str, str, int] | None:
+    fields = raw_record.split("\t")
+    if len(fields) < 8:
+        raise NormalizationError("Normalized VCF record has fewer than 8 columns")
+    info = fields[7]
+    values = [item.partition("=")[2] for item in info.split(";") if item.partition("=")[0] == ORIGINAL_RECORD_INFO_TAG]
+    if not values:
+        return None
+    if len(values) != 1:
+        raise NormalizationError("Normalized record has duplicate source-mapping tags")
+    mapping = values[0].split("|", 4)
+    if len(mapping) not in {4, 5}:
+        raise NormalizationError("Normalized record has malformed source-mapping tag")
+    chromosome, position_text, reference, alternates_text = mapping[:4]
+    try:
+        position = int(position_text)
+        alt_index = int(mapping[4]) if len(mapping) == 5 else 1
+    except ValueError as exc:
+        raise NormalizationError("Normalized record has non-integer source coordinates or ALT index") from exc
+    alternates = alternates_text.split(",")
+    if (
+        not chromosome
+        or position < 1
+        or not reference
+        or (len(mapping) == 4 and len(alternates) != 1)
+        or alt_index < 1
+        or alt_index > len(alternates)
+        or not alternates[alt_index - 1]
+    ):
+        raise NormalizationError("Normalized record has invalid source-record mapping values")
+    return chromosome, position, reference, alternates_text, alt_index

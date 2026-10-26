@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class CanonicalVariant(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -15,6 +17,7 @@ class CanonicalVariant(BaseModel):
     original_position: int | None = None
     original_reference: str | None = None
     original_alternate: str | None = None
+    original_alt_index: int | None = Field(default=None, ge=1)
     variant_key: str | None = None
     # Analysis-specific sample call evidence is carried alongside the canonical
     # allele while streaming. It is never part of the allele identity key.

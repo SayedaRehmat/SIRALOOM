@@ -12,6 +12,7 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AnalysisPartition,
     Artifact,
     AuditEvent,
     Case,
@@ -524,7 +525,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             monkeypatch.setattr(db_module, "engine", engine)
             task_id = "gvcf-positive-test"
             normalized_id = uuid5(
-                analysis_id, "siraloom:normalization:normalized-vcf:v3"
+                analysis_id, "siraloom:normalization:normalized-vcf:v4"
             )
             normalized_uri = store.uri_for_artifact(
                 case_id=case_id,
@@ -726,6 +727,18 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 if used_real_bcftools:
                     assert "bcftools view -A" in normalized.metadata_json["normalization_command"]
+                    assert normalized.metadata_json["normalization_version"] == "4.0"
+                    partition = db.scalar(select(AnalysisPartition).where(
+                        AnalysisPartition.analysis_id == analysis_id,
+                        AnalysisPartition.step_id == "normalize",
+                    ))
+                    assert partition is not None
+                    source_mappings = partition.metadata_json["source_record_mappings"]
+                    assert [
+                        (item["source_position"], item["source_reference"],
+                         item["source_alternate"], item["source_alt_index"])
+                        for item in source_mappings
+                    ] == [(11, "A", "C", 1), (20, "AT", "A", 1)]
                     normalized_text = gzip.decompress(store.read_bytes(normalized.storage_uri)).decode("utf-8")
                     normalized_records = [
                         line.split("\t") for line in normalized_text.splitlines()
