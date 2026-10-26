@@ -453,3 +453,5 @@ Focused prior failure set: **42 passed**. This diagnostic-ordering correction do
 | Actual isolated PostgreSQL and artifact restore | NOT TESTED | Docker is unavailable in this WSL environment; no real `pg_restore`, isolated Compose lifecycle, or post-restore artifact comparison was performed. |
 
 The guard reduces the risk of an operator accidentally restoring into the normal Compose context. It does not prove the supplied project/environment points to a dedicated laboratory restore host, and does not qualify a real recovery objective. Phase A and deployment readiness remain **PARTIAL**.
+
+**Follow-up code checkpoint:** commit [`4d35ffb4403cab5d3813c1087ce6c9dba9f1b520`](https://github.com/SayedaRehmat/SIRALOOM/commit/4d35ffb4403cab5d3813c1087ce6c9dba9f1b520) is on `origin/main`; exact-SHA CI run [40313345990](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40313345990) passed all three jobs. This does not change the NOT TESTED status of an actual laboratory backup/restore.
