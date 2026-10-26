@@ -9,7 +9,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from backend.app.acmg.rules import BENIGN_CRITERIA, PATHOGENIC_CRITERIA
+from backend.app.acmg.rules import (
+    BENIGN_CRITERIA,
+    PATHOGENIC_CRITERIA,
+    RETIRED_BENIGN_CRITERIA,
+    RETIRED_CRITERIA,
+    RETIRED_PATHOGENIC_CRITERIA,
+)
 from backend.app.infrastructure.db.models import ACMGSourceAssertion, ClinGenSpecification
 
 VALID_STRENGTHS = ("SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG")
@@ -60,6 +66,22 @@ def assess_source_assertion(
     strength information, a MET source assertion remains REQUIRES_REVIEW.
     """
     criterion = assertion.criterion.strip().upper()
+    if criterion in RETIRED_CRITERIA:
+        return _assessment(
+            assertion,
+            specification,
+            applicable=False,
+            strength=None,
+            status="REQUIRES_REVIEW",
+            rationale=(
+                f"{criterion} is retired for automated interpretation under ClinGen SVI guidance; "
+                "the source assertion is preserved but cannot contribute to classification."
+            ),
+            metadata={
+                "applicability_basis": "RETIRED_CRITERION",
+                "retired_criterion": criterion,
+            },
+        )
     if criterion not in PATHOGENIC_CRITERIA | BENIGN_CRITERIA:
         raise SourceCriterionAssessmentError(f"Unsupported ACMG criterion: {criterion}")
 
@@ -220,9 +242,15 @@ def _assessment(
     metadata: dict[str, Any],
     effective_criterion: str | None = None,
 ) -> SourceCriterionAssessment:
-    direction = "PATHOGENIC" if assertion.criterion in PATHOGENIC_CRITERIA else "BENIGN"
+    criterion = assertion.criterion.strip().upper()
+    if criterion in PATHOGENIC_CRITERIA | RETIRED_PATHOGENIC_CRITERIA:
+        direction = "PATHOGENIC"
+    elif criterion in BENIGN_CRITERIA | RETIRED_BENIGN_CRITERIA:
+        direction = "BENIGN"
+    else:
+        direction = "UNKNOWN"
     return SourceCriterionAssessment(
-        criterion=assertion.criterion,
+        criterion=criterion,
         effective_criterion=effective_criterion,
         applicable=applicable,
         strength=strength,
@@ -321,9 +349,9 @@ def _effective_code(criterion: str, strength: str, allowed: tuple[str, ...], rul
         "BA1": "STANDALONE",
         "PS1": "STRONG", "PS2": "STRONG", "PS3": "STRONG", "PS4": "STRONG",
         "PM1": "MODERATE", "PM2": "MODERATE", "PM3": "MODERATE", "PM4": "MODERATE", "PM5": "MODERATE", "PM6": "MODERATE",
-        "PP1": "SUPPORTING", "PP2": "SUPPORTING", "PP3": "SUPPORTING", "PP4": "SUPPORTING", "PP5": "SUPPORTING",
+        "PP1": "SUPPORTING", "PP2": "SUPPORTING", "PP3": "SUPPORTING", "PP4": "SUPPORTING",
         "BS1": "STRONG", "BS2": "STRONG", "BS3": "STRONG", "BS4": "STRONG",
-        "BP1": "SUPPORTING", "BP2": "SUPPORTING", "BP3": "SUPPORTING", "BP4": "SUPPORTING", "BP5": "SUPPORTING", "BP6": "SUPPORTING", "BP7": "SUPPORTING",
+        "BP1": "SUPPORTING", "BP2": "SUPPORTING", "BP3": "SUPPORTING", "BP4": "SUPPORTING", "BP5": "SUPPORTING", "BP7": "SUPPORTING",
     }.get(criterion)
     if strength == baseline:
         return criterion

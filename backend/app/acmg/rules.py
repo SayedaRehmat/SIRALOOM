@@ -9,6 +9,7 @@ logic as a baseline proposal layer.
 from dataclasses import dataclass
 from enum import StrEnum
 
+
 class CriterionDirection(StrEnum):
     PATHOGENIC = "PATHOGENIC"
     BENIGN = "BENIGN"
@@ -16,12 +17,15 @@ class CriterionDirection(StrEnum):
 PATHOGENIC_CRITERIA = {
     "PVS1", "PS1", "PS2", "PS3", "PS4",
     "PM1", "PM2", "PM3", "PM4", "PM5", "PM6",
-    "PP1", "PP2", "PP3", "PP4", "PP5",
+    "PP1", "PP2", "PP3", "PP4",
 }
 BENIGN_CRITERIA = {
     "BA1", "BS1", "BS2", "BS3", "BS4",
-    "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7",
+    "BP1", "BP2", "BP3", "BP4", "BP5", "BP7",
 }
+RETIRED_CRITERIA = {"PP5", "BP6"}
+RETIRED_PATHOGENIC_CRITERIA = {"PP5"}
+RETIRED_BENIGN_CRITERIA = {"BP6"}
 ALL_CRITERIA = PATHOGENIC_CRITERIA | BENIGN_CRITERIA
 
 STRENGTH_TO_POINTS = {
@@ -46,6 +50,10 @@ ACMG2015BaselineProfile = RuleProfile(
 )
 
 def validate_criterion_code(code: str) -> None:
+    if code in RETIRED_CRITERIA:
+        raise ValueError(
+            f"ACMG criterion {code} is retired for automated use under ClinGen SVI guidance"
+        )
     if code not in ALL_CRITERIA:
         raise ValueError(f"Unsupported ACMG/AMP criterion code: {code}")
 

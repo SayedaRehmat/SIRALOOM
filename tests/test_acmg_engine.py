@@ -71,6 +71,20 @@ def test_ba1_requires_standalone_strength():
     assert ACMGEngine().classify([ba1]).classification == "BENIGN"
 
 
+@pytest.mark.parametrize("criterion", ["PP5", "BP6"])
+def test_clingen_retired_criteria_cannot_enter_acmg_combination(criterion):
+    assessment = CriterionAssessment(
+        criterion,
+        "SUPPORTING",
+        CriterionDirection.PATHOGENIC if criterion == "PP5" else CriterionDirection.BENIGN,
+        evidence_ids=("persisted-source-evidence",),
+        reason="source assertion only",
+    )
+
+    with pytest.raises(ValueError, match="retired for automated use under ClinGen SVI guidance"):
+        ACMGEngine().classify([assessment])
+
+
 @pytest.mark.parametrize("status", ["NOT_MET", "REJECTED", "REQUIRES_REVIEW", "NOT_APPLICABLE"])
 def test_non_proposed_criteria_cannot_contribute_to_classification(status):
     criterion = CriterionAssessment(

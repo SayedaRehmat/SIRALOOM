@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from backend.app.adapters.clingen.cspec import CSpecClient, CSpecEntity
 from backend.app.acmg.specifications import CriterionSpecification
+from backend.app.adapters.clingen.cspec import CSpecClient, CSpecEntity
 
 
 @dataclass(frozen=True)
@@ -300,6 +300,6 @@ def _extract_criteria(content: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 _ACMG_CODES = {
     "PVS1", "PS1", "PS2", "PS3", "PS4", "PM1", "PM2", "PM3", "PM4", "PM5", "PM6",
-    "PP1", "PP2", "PP3", "PP4", "PP5", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1",
-    "BP2", "BP3", "BP4", "BP5", "BP6", "BP7",
+    "PP1", "PP2", "PP3", "PP4", "BA1", "BS1", "BS2", "BS3", "BS4", "BP1",
+    "BP2", "BP3", "BP4", "BP5", "BP7",
 }

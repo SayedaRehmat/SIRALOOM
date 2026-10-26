@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+import pytest
+
 from backend.app.acmg.source_assessment import assess_source_assertion
 from backend.app.infrastructure.db.models import ACMGSourceAssertion, ClinGenSpecification
 
@@ -112,3 +114,22 @@ def test_source_assessment_does_not_create_final_classification():
     )
     assert not hasattr(result, "classification")
     assert result.status == "PROPOSED"
+
+
+@pytest.mark.parametrize(
+    ("criterion", "direction"),
+    [("PP5", "PATHOGENIC"), ("BP6", "BENIGN")],
+)
+def test_retired_source_assertion_is_preserved_but_requires_human_review(criterion, direction):
+    result = assess_source_assertion(
+        make_assertion(criterion=criterion),
+        make_spec({criterion: {"strength": "Supporting"}}),
+    )
+
+    assert result.status == "REQUIRES_REVIEW"
+    assert result.applicable is False
+    assert result.strength is None
+    assert result.direction == direction
+    assert result.effective_criterion is None
+    assert result.metadata["retired_criterion"] == criterion
+    assert criterion in result.rationale

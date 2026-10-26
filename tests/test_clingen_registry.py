@@ -1,9 +1,12 @@
 import httpx
 import pytest
 
+from backend.app.acmg.clingen_registry import (
+    select_current_released_version,
+    snapshot_ruleset,
+    snapshot_sequence_variant_interpretation,
+)
 from backend.app.adapters.clingen.cspec import CSpecClient, CSpecClientError
-from backend.app.acmg.clingen_registry import snapshot_ruleset, snapshot_sequence_variant_interpretation, select_current_released_version
-
 
 
 def make_client(handler):
@@ -112,3 +115,28 @@ def test_cspec_svi_snapshot_preserves_provenance_and_structured_criteria():
     assert snapshot.criteria["PM2"]["strength"] == "SUPPORTING"
     assert snapshot.request_fingerprint == "request-sha"
     assert snapshot.response_sha256 == "response-sha"
+
+
+def test_cspec_snapshot_preserves_but_does_not_activate_retired_pp5_bp6():
+    from backend.app.adapters.clingen.cspec import CSpecEntity
+
+    content = {
+        "version": "1.0",
+        "criteria": {
+            "PP5": {"strength": "SUPPORTING"},
+            "BP6": {"strength": "SUPPORTING"},
+            "PM2": {"strength": "SUPPORTING"},
+        },
+    }
+    snapshot = snapshot_sequence_variant_interpretation(CSpecEntity(
+        ent_id="GN-RETIRED",
+        ent_type="SequenceVariantInterpretation",
+        ldh_id=None,
+        ent_iri="https://cspec.example/GN-RETIRED",
+        content=content,
+        modified=None,
+        raw={"entId": "GN-RETIRED", "entType": "SequenceVariantInterpretation", "entContent": content},
+    ))
+
+    assert set(snapshot.criteria) == {"PM2"}
+    assert set(snapshot.raw_entity["entContent"]["criteria"]) == {"PP5", "BP6", "PM2"}

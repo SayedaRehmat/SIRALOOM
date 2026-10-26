@@ -653,7 +653,7 @@ def _looks_like_acmg_criterion(value: object) -> bool:
 
     return bool(
         re.fullmatch(
-            r"(?:PVS1|PS[1-4]|PM[1-6]|PP[1-5]|BA1|BS[1-4]|BP[1-7])(?:_[A-Z]+)?",
+            r"(?:PVS1|PS[1-4]|PM[1-6]|PP[1-4]|BA1|BS[1-4]|BP[1-57])(?:_[A-Z]+)?",
             value.upper(),
         )
     )
