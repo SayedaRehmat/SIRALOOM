@@ -8,10 +8,17 @@ import tempfile
 from contextlib import ExitStack
 from pathlib import Path
 
+from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
+
 GVCF_WILDCARD_ALLELES = {"<NON_REF>", "<*>"}
 
 
-def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
+def route_vcf_records(
+    input_path: str | Path,
+    output_dir: str | Path,
+    *,
+    reference_contig_lengths: dict[str, int] | None = None,
+) -> dict:
     """Partition a validated VCF without changing records or sample semantics.
 
     Only sequence-resolved records are sent to ordinary normalization. GVCF
@@ -26,6 +33,11 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
     source = Path(input_path)
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
+    coordinate_lengths = (
+        reference_contig_lengths
+        if reference_contig_lengths is not None
+        else declared_vcf_contig_lengths(source)
+    )
     names = {
         "sequence": output / "sequence-input.vcf",
         "gvcf_blocks": output / "gvcf-reference-blocks.vcf",
@@ -33,6 +45,7 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
         "structural": output / "structural-variants.vcf",
         "spanning_deletions": output / "spanning-deletion-records.vcf",
         "telomere": output / "telomere-records.vcf",
+        "telomere_after": output / "telomere-after-contig-records.vcf",
     }
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
     headers: list[str] = []
@@ -72,6 +85,9 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
                     raise VCFToolError("Cannot route VCF record with a non-integer POS.") from exc
                 if position == 0:
                     emit("telomere", line)
+                    continue
+                if position == coordinate_lengths.get(fields[0], -2) + 1:
+                    emit("telomere_after", line)
                     continue
                 wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
                 if any(alt == "*" for alt in alts):
@@ -129,12 +145,14 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
         "structural_variant_records": counts["structural"],
         "spanning_deletion_records": counts["spanning_deletions"],
         "telomere_records": counts["telomere"],
+        "telomere_after_contig_records": counts["telomere_after"],
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
         "gvcf_unresolved_path": str(names["gvcf_unresolved"]) if counts["gvcf_unresolved"] else None,
         "structural_path": str(names["structural"]) if counts["structural"] else None,
         "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
         "telomere_path": str(names["telomere"]) if counts["telomere"] else None,
+        "telomere_after_contig_path": str(names["telomere_after"]) if counts["telomere_after"] else None,
         "gvcf_wildcard_policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
     }
 

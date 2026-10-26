@@ -63,6 +63,52 @@ def test_strict_validation_accepts_vcf_telomere_sentinel_and_marks_it_for_review
     assert profile["telomere_records"] == 1
 
 
+def test_strict_validation_counts_declared_contig_n_plus_one_as_telomere(tmp_path: Path):
+    path = tmp_path / "telomere-after-contig.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=10>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t11\ttelo-after\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert profile["telomere_records"] == 1
+
+
+def test_declared_vcf_contig_length_parses_quoted_id_and_attributes_in_any_order(tmp_path: Path):
+    path = tmp_path / "quoted-contig.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##contig=<assembly="GRCh38",length=10,ID="chr,1">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr,1\t11\ttelo-after\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["telomere_records"] == 1
+
+
+def test_strict_validation_does_not_treat_out_of_range_position_as_telomere(tmp_path: Path):
+    path = tmp_path / "out-of-range.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=10>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t12\toutside\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["telomere_records"] == 0
+
+
 def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: Path):
     path = tmp_path / "mixed-missing-alt.vcf"
     write_vcf(path, "1\t2\t.\tA\t.,G\t.\tPASS\t.\n")
@@ -517,3 +563,43 @@ def test_reference_validation_marks_telomere_record_unvalidated_without_invalid_
     assert profile["result"] == "PARTIAL"
     assert profile["checked_record_count"] == 0
     assert profile["unvalidated_telomere_record_count"] == 1
+
+
+def test_reference_validation_confirms_n_plus_one_telomere_against_selected_reference(tmp_path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\n" + "A" * 30 + "\n", encoding="ascii", newline="\n")
+    (tmp_path / "reference.fa.fai").write_text("1\t30\t3\t30\t31\n", encoding="ascii")
+    source = tmp_path / "telomere-after-contig.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t31\ttelo-after\tA\tG\t.\tPASS\t.\n",
+        encoding="ascii",
+    )
+    validate_vcf_strict(source)
+
+    profile = validate_vcf_reference_alleles(source, fasta)
+
+    assert profile["result"] == "PARTIAL"
+    assert profile["checked_record_count"] == 0
+    assert profile["unvalidated_telomere_record_count"] == 1
+
+
+def test_reference_validation_rejects_vcf_contig_length_disagreement(tmp_path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\n" + "A" * 30 + "\n", encoding="ascii", newline="\n")
+    (tmp_path / "reference.fa.fai").write_text("1\t30\t3\t30\t31\n", encoding="ascii")
+    source = tmp_path / "mismatched-contig-length.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=29>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t30\tlast-base\tA\tG\t.\tPASS\t.\n",
+        encoding="ascii",
+    )
+    validate_vcf_strict(source)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_reference_alleles(source, fasta)
+
+    assert exc.value.code == "VCF_CONTIG_LENGTH_MISMATCH"

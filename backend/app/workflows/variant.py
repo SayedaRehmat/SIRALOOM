@@ -1541,11 +1541,92 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     artifact.metadata_json = metadata
                     db.add(artifact)
 
+            def finish_no_sequence_review(*, reference_validated: bool) -> None:
+                if not reference_validated:
+                    set_routed_reference_validation(
+                        "NOT_RUN",
+                        "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION",
+                    )
+                specialized_review_count = (
+                    routing["gvcf_reference_blocks"]
+                    + routing["gvcf_unresolved_variant_records"]
+                    + routing["structural_variant_records"]
+                    + routing["spanning_deletion_records"]
+                    + routing["telomere_records"]
+                    + routing["telomere_after_contig_records"]
+                )
+                routed_count = specialized_review_count + routing["reference_only_records"]
+                if specialized_review_count:
+                    reason = (
+                        "The source contains preserved GVCF, structural, spanning-deletion, or telomere "
+                        "records requiring a specialized review path; no sequence-resolved variant records "
+                        "were eligible for ordinary normalization. Original records remain in the source "
+                        "artifact and routed artifacts."
+                    )
+                    if routing["reference_only_records"]:
+                        reason += (
+                            f" {routing['reference_only_records']} reference-only ALT='.' record(s) "
+                            "were retained in the source and excluded from variant analysis."
+                        )
+                    telomere_only = (
+                        routing["telomere_records"] + routing["telomere_after_contig_records"]
+                        == specialized_review_count
+                    )
+                    next_step = "VCF_TELOMERE_COORDINATE_REVIEW" if telomere_only else "GVCF_OR_STRUCTURAL_VARIANT_REVIEW"
+                    review_reason_codes = sorted({
+                        item.metadata_json["review_reason_code"]
+                        for item in routed_artifacts
+                    })
+                    if routing["reference_only_records"]:
+                        review_reason_codes.append("REFERENCE_ONLY_RECORDS_EXCLUDED")
+                else:
+                    reason = (
+                        "The source contains no alternate alleles (all records have ALT='.'). "
+                        "This is not a negative clinical result. Review the upstream callset and analysis "
+                        "scope; the original VCF remains preserved."
+                    )
+                    next_step = "UPSTREAM_VARIANT_CALLSET_REVIEW"
+                    review_reason_codes = ["NO_VARIANT_ALLELES_PROVIDED"]
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.REQUIRES_REVIEW,
+                    error_code="NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
+                    error_message=reason,
+                    metadata={
+                        "next_step": next_step,
+                        "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
+                        "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
+                        "review_reason_codes": review_reason_codes,
+                        "human_action_required": True,
+                    },
+                )
+                analysis.status = AnalysisStatus.REQUIRES_REVIEW
+                analysis.completed_at = None
+                db.commit()
+                audit.record(
+                    event_type="VCF_RECORDS_ROUTED_TO_REVIEW",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-vcf-router",
+                    input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
+                    output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts],
+                    reason=reason,
+                    payload={
+                        "error_code": "NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
+                        "routed_record_count": routed_count,
+                        "review_reason_codes": review_reason_codes,
+                        "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
+                    },
+                )
+                db.commit()
+
             try:
                 profile = classify_records(input_path)
                 routing_dir = Path(tempfile.mkdtemp(prefix=f"siraloom-vcf-routing-{analysis.id}-"))
                 temporary_artifact_paths.append(routing_dir)
-                routing = route_vcf_records(input_path, routing_dir)
+                routing = route_vcf_records(input_path, routing_dir, reference_contig_lengths={})
                 routed_artifact_specs = (
                     (
                         "gvcf_blocks_path",
@@ -1577,6 +1658,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "telomere-records.vcf",
                         "VCF_TELOMERE_COORDINATE_UNSUPPORTED",
                     ),
+                    (
+                        "telomere_after_contig_path",
+                        "TELOMERE_AFTER_CONTIG_RECORDS",
+                        "telomere-after-contig-records.vcf",
+                        "VCF_TELOMERE_COORDINATE_UNSUPPORTED",
+                    ),
                 )
                 for path_key, artifact_type, filename, review_reason_code in routed_artifact_specs:
                     routed_path = routing.get(path_key)
@@ -1603,6 +1690,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "STRUCTURAL_VARIANT_RECORDS": "structural_variant_records",
                                 "SPANNING_DELETION_RECORDS": "spanning_deletion_records",
                                 "TELOMERE_COORDINATE_RECORDS": "telomere_records",
+                                "TELOMERE_AFTER_CONTIG_RECORDS": "telomere_after_contig_records",
                             }[artifact_type]],
                             "interpretation_status": "NOT_ANALYZED",
                             "review_status": "REQUIRES_SPECIALIZED_REVIEW",
@@ -1616,84 +1704,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
 
                 if not routing["sequence_records"]:
-                    set_routed_reference_validation(
-                        "NOT_RUN",
-                        "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION",
-                    )
-                    specialized_review_count = (
-                        routing["gvcf_reference_blocks"]
-                        + routing["gvcf_unresolved_variant_records"]
-                        + routing["structural_variant_records"]
-                        + routing["spanning_deletion_records"]
-                        + routing["telomere_records"]
-                    )
-                    routed_count = specialized_review_count + routing["reference_only_records"]
-                    if specialized_review_count:
-                        reason = (
-                            "The source contains preserved GVCF, structural, spanning-deletion, or telomere "
-                            "records requiring a specialized review path; no sequence-resolved variant records "
-                            "were eligible for ordinary normalization. "
-                            "Original records remain in the source artifact and routed artifacts."
-                        )
-                        if routing["reference_only_records"]:
-                            reason += (
-                                f" {routing['reference_only_records']} reference-only ALT='.' record(s) "
-                                "were retained in the source and excluded from variant analysis."
-                            )
-                        next_step = (
-                            "VCF_TELOMERE_COORDINATE_REVIEW"
-                            if routing["telomere_records"]
-                            and specialized_review_count == routing["telomere_records"]
-                            else "GVCF_OR_STRUCTURAL_VARIANT_REVIEW"
-                        )
-                        review_reason_codes = sorted({
-                            item.metadata_json["review_reason_code"]
-                            for item in routed_artifacts
-                        })
-                        if routing["reference_only_records"]:
-                            review_reason_codes.append("REFERENCE_ONLY_RECORDS_EXCLUDED")
-                    else:
-                        reason = (
-                            "The source contains no alternate alleles (all records have ALT='.'). "
-                            "This is not a negative clinical result. Review the upstream callset and analysis "
-                            "scope; the original VCF remains preserved."
-                        )
-                        next_step = "UPSTREAM_VARIANT_CALLSET_REVIEW"
-                        review_reason_codes = ["NO_VARIANT_ALLELES_PROVIDED"]
-                    mark_step(
-                        db,
-                        normalization_step,
-                        StepStatus.REQUIRES_REVIEW,
-                        error_code="NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
-                        error_message=reason,
-                        metadata={
-                            "next_step": next_step,
-                            "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
-                            "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
-                            "review_reason_codes": review_reason_codes,
-                            "human_action_required": True,
-                        },
-                    )
-                    analysis.status = AnalysisStatus.REQUIRES_REVIEW
-                    analysis.completed_at = None
-                    db.commit()
-                    audit.record(
-                        event_type="VCF_RECORDS_ROUTED_TO_REVIEW",
-                        case_id=analysis.case_id,
-                        analysis_id=analysis.id,
-                        actor_type="SYSTEM",
-                        actor_id="siraloom-vcf-router",
-                        input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
-                        output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts],
-                        reason=reason,
-                        payload={
-                            "error_code": "NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
-                            "routed_record_count": routed_count,
-                            "review_reason_codes": review_reason_codes,
-                            "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
-                        },
-                    )
-                    db.commit()
+                    finish_no_sequence_review(reference_validated=False)
                     return
 
                 case = db.get(Case, analysis.case_id)
@@ -1839,6 +1850,53 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         )
 
                 reference_contigs = {item["name"] for item in reference_package["contigs"]}
+                reference_contig_lengths = {
+                    item["name"]: int(item["length"])
+                    for item in reference_package["contigs"]
+                }
+
+                # The header may omit contig lengths. Re-route once the
+                # organization-approved reference is resolved so POS=N+1 is
+                # recognized from the selected FASTA and cannot reach BCFtools.
+                routing = route_vcf_records(
+                    input_path,
+                    routing_dir,
+                    reference_contig_lengths=reference_contig_lengths,
+                )
+                telomere_after_path = routing.get("telomere_after_contig_path")
+                if telomere_after_path:
+                    telomere_after_id = uuid5(
+                        analysis.id,
+                        "siraloom:normalization:routed:telomere_after_contig_records:v1",
+                    )
+                    if not any(item.id == telomere_after_id for item in routed_artifacts):
+                        routed_artifacts.append(_put_idempotent_stage_artifact(
+                            artifacts,
+                            artifact_id=telomere_after_id,
+                            db=db,
+                            case_id=analysis.case_id,
+                            analysis_id=analysis.id,
+                            source_path=Path(telomere_after_path),
+                            filename="telomere-after-contig-records.vcf",
+                            artifact_type="TELOMERE_AFTER_CONTIG_RECORDS",
+                            media_type="text/vcf",
+                            genome_build=reference_build,
+                            metadata={
+                                "routing_version": routing["routing_version"],
+                                "source_artifact_id": str(input_artifact.id),
+                                "source_sha256": input_artifact.sha256,
+                                "record_count": routing["telomere_after_contig_records"],
+                                "interpretation_status": "NOT_ANALYZED",
+                                "review_status": "REQUIRES_SPECIALIZED_REVIEW",
+                                "review_reason_code": "VCF_TELOMERE_COORDINATE_UNSUPPORTED",
+                                "reference_validation_status": "PENDING",
+                            },
+                        ))
+                    normalization_step.output_artifacts = [
+                        str(item.id) for item in routed_artifacts
+                    ]
+                    db.add(normalization_step)
+                    db.commit()
 
                 # Re-validate against the selected package so build/contig compatibility
                 # is established before bcftools is allowed to transform the VCF.
@@ -1856,6 +1914,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     reference_package=reference_package,
                     reference_profile=reference_allele_profile,
                 )
+                if not routing["sequence_records"]:
+                    finish_no_sequence_review(reference_validated=True)
+                    return
             except UnsupportedVariantError as exc:
                 set_routed_reference_validation("FAILED", exc.code)
                 mark_step(
@@ -5569,6 +5630,7 @@ def _put_idempotent_stage_artifact(
             "STRUCTURAL_VARIANT_RECORDS",
             "SPANNING_DELETION_RECORDS",
             "TELOMERE_COORDINATE_RECORDS",
+            "TELOMERE_AFTER_CONTIG_RECORDS",
         }:
             existing_validation = {
                 key: existing_metadata.pop(key)

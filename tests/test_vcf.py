@@ -42,6 +42,22 @@ def test_variant_iterator_excludes_valid_telomere_sentinel_from_small_variants(t
 
     assert [(variant.position, variant.alternate) for variant in variants] == [(100, "C")]
 
+
+def test_variant_iterator_excludes_declared_contig_n_plus_one_from_small_variants(tmp_path: Path):
+    path = tmp_path / "telomere-after-contig-and-snv.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t101\ttelo-after\tA\tG\t.\tPASS\t.\n"
+        "1\t100\trs1\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    variants = validate_and_extract(str(path), "GRCh38")
+
+    assert [(variant.position, variant.alternate) for variant in variants] == [(100, "C")]
+
 def test_malformed_vcf(tmp_path: Path):
     path = tmp_path / "bad.vcf"
     path.write_text("1\t100\t.\tA\tG\n")

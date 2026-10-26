@@ -414,7 +414,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9,0:100,50,60,40,0,30\n"
         "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
         "1\t21\tstar1\tT\t*\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
-        + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD:PL\t0/1:10,10:0,20,200\n",
+        + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD:PL\t0/1:10,10:0,20,200\n"
+        + "1\t1001\ttelo-after\tA\tG\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n",
         encoding="utf-8",
     )
     try:
@@ -490,6 +491,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert "AT\tA" in routed_text
             assert "\t*\t" not in routed_text
             assert "\t0\ttelo1\t" not in routed_text
+            assert "\t1001\ttelo-after\t" not in routed_text
             assert "<NON_REF>\t.\tPASS\tEND=10" not in routed_text
             index = Path(str(output_path) + ".csi")
             with gzip.open(output_path, "wt", encoding="utf-8", newline="\n") as handle:
@@ -613,11 +615,16 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "TELOMERE_COORDINATE_RECORDS",
             ))
+            telomere_after_artifact = db.scalar(select(Artifact).where(
+                Artifact.analysis_id == analysis_id,
+                Artifact.artifact_type == "TELOMERE_AFTER_CONTIG_RECORDS",
+            ))
             analysis = db.get(Analysis, analysis_id)
             assert block_artifact is not None and store.exists(block_artifact.storage_uri)
             assert star_artifact is not None and store.exists(star_artifact.storage_uri)
             assert sv_artifact is not None and store.exists(sv_artifact.storage_uri)
             assert telomere_artifact is not None and store.exists(telomere_artifact.storage_uri)
+            assert telomere_after_artifact is not None and store.exists(telomere_after_artifact.storage_uri)
             assert block_artifact.metadata_json["source_artifact_id"] == str(input_artifact.id)
             assert star_artifact.metadata_json["source_sha256"] == input_artifact.sha256
             assert sv_artifact.metadata_json["source_sha256"] == input_artifact.sha256
@@ -625,19 +632,25 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert star_artifact.metadata_json["record_count"] == 1
             assert sv_artifact.metadata_json["record_count"] == 1
             assert telomere_artifact.metadata_json["record_count"] == 1
+            assert telomere_after_artifact.metadata_json["record_count"] == 1
             assert sha256(store.read_bytes(block_artifact.storage_uri)).hexdigest() == block_artifact.sha256
             assert sha256(store.read_bytes(star_artifact.storage_uri)).hexdigest() == star_artifact.sha256
             assert sha256(store.read_bytes(sv_artifact.storage_uri)).hexdigest() == sv_artifact.sha256
             assert sha256(store.read_bytes(telomere_artifact.storage_uri)).hexdigest() == telomere_artifact.sha256
+            assert sha256(store.read_bytes(telomere_after_artifact.storage_uri)).hexdigest() == telomere_after_artifact.sha256
             assert "END=10" in store.read_bytes(block_artifact.storage_uri).decode("utf-8")
             assert "\t*\t" in store.read_bytes(star_artifact.storage_uri).decode("utf-8")
             assert "<DEL>" in store.read_bytes(sv_artifact.storage_uri).decode("utf-8")
             assert "\t0\ttelo1\t" in store.read_bytes(telomere_artifact.storage_uri).decode("utf-8")
+            assert "\t1001\ttelo-after\t" in store.read_bytes(telomere_after_artifact.storage_uri).decode("utf-8")
             if reference_mismatch:
                 for artifact in (block_artifact, star_artifact, sv_artifact):
                     assert artifact.metadata_json["reference_validation_status"] == "FAILED"
                     assert artifact.metadata_json["reference_validation_reason_code"] == "VCF_REFERENCE_MISMATCH"
                 assert telomere_artifact.metadata_json["reference_validation_status"] == (
+                    "NOT_VALIDATED_UNSUPPORTED_COORDINATE"
+                )
+                assert telomere_after_artifact.metadata_json["reference_validation_status"] == (
                     "NOT_VALIDATED_UNSUPPORTED_COORDINATE"
                 )
                 assert analysis.status == AnalysisStatus.BLOCKED
@@ -653,10 +666,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert {item["artifact_id"] for item in blocked_event.output_artifacts} == {
                     str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id),
                     str(telomere_artifact.id),
+                    str(telomere_after_artifact.id),
                 }
                 assert set(step.output_artifacts) == {
                     str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id),
-                    str(telomere_artifact.id),
+                    str(telomere_artifact.id), str(telomere_after_artifact.id),
                 }
             else:
                 for artifact in (block_artifact, star_artifact, sv_artifact):
@@ -670,21 +684,25 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert telomere_artifact.metadata_json["reference_validation_reason_code"] == (
                     "VCF_TELOMERE_COORDINATE_UNSUPPORTED"
                 )
+                assert telomere_after_artifact.metadata_json["reference_validation_status"] == (
+                    "NOT_VALIDATED_UNSUPPORTED_COORDINATE"
+                )
                 assert step.status == StepStatus.SUCCEEDED, (step.error_code, step.error_message, step.metadata_json)
                 assert step.metadata_json["record_count"] == 2
-                assert step.metadata_json["source_record_count"] == 6
+                assert step.metadata_json["source_record_count"] == 7
                 assert step.metadata_json["routing"]["gvcf_reference_blocks"] == 1
                 assert step.metadata_json["routing"]["sequence_records"] == 2
                 assert step.metadata_json["routing"]["spanning_deletion_records"] == 1
                 assert step.metadata_json["routing"]["structural_variant_records"] == 1
                 assert step.metadata_json["routing"]["telomere_records"] == 1
+                assert step.metadata_json["routing"]["telomere_after_contig_records"] == 1
                 assert step.metadata_json["source_reference_allele_profile"]["result"] == "PARTIAL"
                 assert step.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
-                assert step.metadata_json["source_reference_allele_profile"]["unvalidated_telomere_record_count"] == 1
+                assert step.metadata_json["source_reference_allele_profile"]["unvalidated_telomere_record_count"] == 2
                 assert normalized is not None and store.exists(normalized.storage_uri)
                 assert sha256(store.read_bytes(normalized.storage_uri)).hexdigest() == normalized.sha256
                 assert normalized.metadata_json["source_artifact_id"] == str(input_artifact.id)
-                assert normalized.metadata_json["source_record_count"] == 6
+                assert normalized.metadata_json["source_record_count"] == 7
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
                 if worker_loss:
                     assert normalization_calls["count"] == 2

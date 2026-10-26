@@ -207,9 +207,38 @@ def test_router_preserves_telomere_records_outside_small_variant_stream(tmp_path
 
     assert routed["records_total"] == 2
     assert routed["telomere_records"] == 1
+    assert routed["telomere_after_contig_records"] == 0
     assert routed["sequence_records"] == 1
     assert "1\t0\ttelo" in Path(routed["telomere_path"]).read_text(encoding="utf-8")
     assert "1\t0\ttelo" not in Path(routed["sequence_path"]).read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("reference_lengths", [None, {"1": 100}])
+def test_router_preserves_n_plus_one_telomere_records(tmp_path: Path, reference_lengths):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "telomere-after-contig.vcf"
+    header_contig = "##contig=<ID=1,length=100>\n" if reference_lengths is None else ""
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        + header_contig
+        + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t101\ttelo-after\tA\tG\t.\tPASS\t.\n"
+        + "1\t100\trs1\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(
+        source,
+        tmp_path / ("routed-declared" if reference_lengths is None else "routed-reference"),
+        reference_contig_lengths=reference_lengths,
+    )
+
+    assert routed["records_total"] == 2
+    assert routed["telomere_after_contig_records"] == 1
+    assert routed["sequence_records"] == 1
+    assert "1\t101\ttelo-after" in Path(routed["telomere_after_contig_path"]).read_text(encoding="utf-8")
+    assert "1\t101\ttelo-after" not in Path(routed["sequence_path"]).read_text(encoding="utf-8")
 
 
 def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(tmp_path: Path):
@@ -239,6 +268,7 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
     assert routed["gvcf_unresolved_variant_records"] == 1
     assert routed["structural_variant_records"] == 0
     assert routed["telomere_records"] == 0
+    assert routed["telomere_after_contig_records"] == 0
     assert "0/1:15,9,0" in Path(routed["sequence_path"]).read_text(encoding="utf-8")
     assert "0/0:30,0" in Path(routed["gvcf_blocks_path"]).read_text(encoding="utf-8")
     assert "0/2:10,0,11" in Path(routed["gvcf_unresolved_path"]).read_text(encoding="utf-8")

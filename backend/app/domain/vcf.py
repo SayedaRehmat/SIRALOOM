@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Iterator
 
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,7 @@ def open_text(path: str):
 def parse_vcf(path: str) -> Iterator[VCFRecord]:
     found_header = False
     sample_names: list[str] = []
+    declared_contig_lengths = declared_vcf_contig_lengths(path)
     with open_text(path) as fh:
         for line_no, line in enumerate(fh, start=1):
             line = line.rstrip("\n")
@@ -65,9 +67,10 @@ def parse_vcf(path: str) -> Iterator[VCFRecord]:
                 raise VCFValidationError(
                     f"ALT '.' cannot be combined with alternate alleles at line {line_no}"
                 )
-            if pos == 0:
-                # POS=0 is a VCF telomere sentinel, not an allele coordinate
-                # suitable for canonical small-variant processing.
+            if pos == 0 or pos == declared_contig_lengths.get(chrom, -2) + 1:
+                # Telomere sentinels are not allele coordinates suitable for
+                # canonical small-variant processing. N+1 is provisional
+                # until the pinned reference verifies the declared length.
                 continue
             sample_calls: dict[str, dict] = {}
             if len(fields) > 8 and sample_names:

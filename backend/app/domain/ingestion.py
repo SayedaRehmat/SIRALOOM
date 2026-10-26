@@ -183,7 +183,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 raise VCFValidationError("VCF contains no variant records")
         if telomere_records:
             warnings.append(
-                f"{telomere_records} VCF telomere record(s) at POS=0 are structurally valid, "
+                f"{telomere_records} VCF telomere sentinel record(s) at POS=0 or declared contig length + 1 are structurally valid, "
                 "retained in the source, and excluded from small-variant analysis for explicit review."
             )
         if reference_only_records:

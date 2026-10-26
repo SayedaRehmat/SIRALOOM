@@ -13,6 +13,8 @@ BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=left)|"
     r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
+_CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
+_CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
 
 class StrictVCFValidationError(ValueError):
@@ -24,6 +26,37 @@ class StrictVCFValidationError(ValueError):
 def _open(path: str | Path):
     p = Path(path)
     return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
+
+
+def declared_vcf_contig_lengths(path: str | Path) -> dict[str, int]:
+    """Return declared contig lengths from a VCF header, when supplied."""
+    lengths: dict[str, int] = {}
+    with _open(path) as handle:
+        for line_no, raw in enumerate(handle, 1):
+            if raw.startswith("#CHROM"):
+                break
+            if not raw.startswith("##contig=<") or not raw.rstrip("\r\n").endswith(">"):
+                continue
+            line = raw.rstrip("\r\n")
+            body = line[len("##contig=<"):-1]
+            id_match = _CONTIG_ID.search(body)
+            length_match = _CONTIG_LENGTH.search(body + ",")
+            if id_match is None or length_match is None:
+                continue
+            contig = id_match.group(1) or id_match.group(2)
+            length = int(length_match.group(1))
+            if length < 1:
+                raise StrictVCFValidationError(
+                    f"VCF contig {contig!r} has a non-positive length at line {line_no}",
+                    code="VCF_CONTIG_LENGTH_INVALID",
+                )
+            if contig in lengths and lengths[contig] != length:
+                raise StrictVCFValidationError(
+                    f"VCF contig {contig!r} has conflicting declared lengths",
+                    code="VCF_CONTIG_LENGTH_CONFLICT",
+                )
+            lengths[contig] = length
+    return lengths
 
 
 def _validate_info(value: str, line_no: int) -> None:
@@ -413,6 +446,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
     record_ids_seen: set[str] = set()
+    contig_lengths = declared_vcf_contig_lengths(path)
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -496,7 +530,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
-            if _pos == 0:
+            if _pos == 0 or _pos == contig_lengths.get(_chrom, -2) + 1:
                 # VCF permits POS=0 as a telomere sentinel. It is not a
                 # sequence coordinate accepted by SIRALOOM's small-variant
                 # normalizer, so preserve it for explicit review routing.
@@ -738,8 +772,22 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
     checked_records = 0
     checked_breakend_mates = 0
     telomere_records = 0
+    declared_contig_lengths = declared_vcf_contig_lengths(path)
     try:
         with FastaReference(reference_fasta) as reference, _open(path) as handle:
+            for contig, declared_length in declared_contig_lengths.items():
+                try:
+                    reference_length = reference.contig_length(contig)
+                except ReferenceError as exc:
+                    raise StrictVCFValidationError(
+                        f"Declared VCF contig {contig!r} is absent from the selected reference",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    ) from exc
+                if declared_length != reference_length:
+                    raise StrictVCFValidationError(
+                        f"VCF declares contig {contig!r} length {declared_length}, but the selected reference length is {reference_length}",
+                        code="VCF_CONTIG_LENGTH_MISMATCH",
+                    )
             for line_no, raw in enumerate(handle, 1):
                 if not raw or raw.startswith("#"):
                     continue
@@ -748,17 +796,22 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     continue  # validate_vcf_strict reports the structural error first.
                 chrom, pos_text, _identifier, ref, alt_text = fields[:5]
                 pos = int(pos_text)
+                try:
+                    contig_length = reference.contig_length(chrom)
+                except ReferenceError as exc:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {chrom!r} is absent from the selected reference at line {line_no}",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    ) from exc
                 if pos == 0:
                     # POS=0 is a VCF telomere sentinel, not a 1-based FASTA
                     # interval. Preserve it for review routing without
                     # claiming that this record passed REF validation.
-                    try:
-                        reference.contig_length(chrom)
-                    except ReferenceError as exc:
-                        raise StrictVCFValidationError(
-                            f"Telomere record contig {chrom!r} is absent from the selected reference at line {line_no}",
-                            code="REFERENCE_CONTIG_MISMATCH",
-                        ) from exc
+                    telomere_records += 1
+                    continue
+                if pos == contig_length + 1:
+                    # The selected reference, not an untrusted VCF header,
+                    # confirms the N+1 telomere sentinel.
                     telomere_records += 1
                     continue
                 try:
@@ -774,7 +827,6 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         f"VCF REF={ref.upper()}, selected reference={observed}",
                         code="VCF_REFERENCE_MISMATCH",
                     )
-                contig_length = reference.contig_length(chrom)
                 info = _info_values(fields[7])
                 if info.get("END") is not None:
                     end = int(info["END"])

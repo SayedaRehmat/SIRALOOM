@@ -69,7 +69,25 @@ def test_vcf_validation_preserves_telomere_only_input_for_worker_review(tmp_path
 
     assert result.status == "VALID"
     assert result.record_count == 0
-    assert any("telomere record" in warning and "POS=0" in warning for warning in result.warnings)
+    assert any("telomere sentinel record" in warning and "POS=0" in warning for warning in result.warnings)
+
+
+def test_vcf_validation_preserves_declared_n_plus_one_telomere_only_input_for_review(tmp_path: Path):
+    path = tmp_path / "telomere-after-contig-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "##contig=<ID=chr1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t101\ttelo-after\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 0
+    assert any("contig length + 1" in warning for warning in result.warnings)
 
 
 def test_vcf_validation_reports_telomere_records_without_counting_them_as_variants(tmp_path: Path):
