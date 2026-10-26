@@ -197,6 +197,14 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                         "response_sha256": "e" * 64,
                         "observed_at": "2026-10-10T00:00:00+00:00",
                         "retry_count": 0, "genome": "hg38",
+                        "runtime_check": {
+                            "status": "VERIFIED",
+                            "assembly": "GRCh38",
+                            "vep_version": "115.2",
+                            "cache_version": "115",
+                            "vep_binary_sha256": "b" * 64,
+                            "cache_info_sha256": "c" * 64,
+                        },
                     },
                 } for v in variants]
 
@@ -400,6 +408,14 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             assert annotations[0].resource_version == "test-release"
             assert annotations[0].request_fingerprint == "d" * 64
             assert annotations[0].response_sha256 == "e" * 64
+            assert annotations[0].request_metadata["runtime_check"] == {
+                "status": "VERIFIED",
+                "assembly": "GRCh38",
+                "vep_version": "115.2",
+                "cache_version": "115",
+                "vep_binary_sha256": "b" * 64,
+                "cache_info_sha256": "c" * 64,
+            }
             assert step.status == StepStatus.SUCCEEDED
             assert step.metadata_json["batches"]["0:1"]["status"] == "SUCCEEDED"
             assert partitions and all(p.status == "SUCCEEDED" for p in partitions)
