@@ -308,3 +308,82 @@ def test_same_persisted_evidence_cannot_be_counted_for_multiple_criteria():
                 analysis_id=analysis.id, variant_id=variant.id
             ).all()
         } == {"PS1", "PM5"}
+
+
+def test_retired_source_assertions_persist_review_disposition_without_classification():
+    engine = _db()
+    with Session(engine) as db:
+        analysis = _analysis(uuid4())
+        variant = _variant()
+        specification = ClinGenSpecification(
+            id=uuid4(), specification_id="SPEC-RETIRED", version="1.0",
+            provider="ClinGen", framework="ACMG/AMP", gene_scope=["GENE1"],
+            disease_scope=["Disease X"],
+            criteria={
+                "PP5": {"strength": "SUPPORTING"},
+                "BP6": {"strength": "SUPPORTING"},
+            },
+            raw_payload={}, retrieved_at=datetime.now(UTC),
+            validated_for_automation=True, validation_status="APPROVED_FOR_AUTOMATION",
+        )
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="fixture", provider_version="1", resource_name="fixture",
+            resource_version="1", payload={"normalized": {"gene": {"symbol": "GENE1"}}},
+        )
+        db.add_all([analysis, variant, specification, annotation])
+        db.flush()
+        for criterion, classification in (("PP5", "PATHOGENIC"), ("BP6", "BENIGN")):
+            evidence = Evidence(
+                id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+                evidence_type="CLINICAL_ASSERTION", statement=f"Source assertion {criterion}",
+                direction="NEUTRAL", source_name="ClinVar", source_version="fixture",
+                source_record_id=f"record-{criterion}", payload={},
+                created_by_type="TEST", created_by_id="test",
+                evidence_fingerprint=str(uuid4()),
+            )
+            db.add(evidence)
+            db.flush()
+            db.add(ACMGSourceAssertion(
+                id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+                evidence_id=evidence.id, criterion=criterion, status="MET",
+                strength="SUPPORTING", source_name="ClinVar", source_version="fixture",
+                source_record_id=f"record-{criterion}", source_classification=classification,
+                condition="Disease X", gene="GENE1", rationale="Imported source criterion",
+                source_payload={}, assertion_fingerprint=str(uuid4()),
+            ))
+        db.commit()
+
+        service = ACMGSpecificationAssessmentService()
+        result = service.assess_variant(
+            db, analysis=analysis, variant=variant, annotation=annotation,
+            population_rows=[], resource_rows={}, gene="GENE1", disease="Disease X",
+        )
+        assert result.status == "REQUIRES_REVIEW"
+        assert result.classification is None
+        assert {item.criterion for item in result.source_assessments} == {"PP5", "BP6"}
+        assert all(item.status == "REQUIRES_REVIEW" for item in result.source_assessments)
+        assert all(item.strength is None for item in result.source_assessments)
+
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        db.commit()
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        db.commit()
+
+        rows = {
+            row.criterion: row
+            for row in db.query(ACMGAssessment).filter_by(
+                analysis_id=analysis.id, variant_id=variant.id
+            ).all()
+        }
+        assert set(rows) == {"PP5", "BP6"}
+        for criterion, row in rows.items():
+            assert row.state == "REQUIRES_REVIEW"
+            assert row.automated_assessment["source_assessments"][0]["status"] == "REQUIRES_REVIEW"
+            assert row.automated_assessment["source_assessments"][0]["metadata"][
+                "retired_criterion"
+            ] == criterion
+            assert len(row.automated_assessment["source_assessments"]) == 1
+        assert db.query(Classification).filter_by(
+            analysis_id=analysis.id, variant_id=variant.id
+        ).count() == 0

@@ -522,6 +522,72 @@ class ACMGSpecificationAssessmentService:
             row.state = evaluated.status
             db.add(row)
 
+        # Source assertions that cannot be proposed still need a durable,
+        # criterion-level disposition. In particular, retired PP5/BP6 source
+        # assertions must remain visible as REQUIRES_REVIEW rather than only
+        # affecting the transient stage result. Proposed source assessments
+        # are persisted below through result.criterion_assessments.
+        for assessed in result.source_assessments:
+            if assessed.status == "PROPOSED":
+                continue
+            existing = db.scalar(
+                select(ACMGAssessment).where(
+                    ACMGAssessment.variant_id == variant.id,
+                    ACMGAssessment.analysis_id == analysis.id,
+                    ACMGAssessment.criterion == assessed.criterion,
+                )
+            )
+            row = existing or ACMGAssessment(
+                id=uuid4(),
+                variant_id=variant.id,
+                analysis_id=analysis.id,
+                framework_name="ACMG/AMP",
+                framework_version="2015",
+                specification_provider="ClinGen",
+                specification_id=result.binding.specification_id,
+                specification_version=result.binding.specification_version,
+                criterion=assessed.criterion,
+                state=assessed.status,
+            )
+            source_detail = {
+                "applicable": assessed.applicable,
+                "strength": assessed.strength,
+                "direction": assessed.direction,
+                "status": assessed.status,
+                "source_assertion_ids": list(assessed.source_assertion_ids),
+                "specification_id": assessed.specification_id,
+                "specification_version": assessed.specification_version,
+                "reason": assessed.rationale,
+                "metadata": assessed.metadata,
+            }
+            persisted = dict(row.automated_assessment or {})
+            source_details = list(persisted.get("source_assessments") or [])
+            source_key = (
+                tuple(source_detail["source_assertion_ids"]),
+                source_detail["specification_id"],
+                source_detail["specification_version"],
+            )
+            source_details = [
+                item for item in source_details
+                if (
+                    tuple(item.get("source_assertion_ids") or ()),
+                    item.get("specification_id"),
+                    item.get("specification_version"),
+                ) != source_key
+            ]
+            source_details.append(source_detail)
+            persisted["source_assessments"] = source_details
+            row.automated_assessment = persisted
+            # A non-proposed source assertion can make an existing evaluator
+            # proposal unsuitable for automatic use. Keep its details, but
+            # ensure the durable criterion state reflects the review gate.
+            if assessed.status == "REQUIRES_REVIEW":
+                row.state = "REQUIRES_REVIEW"
+            row.specification_provider = "ClinGen"
+            row.specification_id = result.binding.specification_id
+            row.specification_version = result.binding.specification_version
+            db.add(row)
+
         # Persist source-derived proposed criteria that were not already represented
         # by an evaluator row. Source assertions remain the provenance authority;
         # this ACMGAssessment is only the reconciled criterion proposal.
