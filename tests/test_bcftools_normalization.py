@@ -1,12 +1,17 @@
-from pathlib import Path
 import gzip
 import shutil
+from pathlib import Path
 
 import pytest
 
 from backend.app.domain.vcf import parse_vcf
-from backend.app.domain.vcf_tools import MNV_POLICY, MULTIALLELIC_POLICY, normalize_vcf_with_bcftools, VCFToolError
-
+from backend.app.domain.vcf_tools import (
+    MNV_POLICY,
+    MULTIALLELIC_OVERLAP_POLICY,
+    MULTIALLELIC_POLICY,
+    VCFToolError,
+    normalize_vcf_with_bcftools,
+)
 
 pytestmark = pytest.mark.skipif(shutil.which("bcftools") is None, reason="bcftools is required for production normalization golden tests")
 
@@ -53,6 +58,7 @@ def normalize(tmp_path: Path, records_text: str):
     assert stats["index"] == "CSI"
     assert Path(str(output) + ".csi").is_file()
     assert stats["multiallelic_mode"] == MULTIALLELIC_POLICY
+    assert stats["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
     assert stats["mnv_policy"] == MNV_POLICY
     return records(output), reference, source, output
 
@@ -75,6 +81,44 @@ def test_golden_repeat_insertion_is_left_normalized(tmp_path: Path):
 def test_golden_multiallelic_is_split_without_losing_alleles(tmp_path: Path):
     normalized, *_ = normalize(tmp_path, "1\t2\t.\tA\tC,G\t.\tPASS\t.\n")
     assert normalized == [("1", 2, "A", "C"), ("1", 2, "A", "G")]
+
+
+def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tmp_path: Path):
+    reference = make_reference(tmp_path)
+    source = tmp_path / "multiallelic.vcf"
+    output = tmp_path / "multiallelic.normalized.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele counts">\n'
+        '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequencies">\n'
+        '##INFO=<ID=AR,Number=R,Type=Integer,Description="Reference and alternate values">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\n'
+        '##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tP\tQ\n"
+        "1\t2\trs1\tA\tC,G\t50\tPASS\tAC=3,2;AF=0.3,0.2;AR=20,5,7\t"
+        "GT:AD:PL:PS\t1|2:10,5,7:100,50,60,40,0,30:2\t"
+        "2/2:6,3,9:90,80,70,60,50,0:.\n",
+        encoding="utf-8",
+    )
+
+    stats = normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
+
+    assert stats["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
+    assert "--multi-overlaps 0" in stats["command"]
+    with gzip.open(output, "rt", encoding="utf-8") as handle:
+        split_records = [line.rstrip("\n").split("\t") for line in handle if not line.startswith("#")]
+    assert [row[4] for row in split_records] == ["C", "G"]
+    assert [row[7] for row in split_records] == [
+        "AC=3;AF=0.3;AR=20,5",
+        "AC=2;AF=0.2;AR=20,7",
+    ]
+    assert [row[9:] for row in split_records] == [
+        ["1|0:10,5:100,50,60:2", "0/0:6,3:90,80,70:."],
+        ["0|1:10,7:100,40,30:2", "1/1:6,9:90,60,0:."],
+    ]
 
 
 def test_golden_mnv_is_not_atomized(tmp_path: Path):

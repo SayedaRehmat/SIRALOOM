@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from backend.app.domain.vcf_tools import VCFToolError, classify_records, normalize_vcf_with_bcftools
+from backend.app.domain.vcf_tools import (
+    MULTIALLELIC_OVERLAP_POLICY,
+    VCFToolError,
+    classify_records,
+    normalize_vcf_with_bcftools,
+)
 
 
 def require_bcftools() -> None:
@@ -50,6 +55,8 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert result["expected_tool_version"] == "1.19"
     assert result["reference_check"] == "error"
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
+    assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
+    assert "--multi-overlaps 0" in result["command"]
     import gzip
     assert Path(str(output_vcf) + ".csi").is_file()
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:

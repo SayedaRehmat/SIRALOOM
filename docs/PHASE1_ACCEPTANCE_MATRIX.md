@@ -467,3 +467,11 @@ The guard reduces the risk of an operator accidentally restoring into the normal
 The official HPO references and implementation rationale are recorded in `docs/research/GERMLINE_LAB_WORKFLOW_AND_RESOURCE_RESEARCH.md` and the engineering ledger. This increment does not change the overall release decision: Phase A remains PARTIAL; live identity, deployed tenant/storage isolation, complete lab signout/recovery, independent truth-set benchmarking, and actual deployment/restore qualification are still unverified.
 
 **Verified repository checkpoint:** implementation commits [`8f9626b185192709dd2f7974a9d2f271552ce33f`](https://github.com/SayedaRehmat/SIRALOOM/commit/8f9626b185192709dd2f7974a9d2f271552ce33f) and [`7fbf54a75168942b7faadae45413480da1789812`](https://github.com/SayedaRehmat/SIRALOOM/commit/7fbf54a75168942b7faadae45413480da1789812) are on `origin/main`; exact-SHA CI [40316000823](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40316000823) passed all three jobs. This verifies the automated repository checks only and does not change the live/deployed evidence statuses above.
+
+### 2026-10-26 BCFtools multiallelic projection verification
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Explicit multiallelic other-ALT projection policy and provenance | PASS (BCFtools 1.19 synthetic fixture) | Both normalization commands use `--multi-overlaps 0`; command metadata and `REFERENCE_ALLELE_ZERO` are retained. Golden fixture checks phased `1|2` projection, sample GTs, `Number=A/R/G` INFO/FORMAT values, and phase-set preservation. |
+| Intake, VCF normalization and unsupported-record routing regression set with actual pinned BCFtools | PASS (automated 1.19 scope) | 8 focused VCF suites: **136 passed** using isolated BCFtools 1.19/HTSlib 1.19. This is a synthetic tool contract and software regression, not a GIAB benchmark or laboratory assay validation. |
+| Independent truth-set concordance and clinical/segregation validity | NOT RUN / NOT ESTABLISHED | No approved GIAB benchmark manifest or expert-adjudicated interpretation set was run. Overall Phase A remains PARTIAL; live lab and deployment evidence remains outstanding. |

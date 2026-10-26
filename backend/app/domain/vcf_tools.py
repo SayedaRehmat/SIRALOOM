@@ -159,6 +159,7 @@ def route_vcf_records(
 
 MNV_POLICY = "PRESERVE"
 MULTIALLELIC_POLICY = "SPLIT_WITH_BCFTOOLS"
+MULTIALLELIC_OVERLAP_POLICY = "REFERENCE_ALLELE_ZERO"
 
 
 class VCFToolError(RuntimeError):
@@ -206,6 +207,7 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
 
     command = [
         "bcftools", "norm", "-m", "-any", "-N", "-Ov",
+        "--multi-overlaps", "0",
         "-o", str(output_path), str(input_path),
     ]
     completed = subprocess.run(
@@ -222,7 +224,9 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
     return {
         "tool": "bcftools",
         "operation": "split_multiallelic",
-        "command": "bcftools norm -m -any -N",
+        "command": " ".join(command),
+        "multiallelic_mode": MULTIALLELIC_POLICY,
+        "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
         "stderr": (completed.stderr or "").strip(),
     }
 
@@ -311,7 +315,7 @@ def normalize_vcf_with_bcftools(
 
         normalize_command = [
             "bcftools", "norm", "-f", str(reference_fasta), "-c", "e",
-            "-m", "-any", "-Oz", "-o", str(normalized_path), str(prepared_path),
+            "-m", "-any", "--multi-overlaps", "0", "-Oz", "-o", str(normalized_path), str(prepared_path),
         ]
         try:
             completed = subprocess.run(
@@ -416,6 +420,7 @@ def normalize_vcf_with_bcftools(
             "reference_fasta": str(reference_fasta),
             "reference_check": "error",
             "multiallelic_mode": MULTIALLELIC_POLICY,
+            "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
             "mnv_policy": MNV_POLICY,
             "compression": "BGZF",
             "index": "CSI",
