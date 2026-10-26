@@ -7,6 +7,7 @@ from backend.app.acmg.evaluators import (
     evaluate_pp3_bp4,
     evaluate_pvs1,
 )
+from backend.app.acmg.assessment_service import _variant_context
 
 
 def obs(code="MID", af=0.0, an=10000, ac=None):
@@ -20,6 +21,18 @@ def obs(code="MID", af=0.0, an=10000, ac=None):
         "allele_count": ac,
         "availability": "AVAILABLE",
     }
+
+
+def test_variant_context_does_not_choose_first_unselected_transcript_consequence():
+    context = _variant_context({
+        "effect": None,
+        "hgvs_consequences": [
+            {"consequence": "stop_gained"},
+            {"consequence": "synonymous_variant"},
+        ],
+    })
+
+    assert context == {"consequence": None}
 
 
 def test_pm2_requires_explicit_configuration():

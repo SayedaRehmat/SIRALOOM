@@ -721,6 +721,8 @@ export type TranslationKey =
   | "review.context"
   | "review.variant"
   | "review.gene"
+  | "review.transcriptSelection"
+  | "review.transcriptConsequences"
   | "review.population"
   | "review.populationNone"
   | "review.qc"
@@ -1190,6 +1192,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.context": "VARIANT, POPULATION & TECHNICAL CONTEXT",
     "review.variant": "Variant",
     "review.gene": "Gene",
+    "review.transcriptSelection": "Transcript selection",
+    "review.transcriptConsequences": "Transcript consequences",
     "review.population": "Population observations",
     "review.populationNone": "No population observations.",
     "review.qc": "Technical QC",
@@ -2107,6 +2111,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.context": "سياق المتغير والسكان والجوانب التقنية",
     "review.variant": "المتغير",
     "review.gene": "الجين",
+    "review.transcriptSelection": "اختيار النسخة الجينية",
+    "review.transcriptConsequences": "تأثيرات النسخ الجينية",
     "review.population": "ملاحظات السكان",
     "review.populationNone": "لا توجد ملاحظات سكانية.",
     "review.qc": "ضبط الجودة التقني",

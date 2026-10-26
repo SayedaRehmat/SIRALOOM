@@ -770,17 +770,10 @@ def _resolve_evidence_ids(
 
 
 def _variant_context(normalized: dict[str, Any]) -> dict[str, Any]:
-    effect = normalized.get("effect")
-    consequence = effect
-    if consequence is None:
-        terms = normalized.get("hgvs_consequences") or []
-        if isinstance(terms, list) and terms:
-            first = terms[0]
-            if isinstance(first, dict):
-                consequence = first.get("consequence") or first.get("term") or first.get("effect")
-            elif isinstance(first, str):
-                consequence = first
-    return {"consequence": consequence}
+    # Only the provider's explicit, policy-selected effect is eligible as a
+    # single-variant context. Choosing the first transcript consequence here
+    # would silently turn provider ordering into a clinical transcript policy.
+    return {"consequence": normalized.get("effect")}
 
 
 def _population_dict(obs: PopulationObservation, resource: Resource | None) -> dict[str, Any]:

@@ -19,6 +19,7 @@ def normalize_annotation_payload(provider_id: str, raw: dict[str, Any]) -> dict[
             },
             "gene": {"symbol": raw.get("gene_symbol"), "gene_id": raw.get("gene")},
             "transcript": raw.get("transcript"),
+            "transcript_selection": raw.get("transcript_selection"),
             "effect": raw.get("effect"),
             "hgvs_consequences": raw.get("consequences") or [],
             "hgvs": {"c": raw.get("hgvsc"), "p": raw.get("hgvsp")},

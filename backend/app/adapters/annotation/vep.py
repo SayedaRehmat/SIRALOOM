@@ -208,6 +208,14 @@ class VEPProvider(ScientificResourceProvider):
         for record in result.payload:
             if not isinstance(record, dict):
                 raise VEPProviderError("VEP JSON response contains a non-object record.")
+            transcript_consequences = record.get("transcript_consequences")
+            if transcript_consequences is not None and (
+                not isinstance(transcript_consequences, list)
+                or any(not isinstance(item, dict) for item in transcript_consequences)
+            ):
+                raise VEPProviderError(
+                    "VEP transcript_consequences must be a list of objects when present."
+                )
 
     def normalize_result(
         self,
@@ -234,13 +242,7 @@ class VEPProvider(ScientificResourceProvider):
                 continue
 
             transcripts = record.get("transcript_consequences") or []
-            selected = next(
-                (
-                    t for t in transcripts
-                    if t.get("canonical") or t.get("mane_select")
-                ),
-                transcripts[0] if transcripts else {},
-            )
+            selected, selection_status = self._select_display_transcript(transcripts)
             normalized.append({
                 "chr": original.chromosome,
                 "pos": original.position,
@@ -256,6 +258,11 @@ class VEPProvider(ScientificResourceProvider):
                 "hgvsp": selected.get("hgvsp"),
                 "canonical": bool(selected.get("canonical")),
                 "mane_select": selected.get("mane_select"),
+                "transcript_selection": {
+                    "status": selection_status,
+                    "policy": "UNIQUE_MANE_SELECT_THEN_UNIQUE_CANONICAL",
+                    "selected_transcript_id": selected.get("transcript_id"),
+                },
                 "_siraloom_annotation_provenance": {
                     "provider": self.provider_id,
                     "provider_version": self.contract.provider_version,
@@ -280,6 +287,21 @@ class VEPProvider(ScientificResourceProvider):
                 f"missing={len(expected - observed)}, extra={len(observed - expected)}"
             )
         return ProviderNormalizedResult("annotate", tuple(normalized), result.metadata)
+
+    @staticmethod
+    def _select_display_transcript(transcripts: list[dict[str, Any]]) -> tuple[dict[str, Any], str]:
+        mane_select = [item for item in transcripts if item.get("mane_select")]
+        if len(mane_select) == 1:
+            return mane_select[0], "SELECTED_MANE_SELECT"
+        if len(mane_select) > 1:
+            return {}, "AMBIGUOUS_MANE_SELECT"
+
+        canonical = [item for item in transcripts if item.get("canonical")]
+        if len(canonical) == 1:
+            return canonical[0], "SELECTED_CANONICAL"
+        if len(canonical) > 1:
+            return {}, "AMBIGUOUS_CANONICAL"
+        return {}, "NO_PREFERRED_TRANSCRIPT"
 
     def to_evidence(
         self,
