@@ -1,5 +1,7 @@
 from gzip import open as gzip_open
+from hashlib import sha256
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import uuid4
 
 from backend.app.domain.resource_qualification import qualify_resource
@@ -171,3 +173,103 @@ def test_qualification_blocks_staging_identity_mismatch(tmp_path):
     result = qualify_resource(resource, staging=staging)
     assert result.passed is False
     assert "STAGING_RESOURCE_IDENTITY_MISMATCH" in result.blockers
+
+
+def _vep_resource(tmp_path: Path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture binary", encoding="utf-8")
+    cache_archive = tmp_path / "vep-cache-115.tar.gz"
+    cache_archive.write_bytes(b"fixture cache archive")
+    cache_dir = tmp_path / "installed-vep-cache"
+    cache_dir.mkdir()
+    cache_sha256 = sha256(cache_archive.read_bytes()).hexdigest()
+    resource = Resource(
+        name="VEP 115 GRCh38",
+        provider="VEP",
+        resource_type="ANNOTATION",
+        version="115",
+        genome_build="GRCh38",
+        access_method="LOCAL",
+        license_text=None,
+        checksum=cache_sha256,
+        location=str(cache_archive),
+        population_definition=None,
+        organization_id=None,
+        metadata_json={
+            "source_contract": {
+                "publisher": "Ensembl",
+                "canonical_source_url": "https://www.ensembl.org/info/docs/tools/vep/",
+                "artifact_url": "https://ftp.ensembl.org/pub/release-115/variation/vep-cache/",
+                "release_identity": "115",
+                "access_mode": "LOCAL_ONLY",
+                "license_status": "NOT_REQUIRED",
+                "checksum_status": "PUBLISHED_AND_VERIFIED",
+                "authority_evidence_url": "https://www.ensembl.org/info/docs/tools/vep/script/vep_cache.html",
+            },
+            "execution": {
+                "provider_id": "VEP",
+                "provider_version": "115",
+                "access_method": "LOCAL",
+                "location": str(cache_archive),
+                "dataset": "Ensembl VEP cache",
+                "toolchain": {
+                    "vep_binary": str(binary),
+                    "cache_dir": str(cache_dir),
+                    "cache_version": "115",
+                    "assembly": "GRCh38",
+                },
+            },
+        },
+    )
+    return resource, binary
+
+
+def test_vep_qualification_executes_version_and_offline_cache_preflight(monkeypatch, tmp_path):
+    resource, _binary = _vep_resource(tmp_path)
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
+        return SimpleNamespace(
+            returncode=0,
+            stdout="Cache version 115; species homo_sapiens; assembly GRCh38",
+            stderr="",
+        )
+
+    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.run", fake_run)
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is True
+    assert result.checks["vep_runtime"]["status"] == "VERIFIED"
+    assert result.checks["vep_runtime"]["assembly"] == "GRCh38"
+    assert len(calls) == 2
+    assert "--offline" in calls[1]
+    assert "--show_cache_info" in calls[1]
+
+
+def test_vep_qualification_blocks_binary_release_mismatch(monkeypatch, tmp_path):
+    resource, _binary = _vep_resource(tmp_path)
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout="ensembl-vep 114.9", stderr=""
+        ),
+    )
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "VEP_RUNTIME_PREFLIGHT_FAILED" in result.blockers
+    assert result.checks["vep_runtime"]["status"] == "BLOCKED"
+
+
+def test_vep_qualification_requires_staged_resource_artifact(tmp_path):
+    resource, _binary = _vep_resource(tmp_path)
+    result = qualify_resource(resource)
+
+    assert result.passed is False
+    assert "VEP_RESOURCE_ARTIFACT_NOT_STAGED" in result.blockers
+    assert result.checks["vep_runtime"]["status"] == "NOT_RUN"

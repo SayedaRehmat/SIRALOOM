@@ -98,6 +98,26 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_execution"] = "GOVERNED"
 
 
+def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
+    """Require the governed VEP executable and cache to be usable offline.
+
+    This is a technical preflight only. Scientific accuracy still requires an
+    independently specified known-answer fixture and laboratory qualification.
+    """
+    from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
+
+    try:
+        provider = VEPProvider.from_execution_contract(execution)
+        build = str((execution.toolchain or {}).get("assembly") or "")
+        checks["vep_runtime"] = provider.verify_local_runtime(build)
+    except (VEPProviderError, OSError) as exc:
+        blockers.append("VEP_RUNTIME_PREFLIGHT_FAILED")
+        checks["vep_runtime"] = {
+            "status": "BLOCKED",
+            "error": str(exc)[:2000],
+        }
+
+
 def qualify_resource(
     resource: Resource,
     *,
@@ -198,6 +218,12 @@ def qualify_resource(
         blockers.append("LICENSE_NOT_VERIFIED")
     if resource.provider == "NCBI ClinVar":
         _qualify_clinvar(resource, path, checks)
+    if resource.provider == "VEP":
+        if not path or not path.is_file() or not staging or staging.status != "STAGED":
+            blockers.append("VEP_RESOURCE_ARTIFACT_NOT_STAGED")
+            checks["vep_runtime"] = {"status": "NOT_RUN", "reason": "resource artifact is not staged"}
+        else:
+            _qualify_vep_runtime(execution, blockers, checks)
     passed = all(bool(checks.get(name)) for name in ("publisher_present", "release_identity_match", "artifact_location_match")) and not blockers
     if resource.provider == "NCBI ClinVar" and checks.get("artifact_validation") != "GZIP_XML_WELL_FORMED":
         passed = False
