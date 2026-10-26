@@ -223,6 +223,14 @@ def qualify_resource(
             blockers.append("VEP_RESOURCE_ARTIFACT_NOT_STAGED")
             checks["vep_runtime"] = {"status": "NOT_RUN", "reason": "resource artifact is not staged"}
         else:
+            toolchain = dict(execution.toolchain or {})
+            registered_artifact_sha256 = str(resource.checksum or "").lower()
+            if (
+                not registered_artifact_sha256
+                or str(toolchain.get("cache_artifact_sha256") or "").lower()
+                != registered_artifact_sha256
+            ):
+                blockers.append("VEP_CACHE_ARTIFACT_DIGEST_MISMATCH")
             _qualify_vep_runtime(execution, blockers, checks)
     passed = all(bool(checks.get(name)) for name in ("publisher_present", "release_identity_match", "artifact_location_match")) and not blockers
     if resource.provider == "NCBI ClinVar" and checks.get("artifact_validation") != "GZIP_XML_WELL_FORMED":

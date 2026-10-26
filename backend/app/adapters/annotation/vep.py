@@ -5,10 +5,11 @@ import json
 import os
 import re
 import signal
+import stat
 import subprocess
 import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from backend.app.domain.provider_contract import (
@@ -54,6 +55,10 @@ class VEPProvider(ScientificResourceProvider):
         self.species = str(toolchain.get("species") or "homo_sapiens")
         self.cache_version = str(toolchain.get("cache_version") or "").strip()
         self.assembly = str(toolchain.get("assembly") or "").strip()
+        self.cache_manifest = str(toolchain.get("cache_manifest") or "").strip()
+        self.cache_manifest_sha256 = str(toolchain.get("cache_manifest_sha256") or "").strip().lower()
+        self.cache_artifact_sha256 = str(toolchain.get("cache_artifact_sha256") or "").strip().lower()
+        self.expected_binary_sha256 = str(toolchain.get("vep_binary_sha256") or "").strip().lower()
         self.extra_args = [str(x) for x in (toolchain.get("extra_args") or [])]
         self._runtime_checks: dict[str, dict[str, Any]] = {}
         self._validate_toolchain()
@@ -83,10 +88,21 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError("VEP execution contract must declare an absolute cache_dir path.")
         if _canonical_assembly(self.assembly) is None:
             raise VEPProviderError("VEP execution contract must pin assembly to GRCh37 or GRCh38.")
+        if not Path(self.cache_manifest).is_absolute():
+            raise VEPProviderError("VEP execution contract must declare an absolute cache_manifest path.")
+        for name, digest in (
+            ("cache_manifest_sha256", self.cache_manifest_sha256),
+            ("cache_artifact_sha256", self.cache_artifact_sha256),
+            ("vep_binary_sha256", self.expected_binary_sha256),
+        ):
+            if not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise VEPProviderError(f"VEP execution contract must pin {name} as a SHA-256 digest.")
         if self.extra_args:
             forbidden = {
                 "--input_file", "-i", "--output_file", "-o", "--cache_version",
                 "--dir_cache", "--cache", "--offline", "--species", "--assembly", "--fasta",
+                "--help", "-h", "--version", "--show_cache_info", "--config", "--plugin", "--custom",
+                "--refseq", "--merged", "--everything", "--canonical", "--mane",
             }
             if any(arg.split("=", 1)[0] in forbidden for arg in self.extra_args):
                 raise VEPProviderError(
@@ -364,6 +380,14 @@ class VEPProvider(ScientificResourceProvider):
         if assembly in self._runtime_checks:
             return dict(self._runtime_checks[assembly])
 
+        cache_manifest_check = self._verify_cache_manifest(assembly)
+        try:
+            binary_sha256_before = _sha256_file(Path(self.binary))
+        except OSError as exc:
+            raise VEPProviderError(f"VEP executable is unavailable for checksum verification: {self.binary}") from exc
+        if binary_sha256_before != self.expected_binary_sha256:
+            raise VEPProviderError("VEP binary SHA-256 does not match the governed execution contract.")
+
         try:
             version_result = subprocess.run(
                 [self.binary, "--version"],
@@ -418,7 +442,6 @@ class VEPProvider(ScientificResourceProvider):
             "--assembly",
             assembly,
             "--show_cache_info",
-            *self.extra_args,
         ]
         try:
             cache_result = subprocess.run(
@@ -441,9 +464,11 @@ class VEPProvider(ScientificResourceProvider):
                 + (cache_output or "no cache information was returned")[-2000:]
             )
         try:
-            binary_sha256 = _sha256_file(Path(self.binary))
+            binary_sha256_after = _sha256_file(Path(self.binary))
         except OSError as exc:
             raise VEPProviderError("VEP binary could not be checksummed after runtime verification.") from exc
+        if binary_sha256_after != binary_sha256_before:
+            raise VEPProviderError("VEP executable changed during runtime verification.")
 
         runtime_check = {
             "status": "VERIFIED",
@@ -451,12 +476,122 @@ class VEPProvider(ScientificResourceProvider):
             "vep_version": actual_version,
             "expected_vep_version": expected_version,
             "cache_version": self.cache_version,
-            "vep_binary_sha256": binary_sha256,
+            "vep_binary_sha256": binary_sha256_after,
+            "cache_manifest_sha256": cache_manifest_check["manifest_sha256"],
+            "cache_tree_sha256": cache_manifest_check["tree_sha256"],
+            "cache_artifact_sha256": cache_manifest_check["source_artifact_sha256"],
             "cache_info_sha256": hashlib.sha256(cache_output.encode("utf-8")).hexdigest(),
             "verified_at": datetime.now(timezone.utc).isoformat(),
         }
         self._runtime_checks[assembly] = runtime_check
         return dict(runtime_check)
+
+    def _verify_cache_manifest(self, assembly: str) -> dict[str, str]:
+        manifest_path = Path(self.cache_manifest)
+        cache_root = Path(self.cache_dir)
+        if cache_root.is_symlink():
+            raise VEPProviderError("VEP cache directory cannot be a symlink.")
+        if not manifest_path.is_file() or manifest_path.is_symlink():
+            raise VEPProviderError("VEP cache manifest is missing or is not a regular file.")
+        try:
+            resolved_root = cache_root.resolve(strict=True)
+            resolved_manifest = manifest_path.resolve(strict=True)
+        except OSError as exc:
+            raise VEPProviderError("VEP cache or manifest path is unavailable.") from exc
+        if not resolved_root.is_dir() or resolved_manifest.is_relative_to(resolved_root):
+            raise VEPProviderError("VEP cache manifest must be a file outside the cache directory.")
+        try:
+            manifest_sha256 = _sha256_file(resolved_manifest)
+            if manifest_sha256 != self.cache_manifest_sha256:
+                raise VEPProviderError("VEP cache manifest SHA-256 does not match the governed contract.")
+            document = json.loads(resolved_manifest.read_text(encoding="utf-8"))
+        except VEPProviderError:
+            raise
+        except (OSError, UnicodeError, ValueError) as exc:
+            raise VEPProviderError("VEP cache manifest is unreadable or invalid JSON.") from exc
+        if not isinstance(document, dict) or document.get("schema") != "siraloom.vep-cache-manifest.v1":
+            raise VEPProviderError("VEP cache manifest has an unsupported schema.")
+        if str(document.get("cache_version") or "") != self.cache_version:
+            raise VEPProviderError("VEP cache manifest release does not match the execution contract.")
+        if str(document.get("species") or "") != self.species:
+            raise VEPProviderError("VEP cache manifest species does not match the execution contract.")
+        if _canonical_assembly(str(document.get("assembly") or "")) != assembly:
+            raise VEPProviderError("VEP cache manifest assembly does not match the analysis assembly.")
+        source_artifact_sha256 = str(document.get("source_artifact_sha256") or "").lower()
+        if source_artifact_sha256 != self.cache_artifact_sha256:
+            raise VEPProviderError("VEP cache manifest does not identify the governed cache artifact digest.")
+        entries = document.get("files")
+        if not isinstance(entries, list) or not entries:
+            raise VEPProviderError("VEP cache manifest must list at least one cache file.")
+
+        expected: dict[str, tuple[str, int]] = {}
+        for entry in entries:
+            if not isinstance(entry, dict):
+                raise VEPProviderError("VEP cache manifest file entries must be objects.")
+            relative = str(entry.get("path") or "")
+            parsed = PurePosixPath(relative)
+            digest = str(entry.get("sha256") or "").lower()
+            size = entry.get("size_bytes")
+            if (
+                not relative
+                or parsed.is_absolute()
+                or any(part in {"", ".", ".."} for part in parsed.parts)
+                or parsed.as_posix() != relative
+                or not re.fullmatch(r"[0-9a-f]{64}", digest)
+                or isinstance(size, bool)
+                or not isinstance(size, int)
+                or size < 0
+                or relative in expected
+            ):
+                raise VEPProviderError("VEP cache manifest contains an invalid or duplicate file entry.")
+            expected[relative] = (digest, size)
+
+        actual_paths: set[str] = set()
+        actual_entries: list[dict[str, Any]] = []
+        try:
+            for path in resolved_root.rglob("*"):
+                if path.is_symlink():
+                    raise VEPProviderError("VEP cache contains a symlink, which is not permitted by its manifest.")
+                mode = path.stat(follow_symlinks=False).st_mode
+                if stat.S_ISDIR(mode):
+                    continue
+                if not stat.S_ISREG(mode):
+                    raise VEPProviderError("VEP cache contains a non-regular filesystem entry.")
+                relative = path.relative_to(resolved_root).as_posix()
+                actual_paths.add(relative)
+                if relative not in expected:
+                    raise VEPProviderError(f"VEP cache contains an unlisted file: {relative}")
+                digest = _sha256_file(path)
+                size = path.stat().st_size
+                actual_entries.append({"path": relative, "sha256": digest, "size_bytes": size})
+                if expected.get(relative) != (digest, size):
+                    raise VEPProviderError(f"VEP cache file does not match its manifest: {relative}")
+        except VEPProviderError:
+            raise
+        except OSError as exc:
+            raise VEPProviderError("VEP cache could not be read for manifest verification.") from exc
+        if actual_paths != set(expected):
+            raise VEPProviderError(
+                "VEP cache file set does not match its manifest "
+                f"(missing={len(set(expected) - actual_paths)}, extra={len(actual_paths - set(expected))})."
+            )
+        canonical = json.dumps(
+            {
+                "schema": "siraloom.vep-cache-manifest.v1",
+                "cache_version": self.cache_version,
+                "species": self.species,
+                "assembly": assembly,
+                "source_artifact_sha256": source_artifact_sha256,
+                "files": sorted(actual_entries, key=lambda item: item["path"]),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return {
+            "manifest_sha256": manifest_sha256,
+            "tree_sha256": hashlib.sha256(canonical).hexdigest(),
+            "source_artifact_sha256": source_artifact_sha256,
+        }
 
 
 def _canonical_assembly(value: str | None) -> str | None:

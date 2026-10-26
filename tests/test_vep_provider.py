@@ -1,9 +1,11 @@
+import hashlib
+import json
 from types import SimpleNamespace
 
 import pytest
 
-from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
+from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.domain.provider_contract import ProviderRawResult
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
@@ -24,6 +26,10 @@ def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep
             "cache_version": "115",
             "assembly": "GRCh38",
             "fasta": "/resources/GRCh38.fa",
+            "cache_manifest": "/resources/vep/115.manifest.json",
+            "cache_manifest_sha256": "a" * 64,
+            "cache_artifact_sha256": "b" * 64,
+            "vep_binary_sha256": "c" * 64,
         },
     )
 
@@ -56,13 +62,21 @@ def test_vep_provider_requires_explicit_cache_version():
         VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
 
 
-def test_vep_provider_rejects_extra_args_that_override_governed_paths():
+@pytest.mark.parametrize(
+    "argument",
+    ["--input_file=/tmp/unapproved.vcf", "--help", "--plugin", "--refseq"],
+)
+def test_vep_provider_rejects_extra_args_that_override_governed_paths(argument):
     toolchain = {
         "vep_binary": "/opt/vep/vep",
         "cache_dir": "/resources/vep/115",
         "cache_version": "115",
         "assembly": "GRCh38",
-        "extra_args": ["--input_file=/tmp/unapproved.vcf"],
+        "cache_manifest": "/resources/vep/115.manifest.json",
+        "cache_manifest_sha256": "a" * 64,
+        "cache_artifact_sha256": "b" * 64,
+        "vep_binary_sha256": "c" * 64,
+        "extra_args": [argument],
     }
     with pytest.raises(VEPProviderError, match="may not override governed"):
         VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
@@ -82,6 +96,10 @@ def test_vep_requires_absolute_paths_and_explicit_assembly(field, value, message
         "cache_dir": "/resources/vep/115",
         "cache_version": "115",
         "assembly": "GRCh38",
+        "cache_manifest": "/resources/vep/115.manifest.json",
+        "cache_manifest_sha256": "a" * 64,
+        "cache_artifact_sha256": "b" * 64,
+        "vep_binary_sha256": "c" * 64,
     }
     toolchain[field] = value
 
@@ -105,6 +123,41 @@ def _normalize_consequences(transcripts):
         result,
         inputs={"variants": [variant], "genome_build": "GRCh38"},
     ).observations[0]
+
+
+def _manifested_toolchain(tmp_path, binary, *, vep_version=None):
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(exist_ok=True)
+    cache_file = cache_dir / "fixture.dat"
+    cache_file.write_bytes(b"qualified fixture cache bytes")
+    cache_artifact_sha256 = "b" * 64
+    document = {
+        "schema": "siraloom.vep-cache-manifest.v1",
+        "cache_version": "115",
+        "species": "homo_sapiens",
+        "assembly": "GRCh38",
+        "source_artifact_sha256": cache_artifact_sha256,
+        "files": [{
+            "path": "fixture.dat",
+            "sha256": hashlib.sha256(cache_file.read_bytes()).hexdigest(),
+            "size_bytes": cache_file.stat().st_size,
+        }],
+    }
+    manifest = tmp_path / "vep-cache-manifest.json"
+    manifest.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+    toolchain = {
+        "vep_binary": str(binary),
+        "cache_dir": str(cache_dir),
+        "cache_version": "115",
+        "assembly": "GRCh38",
+        "cache_manifest": str(manifest),
+        "cache_manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+        "cache_artifact_sha256": cache_artifact_sha256,
+        "vep_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+    }
+    if vep_version:
+        toolchain["vep_version"] = vep_version
+    return toolchain, cache_file
 
 
 def test_vep_prefers_one_mane_select_transcript_over_canonical():
@@ -175,7 +228,8 @@ def test_vep_rejects_malformed_transcript_consequence_response():
 def test_vep_annotation_verifies_pinned_binary_and_offline_cache(monkeypatch, tmp_path):
     binary = tmp_path / "vep"
     binary.write_text("fixture VEP executable identity", encoding="utf-8")
-    provider = VEPProvider.from_execution_contract(_contract(vep_binary=str(binary)))
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary)
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
     calls = []
 
     def fake_run(command, **kwargs):
@@ -217,10 +271,15 @@ def test_vep_annotation_verifies_pinned_binary_and_offline_cache(monkeypatch, tm
     assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["status"] == "VERIFIED"
     assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["vep_version"] == "115.2"
     assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["vep_binary_sha256"]
+    assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["cache_tree_sha256"]
+    assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["cache_manifest_sha256"]
 
 
-def test_vep_rejects_binary_release_mismatch_before_loading_cache(monkeypatch):
-    provider = VEPProvider.from_execution_contract(_contract())
+def test_vep_rejects_binary_release_mismatch_before_loading_cache(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary)
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
     calls = []
 
     def fake_run(command, **kwargs):
@@ -238,13 +297,7 @@ def test_vep_rejects_binary_release_mismatch_before_loading_cache(monkeypatch):
 def test_vep_honors_full_binary_patch_version_when_configured(monkeypatch, tmp_path):
     binary = tmp_path / "vep"
     binary.write_text("fixture VEP executable identity", encoding="utf-8")
-    toolchain = {
-        "vep_binary": str(binary),
-        "cache_dir": "/resources/vep/115",
-        "cache_version": "115",
-        "vep_version": "115.1",
-        "assembly": "GRCh38",
-    }
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.1")
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
     calls = []
 
@@ -263,7 +316,8 @@ def test_vep_honors_full_binary_patch_version_when_configured(monkeypatch, tmp_p
 def test_vep_blocks_when_offline_cache_cannot_be_loaded(monkeypatch, tmp_path):
     binary = tmp_path / "vep"
     binary.write_text("fixture VEP executable identity", encoding="utf-8")
-    provider = VEPProvider.from_execution_contract(_contract(vep_binary=str(binary)))
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary)
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
     calls = []
 
     def fake_run(command, **kwargs):
@@ -278,6 +332,69 @@ def test_vep_blocks_when_offline_cache_cannot_be_loaded(monkeypatch, tmp_path):
         provider.verify_local_runtime("GRCh38")
 
     assert len(calls) == 2
+
+
+def test_vep_blocks_cache_file_modified_after_manifest_creation(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, cache_file = _manifested_toolchain(tmp_path, binary)
+    cache_file.write_bytes(b"changed after approval")
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda *_args, **_kwargs: pytest.fail("VEP must not execute when cache integrity fails"),
+    )
+
+    with pytest.raises(VEPProviderError, match="does not match its manifest"):
+        provider.verify_local_runtime("GRCh38")
+
+
+def test_vep_blocks_binary_changed_after_contract_pinning(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("pinned binary bytes", encoding="utf-8")
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary)
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    binary.write_text("different binary bytes", encoding="utf-8")
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda *_args, **_kwargs: pytest.fail("VEP must not run when binary digest differs"),
+    )
+
+    with pytest.raises(VEPProviderError, match="binary SHA-256 does not match"):
+        provider.verify_local_runtime("GRCh38")
+
+
+def test_vep_blocks_unlisted_cache_file(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, cache_file = _manifested_toolchain(tmp_path, binary)
+    (cache_file.parent / "unlisted.dat").write_bytes(b"unqualified cache data")
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda *_args, **_kwargs: pytest.fail("VEP must not execute when cache manifest is incomplete"),
+    )
+
+    with pytest.raises(VEPProviderError, match="contains an unlisted file"):
+        provider.verify_local_runtime("GRCh38")
+
+
+def test_vep_rejects_symlinked_cache_root(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, cache_file = _manifested_toolchain(tmp_path, binary)
+    actual_cache = cache_file.parent
+    cache_link = tmp_path / "cache-link"
+    cache_link.symlink_to(actual_cache, target_is_directory=True)
+    toolchain["cache_dir"] = str(cache_link)
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda *_args, **_kwargs: pytest.fail("VEP must not run with a symlinked cache root"),
+    )
+
+    with pytest.raises(VEPProviderError, match="cache directory cannot be a symlink"):
+        provider.verify_local_runtime("GRCh38")
 
 
 def test_vep_rejects_analysis_assembly_different_from_resource_assembly(monkeypatch):

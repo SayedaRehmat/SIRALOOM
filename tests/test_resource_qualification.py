@@ -1,3 +1,4 @@
+import json
 from gzip import open as gzip_open
 from hashlib import sha256
 from pathlib import Path
@@ -182,7 +183,22 @@ def _vep_resource(tmp_path: Path):
     cache_archive.write_bytes(b"fixture cache archive")
     cache_dir = tmp_path / "installed-vep-cache"
     cache_dir.mkdir()
+    cache_file = cache_dir / "fixture.dat"
+    cache_file.write_bytes(b"qualified fixture cache bytes")
     cache_sha256 = sha256(cache_archive.read_bytes()).hexdigest()
+    manifest = tmp_path / "vep-cache-manifest.json"
+    manifest.write_text(json.dumps({
+        "schema": "siraloom.vep-cache-manifest.v1",
+        "cache_version": "115",
+        "species": "homo_sapiens",
+        "assembly": "GRCh38",
+        "source_artifact_sha256": cache_sha256,
+        "files": [{
+            "path": "fixture.dat",
+            "sha256": sha256(cache_file.read_bytes()).hexdigest(),
+            "size_bytes": cache_file.stat().st_size,
+        }],
+    }, sort_keys=True), encoding="utf-8")
     resource = Resource(
         name="VEP 115 GRCh38",
         provider="VEP",
@@ -217,6 +233,10 @@ def _vep_resource(tmp_path: Path):
                     "cache_dir": str(cache_dir),
                     "cache_version": "115",
                     "assembly": "GRCh38",
+                    "cache_manifest": str(manifest),
+                    "cache_manifest_sha256": sha256(manifest.read_bytes()).hexdigest(),
+                    "cache_artifact_sha256": cache_sha256,
+                    "vep_binary_sha256": sha256(binary.read_bytes()).hexdigest(),
                 },
             },
         },
@@ -245,6 +265,7 @@ def test_vep_qualification_executes_version_and_offline_cache_preflight(monkeypa
     assert result.passed is True
     assert result.checks["vep_runtime"]["status"] == "VERIFIED"
     assert result.checks["vep_runtime"]["assembly"] == "GRCh38"
+    assert result.checks["vep_runtime"]["cache_artifact_sha256"] == resource.checksum
     assert len(calls) == 2
     assert "--offline" in calls[1]
     assert "--show_cache_info" in calls[1]
@@ -264,6 +285,26 @@ def test_vep_qualification_blocks_binary_release_mismatch(monkeypatch, tmp_path)
     assert result.passed is False
     assert "VEP_RUNTIME_PREFLIGHT_FAILED" in result.blockers
     assert result.checks["vep_runtime"]["status"] == "BLOCKED"
+
+
+def test_vep_qualification_blocks_manifest_artifact_digest_mismatch(monkeypatch, tmp_path):
+    resource, _binary = _vep_resource(tmp_path)
+    execution = resource.metadata_json["execution"]
+    execution["toolchain"]["cache_artifact_sha256"] = "0" * 64
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda command, **_kwargs: SimpleNamespace(
+            returncode=0,
+            stdout="ensembl-vep 115.2" if command[-1] == "--version" else "cache info",
+            stderr="",
+        ),
+    )
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "VEP_CACHE_ARTIFACT_DIGEST_MISMATCH" in result.blockers
+    assert "VEP_RUNTIME_PREFLIGHT_FAILED" in result.blockers
 
 
 def test_vep_qualification_requires_staged_resource_artifact(tmp_path):
