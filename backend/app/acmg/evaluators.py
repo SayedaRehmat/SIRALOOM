@@ -88,6 +88,10 @@ def _invalid_frequency_reason(obs: dict[str, Any]) -> str | None:
         return "allele_frequency has no positive allele_number denominator"
     if an is not None and ac is not None and ac > an:
         return "allele_count exceeds allele_number"
+    if af is not None and an is not None and an > 0 and ac is not None:
+        expected_af = ac / an
+        if not math.isclose(af, expected_af, rel_tol=1e-12, abs_tol=1e-12):
+            return "allele_frequency is inconsistent with allele_count/allele_number"
     return None
 
 

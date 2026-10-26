@@ -8,6 +8,7 @@ import signal
 import subprocess
 import time
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from typing import Any, Iterable
 
 import httpx
@@ -543,6 +544,7 @@ class LocalGnomADTabixProvider:
                 field=f"AC{suffix}",
             )
             an = _nonnegative_count(info.get(f"AN{suffix}"), field=f"AN{suffix}")
+            af_text = _array_text(info.get(f"AF{suffix}"), best["alt_index"])
             af = _array_float(info.get(f"AF{suffix}"), best["alt_index"])
             hom = _array_count(
                 info.get(f"nhomalt{suffix}"),
@@ -557,7 +559,13 @@ class LocalGnomADTabixProvider:
             # Never expose it as a frequency when AN is missing or zero.
             if not _frequency_available(ac, an):
                 af = None
-            elif af is None:
+            else:
+                if af_text is not None:
+                    _validate_source_af_matches_counts(
+                        af_text, ac=ac, an=an, context=suffix or "global"
+                    )
+                # AC/AN is the exact frequency represented by these same
+                # gnomAD VCF fields. Store that value rather than a rounded AF.
                 af = _af(ac, an)
             availability = "AVAILABLE" if _frequency_available(ac, an) else "NOT_AVAILABLE"
             observations.append(
@@ -600,6 +608,35 @@ def _array_value(value: str | None, index: int) -> int | None:
     return _int_or_none(parts[index])
 
 
+def _array_text(value: str | None, index: int) -> str | None:
+    if value is None:
+        return None
+    parts = value.split(",")
+    if index >= len(parts):
+        raise GnomADProviderError("Local gnomAD AF has no value for the requested alternate allele")
+    raw_value = parts[index]
+    return None if raw_value in {"", "."} else raw_value
+
+
+def _validate_source_af_matches_counts(
+    af_text: str, *, ac: int | None, an: int | None, context: str
+) -> None:
+    if ac is None or an is None or an <= 0:
+        return
+    try:
+        reported = Decimal(af_text)
+    except InvalidOperation as exc:
+        raise GnomADProviderError("Local gnomAD AF is not a valid decimal") from exc
+    if not reported.is_finite() or reported < 0 or reported > 1:
+        raise GnomADProviderError("Local gnomAD AF must be a finite frequency between 0 and 1")
+    expected = Decimal(ac) / Decimal(an)
+    rounding_tolerance = Decimal(5).scaleb(reported.as_tuple().exponent - 1)
+    if abs(reported - expected) > rounding_tolerance:
+        raise GnomADProviderError(
+            f"Local gnomAD {context} AF is inconsistent with AC/AN at the source precision"
+        )
+
+
 def _nonnegative_count(value: str | None, *, field: str) -> int | None:
     if value in (None, "", "."):
         return None
@@ -623,15 +660,8 @@ def _array_count(value: str | None, index: int, *, field: str) -> int | None:
 
 
 def _array_float(value: str | None, index: int) -> float | None:
-    if value is None:
-        return None
-    parts = value.split(",")
-    if index >= len(parts):
-        raise GnomADProviderError(
-            "Local gnomAD AF has no value for the requested alternate allele"
-        )
-    raw_value = parts[index]
-    if raw_value in {"", "."}:
+    raw_value = _array_text(value, index)
+    if raw_value is None:
         return None
     try:
         parsed = float(raw_value)

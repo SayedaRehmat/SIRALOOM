@@ -187,7 +187,9 @@ def _validate_population_metrics(*, ac, an, af, af_text):
             raise SecondaryPopulationProviderError(
                 "Population allele frequency is inconsistent with AC/AN at the source precision."
             )
-    if af is None and ac is not None:
+    if ac is not None:
+        # Once the supplied AF is validated at its represented precision,
+        # retain the exact count-derived value for downstream classification.
         return ac / an
     return af
 

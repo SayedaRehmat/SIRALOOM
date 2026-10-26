@@ -9,7 +9,7 @@ from backend.app.acmg.evaluators import (
 )
 
 
-def obs(code="MID", af=0.0, an=10000, ac=0):
+def obs(code="MID", af=0.0, an=10000, ac=None):
     return {
         "observation_id": "POBS-1",
         "population_code": code,
@@ -112,11 +112,13 @@ def test_bs1_uses_explicit_threshold():
         {"allele_frequency": 0.0, "allele_number": True, "allele_count": 0},
         {"allele_frequency": 0.0, "allele_number": 0, "allele_count": 0},
         {"allele_frequency": 0.0, "allele_number": None, "allele_count": 0},
+        {"allele_frequency": 0.01, "allele_number": 100, "allele_count": 0},
+        {"allele_frequency": 0.02, "allele_number": 100, "allele_count": 1},
     ],
     ids=[
         "negative-af", "af-over-one", "nan-af", "infinite-af", "boolean-af", "ac-over-an",
         "negative-ac", "fractional-an", "boolean-an", "zero-denominator",
-        "missing-denominator",
+        "missing-denominator", "nonzero-af-with-zero-ac", "af-inconsistent-with-ac-an",
     ],
 )
 @pytest.mark.parametrize("criterion", ["PM2", "BS1"])
@@ -142,7 +144,7 @@ def test_population_criteria_require_review_for_malformed_available_metrics(
 
 
 def test_population_criteria_ignore_malformed_unselected_cohort():
-    valid = obs(code="MID", af=0.00001, an=20000, ac=0)
+    valid = obs(code="MID", af=0.00001, an=20000)
     unselected = obs(code="MID_EXOMES", af=-1, an=1000, ac=0)
     profile = {
         "PM2": {

@@ -114,6 +114,24 @@ def test_rejects_invalid_or_inconsistent_population_frequency(monkeypatch, info,
         provider.query_variant(variant)
 
 
+def test_rounded_source_af_is_validated_then_normalized_from_counts(monkeypatch):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
+    ))
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stderr="",
+            stdout="1\t100\trs1\tA\tG\t.\tPASS\tAC=1;AN=300;AF=0.0033\n",
+        ),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+
+    observation = provider.query_variant(variant)[0]
+
+    assert observation.allele_frequency == 1 / 300
+
+
 def test_zero_allele_number_never_produces_af(monkeypatch):
     provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
         info_fields={"AC": "AC", "AN": "AN", "AF": "AF"},
