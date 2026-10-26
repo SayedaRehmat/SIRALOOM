@@ -30,6 +30,7 @@ const objEntries=(v:any)=>v&&typeof v==="object"&&!Array.isArray(v)?Object.entri
 function EvidenceCard({e}:{e:Evidence}){
  const {t}=useLanguage();
  const assertions=e.source==="HPOA"&&Array.isArray(e.payload?.assertions)?e.payload.assertions:[];
+ const patientComparison=e.source==="HPOA"&&e.payload?.patient_comparison&&typeof e.payload.patient_comparison==="object"?e.payload.patient_comparison:null;
  const phenotypeMatch=e.type==="GENE_DISEASE"&&e.payload?.phenotype_match&&typeof e.payload.phenotype_match==="object"?e.payload.phenotype_match:null;
  const hasProvenance=Boolean(e.resource_id||e.request_fingerprint||e.response_sha256);
  return <article className="clinical-evidence-card">
@@ -44,6 +45,21 @@ function EvidenceCard({e}:{e:Evidence}){
    <p className="phenotype-match-review-note">{t("review.phenotypeMatchUnvalidated")}</p>
   </section>}
   {assertions.length>0&&<section className="hpoa-assertions" aria-label={t("review.hpoaAssertions")}><strong>{t("review.hpoaDisease")}: {e.payload?.disease_id||"—"}{e.payload?.gene?` · ${e.payload.gene}`:""}</strong><ul>{assertions.map((row:any,index:number)=><li key={`${row.hpo_id||"term"}-${row.reference||"ref"}-${index}`}><span className={`badge ${row.qualifier==="NOT"?"danger":"neutral"}`}>{row.qualifier==="NOT"?t("review.hpoaNot"):t("review.hpoaReported")}</span><strong>{row.hpo_id||"—"}</strong><span>{t("review.hpoaEvidence")}: {row.evidence||"—"}</span><span>{t("review.hpoaFrequency")}: {row.frequency||"—"}</span><small>{[row.reference,row.onset&&`${t("review.hpoaOnset")}: ${row.onset}`,row.sex&&`${t("review.hpoaSex")}: ${pretty(row.sex)}`,...(Array.isArray(row.modifiers)?row.modifiers:[])].filter(Boolean).join(" · ")}</small></li>)}</ul><p className="hpoa-review-note">{t("review.hpoaReviewOnly")}</p></section>}
+  {patientComparison&&<section className="hpoa-patient-comparison" aria-label={t("review.hpoaPatientComparison")}>
+   <strong>{t("review.hpoaPatientComparison")}: {pretty(patientComparison.status)}</strong>
+   <p>{t("review.hpoaPatientComparisonMethod")}: {patientComparison.method||"—"} · {t("review.hpoaOntologyRelease")}: {patientComparison.ontology_release||"—"}</p>
+   {Array.isArray(patientComparison.potential_discordances)&&patientComparison.potential_discordances.length>0&&<ul>{patientComparison.potential_discordances.map((item:any,index:number)=><li key={`${item.type}-${item.patient_hpo_id}-${item.assertion_hpo_id}-${index}`}>
+    <strong>{item.type==="PATIENT_PRESENT_VS_SOURCE_NOT_ASSERTION"?t("review.hpoaPresentVsNot"):item.type==="PATIENT_PRESENT_VS_SOURCE_NOT_AND_FREQUENCY_CONTEXT"?t("review.hpoaPresentVsNotAndFrequency"):item.type==="PATIENT_PRESENT_VS_HPO_EXCLUDED_FREQUENCY"?t("review.hpoaPresentVsHpoExcluded"):item.type==="PATIENT_PRESENT_VS_ZERO_PERCENT_FREQUENCY"?t("review.hpoaPresentVsZeroPercent"):item.type==="PATIENT_PRESENT_VS_ZERO_OF_N_FREQUENCY"?t("review.hpoaPresentVsZeroOfN"):t("review.hpoaAbsentVsReported")}</strong>
+    <span>{t("review.hpoaPatientTerm")}: {item.patient_hpo_id} ({pretty(item.patient_status)})</span>
+    <span>{t("review.hpoaSourceTerm")}: {item.assertion_hpo_id}</span>
+    {item.qualifier&&<span>{t("review.hpoaQualifier")}: {item.qualifier}</span>}
+    {item.frequency&&<span>{t("review.hpoaFrequency")}: {item.frequency}</span>}
+    {Array.isArray(item.source_negative_semantics)&&item.source_negative_semantics.some((value:string)=>value!=="SOURCE_NOT")&&<p>{t("review.hpoaZeroFrequencyCaveat")}</p>}
+    {item.reference&&<small>{t("review.sourceRecord")}: {item.reference}</small>}
+   </li>)}</ul>}
+   {patientComparison.reason&&<p>{String(patientComparison.reason)}</p>}
+   <p className="hpoa-review-note">{t("review.hpoaComparisonReviewOnly")}</p>
+  </section>}
   {e.source_record_id&&<small>{t("review.sourceRecord")}: {e.source_record_id}</small>}
   {hasProvenance&&<details className="evidence-provenance"><summary>{t("review.provenance")}</summary><dl>{e.resource_id&&<><dt>{t("review.resourceId")}</dt><dd><code>{e.resource_id}</code></dd></>}{e.request_fingerprint&&<><dt>{t("review.requestDigest")}</dt><dd><code>{e.request_fingerprint}</code></dd></>}{e.response_sha256&&<><dt>{t("review.responseDigest")}</dt><dd><code>{e.response_sha256}</code></dd></>}</dl></details>}
  </article>

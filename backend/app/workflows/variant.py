@@ -4157,6 +4157,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 gene_disease_records=gene_disease_records,
                                 annotations_by_disease=hpoa_disease_annotations,
                                 provenance=hpoa_provenance,
+                                patient_hpo_terms=case_hpo_terms,
+                                hpo_ontology=hpo_ontology,
                             ))
 
                         gene = gene_symbol or ((normalized.get("gene") or {}).get("symbol")) or normalized.get("gene_symbol")

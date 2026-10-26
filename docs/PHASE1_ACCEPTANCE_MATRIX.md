@@ -455,3 +455,13 @@ Focused prior failure set: **42 passed**. This diagnostic-ordering correction do
 The guard reduces the risk of an operator accidentally restoring into the normal Compose context. It does not prove the supplied project/environment points to a dedicated laboratory restore host, and does not qualify a real recovery objective. Phase A and deployment readiness remain **PARTIAL**.
 
 **Follow-up code checkpoint:** commit [`4d35ffb4403cab5d3813c1087ce6c9dba9f1b520`](https://github.com/SayedaRehmat/SIRALOOM/commit/4d35ffb4403cab5d3813c1087ce6c9dba9f1b520) is on `origin/main`; exact-SHA CI run [40313345990](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40313345990) passed all three jobs. This does not change the NOT TESTED status of an actual laboratory backup/restore.
+
+### 2026-10-26 HPOA and patient phenotype review context
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Preserve distinct HPOA `NOT`, HPO Excluded frequency, literal `0%`, and cohort `0/N` semantics in comparison output | PASS (deterministic implementation/test scope) | Evidence engine comparison uses pinned HPO release and aspect P; tests assert distinct source semantics/types, `0/3` denominator preservation, unresolved/missing ontology, patient present/absent/unknown, and hierarchy direction. |
+| Persist the real workflow's patient/HPOA comparison and render review context in the bilingual reviewer interface | PASS (local workflow/frontend test scope) | `tests/test_actual_population_stage_redelivery.py` verifies worker persistence and pinned ontology lineage; localization guard, 40 frontend session tests, TypeScript check, and Next production build passed. The context is explicitly non-scored and does not affect classification or ranking. |
+| Clinical validity of phenotype matching, diagnostic ranking, or disease-specific interpretation | NOT ESTABLISHED | This is a constrained reviewer aid, not a validated similarity algorithm or clinical utility assessment. No expert-adjudicated clinical benchmark was performed. |
+
+The official HPO references and implementation rationale are recorded in `docs/research/GERMLINE_LAB_WORKFLOW_AND_RESOURCE_RESEARCH.md` and the engineering ledger. This increment does not change the overall release decision: Phase A remains PARTIAL; live identity, deployed tenant/storage isolation, complete lab signout/recovery, independent truth-set benchmarking, and actual deployment/restore qualification are still unverified.

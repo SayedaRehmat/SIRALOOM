@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Iterable
 from uuid import UUID, uuid4
@@ -560,6 +561,8 @@ class EvidenceEngine:
         gene_disease_records: Iterable[dict[str, Any]],
         annotations_by_disease: dict[str, Iterable[Any]],
         provenance: dict[str, Any],
+        patient_hpo_terms: Iterable[Any] = (),
+        hpo_ontology: Any | None = None,
     ) -> list[EvidenceRecord]:
         """Persist source assertions without turning frequency into a score.
 
@@ -570,6 +573,7 @@ class EvidenceEngine:
         from dataclasses import asdict, is_dataclass
 
         out: list[EvidenceRecord] = []
+        patient_hpo_material = list(patient_hpo_terms)
         eligible_disease_ids = {
             str(item.get("disease_id") or item.get("disease_identifier") or "").strip()
             for item in gene_disease_records
@@ -590,6 +594,11 @@ class EvidenceEngine:
             ]
             if not material:
                 continue
+            patient_comparison = self._compare_hpoa_patient_context(
+                patient_hpo_terms=patient_hpo_material,
+                assertions=material,
+                ontology=hpo_ontology,
+            )
             out.append(
                 self._record(
                     variant_id=variant_id,
@@ -608,6 +617,7 @@ class EvidenceEngine:
                         "interpretive_use": "DISEASE_PHENOTYPE_EVIDENCE_REVIEW",
                         "score": None,
                         "clinical_prioritization_validated": False,
+                        "patient_comparison": patient_comparison,
                     },
                     resource_id=(
                         UUID(str(provenance["resource_id"]))
@@ -620,6 +630,174 @@ class EvidenceEngine:
                 )
             )
         return out
+
+
+    @staticmethod
+    def _compare_hpoa_patient_context(
+        *, patient_hpo_terms: Iterable[Any], assertions: list[dict[str, Any]], ontology: Any | None
+    ) -> dict[str, Any]:
+        """Expose limited HPOA/patient discrepancies for review, never as a score.
+
+        Only Phenotypic Abnormality (aspect P) is compared. HPO ``is_a`` ancestry is
+        used solely to surface exact/descendant relationships. A source ``NOT``
+        assertion, a coded 0% frequency, a textual 0%, and a finite-cohort 0/N
+        observation remain distinct in the returned evidence. None changes ACMG
+        criteria or ranking.
+        """
+        from backend.app.phenotype import normalize_terms
+
+        result: dict[str, Any] = {
+            "method": "HPOA_ASSERTION_COMPARISON_V1",
+            "ontology_release": getattr(ontology, "release", None),
+            "ontology_sha256": getattr(ontology, "sha256", None),
+            "comparison_scope": "HPOA aspect P; exact or HPO is_a descendant relations only",
+            "potential_discordances": [],
+            "contradictory_patient_terms": [],
+            "unresolved_patient_terms": [],
+            "unresolved_assertion_terms": [],
+            "non_phenotypic_assertions_skipped": 0,
+            "patient_status_counts": {},
+            "score": None,
+            "clinical_prioritization_validated": False,
+            "classification_criterion": None,
+            "interpretive_use": "HUMAN_REVIEW_CONTEXT_ONLY",
+        }
+        if ontology is None:
+            result.update({
+                "status": "REQUIRES_REVIEW",
+                "reason": "PINNED_HPO_ONTOLOGY_UNAVAILABLE",
+                "review_required": True,
+            })
+            return result
+
+        normalized = normalize_terms(patient_hpo_terms)
+        patient_terms: list[tuple[str, str]] = []
+        patient_status_counts: dict[str, int] = {}
+        resolved_statuses: dict[str, set[str]] = {}
+        for term in normalized:
+            patient_status_counts[term.status] = patient_status_counts.get(term.status, 0) + 1
+            resolution = ontology.resolve(term.hpo_id)
+            if resolution.status not in {"CURRENT", "ALTERNATE_ID", "OBSOLETE_REPLACED"} or not resolution.canonical_id:
+                result["unresolved_patient_terms"].append({
+                    "hpo_id": term.hpo_id,
+                    "status": resolution.status,
+                    "phenotype_status": term.status,
+                })
+                continue
+            if term.status in {"PRESENT", "ABSENT", "EXCLUDED"}:
+                patient_terms.append((resolution.canonical_id, term.status))
+                resolved_statuses.setdefault(resolution.canonical_id, set()).add(term.status)
+
+        result["patient_status_counts"] = patient_status_counts
+        result["contradictory_patient_terms"] = [
+            {
+                "hpo_id": hpo_id,
+                "statuses": sorted(statuses),
+            }
+            for hpo_id, statuses in sorted(resolved_statuses.items())
+            if "PRESENT" in statuses and statuses & {"ABSENT", "EXCLUDED"}
+        ]
+
+        if not patient_terms:
+            result.update({
+                "status": "REQUIRES_REVIEW",
+                "reason": "No resolved PRESENT, ABSENT, or EXCLUDED patient terms are available.",
+                "review_required": True,
+            })
+            return result
+
+        for assertion in assertions:
+            if str(assertion.get("aspect") or "").strip().upper() != "P":
+                result["non_phenotypic_assertions_skipped"] += 1
+                continue
+            source_hpo_id = str(assertion.get("hpo_id") or "").strip().upper()
+            resolution = ontology.resolve(source_hpo_id)
+            if resolution.status not in {"CURRENT", "ALTERNATE_ID", "OBSOLETE_REPLACED"} or not resolution.canonical_id:
+                result["unresolved_assertion_terms"].append({
+                    "hpo_id": source_hpo_id,
+                    "status": resolution.status,
+                    "reference": assertion.get("reference"),
+                })
+                continue
+            assertion_hpo_id = resolution.canonical_id
+            qualifier = str(assertion.get("qualifier") or "").strip().upper()
+            frequency = str(assertion.get("frequency") or "").strip()
+            frequency_upper = frequency.upper()
+            if frequency_upper == "HP:0040285":
+                frequency_semantic = "HPO_FREQUENCY_EXCLUDED_0_PERCENT"
+            elif frequency == "0%":
+                frequency_semantic = "ZERO_PERCENT_FREQUENCY"
+            elif re.fullmatch(r"0/[1-9][0-9]*", frequency):
+                frequency_semantic = "ZERO_OF_N_COHORT_OBSERVATION"
+            else:
+                frequency_semantic = None
+            frequency_zero = frequency_semantic is not None
+            negative_semantics = []
+            if qualifier == "NOT":
+                negative_semantics.append("SOURCE_NOT")
+            if frequency_semantic:
+                negative_semantics.append(frequency_semantic)
+
+            for patient_hpo_id, patient_status in patient_terms:
+                if patient_status == "PRESENT" and negative_semantics:
+                    is_descendant = (
+                        patient_hpo_id == assertion_hpo_id
+                        or assertion_hpo_id in ontology.ancestors(patient_hpo_id)
+                    )
+                    if is_descendant:
+                        result["potential_discordances"].append({
+                            "type": (
+                                "PATIENT_PRESENT_VS_SOURCE_NOT_AND_FREQUENCY_CONTEXT"
+                                if qualifier == "NOT" and frequency_zero
+                                else "PATIENT_PRESENT_VS_SOURCE_NOT_ASSERTION"
+                                if qualifier == "NOT"
+                                else {
+                                    "HPO_FREQUENCY_EXCLUDED_0_PERCENT": "PATIENT_PRESENT_VS_HPO_EXCLUDED_FREQUENCY",
+                                    "ZERO_PERCENT_FREQUENCY": "PATIENT_PRESENT_VS_ZERO_PERCENT_FREQUENCY",
+                                    "ZERO_OF_N_COHORT_OBSERVATION": "PATIENT_PRESENT_VS_ZERO_OF_N_FREQUENCY",
+                                }[frequency_semantic]
+                            ),
+                            "source_negative_semantics": negative_semantics,
+                            "patient_hpo_id": patient_hpo_id,
+                            "patient_status": patient_status,
+                            "assertion_hpo_id": assertion_hpo_id,
+                            "qualifier": qualifier or None,
+                            "frequency": frequency or None,
+                            "reference": assertion.get("reference"),
+                            "evidence": assertion.get("evidence"),
+                            "biocuration": assertion.get("biocuration"),
+                        })
+                elif patient_status in {"ABSENT", "EXCLUDED"} and not negative_semantics:
+                    disease_term_is_within_absent_term = (
+                        patient_hpo_id == assertion_hpo_id
+                        or patient_hpo_id in ontology.ancestors(assertion_hpo_id)
+                    )
+                    if disease_term_is_within_absent_term:
+                        result["potential_discordances"].append({
+                            "type": "PATIENT_ABSENT_VS_DISEASE_ANNOTATED_FEATURE",
+                            "patient_hpo_id": patient_hpo_id,
+                            "patient_status": patient_status,
+                            "assertion_hpo_id": assertion_hpo_id,
+                            "qualifier": qualifier or None,
+                            "frequency": frequency or None,
+                            "reference": assertion.get("reference"),
+                            "evidence": assertion.get("evidence"),
+                            "biocuration": assertion.get("biocuration"),
+                        })
+
+        unresolved = bool(
+            result["unresolved_patient_terms"] or result["unresolved_assertion_terms"]
+        )
+        requires_review = bool(
+            unresolved
+            or result["potential_discordances"]
+            or result["contradictory_patient_terms"]
+        )
+        result.update({
+            "status": "REQUIRES_REVIEW" if requires_review else "COMPARISON_COMPLETE",
+            "review_required": requires_review,
+        })
+        return result
 
     def _record(
         self,

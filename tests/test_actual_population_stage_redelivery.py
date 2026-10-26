@@ -989,6 +989,13 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 assert hpoa_evidence.payload["clinical_prioritization_validated"] is False
                 assert [row["qualifier"] for row in hpoa_evidence.payload["assertions"]] == ["", "NOT"]
                 assert [row["frequency"] for row in hpoa_evidence.payload["assertions"]] == ["1/2", "0/3"]
+                patient_comparison = hpoa_evidence.payload["patient_comparison"]
+                assert patient_comparison["method"] == "HPOA_ASSERTION_COMPARISON_V1"
+                assert patient_comparison["ontology_release"] == (
+                    "2026-09-01" if ontology_valid else None
+                )
+                assert patient_comparison["score"] is None
+                assert patient_comparison["clinical_prioritization_validated"] is False
                 assert len(hpoa_evidence.request_fingerprint) == 64
                 assert len(hpoa_evidence.response_sha256) == 64
                 assert len(hpoa_execution_rows) == 1

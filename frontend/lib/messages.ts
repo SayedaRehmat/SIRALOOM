@@ -694,6 +694,21 @@ export type TranslationKey =
   | "review.hpoaOnset"
   | "review.hpoaSex"
   | "review.hpoaReviewOnly"
+  | "review.hpoaPatientComparison"
+  | "review.hpoaPatientComparisonMethod"
+  | "review.hpoaOntologyRelease"
+  | "review.hpoaPresentVsNot"
+  | "review.hpoaPresentVsZeroFrequency"
+  | "review.hpoaPresentVsNotAndFrequency"
+  | "review.hpoaPresentVsHpoExcluded"
+  | "review.hpoaPresentVsZeroPercent"
+  | "review.hpoaPresentVsZeroOfN"
+  | "review.hpoaZeroFrequencyCaveat"
+  | "review.hpoaAbsentVsReported"
+  | "review.hpoaPatientTerm"
+  | "review.hpoaSourceTerm"
+  | "review.hpoaQualifier"
+  | "review.hpoaComparisonReviewOnly"
   | "review.provenance"
   | "review.resourceId"
   | "review.requestDigest"
@@ -1165,6 +1180,21 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.hpoaOnset": "Onset",
     "review.hpoaSex": "Sex context",
     "review.hpoaReviewOnly": "Source assertions are shown for review; they are not a validated diagnostic score or classification.",
+    "review.hpoaPatientComparison": "Patient and disease-phenotype context",
+    "review.hpoaPatientComparisonMethod": "Comparison method",
+    "review.hpoaOntologyRelease": "Pinned HPO release",
+    "review.hpoaPresentVsNot": "Present patient finding overlaps a source NOT assertion",
+    "review.hpoaPresentVsZeroFrequency": "Present patient finding overlaps a zero-frequency source observation",
+    "review.hpoaPresentVsNotAndFrequency": "Present patient finding overlaps a source NOT assertion and frequency context",
+    "review.hpoaPresentVsHpoExcluded": "Present patient finding overlaps the HPO Excluded frequency category (0%)",
+    "review.hpoaPresentVsZeroPercent": "Present patient finding overlaps a source frequency of 0%",
+    "review.hpoaPresentVsZeroOfN": "Present patient finding overlaps a cohort observation of zero among N individuals",
+    "review.hpoaZeroFrequencyCaveat": "Frequency observations are not the same as a source NOT assertion. Preserve the frequency format and denominator when assessing its evidence.",
+    "review.hpoaAbsentVsReported": "Patient finding marked absent overlaps a disease-annotated feature",
+    "review.hpoaPatientTerm": "Patient term",
+    "review.hpoaSourceTerm": "Source term",
+    "review.hpoaQualifier": "Source qualifier",
+    "review.hpoaComparisonReviewOnly": "Potential discrepancies are context for human review. They are not diagnostic conclusions, validated phenotype scores, or classification criteria.",
     "review.provenance": "Resource and query provenance",
     "review.resourceId": "Resource ID",
     "review.requestDigest": "Request SHA-256",
@@ -2084,6 +2114,21 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.hpoaOnset": "بداية الظهور",
     "review.hpoaSex": "السياق الجنسي",
     "review.hpoaReviewOnly": "تُعرض تأكيدات المصدر للمراجعة؛ وهي ليست درجة تشخيصية أو تصنيفًا معتمدًا.",
+    "review.hpoaPatientComparison": "سياق النمط الظاهري للمريض والمرض",
+    "review.hpoaPatientComparisonMethod": "طريقة المقارنة",
+    "review.hpoaOntologyRelease": "إصدار HPO المثبت",
+    "review.hpoaPresentVsNot": "تتداخل ملاحظة موجودة لدى المريض مع تأكيد NOT في المصدر",
+    "review.hpoaPresentVsZeroFrequency": "تتداخل ملاحظة موجودة لدى المريض مع رصد تواتر صفري في المصدر",
+    "review.hpoaPresentVsNotAndFrequency": "تتداخل ملاحظة موجودة لدى المريض مع تأكيد NOT وسياق التواتر",
+    "review.hpoaPresentVsHpoExcluded": "تتداخل ملاحظة موجودة لدى المريض مع فئة التواتر المستبعد في HPO (0٪)",
+    "review.hpoaPresentVsZeroPercent": "تتداخل ملاحظة موجودة لدى المريض مع تواتر مصدر مقداره 0٪",
+    "review.hpoaPresentVsZeroOfN": "تتداخل ملاحظة موجودة لدى المريض مع رصد صفر من N أفراد في مجموعة الدراسة",
+    "review.hpoaZeroFrequencyCaveat": "رصد التواتر ليس مثل تأكيد NOT. احتفظ بصيغة التواتر والمقام عند تقييم قوة الدليل.",
+    "review.hpoaAbsentVsReported": "تتداخل ملاحظة مصنفة كغائبة مع سمة موصوفة للمرض",
+    "review.hpoaPatientTerm": "مصطلح المريض",
+    "review.hpoaSourceTerm": "مصطلح المصدر",
+    "review.hpoaQualifier": "محدد المصدر",
+    "review.hpoaComparisonReviewOnly": "التباينات المحتملة سياق للمراجعة البشرية وليست استنتاجًا تشخيصيًا أو درجة ظاهرية معتمدة أو معيار تصنيف.",
     "review.provenance": "مصدر المورد والاستعلام",
     "review.resourceId": "معرّف المورد",
     "review.requestDigest": "SHA-256 للطلب",
