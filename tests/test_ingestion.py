@@ -37,6 +37,39 @@ def test_vcf_validation_reads_real_content(tmp_path: Path):
     assert result.detected_build == "GRCh38"
 
 
+def test_vcf_validation_excludes_reference_only_rows_and_reports_count(tmp_path: Path):
+    path = tmp_path / "mixed-reference-variant.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t99\t.\tA\t.\t.\tPASS\t.\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 1
+    assert any("1 reference-only" in warning and "ALT='.'" in warning for warning in result.warnings)
+
+
+def test_vcf_with_only_reference_rows_is_not_accepted_as_variant_analysis(tmp_path: Path):
+    path = tmp_path / "reference-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t99\t.\tA\t.\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert "cannot establish a negative clinical result" in result.errors[0]
+
+
 def test_vcf_upload_validation_rejects_explicit_specimen_sample_mismatch():
     result = ValidationResult(
         "VALID", "VCF", 1, ["OTHER_SAMPLE"], "GRCh38", [], []

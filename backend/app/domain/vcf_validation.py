@@ -309,8 +309,14 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
     if not DNA_RE.fullmatch(ref):
         raise StrictVCFValidationError(f"REF must contain only A/C/G/T/N for Phase 1 at line {line_no}", code="VCF_REF_INVALID")
 
-    alts = [a.upper() for a in alt.split(",")]
-    if not alt or any(
+    raw_alts = [a.upper() for a in alt.split(",")]
+    if not alt or ("." in raw_alts and raw_alts != ["."]):
+        raise StrictVCFValidationError(
+            f"ALT '.' must be the only allele when no alternate is present at line {line_no}",
+            code="VCF_ALT_INVALID",
+        )
+    alts = [] if raw_alts == ["."] else raw_alts
+    if any(
         not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and a != "*"
         for a in alts
     ):
@@ -393,6 +399,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     found_header = False
     records = 0
     multiallelic = 0
+    reference_only = 0
     symbolic = 0
     breakends = 0
     gvcf_markers = 0
@@ -488,6 +495,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            if not alts:
+                reference_only += 1
             if fields[2] != ".":
                 record_ids = fields[2].split(";")
                 if len(record_ids) != len(set(record_ids)):
@@ -697,6 +706,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     return {
         "fileformat": fileformat,
         "records": records,
+        "reference_only_records": reference_only,
         "multiallelic_records": multiallelic,
         "symbolic_records": symbolic,
         "breakend_records": breakends,

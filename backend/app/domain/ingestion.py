@@ -150,6 +150,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
 
         records = 0
         warnings: list[str] = []
+        reference_only_records = strict_profile["reference_only_records"]
         saw_multiallelic = False
         saw_symbolic = False
         saw_gvcf_marker = False
@@ -172,7 +173,17 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         for _ in parse_vcf(str(p)):
             records += 1
         if records == 0:
+            if reference_only_records:
+                raise VCFValidationError(
+                    "VCF contains no variant records: every row has ALT='.' (no alternate allele). "
+                    "This cannot establish a negative clinical result; review the upstream callset."
+                )
             raise VCFValidationError("VCF contains no variant records")
+        if reference_only_records:
+            warnings.append(
+                f"{reference_only_records} reference-only VCF record(s) with ALT='.' were retained "
+                "in the original file and excluded from variant analysis."
+            )
         if saw_multiallelic:
             warnings.append(
                 "Multiallelic records detected. SIRALOOM will split them with bcftools "

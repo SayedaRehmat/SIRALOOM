@@ -203,6 +203,7 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
         '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
         "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD\t0/0:30,0\n"
+        "1\t2\t.\tA\t.\t.\tPASS\t.\tGT\t0/0\n"
         "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD\t0/1:15,9,0\n"
         "1\t12\trs2\tA\tG,<NON_REF>\t50\tPASS\tDP=21\tGT:AD\t0/2:10,0,11\n",
         encoding="utf-8",
@@ -210,7 +211,8 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
 
     routed = route_vcf_records(source, tmp_path / "routed")
 
-    assert routed["records_total"] == 3
+    assert routed["records_total"] == 4
+    assert routed["reference_only_records"] == 1
     assert routed["sequence_records"] == 1
     assert routed["gvcf_reference_blocks"] == 1
     assert routed["gvcf_unresolved_variant_records"] == 1

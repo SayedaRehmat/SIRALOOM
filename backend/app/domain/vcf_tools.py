@@ -8,7 +8,6 @@ import tempfile
 from contextlib import ExitStack
 from pathlib import Path
 
-
 GVCF_WILDCARD_ALLELES = {"<NON_REF>", "<*>"}
 
 
@@ -37,6 +36,7 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
     headers: list[str] = []
     counts = {key: 0 for key in names}
+    counts["reference_only"] = 0
     handles = {}
     sample_count = 0
     with ExitStack() as stack:
@@ -62,6 +62,9 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
                 if len(fields) < 8:
                     raise VCFToolError("Cannot route malformed VCF record with fewer than 8 columns.")
                 alts = fields[4].split(",")
+                if alts == ["."]:
+                    counts["reference_only"] += 1
+                    continue
                 wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
                 if any(alt == "*" for alt in alts):
                     emit("spanning_deletions", line)
@@ -112,6 +115,7 @@ def route_vcf_records(input_path: str | Path, output_dir: str | Path) -> dict:
         "routing_version": "1",
         "records_total": sum(counts.values()),
         "sequence_records": counts["sequence"],
+        "reference_only_records": counts["reference_only"],
         "gvcf_reference_blocks": counts["gvcf_blocks"],
         "gvcf_unresolved_variant_records": counts["gvcf_unresolved"],
         "structural_variant_records": counts["structural"],

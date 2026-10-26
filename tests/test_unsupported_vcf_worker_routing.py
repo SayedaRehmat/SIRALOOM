@@ -151,6 +151,16 @@ def _vcf(columns: str, records: str, *, headers: str = "") -> str:
             "gvcf_unresolved_variant_records",
             "GVCF_VARIANT_ALLELE_UNRESOLVED",
         ),
+        (
+            "reference-only.vcf",
+            _vcf(
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+                "1\t5\tref1\tA\t.\t.\tPASS\t.\n",
+            ),
+            None,
+            "reference_only_records",
+            "NO_VARIANT_ALLELES_PROVIDED",
+        ),
     ],
 )
 def test_production_worker_preserves_valid_non_sequence_records_for_review(
@@ -234,29 +244,37 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
             assert normalization.error_code == "NO_SEQUENCE_VARIANTS_TO_NORMALIZE"
             assert normalization.metadata_json["review_reason_codes"] == [review_reason_code]
             assert normalization.metadata_json["routing"][count_key] > 0
-            assert routed is not None
-            assert routed.metadata_json["source_artifact_id"] == str(source_row.id)
-            assert routed.metadata_json["source_sha256"] == source_sha256
-            assert routed.metadata_json["record_count"] == normalization.metadata_json["routing"][count_key]
-            assert routed.metadata_json["interpretation_status"] == "NOT_ANALYZED"
-            assert routed.metadata_json["review_status"] == "REQUIRES_SPECIALIZED_REVIEW"
-            assert routed.metadata_json["review_reason_code"] == review_reason_code
-            assert routed.metadata_json["reference_validation_status"] == "NOT_RUN"
-            assert routed.metadata_json["reference_validation_reason_code"] == (
-                "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION"
-            )
+            if artifact_type is None:
+                assert routed is None
+                assert normalization.metadata_json["next_step"] == "UPSTREAM_VARIANT_CALLSET_REVIEW"
+                assert "not a negative clinical result" in normalization.error_message
+                assert event.output_artifacts == []
+            else:
+                assert routed is not None
+                assert routed.metadata_json["source_artifact_id"] == str(source_row.id)
+                assert routed.metadata_json["source_sha256"] == source_sha256
+                assert routed.metadata_json["record_count"] == normalization.metadata_json["routing"][count_key]
+                assert routed.metadata_json["interpretation_status"] == "NOT_ANALYZED"
+                assert routed.metadata_json["review_status"] == "REQUIRES_SPECIALIZED_REVIEW"
+                assert routed.metadata_json["review_reason_code"] == review_reason_code
+                assert routed.metadata_json["reference_validation_status"] == "NOT_RUN"
+                assert routed.metadata_json["reference_validation_reason_code"] == (
+                    "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION"
+                )
             assert store.exists(source_row.storage_uri)
-            assert store.exists(routed.storage_uri)
-            routed_bytes = store.read_bytes(routed.storage_uri)
-            assert sha256(routed_bytes).hexdigest() == routed.sha256
-            routed_records = [line for line in routed_bytes.decode("utf-8").splitlines() if line and not line.startswith("#")]
             source_records = [line for line in vcf.splitlines() if line and not line.startswith("#")]
-            assert routed_records == source_records
             assert source_row.sha256 == source_sha256
             assert sha256(store.read_bytes(source_row.storage_uri)).hexdigest() == source_sha256
+            if routed is not None:
+                assert store.exists(routed.storage_uri)
+                routed_bytes = store.read_bytes(routed.storage_uri)
+                assert sha256(routed_bytes).hexdigest() == routed.sha256
+                routed_records = [line for line in routed_bytes.decode("utf-8").splitlines() if line and not line.startswith("#")]
+                assert routed_records == source_records
             assert event.payload["routing"][count_key] > 0
             assert event.payload["review_reason_codes"] == [review_reason_code]
-            assert event.output_artifacts[0]["artifact_id"] == str(routed.id)
+            if routed is not None:
+                assert event.output_artifacts[0]["artifact_id"] == str(routed.id)
             assert db.scalar(select(Artifact).where(
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "NORMALIZED_VCF",

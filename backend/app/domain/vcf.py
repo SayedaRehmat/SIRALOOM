@@ -1,8 +1,10 @@
-from dataclasses import dataclass, field
-from typing import Iterator
 import gzip
 import re
+from dataclasses import dataclass, field
+from typing import Iterator
+
 from backend.app.domain.schemas import CanonicalVariant
+
 
 @dataclass(frozen=True)
 class VCFRecord:
@@ -57,6 +59,12 @@ def parse_vcf(path: str) -> Iterator[VCFRecord]:
                 raise VCFValidationError(f"Invalid REF/ALT allele syntax at line {line_no}")
             if not ref or not alt:
                 raise VCFValidationError(f"REF/ALT missing at line {line_no}")
+            if alt == ".":
+                continue
+            if "." in alt.split(","):
+                raise VCFValidationError(
+                    f"ALT '.' cannot be combined with alternate alleles at line {line_no}"
+                )
             sample_calls: dict[str, dict] = {}
             if len(fields) > 8 and sample_names:
                 format_keys = [] if fields[8] in {"", "."} else fields[8].split(":")

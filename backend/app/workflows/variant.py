@@ -1608,22 +1608,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "NOT_RUN",
                         "NO_SEQUENCE_VARIANTS_ELIGIBLE_FOR_REFERENCE_NORMALIZATION",
                     )
-                    reason = (
-                        "The source contains only preserved GVCF reference blocks and/or records requiring a "
-                        "GVCF/SV-aware review path; no sequence-resolved variant records were eligible for "
-                        "ordinary normalization. Original records are retained in the source artifact and "
-                        "routed artifacts."
-                    )
-                    routed_count = (
+                    specialized_review_count = (
                         routing["gvcf_reference_blocks"]
                         + routing["gvcf_unresolved_variant_records"]
                         + routing["structural_variant_records"]
                         + routing["spanning_deletion_records"]
                     )
-                    review_reason_codes = sorted({
-                        item.metadata_json["review_reason_code"]
-                        for item in routed_artifacts
-                    })
+                    routed_count = specialized_review_count + routing["reference_only_records"]
+                    if specialized_review_count:
+                        reason = (
+                            "The source contains preserved GVCF/SV records requiring a specialized review path; "
+                            "no sequence-resolved variant records were eligible for ordinary normalization. "
+                            "Original records remain in the source artifact and routed artifacts."
+                        )
+                        if routing["reference_only_records"]:
+                            reason += (
+                                f" {routing['reference_only_records']} reference-only ALT='.' record(s) "
+                                "were retained in the source and excluded from variant analysis."
+                            )
+                        next_step = "GVCF_OR_STRUCTURAL_VARIANT_REVIEW"
+                        review_reason_codes = sorted({
+                            item.metadata_json["review_reason_code"]
+                            for item in routed_artifacts
+                        })
+                        if routing["reference_only_records"]:
+                            review_reason_codes.append("REFERENCE_ONLY_RECORDS_EXCLUDED")
+                    else:
+                        reason = (
+                            "The source contains no alternate alleles (all records have ALT='.'). "
+                            "This is not a negative clinical result. Review the upstream callset and analysis "
+                            "scope; the original VCF remains preserved."
+                        )
+                        next_step = "UPSTREAM_VARIANT_CALLSET_REVIEW"
+                        review_reason_codes = ["NO_VARIANT_ALLELES_PROVIDED"]
                     mark_step(
                         db,
                         normalization_step,
@@ -1631,7 +1648,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         error_code="NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
                         error_message=reason,
                         metadata={
-                            "next_step": "GVCF_OR_STRUCTURAL_VARIANT_REVIEW",
+                            "next_step": next_step,
                             "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
                             "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
                             "review_reason_codes": review_reason_codes,

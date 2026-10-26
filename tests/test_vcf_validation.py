@@ -43,6 +43,26 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["reference_contig_policy"] == "EXACT"
 
 
+def test_strict_validation_accepts_vcf_reference_only_alt_dot_record(tmp_path: Path):
+    path = tmp_path / "reference-only.vcf"
+    write_vcf(path, "1\t2\t.\tA\t.\t.\tPASS\t.\n")
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert profile["reference_only_records"] == 1
+
+
+def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: Path):
+    path = tmp_path / "mixed-missing-alt.vcf"
+    write_vcf(path, "1\t2\t.\tA\t.,G\t.\tPASS\t.\n")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_ALT_INVALID"
+
+
 @pytest.mark.parametrize(
     ("body", "code"),
     [
