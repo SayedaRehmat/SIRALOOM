@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 
 from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
@@ -7,7 +9,7 @@ from backend.app.domain.resource_source_contract import ResourceExecutionContrac
 from backend.app.domain.schemas import CanonicalVariant
 
 
-def _contract(*, access_method="LOCAL", toolchain=None):
+def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep"):
     return ResourceExecutionContract(
         provider_id="VEP",
         provider_version="115",
@@ -17,7 +19,7 @@ def _contract(*, access_method="LOCAL", toolchain=None):
         dataset="vep-cache",
         execution_scope="ORGANIZATION_MANAGED",
         toolchain=toolchain if toolchain is not None else {
-            "vep_binary": "/opt/vep/vep",
+            "vep_binary": vep_binary,
             "cache_dir": "/resources/vep/115",
             "cache_version": "115",
             "assembly": "GRCh38",
@@ -59,9 +61,31 @@ def test_vep_provider_rejects_extra_args_that_override_governed_paths():
         "vep_binary": "/opt/vep/vep",
         "cache_dir": "/resources/vep/115",
         "cache_version": "115",
+        "assembly": "GRCh38",
         "extra_args": ["--input_file=/tmp/unapproved.vcf"],
     }
     with pytest.raises(VEPProviderError, match="may not override governed"):
+        VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("vep_binary", "vep", "absolute vep_binary"),
+        ("cache_dir", "vep-cache", "absolute cache_dir"),
+        ("assembly", "", "pin assembly"),
+    ],
+)
+def test_vep_requires_absolute_paths_and_explicit_assembly(field, value, message):
+    toolchain = {
+        "vep_binary": "/opt/vep/vep",
+        "cache_dir": "/resources/vep/115",
+        "cache_version": "115",
+        "assembly": "GRCh38",
+    }
+    toolchain[field] = value
+
+    with pytest.raises(VEPProviderError, match=message):
         VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
 
 
@@ -146,3 +170,125 @@ def test_vep_rejects_malformed_transcript_consequence_response():
 
     with pytest.raises(VEPProviderError, match="list of objects"):
         provider.validate_response(result)
+
+
+def test_vep_annotation_verifies_pinned_binary_and_offline_cache(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    provider = VEPProvider.from_execution_contract(_contract(vep_binary=str(binary)))
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
+        return SimpleNamespace(
+            returncode=0,
+            stdout="Cache version 115; species homo_sapiens; assembly GRCh38",
+            stderr="",
+        )
+
+    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        provider,
+        "execute",
+        lambda request: ProviderRawResult(
+            "annotate",
+            [{
+                "start": 100,
+                "seq_region_name": "1",
+                "allele_string": "A/G",
+                "transcript_consequences": [{"transcript_id": "ENST1", "canonical": 1}],
+            }],
+            "fixture-response-digest",
+            {},
+        ),
+    )
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+
+    output = provider.annotate([variant], {"genome": "hg38"})
+
+    assert len(calls) == 2
+    assert "--offline" in calls[1]
+    assert "--cache" in calls[1]
+    assert calls[1][calls[1].index("--assembly") + 1] == "GRCh38"
+    assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["status"] == "VERIFIED"
+    assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["vep_version"] == "115.2"
+    assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["vep_binary_sha256"]
+
+
+def test_vep_rejects_binary_release_mismatch_before_loading_cache(monkeypatch):
+    provider = VEPProvider.from_execution_contract(_contract())
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        return SimpleNamespace(returncode=0, stdout="ensembl-vep 114.9", stderr="")
+
+    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.run", fake_run)
+
+    with pytest.raises(VEPProviderError, match="does not match governed release"):
+        provider.verify_local_runtime("GRCh38")
+
+    assert len(calls) == 1
+
+
+def test_vep_honors_full_binary_patch_version_when_configured(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain = {
+        "vep_binary": str(binary),
+        "cache_dir": "/resources/vep/115",
+        "cache_version": "115",
+        "vep_version": "115.1",
+        "assembly": "GRCh38",
+    }
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
+
+    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.run", fake_run)
+
+    with pytest.raises(VEPProviderError, match="does not match governed release"):
+        provider.verify_local_runtime("GRCh38")
+
+    assert len(calls) == 1
+
+
+def test_vep_blocks_when_offline_cache_cannot_be_loaded(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    provider = VEPProvider.from_execution_contract(_contract(vep_binary=str(binary)))
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
+        return SimpleNamespace(returncode=1, stdout="cache release missing", stderr="")
+
+    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.run", fake_run)
+
+    with pytest.raises(VEPProviderError, match="could not load the governed cache offline"):
+        provider.verify_local_runtime("GRCh38")
+
+    assert len(calls) == 2
+
+
+def test_vep_rejects_analysis_assembly_different_from_resource_assembly(monkeypatch):
+    provider = VEPProvider.from_execution_contract(_contract())
+    calls = []
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.run",
+        lambda *args, **kwargs: calls.append(args),
+    )
+
+    with pytest.raises(VEPProviderError, match="does not match analysis assembly"):
+        provider.verify_local_runtime("GRCh37")
+
+    assert calls == []

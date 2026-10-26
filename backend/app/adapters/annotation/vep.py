@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import signal
 import subprocess
 import tempfile
@@ -54,6 +55,7 @@ class VEPProvider(ScientificResourceProvider):
         self.cache_version = str(toolchain.get("cache_version") or "").strip()
         self.assembly = str(toolchain.get("assembly") or "").strip()
         self.extra_args = [str(x) for x in (toolchain.get("extra_args") or [])]
+        self._runtime_checks: dict[str, dict[str, Any]] = {}
         self._validate_toolchain()
 
     @classmethod
@@ -75,8 +77,17 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError(
                 "VEP execution contract must declare cache_version so the tool/cache pairing is explicit."
             )
+        if not Path(self.binary).is_absolute():
+            raise VEPProviderError("VEP execution contract must declare an absolute vep_binary path.")
+        if not Path(self.cache_dir).is_absolute():
+            raise VEPProviderError("VEP execution contract must declare an absolute cache_dir path.")
+        if _canonical_assembly(self.assembly) is None:
+            raise VEPProviderError("VEP execution contract must pin assembly to GRCh37 or GRCh38.")
         if self.extra_args:
-            forbidden = {"--input_file", "-i", "--output_file", "-o", "--cache_version", "--dir_cache"}
+            forbidden = {
+                "--input_file", "-i", "--output_file", "-o", "--cache_version",
+                "--dir_cache", "--cache", "--offline", "--species", "--assembly", "--fasta",
+            }
             if any(arg.split("=", 1)[0] in forbidden for arg in self.extra_args):
                 raise VEPProviderError(
                     "VEP extra_args may not override governed input/output/cache arguments."
@@ -104,7 +115,9 @@ class VEPProvider(ScientificResourceProvider):
 
     def execute(self, request: ProviderRequest) -> ProviderRawResult:
         variants = request.payload["variants"]
-        build = str(request.payload.get("genome_build") or self.assembly or "GRCh38").upper()
+        build = _canonical_assembly(request.payload.get("genome_build") or self.assembly)
+        if not build:
+            raise VEPProviderError("VEP execution requires an explicit GRCh37/GRCh38 assembly.")
         with tempfile.TemporaryDirectory(prefix="siraloom-vep-") as tmp:
             input_vcf = Path(tmp) / "input.vcf"
             output_json = Path(tmp) / "output.json"
@@ -133,8 +146,7 @@ class VEPProvider(ScientificResourceProvider):
                 "--input_file", str(input_vcf),
                 "--output_file", str(output_json),
             ]
-            if self.assembly:
-                cmd.extend(["--assembly", self.assembly])
+            cmd.extend(["--assembly", build])
             if self.fasta:
                 cmd.extend(["--fasta", self.fasta])
             cmd.extend(self.extra_args)
@@ -270,6 +282,7 @@ class VEPProvider(ScientificResourceProvider):
                     "response_sha256": result.response_sha256,
                     "assembly": inputs.get("genome_build"),
                     "cache_version": self.cache_version,
+                    "runtime_check": result.metadata.get("runtime_check"),
                 },
             })
 
@@ -319,10 +332,162 @@ class VEPProvider(ScientificResourceProvider):
         )
 
     def annotate(self, variants: list[CanonicalVariant], context: dict[str, Any]) -> list[dict[str, Any]]:
+        genome_build = _canonical_assembly(context.get("genome_build") or context.get("genome"))
+        if not genome_build:
+            raise VEPProviderError("VEP annotation requires an explicit GRCh37/GRCh38 assembly.")
+        runtime_check = self.verify_local_runtime(genome_build)
         request = self.prepare_request(
             "annotate",
             {"variants": variants, "genome_build": context.get("genome_build") or context.get("genome")},
         )
         raw = self.execute(request)
+        raw.metadata["runtime_check"] = runtime_check
         normalized = self.normalize_result(raw, inputs=request.payload)
         return list(normalized.observations)
+
+    def verify_local_runtime(self, genome_build: str | None) -> dict[str, Any]:
+        """Verify the configured VEP binary and cache before scientific execution.
+
+        This check is intentionally performed by the real annotation entry point,
+        not inferred from a registered path or a resource's declared version.
+        """
+        assembly = _canonical_assembly(genome_build or self.assembly)
+        if not assembly:
+            raise VEPProviderError("VEP runtime verification requires an explicit GRCh37/GRCh38 assembly.")
+        if assembly not in self.supported_builds:
+            raise VEPProviderError(f"VEP does not support assembly {assembly!r}.")
+        configured_assembly = _canonical_assembly(self.assembly)
+        if configured_assembly and configured_assembly != assembly:
+            raise VEPProviderError(
+                f"VEP resource assembly {configured_assembly} does not match analysis assembly {assembly}."
+            )
+        if assembly in self._runtime_checks:
+            return dict(self._runtime_checks[assembly])
+
+        try:
+            version_result = subprocess.run(
+                [self.binary, "--version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise VEPProviderError("VEP version check timed out.", retryable=True) from exc
+        except OSError as exc:
+            raise VEPProviderError(f"VEP executable is unavailable: {self.binary}") from exc
+        if version_result.returncode != 0:
+            raise VEPProviderError(
+                "VEP version check failed: "
+                + (version_result.stderr or version_result.stdout or "no diagnostic").strip()[-2000:]
+            )
+        version_output = "\n".join((version_result.stdout or "", version_result.stderr or "")).strip()
+        actual_version = _extract_vep_version(version_output)
+        expected_version = str(
+            (self.contract.toolchain or {}).get("vep_version")
+            or self.contract.provider_version
+        ).strip()
+        expected_release = _version_release(expected_version)
+        if expected_release is None:
+            raise VEPProviderError(
+                "VEP execution contract must pin a parseable tool version in provider_version or toolchain.vep_version."
+            )
+        if actual_version is None:
+            raise VEPProviderError("VEP --version returned output without a parseable release version.")
+        expected_full_version = _extract_vep_version(expected_version)
+        version_matches = (
+            actual_version == expected_full_version
+            if expected_full_version and "." in expected_full_version
+            else _version_release(actual_version) == expected_release
+        )
+        if not version_matches:
+            raise VEPProviderError(
+                f"VEP binary release {actual_version} does not match governed release {expected_version}."
+            )
+
+        cache_command = [
+            self.binary,
+            "--offline",
+            "--cache",
+            "--species",
+            self.species,
+            "--cache_version",
+            self.cache_version,
+            "--dir_cache",
+            self.cache_dir,
+            "--assembly",
+            assembly,
+            "--show_cache_info",
+            *self.extra_args,
+        ]
+        try:
+            cache_result = subprocess.run(
+                cache_command,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise VEPProviderError(
+                "VEP offline cache verification timed out.", retryable=True
+            ) from exc
+        except OSError as exc:
+            raise VEPProviderError(f"VEP cache verification could not start: {self.binary}") from exc
+        cache_output = "\n".join((cache_result.stdout or "", cache_result.stderr or "")).strip()
+        if cache_result.returncode != 0 or not cache_output:
+            raise VEPProviderError(
+                "VEP could not load the governed cache offline: "
+                + (cache_output or "no cache information was returned")[-2000:]
+            )
+        try:
+            binary_sha256 = _sha256_file(Path(self.binary))
+        except OSError as exc:
+            raise VEPProviderError("VEP binary could not be checksummed after runtime verification.") from exc
+
+        runtime_check = {
+            "status": "VERIFIED",
+            "assembly": assembly,
+            "vep_version": actual_version,
+            "expected_vep_version": expected_version,
+            "cache_version": self.cache_version,
+            "vep_binary_sha256": binary_sha256,
+            "cache_info_sha256": hashlib.sha256(cache_output.encode("utf-8")).hexdigest(),
+            "verified_at": datetime.now(timezone.utc).isoformat(),
+        }
+        self._runtime_checks[assembly] = runtime_check
+        return dict(runtime_check)
+
+
+def _canonical_assembly(value: str | None) -> str | None:
+    normalized = str(value or "").strip().casefold()
+    if normalized in {"grch37", "hg19"}:
+        return "GRCh37"
+    if normalized in {"grch38", "hg38"}:
+        return "GRCh38"
+    return None
+
+
+def _extract_vep_version(value: str) -> str | None:
+    match = re.search(
+        r"(?:ensembl[- ]vep|\bvep)(?:\s+version)?\s*[/=:v-]?\s*(\d+(?:\.\d+)*)",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if match:
+        return match.group(1)
+    match = re.search(r"\b(\d+(?:\.\d+)*)\b", value)
+    return match.group(1) if match else None
+
+
+def _version_release(value: str) -> str | None:
+    match = re.search(r"\d+", value)
+    return match.group(0) if match else None
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
