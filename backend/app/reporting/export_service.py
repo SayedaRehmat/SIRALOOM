@@ -15,6 +15,10 @@ from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
     has_valid_signed_artifact,
 )
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    artifact_store_for_uri,
+)
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -188,7 +192,17 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
             for artifact in artifacts:
                 target = artifacts_root / f"{artifact.id}-{artifact.filename}"
                 target.parent.mkdir(parents=True, exist_ok=True)
-                download_to_file = getattr(store, "download_to_file", None)
+                try:
+                    source_store = artifact_store_for_uri(
+                        db,
+                        organization_id=case.organization_id,
+                        storage_uri=artifact.storage_uri,
+                    )
+                except StorageProfileError as exc:
+                    raise CaseExportError(
+                        "Case contains an artifact whose approved storage target is unavailable"
+                    ) from exc
+                download_to_file = getattr(source_store, "download_to_file", None)
                 if callable(download_to_file):
                     download_to_file(
                         artifact.storage_uri,
@@ -197,7 +211,7 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
                         expected_size_bytes=artifact.size_bytes,
                     )
                 else:
-                    source = store.local_path(artifact.storage_uri)
+                    source = source_store.local_path(artifact.storage_uri)
                     verify_artifact_file(
                         source,
                         sha256=artifact.sha256,

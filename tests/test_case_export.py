@@ -94,7 +94,7 @@ def _case_export_fixture(*, include_artifacts=True):
     return db, case, export
 
 
-def test_case_export_verifies_local_artifact_bytes_before_packaging(tmp_path):
+def test_case_export_verifies_local_artifact_bytes_before_packaging(tmp_path, monkeypatch):
     db, case, export = _case_export_fixture()
     store = ArtifactStore(str(tmp_path / "store"))
     source = tmp_path / "input.vcf"
@@ -105,6 +105,13 @@ def test_case_export_verifies_local_artifact_bytes_before_packaging(tmp_path):
         genome_build="GRCh38", artifact_id=uuid4(),
     )
     stored_file = store.local_path(stored.storage_uri)
+    from backend.app.reporting import export_service
+
+    monkeypatch.setattr(
+        export_service,
+        "artifact_store_for_uri",
+        lambda db, *, organization_id, storage_uri: store,
+    )
 
     package = build_case_export(db, export=export, store=store)
     with zipfile.ZipFile(store.local_path(package.storage_uri)) as archive:
@@ -115,7 +122,7 @@ def test_case_export_verifies_local_artifact_bytes_before_packaging(tmp_path):
         build_case_export(db, export=export, store=store)
 
 
-def test_case_export_downloads_and_verifies_cloud_artifacts(tmp_path):
+def test_case_export_downloads_and_verifies_cloud_artifacts(tmp_path, monkeypatch):
     db, case, export = _case_export_fixture()
     content = b"cloud input"
     artifact = Artifact(
@@ -149,9 +156,82 @@ def test_case_export_downloads_and_verifies_cloud_artifacts(tmp_path):
             )
 
     cloud_store = CloudStore()
+    from backend.app.reporting import export_service
+
+    monkeypatch.setattr(
+        export_service,
+        "artifact_store_for_uri",
+        lambda db, *, organization_id, storage_uri: cloud_store,
+    )
     build_case_export(db, export=export, store=cloud_store)
     with zipfile.ZipFile(cloud_store.package_path) as archive:
         assert archive.read(f"artifacts/{artifact.id}-{artifact.filename}") == content
+
+
+def test_case_export_resolves_each_historical_artifact_for_its_case_organization(
+    tmp_path, monkeypatch
+):
+    db, case, export = _case_export_fixture()
+    source_store = ArtifactStore(str(tmp_path / "historical"))
+    destination_store = ArtifactStore(str(tmp_path / "current"))
+    source = tmp_path / "historical.vcf"
+    source.write_bytes(b"historical source")
+    stored = source_store.put_file(
+        db=db,
+        case_id=case.id,
+        analysis_id=None,
+        source_path=source,
+        filename=source.name,
+        artifact_type="VCF",
+        media_type="text/plain",
+        genome_build="GRCh38",
+        artifact_id=uuid4(),
+    )
+    from backend.app.reporting import export_service
+
+    calls = []
+
+    def resolve(db_arg, *, organization_id, storage_uri):
+        calls.append((organization_id, storage_uri))
+        return source_store
+
+    monkeypatch.setattr(export_service, "artifact_store_for_uri", resolve)
+    package = build_case_export(db, export=export, store=destination_store)
+
+    assert calls == [(case.organization_id, stored.storage_uri)]
+    with zipfile.ZipFile(destination_store.local_path(package.storage_uri)) as archive:
+        assert archive.read(f"artifacts/{stored.id}-{stored.filename}") == b"historical source"
+
+
+def test_case_export_fails_closed_when_historical_storage_is_unassigned(
+    tmp_path, monkeypatch
+):
+    from backend.app.domain.storage_profiles import StorageProfileError
+    from backend.app.reporting import export_service
+
+    db, case, export = _case_export_fixture()
+    source = tmp_path / "unassigned.vcf"
+    source.write_bytes(b"not readable")
+    ArtifactStore(str(tmp_path / "unassigned-store")).put_file(
+        db=db,
+        case_id=case.id,
+        analysis_id=None,
+        source_path=source,
+        filename=source.name,
+        artifact_type="VCF",
+        media_type="text/plain",
+        genome_build="GRCh38",
+        artifact_id=uuid4(),
+    )
+    monkeypatch.setattr(
+        export_service,
+        "artifact_store_for_uri",
+        lambda *args, **kwargs: (_ for _ in ()).throw(StorageProfileError("private path")),
+    )
+
+    with pytest.raises(CaseExportError, match="approved storage target is unavailable") as error:
+        build_case_export(db, export=export, store=ArtifactStore(str(tmp_path / "destination")))
+    assert "private path" not in str(error.value)
 
 
 def test_case_export_rejects_artifact_linked_to_another_cases_analysis(tmp_path):
