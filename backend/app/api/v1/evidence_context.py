@@ -9,12 +9,13 @@ from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
     get_accessible_analysis,
     get_analysis_variant,
+    require_case_permission,
     require_role,
 )
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.evidence import evidence_fingerprint
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Annotation, Evidence
+from backend.app.infrastructure.db.models import Analysis, Annotation, Case, Evidence
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["evidence-context"])
@@ -26,11 +27,25 @@ class ContextEvidenceRequest(BaseModel):
     payload: dict = Field(default_factory=dict)
     direction: str = "NEUTRAL"
 
+
+def _lock_analysis_for_evidence(db: Session, analysis_id: UUID, principal: Principal):
+    """Serialize report-contributing evidence writes against report sign-out."""
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    db.refresh(analysis, with_for_update=True)
+    case = db.get(Case, analysis.case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    require_case_permission(case, principal, db, "write")
+    return analysis
+
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/context-evidence", status_code=201)
 def add_context_evidence(analysis_id: UUID, variant_id: UUID, body: ContextEvidenceRequest, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     analysis = get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
     get_analysis_variant(analysis, variant_id, db)
+    analysis = _lock_analysis_for_evidence(db, analysis_id, principal)
     ann = db.scalar(select(Annotation).where(Annotation.analysis_id == analysis_id, Annotation.variant_id == variant_id))
     if not ann: raise HTTPException(404, "Variant annotation not found in analysis")
     typ = body.evidence_type.upper()
