@@ -25,8 +25,24 @@ class FirebaseArtifactStore:
     The Firebase Admin SDK uses the configured Firebase credentials and bucket.
     """
 
-    def __init__(self, bucket_name: str | None = None) -> None:
+    def __init__(
+        self,
+        bucket_name: str | None = None,
+        *,
+        credentials_path: str | None = None,
+        project_id: str | None = None,
+        app_name: str | None = None,
+        inherit_global_credentials: bool = True,
+    ) -> None:
         self.bucket_name = bucket_name or settings.firebase_storage_bucket
+        self.credentials_path = (
+            credentials_path
+            if credentials_path is not None
+            else (settings.firebase_credentials_path if inherit_global_credentials else None)
+        )
+        self.project_id = project_id or settings.firebase_project_id
+        self.app_name = app_name
+        self.inherit_global_credentials = inherit_global_credentials
 
         if not self.bucket_name:
             raise RuntimeError(
@@ -41,52 +57,51 @@ class FirebaseArtifactStore:
         if self._bucket is not None:
             return self._bucket
 
-        self._initialize_firebase()
+        app = self._initialize_firebase()
 
         from firebase_admin import storage
 
-        self._bucket = storage.bucket(self.bucket_name)
+        self._bucket = storage.bucket(self.bucket_name, app=app)
         return self._bucket
 
-    @staticmethod
-    def _initialize_firebase() -> None:
+    def _initialize_firebase(self):
         import firebase_admin
         from firebase_admin import credentials
 
         try:
-            firebase_admin.get_app()
-            return
+            return (
+                firebase_admin.get_app(self.app_name) if self.app_name else firebase_admin.get_app()
+            )
         except ValueError:
             pass
 
-        credentials_path = settings.firebase_credentials_path
-
-        if credentials_path:
-            path = Path(credentials_path)
-
+        credential = None
+        if self.credentials_path:
+            path = Path(self.credentials_path)
             if not path.is_file():
-                raise RuntimeError(
-                    f"Firebase credentials file does not exist: {path}"
-                )
+                raise RuntimeError(f"Firebase credentials file does not exist: {path}")
+            credential = credentials.Certificate(str(path))
+        elif self.app_name:
+            credential = credentials.ApplicationDefault()
 
-            cred = credentials.Certificate(str(path))
-
-            firebase_admin.initialize_app(
-                cred,
-                {
-                    "projectId": settings.firebase_project_id,
-                    "storageBucket": settings.firebase_storage_bucket,
-                },
+        options = {
+            key: value
+            for key, value in {
+                "projectId": self.project_id,
+                "storageBucket": self.bucket_name,
+            }.items()
+            if value
+        }
+        try:
+            if self.app_name:
+                return firebase_admin.initialize_app(credential, options, name=self.app_name)
+            return firebase_admin.initialize_app(credential, options)
+        except ValueError:
+            # Another thread in this worker may have initialized the same named
+            # deployment target concurrently.
+            return (
+                firebase_admin.get_app(self.app_name) if self.app_name else firebase_admin.get_app()
             )
-            return
-
-        # Fall back to Application Default Credentials.
-        firebase_admin.initialize_app(
-            options={
-                "projectId": settings.firebase_project_id,
-                "storageBucket": settings.firebase_storage_bucket,
-            }
-        )
 
     @staticmethod
     def _safe_filename(filename: str) -> str:

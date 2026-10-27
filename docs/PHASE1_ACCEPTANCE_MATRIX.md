@@ -394,6 +394,16 @@ Linux command `.venv/bin/python -m pytest tests/test_storage_profiles.py tests/t
 
 Limitations: no actual two-laboratory deployment, mounted independent roots, Firebase bucket credentials, cross-tenant live download attempt, backup/restore, or concurrent PostgreSQL target-activation test was run. The current Firebase adapter uses a deployment-level service identity; independently scoped credentials per organization are not implemented. Deployment configuration mapping is security-sensitive and must be applied consistently to API and workers. CI success is not laboratory storage qualification. Laboratory deployment and overall Phase A remain **PARTIAL**.
 
+### 2026-10-27 Firebase target credential separation
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Cloud storage target can use a deployment-owned bucket, project ID and separate credential file without storing service-account material in the database | PASS (mocked Admin SDK initialization and workflow-adapter scope) | Target profile stores only `target_id`; deployment configuration supplies bucket/project/credential-file path. Firebase Storage uses a uniquely named Admin app per target and binds `storage.bucket(..., app=...)` to it. If no credential file is set, ADC is used without inheriting Firebase Auth's service-account file. |
+| Named storage apps coexist with Firebase Auth's default app | PASS (deterministic regression scope) | Auth explicitly checks/initializes the default Firebase Admin app even if named storage apps already exist. |
+| Live storage IAM, cross-lab cloud isolation, and deployed Compose credential mounting | NOT RUN | No real Firebase credentials/projects or Docker deployment are available in this environment. The project still allows shared ADC when a per-target credential file is omitted; separate least-privilege lab credentials must be configured and live-qualified. |
+
+Official Firebase Admin documentation and version caveats are recorded in the engineering ledger. The full backend suite before the final app-name fallback refinement passed **1,465 tests, 48 skipped**; focused tests on the final code passed **57, 1 skipped**. Exact-SHA CI, real cloud qualification, and deployment tests remain pending. Phase A and laboratory deployment remain **PARTIAL**.
+
 ## 2026-10-27 include telomere sentinels in report/sign-out blocking
 
 | Requirement | Status | Evidence / limitation |

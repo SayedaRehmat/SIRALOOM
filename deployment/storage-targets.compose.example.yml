@@ -1,0 +1,16 @@
+# Optional Docker Compose override for a cloud storage target.
+# Add one top-level secret and attach it to both API and worker services for
+# each independently credentialed laboratory bucket.
+services:
+  api:
+    secrets:
+      - source: lab_c_storage_credentials
+        target: lab-c-storage-service-account.json
+  worker:
+    secrets:
+      - source: lab_c_storage_credentials
+        target: lab-c-storage-service-account.json
+
+secrets:
+  lab_c_storage_credentials:
+    file: ${LAB_C_STORAGE_CREDENTIALS_HOST_PATH:?Set the lab C service-account file path}

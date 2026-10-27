@@ -26,6 +26,7 @@ def _firebase_admin_stub(monkeypatch, verify_id_token):
 
     fake = ModuleType("firebase_admin")
     fake._apps = [object()]
+    fake.get_app = lambda *_args, **_kwargs: fake._apps[0]
     fake.auth = SimpleNamespace(
         InvalidIdTokenError=InvalidIdTokenError,
         UserDisabledError=UserDisabledError,
@@ -69,6 +70,45 @@ def test_firebase_verification_service_errors_are_unavailable(monkeypatch, error
         principal._verify_firebase_token("valid-token")
 
     assert error.value.status_code == 503
+
+
+def test_named_storage_app_does_not_suppress_default_firebase_auth_initialization(monkeypatch):
+    default_app = None
+    named_app = object()
+    fake = ModuleType("firebase_admin")
+    fake._apps = {"siraloom-storage-lab": named_app}
+
+    def get_app(name="[DEFAULT]"):
+        if name == "[DEFAULT]" and default_app is not None:
+            return default_app
+        if name == "siraloom-storage-lab":
+            return named_app
+        raise ValueError("Firebase app is not initialized")
+
+    def initialize_app(credential, options):
+        nonlocal default_app
+        default_app = SimpleNamespace(credential=credential, options=options)
+        return default_app
+
+    def verify_id_token(_token, check_revoked):
+        assert check_revoked is True
+        assert default_app is not None
+        return {"uid": "lab-user"}
+
+    fake.get_app = get_app
+    fake.initialize_app = initialize_app
+    fake.auth = SimpleNamespace(verify_id_token=verify_id_token)
+    fake.credentials = SimpleNamespace(
+        Certificate=lambda path: ("certificate", path),
+        ApplicationDefault=lambda: "application-default",
+    )
+    fake.exceptions = SimpleNamespace(FirebaseError=Exception)
+    monkeypatch.setitem(sys.modules, "firebase_admin", fake)
+
+    decoded = principal._verify_firebase_token("test-token")
+
+    assert decoded == {"uid": "lab-user"}
+    assert default_app is not None
 
 
 def _bearer_request() -> Request:
@@ -214,20 +254,28 @@ def test_principal_rejects_unverified_firebase_email_before_database_access(monk
 def test_principal_rejects_inactive_local_user_with_active_membership(monkeypatch):
     user_id = uuid4()
     organization_id = uuid4()
-    user = type("UserRow", (), {
-        "id": user_id,
-        "organization_id": organization_id,
-        "external_subject": "firebase-subject-inactive",
-        "role": "organization_admin",
-        "email": "member@example.test",
-        "status": "INACTIVE",
-    })()
-    membership = type("MembershipRow", (), {
-        "user_id": user_id,
-        "organization_id": organization_id,
-        "role": "organization_admin",
-        "status": "ACTIVE",
-    })()
+    user = type(
+        "UserRow",
+        (),
+        {
+            "id": user_id,
+            "organization_id": organization_id,
+            "external_subject": "firebase-subject-inactive",
+            "role": "organization_admin",
+            "email": "member@example.test",
+            "status": "INACTIVE",
+        },
+    )()
+    membership = type(
+        "MembershipRow",
+        (),
+        {
+            "user_id": user_id,
+            "organization_id": organization_id,
+            "role": "organization_admin",
+            "status": "ACTIVE",
+        },
+    )()
     monkeypatch.setattr(
         principal,
         "_verify_firebase_token",

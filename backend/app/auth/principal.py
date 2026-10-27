@@ -14,6 +14,7 @@ VALID_ROLES = frozenset({
     "reviewer", "bioinformatician", "lab_scientist", "read_only",
 })
 
+
 @dataclass(frozen=True)
 class Principal:
     user_id: UUID
@@ -22,15 +23,23 @@ class Principal:
     subject: str
     email: str | None = None
 
+
 def _verify_firebase_token(token: str) -> dict:
     try:
         import firebase_admin
         from firebase_admin import auth, credentials, exceptions
     except ImportError as exc:
         raise HTTPException(status_code=503, detail="Firebase Admin SDK is not installed") from exc
-    if not firebase_admin._apps:
+    try:
+        firebase_admin.get_app()
+    except ValueError:
         credential = credentials.Certificate(settings.firebase_credentials_path) if settings.firebase_credentials_path else credentials.ApplicationDefault()
-        firebase_admin.initialize_app(credential, {"projectId": settings.firebase_project_id} if settings.firebase_project_id else None)
+        options = {"projectId": settings.firebase_project_id} if settings.firebase_project_id else None
+        try:
+            firebase_admin.initialize_app(credential, options)
+        except ValueError:
+            # Concurrent startup may initialize the default app after get_app.
+            firebase_admin.get_app()
     try:
         return auth.verify_id_token(token, check_revoked=True)
     except (auth.InvalidIdTokenError, auth.UserDisabledError, auth.UserNotFoundError, ValueError) as exc:
@@ -41,11 +50,14 @@ def _verify_firebase_token(token: str) -> dict:
         # closed without unnecessarily signing out every active user.
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Firebase authentication is temporarily unavailable") from exc
 
+
 def _development_principal(db: Session) -> Principal:
     # This path is deliberately unavailable when Firebase authentication is required.
     from backend.app.application.cases import ensure_dev_identity
+
     org, user = ensure_dev_identity(db)
     return Principal(user_id=user.id, organization_id=org.id, role="bioinformatician", subject=str(user.id), email=user.email)
+
 
 def get_current_principal(request: Request, db: Session = Depends(get_db)) -> Principal:
     authorization = request.headers.get("Authorization", "")
@@ -85,6 +97,7 @@ def get_current_principal(request: Request, db: Session = Depends(get_db)) -> Pr
     if not membership or membership.role not in VALID_ROLES:
         raise HTTPException(status_code=403, detail="No active SIRALOOM organization membership")
     return Principal(user_id=user.id, organization_id=membership.organization_id, role=membership.role, subject=subject, email=decoded.get("email"))
+
 
 def require_case_tenant(case, principal: Principal) -> None:
     if case.organization_id != principal.organization_id:

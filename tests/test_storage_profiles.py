@@ -283,6 +283,81 @@ def test_organizations_resolve_only_their_deployment_configured_storage_target(
             artifact_store_for_uri(db, organization_id=organizations[1].id, storage_uri=uri_a)
 
 
+def test_firebase_targets_bind_distinct_deployment_credentials(monkeypatch, tmp_path):
+    import json
+
+    from backend.app.config import settings
+    from backend.app.domain.storage_profiles import (
+        activate_storage_profile,
+        artifact_store_for_organization,
+        register_storage_profile,
+    )
+    from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+
+    org_a_id, org_b_id = uuid4(), uuid4()
+    credential_a = tmp_path / "lab-a.json"
+    credential_b = tmp_path / "lab-b.json"
+    monkeypatch.setattr(settings, "firebase_storage_enabled", True)
+    monkeypatch.setattr(settings, "firebase_credentials_path", None)
+    monkeypatch.setattr(
+        settings,
+        "artifact_storage_targets_json",
+        json.dumps(
+            {
+                "lab-a": {
+                    "backend_type": "FIREBASE_GCS",
+                    "bucket": "lab-a-bucket",
+                    "organization_id": str(org_a_id),
+                    "project_id": "project-a",
+                    "credentials_path": str(credential_a),
+                },
+                "lab-b": {
+                    "backend_type": "FIREBASE_GCS",
+                    "bucket": "lab-b-bucket",
+                    "organization_id": str(org_b_id),
+                    "project_id": "project-b",
+                    "credentials_path": str(credential_b),
+                },
+            }
+        ),
+    )
+    engine = _engine()
+    with Session(engine) as db:
+        org_a = Organization(id=org_a_id, name="Lab A", external_identifier=None)
+        org_b = Organization(id=org_b_id, name="Lab B", external_identifier=None)
+        db.add_all([org_a, org_b])
+        db.flush()
+        profiles = []
+        for org, target_id in ((org_a, "lab-a"), (org_b, "lab-b")):
+            profile = register_storage_profile(
+                db,
+                organization_id=org.id,
+                name="primary",
+                backend_type="FIREBASE_GCS",
+                storage_key="PRIMARY_FIREBASE",
+                configuration={"target_id": target_id},
+                created_by=None,
+            )
+            profiles.append(profile)
+        db.commit()
+        for org, profile in ((org_a, profiles[0]), (org_b, profiles[1])):
+            activate_storage_profile(db, organization_id=org.id, profile_id=profile.id)
+        db.commit()
+
+        store_a = artifact_store_for_organization(db, organization_id=org_a.id)
+        store_b = artifact_store_for_organization(db, organization_id=org_b.id)
+        assert isinstance(store_a, FirebaseArtifactStore)
+        assert isinstance(store_b, FirebaseArtifactStore)
+        assert store_a.bucket_name == "lab-a-bucket"
+        assert store_a.credentials_path == str(credential_a)
+        assert store_a.project_id == "project-a"
+        assert store_a.app_name != store_b.app_name
+        assert store_b.bucket_name == "lab-b-bucket"
+        assert store_b.credentials_path == str(credential_b)
+        assert store_b.project_id == "project-b"
+        assert store_a.inherit_global_credentials is False
+
+
 def test_storage_target_cannot_be_assigned_to_two_organizations(monkeypatch, tmp_path):
     import json
 

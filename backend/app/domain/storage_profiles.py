@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -39,6 +40,8 @@ def _configured_targets() -> dict[str, dict[str, str]]:
             "root",
             "bucket",
             "organization_id",
+            "credentials_path",
+            "project_id",
         }:
             raise StorageProfileError(f"Artifact storage target {target_id} has invalid fields")
         try:
@@ -49,13 +52,14 @@ def _configured_targets() -> dict[str, dict[str, str]]:
             ) from exc
         backend = str(value.get("backend_type") or "").strip().upper()
         if backend == "LOCAL_FILESYSTEM":
-            root = str(value.get("root") or "").strip()
+            root_value = value.get("root")
+            root = root_value.strip() if isinstance(root_value, str) else ""
             resolved_root = Path(root).expanduser().resolve() if root else None
             if (
                 resolved_root is None
                 or not resolved_root.is_absolute()
                 or resolved_root == Path(resolved_root.anchor)
-                or "bucket" in value
+                or any(key in value for key in ("bucket", "credentials_path", "project_id"))
             ):
                 raise StorageProfileError(
                     f"Local storage target {target_id} needs a dedicated absolute root"
@@ -66,13 +70,41 @@ def _configured_targets() -> dict[str, dict[str, str]]:
                 "organization_id": owner_id,
             }
         elif backend == "FIREBASE_GCS":
-            bucket = str(value.get("bucket") or "").strip()
-            if not bucket or "/" in bucket or "root" in value:
+            bucket_value = value.get("bucket")
+            bucket = bucket_value.strip() if isinstance(bucket_value, str) else ""
+            if (
+                not bucket
+                or "/" in bucket
+                or any(char.isspace() for char in bucket)
+                or "root" in value
+            ):
                 raise StorageProfileError(f"Cloud storage target {target_id} needs a bucket name")
+            credentials_value = value.get("credentials_path")
+            if credentials_value is not None and not isinstance(credentials_value, str):
+                raise StorageProfileError(
+                    f"Cloud storage target {target_id} credential path must be a string"
+                )
+            credentials_path = credentials_value.strip() if credentials_value else ""
+            if credentials_path and not Path(credentials_path).expanduser().is_absolute():
+                raise StorageProfileError(
+                    f"Cloud storage target {target_id} credential path must be absolute"
+                )
+            project_value = value.get("project_id")
+            if project_value is not None and not isinstance(project_value, str):
+                raise StorageProfileError(
+                    f"Cloud storage target {target_id} project_id must be a string"
+                )
+            project_id = project_value.strip() if project_value else ""
             targets[target_id] = {
                 "backend_type": backend,
                 "bucket": bucket,
                 "organization_id": owner_id,
+                **(
+                    {"credentials_path": str(Path(credentials_path).expanduser().resolve())}
+                    if credentials_path
+                    else {}
+                ),
+                **({"project_id": project_id} if project_id else {}),
             }
         else:
             raise StorageProfileError(
@@ -307,12 +339,25 @@ def activate_storage_profile(
     return profile
 
 
-def _store(backend_type: str, target: str):
+def _store(backend_type: str, target: str, *, target_id: str | None = None):
     from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
     from backend.app.infrastructure.artifacts.store import ArtifactStore
 
     if backend_type == "FIREBASE_GCS":
-        return FirebaseArtifactStore(target)
+        configured_targets = _configured_targets()
+        target_config = configured_targets.get(target_id or "", {})
+        app_name = None
+        if target_id and target_id in configured_targets:
+            project_id = target_config.get("project_id") or settings.firebase_project_id or ""
+            stable_name = f"{target_id}\0{target}\0{project_id}\0{target_config.get('credentials_path', '')}"
+            app_name = "siraloom-storage-" + hashlib.sha256(stable_name.encode()).hexdigest()[:20]
+        return FirebaseArtifactStore(
+            target,
+            credentials_path=target_config.get("credentials_path"),
+            project_id=target_config.get("project_id"),
+            app_name=app_name,
+            inherit_global_credentials=not bool(app_name),
+        )
     return ArtifactStore(target)
 
 
@@ -326,8 +371,8 @@ def artifact_store_for_organization(db: Session, *, organization_id: UUID):
         if settings.firebase_storage_enabled:
             return _store("FIREBASE_GCS", settings.firebase_storage_bucket or "")
         return _store("LOCAL_FILESYSTEM", settings.artifact_root)
-    _, target = _target_for_profile(profile)
-    return _store(profile.backend_type, target)
+    target_id, target = _target_for_profile(profile)
+    return _store(profile.backend_type, target, target_id=target_id)
 
 
 def artifact_store_for_uri(db: Session, *, organization_id: UUID, storage_uri: str):
@@ -414,12 +459,12 @@ def artifact_store_for_uri(db: Session, *, organization_id: UUID, storage_uri: s
             continue
         if profile.backend_type == "FIREBASE_GCS":
             if storage_uri.startswith("gs://") and urlsplit(storage_uri).netloc == target:
-                matches.append((profile.backend_type, target))
+                matches.append((profile.backend_type, target, target_id))
         else:
             path = local_path_from_uri(storage_uri) if storage_uri.startswith("file:") else None
             root = Path(target).expanduser().resolve()
             if path is not None and (path == root or root in path.parents):
-                matches.append((profile.backend_type, target))
+                matches.append((profile.backend_type, target, target_id))
     if not matches:
         if retired_target_errors:
             raise StorageProfileError(
@@ -429,5 +474,5 @@ def artifact_store_for_uri(db: Session, *, organization_id: UUID, storage_uri: s
     unique = set(matches)
     if len(unique) != 1:
         raise StorageProfileError("Artifact URI matches multiple organization storage targets")
-    backend, target = unique.pop()
-    return _store(backend, target)
+    backend, target, target_id = unique.pop()
+    return _store(backend, target, target_id=target_id)
