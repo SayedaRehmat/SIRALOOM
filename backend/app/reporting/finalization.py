@@ -10,7 +10,10 @@ from uuid import UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.report_integrity import has_valid_signed_artifact
+from backend.app.domain.report_integrity import (
+    has_valid_draft_artifact,
+    has_valid_signed_artifact,
+)
 from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
@@ -39,6 +42,10 @@ class ReportFinalizationError(ValueError):
 def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
+    if not has_valid_draft_artifact(db, report):
+        raise ReportFinalizationError(
+            "Report draft artifact is missing, has invalid lineage, or no longer matches its content"
+        )
     quality_snapshot = content.get("technical_quality")
     if report.report_type == "CLINICAL_INTERPRETATION":
         if not isinstance(quality_snapshot, dict):

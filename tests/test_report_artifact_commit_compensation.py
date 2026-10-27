@@ -7,6 +7,10 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.app.api.v1 import reports as reports_api
 from backend.app.auth.principal import Principal
+from backend.app.domain.report_integrity import (
+    REPORT_CONTENT_INTEGRITY_VERSION,
+    report_content_sha256,
+)
 from backend.app.domain.schemas import ReportCreate
 from backend.app.infrastructure.artifacts import compensation as compensation_api
 from backend.app.infrastructure.db.models import Artifact
@@ -54,7 +58,7 @@ class _Store:
             sha256="a" * 64,
             storage_uri="file:///artifact/draft-report.pdf",
             validation_status="VALID",
-            metadata_json={},
+            metadata_json=_kwargs.get("metadata", {}),
         )
         return self.artifact
 
@@ -112,6 +116,10 @@ def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkey
     assert audit_events[0]["event_type"] == "REPORT_GENERATED"
     assert audit_events[0]["actor_type"] == "HUMAN"
     assert audit_events[0]["actor_id"] == str(user_id)
+    assert store.artifact.metadata_json["report_content_integrity"] == REPORT_CONTENT_INTEGRITY_VERSION
+    assert store.artifact.metadata_json["report_content_sha256"] == report_content_sha256(
+        {"report_schema_version": "1", "report_version": 1}
+    )
 
 
 def test_report_route_removes_draft_bytes_after_audit_flush_failure(monkeypatch):

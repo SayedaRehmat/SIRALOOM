@@ -10,16 +10,16 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisPartition,
-    Assay,
     Artifact,
+    Assay,
     AuditEvent,
     Case,
     Classification,
     ConfirmationRecord,
     Organization,
+    QCAssessment,
     Report,
     ReportabilityDecision,
-    QCAssessment,
     TechnicalQCObservation,
     User,
     Variant,
@@ -51,7 +51,7 @@ def seed(approved=True):
     from backend.app.domain.quality_provenance import qc_observation_snapshot
     qc.observation_snapshot=qc_observation_snapshot(db,a,[qc_observation]); db.flush()
     rd=ReportabilityDecision(id=uuid4(),analysis_id=a.id,variant_id=v.id,classification_id=cl.id,version=1,policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",policy_version="1.0.0",disposition="REPORT",priority_score=100,priority_band="HIGH",reasons=["Test fixture"],status="FINAL",review_version=1,reviewed_by=u.id)
-    art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=100,sha256="a"*64,storage_uri="file:///tmp/fixture.pdf",genome_build="GRCh38")
+    art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=100,sha256="a"*64,storage_uri="file:///tmp/fixture.pdf",genome_build="GRCh38",validation_status="VALID")
     db.add_all([rd,art]); db.commit(); return db, u, c, a, v
 
 def test_final_report_requires_approved_classification():

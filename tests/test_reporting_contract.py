@@ -7,16 +7,16 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
-    Assay,
+    AnalysisPartition,
     Artifact,
+    Assay,
     Case,
     Classification,
     ConfirmationRecord,
-    AnalysisPartition,
     Organization,
+    QCAssessment,
     Report,
     ReportabilityDecision,
-    QCAssessment,
     TechnicalQCObservation,
     User,
     Variant,
@@ -45,7 +45,7 @@ def seed(approved=True):
     qc.observation_snapshot=qc_observation_snapshot(d,a,[qc_observation])
     d.flush()
     rd=ReportabilityDecision(id=uuid4(),analysis_id=a.id,variant_id=v.id,classification_id=cl.id,version=1,policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",policy_version="1.0.0",disposition="REPORT",priority_score=100,priority_band="HIGH",reasons=["Test fixture"],status="FINAL",review_version=1,reviewed_by=u.id)
-    art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=100,sha256="a"*64,storage_uri="file:///tmp/fixture.pdf",genome_build="GRCh38")
+    art=Artifact(id=uuid4(),case_id=c.id,analysis_id=a.id,artifact_type="REPORT_PDF",filename="fixture.pdf",media_type="application/pdf",size_bytes=100,sha256="a"*64,storage_uri="file:///tmp/fixture.pdf",genome_build="GRCh38",validation_status="VALID")
     d.add_all([rd,art]); d.commit(); return d,o,u,c,a,v
 
 def test_report_content_contract_has_required_fields():

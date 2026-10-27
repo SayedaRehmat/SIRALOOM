@@ -28,8 +28,10 @@ from backend.app.domain.artifact_integrity import (
 )
 from backend.app.domain.enums import AnalysisStatus
 from backend.app.domain.report_integrity import (
+    REPORT_CONTENT_INTEGRITY_VERSION,
     has_valid_draft_artifact,
     has_valid_signed_artifact,
+    report_content_sha256,
 )
 from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
@@ -158,6 +160,8 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
                 "report_state": "DRAFT",
                 "report_id": str(report.id),
                 "report_version": report.report_version,
+                "report_content_integrity": REPORT_CONTENT_INTEGRITY_VERSION,
+                "report_content_sha256": report_content_sha256(content),
             },
             validation_status="VALID",
             artifact_id=draft_artifact_id,

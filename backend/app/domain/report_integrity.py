@@ -1,8 +1,25 @@
 """Integrity checks for immutable, signed report artifacts."""
 
+import hashlib
+import json
+
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import Artifact, Report
+
+REPORT_CONTENT_INTEGRITY_VERSION = "sha256-canonical-json-v1"
+
+
+def report_content_sha256(content: dict) -> str:
+    """Hash a report JSON snapshot using a stable serialization contract."""
+    canonical = json.dumps(
+        content,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
 
 
 def has_valid_signed_artifact(db: Session, report: Report) -> bool:
@@ -48,6 +65,12 @@ def has_valid_draft_artifact(db: Session, report: Report) -> bool:
         return False
 
     metadata = dict(artifact.metadata_json or {})
+    integrity_version = metadata.get("report_content_integrity")
+    content_integrity_valid = integrity_version is None or (
+        integrity_version == REPORT_CONTENT_INTEGRITY_VERSION
+        and isinstance(metadata.get("report_content_sha256"), str)
+        and metadata["report_content_sha256"] == report_content_sha256(report.content_json or {})
+    )
     return bool(
         artifact.case_id == report.case_id
         and artifact.analysis_id == report.analysis_id
@@ -65,4 +88,5 @@ def has_valid_draft_artifact(db: Session, report: Report) -> bool:
             metadata.get("report_state") is None
             or metadata.get("report_state") == "DRAFT"
         )
+        and content_integrity_valid
     )

@@ -5,24 +5,28 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.report_integrity import (
+    REPORT_CONTENT_INTEGRITY_VERSION,
+    report_content_sha256,
+)
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
     AnalysisPartition,
     Annotation,
-    Assay,
     Artifact,
+    Assay,
     Case,
     Classification,
     ConfirmationRecord,
     Evidence,
     Organization,
+    QCAssessment,
     Report,
     ReportabilityDecision,
-    QCAssessment,
-    TechnicalQCObservation,
     SecondaryFindingDecision,
+    TechnicalQCObservation,
     User,
     Variant,
     WorkflowStep,
@@ -692,6 +696,21 @@ def test_signout_rejects_changed_reportability_review_provenance():
 
     from backend.app.reporting.finalization import ReportFinalizationError
     with pytest.raises(ReportFinalizationError, match="reportability decision or reviewer provenance"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
+
+def test_signout_rejects_report_content_changed_after_draft_artifact_generation():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    draft_artifact = db.get(Artifact, report.artifact_id)
+    draft_artifact.metadata_json = {
+        **(draft_artifact.metadata_json or {}),
+        "report_content_integrity": REPORT_CONTENT_INTEGRITY_VERSION,
+        "report_content_sha256": report_content_sha256(report.content_json),
+    }
+    report.content_json = {**report.content_json, "recommendations": "Changed after draft PDF generation"}
+    db.commit()
+
+    with pytest.raises(ReportFinalizationError, match="no longer matches its content"):
         finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
 
 
