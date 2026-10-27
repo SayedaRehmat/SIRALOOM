@@ -45,7 +45,8 @@ def seed(approved=True):
     cl=Classification(id=uuid4(),variant_id=v.id,analysis_id=a.id,framework_name='ACMG/AMP',framework_version='2015',result='VUS',criterion_ids=[],metadata_json={},state='FINAL' if approved else 'PROPOSED',review_status='APPROVED' if approved else 'IN_REVIEW',version=1,review_version=1)
     qc_observation=TechnicalQCObservation(id=uuid4(),analysis_id=a.id,metric_name='mean_depth',metric_value=40,status='AVAILABLE',source='LAB_QC')
     qc=QCAssessment(id=uuid4(),analysis_id=a.id,assay_id=assay.id,status='PASS',profile_name=assay.name,profile_version=assay.version,metrics_json={'mean_depth':40},evaluated_rules=[{'metric':'mean_depth','value':40,'status':'PASS','direction':'MIN','threshold':20,'minimum':None,'maximum':None,'severity':'FAIL'}],observation_snapshot=[],gate_status='PASS',reviewed_by=str(u.id),reviewed_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc))
-    db.add_all([org,u,assay,c,a,v,partition,cl,qc_observation,qc])
+    confirmation=ConfirmationRecord(id=uuid4(),analysis_id=a.id,variant_id=v.id,version=1,required=False,status="NOT_REQUIRED",reviewed_by=u.id,reviewed_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc),notes="Fixture explicitly records that orthogonal confirmation is not required.")
+    db.add_all([org,u,assay,c,a,v,partition,cl,qc_observation,qc,confirmation])
     db.flush()
     from backend.app.domain.quality_provenance import qc_observation_snapshot
     qc.observation_snapshot=qc_observation_snapshot(db,a,[qc_observation]); db.flush()
@@ -202,6 +203,7 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
 
 def test_report_content_persists_exact_confirmation_identity():
     db, u, _, a, v = seed(True)
+    db.query(ConfirmationRecord).filter_by(analysis_id=a.id, variant_id=v.id).delete()
     confirmation = ConfirmationRecord(
         id=uuid4(),
         analysis_id=a.id,
@@ -233,6 +235,7 @@ def test_report_content_persists_exact_confirmation_identity():
 
 def test_finalize_report_rejects_changed_confirmation_snapshot():
     db, u, c, a, v = seed(True)
+    db.query(ConfirmationRecord).filter_by(analysis_id=a.id, variant_id=v.id).delete()
     confirmation_v1 = ConfirmationRecord(
         id=uuid4(),
         analysis_id=a.id,
@@ -297,6 +300,7 @@ def test_finalize_report_rejects_changed_confirmation_snapshot():
 
 def test_confirmation_record_version_identity_is_database_enforced():
     db, _, _, a, v = seed(True)
+    db.query(ConfirmationRecord).filter_by(analysis_id=a.id, variant_id=v.id).delete()
     first = ConfirmationRecord(
         id=uuid4(),
         analysis_id=a.id,

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import create_engine
@@ -10,6 +11,7 @@ from backend.app.infrastructure.db.models import (
     Artifact,
     Case,
     Classification,
+    ConfirmationRecord,
     AnalysisPartition,
     Organization,
     Report,
@@ -36,7 +38,8 @@ def seed(approved=True):
     cl=Classification(id=uuid4(),variant_id=v.id,analysis_id=a.id,framework_name='ACMG/AMP',framework_version='2015',result='VUS',criterion_ids=[],metadata_json={},state='FINAL' if approved else 'PROPOSED',review_status='APPROVED' if approved else 'IN_REVIEW',version=1,review_version=1)
     qc_observation=TechnicalQCObservation(id=uuid4(),analysis_id=a.id,metric_name='mean_depth',metric_value=40,status='AVAILABLE',source='LAB_QC')
     qc=QCAssessment(id=uuid4(),analysis_id=a.id,assay_id=assay.id,status='PASS',profile_name=assay.name,profile_version=assay.version,metrics_json={'mean_depth':40},evaluated_rules=[{'metric':'mean_depth','value':40,'status':'PASS','direction':'MIN','threshold':20,'minimum':None,'maximum':None,'severity':'FAIL'}],observation_snapshot=[],gate_status='PASS',reviewed_by=str(u.id),reviewed_at=__import__('datetime').datetime.now(__import__('datetime').timezone.utc))
-    d.add_all([o,u,assay,c,a,v,cl,partition,qc_observation,qc])
+    confirmation=ConfirmationRecord(id=uuid4(),analysis_id=a.id,variant_id=v.id,version=1,required=False,status="NOT_REQUIRED",reviewed_by=u.id,reviewed_at=datetime.now(UTC),notes="Fixture explicitly records that orthogonal confirmation is not required.")
+    d.add_all([o,u,assay,c,a,v,cl,partition,qc_observation,qc,confirmation])
     d.flush()
     from backend.app.domain.quality_provenance import qc_observation_snapshot
     qc.observation_snapshot=qc_observation_snapshot(d,a,[qc_observation])

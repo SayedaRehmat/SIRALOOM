@@ -27,7 +27,7 @@ from backend.app.infrastructure.db.models import (
     Variant,
     WorkflowStep,
 )
-from backend.app.reporting.finalization import finalize_report
+from backend.app.reporting.finalization import ReportFinalizationError, finalize_report
 from backend.app.reporting.service import build_report_content, final_report_eligibility
 
 
@@ -130,6 +130,17 @@ def seed_finalizable_report():
         review_version=1,
         reviewed_by=reviewer.id,
     )
+    confirmation = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        version=1,
+        required=False,
+        status="NOT_REQUIRED",
+        reviewed_by=reviewer.id,
+        reviewed_at=datetime.now(UTC),
+        notes="Fixture explicitly records that orthogonal confirmation is not required.",
+    )
     draft_artifact = Artifact(
         id=uuid4(),
         analysis_id=analysis.id,
@@ -158,7 +169,7 @@ def seed_finalizable_report():
         gate_status="PASS", reviewed_by=str(reviewer.id),
         reviewed_at=datetime.now(UTC),
     )
-    db.add_all([org, reviewer, case, assay, analysis, variant, classification, decision, draft_artifact, qc_observation, qc])
+    db.add_all([org, reviewer, case, assay, analysis, variant, classification, decision, confirmation, draft_artifact, qc_observation, qc])
     db.flush()
 
     from backend.app.domain.quality_provenance import qc_observation_snapshot
@@ -296,6 +307,9 @@ def test_report_eligibility_requires_reviewed_confirmation_provenance(
     variant_id = db.scalar(
         select(Classification.variant_id).where(Classification.analysis_id == analysis.id)
     )
+    db.query(ConfirmationRecord).filter_by(
+        analysis_id=analysis.id, variant_id=variant_id
+    ).delete()
     confirmation = ConfirmationRecord(
         id=uuid4(),
         analysis_id=analysis.id,
@@ -322,6 +336,21 @@ def test_report_eligibility_requires_reviewed_confirmation_provenance(
     assert eligible is expected_eligible, errors
     if not expected_eligible:
         assert any("confirmation" in error.lower() for error in errors)
+
+
+def test_reportable_variant_requires_explicit_confirmation_disposition():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    db.query(ConfirmationRecord).filter_by(analysis_id=analysis.id).delete()
+    db.commit()
+
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type="CLINICAL_INTERPRETATION"
+    )
+
+    assert not eligible
+    assert any("no reviewed confirmation or not-required decision" in error for error in errors)
+    with pytest.raises(ReportFinalizationError, match="confirmation"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Test")
 
 
 def test_clinical_report_eligibility_rejects_changed_rules_without_version_change():

@@ -252,7 +252,11 @@ def final_report_eligibility(
             reportable_variant_ids.add(row.variant_id)
     for variant_id in reportable_variant_ids:
         confirmation = db.scalar(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id == analysis_id, ConfirmationRecord.variant_id == variant_id).order_by(ConfirmationRecord.version.desc()))
-        if confirmation:
+        if confirmation is None:
+            errors.append(
+                f"Variant {variant_id} has no reviewed confirmation or not-required decision"
+            )
+        else:
             reviewed = bool(confirmation.reviewed_by and confirmation.reviewed_at)
             rationale_present = bool((confirmation.notes or "").strip())
             if confirmation.status == "NOT_REQUIRED":
