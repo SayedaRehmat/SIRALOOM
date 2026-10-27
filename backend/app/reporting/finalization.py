@@ -24,6 +24,7 @@ from backend.app.infrastructure.db.models import (
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
     REPORT_STATUS_SUPERSEDED,
+    datetime_snapshot,
     final_report_eligibility,
     render_pdf,
     technical_quality_snapshot,
@@ -110,6 +111,8 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
         classification_payload = {
             "id": str(cls.id),
             "version": cls.version,
+            "reviewed_by": str(cls.reviewed_by) if cls.reviewed_by else None,
+            "approved_at": datetime_snapshot(cls.approved_at),
             "result": cls.result,
             "state": cls.state,
             "review_status": cls.review_status,
@@ -257,6 +260,23 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             raise ReportFinalizationError(
                 f"Report snapshot reportability decision for variant {variant_id} is stale or not final"
             )
+        reportability_snapshot = {
+            "decision_id": str(decision.id),
+            "version": decision.version,
+            "classification_id": str(decision.classification_id),
+            "disposition": decision.disposition,
+            "status": decision.status,
+            "reasons": list(decision.reasons or []),
+            "policy_name": decision.policy_name,
+            "policy_version": decision.policy_version,
+            "review_version": decision.review_version,
+            "reviewed_by": str(decision.reviewed_by) if decision.reviewed_by else None,
+            "approved_at": datetime_snapshot(decision.approved_at),
+        }
+        if reportability != reportability_snapshot:
+            raise ReportFinalizationError(
+                f"Report snapshot reportability decision or reviewer provenance changed for variant {variant_id}"
+            )
 
         confirmation_context = finding.get("confirmation_context")
         if not isinstance(confirmation_context, dict):
@@ -314,7 +334,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                 confirmation_context.get("reviewed_by")
                 != (str(confirmation.reviewed_by) if confirmation.reviewed_by else None)
                 or confirmation_context.get("reviewed_at")
-                != (confirmation.reviewed_at.isoformat() if confirmation.reviewed_at else None)
+                != datetime_snapshot(confirmation.reviewed_at)
             ):
                 raise ReportFinalizationError(
                     f"Report snapshot confirmation review provenance is stale for variant {variant_id}"
@@ -361,6 +381,24 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
         ):
             raise ReportFinalizationError(
                 f"Report snapshot secondary finding for variant {variant_id} is stale or no longer reportable"
+            )
+        secondary_snapshot = {
+            "decision_id": str(decision.id),
+            "variant_id": str(decision.variant_id),
+            "version": decision.version,
+            "policy": {"name": decision.policy_name, "version": decision.policy_version},
+            "eligibility": decision.eligibility,
+            "consent_status": decision.consent_status,
+            "disposition": decision.disposition,
+            "status": decision.status,
+            "rationale": decision.rationale,
+            "gene_disease_context": decision.gene_disease_context or {},
+            "reviewed_by": str(decision.reviewed_by) if decision.reviewed_by else None,
+            "reviewed_at": datetime_snapshot(decision.reviewed_at),
+        }
+        if finding != secondary_snapshot:
+            raise ReportFinalizationError(
+                f"Report snapshot secondary-finding decision or reviewer provenance changed for variant {variant_id}"
             )
 
     latest_secondary_rows = list(

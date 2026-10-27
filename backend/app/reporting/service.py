@@ -4,7 +4,7 @@ import hashlib
 import html
 import json
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -51,6 +51,14 @@ from backend.app.reporting.reportability import final_reportability_state, lates
 REPORT_STATUS_DRAFT = "DRAFT"
 REPORT_STATUS_FINAL = "FINAL"
 REPORT_STATUS_SUPERSEDED = "SUPERSEDED"
+
+
+def datetime_snapshot(value: datetime | None) -> str | None:
+    """Serialize timestamps consistently across PostgreSQL and SQLite."""
+    if value is None:
+        return None
+    normalized = value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+    return normalized.isoformat()
 
 
 def _utc_now() -> datetime:
@@ -334,7 +342,7 @@ def technical_quality_snapshot(db: Session, analysis_id: UUID) -> dict[str, Any]
         "evaluated_rules": assessment.evaluated_rules or [],
         "observation_snapshot": assessment.observation_snapshot,
         "reviewed_by": assessment.reviewed_by,
-        "reviewed_at": assessment.reviewed_at.isoformat() if assessment.reviewed_at else None,
+        "reviewed_at": datetime_snapshot(assessment.reviewed_at),
     }
 
 def _criterion_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> list[dict[str, Any]]:
@@ -474,6 +482,8 @@ def _classification_snapshot_sha256(classification) -> str:
     payload = {
         "id": str(classification.id),
         "version": classification.version,
+        "reviewed_by": str(classification.reviewed_by) if classification.reviewed_by else None,
+        "approved_at": datetime_snapshot(classification.approved_at),
         "result": classification.result,
         "state": classification.state,
         "review_status": classification.review_status,
@@ -675,10 +685,15 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "reportability": {
                 "decision_id": str(decision.id) if decision else None,
                 "version": decision.version if decision else None,
+                "classification_id": str(decision.classification_id) if decision else None,
                 "disposition": decision.disposition if decision else "NOT_DETERMINED",
                 "status": decision.status if decision else "NOT_DETERMINED",
                 "reasons": list(decision.reasons or []) if decision else [],
-                "policy": f"{decision.policy_name}@{decision.policy_version}" if decision else None,
+                "policy_name": decision.policy_name if decision else None,
+                "policy_version": decision.policy_version if decision else None,
+                "review_version": decision.review_version if decision else None,
+                "reviewed_by": str(decision.reviewed_by) if decision and decision.reviewed_by else None,
+                "approved_at": datetime_snapshot(decision.approved_at) if decision else None,
             },
 
             "framework": {
@@ -726,7 +741,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 "performed_at": confirmation.performed_at.isoformat() if confirmation and confirmation.performed_at else None,
                 "notes": confirmation.notes if confirmation else None,
                 "reviewed_by": str(confirmation.reviewed_by) if confirmation and confirmation.reviewed_by else None,
-                "reviewed_at": confirmation.reviewed_at.isoformat() if confirmation and confirmation.reviewed_at else None,
+                "reviewed_at": datetime_snapshot(confirmation.reviewed_at) if confirmation else None,
             },
             "follow_up": [{"action_type": x.action_type, "status": x.status, "due_date": x.due_date.isoformat() if x.due_date else None, "responsible_role": x.responsible_role, "outcome": x.outcome, "notes": x.notes} for x in followups],
         }
@@ -753,6 +768,8 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         "decision_id": str(row.id), "variant_id": str(row.variant_id), "version": row.version, "policy": {"name": row.policy_name, "version": row.policy_version},
         "eligibility": row.eligibility, "consent_status": row.consent_status, "disposition": row.disposition,
         "status": row.status, "rationale": row.rationale, "gene_disease_context": row.gene_disease_context or {},
+        "reviewed_by": str(row.reviewed_by) if row.reviewed_by else None,
+        "reviewed_at": datetime_snapshot(row.reviewed_at),
     } for row in secondary_latest.values() if row.status == "FINAL" and row.disposition == "REPORT"]
     tool_rows = list(db.scalars(select(Artifact).where(Artifact.analysis_id == analysis.id).order_by(Artifact.created_at, Artifact.id)))
     audit_rows = list(

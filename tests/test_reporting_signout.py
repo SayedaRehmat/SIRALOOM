@@ -646,6 +646,32 @@ def test_signout_rejects_mutated_classification_snapshot():
         raise AssertionError("Sign-out must reject a mutated classification snapshot")
 
 
+def test_signout_rejects_changed_classification_reviewer_provenance():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    classification = db.scalar(select(Classification).where(Classification.analysis_id == analysis.id))
+    classification.reviewed_by = uuid4()
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    with pytest.raises(ReportFinalizationError, match="ACMG classification"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
+
+def test_signout_rejects_changed_reportability_review_provenance():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    decision = db.scalar(
+        select(ReportabilityDecision).where(ReportabilityDecision.analysis_id == analysis.id)
+    )
+    decision.reviewed_by = uuid4()
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    with pytest.raises(ReportFinalizationError, match="reportability decision or reviewer provenance"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
+
 
 
 def test_signout_rejects_mutated_acmg_evidence_snapshot():
@@ -802,6 +828,27 @@ def test_signout_rejects_stale_secondary_finding_snapshot():
         assert "secondary finding" in str(exc)
     else:
         raise AssertionError("Sign-out must reject a stale secondary-finding snapshot")
+
+
+def test_signout_rejects_changed_secondary_finding_reviewer_provenance():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    decision = SecondaryFindingDecision(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id, version=1,
+        policy_name="ACMG_SF", policy_version="3.3.2", eligibility="ELIGIBLE",
+        consent_status="CONSENTED", disposition="REPORT", status="FINAL",
+        rationale="Reviewed secondary finding", gene_disease_context={},
+        reviewed_by=reviewer.id, reviewed_at=datetime.now(UTC),
+    )
+    db.add(decision)
+    db.commit()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    decision.reviewed_by = uuid4()
+    db.commit()
+
+    from backend.app.reporting.finalization import ReportFinalizationError
+    with pytest.raises(ReportFinalizationError, match="secondary-finding decision or reviewer provenance"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
 
 
 def test_signout_rejects_new_secondary_reportable_decision_missing_from_draft():
