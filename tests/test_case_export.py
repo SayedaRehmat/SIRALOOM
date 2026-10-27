@@ -273,6 +273,73 @@ def test_case_export_fails_closed_when_historical_storage_is_unassigned(
     assert "private path" not in str(error.value)
 
 
+def test_case_export_rejects_artifact_uri_assigned_to_another_organization(
+    tmp_path, monkeypatch
+):
+    import json
+
+    from backend.app.config import settings
+    from backend.app.domain.storage_profiles import (
+        activate_storage_profile,
+        register_storage_profile,
+    )
+
+    db, case, export = _case_export_fixture()
+    lab_a_root = tmp_path / "lab-a"
+    lab_b_root = tmp_path / "lab-b"
+    other_org_id = uuid4()
+    monkeypatch.setattr(
+        settings,
+        "artifact_storage_targets_json",
+        json.dumps({
+            "lab-a": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(lab_a_root),
+                "organization_id": str(case.organization_id),
+            },
+            "lab-b": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(lab_b_root),
+                "organization_id": str(other_org_id),
+            },
+        }),
+    )
+    profile = register_storage_profile(
+        db,
+        organization_id=case.organization_id,
+        name="lab-a-storage",
+        backend_type="LOCAL_FILESYSTEM",
+        storage_key="PRIMARY_ARTIFACTS",
+        configuration={"target_id": "lab-a"},
+        created_by=None,
+    )
+    activate_storage_profile(db, organization_id=case.organization_id, profile_id=profile.id)
+    db.commit()
+
+    source = tmp_path / "other-lab.vcf"
+    source.write_bytes(b"private other-lab data")
+    foreign_store = ArtifactStore(str(lab_b_root))
+    foreign_artifact = foreign_store.put_file(
+        db=db,
+        case_id=case.id,
+        analysis_id=None,
+        source_path=source,
+        filename=source.name,
+        artifact_type="VCF",
+        media_type="text/plain",
+        genome_build="GRCh38",
+        artifact_id=uuid4(),
+    )
+
+    with pytest.raises(CaseExportError, match="approved storage target is unavailable"):
+        build_case_export(
+            db,
+            export=export,
+            store=ArtifactStore(str(lab_a_root)),
+        )
+    assert foreign_artifact.storage_uri.startswith(lab_b_root.as_uri())
+
+
 def test_case_export_rejects_artifact_linked_to_another_cases_analysis(tmp_path):
     db, case, export = _case_export_fixture()
     foreign_org = Organization(id=uuid4(), name="Other lab")
