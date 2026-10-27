@@ -209,6 +209,23 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             ).all()
             assert len(events) == 7
             assert all(event.after_state["created_at"] for event in events)
+            followup_updates = [
+                event for event in events
+                if event.event_type == "FOLLOW_UP_PLAN_UPDATED"
+            ]
+            assert len(followup_updates) == 2
+            completed_event = next(
+                event for event in followup_updates
+                if event.after_state["status"] == "COMPLETED"
+            )
+            reopened_event = next(
+                event for event in followup_updates
+                if event.after_state["status"] == "IN_PROGRESS"
+            )
+            assert completed_event.before_state["status"] == "PLANNED"
+            assert reopened_event.before_state["status"] == "COMPLETED"
+            assert reopened_event.before_state["completed_by"] == str(user_id)
+            assert reopened_event.after_state["completed_by"] is None
             assert len(db.scalars(select(ConfirmationRecord)).all()) == 2
             assert len(db.scalars(select(FollowUpPlan)).all()) == 1
             assert len(db.scalars(select(SecondaryFindingDecision)).all()) == 1

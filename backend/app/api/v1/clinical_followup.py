@@ -228,6 +228,7 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
     _validate_followup_case_link(row, analysis)
     if row.variant_id is not None:
         _variant_access(analysis, row.variant_id, db)
+    before_state = _followup(row)
     row.action_type=body.action_type.strip(); row.status=body.status; row.due_date=body.due_date; row.responsible_role=body.responsible_role; row.outcome=body.outcome; row.notes=body.notes; row.metadata_json=body.metadata
     if body.status in {"COMPLETED","CANCELLED"}:
         row.completed_by = principal.user_id
@@ -238,7 +239,7 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
         # reopened or otherwise moved back to an active state.
         row.completed_by = None
         row.completed_at = None
-    AuditService(db).record(event_type="FOLLOW_UP_PLAN_UPDATED",case_id=analysis.case_id,analysis_id=row.analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="FOLLOW_UP_PLAN",subject_id=str(row.id),operation="UPDATE",after_state=_followup(row)); db.commit(); return _followup(row)
+    AuditService(db).record(event_type="FOLLOW_UP_PLAN_UPDATED",case_id=analysis.case_id,analysis_id=row.analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="FOLLOW_UP_PLAN",subject_id=str(row.id),operation="UPDATE",before_state=before_state,after_state=_followup(row)); db.commit(); return _followup(row)
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/secondary-finding",status_code=201)
 def record_secondary_finding(analysis_id: UUID, variant_id: UUID, body: SecondaryFindingInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
