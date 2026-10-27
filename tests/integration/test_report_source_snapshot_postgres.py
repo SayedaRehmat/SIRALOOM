@@ -76,7 +76,17 @@ def _seed_postgres_draft(database_url: str):
             validation_status="VALID",
             metadata_json={},
         )
-        db.add_all([organization, user, case, analysis, artifact])
+        # These models use foreign keys without ORM relationships, so SQLAlchemy
+        # cannot infer their insert ordering from object dependencies.
+        db.add(organization)
+        db.flush()
+        db.add(user)
+        db.flush()
+        db.add(case)
+        db.flush()
+        db.add(analysis)
+        db.flush()
+        db.add(artifact)
         db.flush()
         content = build_report_content(db, analysis, "en", report_type="ANALYTICAL")
         content["report_version"] = 1
