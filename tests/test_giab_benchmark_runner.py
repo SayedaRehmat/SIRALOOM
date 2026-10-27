@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "validation" / "run_giab_benchmark.py"
 
@@ -375,6 +374,8 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
     assert lineage["status"] == "REPRODUCED_RECORDS_MATCH"
     assert lineage["record_count"] == 2
     assert len(lineage["ordered_record_sha256"]) == 64
+    assert any("--multi-overlaps 0" in command for command in lineage["commands"])
+    assert any("--old-rec-tag SIRALOOM_ORIG" in command for command in lineage["commands"])
     assert lineage["input_routing"] == {
         "routing_version": "1",
         "records_total": 5,

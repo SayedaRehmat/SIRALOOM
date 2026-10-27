@@ -5441,14 +5441,14 @@ def _normalized_partition_metadata(
         "source_record_mappings": [
             {
                 "variant_id": str(variant_id),
-                "source_chromosome": variant.original_chromosome,
-                "source_position": variant.original_position,
-                "source_reference": variant.original_reference,
-                "source_alternate": variant.original_alternate,
-                "source_alt_index": variant.original_alt_index,
+                "source_chromosome": getattr(variant, "original_chromosome", None),
+                "source_position": getattr(variant, "original_position", None),
+                "source_reference": getattr(variant, "original_reference", None),
+                "source_alternate": getattr(variant, "original_alternate", None),
+                "source_alt_index": getattr(variant, "original_alt_index", None),
             }
             for variant_id, variant in zip(variant_ids, variants)
-            if variant.original_position is not None
+            if getattr(variant, "original_position", None) is not None
         ],
     }
 

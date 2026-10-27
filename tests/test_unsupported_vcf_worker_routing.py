@@ -510,6 +510,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 "tool": "bcftools", "tool_version": "bcftools 1.19",
                 "expected_tool_version": "1.19", "operation": "fixture-normalization",
                 "command": "bcftools view -A && bcftools norm -f ref.fa -c e -m -any",
+                "source_record_mapping_tag": "SIRALOOM_ORIG",
+                "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
                 "compression": "BGZF", "index": "CSI", "index_path": str(index),
             }
 

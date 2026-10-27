@@ -23,7 +23,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-
 REQUIRED_ASSETS = (
     "truth_vcf",
     "confident_regions_bed",
@@ -71,7 +70,7 @@ def verify_normalization_derivation(
     bcftools: str, expected_version: str,
 ) -> dict[str, Any]:
     """Reproduce production routing and BCFtools sequence normalization, then compare records."""
-    from backend.app.domain.vcf_tools import route_vcf_records
+    from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 
     version = run_command([bcftools, "--version"])
     verify_version_pin("bcftools", expected_version, version)
@@ -82,19 +81,17 @@ def verify_normalization_derivation(
             raise BenchmarkConfigurationError(
                 "Raw input has no supported sequence-variant records for the configured benchmark."
             )
-        prepared = work / "prepared.vcf.gz"
         normalized = work / "normalized.vcf.gz"
-        sorted_vcf = work / "sorted.vcf.gz"
-        commands = [
-            [bcftools, "view", "-A", "-Oz", "-o", str(prepared), routing["sequence_path"]],
-            [bcftools, "norm", "-f", str(reference_fasta), "-c", "e", "-m", "-any", "-Oz", "-o", str(normalized), str(prepared)],
-            [bcftools, "sort", "-Oz", "-o", str(sorted_vcf), str(normalized)],
-        ]
-        for command in commands:
-            run_command(command)
-        if not sorted_vcf.is_file() or sorted_vcf.stat().st_size == 0:
+        normalization = normalize_vcf_with_bcftools(
+            routing["sequence_path"],
+            normalized,
+            reference_fasta=reference_fasta,
+            expected_bcftools_version=expected_version,
+            bcftools_executable=bcftools,
+        )
+        if not normalized.is_file() or normalized.stat().st_size == 0:
             raise RuntimeError("Pinned BCFtools normalization produced no reproducible VCF.")
-        reproduced_count, reproduced_sha256 = hash_vcf_records(sorted_vcf)
+        reproduced_count, reproduced_sha256 = hash_vcf_records(normalized)
     observed_count, observed_sha256 = hash_vcf_records(normalized_vcf)
     if (observed_count, observed_sha256) != (reproduced_count, reproduced_sha256):
         raise BenchmarkConfigurationError(
@@ -116,7 +113,7 @@ def verify_normalization_derivation(
             "policy": routing["gvcf_wildcard_policy"],
         },
         "bcftools_version": version["output"],
-        "commands": commands,
+        "commands": normalization["command"].split(" && "),
         "comparison_scope": "Production-routed sequence VCF data-record lines only; headers/compression bytes are excluded",
     }
 

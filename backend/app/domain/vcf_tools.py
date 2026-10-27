@@ -241,6 +241,7 @@ def normalize_vcf_with_bcftools(
     expected_bcftools_version: str | None = None,
     timeout_seconds: int = 1800,
     preserve_existing_source_mapping: bool = False,
+    bcftools_executable: str = "bcftools",
 ) -> dict:
     """Normalize, sort, and CSI-index a VCF before publishing either output.
 
@@ -248,7 +249,12 @@ def normalize_vcf_with_bcftools(
     filesystem. Existing output and index files remain untouched until
     normalization, sorting, and indexing have all succeeded.
     """
-    if not bcftools_available():
+    executable_available = (
+        bcftools_available()
+        if bcftools_executable == "bcftools"
+        else Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
+    )
+    if not executable_available:
         raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
     input_path = Path(input_path)
     output_path = Path(output_path)
@@ -267,7 +273,7 @@ def normalize_vcf_with_bcftools(
 
     try:
         version_result = subprocess.run(
-            ["bcftools", "--version"],
+            [bcftools_executable, "--version"],
             capture_output=True,
             text=True,
             timeout=30,
@@ -302,7 +308,7 @@ def normalize_vcf_with_bcftools(
         # ``view -A`` is available in the pinned 1.19 release. The router only
         # places records here when the GVCF wildcard is provably uncalled.
         prepared_path = work / "prepared.vcf.gz"
-        view_command = ["bcftools", "view", "-A", "-Oz", "-o", str(prepared_path), str(input_path)]
+        view_command = [bcftools_executable, "view", "-A", "-Oz", "-o", str(prepared_path), str(input_path)]
         try:
             viewed = subprocess.run(
                 view_command, capture_output=True, text=True, timeout=timeout,
@@ -326,7 +332,7 @@ def normalize_vcf_with_bcftools(
             header_injection = _write_original_record_info_header(prepared_path, provenance_input)
 
         normalize_command = [
-            "bcftools", "norm", "-f", str(reference_fasta), "-c", "e",
+            bcftools_executable, "norm", "-f", str(reference_fasta), "-c", "e",
             "-m", "-any", "--multi-overlaps", "0",
             *( [] if has_existing_source_mapping else ["--old-rec-tag", ORIGINAL_RECORD_TAG] ),
             "-Oz", "-o", str(normalized_path), str(provenance_input),
@@ -350,7 +356,7 @@ def normalize_vcf_with_bcftools(
         if not normalized_path.is_file() or normalized_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no normalized VCF.")
 
-        sort_command = ["bcftools", "sort", "-Oz", "-o", str(sorted_path), str(normalized_path)]
+        sort_command = [bcftools_executable, "sort", "-Oz", "-o", str(sorted_path), str(normalized_path)]
         try:
             sorted_result = subprocess.run(
                 sort_command,
@@ -370,7 +376,7 @@ def normalize_vcf_with_bcftools(
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
 
-        index_command = ["bcftools", "index", "--csi", "--force", str(sorted_path)]
+        index_command = [bcftools_executable, "index", "--csi", "--force", str(sorted_path)]
         try:
             indexed_result = subprocess.run(
                 index_command,
