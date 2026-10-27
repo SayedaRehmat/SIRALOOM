@@ -4,22 +4,29 @@ This verifies stage reconciliation and downstream gate ordering. It does not cla
 scientific validity of the manually entered classification or end-to-end clinical
 validation; those require separately governed reviewer and truth-set tests.
 """
-from datetime import datetime, timezone
 import gzip
+from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import func, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.variant_identity import stable_variant_uuid
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, Annotation, AuditEvent, Case, Classification, Organization,
-    Report, User, Variant, WorkflowStep,
+    Analysis,
+    Annotation,
+    AuditEvent,
+    Case,
+    Classification,
+    Organization,
+    Report,
+    User,
+    Variant,
+    WorkflowStep,
 )
-from backend.app.domain.variant_identity import stable_variant_uuid
 
 
 def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, tmp_path):
@@ -152,6 +159,7 @@ def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, t
             workflow, "artifact_store_for_organization",
             lambda *_args, **_kwargs: store,
         )
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
         # No final reportability disposition has been entered yet. The real
         # workflow must resume through classification review and stop at that gate.
         monkeypatch.setattr(reportability, "evaluate_analysis", lambda *_args: None)

@@ -36,12 +36,10 @@ from backend.app.domain.ingestion import (
 from backend.app.domain.storage_capacity import preflight_upload_capacity
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
+    artifact_store_for_organization,
     artifact_store_for_uri,
-    resolve_storage_profile,
 )
 from backend.app.infrastructure.artifacts.compensation import compensate_uncommitted_artifact
-from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
-from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
 from backend.app.infrastructure.db.session import SessionLocal, get_db
@@ -63,21 +61,9 @@ def _compensate_uncommitted_artifact(db: Session, store, artifact_id: UUID, stor
 
 def _store(db: Session, organization_id: UUID):
     try:
-        profile = resolve_storage_profile(db, organization_id=organization_id)
+        return artifact_store_for_organization(db, organization_id=organization_id)
     except StorageProfileError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-
-    if profile is None:
-        return (
-            FirebaseArtifactStore(settings.firebase_storage_bucket)
-            if settings.firebase_storage_enabled
-            else ArtifactStore(settings.artifact_root)
-        )
-
-    if profile.backend_type == "FIREBASE_GCS":
-        return FirebaseArtifactStore(settings.firebase_storage_bucket)
-
-    return ArtifactStore(settings.artifact_root)
 
 
 def _safe_filename(filename: str) -> str:

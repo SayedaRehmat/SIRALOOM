@@ -4,8 +4,8 @@ Earlier stages are seeded as durable completed checkpoints so this test isolates
 report stage body. The real run_variant_analysis entry point executes twice, with a
 one-shot artifact-store failure on the first attempt.
 """
-from datetime import datetime, timezone
 import gzip
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -150,6 +150,7 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
             workflow, "artifact_store_for_organization",
             lambda *_args, **_kwargs: store,
         )
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
         monkeypatch.setattr(store, "put_file", fail_once_at_report_artifact_boundary)
         monkeypatch.setattr(workflow, "_classification_review_gate_ready", lambda *_args: True)
         monkeypatch.setattr(

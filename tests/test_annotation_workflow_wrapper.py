@@ -136,6 +136,7 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
 
         monkeypatch.setattr(db_module, "SessionLocal", LocalSession)
         monkeypatch.setattr(db_module, "engine", engine)
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_args, **_kwargs: store)
 
         class FakeProvider:
             provider_id = "GeneBe"
@@ -475,8 +476,8 @@ def test_worker_rejects_unbound_or_invalid_analysis_input_before_reading(
     artifact_build,
     message,
 ):
-    import importlib
     import hashlib
+    import importlib
 
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     workflow = importlib.import_module("backend.app.workflows.variant")

@@ -4,10 +4,10 @@ This test proves the orchestration continues without inventing zero frequency an
 ACMG to review. The resource plan is deliberately empty; it is not a provider integration
 test or clinical-validity claim.
 """
+import gzip
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
-import gzip
 
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
@@ -17,8 +17,16 @@ from backend.app.domain.variant_identity import stable_variant_uuid
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, Annotation, AuditEvent, Case, Classification, Organization,
-    Report, User, Variant, WorkflowStep,
+    Analysis,
+    Annotation,
+    AuditEvent,
+    Case,
+    Classification,
+    Organization,
+    Report,
+    User,
+    Variant,
+    WorkflowStep,
 )
 
 
@@ -132,6 +140,7 @@ def test_missing_population_observation_continues_to_acmg_human_review(monkeypat
             workflow, "artifact_store_for_organization",
             lambda *_args, **_kwargs: store,
         )
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
         # An empty optional population-resource plan exercises the real stage body
         # and its per-variant missing-observation check without a live provider.
         monkeypatch.setattr(

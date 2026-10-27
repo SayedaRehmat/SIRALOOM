@@ -19,8 +19,8 @@ from backend.app.infrastructure.db.models import (
     Case,
     Classification,
     Organization,
-    Report,
     ReanalysisCandidate,
+    Report,
     User,
     Variant,
     WorkflowStep,
@@ -280,6 +280,7 @@ def test_resumed_signed_out_analysis_recovers_provenance_failure_and_completes(
             "artifact_store_for_organization",
             lambda *_args, **_kwargs: store,
         )
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
 
         original_put_file = store.put_file
         failures_remaining = {"count": 1}

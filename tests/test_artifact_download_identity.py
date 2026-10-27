@@ -47,8 +47,6 @@ def test_artifact_download_rejects_uri_not_bound_to_artifact(monkeypatch, storag
 
     monkeypatch.setattr(artifacts, "get_accessible_artifact", lambda *args, **kwargs: artifact)
     monkeypatch.setattr(artifacts, "artifact_store_for_uri", lambda *args, **kwargs: FakeStore())
-    monkeypatch.setattr(artifacts, "FirebaseArtifactStore", FakeStore)
-    monkeypatch.setattr(artifacts, "ArtifactStore", FakeStore)
 
     with pytest.raises(HTTPException) as error:
         artifacts.download_artifact(
@@ -95,7 +93,6 @@ def test_local_artifact_download_verifies_bytes_before_response(monkeypatch, tmp
 
     monkeypatch.setattr(routes, "get_accessible_artifact", lambda *args, **kwargs: artifact)
     monkeypatch.setattr(routes, "artifact_store_for_uri", lambda *args, **kwargs: LocalStore(tmp_path))
-    monkeypatch.setattr(routes, "ArtifactStore", LocalStore)
 
     if corrupt:
         with pytest.raises(HTTPException) as error:
@@ -149,7 +146,6 @@ def test_cloud_artifact_download_verifies_bytes_before_response(monkeypatch, cor
     monkeypatch.setattr(routes.settings, "firebase_storage_bucket", "lab-bucket")
     monkeypatch.setattr(routes, "get_accessible_artifact", lambda *args, **kwargs: artifact)
     monkeypatch.setattr(routes, "artifact_store_for_uri", lambda *args, **kwargs: CloudStore("lab-bucket"))
-    monkeypatch.setattr(routes, "FirebaseArtifactStore", CloudStore)
     principal = Principal(user_id, organization_id, "read_only", str(user_id))
 
     if corrupt:

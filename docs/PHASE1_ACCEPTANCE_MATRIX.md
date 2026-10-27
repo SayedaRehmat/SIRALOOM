@@ -540,3 +540,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | Authorized operations users can identify the deployment target selected by a storage profile without receiving deployment secrets | PASS (automated API/UI scope) | API payload adds only a grammar-validated target ID; profile paths, bucket/project configuration and credential paths remain omitted. Regression proves secrets and unsafe IDs are not returned. Bilingual operations UI displays the ID when present. Exact-SHA GitHub Actions run [40474501279](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40474501279) on `e025d492483727da887625d3c912f1d31d7c0ce8` passed backend, frontend, PostgreSQL/Celery integration, image-build and Compose validation. Local frontend tests were not run because this WSL environment has no Linux Node runtime. This does not verify live storage isolation or laboratory deployment. |
+
+### 2026-10-27 enforce organization-bound storage at artifact ingress and worker reads
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Artifact uploads select the active organization-bound deployment target | PASS (automated API resolver scope) | Intake delegates to `artifact_store_for_organization`; a route regression asserts the organization ID and DB session are passed through to the governed resolver. |
+| Scientific workers read only artifacts assigned to the owning case's organization | PASS (automated resolver and workflow scope) | Worker loads the case, resolves each immutable artifact URI for its organization, and verifies local containment or cloud checksum/size. Unassigned URI fails closed; response-checkpoint replay uses the same resolver. Existing two-organization target tests verify cross-organization URI denial. |
+| Full backend regression after ingress/worker storage change | PASS (local Linux suite) | **1,467 passed, 48 skipped**; focused storage/materialization/download suite **25 passed**; exact-SHA GitHub Actions and deployed two-lab/Firebase IAM checks pending. |

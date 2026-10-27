@@ -119,6 +119,7 @@ def test_missing_reportability_disposition_blocks_report_creation_on_reexecution
             workflow, "artifact_store_for_organization",
             lambda *_args, **_kwargs: store,
         )
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
         # This test starts at reportability, so upstream classification review
         # is deliberately considered complete rather than re-tested here.
         monkeypatch.setattr(workflow, "_classification_review_gate_ready", lambda *_args: True)

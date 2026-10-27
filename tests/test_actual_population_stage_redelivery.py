@@ -19,8 +19,8 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    ACMGSourceAssertion,
     ACMGAssessment,
+    ACMGSourceAssertion,
     Analysis,
     Annotation,
     AuditEvent,
@@ -577,6 +577,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             "artifact_store_for_organization",
             lambda *_args, **_kwargs: store,
         )
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
 
         contract = SimpleNamespace(
             provider_id="fixture-population",

@@ -454,7 +454,7 @@ def test_resolver_fails_closed_when_local_execution_location_disagrees_with_regi
 
 
 def test_local_gnomad_adapter_requires_qualified_local_contract():
-    from backend.app.adapters.population.gnomad import LocalGnomADTabixProvider, GnomADProviderError
+    from backend.app.adapters.population.gnomad import GnomADProviderError, LocalGnomADTabixProvider
 
     contract = ResourceExecutionContract(
         provider_id="gnomad-local-tabix",
@@ -531,10 +531,17 @@ def test_replayed_annotation_observation_cannot_duplicate_or_change_resource_ide
         engine.dispose()
 
 
-def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(tmp_path):
+def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(monkeypatch, tmp_path):
     """A crash after response checkpointing but before row persistence must not call the provider again."""
     from backend.app.infrastructure.artifacts.store import ArtifactStore
-    from backend.app.infrastructure.db.models import Artifact, Case, Organization, User, WorkflowStep
+    from backend.app.infrastructure.db.models import (
+        Artifact,
+        Case,
+        Organization,
+        OrganizationStorageProfile,
+        User,
+        WorkflowStep,
+    )
     from backend.app.workflows.variant import (
         _load_annotation_response_checkpoint,
         _persist_annotation_response_checkpoint,
@@ -546,10 +553,13 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
         tables=[
             Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
             Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            OrganizationStorageProfile.__table__,
             WorkflowStep.__table__,
         ],
     )
     store = ArtifactStore(tmp_path / "artifact-store")
+    from backend.app.config import settings
+    monkeypatch.setattr(settings, "artifact_root", str(tmp_path / "artifact-store"))
     organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Replay Safety Lab", external_identifier=None))
@@ -627,9 +637,16 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
     engine.dispose()
 
 
-def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(tmp_path):
+def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(monkeypatch, tmp_path):
     from backend.app.infrastructure.artifacts.store import ArtifactStore
-    from backend.app.infrastructure.db.models import Artifact, Case, Organization, User, WorkflowStep
+    from backend.app.infrastructure.db.models import (
+        Artifact,
+        Case,
+        Organization,
+        OrganizationStorageProfile,
+        User,
+        WorkflowStep,
+    )
     from backend.app.workflows.variant import (
         _load_annotation_response_checkpoint,
         _persist_annotation_response_checkpoint,
@@ -641,10 +658,13 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(t
         tables=[
             Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
             Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            OrganizationStorageProfile.__table__,
             WorkflowStep.__table__,
         ],
     )
     store = ArtifactStore(tmp_path / "artifact-store")
+    from backend.app.config import settings
+    monkeypatch.setattr(settings, "artifact_root", str(tmp_path / "artifact-store"))
     organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Identity Lab", external_identifier=None))
@@ -696,6 +716,7 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(t
 
 def test_local_annotation_provider_gets_stable_request_fingerprint():
     from types import SimpleNamespace
+
     from backend.app.workflows.variant import _ensure_annotation_request_fingerprint
 
     analysis = SimpleNamespace(
@@ -735,7 +756,7 @@ def test_local_annotation_provider_gets_stable_request_fingerprint():
     assert payloads[0]["_siraloom_annotation_provenance"]["request_fingerprint"] == first
 
 
-def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_lineage(tmp_path):
+def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_lineage(monkeypatch, tmp_path):
     """Recover after row commit but before batch completion without duplicate annotations."""
     from types import SimpleNamespace
 
@@ -746,7 +767,12 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
     from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
     from backend.app.infrastructure.artifacts.store import ArtifactStore
     from backend.app.infrastructure.db.models import (
-        AnalysisPartition, Artifact, Case, Evidence, Organization, User, Variant, WorkflowStep,
+        AnalysisPartition,
+        Case,
+        Organization,
+        User,
+        Variant,
+        WorkflowStep,
     )
     from backend.app.partition_scheduler import PartitionScheduler, configure_partition
     from backend.app.workflows.variant import (
@@ -760,6 +786,8 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path/'annotation-stage-recovery.db'}")
     Base.metadata.create_all(engine)
     store = ArtifactStore(tmp_path / "artifact-store")
+    from backend.app.config import settings
+    monkeypatch.setattr(settings, "artifact_root", str(tmp_path / "artifact-store"))
     organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
     parent_id, analysis_id = uuid4(), uuid4()
     variant_key = canonical_key("GRCh38", "1", 555, "T", "C")

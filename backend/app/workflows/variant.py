@@ -78,7 +78,11 @@ from backend.app.domain.resource_execution import (
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.schemas import CanonicalVariant
-from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    artifact_store_for_organization,
+    artifact_store_for_uri,
+)
 from backend.app.domain.variant_identity import canonical_key, normalize_build, stable_variant_uuid
 from backend.app.domain.vcf_tools import (
     VCFToolError,
@@ -93,7 +97,6 @@ from backend.app.domain.vcf_validation import (
 )
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
-from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
@@ -618,7 +621,7 @@ def _load_annotation_response_checkpoint(
         raise RuntimeError("Persisted annotation response resource/provider identity conflicts with the active execution plan.")
     if checkpoint.get("response_artifact_sha256") != artifact.sha256:
         raise RuntimeError("Persisted annotation response artifact checksum conflicts with its workflow checkpoint.")
-    path = _materialize_artifact_for_worker(artifact, temporary_paths)
+    path = _materialize_artifact_for_worker(db, artifact, temporary_paths)
     if sha256_file(path) != artifact.sha256:
         raise RuntimeError("Persisted annotation response artifact failed SHA-256 verification.")
     with path.open("r", encoding="utf-8") as handle:
@@ -1116,7 +1119,9 @@ def recover_interrupted_execution(db: Session, analysis_id: UUID) -> bool:
     return True
 
 
-def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[Path]) -> Path:
+def _materialize_artifact_for_worker(
+    db: Session, artifact: Artifact, temporary_paths: list[Path]
+) -> Path:
     """Resolve an immutable artifact URI to a worker-local file for tools.
 
     Scientific tools such as bcftools and VEP require filesystem paths. Cloud
@@ -1124,13 +1129,18 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
     file rather than incorrectly interpreted as a local path.
     """
     uri = str(artifact.storage_uri or "")
+    case = db.get(Case, artifact.case_id)
+    if case is None:
+        raise RuntimeError(f"Artifact {artifact.id} is not linked to an existing case.")
+    try:
+        store = artifact_store_for_uri(
+            db, organization_id=case.organization_id, storage_uri=uri
+        )
+    except StorageProfileError as exc:
+        raise RuntimeError(
+            f"Artifact {artifact.id} storage URI is not assigned to its organization."
+        ) from exc
     if uri.startswith("gs://"):
-        if not settings.firebase_storage_enabled or not settings.firebase_storage_bucket:
-            raise RuntimeError(
-                f"Artifact {artifact.id} is stored in cloud storage, but cloud storage "
-                "is not configured on this worker."
-            )
-        store = FirebaseArtifactStore(settings.firebase_storage_bucket)
         suffix = "".join(Path(artifact.filename).suffixes) or ".bin"
         with NamedTemporaryFile(
             prefix="siraloom-artifact-",
@@ -1156,9 +1166,9 @@ def _materialize_artifact_for_worker(artifact: Artifact, temporary_paths: list[P
         temporary_paths.append(local_path)
         return local_path
 
-    local_path = local_path_from_uri(uri)
-    if local_path is None:
-        raise RuntimeError(f"Artifact {artifact.id} has an unsupported local storage URI: {uri}")
+    if not isinstance(store, ArtifactStore):
+        raise RuntimeError(f"Artifact {artifact.id} storage adapter does not match its URI.")
+    local_path = store.local_path(uri)
     if not local_path.is_file():
         raise RuntimeError(
             f"Artifact {artifact.id} is not available on this worker: {uri}"
@@ -1406,7 +1416,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             raise RuntimeError("Analysis input artifact is not a primary VCF")
         elif input_artifact.validation_status == "INVALID":
             raise RuntimeError("Analysis input VCF failed ingestion validation")
-        input_path = _materialize_artifact_for_worker(input_artifact, temporary_artifact_paths)
+        input_path = _materialize_artifact_for_worker(
+            db, input_artifact, temporary_artifact_paths
+        )
 
         if analysis.status not in {AnalysisStatus.SUCCEEDED, AnalysisStatus.REQUIRES_REVIEW}:
             analysis.status = AnalysisStatus.RUNNING
@@ -2307,7 +2319,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         elif normalized_artifact is None:
             raise RuntimeError("Normalization step is marked complete but normalized artifact is missing")
 
-        normalized_path = _materialize_artifact_for_worker(normalized_artifact, temporary_artifact_paths)
+        normalized_path = _materialize_artifact_for_worker(
+            db, normalized_artifact, temporary_artifact_paths
+        )
         if not normalized_path.is_file():
             raise RuntimeError(f"Normalized artifact path does not exist: {normalized_path}")
 

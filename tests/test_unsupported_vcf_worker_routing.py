@@ -228,6 +228,7 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
 
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
 
         def unexpected_reference_lookup(*_args, **_kwargs):
             raise AssertionError("records with no sequence-resolved variants need no normalization reference")
@@ -363,6 +364,7 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
             db.commit()
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
 
         workflow.run_variant_analysis(analysis_id)
 
@@ -476,6 +478,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
         decision = WorkflowDecision(WorkflowAction.CONTINUE, "TEST_REFERENCE_SELECTED", "Fixture reference selected")
         monkeypatch.setattr(workflow, "resolve_resource_with_fallback", lambda db, **_k: SimpleNamespace(
             resource=db.get(Resource, resource_id), used_fallback=False,
