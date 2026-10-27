@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     redis_url: str
 
     artifact_root: str = "/data/siraloom/artifacts"
+    # Deployment-owned allowlist of per-organization artifact targets. Profiles
+    # may reference target IDs but can never supply filesystem paths or buckets.
+    artifact_storage_targets_json: str = "{}"
     # Hard application-level upper bound; labs can raise it per deployment via MAX_ARTIFACT_UPLOAD_BYTES.
     max_artifact_upload_bytes: int = Field(default=512 * 1024 * 1024, gt=0)
     resource_cache_root: str = "/data/siraloom/resource-cache"

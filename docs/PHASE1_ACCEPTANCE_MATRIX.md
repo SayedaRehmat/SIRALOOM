@@ -382,7 +382,17 @@ Limitations: the manifest is lineage and routing evidence, not independent truth
 
 Linux regressions across storage profile lifecycle, artifact downloads, case-export download/integrity and tenant guards — **28 passed, 1 skipped**; Ruff `--select F,I`, Python compilation and `git diff --check` passed. The local artifact download also now emits `X-Content-Type-Options: nosniff`.
 
-Limitations: storage profiles still select a deployment-wide local root or Firebase bucket; per-organization independent roots/buckets and historical bucket-version mappings are not implemented. A backend must remain configured and its canonical artifact URI must match; no arbitrary URI target is trusted. Exact-SHA CI is pending. Phase A and laboratory deployment remain **PARTIAL**.
+Limitations at the time of that checkpoint: storage profiles still selected a deployment-wide local root or Firebase bucket. The follow-up below implements deployment-configured per-organization target IDs, but it has not yet been committed or run through CI or an actual lab deployment. Phase A and laboratory deployment remain **PARTIAL**.
+
+### 2026-10-27 deployment-owned per-organization artifact target binding
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Organization profiles select only deployment-approved storage targets, with distinct lab bindings and tenant-scoped historical reads | PASS (automated configuration and adapter scope) | `ARTIFACT_STORAGE_TARGETS_JSON` maps target IDs to local roots or Firebase buckets and the exact owning organization UUID. Database profile configuration accepts only a target ID. Resolution rejects unknown targets, backend mismatches, and cross-organization target claims; historical reads are limited to active/retired target bindings for that organization. Existing deployments with an empty target map retain documented legacy single-root/single-bucket behavior, which is not per-lab isolation. |
+
+Linux command `.venv/bin/python -m pytest tests/test_storage_profiles.py tests/test_artifact_download_identity.py tests/test_case_export_download.py tests/test_case_export_download_integrity.py tests/test_population_route_tenant_guards.py -q` — **35 passed, 1 skipped**, one existing Starlette/httpx deprecation warning. The complete Linux backend suite — **1,462 passed, 48 skipped**, same warning. Ruff `--select F,I`, changed-file formatting, Python compilation and `git diff --check` passed. Coverage includes two distinct local organization roots, cross-organization URI denial, target ownership and overlap enforcement, missing profile blocking, legacy migration/history behavior, removed target behavior, and existing download integrity/tenant authorization. The prior code commit `0c683bd60706f750edbb69f0a9fc39c41d09f1ef` has exact-SHA CI run [40468074986](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40468074986) passing backend/container, PostgreSQL/Celery worker-loss and frontend/container jobs; the current target-binding edits are later uncommitted changes and have not been run in CI.
+
+Limitations: no actual two-laboratory deployment, mounted independent roots, Firebase bucket credentials, cross-tenant live download attempt, backup/restore, or concurrent PostgreSQL target-activation test was run. The current Firebase adapter uses a deployment-level service identity; independently scoped credentials per organization are not implemented. Deployment configuration mapping is security-sensitive and must be applied consistently to API and workers. Laboratory deployment and overall Phase A remain **PARTIAL**.
 
 ## 2026-10-27 include telomere sentinels in report/sign-out blocking
 

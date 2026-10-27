@@ -92,6 +92,7 @@ Required production concepts:
 DATABASE_URL
 REDIS_PASSWORD
 ARTIFACT_ROOT
+ARTIFACT_STORAGE_TARGETS_JSON
 PUBLIC_BASE_URL
 FRONTEND_ORIGIN
 FIREBASE_AUTH_REQUIRED=true
@@ -106,6 +107,20 @@ Set `REDIS_PASSWORD` to a cryptographically generated secret with at least 32 ch
 Redis authentication follows Redis's documented `AUTH`/`requirepass` behavior; Redis ACL users are an alternative for deployments that need command/key-level restrictions ([Redis AUTH](https://redis.io/docs/latest/commands/auth/), [Redis ACL](https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/)). This Compose setup authenticates the default user but does not impose a custom command allowlist.
 
 GeneBe is optional at the software level but required for the current development annotation path. Its credentials remain server-side.
+
+### Organization-specific artifact stores
+
+For a deployment serving multiple laboratories, configure a deployment-owned target allowlist and assign one target ID to each organization's active storage profile. Profile configuration may contain only `target_id`; filesystem paths, bucket names, credentials, and cloud settings remain controlled by the deployment administrator. For example:
+
+```json
+{
+  "lab-a-files": {"backend_type": "LOCAL_FILESYSTEM", "root": "/srv/siraloom/labs/lab-a/artifacts", "organization_id": "<Lab A organization UUID>"},
+  "lab-b-files": {"backend_type": "LOCAL_FILESYSTEM", "root": "/srv/siraloom/labs/lab-b/artifacts", "organization_id": "<Lab B organization UUID>"},
+  "lab-c-cloud": {"backend_type": "FIREBASE_GCS", "bucket": "lab-c-siraloom-artifacts", "organization_id": "<Lab C organization UUID>"}
+}
+```
+
+Set this JSON as `ARTIFACT_STORAGE_TARGETS_JSON` in the API and every worker environment. Each target must be bound to the exact organization UUID, preventing cross-organization target reuse even during concurrent profile activation. Filesystem roots must be mounted and writable only by the appropriate service identity. Cloud credentials use the deployment's existing Firebase service identity or Application Default Credentials and are not stored in organization profiles. The administrator creates a profile with `configuration: {"target_id": "lab-a-files"}`; activation rejects unknown targets, organization mismatches and backend mismatches. Keep retired target entries configured for as long as historical artifacts on them must remain retrievable; removing one makes its historical artifacts unavailable while leaving a valid active target usable. Historical downloads resolve only against active or retired target bindings for that organization and continue through canonical URI and checksum validation. When this setting is empty, deployments retain legacy single-root/single-bucket behavior; that compatibility mode does not provide per-laboratory storage separation.
 
 ## Artifact upload capacity
 
