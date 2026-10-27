@@ -13,6 +13,7 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     AuditEvent,
     Case,
+    CaseAccessGrant,
     ConfirmationRecord,
     FollowUpPlan,
     Organization,
@@ -68,8 +69,6 @@ def test_postgres_followup_update_waits_for_report_analysis_lock(monkeypatch):
         )
         db.add(case)
         db.flush()
-        from backend.app.infrastructure.db.models import CaseAccessGrant
-
         db.add(CaseAccessGrant(
             id=uuid4(), case_id=case_id, user_id=user_id,
             can_read=True, can_write=True, can_review=True, granted_by=user_id,
@@ -133,8 +132,10 @@ def test_postgres_followup_update_waits_for_report_analysis_lock(monkeypatch):
         if writer.ident is not None:
             writer.join(timeout=2)
         with Session(engine) as db:
+            db.query(AuditEvent).filter(AuditEvent.case_id == case_id).delete()
             db.query(FollowUpPlan).filter(FollowUpPlan.id == plan_id).delete()
             db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(CaseAccessGrant).filter(CaseAccessGrant.case_id == case_id).delete()
             db.query(Case).filter(Case.id == case_id).delete()
             db.query(OrganizationMembership).filter(
                 OrganizationMembership.organization_id == organization_id
