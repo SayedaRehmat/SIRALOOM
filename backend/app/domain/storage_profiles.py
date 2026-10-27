@@ -135,6 +135,16 @@ def _configured_targets() -> dict[str, dict[str, str]]:
     return targets
 
 
+def list_deployment_storage_targets(*, organization_id: UUID) -> list[dict[str, str]]:
+    """Expose only target identifiers and backend types assigned to one organization."""
+    owner_id = str(organization_id)
+    return [
+        {"target_id": target_id, "backend_type": target["backend_type"]}
+        for target_id, target in sorted(_configured_targets().items())
+        if target["organization_id"] == owner_id
+    ]
+
+
 def _target_for_profile(profile: OrganizationStorageProfile) -> tuple[str, str]:
     configuration = profile.configuration_json or {}
     if not isinstance(configuration, dict) or set(configuration) - {"target_id"}:

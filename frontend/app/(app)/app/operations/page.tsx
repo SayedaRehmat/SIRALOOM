@@ -67,6 +67,11 @@ type StorageProfile = {
   status: string;
 };
 
+type DeploymentStorageTarget = {
+  target_id: string;
+  backend_type: "LOCAL_FILESYSTEM" | "FIREBASE_GCS";
+};
+
 async function apiFetch(path: string, init?: RequestInit) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
   const response = await fetch(`${API_BASE}${path}`, {
@@ -103,7 +108,7 @@ export default function OperationsPage() {
     uploadLimit: "Upload limit", stagingLimit: "Resource staging limit", preflight: "Capacity preflight", enabled: "Enabled", disabled: "Disabled",
     free: "Free", used: "Used", total: "Total", writable: "Writable", notWritable: "Not writable", capacityIssues: "Capacity issues",
     storageName: "Profile name", storageBackend: "Storage backend", registerStorage: "Register storage profile", localFilesystem: "Lab-managed filesystem",
-    cloudStorage: "Configured Firebase Cloud Storage", deploymentTarget: "Deployment target", storageNote: "This profile selects storage configured by the deployment administrator. It does not create a disk, mount a path or provision a bucket."
+    cloudStorage: "Configured Firebase Cloud Storage", deploymentTarget: "Deployment target", chooseDeploymentTarget: "Select approved target", noMatchingTarget: "No deployment target is configured for this storage backend.", storageNote: "This profile selects storage configured by the deployment administrator. It does not create a disk, mount a path or provision a bucket."
   };
   const arabicCopy = {
     eyebrow: "عمليات المختبر", title: "التنبيهات وإعادة التحليل والسعة", lead: "نقطة تشغيل واحدة للإجراءات التي تتطلب انتباهاً من المختبر.",
@@ -114,7 +119,7 @@ export default function OperationsPage() {
     uploadLimit: "حد الرفع", stagingLimit: "حد تجهيز الموارد", preflight: "فحص السعة", enabled: "مفعّل", disabled: "معطّل",
     free: "المتاح", used: "المستخدم", total: "الإجمالي", writable: "قابل للكتابة", notWritable: "غير قابل للكتابة", capacityIssues: "مشكلات السعة",
     storageName: "اسم الملف", storageBackend: "خلفية التخزين", registerStorage: "تسجيل ملف تخزين", localFilesystem: "نظام ملفات تديره المختبر",
-    cloudStorage: "تخزين Firebase السحابي المُهيّأ", deploymentTarget: "وجهة النشر", storageNote: "يختار هذا الملف التخزين الذي هيأه مسؤول النشر. لا ينشئ قرصاً أو نقطة تركيب أو حاوية تخزين."
+    cloudStorage: "تخزين Firebase السحابي المُهيّأ", deploymentTarget: "وجهة النشر", chooseDeploymentTarget: "اختر وجهة معتمدة", noMatchingTarget: "لا توجد وجهة نشر مهيأة لخلفية التخزين هذه.", storageNote: "يختار هذا الملف التخزين الذي هيأه مسؤول النشر. لا ينشئ قرصاً أو نقطة تركيب أو حاوية تخزين."
   };
   const copy = Object.fromEntries(Object.keys(englishCopy).map((key) => [
     key,
@@ -127,8 +132,10 @@ export default function OperationsPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [capacity, setCapacity] = useState<Capacity | null>(null);
   const [profiles, setProfiles] = useState<StorageProfile[]>([]);
+  const [storageTargets, setStorageTargets] = useState<DeploymentStorageTarget[]>([]);
   const [storageProfileName, setStorageProfileName] = useState("");
   const [storageBackend, setStorageBackend] = useState<"LOCAL_FILESYSTEM" | "FIREBASE_GCS">("LOCAL_FILESYSTEM");
+  const [storageTargetId, setStorageTargetId] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [candidateRefreshFailed, setCandidateRefreshFailed] = useState(false);
@@ -136,16 +143,22 @@ export default function OperationsPage() {
   const load = useCallback(async () => {
     setBusy(true); setMessage("");
     try {
-      const [n, c, cap, p] = await Promise.all([
+      const [n, c, cap, p, targets] = await Promise.all([
         apiFetch("/notifications"),
         apiFetch("/reanalysis/candidates"),
         apiFetch("/storage/capacity"),
         apiFetch("/storage/profiles"),
+        apiFetch("/storage/targets"),
       ]);
       setNotifications(Array.isArray(n) ? n : []);
       setCandidates(Array.isArray(c) ? c : []);
       setCapacity(cap ?? null);
       setProfiles(Array.isArray(p) ? p : []);
+      const configuredTargets = Array.isArray(targets) ? targets : [];
+      setStorageTargets(configuredTargets);
+      setStorageTargetId(current => configuredTargets.some((target: DeploymentStorageTarget) => target.target_id === current)
+        ? current
+        : configuredTargets.find((target: DeploymentStorageTarget) => target.backend_type === storageBackend)?.target_id ?? "");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to load laboratory operations.");
     } finally { setBusy(false); }
@@ -207,10 +220,11 @@ export default function OperationsPage() {
           name: storageProfileName.trim(),
           backend_type: storageBackend,
           storage_key: storageBackend === "FIREBASE_GCS" ? "PRIMARY_FIREBASE" : "PRIMARY_ARTIFACTS",
-          configuration: {},
+          configuration: storageTargets.length ? { target_id: storageTargetId } : {},
         }),
       });
       setStorageProfileName("");
+      setStorageTargetId("");
       setMessage(copy.registerStorage);
       await load();
     } catch (error) { setMessage(error instanceof Error ? error.message : copy.failed); }
@@ -280,11 +294,15 @@ export default function OperationsPage() {
           {profiles.length === 0 ? <p className="muted">{copy.noProfiles}</p> : <div className="operation-list compact">{profiles.map(profile => <div className="operation-row" key={profile.storage_profile_id}><div className="operation-main"><strong>{profile.name}</strong><small>{profile.backend_type} · {profile.storage_key}</small>{profile.deployment_target_id && <span className="metadata-line">{copy.deploymentTarget}: {profile.deployment_target_id}</span>}<span className="metadata-line">{copy.version}: {profile.version}</span></div><div className="operation-actions">{profile.status === "ACTIVE" ? <span className="badge success">{copy.active}</span> : <button className="text-button" disabled={busy} onClick={() => void activate(profile.storage_profile_id)}>{copy.activate}</button>}</div></div>)}</div>}
           <form className="manual-classification-form" onSubmit={registerStorage}>
             <label>{copy.storageName}<input value={storageProfileName} onChange={event => setStorageProfileName(event.target.value)} required maxLength={120} /></label>
-            <label>{copy.storageBackend}<select value={storageBackend} onChange={event => setStorageBackend(event.target.value as "LOCAL_FILESYSTEM" | "FIREBASE_GCS")}>
+            <label>{copy.storageBackend}<select value={storageBackend} onChange={event => { setStorageBackend(event.target.value as "LOCAL_FILESYSTEM" | "FIREBASE_GCS"); setStorageTargetId(""); }}>
               <option value="LOCAL_FILESYSTEM">{copy.localFilesystem}</option><option value="FIREBASE_GCS">{copy.cloudStorage}</option>
             </select></label>
+            {storageTargets.length > 0 && <label>{copy.deploymentTarget}<select value={storageTargetId} required onChange={event => setStorageTargetId(event.target.value)}>
+              <option value="">{copy.chooseDeploymentTarget}</option>
+              {storageTargets.filter(target => target.backend_type === storageBackend).map(target => <option key={target.target_id} value={target.target_id}>{target.target_id}</option>)}
+            </select>{!storageTargets.some(target => target.backend_type === storageBackend) && <small>{copy.noMatchingTarget}</small>}</label>}
             <p>{copy.storageNote}</p>
-            <button className="secondary" type="submit" disabled={busy || !storageProfileName.trim()}>{copy.registerStorage}</button>
+            <button className="secondary" type="submit" disabled={busy || !storageProfileName.trim() || (storageTargets.length > 0 && !storageTargetId)}>{copy.registerStorage}</button>
           </form>
         </section>
       </div>

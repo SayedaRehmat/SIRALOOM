@@ -14,6 +14,7 @@ from backend.app.domain.storage_profiles import (
     StorageProfileError,
     activate_storage_profile,
     get_active_storage_profile,
+    list_deployment_storage_targets,
     register_storage_profile,
 )
 from backend.app.infrastructure.db.models import OrganizationStorageProfile
@@ -70,6 +71,19 @@ def list_storage_profiles(
         )
     ).all()
     return [_payload(row) for row in rows]
+
+
+@router.get("/targets")
+def list_storage_targets(
+    principal: Principal = Depends(get_current_principal),
+):
+    require_role(principal, READ_ROLES)
+    try:
+        return list_deployment_storage_targets(
+            organization_id=principal.organization_id
+        )
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=503, detail="Deployment storage targets are invalid") from exc
 
 
 @router.get("/active")

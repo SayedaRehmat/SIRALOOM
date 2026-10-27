@@ -7,6 +7,7 @@ from backend.app.domain.storage_profiles import (
     activate_storage_profile,
     artifact_store_for_uri,
     get_active_storage_profile,
+    list_deployment_storage_targets,
     register_storage_profile,
 )
 from backend.app.infrastructure.db.base import Base
@@ -156,6 +157,49 @@ def test_storage_profile_payload_hides_invalid_target_ids():
     )
 
     assert _payload(profile)["deployment_target_id"] is None
+
+
+def test_storage_target_list_exposes_only_targets_owned_by_organization(monkeypatch, tmp_path):
+    import json
+
+    from backend.app.config import settings
+
+    organization_id = uuid4()
+    other_organization_id = uuid4()
+    secret_path = str(tmp_path / "private-service-account.json")
+    monkeypatch.setattr(
+        settings,
+        "artifact_storage_targets_json",
+        json.dumps({
+            "lab-local": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(tmp_path / "lab-local"),
+                "organization_id": str(organization_id),
+            },
+            "lab-cloud": {
+                "backend_type": "FIREBASE_GCS",
+                "bucket": "private-bucket",
+                "organization_id": str(organization_id),
+                "project_id": "private-project",
+                "credentials_path": secret_path,
+            },
+            "other-lab": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(tmp_path / "other-lab"),
+                "organization_id": str(other_organization_id),
+            },
+        }),
+    )
+
+    targets = list_deployment_storage_targets(organization_id=organization_id)
+
+    assert targets == [
+        {"target_id": "lab-cloud", "backend_type": "FIREBASE_GCS"},
+        {"target_id": "lab-local", "backend_type": "LOCAL_FILESYSTEM"},
+    ]
+    assert secret_path not in repr(targets)
+    assert "private-bucket" not in repr(targets)
+    assert "private-project" not in repr(targets)
 
 
 def test_historical_artifact_backend_is_selected_from_uri_after_profile_change(
