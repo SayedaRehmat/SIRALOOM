@@ -21,7 +21,9 @@ from backend.app.infrastructure.db.models import (
     Classification,
     ConfirmationRecord,
     Evidence,
+    FollowUpPlan,
     Organization,
+    PhenotypeObservation,
     QCAssessment,
     Report,
     ReportabilityDecision,
@@ -711,6 +713,39 @@ def test_signout_rejects_report_content_changed_after_draft_artifact_generation(
     db.commit()
 
     with pytest.raises(ReportFinalizationError, match="no longer matches its content"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
+
+def test_signout_rejects_case_clinical_context_changed_after_report_generation():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    case = db.get(Case, report.case_id)
+    case.clinical_context = {"indication": "Changed after draft generation"}
+    db.commit()
+
+    with pytest.raises(ReportFinalizationError, match="source data changed after report draft generation"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
+
+def test_signout_rejects_new_phenotype_or_followup_context_after_report_generation():
+    db, reviewer, analysis, report = seed_finalizable_report()
+    variant = db.scalar(select(Variant).where(Variant.canonical_key == "GRCh38:17:1:A:G"))
+    db.add(
+        PhenotypeObservation(
+            id=uuid4(), case_id=analysis.case_id, analysis_id=analysis.id,
+            hpo_id="HP:0001250", label="Seizure", present=True,
+            phenotype_status="PRESENT", source="CLINICIAN",
+        )
+    )
+    db.add(
+        FollowUpPlan(
+            id=uuid4(), case_id=analysis.case_id, analysis_id=analysis.id,
+            variant_id=variant.id, action_type="REVIEW_ADDITIONAL_EVIDENCE",
+            status="PLANNED", notes="Added after draft", created_by=reviewer.id,
+        )
+    )
+    db.commit()
+
+    with pytest.raises(ReportFinalizationError, match="source data changed after report draft generation"):
         finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
 
 

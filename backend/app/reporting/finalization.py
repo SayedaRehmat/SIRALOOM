@@ -27,6 +27,7 @@ from backend.app.infrastructure.db.models import (
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
     REPORT_STATUS_SUPERSEDED,
+    build_report_content,
     confirmation_snapshot,
     datetime_snapshot,
     final_report_eligibility,
@@ -37,6 +38,52 @@ from backend.app.reporting.service import (
 
 class ReportFinalizationError(ValueError):
     pass
+
+
+def _verify_report_source_snapshot(db: Session, report: Report, content: dict) -> None:
+    """Ensure source records still produce the persisted draft report content."""
+    analysis = db.get(Analysis, report.analysis_id)
+    if analysis is None or analysis.case_id != report.case_id:
+        raise ReportFinalizationError("Report analysis no longer matches its case")
+    include_full_evidence = any(
+        isinstance(finding, dict) and "evidence" in finding
+        for finding in (content.get("findings") or [])
+    )
+    try:
+        current = build_report_content(
+            db,
+            analysis,
+            report.language,
+            report_type=report.report_type,
+            include_full_evidence=include_full_evidence,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ReportFinalizationError(
+            f"Report source data can no longer reproduce the draft: {exc}"
+        ) from exc
+
+    def stable_projection(value: dict) -> dict:
+        projection = dict(value)
+        # These change as a normal consequence of generating/signing a report.
+        projection.pop("generated_at", None)
+        projection.pop("audit_summary", None)
+        projection["report_version"] = report.report_version
+        # The report is rendered before its own draft PDF is stored. Seeded and
+        # migrated drafts can include it, so omit only this report's own artifact.
+        artifact_manifest = projection.get("artifact_manifest")
+        if isinstance(artifact_manifest, list):
+            projection["artifact_manifest"] = [
+                artifact
+                for artifact in artifact_manifest
+                if not isinstance(artifact, dict)
+                or artifact.get("artifact_id") != str(report.artifact_id)
+            ]
+        return projection
+
+    if stable_projection(current) != stable_projection(content):
+        raise ReportFinalizationError(
+            "Case or analysis source data changed after report draft generation; regenerate the report"
+        )
 
 
 def _verify_report_snapshot(db: Session, report: Report) -> None:
@@ -446,6 +493,11 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
         raise ReportFinalizationError(
             "Report snapshot no longer matches the current finalized reportability set"
         )
+
+    # Specific decision checks above provide actionable errors for changed
+    # classifications, evidence, QC, reportability, confirmation and secondary
+    # findings. This final comparison covers the other rendered source data.
+    _verify_report_source_snapshot(db, report, content)
 
 
 
