@@ -155,6 +155,27 @@ def configured_local_storage_targets() -> list[tuple[str, str]]:
     ]
 
 
+def configured_firebase_storage_target_ids() -> list[str]:
+    """Return configured cloud target IDs without exposing bucket credentials."""
+    return [
+        target_id
+        for target_id, target in sorted(_configured_targets().items())
+        if target["backend_type"] == "FIREBASE_GCS"
+    ]
+
+
+def probe_configured_firebase_storage_target(target_id: str) -> None:
+    """Exercise write/read/delete against one deployment-approved bucket."""
+    targets = _configured_targets()
+    target = targets.get(target_id)
+    if target is None or target["backend_type"] != "FIREBASE_GCS":
+        raise StorageProfileError("Configured Firebase storage target is unavailable")
+    if not settings.firebase_storage_enabled:
+        raise StorageProfileError("FIREBASE_STORAGE_ENABLED is false")
+    store = _store("FIREBASE_GCS", target["bucket"], target_id=target_id)
+    store.probe()
+
+
 def _target_for_profile(profile: OrganizationStorageProfile) -> tuple[str, str]:
     configuration = profile.configuration_json or {}
     if not isinstance(configuration, dict) or set(configuration) - {"target_id"}:

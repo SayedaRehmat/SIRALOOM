@@ -44,6 +44,92 @@ def test_iter_bytes_yields_bounded_chunks(monkeypatch):
     assert chunks == [b"abcd", b"efgh", b"ij"]
 
 
+def test_cloud_readiness_probe_uses_unique_generation_guarded_object_and_deletes_it():
+    class ProbeBlob:
+        generation = None
+
+        def __init__(self):
+            self.calls = []
+
+        def upload_from_string(self, payload, **kwargs):
+            self.calls.append(("upload", payload, kwargs))
+            self.generation = 17
+
+        def reload(self, **kwargs):
+            self.calls.append(("reload", kwargs))
+
+        def download_as_bytes(self, **kwargs):
+            self.calls.append(("download", kwargs))
+            return b"siraloom-storage-readiness-v1"
+
+        def delete(self, **kwargs):
+            self.calls.append(("delete", kwargs))
+
+    class ProbeBucket:
+        def __init__(self):
+            self.name = None
+            self.probe_blob = ProbeBlob()
+
+        def blob(self, name):
+            self.name = name
+            return self.probe_blob
+
+    store = FirebaseArtifactStore("test-bucket")
+    bucket = ProbeBucket()
+    store._bucket = bucket
+
+    store.probe(timeout_seconds=2)
+
+    assert bucket.name.startswith("_siraloom/readiness/")
+    assert bucket.probe_blob.calls[0][0] == "upload"
+    assert bucket.probe_blob.calls[0][2]["if_generation_match"] == 0
+    assert bucket.probe_blob.calls[2] == (
+        "download",
+        {"if_generation_match": 17, "timeout": 2},
+    )
+    assert bucket.probe_blob.calls[-1] == (
+        "delete",
+        {"if_generation_match": 17, "timeout": 2},
+    )
+
+
+def test_cloud_readiness_probe_cleans_up_after_read_failure():
+    import pytest
+
+    class ProbeBlob:
+        generation = 23
+
+        def __init__(self):
+            self.deleted_generation = None
+
+        def upload_from_string(self, payload, **kwargs):
+            pass
+
+        def reload(self, **kwargs):
+            pass
+
+        def download_as_bytes(self, **kwargs):
+            raise RuntimeError("provider read failed")
+
+        def delete(self, **kwargs):
+            self.deleted_generation = kwargs["if_generation_match"]
+
+    class ProbeBucket:
+        def __init__(self):
+            self.probe_blob = ProbeBlob()
+
+        def blob(self, _name):
+            return self.probe_blob
+
+    store = FirebaseArtifactStore("test-bucket")
+    bucket = ProbeBucket()
+    store._bucket = bucket
+
+    with pytest.raises(RuntimeError, match="provider read failed"):
+        store.probe()
+    assert bucket.probe_blob.deleted_generation == 23
+
+
 def test_named_firebase_apps_use_target_scoped_credentials_and_bucket(monkeypatch, tmp_path):
     import firebase_admin
     from firebase_admin import credentials, storage

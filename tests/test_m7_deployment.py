@@ -151,6 +151,83 @@ def test_readiness_blocks_when_configured_local_lab_target_is_missing(monkeypatc
     assert not missing_root.exists()
 
 
+def test_cloud_storage_target_is_probed_and_legacy_local_root_is_not_required(
+    monkeypatch, tmp_path
+):
+    import json
+    from uuid import uuid4
+
+    from backend.app.api.v1 import health
+
+    monkeypatch.setattr(
+        health.settings,
+        "artifact_storage_targets_json",
+        json.dumps({
+            "lab-cloud": {
+                "backend_type": "FIREBASE_GCS",
+                "bucket": "lab-cloud.appspot.com",
+                "organization_id": str(uuid4()),
+            }
+        }),
+    )
+    monkeypatch.setattr(health.settings, "firebase_storage_enabled", True)
+    monkeypatch.setattr(health.settings, "artifact_root", str(tmp_path / "unused-local-root"))
+    monkeypatch.setattr(health.settings, "app_env", "test")
+    monkeypatch.setattr(health.settings, "firebase_auth_required", False)
+    monkeypatch.setattr(health.settings, "firebase_project_id", None)
+    monkeypatch.setattr(health, "_check_database", lambda: ("ok", None))
+    monkeypatch.setattr(health, "_check_redis", lambda: ("ok", None))
+    health._CLOUD_PROBE_CACHE.clear()
+    probed = []
+    monkeypatch.setattr(
+        health,
+        "probe_configured_firebase_storage_target",
+        lambda target_id: probed.append(target_id),
+    )
+
+    response = TestClient(app).get("/api/v1/ready")
+
+    assert response.status_code == 200
+    assert response.json()["checks"]["artifact_store"]["status"] == "not_required"
+    assert response.json()["checks"]["organization_artifact_targets"]["status"] == "ok"
+    assert probed == ["lab-cloud"]
+    assert not (tmp_path / "unused-local-root").exists()
+
+
+def test_cloud_storage_readiness_failure_is_generic_and_cached(monkeypatch):
+    import json
+    from uuid import uuid4
+
+    from backend.app.api.v1 import health
+
+    monkeypatch.setattr(
+        health.settings,
+        "artifact_storage_targets_json",
+        json.dumps({
+            "lab-cloud": {
+                "backend_type": "FIREBASE_GCS",
+                "bucket": "lab-cloud.appspot.com",
+                "organization_id": str(uuid4()),
+            }
+        }),
+    )
+    health._CLOUD_PROBE_CACHE.clear()
+    count = 0
+
+    def fail_probe(_target_id):
+        nonlocal count
+        count += 1
+        raise RuntimeError("private provider details")
+
+    monkeypatch.setattr(health, "probe_configured_firebase_storage_target", fail_probe)
+
+    result = health._check_organization_artifact_targets()
+    assert result == ("error", "ORGANIZATION_ARTIFACT_TARGET_UNAVAILABLE")
+    assert "private provider details" not in str(result)
+    assert health._check_organization_artifact_targets() == result
+    assert count == 1
+
+
 def test_deployment_health_checks_use_readiness_not_liveness():
     repo_root = Path(__file__).resolve().parents[1]
     compose = (repo_root / "docker-compose.production.yml").read_text(encoding="utf-8")

@@ -332,6 +332,63 @@ class FirebaseArtifactStore:
         except ValueError:
             return False
 
+    def probe(self, *, timeout_seconds: float = 5.0) -> None:
+        """Verify bucket write/read/delete permissions with an isolated object.
+
+        The object name is random and creation/deletion are generation guarded,
+        so the probe cannot overwrite another object. A failed read still tries
+        to remove the probe object before propagating the original failure.
+        """
+        if timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        blob = self.bucket.blob(f"_siraloom/readiness/{uuid4().hex}")
+        payload = b"siraloom-storage-readiness-v1"
+        generation = None
+        try:
+            blob.upload_from_string(
+                payload,
+                content_type="application/octet-stream",
+                if_generation_match=0,
+                timeout=timeout_seconds,
+            )
+            blob.reload(timeout=timeout_seconds)
+            generation = blob.generation
+            if generation is None:
+                raise RuntimeError("Cloud storage probe did not return an object generation")
+            actual = blob.download_as_bytes(
+                if_generation_match=generation,
+                timeout=timeout_seconds,
+            )
+            if actual != payload:
+                raise RuntimeError("Cloud storage readiness probe content mismatch")
+        except Exception:
+            if generation is None:
+                try:
+                    blob.reload(timeout=timeout_seconds)
+                    generation = blob.generation
+                except Exception:  # noqa: BLE001 - preserve the original probe failure
+                    generation = None
+            if generation is not None:
+                try:
+                    blob.delete(
+                        if_generation_match=generation,
+                        timeout=timeout_seconds,
+                    )
+                except Exception as cleanup_exc:  # noqa: BLE001 - preserve original failure
+                    logger.warning(
+                        "Could not remove cloud storage readiness object (%s)",
+                        type(cleanup_exc).__name__,
+                    )
+            raise
+        try:
+            blob.delete(if_generation_match=generation, timeout=timeout_seconds)
+        except Exception as cleanup_exc:  # noqa: BLE001 - surface failed cleanup to readiness
+            logger.warning(
+                "Could not remove cloud storage readiness object (%s)",
+                type(cleanup_exc).__name__,
+            )
+            raise
+
     def delete(self, storage_uri: str) -> None:
         blob = self._blob_from_uri(storage_uri)
         blob.delete()
