@@ -171,9 +171,57 @@ def test_case_export_downloads_and_verifies_cloud_artifacts(tmp_path, monkeypatc
 def test_case_export_resolves_each_historical_artifact_for_its_case_organization(
     tmp_path, monkeypatch
 ):
+    import json
+
+    from backend.app.config import settings
+    from backend.app.domain.storage_profiles import (
+        activate_storage_profile,
+        register_storage_profile,
+    )
+
     db, case, export = _case_export_fixture()
-    source_store = ArtifactStore(str(tmp_path / "historical"))
-    destination_store = ArtifactStore(str(tmp_path / "current"))
+    historical_root = tmp_path / "historical"
+    current_root = tmp_path / "current"
+    monkeypatch.setattr(
+        settings,
+        "artifact_storage_targets_json",
+        json.dumps({
+            "historical": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(historical_root),
+                "organization_id": str(case.organization_id),
+            },
+            "current": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(current_root),
+                "organization_id": str(case.organization_id),
+            },
+        }),
+    )
+    old_profile = register_storage_profile(
+        db,
+        organization_id=case.organization_id,
+        name="history",
+        backend_type="LOCAL_FILESYSTEM",
+        storage_key="PRIMARY_ARTIFACTS",
+        configuration={"target_id": "historical"},
+        created_by=None,
+    )
+    activate_storage_profile(db, organization_id=case.organization_id, profile_id=old_profile.id)
+    current_profile = register_storage_profile(
+        db,
+        organization_id=case.organization_id,
+        name="current",
+        backend_type="LOCAL_FILESYSTEM",
+        storage_key="PRIMARY_ARTIFACTS",
+        configuration={"target_id": "current"},
+        created_by=None,
+    )
+    activate_storage_profile(db, organization_id=case.organization_id, profile_id=current_profile.id)
+    db.commit()
+
+    source_store = ArtifactStore(str(historical_root))
+    destination_store = ArtifactStore(str(current_root))
     source = tmp_path / "historical.vcf"
     source.write_bytes(b"historical source")
     stored = source_store.put_file(
@@ -187,18 +235,9 @@ def test_case_export_resolves_each_historical_artifact_for_its_case_organization
         genome_build="GRCh38",
         artifact_id=uuid4(),
     )
-    from backend.app.reporting import export_service
-
-    calls = []
-
-    def resolve(db_arg, *, organization_id, storage_uri):
-        calls.append((organization_id, storage_uri))
-        return source_store
-
-    monkeypatch.setattr(export_service, "artifact_store_for_uri", resolve)
     package = build_case_export(db, export=export, store=destination_store)
 
-    assert calls == [(case.organization_id, stored.storage_uri)]
+    assert destination_store.local_path(package.storage_uri).is_relative_to(current_root.resolve())
     with zipfile.ZipFile(destination_store.local_path(package.storage_uri)) as archive:
         assert archive.read(f"artifacts/{stored.id}-{stored.filename}") == b"historical source"
 
