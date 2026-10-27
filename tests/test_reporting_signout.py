@@ -353,6 +353,29 @@ def test_reportable_variant_requires_explicit_confirmation_disposition():
         finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Test")
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("notes", "Updated confirmation rationale after draft"),
+        ("result", "Changed after draft"),
+    ],
+)
+def test_signout_rejects_confirmation_decision_content_changed_without_new_version(field, value):
+    db, reviewer, analysis, report = seed_finalizable_report()
+    report.content_json = build_report_content(db, analysis, "en", report_type="CLINICAL_INTERPRETATION")
+    confirmation = db.scalar(
+        select(ConfirmationRecord).where(ConfirmationRecord.analysis_id == analysis.id)
+    )
+    assert confirmation is not None
+    original_version = confirmation.version
+    setattr(confirmation, field, value)
+    db.commit()
+    assert confirmation.version == original_version
+
+    with pytest.raises(ReportFinalizationError, match="confirmation decision or reviewer provenance changed"):
+        finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
+
+
 def test_clinical_report_eligibility_rejects_changed_rules_without_version_change():
     db, _reviewer, analysis, _report = seed_finalizable_report()
     assay = db.get(Assay, analysis.assay_id)

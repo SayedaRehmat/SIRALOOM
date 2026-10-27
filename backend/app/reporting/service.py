@@ -61,6 +61,41 @@ def datetime_snapshot(value: datetime | None) -> str | None:
     return normalized.isoformat()
 
 
+def confirmation_snapshot(confirmation: ConfirmationRecord | None) -> dict[str, Any]:
+    """Return the complete persisted confirmation decision bound into a report."""
+    if confirmation is None:
+        return {
+            "record_id": None,
+            "version": None,
+            "required": None,
+            "status": "NOT_CONFIGURED",
+            "method": None,
+            "result": None,
+            "laboratory": None,
+            "accession": None,
+            "performed_at": None,
+            "notes": None,
+            "reviewed_by": None,
+            "reviewed_at": None,
+        }
+    return {
+        "record_id": str(confirmation.id),
+        "version": confirmation.version,
+        "required": confirmation.required,
+        "status": confirmation.status,
+        "method": confirmation.method,
+        "result": confirmation.result,
+        "laboratory": confirmation.laboratory,
+        "accession": confirmation.accession,
+        # Preserve the existing report schema's datetime representation so a
+        # pre-deployment draft remains comparable in SQLite and PostgreSQL.
+        "performed_at": confirmation.performed_at.isoformat() if confirmation.performed_at else None,
+        "notes": confirmation.notes,
+        "reviewed_by": str(confirmation.reviewed_by) if confirmation.reviewed_by else None,
+        "reviewed_at": datetime_snapshot(confirmation.reviewed_at),
+    }
+
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -726,23 +761,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 ],
                 "segregation_observations": [{"pedigree_member_id": str(o.pedigree_member_id), "genotype": o.genotype, "zygosity": o.zygosity, "phase": o.phase, "phenotype_status": o.phenotype_status, "source": o.source, "notes": o.notes} for o in segregation_rows],
             },
-            "confirmation_context": {
-                # Persist exact confirmation identity so sign-out can prove that
-                # the clinical report reflects the confirmation state that was
-                # actually present when the draft was generated.
-                "record_id": str(confirmation.id) if confirmation else None,
-                "version": confirmation.version if confirmation else None,
-                "required": confirmation.required if confirmation else None,
-                "status": confirmation.status if confirmation else "NOT_CONFIGURED",
-                "method": confirmation.method if confirmation else None,
-                "result": confirmation.result if confirmation else None,
-                "laboratory": confirmation.laboratory if confirmation else None,
-                "accession": confirmation.accession if confirmation else None,
-                "performed_at": confirmation.performed_at.isoformat() if confirmation and confirmation.performed_at else None,
-                "notes": confirmation.notes if confirmation else None,
-                "reviewed_by": str(confirmation.reviewed_by) if confirmation and confirmation.reviewed_by else None,
-                "reviewed_at": datetime_snapshot(confirmation.reviewed_at) if confirmation else None,
-            },
+            "confirmation_context": confirmation_snapshot(confirmation),
             "follow_up": [{"action_type": x.action_type, "status": x.status, "due_date": x.due_date.isoformat() if x.due_date else None, "responsible_role": x.responsible_role, "outcome": x.outcome, "notes": x.notes} for x in followups],
         }
         if include_full_evidence:

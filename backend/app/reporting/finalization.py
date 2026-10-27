@@ -24,6 +24,7 @@ from backend.app.infrastructure.db.models import (
 from backend.app.reporting.service import (
     REPORT_STATUS_FINAL,
     REPORT_STATUS_SUPERSEDED,
+    confirmation_snapshot,
     datetime_snapshot,
     final_report_eligibility,
     render_pdf,
@@ -297,8 +298,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             if (
                 confirmation_version is not None
                 or latest_confirmation is not None
-                or confirmation_context.get("reviewed_by") is not None
-                or confirmation_context.get("reviewed_at") is not None
+                or confirmation_context != confirmation_snapshot(None)
             ):
                 raise ReportFinalizationError(
                     f"Report snapshot confirmation for variant {variant_id} is stale"
@@ -330,14 +330,9 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                 raise ReportFinalizationError(
                     f"Report snapshot confirmation for variant {variant_id} is stale or no longer latest"
                 )
-            if (
-                confirmation_context.get("reviewed_by")
-                != (str(confirmation.reviewed_by) if confirmation.reviewed_by else None)
-                or confirmation_context.get("reviewed_at")
-                != datetime_snapshot(confirmation.reviewed_at)
-            ):
+            if confirmation_context != confirmation_snapshot(confirmation):
                 raise ReportFinalizationError(
-                    f"Report snapshot confirmation review provenance is stale for variant {variant_id}"
+                    f"Report snapshot confirmation decision or reviewer provenance changed for variant {variant_id}"
                 )
 
     secondary_findings = content.get("secondary_findings") or []
