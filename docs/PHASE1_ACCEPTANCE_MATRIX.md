@@ -374,6 +374,14 @@ Verification: focused command using isolated BCFtools/HTSlib **1.19** — `LD_LI
 
 Limitations: the manifest is lineage and routing evidence, not independent truth-set concordance; SIRALOOM still does not interpret routed SV/CNV, BND, GVCF confidence blocks or spanning deletions. It does not make clinical or deployment readiness claims. Phase A, scientific validation and laboratory deployment remain **PARTIAL**.
 
+## 2026-10-27 include telomere sentinels in report/sign-out blocking
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Clinical report generation and sign-out block all preserved but uninterpreted routed VCF classes | PASS (automated reportability/sign-out scope) | `final_report_eligibility` now counts `telomere_records` (POS=0) and `telomere_after_contig_records` (POS=N+1), in addition to GVCF, SV and spanning-deletion classes. Regression checks both sentinel classes independently and calls `finalize_report`; each is rejected and the report remains DRAFT. |
+
+Linux verification across `tests/test_reporting_signout.py`, `tests/test_reporting_contract.py`, `tests/test_report_finalization.py`, `tests/test_report_signout_resume.py`, and `tests/test_reviewer_to_signed_report_integration.py` — **47 passed**, one existing Starlette/httpx deprecation warning. This prevents a mixed VCF from being signed out as a complete supported analysis while telomere records remain unassessed. It does not implement telomere interpretation, independent scientific validation, or laboratory sign-off qualification. Overall Phase A and lab readiness remain **PARTIAL**. Exact-SHA CI is pending for this follow-up commit.
+
 ## 2026-10-24 persisted genotype evidence and sign-out gate
 
 | Requirement | Status | Evidence / limitation |

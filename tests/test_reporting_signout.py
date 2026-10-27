@@ -470,25 +470,43 @@ def test_clinical_qc_requires_reassessment_after_new_observation():
     assert any("observations changed after assessment" in error for error in errors)
 
 
-def test_signout_rejects_reports_when_gvcf_or_sv_records_were_preserved_uninterpreted():
-    db, _reviewer, analysis, _report = seed_finalizable_report()
+@pytest.mark.parametrize(
+    ("routing", "expected_count"),
+    [
+        ({
+            "gvcf_reference_blocks": 2,
+            "gvcf_unresolved_variant_records": 0,
+            "structural_variant_records": 1,
+        }, 3),
+        ({"telomere_records": 1}, 1),
+        ({"telomere_after_contig_records": 1}, 1),
+    ],
+)
+def test_signout_rejects_reports_when_unsupported_routed_records_were_preserved_uninterpreted(
+    routing, expected_count,
+):
+    db, reviewer, analysis, report = seed_finalizable_report()
     db.add(WorkflowStep(
         id=uuid4(), analysis_id=analysis.id, step_id="normalize", step_order=2,
         status="SUCCEEDED", attempt=1, input_artifacts=[], output_artifacts=[],
-        metadata_json={
-            "routing": {
-                "gvcf_reference_blocks": 2,
-                "gvcf_unresolved_variant_records": 0,
-                "structural_variant_records": 1,
-            },
-        },
+        metadata_json={"routing": routing},
     ))
     db.commit()
 
     eligible, errors = final_report_eligibility(db, analysis_id=analysis.id)
 
     assert not eligible
-    assert any("3 preserved GVCF/SV record(s)" in error for error in errors)
+    assert any(
+        f"{expected_count} preserved GVCF/SV/telomere record(s)" in error
+        for error in errors
+    )
+    with pytest.raises(Exception, match="preserved GVCF/SV/telomere record"):
+        finalize_report(
+            db, report_id=report.id, approver_id=reviewer.id,
+            reason="Attempt sign-out while a routed VCF record is unreviewed",
+        )
+    db.refresh(report)
+    assert report.status == "DRAFT"
 
 
 def test_report_generation_and_signout_eligibility_reject_classification_outside_manifest():

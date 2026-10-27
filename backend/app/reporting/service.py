@@ -214,11 +214,13 @@ def final_report_eligibility(
             "gvcf_unresolved_variant_records",
             "structural_variant_records",
             "spanning_deletion_records",
+            "telomere_records",
+            "telomere_after_contig_records",
         )
     )
     if unprocessed_count:
         errors.append(
-            f"Analysis contains {unprocessed_count} preserved GVCF/SV record(s) that were not interpreted; "
+            f"Analysis contains {unprocessed_count} preserved GVCF/SV/telomere record(s) that were not interpreted; "
             "a report cannot imply complete analysis until a qualified workflow addresses them."
         )
 
