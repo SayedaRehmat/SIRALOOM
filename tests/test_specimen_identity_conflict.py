@@ -18,8 +18,13 @@ class DuplicateSpecimenSession:
         self.scalar_calls = 0
         self.rolled_back = False
 
-    def get(self, model, identity):
+    def get(self, model, identity, **kwargs):
+        assert kwargs.get("with_for_update") is True
         return self.case
+
+    def refresh(self, row, **kwargs):
+        assert row is self.case
+        assert kwargs.get("with_for_update") is True
 
     def add(self, item):
         self.added.append(item)

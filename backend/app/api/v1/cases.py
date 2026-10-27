@@ -157,9 +157,12 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
 
 @router.post("/{case_id}/specimens", status_code=201)
 def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    case = db.get(Case, case_id)
+    # Sign-out snapshots the selected specimen while holding this case row.
+    # Use the same lock so specimen registration cannot race report creation.
+    case = db.get(Case, case_id, with_for_update=True)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    db.refresh(case, with_for_update=True)
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     specimen_metadata = dict(payload.metadata or {})

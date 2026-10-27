@@ -17,6 +17,7 @@ from backend.app.auth.authorization import (
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
+    Analysis,
     Case,
     Evidence,
     InheritanceAssessment,
@@ -29,6 +30,23 @@ from backend.app.infrastructure.db.session import get_db
 from backend.app.inheritance import FamilyObservation, assess_model, fingerprint, normalize_model
 
 router = APIRouter(tags=["pedigree-inheritance"])
+
+
+def _lock_analysis_for_pedigree(db: Session, analysis_id: UUID, principal: Principal, permission: str):
+    """Serialize report-contributing pedigree decisions with sign-out."""
+    analysis = db.scalar(
+        select(Analysis)
+        .where(Analysis.id == analysis_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    case = db.get(Case, analysis.case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    require_case_permission(case, principal, db, permission)
+    return analysis
 
 class MemberInput(BaseModel):
     member_identifier: str = Field(min_length=1, max_length=100)
@@ -204,8 +222,11 @@ def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principa
 
 @router.post("/cases/{case_id}/pedigree/members",status_code=201)
 def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    case=db.get(Case,case_id)
+    # Report drafts include the pedigree. Serialize member edits with report
+    # generation and sign-out through the shared case-row lock.
+    case=db.get(Case,case_id,with_for_update=True)
     if not case: raise HTTPException(404,"Case not found")
+    db.refresh(case,with_for_update=True)
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     if body.specimen_id:
@@ -262,6 +283,7 @@ def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_d
 def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal)
     require_role(principal, CASE_WRITE_ROLES)
+    analysis = _lock_analysis_for_pedigree(db, analysis_id, principal, "write")
     get_analysis_variant(analysis,variant_id,db)
     member=db.get(PedigreeMember,body.pedigree_member_id)
     if not member or member.case_id!=analysis.case_id: raise HTTPException(400,"Variant and pedigree member must belong to this analysis/case")
@@ -282,7 +304,6 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal, "review")
     require_role(principal, REVIEW_ROLES)
-    get_analysis_variant(analysis,variant_id,db)
     models = []
     for raw_model in body.models:
         try:
@@ -292,6 +313,8 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
         if model in models:
             raise HTTPException(400, f"Duplicate inheritance model: {model}")
         models.append(model)
+    analysis = _lock_analysis_for_pedigree(db, analysis_id, principal, "review")
+    get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     _validate_observation_members(rows, members)

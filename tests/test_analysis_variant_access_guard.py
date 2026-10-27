@@ -134,6 +134,7 @@ def test_pedigree_write_denies_variant_from_another_analysis_before_mutation(mon
     analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
     principal = SimpleNamespace(user_id=uuid4(), role="bioinformatician")
     monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
 
     def deny_nonmember_variant(*_args):
         raise HTTPException(status_code=404, detail="Variant is not part of this analysis")

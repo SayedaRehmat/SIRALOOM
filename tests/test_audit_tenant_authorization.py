@@ -153,8 +153,14 @@ def test_pedigree_member_cannot_reference_specimen_from_another_case(monkeypatch
     foreign_specimen = SimpleNamespace(id=specimen_id, case_id=uuid4())
 
     class _CaseDb:
-        def get(self, model, _object_id):
+        def get(self, model, _object_id, **kwargs):
+            if model is Case:
+                assert kwargs.get("with_for_update") is True
             return {Case: case, Specimen: foreign_specimen}.get(model)
+
+        def refresh(self, row, **kwargs):
+            assert row is case
+            assert kwargs.get("with_for_update") is True
 
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
@@ -187,8 +193,14 @@ def test_sampled_pedigree_member_persists_case_specimen_link(monkeypatch):
             self.added = []
             self.committed = False
 
-        def get(self, model, _object_id):
+        def get(self, model, _object_id, **kwargs):
+            if model is Case:
+                assert kwargs.get("with_for_update") is True
             return {Case: case, Specimen: specimen}.get(model)
+
+        def refresh(self, row, **kwargs):
+            assert row is case
+            assert kwargs.get("with_for_update") is True
 
         def scalar(self, _statement):
             return None
@@ -684,6 +696,7 @@ def test_segregation_lineage_rejects_member_from_another_case(monkeypatch, opera
             return self.results.pop(0)
 
     monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
     monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
     db = _Db()

@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from backend.app.api.v1 import pedigree
 from backend.app.api.v1.pedigree import AssessmentInput
-from backend.app.infrastructure.db.models import SegregationObservation
+from backend.app.infrastructure.db.models import Case, SegregationObservation
 from backend.app.inheritance import (
     FamilyObservation,
     assess_model,
@@ -15,6 +15,35 @@ from backend.app.inheritance import (
     fingerprint,
     normalize_model,
 )
+
+
+def test_pedigree_report_mutations_lock_the_analysis_row(monkeypatch):
+    analysis_id, case_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    case = SimpleNamespace(id=case_id)
+    permission_checks = []
+
+    class FakeDb:
+        def scalar(self, statement):
+            assert statement._for_update_arg is not None
+            return analysis
+
+        def get(self, model, object_id):
+            assert model is Case
+            assert object_id == case_id
+            return case
+
+    monkeypatch.setattr(
+        pedigree,
+        "require_case_permission",
+        lambda _case, _principal, _db, permission: permission_checks.append(permission),
+    )
+    principal = SimpleNamespace(user_id=uuid4())
+
+    assert pedigree._lock_analysis_for_pedigree(
+        FakeDb(), analysis_id, principal, "write"
+    ) is analysis
+    assert permission_checks == ["write"]
 
 
 def test_pedigree_snapshot_records_stable_member_and_relationship_context():
@@ -87,7 +116,13 @@ def test_segregation_write_overrides_client_pedigree_snapshot(monkeypatch):
         def record(self, **_kwargs):
             pass
 
+    lock_permissions = []
     monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        pedigree,
+        "_lock_analysis_for_pedigree",
+        lambda _db, _analysis_id, _principal, permission: lock_permissions.append(permission) or analysis,
+    )
     monkeypatch.setattr(
         pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id)
     )
@@ -106,6 +141,7 @@ def test_segregation_write_overrides_client_pedigree_snapshot(monkeypatch):
     row = next(item for item in db.added if isinstance(item, SegregationObservation))
     assert row.metadata_json["pedigree_context_snapshot"] == expected_snapshot
     assert db.committed is True
+    assert lock_permissions == ["write"]
 
 
 def test_m10_model_aliases_and_fingerprint_are_deterministic():
@@ -238,7 +274,13 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
         def record(self, **_kwargs):
             pass
 
+    lock_permissions = []
     monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(
+        pedigree,
+        "_lock_analysis_for_pedigree",
+        lambda _db, _analysis_id, _principal, permission: lock_permissions.append(permission) or analysis,
+    )
     monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
     monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
@@ -253,6 +295,7 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
     )
 
     assert result["results"][0]["status"] == "REQUIRES_REVIEW"
+    assert lock_permissions == ["review"]
     assert "score" not in result["results"][0]
     assert "score" not in result
     assert db.committed is True
