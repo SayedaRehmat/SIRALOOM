@@ -1,6 +1,7 @@
 """Production VCF worker integration with PostgreSQL and pinned BCFtools."""
 
 import gzip
+import json
 import os
 import shutil
 import subprocess
@@ -21,6 +22,7 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Case,
     Organization,
+    OrganizationStorageProfile,
     Resource,
     User,
     WorkflowStep,
@@ -48,7 +50,8 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     engine = create_engine(database_url, pool_pre_ping=True)
     local_session = sessionmaker(bind=engine, expire_on_commit=False)
-    store = ArtifactStore(tmp_path / "gvcf-worker-artifacts")
+    artifact_root = tmp_path / "gvcf-worker-artifacts"
+    store = ArtifactStore(artifact_root)
     organization_id, user_id, case_id, analysis_id, resource_id = (
         uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
@@ -99,6 +102,18 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
                 status="ACTIVE",
                 clinical_context={},
                 language="en",
+                created_by=user_id,
+            ))
+            db.flush()
+            db.add(OrganizationStorageProfile(
+                id=uuid4(),
+                organization_id=organization_id,
+                name="integration-artifacts",
+                version=1,
+                backend_type="LOCAL_FILESYSTEM",
+                storage_key="PRIMARY_ARTIFACTS",
+                configuration_json={"target_id": "gvcf-integration"},
+                status="ACTIVE",
                 created_by=user_id,
             ))
             db.flush()
@@ -158,6 +173,17 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             db.commit()
 
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
+        monkeypatch.setattr(
+            workflow.settings,
+            "artifact_storage_targets_json",
+            json.dumps({
+                "gvcf-integration": {
+                    "backend_type": "LOCAL_FILESYSTEM",
+                    "root": str(artifact_root),
+                    "organization_id": str(organization_id),
+                },
+            }),
+        )
         monkeypatch.setattr(
             workflow, "artifact_store_for_organization", lambda *_args, **_kwargs: store,
         )
