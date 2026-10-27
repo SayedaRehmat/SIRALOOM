@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -131,6 +133,21 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
                 db,
                 principal,
             )
+            completed_confirmation = clinical_followup.record_confirmation(
+                analysis_id,
+                variant_id,
+                clinical_followup.ConfirmationInput(
+                    required=True,
+                    status="COMPLETED",
+                    method="Sanger",
+                    result="CONFIRMED",
+                    laboratory="Governance test laboratory",
+                    accession="CONF-1",
+                    performed_at=datetime.now(timezone.utc),
+                ),
+                db,
+                principal,
+            )
             follow_up = clinical_followup.create_followup(
                 analysis_id,
                 variant_id,
@@ -180,6 +197,9 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             )
 
             assert confirmation["created_at"]
+            assert confirmation["reviewed_by"] is None
+            assert completed_confirmation["reviewed_by"] == str(user_id)
+            assert completed_confirmation["reviewed_at"]
             assert follow_up["created_at"]
             assert secondary["created_at"]
             assert secondary["status"] == "DRAFT"
@@ -187,9 +207,9 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
             events = db.scalars(
                 select(AuditEvent).where(AuditEvent.analysis_id == analysis_id)
             ).all()
-            assert len(events) == 6
+            assert len(events) == 7
             assert all(event.after_state["created_at"] for event in events)
-            assert len(db.scalars(select(ConfirmationRecord)).all()) == 1
+            assert len(db.scalars(select(ConfirmationRecord)).all()) == 2
             assert len(db.scalars(select(FollowUpPlan)).all()) == 1
             assert len(db.scalars(select(SecondaryFindingDecision)).all()) == 1
             assert len(db.scalars(select(TechnicalQCObservation)).all()) == 1
@@ -215,3 +235,96 @@ def test_governance_create_routes_flush_generated_timestamps_before_audit(monkey
 def test_governance_input_rejects_unsupported_states(model, payload):
     with pytest.raises(ValidationError):
         model(**payload)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        clinical_followup.ConfirmationInput(
+            required=False, status="NOT_REQUIRED", notes="SOP does not require confirmation"
+        ),
+        clinical_followup.ConfirmationInput(
+            required=True,
+            status="COMPLETED",
+            method="Sanger",
+            result="CONFIRMED",
+            laboratory="Lab A",
+            accession="ACC-1",
+            performed_at=datetime.now(timezone.utc),
+        ),
+    ],
+)
+def test_case_writer_cannot_finalize_confirmation_decision(monkeypatch, payload):
+    analysis = type("AnalysisStub", (), {"id": uuid4()})()
+    principal = Principal(
+        user_id=uuid4(),
+        organization_id=uuid4(),
+        role="lab_scientist",
+        subject="verified-test-subject",
+    )
+    monkeypatch.setattr(
+        clinical_followup,
+        "get_accessible_analysis",
+        lambda *_args: analysis,
+    )
+    monkeypatch.setattr(
+        clinical_followup,
+        "_variant_access",
+        lambda *_args: object(),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        clinical_followup.record_confirmation(
+            uuid4(), uuid4(), payload, object(), principal
+        )
+
+    assert exc.value.status_code == 403
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        clinical_followup.ConfirmationInput(required=False, status="PENDING"),
+        clinical_followup.ConfirmationInput(
+            required=True, status="NOT_REQUIRED", notes="Policy rationale"
+        ),
+        clinical_followup.ConfirmationInput(required=True, status="WAIVED"),
+        clinical_followup.ConfirmationInput(required=True, status="COMPLETED"),
+        clinical_followup.ConfirmationInput(
+            required=True,
+            status="COMPLETED",
+            method="Sanger",
+            result="CONFIRMED",
+            laboratory="Lab A",
+            accession="ACC-1",
+            performed_at=datetime(2026, 10, 27, 12, 0),
+        ),
+    ],
+)
+def test_confirmation_decision_requires_consistent_state_and_provenance(payload):
+    with pytest.raises(HTTPException) as exc:
+        clinical_followup._validate_confirmation_decision(payload)
+
+    assert exc.value.status_code == 422
+
+
+def test_completed_confirmation_accepts_complete_timezone_aware_provenance():
+    payload = clinical_followup.ConfirmationInput(
+        required=True,
+        status="COMPLETED",
+        method="Sanger",
+        result="CONFIRMED",
+        laboratory="Lab A",
+        accession="ACC-1",
+        performed_at=datetime(2026, 10, 27, 12, 0, tzinfo=timezone.utc),
+    )
+
+    clinical_followup._validate_confirmation_decision(payload)
+
+
+def test_waived_confirmation_accepts_documented_reviewer_rationale():
+    payload = clinical_followup.ConfirmationInput(
+        required=True, status="WAIVED", notes="Case-specific rationale"
+    )
+
+    clinical_followup._validate_confirmation_decision(payload)

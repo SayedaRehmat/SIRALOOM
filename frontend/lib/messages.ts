@@ -792,6 +792,7 @@ export type TranslationKey =
   | "review.reportabilityNone"
   | "review.confirmation"
   | "review.confirmationHelp"
+  | "review.confirmationReviewRoleHelp"
   | "review.confirmationRequired"
   | "review.saveConfirmation"
   | "review.followup"
@@ -824,6 +825,7 @@ export type TranslationKey =
   | "review.resultPlaceholder"
   | "review.laboratoryPlaceholder"
   | "review.accessionPlaceholder"
+  | "review.performedAtPlaceholder"
   | "review.confirmationNotesPlaceholder"
   | "review.followActionPlaceholder"
   | "review.followNotesPlaceholder"
@@ -1281,7 +1283,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.relevance": "CLINICAL RELEVANCE, CONFIRMATION & FOLLOW-UP",
     "review.reportabilityNone": "No reportability decision has been generated.",
     "review.confirmation": "Orthogonal confirmation",
-    "review.confirmationHelp": "Confirmation is an explicit laboratory policy decision. SIRALOOM blocks final release only when a record explicitly marks confirmation as required.",
+    "review.confirmationHelp": "A reviewer records the laboratory's confirmation decision. Required confirmations block report release until completed or explicitly waived with rationale.",
+    "review.confirmationReviewRoleHelp": "Only assigned clinical reviewers can mark confirmation complete, waive it, or decide it is not required.",
     "review.confirmationRequired": "Confirmation required",
     "review.saveConfirmation": "Save confirmation",
     "review.followup": "Follow-up plan",
@@ -1314,6 +1317,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.resultPlaceholder": "Result e.g. CONFIRMED",
     "review.laboratoryPlaceholder": "Laboratory",
     "review.accessionPlaceholder": "Accession / case ID",
+    "review.performedAtPlaceholder": "Confirmation performed date and time",
     "review.confirmationNotesPlaceholder": "Confirmation notes",
     "review.followActionPlaceholder": "Action e.g. genetic counselling",
     "review.followNotesPlaceholder": "Follow-up notes / outcome",
@@ -2219,7 +2223,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.relevance": "الصلة السريرية، التأكيد، والمتابعة",
     "review.reportabilityNone": "لم يتم إنشاء قرار لقابلية الإبلاغ.",
     "review.confirmation": "التأكيد بوسيلة مستقلة",
-    "review.confirmationHelp": "التأكيد قرار صريح وفق سياسة المختبر. يمنع SIRALOOM الإصدار النهائي فقط عندما يحدد سجل صراحةً أن التأكيد مطلوب.",
+    "review.confirmationHelp": "يسجل المراجع قرار التأكيد وفق سياسة المختبر. يمنع التأكيد المطلوب إصدار التقرير حتى يكتمل أو يُعفَ منه صراحةً مع توثيق المبرر.",
+    "review.confirmationReviewRoleHelp": "يمكن للمراجعين السريريين المعينين فقط اعتماد اكتمال التأكيد أو الإعفاء منه أو تقرير عدم الحاجة إليه.",
     "review.confirmationRequired": "التأكيد مطلوب",
     "review.saveConfirmation": "حفظ التأكيد",
     "review.followup": "خطة المتابعة",
@@ -2252,6 +2257,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.resultPlaceholder": "النتيجة، مثال: CONFIRMED",
     "review.laboratoryPlaceholder": "المختبر",
     "review.accessionPlaceholder": "رقم الإيداع / معرّف الحالة",
+    "review.performedAtPlaceholder": "تاريخ ووقت إجراء التأكيد",
     "review.confirmationNotesPlaceholder": "ملاحظات التأكيد",
     "review.followActionPlaceholder": "الإجراء، مثال: الاستشارة الوراثية",
     "review.followNotesPlaceholder": "ملاحظات المتابعة / النتيجة",

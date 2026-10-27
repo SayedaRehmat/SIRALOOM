@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     Artifact,
     Case,
     Classification,
+    ConfirmationRecord,
     Evidence,
     Organization,
     Report,
@@ -274,6 +275,53 @@ def test_clinical_report_eligibility_requires_current_passing_qc(qc_change, expe
 
     assert not eligible
     assert any(expected_error in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    ("status", "required", "complete_provenance", "expected_eligible"),
+    [
+        ("COMPLETED", True, True, True),
+        ("COMPLETED", True, False, False),
+        ("WAIVED", True, True, True),
+        ("WAIVED", True, False, False),
+        ("NOT_REQUIRED", False, True, True),
+        ("NOT_REQUIRED", False, False, False),
+        ("PENDING", False, False, False),
+    ],
+)
+def test_report_eligibility_requires_reviewed_confirmation_provenance(
+    status, required, complete_provenance, expected_eligible
+):
+    db, reviewer, analysis, _report = seed_finalizable_report()
+    variant_id = db.scalar(
+        select(Classification.variant_id).where(Classification.analysis_id == analysis.id)
+    )
+    confirmation = ConfirmationRecord(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        variant_id=variant_id,
+        version=1,
+        required=required,
+        status=status,
+        method="Sanger" if status == "COMPLETED" and complete_provenance else None,
+        result="CONFIRMED" if status == "COMPLETED" and complete_provenance else None,
+        laboratory="Test Lab" if status == "COMPLETED" and complete_provenance else None,
+        accession="ACC-1" if status == "COMPLETED" and complete_provenance else None,
+        performed_at=datetime.now(UTC) if status == "COMPLETED" and complete_provenance else None,
+        reviewed_by=reviewer.id if complete_provenance else None,
+        reviewed_at=datetime.now(UTC) if complete_provenance else None,
+        notes=("Approved by the laboratory reviewer" if complete_provenance else None),
+    )
+    db.add(confirmation)
+    db.commit()
+
+    eligible, errors = final_report_eligibility(
+        db, analysis_id=analysis.id, report_type="CLINICAL_INTERPRETATION"
+    )
+
+    assert eligible is expected_eligible, errors
+    if not expected_eligible:
+        assert any("confirmation" in error.lower() for error in errors)
 
 
 def test_clinical_report_eligibility_rejects_changed_rules_without_version_change():

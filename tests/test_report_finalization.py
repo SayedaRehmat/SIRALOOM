@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import uuid4, uuid5
 
 import pytest
@@ -200,7 +201,7 @@ def test_signed_report_artifact_identity_survives_transaction_retry(tmp_path, mo
 
 
 def test_report_content_persists_exact_confirmation_identity():
-    db, _, _, a, v = seed(True)
+    db, u, _, a, v = seed(True)
     confirmation = ConfirmationRecord(
         id=uuid4(),
         analysis_id=a.id,
@@ -210,6 +211,11 @@ def test_report_content_persists_exact_confirmation_identity():
         status="COMPLETED",
         method="ORTHOGONAL_TEST",
         result="CONFIRMED",
+        laboratory="Test Laboratory",
+        accession="CONF-1",
+        performed_at=datetime.now(UTC),
+        reviewed_by=u.id,
+        reviewed_at=datetime.now(UTC),
     )
     db.add(confirmation)
     db.commit()
@@ -221,6 +227,8 @@ def test_report_content_persists_exact_confirmation_identity():
     assert snapshot["version"] == 1
     assert snapshot["required"] is True
     assert snapshot["status"] == "COMPLETED"
+    assert snapshot["reviewed_by"] == str(u.id)
+    assert snapshot["reviewed_at"]
 
 
 def test_finalize_report_rejects_changed_confirmation_snapshot():
@@ -234,6 +242,11 @@ def test_finalize_report_rejects_changed_confirmation_snapshot():
         status="COMPLETED",
         method="ORTHOGONAL_TEST",
         result="CONFIRMED",
+        laboratory="Test Laboratory",
+        accession="CONF-1",
+        performed_at=datetime.now(UTC),
+        reviewed_by=u.id,
+        reviewed_at=datetime.now(UTC),
     )
     db.add(confirmation_v1)
     db.commit()
@@ -250,6 +263,11 @@ def test_finalize_report_rejects_changed_confirmation_snapshot():
         status="COMPLETED",
         method="ORTHOGONAL_TEST_REPEAT",
         result="CONFIRMED",
+        laboratory="Test Laboratory",
+        accession="CONF-2",
+        performed_at=datetime.now(UTC),
+        reviewed_by=u.id,
+        reviewed_at=datetime.now(UTC),
     )
     db.add(confirmation_v2)
     db.commit()

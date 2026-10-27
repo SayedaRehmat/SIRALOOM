@@ -16,12 +16,24 @@ const REPORT_FINALIZE_ROLES = new Set([
   "clinical_geneticist",
 ]);
 
+const CLINICAL_REVIEW_ROLES = new Set([
+  "platform_admin",
+  "organization_admin",
+  "lab_director",
+  "clinical_geneticist",
+  "reviewer",
+]);
+
 export function canGenerateOrEvaluateReports(role) {
   return REPORT_WRITE_ROLES.has(role);
 }
 
 export function canFinalizeClinicalReports(role) {
   return REPORT_FINALIZE_ROLES.has(role);
+}
+
+export function canReviewClinicalEvidence(role) {
+  return CLINICAL_REVIEW_ROLES.has(role);
 }
 
 export function canSubmitReportSignout(role, reason) {

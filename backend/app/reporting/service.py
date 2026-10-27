@@ -252,8 +252,42 @@ def final_report_eligibility(
             reportable_variant_ids.add(row.variant_id)
     for variant_id in reportable_variant_ids:
         confirmation = db.scalar(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id == analysis_id, ConfirmationRecord.variant_id == variant_id).order_by(ConfirmationRecord.version.desc()))
-        if confirmation and confirmation.required and confirmation.status not in {"COMPLETED", "WAIVED"}:
-            errors.append(f"Variant {variant_id} requires confirmation before clinical report release (status {confirmation.status})")
+        if confirmation:
+            reviewed = bool(confirmation.reviewed_by and confirmation.reviewed_at)
+            rationale_present = bool((confirmation.notes or "").strip())
+            if confirmation.status == "NOT_REQUIRED":
+                if confirmation.required or not reviewed or not rationale_present:
+                    errors.append(
+                        f"Variant {variant_id} has an unreviewed or inconsistent NOT_REQUIRED confirmation decision"
+                    )
+            elif not confirmation.required:
+                errors.append(
+                    f"Variant {variant_id} has an unresolved confirmation decision (status {confirmation.status})"
+                )
+            elif confirmation.status == "COMPLETED":
+                required_details = (
+                    confirmation.method,
+                    confirmation.result,
+                    confirmation.laboratory,
+                    confirmation.accession,
+                    confirmation.performed_at,
+                )
+                if not reviewed or any(
+                    value is None or (isinstance(value, str) and not value.strip())
+                    for value in required_details
+                ):
+                    errors.append(
+                        f"Variant {variant_id} has a completed confirmation without reviewer approval or complete provenance"
+                    )
+            elif confirmation.status == "WAIVED":
+                if not reviewed or not rationale_present:
+                    errors.append(
+                        f"Variant {variant_id} has a waived confirmation without reviewer approval and rationale"
+                    )
+            else:
+                errors.append(
+                    f"Variant {variant_id} requires confirmation before clinical report release (status {confirmation.status})"
+                )
 
     reportability_ok, reportability_errors = final_reportability_state(db, analysis_id)
     if not reportability_ok:
@@ -687,6 +721,8 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 "accession": confirmation.accession if confirmation else None,
                 "performed_at": confirmation.performed_at.isoformat() if confirmation and confirmation.performed_at else None,
                 "notes": confirmation.notes if confirmation else None,
+                "reviewed_by": str(confirmation.reviewed_by) if confirmation and confirmation.reviewed_by else None,
+                "reviewed_at": confirmation.reviewed_at.isoformat() if confirmation and confirmation.reviewed_at else None,
             },
             "follow_up": [{"action_type": x.action_type, "status": x.status, "due_date": x.due_date.isoformat() if x.due_date else None, "responsible_role": x.responsible_role, "outcome": x.outcome, "notes": x.notes} for x in followups],
         }

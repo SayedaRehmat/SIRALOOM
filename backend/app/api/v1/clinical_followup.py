@@ -10,6 +10,7 @@ from sqlalchemy import select
 from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
     REPORT_FINALIZE_ROLES,
+    REVIEW_ROLES,
     get_accessible_analysis,
     get_analysis_variant,
     require_case_permission,
@@ -41,6 +42,60 @@ class ConfirmationInput(BaseModel):
     performed_at: datetime | None = None
     notes: str | None = Field(default=None, max_length=5000)
     metadata: dict = Field(default_factory=dict)
+
+
+def _validate_confirmation_decision(body: ConfirmationInput) -> None:
+    """Require an explicit, traceable decision before confirmation can clear a gate."""
+    if body.status == "NOT_REQUIRED":
+        if body.required:
+            raise HTTPException(
+                status_code=422,
+                detail="A NOT_REQUIRED confirmation record cannot be marked required",
+            )
+        if not (body.notes or "").strip():
+            raise HTTPException(
+                status_code=422,
+                detail="A rationale is required when confirmation is not required",
+            )
+        return
+
+    if not body.required:
+        raise HTTPException(
+            status_code=422,
+            detail="Set status to NOT_REQUIRED and provide a rationale when no confirmation is required",
+        )
+
+    if body.status == "WAIVED" and not (body.notes or "").strip():
+        raise HTTPException(
+            status_code=422,
+            detail="A rationale is required to waive a required confirmation",
+        )
+
+    if body.status == "COMPLETED":
+        missing = [
+            name
+            for name, value in (
+                ("method", body.method),
+                ("result", body.result),
+                ("laboratory", body.laboratory),
+                ("accession", body.accession),
+                ("performed_at", body.performed_at),
+            )
+            if value is None or (isinstance(value, str) and not value.strip())
+        ]
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "A completed confirmation requires method, result, laboratory, "
+                    "accession, and performed_at"
+                ),
+            )
+        if body.performed_at and body.performed_at.tzinfo is None:
+            raise HTTPException(
+                status_code=422,
+                detail="performed_at must include a timezone",
+            )
 
 class FollowUpInput(BaseModel):
     action_type: str = Field(min_length=1, max_length=150)
@@ -126,10 +181,18 @@ def get_governance(analysis_id: UUID, variant_id: UUID, db=Depends(get_db), prin
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/confirmation",status_code=201)
 def record_confirmation(analysis_id: UUID, variant_id: UUID, body: ConfirmationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal, "write"); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
-    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal, "write")
+    reviewer_decision = (
+        not body.required
+        or body.status in {"COMPLETED", "WAIVED", "NOT_REQUIRED"}
+    )
+    permission = "review" if reviewer_decision else "write"
+    allowed_roles = REVIEW_ROLES if reviewer_decision else CASE_WRITE_ROLES
+    analysis=get_accessible_analysis(analysis_id,db,principal, permission); _variant_access(analysis,variant_id,db); require_role(principal,allowed_roles)
+    _validate_confirmation_decision(body)
+    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal, permission)
     previous=db.scalar(select(ConfirmationRecord).where(ConfirmationRecord.analysis_id==analysis_id,ConfirmationRecord.variant_id==variant_id).order_by(ConfirmationRecord.version.desc()))
-    row=ConfirmationRecord(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,version=(previous.version+1 if previous else 1),supersedes_record_id=previous.id if previous else None,required=body.required,method=body.method,status=body.status,result=body.result,laboratory=body.laboratory,accession=body.accession,performed_at=body.performed_at,reviewed_by=principal.user_id,reviewed_at=datetime.now(timezone.utc),notes=body.notes,metadata_json=body.metadata)
+    decision_reviewed = body.status in {"COMPLETED", "WAIVED", "NOT_REQUIRED"}
+    row=ConfirmationRecord(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,version=(previous.version+1 if previous else 1),supersedes_record_id=previous.id if previous else None,required=body.required,method=body.method,status=body.status,result=body.result,laboratory=body.laboratory,accession=body.accession,performed_at=body.performed_at,reviewed_by=principal.user_id if decision_reviewed else None,reviewed_at=datetime.now(timezone.utc) if decision_reviewed else None,notes=body.notes,metadata_json=body.metadata)
     db.add(row)
     # created_at is generated by the database/ORM insert default. Flush before
     # serializing the immutable audit snapshot so the event and response carry

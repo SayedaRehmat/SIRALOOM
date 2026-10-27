@@ -274,7 +274,12 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             .order_by(ConfirmationRecord.version.desc())
         )
         if confirmation_id_raw is None:
-            if confirmation_version is not None or latest_confirmation is not None:
+            if (
+                confirmation_version is not None
+                or latest_confirmation is not None
+                or confirmation_context.get("reviewed_by") is not None
+                or confirmation_context.get("reviewed_at") is not None
+            ):
                 raise ReportFinalizationError(
                     f"Report snapshot confirmation for variant {variant_id} is stale"
                 )
@@ -304,6 +309,15 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
             ):
                 raise ReportFinalizationError(
                     f"Report snapshot confirmation for variant {variant_id} is stale or no longer latest"
+                )
+            if (
+                confirmation_context.get("reviewed_by")
+                != (str(confirmation.reviewed_by) if confirmation.reviewed_by else None)
+                or confirmation_context.get("reviewed_at")
+                != (confirmation.reviewed_at.isoformat() if confirmation.reviewed_at else None)
+            ):
+                raise ReportFinalizationError(
+                    f"Report snapshot confirmation review provenance is stale for variant {variant_id}"
                 )
 
     secondary_findings = content.get("secondary_findings") or []
