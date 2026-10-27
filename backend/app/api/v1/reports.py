@@ -88,12 +88,21 @@ def create_report(analysis_id: UUID, payload: ReportCreate, db: Session = Depend
     analysis = get_accessible_analysis(analysis_id, db, principal, "write")
     require_role(principal, CASE_WRITE_ROLES)
 
-    # Report version allocation is a case-scoped clinical history mutation.
-    # Lock the case before eligibility/version allocation so concurrent requests serialize.
+    # Decision and evidence writers serialize on Analysis. Lock it before
+    # checking eligibility or reading report inputs so the draft is one stable
+    # analysis snapshot, rather than a mixture of concurrent reviewer writes.
+    analysis = db.get(Analysis, analysis_id, with_for_update=True)
+    if analysis is None:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    db.refresh(analysis, with_for_update=True)
+
+    # Report version allocation and case-level source data are case-scoped.
+    # Follow the sign-out lock order: Analysis, then Case.
     case = db.get(Case, analysis.case_id, with_for_update=True)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
 
     eligible, errors = final_report_eligibility(
         db, analysis_id=analysis.id, report_type=payload.report_type

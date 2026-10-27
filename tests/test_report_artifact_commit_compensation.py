@@ -13,19 +13,30 @@ from backend.app.domain.report_integrity import (
 )
 from backend.app.domain.schemas import ReportCreate
 from backend.app.infrastructure.artifacts import compensation as compensation_api
-from backend.app.infrastructure.db.models import Artifact
+from backend.app.infrastructure.db.models import Analysis, Artifact, Case
 
 
 class _Database:
-    def __init__(self, case):
+    def __init__(self, case, analysis):
         self.case = case
+        self.analysis = analysis
         self.rollbacks = 0
+        self.lock_events = []
 
-    def get(self, model, *_args, **_kwargs):
-        return self.case
+    def get(self, model, *_args, **kwargs):
+        if model is Analysis:
+            if kwargs.get("with_for_update"):
+                self.lock_events.append("analysis_locked")
+            return self.analysis
+        if model is Case:
+            if kwargs.get("with_for_update"):
+                self.lock_events.append("case_locked")
+            return self.case
+        return None
 
-    def refresh(self, *_args, **_kwargs):
-        pass
+    def refresh(self, row, **kwargs):
+        assert kwargs.get("with_for_update") is True
+        self.lock_events.append("analysis_refreshed" if row is self.analysis else "case_refreshed")
 
     def scalar(self, *_args, **_kwargs):
         return 0
@@ -86,11 +97,12 @@ def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkey
     user_id = uuid4()
     case = SimpleNamespace(id=case_id, organization_id=uuid4())
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id, reference_build="GRCh38")
-    db = _Database(case)
+    db = _Database(case, analysis)
     store = _Store()
     audit_events = []
     monkeypatch.setattr(reports_api, "get_accessible_analysis", lambda *_args: analysis)
     monkeypatch.setattr(reports_api, "require_role", lambda *_args: None)
+    monkeypatch.setattr(reports_api, "require_case_permission", lambda *_args: db.lock_events.append("write_permission_rechecked"))
     monkeypatch.setattr(reports_api, "final_report_eligibility", lambda *_args, **_kwargs: (True, []))
     monkeypatch.setattr(reports_api, "build_report_content", lambda *_args, **_kwargs: {"report_schema_version": "1"})
     monkeypatch.setattr(reports_api, "render_pdf", lambda _content: b"pdf")
@@ -111,6 +123,13 @@ def test_report_route_removes_draft_bytes_after_confirmed_commit_rollback(monkey
         )
 
     assert error.value.status_code == 409
+    assert db.lock_events == [
+        "analysis_locked",
+        "analysis_refreshed",
+        "case_locked",
+        "case_refreshed",
+        "write_permission_rechecked",
+    ]
     assert db.rollbacks == 1
     assert store.deleted == ["file:///artifact/draft-report.pdf"]
     assert audit_events[0]["event_type"] == "REPORT_GENERATED"
@@ -127,10 +146,11 @@ def test_report_route_removes_draft_bytes_after_audit_flush_failure(monkeypatch)
     analysis_id = uuid4()
     case = SimpleNamespace(id=case_id, organization_id=uuid4())
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id, reference_build="GRCh38")
-    db = _Database(case)
+    db = _Database(case, analysis)
     store = _Store()
     monkeypatch.setattr(reports_api, "get_accessible_analysis", lambda *_args: analysis)
     monkeypatch.setattr(reports_api, "require_role", lambda *_args: None)
+    monkeypatch.setattr(reports_api, "require_case_permission", lambda *_args: db.lock_events.append("write_permission_rechecked"))
     monkeypatch.setattr(reports_api, "final_report_eligibility", lambda *_args, **_kwargs: (True, []))
     monkeypatch.setattr(reports_api, "build_report_content", lambda *_args, **_kwargs: {"report_schema_version": "1"})
     monkeypatch.setattr(reports_api, "render_pdf", lambda _content: b"pdf")
