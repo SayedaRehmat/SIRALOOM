@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,7 @@ from backend.app.infrastructure.db.models import (
     QCAssessment,
     Report,
     ReportabilityDecision,
+    Specimen,
     TechnicalQCObservation,
     User,
     Variant,
@@ -51,6 +53,92 @@ def seed(approved=True):
 def test_report_content_contract_has_required_fields():
     d,_,_,_,a,_=seed(True); content=build_report_content(d,a,'en');
     for key in ['report_schema_version','report_version','case_id','analysis_id','findings','methodology','limitations','final_result']: assert key in content
+
+
+def test_report_uses_specimen_bound_to_analysis_input_not_newest_case_specimen():
+    d, _, _, case, analysis, _ = seed(True)
+    selected = Specimen(
+        id=uuid4(), case_id=case.id, specimen_identifier="PROBAND",
+        specimen_type="BLOOD", metadata_json={},
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+    newer_relative = Specimen(
+        id=uuid4(), case_id=case.id, specimen_identifier="FATHER",
+        specimen_type="BLOOD", metadata_json={},
+        created_at=datetime(2024, 2, 1, tzinfo=UTC),
+    )
+    input_vcf = Artifact(
+        id=uuid4(), case_id=case.id, artifact_type="VCF", filename="proband.vcf",
+        media_type="text/vcf", size_bytes=10, sha256="c" * 64,
+        storage_uri="file:///tmp/proband.vcf", genome_build="GRCh38",
+        specimen_id=selected.id, validation_status="VALID",
+    )
+    d.add_all([selected, newer_relative, input_vcf])
+    analysis.configuration = {
+        "input_artifact_id": str(input_vcf.id),
+        "specimen_id": str(selected.id),
+    }
+    d.commit()
+
+    content = build_report_content(d, analysis, "en")
+
+    assert content["specimen"]["specimen_id"] == str(selected.id)
+    assert content["specimen"]["specimen_identifier"] == "PROBAND"
+
+
+def test_report_blocks_ambiguous_legacy_analysis_with_multiple_specimens():
+    d, _, _, case, analysis, _ = seed(True)
+    d.add_all([
+        Specimen(
+            id=uuid4(), case_id=case.id, specimen_identifier="SAMPLE-A",
+            specimen_type="BLOOD", metadata_json={},
+        ),
+        Specimen(
+            id=uuid4(), case_id=case.id, specimen_identifier="SAMPLE-B",
+            specimen_type="BLOOD", metadata_json={},
+        ),
+    ])
+    d.commit()
+
+    eligible, errors = final_report_eligibility(
+        d, analysis_id=analysis.id, report_type="ANALYTICAL"
+    )
+
+    assert not eligible
+    assert any("multiple case specimens" in error for error in errors)
+    with pytest.raises(ValueError, match="multiple case specimens"):
+        build_report_content(d, analysis, "en", report_type="ANALYTICAL")
+
+
+def test_reportability_preflight_rejects_specimen_that_disagrees_with_input_vcf():
+    d, _, _, case, analysis, _ = seed(True)
+    selected = Specimen(
+        id=uuid4(), case_id=case.id, specimen_identifier="VCF-SAMPLE",
+        specimen_type="BLOOD", metadata_json={},
+    )
+    conflicting = Specimen(
+        id=uuid4(), case_id=case.id, specimen_identifier="OTHER-SAMPLE",
+        specimen_type="BLOOD", metadata_json={},
+    )
+    input_vcf = Artifact(
+        id=uuid4(), case_id=case.id, artifact_type="VCF", filename="sample.vcf",
+        media_type="text/vcf", size_bytes=10, sha256="d" * 64,
+        storage_uri="file:///tmp/sample.vcf", genome_build="GRCh38",
+        specimen_id=selected.id, validation_status="VALID",
+    )
+    d.add_all([selected, conflicting, input_vcf])
+    analysis.configuration = {
+        "input_artifact_id": str(input_vcf.id),
+        "specimen_id": str(conflicting.id),
+    }
+    d.commit()
+
+    eligible, errors = final_report_eligibility(
+        d, analysis_id=analysis.id, report_type="ANALYTICAL"
+    )
+
+    assert not eligible
+    assert "Analysis specimen identity does not match its input VCF" in errors
 
 def test_report_finalization_requires_reviewed_classifications():
     d,_,_,_,a,_=seed(False)

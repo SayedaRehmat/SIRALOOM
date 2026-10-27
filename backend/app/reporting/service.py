@@ -14,13 +14,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
-from backend.app.domain.sample_call import get_analysis_sample_calls
 from backend.app.domain.population import qualified_allele_frequency
+from backend.app.domain.quality_provenance import qc_observation_snapshot
+from backend.app.domain.sample_call import get_analysis_sample_calls
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
     Annotation,
     Artifact,
+    Assay,
     AuditEvent,
     Case,
     Classification,
@@ -32,6 +34,7 @@ from backend.app.infrastructure.db.models import (
     PedigreeRelationship,
     PhenotypeObservation,
     PopulationObservation,
+    QCAssessment,
     Resource,
     ReviewAction,
     SecondaryFindingDecision,
@@ -40,12 +43,9 @@ from backend.app.infrastructure.db.models import (
     TechnicalQCObservation,
     Variant,
     WorkflowStep,
-    Assay,
-    QCAssessment,
 )
 from backend.app.inheritance import assessment_projection, evidence_projection
 from backend.app.quality import assess_metrics
-from backend.app.domain.quality_provenance import qc_observation_snapshot
 from backend.app.reporting.reportability import final_reportability_state, latest_decision
 
 REPORT_STATUS_DRAFT = "DRAFT"
@@ -122,6 +122,60 @@ def _approved_classifications(db: Session, analysis_id: UUID) -> list[Classifica
     )
 
 
+def _resolve_report_specimen(
+    db: Session, analysis: Analysis, case: Case
+) -> Specimen | None:
+    """Resolve report identity from the analysis input, never case recency."""
+    configuration = analysis.configuration if isinstance(analysis.configuration, dict) else {}
+    configured_specimen_id = configuration.get("specimen_id")
+    input_artifact_id = configuration.get("input_artifact_id")
+
+    if input_artifact_id is not None:
+        try:
+            input_artifact_uuid = UUID(str(input_artifact_id))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Analysis input artifact identity is invalid for report generation") from exc
+        artifact = db.get(Artifact, input_artifact_uuid)
+        artifact_type = getattr(artifact.artifact_type, "value", artifact.artifact_type) if artifact else None
+        if (
+            artifact is None
+            or artifact.case_id != case.id
+            or str(artifact_type).upper() != "VCF"
+            or artifact.specimen_id is None
+            or artifact.analysis_id not in {None, analysis.id}
+        ):
+            raise ValueError("Analysis input VCF does not have valid case and specimen lineage")
+        if configured_specimen_id is not None and str(artifact.specimen_id) != str(configured_specimen_id):
+            raise ValueError("Analysis specimen identity does not match its input VCF")
+        configured_specimen_id = artifact.specimen_id
+
+    if configured_specimen_id is not None:
+        try:
+            specimen_uuid = UUID(str(configured_specimen_id))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Analysis specimen identity is invalid for report generation") from exc
+        specimen = db.get(Specimen, specimen_uuid)
+        if specimen is None or specimen.case_id != case.id:
+            raise ValueError("Analysis specimen does not belong to the report case")
+        return specimen
+
+    # Legacy analyses without a persisted selection may use the only specimen
+    # in the case. Multiple possible specimens are ambiguous and must not be
+    # resolved by whichever row happens to be newest.
+    specimens = list(
+        db.scalars(
+            select(Specimen)
+            .where(Specimen.case_id == case.id)
+            .order_by(Specimen.created_at, Specimen.id)
+        )
+    )
+    if len(specimens) > 1:
+        raise ValueError(
+            "Analysis has multiple case specimens but no specimen identity pinned to its input"
+        )
+    return specimens[0] if specimens else None
+
+
 def _latest_by_variant(rows: list[Classification]) -> list[Classification]:
     latest: dict[UUID, Classification] = {}
     for row in rows:
@@ -173,6 +227,14 @@ def final_report_eligibility(
     errors: list[str] = []
     if analysis.status not in {"REQUIRES_REVIEW", "SUCCEEDED"}:
         errors.append(f"Analysis status {analysis.status} is not report-eligible")
+    case = db.get(Case, analysis.case_id)
+    if case is None:
+        errors.append("Report case is missing")
+    else:
+        try:
+            _resolve_report_specimen(db, analysis, case)
+        except ValueError as exc:
+            errors.append(str(exc))
 
     if report_type == "CLINICAL_INTERPRETATION":
         assay = db.get(Assay, analysis.assay_id) if analysis.assay_id else None
@@ -620,7 +682,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         raise ValueError("Case not found")
     if report_type not in {"CLINICAL_INTERPRETATION", "ANALYTICAL"}:
         raise ValueError("Unsupported report type")
-    specimen = db.scalar(select(Specimen).where(Specimen.case_id == case.id).order_by(Specimen.created_at.desc()))
+    specimen = _resolve_report_specimen(db, analysis, case)
 
     latest_rows = _latest_by_variant(
         list(db.scalars(select(Classification).where(Classification.analysis_id == analysis.id)))
