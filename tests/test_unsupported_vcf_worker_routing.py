@@ -1,3 +1,4 @@
+import json
 from hashlib import sha256
 from pathlib import Path
 from uuid import uuid4, uuid5
@@ -259,7 +260,15 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
                 assert routed is None
                 assert normalization.metadata_json["next_step"] == "UPSTREAM_VARIANT_CALLSET_REVIEW"
                 assert "not a negative clinical result" in normalization.error_message
-                assert event.output_artifacts == []
+                manifest = db.scalar(select(Artifact).where(
+                    Artifact.analysis_id == analysis_id,
+                    Artifact.artifact_type == "VCF_EXCLUSION_MANIFEST",
+                ))
+                assert manifest is not None and store.exists(manifest.storage_uri)
+                assert str(manifest.id) in normalization.output_artifacts
+                assert event.output_artifacts == [{
+                    "artifact_id": str(manifest.id), "sha256": manifest.sha256,
+                }]
             else:
                 assert routed is not None
                 assert routed.metadata_json["source_artifact_id"] == str(source_row.id)
@@ -622,12 +631,33 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "TELOMERE_AFTER_CONTIG_RECORDS",
             ))
+            exclusion_manifests = db.scalars(select(Artifact).where(
+                Artifact.analysis_id == analysis_id,
+                Artifact.artifact_type == "VCF_EXCLUSION_MANIFEST",
+            )).all()
             analysis = db.get(Analysis, analysis_id)
             assert block_artifact is not None and store.exists(block_artifact.storage_uri)
             assert star_artifact is not None and store.exists(star_artifact.storage_uri)
             assert sv_artifact is not None and store.exists(sv_artifact.storage_uri)
             assert telomere_artifact is not None and store.exists(telomere_artifact.storage_uri)
             assert telomere_after_artifact is not None and store.exists(telomere_after_artifact.storage_uri)
+            assert len(exclusion_manifests) == 1
+            exclusion_manifest = exclusion_manifests[0]
+            assert store.exists(exclusion_manifest.storage_uri)
+            assert exclusion_manifest.metadata_json["source_artifact_id"] == str(input_artifact.id)
+            assert exclusion_manifest.metadata_json["source_sha256"] == input_artifact.sha256
+            assert exclusion_manifest.metadata_json["reference_contig_lengths_resolved"] is True
+            assert exclusion_manifest.metadata_json["record_count"] == 5
+            exclusion_rows = [
+                json.loads(line)
+                for line in store.read_bytes(exclusion_manifest.storage_uri).decode("utf-8").splitlines()
+            ]
+            assert [row["source_record_index"] for row in exclusion_rows] == [1, 2, 5, 6, 7]
+            assert {row["routed_artifact_type"] for row in exclusion_rows} == {
+                "GVCF_REFERENCE_BLOCKS", "SPANNING_DELETION_RECORDS",
+                "STRUCTURAL_VARIANT_RECORDS", "TELOMERE_COORDINATE_RECORDS",
+                "TELOMERE_AFTER_CONTIG_RECORDS",
+            }
             assert block_artifact.metadata_json["source_artifact_id"] == str(input_artifact.id)
             assert star_artifact.metadata_json["source_sha256"] == input_artifact.sha256
             assert sv_artifact.metadata_json["source_sha256"] == input_artifact.sha256
@@ -670,10 +700,12 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id),
                     str(telomere_artifact.id),
                     str(telomere_after_artifact.id),
+                    str(exclusion_manifest.id),
                 }
                 assert set(step.output_artifacts) == {
                     str(block_artifact.id), str(star_artifact.id), str(sv_artifact.id),
                     str(telomere_artifact.id), str(telomere_after_artifact.id),
+                    str(exclusion_manifest.id),
                 }
             else:
                 for artifact in (block_artifact, star_artifact, sv_artifact):
@@ -707,6 +739,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["source_artifact_id"] == str(input_artifact.id)
                 assert normalized.metadata_json["source_record_count"] == 7
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
+                assert str(exclusion_manifest.id) in step.output_artifacts
+                assert str(exclusion_manifest.id) in step.metadata_json["exclusion_manifest_artifact_ids"]
                 if worker_loss:
                     assert normalization_calls["count"] == 2
                     normalized_rows = db.scalars(select(Artifact).where(

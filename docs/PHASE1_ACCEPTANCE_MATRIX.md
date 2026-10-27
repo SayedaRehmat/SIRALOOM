@@ -363,6 +363,17 @@ This identity link does not yet parse or persist per-variant genotype/zygosity, 
 | Reference-only records cannot block sign-out as if they were alternate findings | PASS (downstream iterator scope) | Annotation and population processing use the same filtered iterator as normalization, so excluded alleles do not acquire candidate rows or classifications. Combined report/reanalysis regression command: **56 passed**; normalization, VCF and unsupported-input regressions: **68 passed, 1 skipped**. |
 | Exclusion lineage identifies every source record individually | PARTIAL | Aggregate counts and immutable source/normalized artifacts are preserved; an individual excluded-record manifest is not yet persisted. The BCFtools-dependent multiallelic execution was skipped in this environment. This change does not establish clinical interpretation or validation. Phase A remains PARTIAL. |
 
+## 2026-10-27 persist source-record exclusion lineage
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Every routed-out source record has a durable per-record exclusion reason and source identity | PASS (automated routing/artifact scope) | The VCF router streams a JSONL manifest with the 1-based ordinal among non-header source records, decoded-line SHA-256, locus/alleles, reason code, and routed artifact class. For complete genotypes, unobserved concrete ALT indexes are separately recorded as `REFERENCE_ONLY_GENOTYPE`; incomplete/missing genotypes are not treated as reference evidence. The manifest is stored as an analysis artifact tied to the source artifact ID/checksum, included in normalization step outputs and audit output lineage, with content-addressed idempotent persistence. |
+| Multiallelic allele exclusions retain source ALT identity | PASS (synthetic fixture and pinned BCFtools regression scope) | Regression verifies a `0/1` `C,G` record identifies only source ALT index 2 as reference-only; a `0/0` biallelic record identifies ALT index 1; a partial `0/.` call is not excluded. Worker regression verifies source ordinals and specialized artifact classes, persisted checksum/provenance, and worker-loss replay with BCFtools 1.19. |
+
+Verification: focused command using isolated BCFtools/HTSlib **1.19** — `LD_LIBRARY_PATH=/tmp/siraloom-bcftools-runtime/usr/lib/x86_64-linux-gnu PATH=/tmp/siraloom-bcftools-runtime/usr/bin:$PATH PYTHONPATH=. DATABASE_URL=sqlite:////tmp/siraloom-exclusion-lineage-4.sqlite REDIS_URL=redis://localhost:6379/0 GENEBE_ENABLED=false GNOMAD_ENABLED=false .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/tmp/siraloom-exclusion-lineage-4 -q --tb=short tests/test_vcf_tools.py tests/test_unsupported_vcf_worker_routing.py tests/test_bcftools_normalization.py tests/test_m13_streaming_partitions.py` — **45 passed**. Review/signout/reanalysis regression command covering 11 suites — **92 passed**. Ruff `--select F,I` passed for `vcf_tools.py` and its changed tests; Ruff `--select F` on the older workflow module reports seven pre-existing unused-import/local findings outside this change. Python compilation and `git diff --check` passed.
+
+Limitations: the manifest is lineage and routing evidence, not independent truth-set concordance; SIRALOOM still does not interpret routed SV/CNV, BND, GVCF confidence blocks or spanning deletions. It does not make clinical or deployment readiness claims. Phase A, scientific validation and laboratory deployment remain **PARTIAL**.
+
 ## 2026-10-24 persisted genotype evidence and sign-out gate
 
 | Requirement | Status | Evidence / limitation |

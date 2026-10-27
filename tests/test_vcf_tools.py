@@ -1,3 +1,5 @@
+import hashlib
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -289,6 +291,68 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
     assert "0/1:15,9,0" in Path(routed["sequence_path"]).read_text(encoding="utf-8")
     assert "0/0:30,0" in Path(routed["gvcf_blocks_path"]).read_text(encoding="utf-8")
     assert "0/2:10,0,11" in Path(routed["gvcf_unresolved_path"]).read_text(encoding="utf-8")
+
+    exclusions = [
+        json.loads(line)
+        for line in Path(routed["exclusion_manifest_path"]).read_text(encoding="utf-8").splitlines()
+    ]
+    assert routed["exclusion_manifest_records"] == 3
+    assert [item["source_record_index"] for item in exclusions] == [1, 2, 4]
+    assert [item["reason_code"] for item in exclusions] == [
+        "GVCF_REFERENCE_CONFIDENCE_ANALYSIS_UNSUPPORTED",
+        "NO_ALTERNATE_ALLELE",
+        "GVCF_VARIANT_ALLELE_UNRESOLVED",
+    ]
+    source_records = [line for line in source.read_text(encoding="utf-8").splitlines() if not line.startswith("#")]
+    for item in exclusions:
+        original = source_records[item["source_record_index"] - 1]
+        assert item["source_record_sha256"] == hashlib.sha256(original.encode("utf-8")).hexdigest()
+        assert item["chrom"] == original.split("\t")[0]
+        assert item["pos"] == original.split("\t")[1]
+
+
+def test_router_exclusion_manifest_is_absent_when_no_source_records_are_excluded(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "sequence-only.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t1\trs1\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    routed = route_vcf_records(source, tmp_path / "routed-sequence-only")
+    assert routed["exclusion_manifest_path"] is None
+    assert routed["exclusion_manifest_records"] == 0
+
+
+def test_router_manifests_each_unobserved_source_alt_from_complete_genotypes(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "reference-genotype-candidates.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t10\tmulti\tA\tC,G\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t11\tref\tA\tT\t.\tPASS\t.\tGT\t0/0\n"
+        "1\t12\tpartial\tA\tG\t.\tPASS\t.\tGT\t0/.\n",
+        encoding="utf-8",
+    )
+    routed = route_vcf_records(source, tmp_path / "routed-reference-genotypes")
+    entries = [
+        json.loads(line)
+        for line in Path(routed["exclusion_manifest_path"]).read_text(encoding="utf-8").splitlines()
+    ]
+    assert routed["sequence_records"] == 3
+    assert routed["reference_only_genotype_alleles"] == 2
+    assert [
+        (entry["source_record_index"], entry.get("source_alt_index"), entry["reason_code"])
+        for entry in entries
+    ] == [
+        (1, 2, "REFERENCE_ONLY_GENOTYPE"),
+        (2, 1, "REFERENCE_ONLY_GENOTYPE"),
+    ]
 
 
 def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(tmp_path: Path):

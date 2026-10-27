@@ -1498,7 +1498,47 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             profile: dict[str, int] = {}
             routing: dict = {}
             routed_artifacts: list[Artifact] = []
+            exclusion_manifest_artifacts: list[Artifact] = []
             validated_reference_package: dict | None = None
+            routing_contig_lengths_resolved = False
+
+            def persist_exclusion_manifest(*, contig_lengths_resolved: bool) -> None:
+                manifest_path = routing.get("exclusion_manifest_path")
+                if not manifest_path:
+                    return
+                source_path = Path(manifest_path)
+                manifest_sha256 = sha256_file(source_path)
+                artifact_id = uuid5(
+                    analysis.id,
+                    f"siraloom:normalization:exclusion-manifest:v1:{manifest_sha256}",
+                )
+                if any(item.id == artifact_id for item in exclusion_manifest_artifacts):
+                    return
+                artifact = _put_idempotent_stage_artifact(
+                    artifacts,
+                    artifact_id=artifact_id,
+                    db=db,
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    source_path=source_path,
+                    filename="excluded-source-records.jsonl",
+                    artifact_type="VCF_EXCLUSION_MANIFEST",
+                    media_type="application/x-ndjson",
+                    genome_build=reference_build,
+                    metadata={
+                        "schema_version": "1",
+                        "routing_version": routing["routing_version"],
+                        "source_artifact_id": str(input_artifact.id),
+                        "source_sha256": input_artifact.sha256,
+                        "record_count": routing["exclusion_manifest_records"],
+                        "source_record_index_base": 1,
+                        "source_record_index_definition": "1-based ordinal among non-header VCF records",
+                        "source_record_hash": "SHA-256 of decoded UTF-8 VCF data line without line terminator",
+                        "reference_contig_lengths_resolved": contig_lengths_resolved,
+                    },
+                )
+                if all(item.id != artifact.id for item in exclusion_manifest_artifacts):
+                    exclusion_manifest_artifacts.append(artifact)
 
             def set_routed_reference_validation(
                 status: str,
@@ -1597,6 +1637,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "next_step": next_step,
                         "routing": {key: value for key, value in routing.items() if not key.endswith("_path")},
                         "routed_artifact_ids": [str(item.id) for item in routed_artifacts],
+                        "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts],
                         "review_reason_codes": review_reason_codes,
                         "human_action_required": True,
                     },
@@ -1611,7 +1652,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     actor_type="SYSTEM",
                     actor_id="siraloom-vcf-router",
                     input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
-                    output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts],
+                    output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)],
                     reason=reason,
                     payload={
                         "error_code": "NO_SEQUENCE_VARIANTS_TO_NORMALIZE",
@@ -1699,11 +1740,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         },
                     ))
                 normalization_step.input_artifacts = [str(input_artifact.id)]
-                normalization_step.output_artifacts = [str(item.id) for item in routed_artifacts]
+                normalization_step.output_artifacts = [
+                    *(str(item.id) for item in routed_artifacts),
+                    *(str(item.id) for item in exclusion_manifest_artifacts),
+                ]
                 db.add(normalization_step)
                 db.commit()
 
                 if not routing["sequence_records"]:
+                    persist_exclusion_manifest(contig_lengths_resolved=False)
+                    normalization_step.output_artifacts = [
+                        *(str(item.id) for item in routed_artifacts),
+                        *(str(item.id) for item in exclusion_manifest_artifacts),
+                    ]
+                    db.add(normalization_step)
                     finish_no_sequence_review(reference_validated=False)
                     return
 
@@ -1863,6 +1913,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     routing_dir,
                     reference_contig_lengths=reference_contig_lengths,
                 )
+                routing_contig_lengths_resolved = True
+                persist_exclusion_manifest(contig_lengths_resolved=True)
                 telomere_after_path = routing.get("telomere_after_contig_path")
                 if telomere_after_path:
                     telomere_after_id = uuid5(
@@ -1893,7 +1945,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             },
                         ))
                     normalization_step.output_artifacts = [
-                        str(item.id) for item in routed_artifacts
+                        *(str(item.id) for item in routed_artifacts),
+                        *(str(item.id) for item in exclusion_manifest_artifacts),
                     ]
                     db.add(normalization_step)
                     db.commit()
@@ -1918,6 +1971,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     finish_no_sequence_review(reference_validated=True)
                     return
             except UnsupportedVariantError as exc:
+                persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation("FAILED", exc.code)
                 mark_step(
                     db,
@@ -1952,6 +2006,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except ReferencePackageError as exc:
+                persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation("NOT_RUN", exc.code)
                 mark_step(
                     db,
@@ -1974,6 +2029,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except StrictVCFValidationError as exc:
+                persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation("FAILED", exc.code)
                 reference_mismatch = exc.code.startswith((
                     "VCF_REFERENCE_",
@@ -2001,7 +2057,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     actor_type="SYSTEM",
                     actor_id="vcf-validator",
                     input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}],
-                    output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts],
+                    output_artifacts=[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)],
                     reason=str(exc),
                     payload={
                         "error_code": exc.code,
@@ -2013,6 +2069,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except ResourceExecutionError as exc:
+                persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation(
                     "NOT_RUN",
                     "REFERENCE_EXECUTION_CONTRACT_INVALID",
@@ -2175,6 +2232,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 normalization_step.output_artifacts = [
                     str(normalized_artifact.id), str(index_artifact.id),
                     *(str(item.id) for item in routed_artifacts),
+                    *(str(item.id) for item in exclusion_manifest_artifacts),
                 ]
                 fallback_metadata = {
                     "requested_resource_id": str(resolution.requested_resource_id),
@@ -2182,8 +2240,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in routed_artifacts]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
                 mark_step(

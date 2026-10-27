@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -47,13 +49,73 @@ def route_vcf_records(
         "spanning_deletions": output / "spanning-deletion-records.vcf",
         "telomere": output / "telomere-records.vcf",
         "telomere_after": output / "telomere-after-contig-records.vcf",
+        "exclusions": output / "excluded-source-records.jsonl",
     }
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
     headers: list[str] = []
     counts = {key: 0 for key in names}
     counts["reference_only"] = 0
+    counts["reference_only_genotype_alleles"] = 0
     handles = {}
     sample_count = 0
+    source_record_index = 0
+    exclusion_handle = None
+
+    def record_exclusion(
+        record: str,
+        reason_code: str,
+        routed_type: str,
+        *,
+        source_alt_index: int | None = None,
+    ) -> None:
+        nonlocal exclusion_handle
+        if exclusion_handle is None:
+            exclusion_handle = stack.enter_context(
+                names["exclusions"].open("w", encoding="utf-8", newline="\n")
+            )
+        fields = record.split("\t")
+        entry = {
+            "schema_version": "1",
+            "source_record_index": source_record_index,
+            "source_record_sha256": hashlib.sha256(record.encode("utf-8")).hexdigest(),
+            "chrom": fields[0],
+            "pos": fields[1],
+            "id": fields[2],
+            "ref": fields[3],
+            "alt": fields[4],
+            "reason_code": reason_code,
+            "routed_artifact_type": routed_type,
+        }
+        if source_alt_index is not None:
+            entry["source_alt_index"] = source_alt_index
+        exclusion_handle.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
+
+    def record_reference_genotype_exclusions(record: str, fields: list[str], alts: list[str]) -> None:
+        if sample_count == 0 or len(fields) < 10:
+            return
+        format_keys = fields[8].split(":")
+        if "GT" not in format_keys:
+            return
+        gt_index = format_keys.index("GT")
+        called_alt_indexes: set[int] = set()
+        for sample in fields[9:]:
+            values = sample.split(":")
+            if gt_index >= len(values):
+                return
+            genotype = values[gt_index]
+            alleles = re.split(r"[/|]", genotype)
+            if not alleles or any(not allele.isdigit() for allele in alleles):
+                return
+            called_alt_indexes.update(int(allele) for allele in alleles if int(allele) > 0)
+        for index, alternate in enumerate(alts, start=1):
+            if alternate not in GVCF_WILDCARD_ALLELES and index not in called_alt_indexes:
+                counts["reference_only_genotype_alleles"] += 1
+                record_exclusion(
+                    record,
+                    "REFERENCE_ONLY_GENOTYPE",
+                    "SEQUENCE_NORMALIZATION_CANDIDATE_FILTER",
+                    source_alt_index=index,
+                )
     with ExitStack() as stack:
         def emit(key: str, record: str) -> None:
             handle = handles.get(key)
@@ -76,9 +138,11 @@ def route_vcf_records(
                 fields = line.split("\t")
                 if len(fields) < 8:
                     raise VCFToolError("Cannot route malformed VCF record with fewer than 8 columns.")
+                source_record_index += 1
                 alts = fields[4].split(",")
                 if alts == ["."]:
                     counts["reference_only"] += 1
+                    record_exclusion(line, "NO_ALTERNATE_ALLELE", "REFERENCE_ONLY_RECORDS")
                     continue
                 try:
                     position = int(fields[1])
@@ -86,13 +150,16 @@ def route_vcf_records(
                     raise VCFToolError("Cannot route VCF record with a non-integer POS.") from exc
                 if position == 0:
                     emit("telomere", line)
+                    record_exclusion(line, "VCF_TELOMERE_COORDINATE_UNSUPPORTED", "TELOMERE_COORDINATE_RECORDS")
                     continue
                 if position == coordinate_lengths.get(fields[0], -2) + 1:
                     emit("telomere_after", line)
+                    record_exclusion(line, "VCF_TELOMERE_COORDINATE_UNSUPPORTED", "TELOMERE_AFTER_CONTIG_RECORDS")
                     continue
                 wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
                 if any(alt == "*" for alt in alts):
                     emit("spanning_deletions", line)
+                    record_exclusion(line, "SPANNING_DELETION_NOT_INTERPRETED", "SPANNING_DELETION_RECORDS")
                     continue
                 is_structural = any(
                     alt not in GVCF_WILDCARD_ALLELES and
@@ -101,11 +168,13 @@ def route_vcf_records(
                 )
                 if is_structural:
                     emit("structural", line)
+                    record_exclusion(line, "STRUCTURAL_VARIANT_INTERPRETATION_UNSUPPORTED", "STRUCTURAL_VARIANT_RECORDS")
                     continue
                 if wildcard_indexes:
                     concrete_alts = [alt for alt in alts if alt not in GVCF_WILDCARD_ALLELES]
                     if not concrete_alts:
                         emit("gvcf_blocks", line)
+                        record_exclusion(line, "GVCF_REFERENCE_CONFIDENCE_ANALYSIS_UNSUPPORTED", "GVCF_REFERENCE_BLOCKS")
                         continue
                     format_keys = fields[8].split(":") if len(fields) > 8 else []
                     gt_index = format_keys.index("GT") if "GT" in format_keys else None
@@ -133,12 +202,21 @@ def route_vcf_records(
                                     break
                             if not fully_unseen:
                                 break
-                    emit("sequence" if fully_unseen else "gvcf_unresolved", line)
+                    if fully_unseen:
+                        emit("sequence", line)
+                        record_reference_genotype_exclusions(line, fields, alts)
+                    else:
+                        emit("gvcf_unresolved", line)
+                        record_exclusion(line, "GVCF_VARIANT_ALLELE_UNRESOLVED", "UNRESOLVED_GVCF_VARIANTS")
                     continue
                 emit("sequence", line)
+                record_reference_genotype_exclusions(line, fields, alts)
     return {
         "routing_version": "1",
-        "records_total": sum(counts.values()),
+        "records_total": sum(counts[key] for key in (
+            "sequence", "gvcf_blocks", "gvcf_unresolved", "structural",
+            "spanning_deletions", "telomere", "telomere_after", "reference_only",
+        )),
         "sequence_records": counts["sequence"],
         "reference_only_records": counts["reference_only"],
         "gvcf_reference_blocks": counts["gvcf_blocks"],
@@ -147,6 +225,13 @@ def route_vcf_records(
         "spanning_deletion_records": counts["spanning_deletions"],
         "telomere_records": counts["telomere"],
         "telomere_after_contig_records": counts["telomere_after"],
+        "reference_only_genotype_alleles": counts["reference_only_genotype_alleles"],
+        "exclusion_manifest_path": str(names["exclusions"]) if exclusion_handle is not None else None,
+        "exclusion_manifest_records": sum(counts[key] for key in (
+            "reference_only", "gvcf_blocks", "gvcf_unresolved", "structural",
+            "spanning_deletions", "telomere", "telomere_after",
+            "reference_only_genotype_alleles",
+        )),
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
         "gvcf_unresolved_path": str(names["gvcf_unresolved"]) if counts["gvcf_unresolved"] else None,
