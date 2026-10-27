@@ -535,6 +535,13 @@ Commit [`e0858aa`](https://github.com/SayedaRehmat/SIRALOOM/commit/e0858aa9ad719
 - **Status:** locally verified, pending push; Phase A remains PARTIAL.
 - **Next action:** add explicit route regressions for confirmation/secondary-finding malformed row links and context-evidence nonmember IDs; then continue audit of review queue and every analysis-scoped API and complete signup-to-signout recovery evidence.
 
+### Direct-object audit follow-up — clinical governance evidence
+
+- **Regression coverage added:** `tests/test_audit_tenant_authorization.py` now invokes the clinical-governance dossier with malformed confirmation and secondary-finding variant links and asserts HTTP 409. It also invokes context-evidence creation with an analysis-external variant and proves rejection occurs before evidence lookup or persistence.
+- **Verification:** the focused object-authorization, clinical-governance persistence, review workflow/queue, signed-report integration, evidence engine/provenance, and tenant-object suite passed **124 tests** (`1` existing Starlette/httpx deprecation warning). The complete backend suite passed **1,485 tests, 48 skipped**, with the same existing warning, in 287.59s. A first attempted wider command named a nonexistent test module and ran no tests; it was corrected to the existing test filenames before the passing run. Python compilation and `git diff --check` passed. Ruff reports four pre-existing findings in this legacy test module; checking committed `HEAD` reproduced the identical findings, and none were introduced by this batch.
+- **Scope:** these regressions verify route guards using deterministic test doubles; they do not establish deployed PostgreSQL tenant isolation, live identity, cloud artifact authorization, or full workflow failure recovery. Phase A remains PARTIAL.
+- **Next:** continue the remaining direct-object route and worker audit, then integrate live/deployed reviewer-to-signout recovery evidence when its configured infrastructure is available.
+
 ## Verified current batch
 
 | Finding | Root cause | Correction | Evidence | Status |

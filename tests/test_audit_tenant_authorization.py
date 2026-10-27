@@ -1068,6 +1068,99 @@ def test_secondary_finding_list_rejects_variant_outside_analysis(monkeypatch):
     assert exc.value.detail == "Variant is not part of this analysis"
 
 
+@pytest.mark.parametrize(
+    ("record_type", "link_field", "expected_detail"),
+    [
+        (
+            "confirmation",
+            "variant_id",
+            "Confirmation record variant does not match the requested variant",
+        ),
+        (
+            "secondary_finding",
+            "variant_id",
+            "Secondary-finding decision variant does not match the requested variant",
+        ),
+    ],
+)
+def test_clinical_governance_dossier_rejects_malformed_variant_links(
+    monkeypatch, record_type, link_field, expected_detail
+):
+    from backend.app.infrastructure.db.models import (
+        ConfirmationRecord,
+        SecondaryFindingDecision,
+    )
+
+    analysis_id, requested_variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
+    malformed_row = SimpleNamespace(
+        analysis_id=analysis_id,
+        **{link_field: uuid4()},
+    )
+    row_model = (
+        ConfirmationRecord if record_type == "confirmation" else SecondaryFindingDecision
+    )
+    monkeypatch.setattr(
+        clinical_followup, "get_accessible_analysis", lambda *_args: analysis
+    )
+    monkeypatch.setattr(
+        clinical_followup,
+        "_variant_access",
+        lambda *_args: SimpleNamespace(id=requested_variant_id),
+    )
+
+    class _Db:
+        def scalars(self, statement):
+            model = statement.column_descriptions[0]["entity"]
+            return [malformed_row] if model is row_model else []
+
+    with pytest.raises(HTTPException) as exc:
+        clinical_followup.get_governance(
+            analysis_id, requested_variant_id, _Db(), _principal(uuid4())
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == expected_detail
+
+
+def test_context_evidence_rejects_variant_outside_analysis_before_database_reads(
+    monkeypatch,
+):
+    from backend.app.api.v1 import evidence_context
+
+    analysis_id, variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id)
+    principal = _principal(uuid4(), role="analyst")
+    monkeypatch.setattr(
+        evidence_context, "get_accessible_analysis", lambda *_args: analysis
+    )
+    monkeypatch.setattr(evidence_context, "require_role", lambda *_args: None)
+    monkeypatch.setattr(
+        evidence_context,
+        "get_analysis_variant",
+        lambda *_args: (_ for _ in ()).throw(
+            HTTPException(404, "Variant is not part of this analysis")
+        ),
+    )
+
+    class _Db:
+        def scalar(self, _statement):
+            pytest.fail("foreign variant must be rejected before evidence lookup")
+
+    payload = evidence_context.ContextEvidenceRequest(
+        evidence_type="LITERATURE",
+        source_name="Curated paper",
+        statement="Candidate evidence",
+    )
+    with pytest.raises(HTTPException) as exc:
+        evidence_context.add_context_evidence(
+            analysis_id, variant_id, payload, _Db(), principal
+        )
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "Variant is not part of this analysis"
+
+
 def test_quality_read_rejects_analysis_assay_from_another_tenant(monkeypatch):
     from backend.app.infrastructure.db.models import Assay
 
