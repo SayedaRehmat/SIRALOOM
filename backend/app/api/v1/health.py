@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from fastapi import APIRouter, Response
 from sqlalchemy import text
 
 from backend.app.config import settings
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    configured_local_storage_targets,
+)
 from backend.app.infrastructure.db.session import SessionLocal
 
 router = APIRouter(tags=["health"])
@@ -41,17 +47,43 @@ def _check_redis() -> tuple[str, str | None]:
         return "error", "REDIS_UNAVAILABLE"
 
 
-def _check_artifact_root() -> tuple[str, str | None]:
+def _check_artifact_root(root_path: str | None = None) -> tuple[str, str | None]:
+    probe_path: Path | None = None
     try:
-        root = Path(settings.artifact_root)
-        root.mkdir(parents=True, exist_ok=True)
-        probe = root / ".siraloom-readiness-probe"
-        probe.write_bytes(b"ok")
-        probe.unlink(missing_ok=True)
+        root = Path(root_path or settings.artifact_root).expanduser().resolve()
+        if not root.is_dir():
+            return "error", "ARTIFACT_STORE_UNAVAILABLE"
+        with NamedTemporaryFile(
+            mode="wb", prefix=".siraloom-readiness-", dir=root, delete=False
+        ) as probe:
+            probe_path = Path(probe.name)
+            probe.write(b"siraloom-readiness")
+            probe.flush()
+            os.fsync(probe.fileno())
+        probe_path.unlink()
         return "ok", None
     except Exception as exc:  # pragma: no cover - deployment/runtime dependent  # noqa: BLE001
         logger.warning("Readiness artifact-store check failed (%s)", type(exc).__name__)
         return "error", "ARTIFACT_STORE_UNAVAILABLE"
+    finally:
+        if probe_path is not None:
+            try:
+                probe_path.unlink(missing_ok=True)
+            except OSError:
+                logger.warning("Readiness probe cleanup failed")
+
+
+def _check_organization_artifact_targets() -> tuple[str, str | None]:
+    try:
+        targets = configured_local_storage_targets()
+    except StorageProfileError as exc:
+        logger.warning("Organization artifact target configuration is invalid (%s)", type(exc).__name__)
+        return "error", "ARTIFACT_TARGET_CONFIGURATION_INVALID"
+    for _target_id, root in targets:
+        status, _error = _check_artifact_root(root)
+        if status != "ok":
+            return "error", "ORGANIZATION_ARTIFACT_TARGET_UNAVAILABLE"
+    return ("ok", None) if targets else ("not_required", None)
 
 
 @router.get("/ready")
@@ -67,6 +99,7 @@ def ready(response: Response):
         ("database", _check_database),
         ("redis", _check_redis),
         ("artifact_store", _check_artifact_root),
+        ("organization_artifact_targets", _check_organization_artifact_targets),
     ):
         status, error = checker()
         checks[name] = {"status": status, **({"error": error} if error else {})}

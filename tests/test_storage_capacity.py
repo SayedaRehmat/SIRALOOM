@@ -1,9 +1,8 @@
-from pathlib import Path
 from collections import namedtuple
+from pathlib import Path
 
 from backend.app.config import settings
 from backend.app.domain import storage_capacity
-
 
 Usage = namedtuple("Usage", "total used free")
 
@@ -57,6 +56,71 @@ def test_analysis_preflight_blocks_if_configured_storage_root_is_missing(monkeyp
     result = storage_capacity.preflight_analysis_capacity(100)
     assert result["status"] == "BLOCKED"
     assert any(issue["code"] == "STORAGE_PATH_MISSING" for issue in result["issues"])
+
+
+def test_analysis_preflight_uses_the_organization_target_instead_of_legacy_artifact_root(
+    monkeypatch, tmp_path
+):
+    legacy_root = tmp_path / "legacy-artifacts"
+    target_root = tmp_path / "lab-artifacts"
+    scratch_root = tmp_path / "scratch"
+    legacy_root.mkdir()
+    target_root.mkdir()
+    scratch_root.mkdir()
+    monkeypatch.setattr(settings, "artifact_root", str(legacy_root))
+    monkeypatch.setattr(settings, "worker_scratch_root", str(scratch_root))
+    monkeypatch.setattr(settings, "storage_capacity_preflight_enabled", True)
+    monkeypatch.setattr(settings, "analysis_artifact_output_multiplier", 1.0)
+    monkeypatch.setattr(settings, "analysis_scratch_multiplier", 2.0)
+    monkeypatch.setattr(settings, "analysis_storage_headroom_bytes", 10)
+
+    def disk_usage(path):
+        if Path(path) == target_root:
+            return Usage(1000, 990, 10)
+        return Usage(1000, 0, 1000)
+
+    monkeypatch.setattr(storage_capacity.shutil, "disk_usage", disk_usage)
+    result = storage_capacity.preflight_analysis_capacity(
+        100,
+        artifact_root=str(target_root),
+        artifact_backend_type="LOCAL_FILESYSTEM",
+    )
+
+    assert result["status"] == "BLOCKED"
+    artifact_root_result = next(root for root in result["roots"] if root["label"] == "artifact_store")
+    assert artifact_root_result["path"] == str(target_root)
+    issue = next(item for item in result["issues"] if item["code"] == "INSUFFICIENT_STORAGE_CAPACITY")
+    assert issue["storage"] == "artifact_store, worker_scratch"
+
+
+def test_cloud_storage_preflight_does_not_report_legacy_filesystem_capacity(
+    monkeypatch, tmp_path
+):
+    legacy_root = tmp_path / "legacy-artifacts"
+    scratch_root = tmp_path / "scratch"
+    resource_root = tmp_path / "resources"
+    for path in (legacy_root, scratch_root, resource_root):
+        path.mkdir()
+    monkeypatch.setattr(settings, "artifact_root", str(legacy_root))
+    monkeypatch.setattr(settings, "worker_scratch_root", str(scratch_root))
+    monkeypatch.setattr(settings, "resource_cache_root", str(resource_root))
+    monkeypatch.setattr(settings, "storage_capacity_preflight_enabled", True)
+    monkeypatch.setattr(settings, "analysis_artifact_output_multiplier", 1.0)
+    monkeypatch.setattr(settings, "analysis_scratch_multiplier", 2.0)
+    monkeypatch.setattr(settings, "analysis_storage_headroom_bytes", 10)
+
+    result = storage_capacity.preflight_analysis_capacity(
+        100, artifact_backend_type="FIREBASE_GCS"
+    )
+
+    assert result["status"] == "READY"
+    assert [root["label"] for root in result["roots"]] == ["worker_scratch"]
+    assert result["estimated_required_bytes"] == 210
+    assert result["artifact_storage"] == {
+        "backend_type": "FIREBASE_GCS",
+        "capacity_status": "PROVIDER_MANAGED_NOT_MEASURABLE",
+        "estimated_artifact_bytes": 110,
+    }
 
 
 def test_analysis_preflight_is_explicitly_not_configured_when_disabled(monkeypatch):

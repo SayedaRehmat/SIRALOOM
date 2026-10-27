@@ -36,6 +36,7 @@ from backend.app.domain.ingestion import (
 from backend.app.domain.storage_capacity import preflight_upload_capacity
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
+    artifact_storage_target_for_organization,
     artifact_store_for_organization,
     artifact_store_for_uri,
 )
@@ -187,7 +188,18 @@ async def upload_artifact(
     if incoming_size > max_bytes:
         await file.close()
         raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
-    capacity_preflight = preflight_upload_capacity(incoming_size)
+    try:
+        storage_backend, _target_id, storage_target = artifact_storage_target_for_organization(
+            db, organization_id=case.organization_id
+        )
+    except StorageProfileError as exc:
+        await file.close()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    capacity_preflight = preflight_upload_capacity(
+        incoming_size,
+        artifact_root=(storage_target if storage_backend == "LOCAL_FILESYSTEM" else None),
+        artifact_backend_type=storage_backend,
+    )
     if capacity_preflight.get("status") == "BLOCKED":
         await file.close()
         raise HTTPException(

@@ -11,7 +11,10 @@ from sqlalchemy.orm import Session
 from backend.app.application import analysis as analysis_application
 from backend.app.domain.enums import AnalysisStatus
 from backend.app.domain.resource_capabilities import CLINICAL_DATABASE, REFERENCE_PACKAGE
-from backend.app.domain.resource_profile_resolver import AnalysisResourcePlan, ResourceResolutionIssue
+from backend.app.domain.resource_profile_resolver import (
+    AnalysisResourcePlan,
+    ResourceResolutionIssue,
+)
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -157,7 +160,11 @@ def test_capacity_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
         "preflight_analysis_resources",
         lambda *_args, **_kwargs: None,
     )
-    monkeypatch.setattr(analyses_api, "preflight_analysis_capacity", lambda _size: capacity_ready)
+    monkeypatch.setattr(
+        analyses_api,
+        "preflight_analysis_capacity",
+        lambda _size, **_kwargs: capacity_ready,
+    )
     monkeypatch.setattr(
         analyses_api,
         "resolve_resource_deployment_policy",
@@ -295,7 +302,7 @@ def test_resource_blocked_analysis_recovers_and_dispatches_once(monkeypatch):
     monkeypatch.setattr(
         analyses_api,
         "preflight_analysis_capacity",
-        lambda _size: {
+        lambda _size, **_kwargs: {
             "status": "READY",
             "enabled": True,
             "issues": [],
@@ -456,7 +463,7 @@ def test_optional_resource_gap_does_not_block_preflight_or_dispatch(monkeypatch)
     monkeypatch.setattr(
         analyses_api,
         "preflight_analysis_capacity",
-        lambda _size: {
+        lambda _size, **_kwargs: {
             "status": "READY",
             "enabled": True,
             "issues": [],

@@ -89,7 +89,66 @@ def test_artifact_readiness_probe_writes_and_removes_only_probe(tmp_path, monkey
     status, error = _check_artifact_root()
     assert status == "ok"
     assert error is None
-    assert not (Path(tmp_path) / ".siraloom-readiness-probe").exists()
+    assert not list(Path(tmp_path).glob(".siraloom-readiness-*"))
+
+
+def test_artifact_readiness_does_not_create_missing_target_root(tmp_path):
+    missing_root = tmp_path / "unmounted-lab-target"
+
+    status, error = _check_artifact_root(str(missing_root))
+
+    assert status == "error"
+    assert error == "ARTIFACT_STORE_UNAVAILABLE"
+    assert not missing_root.exists()
+
+
+def test_artifact_readiness_probe_does_not_overwrite_or_delete_existing_file(tmp_path):
+    sentinel = tmp_path / ".siraloom-readiness-probe"
+    sentinel.write_bytes(b"operator-owned-file")
+
+    status, error = _check_artifact_root(str(tmp_path))
+
+    assert status == "ok"
+    assert error is None
+    assert sentinel.read_bytes() == b"operator-owned-file"
+    assert list(tmp_path.glob(".siraloom-readiness-*")) == [sentinel]
+
+
+def test_readiness_blocks_when_configured_local_lab_target_is_missing(monkeypatch, tmp_path):
+    import json
+    from uuid import uuid4
+
+    from backend.app.api.v1 import health
+
+    missing_root = tmp_path / "unmounted-lab-target"
+    monkeypatch.setattr(health, "_check_database", lambda: ("ok", None))
+    monkeypatch.setattr(health, "_check_redis", lambda: ("ok", None))
+    monkeypatch.setattr(health.settings, "artifact_root", str(tmp_path))
+    monkeypatch.setattr(
+        health.settings,
+        "artifact_storage_targets_json",
+        json.dumps(
+            {
+                "lab-a": {
+                    "backend_type": "LOCAL_FILESYSTEM",
+                    "root": str(missing_root),
+                    "organization_id": str(uuid4()),
+                }
+            }
+        ),
+    )
+    monkeypatch.setattr(health.settings, "app_env", "test")
+    monkeypatch.setattr(health.settings, "firebase_auth_required", False)
+    monkeypatch.setattr(health.settings, "firebase_project_id", None)
+
+    response = TestClient(app).get("/api/v1/ready")
+
+    assert response.status_code == 503
+    assert response.json()["checks"]["organization_artifact_targets"] == {
+        "status": "error",
+        "error": "ORGANIZATION_ARTIFACT_TARGET_UNAVAILABLE",
+    }
+    assert not missing_root.exists()
 
 
 def test_deployment_health_checks_use_readiness_not_liveness():

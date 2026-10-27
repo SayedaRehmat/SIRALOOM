@@ -13,6 +13,7 @@ from backend.app.domain.storage_capacity import inspect_deployment_capacity
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
     activate_storage_profile,
+    artifact_storage_target_for_organization,
     get_active_storage_profile,
     list_deployment_storage_targets,
     register_storage_profile,
@@ -49,11 +50,21 @@ def _payload(row: OrganizationStorageProfile) -> dict:
 
 @router.get("/capacity")
 def storage_capacity(
+    db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
     """Return deployment filesystem capacity to authorized lab operators."""
     require_role(principal, READ_ROLES)
-    return inspect_deployment_capacity()
+    try:
+        backend, _target_id, target = artifact_storage_target_for_organization(
+            db, organization_id=principal.organization_id
+        )
+    except StorageProfileError as exc:
+        raise HTTPException(status_code=503, detail="Organization artifact storage is unavailable") from exc
+    return inspect_deployment_capacity(
+        artifact_root=(target if backend == "LOCAL_FILESYSTEM" else None),
+        artifact_backend_type=backend,
+    )
 
 
 @router.get("/profiles")

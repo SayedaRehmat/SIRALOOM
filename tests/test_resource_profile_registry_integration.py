@@ -340,7 +340,7 @@ def test_real_registry_recovery_queues_one_durable_dispatch_and_duplicate_start_
     monkeypatch.setattr(
         analyses_api,
         "preflight_analysis_capacity",
-        lambda _size: {
+        lambda _size, **_kwargs: {
             "status": "READY",
             "enabled": True,
             "issues": [],

@@ -31,6 +31,10 @@ from backend.app.domain.storage_capacity import (
     enforce_laboratory_capacity_policy,
     preflight_analysis_capacity,
 )
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    artifact_storage_target_for_organization,
+)
 from backend.app.infrastructure.db.models import (
     Annotation,
     Artifact,
@@ -273,7 +277,18 @@ def start(
         except ValueError as exc:
             db.rollback()
             raise HTTPException(status_code=409, detail=str(exc)) from exc
-    capacity = preflight_analysis_capacity(int(input_artifact.size_bytes or 0) if input_artifact else 0)
+    try:
+        storage_backend, _target_id, storage_target = artifact_storage_target_for_organization(
+            db, organization_id=principal.organization_id
+        )
+    except StorageProfileError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    capacity = preflight_analysis_capacity(
+        int(input_artifact.size_bytes or 0) if input_artifact else 0,
+        artifact_root=(storage_target if storage_backend == "LOCAL_FILESYSTEM" else None),
+        artifact_backend_type=storage_backend,
+    )
     deployment_policy = resolve_resource_deployment_policy(
         db,
         organization_id=principal.organization_id,

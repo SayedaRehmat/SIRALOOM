@@ -292,11 +292,14 @@ def test_organizations_resolve_only_their_deployment_configured_storage_target(
     from backend.app.config import settings
     from backend.app.domain.storage_profiles import (
         StorageProfileError,
+        artifact_storage_target_for_organization,
         artifact_store_for_organization,
     )
 
     root_a = tmp_path / "lab-a"
     root_b = tmp_path / "lab-b"
+    root_a.mkdir()
+    root_b.mkdir()
     org_a_id, org_b_id = uuid4(), uuid4()
     monkeypatch.setattr(
         settings,
@@ -340,6 +343,13 @@ def test_organizations_resolve_only_their_deployment_configured_storage_target(
         for org, profile in zip(organizations, profiles, strict=True):
             activate_storage_profile(db, organization_id=org.id, profile_id=profile.id)
         db.commit()
+
+        assert artifact_storage_target_for_organization(
+            db, organization_id=org_a_id
+        ) == ("LOCAL_FILESYSTEM", "lab-a", str(root_a.resolve()))
+        assert artifact_storage_target_for_organization(
+            db, organization_id=org_b_id
+        ) == ("LOCAL_FILESYSTEM", "lab-b", str(root_b.resolve()))
 
         stores = [
             artifact_store_for_organization(db, organization_id=org.id) for org in organizations
@@ -709,6 +719,54 @@ def test_configured_target_mode_blocks_organizations_without_active_profiles(mon
             )
 
 
+def test_missing_configured_local_target_is_not_created_as_container_local_storage(
+    monkeypatch, tmp_path
+):
+    import json
+
+    import pytest
+
+    from backend.app.config import settings
+    from backend.app.domain.storage_profiles import (
+        StorageProfileError,
+        activate_storage_profile,
+        artifact_store_for_organization,
+    )
+
+    org = Organization(id=uuid4(), name="Mounted Lab", external_identifier=None)
+    root = tmp_path / "missing-target"
+    monkeypatch.setattr(
+        settings,
+        "artifact_storage_targets_json",
+        json.dumps({
+            "lab-a": {
+                "backend_type": "LOCAL_FILESYSTEM",
+                "root": str(root),
+                "organization_id": str(org.id),
+            }
+        }),
+    )
+    engine = _engine()
+    with Session(engine) as db:
+        db.add(org)
+        db.flush()
+        profile = register_storage_profile(
+            db,
+            organization_id=org.id,
+            name="primary",
+            backend_type="LOCAL_FILESYSTEM",
+            storage_key="PRIMARY_ARTIFACTS",
+            configuration={"target_id": "lab-a"},
+            created_by=None,
+        )
+        activate_storage_profile(db, organization_id=org.id, profile_id=profile.id)
+        db.commit()
+
+        with pytest.raises(StorageProfileError, match="target is missing"):
+            artifact_store_for_organization(db, organization_id=org.id)
+    assert not root.exists()
+
+
 def test_removed_retired_target_does_not_block_active_store_reads(monkeypatch, tmp_path):
     import json
 
@@ -719,6 +777,8 @@ def test_removed_retired_target_does_not_block_active_store_reads(monkeypatch, t
 
     org = Organization(id=uuid4(), name="Migrating Lab", external_identifier=None)
     old_root, active_root = tmp_path / "old", tmp_path / "active"
+    old_root.mkdir()
+    active_root.mkdir()
     engine = _engine()
     with Session(engine) as db:
         db.add(org)

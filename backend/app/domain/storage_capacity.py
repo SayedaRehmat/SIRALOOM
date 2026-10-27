@@ -83,18 +83,51 @@ def inspect_storage_root(label: str, raw_path: str) -> dict[str, Any]:
     return result
 
 
-def inspect_deployment_capacity() -> dict[str, Any]:
-    roots = [
-        inspect_storage_root("artifact_store", settings.artifact_root),
-        inspect_storage_root("worker_scratch", settings.worker_scratch_root),
-        inspect_storage_root("resource_cache", settings.resource_cache_root),
-    ]
+def _capacity_roots(
+    *, artifact_root: str | None, artifact_backend_type: str
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    if artifact_backend_type not in {"LOCAL_FILESYSTEM", "FIREBASE_GCS"}:
+        raise ValueError("Unsupported artifact storage backend for capacity inspection")
+    remote_storage = None
+    roots = []
+    if artifact_backend_type == "LOCAL_FILESYSTEM":
+        roots.append(
+            inspect_storage_root(
+                "artifact_store", artifact_root or settings.artifact_root
+            )
+        )
+    else:
+        # Object-store quota/free capacity is not exposed as a filesystem
+        # measurement. Actual writes remain authoritative; do not substitute
+        # the unrelated legacy ARTIFACT_ROOT's free-space figure.
+        remote_storage = {
+            "backend_type": artifact_backend_type,
+            "capacity_status": "PROVIDER_MANAGED_NOT_MEASURABLE",
+        }
+    roots.extend(
+        (
+            inspect_storage_root("worker_scratch", settings.worker_scratch_root),
+            inspect_storage_root("resource_cache", settings.resource_cache_root),
+        )
+    )
+    return roots, remote_storage
+
+
+def inspect_deployment_capacity(
+    *,
+    artifact_root: str | None = None,
+    artifact_backend_type: str = "LOCAL_FILESYSTEM",
+) -> dict[str, Any]:
+    roots, remote_storage = _capacity_roots(
+        artifact_root=artifact_root,
+        artifact_backend_type=artifact_backend_type,
+    )
     public_roots = [{key: value for key, value in root.items() if not key.startswith("_")} for root in roots]
     issues = [
         {"code": root["error_code"], "message": root["error_message"], "storage": root["label"]}
         for root in roots if root["error_code"]
     ]
-    return {
+    result = {
         "status": "BLOCKED" if issues else "READY",
         "capacity_preflight_enabled": settings.storage_capacity_preflight_enabled,
         "max_artifact_upload_bytes": settings.max_artifact_upload_bytes,
@@ -103,9 +136,17 @@ def inspect_deployment_capacity() -> dict[str, Any]:
         "roots": public_roots,
         "issues": issues,
     }
+    if remote_storage is not None:
+        result["artifact_storage"] = remote_storage
+    return result
 
 
-def preflight_upload_capacity(incoming_size_bytes: int) -> dict[str, Any]:
+def preflight_upload_capacity(
+    incoming_size_bytes: int,
+    *,
+    artifact_root: str | None = None,
+    artifact_backend_type: str = "LOCAL_FILESYSTEM",
+) -> dict[str, Any]:
     """Estimate extra space needed to stage and persist an incoming upload."""
     if not settings.storage_capacity_preflight_enabled:
         return {
@@ -129,10 +170,11 @@ def preflight_upload_capacity(incoming_size_bytes: int) -> dict[str, Any]:
         }
     headroom = settings.analysis_storage_headroom_bytes
     required = incoming_size_bytes + headroom
-    roots = [
-        inspect_storage_root("artifact_store", settings.artifact_root),
-        inspect_storage_root("worker_scratch", settings.worker_scratch_root),
-    ]
+    roots, remote_storage = _capacity_roots(
+        artifact_root=artifact_root,
+        artifact_backend_type=artifact_backend_type,
+    )
+    roots = [root for root in roots if root["label"] != "resource_cache"]
     issues: list[dict[str, Any]] = [
         {"code": root["error_code"], "message": root["error_message"], "storage": root["label"]}
         for root in roots if root["error_code"]
@@ -158,7 +200,7 @@ def preflight_upload_capacity(incoming_size_bytes: int) -> dict[str, Any]:
                 "available_bytes": group["available_bytes"],
                 "required_bytes": group["required_bytes"],
             })
-    return {
+    result = {
         "status": "BLOCKED" if issues else "READY",
         "enabled": True,
         "input_size_bytes": incoming_size_bytes,
@@ -172,9 +214,17 @@ def preflight_upload_capacity(incoming_size_bytes: int) -> dict[str, Any]:
             for root in roots
         ],
     }
+    if remote_storage is not None:
+        result["artifact_storage"] = remote_storage
+    return result
 
 
-def preflight_analysis_capacity(input_size_bytes: int) -> dict[str, Any]:
+def preflight_analysis_capacity(
+    input_size_bytes: int,
+    *,
+    artifact_root: str | None = None,
+    artifact_backend_type: str = "LOCAL_FILESYSTEM",
+) -> dict[str, Any]:
     if not settings.storage_capacity_preflight_enabled:
         return {
             "status": "NOT_CONFIGURED",
@@ -202,17 +252,23 @@ def preflight_analysis_capacity(input_size_bytes: int) -> dict[str, Any]:
     headroom = settings.analysis_storage_headroom_bytes
     artifact_required = math.ceil(input_size_bytes * settings.analysis_artifact_output_multiplier) + headroom
     scratch_required = math.ceil(input_size_bytes * settings.analysis_scratch_multiplier) + headroom
-    roots = [
-        inspect_storage_root("artifact_store", settings.artifact_root),
-        inspect_storage_root("worker_scratch", settings.worker_scratch_root),
-    ]
+    roots, remote_storage = _capacity_roots(
+        artifact_root=artifact_root,
+        artifact_backend_type=artifact_backend_type,
+    )
+    roots = [root for root in roots if root["label"] != "resource_cache"]
     issues: list[dict[str, Any]] = []
     for root in roots:
         if root["error_code"]:
             issues.append({"code": root["error_code"], "message": root["error_message"], "storage": root["label"]})
 
     device_groups: dict[int, dict[str, Any]] = {}
-    for root, required in zip(roots, (artifact_required, scratch_required)):
+    required_by_label = {
+        "artifact_store": artifact_required,
+        "worker_scratch": scratch_required,
+    }
+    for root in roots:
+        required = required_by_label[root["label"]]
         device_id = root.get("_device_id")
         if device_id is None:
             continue
@@ -235,16 +291,19 @@ def preflight_analysis_capacity(input_size_bytes: int) -> dict[str, Any]:
             })
 
     public_roots = []
-    for root, required in zip(roots, (artifact_required, scratch_required)):
+    for root in roots:
+        required = required_by_label[root["label"]]
         public_roots.append({
             key: value for key, value in root.items() if not key.startswith("_")
         } | {"estimated_required_bytes": required})
 
-    return {
+    result = {
         "status": "BLOCKED" if issues else "READY",
         "enabled": True,
         "input_size_bytes": input_size_bytes,
-        "estimated_required_bytes": artifact_required + scratch_required,
+        "estimated_required_bytes": sum(
+            required_by_label[root["label"]] for root in roots
+        ),
         "artifact_output_multiplier": settings.analysis_artifact_output_multiplier,
         "scratch_multiplier": settings.analysis_scratch_multiplier,
         "headroom_bytes_per_root": headroom,
@@ -252,3 +311,9 @@ def preflight_analysis_capacity(input_size_bytes: int) -> dict[str, Any]:
         "issues": issues,
         "roots": public_roots,
     }
+    if remote_storage is not None:
+        result["artifact_storage"] = {
+            **remote_storage,
+            "estimated_artifact_bytes": artifact_required,
+        }
+    return result

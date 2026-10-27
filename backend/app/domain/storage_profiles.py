@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -145,6 +146,15 @@ def list_deployment_storage_targets(*, organization_id: UUID) -> list[dict[str, 
     ]
 
 
+def configured_local_storage_targets() -> list[tuple[str, str]]:
+    """Return configured local target IDs and roots for internal health checks."""
+    return [
+        (target_id, target["root"])
+        for target_id, target in sorted(_configured_targets().items())
+        if target["backend_type"] == "LOCAL_FILESYSTEM"
+    ]
+
+
 def _target_for_profile(profile: OrganizationStorageProfile) -> tuple[str, str]:
     configuration = profile.configuration_json or {}
     if not isinstance(configuration, dict) or set(configuration) - {"target_id"}:
@@ -197,6 +207,27 @@ def _target_for_profile(profile: OrganizationStorageProfile) -> tuple[str, str]:
             raise StorageProfileError("Firebase Storage is not configured")
         return "__legacy_firebase__", settings.firebase_storage_bucket
     raise StorageProfileError(f"Unsupported storage backend: {profile.backend_type}")
+
+
+def artifact_storage_target_for_organization(
+    db: Session, *, organization_id: UUID
+) -> tuple[str, str, str]:
+    """Resolve the configured artifact backend and location for one organization."""
+    profile = resolve_storage_profile(db, organization_id=organization_id)
+    if profile is None:
+        if _configured_targets():
+            raise StorageProfileError(
+                "Organization has no ACTIVE storage profile for the configured deployment targets"
+            )
+        if settings.firebase_storage_enabled:
+            return "FIREBASE_GCS", "__legacy_firebase__", settings.firebase_storage_bucket or ""
+        root = str(settings.artifact_root or "").strip()
+        if not root:
+            raise StorageProfileError("ARTIFACT_ROOT is not configured")
+        return "LOCAL_FILESYSTEM", "__legacy_local__", str(Path(root).expanduser().resolve())
+
+    target_id, target = _target_for_profile(profile)
+    return profile.backend_type, target_id, target
 
 
 def _validate_target(
@@ -368,21 +399,24 @@ def _store(backend_type: str, target: str, *, target_id: str | None = None):
             app_name=app_name,
             inherit_global_credentials=not bool(app_name),
         )
+    if target_id and target_id != "__legacy_local__":
+        root = Path(target).expanduser().resolve()
+        if not root.is_dir():
+            raise StorageProfileError(
+                "Configured organization artifact target is missing or not a directory"
+            )
+        if not os.access(root, os.W_OK | os.X_OK):
+            raise StorageProfileError(
+                "Configured organization artifact target is not writable by the service"
+            )
     return ArtifactStore(target)
 
 
 def artifact_store_for_organization(db: Session, *, organization_id: UUID):
-    profile = resolve_storage_profile(db, organization_id=organization_id)
-    if profile is None:
-        if _configured_targets():
-            raise StorageProfileError(
-                "Organization has no ACTIVE storage profile for the configured deployment targets"
-            )
-        if settings.firebase_storage_enabled:
-            return _store("FIREBASE_GCS", settings.firebase_storage_bucket or "")
-        return _store("LOCAL_FILESYSTEM", settings.artifact_root)
-    target_id, target = _target_for_profile(profile)
-    return _store(profile.backend_type, target, target_id=target_id)
+    backend, target_id, target = artifact_storage_target_for_organization(
+        db, organization_id=organization_id
+    )
+    return _store(backend, target, target_id=target_id)
 
 
 def artifact_store_for_uri(db: Session, *, organization_id: UUID, storage_uri: str):
