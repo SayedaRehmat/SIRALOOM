@@ -1,5 +1,6 @@
 import os
 import threading
+import time
 from uuid import uuid4
 
 import pytest
@@ -13,12 +14,135 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Case,
     ConfirmationRecord,
+    FollowUpPlan,
     Organization,
     OrganizationMembership,
     SecondaryFindingDecision,
     User,
     Variant,
 )
+
+
+@pytest.mark.integration
+def test_postgres_followup_update_waits_for_report_analysis_lock(monkeypatch):
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id, user_id, case_id, analysis_id, plan_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    principal = Principal(
+        user_id=user_id,
+        organization_id=organization_id,
+        role="lab_director",
+        subject="followup-lock-test",
+    )
+    with Session(engine) as db:
+        db.add(Organization(
+            id=organization_id,
+            name=f"followup-analysis-lock-{organization_id}",
+            external_identifier=str(organization_id),
+        ))
+        db.flush()
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject=str(user_id),
+            email=f"{user_id}@example.test",
+            display_name="Follow-up lock integration",
+            role="lab_director",
+            status="ACTIVE",
+        ))
+        db.flush()
+        db.add(OrganizationMembership(
+            id=uuid4(), organization_id=organization_id, user_id=user_id,
+            role="lab_director", status="ACTIVE",
+        ))
+        db.flush()
+        case = Case(
+            id=case_id, organization_id=organization_id,
+            case_identifier=str(case_id), status="OPEN", clinical_context={},
+            language="en", created_by=user_id,
+        )
+        db.add(case)
+        db.flush()
+        from backend.app.infrastructure.db.models import CaseAccessGrant
+
+        db.add(CaseAccessGrant(
+            id=uuid4(), case_id=case_id, user_id=user_id,
+            can_read=True, can_write=True, can_review=True, granted_by=user_id,
+        ))
+        db.flush()
+        db.add(Analysis(
+            id=analysis_id, case_id=case_id, analysis_type="GERMLINE",
+            workflow_id="followup-lock-integration", workflow_version="1",
+            status="SUCCEEDED", reference_build="GRCh38", configuration={},
+            created_by=user_id,
+        ))
+        db.flush()
+        db.add(FollowUpPlan(
+            id=plan_id, case_id=case_id, analysis_id=analysis_id,
+            action_type="original", status="PLANNED", metadata_json={},
+            created_by=user_id,
+        ))
+        db.commit()
+
+    analysis_stub = type("AnalysisStub", (), {"id": analysis_id, "case_id": case_id})()
+    monkeypatch.setattr(
+        clinical_followup, "get_accessible_analysis", lambda *_args: analysis_stub
+    )
+    monkeypatch.setattr(clinical_followup, "require_role", lambda *_args: None)
+    writer_started = threading.Event()
+    writer_finished = threading.Event()
+    errors = []
+
+    def update_plan():
+        writer_started.set()
+        try:
+            with Session(engine) as db:
+                clinical_followup.update_followup(
+                    plan_id,
+                    clinical_followup.FollowUpInput(action_type="updated"),
+                    db,
+                    principal,
+                )
+        except Exception as exc:  # noqa: BLE001 - surfaced in the main test thread
+            errors.append(exc)
+        finally:
+            writer_finished.set()
+
+    writer = threading.Thread(target=update_plan)
+    try:
+        with Session(engine) as report_writer:
+            report_writer.get(Analysis, analysis_id, with_for_update=True)
+            writer.start()
+            assert writer_started.wait(timeout=5)
+            time.sleep(0.5)
+            assert not writer_finished.is_set(), "follow-up update bypassed report analysis lock"
+            unchanged = report_writer.get(FollowUpPlan, plan_id)
+            assert unchanged.action_type == "original"
+            report_writer.commit()
+        writer.join(timeout=10)
+        assert not writer.is_alive()
+        assert not errors
+        with Session(engine) as db:
+            assert db.get(FollowUpPlan, plan_id).action_type == "updated"
+    finally:
+        if writer.ident is not None:
+            writer.join(timeout=2)
+        with Session(engine) as db:
+            db.query(FollowUpPlan).filter(FollowUpPlan.id == plan_id).delete()
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete()
+            db.query(Case).filter(Case.id == case_id).delete()
+            db.query(OrganizationMembership).filter(
+                OrganizationMembership.organization_id == organization_id
+            ).delete()
+            db.query(User).filter(User.id == user_id).delete()
+            db.query(Organization).filter(Organization.id == organization_id).delete()
+            db.commit()
+        engine.dispose()
 
 
 @pytest.mark.integration

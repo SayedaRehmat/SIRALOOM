@@ -203,6 +203,8 @@ def record_confirmation(analysis_id: UUID, variant_id: UUID, body: ConfirmationI
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/follow-up",status_code=201)
 def create_followup(analysis_id: UUID, variant_id: UUID, body: FollowUpInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal, "write"); _variant_access(analysis,variant_id,db); require_role(principal,CASE_WRITE_ROLES)
+    analysis = _lock_analysis_for_governance_version(db, analysis_id, principal, "write")
+    _variant_access(analysis, variant_id, db)
     row=FollowUpPlan(id=uuid4(),case_id=analysis.case_id,analysis_id=analysis_id,variant_id=variant_id,action_type=body.action_type.strip(),status=body.status,due_date=body.due_date,responsible_role=body.responsible_role,outcome=body.outcome,notes=body.notes,metadata_json=body.metadata,created_by=principal.user_id,completed_by=principal.user_id if body.status in {"COMPLETED","CANCELLED"} else None,completed_at=datetime.now(timezone.utc) if body.status in {"COMPLETED","CANCELLED"} else None)
     db.add(row)
     db.flush()
@@ -219,6 +221,10 @@ def update_followup(follow_up_id: UUID, body: FollowUpInput, db=Depends(get_db),
             raise HTTPException(404,"Follow-up plan not found") from exc
         raise
     require_role(principal,CASE_WRITE_ROLES)
+    analysis = _lock_analysis_for_governance_version(db, row.analysis_id, principal, "write")
+    row = db.get(FollowUpPlan, follow_up_id, populate_existing=True)
+    if row is None:
+        raise HTTPException(404,"Follow-up plan not found")
     _validate_followup_case_link(row, analysis)
     if row.variant_id is not None:
         _variant_access(analysis, row.variant_id, db)

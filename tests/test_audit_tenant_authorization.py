@@ -579,9 +579,14 @@ def test_followup_update_rejects_case_mismatch_with_its_analysis(monkeypatch):
     monkeypatch.setattr(
         clinical_followup, "get_accessible_analysis", lambda *_args: analysis
     )
+    monkeypatch.setattr(
+        clinical_followup,
+        "_lock_analysis_for_governance_version",
+        lambda *_args: analysis,
+    )
 
     class _Db:
-        def get(self, model, _object_id):
+        def get(self, model, _object_id, **_kwargs):
             from backend.app.infrastructure.db.models import FollowUpPlan
 
             assert model is FollowUpPlan
