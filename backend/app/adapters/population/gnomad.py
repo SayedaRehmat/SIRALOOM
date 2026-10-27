@@ -9,12 +9,12 @@ import subprocess
 import time
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
-from typing import Any, Iterable
+from typing import Any
 
 import httpx
 
-from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
+from backend.app.domain.schemas import CanonicalVariant
 
 
 class GnomADProviderError(RuntimeError):
@@ -497,19 +497,34 @@ class LocalGnomADTabixProvider:
         for line in stdout.splitlines():
             fields = line.split("\t")
             if len(fields) < 8:
-                continue
+                raise GnomADProviderError(
+                    "Local gnomAD tabix returned a malformed VCF record with fewer than 8 fixed fields"
+                )
             record_chrom, pos_s, _vid, ref, alt, _qual, _flt, info_s = fields[:8]
+            try:
+                record_position = int(pos_s)
+            except ValueError as exc:
+                raise GnomADProviderError(
+                    "Local gnomAD tabix returned a VCF record with a non-integer POS"
+                ) from exc
+            if record_position < 0:
+                raise GnomADProviderError(
+                    "Local gnomAD tabix returned a VCF record with a negative POS"
+                )
             if record_chrom.removeprefix("chr") != variant.chromosome.removeprefix("chr"):
                 continue
-            if int(pos_s) != variant.position or ref.upper() != variant.reference.upper():
+            if record_position != variant.position or ref.upper() != variant.reference.upper():
                 continue
             alts = alt.split(",")
             if variant.alternate.upper() not in [a.upper() for a in alts]:
                 continue
             alt_index = [a.upper() for a in alts].index(variant.alternate.upper())
             info = _parse_info(info_s)
+            if best is not None:
+                raise GnomADProviderError(
+                    "Local gnomAD tabix returned multiple records matching the same normalized allele"
+                )
             best = {"info": info, "alt_index": alt_index, "variant_id": f"{record_chrom}:{pos_s}:{ref}:{alt}"}
-            break
 
         if best is None:
             return [

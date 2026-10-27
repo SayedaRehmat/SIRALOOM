@@ -1,9 +1,13 @@
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from backend.app.adapters.population.gnomad import LocalGnomADTabixProvider, _parse_info, _array_value, _array_float
+from backend.app.adapters.population.gnomad import (
+    LocalGnomADTabixProvider,
+    _array_float,
+    _array_value,
+    _parse_info,
+)
 from backend.app.domain.schemas import CanonicalVariant
 
 
@@ -36,6 +40,53 @@ def test_local_gnomad_no_exact_record_has_provenance_and_no_frequency(monkeypatc
     assert all(item.allele_count is None and item.allele_number is None and item.allele_frequency is None for item in observations)
     assert all(len(item.request_fingerprint) == 64 and len(item.response_sha256) == 64 for item in observations)
     assert all(item.request_metadata["resource_location"] == "/qualified/gnomad.vcf.gz" for item in observations)
+
+
+@pytest.mark.parametrize(
+    ("stdout", "message"),
+    [
+        ("1\t555\t.\tT\tC\t.\tPASS\n", "fewer than 8 fixed fields"),
+        ("1\tbad\t.\tT\tC\t.\tPASS\tAC=1;AN=10\n", "non-integer POS"),
+        ("1\t-1\t.\tT\tC\t.\tPASS\tAC=1;AN=10\n", "negative POS"),
+    ],
+)
+def test_local_gnomad_rejects_malformed_tabix_records(monkeypatch, stdout, message):
+    import backend.app.adapters.population.gnomad as gnomad
+
+    monkeypatch.setattr(
+        gnomad.subprocess,
+        "Popen",
+        lambda *args, **kwargs: SimpleNamespace(
+            pid=123, returncode=0, communicate=lambda timeout: (stdout, "")
+        ),
+    )
+    provider = LocalGnomADTabixProvider("/qualified/gnomad.vcf.gz")
+
+    with pytest.raises(gnomad.GnomADProviderError, match=message):
+        provider.query_variant(CanonicalVariant(
+            genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+        ))
+
+
+def test_local_gnomad_rejects_duplicate_records_for_same_normalized_allele(monkeypatch):
+    import backend.app.adapters.population.gnomad as gnomad
+
+    record = "1\t555\t.\tT\tC\t.\tPASS\tAC=1;AN=100;AF=0.01;nhomalt=0"
+    monkeypatch.setattr(
+        gnomad.subprocess,
+        "Popen",
+        lambda *args, **kwargs: SimpleNamespace(
+            pid=123,
+            returncode=0,
+            communicate=lambda timeout: (f"{record}\n{record}\n", ""),
+        ),
+    )
+    provider = LocalGnomADTabixProvider("/qualified/gnomad.vcf.gz")
+
+    with pytest.raises(gnomad.GnomADProviderError, match="multiple records matching"):
+        provider.query_variant(CanonicalVariant(
+            genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+        ))
 
 
 @pytest.mark.parametrize(
