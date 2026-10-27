@@ -115,7 +115,12 @@ def test_storage_profile_api_payload_never_exposes_configuration():
         version=1,
         backend_type="FIREBASE_GCS",
         storage_key="PRIMARY_FIREBASE",
-        configuration_json={"service_account_key": secret, "purpose": "clinical"},
+        configuration_json={
+            "target_id": "lab-a-primary",
+            "credentials_path": "/run/secrets/firebase.json",
+            "service_account_key": secret,
+            "purpose": "clinical",
+        },
         status="DRAFT",
         created_by=None,
         created_at=now,
@@ -125,7 +130,32 @@ def test_storage_profile_api_payload_never_exposes_configuration():
     payload = _payload(profile)
 
     assert "configuration" not in payload
+    assert payload["deployment_target_id"] == "lab-a-primary"
+    assert "/run/secrets/firebase.json" not in repr(payload)
     assert secret not in repr(payload)
+
+
+def test_storage_profile_payload_hides_invalid_target_ids():
+    from datetime import datetime, timezone
+
+    from backend.app.api.v1.storage import _payload
+
+    now = datetime.now(timezone.utc)
+    profile = OrganizationStorageProfile(
+        id=uuid4(),
+        organization_id=uuid4(),
+        name="primary",
+        version=1,
+        backend_type="LOCAL_FILESYSTEM",
+        storage_key="PRIMARY_ARTIFACTS",
+        configuration_json={"target_id": "../private"},
+        status="DRAFT",
+        created_by=None,
+        created_at=now,
+        updated_at=now,
+    )
+
+    assert _payload(profile)["deployment_target_id"] is None
 
 
 def test_historical_artifact_backend_is_selected_from_uri_after_profile_change(

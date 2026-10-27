@@ -63,6 +63,7 @@ type StorageProfile = {
   version: number;
   backend_type: string;
   storage_key: string;
+  deployment_target_id?: string | null;
   status: string;
 };
 
@@ -102,7 +103,7 @@ export default function OperationsPage() {
     uploadLimit: "Upload limit", stagingLimit: "Resource staging limit", preflight: "Capacity preflight", enabled: "Enabled", disabled: "Disabled",
     free: "Free", used: "Used", total: "Total", writable: "Writable", notWritable: "Not writable", capacityIssues: "Capacity issues",
     storageName: "Profile name", storageBackend: "Storage backend", registerStorage: "Register storage profile", localFilesystem: "Lab-managed filesystem",
-    cloudStorage: "Configured Firebase Cloud Storage", storageNote: "This profile selects storage configured by the deployment administrator. It does not create a disk, mount a path or provision a bucket."
+    cloudStorage: "Configured Firebase Cloud Storage", deploymentTarget: "Deployment target", storageNote: "This profile selects storage configured by the deployment administrator. It does not create a disk, mount a path or provision a bucket."
   };
   const arabicCopy = {
     eyebrow: "عمليات المختبر", title: "التنبيهات وإعادة التحليل والسعة", lead: "نقطة تشغيل واحدة للإجراءات التي تتطلب انتباهاً من المختبر.",
@@ -113,7 +114,7 @@ export default function OperationsPage() {
     uploadLimit: "حد الرفع", stagingLimit: "حد تجهيز الموارد", preflight: "فحص السعة", enabled: "مفعّل", disabled: "معطّل",
     free: "المتاح", used: "المستخدم", total: "الإجمالي", writable: "قابل للكتابة", notWritable: "غير قابل للكتابة", capacityIssues: "مشكلات السعة",
     storageName: "اسم الملف", storageBackend: "خلفية التخزين", registerStorage: "تسجيل ملف تخزين", localFilesystem: "نظام ملفات تديره المختبر",
-    cloudStorage: "تخزين Firebase السحابي المُهيّأ", storageNote: "يختار هذا الملف التخزين الذي هيأه مسؤول النشر. لا ينشئ قرصاً أو نقطة تركيب أو حاوية تخزين."
+    cloudStorage: "تخزين Firebase السحابي المُهيّأ", deploymentTarget: "وجهة النشر", storageNote: "يختار هذا الملف التخزين الذي هيأه مسؤول النشر. لا ينشئ قرصاً أو نقطة تركيب أو حاوية تخزين."
   };
   const copy = Object.fromEntries(Object.keys(englishCopy).map((key) => [
     key,
@@ -276,7 +277,7 @@ export default function OperationsPage() {
 
         <section className="panel">
           <div className="section-heading"><div><h2>{copy.storage}</h2><p className="muted">{copy.activeProfile}: {profiles.find(p => p.status === "ACTIVE")?.name ?? "—"}</p></div></div>
-          {profiles.length === 0 ? <p className="muted">{copy.noProfiles}</p> : <div className="operation-list compact">{profiles.map(profile => <div className="operation-row" key={profile.storage_profile_id}><div className="operation-main"><strong>{profile.name}</strong><small>{profile.backend_type} · {profile.storage_key}</small><span className="metadata-line">{copy.version}: {profile.version}</span></div><div className="operation-actions">{profile.status === "ACTIVE" ? <span className="badge success">{copy.active}</span> : <button className="text-button" disabled={busy} onClick={() => void activate(profile.storage_profile_id)}>{copy.activate}</button>}</div></div>)}</div>}
+          {profiles.length === 0 ? <p className="muted">{copy.noProfiles}</p> : <div className="operation-list compact">{profiles.map(profile => <div className="operation-row" key={profile.storage_profile_id}><div className="operation-main"><strong>{profile.name}</strong><small>{profile.backend_type} · {profile.storage_key}</small>{profile.deployment_target_id && <span className="metadata-line">{copy.deploymentTarget}: {profile.deployment_target_id}</span>}<span className="metadata-line">{copy.version}: {profile.version}</span></div><div className="operation-actions">{profile.status === "ACTIVE" ? <span className="badge success">{copy.active}</span> : <button className="text-button" disabled={busy} onClick={() => void activate(profile.storage_profile_id)}>{copy.activate}</button>}</div></div>)}</div>}
           <form className="manual-classification-form" onSubmit={registerStorage}>
             <label>{copy.storageName}<input value={storageProfileName} onChange={event => setStorageProfileName(event.target.value)} required maxLength={120} /></label>
             <label>{copy.storageBackend}<select value={storageBackend} onChange={event => setStorageBackend(event.target.value as "LOCAL_FILESYSTEM" | "FIREBASE_GCS")}>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import require_role
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.storage_capacity import inspect_deployment_capacity
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
     activate_storage_profile,
@@ -16,15 +18,19 @@ from backend.app.domain.storage_profiles import (
 )
 from backend.app.infrastructure.db.models import OrganizationStorageProfile
 from backend.app.infrastructure.db.session import get_db
-from backend.app.domain.storage_capacity import inspect_deployment_capacity
 
 router = APIRouter(prefix="/storage", tags=["storage"])
 
 ADMIN_ROLES = frozenset({"platform_admin", "organization_admin", "lab_director"})
 READ_ROLES = ADMIN_ROLES | frozenset({"bioinformatician", "lab_scientist", "read_only"})
+_TARGET_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$")
 
 
 def _payload(row: OrganizationStorageProfile) -> dict:
+    configuration = row.configuration_json
+    target_id = configuration.get("target_id") if isinstance(configuration, dict) else None
+    if not isinstance(target_id, str) or not _TARGET_ID.fullmatch(target_id):
+        target_id = None
     return {
         "storage_profile_id": str(row.id),
         "organization_id": str(row.organization_id),
@@ -32,6 +38,7 @@ def _payload(row: OrganizationStorageProfile) -> dict:
         "version": row.version,
         "backend_type": row.backend_type,
         "storage_key": row.storage_key,
+        "deployment_target_id": target_id,
         "status": row.status,
         "created_by": str(row.created_by) if row.created_by else None,
         "created_at": row.created_at.isoformat(),

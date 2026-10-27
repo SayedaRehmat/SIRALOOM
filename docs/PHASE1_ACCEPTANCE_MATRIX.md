@@ -534,3 +534,9 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Explicit multiallelic other-ALT projection policy and provenance | PASS (BCFtools 1.19 synthetic fixture) | Both normalization commands use `--multi-overlaps 0`; command metadata and `REFERENCE_ALLELE_ZERO` are retained. Golden fixture checks phased `1|2` projection, sample GTs, `Number=A/R/G` INFO/FORMAT values, and phase-set preservation. |
 | Intake, VCF normalization and unsupported-record routing regression set with actual pinned BCFtools | PASS (automated 1.19 scope) | 8 focused VCF suites: **136 passed** using isolated BCFtools 1.19/HTSlib 1.19. This is a synthetic tool contract and software regression, not a GIAB benchmark or laboratory assay validation. |
 | Independent truth-set concordance and clinical/segregation validity | NOT RUN / NOT ESTABLISHED | No approved GIAB benchmark manifest or expert-adjudicated interpretation set was run. Overall Phase A remains PARTIAL; live lab and deployment evidence remains outstanding. |
+
+### 2026-10-27 storage target visibility for laboratory operators
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Authorized operations users can identify the deployment target selected by a storage profile without receiving deployment secrets | PARTIAL | API payload adds only a grammar-validated target ID; profile paths, bucket/project configuration and credential paths remain omitted. Bilingual operations UI displays the ID when present. Regression and exact-SHA CI evidence are pending. |
