@@ -27,9 +27,17 @@ from backend.app.domain.artifact_integrity import (
     verify_artifact_file,
 )
 from backend.app.domain.enums import AnalysisStatus
+from backend.app.domain.report_integrity import (
+    has_valid_draft_artifact,
+    has_valid_signed_artifact,
+)
 from backend.app.domain.review import ClassificationReviewRequest
 from backend.app.domain.schemas import ExportCreate, ReportabilityDecisionRequest, ReportCreate
-from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    artifact_store_for_organization,
+    artifact_store_for_uri,
+)
 from backend.app.infrastructure.artifacts.compensation import (
     commit_with_artifact_compensation,
     compensate_uncommitted_artifact,
@@ -37,10 +45,6 @@ from backend.app.infrastructure.artifacts.compensation import (
 from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, CaseExport, Report
-from backend.app.domain.report_integrity import (
-    has_valid_draft_artifact,
-    has_valid_signed_artifact,
-)
 from backend.app.infrastructure.db.session import get_db
 from backend.app.reporting.finalization import ReportFinalizationError, finalize_report
 from backend.app.reporting.reportability import (
@@ -424,15 +428,16 @@ def download_case_export(export_id: UUID, db: Session = Depends(get_db), princip
     ):
         raise HTTPException(status_code=404, detail="Export artifact not found")
     try:
-        store = artifact_store_for_organization(
+        store = artifact_store_for_uri(
             db,
             organization_id=case.organization_id,
+            storage_uri=artifact.storage_uri,
         )
     except StorageProfileError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    # Resolve the export through the same organization-selected store that
-    # created it. A cloud URI must never be treated as a local filesystem path.
+    # Resolve the immutable historical backend from the stored URI. The active
+    # profile governs new artifacts and need not match this retained export.
     if isinstance(store, FirebaseArtifactStore):
         if store.uri_for_artifact(
             case_id=artifact.case_id,

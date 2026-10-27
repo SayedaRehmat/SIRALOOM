@@ -100,7 +100,7 @@ def test_artifact_download_checks_tenant_before_resolving_storage(monkeypatch):
         pytest.fail("Storage was resolved before artifact tenant authorization")
 
     monkeypatch.setattr(artifacts, "get_accessible_artifact", deny_foreign_artifact)
-    monkeypatch.setattr(artifacts, "resolve_storage_profile", storage_must_not_be_resolved)
+    monkeypatch.setattr(artifacts, "artifact_store_for_uri", storage_must_not_be_resolved)
     with pytest.raises(HTTPException) as exc:
         artifacts.download_artifact(str(uuid4()), object(), SimpleNamespace(organization_id=uuid4()))
     assert exc.value.status_code == 404

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.storage_profiles import (
     activate_storage_profile,
+    artifact_store_for_uri,
     get_active_storage_profile,
     register_storage_profile,
 )
@@ -125,3 +126,73 @@ def test_storage_profile_api_payload_never_exposes_configuration():
 
     assert "configuration" not in payload
     assert secret not in repr(payload)
+
+
+def test_historical_artifact_backend_is_selected_from_uri_after_profile_change(monkeypatch, tmp_path):
+    from backend.app.config import settings
+    from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+
+    engine = _engine()
+    monkeypatch.setattr(settings, "artifact_root", str(tmp_path / "artifacts"))
+    monkeypatch.setattr(settings, "firebase_storage_enabled", True)
+    monkeypatch.setattr(settings, "firebase_storage_bucket", "lab-current-bucket")
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab A", external_identifier=None)
+        db.add(org)
+        db.flush()
+        cloud_profile = register_storage_profile(
+            db,
+            organization_id=org.id,
+            name="primary",
+            backend_type="FIREBASE_GCS",
+            storage_key="PRIMARY_FIREBASE",
+            configuration={},
+            created_by=None,
+        )
+        activate_storage_profile(db, organization_id=org.id, profile_id=cloud_profile.id)
+        db.commit()
+
+        historical_local = artifact_store_for_uri(
+            db,
+            organization_id=org.id,
+            storage_uri="file:///old-profile/cases/case/artifacts/artifact/file.vcf",
+        )
+        assert isinstance(historical_local, ArtifactStore)
+
+        historical_cloud = artifact_store_for_uri(
+            db,
+            organization_id=org.id,
+            storage_uri="gs://lab-current-bucket/cases/case/artifacts/artifact/file.vcf",
+        )
+        assert isinstance(historical_cloud, FirebaseArtifactStore)
+        assert historical_cloud.bucket_name == "lab-current-bucket"
+
+        # A broken current cloud configuration must not prevent reads from an
+        # independently available historical local artifact.
+        monkeypatch.setattr(settings, "firebase_storage_enabled", False)
+        still_available_local = artifact_store_for_uri(
+            db,
+            organization_id=org.id,
+            storage_uri="file:///old-profile/cases/case/artifacts/artifact/file.vcf",
+        )
+        assert isinstance(still_available_local, ArtifactStore)
+
+
+def test_artifact_store_for_uri_rejects_unknown_or_unconfigured_backends(monkeypatch):
+    import pytest
+
+    from backend.app.config import settings
+    from backend.app.domain.storage_profiles import StorageProfileError
+
+    engine = _engine()
+    monkeypatch.setattr(settings, "firebase_storage_enabled", False)
+    monkeypatch.setattr(settings, "firebase_storage_bucket", "lab-current-bucket")
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="Lab A", external_identifier=None)
+        db.add(org)
+        db.commit()
+        with pytest.raises(StorageProfileError, match="unsupported backend"):
+            artifact_store_for_uri(db, organization_id=org.id, storage_uri="https://example.invalid/file")
+        with pytest.raises(StorageProfileError, match="Firebase Storage is not configured"):
+            artifact_store_for_uri(db, organization_id=org.id, storage_uri="gs://lab-current-bucket/file")

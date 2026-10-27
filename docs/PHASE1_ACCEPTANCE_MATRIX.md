@@ -374,6 +374,16 @@ Verification: focused command using isolated BCFtools/HTSlib **1.19** — `LD_LI
 
 Limitations: the manifest is lineage and routing evidence, not independent truth-set concordance; SIRALOOM still does not interpret routed SV/CNV, BND, GVCF confidence blocks or spanning deletions. It does not make clinical or deployment readiness claims. Phase A, scientific validation and laboratory deployment remain **PARTIAL**.
 
+## 2026-10-27 preserve historical artifact downloads across storage-profile changes
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Existing artifacts resolve through their persisted backend URI after the active organization storage profile changes | PASS (automated local/cloud adapter scope) | Generic artifact and case-export downloads now select the local filesystem or configured Firebase bucket based on the artifact URI scheme, then require the canonical case/artifact/filename URI and verify SHA-256 and size. An active cloud profile no longer hides a valid historical local artifact; a broken current cloud configuration does not prevent retrieving an intact local artifact. Tenant/case authorization still occurs before storage resolution. |
+
+Linux regressions across storage profile lifecycle, artifact downloads, case-export download/integrity and tenant guards — **28 passed, 1 skipped**; Ruff `--select F,I`, Python compilation and `git diff --check` passed. The local artifact download also now emits `X-Content-Type-Options: nosniff`.
+
+Limitations: storage profiles still select a deployment-wide local root or Firebase bucket; per-organization independent roots/buckets and historical bucket-version mappings are not implemented. A backend must remain configured and its canonical artifact URI must match; no arbitrary URI target is trusted. Exact-SHA CI is pending. Phase A and laboratory deployment remain **PARTIAL**.
+
 ## 2026-10-27 include telomere sentinels in report/sign-out blocking
 
 | Requirement | Status | Evidence / limitation |

@@ -174,3 +174,41 @@ def artifact_store_for_organization(db: Session, *, organization_id: UUID):
     if profile.backend_type == "FIREBASE_GCS":
         return FirebaseArtifactStore(settings.firebase_storage_bucket)
     return ArtifactStore(settings.artifact_root)
+
+
+def artifact_store_for_uri(
+    db: Session,
+    *,
+    organization_id: UUID,
+    storage_uri: str,
+):
+    """Resolve an existing artifact by its persisted backend URI.
+
+    The current organization profile governs new writes. Historical artifacts
+    retain their original URI and remain readable after the profile changes,
+    provided that backend is still configured and the URI later passes the
+    caller's canonical artifact-identity check.
+    """
+    active_profile = get_active_storage_profile(db, organization_id=organization_id)
+    if active_profile is None and settings.organization_require_storage_profile:
+        raise StorageProfileError(
+            "Organization has no ACTIVE storage profile. "
+            "Register and activate the laboratory artifact storage target before use."
+        )
+
+    from backend.app.infrastructure.artifacts.firebase_store import FirebaseArtifactStore
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+
+    if storage_uri.startswith("gs://"):
+        if not settings.firebase_storage_enabled or not settings.firebase_storage_bucket:
+            raise StorageProfileError(
+                "Firebase Storage is not configured to read this historical artifact."
+            )
+        return FirebaseArtifactStore(settings.firebase_storage_bucket)
+    if storage_uri.startswith("file:"):
+        if not str(settings.artifact_root or "").strip():
+            raise StorageProfileError(
+                "The local artifact root is not configured to read this historical artifact."
+            )
+        return ArtifactStore(settings.artifact_root)
+    raise StorageProfileError("Artifact storage URI uses an unsupported backend.")

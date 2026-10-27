@@ -46,7 +46,7 @@ def test_artifact_download_rejects_uri_not_bound_to_artifact(monkeypatch, storag
             raise AssertionError("Mismatched URI must not be resolved")
 
     monkeypatch.setattr(artifacts, "get_accessible_artifact", lambda *args, **kwargs: artifact)
-    monkeypatch.setattr(artifacts, "resolve_storage_profile", lambda *args, **kwargs: None)
+    monkeypatch.setattr(artifacts, "artifact_store_for_uri", lambda *args, **kwargs: FakeStore())
     monkeypatch.setattr(artifacts, "FirebaseArtifactStore", FakeStore)
     monkeypatch.setattr(artifacts, "ArtifactStore", FakeStore)
 
@@ -94,7 +94,7 @@ def test_local_artifact_download_verifies_bytes_before_response(monkeypatch, tmp
             return source
 
     monkeypatch.setattr(routes, "get_accessible_artifact", lambda *args, **kwargs: artifact)
-    monkeypatch.setattr(routes, "resolve_storage_profile", lambda *args, **kwargs: None)
+    monkeypatch.setattr(routes, "artifact_store_for_uri", lambda *args, **kwargs: LocalStore(tmp_path))
     monkeypatch.setattr(routes, "ArtifactStore", LocalStore)
 
     if corrupt:
@@ -148,7 +148,7 @@ def test_cloud_artifact_download_verifies_bytes_before_response(monkeypatch, cor
 
     monkeypatch.setattr(routes.settings, "firebase_storage_bucket", "lab-bucket")
     monkeypatch.setattr(routes, "get_accessible_artifact", lambda *args, **kwargs: artifact)
-    monkeypatch.setattr(routes, "resolve_storage_profile", lambda *args, **kwargs: None)
+    monkeypatch.setattr(routes, "artifact_store_for_uri", lambda *args, **kwargs: CloudStore("lab-bucket"))
     monkeypatch.setattr(routes, "FirebaseArtifactStore", CloudStore)
     principal = Principal(user_id, organization_id, "read_only", str(user_id))
 

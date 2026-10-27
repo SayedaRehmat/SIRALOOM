@@ -36,6 +36,7 @@ from backend.app.domain.ingestion import (
 from backend.app.domain.storage_capacity import preflight_upload_capacity
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
+    artifact_store_for_uri,
     resolve_storage_profile,
 )
 from backend.app.infrastructure.artifacts.compensation import compensate_uncommitted_artifact
@@ -337,13 +338,16 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
         raise HTTPException(status_code=400, detail="Invalid artifact_id") from exc
     artifact = get_accessible_artifact(artifact_uuid, db, principal)
     try:
-        profile = resolve_storage_profile(db, organization_id=principal.organization_id)
+        store = artifact_store_for_uri(
+            db,
+            organization_id=principal.organization_id,
+            storage_uri=artifact.storage_uri,
+        )
     except StorageProfileError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     if artifact.storage_uri.startswith("gs://"):
-        cloud_store = FirebaseArtifactStore(settings.firebase_storage_bucket)
-        if cloud_store.uri_for_artifact(
+        if store.uri_for_artifact(
             case_id=artifact.case_id,
             artifact_id=artifact.id,
             filename=artifact.filename,
@@ -351,7 +355,7 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
             raise HTTPException(status_code=404, detail="Artifact not found")
         try:
             path = stage_verified_cloud_artifact(
-                cloud_store,
+                store,
                 artifact,
                 prefix="siraloom-artifact-download-",
             )
@@ -368,12 +372,9 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
             background=BackgroundTask(path.unlink, missing_ok=True),
         )
 
-    # Artifact URIs are immutable. The active profile controls the deployment
-    # target for new artifacts; historical files continue to resolve by URI.
-    root = settings.artifact_root
-    if profile is not None and profile.backend_type != "LOCAL_FILESYSTEM":
-        raise HTTPException(status_code=409, detail="Artifact uses local storage but the organization's active storage profile is not local filesystem.")
-    store = ArtifactStore(root)
+    # The URI selects the historical backend; the active profile governs new
+    # writes. Canonical identity, root containment and checksum are still
+    # verified before bytes are returned.
     if store.uri_for_artifact(
         case_id=artifact.case_id,
         artifact_id=artifact.id,
@@ -388,4 +389,9 @@ def download_artifact(artifact_id: str, db: Session = Depends(get_db), principal
             status_code=409,
             detail="Artifact is unavailable or failed integrity verification.",
         ) from exc
-    return FileResponse(path, media_type=artifact.media_type or "application/octet-stream", filename=Path(artifact.filename).name)
+    return FileResponse(
+        path,
+        media_type=artifact.media_type or "application/octet-stream",
+        filename=Path(artifact.filename).name,
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
