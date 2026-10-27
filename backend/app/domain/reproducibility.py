@@ -278,6 +278,7 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
 
     phenotypes = [
         {
+            "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
             "hpo_id": row.hpo_id,
             "label": row.label,
             "present": row.present,
@@ -288,8 +289,10 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
             "evidence": row.evidence or {},
         }
         for row in db.scalars(select(PhenotypeObservation).where(
-            PhenotypeObservation.analysis_id == analysis_id
-        )).all()
+            PhenotypeObservation.case_id == analysis.case_id,
+            (PhenotypeObservation.analysis_id == analysis_id)
+            | (PhenotypeObservation.analysis_id.is_(None)),
+        ).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)).all()
     ]
 
     technical_qc = [

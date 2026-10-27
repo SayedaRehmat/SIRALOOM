@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.reproducibility import (
     ReanalysisComparisonError,
+    build_reproducibility_manifest,
     compare_reanalysis_outputs,
 )
 from backend.app.infrastructure.db.base import Base
@@ -78,6 +79,50 @@ def _seed_analysis(db, *, organization_id, user_id, case_id, analysis_id, parent
         metadata_json={"ruleset": "pinned-fixture"},
     ))
     db.flush()
+
+
+def test_reproducibility_manifest_includes_case_level_phenotype_inputs(tmp_path):
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'case-phenotype-manifest.db'}")
+    Base.metadata.create_all(engine)
+    organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
+    try:
+        with Session(engine) as db:
+            db.add(Organization(id=organization_id, name="Manifest Lab"))
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@test.local",
+                display_name="Manifest Test", role="ADMIN", status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"MANIFEST-{case_id}", status="OPEN",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.flush()
+            _seed_analysis(
+                db, organization_id=organization_id, user_id=user_id,
+                case_id=case_id, analysis_id=analysis_id, parent_id=None, version=1,
+            )
+            db.commit()
+
+            before = build_reproducibility_manifest(db, analysis_id)
+            db.add(PhenotypeObservation(
+                id=uuid4(), case_id=case_id, analysis_id=None,
+                hpo_id="HP:0001250", label="Seizure", present=True,
+                phenotype_status="PRESENT", onset="CHILDHOOD",
+                severity="MODERATE", source="CLINICAL_INPUT",
+                evidence={"recorded_by": "reviewed-fixture"},
+            ))
+            db.flush()
+            after = build_reproducibility_manifest(db, analysis_id)
+
+            assert before["scientific_output_sha256"] != after["scientific_output_sha256"]
+            assert before["reproducibility_eligible"] is True
+            assert after["reproducibility_eligible"] is True
+    finally:
+        engine.dispose()
 
 
 def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versions(tmp_path):
