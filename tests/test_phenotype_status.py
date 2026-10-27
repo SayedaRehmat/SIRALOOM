@@ -60,9 +60,14 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
     class FakeDB:
         row = None
 
-        def get(self, model, object_id):
+        def get(self, model, object_id, *, with_for_update=False):
             assert object_id == case_id
+            assert with_for_update is True
             return case
+
+        def refresh(self, row, *, with_for_update=False):
+            assert row is case
+            assert with_for_update is True
 
         def scalar(self, _query):
             return None

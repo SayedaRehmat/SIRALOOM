@@ -78,8 +78,12 @@ def list_case_phenotypes(case_id: UUID, db: Session = Depends(get_db), principal
 
 @router.post("/cases/{case_id}/phenotypes", status_code=201)
 def add_case_phenotype(case_id: UUID, body: PhenotypeInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    case = db.get(Case, case_id)
+    # Sign-out locks this row while verifying the report's clinical snapshot.
+    # Serialize phenotype changes on the same lock so a new observation cannot
+    # commit between snapshot verification and signed-report persistence.
+    case = db.get(Case, case_id, with_for_update=True)
     if not case: raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     try: hpo = normalize_hpo_id(body.hpo_id)

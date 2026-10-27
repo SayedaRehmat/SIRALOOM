@@ -12,6 +12,9 @@ class _Db:
     def get(self, _model, object_id, **_kwargs):
         return SimpleNamespace(id=object_id, case_id=object_id)
 
+    def refresh(self, *_args, **_kwargs):
+        return None
+
 
 def _read_only_principal():
     return Principal(
