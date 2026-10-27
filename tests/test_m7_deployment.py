@@ -119,6 +119,29 @@ def test_production_compose_requires_redis_auth_for_all_celery_clients():
         assert compose["services"][service_name]["environment"]["REDIS_URL"] == authenticated_url
 
 
+def test_local_storage_target_override_mounts_each_lab_root_into_api_and_worker():
+    repo_root = Path(__file__).resolve().parents[1]
+    override = yaml.safe_load(
+        (repo_root / "deployment/storage-targets-local.compose.example.yml").read_text(
+            encoding="utf-8"
+        )
+    )
+    expected = {
+        "${SIRALOOM_LAB_A_ARTIFACT_HOST_PATH:?Set the lab A artifact directory}":
+            "/data/siraloom/labs/lab-a/artifacts",
+        "${SIRALOOM_LAB_B_ARTIFACT_HOST_PATH:?Set the lab B artifact directory}":
+            "/data/siraloom/labs/lab-b/artifacts",
+    }
+
+    for service_name in ("api", "worker"):
+        mounts = override["services"][service_name]["volumes"]
+        assert {mount["source"]: mount["target"] for mount in mounts} == expected
+        assert all(mount["type"] == "bind" for mount in mounts)
+        assert all(mount["bind"]["create_host_path"] is False for mount in mounts)
+
+    assert override["services"]["api"]["volumes"] == override["services"]["worker"]["volumes"]
+
+
 def test_production_settings_reject_unauthenticated_redis_url():
     with pytest.raises(ValidationError, match="AUTH secret of at least 32 characters"):
         Settings(

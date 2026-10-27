@@ -35,6 +35,15 @@ sudo mkdir -p /srv/siraloom/postgres /srv/siraloom/redis \
 
 Edit `.env` before starting the stack. Set the actual absolute host paths in the `SIRALOOM_*_HOST_PATH` variables. These paths are bind-mounted into the API and worker containers; the reference path is read-only. Configure `SIRALOOM_SCRATCH_HOST_PATH`, `SIRALOOM_BEAT_HOST_PATH`, and the artifact/resource-cache paths. Keep exactly one Celery Beat instance active for this deployment; it uses the persistent beat schedule file to coordinate daily discovery and recovery jobs. The API and worker must see the same scratch filesystem at `/data/siraloom/scratch`; the API preflight estimates capacity there, while worker jobs consume it. Ensure the relevant container users can write to the database, Redis, artifact, resource-cache and scratch paths. Do not guess ownership IDs: inspect the exact container images and apply your lab's filesystem policy.
 
+For organization-specific local artifact roots, configure one host path variable per lab and add the corresponding local-target Compose override. The example in [storage-targets-local.compose.example.yml](../../deployment/storage-targets-local.compose.example.yml) mounts each dedicated host path into both API and worker containers; each `ARTIFACT_STORAGE_TARGETS_JSON` local `root` must exactly match its container-side mount target. Add one mount pair to both services for every additional organization. Render and inspect the merged configuration before startup:
+
+```bash
+docker compose -f docker-compose.production.yml \
+  -f deployment/storage-targets-local.compose.example.yml config
+```
+
+The base Compose file's `/data/siraloom/artifacts` volume is the legacy single-root location. It does not mount any additional local target roots. Do not configure per-laboratory roots outside the container without adding explicit mounts to both API and worker.
+
 Copy the approved reference package into `/srv/siraloom/references`; set `REFERENCE_FASTA` and `REFERENCE_FAI` to the matching in-container paths. Do not silently replace a reference build or index after a case has been analyzed.
 
 ## 4. Configure identity, secrets and URLs

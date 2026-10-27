@@ -139,3 +139,7 @@ jobs:
           cp .env.production.example .env
           touch /tmp/siraloom-firebase-admin.json
           docker compose -f docker-compose.production.yml config --quiet
+          SIRALOOM_LAB_A_ARTIFACT_HOST_PATH=/tmp/siraloom-lab-a-artifacts \
+            SIRALOOM_LAB_B_ARTIFACT_HOST_PATH=/tmp/siraloom-lab-b-artifacts \
+            docker compose -f docker-compose.production.yml \
+              -f deployment/storage-targets-local.compose.example.yml config --quiet

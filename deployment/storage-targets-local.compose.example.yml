@@ -1,0 +1,33 @@
+# Optional Compose override for organization-specific local artifact targets.
+# Add one bind mount per configured local target to BOTH the API and worker.
+# The paths in ARTIFACT_STORAGE_TARGETS_JSON must match these container targets.
+services:
+  api:
+    volumes:
+      - type: bind
+        source: ${SIRALOOM_LAB_A_ARTIFACT_HOST_PATH:?Set the lab A artifact directory}
+        target: /data/siraloom/labs/lab-a/artifacts
+        read_only: false
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${SIRALOOM_LAB_B_ARTIFACT_HOST_PATH:?Set the lab B artifact directory}
+        target: /data/siraloom/labs/lab-b/artifacts
+        read_only: false
+        bind:
+          create_host_path: false
+
+  worker:
+    volumes:
+      - type: bind
+        source: ${SIRALOOM_LAB_A_ARTIFACT_HOST_PATH:?Set the lab A artifact directory}
+        target: /data/siraloom/labs/lab-a/artifacts
+        read_only: false
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${SIRALOOM_LAB_B_ARTIFACT_HOST_PATH:?Set the lab B artifact directory}
+        target: /data/siraloom/labs/lab-b/artifacts
+        read_only: false
+        bind:
+          create_host_path: false
