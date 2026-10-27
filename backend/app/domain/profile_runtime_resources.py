@@ -53,6 +53,22 @@ def _require_resource_tenant(resource: Resource, case: Case) -> None:
         )
 
 
+def _pinned_qualification_id(snapshot: dict, *, capability: str) -> UUID:
+    value = (snapshot.get("execution") or {}).get("qualification_id")
+    if not value:
+        raise ProfileRuntimeResourceError(
+            "RESOURCE_PLAN_INVALID",
+            f"Preflight snapshot for {capability!r} has no pinned qualification ID.",
+        )
+    try:
+        return UUID(str(value))
+    except (TypeError, ValueError) as exc:
+        raise ProfileRuntimeResourceError(
+            "RESOURCE_PLAN_INVALID",
+            f"Preflight qualification ID for {capability!r} is not a UUID: {value!r}.",
+        ) from exc
+
+
 def resolve_profile_runtime_resources(
     db: Session,
     *,
@@ -140,15 +156,20 @@ def resolve_profile_runtime_resources(
             )
         _require_resource_tenant(resource, case)
 
+        expected_execution = dict(snapshot.get("execution") or {})
+        qualification_id = _pinned_qualification_id(snapshot, capability=capability)
         try:
-            execution = resolve_resource_execution(db, resource=resource)
+            execution = resolve_resource_execution(
+                db,
+                resource=resource,
+                qualification_id=qualification_id,
+            )
         except ResourceExecutionError as exc:
             raise ProfileRuntimeResourceError(
                 "RESOURCE_EXECUTION_CONTRACT_INVALID",
                 str(exc),
             ) from exc
 
-        expected_execution = dict(snapshot.get("execution") or {})
         expected = {
             "resource_id": str(expected_execution.get("resource_id")),
             "resource_version": expected_execution.get("resource_version"),
@@ -256,15 +277,20 @@ def resolve_profile_runtime_resource(
         )
     _require_resource_tenant(resource, case)
 
+    expected_execution = dict(snapshot.get("execution") or {})
+    qualification_id = _pinned_qualification_id(snapshot, capability=capability)
     try:
-        execution = resolve_resource_execution(db, resource=resource)
+        execution = resolve_resource_execution(
+            db,
+            resource=resource,
+            qualification_id=qualification_id,
+        )
     except ResourceExecutionError as exc:
         raise ProfileRuntimeResourceError(
             "RESOURCE_EXECUTION_CONTRACT_INVALID",
             str(exc),
         ) from exc
 
-    expected_execution = dict(snapshot.get("execution") or {})
     expected = {
         "resource_id": str(expected_execution.get("resource_id")),
         "resource_version": expected_execution.get("resource_version"),

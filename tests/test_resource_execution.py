@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -9,8 +10,12 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from backend.app.adapters.annotation.genebe import GeneBeProvider
 from backend.app.adapters.population.gnomad import GnomADGraphQLProvider
-from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
-from backend.app.domain.resource_execution import ResolvedResourceExecution, start_resource_execution
+from backend.app.domain.resource_execution import (
+    ResolvedResourceExecution,
+    ResourceExecutionError,
+    resolve_resource_execution,
+    start_resource_execution,
+)
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
@@ -146,6 +151,58 @@ def test_resolver_returns_exact_qualified_contract_and_stable_hash():
         assert resolved.contract.provider_version == "api-public-v1"
         assert len(resolved.contract_hash) == 64
         assert resolved.snapshot["resource_id"] == str(resource.id)
+    finally:
+        db.close()
+        engine.dispose()
+
+
+def test_resolver_can_replay_the_exact_qualification_pinned_by_analysis():
+    engine, db = _db()
+    try:
+        resource = _resource(db, endpoint="https://qualified.example/old")
+        original = db.query(ResourceQualification).filter_by(resource_id=resource.id).one()
+        replacement = ResourceQualification(
+            id=uuid4(),
+            resource_id=resource.id,
+            qualification_version="qualification-v2",
+            status="QUALIFIED",
+            qualified_at=datetime.now(timezone.utc),
+            checks_json={
+                "passed": True,
+                "execution_contract": {
+                    "provider_id": "GeneBe",
+                    "provider_version": "api-public-v1",
+                    "access_method": "API",
+                    "endpoint": "https://qualified.example/new",
+                    "location": None,
+                    "dataset": None,
+                },
+            },
+        )
+        db.add(replacement)
+        db.commit()
+
+        latest = resolve_resource_execution(db, resource=resource)
+        replay = resolve_resource_execution(
+            db,
+            resource=resource,
+            qualification_id=original.id,
+        )
+
+        assert latest.qualification_id == replacement.id
+        assert latest.contract.endpoint == "https://qualified.example/new"
+        assert replay.qualification_id == original.id
+        assert replay.qualification_version == original.qualification_version
+        assert replay.contract.endpoint == "https://qualified.example/old"
+
+        original.status = "REVOKED"
+        db.commit()
+        with pytest.raises(ResourceExecutionError, match="pinned qualification .* unavailable"):
+            resolve_resource_execution(
+                db,
+                resource=resource,
+                qualification_id=original.id,
+            )
     finally:
         db.close()
         engine.dispose()

@@ -47,27 +47,35 @@ def resolve_resource_execution(
     db: Session,
     *,
     resource: Resource,
+    qualification_id: UUID | None = None,
 ) -> ResolvedResourceExecution:
     """Return only the contract that was actually qualified for this resource.
 
     Runtime adapters must consume this object rather than reconstructing endpoint,
     provider version, dataset, or local location from application settings.
     """
-    qualification = db.scalar(
-        select(ResourceQualification)
-        .where(
-            ResourceQualification.resource_id == resource.id,
-            ResourceQualification.status == "QUALIFIED",
+    qualification_query = select(ResourceQualification).where(
+        ResourceQualification.resource_id == resource.id,
+        ResourceQualification.status == "QUALIFIED",
+    )
+    if qualification_id is not None:
+        qualification_query = qualification_query.where(
+            ResourceQualification.id == qualification_id
         )
-        .order_by(
+    else:
+        qualification_query = qualification_query.order_by(
             ResourceQualification.qualified_at.desc(),
             ResourceQualification.created_at.desc(),
-        )
-        .limit(1)
-    )
+        ).limit(1)
+    qualification = db.scalar(qualification_query)
     if qualification is None:
+        qualification_detail = (
+            f"pinned qualification {qualification_id} is unavailable or no longer qualified"
+            if qualification_id is not None
+            else "no successful technical qualification"
+        )
         raise ResourceExecutionError(
-            f"Resource {resource.id} has no successful technical qualification."
+            f"Resource {resource.id} has {qualification_detail}."
         )
 
     checks = dict(qualification.checks_json or {})

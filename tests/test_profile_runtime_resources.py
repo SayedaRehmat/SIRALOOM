@@ -74,7 +74,13 @@ def test_resolver_returns_exact_preflight_population_resource(monkeypatch):
     resource = SimpleNamespace(id=resource_id, provider="GNOMAD", version="1")
     analysis = _analysis(resource_id, execution)
     db = FakeDB(analysis, {resource_id: resource})
-    monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: execution)
+    monkeypatch.setattr(
+        runtime,
+        "resolve_resource_execution",
+        lambda db, resource, qualification_id=None: (
+            execution if qualification_id == execution.qualification_id else pytest.fail("wrong pinned qualification")
+        ),
+    )
 
     resolved = runtime.resolve_profile_runtime_resource(
         db,
@@ -84,6 +90,30 @@ def test_resolver_returns_exact_preflight_population_resource(monkeypatch):
 
     assert resolved.resource is resource
     assert resolved.execution is execution
+
+
+def test_runtime_resolver_passes_the_pinned_qualification_to_resource_resolution(monkeypatch):
+    resource_id = uuid4()
+    execution = _resolved(resource_id)
+    resource = SimpleNamespace(id=resource_id, provider="GNOMAD", version="1")
+    analysis = _analysis(resource_id, execution)
+    db = FakeDB(analysis, {resource_id: resource})
+    observed = {}
+
+    def resolve(_db, *, resource, qualification_id):
+        observed["resource"] = resource
+        observed["qualification_id"] = qualification_id
+        return execution
+
+    monkeypatch.setattr(runtime, "resolve_resource_execution", resolve)
+    resolved = runtime.resolve_profile_runtime_resource(
+        db,
+        analysis_id=analysis.id,
+        capability="POPULATION",
+    )
+
+    assert resolved.execution is execution
+    assert observed == {"resource": resource, "qualification_id": execution.qualification_id}
 
 
 def test_resolver_rejects_missing_selected_resource():
@@ -111,7 +141,11 @@ def test_resolver_rejects_stale_execution_contract(monkeypatch):
     resource = SimpleNamespace(id=resource_id, provider="GNOMAD", version="1")
     analysis = _analysis(resource_id, selected_execution)
     db = FakeDB(analysis, {resource_id: resource})
-    monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: current_execution)
+    monkeypatch.setattr(
+        runtime,
+        "resolve_resource_execution",
+        lambda db, resource, qualification_id=None: current_execution,
+    )
 
     with pytest.raises(runtime.ProfileRuntimeResourceError, match="Preflight resource contract no longer matches runtime qualification"):
         runtime.resolve_profile_runtime_resource(
@@ -192,7 +226,11 @@ def test_plural_resolver_returns_all_selected_secondary_resources(monkeypatch):
         },
     )
     db = FakeDB(analysis, resources)
-    monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: executions[resource_ids.index(resource.id)])
+    monkeypatch.setattr(
+        runtime,
+        "resolve_resource_execution",
+        lambda db, resource, qualification_id=None: executions[resource_ids.index(resource.id)],
+    )
 
     resolved = runtime.resolve_profile_runtime_resources(
         db,
@@ -234,7 +272,11 @@ def test_plural_resolver_rejects_one_stale_selected_secondary_resource(monkeypat
         },
     )
     db = FakeDB(analysis, resources)
-    monkeypatch.setattr(runtime, "resolve_resource_execution", lambda db, resource: current[resource_ids.index(resource.id)])
+    monkeypatch.setattr(
+        runtime,
+        "resolve_resource_execution",
+        lambda db, resource, qualification_id=None: current[resource_ids.index(resource.id)],
+    )
 
     with pytest.raises(runtime.ProfileRuntimeResourceError, match="Preflight resource contract no longer matches runtime qualification"):
         runtime.resolve_profile_runtime_resources(db, analysis_id=analysis.id, capability="POPULATION_SECONDARY")
