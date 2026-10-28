@@ -31,6 +31,10 @@ class ValidationResult:
     warnings: list[str]
 
 
+class VCFValidationUnavailable(RuntimeError):
+    """A required validation tool could not complete; the VCF is not classified."""
+
+
 def classify_filename(filename: str) -> str:
     name = Path(filename).name.lower()
     if name.endswith(".vcf.gz") or name.endswith(".vcf.bgz") or name.endswith(".vcf"):
@@ -91,13 +95,24 @@ def _bcftools_validate(path: Path) -> str | None:
     executable = shutil.which("bcftools")
     if executable is None:
         return None
-    completed = subprocess.run(
-        [executable, "view", "-Ov", "-o", "/dev/null", str(path)],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            [executable, "view", "-Ov", "-o", "/dev/null", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise VCFValidationUnavailable(
+            "bcftools/htslib validation exceeded its 120-second execution limit. "
+            "The VCF was not accepted; retry after the laboratory execution issue is resolved."
+        ) from exc
+    except OSError as exc:
+        raise VCFValidationUnavailable(
+            "bcftools/htslib could not be executed. The VCF was not accepted; "
+            "retry after the laboratory execution issue is resolved."
+        ) from exc
     if completed.returncode != 0:
         return (completed.stderr or completed.stdout or "bcftools rejected the VCF").strip()
     return None

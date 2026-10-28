@@ -37,6 +37,50 @@ def test_vcf_validation_reads_real_content(tmp_path: Path):
     assert result.detected_build == "GRCh38"
 
 
+@pytest.mark.parametrize("failure", ["timeout", "executable_unavailable"])
+def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
+    tmp_path: Path, monkeypatch, failure: str,
+):
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
+
+    def fail_to_run(*_args, **_kwargs):
+        if failure == "timeout":
+            raise ingestion.subprocess.TimeoutExpired("bcftools", 120)
+        raise OSError("executable disappeared")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", fail_to_run)
+
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="bcftools/htslib"):
+        ingestion.validate_vcf(path)
+
+
+def test_upload_maps_validation_tool_failure_to_retryable_503(tmp_path: Path, monkeypatch):
+    from fastapi import HTTPException
+
+    from backend.app.api.v1 import artifacts
+    from backend.app.domain.ingestion import VCFValidationUnavailable
+
+    monkeypatch.setattr(
+        artifacts,
+        "validate_vcf",
+        lambda _path: (_ for _ in ()).throw(VCFValidationUnavailable("temporary tool failure")),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        artifacts._validate_vcf_for_upload(tmp_path / "sample.vcf")
+
+    assert exc.value.status_code == 503
+    assert exc.value.detail == {
+        "code": "VCF_VALIDATION_UNAVAILABLE",
+        "message": "temporary tool failure",
+        "retryable": True,
+    }
+
+
 def test_vcf_validation_excludes_reference_only_rows_and_reports_count(tmp_path: Path):
     path = tmp_path / "mixed-reference-variant.vcf"
     path.write_text(
