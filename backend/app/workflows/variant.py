@@ -676,6 +676,22 @@ def _apply_reanalysis_reuse(db: Session, analysis: Analysis) -> None:
     parent_steps = {s.step_id: s for s in db.scalars(select(WorkflowStep).where(WorkflowStep.analysis_id == parent_id)).all()}
     child_steps = {s.step_id: s for s in db.scalars(select(WorkflowStep).where(WorkflowStep.analysis_id == analysis.id)).all()}
     from uuid import uuid4
+    if max_order >= STEP_ORDER["build_evidence"]:
+        parent_evidence_step = parent_steps.get("build_evidence")
+        child_evidence_step = child_steps.get("build_evidence")
+        if parent_evidence_step and child_evidence_step:
+            from backend.app.domain.clinical_input_snapshot import (
+                inherit_reused_case_clinical_input_snapshot,
+            )
+
+            try:
+                inherit_reused_case_clinical_input_snapshot(
+                    parent_evidence_step, child_evidence_step
+                )
+            except ValueError as exc:
+                raise RuntimeError(str(exc)) from exc
+            db.add(child_evidence_step)
+
     artifact_id_map: dict[str, str] = {}
 
     for step_id, order in WORKFLOW_STEPS:
@@ -4004,18 +4020,28 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         })
                         hpoa_resource = hpoa_execution = hpoa_provider = None
                         hpoa_resource_metadata = None
-                from backend.app.infrastructure.db.models import PhenotypeObservation
-                case = db.get(Case, analysis.case_id)
-                case_context = case.clinical_context if case else {}
-                phenotype_rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == analysis.case_id, (PhenotypeObservation.analysis_id == analysis.id) | (PhenotypeObservation.analysis_id.is_(None)))).all()
-                case_hpo_terms = [{
-                    "hpo_id": x.hpo_id,
-                    "label": x.label,
-                    "present": x.present,
-                    "phenotype_status": x.phenotype_status,
-                } for x in phenotype_rows]
-                gene_disease_records = list(case_context.get("gene_disease_evidence") or [])
-                literature_records = list(case_context.get("literature_evidence") or [])
+                from backend.app.domain.clinical_input_snapshot import (
+                    capture_or_reuse_case_clinical_input_snapshot,
+                )
+
+                try:
+                    clinical_input_snapshot = capture_or_reuse_case_clinical_input_snapshot(
+                        db, analysis, evidence_step
+                    )
+                except ValueError as exc:
+                    raise RuntimeError(str(exc)) from exc
+
+                case_hpo_terms = [
+                    {
+                        "hpo_id": row["hpo_id"],
+                        "label": row.get("label"),
+                        "present": row.get("present"),
+                        "phenotype_status": row["phenotype_status"],
+                    }
+                    for row in clinical_input_snapshot["phenotype_observations"]
+                ]
+                gene_disease_records = clinical_input_snapshot["gene_disease_evidence"]
+                literature_records = clinical_input_snapshot["literature_evidence"]
                 hpoa_disease_annotations: dict[str, tuple] = {}
                 hpoa_provenance = None
                 if hpoa_provider is not None and hpoa_resource is not None and hpoa_execution is not None:

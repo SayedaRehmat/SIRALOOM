@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     Classification,
     ConfirmationRecord,
     Organization,
+    PhenotypeObservation,
     QCAssessment,
     Report,
     ReportabilityDecision,
@@ -22,6 +23,7 @@ from backend.app.infrastructure.db.models import (
     TechnicalQCObservation,
     User,
     Variant,
+    WorkflowStep,
 )
 from backend.app.reporting.finalization import finalize_report
 from backend.app.reporting.service import build_report_content, final_report_eligibility
@@ -139,6 +141,61 @@ def test_reportability_preflight_rejects_specimen_that_disagrees_with_input_vcf(
 
     assert not eligible
     assert "Analysis specimen identity does not match its input VCF" in errors
+
+
+def test_report_uses_analysis_time_phenotype_snapshot_after_case_context_changes():
+    from backend.app.domain.clinical_input_snapshot import clinical_input_snapshot_digest
+
+    d, _, _, case, analysis, _ = seed(True)
+    snapshot = {
+        "schema_version": 1,
+        "phenotype_observations": [{
+            "scope": "CASE", "hpo_id": "HP:0001251", "label": "Ataxia",
+            "present": True, "phenotype_status": "PRESENT", "onset": "CHILDHOOD",
+            "severity": None, "source": "CLINICAL_INPUT", "evidence": {},
+        }],
+        "gene_disease_evidence": [],
+        "literature_evidence": [],
+    }
+    d.add_all([
+        WorkflowStep(
+            id=uuid4(), analysis_id=analysis.id, step_id="build_evidence",
+            step_order=5, status="SUCCEEDED", attempt=1,
+            input_artifacts=[], output_artifacts=[], metadata_json={
+                "clinical_input_snapshot": snapshot,
+                "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(snapshot),
+            },
+        ),
+        PhenotypeObservation(
+            id=uuid4(), case_id=case.id, analysis_id=None,
+            hpo_id="HP:0001250", label="Seizure", present=True,
+            phenotype_status="PRESENT", source="CLINICAL_INPUT", evidence={},
+        ),
+    ])
+    d.commit()
+
+    content = build_report_content(d, analysis, "en", report_type="ANALYTICAL")
+
+    assert [row["hpo_id"] for row in content["phenotype_context"]] == ["HP:0001251"]
+
+
+def test_completed_evidence_without_clinical_snapshot_cannot_generate_report():
+    d, _, _, _, analysis, _ = seed(True)
+    d.add(WorkflowStep(
+        id=uuid4(), analysis_id=analysis.id, step_id="build_evidence",
+        step_order=5, status="SUCCEEDED", attempt=1,
+        input_artifacts=[], output_artifacts=[], metadata_json={},
+    ))
+    d.commit()
+
+    eligible, errors = final_report_eligibility(
+        d, analysis_id=analysis.id, report_type="ANALYTICAL"
+    )
+
+    assert not eligible
+    assert any("missing its captured clinical input snapshot" in error for error in errors)
+    with pytest.raises(ValueError, match="missing its captured clinical input snapshot"):
+        build_report_content(d, analysis, "en", report_type="ANALYTICAL")
 
 def test_report_finalization_requires_reviewed_classifications():
     d,_,_,_,a,_=seed(False)

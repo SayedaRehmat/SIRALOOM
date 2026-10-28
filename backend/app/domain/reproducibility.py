@@ -17,6 +17,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.clinical_input_snapshot import saved_case_clinical_input_snapshot
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -276,24 +277,35 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
         )).all()
     ]
 
-    phenotypes = [
-        {
-            "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
-            "hpo_id": row.hpo_id,
-            "label": row.label,
-            "present": row.present,
-            "status": row.phenotype_status,
-            "onset": row.onset,
-            "severity": row.severity,
-            "source": row.source,
-            "evidence": row.evidence or {},
-        }
-        for row in db.scalars(select(PhenotypeObservation).where(
-            PhenotypeObservation.case_id == analysis.case_id,
-            (PhenotypeObservation.analysis_id == analysis_id)
-            | (PhenotypeObservation.analysis_id.is_(None)),
-        ).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)).all()
-    ]
+    clinical_input_snapshot = saved_case_clinical_input_snapshot(db, analysis_id)
+    if clinical_input_snapshot is None:
+        provenance_issues.append("CLINICAL_INPUT_SNAPSHOT_MISSING")
+        phenotypes = [
+            {
+                "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
+                "hpo_id": row.hpo_id,
+                "label": row.label,
+                "present": row.present,
+                "status": row.phenotype_status,
+                "onset": row.onset,
+                "severity": row.severity,
+                "source": row.source,
+                "evidence": row.evidence or {},
+            }
+            for row in db.scalars(select(PhenotypeObservation).where(
+                PhenotypeObservation.case_id == analysis.case_id,
+                (PhenotypeObservation.analysis_id == analysis_id)
+                | (PhenotypeObservation.analysis_id.is_(None)),
+            ).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)).all()
+        ]
+    else:
+        phenotypes = [
+            {
+                **row,
+                "status": row["phenotype_status"],
+            }
+            for row in clinical_input_snapshot["phenotype_observations"]
+        ]
 
     technical_qc = [
         {

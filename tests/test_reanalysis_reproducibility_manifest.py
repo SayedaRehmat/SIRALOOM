@@ -2,9 +2,16 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.clinical_input_snapshot import (
+    build_case_clinical_input_snapshot,
+    capture_or_reuse_case_clinical_input_snapshot,
+    clinical_input_snapshot_digest,
+    inherit_reused_case_clinical_input_snapshot,
+    validate_case_clinical_input_snapshot,
+)
 from backend.app.domain.reproducibility import (
     ReanalysisComparisonError,
     build_reproducibility_manifest,
@@ -81,6 +88,22 @@ def _seed_analysis(db, *, organization_id, user_id, case_id, analysis_id, parent
     db.flush()
 
 
+def _persist_clinical_input_snapshot(db, analysis_id):
+    analysis = db.get(Analysis, analysis_id)
+    snapshot = build_case_clinical_input_snapshot(db, analysis)
+    db.add(WorkflowStep(
+        id=uuid4(), analysis_id=analysis_id, step_id="build_evidence",
+        step_order=5, status="SUCCEEDED", attempt=1,
+        input_artifacts=[], output_artifacts=[], error_code=None,
+        error_message=None,
+        metadata_json={
+            "clinical_input_snapshot": snapshot,
+            "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(snapshot),
+        },
+    ))
+    db.flush()
+
+
 def test_reproducibility_manifest_includes_case_level_phenotype_inputs(tmp_path):
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'case-phenotype-manifest.db'}")
     Base.metadata.create_all(engine)
@@ -105,8 +128,20 @@ def test_reproducibility_manifest_includes_case_level_phenotype_inputs(tmp_path)
                 db, organization_id=organization_id, user_id=user_id,
                 case_id=case_id, analysis_id=analysis_id, parent_id=None, version=1,
             )
+            evidence_step = WorkflowStep(
+                id=uuid4(), analysis_id=analysis_id, step_id="build_evidence",
+                step_order=5, status="SUCCEEDED", attempt=1,
+                input_artifacts=[], output_artifacts=[], error_code=None,
+                error_message=None, metadata_json={},
+            )
+            analysis = db.get(Analysis, analysis_id)
+            db.add(evidence_step)
             db.commit()
 
+            captured = capture_or_reuse_case_clinical_input_snapshot(
+                db, analysis, evidence_step
+            )
+            assert captured["phenotype_observations"] == []
             before = build_reproducibility_manifest(db, analysis_id)
             db.add(PhenotypeObservation(
                 id=uuid4(), case_id=case_id, analysis_id=None,
@@ -116,13 +151,68 @@ def test_reproducibility_manifest_includes_case_level_phenotype_inputs(tmp_path)
                 evidence={"recorded_by": "reviewed-fixture"},
             ))
             db.flush()
+            reused = capture_or_reuse_case_clinical_input_snapshot(
+                db, analysis, evidence_step
+            )
             after = build_reproducibility_manifest(db, analysis_id)
 
-            assert before["scientific_output_sha256"] != after["scientific_output_sha256"]
+            assert reused == captured
+            assert before["scientific_output_sha256"] == after["scientific_output_sha256"]
             assert before["reproducibility_eligible"] is True
             assert after["reproducibility_eligible"] is True
     finally:
         engine.dispose()
+
+
+def test_reused_evidence_stage_inherits_verified_parent_clinical_inputs():
+    snapshot = {
+        "schema_version": 1,
+        "phenotype_observations": [{
+            "scope": "CASE", "hpo_id": "HP:0001250", "label": "Seizure",
+            "present": True, "phenotype_status": "PRESENT", "onset": None,
+            "severity": None, "source": "CLINICAL_INPUT", "evidence": {},
+        }],
+        "gene_disease_evidence": [],
+        "literature_evidence": [],
+    }
+    parent = WorkflowStep(
+        id=uuid4(), analysis_id=uuid4(), step_id="build_evidence", step_order=5,
+        status="SUCCEEDED", attempt=1, input_artifacts=[], output_artifacts=[],
+        metadata_json={
+            "clinical_input_snapshot": snapshot,
+            "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(snapshot),
+        },
+    )
+    child = WorkflowStep(
+        id=uuid4(), analysis_id=uuid4(), step_id="build_evidence", step_order=5,
+        status="SUCCEEDED", attempt=1, input_artifacts=[], output_artifacts=[],
+        metadata_json={"reanalysis_reuse": True},
+    )
+
+    inherited = inherit_reused_case_clinical_input_snapshot(parent, child)
+
+    assert inherited == validate_case_clinical_input_snapshot(snapshot)
+    assert child.metadata_json["clinical_input_snapshot"] == snapshot
+    assert child.metadata_json["clinical_input_snapshot_sha256"] == clinical_input_snapshot_digest(snapshot)
+
+
+def test_reused_evidence_stage_rejects_modified_parent_snapshot():
+    snapshot = {
+        "schema_version": 1, "phenotype_observations": [],
+        "gene_disease_evidence": [], "literature_evidence": [],
+    }
+    parent = WorkflowStep(
+        id=uuid4(), analysis_id=uuid4(), step_id="build_evidence", step_order=5,
+        status="SUCCEEDED", attempt=1, input_artifacts=[], output_artifacts=[],
+        metadata_json={"clinical_input_snapshot": snapshot, "clinical_input_snapshot_sha256": "0" * 64},
+    )
+    child = WorkflowStep(
+        id=uuid4(), analysis_id=uuid4(), step_id="build_evidence", step_order=5,
+        status="SUCCEEDED", attempt=1, input_artifacts=[], output_artifacts=[], metadata_json={},
+    )
+
+    with pytest.raises(ValueError, match="Parent clinical input snapshot checksum"):
+        inherit_reused_case_clinical_input_snapshot(parent, child)
 
 
 def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versions(tmp_path):
@@ -338,6 +428,8 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
                         }],
                     },
                 ))
+            for analysis_id in (parent_id, child_id):
+                _persist_clinical_input_snapshot(db, analysis_id)
             db.commit()
 
             result = compare_reanalysis_outputs(
@@ -407,7 +499,9 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
             assert result["decision"] == "MISMATCH"
 
             child_secondary.consent_status = "CONSENTED"
-            child_step = db.query(WorkflowStep).filter_by(analysis_id=child_id).one()
+            child_step = db.query(WorkflowStep).filter_by(
+                analysis_id=child_id, step_id="normalize"
+            ).one()
             child_step.status = "BLOCKED"
             db.flush()
             result = compare_reanalysis_outputs(
@@ -525,6 +619,35 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
             child_phenotype.present = False
             child_phenotype.phenotype_status = "ABSENT"
             db.flush()
+            child_snapshot_step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == child_id,
+                WorkflowStep.step_id == "build_evidence",
+            ))
+            original_child_snapshot = child_snapshot_step.metadata_json[
+                "clinical_input_snapshot"
+            ]
+            result = compare_reanalysis_outputs(
+                db, parent_analysis_id=parent_id, child_analysis_id=child_id
+            )
+            # Current case/row state is not substituted for what the completed
+            # analyses actually consumed. Child consumed input has now drifted.
+            assert result["decision"] == "MISMATCH"
+            child_snapshot_step.metadata_json = {
+                **child_snapshot_step.metadata_json,
+                "clinical_input_snapshot": {
+                    **original_child_snapshot,
+                    "phenotype_observations": [
+                        {**row, "present": False, "phenotype_status": "ABSENT"}
+                        if row["hpo_id"] == child_phenotype.hpo_id else row
+                        for row in original_child_snapshot["phenotype_observations"]
+                    ],
+                },
+            }
+            child_snapshot_step.metadata_json["clinical_input_snapshot_sha256"] = (
+                clinical_input_snapshot_digest(
+                    child_snapshot_step.metadata_json["clinical_input_snapshot"]
+                )
+            )
             result = compare_reanalysis_outputs(
                 db, parent_analysis_id=parent_id, child_analysis_id=child_id
             )
@@ -533,6 +656,13 @@ def test_reanalysis_manifest_matches_across_different_row_ids_and_workflow_versi
 
             child_phenotype.present = True
             child_phenotype.phenotype_status = "PRESENT"
+            child_snapshot_step.metadata_json = {
+                **child_snapshot_step.metadata_json,
+                "clinical_input_snapshot": original_child_snapshot,
+                "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(
+                    original_child_snapshot
+                ),
+            }
             child_qc = db.query(QCAssessment).filter_by(analysis_id=child_id).one()
             child_qc.gate_status = "REVIEW_REQUIRED"
             db.flush()
@@ -649,6 +779,8 @@ def test_reanalysis_manifest_flags_scientific_output_drift(tmp_path):
                 review_status="PENDING", version=1, review_version=0,
             )
             db.add_all([parent_classification, child_classification])
+            for analysis_id in (parent_id, child_id):
+                _persist_clinical_input_snapshot(db, analysis_id)
             db.commit()
 
             result = compare_reanalysis_outputs(
@@ -764,6 +896,7 @@ def test_reanalysis_manifest_is_ineligible_without_checksums(tmp_path):
             assert result["decision"] == "INELIGIBLE_UNPINNED_RESOURCES"
             assert result["parent"]["unpinned_resources"] == ["ANNOTATION:Example provider"]
             assert result["parent"]["provenance_issues"] == [
+                "CLINICAL_INPUT_SNAPSHOT_MISSING",
                 "SOURCE_ARTIFACT_MISSING_OR_UNVERIFIED"
             ]
     finally:

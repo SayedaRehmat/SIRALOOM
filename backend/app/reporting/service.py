@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
+from backend.app.domain.clinical_input_snapshot import saved_case_clinical_input_snapshot
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.domain.quality_provenance import qc_observation_snapshot
 from backend.app.domain.sample_call import get_analysis_sample_calls
@@ -235,6 +236,18 @@ def final_report_eligibility(
             _resolve_report_specimen(db, analysis, case)
         except ValueError as exc:
             errors.append(str(exc))
+    evidence_step = db.scalar(select(WorkflowStep).where(
+        WorkflowStep.analysis_id == analysis_id,
+        WorkflowStep.step_id == "build_evidence",
+    ))
+    if evidence_step is not None and evidence_step.status == "SUCCEEDED":
+        try:
+            if saved_case_clinical_input_snapshot(db, analysis_id) is None:
+                errors.append(
+                    "Completed evidence stage is missing its captured clinical input snapshot"
+                )
+        except ValueError as exc:
+            errors.append(f"Completed evidence stage clinical input snapshot is invalid: {exc}")
 
     if report_type == "CLINICAL_INTERPRETATION":
         assay = db.get(Assay, analysis.assay_id) if analysis.assay_id else None
@@ -699,20 +712,48 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     latest_rows.sort(key=lambda row: str(row.variant_id))
 
     findings: list[dict[str, Any]] = []
-    phenotype_rows = db.scalars(select(PhenotypeObservation).where(PhenotypeObservation.case_id == case.id, (PhenotypeObservation.analysis_id == analysis.id) | (PhenotypeObservation.analysis_id.is_(None))).order_by(PhenotypeObservation.created_at)).all()
-    phenotype_context = [{
-        "hpo_id": r.hpo_id,
-        "label": r.label,
-        "present": (
-            True if r.phenotype_status == "PRESENT"
-            else False if r.phenotype_status in {"ABSENT", "EXCLUDED"}
-            else None
-        ),
-        "phenotype_status": r.phenotype_status,
-        "onset": r.onset,
-        "severity": r.severity,
-        "source": r.source,
-    } for r in phenotype_rows]
+    clinical_input_snapshot = saved_case_clinical_input_snapshot(db, analysis.id)
+    evidence_step = db.scalar(select(WorkflowStep).where(
+        WorkflowStep.analysis_id == analysis.id,
+        WorkflowStep.step_id == "build_evidence",
+    ))
+    if evidence_step is not None and evidence_step.status == "SUCCEEDED" and clinical_input_snapshot is None:
+        raise ValueError(
+            "Completed evidence stage is missing its captured clinical input snapshot"
+        )
+    if clinical_input_snapshot is None:
+        phenotype_rows = db.scalars(select(PhenotypeObservation).where(
+            PhenotypeObservation.case_id == case.id,
+            (PhenotypeObservation.analysis_id == analysis.id)
+            | (PhenotypeObservation.analysis_id.is_(None)),
+        ).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)).all()
+        phenotype_context = [{
+            "hpo_id": row.hpo_id,
+            "label": row.label,
+            "present": (
+                True if row.phenotype_status == "PRESENT"
+                else False if row.phenotype_status in {"ABSENT", "EXCLUDED"}
+                else None
+            ),
+            "phenotype_status": row.phenotype_status,
+            "onset": row.onset,
+            "severity": row.severity,
+            "source": row.source,
+        } for row in phenotype_rows]
+    else:
+        phenotype_context = [{
+            "hpo_id": row["hpo_id"],
+            "label": row.get("label"),
+            "present": (
+                True if row["phenotype_status"] == "PRESENT"
+                else False if row["phenotype_status"] in {"ABSENT", "EXCLUDED"}
+                else None
+            ),
+            "phenotype_status": row["phenotype_status"],
+            "onset": row.get("onset"),
+            "severity": row.get("severity"),
+            "source": row.get("source"),
+        } for row in clinical_input_snapshot["phenotype_observations"]]
     pedigree_members = list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id == case.id).order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)))
     pedigree_relationships = list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id == case.id).order_by(PedigreeRelationship.created_at)))
     pedigree_context = {
