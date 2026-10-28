@@ -240,7 +240,12 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     assert stats["gvcf_wildcard_command"] == "bcftools view -A"
     assert records(output) == [("1", 2, "A", "G")]
     with gzip.open(output, "rt", encoding="utf-8") as handle:
-        variant = next(line for line in handle if not line.startswith("#"))
+        output_lines = list(handle)
+    assert not any(
+        line.startswith("##bcftools_") and "Command=" in line
+        for line in output_lines
+    )
+    variant = next(line for line in output_lines if not line.startswith("#"))
     fields = variant.rstrip("\n").split("\t")
     assert fields[4] == "G"
     assert fields[7] == "AF=0.2;SIRALOOM_ORIG=1|2|A|G|1"

@@ -765,7 +765,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["record_count"] == 2
                 assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 if used_real_bcftools:
-                    assert "bcftools view -A" in normalized.metadata_json["normalization_command"]
+                    assert "bcftools view --no-version -A" in normalized.metadata_json["normalization_command"]
                     assert normalized.metadata_json["normalization_version"] == "4.0"
                     partition = db.scalar(select(AnalysisPartition).where(
                         AnalysisPartition.analysis_id == analysis_id,

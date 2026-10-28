@@ -293,7 +293,7 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
-        "bcftools", "norm", "-m", "-any", "-N", "-Ov",
+        "bcftools", "norm", "--no-version", "-m", "-any", "-N", "-Ov",
         "--multi-overlaps", "0",
         "-o", str(output_path), str(input_path),
     ]
@@ -393,7 +393,10 @@ def normalize_vcf_with_bcftools(
         # ``view -A`` is available in the pinned 1.19 release. The router only
         # places records here when the GVCF wildcard is provably uncalled.
         prepared_path = work / "prepared.vcf.gz"
-        view_command = [bcftools_executable, "view", "-A", "-Oz", "-o", str(prepared_path), str(input_path)]
+        view_command = [
+            bcftools_executable, "view", "--no-version", "-A", "-Oz",
+            "-o", str(prepared_path), str(input_path),
+        ]
         try:
             viewed = subprocess.run(
                 view_command, capture_output=True, text=True, timeout=timeout,
@@ -417,7 +420,7 @@ def normalize_vcf_with_bcftools(
             header_injection = _write_original_record_info_header(prepared_path, provenance_input)
 
         normalize_command = [
-            bcftools_executable, "norm", "-f", str(reference_fasta), "-c", "e",
+            bcftools_executable, "norm", "--no-version", "-f", str(reference_fasta), "-c", "e",
             "-m", "-any", "--multi-overlaps", "0",
             *( [] if has_existing_source_mapping else ["--old-rec-tag", ORIGINAL_RECORD_TAG] ),
             "-Oz", "-o", str(normalized_path), str(provenance_input),
@@ -441,7 +444,10 @@ def normalize_vcf_with_bcftools(
         if not normalized_path.is_file() or normalized_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no normalized VCF.")
 
-        sort_command = [bcftools_executable, "sort", "-Oz", "-o", str(sorted_path), str(normalized_path)]
+        sort_command = [
+            bcftools_executable, "sort", "-Oz", "-o", str(sorted_path),
+            str(normalized_path),
+        ]
         try:
             sorted_result = subprocess.run(
                 sort_command,
