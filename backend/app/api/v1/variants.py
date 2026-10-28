@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from backend.app.adapters.annotation.genebe_normalizer import gene_be_display_payload
 from backend.app.auth.authorization import get_accessible_analysis, get_analysis_variant
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -74,7 +75,7 @@ def get_variant(
         "variant": {"id": str(v.id), "genome_build": v.genome_build, "chromosome": v.chromosome, "position": v.position, "reference": v.reference, "alternate": v.alternate, "normalization_status": v.normalization_status, "canonical_key": v.canonical_key, "identifiers": v.identifiers},
         "annotations": [{"id": str(a.id), "provider": a.provider_name, "provider_version": a.provider_version, "resource": a.resource_name, "resource_version": a.resource_version, "payload": gene_be_display_payload(a.payload or {}) if a.provider_name == "GeneBe" else a.payload} for a in anns],
         "population": [{"population": p.population_code, "label": p.population_label, "availability": p.availability, "af": qualified_allele_frequency(p.allele_frequency, p.allele_number), "ac": p.allele_count, "an": p.allele_number} for p in pops],
-        "evidence": [{"id": str(e.id), "type": e.evidence_type, "statement": e.statement, "direction": e.direction, "source": e.source_name, "source_version": e.source_version, "payload": e.payload} for e in ev],
+        "evidence": [{"id": str(e.id), "type": e.evidence_type, "statement": e.statement, "direction": e.direction, "source": e.source_name, "source_version": e.source_version, "payload": phenotype_evidence_display_payload(e.evidence_type, e.payload)} for e in ev],
         "acmg": [{"id": str(a.id), "criterion": a.criterion, "automated": a.automated_assessment, "reviewed": a.reviewed_assessment, "final": a.final_assessment, "state": a.state} for a in acmg],
         "classifications": [{"id": str(c.id), "result": c.result, "state": c.state, "review_status": c.review_status} for c in cls],
     }

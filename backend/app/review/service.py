@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from backend.app.adapters.annotation.genebe_normalizer import gene_be_display_payload
 from backend.app.auth.authorization import get_analysis_variant, require_analysis_artifact
 from backend.app.domain.enums import ReviewStatus, StepStatus
+from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
@@ -104,6 +105,7 @@ def _evidence_context_dict(evidence: Evidence) -> dict:
         statement=evidence.statement,
         payload=evidence.payload,
     )
+    payload = phenotype_evidence_display_payload(evidence.evidence_type, payload)
     return {
         "id": str(evidence.id),
         "type": evidence.evidence_type,

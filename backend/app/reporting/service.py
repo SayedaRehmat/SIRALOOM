@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
 from backend.app.domain.clinical_input_snapshot import saved_case_clinical_input_snapshot
+from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.domain.quality_provenance import qc_observation_snapshot
 from backend.app.domain.sample_call import get_analysis_sample_calls
@@ -535,6 +536,7 @@ def _evidence_summary_row(row: Evidence) -> dict[str, Any]:
         statement=row.statement,
         payload=row.payload,
     )
+    payload = phenotype_evidence_display_payload(row.evidence_type, payload)
     return {
         "evidence_id": str(row.id),
         "type": row.evidence_type,
@@ -681,7 +683,7 @@ def _evidence_snapshot(db: Session, analysis_id: UUID, variant_id: UUID, automat
             "request_fingerprint": evidence.request_fingerprint,
             "response_sha256": evidence.response_sha256,
             "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
-            "payload": evidence.payload or {},
+            "payload": phenotype_evidence_display_payload(evidence.evidence_type, evidence.payload),
         })
     return snapshots
 

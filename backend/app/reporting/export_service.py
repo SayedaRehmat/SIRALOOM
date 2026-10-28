@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.artifact_integrity import verify_artifact_file
+from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
@@ -177,7 +178,7 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
             else:
                 evidence = []; classifications = []; acmg = []; populations = []; review_actions = []; reportability = []
             evidence_obj = {
-                "evidence": [{"id": str(e.id), "analysis_id": str(e.analysis_id), "variant_id": str(e.variant_id), "type": e.evidence_type, "statement": e.statement, "direction": e.direction, "source_name": e.source_name, "source_version": e.source_version, "source_record_id": e.source_record_id, "observation_ids": e.observation_ids, "payload": e.payload} for e in evidence],
+                "evidence": [{"id": str(e.id), "analysis_id": str(e.analysis_id), "variant_id": str(e.variant_id), "type": e.evidence_type, "statement": e.statement, "direction": e.direction, "source_name": e.source_name, "source_version": e.source_version, "source_record_id": e.source_record_id, "observation_ids": e.observation_ids, "payload": phenotype_evidence_display_payload(e.evidence_type, e.payload)} for e in evidence],
                 "classifications": [{"id": str(c.id), "analysis_id": str(c.analysis_id), "variant_id": str(c.variant_id), "version": c.version, "result": c.result, "state": c.state, "review_status": c.review_status, "framework": c.framework_name, "framework_version": c.framework_version, "specification_provider": c.specification_provider, "specification_id": c.specification_id, "specification_version": c.specification_version, "criterion_ids": c.criterion_ids} for c in classifications],
                 "acmg_assessments": [{"id": str(a.id), "analysis_id": str(a.analysis_id), "variant_id": str(a.variant_id), "criterion": a.criterion, "automated_assessment": a.automated_assessment, "reviewed_assessment": a.reviewed_assessment, "final_assessment": a.final_assessment, "state": a.state, "review_version": a.review_version} for a in acmg],
                 "population_observations": [{"id": str(p.id), "analysis_id": str(p.analysis_id), "variant_id": str(p.variant_id), "resource_id": str(p.resource_id), "population_level": p.population_level, "population_code": p.population_code, "population_label": p.population_label, "allele_count": p.allele_count, "allele_number": p.allele_number, "allele_frequency": qualified_allele_frequency(p.allele_frequency, p.allele_number), "availability": p.availability, "quality_status": p.quality_status} for p in populations],

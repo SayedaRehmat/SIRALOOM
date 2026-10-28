@@ -10,6 +10,7 @@ from uuid import UUID, uuid5
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
     has_valid_signed_artifact,
@@ -277,7 +278,7 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     "request_fingerprint": evidence.request_fingerprint,
                     "response_sha256": evidence.response_sha256,
                     "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
-                    "payload": evidence.payload or {},
+                    "payload": phenotype_evidence_display_payload(evidence.evidence_type, evidence.payload),
                 }
                 if current_evidence != evidence_item:
                     raise ReportFinalizationError(

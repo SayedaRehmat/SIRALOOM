@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_accessible_analysis, get_analysis_variant
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.infrastructure.db.models import Evidence
 from backend.app.infrastructure.db.session import get_db
 
@@ -44,7 +45,7 @@ def list_analysis_evidence(analysis_id: UUID, db: Session = Depends(get_db), pri
                 "source_version": row.source_version,
                 "source_record_id": row.source_record_id,
                 "observation_ids": row.observation_ids or [],
-                "payload": row.payload or {},
+                "payload": phenotype_evidence_display_payload(row.evidence_type, row.payload),
                 "created_by": {
                     "type": row.created_by_type,
                     "id": row.created_by_id,
@@ -87,7 +88,7 @@ def get_evidence(evidence_id: UUID, db: Session = Depends(get_db), principal: Pr
         "source_version": row.source_version,
         "source_record_id": row.source_record_id,
         "observation_ids": row.observation_ids or [],
-        "payload": row.payload or {},
+        "payload": phenotype_evidence_display_payload(row.evidence_type, row.payload),
         "created_by": {"type": row.created_by_type, "id": row.created_by_id},
         "created_at": row.created_at.isoformat(),
     }
