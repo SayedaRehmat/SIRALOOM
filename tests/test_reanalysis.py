@@ -1,22 +1,21 @@
-import pytest
 from uuid import uuid4
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.resources import register_resource_version
 from backend.app.domain.reanalysis import (
     affected_step_for_trigger,
     create_change_event,
     detect_change,
     scan_active_resources_for_reanalysis,
 )
+from backend.app.domain.resources import register_resource_version
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
-    AuditEvent,
-    AnalysisResourceSnapshot,
     AnalysisDispatch,
+    AnalysisResourceSnapshot,
+    AuditEvent,
     Case,
     CaseAccessGrant,
     Notification,
@@ -108,6 +107,7 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
 
         from unittest.mock import patch
+
         from backend.app.application.analysis import enqueue_analysis
 
         def publish_retry(dispatch_id):
@@ -159,6 +159,79 @@ def test_reanalysis_trigger_dependency_contract():
     assert affected_step_for_trigger("ACMG_RULE_UPDATE") == "acmg_assessment"
     assert affected_step_for_trigger("REFERENCE_UPDATE") == "normalize"
     assert affected_step_for_trigger("MANUAL") == "normalize"
+
+
+def test_reanalysis_replays_evidence_when_parent_clinical_snapshot_is_missing_or_invalid():
+    from backend.app.domain.clinical_input_snapshot import clinical_input_snapshot_digest
+    from backend.app.domain.reanalysis import _effective_reanalysis_start_step
+    from backend.app.infrastructure.db.models import WorkflowStep
+
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[Organization.__table__, Case.__table__, Analysis.__table__, WorkflowStep.__table__],
+    )
+    organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
+    parent_ids = [uuid4(), uuid4(), uuid4()]
+    valid_snapshot = {
+        "schema_version": 1,
+        "phenotype_observations": [],
+        "gene_disease_evidence": [],
+        "literature_evidence": [],
+    }
+
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Snapshot Replay Lab", external_identifier=None))
+        db.flush()
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="SNAPSHOT-REPLAY-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.flush()
+        for parent_id in parent_ids:
+            parent = Analysis(
+                id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=1,
+            )
+            db.add(parent)
+        db.flush()
+        db.add_all([
+            WorkflowStep(
+                id=uuid4(), analysis_id=parent_ids[1], step_id="build_evidence",
+                step_order=5, status="SUCCEEDED", attempt=1,
+                input_artifacts=[], output_artifacts=[], metadata_json={
+                    "clinical_input_snapshot": valid_snapshot,
+                    "clinical_input_snapshot_sha256": "0" * 64,
+                },
+            ),
+            WorkflowStep(
+                id=uuid4(), analysis_id=parent_ids[2], step_id="build_evidence",
+                step_order=5, status="SUCCEEDED", attempt=1,
+                input_artifacts=[], output_artifacts=[], metadata_json={
+                    "clinical_input_snapshot": valid_snapshot,
+                    "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(valid_snapshot),
+                },
+            ),
+        ])
+        db.flush()
+
+        assert _effective_reanalysis_start_step(
+            db, db.get(Analysis, parent_ids[0]), "acmg_assessment", profile_bound=False
+        ) == ("build_evidence", "PARENT_CLINICAL_INPUT_SNAPSHOT_MISSING_OR_INVALID")
+        assert _effective_reanalysis_start_step(
+            db, db.get(Analysis, parent_ids[1]), "acmg_assessment", profile_bound=False
+        ) == ("build_evidence", "PARENT_CLINICAL_INPUT_SNAPSHOT_MISSING_OR_INVALID")
+        assert _effective_reanalysis_start_step(
+            db, db.get(Analysis, parent_ids[2]), "acmg_assessment", profile_bound=False
+        ) == ("acmg_assessment", None)
+        assert _effective_reanalysis_start_step(
+            db, db.get(Analysis, parent_ids[0]), "acmg_assessment", profile_bound=True
+        ) == ("normalize", None)
+
+    engine.dispose()
 
 
 def _engine():
@@ -534,7 +607,6 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
 
     from backend.app.domain.reanalysis import create_reanalysis
     from backend.app.infrastructure.db.models import (
-        AuditEvent,
         AnalysisPartition,
         Annotation,
         Artifact,

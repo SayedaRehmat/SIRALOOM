@@ -14,11 +14,9 @@ from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
-    AnalysisPartition,
     AnalysisResourceSnapshot,
     Annotation,
     Case,
-    Classification,
     Evidence,
     InheritanceAssessment,
     Notification,
@@ -27,7 +25,6 @@ from backend.app.infrastructure.db.models import (
     ReanalysisChangeEvent,
     Resource,
     SegregationObservation,
-    WorkflowStep,
 )
 
 CHANGE_STEP = {
@@ -65,6 +62,33 @@ def affected_step_for_trigger(trigger_type: str) -> str:
         return CHANGE_STEP[trigger_type]
     except KeyError:
         raise ValueError(f"Unsupported reanalysis trigger: {trigger_type}")
+
+
+def _effective_reanalysis_start_step(
+    db: Session, parent: Analysis, earliest_affected_step: str, *, profile_bound: bool
+) -> tuple[str, str | None]:
+    """Avoid reusing evidence-derived outputs when their consumed inputs are unknown.
+
+    Analyses created before clinical-input snapshots cannot safely reuse evidence
+    or any downstream result. Recompute from evidence while retaining eligible
+    validation, normalization, annotation and population outputs.
+    """
+    if profile_bound:
+        return "normalize", None
+    if STEP_ORDER[earliest_affected_step] <= STEP_ORDER["build_evidence"]:
+        return earliest_affected_step, None
+
+    from backend.app.domain.clinical_input_snapshot import (
+        saved_case_clinical_input_snapshot,
+    )
+
+    try:
+        snapshot = saved_case_clinical_input_snapshot(db, parent.id)
+    except ValueError:
+        snapshot = None
+    if snapshot is None:
+        return "build_evidence", "PARENT_CLINICAL_INPUT_SNAPSHOT_MISSING_OR_INVALID"
+    return earliest_affected_step, None
 
 
 def mark_reanalysis_completed(db: Session, analysis: Analysis) -> bool:
@@ -526,7 +550,9 @@ def create_reanalysis(db: Session, *, parent: Analysis, trigger_type: str, reque
         raise ValueError("Only a successfully completed analysis can be reanalyzed.")
     earliest = affected_step or affected_step_for_trigger(trigger_type)
     profile_bound = bool((parent.configuration or {}).get("resource_profile_id"))
-    execution_start_step = "normalize" if profile_bound else earliest
+    execution_start_step, forced_replay_reason = _effective_reanalysis_start_step(
+        db, parent, earliest, profile_bound=profile_bound
+    )
     next_version = (parent.analysis_version or 1) + 1
     duplicate = db.scalar(select(Analysis).where(Analysis.case_id == parent.case_id, Analysis.parent_analysis_id == parent.id, Analysis.analysis_version == next_version))
     if duplicate:
@@ -534,7 +560,16 @@ def create_reanalysis(db: Session, *, parent: Analysis, trigger_type: str, reque
         return duplicate, candidate
     case = db.get(Case, parent.case_id)
     child_configuration = dict(parent.configuration or {})
-    child_configuration["reanalysis"] = {"parent_analysis_id": str(parent.id), "trigger_type": trigger_type, "reason": reason, "earliest_affected_step": earliest, "execution_start_step": execution_start_step, "reuse_through_step": _previous_step(execution_start_step), "resource_plan_policy": "FULL_REPLAY_FROM_NORMALIZATION" if profile_bound else "INCREMENTAL_REUSE"}
+    child_configuration["reanalysis"] = {
+        "parent_analysis_id": str(parent.id),
+        "trigger_type": trigger_type,
+        "reason": reason,
+        "earliest_affected_step": earliest,
+        "execution_start_step": execution_start_step,
+        "reuse_through_step": _previous_step(execution_start_step),
+        "resource_plan_policy": "FULL_REPLAY_FROM_NORMALIZATION" if profile_bound else "INCREMENTAL_REUSE",
+        **({"forced_replay_reason": forced_replay_reason} if forced_replay_reason else {}),
+    }
     child = Analysis(id=uuid4(), case_id=parent.case_id, parent_analysis_id=parent.id, assay_id=parent.assay_id, analysis_type=parent.analysis_type, workflow_id=parent.workflow_id, workflow_version=parent.workflow_version, status="CREATED", queue_task_id=None, reference_build=parent.reference_build, configuration=child_configuration, started_at=None, completed_at=None, created_by=requested_by, analysis_version=next_version)
     try:
         with db.begin_nested():
@@ -550,7 +585,7 @@ def create_reanalysis(db: Session, *, parent: Analysis, trigger_type: str, reque
                     candidate.acted_at = _now()
             from backend.app.application.entitlements import consume_analysis_quota
             consume_analysis_quota(db, case.organization_id, commit=False)
-            AuditService(db).record(event_type="REANALYSIS_REQUESTED", case_id=parent.case_id, analysis_id=child.id, actor_type="USER", actor_id=str(requested_by), subject_type="ANALYSIS", subject_id=str(child.id), operation="CREATE_REANALYSIS", before_state={"parent_analysis_id": str(parent.id), "parent_status": str(parent.status), "parent_analysis_version": parent.analysis_version}, after_state={"child_analysis_id": str(child.id), "child_status": str(child.status), "child_analysis_version": child.analysis_version, "trigger_type": trigger_type, "earliest_affected_step": earliest}, reason=reason, workflow={"workflow_id": child.workflow_id, "workflow_version": child.workflow_version, "reuse_through_step": _previous_step(earliest)}, payload={"parent_analysis_id": str(parent.id), "child_analysis_id": str(child.id), "analysis_version": child.analysis_version, "trigger_type": trigger_type, "change_event_id": str(change_event_id) if change_event_id else None})
+            AuditService(db).record(event_type="REANALYSIS_REQUESTED", case_id=parent.case_id, analysis_id=child.id, actor_type="USER", actor_id=str(requested_by), subject_type="ANALYSIS", subject_id=str(child.id), operation="CREATE_REANALYSIS", before_state={"parent_analysis_id": str(parent.id), "parent_status": str(parent.status), "parent_analysis_version": parent.analysis_version}, after_state={"child_analysis_id": str(child.id), "child_status": str(child.status), "child_analysis_version": child.analysis_version, "trigger_type": trigger_type, "earliest_affected_step": earliest, "execution_start_step": execution_start_step, "forced_replay_reason": forced_replay_reason}, reason=reason, workflow={"workflow_id": child.workflow_id, "workflow_version": child.workflow_version, "reuse_through_step": _previous_step(execution_start_step)}, payload={"parent_analysis_id": str(parent.id), "child_analysis_id": str(child.id), "analysis_version": child.analysis_version, "trigger_type": trigger_type, "change_event_id": str(change_event_id) if change_event_id else None})
     except IntegrityError:
         duplicate = db.scalar(select(Analysis).where(Analysis.case_id == parent.case_id, Analysis.parent_analysis_id == parent.id, Analysis.analysis_version == next_version))
         if duplicate is None:

@@ -14,6 +14,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from backend.app.domain.clinical_input_snapshot import clinical_input_snapshot_digest
 from backend.app.domain.reproducibility import ReanalysisComparisonError
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
@@ -26,6 +27,7 @@ from backend.app.infrastructure.db.models import (
     Organization,
     User,
     Variant,
+    WorkflowStep,
 )
 
 
@@ -269,6 +271,22 @@ def test_comparison_cli_uses_real_parent_child_database_rows(
                             "zygosity": "HETEROZYGOUS", "phase": "UNPHASED",
                             "phase_set": None, "format_values": {"DP": "30"},
                         }],
+                    },
+                ))
+                clinical_input_snapshot = {
+                    "schema_version": 1,
+                    "phenotype_observations": [],
+                    "gene_disease_evidence": [],
+                    "literature_evidence": [],
+                }
+                db.add(WorkflowStep(
+                    id=uuid4(), analysis_id=analysis_id, step_id="build_evidence",
+                    step_order=5, status="SUCCEEDED", attempt=1,
+                    input_artifacts=[], output_artifacts=[], metadata_json={
+                        "clinical_input_snapshot": clinical_input_snapshot,
+                        "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(
+                            clinical_input_snapshot
+                        ),
                     },
                 ))
             db.commit()
