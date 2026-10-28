@@ -1,4 +1,5 @@
 import hashlib
+import json
 import zipfile
 from pathlib import Path
 from uuid import uuid4
@@ -16,9 +17,11 @@ from backend.app.infrastructure.db.models import (
     Artifact,
     Case,
     CaseExport,
+    Evidence,
     Organization,
     Report,
     User,
+    Variant,
 )
 from backend.app.reporting.export_service import CaseExportError, build_case_export
 
@@ -79,6 +82,57 @@ def test_case_export_uses_durable_export_id_as_artifact_identity(tmp_path):
 
     assert artifact.id == export.id
     assert artifact.metadata_json["export_id"] == str(export.id)
+
+
+def test_case_export_sanitizes_legacy_phenotype_scores_without_mutating_evidence(tmp_path):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+    org = Organization(id=uuid4(), name="Lab")
+    user = User(id=uuid4(), organization_id=org.id, display_name="Auditor", role="AUDITOR", status="ACTIVE")
+    case = Case(id=uuid4(), organization_id=org.id, case_identifier="CASE-HPO-EXPORT", status="ACTIVE", clinical_context={}, language="en", created_by=user.id)
+    analysis = Analysis(
+        id=uuid4(), case_id=case.id, analysis_type="GERMLINE", workflow_id="variant",
+        workflow_version="1", status="SUCCEEDED", reference_build="GRCh38", configuration={},
+    )
+    variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=100,
+        reference="A", alternate="G", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:1:100:A:G:{uuid4()}", identifiers={},
+    )
+    legacy_payload = {
+        "phenotype_match": {"status": "SCORED", "score": 1.0, "matched_terms": ["HP:0001250"]}
+    }
+    evidence = Evidence(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        evidence_type="GENE_DISEASE", statement="legacy phenotype context",
+        direction="CONTEXTUAL", source_name="HPO", source_version="old",
+        observation_ids=[], payload=legacy_payload, created_by_type="SYSTEM",
+        created_by_id="test", evidence_fingerprint="a" * 64,
+    )
+    export = CaseExport(
+        id=uuid4(), case_id=case.id, requested_by=user.id, status="RUNNING",
+        include_artifacts=False, include_reports=False, include_evidence=True,
+        include_audit=False, include_provenance=False,
+    )
+    db.add_all([org, user, case])
+    db.flush()
+    db.add(analysis)
+    db.flush()
+    db.add(variant)
+    db.flush()
+    db.add_all([evidence, export])
+    db.commit()
+
+    artifact = build_case_export(db, export=export, store=ArtifactStore(str(tmp_path)))
+    archive_path = local_path_from_uri(artifact.storage_uri)
+    with zipfile.ZipFile(archive_path) as bundle:
+        exported = json.loads(bundle.read("evidence.json"))
+
+    phenotype_match = exported["evidence"][0]["payload"]["phenotype_match"]
+    assert phenotype_match["status"] == "CONTEXT_ONLY"
+    assert "score" not in phenotype_match
+    assert evidence.payload["phenotype_match"]["score"] == 1.0
 
 
 def _case_export_fixture(*, include_artifacts=True):
