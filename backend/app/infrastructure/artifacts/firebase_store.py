@@ -128,6 +128,19 @@ class FirebaseArtifactStore:
         return digest.hexdigest(), size
 
     @staticmethod
+    def _blob_sha256_and_size(blob) -> tuple[str, int]:
+        generation = getattr(blob, "generation", None)
+        if generation is None:
+            raise RuntimeError("Cloud artifact generation is unavailable for integrity verification.")
+        digest = hashlib.sha256()
+        size = 0
+        with blob.open("rb", if_generation_match=generation) as remote_file:
+            while chunk := remote_file.read(8 * 1024 * 1024):
+                digest.update(chunk)
+                size += len(chunk)
+        return digest.hexdigest(), size
+
+    @staticmethod
     def _object_name(
         case_id: UUID,
         artifact_id: UUID,
@@ -187,7 +200,15 @@ class FirebaseArtifactStore:
             filename=filename,
         )
 
+        existing_artifact = db.get(Artifact, artifact_id)
+        if existing_artifact is not None:
+            raise FileExistsError(
+                f"Artifact identity {artifact_id} already has a durable database record."
+            )
+
         blob = self.bucket.blob(object_name)
+        uploaded_generation = None
+        uploaded_by_this_call = False
         try:
             sha256, size_bytes = self._sha256_and_size(source)
 
@@ -201,10 +222,37 @@ class FirebaseArtifactStore:
                 "filename": self._safe_filename(filename),
             }
 
-            blob.upload_from_filename(
-                str(source),
-                content_type=media_type,
-            )
+            try:
+                blob.upload_from_filename(
+                    str(source),
+                    content_type=media_type,
+                    if_generation_match=0,
+                )
+                uploaded_by_this_call = True
+                uploaded_generation = getattr(blob, "generation", None)
+            except Exception as exc:
+                # A previous attempt may have created the object and lost its
+                # database transaction. Reuse only an exact, verifiable orphan.
+                if getattr(exc, "code", None) != 412:
+                    raise
+                blob.reload()
+                existing_metadata = blob.metadata or {}
+                if (
+                    existing_metadata.get("sha256") != sha256
+                    or existing_metadata.get("artifact_id") != str(artifact_id)
+                    or existing_metadata.get("case_id") != str(case_id)
+                    or existing_metadata.get("filename") != self._safe_filename(filename)
+                    or int(blob.size or -1) != size_bytes
+                ):
+                    raise FileExistsError(
+                        f"Cloud artifact identity {artifact_id} already contains different or unverifiable data."
+                    ) from exc
+                existing_sha256, existing_size = self._blob_sha256_and_size(blob)
+                if (existing_sha256, existing_size) != (sha256, size_bytes):
+                    raise FileExistsError(
+                        f"Cloud artifact identity {artifact_id} contains bytes that fail integrity verification."
+                    ) from exc
+                uploaded_generation = getattr(blob, "generation", None)
 
             storage_uri = f"gs://{self.bucket_name}/{object_name}"
 
@@ -232,9 +280,9 @@ class FirebaseArtifactStore:
             db.add(artifact)
             db.flush()
         except Exception:
-            if generated_artifact_id:
+            if generated_artifact_id and uploaded_by_this_call and uploaded_generation is not None:
                 try:
-                    blob.delete()
+                    blob.delete(if_generation_match=uploaded_generation)
                 except Exception as cleanup_exc:  # noqa: BLE001 - preserve original operation failure
                     # Preserve the original storage/database failure.
                     logger.warning(

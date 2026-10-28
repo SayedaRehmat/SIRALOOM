@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import tempfile
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -133,15 +134,54 @@ class ArtifactStore:
             filename=filename,
         )
 
+        resolved_parent = destination.parent.resolve()
+        if resolved_parent != self.root and self.root not in resolved_parent.parents:
+            raise ValueError("Artifact path resolves outside the configured storage root.")
         destination.parent.mkdir(parents=True, exist_ok=True)
 
+        existing_artifact = db.get(Artifact, artifact_id)
+        if existing_artifact is not None:
+            raise FileExistsError(
+                f"Artifact identity {artifact_id} already has a durable database record."
+            )
+
+        created_destination = False
+        temporary_path: Path | None = None
         try:
-            # Stream the copy to avoid loading potentially large VCF files into RAM.
-            with source.open("rb") as src, destination.open("wb") as dst:
-                while chunk := src.read(8 * 1024 * 1024):
-                    dst.write(chunk)
+            # Stage beside the destination, then publish with a hard link. Unlike
+            # opening the destination with wb, link creation cannot replace an
+            # artifact created by another worker or an earlier attempt.
+            with tempfile.NamedTemporaryFile(
+                prefix=f".{destination.name}.",
+                suffix=".tmp",
+                dir=destination.parent,
+                delete=False,
+            ) as staged:
+                temporary_path = Path(staged.name)
+                with source.open("rb") as src:
+                    while chunk := src.read(8 * 1024 * 1024):
+                        staged.write(chunk)
+                staged.flush()
+                os.fsync(staged.fileno())
+
+            staged_sha256, size_bytes = self._sha256_and_size(temporary_path)
+            try:
+                os.link(temporary_path, destination)
+                created_destination = True
+            except FileExistsError:
+                if destination.is_symlink() or not destination.is_file():
+                    raise FileExistsError(
+                        f"Artifact storage identity {artifact_id} is not a regular file."
+                    )
+                existing_sha256, existing_size = self._sha256_and_size(destination)
+                if (existing_sha256, existing_size) != (staged_sha256, size_bytes):
+                    raise FileExistsError(
+                        f"Artifact storage identity {artifact_id} already contains different bytes."
+                    )
 
             sha256, size_bytes = self._sha256_and_size(destination)
+            if sha256 != staged_sha256 or size_bytes != temporary_path.stat().st_size:
+                raise RuntimeError("Published artifact bytes differ from the staged source.")
 
             artifact = Artifact(
                 id=artifact_id,
@@ -167,11 +207,16 @@ class ArtifactStore:
             db.add(artifact)
             db.flush()
         except Exception:
-            if generated_artifact_id:
+            if generated_artifact_id and created_destination:
                 try:
                     destination.unlink(missing_ok=True)
                 except OSError:
                     pass
+            raise
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+            if generated_artifact_id:
                 directory = destination.parent
                 while directory != self.root:
                     try:
@@ -179,7 +224,6 @@ class ArtifactStore:
                     except OSError:
                         break
                     directory = directory.parent
-            raise
 
         return artifact
 

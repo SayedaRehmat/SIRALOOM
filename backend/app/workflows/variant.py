@@ -1295,7 +1295,6 @@ def _persist_terminal_provenance(
     import json
 
     provenance_artifact_id = uuid5(analysis.id, "siraloom:terminal-provenance-manifest")
-    existing_artifact = db.get(Artifact, provenance_artifact_id)
 
     # Stage the successful terminal-step state before rendering the manifest so
     # the manifest describes the intended terminal state. Nothing is committed
@@ -1347,13 +1346,9 @@ def _persist_terminal_provenance(
         }, indent=2, ensure_ascii=False))
         provenance_tmp_path = Path(provenance_tmp.name)
     try:
-        # If an earlier attempt left a committed artifact row (for example,
-        # from a deployment with older non-atomic behavior), replace that row
-        # under the same deterministic ID rather than violating the PK.
-        if existing_artifact is not None:
-            db.delete(existing_artifact)
-            db.flush()
-        provenance_artifact = artifacts.put_file(
+        provenance_artifact = _put_idempotent_stage_artifact(
+            artifacts,
+            artifact_id=provenance_artifact_id,
             db=db,
             case_id=analysis.case_id,
             analysis_id=analysis.id,
@@ -1363,7 +1358,6 @@ def _persist_terminal_provenance(
             media_type="application/json",
             genome_build=analysis.reference_build,
             metadata={"provenance_schema_version": "1.0.0"},
-            artifact_id=provenance_artifact_id,
         )
     finally:
         provenance_tmp_path.unlink(missing_ok=True)
