@@ -46,6 +46,20 @@ def seed():
     return db, reviewer_or_user(user), analyst, analysis, variant, assessment, classification
 
 
+def add_review_evidence(db, reviewer, analysis, variant):
+    evidence = Evidence(
+        id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+        evidence_type="LITERATURE", statement="Reviewed literature evidence.",
+        direction="SUPPORTING", source_name="PubMed", source_version="fixture-1",
+        source_record_id="PMID:12345678", observation_ids=[], payload={},
+        created_by_type="HUMAN", created_by_id=str(reviewer.id),
+        evidence_fingerprint=f"review-evidence-{uuid4()}",
+    )
+    db.add(evidence)
+    db.flush()
+    return evidence
+
+
 def reviewer_or_user(x):
     return x
 
@@ -261,13 +275,53 @@ def test_worker_review_gates_reject_downstream_variants_outside_normalization_ma
 
 def test_criterion_review_is_versioned_and_append_only_history():
     db, reviewer, _, analysis, variant, assessment, _ = seed()
-    out = review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("MODIFY", "MODERATE", "Reviewed evidence", tuple(), 0), reviewer=reviewer)
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    out = review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("MODIFY", "MODERATE", "Reviewed evidence", (evidence.id,), 0), reviewer=reviewer)
     db.commit()
     assert out.review_version == 1
+    assert out.final_assessment["evidence_ids"] == [str(evidence.id)]
     action = db.query(ReviewAction).one()
     assert action.sequence_number == 1
     assert action.before_state["review_version"] == 0
     assert action.resulting_version == 1
+
+
+def test_criterion_review_preserves_automated_evidence_when_reviewer_omits_reselection():
+    db, reviewer, _, analysis, variant, assessment, _ = seed()
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    assessment.automated_assessment = {
+        "strength": "SUPPORTING",
+        "evidence_ids": [str(evidence.id)],
+        "reason": "Evidence was resolved during automated assessment.",
+    }
+    db.commit()
+
+    reviewed = review_criterion(
+        db,
+        analysis_id=analysis.id,
+        variant_id=variant.id,
+        criterion="PM2",
+        mutation=ReviewMutation("ACCEPT", "SUPPORTING", "Reviewed source and accepted.", tuple(), 0),
+        reviewer=reviewer,
+    )
+    db.commit()
+
+    assert reviewed.final_assessment["evidence_ids"] == [str(evidence.id)]
+    assert reviewed.reviewed_assessment["evidence_ids"] == [str(evidence.id)]
+
+
+@pytest.mark.parametrize("decision", ["ACCEPT", "MODIFY"])
+def test_criterion_review_requires_persisted_evidence_when_no_prior_evidence_exists(decision):
+    db, reviewer, _, analysis, variant, _, _ = seed()
+    with pytest.raises(ReviewError, match="linked evidence record is required"):
+        review_criterion(
+            db,
+            analysis_id=analysis.id,
+            variant_id=variant.id,
+            criterion="PM2",
+            mutation=ReviewMutation(decision, "SUPPORTING", "No evidence to link.", tuple(), 0),
+            reviewer=reviewer,
+        )
 
 
 @pytest.mark.parametrize("decision", ["ACCEPT", "MODIFY"])
@@ -308,7 +362,8 @@ def test_criterion_review_enforces_framework_strength_for_criterion(criterion, s
 
 def test_stale_review_is_rejected():
     db, reviewer, _, analysis, variant, _, _ = seed()
-    review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("ACCEPT", "MODERATE", "Accept", tuple(), 0), reviewer=reviewer)
+    evidence = add_review_evidence(db, reviewer, analysis, variant)
+    review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("ACCEPT", "MODERATE", "Accept", (evidence.id,), 0), reviewer=reviewer)
     with pytest.raises(ReviewConflictError):
         review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("MODIFY", "SUPPORTING", "Stale", tuple(), 0), reviewer=reviewer)
 

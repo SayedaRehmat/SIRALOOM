@@ -785,6 +785,7 @@ export type TranslationKey =
   | "review.linkEvidence"
   | "review.selectStrength"
   | "review.strengthRequired"
+  | "review.evidenceRequired"
   | "review.accept"
   | "review.modify"
   | "review.reject"
@@ -1278,6 +1279,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.linkEvidence": "Link supporting/contradictory evidence",
     "review.selectStrength": "Select criterion strength",
     "review.strengthRequired": "Select an explicit criterion strength before accepting or modifying it.",
+    "review.evidenceRequired": "Link at least one persisted evidence record before accepting or modifying this criterion.",
     "review.accept": "Accept",
     "review.modify": "Modify",
     "review.reject": "Reject",
@@ -2219,6 +2221,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.linkEvidence": "ربط الأدلة الداعمة/المتعارضة",
     "review.selectStrength": "اختر قوة المعيار",
     "review.strengthRequired": "اختر قوة المعيار صراحةً قبل قبوله أو تعديله.",
+    "review.evidenceRequired": "اربط سجل دليل محفوظًا واحدًا على الأقل قبل قبول هذا المعيار أو تعديله.",
     "review.accept": "قبول",
     "review.modify": "تعديل",
     "review.reject": "رفض",

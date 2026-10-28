@@ -543,15 +543,27 @@ def review_criterion(
 
     if db.get(Variant, variant_id) is None:
         raise ReviewError("Variant not found")
-    if mutation.evidence_ids:
+    evidence_ids = mutation.evidence_ids
+    if not evidence_ids:
+        for prior_assessment in (assessment.reviewed_assessment, assessment.final_assessment, assessment.automated_assessment):
+            prior_ids = prior_assessment.get("evidence_ids") if isinstance(prior_assessment, dict) else None
+            if isinstance(prior_ids, list) and prior_ids:
+                try:
+                    evidence_ids = tuple(UUID(str(value)) for value in prior_ids)
+                except (TypeError, ValueError) as exc:
+                    raise ReviewError("Stored criterion evidence references are invalid") from exc
+                break
+    if mutation.decision in {"ACCEPT", "MODIFY"} and not evidence_ids:
+        raise ReviewError("At least one linked evidence record is required to accept or modify a criterion")
+    if evidence_ids:
         evidence_rows = list(db.scalars(
             select(Evidence).where(
-                Evidence.id.in_(mutation.evidence_ids),
+                Evidence.id.in_(evidence_ids),
                 Evidence.analysis_id == analysis_id,
                 Evidence.variant_id == variant_id,
             )
         ))
-        if len(evidence_rows) != len(set(mutation.evidence_ids)):
+        if len(evidence_rows) != len(set(evidence_ids)):
             raise ReviewError("Every selected evidence record must belong to this variant and analysis")
 
     before = {
@@ -565,7 +577,7 @@ def review_criterion(
         "decision": mutation.decision,
         "strength": mutation.strength,
         "reason": mutation.reason.strip(),
-        "evidence_ids": [str(x) for x in mutation.evidence_ids],
+        "evidence_ids": [str(x) for x in evidence_ids],
         "reviewer_id": str(reviewer.id),
         "reviewed_at": now.isoformat(),
         "revision": assessment.review_version + 1,

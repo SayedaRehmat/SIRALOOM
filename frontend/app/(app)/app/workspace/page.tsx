@@ -39,9 +39,9 @@ type ReviewBundle = {
   } | null;
   criteria: Array<{
     criterion: string;
-    automated?: Record<string, unknown> | null;
-    reviewed?: Record<string, unknown> | null;
-    final?: Record<string, unknown> | null;
+    automated_assessment?: Record<string, unknown> | null;
+    reviewed_assessment?: Record<string, unknown> | null;
+    final_assessment?: Record<string, unknown> | null;
     state: string;
   }>;
   history: Array<{
@@ -801,8 +801,13 @@ export default function Home() {
     const current = review?.criteria.find((item) => item.criterion === criterion);
     const expectedVersion = Number((current as any)?.review_version ?? 0);
     const strength = criterionStrengths[criterion] ?? "";
-    if (!analysisId || !selectedVariantId || !criterionReason.trim() || (decision === "ACCEPT" && !strength)) {
-      setMessage(!criterionReason.trim() ? t("workspace.reviewReasonRequired") : t("review.strengthRequired"));
+    const reviewedEvidenceIds = current?.reviewed_assessment?.evidence_ids;
+    const automatedEvidenceIds = current?.automated_assessment?.evidence_ids;
+    const evidenceIds = Array.isArray(reviewedEvidenceIds) && reviewedEvidenceIds.length
+      ? reviewedEvidenceIds as string[]
+      : Array.isArray(automatedEvidenceIds) ? automatedEvidenceIds as string[] : [];
+    if (!analysisId || !selectedVariantId || !criterionReason.trim() || (decision === "ACCEPT" && !strength) || (decision === "ACCEPT" && !evidenceIds.length)) {
+      setMessage(!criterionReason.trim() ? t("workspace.reviewReasonRequired") : !strength ? t("review.strengthRequired") : t("review.evidenceRequired"));
       return;
     }
     try {
@@ -813,7 +818,7 @@ export default function Home() {
           decision,
           strength: decision === "ACCEPT" ? strength : null,
           reason: criterionReason.trim(),
-          evidence_ids: [],
+          evidence_ids: evidenceIds,
           expected_version: expectedVersion,
         }),
       });
@@ -1264,7 +1269,7 @@ export default function Home() {
               <button className="primary" type="button" onClick={() => void proposeManualClassification()} disabled={busy || !manualClassificationEvidence.length}>{t("workspace.manualClassificationSubmit")}</button>
             </div>}
             <div className="actions-row"><button className="secondary" onClick={startReview} disabled={!review.classification || review.review_status === "APPROVED"}>{t("workspace.startReview")}</button></div>
-            <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String((item.automated as any)?.reason ?? t("workspace.noAutomatedRationale"))}</p><label>{t("review.selectStrength")}<select value={criterionStrengths[item.criterion] ?? ""} onChange={(e) => setCriterionStrengths((current) => ({ ...current, [item.criterion]: e.target.value }))}><option value="">{t("review.selectStrength")}</option>{item.criterion === "BA1" ? <option>STANDALONE</option> : <><option>SUPPORTING</option><option>MODERATE</option><option>STRONG</option><option>VERY_STRONG</option></>}</select></label><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">{t("workspace.accept")}</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">{t("workspace.reject")}</button></div></div>)}</div>
+            <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String(item.automated_assessment?.reason ?? t("workspace.noAutomatedRationale"))}</p><label>{t("review.selectStrength")}<select value={criterionStrengths[item.criterion] ?? ""} onChange={(e) => setCriterionStrengths((current) => ({ ...current, [item.criterion]: e.target.value }))}><option value="">{t("review.selectStrength")}</option>{item.criterion === "BA1" ? <option>STANDALONE</option> : <><option>SUPPORTING</option><option>MODERATE</option><option>STRONG</option><option>VERY_STRONG</option></>}</select></label><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">{t("workspace.accept")}</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">{t("workspace.reject")}</button></div></div>)}</div>
             <label>{t("workspace.criterionReviewReason")}<input value={criterionReason} onChange={(e: ChangeEvent<HTMLInputElement>) => setCriterionReason(e.target.value)} placeholder="Why is this criterion accepted/rejected?" /></label>
             <label>{t("workspace.finalApprovalReason")}<textarea value={reviewReason} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReviewReason(e.target.value)} placeholder="Explain the basis for the final reviewer decision." rows={3} /></label>
             <div className="actions-row"><button className="primary" onClick={approve} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.approveClassification")}</button><button className="secondary" onClick={requestMoreEvidence} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.requestMoreEvidence")}</button><button className="secondary" onClick={generateReport} disabled={!analysisId || review.review_status !== "APPROVED"}>{t("workspace.generateReport")}</button></div>
