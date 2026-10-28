@@ -189,6 +189,57 @@ def _parse_field_definition(line: str, kind: str, line_no: int) -> tuple[str, di
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
+def _structured_header_id(line: str, kind: str, line_no: int) -> str:
+    """Extract the required ID from a structured VCF header line."""
+    prefix = f"##{kind}=<"
+    if not line.startswith(prefix) or not line.endswith(">"):
+        raise StrictVCFValidationError(
+            f"Malformed {kind} structured header at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    body = line[len(prefix):-1]
+    attributes: list[str] = []
+    current: list[str] = []
+    quoted = False
+    escaped = False
+    for char in body:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == "\\" and quoted:
+            current.append(char)
+            escaped = True
+        elif char == '"':
+            current.append(char)
+            quoted = not quoted
+        elif char == "," and not quoted:
+            attributes.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    if quoted or escaped:
+        raise StrictVCFValidationError(
+            f"Malformed quoted {kind} structured header at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    attributes.append("".join(current))
+
+    identifiers = []
+    for attribute in attributes:
+        key, separator, value = attribute.partition("=")
+        if separator and key.strip() == "ID":
+            value = value.strip()
+            if value.startswith('"') and value.endswith('"') and len(value) >= 2:
+                value = value[1:-1]
+            identifiers.append(value)
+    if len(identifiers) != 1 or not identifiers[0]:
+        raise StrictVCFValidationError(
+            f"{kind} structured header must contain exactly one non-empty ID at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    return identifiers[0]
+
+
 def _expected_cardinality(number: str, alternate_count: int, ploidy: int | None) -> int | None:
     if number == ".":
         return None
@@ -439,6 +490,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     gvcf_markers = 0
     unchecked_info_number_g_fields: set[str] = set()
     singleton_headers: set[str] = set()
+    structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
@@ -474,6 +526,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         f"VCF meta-information appears after the #CHROM header at line {line_no}",
                         code="VCF_HEADER_ORDER_INVALID",
                     )
+                header_key, separator, header_value = line[2:].partition("=")
+                if separator and header_value.startswith("<"):
+                    identifier = _structured_header_id(line, header_key, line_no)
+                    ids_for_type = structured_header_ids.setdefault(header_key, set())
+                    if identifier in ids_for_type:
+                        raise StrictVCFValidationError(
+                            f"Duplicate {header_key} ID {identifier!r} at line {line_no}",
+                            code="VCF_HEADER_DEFINITION_INVALID",
+                        )
+                    ids_for_type.add(identifier)
                 if line.startswith("##fileformat="):
                     if fileformat is not None:
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")

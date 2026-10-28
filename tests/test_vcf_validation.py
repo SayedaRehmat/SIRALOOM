@@ -341,6 +341,50 @@ def test_strict_validation_rejects_duplicate_info_keys(tmp_path: Path):
 
 
 @pytest.mark.parametrize(
+    "metadata",
+    [
+        [
+            '##FILTER=<ID=LowQual,Description="low quality">',
+            '##FILTER=<ID=LowQual,Description="duplicate filter ID">',
+        ],
+        [
+            '##contig=<ID=chr1,length=100>',
+            '##contig=<ID=chr1,length=100>',
+        ],
+        [
+            '##ALT=<ID=DEL,Description="Deletion">',
+            '##ALT=<ID=DEL,Description="duplicate ALT ID">',
+        ],
+    ],
+)
+def test_strict_validation_rejects_duplicate_structured_header_ids(
+    tmp_path: Path, metadata: list[str],
+):
+    path = tmp_path / "duplicate-structured-id.vcf"
+    write_vcf_with_metadata(path, metadata, "1\t2\t.\tA\tG\t.\tPASS\t.\n")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_structured_header_ids_are_unique_per_type(tmp_path: Path):
+    path = tmp_path / "same-id-different-header-types.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">',
+            '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Sample depth">',
+        ],
+        "1\t2\t.\tA\tG\t.\tPASS\tDP=10\tDP\t10\n",
+        sample=True,
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
     ("field_type", "value"),
     [
         ("Integer", "1.5"),
