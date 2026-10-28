@@ -450,6 +450,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
+            if raw and not raw.endswith("\n") and not raw.startswith("#"):
+                raise StrictVCFValidationError(
+                    f"VCF data line at line {line_no} is missing its required line separator",
+                    code="VCF_RECORD_TERMINATOR_MISSING",
+                )
             line = raw.rstrip("\n\r")
             if line_no == 1 and line.startswith("\ufeff"):
                 raise StrictVCFValidationError(

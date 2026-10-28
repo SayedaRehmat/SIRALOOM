@@ -43,6 +43,20 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["reference_contig_policy"] == "EXACT"
 
 
+def test_strict_validation_rejects_data_record_without_final_line_separator(tmp_path: Path):
+    path = tmp_path / "missing-final-newline.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.3\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t."
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_RECORD_TERMINATOR_MISSING"
+
+
 def test_strict_validation_accepts_vcf_reference_only_alt_dot_record(tmp_path: Path):
     path = tmp_path / "reference-only.vcf"
     write_vcf(path, "1\t2\t.\tA\t.\t.\tPASS\t.\n")
