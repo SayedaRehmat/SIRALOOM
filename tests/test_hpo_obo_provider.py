@@ -286,12 +286,12 @@ def test_broader_patient_term_does_not_imply_specific_disease_term(tmp_path):
     assert phenotype.resource_id == resource_id
     assert phenotype.source_version == "2026-09-01"
     assert phenotype.response_sha256 == "b" * 64
-    assert disease.payload["phenotype_match"]["status"] == "SCORED"
+    assert disease.payload["phenotype_match"]["status"] == "CONTEXT_ONLY"
     assert disease.payload["phenotype_match"]["clinical_prioritization_validated"] is False
     assert "priority_adjustment" not in disease.payload["phenotype_match"]
     assert disease.payload["phenotype_match"]["method"] == "HPO_PATIENT_DESCENDANT_OVERLAP"
     assert disease.payload["phenotype_match"]["matched_terms"] == []
-    assert disease.payload["phenotype_match"]["score"] == 0.0
+    assert "score" not in disease.payload["phenotype_match"]
     assert disease.payload["phenotype_match"]["ontology_provenance"]["resource_checksum"] == ontology.sha256
     assert "hpo_ancestor_map" not in disease.payload
 
@@ -309,9 +309,9 @@ def test_more_specific_patient_term_matches_broader_disease_annotation(tmp_path)
     )
     disease = next(record for record in records if record.evidence_type == "GENE_DISEASE")
 
-    assert disease.payload["phenotype_match"]["status"] == "SCORED"
+    assert disease.payload["phenotype_match"]["status"] == "CONTEXT_ONLY"
     assert disease.payload["phenotype_match"]["matched_terms"] == ["HP:0000003"]
-    assert disease.payload["phenotype_match"]["score"] == 1.0
+    assert "score" not in disease.payload["phenotype_match"]
     assert disease.payload["phenotype_match"]["clinical_prioritization_validated"] is False
 
 
@@ -374,7 +374,7 @@ def test_contradictory_patient_presence_and_absence_requires_review(tmp_path):
     assert "score" not in disease.payload["phenotype_match"]
 
 
-def test_hpo_explicit_obsolete_replacement_keeps_original_id_and_scores_canonical_term(tmp_path):
+def test_hpo_explicit_obsolete_replacement_preserves_original_and_matches_canonical_term(tmp_path):
     ontology = _provider(tmp_path)
     records = EvidenceEngine().build_case_context_evidence(
         variant_id=uuid4(),
@@ -397,8 +397,9 @@ def test_hpo_explicit_obsolete_replacement_keeps_original_id_and_scores_canonica
         "consider": [],
         "ambiguous_candidates": [],
     }]
-    assert disease.payload["phenotype_match"]["status"] == "SCORED"
-    assert disease.payload["phenotype_match"]["score"] == 1.0
+    assert disease.payload["phenotype_match"]["status"] == "CONTEXT_ONLY"
+    assert disease.payload["phenotype_match"]["matched_terms"] == ["HP:0000003"]
+    assert "score" not in disease.payload["phenotype_match"]
 
 
 def test_nonpresent_and_uncertain_patient_statuses_are_preserved_not_scored(tmp_path):
@@ -442,9 +443,10 @@ def test_caller_supplied_ancestor_map_is_never_used_without_ontology(tmp_path):
     )
     disease = next(record for record in records if record.evidence_type == "GENE_DISEASE")
     assert disease.payload["phenotype_match"]["status"] == "REQUIRES_REVIEW"
-    assert disease.payload["phenotype_match"]["exact_overlap_score"] == 0.0
+    assert disease.payload["phenotype_match"]["matched_terms"] == []
     assert disease.payload["phenotype_match"]["method"] == "EXACT_HPO_OVERLAP_UNVALIDATED"
     assert "score" not in disease.payload["phenotype_match"]
+    assert "exact_overlap_score" not in disease.payload["phenotype_match"]
     assert "hpo_ancestor_map" not in disease.payload
 
 

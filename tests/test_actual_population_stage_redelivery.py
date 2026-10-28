@@ -1012,8 +1012,9 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 and (row.payload or {}).get("phenotype_match")
             )
             if ontology_valid:
-                assert disease_evidence.payload["phenotype_match"]["status"] == "SCORED"
-                assert disease_evidence.payload["phenotype_match"]["score"] == 1.0
+                assert disease_evidence.payload["phenotype_match"]["status"] == "CONTEXT_ONLY"
+                assert disease_evidence.payload["phenotype_match"]["matched_terms"] == ["HP:0000002"]
+                assert "score" not in disease_evidence.payload["phenotype_match"]
             else:
                 assert disease_evidence.payload["phenotype_match"]["status"] == "REQUIRES_REVIEW"
                 assert "score" not in disease_evidence.payload["phenotype_match"]

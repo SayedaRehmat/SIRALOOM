@@ -511,25 +511,22 @@ class EvidenceEngine:
                         "matched_terms": list(match.matched),
                         "query_count": match.query_count,
                         "target_count": match.target_count,
+                        "interpretive_use": "HUMAN_REVIEW_CONTEXT_ONLY",
                         "ontology_release": getattr(hpo_ontology, "release", None),
                         "ontology_provenance": dict(hpo_provenance or {}),
                     }
                     if hpo_ontology is not None:
                         match_payload.update({
-                            "status": "SCORED",
-                            "score": match.score,
-                            "score_semantics": "fraction_of_present_patient_terms_equal_to_or_more_specific_than_a_disease_phenotype_term",
+                            "status": "CONTEXT_ONLY",
                             "clinical_prioritization_validated": False,
                             "method": match.method,
                         })
                     else:
-                        # Exact string overlap is useful for triage but cannot
-                        # validate term status or ontology semantics. Keep it
-                        # explicitly non-scientific and out of ranking fields.
+                        # Exact string overlap cannot establish ontology or
+                        # disease semantics. Preserve term-level context only.
                         match_payload.update({
                             "status": "REQUIRES_REVIEW",
                             "reason": "No pinned HPO ontology was available to validate terms or compute ontology-aware similarity.",
-                            "exact_overlap_score": match.score,
                             "method": "EXACT_HPO_OVERLAP_UNVALIDATED",
                         })
                     payload["phenotype_match"] = match_payload

@@ -681,7 +681,6 @@ export type TranslationKey =
   | "review.addHpo"
   | "review.phenotype"
   | "review.phenotypeMatchStatus"
-  | "review.phenotypeMatchScore"
   | "review.phenotypeMatchTerms"
   | "review.phenotypeMatchUnvalidated"
   | "review.phenotypeMatchNoTerms"
@@ -1173,9 +1172,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.addHpo": "Add HPO observation",
     "review.phenotype": "Phenotype match & gene–disease relationship",
     "review.phenotypeMatchStatus": "Ontology overlap status",
-    "review.phenotypeMatchScore": "Unvalidated overlap fraction",
     "review.phenotypeMatchTerms": "Patient terms matching disease annotations",
-    "review.phenotypeMatchUnvalidated": "This ontology overlap is not a validated clinical prioritization score and must not be used as a diagnosis or classification.",
+    "review.phenotypeMatchUnvalidated": "This term overlap is limited context for human review. It has not been clinically validated and must not be used alone for diagnosis, classification, or sign-out.",
     "review.phenotypeMatchNoTerms": "No present patient phenotype terms matched the disease annotations under the pinned ontology.",
     "review.hpoaAssertions": "HPO disease-phenotype assertions",
     "review.hpoaDisease": "Disease identifier",
@@ -2113,9 +2111,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.addHpo": "إضافة ملاحظة HPO",
     "review.phenotype": "تطابق النمط الظاهري وعلاقة الجين بالمرض",
     "review.phenotypeMatchStatus": "حالة التداخل وفق الأنطولوجيا",
-    "review.phenotypeMatchScore": "نسبة تداخل غير معتمدة",
     "review.phenotypeMatchTerms": "مصطلحات المريض المطابقة لتوصيفات المرض",
-    "review.phenotypeMatchUnvalidated": "هذا التداخل وفق الأنطولوجيا ليس درجة أولوية سريرية معتمدة، ولا يجوز استخدامه للتشخيص أو التصنيف.",
+    "review.phenotypeMatchUnvalidated": "هذا التداخل بين المصطلحات سياق محدود للمراجعة البشرية. لم يُتحقق من صلاحيته سريرياً ولا يجوز استخدامه وحده للتشخيص أو التصنيف أو اعتماد التقرير.",
     "review.phenotypeMatchNoTerms": "لم تتطابق أي مصطلحات ظاهرية إيجابية للمريض مع توصيفات المرض وفق إصدار الأنطولوجيا المثبت.",
     "review.hpoaAssertions": "تأكيدات HPO للنمط الظاهري المرتبط بالمرض",
     "review.hpoaDisease": "معرّف المرض",

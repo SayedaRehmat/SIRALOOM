@@ -27,7 +27,6 @@ class PhenotypeMatch:
     matched: tuple[str, ...]
     query_count: int
     target_count: int
-    score: float
     method: str = "EXACT_HPO_OVERLAP"
 
 
@@ -98,5 +97,4 @@ def match_hpo(
                 if term in target or bool(normalized_ancestors.get(term, set()) & target)
             )
         )
-    score = len(matched) / len(query) if query else 0.0
-    return PhenotypeMatch(matched, len(query), len(target), round(score, 6), method)
+    return PhenotypeMatch(matched, len(query), len(target), method)

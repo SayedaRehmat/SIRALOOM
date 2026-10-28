@@ -110,7 +110,7 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
     assert result["present"] is (True if status == "PRESENT" else False if status in {"ABSENT", "EXCLUDED"} else None)
 
 
-def test_phenotype_similarity_uses_only_present_terms():
+def test_phenotype_overlap_uses_only_present_terms_without_generating_a_score():
     terms = [
         {"hpo_id": "HP:0000001", "phenotype_status": "PRESENT"},
         {"hpo_id": "HP:0000002", "phenotype_status": "ABSENT", "present": False},
@@ -126,7 +126,7 @@ def test_phenotype_similarity_uses_only_present_terms():
     assert result.query_count == 1
     assert result.target_count == 4
     assert result.matched == ("HP:0000001",)
-    assert result.score == 1.0
+    assert not hasattr(result, "score")
 
 
 def test_phenotype_state_migration_backfills_and_keeps_states_distinct(tmp_path, monkeypatch):

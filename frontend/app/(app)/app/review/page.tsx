@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceAnalysisReady } from "../../../../lib/workspace-context.mjs";
+import { phenotypeContextView } from "../../../../lib/phenotype-context.mjs";
 import { latestQualityAssessment, qualityMetricsFromObservations } from "../../../../lib/quality-review.mjs";
 import { canFinalizeClinicalReports, canGenerateOrEvaluateReports, canReviewClinicalEvidence } from "../../../../lib/report-permissions.mjs";
 
@@ -31,16 +32,15 @@ function EvidenceCard({e}:{e:Evidence}){
  const {t}=useLanguage();
  const assertions=e.source==="HPOA"&&Array.isArray(e.payload?.assertions)?e.payload.assertions:[];
  const patientComparison=e.source==="HPOA"&&e.payload?.patient_comparison&&typeof e.payload.patient_comparison==="object"?e.payload.patient_comparison:null;
- const phenotypeMatch=e.type==="GENE_DISEASE"&&e.payload?.phenotype_match&&typeof e.payload.phenotype_match==="object"?e.payload.phenotype_match:null;
+ const phenotypeMatch=e.type==="GENE_DISEASE"?phenotypeContextView(e.payload?.phenotype_match):null;
  const hasProvenance=Boolean(e.resource_id||e.request_fingerprint||e.response_sha256);
  return <article className="clinical-evidence-card">
   <div className="evidence-card-head"><span className="badge neutral">{pretty(e.type)}</span><span className={`badge ${e.direction==="SUPPORTS"?"success":e.direction==="CONTRADICTS"?"danger":"neutral"}`}>{pretty(e.direction)}</span></div>
   <strong>{e.source||"Unspecified source"}{e.source_version?` · ${e.source_version}`:""}</strong><p>{e.statement}</p>
   {phenotypeMatch&&<section className="phenotype-match-review" aria-label={t("review.phenotypeMatchStatus")}>
    <strong>{t("review.phenotypeMatchStatus")}: {pretty(phenotypeMatch.status)}</strong>
-   {typeof phenotypeMatch.score==="number"&&<p>{t("review.phenotypeMatchScore")}: {phenotypeMatch.score.toFixed(3)}</p>}
-   {Array.isArray(phenotypeMatch.matched_terms)&&phenotypeMatch.matched_terms.length>0&&<p>{t("review.phenotypeMatchTerms")}: {phenotypeMatch.matched_terms.join(", ")}</p>}
-   {phenotypeMatch.status==="SCORED"&&phenotypeMatch.score===0&&<p>{t("review.phenotypeMatchNoTerms")}</p>}
+   {phenotypeMatch.matchedTerms.length>0&&<p>{t("review.phenotypeMatchTerms")}: {phenotypeMatch.matchedTerms.join(", ")}</p>}
+   {phenotypeMatch.showNoMatchedTerms&&<p>{t("review.phenotypeMatchNoTerms")}</p>}
    {phenotypeMatch.reason&&<p>{String(phenotypeMatch.reason)}</p>}
    <p className="phenotype-match-review-note">{t("review.phenotypeMatchUnvalidated")}</p>
   </section>}

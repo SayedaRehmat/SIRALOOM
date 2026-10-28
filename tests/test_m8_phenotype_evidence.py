@@ -11,7 +11,9 @@ def test_hpo_validation_and_exact_matching():
     assert normalize_hpo_id("hp:0001250") == "HP:0001250"
     result = match_hpo(["HP:0001250", "HP:0001263"], ["HP:0001250", "HP:0000707"])
     assert result.matched == ("HP:0001250",)
-    assert result.score == 0.5
+    assert result.query_count == 2
+    assert result.target_count == 2
+    assert not hasattr(result, "score")
 
 def test_hpo_gene_disease_context_produces_match_metadata_without_pathogenicity():
     engine = EvidenceEngine()
@@ -26,8 +28,9 @@ def test_hpo_gene_disease_context_produces_match_metadata_without_pathogenicity(
     assert {"PHENOTYPE","GENE_DISEASE","LITERATURE"} == types
     gd=next(r for r in records if r.evidence_type=="GENE_DISEASE")
     assert gd.payload["phenotype_match"]["status"] == "REQUIRES_REVIEW"
-    assert gd.payload["phenotype_match"]["exact_overlap_score"] == 1.0
+    assert gd.payload["phenotype_match"]["matched_terms"] == ["HP:0001250"]
     assert "score" not in gd.payload["phenotype_match"]
+    assert "exact_overlap_score" not in gd.payload["phenotype_match"]
     assert gd.direction == "NEUTRAL"
     lit=next(r for r in records if r.evidence_type=="LITERATURE")
     assert lit.payload["source_id"] == "PMID:123"
