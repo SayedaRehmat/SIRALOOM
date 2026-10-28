@@ -57,6 +57,21 @@ def _case_payload(db: Session, case: Case) -> dict:
     }
 
 
+def _existing_case_create_response(existing: Case, payload: CaseCreate, principal: Principal, db: Session) -> dict:
+    require_case_permission(existing, principal, db, "read")
+    if existing.language != payload.language or (existing.clinical_context or {}) != payload.clinical_context:
+        raise HTTPException(
+            status_code=409,
+            detail="A case with this identifier already exists with different clinical metadata",
+        )
+    return {
+        "case_id": str(existing.id),
+        "case_identifier": existing.case_identifier,
+        "status": existing.status,
+        "created": False,
+    }
+
+
 @router.post("", status_code=201)
 def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     require_role(principal, CASE_WRITE_ROLES)
@@ -64,8 +79,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
         Case.organization_id == principal.organization_id, Case.case_identifier == payload.case_identifier,
     ))
     if existing:
-        require_case_permission(existing, principal, db, "read")
-        return {"case_id": str(existing.id), "case_identifier": existing.case_identifier, "status": existing.status, "created": False}
+        return _existing_case_create_response(existing, payload, principal, db)
     case = Case(
         id=uuid4(), organization_id=principal.organization_id, case_identifier=payload.case_identifier,
         status=CaseStatus.DRAFT, language=payload.language, clinical_context=payload.clinical_context,
@@ -84,13 +98,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
             Case.case_identifier == payload.case_identifier,
         ))
         if existing is not None:
-            require_case_permission(existing, principal, db, "read")
-            return {
-                "case_id": str(existing.id),
-                "case_identifier": existing.case_identifier,
-                "status": existing.status,
-                "created": False,
-            }
+            return _existing_case_create_response(existing, payload, principal, db)
         raise
     db.add(CaseAccessGrant(
         id=uuid4(), case_id=case.id, user_id=principal.user_id,

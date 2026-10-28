@@ -591,3 +591,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Specimen VCF sample mapping is a canonical non-empty string before analysis creation | PASS (local route/service scope) | Specimen registration rejects non-string/blank metadata mappings and trims valid values before persistence. Analysis creation rejects non-string, blank, or noncanonical legacy values rather than coercing them. Focused intake/quota/sample tests: **63 passed**; full Linux backend suite: **1,566 passed, 54 skipped**; Ruff F/I and `git diff --check` passed. Exact-SHA CI for the previous parent commit passed; this change awaits CI. |
 | Biological sample identity, contamination/relatedness, multisample-family mapping, and live specimen chain-of-custody | NOT ESTABLISHED / NOT IMPLEMENTED | The checks establish exact VCF header-name mapping to a recorded specimen field only. They do not prove biological identity or assay performance. The current executable workflow requires exactly one VCF sample. |
+
+### 2026-10-28 case accession idempotency and clinical-context collision
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Reusing an organization/case identifier is idempotent only when submitted language and clinical context match | PASS (local API and regression scope; exact-SHA CI pending) | Matching retry returns the existing case. Changed indication/language returns HTTP 409 on both pre-existing-row and concurrent unique-key recovery paths. Focused case idempotency/access/workspace tests: **17 passed**. Full Linux backend suite: **1,570 passed, 54 skipped**, one existing Starlette/httpx warning. Ruff F/I and `git diff --check` passed. |
+| Identity of the patient/specimen or correctness of the clinical indication | NOT ESTABLISHED | The guard detects request metadata collisions only; it does not verify biological identity or clinician authorization. Live identity and deployed laboratory validation remain outstanding. |
