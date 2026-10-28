@@ -338,10 +338,18 @@ def test_pvs1_requires_lof_mechanism():
     raise AssertionError("PVS1 must require explicit LoF mechanism")
 
 
-def test_pvs1_conservative_gate():
+@pytest.mark.parametrize(
+    "consequence",
+    ["frameshift_variant", "missense_variant", None],
+    ids=["configured-lof", "unconfigured-consequence", "missing-consequence"],
+)
+def test_pvs1_requires_review_until_decision_tree_is_implemented(consequence):
     result = evaluate_pvs1(
-        {"consequence": "frameshift_variant"},
+        {"consequence": consequence},
         profile={"PVS1": {"lof_mechanism_established": True, "allowed_consequences": ["frameshift_variant"], "strength": "VERY_STRONG"}},
     )
-    assert result.applicable is True
-    assert result.strength == "VERY_STRONG"
+    assert result.applicable is False
+    assert result.status == "REQUIRES_REVIEW"
+    assert result.strength is None
+    assert result.metadata["automated_strength"] == "NOT_PRODUCED"
+    assert result.metadata["review_reason"] == "PVS1_DECISION_TREE_NOT_IMPLEMENTED"

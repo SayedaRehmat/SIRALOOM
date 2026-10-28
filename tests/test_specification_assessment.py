@@ -248,6 +248,66 @@ def test_review_required_criterion_blocks_combination_and_persists_no_classifica
         assert persisted == {"PM2": "PROPOSED", "PP3": "REQUIRES_REVIEW"}
 
 
+def test_pvs1_candidate_requires_review_and_never_enters_automated_classification():
+    engine = _db()
+    with Session(engine) as db:
+        analysis = _analysis(uuid4())
+        variant = _variant()
+        db.add_all([analysis, variant])
+        db.add(ClinGenSpecification(
+            id=uuid4(), specification_id="SPEC-PVS1", version="1.0",
+            provider="ClinGen", framework="ACMG/AMP", gene_scope=["GENE1"],
+            disease_scope=["Disease X"],
+            criteria={"PVS1": {
+                "lof_mechanism_established": True,
+                "allowed_consequences": ["frameshift_variant"],
+                "strength": "VERY_STRONG",
+            }},
+            raw_payload={}, retrieved_at=datetime.now(UTC),
+            validated_for_automation=True,
+            validation_status="APPROVED_FOR_AUTOMATION",
+        ))
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="fixture", provider_version="1", resource_name="fixture",
+            resource_version="1", payload={"normalized": {
+                "gene": {"symbol": "GENE1"},
+                "effect": "frameshift_variant",
+                "computational": {}, "splice": {},
+            }},
+        )
+        db.add(annotation)
+        db.commit()
+
+        service = ACMGSpecificationAssessmentService()
+        result = service.assess_variant(
+            db, analysis=analysis, variant=variant, annotation=annotation,
+            population_rows=[], resource_rows={}, gene="GENE1", disease="Disease X",
+        )
+
+        assert result.status == "REQUIRES_REVIEW"
+        assert result.classification is None
+        assert result.evaluator_results[0].criterion == "PVS1"
+        assert result.evaluator_results[0].status == "REQUIRES_REVIEW"
+        assert result.evaluator_results[0].strength is None
+        assert result.combination_metadata["review_reason"] == "CRITERION_EVIDENCE_REQUIRES_REVIEW"
+
+        service.persist(db, analysis=analysis, variant=variant, result=result)
+        db.commit()
+        assert db.query(Classification).filter_by(
+            analysis_id=analysis.id, variant_id=variant.id
+        ).count() == 0
+        assessment = db.query(ACMGAssessment).filter_by(
+            analysis_id=analysis.id, variant_id=variant.id, criterion="PVS1"
+        ).one()
+        assert assessment.state == "REQUIRES_REVIEW"
+        assert assessment.automated_assessment["status"] == "REQUIRES_REVIEW"
+        assert "decision tree" in assessment.automated_assessment["reason"]
+        assert assessment.automated_assessment["metadata"]["review_reason"] == (
+            "PVS1_DECISION_TREE_NOT_IMPLEMENTED"
+        )
+
+
 def test_same_persisted_evidence_cannot_be_counted_for_multiple_criteria():
     engine = _db()
     with Session(engine) as db:

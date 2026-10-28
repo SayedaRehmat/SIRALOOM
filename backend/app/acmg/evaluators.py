@@ -397,11 +397,11 @@ def evaluate_pvs1(
 ) -> EvaluatorResult:
     """Conservative PVS1 gate based on explicit gene/transcript evidence.
 
-    This is not a full PVS1 decision tree. It requires the profile to assert
-    that loss-of-function is an established mechanism and the variant consequence
-    to be an explicitly supported LoF class. Further location/transcript/exon
-    refinements remain profile-specific and must be supplied by a gene/disease
-    specification before stronger automation is enabled.
+    This is not a full PVS1 decision tree. The current implementation can
+    validate only the broad LoF mechanism and consequence prerequisites; it
+    cannot evaluate transcript/exon relevance, NMD, variant location, or all
+    gene/disease-specific refinements. Therefore it must never emit an ACMG
+    strength for automated classification.
     """
     cfg = profile.get("PVS1") or {}
     lof_mechanism = cfg.get("lof_mechanism_established") is True
@@ -411,17 +411,16 @@ def evaluate_pvs1(
         raise EvaluatorConfigurationError("PVS1 requires explicit assertion that LoF is an established disease mechanism")
     if not allowed:
         raise EvaluatorConfigurationError("PVS1 requires an explicit allowed_consequences list")
-    if consequence not in allowed:
-        return EvaluatorResult(
-            "PVS1", False, None, "PATHOGENIC", "NOT_MET",
-            f"Variant consequence '{consequence}' is not in the configured PVS1 supported consequence set.",
-            metadata={"allowed_consequences": sorted(allowed)},
-        )
-    strength = cfg.get("strength", "VERY_STRONG")
-    if strength not in {"SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG"}:
-        raise EvaluatorConfigurationError("PVS1 strength must be a valid ACMG evidence strength")
+    candidate_consequence = consequence in allowed
     return EvaluatorResult(
-        "PVS1", True, strength, "PATHOGENIC", "PROPOSED",
-        "Variant is an explicitly configured LoF consequence in a gene/disease context where LoF is an established mechanism. Additional gene/transcript-specific PVS1 requirements must be satisfied by the active specification.",
-        metadata={"consequence": consequence, "lof_mechanism_established": True, "allowed_consequences": sorted(allowed)},
+        "PVS1", False, None, "PATHOGENIC", "REQUIRES_REVIEW",
+        "PVS1 requires the ClinGen SVI decision tree and applicable gene/transcript-specific checks; SIRALOOM does not currently implement those checks, so no strength is proposed.",
+        metadata={
+            "consequence": consequence,
+            "candidate_consequence_configured": candidate_consequence,
+            "lof_mechanism_established": True,
+            "allowed_consequences": sorted(allowed),
+            "automated_strength": "NOT_PRODUCED",
+            "review_reason": "PVS1_DECISION_TREE_NOT_IMPLEMENTED",
+        },
     )
