@@ -1,3 +1,5 @@
+import hashlib
+import json
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -319,16 +321,31 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     _validate_observation_members(rows, members)
     obs=[FamilyObservation(member_id=members[r.pedigree_member_id].member_identifier,sex=members[r.pedigree_member_id].sex,affected_status=r.phenotype_status or members[r.pedigree_member_id].affected_status,genotype=r.genotype,zygosity=r.zygosity) for r in rows if r.pedigree_member_id in members]
-    fp=fingerprint(obs); results=[]
+    fp=fingerprint(obs); results=[]; audit_changes=[]
     for model in models:
         result=assess_model(model,obs)
-        row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
-        db.add(row); results.append({"id":str(row.id),**result,"fingerprint":fp,"reviewer_note":body.reviewer_note})
+        row=db.scalar(select(InheritanceAssessment).where(
+            InheritanceAssessment.analysis_id==analysis_id,
+            InheritanceAssessment.variant_id==variant_id,
+            InheritanceAssessment.model==model,
+            InheritanceAssessment.observation_fingerprint==fp,
+        ))
+        if row is None:
+            row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
+            db.add(row)
+            audit_changes.append({"operation":"CREATE","assessment_id":str(row.id),"after_state":{"model":model,"status":result["status"],"reviewer_note":body.reviewer_note,"observation_fingerprint":fp}})
+        elif row.reviewer_note != body.reviewer_note:
+            before_state={"model":row.model,"status":row.status,"reviewer_note":row.reviewer_note,"observation_fingerprint":row.observation_fingerprint}
+            row.reviewer_note=body.reviewer_note
+            audit_changes.append({"operation":"UPDATE","assessment_id":str(row.id),"before_state":before_state,"after_state":{"model":model,"status":row.status,"reviewer_note":row.reviewer_note,"observation_fingerprint":fp}})
+        results.append({"id":str(row.id),**result,"fingerprint":fp,"reviewer_note":row.reviewer_note})
         # Store only a neutral pointer to the recorded observations. This is
         # not a calculated segregation or inheritance criterion.
         payload={"model":model,"status":result["status"],"observations_available":result["observations_available"],"observation_fingerprint":fp,"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW"}
-        stmt=select(Evidence).where(Evidence.analysis_id==analysis_id,Evidence.variant_id==variant_id,Evidence.evidence_type=="SEGREGATION",Evidence.evidence_fingerprint==__import__('hashlib').sha256(__import__('json').dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest())
+        evidence_fingerprint=hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        stmt=select(Evidence).where(Evidence.analysis_id==analysis_id,Evidence.variant_id==variant_id,Evidence.evidence_type=="SEGREGATION",Evidence.evidence_fingerprint==evidence_fingerprint)
         if not db.scalar(stmt):
-            db.add(Evidence(id=uuid4(),variant_id=variant_id,analysis_id=analysis_id,evidence_type="SEGREGATION",statement=f"Family observations recorded for {model}; disease-specific interpretation requires human review.",direction="CONTEXTUAL",source_name="SIRALOOM Pedigree Observation Workflow",source_version="M11_OBSERVATIONS_ONLY",source_record_id=None,observation_ids=[str(r.id) for r in rows],payload=payload,created_by_type="SYSTEM",created_by_id="inheritance",evidence_fingerprint=__import__('hashlib').sha256(__import__('json').dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()))
-    AuditService(db).record(event_type="INHERITANCE_ASSESSMENT_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="VARIANT_INHERITANCE",subject_id=str(variant_id),operation="CREATE",after_state={"models":results,"observation_fingerprint":fp},reason=body.reviewer_note)
+            db.add(Evidence(id=uuid4(),variant_id=variant_id,analysis_id=analysis_id,evidence_type="SEGREGATION",statement=f"Family observations recorded for {model}; disease-specific interpretation requires human review.",direction="CONTEXTUAL",source_name="SIRALOOM Pedigree Observation Workflow",source_version="M11_OBSERVATIONS_ONLY",source_record_id=None,observation_ids=[str(r.id) for r in rows],payload=payload,created_by_type="SYSTEM",created_by_id="inheritance",evidence_fingerprint=evidence_fingerprint))
+    if audit_changes:
+        AuditService(db).record(event_type="INHERITANCE_ASSESSMENT_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="VARIANT_INHERITANCE",subject_id=str(variant_id),operation="UPSERT",after_state={"changes":audit_changes,"observation_fingerprint":fp},reason=body.reviewer_note)
     db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"results":results,"important_note":"No automated inheritance compatibility conclusion or ACMG/ClinGen criterion is generated. Review disease-specific mechanism, penetrance, phase, pedigree and required family evidence."}

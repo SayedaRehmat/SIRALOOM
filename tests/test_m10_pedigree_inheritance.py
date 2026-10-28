@@ -1,12 +1,26 @@
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from pydantic import ValidationError
+from sqlalchemy import create_engine, func, select
+from sqlalchemy.orm import Session
 
 from backend.app.api.v1 import pedigree
 from backend.app.api.v1.pedigree import AssessmentInput
-from backend.app.infrastructure.db.models import Case, SegregationObservation
+from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    AuditEvent,
+    Case,
+    Evidence,
+    InheritanceAssessment,
+    Organization,
+    PedigreeMember,
+    SegregationObservation,
+    User,
+    Variant,
+)
 from backend.app.inheritance import (
     FamilyObservation,
     assess_model,
@@ -305,6 +319,157 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
     assert evidence.source_version == "M11_OBSERVATIONS_ONLY"
     assert "score" not in evidence.payload
     assert evidence.payload["status"] == "REQUIRES_REVIEW"
+
+
+def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplicate_audit(monkeypatch):
+    analysis_id, variant_id, case_id, member_id = (uuid4() for _ in range(4))
+    principal = SimpleNamespace(user_id=uuid4())
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    observation = SimpleNamespace(
+        id=uuid4(), pedigree_member_id=member_id, genotype="0/1",
+        zygosity="HET", phenotype_status="AFFECTED",
+    )
+    member = SimpleNamespace(
+        id=member_id, member_identifier="PROBAND", sex="UNKNOWN",
+        affected_status="AFFECTED",
+    )
+    obs = [FamilyObservation("PROBAND", "UNKNOWN", "AFFECTED", "0/1", "HET")]
+    observation_fingerprint = fingerprint(obs)
+    assessment = InheritanceAssessment(
+        id=uuid4(), analysis_id=analysis_id, variant_id=variant_id, model="AD",
+        status="REQUIRES_REVIEW", score=None,
+        rationale=assess_model("AD", obs)["rationale"],
+        observation_fingerprint=observation_fingerprint, reviewer_note="review context",
+        created_by=str(principal.user_id),
+    )
+    payload = {
+        "model": "AD", "status": "REQUIRES_REVIEW", "observations_available": 1,
+        "observation_fingerprint": observation_fingerprint,
+        "reviewer_note": "review context", "interpretation": "REQUIRES_HUMAN_REVIEW",
+    }
+    import hashlib
+    import json
+
+    evidence_fingerprint = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    evidence = SimpleNamespace(id=uuid4(), evidence_fingerprint=evidence_fingerprint)
+
+    class FakeDb:
+        def __init__(self):
+            self.rows = [[observation], [member]]
+            self.scalar_results = [assessment, evidence]
+            self.added = []
+            self.committed = False
+
+        def scalars(self, _query):
+            return self.rows.pop(0)
+
+        def scalar(self, _query):
+            return self.scalar_results.pop(0)
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.committed = True
+
+    class FakeAudit:
+        events = []
+
+        def __init__(self, _db):
+            pass
+
+        def record(self, **kwargs):
+            self.events.append(kwargs)
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+    FakeAudit.events.clear()
+    db = FakeDb()
+
+    result = pedigree.assess_inheritance(
+        analysis_id, variant_id,
+        AssessmentInput(models=["AD"], reviewer_note="review context"), db, principal,
+    )
+
+    assert result["results"][0]["id"] == str(assessment.id)
+    assert result["results"][0]["reviewer_note"] == "review context"
+    assert not any(isinstance(row, InheritanceAssessment) for row in db.added)
+    assert not any(isinstance(row, Evidence) for row in db.added)
+    assert FakeAudit.events == []
+    assert db.committed is True
+
+
+def test_identical_inheritance_assessment_retry_obeys_database_uniqueness(monkeypatch):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+    organization = Organization(id=uuid4(), name="Test Lab")
+    reviewer = User(
+        id=uuid4(), organization_id=organization.id, display_name="Reviewer",
+        email="reviewer@example.org", role="lab_director", status="ACTIVE",
+    )
+    case = Case(
+        id=uuid4(), organization_id=organization.id, case_identifier="PED-RETRY",
+        status="ACTIVE", clinical_context={}, language="en", created_by=reviewer.id,
+    )
+    analysis = Analysis(
+        id=uuid4(), case_id=case.id, analysis_type="VARIANT_INTERPRETATION",
+        workflow_id="variant-v1", workflow_version="1", status="REQUIRES_REVIEW",
+        reference_build="GRCh38", configuration={}, created_by=reviewer.id,
+    )
+    variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=10,
+        reference="A", alternate="G", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:1:10:A:G:{uuid4()}", identifiers={},
+    )
+    member = PedigreeMember(
+        id=uuid4(), case_id=case.id, member_identifier="PROBAND", sex="UNKNOWN",
+        affected_status="AFFECTED", is_proband=True, sampled=False, metadata_json={},
+    )
+    observation = SegregationObservation(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+        pedigree_member_id=member.id, genotype="0/1", zygosity="HET",
+        phase="UNKNOWN", phenotype_status="AFFECTED", source="HUMAN_REVIEW",
+        metadata_json={},
+    )
+    db.add_all([organization, reviewer, case, analysis, variant, member, observation])
+    db.commit()
+    principal = SimpleNamespace(user_id=reviewer.id)
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: variant)
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+
+    first = pedigree.assess_inheritance(
+        analysis.id, variant.id, AssessmentInput(models=["AD"], reviewer_note="review context"),
+        db, principal,
+    )
+    second = pedigree.assess_inheritance(
+        analysis.id, variant.id, AssessmentInput(models=["AD"], reviewer_note="review context"),
+        db, principal,
+    )
+    revised_note = pedigree.assess_inheritance(
+        analysis.id, variant.id, AssessmentInput(models=["AD"], reviewer_note="revised review context"),
+        db, principal,
+    )
+
+    assert first["results"][0]["id"] == second["results"][0]["id"]
+    assert revised_note["results"][0]["id"] == first["results"][0]["id"]
+    assert db.get(InheritanceAssessment, UUID(first["results"][0]["id"])).reviewer_note == "revised review context"
+    assert db.scalar(select(func.count(InheritanceAssessment.id))) == 1
+    assert db.scalar(select(func.count(Evidence.id)).where(Evidence.evidence_type == "SEGREGATION")) == 2
+    audit_events = list(db.scalars(select(AuditEvent).where(
+        AuditEvent.event_type == "INHERITANCE_ASSESSMENT_RECORDED"
+    ).order_by(AuditEvent.occurred_at)))
+    assert len(audit_events) == 2
+    assert audit_events[-1].after_state["changes"][0]["before_state"]["reviewer_note"] == "review context"
+    assert audit_events[-1].after_state["changes"][0]["after_state"]["reviewer_note"] == "revised review context"
+    db.close()
 
 
 def test_m10_supported_models_are_explicit():
