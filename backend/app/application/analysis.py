@@ -99,9 +99,11 @@ def create_analysis(
     specimen = db.get(Specimen, artifact.specimen_id) if artifact.specimen_id else None
     if specimen is None or specimen.case_id != case_id:
         raise ValueError("Analysis input VCF must be linked to a specimen in this case")
-    expected_sample_name = str((specimen.metadata_json or {}).get("vcf_sample_name") or "").strip()
-    if not expected_sample_name:
-        raise ValueError("The specimen must have an explicit VCF sample name mapping before analysis")
+    expected_sample_name = (specimen.metadata_json or {}).get("vcf_sample_name")
+    if not isinstance(expected_sample_name, str) or not expected_sample_name.strip():
+        raise ValueError("The specimen must have an explicit VCF sample name mapping stored as a non-empty string")
+    if expected_sample_name != expected_sample_name.strip():
+        raise ValueError("The specimen VCF sample name mapping must be trimmed before analysis")
     validate_analysis_input_artifact(artifact, reference_build, expected_sample_name)
 
     analysis_configuration = dict(configuration or {})

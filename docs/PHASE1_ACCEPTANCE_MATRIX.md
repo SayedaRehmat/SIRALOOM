@@ -584,3 +584,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Repeating the same inheritance-review request does not violate the assessment identity constraint or duplicate evidence/audit records | PASS (local SQLite/API scope) | The route reuses the assessment keyed by analysis, variant, model and observation fingerprint under the analysis lock. `tests/test_m10_pedigree_inheritance.py` exercises the actual SQLite uniqueness constraint and checks stable assessment identity, evidence/audit deduplication, and audited reviewer-note changes. Focused suite: **17 passed**; related review/reanalysis/authorization suite: **71 passed**; full Linux backend suite: **1,559 passed, 54 skipped**. Ruff F and `git diff --check` passed. Exact-SHA CI is pending. |
 | Scientific inheritance compatibility, segregation criterion validity, or clinical sign-out validity | NOT ESTABLISHED | The implementation records observation sufficiency and requires human review; it does not infer disease-specific inheritance compatibility or ACMG/ClinGen criteria. Overall Phase A remains **PARTIAL**. |
+
+### 2026-10-28 canonical specimen-to-VCF sample identity
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Specimen VCF sample mapping is a canonical non-empty string before analysis creation | PASS (local route/service scope) | Specimen registration rejects non-string/blank metadata mappings and trims valid values before persistence. Analysis creation rejects non-string, blank, or noncanonical legacy values rather than coercing them. Focused intake/quota/sample tests: **63 passed**; full Linux backend suite: **1,566 passed, 54 skipped**; Ruff F/I and `git diff --check` passed. Exact-SHA CI for the previous parent commit passed; this change awaits CI. |
+| Biological sample identity, contamination/relatedness, multisample-family mapping, and live specimen chain-of-custody | NOT ESTABLISHED / NOT IMPLEMENTED | The checks establish exact VCF header-name mapping to a recorded specimen field only. They do not prove biological identity or assay performance. The current executable workflow requires exactly one VCF sample. |

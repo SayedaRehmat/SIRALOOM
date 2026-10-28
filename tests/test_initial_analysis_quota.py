@@ -325,3 +325,26 @@ def test_missing_or_mismatched_specimen_sample_mapping_blocks_analysis(specimen_
             )
         )
         assert entitlement.analyses_used == 0
+
+
+@pytest.mark.parametrize("specimen_mapping", [42, " PROBAND ", "   "])
+def test_noncanonical_specimen_sample_mapping_cannot_create_analysis(specimen_mapping):
+    engine = _database()
+
+    with Session(engine) as db:
+        organization_id, case_id, artifact_id, user_id = _seed(db)
+        artifact = db.get(Artifact, artifact_id)
+        specimen = db.get(Specimen, artifact.specimen_id)
+        specimen.metadata_json = {"vcf_sample_name": specimen_mapping}
+        db.commit()
+
+        with pytest.raises(ValueError, match="non-empty string|must be trimmed"):
+            _create(db, case_id, artifact_id, user_id)
+
+        assert db.scalar(select(func.count(Analysis.id))) == 0
+        entitlement = db.scalar(
+            select(OrganizationEntitlement).where(
+                OrganizationEntitlement.organization_id == organization_id
+            )
+        )
+        assert entitlement.analyses_used == 0

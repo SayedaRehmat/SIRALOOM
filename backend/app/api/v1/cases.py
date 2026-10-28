@@ -166,6 +166,14 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     specimen_metadata = dict(payload.metadata or {})
+    configured_sample = specimen_metadata.get("vcf_sample_name")
+    if configured_sample is not None:
+        if not isinstance(configured_sample, str) or not configured_sample.strip():
+            raise HTTPException(
+                status_code=422,
+                detail="metadata.vcf_sample_name must be a non-empty string",
+            )
+        specimen_metadata["vcf_sample_name"] = configured_sample.strip()
     if payload.vcf_sample_name is not None:
         declared_sample = payload.vcf_sample_name.strip()
         if not declared_sample:

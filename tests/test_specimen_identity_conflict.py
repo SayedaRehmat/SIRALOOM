@@ -79,3 +79,96 @@ def test_duplicate_specimen_identity_is_a_conflict_not_a_server_error(monkeypatc
     assert db.rolled_back is True
     assert db.scalar_calls == 1
     assert db.added[0].metadata_json["vcf_sample_name"] == "VCF-PROBAND-01"
+
+
+@pytest.mark.parametrize("sample_name", [42, "", "   "])
+def test_specimen_registration_rejects_non_string_or_blank_metadata_sample_mapping(
+    monkeypatch, sample_name
+):
+    organization_id = uuid4()
+    case_id = uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+
+    class Session:
+        added = []
+
+        def get(self, model, identity, **kwargs):
+            assert model.__name__ == "Case"
+            assert kwargs.get("with_for_update") is True
+            return case
+
+        def refresh(self, row, **kwargs):
+            assert row is case
+            assert kwargs.get("with_for_update") is True
+
+        def add(self, item):
+            self.added.append(item)
+
+    db = Session()
+    monkeypatch.setattr(cases_api, "AuditService", NoopAudit)
+    monkeypatch.setattr(cases_api, "require_case_permission", lambda *_args: None)
+
+    with pytest.raises(HTTPException) as error:
+        cases_api.create_specimen(
+            case_id=case_id,
+            payload=SpecimenCreate(
+                specimen_identifier="S-INVALID-MAPPING",
+                specimen_type="blood",
+                metadata={"vcf_sample_name": sample_name},
+            ),
+            db=db,
+            principal=Principal(
+                user_id=uuid4(), organization_id=organization_id,
+                role="organization_admin", subject="verified-subject",
+            ),
+        )
+
+    assert error.value.status_code == 422
+    assert "vcf_sample_name" in error.value.detail
+    assert db.added == []
+
+
+def test_specimen_registration_canonicalizes_whitespace_around_metadata_sample_name(monkeypatch):
+    organization_id = uuid4()
+    case_id = uuid4()
+    case = SimpleNamespace(id=case_id, organization_id=organization_id)
+
+    class Session:
+        def __init__(self):
+            self.added = []
+
+        def get(self, model, identity, **kwargs):
+            assert model.__name__ == "Case"
+            assert kwargs.get("with_for_update") is True
+            return case
+
+        def refresh(self, row, **kwargs):
+            assert row is case
+            assert kwargs.get("with_for_update") is True
+
+        def add(self, item):
+            self.added.append(item)
+
+        def commit(self):
+            pass
+
+    db = Session()
+    monkeypatch.setattr(cases_api, "AuditService", NoopAudit)
+    monkeypatch.setattr(cases_api, "require_case_permission", lambda *_args: None)
+
+    result = cases_api.create_specimen(
+        case_id=case_id,
+        payload=SpecimenCreate(
+            specimen_identifier="S-CANONICAL-MAPPING",
+            specimen_type="blood",
+            metadata={"vcf_sample_name": "  VCF-PROBAND-01  "},
+        ),
+        db=db,
+        principal=Principal(
+            user_id=uuid4(), organization_id=organization_id,
+            role="organization_admin", subject="verified-subject",
+        ),
+    )
+
+    assert result["vcf_sample_name"] == "VCF-PROBAND-01"
+    assert db.added[0].metadata_json["vcf_sample_name"] == "VCF-PROBAND-01"
