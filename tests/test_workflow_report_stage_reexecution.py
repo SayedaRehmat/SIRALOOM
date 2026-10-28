@@ -38,12 +38,12 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
 
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'report-stage-retry.db'}")
     Base.metadata.create_all(engine)
-    case_lock_requests = []
+    report_lock_requests = []
 
     class CaseLockTrackingSession(Session):
         def get(self, entity, ident, **kwargs):
-            if entity is Case and kwargs.get("with_for_update"):
-                case_lock_requests.append(ident)
+            if kwargs.get("with_for_update") and entity in {Analysis, Case}:
+                report_lock_requests.append((entity, ident))
             return super().get(entity, ident, **kwargs)
 
     LocalSession = sessionmaker(
@@ -102,7 +102,7 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
                 artifact_type="SOURCE_VCF", media_type="text/plain",
                 genome_build="GRCh38", metadata={},
             )
-            normalized_artifact = store.put_file(
+            store.put_file(
                 db=db, case_id=case_id, analysis_id=analysis_id,
                 source_path=normalized_vcf, filename="normalized.vcf.gz",
                 artifact_type="NORMALIZED_VCF", media_type="application/gzip",
@@ -167,7 +167,10 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
 
         with pytest.raises(workflow.TransientWorkflowError):
             workflow.run_variant_analysis(analysis_id)
-        assert case_lock_requests.count(case_id) >= 1
+        assert report_lock_requests[-2:] == [
+            (Analysis, analysis_id),
+            (Case, case_id),
+        ]
 
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)
@@ -193,7 +196,10 @@ def test_real_workflow_entrypoint_retries_report_artifact_failure_without_duplic
         # Re-enter through the production workflow function. The completed upstream
         # stages remain checkpoints; only the failed report artifact operation retries.
         workflow.run_variant_analysis(analysis_id)
-        assert case_lock_requests.count(case_id) >= 2
+        assert report_lock_requests[-2:] == [
+            (Analysis, analysis_id),
+            (Case, case_id),
+        ]
 
         with LocalSession() as db:
             analysis = db.get(Analysis, analysis_id)
