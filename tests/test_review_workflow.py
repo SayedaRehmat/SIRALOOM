@@ -284,6 +284,28 @@ def test_criterion_review_requires_explicit_strength(decision):
         )
 
 
+@pytest.mark.parametrize(
+    ("criterion", "strength", "message"),
+    [
+        ("PM2", "STANDALONE", "Unsupported evidence strength"),
+        ("BA1", "SUPPORTING", "BA1 must use strength STANDALONE"),
+    ],
+)
+def test_criterion_review_enforces_framework_strength_for_criterion(criterion, strength, message):
+    db, reviewer, _, analysis, variant, assessment, _ = seed()
+    assessment.criterion = criterion
+    db.commit()
+    with pytest.raises(ReviewError, match=message):
+        review_criterion(
+            db,
+            analysis_id=analysis.id,
+            variant_id=variant.id,
+            criterion=criterion,
+            mutation=ReviewMutation("ACCEPT", strength, "Reviewed evidence", tuple(), 0),
+            reviewer=reviewer,
+        )
+
+
 def test_stale_review_is_rejected():
     db, reviewer, _, analysis, variant, _, _ = seed()
     review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("ACCEPT", "MODERATE", "Accept", tuple(), 0), reviewer=reviewer)

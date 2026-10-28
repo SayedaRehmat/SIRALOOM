@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.adapters.annotation.genebe_normalizer import gene_be_display_payload
+from backend.app.acmg.rules import validate_strength
 from backend.app.auth.authorization import get_analysis_variant, require_analysis_artifact
 from backend.app.domain.enums import ReviewStatus, StepStatus
 from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
@@ -511,14 +512,13 @@ def review_criterion(
     criterion = criterion.strip().upper()
     if not criterion or not mutation.reason.strip():
         raise ReviewError("Criterion and review reason are required")
-    if mutation.decision in {"ACCEPT", "MODIFY"} and mutation.strength not in {
-        "SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG", "STANDALONE",
-    }:
+    if mutation.decision in {"ACCEPT", "MODIFY"} and mutation.strength is None:
         raise ReviewError("Accepting or modifying a criterion requires an explicit valid strength")
-    if mutation.decision == "REJECT" and mutation.strength is not None and mutation.strength not in {
-        "SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG", "STANDALONE",
-    }:
-        raise ReviewError("Criterion strength is invalid")
+    if mutation.decision in {"ACCEPT", "MODIFY"} or mutation.strength is not None:
+        try:
+            validate_strength(criterion, mutation.strength or "")
+        except ValueError as exc:
+            raise ReviewError(str(exc)) from exc
 
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:
