@@ -511,6 +511,14 @@ def review_criterion(
     criterion = criterion.strip().upper()
     if not criterion or not mutation.reason.strip():
         raise ReviewError("Criterion and review reason are required")
+    if mutation.decision in {"ACCEPT", "MODIFY"} and mutation.strength not in {
+        "SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG", "STANDALONE",
+    }:
+        raise ReviewError("Accepting or modifying a criterion requires an explicit valid strength")
+    if mutation.decision == "REJECT" and mutation.strength is not None and mutation.strength not in {
+        "SUPPORTING", "MODERATE", "STRONG", "VERY_STRONG", "STANDALONE",
+    }:
+        raise ReviewError("Criterion strength is invalid")
 
     analysis = db.get(Analysis, analysis_id, with_for_update=True)
     if analysis is None:

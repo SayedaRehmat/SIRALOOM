@@ -783,6 +783,8 @@ export type TranslationKey =
   | "review.evidenceNone"
   | "review.acmg"
   | "review.linkEvidence"
+  | "review.selectStrength"
+  | "review.strengthRequired"
   | "review.accept"
   | "review.modify"
   | "review.reject"
@@ -1274,6 +1276,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.evidenceNone": "No literature or functional/computational context evidence is attached to this variant.",
     "review.acmg": "ACMG / CLINGEN HUMAN ASSESSMENT",
     "review.linkEvidence": "Link supporting/contradictory evidence",
+    "review.selectStrength": "Select criterion strength",
+    "review.strengthRequired": "Select an explicit criterion strength before accepting or modifying it.",
     "review.accept": "Accept",
     "review.modify": "Modify",
     "review.reject": "Reject",
@@ -2213,6 +2217,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.evidenceNone": "لا توجد أدلة سياقية أدبية أو وظيفية/حسابية مرفقة بهذا المتغير.",
     "review.acmg": "التقييم البشري لـ ACMG / ClinGen",
     "review.linkEvidence": "ربط الأدلة الداعمة/المتعارضة",
+    "review.selectStrength": "اختر قوة المعيار",
+    "review.strengthRequired": "اختر قوة المعيار صراحةً قبل قبوله أو تعديله.",
     "review.accept": "قبول",
     "review.modify": "تعديل",
     "review.reject": "رفض",

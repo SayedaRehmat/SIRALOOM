@@ -270,6 +270,20 @@ def test_criterion_review_is_versioned_and_append_only_history():
     assert action.resulting_version == 1
 
 
+@pytest.mark.parametrize("decision", ["ACCEPT", "MODIFY"])
+def test_criterion_review_requires_explicit_strength(decision):
+    db, reviewer, _, analysis, variant, _, _ = seed()
+    with pytest.raises(ReviewError, match="explicit valid strength"):
+        review_criterion(
+            db,
+            analysis_id=analysis.id,
+            variant_id=variant.id,
+            criterion="PM2",
+            mutation=ReviewMutation(decision, None, "Reviewed evidence", tuple(), 0),
+            reviewer=reviewer,
+        )
+
+
 def test_stale_review_is_rejected():
     db, reviewer, _, analysis, variant, _, _ = seed()
     review_criterion(db, analysis_id=analysis.id, variant_id=variant.id, criterion="PM2", mutation=ReviewMutation("ACCEPT", "MODERATE", "Accept", tuple(), 0), reviewer=reviewer)

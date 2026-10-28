@@ -236,6 +236,7 @@ export default function Home() {
   const [gateInputsChanged, setGateInputsChanged] = useState(false);
   const [pollingEpoch, setPollingEpoch] = useState(0);
   const [criterionReason, setCriterionReason] = useState("");
+  const [criterionStrengths, setCriterionStrengths] = useState<Record<string, string>>({});
   const [manualClassificationResult, setManualClassificationResult] = useState("VUS");
   const [manualClassificationReason, setManualClassificationReason] = useState("");
   const [manualClassificationEvidenceId, setManualClassificationEvidenceId] = useState("");
@@ -799,8 +800,9 @@ export default function Home() {
   const reviewCriterion = async (criterion: string, decision: "ACCEPT" | "REJECT") => {
     const current = review?.criteria.find((item) => item.criterion === criterion);
     const expectedVersion = Number((current as any)?.review_version ?? 0);
-    if (!analysisId || !selectedVariantId || !criterionReason.trim()) {
-      setMessage(t("workspace.reviewReasonRequired"));
+    const strength = criterionStrengths[criterion] ?? "";
+    if (!analysisId || !selectedVariantId || !criterionReason.trim() || (decision === "ACCEPT" && !strength)) {
+      setMessage(!criterionReason.trim() ? t("workspace.reviewReasonRequired") : t("review.strengthRequired"));
       return;
     }
     try {
@@ -809,6 +811,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           decision,
+          strength: decision === "ACCEPT" ? strength : null,
           reason: criterionReason.trim(),
           evidence_ids: [],
           expected_version: expectedVersion,
@@ -817,6 +820,7 @@ export default function Home() {
       const next = await apiFetch(`/analyses/${analysisId}/variants/${selectedVariantId}/review`);
       setReview(next);
       setCriterionReason("");
+      if (decision === "ACCEPT") setCriterionStrengths((current) => ({ ...current, [criterion]: "" }));
       setMessage(`${criterion} review saved.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Criterion review failed.");
@@ -1260,7 +1264,7 @@ export default function Home() {
               <button className="primary" type="button" onClick={() => void proposeManualClassification()} disabled={busy || !manualClassificationEvidence.length}>{t("workspace.manualClassificationSubmit")}</button>
             </div>}
             <div className="actions-row"><button className="secondary" onClick={startReview} disabled={!review.classification || review.review_status === "APPROVED"}>{t("workspace.startReview")}</button></div>
-            <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String((item.automated as any)?.reason ?? t("workspace.noAutomatedRationale"))}</p><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">{t("workspace.accept")}</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">{t("workspace.reject")}</button></div></div>)}</div>
+            <div className="criteria-grid">{review.criteria.map((item) => <div className="criterion-card" key={item.criterion}><div className="criterion-head"><strong>{item.criterion}</strong><span className={`badge ${statusTone(item.state)}`}>{prettyStatus(item.state)}</span></div><p>{String((item.automated as any)?.reason ?? t("workspace.noAutomatedRationale"))}</p><label>{t("review.selectStrength")}<select value={criterionStrengths[item.criterion] ?? ""} onChange={(e) => setCriterionStrengths((current) => ({ ...current, [item.criterion]: e.target.value }))}><option value="">{t("review.selectStrength")}</option><option>SUPPORTING</option><option>MODERATE</option><option>STRONG</option><option>VERY_STRONG</option><option>STANDALONE</option></select></label><div className="mini-actions"><button onClick={() => reviewCriterion(item.criterion, "ACCEPT")} className="ghost">{t("workspace.accept")}</button><button onClick={() => reviewCriterion(item.criterion, "REJECT")} className="ghost danger-text">{t("workspace.reject")}</button></div></div>)}</div>
             <label>{t("workspace.criterionReviewReason")}<input value={criterionReason} onChange={(e: ChangeEvent<HTMLInputElement>) => setCriterionReason(e.target.value)} placeholder="Why is this criterion accepted/rejected?" /></label>
             <label>{t("workspace.finalApprovalReason")}<textarea value={reviewReason} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setReviewReason(e.target.value)} placeholder="Explain the basis for the final reviewer decision." rows={3} /></label>
             <div className="actions-row"><button className="primary" onClick={approve} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.approveClassification")}</button><button className="secondary" onClick={requestMoreEvidence} disabled={review.review_status !== "IN_REVIEW"}>{t("workspace.requestMoreEvidence")}</button><button className="secondary" onClick={generateReport} disabled={!analysisId || review.review_status !== "APPROVED"}>{t("workspace.generateReport")}</button></div>
