@@ -250,6 +250,25 @@ def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
     assert exc.value.code == "VCF_BOM_FORBIDDEN"
 
 
+@pytest.mark.parametrize("control", ["\x00", "\x08", "\x0b", "\x0c", "\x1f"])
+def test_strict_validation_rejects_vcf_forbidden_control_characters(
+    tmp_path: Path, control: str,
+):
+    path = tmp_path / "control-character.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        f"##source=invalid{control}metadata\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CONTROL_CHARACTER_INVALID"
+
+
 def test_info_number_a_and_r_cardinality_is_checked_for_multiallelic_records(tmp_path: Path):
     path = tmp_path / "info-cardinality.vcf"
     write_vcf_with_metadata(

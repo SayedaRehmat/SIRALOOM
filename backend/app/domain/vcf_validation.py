@@ -13,6 +13,7 @@ BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=left)|"
     r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
+FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
@@ -502,6 +503,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
+            if FORBIDDEN_CONTROL_RE.search(raw):
+                raise StrictVCFValidationError(
+                    f"VCF contains a forbidden control character at line {line_no}",
+                    code="VCF_CONTROL_CHARACTER_INVALID",
+                )
             if raw and not raw.endswith("\n") and not raw.startswith("#"):
                 raise StrictVCFValidationError(
                     f"VCF data line at line {line_no} is missing its required line separator",

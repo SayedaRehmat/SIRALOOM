@@ -1828,3 +1828,10 @@ The inventory continues. Nested resource/assay/specimen linkage and worker-owned
 - **Correction:** strict parsing now extracts the ID from structured metadata using quote-aware field splitting and rejects duplicate IDs per header type. Equal IDs in different types remain allowed. Added duplicate FILTER, ALT and same-length contig tests, plus INFO/FORMAT cross-type reuse coverage.
 - **Verification:** focused VCF/ingestion/tool suite — **101 passed, 6 skipped**. Full Linux backend suite — **1,532 passed, 54 skipped**, one existing Starlette/httpx deprecation warning. Ruff F/I, Python compilation and `git diff --check` passed. Exact-SHA CI is required after push.
 - **Status/limits:** **VERIFIED** for duplicate-ID detection and type-scoped uniqueness in tested VCFv4.3 fixtures. This does not claim complete conformance for all structured header attributes or VCF 4.4/4.5; scientific validation and laboratory deployment remain **PARTIAL**.
+
+### 2026-10-28 reject forbidden control characters in VCF text
+
+- **Finding:** the strict parser did not reject forbidden control characters in header or record text. VCF v4.3 requires UTF-8, prohibits a BOM and disallows U+0000–U+0008, U+000B–U+000C and U+000E–U+001F; LF/CRLF remain valid line separators ([HTS specifications, VCF v4.3, character encoding](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2303-L2317)).
+- **Correction:** the parser now rejects those specified control ranges before processing each line with `VCF_CONTROL_CHARACTER_INVALID`. Tab-delimited fields and LF/CRLF line handling are unchanged. Added coverage for NUL and the listed non-printing ranges.
+- **Verification:** focused VCF/ingestion/tool suite — **106 passed, 6 skipped**. Full Linux backend suite — **1,537 passed, 54 skipped**, one existing Starlette/httpx deprecation warning. Ruff F/I, Python compilation and `git diff --check` passed. Exact-SHA CI is required after push.
+- **Status/limits:** **VERIFIED** for the specified control ranges in VCFv4.3 text fixtures. This does not establish complete UTF-8 or all-version VCF conformance; scientific validation and laboratory deployment remain **PARTIAL**.
