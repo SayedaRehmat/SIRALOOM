@@ -490,7 +490,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     breakends = 0
     gvcf_markers = 0
     unchecked_info_number_g_fields: set[str] = set()
-    singleton_headers: set[str] = set()
     structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
@@ -587,14 +586,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 found_header = True
                 continue
             if line.startswith("#"):
-                if line.startswith("##"):
-                    continue
-                if "=" in line:
-                    key = line[2:].split("=", 1)[0]
-                    if key in singleton_headers and key not in {"INFO", "FORMAT", "FILTER", "ALT", "contig"}:
-                        raise StrictVCFValidationError(f"Duplicate singleton header: {key}", code="VCF_HEADER_INVALID")
-                    singleton_headers.add(key)
-                continue
+                raise StrictVCFValidationError(
+                    f"Unexpected single-hash line at line {line_no}; only #CHROM is a VCF header line",
+                    code="VCF_HEADER_INVALID",
+                )
             if not found_header:
                 raise StrictVCFValidationError(
                     f"VCF data encountered before #CHROM at line {line_no}",

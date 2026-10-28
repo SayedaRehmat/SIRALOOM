@@ -73,6 +73,24 @@ def test_strict_validation_rejects_metadata_after_chrom_header(tmp_path: Path):
     assert exc.value.code == "VCF_HEADER_ORDER_INVALID"
 
 
+def test_strict_validation_rejects_hash_prefixed_record_instead_of_silently_dropping_it(
+    tmp_path: Path,
+):
+    path = tmp_path / "hash-prefixed-record.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "#1\t100\trs1\tA\tG\t.\tPASS\t.\n"
+        "1\t200\trs2\tC\tT\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_INVALID"
+
+
 def test_late_info_definition_cannot_make_an_invalid_record_pass(tmp_path: Path):
     path = tmp_path / "late-info-definition.vcf"
     path.write_text(
