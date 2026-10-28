@@ -253,7 +253,7 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             assert normalization.metadata_json["routing"]["sequence_records"] == 1
             assert normalized is not None and store.exists(normalized.storage_uri)
             assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
-            assert "bcftools view -A" in normalized.metadata_json["normalization_command"]
+            assert "bcftools view --no-version -A" in normalized.metadata_json["normalization_command"]
             normalized_bytes = store.read_bytes(normalized.storage_uri)
             assert __import__("hashlib").sha256(normalized_bytes).hexdigest() == normalized.sha256
             records = [
