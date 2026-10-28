@@ -469,6 +469,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             if not line:
                 continue
             if line.startswith("##"):
+                if found_header:
+                    raise StrictVCFValidationError(
+                        f"VCF meta-information appears after the #CHROM header at line {line_no}",
+                        code="VCF_HEADER_ORDER_INVALID",
+                    )
                 if line.startswith("##fileformat="):
                     if fileformat is not None:
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")

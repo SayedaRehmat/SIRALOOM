@@ -57,6 +57,38 @@ def test_strict_validation_rejects_data_record_without_final_line_separator(tmp_
     assert exc.value.code == "VCF_RECORD_TERMINATOR_MISSING"
 
 
+def test_strict_validation_rejects_metadata_after_chrom_header(tmp_path: Path):
+    path = tmp_path / "metadata-after-header.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "##source=late-metadata\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_ORDER_INVALID"
+
+
+def test_late_info_definition_cannot_make_an_invalid_record_pass(tmp_path: Path):
+    path = tmp_path / "late-info-definition.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\tLATE=1,2\n"
+        '##INFO=<ID=LATE,Number=1,Type=Integer,Description="must precede records">\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_ORDER_INVALID"
+
+
 def test_strict_validation_accepts_vcf_reference_only_alt_dot_record(tmp_path: Path):
     path = tmp_path / "reference-only.vcf"
     write_vcf(path, "1\t2\t.\tA\t.\t.\tPASS\t.\n")
