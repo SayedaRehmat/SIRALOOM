@@ -59,7 +59,12 @@ class ProviderCapability:
 
 def provider_allowed_in_deployment(provider_id: str, *, is_trial: bool) -> bool:
     """Apply product deployment policy, independent of resource registration."""
-    if provider_id in TRIAL_ONLY_PROVIDERS:
+    # Provider IDs come from governed resource metadata and have historically
+    # appeared with both display-name and uppercase spellings. Deployment policy
+    # must not become fail-open because an alias differs only by case/whitespace.
+    normalized_provider_id = str(provider_id or "").strip().casefold()
+    trial_only_provider_ids = {provider.casefold() for provider in TRIAL_ONLY_PROVIDERS}
+    if normalized_provider_id in trial_only_provider_ids:
         return is_trial
     return True
 

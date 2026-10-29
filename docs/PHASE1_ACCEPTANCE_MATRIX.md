@@ -641,3 +641,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Intake accepts its declared VCF versions and rejects unqualified versions explicitly | PASS (Linux regression + exact-SHA CI) | Valid records with VCFv4.2/v4.3 pass; valid-shaped VCFv4.1/v4.4/v4.5 inputs return `VCF_FILEFORMAT_UNSUPPORTED` with supported-version guidance. Validation/intake/input tests: **120 passed**. Exact-SHA run [40839929025](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40839929025) passed all CI jobs on `b6531e9` (backend **1,649 passed, 35 skipped**). The official HTS specification index currently identifies VCFv4.5 as canonical; this code does not claim support merely from the standard's publication. |
 | VCFv4.4/v4.5 interoperability with all downstream parsers and scientific tools | NOT RUN / unsupported | No independently validated VCFv4.4/v4.5 corpus or toolchain compatibility evidence is available. Inputs must be provided as supported versions by the upstream lab pipeline; do not relabel file headers without a validated conversion. |
+
+### 2026-10-29 trial-provider locality policy
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Trial-only GeneBe and public gnomAD GraphQL providers cannot pass the deployment-policy guard in laboratory mode through case/whitespace aliases | PASS (policy/resource-plan tests) | Provider IDs are trimmed and case-folded before trial-only matching. Tests cover common display-name and uppercase variants; policy/resource-plan/profile suite: **20 passed**. |
+| Prevention of all network egress to these services on a deployed laboratory network | NOT RUN | Requires deployed request-egress capture and network-policy testing; adapter/policy unit tests alone do not prove that boundary. |
