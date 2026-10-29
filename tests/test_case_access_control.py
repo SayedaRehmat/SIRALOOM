@@ -12,6 +12,7 @@ from backend.app.api.v1.case_access import (
 )
 from backend.app.auth.authorization import (
     case_access_predicate,
+    case_read_recipient_user_ids,
     require_case_permission,
 )
 from backend.app.auth.principal import Principal
@@ -153,6 +154,21 @@ def test_case_list_predicate_returns_only_assigned_cases(case_access_db):
     assert db.scalars(
         select(Case).where(case_access_predicate(stale_admin, "read"))
     ).all() == []
+
+
+def test_case_notification_recipients_exclude_inactive_users(case_access_db):
+    db, org, _other_org, users, case, _foreign_case = case_access_db
+    users["reader"].status = "SUSPENDED"
+    db.commit()
+
+    recipients = case_read_recipient_user_ids(
+        db, case_id=case.id, organization_id=org.id
+    )
+
+    assert users["reader"].id not in recipients
+    assert users["writer"].id in recipients
+    assert users["reviewer"].id in recipients
+    assert users["admin"].id in recipients
 
 
 def test_case_access_admin_grants_updates_and_revokes_with_audit(case_access_db):

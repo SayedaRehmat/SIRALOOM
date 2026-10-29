@@ -685,3 +685,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Case-accession VCF upload displays API validation warnings as well as success | PASS (formatter and locale catalog tests) | Case upload message includes backend warnings, filters blank entries, preserves rejection errors, and tolerates malformed non-array warning/error values. Exact repository frontend helper test: **6 passed** under bundled Windows Node v24.22.1; i18n architecture/catalog guard: **PASS**. |
 | Frontend page TypeScript check, production build, and exact-SHA hosted CI | PASS (exact-SHA automated scope) | After adding the missing companion `.d.mts` declaration, exact-SHA run [40861030587](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40861030587) passed frontend behavior/localization checks, production typecheck/build, frontend container and Compose validation, backend tests/image checks and PostgreSQL/Celery integration on `02a58d1c94b90721717547a91255017349567c41`. No Linux Node runtime is installed; no live browser or lab deployment was exercised. |
+
+### 2026-10-29 inactive users excluded from case notification recipients
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Case-scoped reanalysis notification recipients must have both active membership and active user identity | PASS (local SQLite regression scope) | Shared `case_read_recipient_user_ids` now joins `User` and filters `User.status == ACTIVE`, matching resource-release fanout semantics. Regression asserts suspended assigned user excluded while active case readers/admin remain included. Focused case-access/case-change/reanalysis tests: **16 passed**; full backend suite: **1,622 passed, 55 skipped**; Ruff F/I and diff check passed. PostgreSQL and exact-SHA CI pending. |
+| Live identity-provider suspension/offboarding propagation and deployed notification delivery | NOT RUN | No Firebase/laboratory identity configuration or deployed environment is available in this checkout. |

@@ -19,11 +19,12 @@ from backend.app.infrastructure.db.models import (
     Case,
     CaseAccessGrant,
     Classification,
+    OrganizationMembership,
     Report,
     Specimen,
+    User,
     Variant,
     WorkflowStep,
-    OrganizationMembership,
 )
 from backend.app.infrastructure.db.session import get_db
 
@@ -139,9 +140,12 @@ def case_read_recipient_user_ids(db: Session, *, case_id: UUID, organization_id:
         )
     )
     rows = db.scalars(
-        select(OrganizationMembership.user_id).where(
+        select(OrganizationMembership.user_id)
+        .join(User, User.id == OrganizationMembership.user_id)
+        .where(
             OrganizationMembership.organization_id == organization_id,
             OrganizationMembership.status == "ACTIVE",
+            User.status == "ACTIVE",
             or_(
                 OrganizationMembership.role.in_(CASE_ACCESS_ADMIN_ROLES),
                 and_(OrganizationMembership.role.in_(READ_ROLES), granted_read),
