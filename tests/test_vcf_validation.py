@@ -43,6 +43,51 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["reference_contig_policy"] == "EXACT"
 
 
+def test_strict_validation_rejects_decreasing_positions_within_contig(tmp_path: Path):
+    path = tmp_path / "positions-out-of-order.vcf"
+    write_vcf(
+        path,
+        "1\t3\t.\tA\tG\t.\tPASS\t.\n"
+        "1\t2\t.\tC\tT\t.\tPASS\t.\n",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_POS_ORDER_INVALID"
+
+
+def test_strict_validation_rejects_noncontiguous_chromosome_blocks(tmp_path: Path):
+    path = tmp_path / "chromosome-blocks-out-of-order.vcf"
+    write_vcf(
+        path,
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n"
+        "2\t1\t.\tC\tT\t.\tPASS\t.\n"
+        "1\t3\t.\tG\tA\t.\tPASS\t.\n",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CHROM_BLOCK_NONCONTIGUOUS"
+
+
+def test_strict_validation_accepts_equal_positions_and_any_contig_block_order(
+    tmp_path: Path,
+):
+    path = tmp_path / "valid-contiguous-blocks.vcf"
+    write_vcf(
+        path,
+        "2\t3\t.\tA\tG\t.\tPASS\t.\n"
+        "2\t3\t.\tC\tT\t.\tPASS\t.\n"
+        "1\t1\t.\tG\tA\t.\tPASS\t.\n",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 3
+
+
 def test_strict_validation_rejects_data_record_without_final_line_separator(tmp_path: Path):
     path = tmp_path / "missing-final-newline.vcf"
     path.write_bytes(

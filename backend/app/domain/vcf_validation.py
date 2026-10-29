@@ -499,6 +499,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
     record_ids_seen: set[str] = set()
+    current_chrom: str | None = None
+    closed_chroms: set[str] = set()
+    last_position_on_chrom: int | None = None
     contig_lengths = declared_vcf_contig_lengths(path)
 
     with _open(path) as fh:
@@ -604,6 +607,24 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_RECORD_INVALID",
                 )
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            if _chrom != current_chrom:
+                if _chrom in closed_chroms:
+                    raise StrictVCFValidationError(
+                        f"Contig {_chrom!r} reappears after its VCF block ended at line {line_no}",
+                        code="VCF_CHROM_BLOCK_NONCONTIGUOUS",
+                    )
+                if current_chrom is not None:
+                    closed_chroms.add(current_chrom)
+                current_chrom = _chrom
+                last_position_on_chrom = _pos
+            elif last_position_on_chrom is not None and _pos < last_position_on_chrom:
+                raise StrictVCFValidationError(
+                    f"POS {_pos} is lower than the preceding position {last_position_on_chrom} "
+                    f"on contig {_chrom!r} at line {line_no}",
+                    code="VCF_POS_ORDER_INVALID",
+                )
+            else:
+                last_position_on_chrom = _pos
             if _pos == 0 or _pos == contig_lengths.get(_chrom, -2) + 1:
                 # VCF permits POS=0 as a telomere sentinel. It is not a
                 # sequence coordinate accepted by SIRALOOM's small-variant

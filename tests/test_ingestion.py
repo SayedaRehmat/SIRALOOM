@@ -37,6 +37,38 @@ def test_vcf_validation_reads_real_content(tmp_path: Path):
     assert result.detected_build == "GRCh38"
 
 
+@pytest.mark.parametrize(
+    ("records", "error_line"),
+    [
+        (
+            "chr1\t101\t.\tA\tG\t.\tPASS\t.\nchr1\t100\t.\tC\tT\t.\tPASS\t.\n",
+            "line 5",
+        ),
+        (
+            "chr1\t100\t.\tA\tG\t.\tPASS\t.\nchr2\t100\t.\tC\tT\t.\tPASS\t.\nchr1\t101\t.\tG\tA\t.\tPASS\t.\n",
+            "line 6",
+        ),
+    ],
+)
+def test_vcf_intake_rejects_nonconforming_record_order(
+    tmp_path: Path, records: str, error_line: str
+):
+    path = tmp_path / "out-of-order.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + records,
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.record_count == 0
+    assert error_line in result.errors[0]
+
+
 @pytest.mark.parametrize("failure", ["timeout", "executable_unavailable"])
 def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
     tmp_path: Path, monkeypatch, failure: str,

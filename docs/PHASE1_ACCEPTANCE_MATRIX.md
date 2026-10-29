@@ -712,3 +712,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | Reviewer UI can navigate all filtered queue results beyond the API's 100-item default | PASS (frontend compile, locale/session tests, exact-SHA CI) | The page requests `limit=100` and the selected offset, displays total count/range, resets pagination when filters change, corrects stale offsets if results shrink, and provides previous/next controls with English/Arabic labels. Windows Node v22.23.2 TypeScript `tsc --noEmit --incremental false` passed against the Linux checkout; the i18n architecture guard passed; the frontend session suite passed **47 tests** from a temporary Windows path. Exact-SHA CI [run 40865286505](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40865286505) passed frontend behavior, localization, production build/container/Compose, backend tests, PostgreSQL/Celery and container checks on `48748a593daab2a230ad2819f64bf8eceefb6090`. No browser session or deployed large analysis was run. |
+| Reviewer UI deployed-browser interaction and deployed large-analysis performance | NOT RUN | No browser session or deployed laboratory analysis was exercised. |
+
+### 2026-10-29 enforce VCF coordinate ordering at intake
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| A chromosome's VCF records form one contiguous block and positions are nondecreasing within it | PASS (local automated scope) | Strict validation emits `VCF_CHROM_BLOCK_NONCONTIGUOUS` or `VCF_POS_ORDER_INVALID`; equal POS and arbitrary ordering of distinct contiguous contig blocks remain accepted. Regression covers direct validator and intake rejection. Focused VCF/intake/normalization/routing suite: **141 passed, 7 skipped**; full backend suite: **1,629 passed, 55 skipped**; Ruff F/I and `git diff --check` passed. Requirement follows the [HTS VCFv4.3 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex). Exact-SHA CI is pending. |
+| VCF ordering behavior in a deployed laboratory intake | NOT RUN | No laboratory deployment was available. The tests establish local validator and upload-service behavior only. |
