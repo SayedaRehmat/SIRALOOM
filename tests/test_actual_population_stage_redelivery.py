@@ -879,6 +879,9 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 assert all(row.allele_count is None and row.allele_number is None and row.allele_frequency is None for row in observations)
             assert executions[0].request_fingerprint == "d" * 64
             assert executions[0].response_sha256 == "e" * 64
+            assert executions[0].metadata_json["query_outcome"] == (
+                "NO_MATCH" if no_match else "MATCHED"
+            )
             assert provider_calls["count"] == 1
 
         # Simulate worker loss after evidence and resource-execution rows commit,

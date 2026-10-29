@@ -3193,6 +3193,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             )
                             direct_count += 1
                         sample = next(iter(obs_list), None)
+                        if not obs_list:
+                            query_outcome = "NO_OBSERVATIONS"
+                        elif all(
+                            obs.quality_status == "NO_MATCH"
+                            or obs.availability == "NOT_FOUND"
+                            for obs in obs_list
+                        ):
+                            query_outcome = "NO_MATCH"
+                        else:
+                            query_outcome = "MATCHED"
+                        execution_record.metadata_json = {
+                            **(execution_record.metadata_json or {}),
+                            "query_outcome": query_outcome,
+                        }
                         complete_resource_execution(
                             db,
                             execution_record,
