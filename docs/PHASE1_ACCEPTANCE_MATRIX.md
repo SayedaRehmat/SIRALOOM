@@ -720,3 +720,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | A chromosome's VCF records form one contiguous block and positions are nondecreasing within it | PASS (local automated and exact-SHA CI) | Strict validation emits `VCF_CHROM_BLOCK_NONCONTIGUOUS` or `VCF_POS_ORDER_INVALID`; equal POS and arbitrary ordering of distinct contiguous contig blocks remain accepted. Regression covers direct validator and intake rejection. Focused VCF/intake/normalization/routing suite: **141 passed, 7 skipped**; full backend suite: **1,629 passed, 55 skipped**; Ruff F/I and `git diff --check` passed. Exact-SHA run [40866906660](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40866906660) passed backend, PostgreSQL/Celery integration, and frontend/container/Compose on `ea62e921624589574cc6fe034f8e0f7a61789c3d`. Requirement follows the [HTS VCFv4.3 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex). |
 | VCF ordering behavior in a deployed laboratory intake | NOT RUN | No laboratory deployment was available. The tests establish local validator and upload-service behavior only. |
+
+### 2026-10-29 require configured BCFtools for VCF intake
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| VCF upload cannot pass intake when the required BCFtools/HTSlib parser is missing | PASS (local automated scope) | Missing executable now returns the existing retryable `VCFValidationUnavailable` contract instead of silently passing. Regression tests force executable discovery to fail; configured execution used extracted Ubuntu BCFtools/HTSlib **1.19**. Focused intake/VCF/tool/routing suite: **149 passed**; full backend suite: **1,649 passed, 36 skipped**; Ruff F/I and `git diff --check` passed. Exact-SHA CI pending. |
+| Required VCF toolchain integrity in an installed laboratory deployment | NOT RUN | CI/image configuration pins and checks BCFtools 1.19, but no laboratory deployment was inspected or executed. |

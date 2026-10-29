@@ -90,6 +90,19 @@ def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
         ingestion.validate_vcf(path)
 
 
+def test_vcf_intake_fails_retryably_when_bcftools_is_not_installed(
+    tmp_path: Path, monkeypatch
+):
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: None)
+
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="executable was not found"):
+        ingestion.validate_vcf(path)
+
+
 def test_upload_maps_validation_tool_failure_to_retryable_503(tmp_path: Path, monkeypatch):
     from fastapi import HTTPException
 

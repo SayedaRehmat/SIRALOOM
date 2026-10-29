@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 fail closed when the required VCF parser is unavailable
+
+- **Finding:** the laboratory backend image and both CI workflows install/check BCFtools 1.19, but `_bcftools_validate` returned success-shaped `None` when `bcftools` was not found. The upload intake could therefore accept a VCF after only the application's own strict checks when its declared HTSlib parser dependency was missing.
+- **Correction:** missing BCFtools now raises the existing `VCFValidationUnavailable` operational exception, which the upload route already converts to a retryable 503. The message explains that the VCF was not accepted and directs restoration of the configured lab toolchain. Invalid VCF output remains distinct from unavailable tool execution.
+- **Regression/verification:** added a regression that removes BCFtools from discovery and asserts the retryable unavailable state. The pinned Ubuntu packages were extracted under `/tmp` (no system package changes); runtime reports BCFtools **1.19**, HTSlib **1.19**. Focused intake/VCF/tool/routing suite with the real binary — **149 passed**, one existing Starlette/httpx deprecation warning. Full backend suite with BCFtools 1.19 — **1,649 passed, 36 skipped**, one existing deprecation warning. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** local tests prove that missing-tool intake fails as unavailable and configured-tool intake passes regressions. Exact-SHA CI for this change is pending. This does not qualify the laboratory's actual executable/package integrity or establish end-to-end scientific validation. Phase A remains **PARTIAL**.
+
 ### 2026-10-29 reject VCF records that violate coordinate ordering
 
 - **Finding:** the strict VCF validator checked individual records but did not enforce the VCF requirement that records for a chromosome occupy one contiguous block and positions are numerically nondecreasing within that block. Because intake calls this validator, invalid unsorted data could be accepted for normalization. The official [HTS VCFv4.3 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex) defines these ordering constraints; equal positions are allowed.

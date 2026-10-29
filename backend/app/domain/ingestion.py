@@ -94,7 +94,10 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
 def _bcftools_validate(path: Path) -> str | None:
     executable = shutil.which("bcftools")
     if executable is None:
-        return None
+        raise VCFValidationUnavailable(
+            "bcftools/htslib is required to validate VCF input, but the executable was not found. "
+            "The VCF was not accepted; restore the configured laboratory toolchain and retry."
+        )
     try:
         completed = subprocess.run(
             [executable, "view", "-Ov", "-o", "/dev/null", str(path)],
