@@ -387,8 +387,13 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
 
     if identifier == "":
         raise StrictVCFValidationError(f"ID is empty at line {line_no}", code="VCF_ID_INVALID")
-    if identifier != "." and any(not re.fullmatch(r"[A-Za-z0-9_.:-]+", x) for x in identifier.split(";")):
-        raise StrictVCFValidationError(f"Malformed ID at line {line_no}: {identifier!r}", code="VCF_ID_INVALID")
+    if identifier != ".":
+        record_ids = identifier.split(";")
+        if (
+            any(not record_id or any(char.isspace() for char in record_id) for record_id in record_ids)
+            or ("." in record_ids and record_ids != ["."])
+        ):
+            raise StrictVCFValidationError(f"Malformed ID at line {line_no}: {identifier!r}", code="VCF_ID_INVALID")
 
     ref = ref.upper()
     if not DNA_RE.fullmatch(ref):

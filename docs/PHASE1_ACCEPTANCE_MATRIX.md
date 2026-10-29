@@ -734,3 +734,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | FILTER rejects reserved `0`, duplicate IDs, and `PASS` mixed with failed filters | PASS (local automated and exact-SHA CI) | Direct validator and upload regressions cover all three invalid forms; they also verify a declared nonzero numeric FILTER ID is accepted. The parser returns `VCF_FILTER_INVALID` for invalid forms; valid `.` / `PASS` / distinct filter-list semantics are unchanged. The behavior follows [HTS VCFv4.3](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex). Focused VCF/normalization/routing tests: **168 passed**; full backend: **1,657 passed, 36 skipped** with BCFtools/HTSlib 1.19; Ruff F/I and diff check passed. Exact-SHA run [40870508066](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40870508066) passed backend, PostgreSQL/Celery integration, and frontend/container/Compose on `fc315f48e252204df31a7a9009f84f9396ad42c6`. |
 | Meaning/qualification of lab-specific FILTER IDs | NOT RUN | No assay/caller-specific SOP or deployed lab policy was supplied; this change validates syntax and semantics only. |
+
+### 2026-10-29 accept VCF ID field punctuation
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Record IDs permit non-whitespace punctuation under the supported VCF contract | PASS (local automated scope) | Validator accepts punctuation such as `+`; rejects empty IDs, whitespace, duplicate IDs, and `.` mixed with identifiers. Direct parser and upload regressions cover `lab+variant:01` with BCFtools/HTSlib 1.19. Focused six-suite VCF/normalization/routing tests: **172 passed**; full backend rerun: **1,661 passed, 36 skipped**; Ruff F/I and diff check passed. The first full run had one unrelated case-export redelivery failure; that test passed alone and the full rerun passed. See [HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2684-L2691). Exact-SHA CI pending. |
+| Sample identity or clinical provenance of supplied record IDs | NOT ESTABLISHED | VCF record-ID syntax does not establish biological sample identity or clinical validity. |

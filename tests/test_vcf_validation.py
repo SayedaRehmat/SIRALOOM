@@ -56,6 +56,15 @@ def test_strict_validation_accepts_nonzero_numeric_filter_identifier(tmp_path: P
     assert profile["records"] == 1
 
 
+def test_strict_validation_accepts_vcf_record_ids_with_valid_punctuation(tmp_path: Path):
+    path = tmp_path / "punctuated-record-id.vcf"
+    write_vcf(path, "1\t2\tlab+variant:01\tA\tG\t.\tPASS\t.\n")
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
 def test_strict_validation_rejects_decreasing_positions_within_contig(tmp_path: Path):
     path = tmp_path / "positions-out-of-order.vcf"
     write_vcf(
@@ -246,6 +255,8 @@ def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: P
     [
         ("1\t2\t.\tA\tG\n", "VCF_RECORD_INVALID"),
         ("1\t-1\t.\tA\tG\t.\tPASS\t.\n", "VCF_POS_INVALID"),
+        ("1\t2\tbad id\tA\tG\t.\tPASS\t.\n", "VCF_ID_INVALID"),
+        ("1\t2\t.;rs123\tA\tG\t.\tPASS\t.\n", "VCF_ID_INVALID"),
         ("1\t2\t.\tX\tG\t.\tPASS\t.\n", "VCF_REF_INVALID"),
         ("1\t2\t.\tA\tG\t-1\tPASS\t.\n", "VCF_QUAL_INVALID"),
         ("1\t2\t.\tA\tG\t.\tBAD;\t.\n", "VCF_FILTER_INVALID"),

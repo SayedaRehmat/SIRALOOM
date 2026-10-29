@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 accept VCF record IDs allowed by the specification
+
+- **Finding:** the strict validator restricted record IDs to `[A-Za-z0-9_.:-]+`. This rejected otherwise valid IDs containing punctuation such as `+`, even though VCFv4.3 defines the ID field as a semicolon-separated string with whitespace and semicolons disallowed ([HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2684-L2691)).
+- **Correction:** ID validation now rejects empty list members and whitespace while permitting other punctuation. `.` remains valid only as the entire missing-ID value; duplicate IDs within/across records continue to fail the existing uniqueness checks.
+- **Regression/verification:** added direct strict-validator and upload tests for `lab+variant:01`, plus invalid whitespace and mixed-missing-ID cases; the upload test runs through BCFtools/HTSlib **1.19**. Focused six-suite VCF/normalization/routing command — **172 passed**, one existing Starlette/httpx deprecation warning. Full backend rerun with BCFtools/HTSlib **1.19** — **1,661 passed, 36 skipped**, one existing deprecation warning. The first full run had one failure in the unrelated case-export redelivery test; that test passed alone and the complete rerun passed. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** local parser and intake behavior are **VERIFIED**. Exact-SHA CI for this change is pending. This is syntax/compatibility validation only and does not establish sample identity or variant biological interpretation. Phase A remains **PARTIAL**.
+
 ### 2026-10-29 enforce VCF FILTER value semantics
 
 - **Finding:** the strict parser accepted `FILTER=0`, repeated filter IDs (for example `LowQual;LowQual`), and `PASS` combined with a failing filter. The official [HTS VCFv4.3 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex) reserves `0`, prohibits duplicate FILTER values, and defines PASS as passing all filters.
