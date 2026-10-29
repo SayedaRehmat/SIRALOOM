@@ -727,3 +727,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | VCF upload cannot pass intake when the required BCFtools/HTSlib parser is missing | PASS (local automated and exact-SHA CI) | Missing executable now returns the existing retryable `VCFValidationUnavailable` contract instead of silently passing. Regression tests force executable discovery to fail; configured execution used extracted Ubuntu BCFtools/HTSlib **1.19**. Focused intake/VCF/tool/routing suite: **149 passed**; full backend suite: **1,649 passed, 36 skipped**; Ruff F/I and `git diff --check` passed. Exact-SHA run [40868295901](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40868295901) passed backend, PostgreSQL/Celery integration, and frontend/container/Compose on `3fda3ad4e0c693da8e3cd8a26b902e02c10ee2e7`. |
 | Required VCF toolchain integrity in an installed laboratory deployment | NOT RUN | CI/image configuration pins and checks BCFtools 1.19, but no laboratory deployment was inspected or executed. |
+
+### 2026-10-29 enforce VCF FILTER semantics
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| FILTER rejects reserved `0`, duplicate IDs, and `PASS` mixed with failed filters | PASS (local automated scope) | Direct validator and upload regressions cover all three invalid forms; they also verify a declared nonzero numeric FILTER ID is accepted. The parser returns `VCF_FILTER_INVALID` for invalid forms; valid `.` / `PASS` / distinct filter-list semantics are unchanged. The behavior follows [HTS VCFv4.3](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex). Focused VCF/normalization/routing tests: **168 passed**; full backend: **1,657 passed, 36 skipped** with BCFtools/HTSlib 1.19; Ruff F/I and diff check passed. Exact-SHA CI pending. |
+| Meaning/qualification of lab-specific FILTER IDs | NOT RUN | No assay/caller-specific SOP or deployed lab policy was supplied; this change validates syntax and semantics only. |

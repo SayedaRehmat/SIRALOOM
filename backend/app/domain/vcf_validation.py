@@ -416,8 +416,24 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
             raise StrictVCFValidationError(f"QUAL must be non-negative at line {line_no}", code="VCF_QUAL_INVALID")
 
     if filt != ".":
-        if not filt or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*", x) for x in filt.split(";")):
+        filter_ids = filt.split(";")
+        if not filt or any(not value or any(char.isspace() for char in value) for value in filter_ids):
             raise StrictVCFValidationError(f"Malformed FILTER at line {line_no}: {filt!r}", code="VCF_FILTER_INVALID")
+        if "0" in filter_ids:
+            raise StrictVCFValidationError(
+                f"FILTER value '0' is reserved and cannot be used at line {line_no}",
+                code="VCF_FILTER_INVALID",
+            )
+        if len(filter_ids) != len(set(filter_ids)):
+            raise StrictVCFValidationError(
+                f"FILTER contains duplicate values at line {line_no}",
+                code="VCF_FILTER_INVALID",
+            )
+        if "PASS" in filter_ids and filter_ids != ["PASS"]:
+            raise StrictVCFValidationError(
+                f"FILTER PASS cannot be combined with failing filters at line {line_no}",
+                code="VCF_FILTER_INVALID",
+            )
 
     _validate_info(info, line_no)
     info_values = _info_values(info)

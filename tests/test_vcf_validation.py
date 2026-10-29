@@ -43,6 +43,19 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["reference_contig_policy"] == "EXACT"
 
 
+def test_strict_validation_accepts_nonzero_numeric_filter_identifier(tmp_path: Path):
+    path = tmp_path / "numeric-filter-id.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FILTER=<ID=10x,Description="laboratory filter">'],
+        "1\t2\t.\tA\tG\t.\t10x\t.\n",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
 def test_strict_validation_rejects_decreasing_positions_within_contig(tmp_path: Path):
     path = tmp_path / "positions-out-of-order.vcf"
     write_vcf(
@@ -236,6 +249,9 @@ def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: P
         ("1\t2\t.\tX\tG\t.\tPASS\t.\n", "VCF_REF_INVALID"),
         ("1\t2\t.\tA\tG\t-1\tPASS\t.\n", "VCF_QUAL_INVALID"),
         ("1\t2\t.\tA\tG\t.\tBAD;\t.\n", "VCF_FILTER_INVALID"),
+        ("1\t2\t.\tA\tG\t.\t0\t.\n", "VCF_FILTER_INVALID"),
+        ("1\t2\t.\tA\tG\t.\tLowQual;LowQual\t.\n", "VCF_FILTER_INVALID"),
+        ("1\t2\t.\tA\tG\t.\tPASS;LowQual\t.\n", "VCF_FILTER_INVALID"),
     ],
 )
 def test_strict_validation_rejects_malformed_records(tmp_path: Path, body: str, code: str):
