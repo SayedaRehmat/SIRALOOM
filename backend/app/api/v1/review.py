@@ -1,16 +1,34 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.auth.authorization import REVIEW_ROLES, get_accessible_analysis, get_analysis_variant_ids, require_role
-from sqlalchemy import func, select
-
-from backend.app.infrastructure.db.models import ACMGAssessment, Annotation, Classification, Evidence, PopulationObservation, User, Variant, ReportabilityDecision
-from backend.app.domain.review import ClassificationReviewRequest, CriterionReviewRequest, ManualClassificationRequest, ReviewResponse
-from backend.app.infrastructure.db.session import get_db
 from backend.app.application.analysis import resume_analysis
+from backend.app.auth.authorization import (
+    REVIEW_ROLES,
+    get_accessible_analysis,
+    get_analysis_variant_ids,
+    require_role,
+)
+from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.review import (
+    ClassificationReviewRequest,
+    CriterionReviewRequest,
+    ManualClassificationRequest,
+    ReviewResponse,
+)
+from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
+    Annotation,
+    Classification,
+    Evidence,
+    PopulationObservation,
+    ReportabilityDecision,
+    User,
+    Variant,
+)
+from backend.app.infrastructure.db.session import get_db
 from backend.app.review.service import (
     ReviewAuthorizationError,
     ReviewConflictError,
@@ -18,10 +36,10 @@ from backend.app.review.service import (
     ReviewMutation,
     approve_classification,
     get_review_bundle,
-    request_more_evidence,
-    start_review,
-    review_criterion,
     propose_manual_classification,
+    request_more_evidence,
+    review_criterion,
+    start_review,
 )
 
 router = APIRouter(tags=["review"])
@@ -83,25 +101,49 @@ def review_queue(
     if chromosome:
         stmt = stmt.where(Variant.chromosome == chromosome.strip())
 
-    query = stmt.order_by(Variant.chromosome.asc(), Variant.position.asc())
     # Reportability is a separate versioned domain object. Apply the filter
-    # after selecting the latest classification to keep the queue portable.
+    # after selecting the latest classification, and before pagination, so
+    # large analyses remain bounded by the requested page size.
     if reportability:
-        rows = list(db.execute(query).all())
-        _require_manifest_membership(analysis, rows, db)
-        filtered = []
-        for variant, cls in rows:
-            decision = db.scalar(select(ReportabilityDecision).where(ReportabilityDecision.analysis_id == analysis_id, ReportabilityDecision.variant_id == variant.id).order_by(ReportabilityDecision.version.desc()))
-            value = decision.disposition if decision else "NOT_DETERMINED"
-            if value.upper() == reportability.upper():
-                filtered.append((variant, cls))
-        total = len(filtered)
-        rows = filtered[offset:offset + limit]
-    else:
-        count_stmt = select(func.count()).select_from(stmt.order_by(None).subquery())
-        total = int(db.scalar(count_stmt) or 0)
-        rows = list(db.execute(query.offset(offset).limit(limit)).all())
-        _require_manifest_membership(analysis, rows, db)
+        latest_decision = (
+            select(
+                ReportabilityDecision.variant_id,
+                func.max(ReportabilityDecision.version).label("max_version"),
+            )
+            .where(ReportabilityDecision.analysis_id == analysis_id)
+            .group_by(ReportabilityDecision.variant_id)
+            .subquery()
+        )
+        stmt = (
+            stmt.outerjoin(
+                latest_decision,
+                latest_decision.c.variant_id == Variant.id,
+            )
+            .outerjoin(
+                ReportabilityDecision,
+                (ReportabilityDecision.analysis_id == analysis_id)
+                & (ReportabilityDecision.variant_id == latest_decision.c.variant_id)
+                & (ReportabilityDecision.version == latest_decision.c.max_version),
+            )
+            .where(
+                func.upper(
+                    func.coalesce(
+                        ReportabilityDecision.disposition, "NOT_DETERMINED"
+                    )
+                )
+                == reportability.strip().upper()
+            )
+        )
+
+    count_stmt = select(func.count()).select_from(stmt.order_by(None).subquery())
+    total = int(db.scalar(count_stmt) or 0)
+    page_stmt = (
+        stmt.order_by(Variant.chromosome.asc(), Variant.position.asc())
+        .offset(offset)
+        .limit(limit)
+    )
+    rows = list(db.execute(page_stmt).all())
+    _require_manifest_membership(analysis, rows, db)
 
     items = []
     for variant, cls in rows:

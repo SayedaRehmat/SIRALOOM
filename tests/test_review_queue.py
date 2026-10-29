@@ -1,10 +1,27 @@
 from uuid import uuid4
-from sqlalchemy import create_engine
+
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
-from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, OrganizationMembership, Case, CaseAccessGrant, Analysis, Variant, Annotation, Classification, Evidence, PopulationObservation, Resource, ReportabilityDecision, AnalysisPartition
-from backend.app.auth.principal import Principal
+
 from backend.app.api.v1.review import review_queue
+from backend.app.auth.principal import Principal
+from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    AnalysisPartition,
+    Annotation,
+    Case,
+    CaseAccessGrant,
+    Classification,
+    Evidence,
+    Organization,
+    OrganizationMembership,
+    PopulationObservation,
+    ReportabilityDecision,
+    Resource,
+    User,
+    Variant,
+)
 
 
 def seed():
@@ -51,8 +68,97 @@ def test_review_queue_returns_interpretation_context():
 
 def test_review_queue_reportability_filter_is_server_side():
     db, principal, analysis, _ = seed()
+    unreviewed = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="17", position=43071078,
+        reference="C", alternate="A", normalization_status="NORMALIZED",
+        canonical_key="GRCh38:17:43071078:C:A", identifiers={},
+    )
+    db.add_all([
+        unreviewed,
+        Annotation(
+            id=uuid4(), variant_id=unreviewed.id, analysis_id=analysis.id,
+            provider_name="test", provider_version="1", resource_name="test",
+            resource_version="1", payload={"normalized": {}},
+        ),
+        Classification(
+            id=uuid4(), variant_id=unreviewed.id, analysis_id=analysis.id,
+            framework_name="ACMG/AMP", framework_version="2015", result="VUS",
+            criterion_ids=[], metadata_json={}, state="PROPOSED",
+            review_status="IN_REVIEW", version=1, review_version=0,
+        ),
+    ])
+    db.commit()
     assert review_queue(analysis.id, reportability="REPORT", db=db, principal=principal)["total"] == 0
     assert review_queue(analysis.id, reportability="REVIEW", db=db, principal=principal)["total"] == 1
+    assert review_queue(analysis.id, reportability="NOT_DETERMINED", db=db, principal=principal)["total"] == 1
+
+
+def test_review_queue_paginates_after_filtering_latest_reportability_decision():
+    db, principal, analysis, _ = seed()
+    for index in range(3):
+        variant = Variant(
+            id=uuid4(), genome_build="GRCh38", chromosome="17",
+            position=43071078 + index, reference="C", alternate="A",
+            normalization_status="NORMALIZED",
+            canonical_key=f"GRCh38:17:{43071078 + index}:C:A", identifiers={},
+        )
+        annotation = Annotation(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            provider_name="test", provider_version="1", resource_name="test",
+            resource_version="1", payload={"normalized": {"gene": "BRCA1"}},
+        )
+        classification = Classification(
+            id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
+            framework_name="ACMG/AMP", framework_version="2015", result="VUS",
+            criterion_ids=[], metadata_json={}, state="PROPOSED",
+            review_status="IN_REVIEW", version=1, review_version=0,
+        )
+        decision = ReportabilityDecision(
+            id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+            classification_id=classification.id, version=1,
+            policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",
+            policy_version="1.0.0", disposition="REPORT" if index == 1 else "REVIEW",
+            priority_score=60, priority_band="REVIEW", reasons=[], status="PROPOSED",
+            review_version=0,
+        )
+        db.add_all([variant, annotation, classification, decision])
+        if index == 1:
+            # The highest version must determine the filter; the previous
+            # REPORT decision remains historical and must not match.
+            db.add(
+                ReportabilityDecision(
+                    id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+                    classification_id=classification.id, version=2,
+                    policy_name="SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY",
+                    policy_version="1.0.0", disposition="REVIEW",
+                    priority_score=60, priority_band="REVIEW", reasons=[],
+                    status="PROPOSED", review_version=0,
+                )
+            )
+    db.commit()
+
+    statements = []
+    event.listen(
+        db.get_bind(), "before_cursor_execute",
+        lambda _conn, _cursor, statement, _parameters, _context, _many: statements.append(statement),
+    )
+    result = review_queue(
+        analysis.id, reportability="REVIEW", limit=2, offset=1,
+        db=db, principal=principal,
+    )
+    assert result["total"] == 4
+    assert len(result["items"]) == 2
+    assert result["items"][0]["position"] == 43071078
+    assert result["items"][1]["position"] == 43071079
+    assert review_queue(
+        analysis.id, reportability="REPORT", db=db, principal=principal
+    )["total"] == 0
+    assert any(
+        "LIMIT" in statement.upper()
+        and "OFFSET" in statement.upper()
+        and "REPORTABILITY_DECISIONS" in statement.upper()
+        for statement in statements
+    )
 
 
 def test_review_queue_blocks_cross_tenant_access():
