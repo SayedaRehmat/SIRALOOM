@@ -144,9 +144,19 @@ def test_volume_discovery_rejects_named_volumes_for_backup_sources(tmp_path):
         _volume_sources({"services": services})
 
 
-@pytest.mark.parametrize("database_result", ["CLOUD_ARTIFACTS_PRESENT", ""])
-def test_backup_refuses_cloud_artifact_profiles_or_unknown_database_result(
-    tmp_path, monkeypatch, database_result
+@pytest.mark.parametrize(
+    ("database_result", "message"),
+    [
+        ("CLOUD_ARTIFACTS_PRESENT", "Firebase/GCS storage profiles"),
+        (
+            "CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT",
+            "organization-targeted local artifact profiles",
+        ),
+        ("", "unknown result"),
+    ],
+)
+def test_backup_refuses_unsupported_artifact_targets_or_unknown_database_result(
+    tmp_path, monkeypatch, database_result, message
 ):
     from scripts import laboratory_backup
 
@@ -160,7 +170,7 @@ def test_backup_refuses_cloud_artifact_profiles_or_unknown_database_result(
 
     monkeypatch.setattr(laboratory_backup, "_run", fake_run)
 
-    with pytest.raises(BackupError, match="Firebase/GCS storage profiles"):
+    with pytest.raises(BackupError, match=message):
         _require_local_artifact_storage(
             ["docker", "compose"],
             root=tmp_path,
@@ -170,6 +180,7 @@ def test_backup_refuses_cloud_artifact_profiles_or_unknown_database_result(
 
     assert "organization_storage_profiles" in seen["command"][-1]
     assert "storage_uri LIKE 'gs://%'" in seen["command"][-1]
+    assert "CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT" in seen["command"][-1]
     assert seen["capture"] is True
 
 

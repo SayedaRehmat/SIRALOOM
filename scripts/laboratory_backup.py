@@ -29,6 +29,22 @@ STORAGE_ARCHIVES = {
     "references": ("/data/references", "references.tar.gz"),
     "resource_cache": ("/data/siraloom/resource-cache", "resource-cache.tar.gz"),
 }
+ARTIFACT_STORAGE_PREFLIGHT_SQL = """
+    SELECT CASE
+      WHEN EXISTS (
+        SELECT 1 FROM organization_storage_profiles
+        WHERE backend_type = 'FIREBASE_GCS'
+      ) OR EXISTS (
+        SELECT 1 FROM artifacts WHERE storage_uri LIKE 'gs://%'
+      ) THEN 'CLOUD_ARTIFACTS_PRESENT'
+      WHEN EXISTS (
+        SELECT 1 FROM organization_storage_profiles
+        WHERE backend_type = 'LOCAL_FILESYSTEM'
+          AND COALESCE(configuration->>'target_id', '') <> ''
+      ) THEN 'CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT'
+      ELSE 'LOCAL_ARTIFACTS_ONLY'
+    END
+"""
 
 
 class BackupError(RuntimeError):
@@ -190,21 +206,9 @@ def _require_local_artifact_storage(
 ) -> None:
     """Refuse a local-only backup when the database uses cloud artifact storage.
 
-    The current bundle archives the configured filesystem mount, not Firebase/
-    GCS objects. Checking both storage profiles and historical artifact URIs
-    prevents a checksummed but incomplete bundle from being presented as a full
-    laboratory backup.
-    """
-    query = """
-        SELECT CASE
-          WHEN EXISTS (
-            SELECT 1 FROM organization_storage_profiles
-            WHERE backend_type = 'FIREBASE_GCS'
-          ) OR EXISTS (
-            SELECT 1 FROM artifacts WHERE storage_uri LIKE 'gs://%'
-          ) THEN 'CLOUD_ARTIFACTS_PRESENT'
-          ELSE 'LOCAL_ARTIFACTS_ONLY'
-        END
+    The current bundle archives only the legacy artifact bind mount. Checking
+    storage profiles and historical artifact URIs prevents cloud-backed or
+    organization-targeted files from being omitted from a checksummed bundle.
     """
     result = _run(
         [
@@ -217,17 +221,26 @@ def _require_local_artifact_storage(
             "-qAt",
             f"--username={user}",
             f"--dbname={database}",
-            f"--command={query}",
+            f"--command={ARTIFACT_STORAGE_PREFLIGHT_SQL}",
         ],
         cwd=root,
         capture=True,
     )
-    if result.stdout.strip() != "LOCAL_ARTIFACTS_ONLY":
+    result_code = result.stdout.strip()
+    if result_code == "CLOUD_ARTIFACTS_PRESENT":
         raise BackupError(
             "This backup command archives local filesystem mounts only; "
             "Firebase/GCS storage profiles or artifact URIs are present. "
             "Use a cloud-aware backup procedure before creating a recovery bundle."
         )
+    if result_code == "CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT":
+        raise BackupError(
+            "This backup command archives only the legacy artifact mount; "
+            "organization-targeted local artifact profiles are present. "
+            "Use a backup procedure that includes every configured organization artifact root."
+        )
+    if result_code != "LOCAL_ARTIFACTS_ONLY":
+        raise BackupError("Artifact storage preflight returned an unknown result; refusing backup.")
 
 
 def _write_manifest(bundle: Path, *, commit: str, database: str) -> None:
