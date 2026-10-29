@@ -385,7 +385,19 @@ def test_reanalysis_reuse_preserves_segregation_lineage_for_copied_evidence(tmp_
                 genotype="0/1", zygosity="HETEROZYGOUS", phase="UNKNOWN",
                 allele_observed=None, phenotype_status="UNAFFECTED",
                 source="HUMAN_REVIEW", notes="Parent sample reviewed",
-                metadata_json={"review_source": "fixture"},
+                metadata_json={
+                    "review_source": "fixture",
+                    "pedigree_context_snapshot": {
+                        "schema_version": 1,
+                        "members": [{
+                            "member_identifier": "parent-1",
+                            "relationship_to_proband": "parent",
+                            "sex": "FEMALE",
+                            "affected_status": "UNAFFECTED",
+                        }],
+                        "relationships": [],
+                    },
+                },
             ))
             db.add(InheritanceAssessment(
                 id=uuid4(), analysis_id=parent_id, variant_id=variant_id,

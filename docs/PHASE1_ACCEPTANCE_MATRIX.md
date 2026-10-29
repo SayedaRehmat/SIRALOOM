@@ -658,3 +658,9 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Backup includes every configured local artifact root and rejects cloud/unknown URIs | PARTIAL pending PostgreSQL CI and deployment drill | Unit coverage exercises v2 local-root archive, URI mapping, restore mapping and v1 verification. Exact SQL integration is skipped locally because PostgreSQL/Docker is unavailable; no deployed backup/restore drill was run. |
 | Backup and restore of Firebase/GCS artifact storage | BLOCKED / UNSUPPORTED | Cloud profiles and `gs://` objects are rejected before backup and after restore. A provider-aware, qualified cloud backup adapter is not implemented. |
+
+### 2026-10-29 reanalysis family-context snapshot integrity
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Incremental reanalysis may reuse family observations only when their captured pedigree context is versioned and preserved | PASS (local regression scope; exact-SHA CI pending) | Reanalysis copy keeps the parent observation's schema-version-1 pedigree snapshot unchanged. Missing/malformed snapshots raise and abort rather than bind old genotype evidence to a mutable current pedigree. Reanalysis, provenance, reproducibility and report tests: **28 passed**. Full Linux backend suite: **1,611 passed, 55 skipped**, one existing Starlette/httpx warning. Legacy rows without snapshots require replay; this does not calculate inheritance or establish segregation. |

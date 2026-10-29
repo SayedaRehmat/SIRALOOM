@@ -222,3 +222,139 @@ def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance
         assert copied_evidence.request_fingerprint == "evidence-request"
         assert copied_evidence.response_sha256 == "evidence-response"
         assert copied_evidence.request_metadata == {"endpoint": "approved"}
+
+
+def test_reanalysis_reuses_segregation_only_with_immutable_pedigree_snapshot():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, Case.__table__, Analysis.__table__, Variant.__table__,
+            Annotation.__table__, PopulationObservation.__table__, Evidence.__table__,
+            PedigreeMember.__table__, SegregationObservation.__table__,
+            InheritanceAssessment.__table__,
+        ],
+    )
+    organization_id, case_id, parent_id, child_id, user_id, variant_id, member_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    snapshot = {
+        "schema_version": 1,
+        "members": [{"member_identifier": "P1", "affected_status": "AFFECTED"}],
+        "relationships": [],
+    }
+
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Pedigree Lab", external_identifier=None))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="PED-REAN-001",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add_all([
+            Analysis(
+                id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=1,
+            ),
+            Analysis(
+                id=child_id, case_id=case_id, parent_analysis_id=parent_id, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status="CREATED", queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=2,
+            ),
+            Variant(
+                id=variant_id, genome_build="GRCh38", chromosome="1", position=100,
+                reference="A", alternate="G", normalization_status="NORMALIZED",
+                canonical_key="GRCh38:1-100-A-G", identifiers={},
+            ),
+            PedigreeMember(
+                id=member_id, case_id=case_id, member_identifier="P1",
+                relationship_to_proband="PARENT", sex="FEMALE",
+                affected_status="AFFECTED", is_proband=False, sampled=True,
+                specimen_id=None, metadata_json={},
+            ),
+            SegregationObservation(
+                id=uuid4(), analysis_id=parent_id, variant_id=variant_id,
+                pedigree_member_id=member_id, genotype="0/1", zygosity="HET",
+                phase=None, allele_observed="ALT", phenotype_status="AFFECTED",
+                source="HUMAN_REVIEW", notes="Observed", metadata_json={
+                    "pedigree_context_snapshot": snapshot,
+                },
+            ),
+        ])
+        db.commit()
+
+        _copy_rows(db, parent_id, child_id, "acmg_assessment")
+        db.commit()
+
+        copied = db.scalar(select(SegregationObservation).where(
+            SegregationObservation.analysis_id == child_id,
+        ))
+        assert copied is not None
+        assert copied.metadata_json["pedigree_context_snapshot"] == snapshot
+        assert copied.pedigree_member_id == member_id
+
+
+def test_reanalysis_refuses_segregation_reuse_without_pedigree_snapshot():
+    engine = _engine()
+    Base.metadata.create_all(
+        engine,
+        tables=[
+            Organization.__table__, Case.__table__, Analysis.__table__, Variant.__table__,
+            Annotation.__table__, PopulationObservation.__table__, Evidence.__table__,
+            PedigreeMember.__table__, SegregationObservation.__table__,
+            InheritanceAssessment.__table__,
+        ],
+    )
+    organization_id, case_id, parent_id, child_id, user_id, variant_id, member_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
+    )
+
+    with Session(engine) as db:
+        db.add(Organization(id=organization_id, name="Pedigree Lab", external_identifier=None))
+        db.add(Case(
+            id=case_id, organization_id=organization_id, case_identifier="PED-REAN-002",
+            status="ACTIVE", clinical_context={}, language="en", created_by=user_id,
+        ))
+        db.add_all([
+            Analysis(
+                id=parent_id, case_id=case_id, parent_analysis_id=None, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=1,
+            ),
+            Analysis(
+                id=child_id, case_id=case_id, parent_analysis_id=parent_id, assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="2.1", status="CREATED", queue_task_id=None,
+                reference_build="GRCh38", configuration={}, started_at=None,
+                completed_at=None, created_by=user_id, analysis_version=2,
+            ),
+            Variant(
+                id=variant_id, genome_build="GRCh38", chromosome="1", position=100,
+                reference="A", alternate="G", normalization_status="NORMALIZED",
+                canonical_key="GRCh38:1-100-A-G", identifiers={},
+            ),
+            PedigreeMember(
+                id=member_id, case_id=case_id, member_identifier="P1",
+                relationship_to_proband="PARENT", sex="FEMALE",
+                affected_status="AFFECTED", is_proband=False, sampled=True,
+                specimen_id=None, metadata_json={},
+            ),
+            SegregationObservation(
+                id=uuid4(), analysis_id=parent_id, variant_id=variant_id,
+                pedigree_member_id=member_id, genotype="0/1", zygosity="HET",
+                phase=None, allele_observed="ALT", phenotype_status="AFFECTED",
+                source="HUMAN_REVIEW", notes="Legacy observation", metadata_json={},
+            ),
+        ])
+        db.commit()
+
+        import pytest
+
+        with pytest.raises(ValueError, match="valid pedigree context snapshot"):
+            _copy_rows(db, parent_id, child_id, "acmg_assessment")

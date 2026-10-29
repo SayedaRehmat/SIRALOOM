@@ -448,13 +448,22 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 SegregationObservation.analysis_id == parent_id
             )
         ).all():
+            metadata = dict(row.metadata_json or {})
+            pedigree_snapshot = metadata.get("pedigree_context_snapshot")
+            if (
+                not isinstance(pedigree_snapshot, dict)
+                or pedigree_snapshot.get("schema_version") != 1
+            ):
+                raise ValueError(
+                    "Cannot reuse segregation observations without a valid pedigree context snapshot"
+                )
             copied = SegregationObservation(
                 id=uuid4(), analysis_id=child_id, variant_id=row.variant_id,
                 pedigree_member_id=row.pedigree_member_id, genotype=row.genotype,
                 zygosity=row.zygosity, phase=row.phase,
                 allele_observed=row.allele_observed,
                 phenotype_status=row.phenotype_status, source=row.source,
-                notes=row.notes, metadata_json=dict(row.metadata_json or {}),
+                notes=row.notes, metadata_json=metadata,
                 created_at=row.created_at,
             )
             segregation_observation_ids[str(row.id)] = str(copied.id)
