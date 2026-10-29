@@ -5,7 +5,7 @@
 - **Finding:** `_validate_info` split each INFO entry at the first `=` but permitted additional literal equals signs in the value. VCFv4.3 prohibits literal `;` and `=` in INFO values; reserved characters must be percent encoded ([HTS VCFv4.3 INFO field](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2729-L2737)).
 - **Correction:** reject additional literal `=` in the raw INFO value. Regression covers direct parser and upload rejection for `NOTE=a=b`, and continued acceptance of the encoded form `NOTE=a%3Db` alongside custom underscore and legacy `1000G` keys.
 - **Verification:** focused VCF/intake/normalization/routing suite — **178 passed**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,667 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
-- **Status/limits:** **VERIFIED** for parser and upload-service syntax behavior. This does not assess the encoded value's provider-specific interpretation. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA CI pending.
+- **Status/limits:** **VERIFIED** for parser and upload-service syntax behavior plus exact-SHA CI [run #40877548894](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40877548894), which passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container and production Compose checks on `30484d8e902cedbd269c74e5c31b50af22c9e36e`. This does not assess the encoded value's provider-specific interpretation. Phase A and laboratory deployment remain **PARTIAL**.
 
 ### 2026-10-29 accept specification-valid VCF INFO/FORMAT identifiers
 
