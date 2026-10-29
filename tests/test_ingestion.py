@@ -174,6 +174,26 @@ def test_vcf_intake_rejects_unescaped_equals_inside_info_value(tmp_path: Path):
     assert "INFO" in result.errors[0]
 
 
+@pytest.mark.parametrize("info_value", ["NOTE=100%", "NOTE=%GG", "NOTE=a%3db"])
+def test_vcf_intake_rejects_malformed_or_lowercase_percent_escapes(
+    tmp_path: Path, info_value: str
+):
+    path = tmp_path / "invalid-info-percent-escape.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"chr1\t100\t.\tA\tG\t.\tPASS\t{info_value}\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.record_count == 0
+    assert "INFO" in result.errors[0]
+
+
 @pytest.mark.parametrize("failure", ["timeout", "executable_unavailable"])
 def test_bcftools_validation_failure_is_not_misclassified_as_invalid_vcf(
     tmp_path: Path, monkeypatch, failure: str,

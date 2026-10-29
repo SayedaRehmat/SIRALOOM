@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 validate VCF INFO percent escapes
+
+- **Finding:** INFO parsing rejected a raw `=` but accepted malformed `%` escapes and lowercase hex escapes such as `%3d`. VCFv4.3 requires capitalized percent encoding for special characters ([HTS VCFv4.3 character encoding](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2296-L2315)).
+- **Correction:** INFO values now reject percent signs not followed by two uppercase hexadecimal digits. Direct validator and intake regressions reject bare `%`, `%GG`, and lowercase `%3d`; existing coverage confirms valid `%3D` remains accepted.
+- **Verification:** focused VCF/intake/normalization/routing suite — **184 passed**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,673 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** **VERIFIED** for raw escape syntax at parser and upload-service boundaries. It does not decode or interpret arbitrary INFO payload semantics. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA CI pending.
+
 ### 2026-10-29 reject unescaped equals signs in VCF INFO values
 
 - **Finding:** `_validate_info` split each INFO entry at the first `=` but permitted additional literal equals signs in the value. VCFv4.3 prohibits literal `;` and `=` in INFO values; reserved characters must be percent encoded ([HTS VCFv4.3 INFO field](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2729-L2737)).

@@ -765,3 +765,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | INFO values percent-encode literal reserved equals signs | PASS (local automated scope) | Parser and upload intake reject `NOTE=a=b`; accept percent-encoded `NOTE=a%3Db`. Focused VCF/intake/normalization/routing suite: **178 passed**; full backend suite with BCFtools/HTSlib 1.19: **1,667 passed, 36 skipped**; Ruff F/I and diff check passed. Basis: [HTS VCFv4.3 INFO syntax](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2729-L2737). Exact-SHA CI run [40877548894](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40877548894) passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container, and production Compose checks on `30484d8e902cedbd269c74e5c31b50af22c9e36e`. |
 | Correct decoding and scientific meaning of arbitrary INFO values | NOT ESTABLISHED | Validation checks representation syntax; it does not interpret provider-specific payloads. |
+
+
+### 2026-10-29 validate VCF INFO percent escapes
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| INFO percent escapes use two uppercase hexadecimal digits | PASS (local automated scope) | Direct parser and upload intake reject a bare percent, malformed `%GG` and lowercase `%3d`; uppercase `%3D` remains accepted. Focused VCF/intake/normalization/routing suite: **184 passed**; full backend suite with BCFtools/HTSlib 1.19: **1,673 passed, 36 skipped**; Ruff F/I and diff check passed. Basis: [HTS VCFv4.3 character encoding](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2296-L2315). Exact-SHA CI pending. |
+| Decoding or validating arbitrary INFO-field semantics | NOT ESTABLISHED | This check validates escape syntax only; interpretation remains provider/field-specific. |

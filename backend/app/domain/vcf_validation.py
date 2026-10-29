@@ -16,6 +16,7 @@ BREAKEND_RE = re.compile(
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
+INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
@@ -77,6 +78,7 @@ def _validate_info(value: str, line_no: int) -> None:
                 not INFO_KEY_RE.fullmatch(key)
                 or val == ""
                 or "=" in val
+                or INVALID_PERCENT_ESCAPE_RE.search(val)
                 or any(value == "" for value in val.split(","))
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
