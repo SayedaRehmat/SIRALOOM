@@ -75,6 +75,24 @@ def test_strict_validation_accepts_vcf_record_ids_with_valid_punctuation(tmp_pat
     assert profile["records"] == 1
 
 
+def test_strict_validation_accepts_vcf_info_and_format_keys_allowed_by_spec(tmp_path: Path):
+    path = tmp_path / "underscore-info-format-keys.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##INFO=<ID=_CUSTOM,Number=1,Type=Integer,Description="custom">',
+            '##INFO=<ID=1000G,Number=0,Type=Flag,Description="legacy membership">',
+            '##FORMAT=<ID=_GX,Number=1,Type=Integer,Description="custom genotype value">',
+        ],
+        "1\t2\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G\tGT:_GX\t0/1:9\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
 def test_strict_validation_rejects_decreasing_positions_within_contig(tmp_path: Path):
     path = tmp_path / "positions-out-of-order.vcf"
     write_vcf(

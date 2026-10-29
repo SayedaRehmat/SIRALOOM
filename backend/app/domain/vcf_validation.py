@@ -14,6 +14,8 @@ BREAKEND_RE = re.compile(
     r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
+FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
@@ -72,12 +74,12 @@ def _validate_info(value: str, line_no: int) -> None:
         if "=" in item:
             key, val = item.split("=", 1)
             if (
-                not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", key)
+                not INFO_KEY_RE.fullmatch(key)
                 or val == ""
                 or any(value == "" for value in val.split(","))
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
-        elif not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", item):
+        elif not INFO_KEY_RE.fullmatch(item):
             raise StrictVCFValidationError(f"Malformed INFO flag at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         else:
             key = item
@@ -166,7 +168,8 @@ def _parse_field_definition(line: str, kind: str, line_no: int) -> tuple[str, di
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     identifier = parsed["ID"]
-    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", identifier):
+    field_id_pattern = INFO_KEY_RE if kind == "INFO" else FORMAT_KEY_RE
+    if not field_id_pattern.fullmatch(identifier):
         raise StrictVCFValidationError(
             f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
             code="VCF_HEADER_DEFINITION_INVALID",
@@ -461,7 +464,7 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
         if not fmt:
             raise StrictVCFValidationError(f"FORMAT is empty at line {line_no}", code="VCF_FORMAT_INVALID")
         keys = fmt.split(":")
-        if len(keys) != len(set(keys)) or any(not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.]*", k) for k in keys):
+        if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(

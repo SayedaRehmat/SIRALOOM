@@ -749,3 +749,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | VCF CHROM values contain no whitespace | PASS (local automated scope) | Strict parser and upload intake reject `chr 1` with `VCF_CHROM_INVALID`; tested without depending on a reference-contig dictionary. Focused VCF/intake/normalization/routing suite: **174 passed**; full backend suite with BCFtools/HTSlib 1.19: **1,663 passed, 36 skipped**; Ruff F/I and diff check passed. Requirement follows [HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2668-L2673). Exact-SHA CI run [40874226910](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40874226910) passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container, and production Compose checks on `c79559e560b700edf3f4780fb8713bf2d0b83a07`. |
 | Contig identity against a laboratory-approved reference | NOT ESTABLISHED BY THIS CHECK | Syntax validation does not prove assembly/contig compatibility; that requires the selected, qualified reference package. |
+
+
+### 2026-10-29 accept specification-valid VCF INFO/FORMAT identifiers
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| VCF INFO/FORMAT identifier grammar supports underscore-prefixed keys and legacy INFO `1000G` | PASS (local automated scope) | Parser and upload intake accept declared `_CUSTOM` INFO, `_GX` FORMAT and `1000G` INFO flag. Focused VCF/intake/normalization/routing suite: **176 passed**; full backend suite with BCFtools/HTSlib 1.19: **1,665 passed, 36 skipped**; Ruff F/I and diff check passed. Rules follow [HTS VCFv4.3 INFO keys](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2736-L2741) and [FORMAT keys](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2837-L2844). Exact-SHA CI pending. |
+| Scientific meaning and qualification of custom INFO/FORMAT fields | NOT ESTABLISHED | Syntax and declared cardinality do not validate caller-specific field meaning or assay policy. |

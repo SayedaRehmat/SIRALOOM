@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 accept specification-valid VCF INFO/FORMAT identifiers
+
+- **Finding:** the strict parser's INFO, FORMAT, and metadata ID regular expressions required an alphabetic first character and rejected the VCFv4.3 underscore-prefixed identifiers; INFO parsing also rejected the explicitly allowed legacy key `1000G`. The official [HTS VCFv4.3 INFO and genotype field definitions](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2736-L2741) and [FORMAT key grammar](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2837-L2844) allow these forms.
+- **Correction:** introduced separate INFO and FORMAT identifier patterns following the specification, including the `1000G` INFO exception. Metadata definitions and data-record keys now use the matching grammar. Direct parser and upload-intake tests cover `_CUSTOM`, `_GX`, and the declared `1000G` flag.
+- **Verification:** focused VCF/intake/normalization/routing suite — **176 passed**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,665 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** **VERIFIED** for parser and upload service syntax behavior. This does not qualify the source's scientific meaning, assembly, caller, or laboratory policy. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA CI pending.
+
 ### 2026-10-29 reject whitespace in VCF CHROM values
 
 - **Finding:** the strict VCF validator rejected empty or comment-like `CHROM` values but permitted embedded whitespace when no selected reference-contig dictionary was provided. VCFv4.3 specifies CHROM as an identifier with no whitespace ([HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2668-L2673)).
