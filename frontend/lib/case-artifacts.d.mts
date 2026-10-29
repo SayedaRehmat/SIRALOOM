@@ -10,3 +10,12 @@ export function selectPrimaryAfterUpload<T extends { validation_status?: string 
   currentPrimary: T | null,
   uploadedPrimary: T | null,
 ): T | null;
+export function uploadValidationMessage(options: {
+  status: string;
+  label: string;
+  successText: string;
+  warningLabel: string;
+  failureText: string;
+  warnings?: unknown;
+  errors?: unknown;
+}): string;
