@@ -1264,6 +1264,7 @@ def _persist_annotation_batch_rows(
                 "genome": provenance.get("genome"),
                 "provider": provenance.get("provider"),
                 "provider_version": provenance.get("provider_version"),
+                "annotation_options": provenance.get("annotation_options"),
                 "runtime_check": provenance.get("runtime_check"),
             },
             observed_at=(

@@ -198,6 +198,9 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                         "response_sha256": "e" * 64,
                         "observed_at": "2026-10-10T00:00:00+00:00",
                         "retry_count": 0, "genome": "hg38",
+                        "annotation_options": [
+                            "--canonical", "--symbol", "--transcript_version", "--mane",
+                        ],
                         "runtime_check": {
                             "status": "VERIFIED",
                             "assembly": "GRCh38",
@@ -409,6 +412,9 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             assert annotations[0].resource_version == "test-release"
             assert annotations[0].request_fingerprint == "d" * 64
             assert annotations[0].response_sha256 == "e" * 64
+            assert annotations[0].request_metadata["annotation_options"] == [
+                "--canonical", "--symbol", "--transcript_version", "--mane",
+            ]
             assert annotations[0].request_metadata["runtime_check"] == {
                 "status": "VERIFIED",
                 "assembly": "GRCh38",
