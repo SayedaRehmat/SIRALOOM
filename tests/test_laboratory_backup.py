@@ -9,11 +9,14 @@ import pytest
 from scripts.laboratory_backup import (
     DATABASE_FILE,
     FORMAT,
+    FORMAT_V1,
     STORAGE_ARCHIVES,
     BackupError,
+    _artifact_inventory,
+    _artifact_uri_coverage_sql,
     _compose_command,
     _extract_tree,
-    _require_local_artifact_storage,
+    _load_local_artifact_targets,
     _safe_members,
     _volume_sources,
     create_backup,
@@ -32,7 +35,7 @@ def _write_archive(path: Path, files: dict[str, bytes]) -> None:
             archive.addfile(member, io.BytesIO(body))
 
 
-def _bundle(tmp_path: Path) -> Path:
+def _bundle(tmp_path: Path, *, local_targets: dict[str, str] | None = None) -> Path:
     bundle = tmp_path / "backup"
     bundle.mkdir()
     (bundle / DATABASE_FILE).write_bytes(b"PGDMPfixture")
@@ -40,12 +43,22 @@ def _bundle(tmp_path: Path) -> Path:
     for _, archive_name in STORAGE_ARCHIVES.values():
         _write_archive(bundle / archive_name, {"case/file.txt": b"verified artifact"})
         files[archive_name] = sha256_file(bundle / archive_name)
+    target_manifest = {}
+    for target_id, container_path in (local_targets or {}).items():
+        archive_name = f"artifact-target-{target_id}.tar.gz"
+        _write_archive(bundle / archive_name, {"case/local.txt": b"local target artifact"})
+        files[archive_name] = sha256_file(bundle / archive_name)
+        target_manifest[target_id] = {
+            "container_path": container_path,
+            "archive": archive_name,
+        }
     (bundle / "manifest.json").write_text(
         json.dumps(
             {
                 "format": FORMAT,
                 "repository_commit": "test-commit",
                 "database": "siraloom",
+                "local_artifact_targets": target_manifest,
                 "files": files,
             }
         )
@@ -63,6 +76,71 @@ def test_verify_checks_complete_bundle_and_storage_archive_structure(tmp_path):
         DATABASE_FILE,
         *(archive_name for _, archive_name in STORAGE_ARCHIVES.values()),
     }
+
+
+def test_verify_accepts_existing_v1_bundle(tmp_path):
+    bundle = _bundle(tmp_path)
+    manifest_path = bundle / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["format"] = FORMAT_V1
+    manifest.pop("local_artifact_targets", None)
+    manifest_path.write_text(json.dumps(manifest))
+
+    assert verify_bundle(bundle)["format"] == FORMAT_V1
+
+
+def test_verify_checks_declared_local_artifact_archives(tmp_path):
+    bundle = _bundle(tmp_path, local_targets={"lab-a": "/data/labs/a/artifacts"})
+
+    manifest = verify_bundle(bundle)
+
+    assert manifest["local_artifact_targets"] == {
+        "lab-a": {
+            "container_path": "/data/labs/a/artifacts",
+            "archive": "artifact-target-lab-a.tar.gz",
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    "container_path",
+    ["/", "/data/../outside", "relative/path"],
+)
+def test_verify_rejects_unsafe_local_artifact_root(tmp_path, container_path):
+    bundle = _bundle(tmp_path, local_targets={"lab-a": container_path})
+
+    with pytest.raises(BackupError):
+        verify_bundle(bundle)
+
+
+def test_restore_requires_exact_custom_artifact_destination_set(tmp_path):
+    bundle = _bundle(tmp_path, local_targets={"lab-a": "/data/labs/a/artifacts"})
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "compose.yml").write_text("services: {}")
+    parent = tmp_path / "restore"
+    parent.mkdir()
+    targets = {
+        "artifacts": parent / "artifacts",
+        "references": parent / "references",
+        "resource_cache": parent / "resource-cache",
+    }
+
+    with pytest.raises(BackupError, match="exactly the custom artifact targets"):
+        restore_backup(root, Path("compose.yml"), bundle, "siraloom_restore_target", targets)
+
+
+def test_restore_requires_services_to_load_isolated_runtime_environment(tmp_path):
+    from scripts.laboratory_backup import _require_isolated_runtime_environment
+
+    compose_file = tmp_path / "compose.yml"
+    compose_file.write_text("services: {}", encoding="utf-8")
+    env_file = tmp_path / "restore.env"
+    env_file.write_text("POSTGRES_DB=siraloom_restore_bootstrap\n", encoding="utf-8")
+    config = {"services": {service: {"env_file": ".env"} for service in ("api", "worker", "beat")}}
+
+    with pytest.raises(BackupError, match="explicit isolated runtime environment"):
+        _require_isolated_runtime_environment(config, compose_file=compose_file, env_file=env_file)
 
 
 def test_verify_rejects_changed_backup_member(tmp_path):
@@ -147,15 +225,15 @@ def test_volume_discovery_rejects_named_volumes_for_backup_sources(tmp_path):
 @pytest.mark.parametrize(
     ("database_result", "message"),
     [
-        ("CLOUD_ARTIFACTS_PRESENT", "Firebase/GCS storage profiles"),
         (
-            "NON_LEGACY_ARTIFACTS_PRESENT",
-            "organization-targeted local profiles or non-legacy artifact URIs",
+            '{"cloud_present":true,"local_target_ids":[],"nonlegacy_artifacts":false}',
+            "Cloud artifact targets",
         ),
-        ("", "unknown result"),
+        ("not-json", "invalid data"),
+        ('{"cloud_present":false}', "unknown result"),
     ],
 )
-def test_backup_refuses_unsupported_artifact_targets_or_unknown_database_result(
+def test_backup_inventory_rejects_cloud_or_unknown_database_results(
     tmp_path, monkeypatch, database_result, message
 ):
     from scripts import laboratory_backup
@@ -171,7 +249,7 @@ def test_backup_refuses_unsupported_artifact_targets_or_unknown_database_result(
     monkeypatch.setattr(laboratory_backup, "_run", fake_run)
 
     with pytest.raises(BackupError, match=message):
-        _require_local_artifact_storage(
+        _artifact_inventory(
             ["docker", "compose"],
             root=tmp_path,
             user="siraloom",
@@ -180,28 +258,67 @@ def test_backup_refuses_unsupported_artifact_targets_or_unknown_database_result(
 
     assert "organization_storage_profiles" in seen["command"][-1]
     assert "storage_uri LIKE 'gs://%'" in seen["command"][-1]
-    assert "NON_LEGACY_ARTIFACTS_PRESENT" in seen["command"][-1]
-    assert "storage_uri NOT LIKE 'file:///data/siraloom/artifacts/%'" in seen["command"][-1]
     assert seen["capture"] is True
 
 
-def test_backup_accepts_confirmed_local_only_artifact_storage(tmp_path, monkeypatch):
+def test_backup_inventory_accepts_confirmed_local_only_storage(tmp_path, monkeypatch):
     from scripts import laboratory_backup
 
     monkeypatch.setattr(
         laboratory_backup,
         "_run",
         lambda *_args, **_kwargs: CompletedProcess(
-            args=[], returncode=0, stdout="LOCAL_ARTIFACTS_ONLY\n", stderr=""
+            args=[],
+            returncode=0,
+            stdout='{"cloud_present":false,"local_target_ids":[],"nonlegacy_artifacts":false}',
+            stderr="",
         ),
     )
 
-    _require_local_artifact_storage(
+    result = _artifact_inventory(
         ["docker", "compose"],
         root=tmp_path,
         user="siraloom",
         database="siraloom",
     )
+    assert result == {
+        "cloud_present": False,
+        "local_target_ids": [],
+        "nonlegacy_artifacts": False,
+    }
+
+
+def test_local_target_configuration_is_validated_and_only_local_roots_are_returned(
+    tmp_path, monkeypatch
+):
+    from scripts import laboratory_backup
+
+    monkeypatch.setattr(
+        laboratory_backup,
+        "_run",
+        lambda *_args, **_kwargs: CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "lab-a": "/data/lab-a",
+                }
+            ),
+            stderr="",
+        ),
+    )
+
+    assert _load_local_artifact_targets(["docker", "compose"], root=tmp_path) == {
+        "lab-a": "/data/lab-a"
+    }
+
+
+def test_artifact_uri_coverage_query_uses_literal_prefixes():
+    query = _artifact_uri_coverage_sql(["/data/siraloom/labs/lab-a/artifacts"])
+
+    assert "file:///data/siraloom/artifacts/" in query
+    assert "file:///data/siraloom/labs/lab-a/artifacts/" in query
+    assert "left(storage_uri, length(" in query
 
 
 def test_create_backup_checks_cloud_storage_before_stopping_writers(tmp_path, monkeypatch):
@@ -239,20 +356,262 @@ def test_create_backup_checks_cloud_storage_before_stopping_writers(tmp_path, mo
         return CompletedProcess(
             args=command,
             returncode=0,
-            stdout="CLOUD_ARTIFACTS_PRESENT\n",
+            stdout='{"cloud_present":true,"local_target_ids":[],"nonlegacy_artifacts":false}',
             stderr="",
         )
 
     monkeypatch.setattr(laboratory_backup, "_run", fake_run)
     output = root / "backup"
 
-    with pytest.raises(BackupError, match="Firebase/GCS storage profiles"):
+    with pytest.raises(BackupError, match="Cloud artifact targets"):
         create_backup(root, compose_file, output)
 
     assert len(commands) == 1
     assert "psql" in commands[0]
     assert not output.exists()
     assert not list(root.glob(".backup.tmp-*"))
+
+
+def test_create_backup_archives_each_configured_local_target(tmp_path, monkeypatch):
+    from scripts import laboratory_backup
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose_file = root / "compose.yml"
+    compose_file.write_text("services: {}", encoding="utf-8")
+    mount_sources = {}
+    api_volumes = []
+    for key, (container_path, _archive_name) in STORAGE_ARCHIVES.items():
+        source = root / key
+        source.mkdir()
+        mount_sources[key] = source
+        api_volumes.append({"type": "bind", "source": str(source), "target": container_path})
+    custom_source = root / "lab-a-artifacts"
+    custom_source.mkdir()
+    (custom_source / "case.vcf").write_text("local target data", encoding="utf-8")
+    custom_container_root = "/data/siraloom/labs/lab-a/artifacts"
+    api_volumes.append(
+        {"type": "bind", "source": str(custom_source), "target": custom_container_root}
+    )
+    compose_config = {
+        "services": {
+            "api": {"volumes": api_volumes},
+            "worker": {
+                "volumes": [
+                    {
+                        "type": "bind",
+                        "source": str(custom_source),
+                        "target": custom_container_root,
+                    }
+                ]
+            },
+            "postgres": {
+                "environment": {"POSTGRES_DB": "siraloom", "POSTGRES_USER": "siraloom"},
+                "volumes": [{"target": "/var/lib/postgresql/data"}],
+            },
+        }
+    }
+    monkeypatch.setattr(laboratory_backup, "_compose_config", lambda *_a, **_k: compose_config)
+    commands = []
+
+    def fake_run(command, *, cwd, capture=False):
+        commands.append(command)
+        if "psql" in command:
+            sql = command[-1]
+            if "json_build_object" in sql:
+                stdout = json.dumps(
+                    {
+                        "cloud_present": False,
+                        "local_target_ids": ["lab-a"],
+                        "nonlegacy_artifacts": True,
+                    }
+                )
+            else:
+                stdout = "ARTIFACT_URIS_MAPPED"
+        elif "run" in command:
+            stdout = json.dumps({"lab-a": custom_container_root})
+        elif "ps" in command:
+            stdout = "api\nworker\n"
+        elif "rev-parse" in command:
+            stdout = "test-commit\n"
+        else:
+            stdout = ""
+        return CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(laboratory_backup, "_run", fake_run)
+
+    def fake_pg_dump(*_args, cwd, stdout, check):
+        stdout.write(b"PGDMPfixture")
+        return CompletedProcess(args=[], returncode=0)
+
+    monkeypatch.setattr(laboratory_backup.subprocess, "run", fake_pg_dump)
+    output = root / "backup"
+
+    create_backup(root, compose_file, output)
+
+    manifest = verify_bundle(output)
+    assert manifest["local_artifact_targets"]["lab-a"]["container_path"] == custom_container_root
+    assert (output / "artifact-target-lab-a.tar.gz").is_file()
+    assert any("stop" in command for command in commands)
+    assert any("start" in command for command in commands)
+
+
+def test_create_backup_rejects_overlapping_local_mount_roots_before_stopping_writers(
+    tmp_path, monkeypatch
+):
+    from scripts import laboratory_backup
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose_file = root / "compose.yml"
+    compose_file.write_text("services: {}", encoding="utf-8")
+    mount_sources = {}
+    api_volumes = []
+    for key, (container_path, _archive_name) in STORAGE_ARCHIVES.items():
+        source = root / key
+        source.mkdir()
+        mount_sources[key] = source
+        api_volumes.append({"type": "bind", "source": str(source), "target": container_path})
+    custom_source = root / "custom"
+    custom_source.mkdir()
+    custom_container_root = "/data/siraloom/artifacts/lab-a"
+    api_volumes.append(
+        {"type": "bind", "source": str(custom_source), "target": custom_container_root}
+    )
+    config = {
+        "services": {
+            "api": {"volumes": api_volumes},
+            "worker": {
+                "volumes": [
+                    {
+                        "type": "bind",
+                        "source": str(custom_source),
+                        "target": custom_container_root,
+                    }
+                ]
+            },
+            "postgres": {
+                "environment": {"POSTGRES_DB": "siraloom", "POSTGRES_USER": "siraloom"},
+                "volumes": [{"target": "/var/lib/postgresql/data"}],
+            },
+        }
+    }
+    monkeypatch.setattr(laboratory_backup, "_compose_config", lambda *_a, **_k: config)
+    commands = []
+
+    def fake_run(command, *, cwd, capture=False):
+        commands.append(command)
+        if "psql" in command:
+            stdout = json.dumps(
+                {
+                    "cloud_present": False,
+                    "local_target_ids": ["lab-a"],
+                    "nonlegacy_artifacts": False,
+                }
+            )
+        elif "run" in command:
+            stdout = json.dumps({"lab-a": custom_container_root})
+        else:
+            stdout = ""
+        return CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(laboratory_backup, "_run", fake_run)
+
+    with pytest.raises(BackupError, match="must not overlap"):
+        create_backup(root, compose_file, root / "backup")
+
+    assert not any("stop" in command for command in commands)
+
+
+def test_restore_custom_local_target_into_new_compose_mounts(tmp_path, monkeypatch):
+    from scripts import laboratory_backup
+
+    bundle = _bundle(tmp_path, local_targets={"lab-a": "/data/siraloom/labs/lab-a/artifacts"})
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose_file = root / "compose.yml"
+    compose_file.write_text("services: {}", encoding="utf-8")
+    env_file = root / "restore.env"
+    env_file.write_text("POSTGRES_DB=siraloom_restore_bootstrap\n", encoding="utf-8")
+    parent = tmp_path / "restore-targets"
+    parent.mkdir()
+    custom_target = parent / "lab-a-artifacts"
+    targets = {
+        "artifacts": parent / "artifacts",
+        "references": parent / "references",
+        "resource_cache": parent / "resource-cache",
+        "artifact_target:lab-a": custom_target,
+    }
+    container_root = "/data/siraloom/labs/lab-a/artifacts"
+    compose_config = {
+        "services": {
+            "postgres": {
+                "environment": {
+                    "POSTGRES_DB": "siraloom_restore_bootstrap",
+                    "POSTGRES_USER": "siraloom",
+                }
+            },
+            **{
+                service: {
+                    "env_file": str(env_file),
+                    "volumes": [
+                        {
+                            "type": "bind",
+                            "source": str(custom_target),
+                            "target": container_root,
+                        }
+                    ],
+                }
+                for service in ("api", "worker", "beat")
+            },
+        }
+    }
+    monkeypatch.setattr(laboratory_backup, "_compose_config", lambda *_a, **_k: compose_config)
+    monkeypatch.setattr(
+        laboratory_backup,
+        "_load_local_artifact_targets",
+        lambda *_a, **_k: {"lab-a": container_root},
+    )
+    commands = []
+
+    def fake_run(command, *, cwd, capture=False):
+        commands.append(command)
+        if "ps" in command:
+            stdout = "postgres\nredis\n"
+        elif "psql" in command and "json_build_object" in command[-1]:
+            stdout = json.dumps(
+                {
+                    "cloud_present": False,
+                    "local_target_ids": ["lab-a"],
+                    "nonlegacy_artifacts": True,
+                }
+            )
+        elif "psql" in command:
+            stdout = "ARTIFACT_URIS_MAPPED"
+        else:
+            stdout = ""
+        return CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(laboratory_backup, "_run", fake_run)
+    monkeypatch.setattr(
+        laboratory_backup.subprocess,
+        "run",
+        lambda *_args, **_kwargs: CompletedProcess(args=[], returncode=0),
+    )
+
+    restore_backup(
+        root,
+        compose_file,
+        bundle,
+        "siraloom_restore_local_target",
+        targets,
+        project_name="siraloom_restore_test",
+        env_file=env_file,
+    )
+
+    assert (custom_target / "case" / "local.txt").read_bytes() == b"local target artifact"
+    assert custom_target.is_dir()
+    assert any("createdb" in command for command in commands)
 
 
 def test_compose_command_supports_isolated_restore_environment(tmp_path):
@@ -389,12 +748,13 @@ def test_restore_refuses_running_application_services_in_isolated_project(tmp_pa
         "_compose_config",
         lambda *_args, **_kwargs: {
             "services": {
+                **{service: {"env_file": str(env_file)} for service in ("api", "worker", "beat")},
                 "postgres": {
                     "environment": {
                         "POSTGRES_DB": "siraloom_restore_bootstrap",
                         "POSTGRES_USER": "siraloom",
                     }
-                }
+                },
             }
         },
     )

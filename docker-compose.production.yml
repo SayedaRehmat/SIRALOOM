@@ -44,7 +44,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     restart: unless-stopped
-    env_file: .env
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
     environment:
       FIREBASE_CREDENTIALS_PATH: /run/secrets/firebase_admin_credentials
       TMPDIR: /data/siraloom/scratch
@@ -76,7 +76,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     restart: unless-stopped
-    env_file: .env
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
     environment:
       TMPDIR: /data/siraloom/scratch
       REDIS_URL: "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
@@ -97,7 +97,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     restart: unless-stopped
-    env_file: .env
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
     environment:
       REDIS_URL: "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
     command: ["celery", "-A", "backend.app.infrastructure.queue.celery_app.celery_app", "beat", "--loglevel=INFO", "--schedule=/data/siraloom/beat/celerybeat-schedule"]

@@ -22,7 +22,8 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-FORMAT = "siraloom-lab-backup-v1"
+FORMAT_V1 = "siraloom-lab-backup-v1"
+FORMAT = "siraloom-lab-backup-v2"
 DATABASE_FILE = "database.dump"
 STORAGE_ARCHIVES = {
     "artifacts": ("/data/siraloom/artifacts", "artifacts.tar.gz"),
@@ -30,24 +31,25 @@ STORAGE_ARCHIVES = {
     "resource_cache": ("/data/siraloom/resource-cache", "resource-cache.tar.gz"),
 }
 ARTIFACT_STORAGE_PREFLIGHT_SQL = """
-    SELECT CASE
-      WHEN EXISTS (
+    SELECT json_build_object(
+      'cloud_present', EXISTS (
         SELECT 1 FROM organization_storage_profiles
         WHERE backend_type = 'FIREBASE_GCS'
       ) OR EXISTS (
         SELECT 1 FROM artifacts WHERE storage_uri LIKE 'gs://%'
-      ) THEN 'CLOUD_ARTIFACTS_PRESENT'
-      WHEN EXISTS (
-        SELECT 1 FROM organization_storage_profiles
+      ),
+      'local_target_ids', COALESCE((
+        SELECT json_agg(DISTINCT configuration->>'target_id')
+        FROM organization_storage_profiles
         WHERE backend_type = 'LOCAL_FILESYSTEM'
           AND COALESCE(configuration->>'target_id', '') <> ''
-      ) OR EXISTS (
+      ), '[]'::json),
+      'nonlegacy_artifacts', EXISTS (
         SELECT 1 FROM artifacts
         WHERE storage_uri NOT LIKE 'file:///data/siraloom/artifacts/%'
           AND storage_uri NOT LIKE 'gs://%'
-      ) THEN 'NON_LEGACY_ARTIFACTS_PRESENT'
-      ELSE 'LOCAL_ARTIFACTS_ONLY'
-    END
+      )
+    )::text
 """
 
 
@@ -87,10 +89,29 @@ def verify_bundle(bundle: Path) -> dict[str, Any]:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise BackupError("Backup manifest.json is unreadable or invalid") from exc
-    if manifest.get("format") != FORMAT:
+    if manifest.get("format") not in {FORMAT_V1, FORMAT}:
         raise BackupError("Unsupported backup format")
     files = manifest.get("files")
     expected_names = {DATABASE_FILE, *(name for _, name in STORAGE_ARCHIVES.values())}
+    local_targets = manifest.get("local_artifact_targets", {})
+    if manifest["format"] == FORMAT_V1 and local_targets:
+        raise BackupError("Legacy backup manifest cannot declare custom artifact targets")
+    if not isinstance(local_targets, dict):
+        raise BackupError("Manifest local_artifact_targets must be an object")
+    for target_id, target in local_targets.items():
+        if (
+            not isinstance(target_id, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,62}", target_id)
+            or not isinstance(target, dict)
+            or set(target) != {"container_path", "archive"}
+            or not isinstance(target["container_path"], str)
+            or ".." in target["container_path"].split("/")
+            or not PurePosixPath(target["container_path"]).is_absolute()
+            or target["container_path"] == "/"
+            or target["archive"] != f"artifact-target-{target_id}.tar.gz"
+        ):
+            raise BackupError(f"Invalid local artifact target metadata: {target_id!r}")
+        expected_names.add(target["archive"])
     if not isinstance(files, dict) or set(files) != expected_names:
         raise BackupError("Manifest does not list the complete database and storage set")
     actual_names = {path.name for path in bundle.iterdir()}
@@ -193,27 +214,101 @@ def _volume_sources(config: dict[str, Any]) -> dict[str, Path]:
     return result
 
 
-def _archive_tree(source: Path, destination: Path) -> None:
-    with tarfile.open(destination, "w:gz", compresslevel=6) as archive:
-        for path in sorted(source.rglob("*")):
-            if path.is_symlink():
-                raise BackupError(
-                    f"Storage tree contains a symlink; refusing ambiguous backup: {path}"
-                )
-            if not (path.is_dir() or path.is_file()):
-                raise BackupError(f"Storage tree contains an unsupported file type: {path}")
-            archive.add(path, arcname=path.relative_to(source).as_posix(), recursive=False)
+def _bind_mount_source(
+    config: dict[str, Any], service: str, target: str, *, must_exist: bool = True
+) -> Path:
+    mounts = ((config.get("services") or {}).get(service) or {}).get("volumes") or []
+    matches = [mount for mount in mounts if mount.get("target") == target]
+    if len(matches) != 1:
+        raise BackupError(f"Expected one {service} bind mount at {target}")
+    mount = matches[0]
+    source = mount.get("source")
+    if mount.get("type") != "bind" or not source or not Path(source).is_absolute():
+        raise BackupError(f"{service} target {target} must use an absolute host bind mount")
+    path = Path(source).resolve(strict=must_exist)
+    if must_exist and not path.is_dir():
+        raise BackupError(f"Configured storage source is not a directory: {target}")
+    return path
 
 
-def _require_local_artifact_storage(
-    compose: list[str], *, root: Path, user: str, database: str
+def _load_local_artifact_targets(compose: list[str], *, root: Path) -> dict[str, str]:
+    """Read deployment-owned local target IDs and container roots from the API image."""
+    probe = (
+        "import json; "
+        "from backend.app.domain.storage_profiles import configured_local_storage_targets; "
+        "print(json.dumps(dict(configured_local_storage_targets())))"
+    )
+    result = _run(
+        [
+            *compose,
+            "run",
+            "--rm",
+            "-T",
+            "--no-deps",
+            "--entrypoint",
+            "python",
+            "api",
+            "-c",
+            probe,
+        ],
+        cwd=root,
+        capture=True,
+    )
+    try:
+        configured = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise BackupError("Could not read deployment artifact-target configuration") from exc
+    if not isinstance(configured, dict):
+        raise BackupError("Deployment artifact-target configuration must be a JSON object")
+    local: dict[str, str] = {}
+    for target_id, container_path in configured.items():
+        if (
+            not isinstance(target_id, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,62}", target_id)
+            or not isinstance(container_path, str)
+        ):
+            raise BackupError("Deployment artifact-target configuration is invalid")
+        path = PurePosixPath(container_path)
+        if (
+            path is None
+            or not path.is_absolute()
+            or path == PurePosixPath("/")
+            or ".." in path.parts
+        ):
+            raise BackupError(f"Local artifact target {target_id} has an invalid container root")
+        local[target_id] = str(path)
+    return local
+
+
+def _require_isolated_runtime_environment(
+    config: dict[str, Any], *, compose_file: Path, env_file: Path
 ) -> None:
-    """Refuse a local-only backup when the database uses cloud artifact storage.
+    """Ensure application services load the explicit restore environment file."""
+    expected = env_file.resolve(strict=True)
+    services = config.get("services") or {}
+    for service in ("api", "worker", "beat"):
+        raw = (services.get(service) or {}).get("env_file")
+        entries = raw if isinstance(raw, list) else [raw]
+        paths = []
+        for entry in entries:
+            value = entry.get("path") if isinstance(entry, dict) else entry
+            if not isinstance(value, str) or not value:
+                continue
+            path = Path(value)
+            if not path.is_absolute():
+                path = compose_file.parent / path
+            paths.append(path.resolve(strict=False))
+        if paths != [expected]:
+            raise BackupError(
+                f"Restore Compose service {service} must use only the explicit isolated "
+                "runtime environment file. Set SIRALOOM_RUNTIME_ENV_FILE in the "
+                "--env-file to that file's absolute path."
+            )
 
-    The current bundle archives only the legacy artifact bind mount. Checking
-    storage profiles and historical artifact URIs prevents cloud-backed or
-    organization-targeted files from being omitted from a checksummed bundle.
-    """
+
+def _artifact_inventory(
+    compose: list[str], *, root: Path, user: str, database: str
+) -> dict[str, Any]:
     result = _run(
         [
             *compose,
@@ -230,31 +325,111 @@ def _require_local_artifact_storage(
         cwd=root,
         capture=True,
     )
-    result_code = result.stdout.strip()
-    if result_code == "CLOUD_ARTIFACTS_PRESENT":
+    try:
+        inventory = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
         raise BackupError(
-            "This backup command archives local filesystem mounts only; "
-            "Firebase/GCS storage profiles or artifact URIs are present. "
-            "Use a cloud-aware backup procedure before creating a recovery bundle."
-        )
-    if result_code == "NON_LEGACY_ARTIFACTS_PRESENT":
+            "Artifact storage preflight returned invalid data; refusing backup"
+        ) from exc
+    if (
+        not isinstance(inventory, dict)
+        or set(inventory) != {"cloud_present", "local_target_ids", "nonlegacy_artifacts"}
+        or not isinstance(inventory["cloud_present"], bool)
+        or not isinstance(inventory["local_target_ids"], list)
+        or not isinstance(inventory["nonlegacy_artifacts"], bool)
+        or any(not isinstance(item, str) for item in inventory["local_target_ids"])
+    ):
+        raise BackupError("Artifact storage preflight returned an unknown result; refusing backup")
+    if inventory["cloud_present"]:
         raise BackupError(
-            "This backup command archives only the legacy artifact mount; "
-            "organization-targeted local profiles or non-legacy artifact URIs are present. "
-            "Use a backup procedure that includes every referenced artifact target."
+            "Cloud artifact targets are present. Configure and verify a cloud-aware backup "
+            "before creating a recovery bundle."
         )
-    if result_code != "LOCAL_ARTIFACTS_ONLY":
-        raise BackupError("Artifact storage preflight returned an unknown result; refusing backup.")
+    return inventory
 
 
-def _write_manifest(bundle: Path, *, commit: str, database: str) -> None:
-    files = [DATABASE_FILE, *(name for _, name in STORAGE_ARCHIVES.values())]
+def _require_artifact_uris_covered(
+    compose: list[str], *, root: Path, user: str, database: str, container_roots: list[str]
+) -> None:
+    prefixes = [Path(STORAGE_ARCHIVES["artifacts"][0]).as_uri() + "/"]
+    prefixes.extend(PurePosixPath(path).as_uri() + "/" for path in container_roots)
+    sql = _artifact_uri_coverage_sql(container_roots)
+    result = _run(
+        [
+            *compose,
+            "exec",
+            "-T",
+            "postgres",
+            "psql",
+            "-X",
+            "-qAt",
+            f"--username={user}",
+            f"--dbname={database}",
+            f"--command={sql}",
+        ],
+        cwd=root,
+        capture=True,
+    )
+    if result.stdout.strip() != "ARTIFACT_URIS_MAPPED":
+        raise BackupError(
+            "At least one persisted artifact URI is outside the configured local artifact roots; "
+            "refusing an incomplete backup."
+        )
+
+
+def _artifact_uri_coverage_sql(container_roots: list[str]) -> str:
+    prefixes = [Path(STORAGE_ARCHIVES["artifacts"][0]).as_uri() + "/"]
+    prefixes.extend(PurePosixPath(path).as_uri() + "/" for path in container_roots)
+    predicates = []
+    for prefix in prefixes:
+        literal = "'" + prefix.replace("'", "''") + "'"
+        predicates.append(f"left(storage_uri, length({literal})) = {literal}")
+    covered = " OR ".join(predicates)
+    return (
+        "SELECT CASE WHEN EXISTS (SELECT 1 FROM artifacts "
+        f"WHERE NOT ({covered}) AND storage_uri NOT LIKE 'gs://%') "
+        "THEN 'UNMAPPED_ARTIFACT_URI' ELSE 'ARTIFACT_URIS_MAPPED' END"
+    )
+
+
+def _archive_tree(source: Path, destination: Path) -> None:
+    with tarfile.open(destination, "w:gz", compresslevel=6) as archive:
+        for path in sorted(source.rglob("*")):
+            if path.is_symlink():
+                raise BackupError(
+                    f"Storage tree contains a symlink; refusing ambiguous backup: {path}"
+                )
+            if not (path.is_dir() or path.is_file()):
+                raise BackupError(f"Storage tree contains an unsupported file type: {path}")
+            archive.add(path, arcname=path.relative_to(source).as_posix(), recursive=False)
+
+
+def _write_manifest(
+    bundle: Path,
+    *,
+    commit: str,
+    database: str,
+    local_artifact_targets: dict[str, str] | None = None,
+) -> None:
+    local_artifact_targets = local_artifact_targets or {}
+    files = [
+        DATABASE_FILE,
+        *(name for _, name in STORAGE_ARCHIVES.values()),
+        *(f"artifact-target-{target_id}.tar.gz" for target_id in local_artifact_targets),
+    ]
     manifest = {
         "format": FORMAT,
         "created_at": datetime.now(UTC).isoformat(),
         "repository_commit": commit,
         "database": database,
         "storage_targets": {key: target for key, (target, _) in STORAGE_ARCHIVES.items()},
+        "local_artifact_targets": {
+            target_id: {
+                "container_path": container_path,
+                "archive": f"artifact-target-{target_id}.tar.gz",
+            }
+            for target_id, container_path in sorted(local_artifact_targets.items())
+        },
         "files": {name: sha256_file(bundle / name) for name in files},
     }
     (bundle / "manifest.json").write_text(
@@ -304,7 +479,42 @@ def create_backup(
     running: list[str] = []
     stopped = False
     try:
-        _require_local_artifact_storage(compose, root=root, user=user, database=database)
+        inventory = _artifact_inventory(compose, root=root, user=user, database=database)
+        local_targets = _load_local_artifact_targets(compose, root=root)
+        local_target_sources: dict[str, Path] = {}
+        missing_targets = set(inventory["local_target_ids"]) - set(local_targets)
+        if missing_targets:
+            raise BackupError(
+                "Storage profiles reference local targets absent from the deployment "
+                "configuration: " + ", ".join(sorted(missing_targets))
+            )
+        for target_id, container_path in local_targets.items():
+            api_source = _bind_mount_source(config, "api", container_path)
+            worker_source = _bind_mount_source(config, "worker", container_path)
+            if api_source != worker_source:
+                raise BackupError(
+                    f"Local artifact target {target_id} has different API and worker mounts"
+                )
+            local_target_sources[target_id] = api_source
+        container_roots = [Path(target) for target in local_targets.values()]
+        container_roots.append(Path(STORAGE_ARCHIVES["artifacts"][0]))
+        host_roots = list(local_target_sources.values())
+        host_roots.append(storage_sources["artifacts"])
+        for roots in (container_roots, host_roots):
+            for index, path in enumerate(roots):
+                for other in roots[index + 1 :]:
+                    if path == other or path in other.parents or other in path.parents:
+                        raise BackupError(
+                            "Legacy and organization-specific artifact roots must not overlap "
+                            "in container or host mount paths."
+                        )
+        _require_artifact_uris_covered(
+            compose,
+            root=root,
+            user=user,
+            database=database,
+            container_roots=list(local_targets.values()),
+        )
         running_result = _run(
             [*compose, "ps", "--services", "--status", "running"], cwd=root, capture=True
         )
@@ -339,8 +549,15 @@ def create_backup(
             raise BackupError(f"pg_dump failed with exit code {process.returncode}")
         for key, (_, archive_name) in STORAGE_ARCHIVES.items():
             _archive_tree(storage_sources[key], staged / archive_name)
+        for target_id, source in local_target_sources.items():
+            _archive_tree(source, staged / f"artifact-target-{target_id}.tar.gz")
         commit_result = _run(["git", "rev-parse", "HEAD"], cwd=root, capture=True)
-        _write_manifest(staged, commit=commit_result.stdout.strip(), database=database)
+        _write_manifest(
+            staged,
+            commit=commit_result.stdout.strip(),
+            database=database,
+            local_artifact_targets=local_targets,
+        )
         verify_bundle(staged)
         os.replace(staged, output)
     except Exception:
@@ -397,9 +614,14 @@ def restore_backup(
         raise BackupError("Restore database must match siraloom_restore_[a-z0-9_]{1,48}")
     if target_database == manifest["database"]:
         raise BackupError("Restore database must differ from the source database")
-    if set(targets) != set(STORAGE_ARCHIVES):
+    local_targets = manifest.get("local_artifact_targets", {})
+    expected_target_keys = set(STORAGE_ARCHIVES) | {
+        f"artifact_target:{target_id}" for target_id in local_targets
+    }
+    if set(targets) != expected_target_keys:
         raise BackupError(
-            "Restore requires exactly the artifacts, references, and resource-cache targets"
+            "Restore requires the base storage paths and exactly the custom artifact targets "
+            "listed in the backup manifest"
         )
     for key, target in targets.items():
         if not target.is_absolute() or target.exists():
@@ -425,6 +647,28 @@ def restore_backup(
         raise BackupError("Isolated restore environment file is unavailable")
 
     config = _compose_config(root, compose_file, project_name=project_name, env_file=env_file)
+    _require_isolated_runtime_environment(config, compose_file=compose_file, env_file=env_file)
+    if local_targets:
+        configured_targets = _load_local_artifact_targets(
+            _compose_command(compose_file, project_name=project_name, env_file=env_file),
+            root=root,
+        )
+        for target_id, metadata in local_targets.items():
+            if configured_targets.get(target_id) != metadata["container_path"]:
+                raise BackupError(
+                    f"Restore environment does not configure artifact target {target_id} "
+                    "at its recorded container path"
+                )
+            destination = targets[f"artifact_target:{target_id}"].resolve(strict=False)
+            for service in ("api", "worker"):
+                mounted_source = _bind_mount_source(
+                    config, service, metadata["container_path"], must_exist=False
+                )
+                if mounted_source != destination:
+                    raise BackupError(
+                        f"Restore {service} mount for artifact target {target_id} "
+                        "does not match its new storage destination"
+                    )
     running_result = _run(
         [
             *_compose_command(compose_file, project_name=project_name, env_file=env_file),
@@ -465,7 +709,12 @@ def restore_backup(
             )
             stage = stage_root / "tree"
             stages[key] = stage
-            _extract_tree(bundle / STORAGE_ARCHIVES[key][1], stage)
+            if key in STORAGE_ARCHIVES:
+                archive_name = STORAGE_ARCHIVES[key][1]
+            else:
+                target_id = key.removeprefix("artifact_target:")
+                archive_name = local_targets[target_id]["archive"]
+            _extract_tree(bundle / archive_name, stage)
 
         _run(
             [
@@ -502,6 +751,27 @@ def restore_backup(
             )
         if process.returncode:
             raise BackupError(f"pg_restore failed with exit code {process.returncode}")
+
+        restored_inventory = _artifact_inventory(
+            compose, root=root, user=user, database=target_database
+        )
+        if restored_inventory["cloud_present"]:
+            raise BackupError(
+                "Backup contains cloud artifacts that this local restore cannot provide"
+            )
+        missing_targets = set(restored_inventory["local_target_ids"]) - set(local_targets)
+        if missing_targets:
+            raise BackupError(
+                "Restored database references local artifact targets absent from the bundle: "
+                + ", ".join(sorted(missing_targets))
+            )
+        _require_artifact_uris_covered(
+            compose,
+            root=root,
+            user=user,
+            database=target_database,
+            container_roots=[metadata["container_path"] for metadata in local_targets.values()],
+        )
 
         for key, target in targets.items():
             target.mkdir(mode=0o700)
@@ -567,6 +837,13 @@ def main() -> int:
     restore.add_argument("--artifacts-target", required=True, type=Path)
     restore.add_argument("--references-target", required=True, type=Path)
     restore.add_argument("--resource-cache-target", required=True, type=Path)
+    restore.add_argument(
+        "--local-artifact-target",
+        action="append",
+        default=[],
+        metavar="TARGET_ID=HOST_PATH",
+        help="new host directory for a custom local target in the backup (repeat per target)",
+    )
     restore.add_argument("--root", type=Path, default=Path.cwd())
     restore.add_argument("--compose-file", type=Path, default=Path("docker-compose.production.yml"))
     restore.add_argument("--project-name")
@@ -592,6 +869,21 @@ def main() -> int:
                 )
             )
         else:
+            artifact_targets: dict[str, Path] = {}
+            for value in args.local_artifact_target:
+                target_id, separator, path_value = value.partition("=")
+                if (
+                    not separator
+                    or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,62}", target_id)
+                    or not path_value
+                ):
+                    raise BackupError(
+                        "Local artifact target must use TARGET_ID=/absolute/host/path"
+                    )
+                key = f"artifact_target:{target_id}"
+                if key in artifact_targets:
+                    raise BackupError(f"Duplicate local artifact target: {target_id}")
+                artifact_targets[key] = Path(path_value)
             restore_backup(
                 args.root,
                 args.compose_file,
@@ -601,6 +893,7 @@ def main() -> int:
                     "artifacts": args.artifacts_target,
                     "references": args.references_target,
                     "resource_cache": args.resource_cache_target,
+                    **artifact_targets,
                 },
                 project_name=args.project_name,
                 env_file=args.env_file,
