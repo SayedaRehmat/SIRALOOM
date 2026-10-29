@@ -3318,7 +3318,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 step_id="population",
                                 attempt=population_step.attempt,
                                 resolved=secondary_execution,
-                                requested_resource_id=str(secondary_resource.id),
+                                requested_resource_id=secondary_resource.id,
                                 fallback_resource_id=None,
                                 batch_key=batch_key,
                                 metadata={

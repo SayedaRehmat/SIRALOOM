@@ -95,6 +95,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
     organization_id, user_id, case_id, analysis_id, resource_id = (
         uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
+    secondary_resource_id, secondary_qualification_id = uuid4(), uuid4()
     clinvar_resource_id = uuid4()
     hpo_resource_id, hpo_qualification_id = uuid4(), uuid4()
     hpoa_resource_id, hpoa_qualification_id = uuid4(), uuid4()
@@ -383,6 +384,48 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 metadata_json={},
             ))
             if clingen_enabled:
+                secondary_vcf_path = tmp_path / "secondary-population.vcf.gz"
+                secondary_vcf_path.write_bytes(b"fixture-only tabix resource\n")
+                secondary_resource = Resource(
+                    id=secondary_resource_id,
+                    organization_id=organization_id,
+                    name="Fixture secondary population resource",
+                    provider="1000GENOMES",
+                    resource_type="POPULATION",
+                    version="phase3",
+                    genome_build="GRCh38",
+                    access_method="LOCAL",
+                    license_text="Test fixture only",
+                    checksum=hashlib.sha256(secondary_vcf_path.read_bytes()).hexdigest(),
+                    location=str(secondary_vcf_path),
+                    status="ACTIVE",
+                    population_definition=None,
+                    metadata_json={},
+                )
+                db.add(secondary_resource)
+                secondary_contract = ResourceExecutionContract(
+                    provider_id="1000GENOMES",
+                    provider_version="phase3",
+                    access_method="LOCAL",
+                    endpoint=None,
+                    location=str(secondary_vcf_path),
+                    dataset="phase3",
+                    execution_scope="ORGANIZATION_MANAGED",
+                    toolchain={
+                        "info_fields": {"AC": "AC", "AN": "AN", "AF": "AF"},
+                        "population_code": "GLOBAL",
+                        "population_label": "1000 Genomes Phase 3",
+                    },
+                )
+                db.add(ResourceQualification(
+                    id=secondary_qualification_id,
+                    resource_id=secondary_resource_id,
+                    qualification_version="fixture-secondary-qualification-v1",
+                    status="QUALIFIED",
+                    checks_json={"execution_contract": secondary_contract.as_dict()},
+                    qualified_by=user_id,
+                    qualified_at=datetime.now(UTC),
+                ))
                 clingen_vp_resource = Resource(
                     id=clingen_vp_resource_id,
                     organization_id=organization_id,
@@ -473,6 +516,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                 db.flush()
                 selected_resources = [
                     ("POPULATION", resource),
+                    ("POPULATION_SECONDARY", secondary_resource),
                     ("CLINICAL_DATABASE", db.get(Resource, clinvar_resource_id)),
                     ("PHENOTYPE_ONTOLOGY", hpo_resource),
                     ("DISEASE_PHENOTYPE_ASSOCIATION", hpoa_resource),
@@ -578,6 +622,18 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             lambda *_args, **_kwargs: store,
         )
         monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
+
+        secondary_response = "1\t555\trs-secondary\tT\tC\t.\tPASS\tAC=1;AN=100;AF=0.01\n"
+        secondary_calls = {"count": 0}
+
+        def fake_tabix_run(*_args, **_kwargs):
+            secondary_calls["count"] += 1
+            return SimpleNamespace(returncode=0, stderr="", stdout=secondary_response)
+
+        monkeypatch.setattr(
+            "backend.app.adapters.population.secondary.subprocess.run",
+            fake_tabix_run,
+        )
 
         contract = SimpleNamespace(
             provider_id="fixture-population",
@@ -782,9 +838,32 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             observations = db.scalars(select(PopulationObservation).where(
                 PopulationObservation.analysis_id == analysis_id,
             )).all()
-            assert len(executions) == 1
-            assert executions[0].status == "SUCCEEDED"
-            assert len(observations) == (2 if no_match else 1)
+            assert len(executions) == 1 + int(clingen_enabled)
+            assert all(execution.status == "SUCCEEDED" for execution in executions)
+            assert len(observations) == (2 if no_match else 1 + int(clingen_enabled))
+            if clingen_enabled:
+                assert len(observations) == 2
+                secondary_execution_record = next(
+                    execution
+                    for execution in executions
+                    if execution.resource_id == secondary_resource_id
+                )
+                secondary_observation = next(
+                    observation
+                    for observation in observations
+                    if observation.resource_id == secondary_resource_id
+                )
+                assert len(secondary_execution_record.request_fingerprint) == 64
+                assert secondary_execution_record.response_sha256 == hashlib.sha256(
+                    secondary_response.encode()
+                ).hexdigest()
+                assert secondary_observation.request_fingerprint == secondary_execution_record.request_fingerprint
+                assert secondary_observation.response_sha256 == secondary_execution_record.response_sha256
+                assert secondary_observation.request_metadata["alternate"] == "C"
+                assert secondary_observation.observed_at is not None
+                assert secondary_calls["count"] == 1
+            else:
+                assert secondary_calls["count"] == 0
             if no_match:
                 assert all(row.availability == "NOT_FOUND" for row in observations)
                 assert all(row.allele_count is None and row.allele_number is None and row.allele_frequency is None for row in observations)
@@ -1065,10 +1144,10 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             assert db.scalar(select(func.count(ResourceExecutionRecord.id)).where(
                 ResourceExecutionRecord.analysis_id == analysis_id,
                 ResourceExecutionRecord.step_id == "population",
-            )) == 1
+            )) == 1 + int(clingen_enabled)
             assert db.scalar(select(func.count(PopulationObservation.id)).where(
                 PopulationObservation.analysis_id == analysis_id,
-            )) == (2 if no_match else 1)
+            )) == (2 if no_match else 1 + int(clingen_enabled))
             clinvar_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
                 ResourceExecutionRecord.analysis_id == analysis_id,
                 ResourceExecutionRecord.step_id == "build_evidence",
@@ -1077,6 +1156,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             assert len(clinvar_execution_rows) == 1
             assert clinvar_execution_rows[0].status == "NO_DATA"
             assert provider_calls["count"] == 1
+            assert secondary_calls["count"] == int(clingen_enabled)
             population_step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "population",
