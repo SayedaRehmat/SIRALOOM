@@ -38,6 +38,7 @@ def test_backup_storage_preflight_classifies_cloud_custom_and_legacy_targets():
                     external_identifier=str(organization_id),
                 )
             )
+            db.flush()
             db.add(
                 User(
                     id=user_id,
@@ -47,6 +48,7 @@ def test_backup_storage_preflight_classifies_cloud_custom_and_legacy_targets():
                     status="ACTIVE",
                 )
             )
+            db.flush()
             db.add(
                 Case(
                     id=case_id,
@@ -56,6 +58,7 @@ def test_backup_storage_preflight_classifies_cloud_custom_and_legacy_targets():
                     created_by=user_id,
                 )
             )
+            db.flush()
             db.add(
                 Artifact(
                     id=artifact_id,
