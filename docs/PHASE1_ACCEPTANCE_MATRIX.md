@@ -664,3 +664,9 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | Incremental reanalysis may reuse family observations only when their captured pedigree context is versioned and preserved | PASS (local regression scope; exact-SHA CI pending) | Reanalysis copy keeps the parent observation's schema-version-1 pedigree snapshot unchanged. The planner detects missing/invalid snapshots and replays from `build_evidence`; a copy-time guard fails closed if it is bypassed. Planner/reanalysis/provenance/report tests: **22 passed**. Full Linux backend suite: **1,611 passed, 55 skipped**, one existing Starlette/httpx warning. Legacy rows without snapshots retain safe upstream outputs and recompute evidence; this does not calculate inheritance or establish segregation. |
+
+### 2026-10-29 case changes enter the reanalysis lifecycle
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Case-scoped phenotype, clinical-context and pedigree change events validate and resolve to the correct evidence recomputation stage | PASS (local regression scope; exact-SHA CI pending) | Candidate validator accepts the explicit `CASE` event type only for the supported case-change trigger set and only without a resource ID. Clinical-context and pedigree triggers map to `build_evidence`. Pedigree member/relationship routes create durable candidate events in the same transaction. Focused API/case-change/pedigree/tenant suite: **107 passed**. Full backend suite: **1,616 passed, 55 skipped**, one existing Starlette/httpx warning. This creates a human-review candidate; it does not execute analysis or infer inheritance. |

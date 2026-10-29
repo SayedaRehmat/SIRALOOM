@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.case_change import create_case_change_candidates
-from backend.app.domain.reanalysis import _copy_rows
+from backend.app.domain.reanalysis import _copy_rows, affected_step_for_trigger
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -101,6 +101,8 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert len(candidates) == 2
         assert {c.parent_analysis_id for c in candidates} == {parent_one, parent_two}
         assert all(c.earliest_affected_step == "build_evidence" for c in candidates)
+        assert affected_step_for_trigger("CLINICAL_CONTEXT_UPDATE") == "build_evidence"
+        assert affected_step_for_trigger("PEDIGREE_UPDATE") == "build_evidence"
         assert db.query(ReanalysisChangeEvent).count() == 1
         assert db.query(Notification).count() == 4
         assert {row.user_id for row in db.query(Notification).all()} == {user_id, admin_id}
@@ -127,6 +129,21 @@ def test_case_change_creates_one_candidate_and_notification_per_completed_parent
         assert db.query(ReanalysisChangeEvent).count() == 2
         assert db.query(ReanalysisCandidate).count() == 4
         assert db.query(Notification).count() == 8
+
+        pedigree_candidates = create_case_change_candidates(
+            db,
+            case=case,
+            trigger_type="PEDIGREE_UPDATE",
+            reason="Family relationships were updated.",
+            metadata={"change_type": "RELATIONSHIP_ADDED", "relationship_id": str(uuid4())},
+        )
+        db.commit()
+        assert len(pedigree_candidates) == 2
+        assert all(row.earliest_affected_step == "build_evidence" for row in pedigree_candidates)
+        assert db.query(ReanalysisChangeEvent).filter_by(trigger_type="PEDIGREE_UPDATE").count() == 1
+        assert db.query(ReanalysisChangeEvent).count() == 3
+        assert db.query(ReanalysisCandidate).count() == 6
+        assert db.query(Notification).count() == 12
 
 
 def test_reanalysis_copy_preserves_annotation_population_and_evidence_provenance():

@@ -98,6 +98,94 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
     }]
 
 
+def test_pedigree_member_and_relationship_changes_create_reanalysis_candidates(monkeypatch):
+    case_id, parent_id, child_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id, case_identifier="PED-CHANGE-001")
+    parent = SimpleNamespace(
+        id=parent_id, case_id=case_id, member_identifier="parent",
+    )
+    child = SimpleNamespace(
+        id=child_id, case_id=case_id, member_identifier="proband",
+    )
+    principal = SimpleNamespace(user_id=uuid4())
+
+    class FakeResult:
+        def all(self):
+            return []
+
+    class FakeDb:
+        def __init__(self):
+            self.added = []
+            self.commits = 0
+
+        def get(self, model, object_id, **_kwargs):
+            if model is Case and object_id == case_id:
+                return case
+            if model is PedigreeMember and object_id == parent_id:
+                return parent
+            if model is PedigreeMember and object_id == child_id:
+                return child
+            raise AssertionError(f"Unexpected lookup: {model!r} {object_id!r}")
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
+        def scalar(self, _query):
+            return None
+
+        def scalars(self, _query):
+            return FakeResult()
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.commits += 1
+
+    class FakeAudit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    candidate_calls = []
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+    monkeypatch.setattr(
+        pedigree,
+        "create_case_change_candidates",
+        lambda _db, **kwargs: candidate_calls.append(kwargs) or [],
+    )
+
+    member_db = FakeDb()
+    pedigree.add_member(
+        case_id,
+        pedigree.MemberInput(member_identifier="sibling", affected_status="UNKNOWN"),
+        member_db,
+        principal,
+    )
+    relationship_db = FakeDb()
+    pedigree.add_relationship(
+        case_id,
+        pedigree.RelationshipInput(
+            parent_member_id=parent_id,
+            child_member_id=child_id,
+        ),
+        relationship_db,
+        principal,
+    )
+
+    assert [call["trigger_type"] for call in candidate_calls] == [
+        "PEDIGREE_UPDATE",
+        "PEDIGREE_UPDATE",
+    ]
+    assert candidate_calls[0]["metadata"]["change_type"] == "MEMBER_ADDED"
+    assert candidate_calls[1]["metadata"]["change_type"] == "RELATIONSHIP_ADDED"
+    assert member_db.commits == relationship_db.commits == 1
+
+
 def test_segregation_write_overrides_client_pedigree_snapshot(monkeypatch):
     analysis_id, variant_id, case_id, member_id = (uuid4() for _ in range(4))
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id)

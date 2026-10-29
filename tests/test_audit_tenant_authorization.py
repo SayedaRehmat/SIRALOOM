@@ -221,6 +221,7 @@ def test_sampled_pedigree_member_persists_case_specimen_link(monkeypatch):
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
     monkeypatch.setattr(pedigree, "AuditService", _Audit)
+    monkeypatch.setattr(pedigree, "create_case_change_candidates", lambda *_args, **_kwargs: [])
     db = _CaseDb()
 
     result = pedigree.add_member(

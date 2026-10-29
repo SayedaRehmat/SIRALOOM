@@ -17,6 +17,7 @@ from backend.app.auth.authorization import (
     require_role,
 )
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.case_change import create_case_change_candidates
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -242,6 +243,13 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
     row=PedigreeMember(id=uuid4(),case_id=case_id,member_identifier=body.member_identifier.strip(),relationship_to_proband=body.relationship_to_proband,sex=body.sex,affected_status=body.affected_status,is_proband=body.is_proband,sampled=body.sampled,specimen_id=body.specimen_id,metadata_json=body.metadata)
     db.add(row)
     AuditService(db).record(event_type="PEDIGREE_MEMBER_ADDED",case_id=case_id,analysis_id=None,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="PEDIGREE_MEMBER",subject_id=str(row.id),operation="CREATE",after_state=_member(row))
+    create_case_change_candidates(
+        db,
+        case=case,
+        trigger_type="PEDIGREE_UPDATE",
+        reason=f"Family member context for case {case_id} changed; completed analyses may require reanalysis.",
+        metadata={"change_type": "MEMBER_ADDED", "member_id": str(row.id)},
+    )
     db.commit(); return _member(row)
 
 @router.post("/cases/{case_id}/pedigree/relationships",status_code=201)
@@ -268,6 +276,13 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
     row=PedigreeRelationship(id=uuid4(),case_id=case_id,parent_member_id=parent.id,child_member_id=child.id,relationship_type=body.relationship_type,metadata_json=body.metadata)
     db.add(row)
     AuditService(db).record(event_type="PEDIGREE_RELATIONSHIP_ADDED",case_id=case_id,analysis_id=None,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="PEDIGREE_RELATIONSHIP",subject_id=str(row.id),operation="CREATE",after_state=_relationship(row))
+    create_case_change_candidates(
+        db,
+        case=case,
+        trigger_type="PEDIGREE_UPDATE",
+        reason=f"Family relationships for case {case_id} changed; completed analyses may require reanalysis.",
+        metadata={"change_type": "RELATIONSHIP_ADDED", "relationship_id": str(row.id)},
+    )
     db.commit(); return _relationship(row)
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/segregation")

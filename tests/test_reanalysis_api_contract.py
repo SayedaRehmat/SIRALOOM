@@ -1,6 +1,7 @@
+from uuid import uuid4
+
 import pytest
 from pydantic import ValidationError
-from uuid import uuid4
 
 from backend.app.api.v1 import reanalysis as reanalysis_api
 from backend.app.api.v1.reanalysis import ManualReanalysisRequest
@@ -100,6 +101,77 @@ def test_reanalysis_candidate_event_rejects_foreign_resource():
     with pytest.raises(reanalysis_api.HTTPException) as exc_info:
         reanalysis_api._validate_candidate_event_lineage(candidate, FakeDB())
 
+    assert exc_info.value.status_code == 409
+
+
+@pytest.mark.parametrize(
+    "trigger_type",
+    ["PHENOTYPE_UPDATE", "CLINICAL_CONTEXT_UPDATE", "PEDIGREE_UPDATE"],
+)
+def test_case_change_candidate_event_lineage_accepts_case_scoped_events(trigger_type):
+    organization_id = uuid4()
+    event_id = uuid4()
+    candidate = type(
+        "Candidate",
+        (),
+        {
+            "organization_id": organization_id,
+            "change_event_id": event_id,
+            "trigger_type": trigger_type,
+            "earliest_affected_step": "build_evidence",
+        },
+    )()
+    event = type(
+        "Event",
+        (),
+        {
+            "organization_id": organization_id,
+            "trigger_type": trigger_type,
+            "resource_kind": "CASE",
+            "resource_id": None,
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, object_id):
+            assert model is reanalysis_api.ReanalysisChangeEvent
+            assert object_id == event_id
+            return event
+
+    reanalysis_api._validate_candidate_event_lineage(candidate, FakeDB())
+
+
+def test_case_change_candidate_rejects_resource_reference():
+    organization_id = uuid4()
+    event_id = uuid4()
+    candidate = type(
+        "Candidate",
+        (),
+        {
+            "organization_id": organization_id,
+            "change_event_id": event_id,
+            "trigger_type": "PHENOTYPE_UPDATE",
+            "earliest_affected_step": "build_evidence",
+        },
+    )()
+    event = type(
+        "Event",
+        (),
+        {
+            "organization_id": organization_id,
+            "trigger_type": "PHENOTYPE_UPDATE",
+            "resource_kind": "CASE",
+            "resource_id": uuid4(),
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, _object_id):
+            assert model is reanalysis_api.ReanalysisChangeEvent
+            return event
+
+    with pytest.raises(reanalysis_api.HTTPException) as exc_info:
+        reanalysis_api._validate_candidate_event_lineage(candidate, FakeDB())
     assert exc_info.value.status_code == 409
 
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -17,10 +17,10 @@ from backend.app.infrastructure.db.models import (
     ReanalysisChangeEvent,
 )
 
-
 _CASE_TRIGGER_STEPS = {
     "PHENOTYPE_UPDATE": "build_evidence",
     "CLINICAL_CONTEXT_UPDATE": "build_evidence",
+    "PEDIGREE_UPDATE": "build_evidence",
 }
 
 

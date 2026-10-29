@@ -5,8 +5,23 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, aliased
 
-from backend.app.auth.authorization import CASE_WRITE_ROLES, case_access_predicate, require_case_permission, require_role, get_accessible_analysis
+from backend.app.application.analysis import enqueue_analysis, preflight_analysis_resources
+from backend.app.auth.authorization import (
+    CASE_WRITE_ROLES,
+    case_access_predicate,
+    get_accessible_analysis,
+    require_case_permission,
+    require_role,
+)
 from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.reanalysis import (
+    RESOURCE_TRIGGER_TYPE,
+    affected_step_for_trigger,
+    create_reanalysis,
+    detect_change,
+    snapshot_analysis_resources,
+)
+from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
     Case,
@@ -17,15 +32,6 @@ from backend.app.infrastructure.db.models import (
     ResourceDiscovery,
 )
 from backend.app.infrastructure.db.session import get_db
-from backend.app.application.analysis import enqueue_analysis, preflight_analysis_resources
-from backend.app.infrastructure.audit.service import AuditService
-from backend.app.domain.reanalysis import (
-    RESOURCE_TRIGGER_TYPE,
-    affected_step_for_trigger,
-    create_reanalysis,
-    detect_change,
-    snapshot_analysis_resources,
-)
 
 router = APIRouter(tags=["reanalysis"])
 RESOURCE_CHANGE_ROLES = frozenset({
@@ -134,11 +140,22 @@ def _validate_candidate_event_lineage(candidate: ReanalysisCandidate, db: Sessio
     if candidate.change_event_id is None:
         return
     event = db.get(ReanalysisChangeEvent, candidate.change_event_id)
+    event_kind = str(event.resource_kind).upper() if event is not None else None
+    case_event_valid = (
+        event_kind == "CASE"
+        and event.resource_id is None
+        and candidate.trigger_type
+        in {"PHENOTYPE_UPDATE", "CLINICAL_CONTEXT_UPDATE", "PEDIGREE_UPDATE"}
+    )
+    resource_event_valid = (
+        event is not None
+        and RESOURCE_TRIGGER_TYPE.get(event_kind) == event.trigger_type
+    )
     if (
         event is None
         or event.organization_id != candidate.organization_id
         or event.trigger_type != candidate.trigger_type
-        or RESOURCE_TRIGGER_TYPE.get(str(event.resource_kind).upper()) != event.trigger_type
+        or not (case_event_valid or resource_event_valid)
     ):
         raise HTTPException(
             status_code=409,

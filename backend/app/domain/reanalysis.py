@@ -37,6 +37,8 @@ CHANGE_STEP = {
     "REFERENCE_UPDATE": "normalize",
     "PERIODIC": "build_evidence",
     "MANUAL": "normalize",
+    "CLINICAL_CONTEXT_UPDATE": "build_evidence",
+    "PEDIGREE_UPDATE": "build_evidence",
 }
 
 STEP_ORDER = {
