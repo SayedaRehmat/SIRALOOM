@@ -13,6 +13,7 @@ from scripts.laboratory_backup import (
     BackupError,
     _compose_command,
     _extract_tree,
+    _require_local_artifact_storage,
     _safe_members,
     _volume_sources,
     create_backup,
@@ -141,6 +142,105 @@ def test_volume_discovery_rejects_named_volumes_for_backup_sources(tmp_path):
 
     with pytest.raises(BackupError, match="absolute host bind mount"):
         _volume_sources({"services": services})
+
+
+@pytest.mark.parametrize("database_result", ["CLOUD_ARTIFACTS_PRESENT", ""])
+def test_backup_refuses_cloud_artifact_profiles_or_unknown_database_result(
+    tmp_path, monkeypatch, database_result
+):
+    from scripts import laboratory_backup
+
+    seen = {}
+
+    def fake_run(command, *, cwd, capture=False):
+        seen["command"] = command
+        seen["cwd"] = cwd
+        seen["capture"] = capture
+        return CompletedProcess(command, 0, stdout=database_result, stderr="")
+
+    monkeypatch.setattr(laboratory_backup, "_run", fake_run)
+
+    with pytest.raises(BackupError, match="Firebase/GCS storage profiles"):
+        _require_local_artifact_storage(
+            ["docker", "compose"],
+            root=tmp_path,
+            user="siraloom",
+            database="siraloom",
+        )
+
+    assert "organization_storage_profiles" in seen["command"][-1]
+    assert "storage_uri LIKE 'gs://%'" in seen["command"][-1]
+    assert seen["capture"] is True
+
+
+def test_backup_accepts_confirmed_local_only_artifact_storage(tmp_path, monkeypatch):
+    from scripts import laboratory_backup
+
+    monkeypatch.setattr(
+        laboratory_backup,
+        "_run",
+        lambda *_args, **_kwargs: CompletedProcess(
+            args=[], returncode=0, stdout="LOCAL_ARTIFACTS_ONLY\n", stderr=""
+        ),
+    )
+
+    _require_local_artifact_storage(
+        ["docker", "compose"],
+        root=tmp_path,
+        user="siraloom",
+        database="siraloom",
+    )
+
+
+def test_create_backup_checks_cloud_storage_before_stopping_writers(tmp_path, monkeypatch):
+    from scripts import laboratory_backup
+
+    root = tmp_path / "repo"
+    root.mkdir()
+    compose_file = root / "compose.yml"
+    compose_file.write_text("services: {}", encoding="utf-8")
+    api_volumes = []
+    for key, (container_path, _archive_name) in STORAGE_ARCHIVES.items():
+        source = root / key
+        source.mkdir()
+        api_volumes.append({"type": "bind", "source": str(source), "target": container_path})
+    monkeypatch.setattr(
+        laboratory_backup,
+        "_compose_config",
+        lambda *_args, **_kwargs: {
+            "services": {
+                "api": {"volumes": api_volumes},
+                "postgres": {
+                    "environment": {
+                        "POSTGRES_DB": "siraloom",
+                        "POSTGRES_USER": "siraloom",
+                    },
+                    "volumes": [{"target": "/var/lib/postgresql/data"}],
+                },
+            }
+        },
+    )
+    commands = []
+
+    def fake_run(command, *, cwd, capture=False):
+        commands.append(command)
+        return CompletedProcess(
+            args=command,
+            returncode=0,
+            stdout="CLOUD_ARTIFACTS_PRESENT\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(laboratory_backup, "_run", fake_run)
+    output = root / "backup"
+
+    with pytest.raises(BackupError, match="Firebase/GCS storage profiles"):
+        create_backup(root, compose_file, output)
+
+    assert len(commands) == 1
+    assert "psql" in commands[0]
+    assert not output.exists()
+    assert not list(root.glob(".backup.tmp-*"))
 
 
 def test_compose_command_supports_isolated_restore_environment(tmp_path):

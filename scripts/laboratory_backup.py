@@ -185,6 +185,51 @@ def _archive_tree(source: Path, destination: Path) -> None:
             archive.add(path, arcname=path.relative_to(source).as_posix(), recursive=False)
 
 
+def _require_local_artifact_storage(
+    compose: list[str], *, root: Path, user: str, database: str
+) -> None:
+    """Refuse a local-only backup when the database uses cloud artifact storage.
+
+    The current bundle archives the configured filesystem mount, not Firebase/
+    GCS objects. Checking both storage profiles and historical artifact URIs
+    prevents a checksummed but incomplete bundle from being presented as a full
+    laboratory backup.
+    """
+    query = """
+        SELECT CASE
+          WHEN EXISTS (
+            SELECT 1 FROM organization_storage_profiles
+            WHERE backend_type = 'FIREBASE_GCS'
+          ) OR EXISTS (
+            SELECT 1 FROM artifacts WHERE storage_uri LIKE 'gs://%'
+          ) THEN 'CLOUD_ARTIFACTS_PRESENT'
+          ELSE 'LOCAL_ARTIFACTS_ONLY'
+        END
+    """
+    result = _run(
+        [
+            *compose,
+            "exec",
+            "-T",
+            "postgres",
+            "psql",
+            "-X",
+            "-qAt",
+            f"--username={user}",
+            f"--dbname={database}",
+            f"--command={query}",
+        ],
+        cwd=root,
+        capture=True,
+    )
+    if result.stdout.strip() != "LOCAL_ARTIFACTS_ONLY":
+        raise BackupError(
+            "This backup command archives local filesystem mounts only; "
+            "Firebase/GCS storage profiles or artifact URIs are present. "
+            "Use a cloud-aware backup procedure before creating a recovery bundle."
+        )
+
+
 def _write_manifest(bundle: Path, *, commit: str, database: str) -> None:
     files = [DATABASE_FILE, *(name for _, name in STORAGE_ARCHIVES.values())]
     manifest = {
@@ -242,6 +287,7 @@ def create_backup(
     running: list[str] = []
     stopped = False
     try:
+        _require_local_artifact_storage(compose, root=root, user=user, database=database)
         running_result = _run(
             [*compose, "ps", "--services", "--status", "running"], cwd=root, capture=True
         )

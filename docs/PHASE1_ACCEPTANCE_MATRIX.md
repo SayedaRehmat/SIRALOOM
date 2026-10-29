@@ -648,3 +648,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Trial-only GeneBe and public gnomAD GraphQL providers cannot pass the deployment-policy guard in laboratory mode through case/whitespace aliases | PASS (policy/resource-plan tests) | Provider IDs are trimmed and case-folded before trial-only matching. Tests cover common display-name and uppercase variants; policy/resource-plan/profile suite: **20 passed**. |
 | Prevention of all network egress to these services on a deployed laboratory network | NOT RUN | Requires deployed request-egress capture and network-policy testing; adapter/policy unit tests alone do not prove that boundary. |
+
+### 2026-10-29 prevent incomplete backups when cloud artifacts are configured
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Local-only backup refuses to claim completeness when Firebase/GCS storage profiles or persisted `gs://` artifact URIs exist | PASS (deterministic SQL decision tests) | Backup preflight checks both organization storage profiles and artifact URIs before stopping writers or dumping the database; unknown query output fails closed. The production create path test proves this check runs before writer inspection and bundle creation. Backup/deployment tests: **27 passed**. The database query was not exercised in a live Compose deployment because Docker is unavailable here. |
+| Backup and restore of Firebase/GCS artifacts | NOT IMPLEMENTED | The script archives local bind mounts only. Cloud-backed deployments must use a separately approved coordinated cloud backup/export and restore procedure; a local bundle is not complete for them. |
