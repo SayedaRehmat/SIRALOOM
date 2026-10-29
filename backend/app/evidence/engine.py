@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from numbers import Integral
 from typing import Any, Iterable
 from uuid import UUID, uuid4
 
@@ -851,7 +852,7 @@ class EvidenceEngine:
             availability = _normalize_text(obs.get("availability"))
             if availability not in {None, "AVAILABLE"}:
                 continue
-            allele_number = _int(obs.get("allele_number"))
+            allele_number = _population_count(obs.get("allele_number"))
             af = qualified_allele_frequency(obs.get("allele_frequency"), allele_number)
             if all(value in (None, "") for value in (af, obs.get("allele_count"), obs.get("allele_number"), obs.get("homozygote_count"))):
                 continue
@@ -874,9 +875,9 @@ class EvidenceEngine:
                         "population_code": population_code,
                         "population_label": label,
                         "allele_frequency": af,
-                        "allele_count": _int(obs.get("allele_count")),
+                        "allele_count": _population_count(obs.get("allele_count")),
                         "allele_number": allele_number,
-                        "homozygote_count": _int(obs.get("homozygote_count")),
+                        "homozygote_count": _population_count(obs.get("homozygote_count")),
                         "quality_status": obs.get("quality_status"),
                         "availability": availability,
                         "interpretive_use": "OBSERVATION_ONLY_UNTIL_RULE_EVALUATION",
@@ -893,10 +894,10 @@ class EvidenceEngine:
             ("GNOMAD_EXOMES", "gnomad_exomes_af", "gnomad_exomes_an", "gnomad_exomes_ac", "gnomad_exomes_homalt"),
             ("GNOMAD_GENOMES", "gnomad_genomes_af", "gnomad_genomes_an", "gnomad_genomes_ac", "gnomad_genomes_homalt"),
         ):
-            an = _int(population.get(an_key))
+            an = _population_count(population.get(an_key))
             af = qualified_allele_frequency(population.get(af_key), an)
-            ac = _int(population.get(ac_key))
-            hom = _int(population.get(hom_key))
+            ac = _population_count(population.get(ac_key))
+            hom = _population_count(population.get(hom_key))
             if af is None and ac is None and hom is None:
                 continue
             records.append(
@@ -1068,3 +1069,10 @@ def _int(value: Any) -> int | None:
         return int(value) if value not in (None, "") else None
     except (TypeError, ValueError):
         return None
+
+
+def _population_count(value: Any) -> int | None:
+    """Accept only integer population counts; never truncate floats or bools."""
+    if isinstance(value, bool) or not isinstance(value, Integral):
+        return None
+    return int(value)

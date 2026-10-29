@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 keep malformed population counts out of evidence
+
+- **Finding:** the population evidence builder converted AC, AN and homozygote counts with Python `int()` before applying the shared AF guard. That silently truncated fractional values and converted booleans; a malformed AN could therefore become a positive denominator and allow an AF into persisted evidence. The issue affected both direct population observations and annotation-derived aggregates.
+- **Correction:** population evidence now accepts count fields only when the supplied value is a non-boolean integral type. Invalid or string-encoded counts become unavailable; invalid AN consequently withholds AF. Other evidence-engine integer conversions retain their existing behavior.
+- **Regression/verification:** added direct-observation and annotation-aggregate tests for fractional, boolean, and string AN. Focused population/evidence suite — **73 passed, 1 skipped**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,679 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** **VERIFIED** for both evidence-builder paths in local tests. This prevents coercion but does not qualify a live population provider or establish clinical use. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA CI pending.
+
 ### 2026-10-29 validate VCF INFO percent escapes
 
 - **Finding:** INFO parsing rejected a raw `=` but accepted malformed `%` escapes and lowercase hex escapes such as `%3d`. VCFv4.3 requires capitalized percent encoding for special characters ([HTS VCFv4.3 character encoding](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2296-L2315)).

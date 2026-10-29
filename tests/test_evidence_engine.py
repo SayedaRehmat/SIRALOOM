@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+import pytest
+
 from backend.app.domain.evidence import evidence_fingerprint
 from backend.app.domain.population import qualified_allele_frequency
 from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
@@ -137,6 +139,59 @@ def test_population_frequency_requires_positive_allele_number():
     population_records = [record for record in records if record.evidence_type == "POPULATION"]
     assert population_records
     assert all(record.payload["allele_frequency"] is None for record in population_records)
+
+
+@pytest.mark.parametrize("invalid_allele_number", [10.5, True, "10"])
+def test_population_evidence_does_not_coerce_invalid_allele_number(
+    invalid_allele_number,
+):
+    engine = EvidenceEngine()
+    records = engine.build_from_annotation(
+        variant_id=uuid4(),
+        annotation={},
+        provider_name="test",
+        provider_version="1",
+        resource_name="test-population",
+        resource_version="1",
+        context=EvidenceContext(analysis_id=uuid4()),
+        population_observations=[
+            {
+                "availability": "AVAILABLE",
+                "allele_count": 1,
+                "allele_number": invalid_allele_number,
+                "allele_frequency": 0.1,
+            }
+        ],
+    )
+
+    population = next(record for record in records if record.evidence_type == "POPULATION")
+    assert population.payload["allele_number"] is None
+    assert population.payload["allele_frequency"] is None
+
+
+@pytest.mark.parametrize("invalid_allele_number", [10.5, True, "10"])
+def test_annotation_population_evidence_does_not_coerce_invalid_allele_number(
+    invalid_allele_number,
+):
+    records = EvidenceEngine().build_from_annotation(
+        variant_id=uuid4(),
+        annotation={
+            "population": {
+                "reference_population_an": invalid_allele_number,
+                "reference_population_ac": 1,
+                "reference_population_af": 0.1,
+            }
+        },
+        provider_name="test",
+        provider_version="1",
+        resource_name="test-population",
+        resource_version="1",
+        context=EvidenceContext(analysis_id=uuid4()),
+    )
+
+    population = next(record for record in records if record.evidence_type == "POPULATION")
+    assert population.payload["allele_number"] is None
+    assert population.payload["allele_frequency"] is None
 
 
 def test_display_allele_frequency_requires_valid_positive_denominator():

@@ -773,3 +773,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | INFO percent escapes use two uppercase hexadecimal digits | PASS (local automated scope) | Direct parser and upload intake reject a bare percent, malformed `%GG` and lowercase `%3d`; uppercase `%3D` remains accepted. Focused VCF/intake/normalization/routing suite: **184 passed**; full backend suite with BCFtools/HTSlib 1.19: **1,673 passed, 36 skipped**; Ruff F/I and diff check passed. Basis: [HTS VCFv4.3 character encoding](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2296-L2315). Exact-SHA CI run [40879104212](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40879104212) passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container, and production Compose checks on `8db7de2e7355b95abd2573bb22727e8d31f78b65`. |
 | Decoding or validating arbitrary INFO-field semantics | NOT ESTABLISHED | This check validates escape syntax only; interpretation remains provider/field-specific. |
+
+
+### 2026-10-29 keep malformed population counts out of evidence
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Population evidence must not coerce fractional, boolean, or string AC/AN/homozygote counts | PASS (local automated scope) | Both direct observations and annotation-derived aggregates reject malformed AN values `10.5`, `true`, and `"10"`; invalid AN does not yield allele frequency. Focused population/evidence suite: **73 passed, 1 skipped**; full backend suite with BCFtools/HTSlib 1.19: **1,679 passed, 36 skipped**; Ruff F/I and diff check passed. Exact-SHA CI pending. |
+| External population resource data typing and clinical qualification | NOT ESTABLISHED | Regression validates internal evidence handling; it does not qualify a gnomAD or laboratory-owned dataset. |
