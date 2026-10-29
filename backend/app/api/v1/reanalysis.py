@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
 from backend.app.application.analysis import enqueue_analysis, preflight_analysis_resources
@@ -211,11 +211,30 @@ def notifications(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
+    analysis_case = aliased(Analysis)
+    candidate_case = aliased(ReanalysisCandidate)
+    linked_case_id = func.coalesce(
+        Notification.case_id,
+        analysis_case.case_id,
+        candidate_case.case_id,
+    )
     rows = db.scalars(
         select(Notification)
+        .select_from(Notification)
+        .outerjoin(analysis_case, analysis_case.id == Notification.analysis_id)
+        .outerjoin(candidate_case, candidate_case.id == Notification.candidate_id)
+        .outerjoin(Case, Case.id == linked_case_id)
         .where(
             Notification.organization_id == principal.organization_id,
             Notification.user_id == principal.user_id,
+            or_(
+                and_(
+                    Notification.case_id.is_(None),
+                    Notification.analysis_id.is_(None),
+                    Notification.candidate_id.is_(None),
+                ),
+                case_access_predicate(principal, "read"),
+            ),
         )
         .order_by(Notification.created_at.desc())
         .limit(100)

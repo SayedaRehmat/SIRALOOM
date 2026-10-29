@@ -692,3 +692,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Case-scoped reanalysis notification recipients must have both active membership and active user identity | PASS (SQLite + exact-SHA CI) | Shared `case_read_recipient_user_ids` now joins `User` and filters `User.status == ACTIVE`, matching resource-release fanout semantics. Regression asserts suspended assigned user excluded while active case readers/admin remain included. Focused case-access/case-change/reanalysis tests: **16 passed**; full backend suite: **1,622 passed, 55 skipped**; Ruff F/I and diff check passed. Exact-SHA run [40861878685](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40861878685) passed backend, PostgreSQL/Celery, frontend/container/Compose and backend image checks for `ff2d1437de6d45542c759d526976b758a257dfc2`. |
 | Live identity-provider suspension/offboarding propagation and deployed notification delivery | NOT RUN | No Firebase/laboratory identity configuration or deployed environment is available in this checkout. |
+
+### 2026-10-29 filter inbox authorization before pagination
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Revoked or unassigned case notifications cannot consume the inbox page limit ahead of assigned-case notifications | PASS (SQLite route regression) | Database query applies `case_access_predicate` through linked case/analysis/candidate before the 100-row limit, retaining per-row checks. Regression with 105 newer inaccessible rows returns the older authorized notification. Focused inbox/tenant tests: **48 passed**; full backend: **1,623 passed, 55 skipped**; Ruff F/I and diff check passed. Exact-SHA CI pending. |
+| PostgreSQL and deployed inbox authorization behavior | NOT RUN | Hosted CI for this commit is pending; no deployed laboratory identity/case assignment environment was available. |
