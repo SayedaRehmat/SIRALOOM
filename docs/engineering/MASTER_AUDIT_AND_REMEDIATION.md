@@ -5,7 +5,7 @@
 - **Finding:** INFO parsing rejected a raw `=` but accepted malformed `%` escapes and lowercase hex escapes such as `%3d`. VCFv4.3 requires capitalized percent encoding for special characters ([HTS VCFv4.3 character encoding](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2296-L2315)).
 - **Correction:** INFO values now reject percent signs not followed by two uppercase hexadecimal digits. Direct validator and intake regressions reject bare `%`, `%GG`, and lowercase `%3d`; existing coverage confirms valid `%3D` remains accepted.
 - **Verification:** focused VCF/intake/normalization/routing suite — **184 passed**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,673 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
-- **Status/limits:** **VERIFIED** for raw escape syntax at parser and upload-service boundaries. It does not decode or interpret arbitrary INFO payload semantics. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA CI pending.
+- **Status/limits:** **VERIFIED** for raw escape syntax at parser and upload-service boundaries plus exact-SHA CI [run #40879104212](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40879104212), which passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container and production Compose checks on `8db7de2e7355b95abd2573bb22727e8d31f78b65`. It does not decode or interpret arbitrary INFO payload semantics. Phase A and laboratory deployment remain **PARTIAL**.
 
 ### 2026-10-29 reject unescaped equals signs in VCF INFO values
 
