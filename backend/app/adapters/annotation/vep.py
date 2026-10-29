@@ -103,6 +103,8 @@ class VEPProvider(ScientificResourceProvider):
                 "--dir_cache", "--cache", "--offline", "--species", "--assembly", "--fasta",
                 "--help", "-h", "--version", "--show_cache_info", "--config", "--plugin", "--custom",
                 "--refseq", "--merged", "--everything", "--canonical", "--mane",
+                "--symbol", "--transcript_version", "--hgvs", "--hgvsg",
+                "--mane_select",
             }
             if any(arg.split("=", 1)[0] in forbidden for arg in self.extra_args):
                 raise VEPProviderError(
@@ -161,10 +163,19 @@ class VEPProvider(ScientificResourceProvider):
                 "--dir_cache", self.cache_dir,
                 "--input_file", str(input_vcf),
                 "--output_file", str(output_json),
+                "--canonical",
+                "--symbol",
+                "--transcript_version",
             ]
             cmd.extend(["--assembly", build])
+            annotation_options = ["--canonical", "--symbol", "--transcript_version"]
+            if build == "GRCh38":
+                # Ensembl documents MANE annotations for human GRCh38 only.
+                cmd.append("--mane")
+                annotation_options.append("--mane")
             if self.fasta:
-                cmd.extend(["--fasta", self.fasta])
+                cmd.extend(["--fasta", self.fasta, "--hgvs", "--hgvsg"])
+                annotation_options.extend(["--hgvs", "--hgvsg"])
             cmd.extend(self.extra_args)
 
             try:
@@ -227,6 +238,7 @@ class VEPProvider(ScientificResourceProvider):
                     "command_provider": self.provider_id,
                     "assembly": build,
                     "cache_version": self.cache_version,
+                    "annotation_options": annotation_options,
                 },
             )
 
@@ -298,6 +310,7 @@ class VEPProvider(ScientificResourceProvider):
                     "response_sha256": result.response_sha256,
                     "assembly": inputs.get("genome_build"),
                     "cache_version": self.cache_version,
+                    "annotation_options": result.metadata.get("annotation_options", []),
                     "runtime_check": result.metadata.get("runtime_check"),
                 },
             })

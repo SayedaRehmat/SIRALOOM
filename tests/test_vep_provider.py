@@ -1,5 +1,6 @@
 import hashlib
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -64,7 +65,10 @@ def test_vep_provider_requires_explicit_cache_version():
 
 @pytest.mark.parametrize(
     "argument",
-    ["--input_file=/tmp/unapproved.vcf", "--help", "--plugin", "--refseq"],
+    [
+        "--input_file=/tmp/unapproved.vcf", "--help", "--plugin", "--refseq",
+        "--symbol", "--transcript_version", "--hgvs", "--hgvsg", "--mane_select",
+    ],
 )
 def test_vep_provider_rejects_extra_args_that_override_governed_paths(argument):
     toolchain = {
@@ -273,6 +277,79 @@ def test_vep_annotation_verifies_pinned_binary_and_offline_cache(monkeypatch, tm
     assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["vep_binary_sha256"]
     assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["cache_tree_sha256"]
     assert output[0]["_siraloom_annotation_provenance"]["runtime_check"]["cache_manifest_sha256"]
+
+
+@pytest.mark.parametrize(
+    ("assembly", "with_fasta", "expected_options"),
+    [
+        (
+            "GRCh38",
+            True,
+            {"--canonical", "--symbol", "--transcript_version", "--mane", "--hgvs", "--hgvsg"},
+        ),
+        (
+            "GRCh37",
+            False,
+            {"--canonical", "--symbol", "--transcript_version"},
+        ),
+    ],
+)
+def test_vep_execution_requests_and_records_versioned_transcript_annotations(
+    monkeypatch, assembly, with_fasta, expected_options
+):
+    toolchain = dict(_contract().toolchain)
+    toolchain["assembly"] = assembly
+    if not with_fasta:
+        toolchain.pop("fasta")
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    calls = []
+
+    class Completed:
+        returncode = 0
+
+        def communicate(self, timeout):
+            assert timeout == 300
+            output_path = Path(calls[-1][calls[-1].index("--output_file") + 1])
+            output_path.write_text(
+                json.dumps({
+                    "start": 100,
+                    "seq_region_name": "1",
+                    "allele_string": "A/G",
+                    "transcript_consequences": [],
+                }) + "\n",
+                encoding="utf-8",
+            )
+            return "", ""
+
+    def fake_popen(command, **_kwargs):
+        calls.append(command)
+        return Completed()
+
+    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.Popen", fake_popen)
+    variant = CanonicalVariant(
+        genome_build=assembly, chromosome="1", position=100, reference="A", alternate="G"
+    )
+    request = provider.prepare_request(
+        "annotate", {"variants": [variant], "genome_build": assembly}
+    )
+
+    result = provider.execute(request)
+
+    command = calls[0]
+    assert expected_options <= set(command)
+    assert result.metadata["annotation_options"] == [
+        option for option in (
+            "--canonical", "--symbol", "--transcript_version", "--mane", "--hgvs", "--hgvsg"
+        ) if option in expected_options
+    ]
+    assert result.payload[0]["allele_string"] == "A/G"
+    normalized = provider.normalize_result(
+        result,
+        inputs={"variants": [variant], "genome_build": assembly},
+    )
+    assert normalized.observations[0]["_siraloom_annotation_provenance"]["annotation_options"] == (
+        result.metadata["annotation_options"]
+    )
 
 
 def test_vep_rejects_binary_release_mismatch_before_loading_cache(monkeypatch, tmp_path):

@@ -618,3 +618,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | API, worker, Beat and migration image default to fixed non-root UID/GID and retain access to intended writable paths | PASS (exact-SHA CI image and volume checks) | Backend Dockerfile uses UID/GID 10001 and seeds default volume mountpoints. CI run [40837430300](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40837430300) built the image and verified UID/GID 10001 plus write access through fresh named volumes; backend, frontend and PostgreSQL/Celery jobs passed. Local deployment/auth tests: **27 passed**. This is an image/CI check, not a deployed host mount test. |
 | Laboratory host bind-mount permissions, Firebase Admin secret readability, deployed behavior and restore | NOT RUN | No lab deployment or configured credentials/storage were available. Documentation states required ownership/access boundaries; this is not deployment evidence. |
+
+### 2026-10-29 VEP transcript and HGVS command contract
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Configured VEP invocation requests the transcript markers and identifier fields used by downstream logic | PASS (provider command contract tests) | Provider requests `--canonical`, `--symbol`, and `--transcript_version`; adds `--mane` for GRCh38 and `--hgvs --hgvsg` only with configured FASTA. Effective options are provenance fields and extra args cannot override them. Focused provider/resource/worker suite: **81 passed**. |
+| Real qualified VEP/cache output and scientific annotation concordance | NOT RUN | No laboratory VEP installation/cache was available; command tests use deterministic subprocess doubles and are not annotation-accuracy evidence. |
