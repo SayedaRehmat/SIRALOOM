@@ -624,5 +624,13 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | Configured VEP invocation requests the transcript markers and identifier fields used by downstream logic | PASS (provider command contract tests) | Provider requests `--canonical`, `--symbol`, and `--transcript_version`; adds `--mane` for GRCh38 and `--hgvs --hgvsg` only with configured FASTA. Effective options are provenance fields and extra args cannot override them. Focused provider/resource/worker suite: **81 passed**. |
-| Effective VEP options are queryable from the durable annotation row after worker execution/recovery | PASS (local real-workflow persistence test; exact-SHA CI pending) | The annotation batch persistence path copies `annotation_options` into `Annotation.request_metadata`; the actual worker redelivery regression asserts the fields persist. Focused VEP/annotation suite: **39 passed**. |
+| Effective VEP options are queryable from the durable annotation row after worker execution/recovery | PASS (local real-workflow persistence test + exact-SHA CI) | The annotation batch persistence path copies `annotation_options` into `Annotation.request_metadata`; the actual worker redelivery regression asserts the fields persist. Focused VEP/annotation suite: **39 passed**. Exact-SHA run [40838715936](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40838715936) passed the backend (**1,644 passed, 35 skipped**), PostgreSQL/Celery and frontend/container jobs for `dd882cc`. |
 | Real qualified VEP/cache output and scientific annotation concordance | NOT RUN | No laboratory VEP installation/cache was available; command tests use deterministic subprocess doubles and are not annotation-accuracy evidence. |
+
+### 2026-10-29 annotation provenance shown in review and reports
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Reviewer bundle, variant detail and report snapshot preserve safe annotation provider/resource identity, effective options, observation time and response checksum | PASS (local backend/API/report scope) | Shared provenance projection excludes internal endpoint/runtime paths. Review bundle and report regressions verify the options/checksum survive; PDF HTML rendering includes them and omits the private endpoint fixture. Focused backend suite: **131 passed**. |
+| Reviewer UI visibly presents effective options and response checksum | PARTIAL pending exact-SHA frontend verification | UI and English/Arabic strings are implemented. Local WSL has no Linux Node; the available `npm` is a Windows shim and cannot run from this UNC path. The next pushed commit's CI must pass frontend behavior/build/container checks. |
+| Annotation scientific accuracy, live provider result, deployed laboratory visibility | NOT RUN | No qualified VEP installation/cache, scientific known-answer comparison or laboratory deployment was available. |

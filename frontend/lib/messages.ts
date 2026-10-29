@@ -741,6 +741,8 @@ export type TranslationKey =
   | "review.gene"
   | "review.transcriptSelection"
   | "review.transcriptConsequences"
+  | "review.annotationOptions"
+  | "review.annotationResponseHash"
   | "review.population"
   | "review.populationNone"
   | "review.qc"
@@ -1235,6 +1237,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.gene": "Gene",
     "review.transcriptSelection": "Transcript selection",
     "review.transcriptConsequences": "Transcript consequences",
+    "review.annotationOptions": "Annotation options",
+    "review.annotationResponseHash": "Annotation response SHA-256",
     "review.population": "Population observations",
     "review.populationNone": "No population observations.",
     "review.qc": "Technical QC",
@@ -2177,6 +2181,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.gene": "الجين",
     "review.transcriptSelection": "اختيار النسخة الجينية",
     "review.transcriptConsequences": "تأثيرات النسخ الجينية",
+    "review.annotationOptions": "خيارات التعليق الجيني",
+    "review.annotationResponseHash": "بصمة SHA-256 لاستجابة التعليق",
     "review.population": "ملاحظات السكان",
     "review.populationNone": "لا توجد ملاحظات سكانية.",
     "review.qc": "ضبط الجودة التقني",

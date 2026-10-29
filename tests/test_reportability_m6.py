@@ -1,12 +1,28 @@
 from uuid import uuid4
+
 import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Organization, User, Case, Analysis, Variant, Classification, Report, ReportabilityDecision, AnalysisPartition
-from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability, final_reportability_state
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    AnalysisPartition,
+    Case,
+    Classification,
+    Organization,
+    Report,
+    ReportabilityDecision,
+    User,
+    Variant,
+)
+from backend.app.reporting.finalization import ReportFinalizationError, finalize_report
+from backend.app.reporting.reportability import (
+    evaluate_analysis,
+    final_reportability_state,
+    finalize_reportability,
+)
 from backend.app.reporting.service import build_report_content
-from backend.app.reporting.finalization import finalize_report, ReportFinalizationError
 
 
 def make_db():
@@ -71,6 +87,7 @@ def test_reportability_evaluation_rejects_classification_outside_normalization_m
 
 def test_reportability_evaluation_route_returns_conflict_for_manifest_mismatch(monkeypatch):
     from fastapi import HTTPException
+
     from backend.app.api.v1 import reports
 
     db, _, _, analysis, _, _ = seed("PATHOGENIC")
@@ -207,7 +224,7 @@ def test_clinical_report_contains_only_final_report_findings():
     assert content["findings"][0]["reportability"]["disposition"] == "REPORT"
     assert "priority_score" not in content["findings"][0]["reportability"]
     assert "priority_band" not in content["findings"][0]["reportability"]
-    assert content["report_schema_version"] == "1.1.0"
+    assert content["report_schema_version"] == "1.2.0"
     assert content["final_result"]["release_state"] == "NOT_FOR_CLINICAL_RELEASE"
     assert content["final_result"]["clinical_use_status"] == "LABORATORY_VALIDATION_REQUIRED"
     from backend.app.reporting.service import render_html

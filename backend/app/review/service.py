@@ -8,9 +8,10 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.adapters.annotation.genebe_normalizer import gene_be_display_payload
 from backend.app.acmg.rules import validate_strength
+from backend.app.adapters.annotation.genebe_normalizer import gene_be_display_payload
 from backend.app.auth.authorization import get_analysis_variant, require_analysis_artifact
+from backend.app.domain.annotation_provenance import annotation_provenance_snapshot
 from backend.app.domain.enums import ReviewStatus, StepStatus
 from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.population import qualified_allele_frequency
@@ -282,7 +283,7 @@ def get_review_bundle(db: Session, *, analysis_id: UUID, variant_id: UUID) -> di
         },
         "variant_context": {
             "gene": gene,
-            "annotations": [{"provider": a.provider_name, "provider_version": a.provider_version, "resource": a.resource_name, "resource_version": a.resource_version, "payload": gene_be_display_payload(a.payload or {}) if a.provider_name == "GeneBe" else (a.payload or {})} for a in annotations],
+            "annotations": [{**annotation_provenance_snapshot(a), "payload": gene_be_display_payload(a.payload or {}) if a.provider_name == "GeneBe" else (a.payload or {})} for a in annotations],
             "population": [{"population": p.population_code, "level": p.population_level, "label": p.population_label, "availability": p.availability, "af": qualified_allele_frequency(p.allele_frequency, p.allele_number), "ac": p.allele_count, "an": p.allele_number, "resource_id": str(p.resource_id), "quality_status": p.quality_status} for p in population],
             "gene_disease": [_evidence_context_dict(e) for e in gene_context],
             "phenotype_evidence": [_evidence_context_dict(e) for e in phenotype_evidence],

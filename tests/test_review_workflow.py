@@ -7,9 +7,38 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import ReviewStatus, UserRole
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import ACMGAssessment, Analysis, Annotation, Assay, Case, AnalysisPartition, Classification, Evidence, Organization, PedigreeMember, PedigreeRelationship, ReportabilityDecision, ReviewAction, SegregationObservation, Specimen, User, Variant, WorkflowStep
-from backend.app.review.service import ReviewAuthorizationError, ReviewConflictError, ReviewError, ReviewMutation, approve_classification, get_review_bundle, propose_manual_classification, review_criterion, request_more_evidence
+from backend.app.infrastructure.db.models import (
+    ACMGAssessment,
+    Analysis,
+    AnalysisPartition,
+    Annotation,
+    Assay,
+    Case,
+    Classification,
+    Evidence,
+    Organization,
+    PedigreeMember,
+    PedigreeRelationship,
+    ReportabilityDecision,
+    ReviewAction,
+    SegregationObservation,
+    Specimen,
+    User,
+    Variant,
+    WorkflowStep,
+)
 from backend.app.reporting.reportability import evaluate_analysis, final_reportability_state
+from backend.app.review.service import (
+    ReviewAuthorizationError,
+    ReviewConflictError,
+    ReviewError,
+    ReviewMutation,
+    approve_classification,
+    get_review_bundle,
+    propose_manual_classification,
+    request_more_evidence,
+    review_criterion,
+)
 
 
 def make_db():
@@ -207,7 +236,10 @@ def test_completed_acmg_batch_restores_review_and_blocked_counts():
 
 
 def test_manual_acmg_approval_reconciles_when_every_annotated_variant_is_approved():
-    from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete
+    from backend.app.workflows.variant import (
+        _classification_review_gate_ready,
+        _manual_acmg_review_complete,
+    )
 
     db, reviewer, _, analysis, variant, assessment, classification = seed()
     _add_annotation(db, analysis, variant)
@@ -227,7 +259,10 @@ def test_manual_acmg_approval_reconciles_when_every_annotated_variant_is_approve
 
 
 def test_classification_gate_blocks_if_any_annotated_variant_has_no_classification():
-    from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete
+    from backend.app.workflows.variant import (
+        _classification_review_gate_ready,
+        _manual_acmg_review_complete,
+    )
 
     db, _, _, analysis, variant, _, classification = seed()
     _add_annotation(db, analysis, variant)
@@ -239,7 +274,11 @@ def test_classification_gate_blocks_if_any_annotated_variant_has_no_classificati
 
 
 def test_worker_review_gates_reject_downstream_variants_outside_normalization_manifest():
-    from backend.app.workflows.variant import _classification_review_gate_ready, _manual_acmg_review_complete, _reportability_gate_ready
+    from backend.app.workflows.variant import (
+        _classification_review_gate_ready,
+        _manual_acmg_review_complete,
+        _reportability_gate_ready,
+    )
 
     db, _reviewer, _, analysis, variant, assessment, classification = seed()
     classification.criterion_ids = []
@@ -397,6 +436,15 @@ def test_approval_creates_new_immutable_classification_version():
 
 def test_review_bundle_is_analysis_scoped():
     db, _reviewer, _, analysis, variant, _, _ = seed()
+    db.add(Annotation(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+        provider_name="VEP", provider_version="115.2",
+        resource_name="VEP cache", resource_version="115",
+        request_fingerprint="a" * 64, response_sha256="b" * 64,
+        request_metadata={"annotation_options": ["--canonical", "--mane"]},
+        observed_at=datetime.now(timezone.utc), retry_count=0,
+        payload={"normalized": {"gene": {"symbol": "TEST"}}},
+    ))
     classification = db.query(Classification).filter_by(analysis_id=analysis.id).one()
     db.add(ReportabilityDecision(
         id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
@@ -415,6 +463,10 @@ def test_review_bundle_is_analysis_scoped():
     assert len(bundle["criteria"]) == 1
     assert "priority_score" not in bundle["reportability"]
     assert "priority_band" not in bundle["reportability"]
+    annotation = bundle["variant_context"]["annotations"][0]
+    assert annotation["annotation_options"] == ["--canonical", "--mane"]
+    assert annotation["response_sha256"] == "b" * 64
+    assert "endpoint" not in annotation
 
 
 def test_review_bundle_rejects_assay_from_another_organization():
@@ -506,10 +558,20 @@ def test_review_api_paths_exist(client):
 
 def test_approval_requires_active_review():
     from uuid import uuid4
+
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
-    from backend.app.infrastructure.db.models import Base, Organization, User, Case, Analysis, Variant, Classification
-    from backend.app.review.service import approve_classification, ReviewError
+
+    from backend.app.infrastructure.db.models import (
+        Analysis,
+        Base,
+        Case,
+        Classification,
+        Organization,
+        User,
+        Variant,
+    )
+    from backend.app.review.service import ReviewError, approve_classification
 
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
@@ -602,8 +664,8 @@ def test_reportability_is_not_created_from_proposed_classification():
 
 
 def test_manual_classification_to_final_reportability_gate_is_auditable():
-    from backend.app.review.service import start_review
     from backend.app.reporting.reportability import finalize_reportability
+    from backend.app.review.service import start_review
 
     db, reviewer, _, analysis, variant, assessment, classification = seed()
     db.delete(classification)

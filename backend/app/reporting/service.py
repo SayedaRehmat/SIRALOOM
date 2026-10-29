@@ -14,6 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import get_analysis_variant, get_analysis_variant_ids
+from backend.app.domain.annotation_provenance import annotation_provenance_snapshot
 from backend.app.domain.clinical_input_snapshot import saved_case_clinical_input_snapshot
 from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
 from backend.app.domain.population import qualified_allele_frequency
@@ -558,10 +559,7 @@ def _annotation_summary(db: Session, analysis_id: UUID, variant_id: UUID) -> lis
     )
     return [
         {
-            "provider": row.provider_name,
-            "provider_version": row.provider_version,
-            "resource": row.resource_name,
-            "resource_version": row.resource_version,
+            **annotation_provenance_snapshot(row),
             "normalized": (row.payload or {}).get("normalized", {}),
         }
         for row in rows
@@ -869,9 +867,9 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "confirmation_context": confirmation_snapshot(confirmation),
             "follow_up": [{"action_type": x.action_type, "status": x.status, "due_date": x.due_date.isoformat() if x.due_date else None, "responsible_role": x.responsible_role, "outcome": x.outcome, "notes": x.notes} for x in followups],
         }
+        finding["annotations"] = annotations
         if include_full_evidence:
             finding["evidence"] = _evidence_summary(db, analysis.id, variant.id)
-            finding["annotations"] = annotations
         findings.append(finding)
 
     secondary_rows = list(db.scalars(select(SecondaryFindingDecision).where(SecondaryFindingDecision.analysis_id == analysis.id).order_by(SecondaryFindingDecision.variant_id, SecondaryFindingDecision.version)))
@@ -907,7 +905,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     technical_quality = technical_quality_snapshot(db, analysis.id)
 
     return {
-        "report_schema_version": "1.1.0",
+        "report_schema_version": "1.2.0",
         "report_version": 1,
         "report_status": "DRAFT",
         "report_type": report_type,
@@ -1002,6 +1000,18 @@ def _html_document(content: dict[str, Any]) -> str:
             f"<tr><td>{html.escape(str(p['population_label']))}</td><td>{html.escape(str(p['allele_frequency']))}</td><td>{html.escape(str(p['availability']))}</td><td>{html.escape(str(p['resource']['name']))} {html.escape(str(p['resource']['version']))}</td></tr>"
             for p in finding.get("population", [])
         )
+        annotation_rows = "".join(
+            "<li>"
+            f"{html.escape(str(annotation.get('provider') or 'Annotation'))} "
+            f"{html.escape(str(annotation.get('provider_version') or '-'))}; "
+            f"{html.escape(str(annotation.get('resource') or 'resource'))} "
+            f"{html.escape(str(annotation.get('resource_version') or '-'))}; "
+            f"options: {html.escape(', '.join(annotation.get('annotation_options') or []) or 'not recorded')}; "
+            f"response SHA-256: {html.escape(str(annotation.get('response_sha256') or 'not recorded'))}"
+            "</li>"
+            for annotation in finding.get("annotations", [])
+            if isinstance(annotation, dict)
+        )
         findings_html.append(
             f"""
             <section class='finding'>
@@ -1010,6 +1020,7 @@ def _html_document(content: dict[str, Any]) -> str:
               <p><strong>Transcript:</strong> {tx}</p>
               <p><strong>Transcript selection:</strong> {transcript_selection_status} ({selected_transcript_id})</p>
               <p><strong>HGVS c.:</strong> {c_hgvs}<br><strong>HGVS p.:</strong> {p_hgvs}</p>
+              <h3>Annotation provenance</h3><ul>{annotation_rows or '<li>No annotation provenance recorded</li>'}</ul>
               <p><strong>Reportability:</strong> {html.escape(str((finding.get("reportability") or {}).get("disposition", "NOT_DETERMINED")))}</p>
               <h3>ACMG Evidence</h3>
               <table><thead><tr><th>Criterion</th><th>Assessment</th></tr></thead><tbody>{criterion_rows or '<tr><td colspan="2">No criterion records</td></tr>'}</tbody></table>

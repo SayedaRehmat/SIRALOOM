@@ -441,6 +441,14 @@ def test_report_preserves_and_renders_unresolved_transcript_selection():
         variant_id=variant.id,
         provider_name="VEP",
         provider_version="115",
+        resource_name="VEP cache",
+        resource_version="115",
+        request_fingerprint="c" * 64,
+        response_sha256="d" * 64,
+        request_metadata={
+            "endpoint": "https://internal.example.invalid/private",
+            "annotation_options": ["--canonical", "--symbol", "--mane"],
+        },
         payload={"normalized": {
             "gene": {"symbol": None},
             "transcript": None,
@@ -460,7 +468,12 @@ def test_report_preserves_and_renders_unresolved_transcript_selection():
     rendered = _html_document(content)
 
     assert finding["transcript_selection"]["status"] == "AMBIGUOUS_CANONICAL"
+    assert finding["annotations"][0]["annotation_options"] == ["--canonical", "--symbol", "--mane"]
+    assert finding["annotations"][0]["response_sha256"] == "d" * 64
     assert "Transcript selection:</strong> AMBIGUOUS_CANONICAL (-)" in rendered
+    assert "Annotation provenance" in rendered
+    assert "--canonical, --symbol, --mane" in rendered
+    assert "internal.example.invalid" not in rendered
 
 
 def test_rendered_report_contains_persisted_qc_gate_and_observation_provenance():
