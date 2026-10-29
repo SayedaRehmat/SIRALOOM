@@ -124,6 +124,39 @@ def test_configured_manifest_verifies_all_required_assets(tmp_path):
         assert hashes[name] == _sha256(paths[name])
 
 
+def test_benchmark_output_directory_must_be_empty_and_existing_evidence_is_preserved(tmp_path):
+    module = _load_runner()
+    output_dir = tmp_path / "existing-run"
+    output_dir.mkdir()
+    prior_report = output_dir / "benchmark-report.json"
+    prior_report.write_text('{"status":"prior-run"}\n', encoding="utf-8")
+
+    with pytest.raises(module.BenchmarkConfigurationError, match="not empty"):
+        module.prepare_output_dir(output_dir)
+
+    assert prior_report.read_text(encoding="utf-8") == '{"status":"prior-run"}\n'
+
+
+def test_benchmark_output_directory_creation_accepts_new_or_empty_directory(tmp_path):
+    module = _load_runner()
+    new_dir = tmp_path / "new-run"
+    assert module.prepare_output_dir(new_dir) == new_dir.resolve()
+    empty_dir = tmp_path / "empty-run"
+    empty_dir.mkdir()
+    assert module.prepare_output_dir(empty_dir) == empty_dir.resolve()
+
+
+def test_benchmark_output_path_cannot_be_a_file(tmp_path):
+    module = _load_runner()
+    output_file = tmp_path / "not-a-directory"
+    output_file.write_text("preserve", encoding="utf-8")
+
+    with pytest.raises(module.BenchmarkConfigurationError, match="not a directory"):
+        module.prepare_output_dir(output_file)
+
+    assert output_file.read_text(encoding="utf-8") == "preserve"
+
+
 def test_missing_approval_metadata_fails_closed(tmp_path):
     module = _load_runner()
     path = _configured_manifest(tmp_path)

@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -222,6 +222,21 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def prepare_output_dir(path: Path) -> Path:
+    """Create an empty benchmark destination without overwriting prior evidence."""
+    output_dir = path.expanduser().resolve()
+    if output_dir.exists() and not output_dir.is_dir():
+        raise BenchmarkConfigurationError(
+            f"Benchmark output path exists and is not a directory: {output_dir}"
+        )
+    if output_dir.exists() and any(output_dir.iterdir()):
+        raise BenchmarkConfigurationError(
+            f"Benchmark output directory is not empty; choose a new run directory: {output_dir}"
+        )
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir
+
+
 def load_and_verify_manifest(path: Path) -> tuple[dict[str, Any], dict[str, Path], dict[str, str]]:
     manifest = json.loads(path.read_text(encoding="utf-8"))
     benchmark = manifest.get("benchmark") or {}
@@ -306,7 +321,7 @@ def main() -> int:
     parser.add_argument("--bcftools", default="bcftools")
     args = parser.parse_args()
 
-    started = datetime.now(timezone.utc)
+    started = datetime.now(UTC)
     try:
         manifest_path = args.manifest.expanduser().resolve()
         manifest, assets, hashes = load_and_verify_manifest(manifest_path)
@@ -317,8 +332,7 @@ def main() -> int:
         if not bcftools:
             raise BenchmarkConfigurationError(f"bcftools executable not found: {args.bcftools}")
 
-        output_dir = args.output_dir.expanduser().resolve()
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir = prepare_output_dir(args.output_dir)
         prefix = output_dir / "hg001_grch38"
         bcftools_version = run_command([bcftools, "--version"])
         hap_py_version = run_command([hap_py, "--version"])
@@ -362,7 +376,7 @@ def main() -> int:
                 f"hap.py completed but expected summary output was not found: {summary_csv}"
             )
         observed_metrics = parse_happy_summary(summary_csv)
-        finished = datetime.now(timezone.utc)
+        finished = datetime.now(UTC)
         report = {
             "status": "RUN_COMPLETE_REVIEW_REQUIRED",
             "benchmark": manifest["benchmark"],

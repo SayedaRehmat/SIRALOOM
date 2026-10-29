@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 prevent GIAB benchmark output from overwriting prior evidence
+
+- **Finding:** the benchmark runner wrote selected samples, hap.py outputs, and its JSON report directly into the requested directory. Reusing a non-empty output path could overwrite or mix artifacts from a prior run, undermining reproducibility and evidence retention.
+- **Correction:** the runner now accepts only a new or empty output directory and fails closed for a file path or a non-empty directory. It never deletes prior contents. Tests confirm the existing report remains byte-for-byte intact on rejection. Updated UTC timestamp creation to the current standard-library `UTC` alias while making the touched runner Ruff-clean.
+- **Verification:** `.venv/bin/python -m pytest tests/test_giab_benchmark_runner.py -q` — **23 passed, 1 skipped**. Broader normalization/benchmark regression command `PYTHONPATH=. DATABASE_URL=sqlite:// REDIS_URL=redis://localhost:6379/0 GENEBE_ENABLED=false GNOMAD_ENABLED=false .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/tmp/siraloom-giab-benchmark-tests -q --tb=short tests/test_giab_benchmark_runner.py tests/test_vcf_tools.py` — **31 passed, 7 skipped**, one existing Starlette/httpx deprecation warning. Skips include BCFtools-dependent cases because BCFtools is unavailable in this local environment. Ruff, Python compilation and `git diff --check` passed.
+- **Status/limits:** verified output-directory protection and regression behavior. No GIAB truth-set comparison ran: the example manifest remains unconfigured and no approved truth assets, query sample attestation, acceptance policy, or local BCFtools/hap.py toolchain were supplied. No scientific concordance claim is made. Phase A, scientific validation and deployment qualification remain **PARTIAL**. Exact-SHA CI for this change is pending.
+
 ### 2026-10-29 reject numeric-string population counts in ACMG evaluators
 
 - **Finding:** the PM2/BA1/BS1 evaluator integer helper accepted numeric strings such as `"100"`. Malformed or legacy available observations could therefore satisfy allele-number/count requirements and enter criterion threshold evaluation, despite the evidence layer now preserving only genuine integer count types.
