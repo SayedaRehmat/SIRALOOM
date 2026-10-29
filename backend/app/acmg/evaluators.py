@@ -7,8 +7,8 @@ clinical criteria without a calibrated rule profile.
 from __future__ import annotations
 
 import math
-import re
 from dataclasses import dataclass
+from numbers import Integral
 from typing import Any
 
 
@@ -41,15 +41,9 @@ def _finite_float(value: Any) -> float | None:
 
 
 def _int(value: Any) -> int | None:
-    if value is None or value == "":
+    if isinstance(value, bool) or not isinstance(value, Integral):
         return None
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str) and re.fullmatch(r"-?[0-9]+", value.strip()):
-        return int(value)
-    return None
+    return int(value)
 
 
 def _frequency_values(obs: dict[str, Any]) -> tuple[float, int, int | None] | None:

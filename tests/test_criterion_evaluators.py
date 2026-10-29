@@ -1,5 +1,6 @@
 import pytest
 
+from backend.app.acmg.assessment_service import _variant_context
 from backend.app.acmg.evaluators import (
     EvaluatorConfigurationError,
     evaluate_ba1_bs1,
@@ -7,7 +8,6 @@ from backend.app.acmg.evaluators import (
     evaluate_pp3_bp4,
     evaluate_pvs1,
 )
-from backend.app.acmg.assessment_service import _variant_context
 
 
 def obs(code="MID", af=0.0, an=10000, ac=None):
@@ -123,6 +123,8 @@ def test_bs1_uses_explicit_threshold():
         {"allele_frequency": 0.0, "allele_number": 100, "allele_count": -1},
         {"allele_frequency": 0.0, "allele_number": 100.5, "allele_count": 0},
         {"allele_frequency": 0.0, "allele_number": True, "allele_count": 0},
+        {"allele_frequency": 0.0, "allele_number": "100", "allele_count": 0},
+        {"allele_frequency": 0.0, "allele_number": 100, "allele_count": "0"},
         {"allele_frequency": 0.0, "allele_number": 0, "allele_count": 0},
         {"allele_frequency": 0.0, "allele_number": None, "allele_count": 0},
         {"allele_frequency": 0.01, "allele_number": 100, "allele_count": 0},
@@ -130,7 +132,7 @@ def test_bs1_uses_explicit_threshold():
     ],
     ids=[
         "negative-af", "af-over-one", "nan-af", "infinite-af", "boolean-af", "ac-over-an",
-        "negative-ac", "fractional-an", "boolean-an", "zero-denominator",
+        "negative-ac", "fractional-an", "boolean-an", "string-an", "string-ac", "zero-denominator",
         "missing-denominator", "nonzero-af-with-zero-ac", "af-inconsistent-with-ac-an",
     ],
 )

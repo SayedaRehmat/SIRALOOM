@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 reject numeric-string population counts in ACMG evaluators
+
+- **Finding:** the PM2/BA1/BS1 evaluator integer helper accepted numeric strings such as `"100"`. Malformed or legacy available observations could therefore satisfy allele-number/count requirements and enter criterion threshold evaluation, despite the evidence layer now preserving only genuine integer count types.
+- **Correction:** the criterion evaluator now accepts only non-boolean integral values for population count fields and integer configuration values. Numeric strings, fractional values, and booleans are invalid and route to `REQUIRES_REVIEW`; no frequency criterion is proposed from them.
+- **Regression/verification:** PM2/BS1 malformed-observation tests now cover string AN and AC as well as fraction/bool cases. Focused criterion/evidence/population suite — **136 passed, 1 skipped**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,683 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** **VERIFIED** for evaluator behavior and backend regression scope. This does not supply or approve disease-specific thresholds nor validate population resources clinically. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA CI pending.
+
 ### 2026-10-29 keep malformed population counts out of evidence
 
 - **Finding:** the population evidence builder converted AC, AN and homozygote counts with Python `int()` before applying the shared AF guard. That silently truncated fractional values and converted booleans; a malformed AN could therefore become a positive denominator and allow an AF into persisted evidence. The issue affected both direct population observations and annotation-derived aggregates.
