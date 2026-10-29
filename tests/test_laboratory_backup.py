@@ -372,7 +372,10 @@ def test_create_backup_checks_cloud_storage_before_stopping_writers(tmp_path, mo
     assert not list(root.glob(".backup.tmp-*"))
 
 
-def test_create_backup_archives_each_configured_local_target(tmp_path, monkeypatch):
+@pytest.mark.parametrize("cloud_appears_after_quiesce", [False, True])
+def test_create_backup_archives_each_configured_local_target(
+    tmp_path, monkeypatch, cloud_appears_after_quiesce
+):
     from scripts import laboratory_backup
 
     root = tmp_path / "repo"
@@ -413,15 +416,18 @@ def test_create_backup_archives_each_configured_local_target(tmp_path, monkeypat
     }
     monkeypatch.setattr(laboratory_backup, "_compose_config", lambda *_a, **_k: compose_config)
     commands = []
+    inventory_calls = 0
 
     def fake_run(command, *, cwd, capture=False):
+        nonlocal inventory_calls
         commands.append(command)
         if "psql" in command:
             sql = command[-1]
             if "json_build_object" in sql:
+                inventory_calls += 1
                 stdout = json.dumps(
                     {
-                        "cloud_present": False,
+                        "cloud_present": cloud_appears_after_quiesce and inventory_calls > 1,
                         "local_target_ids": ["lab-a"],
                         "nonlegacy_artifacts": True,
                     }
@@ -440,12 +446,23 @@ def test_create_backup_archives_each_configured_local_target(tmp_path, monkeypat
 
     monkeypatch.setattr(laboratory_backup, "_run", fake_run)
 
+    pg_dump_calls = []
+
     def fake_pg_dump(*_args, cwd, stdout, check):
+        pg_dump_calls.append(True)
         stdout.write(b"PGDMPfixture")
         return CompletedProcess(args=[], returncode=0)
 
     monkeypatch.setattr(laboratory_backup.subprocess, "run", fake_pg_dump)
     output = root / "backup"
+
+    if cloud_appears_after_quiesce:
+        with pytest.raises(BackupError, match="Cloud artifact targets"):
+            create_backup(root, compose_file, output)
+        assert not output.exists()
+        assert not pg_dump_calls
+        assert any("start" in command for command in commands)
+        return
 
     create_backup(root, compose_file, output)
 
@@ -454,6 +471,21 @@ def test_create_backup_archives_each_configured_local_target(tmp_path, monkeypat
     assert (output / "artifact-target-lab-a.tar.gz").is_file()
     assert any("stop" in command for command in commands)
     assert any("start" in command for command in commands)
+    stop_index = next(index for index, command in enumerate(commands) if "stop" in command)
+    inventory_indices = [
+        index
+        for index, command in enumerate(commands)
+        if "psql" in command and "json_build_object" in command[-1]
+    ]
+    uri_check_indices = [
+        index
+        for index, command in enumerate(commands)
+        if "psql" in command and "UNMAPPED_ARTIFACT_URI" in command[-1]
+    ]
+    assert len(inventory_indices) == 2
+    assert inventory_indices[0] < stop_index < inventory_indices[1]
+    assert uri_check_indices and min(uri_check_indices) > stop_index
+    assert pg_dump_calls
 
 
 def test_create_backup_rejects_overlapping_local_mount_roots_before_stopping_writers(
@@ -474,7 +506,7 @@ def test_create_backup_rejects_overlapping_local_mount_roots_before_stopping_wri
         api_volumes.append({"type": "bind", "source": str(source), "target": container_path})
     custom_source = root / "custom"
     custom_source.mkdir()
-    custom_container_root = "/data/siraloom/artifacts/lab-a"
+    custom_container_root = "/data/references/lab-a"
     api_volumes.append(
         {"type": "bind", "source": str(custom_source), "target": custom_container_root}
     )

@@ -497,24 +497,17 @@ def create_backup(
                 )
             local_target_sources[target_id] = api_source
         container_roots = [Path(target) for target in local_targets.values()]
-        container_roots.append(Path(STORAGE_ARCHIVES["artifacts"][0]))
+        container_roots.extend(Path(target) for target, _ in STORAGE_ARCHIVES.values())
         host_roots = list(local_target_sources.values())
-        host_roots.append(storage_sources["artifacts"])
+        host_roots.extend(storage_sources.values())
         for roots in (container_roots, host_roots):
             for index, path in enumerate(roots):
                 for other in roots[index + 1 :]:
                     if path == other or path in other.parents or other in path.parents:
                         raise BackupError(
-                            "Legacy and organization-specific artifact roots must not overlap "
-                            "in container or host mount paths."
+                            "Configured artifact roots must not overlap each other or the base "
+                            "storage roots in container or host mount paths."
                         )
-        _require_artifact_uris_covered(
-            compose,
-            root=root,
-            user=user,
-            database=database,
-            container_roots=list(local_targets.values()),
-        )
         running_result = _run(
             [*compose, "ps", "--services", "--status", "running"], cwd=root, capture=True
         )
@@ -526,6 +519,26 @@ def create_backup(
             # partial stop failure.
             stopped = True
             _run([*compose, "stop", "--timeout", "300", *running], cwd=root)
+        # Repeat the database inventory only after all application writers have
+        # stopped. The preliminary check avoids disrupting an unsupported
+        # deployment; this quiesced check closes the race with a final upload,
+        # profile change, or artifact URI written between preflight and stop.
+        quiesced_inventory = _artifact_inventory(compose, root=root, user=user, database=database)
+        if set(quiesced_inventory["local_target_ids"]) - set(local_targets):
+            missing_targets = sorted(
+                set(quiesced_inventory["local_target_ids"]) - set(local_targets)
+            )
+            raise BackupError(
+                "Storage profiles reference local targets absent from the deployment "
+                "configuration after writers stopped: " + ", ".join(missing_targets)
+            )
+        _require_artifact_uris_covered(
+            compose,
+            root=root,
+            user=user,
+            database=database,
+            container_roots=list(local_targets.values()),
+        )
         dump_path = staged / DATABASE_FILE
         with dump_path.open("wb") as dump:
             process = subprocess.run(
