@@ -41,7 +41,11 @@ ARTIFACT_STORAGE_PREFLIGHT_SQL = """
         SELECT 1 FROM organization_storage_profiles
         WHERE backend_type = 'LOCAL_FILESYSTEM'
           AND COALESCE(configuration->>'target_id', '') <> ''
-      ) THEN 'CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT'
+      ) OR EXISTS (
+        SELECT 1 FROM artifacts
+        WHERE storage_uri NOT LIKE 'file:///data/siraloom/artifacts/%'
+          AND storage_uri NOT LIKE 'gs://%'
+      ) THEN 'NON_LEGACY_ARTIFACTS_PRESENT'
       ELSE 'LOCAL_ARTIFACTS_ONLY'
     END
 """
@@ -233,11 +237,11 @@ def _require_local_artifact_storage(
             "Firebase/GCS storage profiles or artifact URIs are present. "
             "Use a cloud-aware backup procedure before creating a recovery bundle."
         )
-    if result_code == "CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT":
+    if result_code == "NON_LEGACY_ARTIFACTS_PRESENT":
         raise BackupError(
             "This backup command archives only the legacy artifact mount; "
-            "organization-targeted local artifact profiles are present. "
-            "Use a backup procedure that includes every configured organization artifact root."
+            "organization-targeted local profiles or non-legacy artifact URIs are present. "
+            "Use a backup procedure that includes every referenced artifact target."
         )
     if result_code != "LOCAL_ARTIFACTS_ONLY":
         raise BackupError("Artifact storage preflight returned an unknown result; refusing backup.")

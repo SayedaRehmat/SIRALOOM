@@ -149,8 +149,8 @@ def test_volume_discovery_rejects_named_volumes_for_backup_sources(tmp_path):
     [
         ("CLOUD_ARTIFACTS_PRESENT", "Firebase/GCS storage profiles"),
         (
-            "CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT",
-            "organization-targeted local artifact profiles",
+            "NON_LEGACY_ARTIFACTS_PRESENT",
+            "organization-targeted local profiles or non-legacy artifact URIs",
         ),
         ("", "unknown result"),
     ],
@@ -180,7 +180,8 @@ def test_backup_refuses_unsupported_artifact_targets_or_unknown_database_result(
 
     assert "organization_storage_profiles" in seen["command"][-1]
     assert "storage_uri LIKE 'gs://%'" in seen["command"][-1]
-    assert "CUSTOM_LOCAL_ARTIFACT_TARGETS_PRESENT" in seen["command"][-1]
+    assert "NON_LEGACY_ARTIFACTS_PRESENT" in seen["command"][-1]
+    assert "storage_uri NOT LIKE 'file:///data/siraloom/artifacts/%'" in seen["command"][-1]
     assert seen["capture"] is True
 
 
