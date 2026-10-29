@@ -683,5 +683,5 @@ The official HPO references and implementation rationale are recorded in `docs/r
 
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
-| Case-accession VCF upload displays API validation warnings as well as success | PASS (formatter and locale catalog tests) | Case upload message includes backend warnings, filters blank entries, and preserves rejection errors. Exact repository frontend helper test: **5 passed** under bundled Windows Node v24.22.1; i18n architecture/catalog guard: **PASS**. |
+| Case-accession VCF upload displays API validation warnings as well as success | PASS (formatter and locale catalog tests) | Case upload message includes backend warnings, filters blank entries, preserves rejection errors, and tolerates malformed non-array warning/error values. Exact repository frontend helper test: **6 passed** under bundled Windows Node v24.22.1; i18n architecture/catalog guard: **PASS**. |
 | Frontend page TypeScript check, production build, and exact-SHA hosted CI | NOT RUN | No Linux Node runtime is installed; `npm` resolves to a Windows shim that cannot use the WSL UNC workspace. Direct helper and locale checks ran from temporary Windows copies; complete app build awaits hosted CI. |

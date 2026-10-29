@@ -40,9 +40,11 @@ export function uploadValidationMessage({
   errors = [],
 }) {
   if (status === "VALID") {
-    const visibleWarnings = warnings.filter((value) => typeof value === "string" && value.trim());
+    const visibleWarnings = (Array.isArray(warnings) ? warnings : [])
+      .filter((value) => typeof value === "string" && value.trim());
     return `${label} ${successText}${visibleWarnings.length ? ` ${warningLabel}: ${visibleWarnings.join(" ")}` : ""}`;
   }
-  const visibleErrors = errors.filter((value) => typeof value === "string" && value.trim());
+  const visibleErrors = (Array.isArray(errors) ? errors : [])
+    .filter((value) => typeof value === "string" && value.trim());
   return `${label} ${failureText}${visibleErrors.length ? ` ${visibleErrors.join(" ")}` : ""}`;
 }

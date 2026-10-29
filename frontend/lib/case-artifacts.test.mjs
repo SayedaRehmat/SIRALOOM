@@ -71,3 +71,20 @@ test("case intake upload message reports errors for rejected input and omits emp
     "Upload validated successfully.",
   );
 });
+
+test("case intake upload message tolerates malformed warning and error fields", () => {
+  assert.equal(
+    uploadValidationMessage({
+      status: "VALID", label: "Upload", successText: "validated successfully.",
+      warningLabel: "Warnings", failureText: "failed validation.", warnings: "unexpected",
+    }),
+    "Upload validated successfully.",
+  );
+  assert.equal(
+    uploadValidationMessage({
+      status: "INVALID", label: "Upload", successText: "validated successfully.",
+      warningLabel: "Warnings", failureText: "failed validation.", errors: { detail: "bad" },
+    }),
+    "Upload failed validation.",
+  );
+});
