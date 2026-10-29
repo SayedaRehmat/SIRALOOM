@@ -260,3 +260,29 @@ def test_local_gnomad_does_not_expose_source_af_without_allele_count(monkeypatch
     assert all(item.allele_number == 100 for item in observations)
     assert all(item.allele_frequency is None for item in observations)
     assert all(item.availability == "NOT_AVAILABLE" for item in observations)
+
+
+def test_local_gnomad_zero_allele_count_with_missing_number_has_no_frequency(monkeypatch):
+    import backend.app.adapters.population.gnomad as gnomad
+
+    info = "AC=0;AN=.;AF=0;nhomalt=0;AC_mid=0;AN_mid=.;AF_mid=0;nhomalt_mid=0"
+    monkeypatch.setattr(
+        gnomad.subprocess,
+        "Popen",
+        lambda *args, **kwargs: SimpleNamespace(
+            pid=123,
+            returncode=0,
+            communicate=lambda timeout: (f"1\t555\t.\tT\tC\t.\tPASS\t{info}\n", ""),
+        ),
+    )
+    observations = LocalGnomADTabixProvider("/qualified/gnomad.vcf.gz").query_variant(
+        CanonicalVariant(
+            genome_build="GRCh38", chromosome="1", position=555, reference="T", alternate="C"
+        )
+    )
+
+    assert len(observations) == 2
+    assert all(item.allele_count == 0 for item in observations)
+    assert all(item.allele_number is None for item in observations)
+    assert all(item.allele_frequency is None for item in observations)
+    assert all(item.availability == "NOT_AVAILABLE" for item in observations)

@@ -604,3 +604,9 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | AF is exposed only for finite numeric AF in `[0,1]` with a positive integral AN; missing/malformed values remain unavailable | PASS (shared helper consumers and Linux regression suite) | Regression coverage includes `AN=null`, `AN=0`, negative/fractional/boolean AN, nonnumeric AF, boolean AF and NaN; valid `AC=0` with positive AN remains AF `0`. Focused population/evidence suite: **66 passed, 1 skipped**. Full backend: **1,570 passed, 54 skipped**. Ruff F/I and `git diff --check` passed. No live gnomAD response or clinical frequency criterion was qualified. |
+
+### 2026-10-29 gnomAD AC=0 with missing AN
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Local gnomAD VCF preserves `AC=0` but does not expose AF when `AN` is missing | PASS (provider regression) | Exact global and Middle Eastern `AC=0;AN=.;AF=0` fixture returns AC 0, AN null, AF null, and `NOT_AVAILABLE`. `tests/test_gnomad.py tests/test_evidence_engine.py`: **33 passed**; Ruff F/I and diff check passed. Exact-SHA CI for parent commit `059ec7a` passed run [40836638953](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40836638953). This does not qualify live gnomAD releases or clinical frequency criteria. |
