@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
-import { selectCaseInputArtifacts, selectPrimaryAfterUpload } from "../../../../lib/case-artifacts.mjs";
+import { selectCaseInputArtifacts, selectPrimaryAfterUpload, uploadValidationMessage } from "../../../../lib/case-artifacts.mjs";
 
 type CaseSummary = {
   case_id: string;
@@ -376,11 +376,15 @@ export default function Cases() {
         }
       }
 
-      setMessage(
-        result.validation_status === "VALID"
-          ? `${isIndex ? t("cases.indexLabel") : t("cases.upload")} validated successfully.`
-          : `${isIndex ? t("cases.indexLabel") : t("cases.upload")} was stored but failed validation. ${Array.isArray(result.validation?.errors) ? result.validation.errors.join(" ") : ""}`,
-      );
+      setMessage(uploadValidationMessage({
+        status: result.validation_status,
+        label: isIndex ? t("cases.indexLabel") : t("cases.upload"),
+        successText: t("cases.validatedSuccessfully"),
+        warningLabel: t("cases.validationWarnings"),
+        failureText: t("cases.failedValidation"),
+        warnings: result.validation?.warnings,
+        errors: result.validation?.errors,
+      }));
 
       await refreshCase();
 

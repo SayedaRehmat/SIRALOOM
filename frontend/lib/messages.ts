@@ -608,6 +608,9 @@ export type TranslationKey =
   | "cases.build"
   | "cases.primaryValidation"
   | "cases.indexLabel"
+  | "cases.validatedSuccessfully"
+  | "cases.validationWarnings"
+  | "cases.failedValidation"
   | "reports.eyebrow"
   | "reports.title"
   | "reports.lead"
@@ -1104,6 +1107,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.build": "Build",
     "cases.primaryValidation": "Primary validation",
     "cases.indexLabel": "Index",
+    "cases.validatedSuccessfully": "validated successfully.",
+    "cases.validationWarnings": "Warnings",
+    "cases.failedValidation": "was stored but failed validation.",
     "reports.eyebrow": "GOVERNED REPORTING",
     "reports.title": "Reports & sign-out",
     "reports.lead": "Finalize reportability, generate versioned reports, and record authorized sign-out.",
@@ -2048,6 +2054,9 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.build": "البناء",
     "cases.primaryValidation": "التحقق الأساسي",
     "cases.indexLabel": "الفهرس",
+    "cases.validatedSuccessfully": "تم التحقق بنجاح.",
+    "cases.validationWarnings": "تحذيرات",
+    "cases.failedValidation": "تم تخزينه لكن فشل التحقق منه.",
     "reports.eyebrow": "إصدار التقارير المحكوم",
     "reports.title": "التقارير والاعتماد النهائي",
     "reports.lead": "احسم قابلية الإبلاغ وأنشئ تقارير ذات إصدارات وسجّل الاعتماد المصرح به.",

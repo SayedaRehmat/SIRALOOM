@@ -28,3 +28,21 @@ export function selectPrimaryAfterUpload(currentPrimary, uploadedPrimary) {
   if (currentPrimary?.validation_status === "VALID") return currentPrimary;
   return uploadedPrimary ?? null;
 }
+
+/** Keep server-reported validation warnings visible in the accession upload flow. */
+export function uploadValidationMessage({
+  status,
+  label,
+  successText,
+  warningLabel,
+  failureText,
+  warnings = [],
+  errors = [],
+}) {
+  if (status === "VALID") {
+    const visibleWarnings = warnings.filter((value) => typeof value === "string" && value.trim());
+    return `${label} ${successText}${visibleWarnings.length ? ` ${warningLabel}: ${visibleWarnings.join(" ")}` : ""}`;
+  }
+  const visibleErrors = errors.filter((value) => typeof value === "string" && value.trim());
+  return `${label} ${failureText}${visibleErrors.length ? ` ${visibleErrors.join(" ")}` : ""}`;
+}

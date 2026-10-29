@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { selectCaseInputArtifacts, selectPrimaryAfterUpload } from "./case-artifacts.mjs";
+import { selectCaseInputArtifacts, selectPrimaryAfterUpload, uploadValidationMessage } from "./case-artifacts.mjs";
 
 test("keeps the displayed specimen and index paired to the selected primary VCF", () => {
   const specimens = [
@@ -36,4 +36,38 @@ test("a rejected replacement does not discard an existing valid primary VCF", ()
   assert.equal(selectPrimaryAfterUpload(valid, rejected), valid);
   assert.equal(selectPrimaryAfterUpload(null, rejected), rejected);
   assert.equal(selectPrimaryAfterUpload(valid, { artifact_id: "new", validation_status: "VALID" }).artifact_id, "new");
+});
+
+test("case intake upload message preserves server validation warnings", () => {
+  const message = uploadValidationMessage({
+    status: "VALID",
+    label: "Upload variant dataset",
+    successText: "validated successfully.",
+    warningLabel: "Warnings",
+    failureText: "was stored but failed validation.",
+    warnings: ["FORMAT/PL cardinality could not be checked without GT.", "  "],
+  });
+
+  assert.equal(
+    message,
+    "Upload variant dataset validated successfully. Warnings: FORMAT/PL cardinality could not be checked without GT.",
+  );
+});
+
+test("case intake upload message reports errors for rejected input and omits empty lists", () => {
+  assert.equal(
+    uploadValidationMessage({
+      status: "INVALID", label: "Upload", successText: "validated successfully.",
+      warningLabel: "Warnings", failureText: "was stored but failed validation.",
+      errors: ["Unsupported VCF version."],
+    }),
+    "Upload was stored but failed validation. Unsupported VCF version.",
+  );
+  assert.equal(
+    uploadValidationMessage({
+      status: "VALID", label: "Upload", successText: "validated successfully.",
+      warningLabel: "Warnings", failureText: "failed validation.",
+    }),
+    "Upload validated successfully.",
+  );
 });
