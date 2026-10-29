@@ -84,7 +84,7 @@ def test_strict_validation_accepts_vcf_info_and_format_keys_allowed_by_spec(tmp_
             '##INFO=<ID=1000G,Number=0,Type=Flag,Description="legacy membership">',
             '##FORMAT=<ID=_GX,Number=1,Type=Integer,Description="custom genotype value">',
         ],
-        "1\t2\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G\tGT:_GX\t0/1:9\n",
+        "1\t2\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G;NOTE=a%3Db\tGT:_GX\t0/1:9\n",
         sample=True,
     )
 
@@ -285,6 +285,7 @@ def test_strict_validation_rejects_missing_alt_mixed_with_called_alt(tmp_path: P
         ("1\t-1\t.\tA\tG\t.\tPASS\t.\n", "VCF_POS_INVALID"),
         ("1\t2\tbad id\tA\tG\t.\tPASS\t.\n", "VCF_ID_INVALID"),
         ("1\t2\t.;rs123\tA\tG\t.\tPASS\t.\n", "VCF_ID_INVALID"),
+        ("1\t2\t.\tA\tG\t.\tPASS\tNOTE=a=b\n", "VCF_INFO_INVALID"),
         ("1\t2\t.\tX\tG\t.\tPASS\t.\n", "VCF_REF_INVALID"),
         ("1\t2\t.\tA\tG\t-1\tPASS\t.\n", "VCF_QUAL_INVALID"),
         ("1\t2\t.\tA\tG\t.\tBAD;\t.\n", "VCF_FILTER_INVALID"),

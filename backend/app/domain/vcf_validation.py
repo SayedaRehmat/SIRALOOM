@@ -76,6 +76,7 @@ def _validate_info(value: str, line_no: int) -> None:
             if (
                 not INFO_KEY_RE.fullmatch(key)
                 or val == ""
+                or "=" in val
                 or any(value == "" for value in val.split(","))
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")

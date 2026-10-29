@@ -147,7 +147,7 @@ def test_vcf_intake_accepts_spec_valid_underscore_and_legacy_info_keys(tmp_path:
         '##INFO=<ID=_CUSTOM,Number=1,Type=Integer,Description="custom">\n'
         '##INFO=<ID=1000G,Number=0,Type=Flag,Description="legacy membership">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "chr1\t100\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G\n",
+        "chr1\t100\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G;NOTE=a%3Db\n",
         encoding="utf-8",
     )
 
@@ -155,6 +155,23 @@ def test_vcf_intake_accepts_spec_valid_underscore_and_legacy_info_keys(tmp_path:
 
     assert result.status == "VALID"
     assert result.record_count == 1
+
+
+def test_vcf_intake_rejects_unescaped_equals_inside_info_value(tmp_path: Path):
+    path = tmp_path / "unescaped-info-equals.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\tNOTE=a=b\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.record_count == 0
+    assert "INFO" in result.errors[0]
 
 
 @pytest.mark.parametrize("failure", ["timeout", "executable_unavailable"])
