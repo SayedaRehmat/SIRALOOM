@@ -212,6 +212,32 @@ def test_strict_validation_rejects_missing_fileformat(tmp_path: Path):
         validate_vcf_strict(path)
 
 
+@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3"])
+def test_strict_validation_accepts_only_declared_supported_vcf_versions(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
+
+    profile = validate_vcf_strict(path, reference_contigs={"1"})
+
+    assert profile["records"] == 1
+
+
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.4", "VCFv4.5"])
+def test_strict_validation_rejects_unqualified_vcf_versions(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FILEFORMAT_UNSUPPORTED"
+    assert "supported versions are VCFv4.2 and VCFv4.3" in str(exc.value)
+
+
 @pytest.mark.parametrize(
     ("body", "duplicate_id"),
     [

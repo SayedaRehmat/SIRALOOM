@@ -634,3 +634,10 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Reviewer bundle, variant detail and report snapshot preserve safe annotation provider/resource identity, effective options, observation time and response checksum | PASS (local backend/API/report scope) | Shared provenance projection excludes internal endpoint/runtime paths. Review bundle and report regressions verify the options/checksum survive; PDF HTML rendering includes them and omits the private endpoint fixture. Focused backend suite: **131 passed**. |
 | Reviewer UI visibly presents effective options and response checksum | PASS (exact-SHA frontend CI) | UI and English/Arabic strings are implemented. Exact-SHA run [40839465103](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40839465103) passed frontend behavior tests, localization validation, production build, frontend container build and Compose validation on `30ed5ced`. Local WSL still lacks Linux Node, so no local frontend command is claimed. |
 | Annotation scientific accuracy, live provider result, deployed laboratory visibility | NOT RUN | No qualified VEP installation/cache, scientific known-answer comparison or laboratory deployment was available. |
+
+### 2026-10-29 explicit VCF version support boundary
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| Intake accepts its declared VCF versions and rejects unqualified versions explicitly | PASS (Linux strict-validator regression) | Valid records with VCFv4.2/v4.3 pass; valid-shaped VCFv4.1/v4.4/v4.5 inputs return `VCF_FILEFORMAT_UNSUPPORTED` with supported-version guidance. Validation/intake/input tests: **120 passed**. The official HTS specification index currently identifies VCFv4.5 as canonical; this code does not claim support merely from the standard's publication. |
+| VCFv4.4/v4.5 interoperability with all downstream parsers and scientific tools | NOT RUN / unsupported | No independently validated VCFv4.4/v4.5 corpus or toolchain compatibility evidence is available. Inputs must be provided as supported versions by the upstream lab pipeline; do not relabel file headers without a validated conversion. |
