@@ -69,6 +69,23 @@ def test_vcf_intake_rejects_nonconforming_record_order(
     assert error_line in result.errors[0]
 
 
+def test_vcf_intake_rejects_whitespace_in_chromosome_name(tmp_path: Path):
+    path = tmp_path / "whitespace-contig.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr 1\t100\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.record_count == 0
+    assert "CHROM" in result.errors[0]
+
+
 @pytest.mark.parametrize("filter_value", ["0", "LowQual;LowQual", "PASS;LowQual"])
 def test_vcf_intake_rejects_nonconforming_filter_values(
     tmp_path: Path, filter_value: str

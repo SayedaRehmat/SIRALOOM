@@ -370,7 +370,7 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
     chrom, pos_text, identifier, ref, alt, qual, filt, info = fields[:8]
 
-    if not chrom or chrom.startswith("#"):
+    if not chrom or chrom.startswith("#") or any(char.isspace() for char in chrom):
         raise StrictVCFValidationError(f"Invalid CHROM at line {line_no}", code="VCF_CHROM_INVALID")
     if reference_contigs is not None and chrom not in reference_contigs:
         raise StrictVCFValidationError(

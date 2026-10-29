@@ -1,5 +1,12 @@
 # SIRALOOM Master Audit and Remediation
 
+### 2026-10-29 reject whitespace in VCF CHROM values
+
+- **Finding:** the strict VCF validator rejected empty or comment-like `CHROM` values but permitted embedded whitespace when no selected reference-contig dictionary was provided. VCFv4.3 specifies CHROM as an identifier with no whitespace ([HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2668-L2673)).
+- **Correction:** strict validation now rejects any whitespace in CHROM before reference matching. Added direct-validator and upload-intake regressions; malformed records do not count as accepted.
+- **Verification:** focused VCF/intake/normalization/routing suite — **174 passed**, one existing Starlette/httpx deprecation warning. Full Linux backend suite with BCFtools/HTSlib **1.19** — **1,663 passed, 36 skipped**, one existing warning. Ruff `--select F,I` and `git diff --check` passed.
+- **Status/limits:** **VERIFIED** for parser and upload-service behavior. This does not qualify an assembly, prove sample identity, or establish lab validation. Phase A and laboratory deployment remain **PARTIAL**; exact-SHA hosted CI pending.
+
 ### 2026-10-29 accept VCF record IDs allowed by the specification
 
 - **Finding:** the strict validator restricted record IDs to `[A-Za-z0-9_.:-]+`. This rejected otherwise valid IDs containing punctuation such as `+`, even though VCFv4.3 defines the ID field as a semicolon-separated string with whitespace and semicolons disallowed ([HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2684-L2691)).

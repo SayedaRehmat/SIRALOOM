@@ -741,3 +741,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Record IDs permit non-whitespace punctuation under the supported VCF contract | PASS (local automated scope) | Validator accepts punctuation such as `+`; rejects empty IDs, whitespace, duplicate IDs, and `.` mixed with identifiers. Direct parser and upload regressions cover `lab+variant:01` with BCFtools/HTSlib 1.19. Focused six-suite VCF/normalization/routing tests: **172 passed**; full backend rerun: **1,661 passed, 36 skipped**; Ruff F/I and diff check passed. The first full run had one unrelated case-export redelivery failure; that test passed alone and the full rerun passed. See [HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2684-L2691). Exact-SHA CI run [40872735531](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40872735531) passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container, and production Compose checks on `08339d9af139818f31900465a2aa07f53ae33d48`. |
 | Sample identity or clinical provenance of supplied record IDs | NOT ESTABLISHED | VCF record-ID syntax does not establish biological sample identity or clinical validity. |
+
+
+### 2026-10-29 reject whitespace in VCF CHROM values
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| VCF CHROM values contain no whitespace | PASS (local automated scope) | Strict parser and upload intake reject `chr 1` with `VCF_CHROM_INVALID`; tested without depending on a reference-contig dictionary. Focused VCF/intake/normalization/routing suite: **174 passed**; full backend suite with BCFtools/HTSlib 1.19: **1,663 passed, 36 skipped**; Ruff F/I and diff check passed. Requirement follows [HTS VCFv4.3 fixed fields](https://github.com/samtools/hts-specs/blob/master/VCFv4.3.tex#L2668-L2673). Exact-SHA CI pending. |
+| Contig identity against a laboratory-approved reference | NOT ESTABLISHED BY THIS CHECK | Syntax validation does not prove assembly/contig compatibility; that requires the selected, qualified reference package. |

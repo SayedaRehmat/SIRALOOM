@@ -43,6 +43,16 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["reference_contig_policy"] == "EXACT"
 
 
+def test_strict_validation_rejects_whitespace_in_chromosome_name(tmp_path: Path):
+    path = tmp_path / "whitespace-contig.vcf"
+    write_vcf(path, "chr 1\t2\t.\tA\tG\t.\tPASS\t.\n")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CHROM_INVALID"
+
+
 def test_strict_validation_accepts_nonzero_numeric_filter_identifier(tmp_path: Path):
     path = tmp_path / "numeric-filter-id.vcf"
     write_vcf_with_metadata(
