@@ -34,6 +34,22 @@ jobs:
         run: python -m compileall backend scripts
       - name: Build laboratory backend image
         run: docker build --file docker/backend.Dockerfile --tag siraloom-backend:ci .
+      - name: Verify backend image runs without root privileges
+        run: |
+          test "$(docker run --rm --entrypoint id siraloom-backend:ci -u)" = "10001"
+          test "$(docker run --rm --entrypoint id siraloom-backend:ci -g)" = "10001"
+          docker run --rm --entrypoint sh siraloom-backend:ci -c \
+            'test -w /data/siraloom/artifacts && test -w /data/siraloom/resource-cache && test -w /data/siraloom/scratch && test -w /data/siraloom/beat'
+      - name: Verify writable ownership of fresh backend named volumes
+        run: |
+          set -eu
+          for directory in artifacts resource-cache scratch beat; do
+            volume="siraloom-ci-${directory}"
+            docker volume create "$volume"
+            docker run --rm -v "$volume:/data/siraloom/$directory" \
+              --entrypoint sh siraloom-backend:ci -c "test -w /data/siraloom/$directory"
+            docker volume rm "$volume"
+          done
       - name: Verify container BCFtools version
         run: test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | head -n1)" = "bcftools 1.19"
 

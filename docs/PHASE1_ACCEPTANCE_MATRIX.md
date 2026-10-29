@@ -610,3 +610,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | Local gnomAD VCF preserves `AC=0` but does not expose AF when `AN` is missing | PASS (provider regression) | Exact global and Middle Eastern `AC=0;AN=.;AF=0` fixture returns AC 0, AN null, AF null, and `NOT_AVAILABLE`. `tests/test_gnomad.py tests/test_evidence_engine.py`: **33 passed**; Ruff F/I and diff check passed. Exact-SHA CI for parent commit `059ec7a` passed run [40836638953](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40836638953). This does not qualify live gnomAD releases or clinical frequency criteria. |
+
+
+### 2026-10-29 unprivileged laboratory backend containers
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| API, worker, Beat and migration image default to fixed non-root UID/GID and retain access to intended writable paths | PARTIAL (local deployment contract tests pass; container test pending) | Backend Dockerfile uses UID/GID 10001 and seeds default volume mountpoints. CI now asserts runtime identity and writable fresh named volumes. Local deployment/auth tests: **27 passed**; YAML parse and `git diff --check` passed. Docker/Podman is not installed locally, so actual image assertions await exact-SHA GitHub Actions. |
+| Laboratory host bind-mount permissions, Firebase Admin secret readability, deployed behavior and restore | NOT RUN | No lab deployment or configured credentials/storage were available. Documentation states required ownership/access boundaries; this is not deployment evidence. |
