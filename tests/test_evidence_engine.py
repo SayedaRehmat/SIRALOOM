@@ -1,8 +1,8 @@
 from uuid import uuid4
 
 from backend.app.domain.evidence import evidence_fingerprint
-from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
 from backend.app.domain.population import qualified_allele_frequency
+from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
 
 
 def test_evidence_engine_builds_traceable_facts_without_final_classification():
@@ -144,6 +144,10 @@ def test_display_allele_frequency_requires_valid_positive_denominator():
     assert qualified_allele_frequency(0.01, None) is None
     assert qualified_allele_frequency(0.01, 0) is None
     assert qualified_allele_frequency(0.01, -1) is None
+    assert qualified_allele_frequency(0.01, 10.5) is None
+    assert qualified_allele_frequency(0.01, True) is None
+    assert qualified_allele_frequency("0.01", 10) is None
+    assert qualified_allele_frequency(True, 10) is None
     assert qualified_allele_frequency(float("nan"), 10) is None
 
 

@@ -598,3 +598,9 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | Reusing an organization/case identifier is idempotent only when submitted language and clinical context match | PASS (local API and regression scope; exact-SHA CI pending) | Matching retry returns the existing case. Changed indication/language returns HTTP 409 on both pre-existing-row and concurrent unique-key recovery paths. Focused case idempotency/access/workspace tests: **17 passed**. Full Linux backend suite: **1,570 passed, 54 skipped**, one existing Starlette/httpx warning. Ruff F/I and `git diff --check` passed. |
 | Identity of the patient/specimen or correctness of the clinical indication | NOT ESTABLISHED | The guard detects request metadata collisions only; it does not verify biological identity or clinician authorization. Live identity and deployed laboratory validation remain outstanding. |
+
+### 2026-10-29 fail closed on malformed allele-frequency display values
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| AF is exposed only for finite numeric AF in `[0,1]` with a positive integral AN; missing/malformed values remain unavailable | PASS (shared helper consumers and Linux regression suite) | Regression coverage includes `AN=null`, `AN=0`, negative/fractional/boolean AN, nonnumeric AF, boolean AF and NaN; valid `AC=0` with positive AN remains AF `0`. Focused population/evidence suite: **66 passed, 1 skipped**. Full backend: **1,570 passed, 54 skipped**. Ruff F/I and `git diff --check` passed. No live gnomAD response or clinical frequency criterion was qualified. |
