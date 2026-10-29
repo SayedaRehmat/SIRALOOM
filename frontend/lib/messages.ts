@@ -924,6 +924,11 @@ export type TranslationKey =
   | "review.loading"
   | "review.refreshQueue"
   | "review.visibleVariants"
+  | "review.totalVariants"
+  | "review.queuePagination"
+  | "review.of"
+  | "review.previousPage"
+  | "review.nextPage"
   | "review.evidenceCount"
   | "review.criteriaCount"
   | "review.populationCount"
@@ -975,6 +980,11 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.loading": "Loading…",
     "review.refreshQueue": "Refresh clinical queue",
     "review.visibleVariants": "visible variants",
+    "review.totalVariants": "total",
+    "review.queuePagination": "Review queue pages",
+    "review.of": "of",
+    "review.previousPage": "Previous page",
+    "review.nextPage": "Next page",
     "review.evidenceCount": "evidence",
     "review.criteriaCount": "criteria",
     "review.populationCount": "population",
@@ -1922,6 +1932,11 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.loading": "جارٍ التحميل…",
     "review.refreshQueue": "تحديث قائمة المراجعة السريرية",
     "review.visibleVariants": "متغيرات ظاهرة",
+    "review.totalVariants": "الإجمالي",
+    "review.queuePagination": "صفحات قائمة المراجعة",
+    "review.of": "من",
+    "review.previousPage": "الصفحة السابقة",
+    "review.nextPage": "الصفحة التالية",
     "review.evidenceCount": "أدلة",
     "review.criteriaCount": "معايير",
     "review.populationCount": "سكان",
