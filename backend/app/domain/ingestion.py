@@ -229,6 +229,14 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 + ", ".join(unchecked_info_number_g)
                 + "."
             )
+        unchecked_format_number_g = strict_profile["unchecked_format_number_g_fields"]
+        if unchecked_format_number_g:
+            warnings.append(
+                "FORMAT fields declared with Number=G are present, but their genotype-value "
+                "cardinality cannot be verified because GT does not establish sample ploidy: "
+                + ", ".join(unchecked_format_number_g)
+                + "."
+            )
         return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings)
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [])

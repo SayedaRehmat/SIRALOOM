@@ -670,3 +670,11 @@ The official HPO references and implementation rationale are recorded in `docs/r
 | Requirement | Status | Evidence / limitation |
 |---|---|---|
 | Case-scoped phenotype, clinical-context and pedigree change events validate and resolve to the correct evidence recomputation stage | PASS (local regression scope; exact-SHA CI pending) | Candidate validator accepts the explicit `CASE` event type only for the supported case-change trigger set, only without a resource ID, and only when event and candidate case IDs match. Clinical-context and pedigree triggers map to `build_evidence`. Pedigree member/relationship routes create durable candidate events in the same transaction. Focused API/case-change/pedigree/tenant suite: **108 passed**. Full backend suite: **1,617 passed, 55 skipped**, one existing Starlette/httpx warning. This creates a human-review candidate; it does not execute analysis or infer inheritance. |
+
+### 2026-10-29 FORMAT Number=G without genotype ploidy
+
+| Requirement | Status | Evidence / limitation |
+|---|---|---|
+| VCF FORMAT `Number=G` cardinality is checked only when sample ploidy is known | PASS (local parser/intake/workflow regression scope) | The VCFv4.3 validator no longer assumes diploidy when GT is omitted. It reports non-missing `Number=G` fields in `unchecked_format_number_g_fields`; intake exposes a warning, and the workflow persists the validation profile. No-GT arrays of cardinality 3, 6 and 10 remain accepted without a false ploidy claim; GT-present cardinality and malformed-count regressions remain active. Focused VCF validation/intake/input tests: **124 passed**; full Linux backend suite: **1,620 passed, 55 skipped**. Ruff F/I, Python compile and `git diff --check` passed. |
+| Ploidy inferred from sex, assembly or clinical context when GT is absent | NOT IMPLEMENTED | SIRALOOM does not infer genotype ploidy from metadata; those Number=G values remain explicitly unchecked. No sex-chromosome ploidy analysis is claimed. |
+| Current exact-SHA hosted CI | NOT RUN | Change has not yet been committed/pushed; local test evidence only. |

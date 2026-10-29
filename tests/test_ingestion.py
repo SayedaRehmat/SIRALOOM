@@ -226,6 +226,25 @@ def test_vcf_validation_warns_when_info_number_g_cannot_be_checked(tmp_path: Pat
     assert any("Number=G" in warning and "GL" in warning for warning in result.warnings)
 
 
+def test_vcf_validation_warns_when_format_number_g_has_no_gt_ploidy(tmp_path: Path):
+    path = tmp_path / "format-number-g-without-gt.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr1\t100\t.\tA\tC,G\t.\tPASS\t.\tPL\t0,1,2\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert any(
+        "FORMAT fields declared with Number=G" in warning and "PL" in warning
+        for warning in result.warnings
+    )
+
+
 @pytest.mark.parametrize(
     "assembly_headers",
     [

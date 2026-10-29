@@ -490,6 +490,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     breakends = 0
     gvcf_markers = 0
     unchecked_info_number_g_fields: set[str] = set()
+    unchecked_format_number_g_fields: set[str] = set()
     structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
@@ -698,7 +699,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
                 if gt_index is None:
-                    genotype_ploidy = 2
+                    # GT is optional in VCF. Number=G cardinality depends on
+                    # ploidy, so do not silently impose a diploid assumption
+                    # when the record supplies no genotype from which to derive it.
+                    genotype_ploidy = None
                 elif gt_index >= len(sample_values) or sample_values[gt_index] == ".":
                     genotype_ploidy = None
                 else:
@@ -706,6 +710,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
                     if definition is not None:
+                        if (
+                            definition["Number"] == "G"
+                            and genotype_ploidy is None
+                            and value not in {None, "."}
+                        ):
+                            unchecked_format_number_g_fields.add(key)
                         _validate_declared_value(
                             kind=f"FORMAT sample {sample_index}",
                             key=key,
@@ -828,6 +838,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "breakend_records": breakends,
         "gvcf_markers": gvcf_markers,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
+        "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
     }

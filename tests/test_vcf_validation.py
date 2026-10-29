@@ -394,6 +394,24 @@ def test_format_number_g_rejects_wrong_genotype_cardinality(tmp_path: Path):
     assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
 
 
+@pytest.mark.parametrize("pl_values", ["0,1,2", "0,1,2,3,4,5", "0,1,2,3,4,5,6,7,8,9"])
+def test_format_number_g_without_gt_does_not_assume_diploid_ploidy(
+    tmp_path: Path, pl_values: str,
+):
+    path = tmp_path / "format-number-g-without-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
+        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tPL\t{pl_values}\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert profile["unchecked_format_number_g_fields"] == ["PL"]
+
+
 def test_strict_validation_rejects_duplicate_info_keys(tmp_path: Path):
     path = tmp_path / "duplicate-info-key.vcf"
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\tDP=10;DP=11\n")
