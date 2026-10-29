@@ -110,12 +110,13 @@ def test_reanalysis_candidate_event_rejects_foreign_resource():
 )
 def test_case_change_candidate_event_lineage_accepts_case_scoped_events(trigger_type):
     organization_id = uuid4()
-    event_id = uuid4()
+    event_id, case_id = uuid4(), uuid4()
     candidate = type(
         "Candidate",
         (),
         {
             "organization_id": organization_id,
+            "case_id": case_id,
             "change_event_id": event_id,
             "trigger_type": trigger_type,
             "earliest_affected_step": "build_evidence",
@@ -129,6 +130,7 @@ def test_case_change_candidate_event_lineage_accepts_case_scoped_events(trigger_
             "trigger_type": trigger_type,
             "resource_kind": "CASE",
             "resource_id": None,
+            "metadata_json": {"case_id": str(case_id)},
         },
     )()
 
@@ -143,12 +145,13 @@ def test_case_change_candidate_event_lineage_accepts_case_scoped_events(trigger_
 
 def test_case_change_candidate_rejects_resource_reference():
     organization_id = uuid4()
-    event_id = uuid4()
+    event_id, case_id = uuid4(), uuid4()
     candidate = type(
         "Candidate",
         (),
         {
             "organization_id": organization_id,
+            "case_id": case_id,
             "change_event_id": event_id,
             "trigger_type": "PHENOTYPE_UPDATE",
             "earliest_affected_step": "build_evidence",
@@ -162,6 +165,44 @@ def test_case_change_candidate_rejects_resource_reference():
             "trigger_type": "PHENOTYPE_UPDATE",
             "resource_kind": "CASE",
             "resource_id": uuid4(),
+            "metadata_json": {"case_id": str(case_id)},
+        },
+    )()
+
+    class FakeDB:
+        def get(self, model, _object_id):
+            assert model is reanalysis_api.ReanalysisChangeEvent
+            return event
+
+    with pytest.raises(reanalysis_api.HTTPException) as exc_info:
+        reanalysis_api._validate_candidate_event_lineage(candidate, FakeDB())
+    assert exc_info.value.status_code == 409
+
+
+def test_case_change_candidate_rejects_event_from_another_case():
+    organization_id = uuid4()
+    event_id = uuid4()
+    candidate_case_id, event_case_id = uuid4(), uuid4()
+    candidate = type(
+        "Candidate",
+        (),
+        {
+            "organization_id": organization_id,
+            "case_id": candidate_case_id,
+            "change_event_id": event_id,
+            "trigger_type": "PEDIGREE_UPDATE",
+            "earliest_affected_step": "build_evidence",
+        },
+    )()
+    event = type(
+        "Event",
+        (),
+        {
+            "organization_id": organization_id,
+            "trigger_type": "PEDIGREE_UPDATE",
+            "resource_kind": "CASE",
+            "resource_id": None,
+            "metadata_json": {"case_id": str(event_case_id)},
         },
     )()
 

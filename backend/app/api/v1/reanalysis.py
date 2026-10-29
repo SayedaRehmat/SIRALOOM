@@ -141,9 +141,13 @@ def _validate_candidate_event_lineage(candidate: ReanalysisCandidate, db: Sessio
         return
     event = db.get(ReanalysisChangeEvent, candidate.change_event_id)
     event_kind = str(event.resource_kind).upper() if event is not None else None
+    event_metadata = getattr(event, "metadata_json", None) if event is not None else None
+    if not isinstance(event_metadata, dict):
+        event_metadata = {}
     case_event_valid = (
         event_kind == "CASE"
         and event.resource_id is None
+        and str(event_metadata.get("case_id")) == str(candidate.case_id)
         and candidate.trigger_type
         in {"PHENOTYPE_UPDATE", "CLINICAL_CONTEXT_UPDATE", "PEDIGREE_UPDATE"}
     )
