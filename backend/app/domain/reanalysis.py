@@ -69,9 +69,10 @@ def _effective_reanalysis_start_step(
 ) -> tuple[str, str | None]:
     """Avoid reusing evidence-derived outputs when their consumed inputs are unknown.
 
-    Analyses created before clinical-input snapshots cannot safely reuse evidence
-    or any downstream result. Recompute from evidence while retaining eligible
-    validation, normalization, annotation and population outputs.
+    Analyses created before clinical-input or pedigree snapshots cannot safely
+    reuse evidence or any downstream result. Recompute from evidence while
+    retaining eligible validation, normalization, annotation and population
+    outputs.
     """
     if profile_bound:
         return "normalize", None
@@ -88,6 +89,23 @@ def _effective_reanalysis_start_step(
         snapshot = None
     if snapshot is None:
         return "build_evidence", "PARENT_CLINICAL_INPUT_SNAPSHOT_MISSING_OR_INVALID"
+
+    segregation_rows = db.scalars(
+        select(SegregationObservation).where(
+            SegregationObservation.analysis_id == parent.id
+        )
+    ).all()
+    has_invalid_pedigree_snapshot = False
+    for row in segregation_rows:
+        pedigree_snapshot = (row.metadata_json or {}).get("pedigree_context_snapshot")
+        if (
+            not isinstance(pedigree_snapshot, dict)
+            or pedigree_snapshot.get("schema_version") != 1
+        ):
+            has_invalid_pedigree_snapshot = True
+            break
+    if has_invalid_pedigree_snapshot:
+        return "build_evidence", "PARENT_PEDIGREE_CONTEXT_SNAPSHOT_MISSING_OR_INVALID"
     return earliest_affected_step, None
 
 

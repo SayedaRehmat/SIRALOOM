@@ -164,15 +164,25 @@ def test_reanalysis_trigger_dependency_contract():
 def test_reanalysis_replays_evidence_when_parent_clinical_snapshot_is_missing_or_invalid():
     from backend.app.domain.clinical_input_snapshot import clinical_input_snapshot_digest
     from backend.app.domain.reanalysis import _effective_reanalysis_start_step
-    from backend.app.infrastructure.db.models import WorkflowStep
+    from backend.app.infrastructure.db.models import (
+        PedigreeMember,
+        SegregationObservation,
+        Variant,
+        WorkflowStep,
+    )
 
     engine = _engine()
     Base.metadata.create_all(
         engine,
-        tables=[Organization.__table__, Case.__table__, Analysis.__table__, WorkflowStep.__table__],
+        tables=[
+            Organization.__table__, Case.__table__, Analysis.__table__,
+            WorkflowStep.__table__, Variant.__table__, PedigreeMember.__table__,
+            SegregationObservation.__table__,
+        ],
     )
     organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
-    parent_ids = [uuid4(), uuid4(), uuid4()]
+    parent_ids = [uuid4(), uuid4(), uuid4(), uuid4()]
+    variant_id, member_id = uuid4(), uuid4()
     valid_snapshot = {
         "schema_version": 1,
         "phenotype_observations": [],
@@ -215,7 +225,33 @@ def test_reanalysis_replays_evidence_when_parent_clinical_snapshot_is_missing_or
                     "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(valid_snapshot),
                 },
             ),
+            WorkflowStep(
+                id=uuid4(), analysis_id=parent_ids[3], step_id="build_evidence",
+                step_order=5, status="SUCCEEDED", attempt=1,
+                input_artifacts=[], output_artifacts=[], metadata_json={
+                    "clinical_input_snapshot": valid_snapshot,
+                    "clinical_input_snapshot_sha256": clinical_input_snapshot_digest(valid_snapshot),
+                },
+            ),
         ])
+        db.add(Variant(
+            id=variant_id, genome_build="GRCh38", chromosome="1", position=10,
+            reference="A", alternate="G", normalization_status="NORMALIZED",
+            canonical_key="GRCh38:1:10:A:G", identifiers={},
+        ))
+        db.add(PedigreeMember(
+            id=member_id, case_id=case_id, member_identifier="P1",
+            relationship_to_proband="PARENT", sex="FEMALE",
+            affected_status="UNAFFECTED", is_proband=False, sampled=True,
+            specimen_id=None, metadata_json={},
+        ))
+        db.add(SegregationObservation(
+            id=uuid4(), analysis_id=parent_ids[3], variant_id=variant_id,
+            pedigree_member_id=member_id, genotype="0/1", zygosity="HET",
+            phase=None, allele_observed="ALT", phenotype_status="UNAFFECTED",
+            source="HUMAN_REVIEW", notes=None,
+            metadata_json={"pedigree_context_snapshot": {"schema_version": 0}},
+        ))
         db.flush()
 
         assert _effective_reanalysis_start_step(
@@ -227,6 +263,9 @@ def test_reanalysis_replays_evidence_when_parent_clinical_snapshot_is_missing_or
         assert _effective_reanalysis_start_step(
             db, db.get(Analysis, parent_ids[2]), "acmg_assessment", profile_bound=False
         ) == ("acmg_assessment", None)
+        assert _effective_reanalysis_start_step(
+            db, db.get(Analysis, parent_ids[3]), "acmg_assessment", profile_bound=False
+        ) == ("build_evidence", "PARENT_PEDIGREE_CONTEXT_SNAPSHOT_MISSING_OR_INVALID")
         assert _effective_reanalysis_start_step(
             db, db.get(Analysis, parent_ids[0]), "acmg_assessment", profile_bound=True
         ) == ("normalize", None)
