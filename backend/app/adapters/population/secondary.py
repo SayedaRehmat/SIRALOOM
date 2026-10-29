@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 import subprocess
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
@@ -24,6 +27,10 @@ class SecondaryPopulationObservation:
     availability: str = "AVAILABLE"
     quality_status: str = "PROVIDER_DERIVED"
     source_record_id: str | None = None
+    request_fingerprint: str | None = None
+    response_sha256: str | None = None
+    request_metadata: dict | None = None
+    observed_at: str | None = None
 
 
 class LocalTabixSecondaryPopulationProvider:
@@ -74,6 +81,10 @@ class LocalTabixSecondaryPopulationProvider:
         )
 
     def query_variant(self, variant):
+        observations, _provenance = self.query_variant_with_provenance(variant)
+        return observations
+
+    def query_variant_with_provenance(self, variant):
         region = f"{variant.chromosome}:{variant.position}-{variant.position}"
         try:
             proc = subprocess.run([self.executable, self.vcf_path, region], check=False,
@@ -82,6 +93,19 @@ class LocalTabixSecondaryPopulationProvider:
             raise SecondaryPopulationProviderError(f"{self.provider_id} tabix execution unavailable or timed out.") from exc
         if proc.returncode not in (0, 1):
             raise SecondaryPopulationProviderError(proc.stderr.strip() or f"{self.provider_id} tabix failed.")
+        request_metadata = {
+            "provider_id": self.provider_id,
+            "region": region,
+            "reference": variant.reference,
+            "alternate": variant.alternate,
+            "info_fields": self.info_fields,
+            "contig_policy": self.contig_policy,
+        }
+        request_fingerprint = hashlib.sha256(
+            json.dumps(request_metadata, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        response_sha256 = hashlib.sha256(proc.stdout.encode("utf-8")).hexdigest()
+        observed_at = datetime.now(UTC).isoformat()
         for line in proc.stdout.splitlines():
             fields = line.split("\t")
             if len(fields) < 8:
@@ -108,8 +132,20 @@ class LocalTabixSecondaryPopulationProvider:
             return [SecondaryPopulationObservation(
                 "SECONDARY", self.population_code, self.population_label, ac, an, af, hom,
                 "AVAILABLE" if any(x is not None for x in (ac, an, af, hom)) else "NOT_AVAILABLE",
-                "PROVIDER_DERIVED", record_id or f"{chrom}:{pos}:{ref}:{alt}")]
-        return []
+                "PROVIDER_DERIVED", record_id or f"{chrom}:{pos}:{ref}:{alt}",
+                request_fingerprint, response_sha256, request_metadata, observed_at,
+            )], {
+                "request_fingerprint": request_fingerprint,
+                "response_sha256": response_sha256,
+                "request_metadata": request_metadata,
+                "observed_at": observed_at,
+            }
+        return [], {
+            "request_fingerprint": request_fingerprint,
+            "response_sha256": response_sha256,
+            "request_metadata": request_metadata,
+            "observed_at": observed_at,
+        }
 
 
 def _parse_info(value):

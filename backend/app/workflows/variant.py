@@ -3329,7 +3329,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             )
                             db.commit()
                             try:
-                                observations = secondary_provider.query_variant(variant)
+                                observations, query_provenance = (
+                                    secondary_provider.query_variant_with_provenance(variant)
+                                )
                             except SecondaryPopulationProviderError as exc:
                                 complete_resource_execution(
                                     db,
@@ -3373,6 +3375,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                         availability=obs.availability,
                                         quality_status=obs.quality_status,
                                         source_record_id=obs.source_record_id,
+                                        request_fingerprint=obs.request_fingerprint,
+                                        response_sha256=obs.response_sha256,
+                                        request_metadata=obs.request_metadata or {},
+                                        observed_at=(
+                                            datetime.fromisoformat(obs.observed_at)
+                                            if obs.observed_at
+                                            else None
+                                        ),
                                     )
                                 )
                                 secondary_count += 1
@@ -3380,8 +3390,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 db,
                                 execution_record,
                                 status="SUCCEEDED",
-                                request_fingerprint=None,
-                                response_sha256=None,
+                                request_fingerprint=query_provenance["request_fingerprint"],
+                                response_sha256=query_provenance["response_sha256"],
                             )
                             db.commit()
 

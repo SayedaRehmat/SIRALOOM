@@ -1,4 +1,6 @@
+import hashlib
 from types import SimpleNamespace
+
 import pytest
 
 from backend.app.adapters.population.secondary import (
@@ -36,6 +38,30 @@ def test_reads_alt_specific_fields(monkeypatch):
     variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
     obs = provider.query_variant(variant)[0]
     assert (obs.allele_count, obs.allele_number, obs.allele_frequency, obs.homozygote_count) == (4, 100, 0.04, 1)
+    assert len(obs.request_fingerprint) == 64
+    assert len(obs.response_sha256) == 64
+    assert obs.request_metadata["alternate"] == "G"
+    assert obs.observed_at
+
+
+def test_no_match_still_returns_query_and_response_provenance(monkeypatch):
+    provider = LocalTabixSecondaryPopulationProvider.from_execution_contract(contract(
+        info_fields={"AC": "AC", "AN": "AN"},
+    ))
+    response = "1\t100\trs1\tA\tC\t.\tPASS\tAC=1;AN=100\n"
+    monkeypatch.setattr(
+        "backend.app.adapters.population.secondary.subprocess.run",
+        lambda *a, **k: SimpleNamespace(returncode=0, stderr="", stdout=response),
+    )
+    variant = SimpleNamespace(chromosome="1", position=100, reference="A", alternate="G")
+
+    observations, provenance = provider.query_variant_with_provenance(variant)
+
+    assert observations == []
+    assert len(provenance["request_fingerprint"]) == 64
+    assert provenance["response_sha256"] == hashlib.sha256(response.encode()).hexdigest()
+    assert provenance["request_metadata"]["alternate"] == "G"
+    assert provenance["observed_at"]
 
 
 def test_contig_matching_is_exact_by_default(monkeypatch):
@@ -168,7 +194,11 @@ def test_rejects_remote_execution():
 
 
 def test_secondary_population_no_data_is_a_limitation_not_pipeline_failure():
-    from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
+    from backend.app.domain.workflow_decision import (
+        OutcomeKind,
+        WorkflowAction,
+        decide_step_outcome,
+    )
 
     decision = decide_step_outcome(
         "population",
