@@ -15,10 +15,13 @@ from backend.app.infrastructure.db.models import (
     Classification,
     ConfirmationRecord,
     Organization,
+    PedigreeMember,
+    PedigreeRelationship,
     PhenotypeObservation,
     QCAssessment,
     Report,
     ReportabilityDecision,
+    SegregationObservation,
     Specimen,
     TechnicalQCObservation,
     User,
@@ -26,7 +29,11 @@ from backend.app.infrastructure.db.models import (
     WorkflowStep,
 )
 from backend.app.reporting.finalization import finalize_report
-from backend.app.reporting.service import build_report_content, final_report_eligibility
+from backend.app.reporting.service import (
+    build_report_content,
+    final_report_eligibility,
+    render_html,
+)
 
 
 def db():
@@ -55,6 +62,47 @@ def seed(approved=True):
 def test_report_content_contract_has_required_fields():
     d,_,_,_,a,_=seed(True); content=build_report_content(d,a,'en');
     for key in ['report_schema_version','report_version','case_id','analysis_id','findings','methodology','limitations','final_result']: assert key in content
+
+
+def test_report_preserves_and_renders_descriptive_family_observations():
+    d, _, _, case, analysis, variant = seed(True)
+    proband = PedigreeMember(
+        id=uuid4(), case_id=case.id, member_identifier="PROBAND-01",
+        relationship_to_proband="PROBAND", sex="FEMALE", affected_status="AFFECTED",
+        is_proband=True, sampled=True, metadata_json={},
+    )
+    parent = PedigreeMember(
+        id=uuid4(), case_id=case.id, member_identifier="PARENT-01",
+        relationship_to_proband="MOTHER", sex="FEMALE", affected_status="UNAFFECTED",
+        is_proband=False, sampled=True, metadata_json={},
+    )
+    relationship = PedigreeRelationship(
+        id=uuid4(), case_id=case.id, parent_member_id=parent.id,
+        child_member_id=proband.id, relationship_type="PARENT_CHILD", metadata_json={},
+    )
+    observation = SegregationObservation(
+        id=uuid4(), analysis_id=analysis.id, variant_id=variant.id,
+        pedigree_member_id=parent.id, genotype="0/1", zygosity="HET",
+        phase="UNPHASED", allele_observed="ALT", phenotype_status="UNAFFECTED",
+        source="LAB_CONFIRMATION", notes="Recorded family observation", metadata_json={},
+    )
+    d.add_all([proband, parent, relationship, observation])
+    d.commit()
+
+    content = build_report_content(d, analysis, "en", report_type="ANALYTICAL")
+    finding = content["findings"][0]
+    report_observation = finding["inheritance_context"]["segregation_observations"][0]
+    html_content = render_html(content).decode("utf-8")
+
+    assert content["report_schema_version"] == "1.3.0"
+    assert next(member for member in content["pedigree_context"]["members"] if member["id"] == str(parent.id))["member_identifier"] == "PARENT-01"
+    assert content["pedigree_context"]["relationships"][0]["parent_member_identifier"] == "PARENT-01"
+    assert report_observation["observation_id"] == str(observation.id)
+    assert report_observation["member_identifier"] == "PARENT-01"
+    assert report_observation["allele_observed"] == "ALT"
+    assert "PARENT-01" in html_content
+    assert "Allele observed" in html_content
+    assert "do not by themselves establish inheritance" in html_content
 
 
 def test_report_uses_specimen_bound_to_analysis_input_not_newest_case_specimen():

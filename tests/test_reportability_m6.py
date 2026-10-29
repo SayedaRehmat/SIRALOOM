@@ -224,7 +224,7 @@ def test_clinical_report_contains_only_final_report_findings():
     assert content["findings"][0]["reportability"]["disposition"] == "REPORT"
     assert "priority_score" not in content["findings"][0]["reportability"]
     assert "priority_band" not in content["findings"][0]["reportability"]
-    assert content["report_schema_version"] == "1.2.0"
+    assert content["report_schema_version"] == "1.3.0"
     assert content["final_result"]["release_state"] == "NOT_FOR_CLINICAL_RELEASE"
     assert content["final_result"]["clinical_use_status"] == "LABORATORY_VALIDATION_REQUIRED"
     from backend.app.reporting.service import render_html

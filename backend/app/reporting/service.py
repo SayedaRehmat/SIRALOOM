@@ -756,9 +756,10 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         } for row in clinical_input_snapshot["phenotype_observations"]]
     pedigree_members = list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id == case.id).order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)))
     pedigree_relationships = list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id == case.id).order_by(PedigreeRelationship.created_at)))
+    pedigree_member_by_id = {member.id: member for member in pedigree_members}
     pedigree_context = {
-        "members": [{"member_identifier": m.member_identifier, "relationship_to_proband": m.relationship_to_proband, "sex": m.sex, "affected_status": m.affected_status, "is_proband": m.is_proband, "sampled": m.sampled} for m in pedigree_members],
-        "relationships": [{"parent_member_id": str(r.parent_member_id), "child_member_id": str(r.child_member_id), "relationship_type": r.relationship_type} for r in pedigree_relationships],
+        "members": [{"id": str(m.id), "member_identifier": m.member_identifier, "relationship_to_proband": m.relationship_to_proband, "sex": m.sex, "affected_status": m.affected_status, "is_proband": m.is_proband, "sampled": m.sampled} for m in pedigree_members],
+        "relationships": [{"parent_member_id": str(r.parent_member_id), "child_member_id": str(r.child_member_id), "parent_member_identifier": pedigree_member_by_id[r.parent_member_id].member_identifier if r.parent_member_id in pedigree_member_by_id else None, "child_member_identifier": pedigree_member_by_id[r.child_member_id].member_identifier if r.child_member_id in pedigree_member_by_id else None, "relationship_type": r.relationship_type} for r in pedigree_relationships],
     }
     reportability_complete, reportability_errors = final_reportability_state(db, analysis.id)
     sample_calls = get_analysis_sample_calls(db, analysis.id)
@@ -862,7 +863,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                     }
                     for a in inheritance_rows
                 ],
-                "segregation_observations": [{"pedigree_member_id": str(o.pedigree_member_id), "genotype": o.genotype, "zygosity": o.zygosity, "phase": o.phase, "phenotype_status": o.phenotype_status, "source": o.source, "notes": o.notes} for o in segregation_rows],
+                "segregation_observations": [{"observation_id": str(o.id), "pedigree_member_id": str(o.pedigree_member_id), "member_identifier": pedigree_member_by_id[o.pedigree_member_id].member_identifier if o.pedigree_member_id in pedigree_member_by_id else None, "genotype": o.genotype, "zygosity": o.zygosity, "phase": o.phase, "allele_observed": o.allele_observed, "phenotype_status": o.phenotype_status, "source": o.source, "notes": o.notes} for o in segregation_rows],
             },
             "confirmation_context": confirmation_snapshot(confirmation),
             "follow_up": [{"action_type": x.action_type, "status": x.status, "due_date": x.due_date.isoformat() if x.due_date else None, "responsible_role": x.responsible_role, "outcome": x.outcome, "notes": x.notes} for x in followups],
@@ -905,7 +906,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     technical_quality = technical_quality_snapshot(db, analysis.id)
 
     return {
-        "report_schema_version": "1.2.0",
+        "report_schema_version": "1.3.0",
         "report_version": 1,
         "report_status": "DRAFT",
         "report_type": report_type,
@@ -1012,6 +1013,27 @@ def _html_document(content: dict[str, Any]) -> str:
             for annotation in finding.get("annotations", [])
             if isinstance(annotation, dict)
         )
+        segregation_observations = (finding.get("inheritance_context") or {}).get("segregation_observations") or []
+        segregation_rows = "".join(
+            "<tr>"
+            f"<td>{html.escape(str(row.get('member_identifier') or row.get('pedigree_member_id') or '-'))}</td>"
+            f"<td>{html.escape(str(row.get('genotype') or '-'))}</td>"
+            f"<td>{html.escape(str(row.get('zygosity') or '-'))}</td>"
+            f"<td>{html.escape(str(row.get('phase') or '-'))}</td>"
+            f"<td>{html.escape(str(row.get('allele_observed') or '-'))}</td>"
+            f"<td>{html.escape(str(row.get('phenotype_status') or '-'))}</td>"
+            f"<td>{html.escape(str(row.get('source') or '-'))}</td>"
+            "</tr>"
+            for row in segregation_observations if isinstance(row, dict)
+        )
+        segregation_body = segregation_rows or '<tr><td colspan="7">No family genotype observations recorded</td></tr>'
+        segregation_html = (
+            "<h3>Family observations</h3>"
+            "<p>These are recorded family observations for review; they do not by themselves establish inheritance, segregation, pathogenicity, or causality.</p>"
+            "<table><thead><tr><th>Family member</th><th>GT</th><th>Zygosity</th><th>Phase</th><th>Allele observed</th><th>Phenotype status</th><th>Source</th></tr></thead>"
+            f"<tbody>{segregation_body}</tbody></table>"
+            if segregation_observations else ""
+        )
         findings_html.append(
             f"""
             <section class='finding'>
@@ -1026,6 +1048,7 @@ def _html_document(content: dict[str, Any]) -> str:
               <table><thead><tr><th>Criterion</th><th>Assessment</th></tr></thead><tbody>{criterion_rows or '<tr><td colspan="2">No criterion records</td></tr>'}</tbody></table>
               <h3>Population Context</h3>
               <table><thead><tr><th>Population</th><th>AF</th><th>Availability</th><th>Source</th></tr></thead><tbody>{pop_rows or '<tr><td colspan="4">No population observations</td></tr>'}</tbody></table>
+              {segregation_html}
             </section>
             """
         )
@@ -1035,6 +1058,33 @@ def _html_document(content: dict[str, Any]) -> str:
     case_identifier = content.get("case_identifier", content.get("case_id", "-"))
     reference_build = content.get("reference_build", "-")
     final_result = content.get("final_result", {"findings_count": len(content.get("findings", []))})
+    pedigree = content.get("pedigree_context") or {}
+    pedigree_member_rows = "".join(
+        "<tr>"
+        f"<td>{html.escape(str(member.get('member_identifier') or member.get('id') or '-'))}</td>"
+        f"<td>{html.escape(str(member.get('relationship_to_proband') or '-'))}</td>"
+        f"<td>{html.escape(str(member.get('sex') or '-'))}</td>"
+        f"<td>{html.escape(str(member.get('affected_status') or 'UNKNOWN'))}</td>"
+        f"<td>{'Yes' if member.get('sampled') else 'No'}</td>"
+        "</tr>"
+        for member in pedigree.get("members", []) if isinstance(member, dict)
+    )
+    pedigree_member_body = pedigree_member_rows or '<tr><td colspan="5">No pedigree members recorded</td></tr>'
+    pedigree_relationship_rows = "".join(
+        "<li>"
+        f"{html.escape(str(relationship.get('parent_member_identifier') or relationship.get('parent_member_id') or '-'))} → "
+        f"{html.escape(str(relationship.get('child_member_identifier') or relationship.get('child_member_id') or '-'))} "
+        f"({html.escape(str(relationship.get('relationship_type') or 'relationship not specified'))})"
+        "</li>"
+        for relationship in pedigree.get("relationships", []) if isinstance(relationship, dict)
+    )
+    family_context_html = (
+        "<h2>Family context</h2>"
+        "<p>Pedigree details are provided as recorded and have not been independently verified by SIRALOOM.</p>"
+        "<table><thead><tr><th>Member</th><th>Relationship to proband</th><th>Sex</th><th>Affected status</th><th>Sampled</th></tr></thead>"
+        f"<tbody>{pedigree_member_body}</tbody></table>"
+        f"<ul>{pedigree_relationship_rows or '<li>No parent/child relationships recorded</li>'}</ul>"
+    )
     quality = content.get("technical_quality")
     if isinstance(quality, dict):
         no_rule_row = "<tr><td colspan='4'>No rules evaluated</td></tr>"
@@ -1120,6 +1170,7 @@ th,td {{ border:1px solid #bbb; padding:4px; vertical-align:top; }} th {{ backgr
 <p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — {html.escape(release_notice)}</p>
 {signout_details}
 {''.join(findings_html)}
+{family_context_html}
 <h2>{'Technical Quality Assessment' if not bilingual else 'Technical Quality Assessment / تقييم الجودة التقنية'}</h2>
 {quality_html}
 <h2>{'Methodology' if not bilingual else 'Methodology / المنهجية'}</h2>
