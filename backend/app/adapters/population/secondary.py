@@ -139,12 +139,14 @@ class LocalTabixSecondaryPopulationProvider:
                 "response_sha256": response_sha256,
                 "request_metadata": request_metadata,
                 "observed_at": observed_at,
+                "query_outcome": "MATCHED",
             }
         return [], {
             "request_fingerprint": request_fingerprint,
             "response_sha256": response_sha256,
             "request_metadata": request_metadata,
             "observed_at": observed_at,
+            "query_outcome": "NO_MATCH",
         }
 
 

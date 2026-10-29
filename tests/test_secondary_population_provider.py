@@ -62,6 +62,7 @@ def test_no_match_still_returns_query_and_response_provenance(monkeypatch):
     assert provenance["response_sha256"] == hashlib.sha256(response.encode()).hexdigest()
     assert provenance["request_metadata"]["alternate"] == "G"
     assert provenance["observed_at"]
+    assert provenance["query_outcome"] == "NO_MATCH"
 
 
 def test_contig_matching_is_exact_by_default(monkeypatch):

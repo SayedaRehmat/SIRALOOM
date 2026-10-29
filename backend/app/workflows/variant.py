@@ -3348,6 +3348,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     "message": str(exc),
                                 })
                                 continue
+                            execution_record.metadata_json = {
+                                **(execution_record.metadata_json or {}),
+                                "query_outcome": query_provenance["query_outcome"],
+                            }
                             for obs in observations:
                                 existing = db.scalar(
                                     select(PopulationObservation).where(

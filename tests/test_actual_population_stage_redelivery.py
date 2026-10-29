@@ -623,7 +623,12 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
         )
         monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
 
-        secondary_response = "1\t555\trs-secondary\tT\tC\t.\tPASS\tAC=1;AN=100;AF=0.01\n"
+        secondary_match_expected = clingen_enabled and not inject_internal_evidence_error
+        secondary_response = (
+            "1\t555\trs-secondary\tT\tC\t.\tPASS\tAC=1;AN=100;AF=0.01\n"
+            if secondary_match_expected
+            else "1\t555\trs-secondary\tT\tG\t.\tPASS\tAC=1;AN=100;AF=0.01\n"
+        )
         secondary_calls = {"count": 0}
 
         def fake_tabix_run(*_args, **_kwargs):
@@ -840,27 +845,32 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             )).all()
             assert len(executions) == 1 + int(clingen_enabled)
             assert all(execution.status == "SUCCEEDED" for execution in executions)
-            assert len(observations) == (2 if no_match else 1 + int(clingen_enabled))
+            assert len(observations) == (
+                2 if no_match else 1 + int(secondary_match_expected)
+            )
             if clingen_enabled:
-                assert len(observations) == 2
                 secondary_execution_record = next(
                     execution
                     for execution in executions
                     if execution.resource_id == secondary_resource_id
                 )
-                secondary_observation = next(
-                    observation
-                    for observation in observations
-                    if observation.resource_id == secondary_resource_id
-                )
                 assert len(secondary_execution_record.request_fingerprint) == 64
                 assert secondary_execution_record.response_sha256 == hashlib.sha256(
                     secondary_response.encode()
                 ).hexdigest()
-                assert secondary_observation.request_fingerprint == secondary_execution_record.request_fingerprint
-                assert secondary_observation.response_sha256 == secondary_execution_record.response_sha256
-                assert secondary_observation.request_metadata["alternate"] == "C"
-                assert secondary_observation.observed_at is not None
+                assert secondary_execution_record.metadata_json["query_outcome"] == (
+                    "MATCHED" if secondary_match_expected else "NO_MATCH"
+                )
+                if secondary_match_expected:
+                    secondary_observation = next(
+                        observation
+                        for observation in observations
+                        if observation.resource_id == secondary_resource_id
+                    )
+                    assert secondary_observation.request_fingerprint == secondary_execution_record.request_fingerprint
+                    assert secondary_observation.response_sha256 == secondary_execution_record.response_sha256
+                    assert secondary_observation.request_metadata["alternate"] == "C"
+                    assert secondary_observation.observed_at is not None
                 assert secondary_calls["count"] == 1
             else:
                 assert secondary_calls["count"] == 0
@@ -1147,7 +1157,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             )) == 1 + int(clingen_enabled)
             assert db.scalar(select(func.count(PopulationObservation.id)).where(
                 PopulationObservation.analysis_id == analysis_id,
-            )) == (2 if no_match else 1 + int(clingen_enabled))
+            )) == (2 if no_match else 1 + int(secondary_match_expected))
             clinvar_execution_rows = db.scalars(select(ResourceExecutionRecord).where(
                 ResourceExecutionRecord.analysis_id == analysis_id,
                 ResourceExecutionRecord.step_id == "build_evidence",
