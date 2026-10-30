@@ -409,6 +409,7 @@ def _validate_record(
     line_no: int,
     reference_contigs: set[str] | None,
     fileformat: str | None = None,
+    format_definitions: dict[str, dict[str, str]] | None = None,
 ) -> tuple[str, int, list[str]]:
     if len(fields) < 8:
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
@@ -513,7 +514,7 @@ def _validate_record(
                 code="VCF_FORMAT_INVALID",
             )
         if fileformat == "VCFv4.5" and (
-            any(format_definitions.get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
+            any((format_definitions or {}).get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
             or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
         ):
             if "LAA" not in keys or keys.index("LAA") != (1 if "GT" in keys else 0):
@@ -687,7 +688,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF record has {len(fields)} columns but the #CHROM header declares {expected} at line {line_no}",
                     code="VCF_RECORD_INVALID",
                 )
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat)
+            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
             if _chrom != current_chrom:
                 if _chrom in closed_chroms:
                     raise StrictVCFValidationError(
