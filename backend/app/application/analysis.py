@@ -58,19 +58,21 @@ def validate_analysis_input_artifact(
 
     validation = (artifact.metadata_json or {}).get("validation")
     sample_names = validation.get("sample_names") if isinstance(validation, dict) else None
-    if (
-        not isinstance(sample_names, list)
-        or len(sample_names) != 1
-        or not isinstance(sample_names[0], str)
-        or not sample_names[0].strip()
-    ):
+    if not isinstance(sample_names, list) or not sample_names:
         raise ValueError(
-            "Analysis currently requires a VCF with exactly one named sample; "
-            "multisample and sites-only VCFs require explicit sample-to-case mapping."
+            "Sites-only VCFs contain no sample genotypes and cannot be used for "
+            "sample-specific clinical interpretation. Use a site-level workflow instead."
         )
-    if expected_sample_name is not None and sample_names[0] != expected_sample_name:
+    if any(not isinstance(name, str) or not name.strip() for name in sample_names):
+        raise ValueError("VCF contains an invalid or empty sample name.")
+    if expected_sample_name is None:
+        if len(sample_names) != 1:
+            raise ValueError(
+                "Multisample VCF analysis requires an explicit sample-to-specimen mapping."
+            )
+    elif expected_sample_name not in sample_names:
         raise ValueError(
-            "VCF sample name does not match the sample explicitly mapped to the case specimen."
+            "The specimen's explicitly mapped VCF sample name is not present in the input callset."
         )
 
 def create_analysis(
