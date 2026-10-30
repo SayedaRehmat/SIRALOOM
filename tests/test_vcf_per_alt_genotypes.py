@@ -28,19 +28,23 @@ def test_multiallelic_genotypes_are_projected_per_alternate_and_source_is_retain
     assert first.sample_calls["SAMPLE_A"]["source_alt_count"] == 2
     assert first.sample_calls["SAMPLE_A"]["genotype"] == "1/2"
     assert first.sample_calls["SAMPLE_A"]["projected_genotype"] == "1/0"
-    assert first.sample_calls["SAMPLE_A"]["zygosity"] == "HETEROZYGOUS"
+    assert first.sample_calls["SAMPLE_A"]["zygosity"] == "MULTIPLE_ALTERNATE_ALLELES"
+    assert first.sample_calls["SAMPLE_A"]["projected_zygosity"] == "HETEROZYGOUS"
     assert first.sample_calls["SAMPLE_B"]["genotype"] == "2|2"
     assert first.sample_calls["SAMPLE_B"]["projected_genotype"] == "0|0"
-    assert first.sample_calls["SAMPLE_B"]["zygosity"] == "HOMOZYGOUS_REFERENCE"
+    assert first.sample_calls["SAMPLE_B"]["zygosity"] == "HOMOZYGOUS_ALTERNATE"
+    assert first.sample_calls["SAMPLE_B"]["projected_zygosity"] == "HOMOZYGOUS_REFERENCE"
 
     assert second.sample_calls["SAMPLE_A"]["source_genotype"] == "1/2"
     assert second.sample_calls["SAMPLE_A"]["source_alt_index"] == 2
     assert second.sample_calls["SAMPLE_A"]["genotype"] == "1/2"
     assert second.sample_calls["SAMPLE_A"]["projected_genotype"] == "0/1"
-    assert second.sample_calls["SAMPLE_A"]["zygosity"] == "HETEROZYGOUS"
+    assert second.sample_calls["SAMPLE_A"]["zygosity"] == "MULTIPLE_ALTERNATE_ALLELES"
+    assert second.sample_calls["SAMPLE_A"]["projected_zygosity"] == "HETEROZYGOUS"
     assert second.sample_calls["SAMPLE_B"]["genotype"] == "2|2"
     assert second.sample_calls["SAMPLE_B"]["projected_genotype"] == "1|1"
     assert second.sample_calls["SAMPLE_B"]["zygosity"] == "HOMOZYGOUS_ALTERNATE"
+    assert second.sample_calls["SAMPLE_B"]["projected_zygosity"] == "HOMOZYGOUS_ALTERNATE"
 
 
 def test_multiallelic_partial_and_missing_calls_remain_missing_after_projection(tmp_path: Path):
