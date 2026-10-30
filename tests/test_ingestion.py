@@ -369,15 +369,15 @@ def test_vcf_sample_identity_rejects_blank_or_malformed_specimen_mapping(mapping
     assert "explicit VCF sample name mapping" in checked.errors[0]
 
 
-def test_vcf_sample_identity_validation_requires_exact_single_sample_match():
+def test_vcf_sample_identity_validation_accepts_explicit_sample_within_multisample_callset():
     multi_sample = ValidationResult(
         "VALID", "VCF", 1, ["EXPECTED_SAMPLE", "OTHER_SAMPLE"], "GRCh38", [], []
     )
 
     checked = validate_specimen_sample_identity(multi_sample, "EXPECTED_SAMPLE")
 
-    assert checked.status == "INVALID"
-    assert "EXPECTED_SAMPLE, OTHER_SAMPLE" in checked.errors[0]
+    assert checked.status == "VALID"
+    assert checked.sample_names == ["EXPECTED_SAMPLE", "OTHER_SAMPLE"]
 
 
 def test_vcf_validation_warns_when_info_number_g_cannot_be_checked(tmp_path: Path):
