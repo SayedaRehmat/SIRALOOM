@@ -793,6 +793,10 @@ def normalize_vcf_with_bcftools(
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
 
+        source_child_reconciliation = _validate_source_child_reconciliation(
+            input_path, sorted_path
+        )
+
         index_command = [bcftools_executable, "index", "--csi", "--force", str(sorted_path)]
         try:
             indexed_result = subprocess.run(
@@ -877,6 +881,7 @@ def normalize_vcf_with_bcftools(
             "index": "CSI",
             "index_path": str(index_path),
             "index_validation": index_validation,
+            "source_child_reconciliation": source_child_reconciliation,
             "gvcf_wildcard_command": "bcftools view -A",
             "stderr": "\n".join(x for x in (view_stderr, normalized_stderr, sorted_stderr, indexed_stderr) if x),
         }
