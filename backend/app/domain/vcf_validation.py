@@ -5,7 +5,7 @@ import re
 from math import comb
 from pathlib import Path
 
-SUPPORTED_VCF_VERSIONS = frozenset({"VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"})
+SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 SYMBOLIC_RE = re.compile(r"^<[^>]+>$")
@@ -493,7 +493,10 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
                 f"GT must be the first FORMAT key when present at line {line_no}",
                 code="VCF_FORMAT_INVALID",
             )
-        if fileformat == "VCFv4.5" and any(key in {"LA", "LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys):
+        if fileformat == "VCFv4.5" and (
+            any(format_definitions.get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
+            or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
+        ):
             if "LAA" not in keys or keys.index("LAA") != (1 if "GT" in keys else 0):
                 raise StrictVCFValidationError(
                     f"VCFv4.5 local-allele FORMAT fields require LAA immediately after GT (or first when GT is absent) at line {line_no}",
@@ -868,7 +871,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
     if fileformat not in SUPPORTED_VCF_VERSIONS:
         raise StrictVCFValidationError(
-            f"Unsupported or missing ##fileformat header: {fileformat!r}; supported versions are VCFv4.2, VCFv4.3, VCFv4.4, and VCFv4.5",
+            f"Unsupported or missing ##fileformat header: {fileformat!r}; supported standardized VCF versions are VCFv4.0 through VCFv4.5",
             code="VCF_FILEFORMAT_UNSUPPORTED",
         )
     if not found_header or chrom_header is None:
