@@ -82,8 +82,11 @@ def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_
     source.write_text(
         "##fileformat=VCFv4.3\\n"
         "##contig=<ID=1,length=7>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t4\\t.\\tAA\\tA,C\\t.\\tPASS\\t.\\n",
+        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
+        "1\\t2\\t.\\tA\\tC,<NON_REF>,G\\t.\\tPASS\\t.\\tGT\\t0/1\\n"
+        "1\\t4\\t.\\tAA\\tA,C\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
         encoding="utf-8",
     )
 
@@ -98,10 +101,10 @@ def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_
     assert result["source_child_reconciliation"] == {
         "status": "VALIDATED",
         "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
-        "source_records": 1,
-        "expected_child_records": 2,
-        "normalized_child_records": 2,
-        "source_alt_mappings": 2,
+        "source_records": 2,
+        "expected_child_records": 4,
+        "normalized_child_records": 4,
+        "source_alt_mappings": 4,
         "balanced": True,
     }
 
