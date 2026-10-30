@@ -281,6 +281,25 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
     routed = route_vcf_records(source, tmp_path / "routed")
 
     assert routed["records_total"] == 4
+    assert routed["source_record_count"] == 4
+    assert routed["excluded_source_record_count"] == 3
+    assert routed["record_reconciliation"] == {
+        "method": "SOURCE_RECORD_INDEX_VS_EXCLUSIVE_ROUTING_DISPOSITIONS",
+        "source_records": 4,
+        "routed_records": 4,
+        "delta": 0,
+        "balanced": True,
+        "disposition_counts": {
+            "sequence": 1,
+            "gvcf_reference_blocks": 1,
+            "gvcf_unresolved_variants": 1,
+            "structural_variants": 0,
+            "spanning_deletions": 0,
+            "telomere_coordinates": 0,
+            "after_contig_coordinates": 0,
+            "reference_only": 1,
+        },
+    }
     assert routed["reference_only_records"] == 1
     assert routed["sequence_records"] == 1
     assert routed["gvcf_reference_blocks"] == 1
@@ -324,6 +343,11 @@ def test_router_exclusion_manifest_is_absent_when_no_source_records_are_excluded
     routed = route_vcf_records(source, tmp_path / "routed-sequence-only")
     assert routed["exclusion_manifest_path"] is None
     assert routed["exclusion_manifest_records"] == 0
+    assert routed["source_record_count"] == 1
+    assert routed["records_total"] == 1
+    assert routed["excluded_source_record_count"] == 0
+    assert routed["record_reconciliation"]["balanced"] is True
+    assert routed["record_reconciliation"]["delta"] == 0
 
 
 def test_router_manifests_each_unobserved_source_alt_from_complete_genotypes(tmp_path: Path):
@@ -346,6 +370,10 @@ def test_router_manifests_each_unobserved_source_alt_from_complete_genotypes(tmp
     ]
     assert routed["sequence_records"] == 3
     assert routed["reference_only_genotype_alleles"] == 2
+    # These are per-ALT evidence entries, not whole-record exclusions.
+    assert routed["exclusion_manifest_records"] == 2
+    assert routed["excluded_source_record_count"] == 0
+    assert routed["record_reconciliation"]["balanced"] is True
     assert [
         (entry["source_record_index"], entry.get("source_alt_index"), entry["reason_code"])
         for entry in entries

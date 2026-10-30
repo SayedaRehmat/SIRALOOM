@@ -60,6 +60,7 @@ def route_vcf_records(
     sample_count = 0
     source_record_index = 0
     exclusion_handle = None
+    excluded_source_record_indexes: set[int] = set()
 
     def record_exclusion(
         record: str,
@@ -88,6 +89,8 @@ def route_vcf_records(
         }
         if source_alt_index is not None:
             entry["source_alt_index"] = source_alt_index
+        else:
+            excluded_source_record_indexes.add(source_record_index)
         exclusion_handle.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
 
     def record_reference_genotype_exclusions(record: str, fields: list[str], alts: list[str]) -> None:
@@ -211,12 +214,37 @@ def route_vcf_records(
                     continue
                 emit("sequence", line)
                 record_reference_genotype_exclusions(line, fields, alts)
+    record_disposition_counts = {
+        "sequence": counts["sequence"],
+        "gvcf_reference_blocks": counts["gvcf_blocks"],
+        "gvcf_unresolved_variants": counts["gvcf_unresolved"],
+        "structural_variants": counts["structural"],
+        "spanning_deletions": counts["spanning_deletions"],
+        "telomere_coordinates": counts["telomere"],
+        "after_contig_coordinates": counts["telomere_after"],
+        "reference_only": counts["reference_only"],
+    }
+    routed_record_count = sum(record_disposition_counts.values())
+    if routed_record_count != source_record_index:
+        raise VCFToolError(
+            "VCF routing record reconciliation failed: "
+            f"source_records={source_record_index}, routed_records={routed_record_count}, "
+            f"dispositions={record_disposition_counts!r}"
+        )
+
     return {
-        "routing_version": "1",
-        "records_total": sum(counts[key] for key in (
-            "sequence", "gvcf_blocks", "gvcf_unresolved", "structural",
-            "spanning_deletions", "telomere", "telomere_after", "reference_only",
-        )),
+        "routing_version": "2",
+        "source_record_count": source_record_index,
+        "records_total": routed_record_count,
+        "record_reconciliation": {
+            "method": "SOURCE_RECORD_INDEX_VS_EXCLUSIVE_ROUTING_DISPOSITIONS",
+            "source_records": source_record_index,
+            "routed_records": routed_record_count,
+            "delta": source_record_index - routed_record_count,
+            "balanced": source_record_index == routed_record_count,
+            "disposition_counts": record_disposition_counts,
+        },
+        "excluded_source_record_count": len(excluded_source_record_indexes),
         "sequence_records": counts["sequence"],
         "reference_only_records": counts["reference_only"],
         "gvcf_reference_blocks": counts["gvcf_blocks"],
