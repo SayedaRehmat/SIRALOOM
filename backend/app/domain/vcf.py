@@ -134,8 +134,77 @@ def parse_vcf(
                             else "MISSING_OR_PARTIAL"
                         ),
                     }
-            for alt_allele in alt.split(","):
-                yield VCFRecord(chrom, pos, ref, alt_allele, line, sample_calls)
+            alt_alleles = alt.split(",")
+            for source_alt_index, alt_allele in enumerate(alt_alleles, start=1):
+                per_alt_calls = _sample_calls_for_alt(
+                    sample_calls,
+                    source_alt_index=source_alt_index,
+                    source_alt_count=len(alt_alleles),
+                )
+                yield VCFRecord(chrom, pos, ref, alt_allele, line, per_alt_calls)
+
+
+def _sample_calls_for_alt(
+    sample_calls: dict[str, dict],
+    *,
+    source_alt_index: int,
+    source_alt_count: int,
+) -> dict[str, dict]:
+    """Project source genotypes onto one ALT while retaining the original call.
+
+    This uses the same explicit non-selected-ALT-to-reference policy as the
+    pinned BCFtools normalization path. The original genotype and ALT index
+    remain available for traceability; the projected genotype is suitable for
+    interpreting this individual ALT record.
+    """
+    projected: dict[str, dict] = {}
+    for sample_name, source_call in sample_calls.items():
+        call = dict(source_call)
+        source_genotype = call.get("genotype")
+        call["source_genotype"] = source_genotype
+        call["source_alt_index"] = source_alt_index
+        call["source_alt_count"] = source_alt_count
+        if source_genotype:
+            # Preserve phase separators (including VCFv4.4+ leading separators)
+            # while remapping allele indices: REF -> 0, selected ALT -> 1,
+            # and other ALT alleles -> 0 under the declared overlap policy.
+            tokens = re.split(r"([/|])", source_genotype)
+            remapped_tokens: list[str] = []
+            for token in tokens:
+                if token in {"/", "|"} or token == "" or token == ".":
+                    remapped_tokens.append(token)
+                    continue
+                if token.isdigit():
+                    allele_index = int(token)
+                    if allele_index == 0:
+                        remapped_tokens.append("0")
+                    elif 1 <= allele_index <= source_alt_count:
+                        remapped_tokens.append("1" if allele_index == source_alt_index else "0")
+                    else:
+                        # Keep invalid indices visible for strict validation or
+                        # explicit review; do not silently reinterpret them.
+                        remapped_tokens.append(token)
+                else:
+                    remapped_tokens.append(token)
+            projected_genotype = "".join(remapped_tokens)
+            call["genotype"] = projected_genotype
+            call["zygosity"] = _zygosity(projected_genotype)
+            call["phase"] = (
+                "PARTIALLY_PHASED"
+                if "|" in projected_genotype and "/" in projected_genotype
+                else "PHASED" if "|" in projected_genotype
+                else "UNPHASED" if "/" in projected_genotype
+                else "UNSPECIFIED"
+            )
+            call["status"] = (
+                "AVAILABLE"
+                if projected_genotype and _zygosity(projected_genotype) not in {
+                    "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
+                }
+                else "MISSING_OR_PARTIAL"
+            )
+        projected[sample_name] = call
+    return projected
 
 
 def _zygosity(genotype: str | None) -> str:
