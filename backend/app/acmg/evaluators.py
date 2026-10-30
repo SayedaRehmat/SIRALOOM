@@ -338,6 +338,21 @@ def evaluate_pp3_bp4(
     minimum = _finite_float(raw_minimum)
     maximum = _finite_float(raw_maximum)
     strength = cfg.get("strength", "SUPPORTING")
+    calibration = cfg.get("calibration")
+    required_calibration_fields = (
+        "calibration_id",
+        "model_version",
+        "validation_dataset",
+        "calibration_reference",
+    )
+    if not isinstance(calibration, dict) or any(
+        not isinstance(calibration.get(field), str) or not calibration[field].strip()
+        for field in required_calibration_fields
+    ):
+        raise EvaluatorConfigurationError(
+            f"{criterion} requires calibration provenance: calibration_id, model_version, "
+            "validation_dataset, and calibration_reference"
+        )
     if not predictor or (minimum is None and maximum is None):
         raise EvaluatorConfigurationError(
             f"{criterion} requires an explicitly calibrated predictor and score interval"
@@ -397,7 +412,13 @@ def evaluate_pp3_bp4(
         "PROPOSED" if met else "NOT_MET",
         f"{criterion} evaluation used calibrated predictor {predictor} with score {score}.",
         evidence_ids=tuple(evidence_ids),
-        metadata={"predictor": predictor, "score": score, "minimum_score": minimum, "maximum_score": maximum},
+        metadata={
+            "predictor": predictor,
+            "score": score,
+            "minimum_score": minimum,
+            "maximum_score": maximum,
+            "calibration": {field: calibration[field].strip() for field in required_calibration_fields},
+        },
     )
 
 
