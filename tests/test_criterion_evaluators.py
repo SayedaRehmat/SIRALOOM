@@ -275,6 +275,7 @@ def test_pp3_uses_calibrated_interval():
         {},
         {"REVEL": None},
         {"REVEL": "not-a-score"},
+        {"REVEL": "0.95"},
         {"REVEL": float("nan")},
         {"REVEL": float("inf")},
         {"REVEL": True},
@@ -315,6 +316,8 @@ def test_pp3_valid_score_outside_calibrated_interval_is_not_met():
     "configuration",
     [
         {"predictor": "REVEL", "minimum_score": "invalid"},
+        {"predictor": "REVEL", "minimum_score": "0.9"},
+        {"predictor": "REVEL", "minimum_score": 0.9, "maximum_score": "0.95"},
         {"predictor": "REVEL", "minimum_score": 0.9, "maximum_score": "invalid"},
         {"predictor": "REVEL", "minimum_score": 0.9, "maximum_score": 0.2},
         {"predictor": "REVEL", "minimum_score": 0.9, "strength": "UNVALIDATED"},

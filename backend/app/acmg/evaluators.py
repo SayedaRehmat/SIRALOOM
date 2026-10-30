@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from numbers import Integral
+from numbers import Integral, Real
 from typing import Any
 
 
@@ -29,13 +29,14 @@ class EvaluatorConfigurationError(ValueError):
 
 
 def _finite_float(value: Any) -> float | None:
+    """Accept numeric values only; never coerce text into scientific evidence."""
     if value is None or value == "":
         return None
-    if isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, Real):
         return None
     try:
         x = float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return x if math.isfinite(x) else None
 
