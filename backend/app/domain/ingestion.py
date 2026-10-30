@@ -29,6 +29,7 @@ class ValidationResult:
     detected_build: str | None
     errors: list[str]
     warnings: list[str]
+    fileformat: str | None = None
 
 
 class VCFValidationUnavailable(RuntimeError):
@@ -240,7 +241,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 + ", ".join(unchecked_format_number_g)
                 + "."
             )
-        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings)
+        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings, strict_profile["fileformat"])
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [])
 
@@ -292,6 +293,15 @@ def validate_specimen_sample_identity(
     expected = expected_sample_name.strip() if isinstance(expected_sample_name, str) else ""
     if result.status != "VALID":
         return result
+    if not result.sample_names:
+        # A sites-only VCF is structurally valid but has no sample genotype.
+        # Keep it as a site-level artifact; do not demand a fictitious sample.
+        return ValidationResult(
+            result.status, result.file_kind, result.record_count, result.sample_names,
+            result.detected_build, result.errors,
+            [*result.warnings, "Sites-only VCF: accepted as a site-level artifact; not eligible for sample-specific interpretation or clinical reporting."],
+            result.fileformat,
+        )
     if not expected:
         error = "The specimen must have an explicit VCF sample name mapping before intake can pass."
         return ValidationResult(
@@ -302,8 +312,9 @@ def validate_specimen_sample_identity(
             result.detected_build,
             [*result.errors, error],
             result.warnings,
+            result.fileformat,
         )
-    if result.sample_names == [expected]:
+    if expected in result.sample_names:
         return result
     observed = ", ".join(result.sample_names) if result.sample_names else "no named samples"
     error = (
@@ -318,4 +329,5 @@ def validate_specimen_sample_identity(
         result.detected_build,
         [*result.errors, error],
         result.warnings,
+        result.fileformat,
     )
