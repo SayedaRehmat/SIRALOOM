@@ -470,16 +470,16 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
     with gzip.open(staged_vcf, "wt", encoding="utf-8") as handle:
         handle.write(
             "##fileformat=VCFv4.3\\n"
-            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-            "1\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
-            "1\\t2\\t.\\tC\\tT\\t.\\tPASS\\t.\\n"
-            "2\\t4\\t.\\tG\\tA\\t.\\tPASS\\t.\\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\\n"
+            "1\t1\t.\tA\tG\t.\tPASS\t.\\n"
+            "1\t2\t.\tC\tT\t.\tPASS\t.\\n"
+            "2\t4\t.\tG\tA\t.\tPASS\t.\\n"
         )
 
     def fake_run(command, **kwargs):
         assert command[1:3] == ["index", "--stats"]
         return subprocess.CompletedProcess(
-            command, 0, stdout="1\\t7\\t2\\t0\\n2\\t5\\t1\\t0\\n", stderr=""
+            command, 0, stdout="1\t7\t2\t0\\n2\t5\t1\t0\\n", stderr=""
         )
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
@@ -504,14 +504,14 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
     with gzip.open(staged_vcf, "wt", encoding="utf-8") as handle:
         handle.write(
             "##fileformat=VCFv4.3\\n"
-            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-            "1\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
-            "1\\t2\\t.\\tC\\tT\\t.\\tPASS\\t.\\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\\n"
+            "1\t1\t.\tA\tG\t.\tPASS\t.\\n"
+            "1\t2\t.\tC\tT\t.\tPASS\t.\\n"
         )
 
     def fake_run(command, **kwargs):
         return subprocess.CompletedProcess(
-            command, 0, stdout="1\\t7\\t1\\t0\\n", stderr=""
+            command, 0, stdout="1\t7\t1\t0\\n", stderr=""
         )
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
