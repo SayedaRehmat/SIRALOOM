@@ -71,6 +71,44 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
 
 
+def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_path: Path):
+    require_bcftools()
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    fasta = make_reference(tmp_path)
+    source = tmp_path / "source.vcf"
+    routed_dir = tmp_path / "routed"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t2\t.\tA\tC,<NON_REF>,G\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t4\t.\tAA\tA,C\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, routed_dir)
+    result = normalize_vcf_with_bcftools(
+        routed["sequence_path"],
+        output_vcf,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result["source_child_reconciliation"] == {
+        "status": "VALIDATED",
+        "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
+        "source_records": 2,
+        "expected_child_records": 4,
+        "normalized_child_records": 4,
+        "source_alt_mappings": 4,
+        "balanced": True,
+    }
+
+
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
     require_bcftools()
     fasta = make_reference(tmp_path)
@@ -208,6 +246,21 @@ def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_pat
         "symbolic_records": 2,
         "gvcf_markers": 1,
     }
+
+
+def test_router_rejects_reserved_source_tag_collision_in_record(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "reserved-source-tag.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t1\t.\tA\tC\t.\tPASS\tSIRALOOM_SOURCE=foreign\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VCFToolError, match="reserved INFO tag SIRALOOM_SOURCE"):
+        route_vcf_records(source, tmp_path / "routed-reserved-tag")
 
 
 def test_router_preserves_telomere_records_outside_small_variant_stream(tmp_path: Path):
