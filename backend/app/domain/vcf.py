@@ -100,23 +100,30 @@ def parse_vcf(
                 for selected_name in selected_samples:
                     sample_value = fields[9 + sample_indexes[selected_name]]
                     values = sample_value.split(":")
-                    call_fields = dict(zip(format_keys, values))
+                    # VCF permits omitted trailing FORMAT values; preserve the
+                    # declared schema by materializing those values as missing.
+                    call_fields = {
+                        key: values[index] if index < len(values) else "."
+                        for index, key in enumerate(format_keys)
+                    }
                     genotype = call_fields.get("GT")
                     sample_calls[selected_name] = {
                         "sample_name": selected_name,
                         "genotype": genotype,
                         "zygosity": _zygosity(genotype),
                         "phase": (
-                            "PHASED" if genotype and "|" in genotype
+                            "PARTIALLY_PHASED"
+                            if genotype and "|" in genotype and "/" in genotype
+                            else "PHASED" if genotype and "|" in genotype
                             else "UNPHASED" if genotype and "/" in genotype
                             else "UNSPECIFIED"
                         ),
                         "phase_set": call_fields.get("PS"),
-                        "format_values": {
-                            key: call_fields[key]
-                            for key in ("DP", "GQ", "AD", "PL", "GL", "GP", "PS")
-                            if key in call_fields
-                        },
+                        # Retain standard, local-allele, caller-specific, and
+                        # future FORMAT fields for traceability rather than
+                        # silently dropping data that the interpretation layer
+                        # may need to evaluate or review.
+                        "format_values": dict(call_fields),
                         "status": (
                             "AVAILABLE"
                             if genotype and _zygosity(genotype) not in {
