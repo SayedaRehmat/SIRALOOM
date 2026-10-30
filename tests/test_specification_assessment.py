@@ -57,6 +57,11 @@ def test_selection_and_evaluation_use_selected_clingen_specification():
                     "population_level": "ANCESTRY",
                     "population_codes": ["MID"],
                     "strength": "MODERATE"
+                },
+                "PP3": {
+                    "predictor": "REVEL",
+                    "minimum_score": 0.9,
+                    "strength": "SUPPORTING"
                 }
             }, raw_payload={}, retrieved_at=datetime.now(UTC),
             validated_for_automation=True, validation_status="APPROVED_FOR_AUTOMATION"
@@ -64,7 +69,7 @@ def test_selection_and_evaluation_use_selected_clingen_specification():
         annotation = Annotation(
             id=uuid4(), variant_id=variant.id, analysis_id=analysis.id,
             provider_name="test", provider_version="1", resource_name="test",
-            resource_version="1", payload={"normalized": {"gene": {"symbol": "GENE1"}, "computational": {}, "splice": {}}}
+            resource_version="1", payload={"normalized": {"gene": {"symbol": "GENE1"}, "computational": {"revel": 0.95}, "splice": {}}}
         )
         db.add(annotation)
         resource = Resource(
@@ -90,6 +95,17 @@ def test_selection_and_evaluation_use_selected_clingen_specification():
             created_by_type="TEST", created_by_id="test",
             evidence_fingerprint=str(uuid4()),
         ))
+        predictor_evidence_id = uuid4()
+        db.add(Evidence(
+            id=predictor_evidence_id, analysis_id=analysis.id, variant_id=variant.id,
+            evidence_type="COMPUTATIONAL",
+            statement="REVEL predictor observation from the same annotation run.",
+            direction="NEUTRAL", source_name="test", source_version="1",
+            resource_id=None, source_record_id="revel-test",
+            observation_ids=[], payload={"predictors": {"revel": 0.95}},
+            created_by_type="TEST", created_by_id="test",
+            evidence_fingerprint=str(uuid4()),
+        ))
         db.commit()
 
         service = ACMGSpecificationAssessmentService()
@@ -104,6 +120,11 @@ def test_selection_and_evaluation_use_selected_clingen_specification():
         assert result.classification is not None
         assert result.classification.classification == "VUS"
         assert any(x.criterion == "PM2" and x.applicable for x in result.evaluator_results)
+        pp3 = next(x for x in result.evaluator_results if x.criterion == "PP3")
+        assert pp3.status == "PROPOSED"
+        assert pp3.evidence_ids == (str(predictor_evidence_id),)
+        pp3_assessment = next(x for x in result.criterion_assessments if x.criterion == "PP3")
+        assert pp3_assessment.evidence_ids == (str(predictor_evidence_id),)
 
 
 def test_ambiguous_specification_stops_before_automation():

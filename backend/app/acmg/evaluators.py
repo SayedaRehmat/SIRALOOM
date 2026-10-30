@@ -322,6 +322,7 @@ def evaluate_pp3_bp4(
     *,
     criterion: str,
     profile: dict[str, Any],
+    evidence_ids: tuple[str, ...] = (),
 ) -> EvaluatorResult:
     """Evaluate PP3/BP4 from calibrated predictor evidence only.
 
@@ -355,7 +356,15 @@ def evaluate_pp3_bp4(
         raise EvaluatorConfigurationError(
             f"{criterion} strength must be a valid ACMG evidence strength"
         )
-    raw_score = predictor_observations.get(predictor)
+    matching_values = [
+        value
+        for key, value in predictor_observations.items()
+        if str(key).strip().casefold() == str(predictor).strip().casefold()
+    ]
+    # Provider normalizers may use canonical lower-case field names (e.g. revel)
+    # while a governed ClinGen rule profile names the predictor REVEL. A
+    # case-insensitive exact-key match is safe; ambiguous duplicate keys fail closed.
+    raw_score = matching_values[0] if len(matching_values) == 1 else None
     score = _finite_float(raw_score)
     if score is None:
         return EvaluatorResult(
@@ -367,7 +376,13 @@ def evaluate_pp3_bp4(
             ),
             metadata={
                 "predictor": predictor,
-                "input_status": "MISSING" if raw_score is None or raw_score == "" else "INVALID",
+                "input_status": (
+                    "AMBIGUOUS"
+                    if len(matching_values) > 1
+                    else "MISSING"
+                    if raw_score is None or raw_score == ""
+                    else "INVALID"
+                ),
             },
         )
     if (minimum is not None and score < minimum) or (
@@ -381,6 +396,7 @@ def evaluate_pp3_bp4(
         criterion, met, strength if met else None, direction,
         "PROPOSED" if met else "NOT_MET",
         f"{criterion} evaluation used calibrated predictor {predictor} with score {score}.",
+        evidence_ids=tuple(evidence_ids),
         metadata={"predictor": predictor, "score": score, "minimum_score": minimum, "maximum_score": maximum},
     )
 

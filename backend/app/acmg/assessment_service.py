@@ -11,6 +11,8 @@ This module is deliberately conservative:
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
+from numbers import Real
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -45,6 +47,53 @@ from backend.app.infrastructure.db.models import (
     Resource,
     Variant,
 )
+
+def _predictor_evidence_ids(
+    db: Session,
+    *,
+    analysis_id: UUID,
+    variant_id: UUID,
+    annotation: Annotation,
+    predictor: str,
+    score: Any,
+) -> tuple[str, ...]:
+    """Bind a predictor score only to persisted evidence from the same annotation run."""
+    if isinstance(score, bool) or not isinstance(score, Real):
+        return ()
+    numeric_score = float(score)
+    if not math.isfinite(numeric_score):
+        return ()
+
+    rows = db.scalars(
+        select(Evidence).where(
+            Evidence.analysis_id == analysis_id,
+            Evidence.variant_id == variant_id,
+            Evidence.evidence_type.in_({"COMPUTATIONAL", "SPLICING"}),
+            Evidence.source_name == annotation.provider_name,
+            Evidence.source_version == annotation.provider_version,
+        )
+    ).all()
+    matches: list[str] = []
+    for row in rows:
+        predictors = (row.payload or {}).get("predictors")
+        if not isinstance(predictors, dict):
+            continue
+        values = [
+            value for key, value in predictors.items()
+            if str(key).strip().casefold() == predictor.strip().casefold()
+        ]
+        if len(values) != 1:
+            continue
+        value = values[0]
+        if isinstance(value, bool) or not isinstance(value, Real):
+            continue
+        numeric_value = float(value)
+        if math.isfinite(numeric_value) and math.isclose(
+            numeric_value, numeric_score, rel_tol=0.0, abs_tol=1e-12
+        ):
+            matches.append(str(row.id))
+    return tuple(sorted(set(matches)))
+
 
 SUPPORTED_AUTOMATED_CRITERIA = {"PM2", "BA1", "BS1", "PP3", "BP4", "PVS1"}
 @dataclass(frozen=True)
@@ -188,7 +237,30 @@ class ACMGSpecificationAssessmentService:
                 elif criterion in {"BA1", "BS1"}:
                     result = evaluate_ba1_bs1(observations, criterion=criterion, profile=profile)
                 elif criterion in {"PP3", "BP4"}:
-                    result = evaluate_pp3_bp4(predictor_context, criterion=criterion, profile=profile)
+                    predictor_name = str(cfg.get("predictor") or "")
+                    matching_values = [
+                        value for key, value in predictor_context.items()
+                        if str(key).strip().casefold() == predictor_name.strip().casefold()
+                    ]
+                    predictor_score = matching_values[0] if len(matching_values) == 1 else None
+                    predictor_evidence_ids = (
+                        _predictor_evidence_ids(
+                            db,
+                            analysis_id=analysis.id,
+                            variant_id=variant.id,
+                            annotation=annotation,
+                            predictor=predictor_name,
+                            score=predictor_score,
+                        )
+                        if predictor_name and predictor_score is not None
+                        else ()
+                    )
+                    result = evaluate_pp3_bp4(
+                        predictor_context,
+                        criterion=criterion,
+                        profile=profile,
+                        evidence_ids=predictor_evidence_ids,
+                    )
                 elif criterion == "PVS1":
                     result = evaluate_pvs1(variant_context, profile=profile)
                 else:  # pragma: no cover - guarded by registry
