@@ -26,7 +26,12 @@ def open_text(path: str):
         return gzip.open(path, "rt", encoding="utf-8")
     return open(path, "rt", encoding="utf-8")
 
-def parse_vcf(path: str) -> Iterator[VCFRecord]:
+def parse_vcf(
+    path: str,
+    *,
+    sample_name: str | None = None,
+    allow_unselected_multisample: bool = False,
+) -> Iterator[VCFRecord]:
     found_header = False
     sample_names: list[str] = []
     declared_contig_lengths = declared_vcf_contig_lengths(path)
@@ -42,6 +47,19 @@ def parse_vcf(path: str) -> Iterator[VCFRecord]:
             if line.startswith("#CHROM"):
                 found_header = True
                 sample_names = line.split("\t")[9:]
+                if sample_name is not None and sample_name not in sample_names:
+                    raise VCFValidationError(
+                        f"Selected VCF sample {sample_name!r} is not present in the #CHROM header"
+                    )
+                if (
+                    len(sample_names) > 1
+                    and sample_name is None
+                    and not allow_unselected_multisample
+                ):
+                    raise VCFValidationError(
+                        "Multisample VCF parsing requires an explicit sample_name; "
+                        "refusing to combine different individuals' genotype calls."
+                    )
                 continue
             if line.startswith("#"):
                 continue
@@ -75,12 +93,17 @@ def parse_vcf(path: str) -> Iterator[VCFRecord]:
             sample_calls: dict[str, dict] = {}
             if len(fields) > 8 and sample_names:
                 format_keys = [] if fields[8] in {"", "."} else fields[8].split(":")
-                for sample_name, sample_value in zip(sample_names, fields[9:]):
+                selected_samples = (
+                    [sample_name] if sample_name is not None else sample_names
+                )
+                sample_indexes = {name: sample_names.index(name) for name in selected_samples}
+                for selected_name in selected_samples:
+                    sample_value = fields[9 + sample_indexes[selected_name]]
                     values = sample_value.split(":")
                     call_fields = dict(zip(format_keys, values))
                     genotype = call_fields.get("GT")
-                    sample_calls[sample_name] = {
-                        "sample_name": sample_name,
+                    sample_calls[selected_name] = {
+                        "sample_name": selected_name,
                         "genotype": genotype,
                         "zygosity": _zygosity(genotype),
                         "phase": (
@@ -130,8 +153,13 @@ def _zygosity(genotype: str | None) -> str:
         return "HOMOZYGOUS_ALTERNATE" if len(set(indexes)) == 1 else "MULTIPLE_ALTERNATE_ALLELES"
     return "HETEROZYGOUS"
 
-def validate_and_extract(path: str, genome_build: str) -> list[CanonicalVariant]:
-    records = list(parse_vcf(path))
+def validate_and_extract(
+    path: str,
+    genome_build: str,
+    *,
+    sample_name: str | None = None,
+) -> list[CanonicalVariant]:
+    records = list(parse_vcf(path, sample_name=sample_name))
     if not records:
         raise VCFValidationError("VCF contains no variant records")
     variants = []
