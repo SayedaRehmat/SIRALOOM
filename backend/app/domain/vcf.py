@@ -187,16 +187,20 @@ def _sample_calls_for_alt(
                 else:
                     remapped_tokens.append(token)
             projected_genotype = "".join(remapped_tokens)
-            call["genotype"] = projected_genotype
-            call["zygosity"] = _zygosity(projected_genotype)
-            call["phase"] = (
+            # Keep genotype/zygosity/phase/status in the original source-allele
+            # space. A per-ALT GT projection is an additional interpretation,
+            # not a replacement for the source call: FORMAT values such as AD
+            # (Number=R) and PL (Number=G) remain indexed to the original ALT list.
+            call["projected_genotype"] = projected_genotype
+            call["projected_zygosity"] = _zygosity(projected_genotype)
+            call["projected_phase"] = (
                 "PARTIALLY_PHASED"
                 if "|" in projected_genotype and "/" in projected_genotype
                 else "PHASED" if "|" in projected_genotype
                 else "UNPHASED" if "/" in projected_genotype
                 else "UNSPECIFIED"
             )
-            call["status"] = (
+            call["projected_status"] = (
                 "AVAILABLE"
                 if projected_genotype and _zygosity(projected_genotype) not in {
                     "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
