@@ -415,6 +415,7 @@ export type TranslationKey =
   | "workspace.registerSpecimen"
   | "workspace.vcfIntake"
   | "workspace.selectSpecimen"
+  | "workspace.vcfSpecimenOptional"
   | "workspace.inputPersisted"
   | "workspace.registerInput"
   | "workspace.startAnalysis"
@@ -1618,6 +1619,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.registerSpecimen": "Register specimen",
     "workspace.vcfIntake": "VCF intake",
     "workspace.selectSpecimen": "Select a registered specimen…",
+    "workspace.vcfSpecimenOptional": "Specimen for this VCF (optional for sites-only files)",
     "workspace.inputPersisted": "Input is persisted before analysis begins.",
     "workspace.registerInput": "Register input",
     "workspace.startAnalysis": "Start analysis",
@@ -2570,6 +2572,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workspace.registerSpecimen": "تسجيل العينة",
     "workspace.vcfIntake": "إدخال VCF",
     "workspace.selectSpecimen": "اختر عينة مسجلة…",
+    "workspace.vcfSpecimenOptional": "العينة لهذا الملف (اختيارية لملفات المواقع فقط)",
     "workspace.inputPersisted": "يتم حفظ الإدخال قبل بدء التحليل.",
     "workspace.registerInput": "تسجيل الإدخال",
     "workspace.startAnalysis": "بدء التحليل",

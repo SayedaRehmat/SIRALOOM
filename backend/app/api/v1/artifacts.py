@@ -103,16 +103,24 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
         raise HTTPException(status_code=404, detail="Case not found")
 
     before_status = case.status
-    vcf_statuses = db.scalars(
-        select(Artifact.validation_status).where(
+    vcf_rows = db.execute(
+        select(Artifact.validation_status, Artifact.metadata_json).where(
             Artifact.case_id == case_id,
             Artifact.artifact_type == ArtifactType.VCF,
         )
     ).all()
     case.status = case_status_after_vcf_upload(
         case.status,
-        has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
-        has_vcf=bool(vcf_statuses),
+        has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
+        has_vcf=bool(vcf_rows),
+        has_site_only_vcf=any(
+            status == "VALID_SITE_ONLY"
+            or (
+                isinstance(metadata, dict)
+                and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
+            )
+            for status, metadata in vcf_rows
+        ),
     )
     return case, before_status
 
@@ -184,8 +192,6 @@ async def upload_artifact(
         specimen = db.get(Specimen, specimen_id)
         if not specimen or specimen.case_id != case_id:
             raise HTTPException(status_code=404, detail="Specimen not found in this case")
-    elif kind == "VCF":
-        raise HTTPException(status_code=400, detail="A specimen_id is required for a primary VCF artifact.")
 
     requested_build = normalize_build(genome_build)
     if kind == "VCF" and requested_build not in {"GRCh37", "GRCh38"}:
@@ -242,9 +248,17 @@ async def upload_artifact(
         if digest_size == 0:
             raise HTTPException(status_code=400, detail="The uploaded artifact is empty.")
 
+        artifact_validation_status = None
         if kind == "VCF":
             result = _validate_vcf_for_upload(staged)
-            if specimen is not None:
+            if result.sample_names and specimen is None:
+                result = ValidationResult(
+                    "INVALID", result.file_kind, result.record_count, result.sample_names,
+                    result.detected_build,
+                    [*result.errors, "A sample-bearing VCF must be linked to a specimen with an explicit VCF sample-name mapping."],
+                    result.warnings, result.fileformat,
+                )
+            elif specimen is not None:
                 result = validate_specimen_sample_identity(
                     result,
                     (specimen.metadata_json or {}).get("vcf_sample_name"),
@@ -261,16 +275,30 @@ async def upload_artifact(
                         f"VCF header indicates {result.detected_build}, but the selected genome build is {requested_build}.",
                     ],
                     result.warnings,
+                    result.fileformat,
                 )
             artifact_type = ArtifactType.VCF
             validation_metadata = {
                 "validation": {
-                    "status": result.status, "record_count": result.record_count,
+                    "status": result.status, "fileformat": result.fileformat,
+                    "record_count": result.record_count, "sample_count": len(result.sample_names),
                     "sample_names": result.sample_names, "detected_build": result.detected_build,
                     "errors": result.errors, "warnings": result.warnings,
                 },
                 "ingestion": {"file_kind": "VCF", "original_filename": filename, "capacity_preflight": capacity_preflight},
             }
+            if result.status == "VALID" and not result.sample_names:
+                # Valid VCF syntax is not equivalent to a patient-specific
+                # callset. Keep site-only inputs accessible without marking the
+                # case ready for sample-level interpretation.
+                validation_metadata["workflow_eligibility"] = "SITE_LEVEL_ONLY"
+                artifact_validation_status = "VALID_SITE_ONLY"
+            elif result.status == "VALID":
+                validation_metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
+                artifact_validation_status = "VALID"
+            else:
+                validation_metadata["workflow_eligibility"] = "INELIGIBLE"
+                artifact_validation_status = result.status
             build_for_artifact = requested_build
         else:
             result = validate_index(staged, primary.filename)
@@ -286,7 +314,7 @@ async def upload_artifact(
             db=db, case_id=case_id, analysis_id=None, source_path=staged, filename=filename,
             artifact_type=artifact_type, media_type=file.content_type, genome_build=build_for_artifact,
             metadata=validation_metadata, specimen_id=specimen_id, paired_artifact_id=paired_artifact_id,
-            validation_status=result.status,
+            validation_status=artifact_validation_status or result.status,
         )
 
         try:
@@ -305,16 +333,24 @@ async def upload_artifact(
                 case, before_status = _refresh_case_vcf_intake_status(db, case_id)
             elif primary:
                 # An optional index cannot change the primary VCF's intake state.
-                vcf_statuses = db.scalars(
-                    select(Artifact.validation_status).where(
+                vcf_rows = db.execute(
+                    select(Artifact.validation_status, Artifact.metadata_json).where(
                         Artifact.case_id == case_id,
                         Artifact.artifact_type == ArtifactType.VCF,
                     )
                 ).all()
                 case.status = case_status_after_vcf_upload(
                     case.status,
-                    has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
-                    has_vcf=bool(vcf_statuses),
+                    has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
+                    has_vcf=bool(vcf_rows),
+                    has_site_only_vcf=any(
+                        status == "VALID_SITE_ONLY"
+                        or (
+                            isinstance(metadata, dict)
+                            and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
+                        )
+                        for status, metadata in vcf_rows
+                    ),
                 )
 
             audit = AuditService(db)
@@ -340,6 +376,7 @@ async def upload_artifact(
             "specimen_id": str(artifact.specimen_id) if artifact.specimen_id else None,
             "paired_artifact_id": str(artifact.paired_artifact_id) if artifact.paired_artifact_id else None,
             "validation": validation_metadata["validation"],
+            "workflow_eligibility": validation_metadata.get("workflow_eligibility"),
             "capacity_preflight": capacity_preflight,
         }
 

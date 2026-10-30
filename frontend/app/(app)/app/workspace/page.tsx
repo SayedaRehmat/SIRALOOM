@@ -660,26 +660,25 @@ export default function Home() {
       setMessage(t("workspace.caseAndVcfFirst"));
       return;
     }
-    if (!selectedSpecimenId) {
-      setMessage(t("workspace.specimenRequired"));
-      return;
-    }
     setBusy(true);
     setMessage("");
     try {
       const form = new FormData();
       form.append("file", file, file.name);
-      form.append("specimen_id", selectedSpecimenId);
+      if (selectedSpecimenId) form.append("specimen_id", selectedSpecimenId);
       form.append("genome_build", genomeBuild);
       const result = await apiFetch(`/cases/${caseId}/artifacts`, { method: "POST", body: form });
       const validatedId = validatedArtifactId(result);
-      setArtifactId(validatedId);
+      const siteLevelOnly = result?.workflow_eligibility === "SITE_LEVEL_ONLY";
+      setArtifactId(siteLevelOnly ? "" : validatedId);
       await refreshCaseArtifacts();
-      if (!validatedId) {
+      const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
+      if (siteLevelOnly) {
+        setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
+      } else if (!validatedId) {
         const validationErrors = Array.isArray(result.validation?.errors) ? result.validation.errors.join(" ") : "";
         setMessage(`${t("workspace.inputValidationFailedPrefix")}${validationErrors}`);
       } else {
-        const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
       }
     } catch (error) {
@@ -1112,7 +1111,7 @@ export default function Home() {
 
         <section className="panel input-panel">
           <div className="panel-head"><div><div className="section-kicker">{t("workspace.inputSection")}</div><h3>{t("workspace.vcfIntake")}</h3></div><span className="badge neutral">{t("workspace.phaseOne")}</span></div>
-          <label>Specimen for this VCF
+          <label>{t("workspace.vcfSpecimenOptional")}
             <select value={selectedSpecimenId} onChange={(e) => setSelectedSpecimenId(e.target.value)}>
               <option value="">{t("workspace.selectSpecimen")}</option>
               {caseWorkspace?.specimens?.map((specimen, index) => (
@@ -1152,7 +1151,7 @@ export default function Home() {
             <label className="secondary file-button">{t("workspace.choose")}<input type="file" accept=".vcf,.vcf.gz,.vcf.bgz" onChange={handleFile} hidden /></label>
           </div>
           <div className="actions-row">
-            <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file || !selectedSpecimenId}>{t("workspace.registerInput")}</button>
+            <button className="secondary" onClick={uploadFile} disabled={busy || !caseId || !file}>{t("workspace.registerInput")}</button>
             <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>{t("workspace.startAnalysis")}</button>
           </div>
           {artifactId && <div className="keyline"><span>{t("workspace.artifactId")}</span><code>{artifactId}</code></div>}

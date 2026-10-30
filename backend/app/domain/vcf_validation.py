@@ -5,7 +5,7 @@ import re
 from math import comb
 from pathlib import Path
 
-SUPPORTED_VCF_VERSIONS = {"VCFv4.2", "VCFv4.3"}
+SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 SYMBOLIC_RE = re.compile(r"^<[^>]+>$")
@@ -101,7 +101,7 @@ def _info_values(value: str) -> dict[str, str | None]:
     return result
 
 
-def _parse_field_definition(line: str, kind: str, line_no: int) -> tuple[str, dict[str, str]]:
+def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None) -> tuple[str, dict[str, str]]:
     """Parse INFO/FORMAT metadata without splitting commas inside quoted descriptions."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
@@ -178,7 +178,10 @@ def _parse_field_definition(line: str, kind: str, line_no: int) -> tuple[str, di
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     number = parsed["Number"]
-    if number not in {"A", "R", "G", "."} and not re.fullmatch(r"[0-9]+", number):
+    allowed_cardinality = {"A", "R", "G", "."}
+    if fileformat == "VCFv4.5" and kind == "FORMAT":
+        allowed_cardinality.update({"LA", "LR", "LG", "P"})
+    if number not in allowed_cardinality and not re.fullmatch(r"[0-9]+", number):
         raise StrictVCFValidationError(
             f"Invalid {kind} field Number at line {line_no}: {number!r}",
             code="VCF_HEADER_DEFINITION_INVALID",
@@ -247,7 +250,12 @@ def _structured_header_id(line: str, kind: str, line_no: int) -> str:
     return identifiers[0]
 
 
-def _expected_cardinality(number: str, alternate_count: int, ploidy: int | None) -> int | None:
+def _expected_cardinality(
+    number: str,
+    alternate_count: int,
+    ploidy: int | None,
+    local_allele_count: int | None = None,
+) -> int | None:
     if number == ".":
         return None
     if number == "A":
@@ -260,6 +268,16 @@ def _expected_cardinality(number: str, alternate_count: int, ploidy: int | None)
         # Number=G contains one value for each unordered genotype with
         # replacement from REF plus all ALT alleles.
         return comb(alternate_count + ploidy, ploidy)
+    if number == "P":
+        return ploidy
+    if number == "LA":
+        return max(0, local_allele_count - 1) if local_allele_count is not None else None
+    if number == "LR":
+        return local_allele_count if local_allele_count is not None else None
+    if number == "LG":
+        if ploidy is None or local_allele_count is None:
+            return None
+        return comb(local_allele_count + ploidy - 1, ploidy)
     return int(number)
 
 
@@ -272,6 +290,7 @@ def _validate_declared_value(
     alternate_count: int,
     line_no: int,
     ploidy: int | None = None,
+    local_allele_count: int | None = None,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -289,7 +308,7 @@ def _validate_declared_value(
         )
     if value == ".":
         return
-    expected = _expected_cardinality(number, alternate_count, ploidy)
+    expected = _expected_cardinality(number, alternate_count, ploidy, local_allele_count)
     if expected is None:
         return
     observed = value.split(",")
@@ -371,7 +390,27 @@ def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int]
     return (start, end) if end >= start else None
 
 
-def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str] | None) -> tuple[str, int, list[str]]:
+def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str]:
+    """Parse GT tokens, including VCFv4.4+ leading phasing separators."""
+    value = gt
+    if fileformat in {"VCFv4.4", "VCFv4.5"} and value[:1] in {"/", "|"}:
+        value = value[1:]
+    tokens = re.split(r"[/|]", value)
+    if not value or any(token == "" for token in tokens):
+        raise StrictVCFValidationError(
+            f"Invalid GT separator/allele structure at line {line_no}: {gt!r}",
+            code="VCF_GENOTYPE_INVALID",
+        )
+    return tokens
+
+
+def _validate_record(
+    fields: list[str],
+    line_no: int,
+    reference_contigs: set[str] | None,
+    fileformat: str | None = None,
+    format_definitions: dict[str, dict[str, str]] | None = None,
+) -> tuple[str, int, list[str]]:
     if len(fields) < 8:
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
     chrom, pos_text, identifier, ref, alt, qual, filt, info = fields[:8]
@@ -474,6 +513,15 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
                 f"GT must be the first FORMAT key when present at line {line_no}",
                 code="VCF_FORMAT_INVALID",
             )
+        if fileformat == "VCFv4.5" and (
+            any((format_definitions or {}).get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
+            or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
+        ):
+            if "LAA" not in keys or keys.index("LAA") != (1 if "GT" in keys else 0):
+                raise StrictVCFValidationError(
+                    f"VCFv4.5 local-allele FORMAT fields require LAA immediately after GT (or first when GT is absent) at line {line_no}",
+                    code="VCF_LOCAL_ALLELE_HEADER_INVALID",
+                )
         for sample_index, sample in enumerate(fields[9:], start=1):
             values = sample.split(":")
             if not sample or any(value == "" for value in values) or len(values) > len(keys):
@@ -486,7 +534,7 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
             if "GT" in keys:
                 gt = values[keys.index("GT")]
                 if gt != ".":
-                    for allele_index in re.split(r"[|/]", gt):
+                    for allele_index in _gt_allele_tokens(gt, fileformat, line_no):
                         if allele_index == ".":
                             continue
                         try:
@@ -563,7 +611,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_ORDER_INVALID",
                     )
                 header_key, separator, header_value = line[2:].partition("=")
-                if separator and header_value.startswith("<"):
+                if separator and header_value.startswith("<") and header_key in {
+                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"
+                }:
                     identifier = _structured_header_id(line, header_key, line_no)
                     ids_for_type = structured_header_ids.setdefault(header_key, set())
                     if identifier in ids_for_type:
@@ -577,7 +627,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
                     fileformat = line.split("=", 1)[1]
                 if line.startswith("##INFO="):
-                    identifier, definition = _parse_field_definition(line, "INFO", line_no)
+                    identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat)
                     if identifier in info_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate INFO definition for {identifier!r} at line {line_no}",
@@ -585,7 +635,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         )
                     info_definitions[identifier] = definition
                 elif line.startswith("##FORMAT="):
-                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no)
+                    identifier, definition = _parse_field_definition(line, "FORMAT", line_no, fileformat)
                     if identifier in format_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate FORMAT definition for {identifier!r} at line {line_no}",
@@ -611,6 +661,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     )
                 if len(columns) >= 9 and columns[8] != "FORMAT":
                     raise StrictVCFValidationError("Column 9 must be FORMAT when sample columns are present", code="VCF_HEADER_INVALID")
+                if len(columns) == 9:
+                    raise StrictVCFValidationError(
+                        "FORMAT must be followed by at least one named sample; use exactly the eight fixed columns for a sites-only VCF",
+                        code="VCF_HEADER_INVALID",
+                    )
                 if len(columns) > 9 and len(columns[9:]) != len(set(columns[9:])):
                     raise StrictVCFValidationError("Duplicate sample names are not allowed", code="VCF_SAMPLE_INVALID")
                 chrom_header = columns
@@ -633,7 +688,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF record has {len(fields)} columns but the #CHROM header declares {expected} at line {line_no}",
                     code="VCF_RECORD_INVALID",
                 )
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
             if _chrom != current_chrom:
                 if _chrom in closed_chroms:
                     raise StrictVCFValidationError(
@@ -754,7 +809,26 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 elif gt_index >= len(sample_values) or sample_values[gt_index] == ".":
                     genotype_ploidy = None
                 else:
-                    genotype_ploidy = len(re.split(r"[/|]", sample_values[gt_index]))
+                    genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
+                local_allele_count: int | None = None
+                if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
+                    raw_laa = sample_values[format_keys.index("LAA")]
+                    if raw_laa == ".":
+                        local_allele_count = 1
+                    else:
+                        try:
+                            local_alt_indexes = [int(item) for item in raw_laa.split(",")]
+                        except ValueError as exc:
+                            raise StrictVCFValidationError(
+                                f"FORMAT/LAA contains a non-integer ALT index at line {line_no}",
+                                code="VCF_LOCAL_ALLELE_INVALID",
+                            ) from exc
+                        if any(index < 1 or index > len(alts) for index in local_alt_indexes) or len(local_alt_indexes) != len(set(local_alt_indexes)):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/LAA must contain distinct 1-based ALT indices at line {line_no}",
+                                code="VCF_LOCAL_ALLELE_INVALID",
+                            )
+                        local_allele_count = len(local_alt_indexes) + 1
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
                     if definition is not None:
@@ -772,6 +846,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             alternate_count=len(alts),
                             line_no=line_no,
                             ploidy=genotype_ploidy,
+                            local_allele_count=local_allele_count,
                         )
 
             def carriers(alt_index: int) -> set[int] | None:
@@ -786,7 +861,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     if gt == ".":
                         continue
                     try:
-                        called = {int(item) for item in re.split(r"[/|]", gt) if item != "."}
+                        called = {int(item) for item in _gt_allele_tokens(gt, fileformat, line_no) if item != "."}
                     except ValueError:
                         continue
                     if alt_index in called:
@@ -823,7 +898,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
 
     if fileformat not in SUPPORTED_VCF_VERSIONS:
         raise StrictVCFValidationError(
-            f"Unsupported or missing ##fileformat header: {fileformat!r}; supported versions are VCFv4.2 and VCFv4.3",
+            f"Unsupported or missing ##fileformat header: {fileformat!r}; supported standardized VCF versions are VCFv4.0 through VCFv4.5",
             code="VCF_FILEFORMAT_UNSUPPORTED",
         )
     if not found_header or chrom_header is None:

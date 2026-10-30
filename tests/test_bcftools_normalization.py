@@ -43,7 +43,7 @@ def write_vcf(path: Path, records: str) -> None:
 def records(path: Path):
     return [
         (r.chrom, r.pos, r.ref, r.alt)
-        for r in parse_vcf(str(path))
+        for r in parse_vcf(str(path), allow_unselected_multisample=True)
     ]
 
 
@@ -145,7 +145,7 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
         "1|2|A|C,G|1",
         "1|2|A|C,G|2",
     ]
-    mapped = list(iter_normalized_vcf(output, "GRCh38"))
+    mapped = list(iter_normalized_vcf(output, "GRCh38", sample_name="P"))
     assert [
         (row.original_chromosome, row.original_position, row.original_reference,
          row.original_alternate, row.original_alt_index)
@@ -180,7 +180,7 @@ def test_golden_ref_mismatch_fails_closed(tmp_path: Path):
     output = tmp_path / "normalized.vcf.gz"
     write_vcf(source, "1\t2\t.\tC\tG\t.\tPASS\t.\n")
     with pytest.raises(VCFToolError, match="reference-aware normalization failed"):
-        normalize_vcf_with_bcftools(source, output, reference_fasta=reference, expected_bcftools_version="1.19")
+        normalize_vcf_with_bcftools(source, output, reference_fasta=reference, expected_bcftools_version="1.24")
 
 
 def test_golden_unknown_contig_fails_bcftools(tmp_path: Path):
@@ -233,10 +233,10 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     output = tmp_path / "called-variants.normalized.vcf.gz"
     stats = normalize_vcf_with_bcftools(
         routed["sequence_path"], output, reference_fasta=reference,
-        expected_bcftools_version="1.19",
+        expected_bcftools_version="1.24",
     )
 
-    assert stats["tool_version"].split()[1] == "1.19"
+    assert stats["tool_version"].split()[1] == "1.24"
     assert stats["gvcf_wildcard_command"] == "bcftools view -A"
     assert records(output) == [("1", 2, "A", "G")]
     with gzip.open(output, "rt", encoding="utf-8") as handle:

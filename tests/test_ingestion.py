@@ -369,15 +369,15 @@ def test_vcf_sample_identity_rejects_blank_or_malformed_specimen_mapping(mapping
     assert "explicit VCF sample name mapping" in checked.errors[0]
 
 
-def test_vcf_sample_identity_validation_requires_exact_single_sample_match():
+def test_vcf_sample_identity_validation_accepts_explicit_sample_within_multisample_callset():
     multi_sample = ValidationResult(
         "VALID", "VCF", 1, ["EXPECTED_SAMPLE", "OTHER_SAMPLE"], "GRCh38", [], []
     )
 
     checked = validate_specimen_sample_identity(multi_sample, "EXPECTED_SAMPLE")
 
-    assert checked.status == "INVALID"
-    assert "EXPECTED_SAMPLE, OTHER_SAMPLE" in checked.errors[0]
+    assert checked.status == "VALID"
+    assert checked.sample_names == ["EXPECTED_SAMPLE", "OTHER_SAMPLE"]
 
 
 def test_vcf_validation_warns_when_info_number_g_cannot_be_checked(tmp_path: Path):
@@ -554,6 +554,17 @@ def test_index_filename_and_magic_validation(tmp_path: Path):
     assert validate_index(wrong, primary).status == "INVALID"
 
 
+def test_index_validation_rejects_index_for_uncompressed_vcf(tmp_path: Path):
+    index = tmp_path / "sample.vcf.tbi"
+    with gzip.open(index, "wb") as handle:
+        handle.write(b"TBI\\x01dummy")
+
+    result = validate_index(index, "sample.vcf")
+
+    assert result.status == "INVALID"
+    assert "BGZF-compressed" in result.errors[0]
+
+
 def test_csi_magic_validation(tmp_path: Path):
     csi = tmp_path / "sample.vcf.bgz.csi"
     csi.write_bytes(b"CSI\x01dummy")
@@ -568,3 +579,85 @@ def test_malformed_tbi_is_rejected(tmp_path: Path):
     tbi = tmp_path / "sample.vcf.gz.tbi"
     tbi.write_bytes(b"\x1f\x8b\x08\x04not-a-valid-gzip")
     assert validate_index(tbi, "sample.vcf.gz").status == "INVALID"
+
+
+
+def test_multisample_vcf_is_validated_and_explicit_sample_mapping_is_accepted(tmp_path: Path):
+    path = tmp_path / "family.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tMOTHER\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0/1:30\t0/0:25\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.sample_names == ["PROBAND", "MOTHER"]
+    assert result.fileformat == "VCFv4.3"
+    assert validate_specimen_sample_identity(result, "PROBAND").status == "VALID"
+    mismatch = validate_specimen_sample_identity(result, "FATHER")
+    assert mismatch.status == "INVALID"
+    assert "sample identity mismatch" in mismatch.errors[0]
+
+
+def test_sites_only_vcf_is_structurally_valid_but_not_sample_specific(tmp_path: Path):
+    path = tmp_path / "sites-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.sample_names == []
+    checked = validate_specimen_sample_identity(result, None)
+    assert checked.status == "VALID"
+    assert any("Sites-only VCF" in warning for warning in checked.warnings)
+
+
+def test_multisample_vcf_parser_requires_explicit_sample_selection(tmp_path: Path):
+    from backend.app.domain.vcf import VCFValidationError, parse_vcf
+
+    path = tmp_path / "family.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tMOTHER\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0/1:30\t0/0:25\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VCFValidationError, match="explicit sample_name"):
+        list(parse_vcf(str(path)))
+
+    records = list(parse_vcf(str(path), sample_name="PROBAND"))
+    assert len(records) == 1
+    assert list(records[0].sample_calls) == ["PROBAND"]
+    assert records[0].sample_calls["PROBAND"]["genotype"] == "0/1"
+
+
+
+def test_vcf45_local_allele_callset_passes_full_intake_validation(tmp_path: Path):
+    path = tmp_path / "v45-local-alleles.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##reference=GRCh38\n"
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr1\t100\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL\t0/2:2:20,10:0,50,100\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.fileformat == "VCFv4.5"
+    assert result.sample_names == ["SAMPLE1"]

@@ -29,6 +29,7 @@ class ValidationResult:
     detected_build: str | None
     errors: list[str]
     warnings: list[str]
+    fileformat: str | None = None
 
 
 class VCFValidationUnavailable(RuntimeError):
@@ -46,10 +47,11 @@ def classify_filename(filename: str) -> str:
     return "UNSUPPORTED"
 
 
-def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
+def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
     headers: list[str] = []
     declared_builds: set[str] = set()
     has_fileformat = False
+    fileformat: str | None = None
 
     def record_assembly(value: str) -> None:
         for marker, build in _BUILD_MARKERS:
@@ -65,6 +67,7 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
                 line = line.rstrip("\n")
                 if line.startswith("##fileformat="):
                     has_fileformat = True
+                    fileformat = line.split("=", 1)[1].strip()
                 elif line.startswith("##reference="):
                     value = line.split("=", 1)[1].strip()
                     if not value:
@@ -88,7 +91,7 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
             + ", ".join(sorted(declared_builds))
         )
     detected_build = next(iter(declared_builds), None)
-    return headers, detected_build, has_fileformat
+    return headers, detected_build, has_fileformat, fileformat
 
 
 def _bcftools_validate(path: Path) -> str | None:
@@ -125,8 +128,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
+    fileformat: str | None = None
     try:
-        headers, detected_build, has_fileformat = _header_info(p)
+        headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
             raise VCFValidationError(
                 "VCF is missing the required ##fileformat header. If this file looks "
@@ -189,7 +193,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                         token.startswith("<") or token.startswith("*") or "[" in token or "]" in token
                         for token in alt.split(",")
                     )
-        for _ in parse_vcf(str(p)):
+        for _ in parse_vcf(str(p), allow_unselected_multisample=True):
             records += 1
         if records == 0:
             if reference_only_records:
@@ -240,9 +244,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 + ", ".join(unchecked_format_number_g)
                 + "."
             )
-        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings)
+        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings, strict_profile["fileformat"])
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
-        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [])
+        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat)
 
 
 def validate_index(path: str | Path, primary_filename: str) -> ValidationResult:
@@ -251,6 +255,16 @@ def validate_index(path: str | Path, primary_filename: str) -> ValidationResult:
     if kind not in {"TBI", "CSI"}:
         return ValidationResult("INVALID", kind, 0, [], None, ["Unsupported index format."], [])
     primary = Path(primary_filename).name
+    if not primary.lower().endswith((".vcf.gz", ".vcf.bgz")):
+        return ValidationResult(
+            "INVALID",
+            kind,
+            0,
+            [],
+            None,
+            ["VCF indexes require a BGZF-compressed .vcf.gz or .vcf.bgz primary artifact."],
+            [],
+        )
     expected_suffix = ".tbi" if kind == "TBI" else ".csi"
     expected = primary + expected_suffix
     if p.name != expected:
@@ -292,6 +306,15 @@ def validate_specimen_sample_identity(
     expected = expected_sample_name.strip() if isinstance(expected_sample_name, str) else ""
     if result.status != "VALID":
         return result
+    if not result.sample_names:
+        # A sites-only VCF is structurally valid but has no sample genotype.
+        # Keep it as a site-level artifact; do not demand a fictitious sample.
+        return ValidationResult(
+            result.status, result.file_kind, result.record_count, result.sample_names,
+            result.detected_build, result.errors,
+            [*result.warnings, "Sites-only VCF: accepted as a site-level artifact; not eligible for sample-specific interpretation or clinical reporting."],
+            result.fileformat,
+        )
     if not expected:
         error = "The specimen must have an explicit VCF sample name mapping before intake can pass."
         return ValidationResult(
@@ -302,8 +325,9 @@ def validate_specimen_sample_identity(
             result.detected_build,
             [*result.errors, error],
             result.warnings,
+            result.fileformat,
         )
-    if result.sample_names == [expected]:
+    if expected in result.sample_names:
         return result
     observed = ", ".join(result.sample_names) if result.sample_names else "no named samples"
     error = (
@@ -318,4 +342,5 @@ def validate_specimen_sample_identity(
         result.detected_build,
         [*result.errors, error],
         result.warnings,
+        result.fileformat,
     )

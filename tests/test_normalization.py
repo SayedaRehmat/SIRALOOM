@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, normalize_vcf_file
+from backend.app.domain.normalization import NormalizationError, UnsupportedVariantError, iter_normalized_vcf, normalize_vcf_file
 from backend.app.domain.reference import FastaReference
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid
 
@@ -134,3 +134,22 @@ def test_gzip_output_is_valid_and_published_with_final_gzip_suffix(tmp_path: Pat
     assert "#CHROM" in normalized_text
     assert "1\t2\t.\tA\tC" in normalized_text
     assert not list(tmp_path.glob(".normalized.*.tmp.gz"))
+
+
+
+def test_normalized_vcf_iteration_uses_only_the_explicitly_selected_sample(tmp_path: Path):
+    normalized_vcf = tmp_path / "family.normalized.vcf"
+    normalized_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tMOTHER\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0/1:30\t0/0:25\n",
+        encoding="utf-8",
+    )
+
+    proband_variants = list(iter_normalized_vcf(normalized_vcf, "GRCh38", sample_name="PROBAND"))
+    mother_variants = list(iter_normalized_vcf(normalized_vcf, "GRCh38", sample_name="MOTHER"))
+
+    assert len(proband_variants) == 1
+    assert proband_variants[0].sample_call["sample_name"] == "PROBAND"
+    assert proband_variants[0].sample_call["genotype"] == "0/1"
+    assert mother_variants == []

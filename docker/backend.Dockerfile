@@ -39,7 +39,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -e . \
-    && test "$(bcftools --version | head -n1)" = "bcftools 1.19"
+    && test "$(bcftools --version | head -n1)" = "bcftools 1.24"
 
 RUN chmod +x scripts/start_api_with_worker.sh
 

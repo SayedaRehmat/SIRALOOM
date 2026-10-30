@@ -292,6 +292,7 @@ def iter_normalized_vcf(
     path: str | Path,
     genome_build: str,
     *,
+    sample_name: str | None = None,
     exclusion_stats: dict[str, int] | None = None,
 ):
     """Yield canonical variants one record at a time from a normalized VCF.
@@ -300,7 +301,7 @@ def iter_normalized_vcf(
     streaming boundary used by the M13 workflow for WES/WGS-scale inputs.
     """
     from backend.app.domain.vcf import parse_vcf
-    for record in parse_vcf(str(path)):
+    for record in parse_vcf(str(path), sample_name=sample_name):
         if exclusion_stats is not None:
             exclusion_stats["normalized_allele_records"] = (
                 exclusion_stats.get("normalized_allele_records", 0) + 1

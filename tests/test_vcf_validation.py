@@ -316,8 +316,10 @@ def test_strict_validation_rejects_missing_fileformat(tmp_path: Path):
         validate_vcf_strict(path)
 
 
-@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3"])
-def test_strict_validation_accepts_only_declared_supported_vcf_versions(
+@pytest.mark.parametrize(
+    "version", ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+def test_strict_validation_accepts_standardized_vcf_4x_versions(
     tmp_path: Path, version: str
 ):
     path = tmp_path / f"{version}.vcf"
@@ -326,20 +328,18 @@ def test_strict_validation_accepts_only_declared_supported_vcf_versions(
     profile = validate_vcf_strict(path, reference_contigs={"1"})
 
     assert profile["records"] == 1
+    assert profile["fileformat"] == version
 
 
-@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.4", "VCFv4.5"])
-def test_strict_validation_rejects_unqualified_vcf_versions(
-    tmp_path: Path, version: str
-):
-    path = tmp_path / f"{version}.vcf"
-    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
+def test_strict_validation_rejects_nonexistent_future_vcf_major_version(tmp_path: Path):
+    path = tmp_path / "future-v5.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version="VCFv5.0")
 
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_FILEFORMAT_UNSUPPORTED"
-    assert "supported versions are VCFv4.2 and VCFv4.3" in str(exc.value)
+    assert "VCFv4.0 through VCFv4.5" in str(exc.value)
 
 
 @pytest.mark.parametrize(
@@ -878,3 +878,130 @@ def test_reference_validation_rejects_vcf_contig_length_disagreement(tmp_path):
         validate_vcf_reference_alleles(source, fasta)
 
     assert exc.value.code == "VCF_CONTIG_LENGTH_MISMATCH"
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, version: str):
+    path = tmp_path / f"{version}.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["fileformat"] == version
+    assert profile["records"] == 1
+
+
+def test_vcf45_local_allele_cardinality_is_validated(tmp_path: Path):
+    path = tmp_path / "local-alleles-v45.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
+        '##FORMAT=<ID=PP,Number=P,Type=Integer,Description="Per-ploidy values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:PP\t0/2:2:20,10:0,50,100:12,13\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["fileformat"] == "VCFv4.5"
+    assert profile["records"] == 1
+
+
+def test_vcf45_local_allele_fields_reject_out_of_range_laa_index(tmp_path: Path):
+    path = tmp_path / "bad-local-alleles-v45.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:LAD\t0/1:3:20,10\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+
+
+def test_vcf44_rejects_vcf45_only_local_allele_cardinality(tmp_path: Path):
+    path = tmp_path / "local-alleles-v44.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tLAD\t20,10\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("gt", ["|0/1", "/0/1", "|0|1"])
+def test_vcf44_accepts_leading_gt_phase_separator_and_correct_ploidy(tmp_path: Path, gt: str):
+    path = tmp_path / "prefixed-gt-v44.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\tA\tG\t.\tPASS\t.\tGT\t{gt}\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
+def test_vcf43_rejects_vcf44_leading_gt_phase_separator(tmp_path: Path):
+    path = tmp_path / "prefixed-gt-v43.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT\t|0/1\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GENOTYPE_INVALID"
+
+
+
+def test_strict_validation_accepts_pedigree_metadata_without_id(tmp_path: Path):
+    path = tmp_path / "pedigree-header.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
+
+def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path: Path):
+    path = tmp_path / "format-without-sample.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_INVALID"
