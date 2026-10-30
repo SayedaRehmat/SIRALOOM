@@ -647,6 +647,42 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
     }
 
 
+def _sha256_file(path: Path) -> str:
+    """Hash a reference artifact without loading it into memory."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _reference_artifact_identity(reference_fasta: Path) -> dict:
+    """Attest the exact FASTA and index files used for normalization."""
+    artifacts = {
+        "fasta": reference_fasta,
+        "fai": Path(str(reference_fasta) + ".fai"),
+    }
+    if reference_fasta.name.lower().endswith((".gz", ".bgz")):
+        artifacts["gzi"] = Path(str(reference_fasta) + ".gzi")
+
+    identity_artifacts: dict[str, dict] = {}
+    for role, artifact_path in artifacts.items():
+        if not artifact_path.is_file() or artifact_path.stat().st_size <= 0:
+            sidecar = "FASTA index" if role == "fai" else "BGZF FASTA index" if role == "gzi" else "reference FASTA"
+            raise VCFToolError(
+                f"Required {sidecar} artifact is missing or empty: {artifact_path}"
+            )
+        identity_artifacts[role] = {
+            "path": str(artifact_path.resolve()),
+            "size_bytes": artifact_path.stat().st_size,
+            "sha256": _sha256_file(artifact_path),
+        }
+    return {
+        "method": "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS",
+        "artifacts": identity_artifacts,
+    }
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
