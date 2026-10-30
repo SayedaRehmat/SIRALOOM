@@ -255,6 +255,16 @@ def validate_index(path: str | Path, primary_filename: str) -> ValidationResult:
     if kind not in {"TBI", "CSI"}:
         return ValidationResult("INVALID", kind, 0, [], None, ["Unsupported index format."], [])
     primary = Path(primary_filename).name
+    if not primary.lower().endswith((".vcf.gz", ".vcf.bgz")):
+        return ValidationResult(
+            "INVALID",
+            kind,
+            0,
+            [],
+            None,
+            ["VCF indexes require a BGZF-compressed .vcf.gz or .vcf.bgz primary artifact."],
+            [],
+        )
     expected_suffix = ".tbi" if kind == "TBI" else ".csi"
     expected = primary + expected_suffix
     if p.name != expected:
