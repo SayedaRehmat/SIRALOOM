@@ -61,7 +61,13 @@ def test_selection_and_evaluation_use_selected_clingen_specification():
                 "PP3": {
                     "predictor": "REVEL",
                     "minimum_score": 0.9,
-                    "strength": "SUPPORTING"
+                    "strength": "SUPPORTING",
+                    "calibration": {
+                        "calibration_id": "TEST-REVEL-CAL-1",
+                        "model_version": "fixture-1",
+                        "validation_dataset": "synthetic-unit-test-fixture",
+                        "calibration_reference": "test-fixture"
+                    }
                 }
             }, raw_payload={}, retrieved_at=datetime.now(UTC),
             validated_for_automation=True, validation_status="APPROVED_FOR_AUTOMATION"
