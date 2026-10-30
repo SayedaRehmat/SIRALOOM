@@ -554,6 +554,17 @@ def test_index_filename_and_magic_validation(tmp_path: Path):
     assert validate_index(wrong, primary).status == "INVALID"
 
 
+def test_index_validation_rejects_index_for_uncompressed_vcf(tmp_path: Path):
+    index = tmp_path / "sample.vcf.tbi"
+    with gzip.open(index, "wb") as handle:
+        handle.write(b"TBI\\x01dummy")
+
+    result = validate_index(index, "sample.vcf")
+
+    assert result.status == "INVALID"
+    assert "BGZF-compressed" in result.errors[0]
+
+
 def test_csi_magic_validation(tmp_path: Path):
     csi = tmp_path / "sample.vcf.bgz.csi"
     csi.write_bytes(b"CSI\x01dummy")
