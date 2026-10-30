@@ -316,8 +316,10 @@ def test_strict_validation_rejects_missing_fileformat(tmp_path: Path):
         validate_vcf_strict(path)
 
 
-@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3"])
-def test_strict_validation_accepts_only_declared_supported_vcf_versions(
+@pytest.mark.parametrize(
+    "version", ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+def test_strict_validation_accepts_standardized_vcf_4x_versions(
     tmp_path: Path, version: str
 ):
     path = tmp_path / f"{version}.vcf"
@@ -326,20 +328,18 @@ def test_strict_validation_accepts_only_declared_supported_vcf_versions(
     profile = validate_vcf_strict(path, reference_contigs={"1"})
 
     assert profile["records"] == 1
+    assert profile["fileformat"] == version
 
 
-@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.4", "VCFv4.5"])
-def test_strict_validation_rejects_unqualified_vcf_versions(
-    tmp_path: Path, version: str
-):
-    path = tmp_path / f"{version}.vcf"
-    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
+def test_strict_validation_rejects_nonexistent_future_vcf_major_version(tmp_path: Path):
+    path = tmp_path / "future-v5.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version="VCFv5.0")
 
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_FILEFORMAT_UNSUPPORTED"
-    assert "supported versions are VCFv4.2 and VCFv4.3" in str(exc.value)
+    assert "VCFv4.0 through VCFv4.5" in str(exc.value)
 
 
 @pytest.mark.parametrize(
