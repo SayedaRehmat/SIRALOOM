@@ -49,7 +49,7 @@ def test_multiallelic_partial_and_missing_calls_remain_missing_after_projection(
         encoding="utf-8",
     )
 
-    records = list(parse_vcf(str(path)))
+    records = list(parse_vcf(str(path), allow_unselected_multisample=True))
 
     assert records[0].sample_calls["PARTIAL"]["genotype"] == "1/."
     assert records[1].sample_calls["PARTIAL"]["genotype"] == "0/."
