@@ -3,4 +3,4 @@ channels:
   - bioconda
 channel_priority: strict
 dependencies:
-  - bcftools=1.19
+  - bcftools=1.24
