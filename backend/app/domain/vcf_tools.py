@@ -496,16 +496,39 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
             raise VCFToolError("SIRALOOM_SOURCE payload has an unsupported schema.")
         return payload
 
+    source_header = None
+    with open_text(source_path) as handle:
+        for raw in handle:
+            line = raw.rstrip("\\r\\n")
+            if line.startswith("##INFO=<ID=SIRALOOM_SOURCE,"):
+                source_header = line
+                break
+            if line.startswith("#CHROM\\t"):
+                break
+    if source_header is None:
+        with open_text(source_path) as handle:
+            for raw in handle:
+                line = raw.rstrip("\\r\\n")
+                if not line.startswith("#") and "SIRALOOM_SOURCE=" in line:
+                    raise VCFToolError(
+                        "SIRALOOM_SOURCE record tag is present without its header definition."
+                    )
+        return {
+            "status": "NOT_PROVIDED",
+            "method": "SIRALOOM_SOURCE_TAG_ABSENT",
+            "source_records": None,
+            "expected_child_records": None,
+            "normalized_child_records": None,
+            "balanced": None,
+        }
+    if source_header != SOURCE_RECORD_TAG_HEADER:
+        raise VCFToolError("SIRALOOM_SOURCE header does not match the SIRALOOM contract.")
+
     expected: dict[int, dict] = {}
-    saw_definition = False
-    saw_source_tag = False
     with open_text(source_path) as handle:
         for raw in handle:
             line = raw.rstrip("\r\n")
             if line.startswith("##INFO=<ID=SIRALOOM_SOURCE,"):
-                if line != SOURCE_RECORD_TAG_HEADER:
-                    raise VCFToolError("SIRALOOM_SOURCE header does not match the SIRALOOM contract.")
-                saw_definition = True
                 continue
             if line.startswith("#"):
                 continue
@@ -514,12 +537,7 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                 raise VCFToolError("Source-mapped VCF contains a malformed record.")
             value = info_tag(fields, SOURCE_RECORD_TAG)
             if value is None:
-                if saw_definition:
-                    raise VCFToolError("Source-mapped VCF record is missing SIRALOOM_SOURCE.")
-                continue
-            saw_source_tag = True
-            if not saw_definition:
-                raise VCFToolError("SIRALOOM_SOURCE record tag is present without its header definition.")
+                raise VCFToolError("Source-mapped VCF record is missing SIRALOOM_SOURCE.")
             payload = decode_source_payload(value)
             try:
                 source_index = int(payload["source_record_index"])
@@ -560,16 +578,7 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                 "prepared_alt_values": [source_alts[index - 1] for index in actual_indexes],
             }
 
-    if not saw_definition and not saw_source_tag:
-        return {
-            "status": "NOT_PROVIDED",
-            "method": "SIRALOOM_SOURCE_TAG_ABSENT",
-            "source_records": None,
-            "expected_child_records": None,
-            "normalized_child_records": None,
-            "balanced": None,
-        }
-    if not saw_definition or not expected:
+    if not expected:
         raise VCFToolError("Source-to-normalized reconciliation requires tagged source records.")
 
     observed: set[tuple[int, int]] = set()
