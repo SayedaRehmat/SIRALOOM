@@ -713,6 +713,7 @@ def normalize_vcf_with_bcftools(
         raise VCFToolError(f"VCF input does not exist: {input_path}")
     if not reference_fasta.is_file():
         raise VCFToolError(f"Reference FASTA does not exist: {reference_fasta}")
+    reference_identity_before = _reference_artifact_identity(reference_fasta)
     if output_path.suffixes[-2:] != [".vcf", ".gz"]:
         raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
     has_existing_source_mapping = _reject_original_record_tag_collision(
@@ -832,6 +833,12 @@ def normalize_vcf_with_bcftools(
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
 
+        reference_identity_after = _reference_artifact_identity(reference_fasta)
+        if reference_identity_after != reference_identity_before:
+            raise VCFToolError(
+                "Reference FASTA or index artifacts changed during normalization; staged outputs will not be published."
+            )
+
         source_child_reconciliation = _validate_source_child_reconciliation(
             input_path, sorted_path
         )
@@ -910,6 +917,7 @@ def normalize_vcf_with_bcftools(
                 " ".join(index_command),
             ]),
             "reference_fasta": str(reference_fasta),
+            "reference_identity": reference_identity_before,
             "reference_check": "error",
             "multiallelic_mode": MULTIALLELIC_POLICY,
             "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
