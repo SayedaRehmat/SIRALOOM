@@ -152,10 +152,10 @@ def _sample_calls_for_alt(
 ) -> dict[str, dict]:
     """Project source genotypes onto one ALT while retaining the original call.
 
-    This uses the same explicit non-selected-ALT-to-reference policy as the
-    pinned BCFtools normalization path. The original genotype and ALT index
-    remain available for traceability; the projected genotype is suitable for
-    interpreting this individual ALT record.
+    This is a per-ALT interpretation projection, not a rewritten VCF record.
+    The selected ALT is mapped to 1, REF and other ALT alleles to 0, matching
+    the declared multiallelic overlap policy. Original genotype and FORMAT
+    values remain in source-allele space for evidence and traceability.
     """
     projected: dict[str, dict] = {}
     for sample_name, source_call in sample_calls.items():
