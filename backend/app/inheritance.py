@@ -56,7 +56,7 @@ _KNOWN_ZYGOSITY = {
 # VCF GT uses allele indexes separated by '/' (unphased) or '|' (phased).
 # This validates syntax only; it does not establish phase, pathogenicity, or
 # disease-specific inheritance compatibility.
-_VCF_GT_RE = re.compile(r"^(?:\\d+|\\.)(?:[/|](?:\\d+|\\.))*$")
+_VCF_GT_RE = re.compile(r"^(?:\d+|\.)(?:[/|](?:\d+|\.))*$")
 
 
 def _genotype_is_interpretable(genotype: str) -> bool | None:
