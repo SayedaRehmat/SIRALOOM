@@ -942,3 +942,34 @@ def test_vcf44_rejects_vcf45_only_local_allele_cardinality(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("gt", ["|0/1", "/0/1", "|0|1"])
+def test_vcf44_accepts_leading_gt_phase_separator_and_correct_ploidy(tmp_path: Path, gt: str):
+    path = tmp_path / "prefixed-gt-v44.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\tA\tG\t.\tPASS\t.\tGT\t{gt}\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
+def test_vcf43_rejects_vcf44_leading_gt_phase_separator(tmp_path: Path):
+    path = tmp_path / "prefixed-gt-v43.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT\t|0/1\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GENOTYPE_INVALID"
