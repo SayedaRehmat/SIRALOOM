@@ -120,9 +120,9 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
     output_vcf = tmp_path / "normalized.vcf.gz"
     index_path = Path(str(output_vcf) + ".csi")
     input_vcf.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     output_vcf.write_bytes(b"previous-valid-vcf")
@@ -131,18 +131,18 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.24\\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.24\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             if command[1] == "sort":
                 # Same FASTA geometry, different sequence bytes: size checks alone
                 # would miss this change, while SHA-256 attestation must detect it.
-                fasta.write_text(">1\\nGAAAAAC\\n", encoding="utf-8")
+                fasta.write_text(">1\nGAAAAAC\n", encoding="utf-8")
             with gzip.open(target, "wt", encoding="utf-8") as handle:
                 handle.write(
-                    "##fileformat=VCFv4.3\\n"
-                    "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-                    "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+                    "##fileformat=VCFv4.3\n"
+                    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                    "1\t2\t.\tA\tG\t.\tPASS\t.\n"
                 )
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
         if command[1] == "index":
