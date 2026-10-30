@@ -47,10 +47,11 @@ def classify_filename(filename: str) -> str:
     return "UNSUPPORTED"
 
 
-def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
+def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
     headers: list[str] = []
     declared_builds: set[str] = set()
     has_fileformat = False
+    fileformat: str | None = None
 
     def record_assembly(value: str) -> None:
         for marker, build in _BUILD_MARKERS:
@@ -66,6 +67,7 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
                 line = line.rstrip("\n")
                 if line.startswith("##fileformat="):
                     has_fileformat = True
+                    fileformat = line.split("=", 1)[1].strip()
                 elif line.startswith("##reference="):
                     value = line.split("=", 1)[1].strip()
                     if not value:
@@ -89,7 +91,7 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool]:
             + ", ".join(sorted(declared_builds))
         )
     detected_build = next(iter(declared_builds), None)
-    return headers, detected_build, has_fileformat
+    return headers, detected_build, has_fileformat, fileformat
 
 
 def _bcftools_validate(path: Path) -> str | None:
@@ -126,8 +128,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
+    fileformat: str | None = None
     try:
-        headers, detected_build, has_fileformat = _header_info(p)
+        headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
             raise VCFValidationError(
                 "VCF is missing the required ##fileformat header. If this file looks "
@@ -243,7 +246,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             )
         return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings, strict_profile["fileformat"])
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
-        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [])
+        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat)
 
 
 def validate_index(path: str | Path, primary_filename: str) -> ValidationResult:
