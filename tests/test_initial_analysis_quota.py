@@ -280,7 +280,7 @@ def test_unrestricted_plan_does_not_consume_usage():
     reserve_analysis_quota(FakeDB(), organization_id)
 
 
-@pytest.mark.parametrize("sample_names", [[], ["PROBAND", "MOTHER"], None])
+@pytest.mark.parametrize("sample_names", [[], None])
 def test_unsupported_sample_scope_does_not_create_analysis_or_consume_quota(sample_names):
     engine = _database()
 
@@ -290,7 +290,7 @@ def test_unsupported_sample_scope_does_not_create_analysis_or_consume_quota(samp
         artifact.metadata_json = {"validation": {"sample_names": sample_names}}
         db.commit()
 
-        with pytest.raises(ValueError, match="exactly one named sample"):
+        with pytest.raises(ValueError, match="Sites-only VCFs contain no sample genotypes"):
             _create(db, case_id, artifact_id, user_id)
 
         assert db.scalar(select(func.count(Analysis.id))) == 0
@@ -315,7 +315,7 @@ def test_missing_or_mismatched_specimen_sample_mapping_blocks_analysis(specimen_
         )
         db.commit()
 
-        with pytest.raises(ValueError, match="explicit VCF sample name mapping|does not match"):
+        with pytest.raises(ValueError, match="explicit VCF sample name mapping|not present in the input callset"):
             _create(db, case_id, artifact_id, user_id)
 
         assert db.scalar(select(func.count(Analysis.id))) == 0
@@ -348,3 +348,23 @@ def test_noncanonical_specimen_sample_mapping_cannot_create_analysis(specimen_ma
             )
         )
         assert entitlement.analyses_used == 0
+
+
+
+def test_multisample_analysis_uses_specimen_mapped_sample_and_reserves_quota():
+    engine = _database()
+
+    with Session(engine) as db:
+        organization_id, case_id, artifact_id, user_id = _seed(db)
+        artifact = db.get(Artifact, artifact_id)
+        artifact.metadata_json = {"validation": {"sample_names": ["PROBAND", "MOTHER"]}}
+        analysis = _create(db, case_id, artifact_id, user_id)
+
+        assert analysis.configuration["vcf_sample_name"] == "PROBAND"
+        assert analysis.id is not None
+        entitlement = db.scalar(
+            select(OrganizationEntitlement).where(
+                OrganizationEntitlement.organization_id == organization_id
+            )
+        )
+        assert entitlement.analyses_used == 1
