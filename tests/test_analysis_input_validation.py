@@ -42,8 +42,8 @@ def test_analysis_rejects_unusable_input_artifact(
         validate_analysis_input_artifact(artifact, requested_build)
 
 
-@pytest.mark.parametrize("sample_names", [[], ["PROBAND", "MOTHER"], None])
-def test_analysis_rejects_vcfs_without_one_explicit_sample(sample_names):
+@pytest.mark.parametrize("sample_names", [[], None])
+def test_analysis_rejects_vcfs_without_sample_genotypes(sample_names):
     artifact = SimpleNamespace(
         artifact_type="VCF",
         validation_status="VALID",
@@ -51,7 +51,7 @@ def test_analysis_rejects_vcfs_without_one_explicit_sample(sample_names):
         metadata_json={"validation": {"sample_names": sample_names}},
     )
 
-    with pytest.raises(ValueError, match="exactly one named sample"):
+    with pytest.raises(ValueError, match="Sites-only VCFs contain no sample genotypes"):
         validate_analysis_input_artifact(artifact, "GRCh38")
 
 
@@ -64,5 +64,20 @@ def test_analysis_requires_exact_explicit_specimen_sample_mapping():
     )
 
     validate_analysis_input_artifact(artifact, "GRCh38", "VCF-PATIENT-01")
-    with pytest.raises(ValueError, match="does not match the sample explicitly mapped"):
+    with pytest.raises(ValueError, match="not present in the input callset"):
         validate_analysis_input_artifact(artifact, "GRCh38", "VCF-FAMILY-02")
+
+
+
+def test_analysis_allows_explicitly_mapped_sample_from_multisample_vcf():
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={"validation": {"sample_names": ["PROBAND", "MOTHER", "FATHER"]}},
+    )
+
+    validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
+
+    with pytest.raises(ValueError, match="Multisample VCF analysis requires"):
+        validate_analysis_input_artifact(artifact, "GRCh38")
