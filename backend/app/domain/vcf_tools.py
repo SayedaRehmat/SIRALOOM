@@ -135,7 +135,7 @@ def route_vcf_records(
                     if line.startswith("#CHROM\t"):
                         sample_count = max(0, len(line.split("\t")) - 9)
                     continue
-        fields = line.split("\t")
+                fields = line.split("\t")
                 if len(fields) < 8:
                     raise VCFToolError("Cannot route malformed VCF record with fewer than 8 columns.")
                 source_record_index += 1
