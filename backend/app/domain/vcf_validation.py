@@ -610,7 +610,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_ORDER_INVALID",
                     )
                 header_key, separator, header_value = line[2:].partition("=")
-                if separator and header_value.startswith("<"):
+                if separator and header_value.startswith("<") and header_key in {
+                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"
+                }:
                     identifier = _structured_header_id(line, header_key, line_no)
                     ids_for_type = structured_header_ids.setdefault(header_key, set())
                     if identifier in ids_for_type:
