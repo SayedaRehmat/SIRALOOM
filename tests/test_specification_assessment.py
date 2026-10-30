@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from backend.app.acmg.assessment_service import ACMGSpecificationAssessmentService
+from backend.app.acmg.evaluators import EvaluatorConfigurationError, evaluate_pp3_bp4
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -474,3 +475,50 @@ def test_retired_source_assertions_persist_review_disposition_without_classifica
         assert db.query(Classification).filter_by(
             analysis_id=analysis.id, variant_id=variant.id
         ).count() == 0
+
+
+
+def test_pp3_requires_explicit_calibration_provenance():
+    import pytest
+
+    with pytest.raises(EvaluatorConfigurationError, match="calibration provenance"):
+        evaluate_pp3_bp4(
+            {"revel": 0.95},
+            criterion="PP3",
+            profile={
+                "PP3": {
+                    "predictor": "REVEL",
+                    "minimum_score": 0.9,
+                    "strength": "SUPPORTING",
+                }
+            },
+            evidence_ids=("evidence-1",),
+        )
+
+
+def test_pp3_persists_calibration_provenance_in_result_metadata():
+    result = evaluate_pp3_bp4(
+        {"revel": 0.95},
+        criterion="PP3",
+        profile={
+            "PP3": {
+                "predictor": "REVEL",
+                "minimum_score": 0.9,
+                "strength": "SUPPORTING",
+                "calibration": {
+                    "calibration_id": "CAL-1",
+                    "model_version": "1.2.3",
+                    "validation_dataset": "known-answer-set-v1",
+                    "calibration_reference": "DOI:10.0000/example",
+                },
+            }
+        },
+        evidence_ids=("evidence-1",),
+    )
+    assert result.status == "PROPOSED"
+    assert result.metadata["calibration"] == {
+        "calibration_id": "CAL-1",
+        "model_version": "1.2.3",
+        "validation_dataset": "known-answer-set-v1",
+        "calibration_reference": "DOI:10.0000/example",
+    }
