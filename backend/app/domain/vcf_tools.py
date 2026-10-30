@@ -350,7 +350,7 @@ def _validate_csi_index_record_counts(
 
     indexed_counts: dict[str, int] = {}
     for line in (result.stdout or "").splitlines():
-        fields = line.split("\\t")
+        fields = line.split("\t")
         if len(fields) < 4:
             raise VCFToolError("CSI index statistics returned a malformed contig row.")
         contig = fields[0]
@@ -369,7 +369,7 @@ def _validate_csi_index_record_counts(
             for line in handle:
                 if not line or line.startswith("#"):
                     continue
-                contig = line.split("\\t", 1)[0]
+                contig = line.split("\t", 1)[0]
                 if not contig:
                     raise VCFToolError("Sequential VCF scan found a record with an empty contig.")
                 sequential_counts[contig] = sequential_counts.get(contig, 0) + 1
