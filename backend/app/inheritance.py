@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 
 
@@ -40,13 +41,50 @@ def normalize_model(model: str) -> str:
     return value
 
 
+_MISSING_GENOTYPES = {"", ".", "./.", ".|.", "UNKNOWN", "NA", "N/A"}
+_KNOWN_ZYGOSITY = {
+    "HET",
+    "HETEROZYGOUS",
+    "HOM_REF",
+    "HOM_ALT",
+    "HOM",
+    "HOMOZYGOUS",
+    "HEMI",
+    "HEMIZYGOUS",
+    "COMPOUND_HETEROZYGOUS",
+}
+# VCF GT uses allele indexes separated by '/' (unphased) or '|' (phased).
+# This validates syntax only; it does not establish phase, pathogenicity, or
+# disease-specific inheritance compatibility.
+_VCF_GT_RE = re.compile(r"^(?:\\d+|\\.)(?:[/|](?:\\d+|\\.))*$")
+
+
+def _genotype_is_interpretable(genotype: str) -> bool | None:
+    """Return None for missing GT, False for malformed GT, True for valid called GT."""
+    if genotype in _MISSING_GENOTYPES:
+        return None
+    if not _VCF_GT_RE.fullmatch(genotype):
+        return False
+    alleles = re.split(r"[/|]", genotype)
+    return any(allele != "." for allele in alleles)
+
+
 def _has_observation_data(observation: FamilyObservation) -> bool:
     affected = str(observation.affected_status or "").strip().upper()
     genotype = str(observation.genotype or "").strip().upper()
     zygosity = str(observation.zygosity or "").strip().upper()
-    missing = {"", ".", "./.", ".|.", "UNKNOWN", "NA", "N/A"}
     phenotype_known = affected in {"AFFECTED", "UNAFFECTED"}
-    genotype_known = genotype not in missing or zygosity not in missing
+
+    genotype_state = _genotype_is_interpretable(genotype)
+    # Do not allow a malformed non-empty GT field to be rescued by a
+    # separately supplied zygosity label. Preserve valid explicit zygosity
+    # when no GT was supplied, but never treat arbitrary text as a genotype.
+    if genotype_state is False:
+        return False
+    genotype_known = (
+        genotype_state is True
+        or (genotype_state is None and zygosity in _KNOWN_ZYGOSITY)
+    )
     return phenotype_known and genotype_known
 
 

@@ -303,6 +303,30 @@ def test_unknown_phenotype_and_missing_genotype_are_not_counted_as_interpretable
     assert result["observations_available"] == 0
 
 
+def test_malformed_vcf_genotype_is_not_counted_as_interpretable_even_with_zygosity():
+    result = assess_model(
+        "AD",
+        [FamilyObservation("PROBAND", "FEMALE", "AFFECTED", "heterozygous-ish", "HET")],
+    )
+
+    assert result["status"] == "INSUFFICIENT_DATA"
+    assert result["observations_available"] == 0
+
+
+def test_valid_vcf_genotype_syntax_and_explicit_zygosity_are_accepted_as_observations():
+    result = assess_model(
+        "AD",
+        [
+            FamilyObservation("PARENT", "UNKNOWN", "UNAFFECTED", "0|1", None),
+            FamilyObservation("PROBAND", "UNKNOWN", "AFFECTED", None, "HET"),
+        ],
+    )
+
+    assert result["status"] == "REQUIRES_REVIEW"
+    assert result["observations_available"] == 2
+    assert "not implemented" in result["rationale"]
+
+
 def test_de_novo_model_requires_review_without_parental_and_confirmation_inputs():
     result = assess_model(
         "DE_NOVO",
