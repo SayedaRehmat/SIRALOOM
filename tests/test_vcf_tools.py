@@ -370,6 +370,10 @@ def test_router_manifests_each_unobserved_source_alt_from_complete_genotypes(tmp
     ]
     assert routed["sequence_records"] == 3
     assert routed["reference_only_genotype_alleles"] == 2
+    # These are per-ALT evidence entries, not whole-record exclusions.
+    assert routed["exclusion_manifest_records"] == 2
+    assert routed["excluded_source_record_count"] == 0
+    assert routed["record_reconciliation"]["balanced"] is True
     assert [
         (entry["source_record_index"], entry.get("source_alt_index"), entry["reason_code"])
         for entry in entries
