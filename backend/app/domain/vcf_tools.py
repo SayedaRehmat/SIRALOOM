@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import gzip
 import hashlib
 import json
@@ -14,6 +15,10 @@ from pathlib import Path
 from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
 
 GVCF_WILDCARD_ALLELES = {"<NON_REF>", "<*>"}
+SOURCE_RECORD_TAG = "SIRALOOM_SOURCE"
+SOURCE_RECORD_TAG_HEADER = (
+    '##INFO=<ID=SIRALOOM_SOURCE,Number=1,Type=String,'
+    'Description="Base64url JSON source record identity and ALT mapping">')
 
 
 def route_vcf_records(
@@ -127,6 +132,35 @@ def route_vcf_records(
                 handles[key] = handle
                 for header in headers:
                     handle.write(header + "\n")
+                    if key == "sequence" and header.startswith("#CHROM\t"):
+                        handle.write(SOURCE_RECORD_TAG_HEADER + "\n")
+            if key == "sequence":
+                record_fields = record.split("\t")
+                source_alts = record_fields[4].split(",")
+                source_payload = {
+                    "schema_version": "1",
+                    "source_record_index": source_record_index,
+                    "source_record_sha256": hashlib.sha256(record.encode("utf-8")).hexdigest(),
+                    "chrom": record_fields[0],
+                    "pos": record_fields[1],
+                    "ref": record_fields[3],
+                    "alts": source_alts,
+                    "normalized_alt_source_indexes": [
+                        index
+                        for index, alternate in enumerate(source_alts, start=1)
+                        if alternate not in GVCF_WILDCARD_ALLELES
+                    ],
+                }
+                encoded_payload = base64.urlsafe_b64encode(
+                    json.dumps(source_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).decode("ascii").rstrip("=")
+                source_info = f"{SOURCE_RECORD_TAG}={encoded_payload}"
+                record_fields[7] = (
+                    f"{record_fields[7]};{source_info}"
+                    if record_fields[7] not in {"", "."}
+                    else source_info
+                )
+                record = "\t".join(record_fields)
             handle.write(record + "\n")
             counts[key] += 1
 
@@ -134,6 +168,10 @@ def route_vcf_records(
             for raw in handle:
                 line = raw.rstrip("\r\n")
                 if line.startswith("#"):
+                    if line.startswith(f"##INFO=<ID={SOURCE_RECORD_TAG},"):
+                        raise VCFToolError(
+                            f"Input VCF already declares reserved INFO tag {SOURCE_RECORD_TAG}."
+                        )
                     headers.append(line)
                     if line.startswith("#CHROM\t"):
                         sample_count = max(0, len(line.split("\t")) - 9)
