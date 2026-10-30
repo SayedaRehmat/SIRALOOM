@@ -80,13 +80,13 @@ def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_
     routed_dir = tmp_path / "routed"
     output_vcf = tmp_path / "normalized.vcf.gz"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##contig=<ID=1,length=7>\\n"
-        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\\n'
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\\n"
-        "1\\t2\\t.\\tA\\tC,<NON_REF>,G\\t.\\tPASS\\t.\\tGT\\t0/1\\n"
-        "1\\t4\\t.\\tAA\\tA,C\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t2\t.\tA\tC,<NON_REF>,G\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t4\t.\tAA\tA,C\t.\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
 
@@ -253,9 +253,9 @@ def test_router_rejects_reserved_source_tag_collision_in_record(tmp_path: Path):
 
     source = tmp_path / "reserved-source-tag.vcf"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t1\\t.\\tA\\tC\\t.\\tPASS\\tSIRALOOM_SOURCE=foreign\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t1\t.\tA\tC\t.\tPASS\tSIRALOOM_SOURCE=foreign\n",
         encoding="utf-8",
     )
 
