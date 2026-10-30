@@ -350,18 +350,25 @@ def _validate_csi_index_record_counts(
 
     indexed_counts: dict[str, int] = {}
     for line in (result.stdout or "").splitlines():
-        fields = line.split("\t")
-        if len(fields) < 4:
+        fields = line.split("\\t")
+        # BCFtools 1.24: CHROM, contig length (or "."), record count.
+        if len(fields) != 3:
             raise VCFToolError("CSI index statistics returned a malformed contig row.")
-        contig = fields[0]
+        contig, contig_length, record_count = fields
+        if contig_length != ".":
+            try:
+                parsed_length = int(contig_length)
+            except ValueError as exc:
+                raise VCFToolError("CSI index statistics returned an invalid contig length.") from exc
+            if parsed_length < 0:
+                raise VCFToolError("CSI index statistics returned an invalid contig length.")
         try:
-            mapped = int(fields[-2])
-            unmapped = int(fields[-1])
+            count = int(record_count)
         except ValueError as exc:
-            raise VCFToolError("CSI index statistics returned non-integer record counts.") from exc
-        if not contig or mapped < 0 or unmapped < 0 or contig in indexed_counts:
+            raise VCFToolError("CSI index statistics returned a non-integer record count.") from exc
+        if not contig or count < 0 or contig in indexed_counts:
             raise VCFToolError("CSI index statistics returned invalid or duplicate contig counts.")
-        indexed_counts[contig] = mapped + unmapped
+        indexed_counts[contig] = count
 
     sequential_counts: dict[str, int] = {}
     try:
