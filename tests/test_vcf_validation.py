@@ -989,3 +989,19 @@ def test_strict_validation_accepts_pedigree_metadata_without_id(tmp_path: Path):
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 1
+
+
+
+def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path: Path):
+    path = tmp_path / "format-without-sample.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\tGT\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_INVALID"
