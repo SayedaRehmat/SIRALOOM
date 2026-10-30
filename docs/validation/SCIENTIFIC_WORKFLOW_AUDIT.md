@@ -58,6 +58,8 @@ For each evidence class, verify this complete path:
 
 A provider call that never produces a persisted evidence record is not complete. A persisted record not visible in review/report context is not integrated. A report that omits evidence provenance or renders an unresolved result as a negative result is not acceptable.
 
+**Report-scope distinction found in source:** the clinical-interpretation report includes the selected reportable findings, classification/criterion snapshots, clinical phenotype context, contextual phenotype/gene–disease/literature evidence, pedigree/segregation context, confirmation and follow-up. The complete raw evidence list is attached only when `include_full_evidence=True`; the current Reports UI sets that flag for `ANALYTICAL` reports, not ordinary clinical-interpretation reports. This can be an appropriate separation between clinical summary and analytical appendix, but the laboratory must approve the intended content. Validate that every criterion cited in a clinical report has its supporting persisted evidence in the immutable classification snapshot, and that the analytical report exposes all evidence required for audit without presenting unvalidated scores as clinical conclusions.
+
 ## 3. Scientific release gates
 
 The following are mandatory before claiming a complete clinically qualified workflow:
