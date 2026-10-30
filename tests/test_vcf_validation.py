@@ -973,3 +973,19 @@ def test_vcf43_rejects_vcf44_leading_gt_phase_separator(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_GENOTYPE_INVALID"
+
+
+
+def test_strict_validation_accepts_pedigree_metadata_without_id(tmp_path: Path):
+    path = tmp_path / "pedigree-header.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
