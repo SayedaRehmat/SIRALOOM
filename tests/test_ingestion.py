@@ -629,3 +629,24 @@ def test_multisample_vcf_parser_requires_explicit_sample_selection(tmp_path: Pat
     assert len(records) == 1
     assert list(records[0].sample_calls) == ["PROBAND"]
     assert records[0].sample_calls["PROBAND"]["genotype"] == "0/1"
+
+
+
+def test_vcf45_local_allele_callset_passes_full_intake_validation(tmp_path: Path):
+    path = tmp_path / "v45-local-alleles.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##reference=GRCh38\n"
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr1\t100\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL\t0/2:2:20,10:0,50,100\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.fileformat == "VCFv4.5"
+    assert result.sample_names == ["SAMPLE1"]
