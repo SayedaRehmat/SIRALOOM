@@ -18,7 +18,7 @@ def test_multiallelic_genotypes_are_projected_per_alternate_and_source_is_retain
     path = tmp_path / "multiallelic.vcf"
     _write_multiallelic_vcf(path)
 
-    records = list(parse_vcf(str(path)))
+    records = list(parse_vcf(str(path), allow_unselected_multisample=True))
 
     assert [record.alt for record in records] == ["C", "G"]
     first, second = records
