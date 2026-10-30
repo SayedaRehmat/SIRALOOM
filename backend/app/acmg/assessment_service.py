@@ -876,12 +876,12 @@ def _resolve_evidence_ids(
     variant_id: UUID,
     source_ids: tuple[str, ...],
 ) -> tuple[tuple[UUID, ...], tuple[str, ...]]:
-    """Resolve evaluator source identifiers to persisted Evidence IDs.
+    """Resolve source identifiers to persisted Evidence IDs.
 
-    Population evaluators currently emit PopulationObservation IDs. This helper
-    performs the only legal crossing into the ACMG evidence namespace. Evidence
-    must belong to the same analysis and variant; cross-analysis/cross-variant
-    evidence is never accepted.
+    Population evaluators may emit PopulationObservation IDs, while predictor
+    evaluators may emit the ID of an already-persisted Evidence record. Both
+    paths must resolve inside the exact analysis and variant; cross-analysis
+    or cross-variant evidence is never accepted.
     """
     if not source_ids:
         return (), ()
@@ -900,6 +900,10 @@ def _resolve_evidence_ids(
         # or future query change cannot accidentally cross analysis/variant scope.
         if row.analysis_id != analysis_id or row.variant_id != variant_id:
             continue
+        direct_evidence_id = str(row.id)
+        if direct_evidence_id in normalized:
+            resolved.append(row.id)
+            unresolved.discard(direct_evidence_id)
         observation_ids = {str(x) for x in (row.observation_ids or [])}
         if observation_ids & normalized:
             resolved.append(row.id)
