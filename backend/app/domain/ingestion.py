@@ -190,7 +190,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                         token.startswith("<") or token.startswith("*") or "[" in token or "]" in token
                         for token in alt.split(",")
                     )
-        for _ in parse_vcf(str(p)):
+        for _ in parse_vcf(str(p), allow_unselected_multisample=True):
             records += 1
         if records == 0:
             if reference_only_records:
