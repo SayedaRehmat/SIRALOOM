@@ -660,6 +660,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     )
                 if len(columns) >= 9 and columns[8] != "FORMAT":
                     raise StrictVCFValidationError("Column 9 must be FORMAT when sample columns are present", code="VCF_HEADER_INVALID")
+                if len(columns) == 9:
+                    raise StrictVCFValidationError(
+                        "FORMAT must be followed by at least one named sample; use exactly the eight fixed columns for a sites-only VCF",
+                        code="VCF_HEADER_INVALID",
+                    )
                 if len(columns) > 9 and len(columns[9:]) != len(set(columns[9:])):
                     raise StrictVCFValidationError("Duplicate sample names are not allowed", code="VCF_SAMPLE_INVALID")
                 chrom_header = columns
