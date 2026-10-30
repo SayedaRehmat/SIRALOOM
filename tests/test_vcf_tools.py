@@ -245,6 +245,21 @@ def test_classify_records_reports_multiallelic_symbolic_and_gvcf_markers(tmp_pat
     }
 
 
+def test_router_rejects_reserved_source_tag_collision_in_record(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "reserved-source-tag.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t1\\t.\\tA\\tC\\t.\\tPASS\\tSIRALOOM_SOURCE=foreign\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VCFToolError, match="reserved INFO tag SIRALOOM_SOURCE"):
+        route_vcf_records(source, tmp_path / "routed-reserved-tag")
+
+
 def test_router_preserves_telomere_records_outside_small_variant_stream(tmp_path: Path):
     from backend.app.domain.vcf_tools import route_vcf_records
 
