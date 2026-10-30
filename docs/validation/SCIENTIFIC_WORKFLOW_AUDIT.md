@@ -107,9 +107,9 @@ Live links are discovery references, not immutable execution provenance. For eve
 
 ## 6. Immediate next implementation order
 
-1. Finish strict pedigree/genotype input-quality checks without generating inheritance conclusions.
-2. Audit and implement the missing execution/provenance contract for computational and functional predictions, including actual model identity and calibration.
-3. Separate literature retrieval, citation storage, and human evidence curation; do not synthesize clinical conclusions from titles/abstracts.
+1. **Implemented, unit-tested:** strict VCF GT syntax checks now prevent malformed non-empty genotype strings from being counted as interpretable pedigree observations. This is an input-quality guard only; it does not infer inheritance compatibility. See commits `8a57d926` and `10e427af`.
+2. **Partially implemented:** PP3/BP4 now match predictor field names case-insensitively and can bind a proposed criterion to a persisted COMPUTATIONAL/SPLICING Evidence record from the same analysis, variant, annotation provider and provider version. A regression test exercises the end-to-end assessment service. The remaining scientific gate is explicit predictor/model release and calibration-reference provenance, plus independent validation of the selected thresholds.
+3. **Next:** separate literature retrieval, citation storage, and human evidence curation; do not synthesize clinical conclusions from titles/abstracts.
 4. Build versioned pedigree and phenotype method contracts and golden datasets before enabling scores.
 5. Run the independent GIAB benchmark and controlled lab end-to-end workflow.
 6. Verify the UI/report path against the same persisted evidence IDs, resource versions, interpretation states and hashes.

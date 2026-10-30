@@ -2,11 +2,11 @@
 
 ## Status
 
-Implemented: yes
-Backend contract integration: verified against the existing Phase 1 API routes
-Python backend tests: 57/57 PASS
-TypeScript syntax/type-check: PASS using a temporary dependency stub because the environment has no installed Next.js/React packages
-Next.js production build: NOT EXECUTED — dependency installation timed out in the current environment
+Implemented: core case, workspace, review, evidence-context and report pages are present in source.
+Backend contract integration: automated tests cover selected API/client contracts; source inspection alone does not prove a deployed browser-to-database workflow.
+Latest observed GitHub Actions run during this audit: frontend behavior tests PASS, Next.js production build PASS, production frontend container build PASS, Compose configuration validation PASS, and PostgreSQL/real Celery worker-loss integration PASS. The backend test suite PASS was also observed for commit `d3e50af39dee2c6c3c24c68f5e456be0d18148c6`; its backend image build was still running at the last check.
+Historical local check: an earlier environment lacked installed Next.js/React dependencies, so a production build was not executed locally at that time.
+Browser-level end-to-end validation against a deployed PostgreSQL + Redis + worker + API + frontend stack: NOT RUN in this audit.
 
 ## Implemented user flow
 
