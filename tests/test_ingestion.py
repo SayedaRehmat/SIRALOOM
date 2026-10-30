@@ -568,3 +568,64 @@ def test_malformed_tbi_is_rejected(tmp_path: Path):
     tbi = tmp_path / "sample.vcf.gz.tbi"
     tbi.write_bytes(b"\x1f\x8b\x08\x04not-a-valid-gzip")
     assert validate_index(tbi, "sample.vcf.gz").status == "INVALID"
+
+
+
+def test_multisample_vcf_is_validated_and_explicit_sample_mapping_is_accepted(tmp_path: Path):
+    path = tmp_path / "family.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tMOTHER\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0/1:30\t0/0:25\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.sample_names == ["PROBAND", "MOTHER"]
+    assert result.fileformat == "VCFv4.3"
+    assert validate_specimen_sample_identity(result, "PROBAND").status == "VALID"
+    mismatch = validate_specimen_sample_identity(result, "FATHER")
+    assert mismatch.status == "INVALID"
+    assert "sample identity mismatch" in mismatch.errors[0]
+
+
+def test_sites_only_vcf_is_structurally_valid_but_not_sample_specific(tmp_path: Path):
+    path = tmp_path / "sites-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.sample_names == []
+    checked = validate_specimen_sample_identity(result, None)
+    assert checked.status == "VALID"
+    assert any("Sites-only VCF" in warning for warning in checked.warnings)
+
+
+def test_multisample_vcf_parser_requires_explicit_sample_selection(tmp_path: Path):
+    from backend.app.domain.vcf import VCFValidationError, parse_vcf
+
+    path = tmp_path / "family.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tMOTHER\n"
+        "chr1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0/1:30\t0/0:25\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VCFValidationError, match="explicit sample_name"):
+        list(parse_vcf(str(path)))
+
+    records = list(parse_vcf(str(path), sample_name="PROBAND"))
+    assert len(records) == 1
+    assert list(records[0].sample_calls) == ["PROBAND"]
+    assert records[0].sample_calls["PROBAND"]["genotype"] == "0/1"
