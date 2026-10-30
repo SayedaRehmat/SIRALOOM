@@ -267,6 +267,7 @@ async def upload_artifact(
                         f"VCF header indicates {result.detected_build}, but the selected genome build is {requested_build}.",
                     ],
                     result.warnings,
+                    result.fileformat,
                 )
             artifact_type = ArtifactType.VCF
             validation_metadata = {
