@@ -22,3 +22,12 @@ def test_vcf_upload_status_respects_persisted_inputs_and_lifecycle(
         has_valid_vcf=valid,
         has_vcf=has_vcf,
     ) == expected
+
+
+def test_site_only_vcf_does_not_mark_case_ready_or_invalid():
+    assert case_status_after_vcf_upload(
+        "DRAFT",
+        has_valid_vcf=False,
+        has_vcf=True,
+        has_site_only_vcf=True,
+    ) == "ARTIFACT_UPLOADED"
