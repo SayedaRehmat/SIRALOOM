@@ -318,6 +318,83 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
     }
 
 
+
+def _validate_csi_index_record_counts(
+    vcf_path: Path,
+    *,
+    bcftools_executable: str,
+    timeout_seconds: int,
+) -> dict:
+    """Compare CSI per-contig record counts with a sequential BGZF read.
+
+    This detects missing, stale, or inconsistent index metadata before the
+    normalized VCF/index pair is published. It is a count-concordance check,
+    not a cryptographic proof of every indexed record offset.
+    """
+    try:
+        result = subprocess.run(
+            [bcftools_executable, "index", "--stats", str(vcf_path)],
+            capture_output=True,
+            text=True,
+            timeout=max(1, int(timeout_seconds)),
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise VCFToolError("Timed out while validating CSI index record counts.") from exc
+    except OSError as exc:
+        raise VCFToolError(f"Unable to execute CSI index validation: {exc}") from exc
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "unknown CSI index statistics error").strip()
+        raise VCFToolError(f"CSI index record-count validation failed: {detail}")
+
+    indexed_counts: dict[str, int] = {}
+    for line in (result.stdout or "").splitlines():
+        fields = line.split("\t")
+        # BCFtools 1.24: CHROM, contig length (or "."), record count.
+        if len(fields) != 3:
+            raise VCFToolError("CSI index statistics returned a malformed contig row.")
+        contig, contig_length, record_count = fields
+        if contig_length != ".":
+            try:
+                parsed_length = int(contig_length)
+            except ValueError as exc:
+                raise VCFToolError("CSI index statistics returned an invalid contig length.") from exc
+            if parsed_length < 0:
+                raise VCFToolError("CSI index statistics returned an invalid contig length.")
+        try:
+            count = int(record_count)
+        except ValueError as exc:
+            raise VCFToolError("CSI index statistics returned a non-integer record count.") from exc
+        if not contig or count < 0 or contig in indexed_counts:
+            raise VCFToolError("CSI index statistics returned invalid or duplicate contig counts.")
+        indexed_counts[contig] = count
+
+    sequential_counts: dict[str, int] = {}
+    try:
+        with gzip.open(vcf_path, "rt", encoding="utf-8") as handle:
+            for line in handle:
+                if not line or line.startswith("#"):
+                    continue
+                contig = line.split("\t", 1)[0]
+                if not contig:
+                    raise VCFToolError("Sequential VCF scan found a record with an empty contig.")
+                sequential_counts[contig] = sequential_counts.get(contig, 0) + 1
+    except (OSError, EOFError, UnicodeDecodeError) as exc:
+        raise VCFToolError(f"Cannot read staged BGZF VCF for index concordance: {exc}") from exc
+
+    if indexed_counts != sequential_counts:
+        raise VCFToolError(
+            "CSI index and staged VCF record counts disagree by contig: "
+            f"index={indexed_counts!r}, sequential={sequential_counts!r}"
+        )
+
+    return {
+        "method": "CSI_PER_CONTIG_COUNTS_VS_SEQUENTIAL_BGZF_SCAN",
+        "records": sum(sequential_counts.values()),
+        "contigs": len(sequential_counts),
+    }
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -487,6 +564,12 @@ def normalize_vcf_with_bcftools(
         if not staged_index_path.is_file() or staged_index_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no CSI index.")
 
+        index_validation = _validate_csi_index_record_counts(
+            sorted_path,
+            bcftools_executable=bcftools_executable,
+            timeout_seconds=120,
+        )
+
         # Flush staged files before publication. The private directory is on the
         # destination filesystem, so os.replace avoids cross-device partial copies.
         for staged in (sorted_path, staged_index_path):
@@ -544,6 +627,7 @@ def normalize_vcf_with_bcftools(
             "compression": "BGZF",
             "index": "CSI",
             "index_path": str(index_path),
+            "index_validation": index_validation,
             "gvcf_wildcard_command": "bcftools view -A",
             "stderr": "\n".join(x for x in (view_stderr, normalized_stderr, sorted_stderr, indexed_stderr) if x),
         }

@@ -460,3 +460,62 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
         assert len(record[10].split(":")[2].split(",")) == 2
         assert len(record[9].split(":")[3].split(",")) == 3
         assert len(record[10].split(":")[3].split(",")) == 3
+
+
+def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_path: Path):
+    import gzip
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    staged_vcf = tmp_path / "staged.vcf.gz"
+    with gzip.open(staged_vcf, "wt", encoding="utf-8") as handle:
+        handle.write(
+            "##fileformat=VCFv4.3\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            "1\t1\t.\tA\tG\t.\tPASS\t.\n"
+            "1\t2\t.\tC\tT\t.\tPASS\t.\n"
+            "2\t4\t.\tG\tA\t.\tPASS\t.\n"
+        )
+
+    def fake_run(command, **kwargs):
+        assert command[1:3] == ["index", "--stats"]
+        return subprocess.CompletedProcess(
+            command, 0, stdout="1\t7\t2\n2\t5\t1\n", stderr=""
+        )
+
+    monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
+    result = vcf_tools._validate_csi_index_record_counts(
+        staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
+    )
+
+    assert result == {
+        "method": "CSI_PER_CONTIG_COUNTS_VS_SEQUENTIAL_BGZF_SCAN",
+        "records": 3,
+        "contigs": 2,
+    }
+
+
+def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
+    monkeypatch, tmp_path: Path
+):
+    import gzip
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    staged_vcf = tmp_path / "staged.vcf.gz"
+    with gzip.open(staged_vcf, "wt", encoding="utf-8") as handle:
+        handle.write(
+            "##fileformat=VCFv4.3\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            "1\t1\t.\tA\tG\t.\tPASS\t.\n"
+            "1\t2\t.\tC\tT\t.\tPASS\t.\n"
+        )
+
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command, 0, stdout="1\t7\t1\n", stderr=""
+        )
+
+    monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
+    with pytest.raises(VCFToolError, match="record counts disagree by contig"):
+        vcf_tools._validate_csi_index_record_counts(
+            staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
+        )
