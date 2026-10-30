@@ -13,11 +13,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install bcftools
+      - name: Install pinned BCFtools/HTSlib
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends bcftools
-          test "$(bcftools --version | head -n1)" = "bcftools 1.19"
+          set -eu
+          curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C "$RUNNER_TEMP" bin/micromamba
+          "$RUNNER_TEMP/bin/micromamba" create --yes --prefix "$RUNNER_TEMP/bcftools-env" --file configs/bioinformatics/bcftools-environment.yml
+          echo "$RUNNER_TEMP/bcftools-env/bin" >> "$GITHUB_PATH"
+          test "$("$RUNNER_TEMP/bcftools-env/bin/bcftools" --version | head -n1)" = "bcftools 1.24"
       - name: Install backend
         run: pip install -e . pytest
       - name: Backend tests
@@ -51,7 +53,7 @@ jobs:
             docker volume rm "$volume"
           done
       - name: Verify container BCFtools version
-        run: test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | head -n1)" = "bcftools 1.19"
+        run: test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | head -n1)" = "bcftools 1.24"
 
   postgres-integration:
     runs-on: ubuntu-latest
@@ -83,11 +85,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pinned BCFtools for PostgreSQL workflow integration
+      - name: Install pinned BCFtools/HTSlib for PostgreSQL workflow integration
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends bcftools
-          test "$(bcftools --version | head -n1)" = "bcftools 1.19"
+          set -eu
+          curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C "$RUNNER_TEMP" bin/micromamba
+          "$RUNNER_TEMP/bin/micromamba" create --yes --prefix "$RUNNER_TEMP/bcftools-env" --file configs/bioinformatics/bcftools-environment.yml
+          echo "$RUNNER_TEMP/bcftools-env/bin" >> "$GITHUB_PATH"
+          test "$("$RUNNER_TEMP/bcftools-env/bin/bcftools" --version | head -n1)" = "bcftools 1.24"
       - name: Install backend
         run: pip install -e . pytest
       - name: Apply database migrations
