@@ -148,10 +148,7 @@ def route_vcf_records(
                     "schema_version": "1",
                     "source_record_index": source_record_index,
                     "source_record_sha256": hashlib.sha256(record.encode("utf-8")).hexdigest(),
-                    "chrom": record_fields[0],
-                    "pos": record_fields[1],
-                    "ref": record_fields[3],
-                    "alts": source_alts,
+                    "source_alt_count": len(source_alts),
                     "normalized_alt_source_indexes": [
                         index
                         for index, alternate in enumerate(source_alts, start=1)
@@ -526,25 +523,20 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
             payload = decode_source_payload(value)
             try:
                 source_index = int(payload["source_record_index"])
-                source_alts = payload["alts"]
+                source_alt_count = int(payload["source_alt_count"])
                 expected_indexes = payload["normalized_alt_source_indexes"]
                 source_hash = payload["source_record_sha256"]
             except (KeyError, TypeError, ValueError) as exc:
                 raise VCFToolError("SIRALOOM_SOURCE payload is missing required source identity fields.") from exc
             if (
                 source_index < 1
-                or not isinstance(source_alts, list)
-                or not source_alts
-                or not all(isinstance(alt, str) and alt for alt in source_alts)
+                or source_alt_count != len(fields[4].split(","))
                 or not isinstance(expected_indexes, list)
                 or not all(isinstance(index, int) and not isinstance(index, bool) for index in expected_indexes)
                 or not re.fullmatch(r"[0-9a-f]{64}", str(source_hash))
-                or payload.get("chrom") != fields[0]
-                or payload.get("pos") != fields[1]
-                or payload.get("ref") != fields[3]
-                or source_alts != fields[4].split(",")
             ):
                 raise VCFToolError("SIRALOOM_SOURCE payload does not match its source VCF record.")
+            source_alts = fields[4].split(",")
             actual_indexes = [
                 index
                 for index, alternate in enumerate(source_alts, start=1)
@@ -565,7 +557,7 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
             expected[source_index] = {
                 "payload": payload,
                 "alt_indexes": actual_indexes,
-                "alt_values": {index: source_alts[index - 1] for index in actual_indexes},
+                "prepared_alt_values": [source_alts[index - 1] for index in actual_indexes],
             }
 
     if not saw_definition and not saw_source_tag:
@@ -608,20 +600,15 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                     raise ValueError("expected five source mapping fields")
                 prepared_alts = original_fields[3].split(",")
                 used_alt_index = int(original_fields[4])
-                if used_alt_index < 1 or used_alt_index > len(prepared_alts):
-                    raise ValueError("ALT index outside source mapping")
-                selected_alt = prepared_alts[used_alt_index - 1]
+                if (
+                    prepared_alts != source["prepared_alt_values"]
+                    or used_alt_index < 1
+                    or used_alt_index > len(prepared_alts)
+                ):
+                    raise ValueError("ALT index or prepared ALT list disagrees with source mapping")
             except ValueError as exc:
                 raise VCFToolError("SIRALOOM_ORIG contains an invalid source ALT mapping.") from exc
-            matches = [
-                index for index, alt in source["alt_values"].items()
-                if alt == selected_alt
-            ]
-            if len(matches) != 1:
-                raise VCFToolError(
-                    "Normalized child ALT cannot be mapped uniquely to its original source ALT."
-                )
-            mapping = (source_index, matches[0])
+            mapping = (source_index, source["alt_indexes"][used_alt_index - 1])
             if mapping in observed:
                 raise VCFToolError("Multiple normalized children map to the same source ALT.")
             observed.add(mapping)
