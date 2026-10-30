@@ -410,7 +410,7 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
     assert any("--multi-overlaps 0" in command for command in lineage["commands"])
     assert any("--old-rec-tag SIRALOOM_ORIG" in command for command in lineage["commands"])
     assert lineage["input_routing"] == {
-        "routing_version": "1",
+        "routing_version": "2",
         "records_total": 5,
         "sequence_records": 2,
         "gvcf_reference_blocks": 1,
