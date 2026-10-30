@@ -28,7 +28,7 @@ def route_vcf_records(
     reference blocks and structural records are copied byte-for-text unchanged
     into separate review artifacts. A GVCF variant is eligible for the
     sequence path only when every sample has a complete GT that does not call
-    a wildcard allele; bcftools 1.19 ``view -A`` then removes that unseen
+    a wildcard allele; bcftools 1.24 ``view -A`` then removes that unseen
     wildcard while updating allele-indexed fields.
     """
     import gzip
@@ -390,7 +390,7 @@ def normalize_vcf_with_bcftools(
         sorted_stderr = ""
         indexed_stderr = ""
 
-        # ``view -A`` is available in the pinned 1.19 release. The router only
+        # ``view -A`` is available in the pinned 1.24 release. The router only
         # places records here when the GVCF wildcard is provably uncalled.
         prepared_path = work / "prepared.vcf.gz"
         view_command = [
