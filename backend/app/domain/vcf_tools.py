@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import gzip
 import hashlib
 import json
@@ -14,6 +15,10 @@ from pathlib import Path
 from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
 
 GVCF_WILDCARD_ALLELES = {"<NON_REF>", "<*>"}
+SOURCE_RECORD_TAG = "SIRALOOM_SOURCE"
+SOURCE_RECORD_TAG_HEADER = (
+    '##INFO=<ID=SIRALOOM_SOURCE,Number=1,Type=String,'
+    'Description="Base64url JSON source record identity and ALT mapping">')
 
 
 def route_vcf_records(
@@ -126,7 +131,40 @@ def route_vcf_records(
                 handle = stack.enter_context(names[key].open("w", encoding="utf-8", newline="\n"))
                 handles[key] = handle
                 for header in headers:
+                    if key == "sequence" and header.startswith("#CHROM\t"):
+                        handle.write(SOURCE_RECORD_TAG_HEADER + "\n")
                     handle.write(header + "\n")
+            if key == "sequence":
+                record_fields = record.split("\t")
+                if any(
+                    item.startswith(SOURCE_RECORD_TAG + "=")
+                    for item in record_fields[7].split(";")
+                ):
+                    raise VCFToolError(
+                        f"Input VCF record already contains reserved INFO tag {SOURCE_RECORD_TAG}."
+                    )
+                source_alts = record_fields[4].split(",")
+                source_payload = {
+                    "schema_version": "1",
+                    "source_record_index": source_record_index,
+                    "source_record_sha256": hashlib.sha256(record.encode("utf-8")).hexdigest(),
+                    "source_alt_count": len(source_alts),
+                    "normalized_alt_source_indexes": [
+                        index
+                        for index, alternate in enumerate(source_alts, start=1)
+                        if alternate not in GVCF_WILDCARD_ALLELES
+                    ],
+                }
+                encoded_payload = base64.urlsafe_b64encode(
+                    json.dumps(source_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).decode("ascii").rstrip("=")
+                source_info = f"{SOURCE_RECORD_TAG}={encoded_payload}"
+                record_fields[7] = (
+                    f"{record_fields[7]};{source_info}"
+                    if record_fields[7] not in {"", "."}
+                    else source_info
+                )
+                record = "\t".join(record_fields)
             handle.write(record + "\n")
             counts[key] += 1
 
@@ -134,6 +172,10 @@ def route_vcf_records(
             for raw in handle:
                 line = raw.rstrip("\r\n")
                 if line.startswith("#"):
+                    if line.startswith(f"##INFO=<ID={SOURCE_RECORD_TAG},"):
+                        raise VCFToolError(
+                            f"Input VCF already declares reserved INFO tag {SOURCE_RECORD_TAG}."
+                        )
                     headers.append(line)
                     if line.startswith("#CHROM\t"):
                         sample_count = max(0, len(line.split("\t")) - 9)
@@ -423,6 +465,188 @@ def _validate_csi_index_record_counts(
         "contigs": len(sequential_counts),
     }
 
+def _validate_source_child_reconciliation(source_path: Path, normalized_path: Path) -> dict:
+    """Validate one-to-one source-ALT mapping for normalized sequence children.
+
+    The router embeds an immutable source-record payload in SIRALOOM_SOURCE.
+    BCFtools' SIRALOOM_ORIG tag identifies the selected ALT in the prepared
+    pre-normalization record. These two tags are reconciled so wildcard trimming
+    cannot silently shift source ALT indexes.
+    """
+    def open_text(path: Path):
+        return gzip.open(path, "rt", encoding="utf-8-sig") if path.name.lower().endswith((".gz", ".bgz")) else path.open("r", encoding="utf-8-sig")
+
+    def info_tag(fields: list[str], tag: str) -> str | None:
+        values = [
+            item[len(tag) + 1:]
+            for item in fields[7].split(";")
+            if item.startswith(tag + "=")
+        ]
+        if len(values) > 1:
+            raise VCFToolError(f"Record contains duplicate {tag} INFO tags.")
+        return values[0] if values else None
+
+    def decode_source_payload(value: str) -> dict:
+        try:
+            padded = value + ("=" * (-len(value) % 4))
+            payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
+        except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise VCFToolError("SIRALOOM_SOURCE contains an invalid source payload.") from exc
+        if not isinstance(payload, dict) or payload.get("schema_version") != "1":
+            raise VCFToolError("SIRALOOM_SOURCE payload has an unsupported schema.")
+        return payload
+
+    source_header = None
+    with open_text(source_path) as handle:
+        for raw in handle:
+            line = raw.rstrip("\r\n")
+            if line.startswith("##INFO=<ID=SIRALOOM_SOURCE,"):
+                source_header = line
+                break
+            if line.startswith("#CHROM\t"):
+                break
+    if source_header is None:
+        with open_text(source_path) as handle:
+            for raw in handle:
+                line = raw.rstrip("\r\n")
+                if not line.startswith("#") and "SIRALOOM_SOURCE=" in line:
+                    raise VCFToolError(
+                        "SIRALOOM_SOURCE record tag is present without its header definition."
+                    )
+        return {
+            "status": "NOT_PROVIDED",
+            "method": "SIRALOOM_SOURCE_TAG_ABSENT",
+            "source_records": None,
+            "expected_child_records": None,
+            "normalized_child_records": None,
+            "balanced": None,
+        }
+    if source_header != SOURCE_RECORD_TAG_HEADER:
+        raise VCFToolError("SIRALOOM_SOURCE header does not match the SIRALOOM contract.")
+
+    expected: dict[int, dict] = {}
+    with open_text(source_path) as handle:
+        for raw in handle:
+            line = raw.rstrip("\r\n")
+            if line.startswith("##INFO=<ID=SIRALOOM_SOURCE,"):
+                continue
+            if line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            if len(fields) < 8:
+                raise VCFToolError("Source-mapped VCF contains a malformed record.")
+            value = info_tag(fields, SOURCE_RECORD_TAG)
+            if value is None:
+                raise VCFToolError("Source-mapped VCF record is missing SIRALOOM_SOURCE.")
+            payload = decode_source_payload(value)
+            try:
+                source_index = int(payload["source_record_index"])
+                source_alt_count = int(payload["source_alt_count"])
+                expected_indexes = payload["normalized_alt_source_indexes"]
+                source_hash = payload["source_record_sha256"]
+            except (KeyError, TypeError, ValueError) as exc:
+                raise VCFToolError("SIRALOOM_SOURCE payload is missing required source identity fields.") from exc
+            if (
+                source_index < 1
+                or source_alt_count != len(fields[4].split(","))
+                or not isinstance(expected_indexes, list)
+                or not all(isinstance(index, int) and not isinstance(index, bool) for index in expected_indexes)
+                or not re.fullmatch(r"[0-9a-f]{64}", str(source_hash))
+            ):
+                raise VCFToolError("SIRALOOM_SOURCE payload does not match its source VCF record.")
+            source_alts = fields[4].split(",")
+            actual_indexes = [
+                index
+                for index, alternate in enumerate(source_alts, start=1)
+                if alternate not in GVCF_WILDCARD_ALLELES
+            ]
+            if expected_indexes != actual_indexes or not actual_indexes:
+                raise VCFToolError("SIRALOOM_SOURCE ALT-index mapping is inconsistent with source alleles.")
+            if source_index in expected:
+                raise VCFToolError("SIRALOOM_SOURCE contains a duplicate source record index.")
+            info_items = fields[7].split(";")
+            if not info_items[-1].startswith(SOURCE_RECORD_TAG + "="):
+                raise VCFToolError("SIRALOOM_SOURCE must be the final INFO field for integrity verification.")
+            original_info_items = info_items[:-1]
+            fields[7] = ";".join(original_info_items) if original_info_items else "."
+            original_record = "\t".join(fields)
+            if hashlib.sha256(original_record.encode("utf-8")).hexdigest() != source_hash:
+                raise VCFToolError("SIRALOOM_SOURCE source-record SHA-256 does not match the original record.")
+            expected[source_index] = {
+                "payload": payload,
+                "alt_indexes": actual_indexes,
+                "prepared_alt_values": [source_alts[index - 1] for index in actual_indexes],
+            }
+
+    if not expected:
+        raise VCFToolError("Source-to-normalized reconciliation requires tagged source records.")
+
+    observed: set[tuple[int, int]] = set()
+    normalized_count = 0
+    with open_text(normalized_path) as handle:
+        for raw in handle:
+            line = raw.rstrip("\r\n")
+            if not line or line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            if len(fields) < 8:
+                raise VCFToolError("Normalized VCF contains a malformed record during source reconciliation.")
+            source_value = info_tag(fields, SOURCE_RECORD_TAG)
+            original_value = info_tag(fields, ORIGINAL_RECORD_TAG)
+            if source_value is None or original_value is None:
+                raise VCFToolError("Normalized child is missing required source ALT mapping tags.")
+            payload = decode_source_payload(source_value)
+            try:
+                source_index = int(payload["source_record_index"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise VCFToolError("Normalized child has an invalid source record index.") from exc
+            source = expected.get(source_index)
+            if source is None or payload != source["payload"]:
+                raise VCFToolError("Normalized child source identity does not match the routed source record.")
+            try:
+                original_fields = original_value.split("|", 4)
+                if len(original_fields) != 5:
+                    raise ValueError("expected five source mapping fields")
+                prepared_alts = original_fields[3].split(",")
+                used_alt_index = int(original_fields[4])
+                if (
+                    prepared_alts != source["prepared_alt_values"]
+                    or used_alt_index < 1
+                    or used_alt_index > len(prepared_alts)
+                ):
+                    raise ValueError("ALT index or prepared ALT list disagrees with source mapping")
+            except ValueError as exc:
+                raise VCFToolError("SIRALOOM_ORIG contains an invalid source ALT mapping.") from exc
+            mapping = (source_index, source["alt_indexes"][used_alt_index - 1])
+            if mapping in observed:
+                raise VCFToolError("Multiple normalized children map to the same source ALT.")
+            observed.add(mapping)
+            normalized_count += 1
+
+    expected_mappings = {
+        (source_index, alt_index)
+        for source_index, source in expected.items()
+        for alt_index in source["alt_indexes"]
+    }
+    if observed != expected_mappings:
+        missing = sorted(expected_mappings - observed)
+        unexpected = sorted(observed - expected_mappings)
+        raise VCFToolError(
+            "Source-to-normalized ALT reconciliation failed: "
+            f"missing={missing!r}, unexpected={unexpected!r}"
+        )
+
+    return {
+        "status": "VALIDATED",
+        "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
+        "source_records": len(expected),
+        "expected_child_records": len(expected_mappings),
+        "normalized_child_records": normalized_count,
+        "source_alt_mappings": len(observed),
+        "balanced": True,
+    }
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -572,6 +796,10 @@ def normalize_vcf_with_bcftools(
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
 
+        source_child_reconciliation = _validate_source_child_reconciliation(
+            input_path, sorted_path
+        )
+
         index_command = [bcftools_executable, "index", "--csi", "--force", str(sorted_path)]
         try:
             indexed_result = subprocess.run(
@@ -656,6 +884,7 @@ def normalize_vcf_with_bcftools(
             "index": "CSI",
             "index_path": str(index_path),
             "index_validation": index_validation,
+            "source_child_reconciliation": source_child_reconciliation,
             "gvcf_wildcard_command": "bcftools view -A",
             "stderr": "\n".join(x for x in (view_stderr, normalized_stderr, sorted_stderr, indexed_stderr) if x),
         }

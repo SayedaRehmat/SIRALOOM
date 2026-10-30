@@ -248,7 +248,19 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     variant = next(line for line in output_lines if not line.startswith("#"))
     fields = variant.rstrip("\n").split("\t")
     assert fields[4] == "G"
-    assert fields[7] == "AF=0.2;SIRALOOM_ORIG=1|2|A|G|1"
+    info_fields = fields[7].split(";")
+    assert info_fields[0] == "AF=0.2"
+    source_tag = next(value for value in info_fields if value.startswith("SIRALOOM_SOURCE="))
+    import base64
+    import json
+    payload_value = source_tag.split("=", 1)[1]
+    payload = json.loads(
+        base64.urlsafe_b64decode(payload_value + ("=" * (-len(payload_value) % 4)))
+    )
+    assert payload["source_record_index"] == 2
+    assert payload["source_alt_count"] == 2
+    assert payload["normalized_alt_source_indexes"] == [1]
+    assert "SIRALOOM_ORIG=1|2|A|G|1" in info_fields
     assert fields[8] == "GT:AD:PL"
     # Removing allele 2 retains PL entries for 0/0, 0/1, and 1/1; the
     # removed 0/2 and 1/2 likelihoods must not be reassigned to 1/1.
