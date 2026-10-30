@@ -131,9 +131,9 @@ def route_vcf_records(
                 handle = stack.enter_context(names[key].open("w", encoding="utf-8", newline="\n"))
                 handles[key] = handle
                 for header in headers:
-                    handle.write(header + "\n")
                     if key == "sequence" and header.startswith("#CHROM\t"):
                         handle.write(SOURCE_RECORD_TAG_HEADER + "\n")
+                    handle.write(header + "\n")
             if key == "sequence":
                 record_fields = record.split("\t")
                 source_alts = record_fields[4].split(",")
