@@ -376,6 +376,7 @@ async def upload_artifact(
             "specimen_id": str(artifact.specimen_id) if artifact.specimen_id else None,
             "paired_artifact_id": str(artifact.paired_artifact_id) if artifact.paired_artifact_id else None,
             "validation": validation_metadata["validation"],
+            "workflow_eligibility": validation_metadata.get("workflow_eligibility"),
             "capacity_preflight": capacity_preflight,
         }
 
