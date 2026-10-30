@@ -38,11 +38,11 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
         pytest.skip("PostgreSQL workflow integration requires DATABASE_URL")
     executable = shutil.which("bcftools")
     if executable is None:
-        pytest.skip("Pinned BCFtools 1.19 is required for this workflow integration")
+        pytest.skip("Pinned BCFtools 1.24 is required for this workflow integration")
     version = subprocess.run(
         [executable, "--version"], capture_output=True, text=True, check=True,
     ).stdout.splitlines()[0]
-    assert version == "bcftools 1.19"
+    assert version == "bcftools 1.24"
 
     import importlib
 
@@ -252,7 +252,7 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             assert normalization.metadata_json["routing"]["gvcf_reference_blocks"] == 1
             assert normalization.metadata_json["routing"]["sequence_records"] == 1
             assert normalized is not None and store.exists(normalized.storage_uri)
-            assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.19"
+            assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.24"
             assert "bcftools view --no-version -A" in normalized.metadata_json["normalization_command"]
             normalized_bytes = store.read_bytes(normalized.storage_uri)
             assert __import__("hashlib").sha256(normalized_bytes).hexdigest() == normalized.sha256
