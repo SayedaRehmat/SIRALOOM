@@ -49,12 +49,12 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.19",
+        expected_bcftools_version="1.24",
     )
 
     assert result["tool"] == "bcftools"
-    assert result["tool_version"] == "bcftools 1.19"
-    assert result["expected_tool_version"] == "1.19"
+    assert result["tool_version"] == "bcftools 1.24"
+    assert result["expected_tool_version"] == "1.24"
     assert result["reference_check"] == "error"
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
@@ -88,7 +88,7 @@ def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.19",
+            expected_bcftools_version="1.24",
         )
 
 
@@ -134,7 +134,7 @@ def test_failed_normalization_preserves_existing_vcf_and_index(tmp_path: Path):
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.19",
+            expected_bcftools_version="1.24",
         )
 
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
@@ -155,7 +155,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.19\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.24\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             if command[1] == "view":
@@ -180,7 +180,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.19",
+            expected_bcftools_version="1.24",
         )
 
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
@@ -378,7 +378,7 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.19",
+        expected_bcftools_version="1.24",
     )
 
     import gzip
@@ -432,7 +432,7 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.19",
+        expected_bcftools_version="1.24",
     )
 
     import gzip
