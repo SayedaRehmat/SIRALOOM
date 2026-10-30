@@ -47,7 +47,7 @@ def _configured_manifest(tmp_path: Path) -> Path:
         },
         "assets": assets,
         "toolchain": {
-            "bcftools_version": "1.19",
+            "bcftools_version": "1.24",
             "hap_py_version": "0.3.15",
         },
         "acceptance_policy": {
@@ -97,7 +97,7 @@ def test_giab_runner_rejects_asset_hash_drift(tmp_path):
             name: {"path": str(asset), "sha256": "0" * 64}
             for name in module.REQUIRED_ASSETS
         },
-        "toolchain": {"bcftools_version": "1.19", "hap_py_version": "0.3.15"},
+        "toolchain": {"bcftools_version": "1.24", "hap_py_version": "0.3.15"},
         "acceptance_policy": {
             "id": "LAB-POLICY-001",
             "approved_by": "test-reviewer",
@@ -184,7 +184,7 @@ def test_tool_version_pin_requires_version_command_output_match():
     module = _load_runner()
 
     module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "Hap.py v0.3.15\n"})
-    module.verify_version_pin("bcftools", "1.19", {"exit_code": 0, "output": "bcftools 1.19\nUsing htslib 1.19\n"})
+    module.verify_version_pin("bcftools", "1.24", {"exit_code": 0, "output": "bcftools 1.24\nUsing htslib 1.24\n"})
     with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
         module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "usage: hap.py"})
     with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
@@ -393,7 +393,7 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
     normalized = tmp_path / "normalized.vcf.gz"
     normalize_vcf_with_bcftools(
         production_routing["sequence_path"], normalized, reference_fasta=reference,
-        expected_bcftools_version="1.19",
+        expected_bcftools_version="1.24",
     )
 
     lineage = module.verify_normalization_derivation(
@@ -401,7 +401,7 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
         normalized_vcf=normalized,
         reference_fasta=reference,
         bcftools=shutil.which("bcftools"),
-        expected_version="1.19",
+        expected_version="1.24",
     )
 
     assert lineage["status"] == "REPRODUCED_RECORDS_MATCH"
@@ -449,5 +449,5 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
             normalized_vcf=tampered,
             reference_fasta=reference,
             bcftools=shutil.which("bcftools"),
-            expected_version="1.19",
+            expected_version="1.24",
         )
