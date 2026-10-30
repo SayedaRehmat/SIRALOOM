@@ -136,6 +136,13 @@ def route_vcf_records(
                     handle.write(header + "\n")
             if key == "sequence":
                 record_fields = record.split("\t")
+                if any(
+                    item.startswith(SOURCE_RECORD_TAG + "=")
+                    for item in record_fields[7].split(";")
+                ):
+                    raise VCFToolError(
+                        f"Input VCF record already contains reserved INFO tag {SOURCE_RECORD_TAG}."
+                    )
                 source_alts = record_fields[4].split(",")
                 source_payload = {
                     "schema_version": "1",
