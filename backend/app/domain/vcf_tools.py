@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import ExitStack
+from functools import lru_cache
 from pathlib import Path
 
 from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
@@ -647,13 +648,48 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
     }
 
 
-def _sha256_file(path: Path) -> str:
-    """Hash a reference artifact without loading it into memory."""
+@lru_cache(maxsize=64)
+def _sha256_file_cached(
+    path_string: str,
+    device: int,
+    inode: int,
+    size_bytes: int,
+    mtime_ns: int,
+    ctime_ns: int,
+) -> str:
+    """Cache a digest only for one exact filesystem identity."""
+    path = Path(path_string)
+    before = path.stat()
+    before_identity = (
+        before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns
+    )
+    if before_identity != (device, inode, size_bytes, mtime_ns, ctime_ns):
+        raise VCFToolError(f"Reference artifact changed before hashing: {path}")
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
+    after = path.stat()
+    after_identity = (
+        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns
+    )
+    if after_identity != before_identity:
+        raise VCFToolError(f"Reference artifact changed while hashing: {path}")
     return digest.hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    """Hash a reference artifact, caching only while its filesystem identity is unchanged."""
+    resolved = path.resolve()
+    stat = resolved.stat()
+    return _sha256_file_cached(
+        str(resolved),
+        stat.st_dev,
+        stat.st_ino,
+        stat.st_size,
+        stat.st_mtime_ns,
+        stat.st_ctime_ns,
+    )
 
 
 def _reference_artifact_identity(reference_fasta: Path) -> dict:
@@ -667,15 +703,32 @@ def _reference_artifact_identity(reference_fasta: Path) -> dict:
 
     identity_artifacts: dict[str, dict] = {}
     for role, artifact_path in artifacts.items():
-        if not artifact_path.is_file() or artifact_path.stat().st_size <= 0:
+        if not artifact_path.is_file():
             sidecar = "FASTA index" if role == "fai" else "BGZF FASTA index" if role == "gzi" else "reference FASTA"
             raise VCFToolError(
                 f"Required {sidecar} artifact is missing or empty: {artifact_path}"
             )
+        try:
+            before = artifact_path.stat()
+            if before.st_size <= 0:
+                sidecar = "FASTA index" if role == "fai" else "BGZF FASTA index" if role == "gzi" else "reference FASTA"
+                raise VCFToolError(
+                    f"Required {sidecar} artifact is missing or empty: {artifact_path}"
+                )
+            digest = _sha256_file(artifact_path)
+            after = artifact_path.stat()
+        except OSError as exc:
+            raise VCFToolError(f"Unable to attest reference artifact {artifact_path}: {exc}") from exc
+        if (
+            before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns
+        ) != (
+            after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns
+        ):
+            raise VCFToolError(f"Reference artifact changed while being attested: {artifact_path}")
         identity_artifacts[role] = {
             "path": str(artifact_path.resolve()),
-            "size_bytes": artifact_path.stat().st_size,
-            "sha256": _sha256_file(artifact_path),
+            "size_bytes": after.st_size,
+            "sha256": digest,
         }
     return {
         "method": "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS",
