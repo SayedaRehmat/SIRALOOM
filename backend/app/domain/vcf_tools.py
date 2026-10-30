@@ -499,16 +499,16 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
     source_header = None
     with open_text(source_path) as handle:
         for raw in handle:
-            line = raw.rstrip("\\r\\n")
+            line = raw.rstrip("\r\n")
             if line.startswith("##INFO=<ID=SIRALOOM_SOURCE,"):
                 source_header = line
                 break
-            if line.startswith("#CHROM\\t"):
+            if line.startswith("#CHROM\t"):
                 break
     if source_header is None:
         with open_text(source_path) as handle:
             for raw in handle:
-                line = raw.rstrip("\\r\\n")
+                line = raw.rstrip("\r\n")
                 if not line.startswith("#") and "SIRALOOM_SOURCE=" in line:
                     raise VCFToolError(
                         "SIRALOOM_SOURCE record tag is present without its header definition."
