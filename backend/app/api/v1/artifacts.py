@@ -103,16 +103,24 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
         raise HTTPException(status_code=404, detail="Case not found")
 
     before_status = case.status
-    vcf_statuses = db.scalars(
-        select(Artifact.validation_status).where(
+    vcf_rows = db.execute(
+        select(Artifact.validation_status, Artifact.metadata_json).where(
             Artifact.case_id == case_id,
             Artifact.artifact_type == ArtifactType.VCF,
         )
     ).all()
     case.status = case_status_after_vcf_upload(
         case.status,
-        has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
-        has_vcf=bool(vcf_statuses),
+        has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
+        has_vcf=bool(vcf_rows),
+        has_site_only_vcf=any(
+            status == "VALID_SITE_ONLY"
+            or (
+                isinstance(metadata, dict)
+                and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
+            )
+            for status, metadata in vcf_rows
+        ),
     )
     return case, before_status
 
@@ -325,16 +333,24 @@ async def upload_artifact(
                 case, before_status = _refresh_case_vcf_intake_status(db, case_id)
             elif primary:
                 # An optional index cannot change the primary VCF's intake state.
-                vcf_statuses = db.scalars(
-                    select(Artifact.validation_status).where(
+                vcf_rows = db.execute(
+                    select(Artifact.validation_status, Artifact.metadata_json).where(
                         Artifact.case_id == case_id,
                         Artifact.artifact_type == ArtifactType.VCF,
                     )
                 ).all()
                 case.status = case_status_after_vcf_upload(
                     case.status,
-                    has_valid_vcf=any(status == "VALID" for status in vcf_statuses),
-                    has_vcf=bool(vcf_statuses),
+                    has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
+                    has_vcf=bool(vcf_rows),
+                    has_site_only_vcf=any(
+                        status == "VALID_SITE_ONLY"
+                        or (
+                            isinstance(metadata, dict)
+                            and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
+                        )
+                        for status, metadata in vcf_rows
+                    ),
                 )
 
             audit = AuditService(db)
