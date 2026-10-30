@@ -781,7 +781,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 else:
                     genotype_ploidy = len(re.split(r"[/|]", sample_values[gt_index]))
                 local_allele_count: int | None = None
-                if fileformat == "VCFv4.5" and "LAA" in format_keys and "LAA" in sample_values[:len(format_keys)]:
+                if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
                     raw_laa = sample_values[format_keys.index("LAA")]
                     if raw_laa == ".":
                         local_allele_count = 1
