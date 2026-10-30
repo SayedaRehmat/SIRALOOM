@@ -390,7 +390,26 @@ def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int]
     return (start, end) if end >= start else None
 
 
-def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str] | None) -> tuple[str, int, list[str]]:
+def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str]:
+    """Parse GT tokens, including VCFv4.4+ leading phasing separators."""
+    value = gt
+    if fileformat in {"VCFv4.4", "VCFv4.5"} and value[:1] in {"/", "|"}:
+        value = value[1:]
+    tokens = re.split(r"[/|]", value)
+    if not value or any(token == "" for token in tokens):
+        raise StrictVCFValidationError(
+            f"Invalid GT separator/allele structure at line {line_no}: {gt!r}",
+            code="VCF_GENOTYPE_INVALID",
+        )
+    return tokens
+
+
+def _validate_record(
+    fields: list[str],
+    line_no: int,
+    reference_contigs: set[str] | None,
+    fileformat: str | None = None,
+) -> tuple[str, int, list[str]]:
     if len(fields) < 8:
         raise StrictVCFValidationError(f"Expected at least 8 VCF columns at line {line_no}", code="VCF_RECORD_INVALID")
     chrom, pos_text, identifier, ref, alt, qual, filt, info = fields[:8]
@@ -514,7 +533,7 @@ def _validate_record(fields: list[str], line_no: int, reference_contigs: set[str
             if "GT" in keys:
                 gt = values[keys.index("GT")]
                 if gt != ".":
-                    for allele_index in re.split(r"[|/]", gt):
+                    for allele_index in _gt_allele_tokens(gt, fileformat, line_no):
                         if allele_index == ".":
                             continue
                         try:
@@ -661,7 +680,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF record has {len(fields)} columns but the #CHROM header declares {expected} at line {line_no}",
                     code="VCF_RECORD_INVALID",
                 )
-            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs)
+            _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat)
             if _chrom != current_chrom:
                 if _chrom in closed_chroms:
                     raise StrictVCFValidationError(
@@ -782,7 +801,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 elif gt_index >= len(sample_values) or sample_values[gt_index] == ".":
                     genotype_ploidy = None
                 else:
-                    genotype_ploidy = len(re.split(r"[/|]", sample_values[gt_index]))
+                    genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
                 local_allele_count: int | None = None
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
                     raw_laa = sample_values[format_keys.index("LAA")]
@@ -834,7 +853,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     if gt == ".":
                         continue
                     try:
-                        called = {int(item) for item in re.split(r"[/|]", gt) if item != "."}
+                        called = {int(item) for item in _gt_allele_tokens(gt, fileformat, line_no) if item != "."}
                     except ValueError:
                         continue
                     if alt_index in called:
