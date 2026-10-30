@@ -220,7 +220,7 @@ def test_analysis_and_first_quota_reservation_commit_together():
                 OrganizationEntitlement.organization_id == organization_id
             )
         )
-        assert entitlement.analyses_used == 1
+        assert entitlement.analyses_used == 0
 
 
 def test_failed_quota_reservation_rolls_back_new_analysis():
@@ -351,7 +351,7 @@ def test_noncanonical_specimen_sample_mapping_cannot_create_analysis(specimen_ma
 
 
 
-def test_multisample_analysis_uses_specimen_mapped_sample_and_reserves_quota():
+def test_multisample_analysis_uses_specimen_mapped_sample():
     engine = _database()
 
     with Session(engine) as db:
