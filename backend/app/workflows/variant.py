@@ -1420,7 +1420,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         # those inputs are checked by the strict on-disk validator below.
         if input_artifact.artifact_type == "VCF":
             try:
-                validate_analysis_input_artifact(input_artifact, analysis.reference_build)
+                validate_analysis_input_artifact(
+                    input_artifact,
+                    analysis.reference_build,
+                    str(analysis.configuration.get("vcf_sample_name") or "") or None,
+                )
             except ValueError as exc:
                 raise RuntimeError(str(exc)) from exc
         elif input_artifact.artifact_type != "SOURCE_VCF":
@@ -2353,6 +2357,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             reference_build,
             partition_size,
             exclusion_stats=normalization_exclusions,
+            sample_name=str(analysis.configuration.get("vcf_sample_name") or "") or None,
         ):
             end = start + len(batch)
             partition_key = _batch_key(start, end)
@@ -2591,7 +2596,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 expected_count = int((normalization_step.metadata_json or {}).get("record_count", 0) or 0)
                 scheduler = PartitionScheduler(db)
                 worker_id = f"workflow:{analysis.id}"
-                for start, batch in _iter_variant_batches(normalized_path, reference_build, batch_limit):
+                for start, batch in _iter_variant_batches(
+                    normalized_path,
+                    reference_build,
+                    batch_limit,
+                    sample_name=str(analysis.configuration.get("vcf_sample_name") or "") or None,
+                ):
                     end = start + len(batch)
                     partition = db.scalar(select(AnalysisPartition).where(
                         AnalysisPartition.analysis_id == analysis.id,
@@ -3097,7 +3107,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         continue
 
                     for variant in iter_normalized_vcf(
-                        normalized_path, reference_build
+                        normalized_path,
+                        reference_build,
+                        sample_name=str(analysis.configuration.get("vcf_sample_name") or "") or None,
                     ):
                         batch_key = (
                             f"{provider.provider_id}:{variant.chromosome}:"
@@ -3300,7 +3312,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         )
                         db.commit()
 
-                        for variant in iter_normalized_vcf(normalized_path, reference_build):
+                        for variant in iter_normalized_vcf(
+                            normalized_path,
+                            reference_build,
+                            sample_name=str(analysis.configuration.get("vcf_sample_name") or "") or None,
+                        ):
                             batch_key = (
                                 f"secondary:{provider_name}:{variant.chromosome}:{variant.position}:"
                                 f"{variant.reference}:{variant.alternate}"
@@ -5530,13 +5546,14 @@ def _iter_variant_batches(
     genome_build: str,
     batch_size: int,
     *,
+    sample_name: str | None = None,
     exclusion_stats: dict[str, int] | None = None,
 ):
     """Yield (zero-based record start, bounded list) from a normalized VCF."""
     batch: list[CanonicalVariant] = []
     start = 0
     for variant in iter_normalized_vcf(
-        path, genome_build, exclusion_stats=exclusion_stats
+        path, genome_build, sample_name=sample_name, exclusion_stats=exclusion_stats
     ):
         batch.append(variant)
         if len(batch) >= batch_size:
