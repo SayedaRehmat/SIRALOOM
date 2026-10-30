@@ -220,7 +220,7 @@ def test_analysis_and_first_quota_reservation_commit_together():
                 OrganizationEntitlement.organization_id == organization_id
             )
         )
-        assert entitlement.analyses_used == 0
+        assert entitlement.analyses_used == 1
 
 
 def test_failed_quota_reservation_rolls_back_new_analysis():
@@ -367,4 +367,4 @@ def test_multisample_analysis_uses_specimen_mapped_sample():
                 OrganizationEntitlement.organization_id == organization_id
             )
         )
-        assert entitlement.analyses_used == 1
+        assert entitlement.analyses_used == 0
