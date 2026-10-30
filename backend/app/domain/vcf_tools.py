@@ -350,7 +350,7 @@ def _validate_csi_index_record_counts(
 
     indexed_counts: dict[str, int] = {}
     for line in (result.stdout or "").splitlines():
-        fields = line.split("\\t")
+        fields = line.split("\t")
         # BCFtools 1.24: CHROM, contig length (or "."), record count.
         if len(fields) != 3:
             raise VCFToolError("CSI index statistics returned a malformed contig row.")
