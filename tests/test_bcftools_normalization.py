@@ -72,7 +72,7 @@ def test_golden_snv_is_reference_checked_and_preserved(tmp_path: Path):
         tmp_path, "1\t2\t.\tA\tG\t.\tPASS\t.\n"
     )
     assert normalized == [("1", 2, "A", "G")]
-    mapped = list(iter_normalized_vcf(output, "GRCh38"))
+    mapped = list(iter_normalized_vcf(output, "GRCh38", sample_name="P"))
     assert [
         (variant.original_chromosome, variant.original_position,
          variant.original_reference, variant.original_alternate,
