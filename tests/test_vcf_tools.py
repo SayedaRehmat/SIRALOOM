@@ -56,6 +56,16 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert result["tool_version"] == "bcftools 1.24"
     assert result["expected_tool_version"] == "1.24"
     assert result["reference_check"] == "error"
+    reference_identity = result["reference_identity"]
+    assert reference_identity["method"] == "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS"
+    assert reference_identity["artifacts"]["fasta"]["sha256"] == hashlib.sha256(
+        fasta.read_bytes()
+    ).hexdigest()
+    fai_path = Path(str(fasta) + ".fai")
+    assert reference_identity["artifacts"]["fai"]["sha256"] == hashlib.sha256(
+        fai_path.read_bytes()
+    ).hexdigest()
+    assert reference_identity["artifacts"]["fasta"]["size_bytes"] == fasta.stat().st_size
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
     assert "--multi-overlaps 0" in result["command"]
