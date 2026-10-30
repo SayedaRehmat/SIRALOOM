@@ -878,3 +878,67 @@ def test_reference_validation_rejects_vcf_contig_length_disagreement(tmp_path):
         validate_vcf_reference_alleles(source, fasta)
 
     assert exc.value.code == "VCF_CONTIG_LENGTH_MISMATCH"
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, version: str):
+    path = tmp_path / f"{version}.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["fileformat"] == version
+    assert profile["records"] == 1
+
+
+def test_vcf45_local_allele_cardinality_is_validated(tmp_path: Path):
+    path = tmp_path / "local-alleles-v45.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
+        '##FORMAT=<ID=PP,Number=P,Type=Integer,Description="Per-ploidy values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:PP\t0/2:2:20,10:0,50,100:12,13\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["fileformat"] == "VCFv4.5"
+    assert profile["records"] == 1
+
+
+def test_vcf45_local_allele_fields_reject_out_of_range_laa_index(tmp_path: Path):
+    path = tmp_path / "bad-local-alleles-v45.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:LAD\t0/1:3:20,10\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+
+
+def test_vcf44_rejects_vcf45_only_local_allele_cardinality(tmp_path: Path):
+    path = tmp_path / "local-alleles-v44.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tLAD\t20,10\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
