@@ -71,6 +71,41 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
 
 
+def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_path: Path):
+    require_bcftools()
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    fasta = make_reference(tmp_path)
+    source = tmp_path / "source.vcf"
+    routed_dir = tmp_path / "routed"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "##contig=<ID=1,length=7>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t4\\t.\\tAA\\tA,C\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, routed_dir)
+    result = normalize_vcf_with_bcftools(
+        routed["sequence_path"],
+        output_vcf,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result["source_child_reconciliation"] == {
+        "status": "VALIDATED",
+        "method": "IMMUTABLE_SOURCE_PAYLOAD_VS_BCFTOOLS_OLD_RECORD_ALT_MAPPING",
+        "source_records": 1,
+        "expected_child_records": 2,
+        "normalized_child_records": 2,
+        "source_alt_mappings": 2,
+        "balanced": True,
+    }
+
+
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
     require_bcftools()
     fasta = make_reference(tmp_path)
