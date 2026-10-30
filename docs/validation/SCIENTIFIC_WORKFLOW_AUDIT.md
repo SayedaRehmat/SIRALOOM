@@ -66,8 +66,8 @@ The following are mandatory before claiming a complete clinically qualified work
 
 1. **Supported-method registry:** each active method has intended use, source guidance, algorithm/version, required inputs, known limitations, output semantics, resource dependencies, validation set, acceptance criteria, approval authority and retirement/change-control policy.
 2. **Criterion golden corpus:** source-cited positive, negative, borderline, conflicting, missing, malformed, transcript-dependent, population-dependent and unsupported cases for every automated criterion and enabled ClinGen specification.
-3. **Pedigree/segregation validation corpus:** curated pedigrees spanning supported inheritance modes, affected/unaffected relatives, age-dependent penetrance, de novo parental testing, phase/compound heterozygosity, sex/chromosome context, missing family members, uncertain relationships and contradictory observations. Expected results must be independently adjudicated.
-4. **Phenotype validation corpus:** versioned patient phenotypes and disease annotations with PRESENT/ABSENT/EXCLUDED/UNKNOWN/NOT_ASSESSED states, HPO term migrations, discordance cases, and independent expected ranking/interpretation if a ranking model is enabled.
+3. **Pedigree/segregation validation corpus:** curated pedigrees spanning supported inheritance modes, affected/unaffected relatives, age-dependent penetrance, de novo parental testing, phase/compound heterozygosity, sex/chromosome context, missing family members, uncertain relationships and contradictory observations. Expected results must be independently adjudicated. The rule contract must implement applicable ClinGen SVI PP1/BS4/PP4 guidance and the selected gene–disease-specific CSpec; do not use a universal count-of-relatives threshold. The ClinGen guidance explicitly discusses locus heterogeneity, phenocopies, penetrance, and cases where formal linkage analysis is needed.
+4. **Phenotype validation corpus:** versioned patient phenotypes and disease annotations with PRESENT/ABSENT/EXCLUDED/UNKNOWN/NOT_ASSESSED states, HPO term migrations, discordance cases, and independent expected ranking/interpretation if a ranking model is enabled. If adopting a method such as Exomiser/PhenoDigm, integrate a pinned upstream implementation and its licensed/versioned data resources rather than inventing a new overlap score; treat it as a prioritization method that still requires lab-specific validation, not an official classification standard.
 5. **Functional/computational validation corpus:** predictor-specific score calibration and known-answer cases for the exact provider/model/plugin versions; no generic thresholds or cross-model score substitution.
 6. **Literature governance:** retrieved records and manual curation are separate artifacts; each interpretive assertion cites exact source records and the curator/reviewer, evidence type, condition, variant/transcript and limitations.
 7. **Population validation:** exact build/allele matching, AC/AN/AF semantics, population/cohort identity, ancestry limitations, missingness and source-version checks.
@@ -96,7 +96,10 @@ Never equate CI success with scientific validation.
 - ClinGen Variant Classification Guidance: https://www.clinicalgenome.org/tools/clingen-variant-classification-guidance/
 - ClinGen Criteria Specification Registry: https://cspec.clinicalgenome.org/cspec/ui/svi/
 - ClinGen Gene-Disease Validity resources: https://clinicalgenome.org/curation-activities/gene-disease-validity/
+- ClinGen SVI guidance for PP1/BS4 co-segregation and PP4 phenotype specificity: https://www.clinicalgenome.org/docs/clingen-guidance-for-use-of-the-pp1-bs4-co-segregation-and-pp4-phenotype-specificity-criteria-for-sequence-variant/
+- ClinGen Criteria Specification Registry (example disease-specific PP1 thresholds and cautions): https://cspec.clinicalgenome.org/cspec/ui/svi/doc/GN102
 - Human Phenotype Ontology and HPOA: https://hpo.jax.org/
+- Exomiser documentation (established research prioritization software; not a regulatory or classification standard): https://exomiser.readthedocs.io/en/14.0.1/index.html
 - Ensembl Variant Effect Predictor: https://www.ensembl.org/info/docs/tools/vep/index.html
 - gnomAD: https://gnomad.broadinstitute.org/
 - ClinVar: https://www.ncbi.nlm.nih.gov/clinvar/
