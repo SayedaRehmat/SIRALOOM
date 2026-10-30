@@ -132,7 +132,13 @@ def parse_vcf(
 def _zygosity(genotype: str | None) -> str:
     if not genotype or genotype == ".":
         return "NO_CALL"
+    # VCFv4.4+ permits a leading phase separator before the first allele.
+    # Strict version-aware validation decides whether the input version permits it.
+    if genotype[:1] in {"/", "|"}:
+        genotype = genotype[1:]
     alleles = re.split(r"[/|]", genotype)
+    if not genotype or any(allele == "" for allele in alleles):
+        return "INVALID_CALL"
     if not alleles:
         return "INVALID_CALL"
     if all(allele == "." for allele in alleles):
