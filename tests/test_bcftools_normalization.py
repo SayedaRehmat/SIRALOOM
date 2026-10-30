@@ -43,7 +43,7 @@ def write_vcf(path: Path, records: str) -> None:
 def records(path: Path):
     return [
         (r.chrom, r.pos, r.ref, r.alt)
-        for r in parse_vcf(str(path))
+        for r in parse_vcf(str(path), allow_unselected_multisample=True)
     ]
 
 
@@ -72,7 +72,7 @@ def test_golden_snv_is_reference_checked_and_preserved(tmp_path: Path):
         tmp_path, "1\t2\t.\tA\tG\t.\tPASS\t.\n"
     )
     assert normalized == [("1", 2, "A", "G")]
-    mapped = list(iter_normalized_vcf(output, "GRCh38", sample_name="P"))
+    mapped = list(iter_normalized_vcf(output, "GRCh38"))
     assert [
         (variant.original_chromosome, variant.original_position,
          variant.original_reference, variant.original_alternate,
@@ -145,7 +145,7 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
         "1|2|A|C,G|1",
         "1|2|A|C,G|2",
     ]
-    mapped = list(iter_normalized_vcf(output, "GRCh38"))
+    mapped = list(iter_normalized_vcf(output, "GRCh38", sample_name="P"))
     assert [
         (row.original_chromosome, row.original_position, row.original_reference,
          row.original_alternate, row.original_alt_index)
