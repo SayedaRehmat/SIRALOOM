@@ -123,7 +123,9 @@ def parse_vcf(
                         # future FORMAT fields for traceability rather than
                         # silently dropping data that the interpretation layer
                         # may need to evaluate or review.
-                        "format_values": dict(call_fields),
+                        "format_values": {
+                            key: value for key, value in call_fields.items() if key != "GT"
+                        },
                         "status": (
                             "AVAILABLE"
                             if genotype and _zygosity(genotype) not in {
