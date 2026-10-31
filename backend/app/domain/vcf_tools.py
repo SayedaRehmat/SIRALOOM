@@ -247,6 +247,8 @@ MNV_POLICY = "PRESERVE"
 MULTIALLELIC_POLICY = "SPLIT_WITH_BCFTOOLS"
 MULTIALLELIC_OVERLAP_POLICY = "MISSING_OTHER_ALT"
 ORIGINAL_RECORD_TAG = "SIRALOOM_ORIG"
+SOURCE_GT_FORMAT_TAG = "SIRALOOM_SOURCE_GT"
+SOURCE_ALT_COUNT_FORMAT_TAG = "SIRALOOM_SOURCE_ALT_COUNT"
 
 
 class VCFToolError(RuntimeError):
@@ -353,6 +355,8 @@ def normalize_vcf_with_bcftools(
     has_existing_source_mapping = _reject_original_record_tag_collision(
         input_path, allow_existing=preserve_existing_source_mapping
     )
+    if has_existing_source_mapping:
+        _validate_existing_source_genotype_fields(input_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     index_path = Path(str(output_path) + ".csi")
 
@@ -550,17 +554,25 @@ def normalize_vcf_with_bcftools(
 
 
 def _write_original_record_info_header(source: Path, destination: Path) -> str:
-    """Declare source mapping and tag biallelic rows before normalization.
+    """Attach immutable source-GT provenance before BCFtools splits ALT alleles.
 
-    BCFtools emits ``--old-rec-tag`` when it splits or changes a record, but
-    unchanged biallelic rows may have no old-record tag. Pre-tagging only
-    biallelic rows covers that case; multiallelic rows are left for BCFtools so
-    each split child receives its own correct source ALT index.
+    BCFtools rewrites GT when a multiallelic record is split. The selected ALT
+    remains in GT and non-selected ALTs become missing under the conservative
+    overlap policy. These Number=1 FORMAT fields preserve the pre-split GT and
+    original ALT count on every emitted child record.
     """
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
-    header_line = (
+    info_header_line = (
         '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,'
-        'Description="Original source record CHROM|POS|REF|ALT|USED_ALT_IDX">\n'
+        'Description="Original source record CHROM|POS|REF|ALT|USED_ALT_IDX">\\n'
+    )
+    source_gt_header_line = (
+        '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,'
+        'Description="Original sample GT before SIRALOOM per-ALT splitting">\\n'
+    )
+    source_alt_count_header_line = (
+        '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,'
+        'Description="Number of ALT alleles in the source record before splitting">\\n'
     )
     found_chrom_header = False
     with opener(source, "rt", encoding="utf-8-sig") as input_handle, destination.open(
@@ -568,17 +580,42 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
     ) as output_handle:
         for line in input_handle:
             if line.startswith("#CHROM"):
-                output_handle.write(header_line)
+                output_handle.write(info_header_line)
+                output_handle.write(source_gt_header_line)
+                output_handle.write(source_alt_count_header_line)
                 found_chrom_header = True
                 output_handle.write(line)
                 continue
             if line.startswith("#"):
                 output_handle.write(line)
                 continue
-            fields = line.rstrip("\r\n").split("\t")
+            fields = line.rstrip("\\r\\n").split("\\t")
             if len(fields) < 8:
                 raise VCFToolError("Cannot add source mapping to a malformed prepared VCF record.")
-            if len(fields[4].split(",")) == 1:
+
+            alternate_count = len(fields[4].split(","))
+            if len(fields) > 9:
+                format_keys = [] if fields[8] in {"", "."} else fields[8].split(":")
+                if SOURCE_GT_FORMAT_TAG in format_keys or SOURCE_ALT_COUNT_FORMAT_TAG in format_keys:
+                    raise VCFToolError("Input VCF uses a reserved SIRALOOM source-genotype FORMAT tag.")
+                gt_index = format_keys.index("GT") if "GT" in format_keys else None
+                updated_samples: list[str] = []
+                for sample_value in fields[9:]:
+                    values = [] if sample_value in {"", "."} and not format_keys else sample_value.split(":")
+                    if len(values) > len(format_keys):
+                        raise VCFToolError("Cannot preserve source GT from a malformed sample FORMAT value.")
+                    values.extend(["."] * (len(format_keys) - len(values)))
+                    source_gt = values[gt_index] if gt_index is not None else "."
+                    values.extend([source_gt, str(alternate_count)])
+                    updated_samples.append(":".join(values))
+                fields[8] = ":".join([
+                    *format_keys,
+                    SOURCE_GT_FORMAT_TAG,
+                    SOURCE_ALT_COUNT_FORMAT_TAG,
+                ])
+                fields[9:] = updated_samples
+
+            if alternate_count == 1:
                 try:
                     position = int(fields[1])
                 except ValueError as exc:
@@ -591,14 +628,62 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
                     if fields[7] not in {"", "."}
                     else f"SIRALOOM_ORIG={source_value}"
                 )
-                output_handle.write("\t".join(fields) + "\n")
-            else:
-                output_handle.write(line)
+            output_handle.write("\\t".join(fields) + "\\n")
     if not found_chrom_header:
         destination.unlink(missing_ok=True)
         raise VCFToolError("Cannot declare source mapping: prepared VCF has no #CHROM header.")
-    return "inject reserved SIRALOOM_ORIG header and source mappings for biallelic rows"
+    return (
+        "inject reserved SIRALOOM_ORIG source mappings and "
+        "SIRALOOM_SOURCE_GT/SIRALOOM_SOURCE_ALT_COUNT FORMAT provenance"
+    )
 
+
+def _validate_existing_source_genotype_fields(input_path: Path) -> None:
+    """Reject re-normalization when the immutable source genotype lineage is absent."""
+    opener = gzip.open if input_path.name.lower().endswith((".gz", ".bgz")) else open
+    definitions: set[str] = set()
+    header_columns: int | None = None
+    with opener(input_path, "rt", encoding="utf-8-sig") as handle:
+        for line in handle:
+            if line.startswith("##FORMAT=<ID="):
+                tag = line.split("##FORMAT=<ID=", 1)[1].split(",", 1)[0]
+                if tag in {SOURCE_GT_FORMAT_TAG, SOURCE_ALT_COUNT_FORMAT_TAG}:
+                    definitions.add(tag)
+            elif line.startswith("#CHROM"):
+                header_columns = len(line.rstrip("\\r\\n").split("\\t"))
+                break
+    if definitions != {SOURCE_GT_FORMAT_TAG, SOURCE_ALT_COUNT_FORMAT_TAG}:
+        raise VCFToolError(
+            "Existing normalized VCF lacks the complete SIRALOOM source-genotype provenance contract."
+        )
+    if header_columns is None:
+        raise VCFToolError("Existing source-mapping VCF is missing its #CHROM header.")
+
+    sample_count = max(0, header_columns - 9)
+    if sample_count == 0:
+        return
+    with opener(input_path, "rt", encoding="utf-8-sig") as handle:
+        for line in handle:
+            if not line or line.startswith("#"):
+                continue
+            fields = line.rstrip("\\r\\n").split("\\t")
+            if len(fields) != header_columns or len(fields) < 10:
+                raise VCFToolError("Existing source-genotype VCF has a malformed record.")
+            format_keys = fields[8].split(":")
+            if SOURCE_GT_FORMAT_TAG not in format_keys or SOURCE_ALT_COUNT_FORMAT_TAG not in format_keys:
+                raise VCFToolError("Existing normalized record is missing source-genotype FORMAT fields.")
+            gt_index = format_keys.index(SOURCE_GT_FORMAT_TAG)
+            count_index = format_keys.index(SOURCE_ALT_COUNT_FORMAT_TAG)
+            for sample_value in fields[9:]:
+                values = sample_value.split(":")
+                if max(gt_index, count_index) >= len(values):
+                    raise VCFToolError("Existing normalized sample is missing source-genotype FORMAT values.")
+                try:
+                    alt_count = int(values[count_index])
+                except ValueError as exc:
+                    raise VCFToolError("Existing normalized sample has an invalid source ALT count.") from exc
+                if alt_count < 1:
+                    raise VCFToolError("Existing normalized sample has a non-positive source ALT count.")
 
 def _reject_original_record_tag_collision(input_path: Path, *, allow_existing: bool) -> bool:
     opener = gzip.open if input_path.name.lower().endswith((".gz", ".bgz")) else open
