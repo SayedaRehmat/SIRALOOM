@@ -2183,6 +2183,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         temp_path,
                         reference_fasta=reference_fasta_path,
                         expected_bcftools_version=settings.bcftools_version,
+                        source_only_format_fields=package_profile.get("base_modification_format_fields", []),
                     )
                     response_sha256 = sha256_file(temp_path)
                     complete_resource_execution(
