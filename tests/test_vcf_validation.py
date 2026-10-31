@@ -1189,7 +1189,9 @@ def test_vcf45_reserved_base_modification_aliases_need_no_header_definitions(tmp
         version="VCFv4.5",
     )
 
-    assert validate_vcf_strict(path)["records"] == 1
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+    assert profile["base_modification_format_fields"] == ["M5mC"]
 
 
 def test_vcf45_reserved_depth_aliases_need_no_header_definitions(tmp_path: Path):
