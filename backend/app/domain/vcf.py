@@ -1,4 +1,6 @@
+import base64
 import gzip
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Iterator
@@ -9,6 +11,7 @@ from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
 SOURCE_GT_FORMAT_TAG = "SIRALOOM_SOURCE_GT"
 SOURCE_ALT_COUNT_FORMAT_TAG = "SIRALOOM_SOURCE_ALT_COUNT"
 SOURCE_RECORD_INFO_TAG = "SIRALOOM_ORIG"
+SOURCE_ROUTING_INFO_TAG = "SIRALOOM_SOURCE"
 
 
 @dataclass(frozen=True)
@@ -107,6 +110,15 @@ def parse_vcf(
                 # until the pinned reference verifies the declared length.
                 continue
             source_mapping = _source_record_mapping(fields[7])
+            source_lineage = _source_record_lineage(fields[7])
+            if (
+                source_mapping is not None
+                and source_lineage is not None
+                and source_mapping[1] != len(source_lineage["normalized_alt_source_indexes"])
+            ):
+                raise VCFValidationError(
+                    f"SIRALOOM_ORIG ALT count disagrees with {SOURCE_ROUTING_INFO_TAG} at line {line_no}"
+                )
             sample_calls: dict[str, dict] = {}
             if len(fields) > 8 and sample_names:
                 format_keys = [] if fields[8] in {"", "."} else fields[8].split(":")
@@ -169,6 +181,9 @@ def parse_vcf(
                         "normalized_genotype": genotype,
                         "source_alt_index": source_mapping[0] if source_mapping else None,
                         "source_alt_count": source_alt_count,
+                        "source_record_index": source_lineage["source_record_index"] if source_lineage else None,
+                        "source_record_sha256": source_lineage["source_record_sha256"] if source_lineage else None,
+                        "original_source_alt_count": source_lineage["source_alt_count"] if source_lineage else None,
                         "zygosity": source_zygosity,
                         "source_zygosity": source_zygosity,
                         "normalized_zygosity": _zygosity(genotype),
@@ -192,12 +207,68 @@ def parse_vcf(
                     }
             alt_alleles = alt.split(",")
             for source_alt_index, alt_allele in enumerate(alt_alleles, start=1):
+                routed_source_alt_index = (
+                    source_mapping[0] if source_mapping is not None else source_alt_index
+                )
                 per_alt_calls = _sample_calls_for_alt(
                     sample_calls,
                     source_alt_index=source_alt_index,
                     source_alt_count=len(alt_alleles),
                 )
+                original_source_alt_index = (
+                    source_lineage["normalized_alt_source_indexes"][routed_source_alt_index - 1]
+                    if source_lineage is not None
+                    else None
+                )
+                for call in per_alt_calls.values():
+                    call["original_source_alt_index"] = original_source_alt_index
                 yield VCFRecord(chrom, pos, ref, alt_allele, line, per_alt_calls)
+
+
+def _source_record_lineage(info: str) -> dict | None:
+    """Decode the router's immutable mapping from routed ALT indexes to raw source ALT indexes."""
+    values = [
+        item.partition("=")[2]
+        for item in info.split(";")
+        if item.partition("=")[0] == SOURCE_ROUTING_INFO_TAG
+    ]
+    if not values:
+        return None
+    if len(values) != 1:
+        raise VCFValidationError("VCF record has duplicate SIRALOOM_SOURCE lineage payloads")
+    encoded = values[0]
+    try:
+        padded = encoded + ("=" * (-len(encoded) % 4))
+        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")))
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise VCFValidationError("VCF record has malformed SIRALOOM_SOURCE lineage payload") from exc
+    if not isinstance(payload, dict) or payload.get("schema_version") != "1":
+        raise VCFValidationError("VCF record has an unsupported SIRALOOM_SOURCE lineage schema")
+    try:
+        source_record_index = int(payload["source_record_index"])
+        source_alt_count = int(payload["source_alt_count"])
+        indexes = payload["normalized_alt_source_indexes"]
+        source_record_sha256 = payload["source_record_sha256"]
+    except (KeyError, TypeError, ValueError) as exc:
+        raise VCFValidationError("VCF record has incomplete SIRALOOM_SOURCE lineage fields") from exc
+    if (
+        source_record_index < 1
+        or source_alt_count < 1
+        or not isinstance(indexes, list)
+        or not indexes
+        or any(not isinstance(index, int) or isinstance(index, bool) for index in indexes)
+        or len(set(indexes)) != len(indexes)
+        or any(index < 1 or index > source_alt_count for index in indexes)
+        or not isinstance(source_record_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", source_record_sha256) is None
+    ):
+        raise VCFValidationError("VCF record has invalid SIRALOOM_SOURCE lineage values")
+    return {
+        "source_record_index": source_record_index,
+        "source_record_sha256": source_record_sha256,
+        "source_alt_count": source_alt_count,
+        "normalized_alt_source_indexes": indexes,
+    }
 
 
 def _source_record_mapping(info: str) -> tuple[int, int] | None:
