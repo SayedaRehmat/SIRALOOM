@@ -568,11 +568,11 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
     )
     source_gt_header_line = (
         '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,'
-        'Description="Original sample GT before SIRALOOM per-ALT splitting">\n'
+        'Description="Sample GT on routed sequence input before SIRALOOM per-ALT splitting">\n'
     )
     source_alt_count_header_line = (
         '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,'
-        'Description="Number of ALT alleles in the source record before splitting">\n'
+        'Description="Number of ALT alleles in routed sequence input before splitting">\n'
     )
     found_chrom_header = False
     with opener(source, "rt", encoding="utf-8-sig") as input_handle, destination.open(
@@ -653,8 +653,8 @@ def _validate_existing_source_genotype_fields(input_path: Path) -> None:
                 header_columns = len(line.rstrip("\r\n").split("\t"))
                 break
     expected_definitions = {
-        SOURCE_GT_FORMAT_TAG: '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Original sample GT before SIRALOOM per-ALT splitting">',
-        SOURCE_ALT_COUNT_FORMAT_TAG: '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Number of ALT alleles in the source record before splitting">',
+        SOURCE_GT_FORMAT_TAG: '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Sample GT on routed sequence input before SIRALOOM per-ALT splitting">',
+        SOURCE_ALT_COUNT_FORMAT_TAG: '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Number of ALT alleles in routed sequence input before splitting">',
     }
     if definitions != expected_definitions:
         raise VCFToolError(
