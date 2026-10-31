@@ -150,12 +150,12 @@ def _sample_calls_for_alt(
     source_alt_index: int,
     source_alt_count: int,
 ) -> dict[str, dict]:
-    """Project source genotypes onto one ALT while retaining the original call.
+    """Add a lossless per-ALT dosage projection without inventing REF alleles.
 
-    This is a per-ALT interpretation projection, not a rewritten VCF record.
-    The selected ALT is mapped to 1, REF and other ALT alleles to 0, matching
-    the declared multiallelic overlap policy. Original genotype and FORMAT
-    values remain in source-allele space for evidence and traceability.
+    The source GT and FORMAT values remain authoritative and unchanged. A
+    conventional biallelic GT is emitted only when every called source allele
+    is either REF or this record's selected ALT. Other ALT alleles are kept as
+    OTHER_ALT states and make the conventional projection unavailable.
     """
     projected: dict[str, dict] = {}
     for sample_name, source_call in sample_calls.items():
@@ -164,49 +164,80 @@ def _sample_calls_for_alt(
         call["source_genotype"] = source_genotype
         call["source_alt_index"] = source_alt_index
         call["source_alt_count"] = source_alt_count
-        if source_genotype:
-            # Preserve phase separators (including VCFv4.4+ leading separators)
-            # while remapping allele indices: REF -> 0, selected ALT -> 1,
-            # and other ALT alleles -> 0 under the declared overlap policy.
-            tokens = re.split(r"([/|])", source_genotype)
-            remapped_tokens: list[str] = []
-            for token in tokens:
-                if token in {"/", "|"} or token == "" or token == ".":
-                    remapped_tokens.append(token)
-                    continue
-                if token.isdigit():
-                    allele_index = int(token)
-                    if allele_index == 0:
-                        remapped_tokens.append("0")
-                    elif 1 <= allele_index <= source_alt_count:
-                        remapped_tokens.append("1" if allele_index == source_alt_index else "0")
+        call.update({
+            "projected_genotype": None,
+            "projected_zygosity": None,
+            "projected_phase": call.get("phase", "UNSPECIFIED"),
+            "projected_status": "GENOTYPE_UNAVAILABLE",
+            "projection_status": "GENOTYPE_UNAVAILABLE",
+            "reference_allele_dosage": 0,
+            "selected_alt_dosage": 0,
+            "other_alt_dosage": 0,
+            "missing_allele_count": 0,
+            "projected_allele_states": [],
+        })
+        if source_genotype is None or source_genotype == "":
+            projected[sample_name] = call
+            continue
+
+        tokens = re.split(r"([/|])", source_genotype)
+        allele_positions = [i for i, token in enumerate(tokens) if token not in {"/", "|"}]
+        projected_tokens = list(tokens)
+        states: list[str] = []
+        contains_other_alt = False
+        invalid_source_gt = False
+        for token_index in allele_positions:
+            token = tokens[token_index]
+            if token in {"", "."}:
+                state = "MISSING"
+                call["missing_allele_count"] += 1
+                projected_tokens[token_index] = "."
+            elif token.isdigit():
+                allele_index = int(token)
+                if allele_index == 0:
+                    state = "REFERENCE"
+                    call["reference_allele_dosage"] += 1
+                    projected_tokens[token_index] = "0"
+                elif 1 <= allele_index <= source_alt_count:
+                    if allele_index == source_alt_index:
+                        state = "SELECTED_ALT"
+                        call["selected_alt_dosage"] += 1
+                        projected_tokens[token_index] = "1"
                     else:
-                        # Keep invalid indices visible for strict validation or
-                        # explicit review; do not silently reinterpret them.
-                        remapped_tokens.append(token)
+                        state = "OTHER_ALT"
+                        call["other_alt_dosage"] += 1
+                        contains_other_alt = True
+                        # Never encode a different ALT as reference or missing.
+                        projected_tokens[token_index] = token
                 else:
-                    remapped_tokens.append(token)
-            projected_genotype = "".join(remapped_tokens)
-            # Keep genotype/zygosity/phase/status in the original source-allele
-            # space. A per-ALT GT projection is an additional interpretation,
-            # not a replacement for the source call: FORMAT values such as AD
-            # (Number=R) and PL (Number=G) remain indexed to the original ALT list.
+                    state = "INVALID"
+                    invalid_source_gt = True
+                    projected_tokens[token_index] = token
+            else:
+                state = "INVALID"
+                invalid_source_gt = True
+                projected_tokens[token_index] = token
+            states.append(state)
+
+        call["projected_allele_states"] = states
+        if invalid_source_gt:
+            call["projection_status"] = "INVALID_SOURCE_GT"
+            call["projected_status"] = "INVALID_SOURCE_GT"
+        elif contains_other_alt:
+            call["projection_status"] = "CONTAINS_OTHER_ALT"
+            call["projected_status"] = "CONTAINS_OTHER_ALT"
+        else:
+            projected_genotype = "".join(projected_tokens)
             call["projected_genotype"] = projected_genotype
             call["projected_zygosity"] = _zygosity(projected_genotype)
-            call["projected_phase"] = (
-                "PARTIALLY_PHASED"
-                if "|" in projected_genotype and "/" in projected_genotype
-                else "PHASED" if "|" in projected_genotype
-                else "UNPHASED" if "/" in projected_genotype
-                else "UNSPECIFIED"
-            )
-            call["projected_status"] = (
-                "AVAILABLE"
-                if projected_genotype and _zygosity(projected_genotype) not in {
-                    "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
-                }
-                else "MISSING_OR_PARTIAL"
-            )
+            if call["missing_allele_count"] == len(allele_positions):
+                status = "NO_CALL"
+            elif call["missing_allele_count"]:
+                status = "PARTIAL_CALL"
+            else:
+                status = "AVAILABLE"
+            call["projection_status"] = status
+            call["projected_status"] = status
         projected[sample_name] = call
     return projected
 
