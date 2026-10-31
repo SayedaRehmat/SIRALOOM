@@ -6,6 +6,10 @@ from typing import Iterator
 from backend.app.domain.schemas import CanonicalVariant
 from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
 
+SOURCE_GT_FORMAT_TAG = "SIRALOOM_SOURCE_GT"
+SOURCE_ALT_COUNT_FORMAT_TAG = "SIRALOOM_SOURCE_ALT_COUNT"
+SOURCE_RECORD_INFO_TAG = "SIRALOOM_ORIG"
+
 
 @dataclass(frozen=True)
 class VCFRecord:
@@ -25,6 +29,18 @@ def open_text(path: str):
     if path.endswith((".gz", ".bgz")):
         return gzip.open(path, "rt", encoding="utf-8")
     return open(path, "rt", encoding="utf-8")
+
+def _phase_status(genotype: str | None) -> str:
+    if not genotype:
+        return "UNSPECIFIED"
+    if "|" in genotype and "/" in genotype:
+        return "PARTIALLY_PHASED"
+    if "|" in genotype:
+        return "PHASED"
+    if "/" in genotype:
+        return "UNPHASED"
+    return "UNSPECIFIED"
+
 
 def parse_vcf(
     path: str,
@@ -90,6 +106,7 @@ def parse_vcf(
                 # canonical small-variant processing. N+1 is provisional
                 # until the pinned reference verifies the declared length.
                 continue
+            source_mapping = _source_record_mapping(fields[7])
             sample_calls: dict[str, dict] = {}
             if len(fields) > 8 and sample_names:
                 format_keys = [] if fields[8] in {"", "."} else fields[8].split(":")
@@ -107,17 +124,56 @@ def parse_vcf(
                         for index, key in enumerate(format_keys)
                     }
                     genotype = call_fields.get("GT")
+                    source_alt_count_value = call_fields.get(SOURCE_ALT_COUNT_FORMAT_TAG)
+                    if source_alt_count_value not in {None, "", "."}:
+                        try:
+                            source_alt_count = int(source_alt_count_value)
+                        except ValueError as exc:
+                            raise VCFValidationError(
+                                f"Invalid {SOURCE_ALT_COUNT_FORMAT_TAG} at line {line_no}"
+                            ) from exc
+                        if source_alt_count < 1:
+                            raise VCFValidationError(
+                                f"Non-positive {SOURCE_ALT_COUNT_FORMAT_TAG} at line {line_no}"
+                            )
+                    else:
+                        source_alt_count = source_mapping[1] if source_mapping else None
+                    if (
+                        source_mapping is not None
+                        and source_alt_count is not None
+                        and source_alt_count != source_mapping[1]
+                    ):
+                        raise VCFValidationError(
+                            f"{SOURCE_ALT_COUNT_FORMAT_TAG} disagrees with SIRALOOM_ORIG at line {line_no}"
+                        )
+                    if SOURCE_GT_FORMAT_TAG in call_fields:
+                        source_genotype = call_fields.get(SOURCE_GT_FORMAT_TAG)
+                    elif source_mapping and source_mapping[1] > 1:
+                        # A previously split multiallelic record without its
+                        # source GT cannot be interpreted as a patient genotype.
+                        source_genotype = None
+                    else:
+                        source_genotype = genotype
+                    source_zygosity = (
+                        _zygosity(source_genotype)
+                        if source_genotype is not None
+                        else "GENOTYPE_UNAVAILABLE"
+                    )
                     sample_calls[selected_name] = {
                         "sample_name": selected_name,
-                        "genotype": genotype,
-                        "zygosity": _zygosity(genotype),
-                        "phase": (
-                            "PARTIALLY_PHASED"
-                            if genotype and "|" in genotype and "/" in genotype
-                            else "PHASED" if genotype and "|" in genotype
-                            else "UNPHASED" if genotype and "/" in genotype
-                            else "UNSPECIFIED"
-                        ),
+                        # The source genotype is authoritative for clinical
+                        # interpretation; the split biallelic GT is retained
+                        # separately for exact normalized-artifact traceability.
+                        "genotype": source_genotype,
+                        "source_genotype": source_genotype,
+                        "normalized_genotype": genotype,
+                        "source_alt_index": source_mapping[0] if source_mapping else None,
+                        "source_alt_count": source_alt_count,
+                        "zygosity": source_zygosity,
+                        "source_zygosity": source_zygosity,
+                        "normalized_zygosity": _zygosity(genotype),
+                        "phase": _phase_status(source_genotype),
+                        "normalized_phase": _phase_status(genotype),
                         "phase_set": call_fields.get("PS"),
                         # Retain standard, local-allele, caller-specific, and
                         # future FORMAT fields for traceability rather than
@@ -128,14 +184,166 @@ def parse_vcf(
                         },
                         "status": (
                             "AVAILABLE"
-                            if genotype and _zygosity(genotype) not in {
-                                "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
+                            if source_zygosity not in {
+                                "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
                             }
                             else "MISSING_OR_PARTIAL"
                         ),
                     }
-            for alt_allele in alt.split(","):
-                yield VCFRecord(chrom, pos, ref, alt_allele, line, sample_calls)
+            alt_alleles = alt.split(",")
+            for source_alt_index, alt_allele in enumerate(alt_alleles, start=1):
+                per_alt_calls = _sample_calls_for_alt(
+                    sample_calls,
+                    source_alt_index=source_alt_index,
+                    source_alt_count=len(alt_alleles),
+                )
+                yield VCFRecord(chrom, pos, ref, alt_allele, line, per_alt_calls)
+
+
+def _source_record_mapping(info: str) -> tuple[int, int] | None:
+    """Return (source ALT index, source ALT count) from SIRALOOM_ORIG."""
+    values = [
+        item.partition("=")[2]
+        for item in info.split(";")
+        if item.partition("=")[0] == SOURCE_RECORD_INFO_TAG
+    ]
+    if not values:
+        return None
+    if len(values) != 1:
+        raise VCFValidationError("Normalized VCF record has duplicate SIRALOOM_ORIG mappings")
+    mapping = values[0].split("|", 4)
+    if len(mapping) != 5:
+        raise VCFValidationError("Normalized VCF record has malformed SIRALOOM_ORIG mapping")
+    alternates = mapping[3].split(",")
+    try:
+        alt_index = int(mapping[4])
+    except ValueError as exc:
+        raise VCFValidationError("Normalized VCF record has invalid SIRALOOM_ORIG ALT index") from exc
+    if not alternates or alt_index < 1 or alt_index > len(alternates):
+        raise VCFValidationError("Normalized VCF record has out-of-range SIRALOOM_ORIG ALT index")
+    return alt_index, len(alternates)
+
+
+def _sample_calls_for_alt(
+    sample_calls: dict[str, dict],
+    *,
+    source_alt_index: int,
+    source_alt_count: int,
+) -> dict[str, dict]:
+    """Add a source-aware per-ALT dosage projection without inventing REF alleles.
+
+    The source GT and FORMAT values remain authoritative and unchanged. A
+    conventional biallelic GT is emitted only when every called source allele
+    is either REF or this record's selected ALT. Other ALT alleles remain
+    explicit OTHER_ALT states and make that conventional projection unavailable.
+    """
+    projected: dict[str, dict] = {}
+    for sample_name, source_call in sample_calls.items():
+        call = dict(source_call)
+        source_genotype = call.get("source_genotype")
+        if source_genotype is None and "source_genotype" not in call:
+            source_genotype = call.get("genotype")
+        selected_source_alt_index = call.get("source_alt_index") or source_alt_index
+        original_alt_count = call.get("source_alt_count") or source_alt_count
+        call["source_genotype"] = source_genotype
+        call["source_alt_index"] = selected_source_alt_index
+        call["source_alt_count"] = original_alt_count
+        call["source_zygosity"] = (
+            _zygosity(source_genotype)
+            if source_genotype is not None
+            else "GENOTYPE_UNAVAILABLE"
+        )
+        call.update({
+            "projected_genotype": None,
+            "projected_zygosity": None,
+            "projected_phase": call.get("phase", "UNSPECIFIED"),
+            "projected_status": "GENOTYPE_UNAVAILABLE",
+            "projection_status": "GENOTYPE_UNAVAILABLE",
+            "reference_allele_dosage": 0,
+            "selected_alt_dosage": 0,
+            "other_alt_dosage": 0,
+            "missing_allele_count": 0,
+            "projected_allele_states": [],
+        })
+        if source_genotype is None or source_genotype == "":
+            call["projection_status"] = "GENOTYPE_UNAVAILABLE"
+            call["projected_status"] = "GENOTYPE_UNAVAILABLE"
+            projected[sample_name] = call
+            continue
+        if (
+            not isinstance(selected_source_alt_index, int)
+            or not isinstance(original_alt_count, int)
+            or selected_source_alt_index < 1
+            or selected_source_alt_index > original_alt_count
+        ):
+            call["projection_status"] = "INVALID_SOURCE_ALT_MAPPING"
+            call["projected_status"] = "INVALID_SOURCE_ALT_MAPPING"
+            projected[sample_name] = call
+            continue
+
+        tokens = re.split(r"([/|])", source_genotype)
+        allele_positions = [i for i, token in enumerate(tokens) if token not in {"/", "|"}]
+        projected_tokens = list(tokens)
+        states: list[str] = []
+        contains_other_alt = False
+        invalid_source_gt = False
+        for token_index in allele_positions:
+            token = tokens[token_index]
+            if token in {"", "."}:
+                state = "MISSING"
+                call["missing_allele_count"] += 1
+                projected_tokens[token_index] = "."
+            elif token.isdigit():
+                allele_index = int(token)
+                if allele_index == 0:
+                    state = "REFERENCE"
+                    call["reference_allele_dosage"] += 1
+                    projected_tokens[token_index] = "0"
+                elif 1 <= allele_index <= original_alt_count:
+                    if allele_index == selected_source_alt_index:
+                        state = "SELECTED_ALT"
+                        call["selected_alt_dosage"] += 1
+                        projected_tokens[token_index] = "1"
+                    else:
+                        state = "OTHER_ALT"
+                        call["other_alt_dosage"] += 1
+                        contains_other_alt = True
+                        # Never encode a different ALT as reference or missing.
+                        projected_tokens[token_index] = token
+                else:
+                    state = "INVALID"
+                    invalid_source_gt = True
+                    projected_tokens[token_index] = token
+            else:
+                state = "INVALID"
+                invalid_source_gt = True
+                projected_tokens[token_index] = token
+            states.append(state)
+
+        call["projected_allele_states"] = states
+        if invalid_source_gt:
+            call["projection_status"] = "INVALID_SOURCE_GT"
+            call["projected_status"] = "INVALID_SOURCE_GT"
+        elif contains_other_alt and call["missing_allele_count"]:
+            call["projection_status"] = "CONTAINS_OTHER_ALT_AND_MISSING"
+            call["projected_status"] = "CONTAINS_OTHER_ALT_AND_MISSING"
+        elif contains_other_alt:
+            call["projection_status"] = "CONTAINS_OTHER_ALT"
+            call["projected_status"] = "CONTAINS_OTHER_ALT"
+        else:
+            projected_genotype = "".join(projected_tokens)
+            call["projected_genotype"] = projected_genotype
+            call["projected_zygosity"] = _zygosity(projected_genotype)
+            if call["missing_allele_count"] == len(allele_positions):
+                status = "NO_CALL"
+            elif call["missing_allele_count"]:
+                status = "PARTIAL_CALL"
+            else:
+                status = "AVAILABLE"
+            call["projection_status"] = status
+            call["projected_status"] = status
+        projected[sample_name] = call
+    return projected
 
 
 def _zygosity(genotype: str | None) -> str:
