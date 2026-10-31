@@ -1403,3 +1403,23 @@ def test_vcf45_symbolic_deletion_end_must_match_svlen(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_END_MISMATCH"
+
+
+def test_reference_validation_checks_vcf45_len_derived_block_end(tmp_path: Path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\\n" + "A" * 30 + "\\n", encoding="ascii", newline="\\n")
+    (tmp_path / "reference.fa.fai").write_text("1\\t30\\t3\\t30\\t31\\n", encoding="ascii")
+    source = tmp_path / "vcf45-len-out-of-bounds.vcf"
+    write_vcf_with_metadata(
+        source,
+        [],
+        "1\\t20\\t.\\tA\\t<*>\\t.\\tPASS\\t.\\tGT:LEN\\t0/0:15\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    validate_vcf_strict(source)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_reference_alleles(source, fasta)
+
+    assert exc.value.code == "VCF_REFERENCE_SPAN_OUT_OF_BOUNDS"
