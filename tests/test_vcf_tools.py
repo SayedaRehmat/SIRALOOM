@@ -40,8 +40,9 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t4\t.\tAA\tA,C\t.\tPASS\t.\n",
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t4\t.\tAA\tA,C\t.\tPASS\t.\tGT\t1/2\n",
         encoding="utf-8",
     )
 
@@ -68,7 +69,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert reference_identity["artifacts"]["fasta"]["size_bytes"] == fasta.stat().st_size
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
-    assert "--multi-overlaps 0" in result["command"]
+    assert "--multi-overlaps ." in result["command"]
     import gzip
     assert Path(str(output_vcf) + ".csi").is_file()
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
@@ -79,6 +80,9 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert len(lines) == 2
     assert lines[0].split("\t")[0:5] == ["1", "1", ".", "CA", "C"]
     assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
+    # A non-selected ALT must become missing, never a fabricated reference allele.
+    assert lines[0].split("\t")[9].split(":")[0] == "1/."
+    assert lines[1].split("\t")[9].split(":")[0] == "./1"
 
 
 def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_path: Path):
@@ -529,7 +533,7 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
         records = [
-            line.split("\t")
+            line.rstrip("\r\n").split("\t")
             for line in handle
             if line and not line.startswith("#")
         ]
@@ -547,9 +551,10 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
     # GT must refer to the retained ALT in each row. Number=R AD and Number=G PL
     # must have the biallelic cardinality after splitting.
     samples = [record[9].split(":") for record in records]
-    assert [sample[0] for sample in samples] == ["1/0", "0/1"]
+    assert [sample[0] for sample in samples] == ["1/.", "./1"]
     assert all(len(sample[1].split(",")) == 2 for sample in samples)
     assert all(len(sample[2].split(",")) == 3 for sample in samples)
+    assert [sample[3:] for sample in samples] == [["1/2", "2"], ["1/2", "2"]]
 
 
 def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path: Path):
@@ -594,11 +599,13 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
     assert header is not None
     assert header[9:12] == ["SAMPLE_A", "SAMPLE_B", "SAMPLE_MISSING"]
     assert [record[4] for record in records] == ["C", "G"]
-    assert [record[9].split(":")[0] for record in records] == ["1|0", "0|1"]
-    assert [record[10].split(":")[0] for record in records] == ["0|0", "1|0"]
+    assert [record[9].split(":")[0] for record in records] == ["1|.", ".|1"]
+    assert [record[10].split(":")[0] for record in records] == [".|0", "1|0"]
     assert [record[9].split(":")[1] for record in records] == ["10", "10"]
     assert [record[10].split(":")[1] for record in records] == ["20", "20"]
     assert [record[11].split(":")[0] for record in records] == ["./.", "./."]
+    assert [record[9].split(":")[4:] for record in records] == [["1|2", "2"], ["1|2", "2"]]
+    assert [record[10].split(":")[4:] for record in records] == [["2|0", "2"], ["2|0", "2"]]
     for record in records:
         assert len(record[9].split(":")[2].split(",")) == 2
         assert len(record[10].split(":")[2].split(",")) == 2
@@ -743,3 +750,27 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
         _validate_csi_index_record_counts(
             vcf, bcftools_executable="bcftools", timeout_seconds=10
         )
+
+
+def test_source_genotype_provenance_is_injected_before_multiallelic_splitting(tmp_path: Path):
+    from backend.app.domain.vcf_tools import _write_original_record_info_header
+
+    source = tmp_path / "source-multiallelic.vcf"
+    prepared = tmp_path / "prepared-with-source-provenance.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t100\t.\tA\tC,G\t.\tPASS\t.\tGT\t1/2\n",
+        encoding="utf-8",
+    )
+
+    _write_original_record_info_header(source, prepared)
+
+    text = prepared.read_text(encoding="utf-8")
+    assert '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,' in text
+    assert '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,' in text
+    record = next(line for line in text.splitlines() if not line.startswith("#"))
+    fields = record.split("\t")
+    assert fields[8] == "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
+    assert fields[9] == "1/2:1/2:2"
