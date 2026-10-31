@@ -1143,6 +1143,7 @@ def _validate_existing_source_genotype_fields(input_path: Path) -> None:
 def _reject_original_record_tag_collision(input_path: Path, *, allow_existing: bool) -> bool:
     opener = gzip.open if input_path.name.lower().endswith((".gz", ".bgz")) else open
     has_definition = False
+    has_reserved_source_format_definition = False
     header = None
     with opener(input_path, "rt", encoding="utf-8-sig") as handle:
         for line in handle:
@@ -1162,9 +1163,14 @@ def _reject_original_record_tag_collision(input_path: Path, *, allow_existing: b
             if line.startswith(f"##FORMAT=<ID={SOURCE_GT_FORMAT_TAG},") or line.startswith(
                 f"##FORMAT=<ID={SOURCE_ALT_COUNT_FORMAT_TAG},"
             ):
+                has_reserved_source_format_definition = True
                 if not allow_existing:
                     raise VCFToolError("Input VCF already declares a reserved SIRALOOM source-genotype FORMAT tag.")
     if not has_definition:
+        if has_reserved_source_format_definition:
+            raise VCFToolError(
+                "SIRALOOM source-genotype FORMAT fields require a matching SIRALOOM_ORIG source mapping."
+            )
         return False
 
     if header is None:
