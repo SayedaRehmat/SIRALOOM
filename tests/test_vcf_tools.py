@@ -127,7 +127,7 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
         normalized_records = [line for line in handle if line and not line.startswith("#")]
     assert len(normalized_records) == 1
-    assert normalized_records[0].split("\\t")[:5] == ["1", "4", ".", "A", "G"]
+    assert normalized_records[0].split("\t")[:5] == ["1", "4", ".", "A", "G"]
     assert Path(str(output_vcf) + ".csi").is_file()
 
 
