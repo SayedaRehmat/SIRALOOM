@@ -834,6 +834,8 @@ def _strip_vcf45_number_m_format_fields(
         raise VCFToolError(f"Unable to inspect source VCF fileformat before Number=M handling: {exc}") from exc
     if source_fileformat_header != "##fileformat=VCFv4.5":
         return []
+    if source_only_format_fields is not None and not source_only_format_fields:
+        return []
 
     normalized_file_opener = gzip.open if normalized_path.name.lower().endswith((".gz", ".bgz")) else open
 
