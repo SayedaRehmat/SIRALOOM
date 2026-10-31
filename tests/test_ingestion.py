@@ -598,6 +598,70 @@ def test_index_filename_and_magic_validation(tmp_path: Path):
     assert validate_index(wrong, primary).status == "INVALID"
 
 
+def test_index_validation_records_primary_vcf_concordance(tmp_path: Path, monkeypatch):
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    primary = tmp_path / "sample.vcf.gz"
+    primary.write_bytes(b"verified-primary-vcf")
+    tbi = Path(str(primary) + ".tbi")
+    with gzip.open(tbi, "wb") as handle:
+        handle.write(b"TBI\x01dummy")
+    expected = {
+        "status": "VALIDATED",
+        "index_type": "TBI",
+        "tool": "bcftools",
+        "tool_version": "bcftools 1.24",
+        "expected_tool_version": "1.24",
+        "concordance": {
+            "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
+            "records": 2,
+            "contigs": 1,
+            "indexed_query_contigs_verified": 1,
+            "indexed_query_records_verified": 2,
+        },
+    }
+    monkeypatch.setattr(
+        vcf_tools,
+        "validate_vcf_index_concordance",
+        lambda path, **kwargs: expected,
+    )
+
+    result = validate_index(
+        tbi,
+        primary.name,
+        primary_path=primary,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result.status == "VALID"
+    assert result.metadata == {"index_concordance": expected}
+
+
+def test_index_validation_tool_outage_is_retryable(tmp_path: Path, monkeypatch):
+    import backend.app.domain.vcf_tools as vcf_tools
+    from backend.app.domain.vcf_tools import VCFToolUnavailable
+    from backend.app.domain.ingestion import VCFValidationUnavailable
+
+    primary = tmp_path / "sample.vcf.gz"
+    primary.write_bytes(b"verified-primary-vcf")
+    tbi = Path(str(primary) + ".tbi")
+    with gzip.open(tbi, "wb") as handle:
+        handle.write(b"TBI\x01dummy")
+
+    def unavailable(*_args, **_kwargs):
+        raise VCFToolUnavailable("bcftools unavailable")
+
+    monkeypatch.setattr(vcf_tools, "validate_vcf_index_concordance", unavailable)
+
+    with pytest.raises(VCFValidationUnavailable, match="bcftools unavailable"):
+        validate_index(
+            tbi,
+            primary.name,
+            primary_path=primary,
+            expected_bcftools_version="1.24",
+        )
+
+
 def test_index_validation_rejects_index_for_uncompressed_vcf(tmp_path: Path):
     index = tmp_path / "sample.vcf.tbi"
     with gzip.open(index, "wb") as handle:
