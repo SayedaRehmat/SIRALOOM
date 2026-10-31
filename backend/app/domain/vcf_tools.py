@@ -812,7 +812,8 @@ def _reference_artifact_identity(reference_fasta: Path) -> dict:
 
 
 def _strip_vcf45_number_m_format_fields(
-    source_path: Path,
+    source_vcf_path: Path,
+    normalized_path: Path,
     destination_path: Path,
 ) -> list[str]:
     """Remove Number=M FORMAT values from the per-ALT artifact.
@@ -824,14 +825,16 @@ def _strip_vcf45_number_m_format_fields(
     transform removes Number=M values and their header declarations from the
     derived small-variant artifact and records the source-only policy.
     """
-    opener = gzip.open if source_path.name.lower().endswith((".gz", ".bgz")) else open
+    source_opener = gzip.open if source_vcf_path.name.lower().endswith((".gz", ".bgz")) else open
     try:
-        with opener(source_path, "rt", encoding="utf-8-sig") as header_handle:
-            fileformat_header = header_handle.readline().rstrip("\r\n")
+        with source_opener(source_vcf_path, "rt", encoding="utf-8-sig") as header_handle:
+            source_fileformat_header = header_handle.readline().rstrip("\r\n")
     except OSError as exc:
-        raise VCFToolError(f"Unable to inspect VCF fileformat before Number=M projection: {exc}") from exc
-    if fileformat_header != "##fileformat=VCFv4.5":
+        raise VCFToolError(f"Unable to inspect source VCF fileformat before Number=M handling: {exc}") from exc
+    if source_fileformat_header != "##fileformat=VCFv4.5":
         return []
+
+    source_opener = gzip.open if normalized_path.name.lower().endswith((".gz", ".bgz")) else open
 
     source_only_fields: set[str] = set()
     fileformat: str | None = None
@@ -841,17 +844,17 @@ def _strip_vcf45_number_m_format_fields(
     )
 
     try:
-        with opener(source_path, "rt", encoding="utf-8-sig") as input_handle, destination_path.open(
+        with source_opener(normalized_path, "rt", encoding="utf-8-sig") as input_handle, destination_path.open(
             "w", encoding="utf-8", newline=""
         ) as output_handle:
             for line_no, raw in enumerate(input_handle, 1):
                 line = raw.rstrip("\r\n")
                 if line.startswith("##fileformat="):
                     fileformat = line.split("=", 1)[1]
-                if line.startswith("##FORMAT=") and fileformat == "VCFv4.5":
+                if line.startswith("##FORMAT="):
                     try:
                         identifier, definition = _parse_field_definition(
-                            line, "FORMAT", line_no, fileformat
+                            line, "FORMAT", line_no, "VCFv4.5"
                         )
                     except StrictVCFValidationError as exc:
                         raise VCFToolError(
@@ -870,7 +873,7 @@ def _strip_vcf45_number_m_format_fields(
                     continue
 
                 fields = line.split("\t")
-                if fileformat == "VCFv4.5" and len(fields) >= 10:
+                if len(fields) >= 10:
                     format_keys = fields[8].split(":")
                     implicit_fields = {
                         key
@@ -1067,7 +1070,7 @@ def normalize_vcf_with_bcftools(
         source_only_plain_path = work / "source-only-format-fields.vcf"
         source_only_compressed_path = work / "source-only-format-fields.vcf.gz"
         source_only_format_fields = _strip_vcf45_number_m_format_fields(
-            sorted_path, source_only_plain_path
+            input_path, sorted_path, source_only_plain_path
         )
         source_only_stderr = ""
         source_only_command: list[str] = []
