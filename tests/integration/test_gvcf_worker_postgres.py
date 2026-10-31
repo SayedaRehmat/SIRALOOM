@@ -262,8 +262,8 @@ def test_postgres_worker_persists_gvcf_routing_and_real_bcftools_output(
             ]
             assert len(records) == 1
             assert records[0][4] == "C"
-            assert records[0][8] == "GT:AD:PL"
-            assert records[0][9] == "0/1:15,9:100,50,60"
+            assert records[0][8] == "GT:AD:PL:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
+            assert records[0][9] == "0/1:15,9:100,50,60:0/1:1"
             assert block is not None and store.exists(block.storage_uri)
             assert block.metadata_json["record_count"] == 1
             assert block.metadata_json["source_artifact_id"] == str(source_artifact_id)
