@@ -952,11 +952,14 @@ def test_vcf44_rejects_vcf45_only_local_allele_cardinality(tmp_path: Path):
 
 
 
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
 @pytest.mark.parametrize("gt", ["|0/1", "/0/1", "|0|1"])
-def test_vcf44_accepts_leading_gt_phase_separator_and_correct_ploidy(tmp_path: Path, gt: str):
-    path = tmp_path / "prefixed-gt-v44.vcf"
+def test_vcf44_and_vcf45_accept_leading_gt_phase_separator_and_correct_ploidy(
+    tmp_path: Path, gt: str, version: str
+):
+    path = tmp_path / f"prefixed-gt-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.4\n"
+        f"##fileformat={version}\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
         f"1\t2\t.\tA\tG\t.\tPASS\t.\tGT\t{gt}\n",
         encoding="utf-8",
