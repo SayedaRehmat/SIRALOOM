@@ -564,15 +564,15 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
     opener = gzip.open if source.name.lower().endswith((".gz", ".bgz")) else open
     info_header_line = (
         '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,'
-        'Description="Original source record CHROM|POS|REF|ALT|USED_ALT_IDX">\\n'
+        'Description="Original source record CHROM|POS|REF|ALT|USED_ALT_IDX">\n'
     )
     source_gt_header_line = (
         '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,'
-        'Description="Original sample GT before SIRALOOM per-ALT splitting">\\n'
+        'Description="Original sample GT before SIRALOOM per-ALT splitting">\n'
     )
     source_alt_count_header_line = (
         '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,'
-        'Description="Number of ALT alleles in the source record before splitting">\\n'
+        'Description="Number of ALT alleles in the source record before splitting">\n'
     )
     found_chrom_header = False
     with opener(source, "rt", encoding="utf-8-sig") as input_handle, destination.open(
@@ -589,7 +589,7 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
             if line.startswith("#"):
                 output_handle.write(line)
                 continue
-            fields = line.rstrip("\\r\\n").split("\\t")
+            fields = line.rstrip("\r\n").split("\t")
             if len(fields) < 8:
                 raise VCFToolError("Cannot add source mapping to a malformed prepared VCF record.")
 
@@ -628,7 +628,7 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
                     if fields[7] not in {"", "."}
                     else f"SIRALOOM_ORIG={source_value}"
                 )
-            output_handle.write("\\t".join(fields) + "\\n")
+            output_handle.write("\t".join(fields) + "\n")
     if not found_chrom_header:
         destination.unlink(missing_ok=True)
         raise VCFToolError("Cannot declare source mapping: prepared VCF has no #CHROM header.")
@@ -650,7 +650,7 @@ def _validate_existing_source_genotype_fields(input_path: Path) -> None:
                 if tag in {SOURCE_GT_FORMAT_TAG, SOURCE_ALT_COUNT_FORMAT_TAG}:
                     definitions.add(tag)
             elif line.startswith("#CHROM"):
-                header_columns = len(line.rstrip("\\r\\n").split("\\t"))
+                header_columns = len(line.rstrip("\r\n").split("\t"))
                 break
     if definitions != {SOURCE_GT_FORMAT_TAG, SOURCE_ALT_COUNT_FORMAT_TAG}:
         raise VCFToolError(
@@ -666,7 +666,7 @@ def _validate_existing_source_genotype_fields(input_path: Path) -> None:
         for line in handle:
             if not line or line.startswith("#"):
                 continue
-            fields = line.rstrip("\\r\\n").split("\\t")
+            fields = line.rstrip("\r\n").split("\t")
             if len(fields) != header_columns or len(fields) < 10:
                 raise VCFToolError("Existing source-genotype VCF has a malformed record.")
             format_keys = fields[8].split(":")
