@@ -1337,7 +1337,11 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         f"VCF declares contig {contig!r} length {declared_length}, but the selected reference length is {reference_length}",
                         code="VCF_CONTIG_LENGTH_MISMATCH",
                     )
+            fileformat: str | None = None
             for line_no, raw in enumerate(handle, 1):
+                if raw.startswith("##fileformat="):
+                    fileformat = raw.rstrip("\r\n").split("=", 1)[1]
+                    continue
                 if not raw or raw.startswith("#"):
                     continue
                 fields = raw.rstrip("\r\n").split("\t")
@@ -1377,13 +1381,16 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         code="VCF_REFERENCE_MISMATCH",
                     )
                 info = _info_values(fields[7])
-                if info.get("END") is not None:
-                    end = int(info["END"])
-                    if end > contig_length:
-                        raise StrictVCFValidationError(
-                            f"Reference span END={end} exceeds contig {chrom} length {contig_length} at line {line_no}",
-                            code="VCF_REFERENCE_SPAN_OUT_OF_BOUNDS",
-                        )
+                if fileformat == "VCFv4.5":
+                    span = compute_vcf45_record_span(fields, line_no)
+                    end = span[0] if span is not None else pos + len(ref) - 1
+                else:
+                    end = int(info["END"]) if info.get("END") not in {None, "."} else None
+                if end is not None and end > contig_length:
+                    raise StrictVCFValidationError(
+                        f"Reference span END={end} exceeds contig {chrom} length {contig_length} at line {line_no}",
+                        code="VCF_REFERENCE_SPAN_OUT_OF_BOUNDS",
+                    )
                 for alt in alt_text.split(","):
                     if "[" not in alt and "]" not in alt:
                         continue
