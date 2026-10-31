@@ -467,3 +467,27 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
         assert len(record[10].split(":")[2].split(",")) == 2
         assert len(record[9].split(":")[3].split(",")) == 3
         assert len(record[10].split(":")[3].split(",")) == 3
+
+
+def test_source_genotype_provenance_is_injected_before_multiallelic_splitting(tmp_path: Path):
+    from backend.app.domain.vcf_tools import _write_original_record_info_header
+
+    source = tmp_path / "source-multiallelic.vcf"
+    prepared = tmp_path / "prepared-with-source-provenance.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t100\t.\tA\tC,G\t.\tPASS\t.\tGT\t1/2\n",
+        encoding="utf-8",
+    )
+
+    _write_original_record_info_header(source, prepared)
+
+    text = prepared.read_text(encoding="utf-8")
+    assert '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,' in text
+    assert '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,' in text
+    record = next(line for line in text.splitlines() if not line.startswith("#"))
+    fields = record.split("\t")
+    assert fields[8] == "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
+    assert fields[9] == "1/2:1/2:2"
