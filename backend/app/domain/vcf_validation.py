@@ -20,6 +20,42 @@ INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
+VCF45_BASE_MODIFICATION_FLOAT_ALIASES = frozenset({
+    "M5mC", "M5hmC", "M5fC", "M5caC", "M5hmU", "M5fU",
+    "M5caU", "M6mA", "M8oxoG", "MXaoN", "MxaoN",
+})
+VCF45_BASE_MODIFICATION_DEPTH_ALIASES = frozenset({
+    "DPM5mC", "DPM5hmC", "DPM5fC", "DPM5caC", "DPM5hmU",
+    "DPM5fU", "DPM5caU", "DPM6mA", "DPM8oxoG", "DPMXaoN",
+    "DPMxaoN", "ADM5mC", "ADM5hmC", "ADM5fC", "ADM5caC",
+    "ADM5hmU", "ADM5fU", "ADM5caU", "ADM6mA", "ADM8oxoG",
+    "ADMXaoN", "ADMxaoN",
+})
+
+
+def _base_modification_field_kind(field_id: str) -> str | None:
+    if (
+        re.fullmatch(r"M[0-9]+[ACGTUN]", field_id)
+        or field_id in VCF45_BASE_MODIFICATION_FLOAT_ALIASES
+    ):
+        return "fraction"
+    if (
+        re.fullmatch(r"(?:DPM|ADM)[0-9]+[ACGTUN]", field_id)
+        or field_id in VCF45_BASE_MODIFICATION_DEPTH_ALIASES
+    ):
+        return "depth"
+    return None
+
+
+def _reserved_base_modification_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return the VCFv4.5 built-in definition for reserved base-modification keys."""
+    field_kind = _base_modification_field_kind(field_id)
+    if field_kind == "fraction":
+        return {"Number": "M", "Type": "Float"}
+    if field_kind == "depth":
+        return {"Number": "M", "Type": "Integer"}
+    return None
+
 
 class StrictVCFValidationError(ValueError):
     def __init__(self, message: str, *, code: str = "VCF_INVALID"):
@@ -207,6 +243,21 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+    reserved_base_modification = (
+        _reserved_base_modification_format_definition(identifier)
+        if kind == "FORMAT" and fileformat == "VCFv4.5"
+        else None
+    )
+    if reserved_base_modification is not None and (
+        number != reserved_base_modification["Number"]
+        or parsed["Type"] != reserved_base_modification["Type"]
+    ):
+        raise StrictVCFValidationError(
+            f"Reserved VCFv4.5 base-modification field {identifier!r} requires "
+            f"Number={reserved_base_modification['Number']} and "
+            f"Type={reserved_base_modification['Type']} at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
@@ -345,6 +396,8 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
+                if _base_modification_field_kind(key) == "depth":
+                    valid = valid and integer_value >= 0
         elif field_type == "Float":
             valid = bool(
                 re.fullmatch(
@@ -353,6 +406,9 @@ def _validate_declared_value(
                     flags=re.IGNORECASE,
                 )
             )
+            if valid and _base_modification_field_kind(key) == "fraction":
+                numeric_value = float(item)
+                valid = 0.0 <= numeric_value <= 1.0
         elif field_type == "Character":
             valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
         if not valid:
@@ -605,8 +661,13 @@ def _validate_record(
                 code="VCF_FORMAT_INVALID",
             )
         base_modification_keys = [
-            key for key in keys
+            key
+            for key in keys
             if (format_definitions or {}).get(key, {}).get("Number") == "M"
+            or (
+                fileformat == "VCFv4.5"
+                and _reserved_base_modification_format_definition(key) is not None
+            )
         ]
         if base_modification_keys and "GT" not in keys:
             raise StrictVCFValidationError(
@@ -931,6 +992,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         local_allele_count = len(local_alt_indexes) + 1
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
+                    if definition is None and fileformat == "VCFv4.5":
+                        definition = _reserved_base_modification_format_definition(key)
                     if definition is not None:
                         if (
                             definition["Number"] == "G"
