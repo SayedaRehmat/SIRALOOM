@@ -397,7 +397,7 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
 
 
 
-def _validate_csi_index_record_counts(
+def _validate_vcf_index_record_counts(
     vcf_path: Path,
     *,
     bcftools_executable: str,
@@ -420,33 +420,33 @@ def _validate_csi_index_record_counts(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise VCFToolError("Timed out while validating CSI index record counts.") from exc
+        raise VCFToolError("Timed out while validating VCF index record counts.") from exc
     except OSError as exc:
-        raise VCFToolError(f"Unable to execute CSI index validation: {exc}") from exc
+        raise VCFToolError(f"Unable to execute VCF index validation: {exc}") from exc
 
     if stats.returncode != 0:
-        detail = (stats.stderr or stats.stdout or "unknown CSI index statistics error").strip()
-        raise VCFToolError(f"CSI index record-count validation failed: {detail}")
+        detail = (stats.stderr or stats.stdout or "unknown VCF index statistics error").strip()
+        raise VCFToolError(f"VCF index record-count validation failed: {detail}")
 
     indexed_counts: dict[str, int] = {}
     for line in (stats.stdout or "").splitlines():
         fields = line.split("\t")
         if len(fields) != 3:
-            raise VCFToolError("CSI index statistics returned a malformed contig row.")
+            raise VCFToolError("VCF index statistics returned a malformed contig row.")
         contig, contig_length, record_count = fields
         if contig_length != ".":
             try:
                 parsed_length = int(contig_length)
             except ValueError as exc:
-                raise VCFToolError("CSI index statistics returned an invalid contig length.") from exc
+                raise VCFToolError("VCF index statistics returned an invalid contig length.") from exc
             if parsed_length < 0:
-                raise VCFToolError("CSI index statistics returned an invalid contig length.")
+                raise VCFToolError("VCF index statistics returned an invalid contig length.")
         try:
             count = int(record_count)
         except ValueError as exc:
-            raise VCFToolError("CSI index statistics returned a non-integer record count.") from exc
+            raise VCFToolError("VCF index statistics returned a non-integer record count.") from exc
         if not contig or count < 0 or contig in indexed_counts:
-            raise VCFToolError("CSI index statistics returned invalid or duplicate contig counts.")
+            raise VCFToolError("VCF index statistics returned invalid or duplicate contig counts.")
         indexed_counts[contig] = count
 
     sequential: dict[str, dict[str, object]] = {}
@@ -467,7 +467,7 @@ def _validate_csi_index_record_counts(
     sequential_counts = {contig: int(state["count"]) for contig, state in sequential.items()}
     if indexed_counts != sequential_counts:
         raise VCFToolError(
-            "CSI index and staged VCF record counts disagree by contig: "
+            "VCF index and staged VCF record counts disagree by contig: "
             f"index={indexed_counts!r}, sequential={sequential_counts!r}"
         )
 
@@ -493,17 +493,17 @@ def _validate_csi_index_record_counts(
                 )
             except subprocess.TimeoutExpired as exc:
                 raise VCFToolError(
-                    f"Timed out while querying CSI-indexed records for contig {contig!r}."
+                    f"Timed out while querying index-backed records for contig {contig!r}."
                 ) from exc
             except OSError as exc:
                 raise VCFToolError(
-                    f"Unable to execute CSI-indexed query for contig {contig!r}: {exc}"
+                    f"Unable to execute index-backed query for contig {contig!r}: {exc}"
                 ) from exc
             if queried.returncode != 0:
                 query_error.seek(0)
                 detail = query_error.read().decode("utf-8", errors="replace").strip()
                 raise VCFToolError(
-                    f"CSI-indexed record query failed for contig {contig!r}: "
+                    f"index-backed record query failed for contig {contig!r}: "
                     f"{detail or 'unknown bcftools view error'}"
                 )
 
@@ -516,30 +516,105 @@ def _validate_csi_index_record_counts(
                 fields = raw_line.split(b"\t", 1)
                 if not fields or fields[0].decode("utf-8", errors="replace") != contig:
                     raise VCFToolError(
-                        f"CSI-indexed query for contig {contig!r} returned a record from another contig."
+                        f"index-backed query for contig {contig!r} returned a record from another contig."
                     )
                 digest.update(raw_line)
                 count += 1
             if count != sequential_counts[contig]:
                 raise VCFToolError(
-                    f"CSI-indexed query count mismatch for contig {contig!r}: "
+                    f"index-backed query count mismatch for contig {contig!r}: "
                     f"indexed={count}, sequential={sequential_counts[contig]}."
                 )
             expected_digest = sequential[contig]["digest"].hexdigest()
             actual_digest = digest.hexdigest()
             if actual_digest != expected_digest:
                 raise VCFToolError(
-                    f"CSI-indexed query records disagree with the sequential VCF stream for contig {contig!r}."
+                    f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
                 )
             indexed_digests[contig] = actual_digest
 
     return {
-        "method": "CSI_INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
+        "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
         "records": sum(sequential_counts.values()),
         "contigs": len(sequential_counts),
         "indexed_query_contigs_verified": len(indexed_digests),
         "indexed_query_records_verified": sum(sequential_counts.values()),
     }
+
+def validate_vcf_index_concordance(
+    vcf_path: str | Path,
+    *,
+    expected_bcftools_version: str | None = None,
+    timeout_seconds: int = 120,
+) -> dict:
+    """Validate an uploaded TBI/CSI index against the exact adjacent BGZF VCF.
+
+    The index must be staged beside the VCF using the canonical .tbi or .csi
+    suffix. Per-contig counts and indexed record-line SHA-256 digests are
+    compared with a sequential BGZF scan, so a valid magic header or a
+    same-count stale index cannot be mistaken for a matching index.
+    """
+    path = Path(vcf_path)
+    if not path.is_file() or not path.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
+        raise VCFToolError("Index concordance requires an existing BGZF-compressed VCF.")
+    csi_path = Path(str(path) + ".csi")
+    tbi_path = Path(str(path) + ".tbi")
+    candidates = [candidate for candidate in (csi_path, tbi_path) if candidate.is_file()]
+    if len(candidates) != 1:
+        raise VCFToolError(
+            "Exactly one adjacent TBI or CSI index is required for VCF index concordance."
+        )
+    index_type = "CSI" if candidates[0] == csi_path else "TBI"
+
+    executable = shutil.which("bcftools")
+    if executable is None:
+        raise VCFToolError("bcftools is required to verify an uploaded VCF index.")
+    try:
+        version_result = subprocess.run(
+            [executable, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise VCFToolError("Timed out while checking the bcftools version for index validation.") from exc
+    except OSError as exc:
+        raise VCFToolError(f"Unable to execute bcftools for index validation: {exc}") from exc
+    if version_result.returncode != 0:
+        detail = (
+            version_result.stderr or version_result.stdout or "unknown bcftools error"
+        ).strip()
+        raise VCFToolError(f"Unable to determine bcftools version for index validation: {detail}")
+    version_line = next(
+        (line.strip() for line in version_result.stdout.splitlines() if line.strip()),
+        "unknown",
+    )
+    detected_version = (
+        version_line.split()[1]
+        if len(version_line.split()) > 1 and version_line.split()[0] == "bcftools"
+        else None
+    )
+    if expected_bcftools_version and detected_version != expected_bcftools_version:
+        raise VCFToolError(
+            "bcftools version mismatch during VCF index validation: "
+            f"expected {expected_bcftools_version}, found {detected_version or version_line}"
+        )
+
+    concordance = _validate_vcf_index_record_counts(
+        path,
+        bcftools_executable=executable,
+        timeout_seconds=timeout_seconds,
+    )
+    return {
+        "status": "VALIDATED",
+        "index_type": index_type,
+        "tool": "bcftools",
+        "tool_version": version_line,
+        "expected_tool_version": expected_bcftools_version,
+        "concordance": concordance,
+    }
+
 
 def _validate_source_child_reconciliation(source_path: Path, normalized_path: Path) -> dict:
     """Validate one-to-one source-ALT mapping for normalized sequence children.
@@ -949,7 +1024,7 @@ def normalize_vcf_with_bcftools(
     preserve_existing_source_mapping: bool = False,
     bcftools_executable: str = "bcftools",
 ) -> dict:
-    """Normalize, sort, and CSI-index a VCF before publishing either output.
+    """Normalize, sort, and VCF-index a VCF before publishing either output.
 
     All expensive work occurs in a private directory on the destination
     filesystem. Existing output and index files remain untouched until
@@ -1163,17 +1238,17 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError("bcftools CSI indexing timed out after 120s.") from exc
+            raise VCFToolError("bcftools VCF indexing timed out after 120s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools CSI indexing: {exc}") from exc
+            raise VCFToolError(f"Unable to execute bcftools VCF indexing: {exc}") from exc
         indexed_stderr = (indexed_result.stderr or "").strip()
         if indexed_result.returncode != 0:
             detail = (indexed_result.stderr or indexed_result.stdout or "unknown bcftools index error").strip()
-            raise VCFToolError(f"bcftools CSI indexing failed (exit {indexed_result.returncode}): {detail}")
+            raise VCFToolError(f"bcftools VCF indexing failed (exit {indexed_result.returncode}): {detail}")
         if not staged_index_path.is_file() or staged_index_path.stat().st_size == 0:
-            raise VCFToolError("bcftools reported success but produced no CSI index.")
+            raise VCFToolError("bcftools reported success but produced no VCF index.")
 
-        index_validation = _validate_csi_index_record_counts(
+        index_validation = _validate_vcf_index_record_counts(
             sorted_path,
             bcftools_executable=bcftools_executable,
             timeout_seconds=120,
