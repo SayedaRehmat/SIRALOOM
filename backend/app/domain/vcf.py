@@ -30,6 +30,18 @@ def open_text(path: str):
         return gzip.open(path, "rt", encoding="utf-8")
     return open(path, "rt", encoding="utf-8")
 
+def _phase_status(genotype: str | None) -> str:
+    if not genotype:
+        return "UNSPECIFIED"
+    if "|" in genotype and "/" in genotype:
+        return "PARTIALLY_PHASED"
+    if "|" in genotype:
+        return "PHASED"
+    if "/" in genotype:
+        return "UNPHASED"
+    return "UNSPECIFIED"
+
+
 def parse_vcf(
     path: str,
     *,
@@ -142,20 +154,26 @@ def parse_vcf(
                         source_genotype = None
                     else:
                         source_genotype = genotype
+                    source_zygosity = (
+                        _zygosity(source_genotype)
+                        if source_genotype is not None
+                        else "GENOTYPE_UNAVAILABLE"
+                    )
                     sample_calls[selected_name] = {
                         "sample_name": selected_name,
-                        "genotype": genotype,
+                        # The source genotype is authoritative for clinical
+                        # interpretation; the split biallelic GT is retained
+                        # separately for exact normalized-artifact traceability.
+                        "genotype": source_genotype,
                         "source_genotype": source_genotype,
+                        "normalized_genotype": genotype,
                         "source_alt_index": source_mapping[0] if source_mapping else None,
                         "source_alt_count": source_alt_count,
-                        "zygosity": _zygosity(genotype),
-                        "phase": (
-                            "PARTIALLY_PHASED"
-                            if genotype and "|" in genotype and "/" in genotype
-                            else "PHASED" if genotype and "|" in genotype
-                            else "UNPHASED" if genotype and "/" in genotype
-                            else "UNSPECIFIED"
-                        ),
+                        "zygosity": source_zygosity,
+                        "source_zygosity": source_zygosity,
+                        "normalized_zygosity": _zygosity(genotype),
+                        "phase": _phase_status(source_genotype),
+                        "normalized_phase": _phase_status(genotype),
                         "phase_set": call_fields.get("PS"),
                         # Retain standard, local-allele, caller-specific, and
                         # future FORMAT fields for traceability rather than
@@ -166,8 +184,8 @@ def parse_vcf(
                         },
                         "status": (
                             "AVAILABLE"
-                            if genotype and _zygosity(genotype) not in {
-                                "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
+                            if source_zygosity not in {
+                                "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_CALL", "INVALID_CALL"
                             }
                             else "MISSING_OR_PARTIAL"
                         ),
