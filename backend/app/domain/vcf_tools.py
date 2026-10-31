@@ -641,18 +641,22 @@ def _write_original_record_info_header(source: Path, destination: Path) -> str:
 def _validate_existing_source_genotype_fields(input_path: Path) -> None:
     """Reject re-normalization when the immutable source genotype lineage is absent."""
     opener = gzip.open if input_path.name.lower().endswith((".gz", ".bgz")) else open
-    definitions: set[str] = set()
+    definitions: dict[str, str] = {}
     header_columns: int | None = None
     with opener(input_path, "rt", encoding="utf-8-sig") as handle:
         for line in handle:
             if line.startswith("##FORMAT=<ID="):
                 tag = line.split("##FORMAT=<ID=", 1)[1].split(",", 1)[0]
                 if tag in {SOURCE_GT_FORMAT_TAG, SOURCE_ALT_COUNT_FORMAT_TAG}:
-                    definitions.add(tag)
+                    definitions[tag] = line.rstrip("\r\n")
             elif line.startswith("#CHROM"):
                 header_columns = len(line.rstrip("\r\n").split("\t"))
                 break
-    if definitions != {SOURCE_GT_FORMAT_TAG, SOURCE_ALT_COUNT_FORMAT_TAG}:
+    expected_definitions = {
+        SOURCE_GT_FORMAT_TAG: '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Original sample GT before SIRALOOM per-ALT splitting">',
+        SOURCE_ALT_COUNT_FORMAT_TAG: '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Number of ALT alleles in the source record before splitting">',
+    }
+    if definitions != expected_definitions:
         raise VCFToolError(
             "Existing normalized VCF lacks the complete SIRALOOM source-genotype provenance contract."
         )
@@ -684,6 +688,8 @@ def _validate_existing_source_genotype_fields(input_path: Path) -> None:
                     raise VCFToolError("Existing normalized sample has an invalid source ALT count.") from exc
                 if alt_count < 1:
                     raise VCFToolError("Existing normalized sample has a non-positive source ALT count.")
+                if alt_count != len(mapping[3].split(",")):
+                    raise VCFToolError("Existing normalized source ALT count disagrees with its source mapping.")
 
 def _reject_original_record_tag_collision(input_path: Path, *, allow_existing: bool) -> bool:
     opener = gzip.open if input_path.name.lower().endswith((".gz", ".bgz")) else open
@@ -704,6 +710,11 @@ def _reject_original_record_tag_collision(input_path: Path, *, allow_existing: b
                 )
                 if not has_definition:
                     raise VCFToolError("Existing source-mapping tag does not match the SIRALOOM mapping contract.")
+            if line.startswith(f"##FORMAT=<ID={SOURCE_GT_FORMAT_TAG},") or line.startswith(
+                f"##FORMAT=<ID={SOURCE_ALT_COUNT_FORMAT_TAG},"
+            ):
+                if not allow_existing:
+                    raise VCFToolError("Input VCF already declares a reserved SIRALOOM source-genotype FORMAT tag.")
     if not has_definition:
         return False
 
