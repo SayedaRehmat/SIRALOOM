@@ -30,6 +30,7 @@ The GitHub CI suite exercises the supported version range against the upload val
 | Multisample sequence routing | VCFv4.0–VCFv4.5 | Sample-column order and per-sample GT values remain unchanged during routing |
 | gVCF routing | VCFv4.0–VCFv4.5 | Reference blocks, provably unobserved wildcard alleles, unresolved wildcard calls, and exclusive record reconciliation |
 | Reference-aware normalization | VCFv4.0–VCFv4.5 | Pinned BCFtools 1.24 normalization, normalized record content, and CSI index creation |
+| Uploaded index concordance | VCFv4.3 fixture | Both TBI and CSI; per-contig counts and indexed-query record-line SHA-256 match the sequential BGZF stream |
 | Version-specific genotype syntax | VCFv4.3–VCFv4.5 | VCFv4.4/4.5 leading GT phasing separators are accepted; VCFv4.3 rejects that syntax |
 | VCFv4.5 local-allele fields | VCFv4.5 | LA/LR/LG/P cardinality and LAA constraints |
 | VCFv4.5 base modifications | VCFv4.5 | Reserved implicit fields, Number=M cardinality, field types, fraction/depth ranges, and source-only normalization policy |
@@ -88,7 +89,7 @@ The code-level changes above do not by themselves qualify SIRALOOM for a clinica
 - REF allele concordance against the exact pinned reference package, contig aliases/lengths, GRCh37/GRCh38 mismatch, and boundary/telomere records.
 - Multiallelic split correctness, source ALT-index mapping, left-normalization/idempotence, and known-answer indel fixtures.
 - Symbolic SV, breakend, spanning-deletion, and GVCF routing with record counts and review reasons reconciled to the original source.
-- BGZF validity and index concordance against the exact uploaded VCF (a valid index signature alone is not proof that the index belongs to the file).
+- Representative caller-produced BGZF/TBI/CSI fixtures and large-file performance. The upload path now verifies the paired TBI/CSI index against the exact primary BGZF record stream using per-contig index statistics plus indexed-query record-line SHA-256 comparison with a sequential scan; lab qualification still requires representative caller-produced artifacts.
 - Corrupt/truncated streams, decompression and parser timeouts, large WES/WGS files, storage pressure, worker crash/replay, and immutable provenance.
 - Caller/reference/resource versions, acceptance thresholds, test corpus, intended use, and lab authorization recorded in the resource/assay qualification process.
 
