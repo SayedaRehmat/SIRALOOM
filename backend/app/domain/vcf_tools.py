@@ -837,7 +837,7 @@ def _strip_vcf45_number_m_format_fields(
     source_opener = gzip.open if normalized_path.name.lower().endswith((".gz", ".bgz")) else open
 
     source_only_fields: set[str] = set()
-    fileformat: str | None = None
+    fileformat = "VCFv4.5"
     policy_line = (
         "##SIRALOOM_SOURCE_ONLY_FORMAT_FIELDS_POLICY="
         "VCFv4.5_Number_M_fields_are_retained_in_immutable_source_VCF_and_omitted_from_normalized_small_variant_artifact"
@@ -849,8 +849,6 @@ def _strip_vcf45_number_m_format_fields(
         ) as output_handle:
             for line_no, raw in enumerate(input_handle, 1):
                 line = raw.rstrip("\r\n")
-                if line.startswith("##fileformat="):
-                    fileformat = line.split("=", 1)[1]
                 if line.startswith("##FORMAT="):
                     try:
                         identifier, definition = _parse_field_definition(
