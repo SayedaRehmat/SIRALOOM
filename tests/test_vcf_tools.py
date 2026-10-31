@@ -774,3 +774,45 @@ def test_source_genotype_provenance_is_injected_before_multiallelic_splitting(tm
     fields = record.split("\t")
     assert fields[8] == "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
     assert fields[9] == "1/2:1/2:2"
+
+
+def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_path: Path):
+    require_bcftools()
+    import gzip
+
+    from backend.app.domain.vcf_validation import validate_vcf_strict
+
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "vcf45-base-modification.vcf"
+    output_vcf = tmp_path / "vcf45-base-modification.normalized.vcf.gz"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.5\\n"
+        "##contig=<ID=1,length=7>\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t1\\t.\\tC\\tCTAG,CG\\t.\\tPASS\\t.\\tGT:M5mC\\t1/2:0.5,0.6,0.7,0.8\\n",
+        encoding="utf-8",
+    )
+
+    result = normalize_vcf_with_bcftools(
+        input_vcf,
+        output_vcf,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result["tool_version"] == "bcftools 1.24"
+    assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
+    assert validate_vcf_strict(output_vcf)["records"] == 2
+
+    with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
+        records = [
+            line.rstrip("\\r\\n").split("\\t")
+            for line in handle
+            if line and not line.startswith("#")
+        ]
+
+    assert [record[4] for record in records] == ["CTAG", "CG"]
+    assert [record[9].split(":")[0] for record in records] == ["1/.", "./1"]
+    assert [record[9].split(":")[1] for record in records] == ["0.5,0.6", "0.7,0.8"]
