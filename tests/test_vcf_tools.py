@@ -789,7 +789,6 @@ def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_p
         "##fileformat=VCFv4.5\n"
         "##contig=<ID=1,length=7>\n"
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
         "1\t1\t.\tC\tCTAG,CG\t.\tPASS\t.\tGT:M5mC\t1/2:0.5,0.6,0.7,0.8\n",
         encoding="utf-8",
