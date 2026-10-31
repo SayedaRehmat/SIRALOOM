@@ -122,7 +122,8 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
     )
 
     assert result["tool_version"] == "bcftools 1.24"
-    assert result["normalized_records"] == 1
+    assert result["source_child_reconciliation"]["status"] == "VALIDATED"
+    assert result["source_child_reconciliation"]["normalized_child_records"] == 1
     assert Path(str(output_vcf) + ".csi").is_file()
 
 
