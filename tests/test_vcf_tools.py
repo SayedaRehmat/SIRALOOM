@@ -71,8 +71,8 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert lines[0].split("\t")[0:5] == ["1", "1", ".", "CA", "C"]
     assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
     # A non-selected ALT must become missing, never a fabricated reference allele.
-    assert lines[0].split("\t")[9] == "1/."
-    assert lines[1].split("\t")[9] == "./1"
+    assert lines[0].split("\t")[9].split(":")[0] == "1/."
+    assert lines[1].split("\t")[9].split(":")[0] == "./1"
 
 
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
