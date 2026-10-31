@@ -410,6 +410,7 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
     assert [sample[0] for sample in samples] == ["1/.", "./1"]
     assert all(len(sample[1].split(",")) == 2 for sample in samples)
     assert all(len(sample[2].split(",")) == 3 for sample in samples)
+    assert [sample[3:] for sample in samples] == [["1/2", "2"], ["1/2", "2"]]
 
 
 def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path: Path):
@@ -459,6 +460,8 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
     assert [record[9].split(":")[1] for record in records] == ["10", "10"]
     assert [record[10].split(":")[1] for record in records] == ["20", "20"]
     assert [record[11].split(":")[0] for record in records] == ["./.", "./."]
+    assert [record[9].split(":")[4:] for record in records] == [["1|2", "2"], ["1|2", "2"]]
+    assert [record[10].split(":")[4:] for record in records] == [["2|0", "2"], ["2|0", "2"]]
     for record in records:
         assert len(record[9].split(":")[2].split(",")) == 2
         assert len(record[10].split(":")[2].split(",")) == 2
