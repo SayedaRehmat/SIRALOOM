@@ -296,13 +296,13 @@ def _source_record_mapping(info: str) -> tuple[int, int] | None:
         raise VCFValidationError("Normalized VCF record has duplicate SIRALOOM_ORIG mappings")
     mapping = values[0].split("|", 4)
     if len(mapping) not in {4, 5}:
-        raise VCFValidationError("Invalid source-record mapping: malformed SIRALOOM_ORIG mapping")
+        raise VCFValidationError("invalid source-record mapping: malformed SIRALOOM_ORIG mapping")
     alternates = mapping[3].split(",")
     try:
         source_position = int(mapping[1])
         alt_index = int(mapping[4]) if len(mapping) == 5 else 1
     except ValueError as exc:
-        raise VCFValidationError("Invalid source-record mapping: invalid position or ALT index") from exc
+        raise VCFValidationError("invalid source-record mapping: invalid position or ALT index") from exc
     if (
         not mapping[0]
         or source_position < 1
@@ -312,7 +312,7 @@ def _source_record_mapping(info: str) -> tuple[int, int] | None:
         or alt_index < 1
         or alt_index > len(alternates)
     ):
-        raise VCFValidationError("Invalid source-record mapping: out-of-range SIRALOOM_ORIG ALT index")
+        raise VCFValidationError("invalid source-record mapping: out-of-range SIRALOOM_ORIG ALT index")
     return alt_index, len(alternates)
 
 
