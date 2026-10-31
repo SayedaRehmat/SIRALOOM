@@ -311,18 +311,30 @@ def iter_normalized_vcf(
             if len(record.sample_calls) == 1
             else None
         )
-        # A REF-only genotype is not evidence for the ALT allele in this sample.
-        # Keep it in the immutable source/normalized VCF artifacts, but do not
-        # create a canonical candidate that could be annotated or reported.
-        if sample_call and sample_call.get("zygosity") in {
-            "HOMOZYGOUS_REFERENCE",
-            "REFERENCE_CALL",
-        }:
-            if exclusion_stats is not None:
-                exclusion_stats["reference_only_genotype_alleles"] = (
-                    exclusion_stats.get("reference_only_genotype_alleles", 0) + 1
-                )
-            continue
+        # Exclude only a genotype that proves this source ALT is not carried.
+        # A missing allele is unresolved, not evidence of reference homozygosity.
+        if sample_call:
+            projection_status = sample_call.get("projection_status")
+            selected_alt_dosage = sample_call.get("selected_alt_dosage")
+            missing_allele_count = sample_call.get("missing_allele_count")
+            known_non_carrier = (
+                projection_status in {"AVAILABLE", "CONTAINS_OTHER_ALT"}
+                and selected_alt_dosage == 0
+                and missing_allele_count == 0
+            )
+            legacy_reference_call = (
+                projection_status is None
+                and sample_call.get("zygosity") in {
+                    "HOMOZYGOUS_REFERENCE",
+                    "REFERENCE_CALL",
+                }
+            )
+            if known_non_carrier or legacy_reference_call:
+                if exclusion_stats is not None:
+                    exclusion_stats["reference_only_genotype_alleles"] = (
+                        exclusion_stats.get("reference_only_genotype_alleles", 0) + 1
+                    )
+                continue
         original = _original_record_mapping(record.raw)
         yield CanonicalVariant(
             genome_build=genome_build,
