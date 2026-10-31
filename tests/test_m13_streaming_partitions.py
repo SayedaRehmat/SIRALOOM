@@ -129,8 +129,8 @@ def test_partition_metadata_persists_analysis_scoped_original_allele_mapping(tmp
         "source_alt_index": 2,
         "original_source_alt_index": None,
         "original_source_alt_count": None,
-        "routed_source_alt_index": None,
-        "routed_source_alt_count": None,
+        "routed_source_alt_index": 2,
+        "routed_source_alt_count": 2,
         "source_record_index": None,
         "source_record_sha256": None,
     }]
