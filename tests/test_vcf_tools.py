@@ -40,8 +40,8 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t4\t.\tAA\tA,C\t.\tPASS\t.\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t4\t.\tAA\tA,C\t.\tPASS\t.\tGT\t1/2\n",
         encoding="utf-8",
     )
 
@@ -58,7 +58,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert result["reference_check"] == "error"
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
-    assert "--multi-overlaps 0" in result["command"]
+    assert "--multi-overlaps ." in result["command"]
     import gzip
     assert Path(str(output_vcf) + ".csi").is_file()
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
@@ -69,6 +69,9 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert len(lines) == 2
     assert lines[0].split("\t")[0:5] == ["1", "1", ".", "CA", "C"]
     assert lines[1].split("\t")[0:5] == ["1", "4", ".", "AA", "C"]
+    # A non-selected ALT must become missing, never a fabricated reference allele.
+    assert lines[0].split("\t")[9] == "1/."
+    assert lines[1].split("\t")[9] == "./1"
 
 
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
