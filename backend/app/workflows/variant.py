@@ -5622,12 +5622,16 @@ def _normalized_partition_metadata(
                 "source_position": getattr(variant, "original_position", None),
                 "source_reference": getattr(variant, "original_reference", None),
                 "source_alternate": getattr(variant, "original_alternate", None),
-                "original_source_alt_index": getattr(variant, "original_alt_index", None),
+                "source_alt_index": getattr(variant, "original_alt_index", None),
+                "original_source_alt_index": (
+                    (getattr(variant, "sample_call", None) or {}).get("original_source_alt_index")
+                ),
                 "original_source_alt_count": (
                     (getattr(variant, "sample_call", None) or {}).get("original_source_alt_count")
                 ),
                 "routed_source_alt_index": (
                     (getattr(variant, "sample_call", None) or {}).get("source_alt_index")
+                    or getattr(variant, "original_alt_index", None)
                 ),
                 "routed_source_alt_count": (
                     (getattr(variant, "sample_call", None) or {}).get("source_alt_count")
