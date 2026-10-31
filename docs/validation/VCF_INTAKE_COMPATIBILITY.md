@@ -20,6 +20,23 @@ The parser applies version-specific rules where implemented:
 
 Recognition of a version is not a claim that every optional extension or every caller-specific tag has clinical semantics in SIRALOOM. Unknown INFO/FORMAT tags are preserved as source data; a downstream stage must not infer unsupported semantics from them.
 
+## Automated software conformance coverage
+
+The GitHub CI suite exercises the supported version range against the upload validator, record router, and pinned BCFtools normalization toolchain:
+
+| Automated check | Version coverage | Verification boundary |
+|---|---|---|
+| Strict parser and upload-intake acceptance | VCFv4.0–VCFv4.5 | Minimal conformant records, version identity, HTSlib parsing, and build detection |
+| Multisample sequence routing | VCFv4.0–VCFv4.5 | Sample-column order and per-sample GT values remain unchanged during routing |
+| gVCF routing | VCFv4.0–VCFv4.5 | Reference blocks, provably unobserved wildcard alleles, unresolved wildcard calls, and exclusive record reconciliation |
+| Reference-aware normalization | VCFv4.0–VCFv4.5 | Pinned BCFtools 1.24 normalization, normalized record content, and CSI index creation |
+| Version-specific genotype syntax | VCFv4.3–VCFv4.5 | VCFv4.4/4.5 leading GT phasing separators are accepted; VCFv4.3 rejects that syntax |
+| VCFv4.5 local-allele fields | VCFv4.5 | LA/LR/LG/P cardinality and LAA constraints |
+| VCFv4.5 base modifications | VCFv4.5 | Reserved implicit fields, Number=M cardinality, field types, fraction/depth ranges, and source-only normalization policy |
+
+These are deterministic software conformance fixtures, not a claim that every optional feature emitted by every caller has been qualified. Laboratory release still requires the caller-specific positive/negative corpus, representative WES/WGS data, known-answer reference and indel checks, and the operational/reproducibility checks listed below.
+
+
 ## Input types and routing
 
 | Input | Intake outcome | Clinical interpretation behavior |
