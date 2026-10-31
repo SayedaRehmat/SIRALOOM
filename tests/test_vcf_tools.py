@@ -744,12 +744,12 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
-    result = vcf_tools._validate_csi_index_record_counts(
+    result = vcf_tools._validate_vcf_index_record_counts(
         staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
     )
 
     assert result == {
-        "method": "CSI_INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
+        "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
         "records": 3,
         "contigs": 2,
         "indexed_query_contigs_verified": 2,
@@ -779,7 +779,7 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
     with pytest.raises(VCFToolError, match="record counts disagree by contig"):
-        vcf_tools._validate_csi_index_record_counts(
+        vcf_tools._validate_vcf_index_record_counts(
             staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
         )
 
@@ -791,7 +791,7 @@ def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bg
     import gzip
     import subprocess
 
-    from backend.app.domain.vcf_tools import _validate_csi_index_record_counts
+    from backend.app.domain.vcf_tools import _validate_vcf_index_record_counts
 
     vcf = tmp_path / "indexed.vcf.gz"
     records = [
@@ -813,10 +813,10 @@ def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bg
         return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(subprocess, "run", fake_run)
-    result = _validate_csi_index_record_counts(
+    result = _validate_vcf_index_record_counts(
         vcf, bcftools_executable="bcftools", timeout_seconds=10
     )
-    assert result["method"] == "CSI_INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN"
+    assert result["method"] == "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN"
     assert result["records"] == 3
     assert result["contigs"] == 2
     assert result["indexed_query_contigs_verified"] == 2
@@ -829,7 +829,7 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
     import gzip
     import subprocess
 
-    from backend.app.domain.vcf_tools import VCFToolError, _validate_csi_index_record_counts
+    from backend.app.domain.vcf_tools import VCFToolError, _validate_vcf_index_record_counts
 
     vcf = tmp_path / "stale-offsets.vcf.gz"
     sequential_record = "1\t10\t.\tA\tC\t.\tPASS\t.\n"
@@ -846,9 +846,56 @@ def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
 
     monkeypatch.setattr(subprocess, "run", fake_run)
     with pytest.raises(VCFToolError, match="records disagree with the sequential VCF stream"):
-        _validate_csi_index_record_counts(
+        _validate_vcf_index_record_counts(
             vcf, bcftools_executable="bcftools", timeout_seconds=10
         )
+
+
+@pytest.mark.parametrize(
+    ("index_flag", "expected_index_type"),
+    [("-t", "TBI"), ("-c", "CSI")],
+)
+def test_uploaded_tbi_and_csi_indexes_are_verified_against_the_bgzf_record_stream(
+    tmp_path: Path, index_flag: str, expected_index_type: str
+):
+    require_bcftools()
+    from backend.app.domain.vcf_tools import validate_vcf_index_concordance
+
+    source = tmp_path / "source.vcf"
+    bgzf = tmp_path / "source.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n"
+        "1\t20\t.\tG\tT\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    compressed = subprocess.run(
+        ["bcftools", "view", "--no-version", "-Oz", "-o", str(bgzf), str(source)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert compressed.returncode == 0, compressed.stderr
+    indexed = subprocess.run(
+        ["bcftools", "index", index_flag, str(bgzf)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert indexed.returncode == 0, indexed.stderr
+
+    result = validate_vcf_index_concordance(
+        bgzf,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result["status"] == "VALIDATED"
+    assert result["index_type"] == expected_index_type
+    assert result["tool_version"] == "bcftools 1.24"
+    assert result["concordance"]["records"] == 2
+    assert result["concordance"]["indexed_query_records_verified"] == 2
 
 
 def test_source_genotype_provenance_is_injected_before_multiallelic_splitting(tmp_path: Path):
