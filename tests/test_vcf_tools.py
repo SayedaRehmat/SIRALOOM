@@ -32,6 +32,100 @@ def make_reference(tmp_path: Path) -> Path:
     return fasta
 
 
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_router_preserves_multisample_sequence_records_for_every_supported_vcf_version(
+    tmp_path: Path, version: str
+):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / f"{version}.vcf"
+    source.write_text(
+        f"##fileformat={version}\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tFATHER\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t0/1\t1/2\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / f"routed-{version}")
+    routed_path = Path(routed["sequence_path"])
+    output_lines = routed_path.read_text(encoding="utf-8").splitlines()
+    output_header = next(line for line in output_lines if line.startswith("#CHROM\t"))
+    output_record = next(line for line in output_lines if not line.startswith("#"))
+
+    assert routed["source_record_count"] == 1
+    assert routed["sequence_records"] == 1
+    assert output_header.split("\t")[-2:] == ["PROBAND", "FATHER"]
+    assert output_record.split("\t")[8:] == ["GT", "0/1", "1/2"]
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_router_reconciles_gvcf_blocks_and_unresolved_wildcards_for_every_supported_version(
+    tmp_path: Path, version: str
+):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / f"{version}.g.vcf"
+    source.write_text(
+        f"##fileformat={version}\n"
+        '##ALT=<ID=NON_REF,Description="Any possible allele">\n'
+        '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\tFATHER\n"
+        "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10\tGT\t0/0\t0/0\n"
+        "1\t11\t.\tA\tC,<NON_REF>\t.\tPASS\t.\tGT\t0/1\t0/0\n"
+        "1\t12\t.\tA\tG,<NON_REF>\t.\tPASS\t.\tGT\t0/2\t0/0\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / f"routed-{version}")
+
+    assert routed["source_record_count"] == 3
+    assert routed["records_total"] == 3
+    assert routed["gvcf_reference_blocks"] == 1
+    assert routed["sequence_records"] == 1
+    assert routed["gvcf_unresolved_variant_records"] == 1
+    assert routed["record_reconciliation"]["delta"] == 0
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
+    tmp_path: Path, version: str
+):
+    require_bcftools()
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / f"{version}.vcf"
+    output_vcf = tmp_path / f"{version}.normalized.vcf.gz"
+    input_vcf.write_text(
+        f"##fileformat={version}\n"
+        "##contig=<ID=1,length=7>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t4\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+
+    result = normalize_vcf_with_bcftools(
+        input_vcf,
+        output_vcf,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result["tool_version"] == "bcftools 1.24"
+    assert result["normalized_records"] == 1
+    assert Path(str(output_vcf) + ".csi").is_file()
+
+
 def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path: Path):
     require_bcftools()
     fasta = make_reference(tmp_path)
