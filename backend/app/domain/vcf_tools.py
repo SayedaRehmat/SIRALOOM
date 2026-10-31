@@ -396,14 +396,16 @@ def _validate_csi_index_record_counts(
     bcftools_executable: str,
     timeout_seconds: int,
 ) -> dict:
-    """Compare CSI per-contig record counts with a sequential BGZF read.
+    """Verify indexed per-contig record streams against the staged BGZF file.
 
-    This detects missing, stale, or inconsistent index metadata before the
-    normalized VCF/index pair is published. It is a count-concordance check,
-    not a cryptographic proof of every indexed record offset.
+    Per-contig counts alone cannot detect an index whose offsets resolve to
+    different records with the same count. This check compares SHA-256 digests
+    of the exact record-line streams returned by indexed BCFtools queries with
+    sequential BGZF scans. Query output is streamed to temporary files so
+    WES/WGS-scale VCFs are not accumulated in process memory.
     """
     try:
-        result = subprocess.run(
+        stats = subprocess.run(
             [bcftools_executable, "index", "--stats", str(vcf_path)],
             capture_output=True,
             text=True,
@@ -415,14 +417,13 @@ def _validate_csi_index_record_counts(
     except OSError as exc:
         raise VCFToolError(f"Unable to execute CSI index validation: {exc}") from exc
 
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "unknown CSI index statistics error").strip()
+    if stats.returncode != 0:
+        detail = (stats.stderr or stats.stdout or "unknown CSI index statistics error").strip()
         raise VCFToolError(f"CSI index record-count validation failed: {detail}")
 
     indexed_counts: dict[str, int] = {}
-    for line in (result.stdout or "").splitlines():
+    for line in (stats.stdout or "").splitlines():
         fields = line.split("\t")
-        # BCFtools 1.24: CHROM, contig length (or "."), record count.
         if len(fields) != 3:
             raise VCFToolError("CSI index statistics returned a malformed contig row.")
         contig, contig_length, record_count = fields
@@ -441,29 +442,96 @@ def _validate_csi_index_record_counts(
             raise VCFToolError("CSI index statistics returned invalid or duplicate contig counts.")
         indexed_counts[contig] = count
 
-    sequential_counts: dict[str, int] = {}
+    sequential: dict[str, dict[str, object]] = {}
     try:
-        with gzip.open(vcf_path, "rt", encoding="utf-8") as handle:
+        with gzip.open(vcf_path, "rt", encoding="utf-8", newline="") as handle:
             for line in handle:
                 if not line or line.startswith("#"):
                     continue
                 contig = line.split("\t", 1)[0]
                 if not contig:
                     raise VCFToolError("Sequential VCF scan found a record with an empty contig.")
-                sequential_counts[contig] = sequential_counts.get(contig, 0) + 1
+                state = sequential.setdefault(contig, {"count": 0, "digest": hashlib.sha256()})
+                state["count"] = int(state["count"]) + 1
+                state["digest"].update(line.encode("utf-8"))
     except (OSError, EOFError, UnicodeDecodeError) as exc:
         raise VCFToolError(f"Cannot read staged BGZF VCF for index concordance: {exc}") from exc
 
+    sequential_counts = {contig: int(state["count"]) for contig, state in sequential.items()}
     if indexed_counts != sequential_counts:
         raise VCFToolError(
             "CSI index and staged VCF record counts disagree by contig: "
             f"index={indexed_counts!r}, sequential={sequential_counts!r}"
         )
 
+    indexed_digests: dict[str, str] = {}
+    for contig in sorted(sequential):
+        with tempfile.TemporaryFile(mode="w+b") as query_output, tempfile.TemporaryFile(mode="w+b") as query_error:
+            try:
+                queried = subprocess.run(
+                    [
+                        bcftools_executable,
+                        "view",
+                        "--no-header",
+                        "--regions-overlap",
+                        "0",
+                        "--regions",
+                        contig,
+                        str(vcf_path),
+                    ],
+                    stdout=query_output,
+                    stderr=query_error,
+                    timeout=max(1, int(timeout_seconds)),
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise VCFToolError(
+                    f"Timed out while querying CSI-indexed records for contig {contig!r}."
+                ) from exc
+            except OSError as exc:
+                raise VCFToolError(
+                    f"Unable to execute CSI-indexed query for contig {contig!r}: {exc}"
+                ) from exc
+            if queried.returncode != 0:
+                query_error.seek(0)
+                detail = query_error.read().decode("utf-8", errors="replace").strip()
+                raise VCFToolError(
+                    f"CSI-indexed record query failed for contig {contig!r}: "
+                    f"{detail or 'unknown bcftools view error'}"
+                )
+
+            query_output.seek(0)
+            digest = hashlib.sha256()
+            count = 0
+            for raw_line in query_output:
+                if not raw_line or raw_line.startswith(b"#"):
+                    continue
+                fields = raw_line.split(b"\t", 1)
+                if not fields or fields[0].decode("utf-8", errors="replace") != contig:
+                    raise VCFToolError(
+                        f"CSI-indexed query for contig {contig!r} returned a record from another contig."
+                    )
+                digest.update(raw_line)
+                count += 1
+            if count != sequential_counts[contig]:
+                raise VCFToolError(
+                    f"CSI-indexed query count mismatch for contig {contig!r}: "
+                    f"indexed={count}, sequential={sequential_counts[contig]}."
+                )
+            expected_digest = sequential[contig]["digest"].hexdigest()
+            actual_digest = digest.hexdigest()
+            if actual_digest != expected_digest:
+                raise VCFToolError(
+                    f"CSI-indexed query records disagree with the sequential VCF stream for contig {contig!r}."
+                )
+            indexed_digests[contig] = actual_digest
+
     return {
-        "method": "CSI_PER_CONTIG_COUNTS_VS_SEQUENTIAL_BGZF_SCAN",
+        "method": "CSI_INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
         "records": sum(sequential_counts.values()),
         "contigs": len(sequential_counts),
+        "indexed_query_contigs_verified": len(indexed_digests),
+        "indexed_query_records_verified": sum(sequential_counts.values()),
     }
 
 def _validate_source_child_reconciliation(source_path: Path, normalized_path: Path) -> dict:
