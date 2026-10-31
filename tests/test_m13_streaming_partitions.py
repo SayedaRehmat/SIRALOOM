@@ -71,7 +71,8 @@ def test_normalized_vcf_stream_preserves_sample_call_and_quality_fields(tmp_path
     metadata = _normalized_partition_metadata([variant_id], variants)
 
     assert start == 0
-    assert metadata["schema_version"] == 3
+    assert metadata["schema_version"] == 4
+    assert metadata["genotype_projection_contract"] == "SOURCE_GT_AND_PER_ALT_DOSAGE_V1"
     assert metadata["genome_build"] == "GRCh38"
     assert metadata["sample_calls"] == [{
         "variant_id": str(variant_id),
@@ -79,7 +80,27 @@ def test_normalized_vcf_stream_preserves_sample_call_and_quality_fields(tmp_path
         "sample_name": "LAB_SAMPLE_1",
         "genotype": "0|1",
         "zygosity": "HETEROZYGOUS",
+        "normalized_genotype": "0|1",
+        "normalized_zygosity": "HETEROZYGOUS",
+        "normalized_phase": "PHASED",
+        "source_genotype": "0|1",
+        "source_genotype_stage": "INPUT_RECORD",
+        "source_zygosity": "HETEROZYGOUS",
+        "source_alt_index": 1,
+        "source_alt_count": 1,
+        "original_source_alt_index": None,
+        "original_source_alt_count": None,
+        "source_record_index": None,
+        "source_record_sha256": None,
+        "projection_status": "AVAILABLE",
+        "projected_genotype": "0|1",
+        "projected_zygosity": "HETEROZYGOUS",
+        "reference_allele_dosage": 1,
+        "selected_alt_dosage": 1,
+        "other_alt_dosage": 0,
+        "missing_allele_count": 0,
         "phase": "PHASED",
+        "projected_phase": "PHASED",
         "phase_set": "42",
         "format_values": {"DP": "35", "GQ": "99", "AD": "20,15", "PS": "42"},
     }]
