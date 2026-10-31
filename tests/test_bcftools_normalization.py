@@ -138,8 +138,8 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
         "AC=2;AF=0.2;AR=20,7;SIRALOOM_ORIG=1|2|A|C,G|2",
     ]
     assert [row[9:] for row in split_records] == [
-        ["1|.:10,5:100,50,60:2", "./.:6,3:90,80,70:."],
-        [".|1:10,7:100,40,30:2", "1/1:6,9:90,60,0:."],
+        ["1|.:10,5:100,50,60:2:1|2:2", "./.:6,3:90,80,70:.:2/2:2"],
+        [".|1:10,7:100,40,30:2:1|2:2", "1/1:6,9:90,60,0:.:2/2:2"],
     ]
     assert [row[7].split("SIRALOOM_ORIG=", 1)[1] for row in split_records] == [
         "1|2|A|C,G|1",
