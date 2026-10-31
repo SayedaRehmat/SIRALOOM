@@ -56,6 +56,16 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     assert result["tool_version"] == "bcftools 1.24"
     assert result["expected_tool_version"] == "1.24"
     assert result["reference_check"] == "error"
+    reference_identity = result["reference_identity"]
+    assert reference_identity["method"] == "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS"
+    assert reference_identity["artifacts"]["fasta"]["sha256"] == hashlib.sha256(
+        fasta.read_bytes()
+    ).hexdigest()
+    fai_path = Path(str(fasta) + ".fai")
+    assert reference_identity["artifacts"]["fai"]["sha256"] == hashlib.sha256(
+        fai_path.read_bytes()
+    ).hexdigest()
+    assert reference_identity["artifacts"]["fasta"]["size_bytes"] == fasta.stat().st_size
     assert result["multiallelic_mode"] == "SPLIT_WITH_BCFTOOLS"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
     assert "--multi-overlaps 0" in result["command"]
@@ -107,6 +117,59 @@ def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_
         "source_alt_mappings": 4,
         "balanced": True,
     }
+
+
+def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_outputs(
+    monkeypatch, tmp_path: Path
+):
+    import gzip
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "input.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    index_path = Path(str(output_vcf) + ".csi")
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    output_vcf.write_bytes(b"previous-valid-vcf")
+    index_path.write_bytes(b"previous-valid-index")
+    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+
+    def fake_run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.24\n", stderr="")
+        if command[1] in {"view", "norm", "sort"}:
+            target = Path(command[command.index("-o") + 1])
+            if command[1] == "sort":
+                # Same FASTA geometry, different sequence bytes: size checks alone
+                # would miss this change, while SHA-256 attestation must detect it.
+                fasta.write_text(">1\nGAAAAAC\n", encoding="utf-8")
+            with gzip.open(target, "wt", encoding="utf-8") as handle:
+                handle.write(
+                    "##fileformat=VCFv4.3\n"
+                    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                    "1\t2\t.\tA\tG\t.\tPASS\t.\n"
+                )
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        if command[1] == "index":
+            raise AssertionError("Indexing must not run after reference identity changes.")
+        raise AssertionError(f"Unexpected command: {command!r}")
+
+    monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
+    with pytest.raises(VCFToolError, match="Reference FASTA or index artifacts changed"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            output_vcf,
+            reference_fasta=fasta,
+            expected_bcftools_version="1.24",
+        )
+
+    assert output_vcf.read_bytes() == b"previous-valid-vcf"
+    assert index_path.read_bytes() == b"previous-valid-index"
 
 
 def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):

@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import ExitStack
+from functools import lru_cache
 from pathlib import Path
 
 from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
@@ -647,6 +648,94 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
     }
 
 
+@lru_cache(maxsize=64)
+def _sha256_file_cached(
+    path_string: str,
+    device: int,
+    inode: int,
+    size_bytes: int,
+    mtime_ns: int,
+    ctime_ns: int,
+) -> str:
+    """Cache a digest only for one exact filesystem identity."""
+    path = Path(path_string)
+    before = path.stat()
+    before_identity = (
+        before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns
+    )
+    if before_identity != (device, inode, size_bytes, mtime_ns, ctime_ns):
+        raise VCFToolError(f"Reference artifact changed before hashing: {path}")
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    after = path.stat()
+    after_identity = (
+        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns
+    )
+    if after_identity != before_identity:
+        raise VCFToolError(f"Reference artifact changed while hashing: {path}")
+    return digest.hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    """Hash a reference artifact, caching only while its filesystem identity is unchanged."""
+    resolved = path.resolve()
+    stat = resolved.stat()
+    return _sha256_file_cached(
+        str(resolved),
+        stat.st_dev,
+        stat.st_ino,
+        stat.st_size,
+        stat.st_mtime_ns,
+        stat.st_ctime_ns,
+    )
+
+
+def _reference_artifact_identity(reference_fasta: Path) -> dict:
+    """Attest the exact FASTA and index files used for normalization."""
+    artifacts = {
+        "fasta": reference_fasta,
+        "fai": Path(str(reference_fasta) + ".fai"),
+    }
+    if reference_fasta.name.lower().endswith((".gz", ".bgz")):
+        artifacts["gzi"] = Path(str(reference_fasta) + ".gzi")
+
+    identity_artifacts: dict[str, dict] = {}
+    for role, artifact_path in artifacts.items():
+        if not artifact_path.is_file():
+            sidecar = "FASTA index" if role == "fai" else "BGZF FASTA index" if role == "gzi" else "reference FASTA"
+            raise VCFToolError(
+                f"Required {sidecar} artifact is missing or empty: {artifact_path}"
+            )
+        try:
+            before = artifact_path.stat()
+            if before.st_size <= 0:
+                sidecar = "FASTA index" if role == "fai" else "BGZF FASTA index" if role == "gzi" else "reference FASTA"
+                raise VCFToolError(
+                    f"Required {sidecar} artifact is missing or empty: {artifact_path}"
+                )
+            digest = _sha256_file(artifact_path)
+            after = artifact_path.stat()
+        except OSError as exc:
+            raise VCFToolError(f"Unable to attest reference artifact {artifact_path}: {exc}") from exc
+        if (
+            before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns
+        ) != (
+            after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns
+        ):
+            raise VCFToolError(f"Reference artifact changed while being attested: {artifact_path}")
+        identity_artifacts[role] = {
+            "path": str(artifact_path.resolve()),
+            "size_bytes": after.st_size,
+            "sha256": digest,
+        }
+    return {
+        "method": "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS",
+        "artifacts": identity_artifacts,
+    }
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -677,6 +766,7 @@ def normalize_vcf_with_bcftools(
         raise VCFToolError(f"VCF input does not exist: {input_path}")
     if not reference_fasta.is_file():
         raise VCFToolError(f"Reference FASTA does not exist: {reference_fasta}")
+    reference_identity_before = _reference_artifact_identity(reference_fasta)
     if output_path.suffixes[-2:] != [".vcf", ".gz"]:
         raise VCFToolError("Canonical normalized VCF output must use the .vcf.gz filename extension.")
     has_existing_source_mapping = _reject_original_record_tag_collision(
@@ -796,6 +886,12 @@ def normalize_vcf_with_bcftools(
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
 
+        reference_identity_after = _reference_artifact_identity(reference_fasta)
+        if reference_identity_after != reference_identity_before:
+            raise VCFToolError(
+                "Reference FASTA or index artifacts changed during normalization; staged outputs will not be published."
+            )
+
         source_child_reconciliation = _validate_source_child_reconciliation(
             input_path, sorted_path
         )
@@ -874,6 +970,7 @@ def normalize_vcf_with_bcftools(
                 " ".join(index_command),
             ]),
             "reference_fasta": str(reference_fasta),
+            "reference_identity": reference_identity_before,
             "reference_check": "error",
             "multiallelic_mode": MULTIALLELIC_POLICY,
             "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
