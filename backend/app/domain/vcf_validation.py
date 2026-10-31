@@ -151,6 +151,133 @@ def _info_values(value: str) -> dict[str, str | None]:
     return result
 
 
+def compute_vcf45_record_span(
+    fields: list[str],
+    line_no: int,
+) -> tuple[int, list[tuple[int, int]], str] | None:
+    """Compute the VCFv4.5 reference span from REF, symbolic SVLEN, and FORMAT/LEN."""
+    if len(fields) < 8:
+        return None
+
+    pos = int(fields[1])
+    ref = fields[3].upper()
+    alts = fields[4].split(",") if fields[4] != "." else []
+    ref_end = pos + len(ref) - 1
+    end_candidates = [ref_end]
+    unknown_span = False
+    sample_lengths: list[tuple[int, int]] = []
+
+    info_values = _info_values(fields[7])
+    raw_end = info_values.get("END")
+    declared_end: int | None = None
+    if raw_end not in {None, "."}:
+        try:
+            declared_end = int(raw_end)
+        except ValueError as exc:
+            raise StrictVCFValidationError(
+                f"INFO/END must be an integer at line {line_no}",
+                code="VCF_END_INVALID",
+            ) from exc
+        if declared_end < ref_end:
+            raise StrictVCFValidationError(
+                f"INFO/END precedes the end of REF at line {line_no}",
+                code="VCF_END_INVALID",
+            )
+
+    raw_svlen = info_values.get("SVLEN")
+    svlen_values = raw_svlen.split(",") if raw_svlen not in {None, "."} else []
+    if svlen_values and len(svlen_values) != len(alts):
+        raise StrictVCFValidationError(
+            f"INFO/SVLEN cardinality must match ALT at line {line_no}",
+            code="VCF_SVLEN_INVALID",
+        )
+
+    for alt_index, alt in enumerate(alts):
+        if alt == "<*>":
+            continue
+        if alt == "<NON_REF>":
+            unknown_span = True
+            continue
+        if not (alt.startswith("<") and alt.endswith(">")):
+            continue
+
+        sv_type = alt[1:-1].split(":", 1)[0].upper()
+        if sv_type == "INS":
+            continue
+        if svlen_values:
+            raw_value = svlen_values[alt_index]
+            if raw_value in {"", "."}:
+                unknown_span = True
+                continue
+            try:
+                svlen = int(raw_value)
+            except ValueError as exc:
+                raise StrictVCFValidationError(
+                    f"INFO/SVLEN must contain integers at line {line_no}",
+                    code="VCF_SVLEN_INVALID",
+                ) from exc
+            end_candidates.append(pos + abs(svlen))
+        elif declared_end is not None:
+            # Legacy END is retained as the span source when SVLEN is absent.
+            unknown_span = True
+        else:
+            raise StrictVCFValidationError(
+                f"Symbolic structural ALT {alt!r} requires SVLEN or END at line {line_no}",
+                code="VCF_SV_INVALID",
+            )
+
+    format_keys = fields[8].split(":") if len(fields) > 8 else []
+    if "LEN" in format_keys:
+        if "<*>" not in alts:
+            raise StrictVCFValidationError(
+                f"FORMAT/LEN is only valid when ALT contains <*> at line {line_no}",
+                code="VCF_LEN_INVALID",
+            )
+        len_index = format_keys.index("LEN")
+        if len(fields) <= 9:
+            unknown_span = True
+        for sample_index, sample in enumerate(fields[9:], 1):
+            sample_values = sample.split(":")
+            raw_length = sample_values[len_index] if len_index < len(sample_values) else "."
+            if raw_length in {"", "."}:
+                unknown_span = True
+                continue
+            try:
+                length = int(raw_length)
+            except ValueError as exc:
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN must contain integers at line {line_no}, sample {sample_index}",
+                    code="VCF_LEN_INVALID",
+                ) from exc
+            if length <= 0 or length < len(ref):
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN must be positive and at least the REF length at line {line_no}, sample {sample_index}",
+                    code="VCF_LEN_INVALID",
+                )
+            sample_lengths.append((sample_index, length))
+            end_candidates.append(pos + length - 1)
+        if len(sample_lengths) < max(0, len(fields) - 9):
+            unknown_span = True
+    elif "<*>" in alts:
+        # Legacy VCFv4.5 block records may still supply END instead of LEN.
+        unknown_span = declared_end is not None
+
+    computed_end = max(end_candidates)
+    if declared_end is not None:
+        if declared_end < computed_end:
+            raise StrictVCFValidationError(
+                f"INFO/END is shorter than the computed VCFv4.5 reference span at line {line_no}",
+                code="VCF_END_MISMATCH",
+            )
+        if not unknown_span and declared_end != computed_end:
+            raise StrictVCFValidationError(
+                f"INFO/END must equal the computed VCFv4.5 reference span at line {line_no}",
+                code="VCF_END_MISMATCH",
+            )
+        return declared_end, sample_lengths, "INFO_END"
+    return computed_end, sample_lengths, "COMPUTED"
+
+
 def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None) -> tuple[str, dict[str, str]]:
     """Parse INFO/FORMAT metadata without splitting commas inside quoted descriptions."""
     prefix = f"##{kind}=<"
