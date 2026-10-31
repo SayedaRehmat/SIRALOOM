@@ -281,7 +281,19 @@ def _sample_calls_for_alt(
             projected[sample_name] = call
             continue
 
-        tokens = re.split(r"([/|])", source_genotype)
+        # VCF 4.4/4.5 allow the first phasing indicator to be written
+        # before the first allele (for example, |0/1/2). It is not a missing
+        # allele; preserve it as a prefix while projecting the allele tokens.
+        leading_phase_indicator = (
+            source_genotype[0] if source_genotype[:1] in {"/", "|"} else ""
+        )
+        genotype_body = source_genotype[1:] if leading_phase_indicator else source_genotype
+        if not genotype_body:
+            call["projection_status"] = "INVALID_SOURCE_GT"
+            call["projected_status"] = "INVALID_SOURCE_GT"
+            projected[sample_name] = call
+            continue
+        tokens = re.split(r"([/|])", genotype_body)
         allele_positions = [i for i, token in enumerate(tokens) if token not in {"/", "|"}]
         projected_tokens = list(tokens)
         states: list[str] = []
@@ -331,7 +343,7 @@ def _sample_calls_for_alt(
             call["projection_status"] = "CONTAINS_OTHER_ALT"
             call["projected_status"] = "CONTAINS_OTHER_ALT"
         else:
-            projected_genotype = "".join(projected_tokens)
+            projected_genotype = leading_phase_indicator + "".join(projected_tokens)
             call["projected_genotype"] = projected_genotype
             call["projected_zygosity"] = _zygosity(projected_genotype)
             if call["missing_allele_count"] == len(allele_positions):
