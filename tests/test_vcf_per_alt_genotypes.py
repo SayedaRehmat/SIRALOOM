@@ -119,3 +119,28 @@ def test_normalized_split_records_recover_source_gt_and_per_alt_dosage(tmp_path:
         assert call["reference_allele_dosage"] == 0
         assert call["projection_status"] == "CONTAINS_OTHER_ALT"
         assert call["projected_genotype"] is None
+
+
+def test_vcf44_leading_phase_indicator_is_not_a_missing_allele(tmp_path: Path):
+    path = tmp_path / "vcf44-leading-phase.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t103\trsLeadingPhase\tA\tC,G\t.\tPASS\t.\tGT\t|0/1/2\n",
+        encoding="utf-8",
+    )
+
+    first, second = list(parse_vcf(str(path), sample_name="SAMPLE"))
+
+    for record, expected_index in ((first, 1), (second, 2)):
+        call = record.sample_calls["SAMPLE"]
+        assert call["source_genotype"] == "|0/1/2"
+        assert call["source_alt_index"] == expected_index
+        assert call["source_alt_count"] == 2
+        assert call["reference_allele_dosage"] == 1
+        assert call["selected_alt_dosage"] == 1
+        assert call["other_alt_dosage"] == 1
+        assert call["missing_allele_count"] == 0
+        assert call["projection_status"] == "CONTAINS_OTHER_ALT"
+        assert call["phase"] == "PARTIALLY_PHASED"
