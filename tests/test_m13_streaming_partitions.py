@@ -126,7 +126,12 @@ def test_partition_metadata_persists_analysis_scoped_original_allele_mapping(tmp
         "source_position": 10,
         "source_reference": "AA",
         "source_alternate": "A,AT",
-        "source_alt_index": 2,
+        "original_source_alt_index": 2,
+        "original_source_alt_count": None,
+        "routed_source_alt_index": None,
+        "routed_source_alt_count": None,
+        "source_record_index": None,
+        "source_record_sha256": None,
     }]
 
 
