@@ -57,6 +57,20 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
     return None
 
 
+def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
+    if field_id == "LEN":
+        return {"Number": "1", "Type": "Integer"}
+    return _reserved_base_modification_format_definition(field_id)
+
+
+def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
+    if field_id == "END":
+        return {"Number": "1", "Type": "Integer"}
+    if field_id == "SVLEN":
+        return {"Number": "A", "Type": "Integer"}
+    return None
+
+
 class StrictVCFValidationError(ValueError):
     def __init__(self, message: str, *, code: str = "VCF_INVALID"):
         super().__init__(message)
@@ -243,19 +257,20 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
-    reserved_base_modification = (
-        _reserved_base_modification_format_definition(identifier)
-        if kind == "FORMAT" and fileformat == "VCFv4.5"
-        else None
-    )
-    if reserved_base_modification is not None and (
-        number != reserved_base_modification["Number"]
-        or parsed["Type"] != reserved_base_modification["Type"]
+    reserved_definition = None
+    if fileformat == "VCFv4.5":
+        if kind == "FORMAT":
+            reserved_definition = _reserved_vcf45_format_definition(identifier)
+        elif kind == "INFO":
+            reserved_definition = _reserved_vcf45_info_definition(identifier)
+    if reserved_definition is not None and (
+        number != reserved_definition["Number"]
+        or parsed["Type"] != reserved_definition["Type"]
     ):
         raise StrictVCFValidationError(
-            f"Reserved VCFv4.5 base-modification field {identifier!r} requires "
-            f"Number={reserved_base_modification['Number']} and "
-            f"Type={reserved_base_modification['Type']} at line {line_no}",
+            f"Reserved VCFv4.5 {kind} field {identifier!r} requires "
+            f"Number={reserved_definition['Number']} and "
+            f"Type={reserved_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     return identifier, {"Number": number, "Type": parsed["Type"]}
@@ -1003,7 +1018,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.5":
-                        definition = _reserved_base_modification_format_definition(key)
+                        definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
                         if (
                             definition["Number"] == "G"
