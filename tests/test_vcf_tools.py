@@ -794,11 +794,13 @@ def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_p
         encoding="utf-8",
     )
 
+    source_profile = validate_vcf_strict(input_vcf)
     result = normalize_vcf_with_bcftools(
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
         expected_bcftools_version="1.24",
+        source_only_format_fields=source_profile["base_modification_format_fields"],
     )
 
     assert result["tool_version"] == "bcftools 1.24"
