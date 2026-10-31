@@ -807,7 +807,7 @@ def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_p
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
         records = [
-            line.rstrip("\\r\n").split("\t")
+            line.rstrip("\r\n").split("\t")
             for line in handle
             if line and not line.startswith("#")
         ]
