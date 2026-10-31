@@ -32,6 +32,23 @@ Recognition of a version is not a claim that every optional extension or every c
 | Reference-only rows (ALT=.) and telomere sentinels | Preserved and counted | Not turned into candidate variants or a negative clinical result |
 | Unsupported major version, malformed header/record, or conflicting build declarations | Rejected with an explicit validation error | No downstream analysis dispatch |
 
+## Multiallelic genotype and source-lineage contract
+
+The normalization contract preserves two distinct genotype views:
+
+- `SIRALOOM_SOURCE_GT` stores the sample GT on the routed sequence input immediately before per-ALT normalization. This is after the router's explicit removal of fully unobserved wildcard alleles; it is not a replacement for the immutable uploaded VCF.
+- `SIRALOOM_SOURCE_ALT_COUNT` stores the ALT count on that same routed input.
+- `SIRALOOM_ORIG` maps each normalized child to its routed source record and routed ALT index.
+- `SIRALOOM_SOURCE` retains the router's mapping from routed ALT indexes back to the raw uploaded record, including the raw record index, SHA-256, raw ALT count, and original ALT-index list.
+
+The parser exposes the routed source GT as the authoritative sample genotype and retains the normalized biallelic GT separately. For each normalized ALT it records reference dosage, selected-ALT dosage, other-ALT dosage, missing-allele count, source/routed ALT indexes, original raw ALT index, source-record identity, and a projection status.
+
+**Non-selected ALT alleles are never rewritten as reference alleles.** BCFtools normalization uses the missing-other-ALT policy. A per-ALT candidate is excluded as a known non-carrier only when selected-ALT dosage is zero and no allele is missing. Partial calls, no-calls, invalid mappings, and source/normalized ploidy mismatches remain unresolved; they are not converted into reference-negative evidence.
+
+The normalization artifact contract is versioned independently from the uploaded source artifact. The current source-genotype provenance implementation uses normalization version `5.0`, normalized-artifact identity `v5`, and partition metadata schema `4`. Historical artifacts are not silently upgraded or interpreted as if they contained this provenance contract.
+
+This contract improves genotype and source-record traceability; it does not itself qualify every caller-specific FORMAT field, every VCF 4.0–4.5 optional feature, or downstream inheritance/segregation logic. Those remain separate feature-level and end-to-end laboratory qualification requirements.
+
 ## Validation layers
 
 1. **Accession and transport:** filename/type, non-empty upload, configured byte limit, storage-capacity preflight, SHA-256, original artifact preservation.

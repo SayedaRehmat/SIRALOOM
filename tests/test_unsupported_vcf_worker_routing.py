@@ -539,7 +539,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             monkeypatch.setattr(db_module, "engine", engine)
             task_id = "gvcf-positive-test"
             normalized_id = uuid5(
-                analysis_id, "siraloom:normalization:normalized-vcf:v4"
+                analysis_id, "siraloom:normalization:normalized-vcf:v5"
             )
             normalized_uri = store.uri_for_artifact(
                 case_id=case_id,
@@ -766,7 +766,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 if used_real_bcftools:
                     assert "bcftools view --no-version -A" in normalized.metadata_json["normalization_command"]
-                    assert normalized.metadata_json["normalization_version"] == "4.0"
+                    assert normalized.metadata_json["normalization_version"] == "5.0"
                     partition = db.scalar(select(AnalysisPartition).where(
                         AnalysisPartition.analysis_id == analysis_id,
                         AnalysisPartition.step_id == "normalize",
@@ -785,8 +785,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     ]
                     called_variant = next(record for record in normalized_records if record[1] == "11")
                     assert called_variant[4] == "C"
-                    assert called_variant[8] == "GT:AD:PL"
-                    assert called_variant[9] == "0/1:15,9:100,50,60"
+                    assert called_variant[8] == "GT:AD:PL:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
+                    assert called_variant[9] == "0/1:15,9:100,50,60:0/1:1"
                 assert analysis.status == AnalysisStatus.BLOCKED
                 annotation = db.scalar(select(WorkflowStep).where(
                     WorkflowStep.analysis_id == analysis_id,

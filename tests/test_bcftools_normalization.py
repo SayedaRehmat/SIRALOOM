@@ -126,7 +126,7 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
     stats = normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
 
     assert stats["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
-    assert "--multi-overlaps 0" in stats["command"]
+    assert "--multi-overlaps ." in stats["command"]
     assert "--old-rec-tag SIRALOOM_ORIG" in stats["command"]
     validation = validate_vcf_strict(output)
     assert validation["records"] == 2
@@ -138,8 +138,8 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
         "AC=2;AF=0.2;AR=20,7;SIRALOOM_ORIG=1|2|A|C,G|2",
     ]
     assert [row[9:] for row in split_records] == [
-        ["1|0:10,5:100,50,60:2", "0/0:6,3:90,80,70:."],
-        ["0|1:10,7:100,40,30:2", "1/1:6,9:90,60,0:."],
+        ["1|.:10,5:100,50,60:2:1|2:2", "./.:6,3:90,80,70:.:2/2:2"],
+        [".|1:10,7:100,40,30:2:1|2:2", "1/1:6,9:90,60,0:.:2/2:2"],
     ]
     assert [row[7].split("SIRALOOM_ORIG=", 1)[1] for row in split_records] == [
         "1|2|A|C,G|1",
@@ -261,7 +261,7 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     assert payload["source_alt_count"] == 2
     assert payload["normalized_alt_source_indexes"] == [1]
     assert "SIRALOOM_ORIG=1|2|A|G|1" in info_fields
-    assert fields[8] == "GT:AD:PL"
+    assert fields[8] == "GT:AD:PL:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
     # Removing allele 2 retains PL entries for 0/0, 0/1, and 1/1; the
     # removed 0/2 and 1/2 likelihoods must not be reassigned to 1/1.
-    assert fields[9] == "0/1:15,9:100,50,60"
+    assert fields[9] == "0/1:15,9:100,50,60:0/1:1"
