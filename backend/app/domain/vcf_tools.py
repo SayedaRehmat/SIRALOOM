@@ -826,22 +826,22 @@ def _strip_vcf45_number_m_format_fields(
     transform removes Number=M values and their header declarations from the
     derived small-variant artifact and records the source-only policy.
     """
-    source_opener = gzip.open if source_vcf_path.name.lower().endswith((".gz", ".bgz")) else open
+    source_file_opener = gzip.open if source_vcf_path.name.lower().endswith((".gz", ".bgz")) else open
     try:
-        with source_opener(source_vcf_path, "rt", encoding="utf-8-sig") as header_handle:
+        with source_file_opener(source_vcf_path, "rt", encoding="utf-8-sig") as header_handle:
             source_fileformat_header = header_handle.readline().rstrip("\r\n")
     except OSError as exc:
         raise VCFToolError(f"Unable to inspect source VCF fileformat before Number=M handling: {exc}") from exc
     if source_fileformat_header != "##fileformat=VCFv4.5":
         return []
 
-    source_opener = gzip.open if normalized_path.name.lower().endswith((".gz", ".bgz")) else open
+    normalized_file_opener = gzip.open if normalized_path.name.lower().endswith((".gz", ".bgz")) else open
 
     source_only_fields: set[str] = set(source_only_format_fields or [])
     fileformat = "VCFv4.5"
     if source_only_format_fields is None:
         try:
-            with source_opener(source_vcf_path, "rt", encoding="utf-8-sig") as source_handle:
+            with source_file_opener(source_vcf_path, "rt", encoding="utf-8-sig") as source_handle:
                 for line_no, raw in enumerate(source_handle, 1):
                     line = raw.rstrip("\r\n")
                     if line.startswith("##FORMAT="):
@@ -867,7 +867,7 @@ def _strip_vcf45_number_m_format_fields(
     )
 
     try:
-        with source_opener(normalized_path, "rt", encoding="utf-8-sig") as input_handle, destination_path.open(
+        with normalized_file_opener(normalized_path, "rt", encoding="utf-8-sig") as input_handle, destination_path.open(
             "w", encoding="utf-8", newline=""
         ) as output_handle:
             for line_no, raw in enumerate(input_handle, 1):
