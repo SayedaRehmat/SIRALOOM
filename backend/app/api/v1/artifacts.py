@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import tempfile
 from pathlib import Path
 from uuid import UUID
@@ -301,10 +302,52 @@ async def upload_artifact(
                 artifact_validation_status = result.status
             build_for_artifact = requested_build
         else:
-            result = validate_index(staged, primary.filename)
+            if primary is None:
+                raise HTTPException(status_code=400, detail="A primary VCF is required for index validation.")
+            primary_store = artifact_store_for_uri(
+                db,
+                organization_id=principal.organization_id,
+                storage_uri=primary.storage_uri,
+            )
+            primary_validation_path = Path(tmp) / primary.filename
+            try:
+                if hasattr(primary_store, "download_to_file"):
+                    primary_store.download_to_file(
+                        primary.storage_uri,
+                        primary_validation_path,
+                        expected_sha256=primary.sha256,
+                        expected_size_bytes=primary.size_bytes,
+                    )
+                else:
+                    stored_primary_path = primary_store.local_path(primary.storage_uri)
+                    verify_artifact_file(
+                        stored_primary_path,
+                        sha256=primary.sha256,
+                        size_bytes=primary.size_bytes,
+                    )
+                    primary_validation_path.symlink_to(stored_primary_path)
+                index_suffix = ".tbi" if kind == "TBI" else ".csi"
+                staged_index_path = Path(str(primary_validation_path) + index_suffix)
+                shutil.copyfile(staged, staged_index_path)
+            except (ArtifactIntegrityError, OSError, StorageProfileError) as exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail="The paired primary VCF could not be integrity-verified for index validation.",
+                ) from exc
+            result = validate_index(
+                staged_index_path,
+                primary.filename,
+                primary_path=primary_validation_path,
+                expected_bcftools_version=settings.bcftools_version,
+            )
             artifact_type = ArtifactType.VCF_INDEX_TBI if kind == "TBI" else ArtifactType.VCF_INDEX_CSI
             validation_metadata = {
-                "validation": {"status": result.status, "errors": result.errors, "warnings": result.warnings},
+                "validation": {
+                    "status": result.status,
+                    "errors": result.errors,
+                    "warnings": result.warnings,
+                    **(result.metadata or {}),
+                },
                 "ingestion": {"file_kind": kind, "paired_primary_artifact_id": str(primary.id), "capacity_preflight": capacity_preflight},
             }
             build_for_artifact = primary.genome_build
@@ -319,7 +362,15 @@ async def upload_artifact(
 
         try:
             if kind in {"TBI", "CSI"} and primary:
-                primary.metadata_json = {**(primary.metadata_json or {}), "index": {"artifact_id": str(artifact.id), "status": result.status, "type": kind}}
+                primary.metadata_json = {
+                    **(primary.metadata_json or {}),
+                    "index": {
+                        "artifact_id": str(artifact.id),
+                        "status": result.status,
+                        "type": kind,
+                        "concordance": (result.metadata or {}).get("index_concordance", {"status": "NOT_CHECKED"}),
+                    },
+                }
 
             before_status = case.status
             if kind == "VCF":
