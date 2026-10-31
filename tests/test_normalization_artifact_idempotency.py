@@ -107,7 +107,7 @@ def test_normalization_artifact_replay_recovers_after_file_write_before_commit(
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'artifact-worker-loss.db'}")
     Base.metadata.create_all(engine)
     organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
-    artifact_id = uuid5(analysis_id, "siraloom:normalization:normalized-vcf:v4")
+    artifact_id = uuid5(analysis_id, "siraloom:normalization:normalized-vcf:v5")
     store = ArtifactStore(tmp_path / "artifacts")
     source = tmp_path / "normalized.vcf.gz"
     content = b"stable normalized VCF output from pinned execution\n"
