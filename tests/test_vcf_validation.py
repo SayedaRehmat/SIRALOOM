@@ -1015,12 +1015,13 @@ def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path
 
 
 @pytest.mark.parametrize(
-    ("reference", "alternate", "genotype", "value", "expected_count", "info"),
+    ("field_id", "reference", "alternate", "genotype", "value", "expected_count", "info"),
     [
-        ("C", "A", "0/1", "0.95", 1, "."),
-        ("C", "CTAG", "0/1", "0,0.5,0.7", 3, "."),
-        ("C", ".", "0|0", "0.9,0", 2, "."),
+        ("M5mC", "C", "A", "0/1", "0.95", 1, "."),
+        ("M5mC", "C", "CTAG", "0/1", "0,0.5,0.7", 3, "."),
+        ("M5mC", "C", ".", "0|0", "0.9,0", 2, "."),
         (
+            "M5mC",
             "C",
             "A,T,G,ACG",
             "/3|1/0|4|0/0/3/1",
@@ -1028,16 +1029,17 @@ def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path
             5,
             ".",
         ),
-        ("C", "A", "0/0", "0.9", 1, "."),
-        ("C", "A", "0|0", "0.9,0", 2, "."),
-        ("C", "CTAG", "0/.", "0.9", 1, "."),
-        ("C", "<DEL>", "0/1", "0.9", 1, "END=10"),
-        ("T", "A", "0/1", "0.1,0.2", 2, "."),
-        ("A", "T", "0/1", "0.1,0.2,0.3,0.4", 4, "."),
+        ("M5mC", "C", "A", "0/0", "0.9", 1, "."),
+        ("M5mC", "C", "A", "0|0", "0.9,0", 2, "."),
+        ("M5mC", "C", "CTAG", "0/.", "0.9", 1, "."),
+        ("M5mC", "C", "<DEL>", "0/1", "0.9", 1, "END=10"),
+        ("M5mU", "T", "A", "0/1", "0.1,0.2", 2, "."),
+        ("M5mN", "A", "T", "0/1", "0.1,0.2,0.3,0.4", 4, "."),
     ],
 )
 def test_vcf45_number_m_base_modification_cardinality(
     tmp_path: Path,
+    field_id: str,
     reference: str,
     alternate: str,
     genotype: str,
@@ -1050,9 +1052,9 @@ def test_vcf45_number_m_base_modification_cardinality(
         path,
         [
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
-            '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
+            f'##FORMAT=<ID={field_id},Number=M,Type=Float,Description="Base modification fraction">',
         ],
-        f"1\\t2\\t.\\t{reference}\\t{alternate}\\t.\\tPASS\\t{info}\\tGT:M5mC\\t{genotype}:{value}\\n",
+        f"1\\t2\\t.\\t{reference}\\t{alternate}\\t.\\tPASS\\t{info}\\tGT:{field_id}\\t{genotype}:{value}\\n",
         sample=True,
         version="VCFv4.5",
     )
