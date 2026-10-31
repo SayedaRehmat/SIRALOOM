@@ -12,7 +12,8 @@ The validator recognizes VCFv4.0, VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, and VCFv4.
 
 The parser applies version-specific rules where implemented:
 - VCFv4.4 and VCFv4.5 leading genotype phasing separators are parsed without inflating ploidy.
-- VCFv4.5 FORMAT cardinalities LA, LR, LG, and P are recognized; local-allele fields require LAA in the prescribed position and validate distinct, in-range 1-based ALT indices.
+- VCFv4.5 FORMAT cardinalities LA, LR, LG, P, and M are recognized. Local-allele fields require LAA in the prescribed position and validate distinct, in-range 1-based ALT indices.
+- VCFv4.5 Number=M base-modification fields are cardinality-validated from the sample GT and concrete REF/ALT allele sequences, including strand complements, unphased-allele aggregation, missing alleles, and symbolic alleles. Their raw values are retained; they are not interpreted as rare-disease pathogenicity evidence or used by the clinical prioritization engine.
 - Arbitrary declared FORMAT values are retained in sample-call provenance instead of being reduced to a small fixed whitelist.
 - The pinned BCFtools/HTSlib version is 1.24 so the independent parser and transformation toolchain can handle VCFv4.4/v4.5 cardinality fields.
 
@@ -63,7 +64,7 @@ This contract improves genotype and source-record traceability; it does not itse
 
 The code-level changes above do not by themselves qualify SIRALOOM for a clinical laboratory. Before a lab enables a version/caller/build combination, validate and retain evidence for at least:
 
-- Positive and negative conformance fixtures for every VCF version used by the lab, including version-specific fields actually emitted by its caller.
+- Positive and negative conformance fixtures for every VCF version used by the lab, including version-specific fields actually emitted by its caller; VCFv4.5 Number=M fixtures must include methylation/base-modification cardinality and preservation checks.
 - Multisample proband selection across normalization, genotype interpretation, inheritance/segregation, candidate generation, and report rendering; prove no other sample's genotype is used.
 - Sites-only artifact behavior and explicit rejection from patient-level analysis.
 - REF allele concordance against the exact pinned reference package, contig aliases/lengths, GRCh37/GRCh38 mismatch, and boundary/telomere records.
