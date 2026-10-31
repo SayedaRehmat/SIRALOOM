@@ -774,3 +774,65 @@ def test_source_genotype_provenance_is_injected_before_multiallelic_splitting(tm
     fields = record.split("\t")
     assert fields[8] == "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
     assert fields[9] == "1/2:1/2:2"
+
+
+def test_bcftools_124_multiallelic_normalization_keeps_number_m_fields_source_only(tmp_path: Path):
+    require_bcftools()
+    import gzip
+
+    from backend.app.domain.vcf_validation import validate_vcf_strict
+
+    fasta = make_reference(tmp_path)
+    input_vcf = tmp_path / "vcf45-base-modification.vcf"
+    output_vcf = tmp_path / "vcf45-base-modification.normalized.vcf.gz"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##contig=<ID=1,length=7>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t1\t.\tC\tCTAG,CG\t.\tPASS\t.\tGT:M5mC\t1/2:0.5,0.6,0.7,0.8\n",
+        encoding="utf-8",
+    )
+
+    result = normalize_vcf_with_bcftools(
+        input_vcf,
+        output_vcf,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.24",
+    )
+
+    assert result["tool_version"] == "bcftools 1.24"
+    assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
+    assert result["source_only_format_fields"] == ["M5mC"]
+    assert result["source_only_format_fields_policy"] == "IMMUTABLE_SOURCE_VCF_ONLY"
+    assert validate_vcf_strict(output_vcf)["records"] == 2
+
+    with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
+        header = []
+        records = []
+        for line in handle:
+            if line.startswith("#"):
+                header.append(line.rstrip("\r\n"))
+            elif line:
+                records.append(line.rstrip("\r\n").split("\t"))
+
+    assert any(
+        line.startswith("##SIRALOOM_SOURCE_ONLY_FORMAT_FIELDS_POLICY=")
+        for line in header
+    )
+    assert not any("ID=M5mC" in line for line in header)
+    records_by_alt = {record[4]: record for record in records}
+    assert set(records_by_alt) == {"CTAG", "CG"}
+    assert all(
+        "M5mC" not in record[8].split(":")
+        for record in records_by_alt.values()
+    )
+    for alternate, expected_gt in (("CTAG", "1/."), ("CG", "./1")):
+        record = records_by_alt[alternate]
+        format_keys = record[8].split(":")
+        sample_values = record[9].split(":")
+        assert sample_values[format_keys.index("GT")] == expected_gt
+        assert sample_values[format_keys.index("SIRALOOM_SOURCE_GT")] == "1/2"
+        assert sample_values[format_keys.index("SIRALOOM_SOURCE_ALT_COUNT")] == "2"
+    assert "GT:M5mC" in input_vcf.read_text(encoding="utf-8")
+    assert "1/2:0.5,0.6,0.7,0.8" in input_vcf.read_text(encoding="utf-8")

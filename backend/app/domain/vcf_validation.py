@@ -20,6 +20,42 @@ INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
+VCF45_BASE_MODIFICATION_FLOAT_ALIASES = frozenset({
+    "M5mC", "M5hmC", "M5fC", "M5caC", "M5hmU", "M5fU",
+    "M5caU", "M6mA", "M8oxoG", "MXaoN", "MxaoN",
+})
+VCF45_BASE_MODIFICATION_DEPTH_ALIASES = frozenset({
+    "DPM5mC", "DPM5hmC", "DPM5fC", "DPM5caC", "DPM5hmU",
+    "DPM5fU", "DPM5caU", "DPM6mA", "DPM8oxoG", "DPMXaoN",
+    "DPMxaoN", "ADM5mC", "ADM5hmC", "ADM5fC", "ADM5caC",
+    "ADM5hmU", "ADM5fU", "ADM5caU", "ADM6mA", "ADM8oxoG",
+    "ADMXaoN", "ADMxaoN",
+})
+
+
+def _base_modification_field_kind(field_id: str) -> str | None:
+    if (
+        re.fullmatch(r"M[0-9]+[ACGTUN]", field_id)
+        or field_id in VCF45_BASE_MODIFICATION_FLOAT_ALIASES
+    ):
+        return "fraction"
+    if (
+        re.fullmatch(r"(?:DPM|ADM)[0-9]+[ACGTUN]", field_id)
+        or field_id in VCF45_BASE_MODIFICATION_DEPTH_ALIASES
+    ):
+        return "depth"
+    return None
+
+
+def _reserved_base_modification_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return the VCFv4.5 built-in definition for reserved base-modification keys."""
+    field_kind = _base_modification_field_kind(field_id)
+    if field_kind == "fraction":
+        return {"Number": "M", "Type": "Float"}
+    if field_kind == "depth":
+        return {"Number": "M", "Type": "Integer"}
+    return None
+
 
 class StrictVCFValidationError(ValueError):
     def __init__(self, message: str, *, code: str = "VCF_INVALID"):
@@ -180,7 +216,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     number = parsed["Number"]
     allowed_cardinality = {"A", "R", "G", "."}
     if fileformat == "VCFv4.5" and kind == "FORMAT":
-        allowed_cardinality.update({"LA", "LR", "LG", "P"})
+        allowed_cardinality.update({"LA", "LR", "LG", "P", "M"})
     if number not in allowed_cardinality and not re.fullmatch(r"[0-9]+", number):
         raise StrictVCFValidationError(
             f"Invalid {kind} field Number at line {line_no}: {number!r}",
@@ -194,6 +230,32 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     if (parsed["Type"] == "Flag") != (number == "0") or (kind == "FORMAT" and parsed["Type"] == "Flag"):
         raise StrictVCFValidationError(
             f"{kind} Flag fields require Number=0 and INFO scope at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    if number == "M":
+        if identifier[-1] not in "ACGTUN":
+            raise StrictVCFValidationError(
+                f"FORMAT/Number=M field ID must end with A, C, G, T, U, or N at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if parsed["Type"] not in {"Integer", "Float"}:
+            raise StrictVCFValidationError(
+                f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+    reserved_base_modification = (
+        _reserved_base_modification_format_definition(identifier)
+        if kind == "FORMAT" and fileformat == "VCFv4.5"
+        else None
+    )
+    if reserved_base_modification is not None and (
+        number != reserved_base_modification["Number"]
+        or parsed["Type"] != reserved_base_modification["Type"]
+    ):
+        raise StrictVCFValidationError(
+            f"Reserved VCFv4.5 base-modification field {identifier!r} requires "
+            f"Number={reserved_base_modification['Number']} and "
+            f"Type={reserved_base_modification['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     return identifier, {"Number": number, "Type": parsed["Type"]}
@@ -270,6 +332,8 @@ def _expected_cardinality(
         return comb(alternate_count + ploidy, ploidy)
     if number == "P":
         return ploidy
+    if number == "M":
+        return None
     if number == "LA":
         return max(0, local_allele_count - 1) if local_allele_count is not None else None
     if number == "LR":
@@ -291,6 +355,7 @@ def _validate_declared_value(
     line_no: int,
     ploidy: int | None = None,
     local_allele_count: int | None = None,
+    base_modification_cardinality: int | None = None,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -308,7 +373,11 @@ def _validate_declared_value(
         )
     if value == ".":
         return
-    expected = _expected_cardinality(number, alternate_count, ploidy, local_allele_count)
+    expected = (
+        base_modification_cardinality
+        if number == "M"
+        else _expected_cardinality(number, alternate_count, ploidy, local_allele_count)
+    )
     if expected is None:
         return
     observed = value.split(",")
@@ -327,6 +396,8 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
+                if _base_modification_field_kind(key) == "depth":
+                    valid = valid and integer_value >= 0
         elif field_type == "Float":
             valid = bool(
                 re.fullmatch(
@@ -335,6 +406,9 @@ def _validate_declared_value(
                     flags=re.IGNORECASE,
                 )
             )
+            if valid and _base_modification_field_kind(key) == "fraction":
+                numeric_value = float(item)
+                valid = 0.0 <= numeric_value <= 1.0
         elif field_type == "Character":
             valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
         if not valid:
@@ -402,6 +476,79 @@ def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str
             code="VCF_GENOTYPE_INVALID",
         )
     return tokens
+
+
+def _gt_alleles_with_phase(
+    genotype: str,
+    fileformat: str | None,
+    line_no: int,
+) -> list[tuple[str, str]]:
+    """Return GT allele tokens with their preceding phase separator."""
+    tokens = _gt_allele_tokens(genotype, fileformat, line_no)
+    has_leading_phase = (
+        fileformat in {"VCFv4.4", "VCFv4.5"}
+        and genotype[:1] in {"/", "|"}
+    )
+    value = genotype[1:] if has_leading_phase else genotype
+    separators = re.findall(r"[/|]", value)
+    if len(separators) != len(tokens) - 1:
+        raise StrictVCFValidationError(
+            f"Invalid GT separator structure at line {line_no}: {genotype!r}",
+            code="VCF_GENOTYPE_INVALID",
+        )
+    first_separator = genotype[0] if has_leading_phase else (
+        "/" if "/" in separators else "|"
+    )
+    return [
+        (token, first_separator if index == 0 else separators[index - 1])
+        for index, token in enumerate(tokens)
+    ]
+
+
+def _base_modification_allele_count(sequence: str, modified_base: str) -> int:
+    """Count modifiable positions on both strands of one concrete allele."""
+    base = "T" if modified_base == "U" else modified_base
+    if base == "N":
+        return 2 * len(sequence)
+    complement = {"A": "T", "T": "A", "C": "G", "G": "C"}[base]
+    return sum(1 for nucleotide in sequence if nucleotide in {base, complement})
+
+
+def _expected_base_modification_cardinality(
+    genotype: str,
+    reference: str,
+    alternates: list[str],
+    field_id: str,
+    fileformat: str | None,
+    line_no: int,
+) -> int:
+    """Calculate VCFv4.5 Number=M cardinality from GT and allele sequences.
+
+    Identical unphased allele values are aggregated at their first occurrence;
+    phased copies remain distinct. Missing and symbolic alleles contribute no
+    modifiable bases, as required by VCFv4.5.
+    """
+    seen_unphased_alleles: set[int] = set()
+    expected = 0
+    modified_base = field_id[-1].upper()
+    for allele_token, phase_separator in _gt_alleles_with_phase(
+        genotype, fileformat, line_no
+    ):
+        if allele_token == ".":
+            continue
+        allele_index = int(allele_token)
+        if phase_separator == "/":
+            if allele_index in seen_unphased_alleles:
+                continue
+            seen_unphased_alleles.add(allele_index)
+        allele_sequence = (
+            reference if allele_index == 0 else alternates[allele_index - 1]
+        )
+        if DNA_RE.fullmatch(allele_sequence):
+            expected += _base_modification_allele_count(
+                allele_sequence, modified_base
+            )
+    return expected
 
 
 def _validate_record(
@@ -513,6 +660,20 @@ def _validate_record(
                 f"GT must be the first FORMAT key when present at line {line_no}",
                 code="VCF_FORMAT_INVALID",
             )
+        base_modification_keys = [
+            key
+            for key in keys
+            if (format_definitions or {}).get(key, {}).get("Number") == "M"
+            or (
+                fileformat == "VCFv4.5"
+                and _reserved_base_modification_format_definition(key) is not None
+            )
+        ]
+        if base_modification_keys and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.5 base-modification FORMAT fields require GT at line {line_no}",
+                code="VCF_BASE_MODIFICATION_GT_MISSING",
+            )
         if fileformat == "VCFv4.5" and (
             any((format_definitions or {}).get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
             or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
@@ -566,6 +727,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     gvcf_markers = 0
     unchecked_info_number_g_fields: set[str] = set()
     unchecked_format_number_g_fields: set[str] = set()
+    base_modification_format_fields: set[str] = set()
     structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
@@ -642,6 +804,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             code="VCF_HEADER_DEFINITION_INVALID",
                         )
                     format_definitions[identifier] = definition
+                    if definition["Number"] == "M":
+                        base_modification_format_fields.add(identifier)
                 if line.startswith("##ALT=<ID=NON_REF"):
                     gvcf_markers += 1
                 continue
@@ -688,6 +852,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF record has {len(fields)} columns but the #CHROM header declares {expected} at line {line_no}",
                     code="VCF_RECORD_INVALID",
                 )
+            if fileformat == "VCFv4.5" and len(fields) > 8:
+                for format_key in fields[8].split(":"):
+                    if (
+                        format_definitions.get(format_key, {}).get("Number") == "M"
+                        or _reserved_base_modification_format_definition(format_key) is not None
+                    ):
+                        base_modification_format_fields.add(format_key)
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
             if _chrom != current_chrom:
                 if _chrom in closed_chroms:
@@ -831,6 +1002,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         local_allele_count = len(local_alt_indexes) + 1
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
+                    if definition is None and fileformat == "VCFv4.5":
+                        definition = _reserved_base_modification_format_definition(key)
                     if definition is not None:
                         if (
                             definition["Number"] == "G"
@@ -838,6 +1011,23 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             and value not in {None, "."}
                         ):
                             unchecked_format_number_g_fields.add(key)
+                        base_modification_cardinality = None
+                        if definition["Number"] == "M":
+                            if gt_index is None or gt_index >= len(sample_values):
+                                raise StrictVCFValidationError(
+                                    f"VCFv4.5 base-modification field {key!r} has no sample GT at line {line_no}",
+                                    code="VCF_BASE_MODIFICATION_GT_MISSING",
+                                )
+                            base_modification_cardinality = (
+                                _expected_base_modification_cardinality(
+                                    sample_values[gt_index],
+                                    fields[3].upper(),
+                                    alts,
+                                    key,
+                                    fileformat,
+                                    line_no,
+                                )
+                            )
                         _validate_declared_value(
                             kind=f"FORMAT sample {sample_index}",
                             key=key,
@@ -847,6 +1037,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             line_no=line_no,
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
+                            base_modification_cardinality=base_modification_cardinality,
                         )
 
             def carriers(alt_index: int) -> set[int] | None:
@@ -962,6 +1153,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "gvcf_markers": gvcf_markers,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
+        "base_modification_format_fields": sorted(base_modification_format_fields),
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
     }

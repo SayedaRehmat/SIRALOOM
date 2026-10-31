@@ -20,12 +20,19 @@ def write_vcf(path: Path, body: str, *, version: str = "VCFv4.3", columns: str |
     )
 
 
-def write_vcf_with_metadata(path: Path, metadata: list[str], body: str, *, sample: bool = False) -> None:
+def write_vcf_with_metadata(
+    path: Path,
+    metadata: list[str],
+    body: str,
+    *,
+    sample: bool = False,
+    version: str = "VCFv4.3",
+) -> None:
     columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO"
     if sample:
         columns += "\tFORMAT\tSAMPLE1"
     path.write_text(
-        "##fileformat=VCFv4.3\n"
+        f"##fileformat={version}\n"
         + "\n".join(metadata)
         + "\n"
         + columns
@@ -1005,3 +1012,248 @@ def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("field_id", "reference", "alternate", "genotype", "value", "expected_count", "info"),
+    [
+        ("M5mC", "C", "A", "0/1", "0.95", 1, "."),
+        ("M5mC", "C", "CTAG", "0/1", "0,0.5,0.7", 3, "."),
+        ("M5mC", "C", ".", "0|0", "0.9,0", 2, "."),
+        (
+            "M5mC",
+            "C",
+            "A,T,G,ACG",
+            "/3|1/0|4|0/0/3/1",
+            "0.25,0.1,0.5,0.6,.",
+            5,
+            ".",
+        ),
+        ("M5mC", "C", "A", "0/0", "0.9", 1, "."),
+        ("M5mC", "C", "A", "0|0", "0.9,0", 2, "."),
+        ("M5mC", "C", "CTAG", "0/.", "0.9", 1, "."),
+        ("M5mC", "C", "<DEL>", "0/1", "0.9", 1, "END=10"),
+        ("M5mU", "T", "A", "0/1", "0.1,0.2", 2, "."),
+        ("M5mN", "A", "T", "0/1", "0.1,0.2,0.3,0.4", 4, "."),
+    ],
+)
+def test_vcf45_number_m_base_modification_cardinality(
+    tmp_path: Path,
+    field_id: str,
+    reference: str,
+    alternate: str,
+    genotype: str,
+    value: str,
+    expected_count: int,
+    info: str,
+):
+    path = tmp_path / "base-modification.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            f'##FORMAT=<ID={field_id},Number=M,Type=Float,Description="Base modification fraction">',
+        ],
+        f"1\t2\t.\t{reference}\t{alternate}\t.\tPASS\t{info}\tGT:{field_id}\t{genotype}:{value}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert len(value.split(",")) == expected_count
+
+
+def test_vcf45_number_m_accepts_integer_depth_fields(tmp_path: Path):
+    path = tmp_path / "base-modification-depth.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=DPM5mC,Number=M,Type=Integer,Description="Modification-callable depth">',
+            '##FORMAT=<ID=ADM5mC,Number=M,Type=Integer,Description="Modified-base depth">',
+        ],
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:DPM5mC:ADM5mC\t0/1:10,20,30:1,2,3\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_number_m_rejects_wrong_cardinality(tmp_path: Path):
+    path = tmp_path / "base-modification-wrong-cardinality.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
+        ],
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:M5mC\t0/1:0.5,0.7\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("version", "metadata", "expected_code"),
+    [
+        (
+            "VCFv4.4",
+            ['##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5mC">'],
+            "VCF_HEADER_DEFINITION_INVALID",
+        ),
+        (
+            "VCFv4.5",
+            ['##INFO=<ID=M5mC,Number=M,Type=Float,Description="5mC">'],
+            "VCF_HEADER_DEFINITION_INVALID",
+        ),
+        (
+            "VCFv4.5",
+            ['##FORMAT=<ID=M5mX,Number=M,Type=Float,Description="invalid base suffix">'],
+            "VCF_HEADER_DEFINITION_INVALID",
+        ),
+        (
+            "VCFv4.5",
+            ['##FORMAT=<ID=M5mC,Number=M,Type=String,Description="invalid type">'],
+            "VCF_HEADER_DEFINITION_INVALID",
+        ),
+    ],
+)
+def test_number_m_is_vcf45_format_only_with_valid_base_and_numeric_type(
+    tmp_path: Path,
+    version: str,
+    metadata: list[str],
+    expected_code: str,
+):
+    path = tmp_path / "invalid-number-m.vcf"
+    write_vcf_with_metadata(
+        path,
+        metadata,
+        "1\t2\t.\tC\tA\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+        version=version,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == expected_code
+
+
+def test_vcf45_base_modification_fields_require_sample_gt(tmp_path: Path):
+    path = tmp_path / "base-modification-no-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5mC">'],
+        "1\t2\t.\tC\tA\t.\tPASS\t.\tM5mC\t0.5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BASE_MODIFICATION_GT_MISSING"
+
+
+def test_vcf45_base_modification_missing_gt_allele_contributes_no_values(tmp_path: Path):
+    path = tmp_path / "base-modification-partial-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
+        ],
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:M5mC\t0/.:0.9\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_reserved_base_modification_aliases_need_no_header_definitions(tmp_path: Path):
+    path = tmp_path / "reserved-base-modifications-no-definitions.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:M5mC\t0/1:0,0.5,0.7\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+    assert profile["base_modification_format_fields"] == ["M5mC"]
+
+
+def test_vcf45_reserved_depth_aliases_need_no_header_definitions(tmp_path: Path):
+    path = tmp_path / "reserved-base-modification-depth-no-definitions.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:DPM5mC:ADM5mC\t0/1:10,20,30:1,2,3\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_reserved_base_modification_fraction_must_be_between_zero_and_one(
+    tmp_path: Path,
+):
+    path = tmp_path / "base-modification-out-of-range.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:M5mC\t0/1:1.01\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_reserved_base_modification_depth_must_be_nonnegative(tmp_path: Path):
+    path = tmp_path / "base-modification-negative-depth.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:DPM5mC\t0/1:-1,20,30\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_reserved_base_modification_header_cannot_override_builtin_type_or_number(
+    tmp_path: Path,
+):
+    path = tmp_path / "base-modification-overridden-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=M5mC,Number=1,Type=Float,Description="Incorrect override">'],
+        "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:M5mC\t0/1:0.5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

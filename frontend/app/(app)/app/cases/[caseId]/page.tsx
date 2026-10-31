@@ -289,15 +289,31 @@ export default function CaseDossierPage() {
       <section className="panel case-dossier-panel">
         <div className="panel-head"><div><p className="eyebrow">{t("workspace.files")}</p><h2>{t("workspace.files")}</h2><p className="muted">{t("workspace.filesLead")}</p></div><span className="badge neutral">{artifacts.length}</span></div>
         {!artifacts.length ? <div className="empty small"><strong>{t("cases.dossierNoFiles")}</strong></div> : <div className="case-dossier-list">
-          {artifacts.map(artifact => <article key={artifact.artifact_id}>
-            <div className="case-dossier-artifact-main">
-              <strong>{artifact.filename}</strong>
-              <small>{pretty(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {pretty(artifact.validation_status)}</small>
-              <code>{artifact.sha256}</code>
-              <small>{t("cases.build")}: {artifact.genome_build ?? "—"} · {formatDate(artifact.created_at)}</small>
-            </div>
-            <button className="secondary small" type="button" disabled={downloadingId === artifact.artifact_id} onClick={() => void downloadArtifact(artifact)}>{downloadingId === artifact.artifact_id ? t("workspace.downloading") : t("workspace.downloadArtifact")}</button>
-          </article>)}
+          {artifacts.map(artifact => {
+            const sourceOnlyFormatFields = Array.isArray(artifact.metadata?.source_only_format_fields)
+              ? artifact.metadata.source_only_format_fields.filter((field): field is string => typeof field === "string")
+              : [];
+            const hasSourceOnlyFormatPolicy = artifact.metadata?.source_only_format_fields_policy === "IMMUTABLE_SOURCE_VCF_ONLY";
+            return (
+              <article key={artifact.artifact_id}>
+                <div className="case-dossier-artifact-main">
+                  <strong>{artifact.filename}</strong>
+                  <small>{pretty(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {pretty(artifact.validation_status)}</small>
+                  <code>{artifact.sha256}</code>
+                  <small>{t("cases.build")}: {artifact.genome_build ?? "—"} · {formatDate(artifact.created_at)}</small>
+                  {sourceOnlyFormatFields.length > 0 && (
+                    <small className="muted">
+                      {t("cases.sourceOnlyFormatFields")}: {sourceOnlyFormatFields.join(", ")}
+                    </small>
+                  )}
+                  {hasSourceOnlyFormatPolicy && (
+                    <small className="muted">{t("cases.sourceOnlyFormatFieldsPolicy")}</small>
+                  )}
+                </div>
+                <button className="secondary small" type="button" disabled={downloadingId === artifact.artifact_id} onClick={() => void downloadArtifact(artifact)}>{downloadingId === artifact.artifact_id ? t("workspace.downloading") : t("workspace.downloadArtifact")}</button>
+              </article>
+            );
+          })}
         </div>}
       </section>
 
