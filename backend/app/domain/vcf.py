@@ -300,7 +300,7 @@ def _source_record_mapping(info: str) -> tuple[int, int] | None:
     except ValueError as exc:
         raise VCFValidationError("Normalized VCF record has invalid SIRALOOM_ORIG ALT index") from exc
     if not alternates or alt_index < 1 or alt_index > len(alternates):
-        raise VCFValidationError("Normalized VCF record has out-of-range SIRALOOM_ORIG ALT index")
+        raise VCFValidationError("Invalid source-record mapping: out-of-range SIRALOOM_ORIG ALT index")
     return alt_index, len(alternates)
 
 
