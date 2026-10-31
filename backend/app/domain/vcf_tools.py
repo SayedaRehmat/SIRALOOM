@@ -245,7 +245,7 @@ def route_vcf_records(
 
 MNV_POLICY = "PRESERVE"
 MULTIALLELIC_POLICY = "SPLIT_WITH_BCFTOOLS"
-MULTIALLELIC_OVERLAP_POLICY = "REFERENCE_ALLELE_ZERO"
+MULTIALLELIC_OVERLAP_POLICY = "MISSING_OTHER_ALT"
 ORIGINAL_RECORD_TAG = "SIRALOOM_ORIG"
 
 
@@ -294,7 +294,7 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
 
     command = [
         "bcftools", "norm", "--no-version", "-m", "-any", "-N", "-Ov",
-        "--multi-overlaps", "0",
+        "--multi-overlaps", ".",
         "-o", str(output_path), str(input_path),
     ]
     completed = subprocess.run(
@@ -421,7 +421,7 @@ def normalize_vcf_with_bcftools(
 
         normalize_command = [
             bcftools_executable, "norm", "--no-version", "-f", str(reference_fasta), "-c", "e",
-            "-m", "-any", "--multi-overlaps", "0",
+            "-m", "-any", "--multi-overlaps", ".",
             *( [] if has_existing_source_mapping else ["--old-rec-tag", ORIGINAL_RECORD_TAG] ),
             "-Oz", "-o", str(normalized_path), str(provenance_input),
         ]
