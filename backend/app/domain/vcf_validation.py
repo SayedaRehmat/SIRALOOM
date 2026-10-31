@@ -727,6 +727,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     gvcf_markers = 0
     unchecked_info_number_g_fields: set[str] = set()
     unchecked_format_number_g_fields: set[str] = set()
+    base_modification_format_fields: set[str] = set()
     structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
@@ -803,6 +804,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             code="VCF_HEADER_DEFINITION_INVALID",
                         )
                     format_definitions[identifier] = definition
+                    if definition["Number"] == "M":
+                        base_modification_format_fields.add(identifier)
                 if line.startswith("##ALT=<ID=NON_REF"):
                     gvcf_markers += 1
                 continue
@@ -849,6 +852,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF record has {len(fields)} columns but the #CHROM header declares {expected} at line {line_no}",
                     code="VCF_RECORD_INVALID",
                 )
+            if fileformat == "VCFv4.5" and len(fields) > 8:
+                for format_key in fields[8].split(":"):
+                    if (
+                        format_definitions.get(format_key, {}).get("Number") == "M"
+                        or _reserved_base_modification_format_definition(format_key) is not None
+                    ):
+                        base_modification_format_fields.add(format_key)
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
             if _chrom != current_chrom:
                 if _chrom in closed_chroms:
@@ -1143,6 +1153,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "gvcf_markers": gvcf_markers,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
+        "base_modification_format_fields": sorted(base_modification_format_fields),
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
     }
