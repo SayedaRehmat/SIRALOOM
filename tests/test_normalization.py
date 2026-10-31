@@ -153,3 +153,41 @@ def test_normalized_vcf_iteration_uses_only_the_explicitly_selected_sample(tmp_p
     assert proband_variants[0].sample_call["sample_name"] == "PROBAND"
     assert proband_variants[0].sample_call["genotype"] == "0/1"
     assert mother_variants == []
+
+
+def test_normalized_iteration_excludes_only_proven_non_carrier_alt_records(tmp_path: Path):
+    normalized_vcf = tmp_path / "normalized-non-carrier.vcf"
+    normalized_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Original source genotype">\n'
+        '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Original ALT count">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t100\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|100|A|C,G|1\t"
+        "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t./.:2/2:2\n"
+        "1\t100\t.\tA\tG\t.\tPASS\tSIRALOOM_ORIG=1|100|A|C,G|2\t"
+        "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t1/1:2/2:2\n"
+        "1\t200\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|200|A|C,G|1\t"
+        "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t0/.:0/.:2\n",
+        encoding="utf-8",
+    )
+    exclusion_stats: dict[str, int] = {}
+
+    variants = list(
+        iter_normalized_vcf(
+            normalized_vcf, "GRCh38", sample_name="SAMPLE",
+            exclusion_stats=exclusion_stats,
+        )
+    )
+
+    assert [(variant.position, variant.alternate) for variant in variants] == [
+        (100, "G"),
+        (200, "C"),
+    ]
+    assert variants[0].sample_call["source_genotype"] == "2/2"
+    assert variants[0].sample_call["selected_alt_dosage"] == 2
+    assert variants[1].sample_call["source_genotype"] == "0/."
+    assert variants[1].sample_call["projection_status"] == "PARTIAL_CALL"
+    assert variants[1].sample_call["missing_allele_count"] == 1
+    assert exclusion_stats["reference_only_genotype_alleles"] == 1
