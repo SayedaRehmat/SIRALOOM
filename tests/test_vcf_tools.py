@@ -620,11 +620,22 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
             "2\t4\t.\tG\tA\t.\tPASS\t.\n"
         )
 
+    records = [
+        "1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        "1\t2\t.\tC\tT\t.\tPASS\t.\n",
+        "2\t4\t.\tG\tA\t.\tPASS\t.\n",
+    ]
+
     def fake_run(command, **kwargs):
-        assert command[1:3] == ["index", "--stats"]
-        return subprocess.CompletedProcess(
-            command, 0, stdout="1\t7\t2\n2\t5\t1\n", stderr=""
-        )
+        if command[1:3] == ["index", "--stats"]:
+            return subprocess.CompletedProcess(
+                command, 0, stdout="1\t7\t2\n2\t5\t1\n", stderr=""
+            )
+        assert command[1] == "view"
+        contig = command[command.index("--regions") + 1]
+        selected = [line for line in records if line.startswith(contig + "\t")]
+        kwargs["stdout"].write("".join(selected).encode("utf-8"))
+        return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
 
     monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
     result = vcf_tools._validate_csi_index_record_counts(
@@ -632,9 +643,11 @@ def test_csi_index_record_counts_match_sequential_bgzf_scan(monkeypatch, tmp_pat
     )
 
     assert result == {
-        "method": "CSI_PER_CONTIG_COUNTS_VS_SEQUENTIAL_BGZF_SCAN",
+        "method": "CSI_INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
         "records": 3,
         "contigs": 2,
+        "indexed_query_contigs_verified": 2,
+        "indexed_query_records_verified": 3,
     }
 
 
