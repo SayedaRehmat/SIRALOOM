@@ -30,6 +30,7 @@ class ValidationResult:
     errors: list[str]
     warnings: list[str]
     fileformat: str | None = None
+    metadata: dict | None = None
 
 
 class VCFValidationUnavailable(RuntimeError):
@@ -249,7 +250,13 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat)
 
 
-def validate_index(path: str | Path, primary_filename: str) -> ValidationResult:
+def validate_index(
+    path: str | Path,
+    primary_filename: str,
+    *,
+    primary_path: str | Path | None = None,
+    expected_bcftools_version: str | None = None,
+) -> ValidationResult:
     p = Path(path)
     kind = classify_filename(p.name)
     if kind not in {"TBI", "CSI"}:
@@ -280,7 +287,36 @@ def validate_index(path: str | Path, primary_filename: str) -> ValidationResult:
             with gzip.open(p, "rb") as fh:
                 if fh.read(4) != b"TBI\x01":
                     raise ValueError("TBI index does not contain the TBI magic header")
-        return ValidationResult("VALID", kind, 0, [], None, [], [])
+        if primary_path is None:
+            return ValidationResult(
+                "VALID", kind, 0, [], None, [],
+                ["Index structure is valid; concordance with the primary VCF was not checked."],
+                metadata={"index_concordance": {"status": "NOT_CHECKED"}},
+            )
+        primary = Path(primary_path)
+        if not primary.is_file() or primary.name != primary_filename:
+            raise ValueError("Primary VCF path does not match the paired artifact filename.")
+        from backend.app.domain.vcf_tools import (
+            VCFToolError,
+            VCFToolUnavailable,
+            validate_vcf_index_concordance,
+        )
+        try:
+            concordance = validate_vcf_index_concordance(
+                primary,
+                expected_bcftools_version=expected_bcftools_version,
+            )
+        except VCFToolUnavailable as exc:
+            raise VCFValidationUnavailable(str(exc)) from exc
+        except VCFToolError as exc:
+            return ValidationResult(
+                "INVALID", kind, 0, [], None, [str(exc)], [],
+                metadata={"index_concordance": {"status": "FAILED"}},
+            )
+        return ValidationResult(
+            "VALID", kind, 0, [], None, [], [],
+            metadata={"index_concordance": concordance},
+        )
     except (OSError, ValueError, EOFError, gzip.BadGzipFile) as exc:
         return ValidationResult("INVALID", kind, 0, [], None, [str(exc)], [])
 
