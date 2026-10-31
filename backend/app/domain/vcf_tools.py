@@ -676,6 +676,17 @@ def _validate_existing_source_genotype_fields(input_path: Path) -> None:
             format_keys = fields[8].split(":")
             if SOURCE_GT_FORMAT_TAG not in format_keys or SOURCE_ALT_COUNT_FORMAT_TAG not in format_keys:
                 raise VCFToolError("Existing normalized record is missing source-genotype FORMAT fields.")
+            mapping_values = [
+                item.partition("=")[2]
+                for item in fields[7].split(";")
+                if item.partition("=")[0] == ORIGINAL_RECORD_TAG
+            ]
+            if len(mapping_values) != 1:
+                raise VCFToolError("Existing normalized record has a missing or duplicate source mapping.")
+            mapping = mapping_values[0].split("|", 4)
+            if len(mapping) != 5:
+                raise VCFToolError("Existing normalized record has a malformed source mapping.")
+            source_alternates = mapping[3].split(",")
             gt_index = format_keys.index(SOURCE_GT_FORMAT_TAG)
             count_index = format_keys.index(SOURCE_ALT_COUNT_FORMAT_TAG)
             for sample_value in fields[9:]:
