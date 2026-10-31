@@ -83,7 +83,7 @@ def test_partial_and_missing_calls_remain_explicit(tmp_path: Path):
     assert records[0].sample_calls["PARTIAL"]["projected_genotype"] == "1/."
     assert records[0].sample_calls["PARTIAL"]["projection_status"] == "PARTIAL_CALL"
     assert records[1].sample_calls["PARTIAL"]["projected_genotype"] is None
-    assert records[1].sample_calls["PARTIAL"]["projection_status"] == "CONTAINS_OTHER_ALT"
+    assert records[1].sample_calls["PARTIAL"]["projection_status"] == "CONTAINS_OTHER_ALT_AND_MISSING"
     assert records[0].sample_calls["MISSING"]["projected_genotype"] == "./."
     assert records[0].sample_calls["MISSING"]["projection_status"] == "NO_CALL"
     assert records[1].sample_calls["MISSING"]["projected_genotype"] == "./."
