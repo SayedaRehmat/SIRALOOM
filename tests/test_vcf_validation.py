@@ -1257,3 +1257,149 @@ def test_vcf45_reserved_base_modification_header_cannot_override_builtin_type_or
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_vcf45_star_reference_block_accepts_sample_len_without_info_end(tmp_path: Path):
+    path = tmp_path / "vcf45-star-len-no-end.vcf"
+    columns = "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tSAMPLE2"
+    write_vcf(
+        path,
+        "1\\t100\\t.\\tA\\t<*>\\t.\\tPASS\\t.\\tGT:LEN\\t0/0:10\\t0/0:25\\n",
+        version="VCFv4.5",
+        columns=columns,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert profile["vcf45_reference_span_records"] == 1
+    assert profile["vcf45_max_reference_end"] == 124
+
+
+def test_vcf45_end_must_match_maximum_sample_len_end(tmp_path: Path):
+    path = tmp_path / "vcf45-star-len-end.vcf"
+    columns = "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tSAMPLE2"
+    write_vcf(
+        path,
+        "1\\t100\\t.\\tA\\t<*>\\t.\\tPASS\\tEND=124\\tGT:LEN\\t0/0:10\\t0/0:25\\n",
+        version="VCFv4.5",
+        columns=columns,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 124
+
+
+@pytest.mark.parametrize("end_value", ["123", "125"])
+def test_vcf45_end_rejects_mismatch_with_complete_len_values(tmp_path: Path, end_value: str):
+    path = tmp_path / f"vcf45-star-len-end-mismatch-{end_value}.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        f"1\\t100\\t.\\tA\\t<*>\\t.\\tPASS\\tEND={end_value}\\tGT:LEN\\t0/0:25\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_END_MISMATCH"
+
+
+@pytest.mark.parametrize("length", ["0", "-1", "abc", "0.5"])
+def test_vcf45_len_rejects_non_positive_or_non_integer_values(tmp_path: Path, length: str):
+    path = tmp_path / f"vcf45-invalid-len-{length.replace('.', '_')}.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        f"1\\t100\\t.\\tA\\t<*>\\t.\\tPASS\\t.\\tGT:LEN\\t0/0:{length}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code in {"VCF_FORMAT_VALUE_INVALID", "VCF_LEN_INVALID"}
+
+
+def test_vcf45_len_must_not_be_shorter_than_ref_allele(tmp_path: Path):
+    path = tmp_path / "vcf45-len-shorter-than-ref.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\\t100\\t.\\tAT\\t<*>\\t.\\tPASS\\t.\\tGT:LEN\\t0/0:1\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LEN_INVALID"
+
+
+def test_vcf45_len_is_invalid_without_star_alt(tmp_path: Path):
+    path = tmp_path / "vcf45-len-without-star.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:LEN\\t0/1:25\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LEN_INVALID"
+
+
+def test_vcf45_star_reference_block_can_derive_ref_span_without_len_or_end(tmp_path: Path):
+    path = tmp_path / "vcf45-star-ref-span-only.vcf"
+    write_vcf(path, "1\\t100\\t.\\tAT\\t<*>\\t.\\tPASS\\t.\\n", version="VCFv4.5")
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 101
+
+
+def test_vcf44_star_reference_block_still_requires_info_end(tmp_path: Path):
+    path = tmp_path / "vcf44-star-without-end.vcf"
+    write_vcf(path, "1\\t100\\t.\\tA\\t<*>\\t.\\tPASS\\t.\\n", version="VCFv4.4")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GVCF_BLOCK_INVALID"
+
+
+def test_vcf45_symbolic_deletion_end_is_derived_from_svlen(tmp_path: Path):
+    path = tmp_path / "vcf45-symbolic-deletion-svlen.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=SVLEN,Number=A,Type=Integer,Description="Length of structural variant">'],
+        "1\\t100\\t.\\tA\\t<DEL>\\t.\\tPASS\\tSVLEN=-25\\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 125
+
+
+def test_vcf45_symbolic_deletion_end_must_match_svlen(tmp_path: Path):
+    path = tmp_path / "vcf45-symbolic-deletion-end-mismatch.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=SVLEN,Number=A,Type=Integer,Description="Length of structural variant">'],
+        "1\\t100\\t.\\tA\\t<DEL>\\t.\\tPASS\\tSVLEN=-25;END=124\\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_END_MISMATCH"
