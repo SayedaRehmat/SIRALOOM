@@ -140,6 +140,11 @@ def test_normalized_split_records_recover_source_gt_and_per_alt_dosage(tmp_path:
         assert call["projection_status"] == "CONTAINS_OTHER_ALT"
         assert call["projected_genotype"] is None
 
+    from backend.app.domain.normalization import iter_normalized_vcf
+
+    variants = list(iter_normalized_vcf(path, "GRCh38", sample_name="SAMPLE"))
+    assert [variant.original_alt_index for variant in variants] == [2, 4]
+
 
 def test_vcf44_leading_phase_indicator_is_not_a_missing_allele(tmp_path: Path):
     path = tmp_path / "vcf44-leading-phase.vcf"
