@@ -825,6 +825,14 @@ def _strip_vcf45_number_m_format_fields(
     derived small-variant artifact and records the source-only policy.
     """
     opener = gzip.open if source_path.name.lower().endswith((".gz", ".bgz")) else open
+    try:
+        with opener(source_path, "rt", encoding="utf-8-sig") as header_handle:
+            fileformat_header = header_handle.readline().rstrip("\r\n")
+    except OSError as exc:
+        raise VCFToolError(f"Unable to inspect VCF fileformat before Number=M projection: {exc}") from exc
+    if fileformat_header != "##fileformat=VCFv4.5":
+        return []
+
     source_only_fields: set[str] = set()
     fileformat: str | None = None
     policy_line = (
