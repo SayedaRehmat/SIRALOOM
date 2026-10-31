@@ -655,13 +655,15 @@ def _validate_record(
         )
     if alts and all(alt in {"<NON_REF>", "<*>"} for alt in alts):
         end_value = info_values.get("END")
-        if end_value is None:
+        vcf45_star_block = fileformat == "VCFv4.5" and "<*>" in alts
+        if end_value in {None, "."} and not vcf45_star_block:
             raise StrictVCFValidationError(f"GVCF reference block requires END at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
-        try:
-            if int(end_value) < pos:
-                raise StrictVCFValidationError(f"GVCF block END precedes POS at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
-        except ValueError as exc:
-            raise StrictVCFValidationError(f"GVCF block END must be an integer at line {line_no}", code="VCF_GVCF_BLOCK_INVALID") from exc
+        if end_value not in {None, "."}:
+            try:
+                if int(end_value) < pos:
+                    raise StrictVCFValidationError(f"GVCF block END precedes POS at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
+            except ValueError as exc:
+                raise StrictVCFValidationError(f"GVCF block END must be an integer at line {line_no}", code="VCF_GVCF_BLOCK_INVALID") from exc
 
     if len(fields) >= 9:
         fmt = fields[8]
