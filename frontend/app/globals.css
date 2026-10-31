@@ -93,6 +93,9 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 .timeline-label strong { display: block; font-size: 12px; }
 .timeline-label span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
 .timeline-label small { display: block; margin-top: 4px; color: var(--danger); font-size: 11px; }
+.workflow-step-details { margin-top: 7px; }
+.workflow-step-details summary { color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 700; }
+.workflow-step-details .audit-json { display: block; grid-column: 1; margin-top: 6px; max-height: 340px; }
 .run-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
 
 .variants-panel { margin-top: 14px; }

@@ -1165,7 +1165,13 @@ export default function Home() {
               const status = step?.status ?? (index <= currentStepIndex ? "SUCCEEDED" : "PENDING");
               return <div key={id} className={`timeline-row ${statusTone(status)} ${index === currentStepIndex ? "current" : ""}`}>
                 <div className="timeline-mark">{status === "SUCCEEDED" ? "✓" : status === "FAILED" || status === "BLOCKED" ? "!" : index === currentStepIndex ? "•" : "○"}</div>
-                <div className="timeline-label"><strong>{t(label)}</strong><span>{prettyStatus(status)}{step?.attempt ? ` · attempt ${step.attempt}` : ""}</span>{step?.error_message && <small>{step.error_message}</small>}</div>
+                <div className="timeline-label"><strong>{t(label)}</strong><span>{prettyStatus(status)}{step?.attempt ? ` · attempt ${step.attempt}` : ""}</span>{step?.error_message && <small>{step.error_message}</small>}
+                {step?.metadata && (id === "validate_input" || id === "normalize") && Object.keys(step.metadata).length > 0 && (
+                  <details className="workflow-step-details">
+                    <summary>{t("workflow.stageDetails")}</summary>
+                    <pre className="audit-json">{JSON.stringify(step.metadata, null, 2)}</pre>
+                  </details>
+                )}</div>
               </div>;
             })}
           </div>

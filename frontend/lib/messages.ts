@@ -405,6 +405,7 @@ export type TranslationKey =
   | "workflow.reportability"
   | "workflow.report"
   | "workflow.caseHistory"
+  | "workflow.stageDetails"
   | "workspace.eyebrow"
   | "workspace.subtitle"
   | "workspace.title"
@@ -1613,6 +1614,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workflow.reportability": "Reportability",
     "workflow.report": "Report",
     "workflow.caseHistory": "Case history",
+    "workflow.stageDetails": "Technical stage details",
     "workspace.eyebrow": "GENOMIC INTERPRETATION WORKSPACE",
     "workspace.subtitle": "VCF → evidence → review → report",
     "workspace.title": "A controlled workspace for case-based variant interpretation.",
@@ -2568,6 +2570,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "workflow.reportability": "قابلية الإبلاغ",
     "workflow.report": "التقرير",
     "workflow.caseHistory": "سجل الحالة",
+    "workflow.stageDetails": "تفاصيل المرحلة التقنية",
     "workspace.eyebrow": "مساحة عمل التفسير الجينومي",
     "workspace.subtitle": "VCF ← الأدلة ← المراجعة ← التقرير",
     "workspace.title": "مساحة عمل منضبطة لتفسير المتغيرات المتمحور حول الحالة.",
