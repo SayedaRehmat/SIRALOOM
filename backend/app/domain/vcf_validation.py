@@ -872,6 +872,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     unchecked_info_number_g_fields: set[str] = set()
     unchecked_format_number_g_fields: set[str] = set()
     base_modification_format_fields: set[str] = set()
+    vcf45_reference_span_records = 0
     structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
@@ -1184,6 +1185,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             base_modification_cardinality=base_modification_cardinality,
                         )
 
+            if fileformat == "VCFv4.5":
+                compute_vcf45_record_span(fields, line_no)
+                vcf45_reference_span_records += 1
+
             def carriers(alt_index: int) -> set[int] | None:
                 if len(fields) <= 9 or gt_index is None:
                     return None
@@ -1298,6 +1303,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "base_modification_format_fields": sorted(base_modification_format_fields),
+        "vcf45_reference_span_records": vcf45_reference_span_records,
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
     }
