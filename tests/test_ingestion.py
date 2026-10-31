@@ -28,6 +28,50 @@ def test_supported_filename_classification():
     assert classify_filename("sample.bam") == "UNSUPPORTED"
 
 
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_upload_intake_accepts_each_supported_vcf_version(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        "##reference=GRCh38\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 1
+    assert result.fileformat == version
+    assert result.detected_build == "GRCh38"
+
+
+def test_upload_intake_accepts_vcf45_reserved_base_modification_alias_without_header_definition(
+    tmp_path: Path,
+):
+    path = tmp_path / "vcf45-implicit-base-modification.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##reference=GRCh38\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:M5mC\t0/1:0,0.5,0.7\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 1
+    assert result.fileformat == "VCFv4.5"
+
+
 def test_vcf_validation_reads_real_content(tmp_path: Path):
     path = tmp_path / "sample.vcf"
     path.write_text(VALID_VCF)
