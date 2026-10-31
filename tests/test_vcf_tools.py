@@ -803,15 +803,29 @@ def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_p
 
     assert result["tool_version"] == "bcftools 1.24"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
+    assert result["source_only_format_fields"] == ["M5mC"]
+    assert result["source_only_format_fields_policy"] == "IMMUTABLE_SOURCE_VCF_ONLY"
     assert validate_vcf_strict(output_vcf)["records"] == 2
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
-        records = [
-            line.rstrip("\r\n").split("\t")
-            for line in handle
-            if line and not line.startswith("#")
-        ]
+        header = []
+        records = []
+        for line in handle:
+            if line.startswith("#"):
+                header.append(line.rstrip("\r\n"))
+            elif line:
+                records.append(line.rstrip("\r\n").split("\t"))
 
+    assert any(
+        line.startswith("##SIRALOOM_SOURCE_ONLY_FORMAT_FIELDS_POLICY=")
+        for line in header
+    )
+    assert not any("ID=M5mC" in line for line in header)
     assert [record[4] for record in records] == ["CTAG", "CG"]
+    format_keys = [record[8].split(":") for record in records]
+    assert all("M5mC" not in keys for keys in format_keys)
     assert [record[9].split(":")[0] for record in records] == ["1/.", "./1"]
-    assert [record[9].split(":")[1] for record in records] == ["0.5,0.6", "0.7,0.8"]
+    assert [record[9].split(":")[format_keys[i].index("SIRALOOM_SOURCE_GT")] for i, record in enumerate(records)] == ["1/2", "1/2"]
+    assert [record[9].split(":")[format_keys[i].index("SIRALOOM_SOURCE_ALT_COUNT")] for i, record in enumerate(records)] == ["2", "2"]
+    assert "GT:M5mC" in input_vcf.read_text(encoding="utf-8")
+    assert "1/2:0.5,0.6,0.7,0.8" in input_vcf.read_text(encoding="utf-8")
