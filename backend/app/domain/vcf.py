@@ -295,6 +295,19 @@ def _sample_calls_for_alt(
             continue
         tokens = re.split(r"([/|])", genotype_body)
         allele_positions = [i for i, token in enumerate(tokens) if token not in {"/", "|"}]
+        normalized_genotype = call.get("normalized_genotype")
+        if normalized_genotype not in {None, ""}:
+            normalized_body = (
+                normalized_genotype[1:]
+                if normalized_genotype[:1] in {"/", "|"}
+                else normalized_genotype
+            )
+            normalized_ploidy = len(re.split(r"[/|]", normalized_body)) if normalized_body else 0
+            if normalized_ploidy != len(allele_positions):
+                call["projection_status"] = "SOURCE_NORMALIZED_PLOIDY_MISMATCH"
+                call["projected_status"] = "SOURCE_NORMALIZED_PLOIDY_MISMATCH"
+                projected[sample_name] = call
+                continue
         projected_tokens = list(tokens)
         states: list[str] = []
         contains_other_alt = False
