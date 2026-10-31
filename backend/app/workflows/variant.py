@@ -2147,7 +2147,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fasta_sha256": reference_package["fasta_sha256"],
                     "bcftools_version": settings.bcftools_version,
                     "execution_contract_hash": reference_execution.contract_hash,
-                    "normalization_version": "5.0",
+                    "normalization_version": "6.0",
                     "source_record_mapping_tag": "SIRALOOM_ORIG",
                     "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
                     "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
@@ -2206,13 +2206,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 normalized_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v5"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v6"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip",
                     genome_build=reference_build,
                     metadata={
-                        "normalization_version": "5.0",
+                        "normalization_version": "6.0",
                         "source_record_mapping_tag": normalization_stats["source_record_mapping_tag"],
                         "multiallelic_overlap_policy": normalization_stats["multiallelic_overlap_policy"],
                         "source_genotype_provenance_contract": "SIRALOOM_SOURCE_GT_AND_SOURCE_ALT_COUNT_V1",
@@ -2236,6 +2236,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
                         "normalization_command": normalization_stats["command"],
+                        "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
+                        "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
                         "compression": normalization_stats["compression"],
                         "index": normalization_stats["index"],
                         "execution_contract": reference_execution.snapshot,
@@ -2245,7 +2247,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 index_path = Path(normalization_stats["index_path"])
                 index_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v5"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v6"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=index_path,
                     filename="normalized.vcf.gz.csi",
                     artifact_type="VCF_INDEX", media_type="application/octet-stream",
@@ -2255,6 +2257,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "indexed_artifact_id": str(normalized_artifact.id),
                         "normalization_tool": normalization_stats["tool"],
                         "normalization_tool_version": normalization_stats["tool_version"],
+                        "normalization_version": "6.0",
+                        "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
+                        "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
                         "reference_package_checksum": reference_package["package_checksum"],
                     },
                 )
@@ -2272,8 +2277,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
-                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
                 mark_step(
