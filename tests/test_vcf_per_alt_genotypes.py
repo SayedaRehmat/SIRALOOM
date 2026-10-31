@@ -144,3 +144,26 @@ def test_vcf44_leading_phase_indicator_is_not_a_missing_allele(tmp_path: Path):
         assert call["missing_allele_count"] == 0
         assert call["projection_status"] == "CONTAINS_OTHER_ALT"
         assert call["phase"] == "PARTIALLY_PHASED"
+
+
+def test_source_and_normalized_gt_ploidy_mismatch_is_not_projected(tmp_path: Path):
+    path = tmp_path / "ploidy-mismatch.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Original source genotype">\n'
+        '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Original ALT count">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t104\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|104|A|C,G|1\t"
+        "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t1:1/2:2\n",
+        encoding="utf-8",
+    )
+
+    record = next(parse_vcf(str(path), sample_name="SAMPLE"))
+    call = record.sample_calls["SAMPLE"]
+    assert call["genotype"] == "1/2"
+    assert call["normalized_genotype"] == "1"
+    assert call["projection_status"] == "SOURCE_NORMALIZED_PLOIDY_MISMATCH"
+    assert call["selected_alt_dosage"] == 0
+    assert call["other_alt_dosage"] == 0
