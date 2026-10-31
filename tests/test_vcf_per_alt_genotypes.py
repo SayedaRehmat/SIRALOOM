@@ -110,7 +110,8 @@ def test_normalized_split_records_recover_source_gt_and_per_alt_dosage(tmp_path:
 
     for record, expected_index in ((first, 1), (second, 2)):
         call = record.sample_calls["SAMPLE"]
-        assert call["source_genotype"] == "1/2"
+        assert call["genotype"] == call["source_genotype"] == "1/2"
+        assert call["normalized_genotype"] == ("1/." if expected_index == 1 else "./1")
         assert call["source_alt_index"] == expected_index
         assert call["source_alt_count"] == 2
         assert call["selected_alt_dosage"] == 1
