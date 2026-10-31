@@ -533,7 +533,7 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
         records = [
-            line.split("\t")
+            line.rstrip("\r\n").split("\t")
             for line in handle
             if line and not line.startswith("#")
         ]
