@@ -13,7 +13,7 @@ The validator recognizes VCFv4.0, VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, and VCFv4.
 The parser applies version-specific rules where implemented:
 - VCFv4.4 and VCFv4.5 leading genotype phasing separators are parsed without inflating ploidy.
 - VCFv4.5 FORMAT cardinalities LA, LR, LG, P, and M are recognized. Local-allele fields require LAA in the prescribed position and validate distinct, in-range 1-based ALT indices.
-- VCFv4.5 Number=M base-modification fields are cardinality-validated from the sample GT and concrete REF/ALT allele sequences, including strand complements, unphased-allele aggregation, missing alleles, and symbolic alleles. Their raw values are retained; they are not interpreted as rare-disease pathogenicity evidence or used by the clinical prioritization engine.
+- VCFv4.5 reserved base-modification FORMAT fields (M, DPM, and ADM ChEBI-ID forms and the specification aliases) are recognized even when explicit FORMAT metadata declarations are absent. Their Number=M cardinality is validated from sample GT and concrete REF/ALT allele sequences, including strand complements, U/T equivalence, N modifications, unphased-allele aggregation, missing alleles, and symbolic alleles. Fraction values are constrained to [0, 1] and depth values to non-negative integers. Raw values are retained; they are not interpreted as rare-disease pathogenicity evidence or used by the clinical prioritization engine.
 - Arbitrary declared FORMAT values are retained in sample-call provenance instead of being reduced to a small fixed whitelist.
 - The pinned BCFtools/HTSlib version is 1.24 so the independent parser and transformation toolchain can handle VCFv4.4/v4.5 cardinality fields.
 
