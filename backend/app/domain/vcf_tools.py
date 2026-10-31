@@ -331,6 +331,10 @@ class VCFToolError(RuntimeError):
     pass
 
 
+class VCFToolUnavailable(VCFToolError):
+    """A required VCF tool could not execute; retry after operational recovery."""
+
+
 def bcftools_available() -> bool:
     return shutil.which("bcftools") is not None
 
@@ -420,9 +424,9 @@ def _validate_vcf_index_record_counts(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise VCFToolError("Timed out while validating VCF index record counts.") from exc
+        raise VCFToolUnavailable("Timed out while validating VCF index record counts.") from exc
     except OSError as exc:
-        raise VCFToolError(f"Unable to execute VCF index validation: {exc}") from exc
+        raise VCFToolUnavailable(f"Unable to execute VCF index validation: {exc}") from exc
 
     if stats.returncode != 0:
         detail = (stats.stderr or stats.stdout or "unknown VCF index statistics error").strip()
@@ -496,7 +500,7 @@ def _validate_vcf_index_record_counts(
                     f"Timed out while querying index-backed records for contig {contig!r}."
                 ) from exc
             except OSError as exc:
-                raise VCFToolError(
+                raise VCFToolUnavailable(
                     f"Unable to execute index-backed query for contig {contig!r}: {exc}"
                 ) from exc
             if queried.returncode != 0:
@@ -568,7 +572,7 @@ def validate_vcf_index_concordance(
 
     executable = shutil.which("bcftools")
     if executable is None:
-        raise VCFToolError("bcftools is required to verify an uploaded VCF index.")
+        raise VCFToolUnavailable("bcftools is required to verify an uploaded VCF index.")
     try:
         version_result = subprocess.run(
             [executable, "--version"],
@@ -578,14 +582,14 @@ def validate_vcf_index_concordance(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise VCFToolError("Timed out while checking the bcftools version for index validation.") from exc
+        raise VCFToolUnavailable("Timed out while checking the bcftools version for index validation.") from exc
     except OSError as exc:
-        raise VCFToolError(f"Unable to execute bcftools for index validation: {exc}") from exc
+        raise VCFToolUnavailable(f"Unable to execute bcftools for index validation: {exc}") from exc
     if version_result.returncode != 0:
         detail = (
             version_result.stderr or version_result.stdout or "unknown bcftools error"
         ).strip()
-        raise VCFToolError(f"Unable to determine bcftools version for index validation: {detail}")
+        raise VCFToolUnavailable(f"Unable to determine bcftools version for index validation: {detail}")
     version_line = next(
         (line.strip() for line in version_result.stdout.splitlines() if line.strip()),
         "unknown",
@@ -596,7 +600,7 @@ def validate_vcf_index_concordance(
         else None
     )
     if expected_bcftools_version and detected_version != expected_bcftools_version:
-        raise VCFToolError(
+        raise VCFToolUnavailable(
             "bcftools version mismatch during VCF index validation: "
             f"expected {expected_bcftools_version}, found {detected_version or version_line}"
         )
