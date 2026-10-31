@@ -85,6 +85,7 @@ from backend.app.domain.storage_profiles import (
 )
 from backend.app.domain.variant_identity import canonical_key, normalize_build, stable_variant_uuid
 from backend.app.domain.vcf_tools import (
+    MULTIALLELIC_OVERLAP_POLICY,
     VCFToolError,
     classify_records,
     normalize_vcf_with_bcftools,
@@ -2146,9 +2147,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fasta_sha256": reference_package["fasta_sha256"],
                     "bcftools_version": settings.bcftools_version,
                     "execution_contract_hash": reference_execution.contract_hash,
-                    "normalization_version": "4.0",
+                    "normalization_version": "5.0",
                     "source_record_mapping_tag": "SIRALOOM_ORIG",
                     "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
+                    "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
+                    "source_genotype_provenance_contract": "SIRALOOM_SOURCE_GT_AND_SOURCE_ALT_COUNT_V1",
                     "record_routing": {
                         key: value for key, value in routing.items() if not key.endswith("_path")
                     },
@@ -2203,14 +2206,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 normalized_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v4"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf:v5"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=temp_path,
                     filename="normalized.vcf.gz",
                     artifact_type="NORMALIZED_VCF", media_type="application/gzip",
                     genome_build=reference_build,
                     metadata={
-                        "normalization_version": "4.0",
+                        "normalization_version": "5.0",
                         "source_record_mapping_tag": normalization_stats["source_record_mapping_tag"],
+                        "multiallelic_overlap_policy": normalization_stats["multiallelic_overlap_policy"],
+                        "source_genotype_provenance_contract": "SIRALOOM_SOURCE_GT_AND_SOURCE_ALT_COUNT_V1",
                         "source_record_mapping_policy": normalization_stats["source_record_mapping_policy"],
                         "source_artifact_id": str(input_artifact.id),
                         "source_sha256": input_artifact.sha256,
@@ -2240,7 +2245,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 index_path = Path(normalization_stats["index_path"])
                 index_artifact = _put_idempotent_stage_artifact(
                     artifacts,
-                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v4"),
+                    artifact_id=uuid5(analysis.id, "siraloom:normalization:normalized-vcf-index:v5"),
                     db=db, case_id=analysis.case_id, analysis_id=analysis.id, source_path=index_path,
                     filename="normalized.vcf.gz.csi",
                     artifact_type="VCF_INDEX", media_type="application/octet-stream",
@@ -5580,12 +5585,33 @@ def _normalized_partition_metadata(
             "sample_name": call.get("sample_name"),
             "genotype": call.get("genotype"),
             "zygosity": call.get("zygosity", "UNKNOWN"),
+            "normalized_genotype": call.get("normalized_genotype"),
+            "normalized_zygosity": call.get("normalized_zygosity"),
+            "normalized_phase": call.get("normalized_phase"),
+            "source_genotype": call.get("source_genotype"),
+            "source_genotype_stage": call.get("source_genotype_stage"),
+            "source_zygosity": call.get("source_zygosity"),
+            "source_alt_index": call.get("source_alt_index"),
+            "source_alt_count": call.get("source_alt_count"),
+            "original_source_alt_index": call.get("original_source_alt_index"),
+            "original_source_alt_count": call.get("original_source_alt_count"),
+            "source_record_index": call.get("source_record_index"),
+            "source_record_sha256": call.get("source_record_sha256"),
+            "projection_status": call.get("projection_status", "GENOTYPE_UNAVAILABLE"),
+            "projected_genotype": call.get("projected_genotype"),
+            "projected_zygosity": call.get("projected_zygosity"),
+            "reference_allele_dosage": call.get("reference_allele_dosage", 0),
+            "selected_alt_dosage": call.get("selected_alt_dosage", 0),
+            "other_alt_dosage": call.get("other_alt_dosage", 0),
+            "missing_allele_count": call.get("missing_allele_count", 0),
             "phase": call.get("phase", "UNSPECIFIED"),
+            "projected_phase": call.get("projected_phase", "UNSPECIFIED"),
             "phase_set": call.get("phase_set"),
             "format_values": call.get("format_values", {}),
         })
     return {
-        "schema_version": 3,
+        "schema_version": 4,
+        "genotype_projection_contract": "SOURCE_GT_AND_PER_ALT_DOSAGE_V1",
         "genome_build": variants[0].genome_build if variants else None,
         "variant_ids": [str(value) for value in variant_ids],
         "sample_calls": sample_calls,
@@ -5597,6 +5623,30 @@ def _normalized_partition_metadata(
                 "source_reference": getattr(variant, "original_reference", None),
                 "source_alternate": getattr(variant, "original_alternate", None),
                 "source_alt_index": getattr(variant, "original_alt_index", None),
+                "original_source_alt_index": (
+                    (getattr(variant, "sample_call", None) or {}).get("original_source_alt_index")
+                ),
+                "original_source_alt_count": (
+                    (getattr(variant, "sample_call", None) or {}).get("original_source_alt_count")
+                ),
+                "routed_source_alt_index": (
+                    (getattr(variant, "sample_call", None) or {}).get("source_alt_index")
+                    or getattr(variant, "original_alt_index", None)
+                ),
+                "routed_source_alt_count": (
+                    (getattr(variant, "sample_call", None) or {}).get("source_alt_count")
+                    or (
+                        len(getattr(variant, "original_alternate", "").split(","))
+                        if getattr(variant, "original_alternate", None)
+                        else None
+                    )
+                ),
+                "source_record_index": (
+                    (getattr(variant, "sample_call", None) or {}).get("source_record_index")
+                ),
+                "source_record_sha256": (
+                    (getattr(variant, "sample_call", None) or {}).get("source_record_sha256")
+                ),
             }
             for variant_id, variant in zip(variant_ids, variants)
             if getattr(variant, "original_position", None) is not None
