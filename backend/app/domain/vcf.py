@@ -243,8 +243,11 @@ def _source_record_lineage(info: str) -> dict | None:
         raise VCFValidationError("VCF record has duplicate SIRALOOM_SOURCE lineage payloads")
     encoded = values[0]
     try:
+        if re.fullmatch(r"[A-Za-z0-9_-]+", encoded) is None:
+            raise ValueError("invalid base64 alphabet")
         padded = encoded + ("=" * (-len(encoded) % 4))
-        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")))
+        decoded = base64.b64decode(padded.encode("ascii"), altchars=b"-_", validate=True)
+        payload = json.loads(decoded)
     except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise VCFValidationError("VCF record has malformed SIRALOOM_SOURCE lineage payload") from exc
     if not isinstance(payload, dict) or payload.get("schema_version") != "1":
@@ -292,14 +295,23 @@ def _source_record_mapping(info: str) -> tuple[int, int] | None:
     if len(values) != 1:
         raise VCFValidationError("Normalized VCF record has duplicate SIRALOOM_ORIG mappings")
     mapping = values[0].split("|", 4)
-    if len(mapping) != 5:
-        raise VCFValidationError("Normalized VCF record has malformed SIRALOOM_ORIG mapping")
+    if len(mapping) not in {4, 5}:
+        raise VCFValidationError("Invalid source-record mapping: malformed SIRALOOM_ORIG mapping")
     alternates = mapping[3].split(",")
     try:
-        alt_index = int(mapping[4])
+        source_position = int(mapping[1])
+        alt_index = int(mapping[4]) if len(mapping) == 5 else 1
     except ValueError as exc:
-        raise VCFValidationError("Normalized VCF record has invalid SIRALOOM_ORIG ALT index") from exc
-    if not alternates or alt_index < 1 or alt_index > len(alternates):
+        raise VCFValidationError("Invalid source-record mapping: invalid position or ALT index") from exc
+    if (
+        not mapping[0]
+        or source_position < 1
+        or not mapping[2]
+        or not alternates
+        or (len(mapping) == 4 and len(alternates) != 1)
+        or alt_index < 1
+        or alt_index > len(alternates)
+    ):
         raise VCFValidationError("Invalid source-record mapping: out-of-range SIRALOOM_ORIG ALT index")
     return alt_index, len(alternates)
 
