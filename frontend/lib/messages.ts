@@ -611,6 +611,8 @@ export type TranslationKey =
   | "cases.indexLabel"
   | "cases.validatedSuccessfully"
   | "cases.validationWarnings"
+  | "cases.sourceOnlyFormatFields"
+  | "cases.sourceOnlyFormatFieldsPolicy"
   | "cases.failedValidation"
   | "reports.eyebrow"
   | "reports.title"
@@ -1120,6 +1122,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.indexLabel": "Index",
     "cases.validatedSuccessfully": "validated successfully.",
     "cases.validationWarnings": "Warnings",
+    "cases.sourceOnlyFormatFields": "Source-only FORMAT fields",
+    "cases.sourceOnlyFormatFieldsPolicy": "Values remain in the immutable uploaded VCF and are not propagated to normalized small-variant records.",
     "cases.failedValidation": "was stored but failed validation.",
     "reports.eyebrow": "GOVERNED REPORTING",
     "reports.title": "Reports & sign-out",
@@ -2073,6 +2077,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "cases.indexLabel": "الفهرس",
     "cases.validatedSuccessfully": "تم التحقق بنجاح.",
     "cases.validationWarnings": "تحذيرات",
+    "cases.sourceOnlyFormatFields": "حقول FORMAT المحفوظة في المصدر فقط",
+    "cases.sourceOnlyFormatFieldsPolicy": "تبقى القيم في ملف VCF الأصلي غير القابل للتغيير ولا تُنقل إلى سجلات المتغيرات الصغيرة المُطبَّعة.",
     "cases.failedValidation": "تم تخزينه لكن فشل التحقق منه.",
     "reports.eyebrow": "إصدار التقارير المحكوم",
     "reports.title": "التقارير والاعتماد النهائي",
