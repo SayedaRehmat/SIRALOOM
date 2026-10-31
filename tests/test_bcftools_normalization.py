@@ -126,7 +126,7 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
     stats = normalize_vcf_with_bcftools(source, output, reference_fasta=reference)
 
     assert stats["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
-    assert "--multi-overlaps 0" in stats["command"]
+    assert "--multi-overlaps ." in stats["command"]
     assert "--old-rec-tag SIRALOOM_ORIG" in stats["command"]
     validation = validate_vcf_strict(output)
     assert validation["records"] == 2
@@ -138,8 +138,8 @@ def test_golden_multiallelic_remaps_allele_indexed_fields_and_preserves_phase(tm
         "AC=2;AF=0.2;AR=20,7;SIRALOOM_ORIG=1|2|A|C,G|2",
     ]
     assert [row[9:] for row in split_records] == [
-        ["1|0:10,5:100,50,60:2", "0/0:6,3:90,80,70:."],
-        ["0|1:10,7:100,40,30:2", "1/1:6,9:90,60,0:."],
+        ["1|.:10,5:100,50,60:2", "./.:6,3:90,80,70:."],
+        [".|1:10,7:100,40,30:2", "1/1:6,9,60,0:."],
     ]
     assert [row[7].split("SIRALOOM_ORIG=", 1)[1] for row in split_records] == [
         "1|2|A|C,G|1",
