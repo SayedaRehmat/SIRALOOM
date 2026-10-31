@@ -1054,7 +1054,7 @@ def test_vcf45_number_m_base_modification_cardinality(
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
             f'##FORMAT=<ID={field_id},Number=M,Type=Float,Description="Base modification fraction">',
         ],
-        f"1\\t2\\t.\\t{reference}\\t{alternate}\\t.\\tPASS\\t{info}\\tGT:{field_id}\\t{genotype}:{value}\\n",
+        f"1\t2\t.\t{reference}\t{alternate}\t.\tPASS\t{info}\tGT:{field_id}\t{genotype}:{value}\n",
         sample=True,
         version="VCFv4.5",
     )
@@ -1074,7 +1074,7 @@ def test_vcf45_number_m_accepts_integer_depth_fields(tmp_path: Path):
             '##FORMAT=<ID=DPM5mC,Number=M,Type=Integer,Description="Modification-callable depth">',
             '##FORMAT=<ID=ADM5mC,Number=M,Type=Integer,Description="Modified-base depth">',
         ],
-        "1\\t2\\t.\\tC\\tCTAG\\t.\\tPASS\\t.\\tGT:DPM5mC:ADM5mC\\t0/1:10,20,30:1,2,3\\n",
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:DPM5mC:ADM5mC\t0/1:10,20,30:1,2,3\n",
         sample=True,
         version="VCFv4.5",
     )
@@ -1090,7 +1090,7 @@ def test_vcf45_number_m_rejects_wrong_cardinality(tmp_path: Path):
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
             '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
         ],
-        "1\\t2\\t.\\tC\\tCTAG\\t.\\tPASS\\t.\\tGT:M5mC\\t0/1:0.5,0.7\\n",
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:M5mC\t0/1:0.5,0.7\n",
         sample=True,
         version="VCFv4.5",
     )
@@ -1136,7 +1136,7 @@ def test_number_m_is_vcf45_format_only_with_valid_base_and_numeric_type(
     write_vcf_with_metadata(
         path,
         metadata,
-        "1\\t2\\t.\\tC\\tA\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        "1\t2\t.\tC\tA\t.\tPASS\t.\tGT\t0/1\n",
         sample=True,
         version=version,
     )
@@ -1152,7 +1152,7 @@ def test_vcf45_base_modification_fields_require_sample_gt(tmp_path: Path):
     write_vcf_with_metadata(
         path,
         ['##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5mC">'],
-        "1\\t2\\t.\\tC\\tA\\t.\\tPASS\\t.\\tM5mC\\t0.5\\n",
+        "1\t2\t.\tC\tA\t.\tPASS\t.\tM5mC\t0.5\n",
         sample=True,
         version="VCFv4.5",
     )
@@ -1171,7 +1171,7 @@ def test_vcf45_base_modification_missing_gt_allele_contributes_no_values(tmp_pat
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
             '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
         ],
-        "1\\t2\\t.\\tC\\tCTAG\\t.\\tPASS\\t.\\tGT:M5mC\\t0/.:0.9\\n",
+        "1\t2\t.\tC\tCTAG\t.\tPASS\t.\tGT:M5mC\t0/.:0.9\n",
         sample=True,
         version="VCFv4.5",
     )
