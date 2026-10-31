@@ -13,7 +13,12 @@ from contextlib import ExitStack
 from functools import lru_cache
 from pathlib import Path
 
-from backend.app.domain.vcf_validation import declared_vcf_contig_lengths
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    _base_modification_field_kind,
+    _parse_field_definition,
+    declared_vcf_contig_lengths,
+)
 
 GVCF_WILDCARD_ALLELES = {"<NON_REF>", "<*>"}
 SOURCE_RECORD_TAG = "SIRALOOM_SOURCE"
@@ -806,6 +811,99 @@ def _reference_artifact_identity(reference_fasta: Path) -> dict:
     }
 
 
+def _strip_vcf45_number_m_format_fields(
+    source_path: Path,
+    destination_path: Path,
+) -> list[str]:
+    """Remove Number=M FORMAT values from the per-ALT artifact.
+
+    BCFtools 1.24 preserves Number=M values when splitting a multiallelic
+    record, although the emitted GT and ALT representation changes. Those
+    values are therefore not safe to publish as if they described each
+    normalized child. The immutable source VCF remains authoritative; this
+    transform removes Number=M values and their header declarations from the
+    derived small-variant artifact and records the source-only policy.
+    """
+    opener = gzip.open if source_path.name.lower().endswith((".gz", ".bgz")) else open
+    source_only_fields: set[str] = set()
+    fileformat: str | None = None
+    policy_line = (
+        "##SIRALOOM_SOURCE_ONLY_FORMAT_FIELDS_POLICY="
+        "VCFv4.5_Number_M_fields_are_retained_in_immutable_source_VCF_and_omitted_from_normalized_small_variant_artifact"
+    )
+
+    try:
+        with opener(source_path, "rt", encoding="utf-8-sig") as input_handle, destination_path.open(
+            "w", encoding="utf-8", newline=""
+        ) as output_handle:
+            for line_no, raw in enumerate(input_handle, 1):
+                line = raw.rstrip("\r\n")
+                if line.startswith("##fileformat="):
+                    fileformat = line.split("=", 1)[1]
+                if line.startswith("##FORMAT=") and fileformat == "VCFv4.5":
+                    try:
+                        identifier, definition = _parse_field_definition(
+                            line, "FORMAT", line_no, fileformat
+                        )
+                    except StrictVCFValidationError as exc:
+                        raise VCFToolError(
+                            f"Cannot inspect VCFv4.5 FORMAT definition at line {line_no}: {exc}"
+                        ) from exc
+                    if definition["Number"] == "M":
+                        source_only_fields.add(identifier)
+                        continue
+                if line.startswith("#CHROM"):
+                    if fileformat == "VCFv4.5":
+                        output_handle.write(policy_line + "\n")
+                    output_handle.write(line + "\n")
+                    continue
+                if line.startswith("#"):
+                    output_handle.write(line + "\n")
+                    continue
+
+                fields = line.split("\t")
+                if fileformat == "VCFv4.5" and len(fields) >= 10:
+                    format_keys = fields[8].split(":")
+                    implicit_fields = {
+                        key
+                        for key in format_keys
+                        if _base_modification_field_kind(key) is not None
+                    }
+                    source_only_fields.update(implicit_fields)
+                    removed_fields = {
+                        key for key in format_keys if key in source_only_fields
+                    }
+                    if removed_fields:
+                        retained_indexes = [
+                            index
+                            for index, key in enumerate(format_keys)
+                            if key not in removed_fields
+                        ]
+                        retained_keys = [
+                            key for key in format_keys if key not in removed_fields
+                        ]
+                        fields[8] = ":".join(retained_keys) if retained_keys else "."
+                        for sample_index in range(9, len(fields)):
+                            sample_values = fields[sample_index].split(":")
+                            retained_values = [
+                                sample_values[index] if index < len(sample_values) else "."
+                                for index in retained_indexes
+                            ]
+                            fields[sample_index] = (
+                                ":".join(retained_values) if retained_values else "."
+                            )
+                output_handle.write("\t".join(fields) + "\n")
+    except OSError as exc:
+        raise VCFToolError(
+            f"Unable to create source-only Number=M normalized VCF: {exc}"
+        ) from exc
+
+    if fileformat != "VCFv4.5" or not source_only_fields:
+        destination_path.unlink(missing_ok=True)
+        return []
+    return sorted(source_only_fields)
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -958,6 +1056,55 @@ def normalize_vcf_with_bcftools(
         if not sorted_path.is_file() or sorted_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no sorted VCF.")
 
+        source_only_plain_path = work / "source-only-format-fields.vcf"
+        source_only_compressed_path = work / "source-only-format-fields.vcf.gz"
+        source_only_format_fields = _strip_vcf45_number_m_format_fields(
+            sorted_path, source_only_plain_path
+        )
+        source_only_stderr = ""
+        source_only_command: list[str] = []
+        if source_only_format_fields:
+            source_only_command = [
+                bcftools_executable,
+                "view",
+                "--no-version",
+                "-Oz",
+                "-o",
+                str(source_only_compressed_path),
+                str(source_only_plain_path),
+            ]
+            try:
+                source_only_result = subprocess.run(
+                    source_only_command,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise VCFToolError(
+                    f"bcftools compression of source-only FORMAT output timed out after {timeout}s."
+                ) from exc
+            except OSError as exc:
+                raise VCFToolError(
+                    f"Unable to execute bcftools compression of source-only FORMAT output: {exc}"
+                ) from exc
+            source_only_stderr = (source_only_result.stderr or "").strip()
+            if source_only_result.returncode != 0:
+                detail = (
+                    source_only_result.stderr
+                    or source_only_result.stdout
+                    or "unknown bcftools view error"
+                ).strip()
+                raise VCFToolError(
+                    f"bcftools could not compress source-only FORMAT output: {detail}"
+                )
+            if not source_only_compressed_path.is_file() or source_only_compressed_path.stat().st_size == 0:
+                raise VCFToolError(
+                    "bcftools reported success but produced no source-only normalized VCF."
+                )
+            os.replace(source_only_compressed_path, sorted_path)
+
         reference_identity_after = _reference_artifact_identity(reference_fasta)
         if reference_identity_after != reference_identity_before:
             raise VCFToolError(
@@ -1039,6 +1186,7 @@ def normalize_vcf_with_bcftools(
                 header_injection or "preserve existing SIRALOOM_ORIG mapping",
                 " ".join(normalize_command),
                 " ".join(sort_command),
+                " ".join(source_only_command) if source_only_command else "preserve source fields unchanged",
                 " ".join(index_command),
             ]),
             "reference_fasta": str(reference_fasta),
@@ -1054,8 +1202,17 @@ def normalize_vcf_with_bcftools(
             "index_path": str(index_path),
             "index_validation": index_validation,
             "source_child_reconciliation": source_child_reconciliation,
+            "source_only_format_fields": source_only_format_fields,
+            "source_only_format_fields_policy": (
+                "IMMUTABLE_SOURCE_VCF_ONLY" if source_only_format_fields else None
+            ),
             "gvcf_wildcard_command": "bcftools view -A",
-            "stderr": "\n".join(x for x in (view_stderr, normalized_stderr, sorted_stderr, indexed_stderr) if x),
+            "stderr": "\n".join(
+                x for x in (
+                    view_stderr, normalized_stderr, sorted_stderr,
+                    source_only_stderr, indexed_stderr,
+                ) if x
+            ),
         }
 
 
