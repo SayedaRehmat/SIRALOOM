@@ -91,17 +91,32 @@ def test_partial_and_missing_calls_remain_explicit(tmp_path: Path):
 
 
 def test_normalized_split_records_recover_source_gt_and_per_alt_dosage(tmp_path: Path):
+    import base64
+    import json
+
+    source_payload = {
+        "schema_version": "1",
+        "source_record_index": 7,
+        "source_record_sha256": "a" * 64,
+        "source_alt_count": 4,
+        "normalized_alt_source_indexes": [2, 4],
+    }
+    encoded_source_payload = base64.urlsafe_b64encode(
+        json.dumps(source_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).decode("ascii").rstrip("=")
+    source_info = f"SIRALOOM_SOURCE={encoded_source_payload}"
     path = tmp_path / "normalized-multiallelic.vcf"
     path.write_text(
         "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SIRALOOM_SOURCE,Number=1,Type=String,Description="Source routing provenance">\n'
         '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record">\n'
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Original source genotype">\n'
         '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Original ALT count">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
-        "1\t100\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|100|A|C,G|1\t"
+        f"1\t100\t.\tA\tC\t.\tPASS\t{source_info};SIRALOOM_ORIG=1|100|A|C,G|1\t"
         "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t1/.:1/2:2\n"
-        "1\t100\t.\tA\tG\t.\tPASS\tSIRALOOM_ORIG=1|100|A|C,G|2\t"
+        f"1\t100\t.\tA\tG\t.\tPASS\t{source_info};SIRALOOM_ORIG=1|100|A|C,G|2\t"
         "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t./1:1/2:2\n",
         encoding="utf-8",
     )
@@ -114,6 +129,11 @@ def test_normalized_split_records_recover_source_gt_and_per_alt_dosage(tmp_path:
         assert call["normalized_genotype"] == ("1/." if expected_index == 1 else "./1")
         assert call["source_alt_index"] == expected_index
         assert call["source_alt_count"] == 2
+        assert call["original_source_alt_index"] == expected_index * 2
+        assert call["original_source_alt_count"] == 4
+        assert call["source_record_index"] == 7
+        assert call["source_record_sha256"] == "a" * 64
+        assert call["source_genotype_stage"] == "ROUTED_SEQUENCE_INPUT_PRE_SPLIT"
         assert call["selected_alt_dosage"] == 1
         assert call["other_alt_dosage"] == 1
         assert call["reference_allele_dosage"] == 0
