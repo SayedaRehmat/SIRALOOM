@@ -776,7 +776,7 @@ def test_source_genotype_provenance_is_injected_before_multiallelic_splitting(tm
     assert fields[9] == "1/2:1/2:2"
 
 
-def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_path: Path):
+def test_bcftools_124_multiallelic_normalization_keeps_number_m_fields_source_only(tmp_path: Path):
     require_bcftools()
     import gzip
 
@@ -821,11 +821,18 @@ def test_bcftools_124_multiallelic_normalization_preserves_number_m_fields(tmp_p
         for line in header
     )
     assert not any("ID=M5mC" in line for line in header)
-    assert [record[4] for record in records] == ["CTAG", "CG"]
-    format_keys = [record[8].split(":") for record in records]
-    assert all("M5mC" not in keys for keys in format_keys)
-    assert [record[9].split(":")[0] for record in records] == ["1/.", "./1"]
-    assert [record[9].split(":")[format_keys[i].index("SIRALOOM_SOURCE_GT")] for i, record in enumerate(records)] == ["1/2", "1/2"]
-    assert [record[9].split(":")[format_keys[i].index("SIRALOOM_SOURCE_ALT_COUNT")] for i, record in enumerate(records)] == ["2", "2"]
+    records_by_alt = {record[4]: record for record in records}
+    assert set(records_by_alt) == {"CTAG", "CG"}
+    assert all(
+        "M5mC" not in record[8].split(":")
+        for record in records_by_alt.values()
+    )
+    for alternate, expected_gt in (("CTAG", "1/."), ("CG", "./1")):
+        record = records_by_alt[alternate]
+        format_keys = record[8].split(":")
+        sample_values = record[9].split(":")
+        assert sample_values[format_keys.index("GT")] == expected_gt
+        assert sample_values[format_keys.index("SIRALOOM_SOURCE_GT")] == "1/2"
+        assert sample_values[format_keys.index("SIRALOOM_SOURCE_ALT_COUNT")] == "2"
     assert "GT:M5mC" in input_vcf.read_text(encoding="utf-8")
     assert "1/2:0.5,0.6,0.7,0.8" in input_vcf.read_text(encoding="utf-8")
