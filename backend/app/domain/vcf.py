@@ -270,6 +270,7 @@ def _source_record_lineage(info: str) -> dict | None:
         or not indexes
         or any(not isinstance(index, int) or isinstance(index, bool) for index in indexes)
         or len(set(indexes)) != len(indexes)
+        or indexes != sorted(indexes)
         or any(index < 1 or index > source_alt_count for index in indexes)
         or not isinstance(source_record_sha256, str)
         or re.fullmatch(r"[0-9a-f]{64}", source_record_sha256) is None
