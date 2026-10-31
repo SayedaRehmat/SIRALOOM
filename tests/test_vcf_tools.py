@@ -663,3 +663,70 @@ def test_csi_index_record_counts_reject_mismatch_with_sequential_bgzf_scan(
         vcf_tools._validate_csi_index_record_counts(
             staged_vcf, bcftools_executable="bcftools", timeout_seconds=30
         )
+
+
+
+def test_csi_index_validation_compares_indexed_record_streams_with_sequential_bgzf(
+    monkeypatch, tmp_path: Path
+):
+    import gzip
+    import subprocess
+
+    from backend.app.domain.vcf_tools import _validate_csi_index_record_counts
+
+    vcf = tmp_path / "indexed.vcf.gz"
+    records = [
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n",
+        "1\t20\t.\tG\tT\t.\tPASS\t.\n",
+        "2\t5\t.\tC\tA\t.\tPASS\t.\n",
+    ]
+    with gzip.open(vcf, "wt", encoding="utf-8", newline="") as handle:
+        handle.write("##fileformat=VCFv4.3\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
+        handle.writelines(records)
+
+    def fake_run(command, **kwargs):
+        if command[1:3] == ["index", "--stats"]:
+            return subprocess.CompletedProcess(command, 0, stdout="1\t100\t2\n2\t100\t1\n", stderr="")
+        assert command[1] == "view"
+        contig = command[command.index("--regions") + 1]
+        selected = [line for line in records if line.startswith(contig + "\t")]
+        kwargs["stdout"].write("".join(selected).encode("utf-8"))
+        return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    result = _validate_csi_index_record_counts(
+        vcf, bcftools_executable="bcftools", timeout_seconds=10
+    )
+    assert result["method"] == "CSI_INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN"
+    assert result["records"] == 3
+    assert result["contigs"] == 2
+    assert result["indexed_query_contigs_verified"] == 2
+    assert result["indexed_query_records_verified"] == 3
+
+
+def test_csi_index_validation_rejects_same_count_but_different_indexed_records(
+    monkeypatch, tmp_path: Path
+):
+    import gzip
+    import subprocess
+
+    from backend.app.domain.vcf_tools import VCFToolError, _validate_csi_index_record_counts
+
+    vcf = tmp_path / "stale-offsets.vcf.gz"
+    sequential_record = "1\t10\t.\tA\tC\t.\tPASS\t.\n"
+    indexed_record = "1\t11\t.\tA\tG\t.\tPASS\t.\n"
+    with gzip.open(vcf, "wt", encoding="utf-8", newline="") as handle:
+        handle.write("##fileformat=VCFv4.3\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
+        handle.write(sequential_record)
+
+    def fake_run(command, **kwargs):
+        if command[1:3] == ["index", "--stats"]:
+            return subprocess.CompletedProcess(command, 0, stdout="1\t100\t1\n", stderr="")
+        kwargs["stdout"].write(indexed_record.encode("utf-8"))
+        return subprocess.CompletedProcess(command, 0, stdout=None, stderr=None)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    with pytest.raises(VCFToolError, match="records disagree with the sequential VCF stream"):
+        _validate_csi_index_record_counts(
+            vcf, bcftools_executable="bcftools", timeout_seconds=10
+        )
