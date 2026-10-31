@@ -281,8 +281,8 @@ def _sample_calls_for_alt(
                     state = "REFERENCE"
                     call["reference_allele_dosage"] += 1
                     projected_tokens[token_index] = "0"
-                elif 1 <= allele_index <= source_alt_count:
-                    if allele_index == source_alt_index:
+                elif 1 <= allele_index <= original_alt_count:
+                    if allele_index == selected_source_alt_index:
                         state = "SELECTED_ALT"
                         call["selected_alt_dosage"] += 1
                         projected_tokens[token_index] = "1"
