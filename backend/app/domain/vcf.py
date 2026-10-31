@@ -183,6 +183,11 @@ def parse_vcf(
                         "source_alt_count": source_alt_count,
                         "source_record_index": source_lineage["source_record_index"] if source_lineage else None,
                         "source_record_sha256": source_lineage["source_record_sha256"] if source_lineage else None,
+                        "source_genotype_stage": (
+                            "ROUTED_SEQUENCE_INPUT_PRE_SPLIT"
+                            if SOURCE_GT_FORMAT_TAG in call_fields
+                            else "INPUT_RECORD"
+                        ),
                         "original_source_alt_count": source_lineage["source_alt_count"] if source_lineage else None,
                         "zygosity": source_zygosity,
                         "source_zygosity": source_zygosity,
@@ -217,7 +222,7 @@ def parse_vcf(
                 )
                 original_source_alt_index = (
                     source_lineage["normalized_alt_source_indexes"][routed_source_alt_index - 1]
-                    if source_lineage is not None
+                    if source_lineage is not None and source_mapping is not None
                     else None
                 )
                 for call in per_alt_calls.values():
@@ -245,14 +250,18 @@ def _source_record_lineage(info: str) -> dict | None:
     if not isinstance(payload, dict) or payload.get("schema_version") != "1":
         raise VCFValidationError("VCF record has an unsupported SIRALOOM_SOURCE lineage schema")
     try:
-        source_record_index = int(payload["source_record_index"])
-        source_alt_count = int(payload["source_alt_count"])
+        source_record_index = payload["source_record_index"]
+        source_alt_count = payload["source_alt_count"]
         indexes = payload["normalized_alt_source_indexes"]
         source_record_sha256 = payload["source_record_sha256"]
-    except (KeyError, TypeError, ValueError) as exc:
+    except KeyError as exc:
         raise VCFValidationError("VCF record has incomplete SIRALOOM_SOURCE lineage fields") from exc
     if (
-        source_record_index < 1
+        not isinstance(source_record_index, int)
+        or isinstance(source_record_index, bool)
+        or source_record_index < 1
+        or not isinstance(source_alt_count, int)
+        or isinstance(source_alt_count, bool)
         or source_alt_count < 1
         or not isinstance(indexes, list)
         or not indexes
