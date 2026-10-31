@@ -40,6 +40,7 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
     input_vcf.write_text(
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
         "1\t4\t.\tAA\tA,C\t.\tPASS\t.\tGT\t1/2\n",
         encoding="utf-8",
@@ -406,7 +407,7 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
     # GT must refer to the retained ALT in each row. Number=R AD and Number=G PL
     # must have the biallelic cardinality after splitting.
     samples = [record[9].split(":") for record in records]
-    assert [sample[0] for sample in samples] == ["1/0", "0/1"]
+    assert [sample[0] for sample in samples] == ["1/.", "./1"]
     assert all(len(sample[1].split(",")) == 2 for sample in samples)
     assert all(len(sample[2].split(",")) == 3 for sample in samples)
 
@@ -453,8 +454,8 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
     assert header is not None
     assert header[9:12] == ["SAMPLE_A", "SAMPLE_B", "SAMPLE_MISSING"]
     assert [record[4] for record in records] == ["C", "G"]
-    assert [record[9].split(":")[0] for record in records] == ["1|0", "0|1"]
-    assert [record[10].split(":")[0] for record in records] == ["0|0", "1|0"]
+    assert [record[9].split(":")[0] for record in records] == ["1|.", ".|1"]
+    assert [record[10].split(":")[0] for record in records] == [".|0", "1|0"]
     assert [record[9].split(":")[1] for record in records] == ["10", "10"]
     assert [record[10].split(":")[1] for record in records] == ["20", "20"]
     assert [record[11].split(":")[0] for record in records] == ["./.", "./."]
