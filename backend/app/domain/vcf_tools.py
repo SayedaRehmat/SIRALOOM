@@ -1248,7 +1248,7 @@ def normalize_vcf_with_bcftools(
         indexed_stderr = (indexed_result.stderr or "").strip()
         if indexed_result.returncode != 0:
             detail = (indexed_result.stderr or indexed_result.stdout or "unknown bcftools index error").strip()
-            raise VCFToolError(f"bcftools VCF indexing failed (exit {indexed_result.returncode}): {detail}")
+            raise VCFToolError(f"bcftools CSI indexing failed (exit {indexed_result.returncode}): {detail}")
         if not staged_index_path.is_file() or staged_index_path.stat().st_size == 0:
             raise VCFToolError("bcftools reported success but produced no VCF index.")
 
