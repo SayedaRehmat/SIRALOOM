@@ -5635,6 +5635,11 @@ def _normalized_partition_metadata(
                 ),
                 "routed_source_alt_count": (
                     (getattr(variant, "sample_call", None) or {}).get("source_alt_count")
+                    or (
+                        len(getattr(variant, "original_alternate", "").split(","))
+                        if getattr(variant, "original_alternate", None)
+                        else None
+                    )
                 ),
                 "source_record_index": (
                     (getattr(variant, "sample_call", None) or {}).get("source_record_index")
