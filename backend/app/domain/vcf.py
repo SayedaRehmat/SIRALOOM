@@ -126,6 +126,14 @@ def parse_vcf(
                             )
                     else:
                         source_alt_count = source_mapping[1] if source_mapping else None
+                    if (
+                        source_mapping is not None
+                        and source_alt_count is not None
+                        and source_alt_count != source_mapping[1]
+                    ):
+                        raise VCFValidationError(
+                            f"{SOURCE_ALT_COUNT_FORMAT_TAG} disagrees with SIRALOOM_ORIG at line {line_no}"
+                        )
                     if SOURCE_GT_FORMAT_TAG in call_fields:
                         source_genotype = call_fields.get(SOURCE_GT_FORMAT_TAG)
                     elif source_mapping and source_mapping[1] > 1:
@@ -222,7 +230,11 @@ def _sample_calls_for_alt(
         call["source_genotype"] = source_genotype
         call["source_alt_index"] = selected_source_alt_index
         call["source_alt_count"] = original_alt_count
-        call["source_zygosity"] = _zygosity(source_genotype)
+        call["source_zygosity"] = (
+            _zygosity(source_genotype)
+            if source_genotype is not None
+            else "GENOTYPE_UNAVAILABLE"
+        )
         call.update({
             "projected_genotype": None,
             "projected_zygosity": None,
