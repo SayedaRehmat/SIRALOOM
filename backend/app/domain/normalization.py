@@ -383,4 +383,17 @@ def _original_record_mapping(raw_record: str) -> tuple[str, int, str, str, int] 
         or not alternates[alt_index - 1]
     ):
         raise NormalizationError("Normalized record has invalid source-record mapping values")
+    from backend.app.domain.vcf import _source_record_lineage
+
+    try:
+        source_lineage = _source_record_lineage(info)
+    except ValueError as exc:
+        raise NormalizationError(str(exc)) from exc
+    if source_lineage is not None:
+        source_alt_indexes = source_lineage["normalized_alt_source_indexes"]
+        if len(source_alt_indexes) != len(alternates):
+            raise NormalizationError(
+                "Normalized record source mapping disagrees with routed-to-original ALT lineage."
+            )
+        alt_index = source_alt_indexes[alt_index - 1]
     return chromosome, position, reference, alternates_text, alt_index
