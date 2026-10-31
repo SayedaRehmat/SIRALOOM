@@ -185,8 +185,11 @@ def test_normalized_iteration_excludes_only_proven_non_carrier_alt_records(tmp_p
         (100, "G"),
         (200, "C"),
     ]
+    assert variants[0].sample_call["genotype"] == "2/2"
+    assert variants[0].sample_call["normalized_genotype"] == "1/1"
     assert variants[0].sample_call["source_genotype"] == "2/2"
     assert variants[0].sample_call["selected_alt_dosage"] == 2
+    assert variants[1].sample_call["genotype"] == "0/."
     assert variants[1].sample_call["source_genotype"] == "0/."
     assert variants[1].sample_call["projection_status"] == "PARTIAL_CALL"
     assert variants[1].sample_call["missing_allele_count"] == 1
