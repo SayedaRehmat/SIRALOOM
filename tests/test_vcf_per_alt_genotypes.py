@@ -88,3 +88,33 @@ def test_partial_and_missing_calls_remain_explicit(tmp_path: Path):
     assert records[0].sample_calls["MISSING"]["projection_status"] == "NO_CALL"
     assert records[1].sample_calls["MISSING"]["projected_genotype"] == "./."
     assert records[1].sample_calls["MISSING"]["projection_status"] == "NO_CALL"
+
+
+def test_normalized_split_records_recover_source_gt_and_per_alt_dosage(tmp_path: Path):
+    path = tmp_path / "normalized-multiallelic.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SIRALOOM_ORIG,Number=.,Type=String,Description="Original source record">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=SIRALOOM_SOURCE_GT,Number=1,Type=String,Description="Original source genotype">\n'
+        '##FORMAT=<ID=SIRALOOM_SOURCE_ALT_COUNT,Number=1,Type=Integer,Description="Original ALT count">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "1\t100\t.\tA\tC\t.\tPASS\tSIRALOOM_ORIG=1|100|A|C,G|1\t"
+        "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t1/.:1/2:2\n"
+        "1\t100\t.\tA\tG\t.\tPASS\tSIRALOOM_ORIG=1|100|A|C,G|2\t"
+        "GT:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT\t./1:1/2:2\n",
+        encoding="utf-8",
+    )
+
+    first, second = list(parse_vcf(str(path), sample_name="SAMPLE"))
+
+    for record, expected_index in ((first, 1), (second, 2)):
+        call = record.sample_calls["SAMPLE"]
+        assert call["source_genotype"] == "1/2"
+        assert call["source_alt_index"] == expected_index
+        assert call["source_alt_count"] == 2
+        assert call["selected_alt_dosage"] == 1
+        assert call["other_alt_dosage"] == 1
+        assert call["reference_allele_dosage"] == 0
+        assert call["projection_status"] == "CONTAINS_OTHER_ALT"
+        assert call["projected_genotype"] is None
