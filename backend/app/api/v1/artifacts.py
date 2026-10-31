@@ -304,13 +304,13 @@ async def upload_artifact(
         else:
             if primary is None:
                 raise HTTPException(status_code=400, detail="A primary VCF is required for index validation.")
-            primary_store = artifact_store_for_uri(
-                db,
-                organization_id=principal.organization_id,
-                storage_uri=primary.storage_uri,
-            )
             primary_validation_path = Path(tmp) / primary.filename
             try:
+                primary_store = artifact_store_for_uri(
+                    db,
+                    organization_id=principal.organization_id,
+                    storage_uri=primary.storage_uri,
+                )
                 if hasattr(primary_store, "download_to_file"):
                     primary_store.download_to_file(
                         primary.storage_uri,
@@ -334,12 +334,22 @@ async def upload_artifact(
                     status_code=409,
                     detail="The paired primary VCF could not be integrity-verified for index validation.",
                 ) from exc
-            result = validate_index(
-                staged_index_path,
-                primary.filename,
-                primary_path=primary_validation_path,
-                expected_bcftools_version=settings.bcftools_version,
-            )
+            try:
+                result = validate_index(
+                    staged_index_path,
+                    primary.filename,
+                    primary_path=primary_validation_path,
+                    expected_bcftools_version=settings.bcftools_version,
+                )
+            except VCFValidationUnavailable as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "code": "VCF_VALIDATION_UNAVAILABLE",
+                        "message": str(exc),
+                        "retryable": True,
+                    },
+                ) from exc
             artifact_type = ArtifactType.VCF_INDEX_TBI if kind == "TBI" else ArtifactType.VCF_INDEX_CSI
             validation_metadata = {
                 "validation": {
