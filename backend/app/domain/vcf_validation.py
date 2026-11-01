@@ -212,7 +212,7 @@ def declared_vcf_contig_lengths(path: str | Path) -> dict[str, int]:
     return lengths
 
 
-def _validate_info(value: str, line_no: int) -> None:
+def _validate_info(value: str, line_no: int, fileformat: str | None = None) -> None:
     if value == ".":
         return
     if not value:
@@ -228,7 +228,10 @@ def _validate_info(value: str, line_no: int) -> None:
                 or val == ""
                 or "=" in val
                 or INVALID_PERCENT_ESCAPE_RE.search(val)
-                or any(value == "" for value in val.split(","))
+                or (
+                    not (fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"})
+                    and any(value == "" for value in val.split(","))
+                )
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         elif not INFO_KEY_RE.fullmatch(item):
@@ -997,7 +1000,7 @@ def _validate_record(
                 code="VCF_FILTER_INVALID",
             )
 
-    _validate_info(info, line_no)
+    _validate_info(info, line_no, fileformat)
     info_values = _info_values(info)
     for alt_index, alternate in enumerate(alts):
         _validate_structural_alt(
