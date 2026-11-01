@@ -46,14 +46,28 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def peak_rss_mb() -> float | None:
+def _rss_to_mb(value: float) -> float:
+    # Linux reports KiB; macOS reports bytes. This harness is intended for Linux.
+    return round(value / (1024 * 1024), 2) if sys.platform == "darwin" else round(value / 1024, 2)
+
+
+def python_peak_rss_mb() -> float | None:
     if resource is None:
         return None
-    value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    # Linux reports KiB; macOS reports bytes. This harness is intended for Linux.
-    if sys.platform == "darwin":
-        return round(value / (1024 * 1024), 2)
-    return round(value / 1024, 2)
+    return _rss_to_mb(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+
+
+def largest_child_peak_rss_mb() -> float | None:
+    if resource is None:
+        return None
+    return _rss_to_mb(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+
+
+def child_cpu_seconds() -> float | None:
+    if resource is None:
+        return None
+    usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+    return usage.ru_utime + usage.ru_stime
 
 
 def prepare_output_dir(path: Path) -> Path:
@@ -74,12 +88,19 @@ def timed_stage(
     measurements: dict[str, dict[str, Any]],
 ) -> Any:
     wall_start = time.perf_counter()
-    cpu_start = time.process_time()
+    python_cpu_start = time.process_time()
+    child_cpu_start = child_cpu_seconds()
     result = operation()
+    child_cpu_end = child_cpu_seconds()
     measurements[name] = {
         "wall_seconds": round(time.perf_counter() - wall_start, 3),
-        "process_cpu_seconds": round(time.process_time() - cpu_start, 3),
-        "process_peak_rss_mb_after_stage": peak_rss_mb(),
+        "python_process_cpu_seconds": round(time.process_time() - python_cpu_start, 3),
+        "child_process_cpu_seconds": (
+            round(child_cpu_end - child_cpu_start, 3)
+            if child_cpu_start is not None and child_cpu_end is not None else None
+        ),
+        "python_process_peak_rss_mb_after_stage": python_peak_rss_mb(),
+        "largest_child_peak_rss_mb_after_stage": largest_child_peak_rss_mb(),
     }
     return result
 
@@ -249,7 +270,8 @@ def run_benchmark(
             "runtime": {
                 "platform": platform.platform(),
                 "python_version": platform.python_version(),
-                "process_peak_rss_mb": peak_rss_mb(),
+                "python_process_peak_rss_mb": python_peak_rss_mb(),
+                "largest_child_peak_rss_mb": largest_child_peak_rss_mb(),
                 "stages": stage_metrics,
             },
             "input": {
@@ -363,7 +385,8 @@ def main() -> int:
         "report": str(args.output_dir.resolve() / REPORT_NAME),
         "source_record_count": report["validation"]["source_record_count"],
         "selected_sample_variant_count": report["normalization"]["selected_sample_variant_count"],
-        "process_peak_rss_mb": report["runtime"]["process_peak_rss_mb"],
+        "python_process_peak_rss_mb": report["runtime"]["python_process_peak_rss_mb"],
+        "largest_child_peak_rss_mb": report["runtime"]["largest_child_peak_rss_mb"],
     }, indent=2))
     return 0
 
