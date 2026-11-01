@@ -138,12 +138,15 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     observations = [item for item in resources if item["resourceType"] == "Observation"]
     proband_observation = next(item for item in observations if "focus" not in item)
     relative_observation = next(item for item in observations if "focus" in item)
-    assert proband_observation["subject"]["reference"] == f"Patient/{proband.id}"
-    assert relative_observation["subject"]["reference"] == f"Patient/{proband.id}"
-    assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{mother.id}"
+    patient = next(item for item in resources if item["resourceType"] == "Patient")
+    relative = next(item for item in resources if item["resourceType"] == "RelatedPerson")
+    assert proband_observation["subject"]["reference"] == f"Patient/{patient['id']}"
+    assert relative_observation["subject"]["reference"] == f"Patient/{patient['id']}"
+    assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{relative['id']}"
+    assert str(case_id := patient["id"]) != str(proband.id)
+    assert relative["id"] != str(mother.id)
     family_history = next(item for item in resources if item["resourceType"] == "FamilyMemberHistory")
     assert "sex" not in family_history
-    patient = next(item for item in resources if item["resourceType"] == "Patient")
     assert "gender" not in patient
     consanguinity = next(
         item for item in patient["extension"]
