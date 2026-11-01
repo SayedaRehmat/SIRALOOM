@@ -12,8 +12,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -71,11 +73,18 @@ def load_manifest(path: Path) -> dict[str, Any]:
     criteria = policy.get("criteria")
     if not isinstance(criteria, list) or not criteria:
         raise MatrixConfigurationError("acceptance_policy.criteria must contain predeclared criteria")
+    criterion_ids: set[str] = set()
     for index, criterion in enumerate(criteria):
         if not isinstance(criterion, dict):
             raise MatrixConfigurationError(f"acceptance_policy.criteria[{index}] must be an object")
-        require_string(criterion, "id", f"acceptance_policy.criteria[{index}]")
+        criterion_id = require_string(criterion, "id", f"acceptance_policy.criteria[{index}]")
+        if criterion_id in criterion_ids:
+            raise MatrixConfigurationError(f"duplicate acceptance criterion id: {criterion_id}")
+        criterion_ids.add(criterion_id)
         require_string(criterion, "metric", f"acceptance_policy.criteria[{index}]")
+        threshold = criterion.get("threshold")
+        if isinstance(threshold, bool) or not isinstance(threshold, (int, float)) or not math.isfinite(threshold):
+            raise MatrixConfigurationError(f"acceptance_policy.criteria[{index}].threshold must be finite and numeric")
         operator = criterion.get("operator")
         if operator not in {"<=", "<", ">=", ">", "=="}:
             raise MatrixConfigurationError(f"acceptance_policy.criteria[{index}].operator is invalid")
@@ -92,6 +101,8 @@ def load_manifest(path: Path) -> dict[str, Any]:
         if not isinstance(cell, dict):
             raise MatrixConfigurationError(f"{context} must be an object")
         cell_id = require_string(cell, "id", context)
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", cell_id):
+            raise MatrixConfigurationError(f"{context}.id must be a safe path component (1-64 letters, digits, dot, underscore or hyphen)")
         if cell_id in seen_ids:
             raise MatrixConfigurationError(f"duplicate matrix cell id: {cell_id}")
         seen_ids.add(cell_id)
@@ -108,6 +119,18 @@ def load_manifest(path: Path) -> dict[str, Any]:
             digest = require_string(cell, key, context).lower()
             if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
                 raise MatrixConfigurationError(f"{context}.{key} must be a SHA-256 hex digest")
+            cell[key] = digest
+        # Verify actual bytes before any benchmark output is created. run_benchmark
+        # repeats these checks immediately before execution to detect input drift.
+        verify_asset(cell["vcf"], cell["vcf_sha256"], f"{cell_id} VCF")
+        reference = verify_asset(
+            cell["reference_fasta"],
+            cell["reference_fasta_sha256"],
+            f"{cell_id} reference FASTA",
+        )
+        reference_fai = Path(str(reference) + ".fai")
+        if not reference_fai.is_file():
+            raise MatrixConfigurationError(f"{cell_id} reference FASTA has no adjacent .fai: {reference_fai}")
     return manifest
 
 
@@ -229,7 +252,10 @@ def main() -> int:
         output_dir = args.output_dir.expanduser().resolve()
         if output_dir.exists() and any(output_dir.iterdir()):
             raise MatrixConfigurationError(f"Output directory is not empty: {output_dir}")
-        output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Existing empty directories are accepted, but evidence must not inherit
+        # permissive permissions from a pre-created parent directory.
+        os.chmod(output_dir, 0o700)
 
         policy = manifest["acceptance_policy"]
         cells: list[dict[str, Any]] = []
@@ -308,7 +334,8 @@ def main() -> int:
         }
         try:
             output_dir = args.output_dir.expanduser().resolve()
-            output_dir.mkdir(parents=True, exist_ok=True)
+            output_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+            os.chmod(output_dir, 0o700)
             (output_dir / "qualification-matrix.failure.json").write_text(
                 json.dumps(failure, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
