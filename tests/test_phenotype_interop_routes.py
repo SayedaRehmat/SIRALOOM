@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from uuid import uuid4
@@ -112,7 +113,8 @@ def test_fhir_endpoint_passes_revision_to_bundle_builder_and_audits_export(monke
     )
 
     assert captured["clinical_intake_revision"] is revision
-    assert result["bundle"]["resourceType"] == "Bundle"
-    assert result["clinical_intake_revision"]["version"] == 2
+    payload = json.loads(result.body)
+    assert result.media_type == "application/fhir+json"
+    assert payload["resourceType"] == "Bundle"
     assert db.committed is True
     assert _FakeAudit.calls[0]["after_state"]["clinical_intake_revision_version"] == 2
