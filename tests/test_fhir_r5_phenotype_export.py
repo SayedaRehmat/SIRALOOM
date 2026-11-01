@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from backend.app.adapters.phenotype.fhir_r5 import build_fhir_r5_bundle
 
@@ -119,7 +119,7 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     assert len(full_urls) == len(set(full_urls))
     for full_url in full_urls:
         assert full_url.startswith("urn:uuid:")
-        uuid.UUID(full_url.removeprefix("urn:uuid:"))
+        UUID(full_url.removeprefix("urn:uuid:"))
 
 
 def test_fhir_r5_preserves_parent_child_relationships_as_explicit_extensions():
