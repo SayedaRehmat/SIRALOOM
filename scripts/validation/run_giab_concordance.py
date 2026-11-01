@@ -136,7 +136,7 @@ def _integer(row: dict[str, str], key: str, row_number: int) -> int:
 
 
 def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
-    required = {"Type", "Filter", "TRUTH.TP", "TRUTH.FN", "QUERY.FP"}
+    required = {"Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK"}
     try:
         with path.open("r", encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)
@@ -153,10 +153,14 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                 if key in seen:
                     raise ConcordanceError("hap.py summary.csv contains duplicate type/filter rows.")
                 seen.add(key)
+                truth_total = _integer(row, "TRUTH.TOTAL", row_number)
                 tp = _integer(row, "TRUTH.TP", row_number)
                 fn = _integer(row, "TRUTH.FN", row_number)
+                query_total = _integer(row, "QUERY.TOTAL", row_number)
                 fp = _integer(row, "QUERY.FP", row_number)
-                truth_total = tp + fn
+                query_unknown = _integer(row, "QUERY.UNK", row_number)
+                if truth_total != tp + fn:
+                    raise ConcordanceError(f"hap.py summary row {row_number} truth counts do not reconcile.")
                 precision_denominator = tp + fp
                 recall = tp / truth_total if truth_total else None
                 precision = tp / precision_denominator if precision_denominator else None
@@ -171,6 +175,9 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                     "true_positive": tp,
                     "false_negative": fn,
                     "false_positive": fp,
+                    "query_unknown": query_unknown,
+                    "truth_total": truth_total,
+                    "query_total": query_total,
                     "truth_positive_denominator": truth_total,
                     "query_positive_denominator": precision_denominator,
                     "recall": round(recall, 6) if recall is not None else None,
