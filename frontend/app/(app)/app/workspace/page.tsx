@@ -1021,6 +1021,7 @@ export default function Home() {
 
       <nav className="workspace-section-nav" aria-label={t("workspace.title")}>
         <a href="#case-intake">{t("workspace.caseSection")}</a>
+        <a href="#clinical-phenotype-intake">Clinical phenotypes</a>
         <a href="#analysis-workflow">{t("workspace.executionSection")}</a>
         <a href="#artifacts">{t("workspace.files")}</a>
         <a href="#variants">{t("workspace.interpretationSection")}</a>
