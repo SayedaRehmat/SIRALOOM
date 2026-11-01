@@ -204,3 +204,66 @@ def test_query_must_have_exactly_one_sample(tmp_path: Path) -> None:
             output_dir=tmp_path / "out",
             hap_py=str(_fake_happy(tmp_path)),
         )
+
+
+def test_symbolic_small_variant_input_is_rejected(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    inputs["query_vcf"].write_text(
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "chr1\t10\t.\tA\t<DEL>\t60\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConcordanceError, match="symbolic"):
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "out",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
+
+
+def test_existing_evidence_directory_is_not_modified_by_failed_cli_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sys
+
+    output = tmp_path / "existing-evidence"
+    output.mkdir()
+    sentinel = output / "reviewed-result.json"
+    sentinel.write_text('{"reviewed": true}\n', encoding="utf-8")
+    inputs = _inputs(tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_giab_concordance.py",
+            "--truth-vcf", str(inputs["truth_vcf"]),
+            "--query-vcf", str(inputs["query_vcf"]),
+            "--confident-bed", str(inputs["confident_bed"]),
+            "--reference-fasta", str(inputs["reference_fasta"]),
+            "--reference-build", "GRCh38",
+            "--assay", "WGS",
+            "--caller", "approved-caller",
+            "--caller-version", "1.0",
+            "--truth-set-id", "GIAB-HG002-GRCh38",
+            "--truth-set-version", "4.2.1",
+            "--acceptance-policy-id", "LAB-POLICY-001",
+            "--output-dir", str(output),
+        ],
+    )
+
+    from scripts.validation import run_giab_concordance
+
+    assert run_giab_concordance.main() == 2
+    assert sentinel.read_text(encoding="utf-8") == '{"reviewed": true}\n'
+    assert sorted(path.name for path in output.iterdir()) == ["reviewed-result.json"]
