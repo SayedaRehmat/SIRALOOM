@@ -191,7 +191,6 @@ def vcf_normalization_worker_loss(
     from backend.app.infrastructure.db.models import (
         Analysis,
         Artifact,
-        Case,
         WorkflowStep,
     )
     from backend.app.infrastructure.db.session import SessionLocal
