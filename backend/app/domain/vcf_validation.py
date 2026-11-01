@@ -1039,6 +1039,32 @@ def _validate_vcf45_structural_info(
                         code="VCF_SV_INFO_INTERVAL_INVALID",
                     )
 
+    # VCFv4.5: when IMPRECISE is present, symbolic SV alleles may omit
+    # CIPOS to indicate an unspecified confidence interval. Any precise ALT
+    # allele in the same record must nevertheless carry an explicit CIPOS pair,
+    # including 0,0 when its position is exact.
+    imprecise_flag = "IMPRECISE" in info and info.get("IMPRECISE") is None
+    if imprecise_flag:
+        cipos_value = info.get("CIPOS")
+        cipos_entries = cipos_value.split(",") if cipos_value not in {None, "."} else []
+        precise_alt_indexes = [
+            index
+            for index, alternate in enumerate(alts)
+            if alternate not in {".", "*", "<*>", "<NON_REF>"}
+            and not SYMBOLIC_RE.fullmatch(alternate)
+        ]
+        for alt_index in precise_alt_indexes:
+            pair = (
+                cipos_entries[2 * alt_index : 2 * alt_index + 2]
+                if len(cipos_entries) >= 2 * alt_index + 2
+                else []
+            )
+            if len(pair) != 2 or pair == [".", "."]:
+                raise StrictVCFValidationError(
+                    f"INFO/IMPRECISE requires an explicit INFO/CIPOS interval for precise ALT allele {alt_index + 1} at line {line_no}",
+                    code="VCF_SV_IMPRECISE_CIPOS_MISSING",
+                )
+
     for key in ("MEINFO", "METRANS"):
         raw_value = info.get(key)
         if raw_value in {None, "."}:
