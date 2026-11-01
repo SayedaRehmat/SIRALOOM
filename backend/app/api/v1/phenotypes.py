@@ -583,6 +583,7 @@ def _pedigree_export_sidecar(
         "members": [
             {
                 "member_identifier": member.member_identifier,
+                "phenopacket_subject_id": f"SIRALOOM:{member.id}",
                 "relationship_to_proband": member.relationship_to_proband,
                 "sex": member.sex,
                 "affected_status": member.affected_status,
