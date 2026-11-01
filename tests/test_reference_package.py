@@ -210,6 +210,6 @@ def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
     fasta = tmp_path / "reference.fa"
     fasta.write_bytes(b">1 description\\r\\nACGT\\r\\nAC\\r\\n")
     fai = tmp_path / "reference.fa.fai"
-    fai.write_text("1\\t6\\t15\\t4\\t6\\n", encoding="utf-8")
+    fai.write_text("1\\t6\\t16\\t4\\t6\\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
