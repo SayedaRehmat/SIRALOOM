@@ -88,8 +88,11 @@ def parse_sample_ploidy_evidence(payload: Mapping[str, Any]) -> SamplePloidyEvid
     """Validate the versioned specimen-level copy-number evidence contract."""
     if not isinstance(payload, Mapping):
         raise PloidyPolicyValidationError("Sample ploidy evidence must be an object")
-    if payload.get("schema_version") != 1:
+    if type(payload.get("schema_version")) is not int or payload.get("schema_version") != 1:
         raise PloidyPolicyValidationError("Unsupported sample ploidy evidence schema_version")
+    allowed_keys = {"schema_version", "specimen_id", "reference_build", "status", "region_copy_number", "source_type", "evidence_reference", "reviewed_by", "reviewed_at"}
+    if set(payload) - allowed_keys:
+        raise PloidyPolicyValidationError(f"Unsupported sample ploidy evidence fields: {sorted(set(payload) - allowed_keys)}")
     try:
         specimen_id = str(UUID(_required_text(payload, "specimen_id")))
     except ValueError as exc:
@@ -152,8 +155,11 @@ def parse_caller_ploidy_policy(payload: Mapping[str, Any]) -> CallerPloidyPolicy
     """Validate caller/assay/version-specific copy-number-to-GT encoding policy."""
     if not isinstance(payload, Mapping):
         raise PloidyPolicyValidationError("Caller ploidy policy must be an object")
-    if payload.get("schema_version") != 1:
+    if type(payload.get("schema_version")) is not int or payload.get("schema_version") != 1:
         raise PloidyPolicyValidationError("Unsupported caller ploidy policy schema_version")
+    allowed_keys = {"schema_version", "caller_id", "caller_version", "assay_id", "policy_version", "reference_build", "status", "validation_evidence_reference", "qualified_by", "qualified_at", "region_copy_number_to_gt_ploidy"}
+    if set(payload) - allowed_keys:
+        raise PloidyPolicyValidationError(f"Unsupported caller policy fields: {sorted(set(payload) - allowed_keys)}")
     caller_id = _required_text(payload, "caller_id")
     caller_version = _required_text(payload, "caller_version")
     assay_id = _required_text(payload, "assay_id")
