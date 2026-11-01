@@ -702,6 +702,7 @@ def _validate_declared_value(
     ploidy: int | None = None,
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
+    allow_empty_values: bool = False,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
@@ -725,7 +726,7 @@ def _validate_declared_value(
         else _expected_cardinality(number, alternate_count, ploidy, local_allele_count)
     )
     observed = value.split(",")
-    if any(item == "" for item in observed):
+    if not allow_empty_values and any(item == "" for item in observed):
         raise StrictVCFValidationError(
             f"{kind}/{key} contains an empty list value at line {line_no}",
             code="VCF_FIELD_CARDINALITY_INVALID",
@@ -1302,6 +1303,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         definition=definition,
                         alternate_count=len(alts),
                         line_no=line_no,
+                        allow_empty_values=(
+                            fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
+                        ),
                     )
             breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
             if breakend_alts:
