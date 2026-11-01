@@ -1317,11 +1317,23 @@ def _validate_record(
                 )
         for sample_index, sample in enumerate(fields[9:], start=1):
             values = sample.split(":")
-            if not sample or any(value == "" for value in values) or len(values) > len(keys):
+            if not sample or len(values) > len(keys):
                 raise StrictVCFValidationError(
                     f"Sample {sample_index} has malformed FORMAT values for {len(keys)} keys at line {line_no}",
                     code="VCF_SAMPLE_INVALID",
                 )
+            for value_index, value in enumerate(values):
+                if value == "":
+                    field_key = keys[value_index] if value_index < len(keys) else None
+                    if field_key == "GT":
+                        raise StrictVCFValidationError(
+                            f"FORMAT/GT must contain an explicit genotype or missing-value token at line {line_no}, sample {sample_index}",
+                            code="VCF_GENOTYPE_INVALID",
+                        )
+                    raise StrictVCFValidationError(
+                        f"Sample {sample_index} has an empty FORMAT/{field_key or 'value'} field at line {line_no}; use '.' for a missing value",
+                        code="VCF_SAMPLE_INVALID",
+                    )
             # VCF permits trailing FORMAT fields to be omitted. A missing value
             # within the supplied values must still use the explicit '.' token.
             if "GT" in keys:
@@ -1981,40 +1993,38 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
     declared_contig_md5s = declared_vcf_contig_md5s(path)
     try:
         with FastaReference(reference_fasta) as reference, _open(path) as handle:
+            # Resolve only the deterministic aliases explicitly supported by
+            # FastaReference (for example NC_012920.1 -> chrM). Unknown or
+            # version-mismatched accessions remain hard failures; no network
+            # lookup, assembly conversion, or heuristic contig substitution occurs.
+            resolved_contigs: dict[str, str] = {}
             for contig, declared_length in declared_contig_lengths.items():
-                if contig not in reference.contigs:
-                    raise StrictVCFValidationError(
-                        f"VCF contig {contig!r} is not an exact contig identifier in the selected reference",
-                        code="REFERENCE_CONTIG_MISMATCH",
-                    )
                 try:
-                    reference_length = reference.contig_length(contig)
+                    resolved_contig = reference.resolve_contig(contig)
+                    reference_length = reference.contig_length(resolved_contig)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
-                        f"Declared VCF contig {contig!r} is absent from the selected reference",
+                        f"Declared VCF contig {contig!r} cannot be resolved in the selected reference",
                         code="REFERENCE_CONTIG_MISMATCH",
                     ) from exc
+                resolved_contigs[contig] = resolved_contig
                 if declared_length != reference_length:
                     raise StrictVCFValidationError(
-                        f"VCF declares contig {contig!r} length {declared_length}, but the selected reference length is {reference_length}",
+                        f"VCF declares contig {contig!r} length {declared_length}, but resolved selected-reference contig {resolved_contig!r} has length {reference_length}",
                         code="VCF_CONTIG_LENGTH_MISMATCH",
                     )
             for contig, expected_md5 in declared_contig_md5s.items():
-                if contig not in reference.contigs:
-                    raise StrictVCFValidationError(
-                        f"VCF contig {contig!r} with an MD5 declaration is not an exact contig identifier in the selected reference",
-                        code="REFERENCE_CONTIG_MISMATCH",
-                    )
                 try:
-                    reference_length = reference.contig_length(contig)
+                    resolved_contig = resolved_contigs.get(contig) or reference.resolve_contig(contig)
+                    reference_length = reference.contig_length(resolved_contig)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
-                        f"VCF contig {contig!r} with an MD5 declaration is absent from the selected reference",
+                        f"VCF contig {contig!r} with an MD5 declaration cannot be resolved in the selected reference",
                         code="REFERENCE_CONTIG_MISMATCH",
                     ) from exc
                 digest = hashlib.md5(usedforsecurity=False)
                 for start in range(0, reference_length, 1_000_000):
-                    sequence = reference.fetch(contig, start, min(start + 1_000_000, reference_length))
+                    sequence = reference.fetch(resolved_contig, start, min(start + 1_000_000, reference_length))
                     canonical_sequence = "".join(
                         character for character in sequence if 33 <= ord(character) <= 126
                     ).upper()
@@ -2036,16 +2046,12 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     continue  # validate_vcf_strict reports the structural error first.
                 chrom, pos_text, _identifier, ref, alt_text = fields[:5]
                 pos = int(pos_text)
-                if chrom not in reference.contigs:
-                    raise StrictVCFValidationError(
-                        f"VCF contig {chrom!r} is not an exact contig identifier in the selected reference at line {line_no}",
-                        code="REFERENCE_CONTIG_MISMATCH",
-                    )
                 try:
-                    contig_length = reference.contig_length(chrom)
+                    resolved_chrom = resolved_contigs.get(chrom) or reference.resolve_contig(chrom)
+                    contig_length = reference.contig_length(resolved_chrom)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
-                        f"VCF contig {chrom!r} is absent from the selected reference at line {line_no}",
+                        f"VCF contig {chrom!r} cannot be resolved in the selected reference at line {line_no}",
                         code="REFERENCE_CONTIG_MISMATCH",
                     ) from exc
                 if pos == 0:
@@ -2060,7 +2066,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     telomere_records += 1
                     continue
                 try:
-                    observed = reference.fetch(chrom, pos - 1, pos - 1 + len(ref))
+                    observed = reference.fetch(resolved_chrom, pos - 1, pos - 1 + len(ref))
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
                         f"Reference interval is invalid at {chrom}:{pos} line {line_no}: {exc}",
@@ -2090,16 +2096,12 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     if match is None:
                         continue
                     mate_contig, mate_position = match.group(1), int(match.group(2))
-                    if mate_contig not in reference.contigs:
-                        raise StrictVCFValidationError(
-                            f"Breakend mate contig {mate_contig!r} is not an exact contig identifier in the selected reference at line {line_no}",
-                            code="VCF_BREAKEND_REFERENCE_MISMATCH",
-                        )
                     try:
-                        mate_length = reference.contig_length(mate_contig)
+                        resolved_mate_contig = resolved_contigs.get(mate_contig) or reference.resolve_contig(mate_contig)
+                        mate_length = reference.contig_length(resolved_mate_contig)
                     except ReferenceError as exc:
                         raise StrictVCFValidationError(
-                            f"Breakend mate contig {mate_contig!r} is absent from the selected reference at line {line_no}",
+                            f"Breakend mate contig {mate_contig!r} cannot be resolved in the selected reference at line {line_no}",
                             code="VCF_BREAKEND_REFERENCE_MISMATCH",
                         ) from exc
                     if mate_position > mate_length:
