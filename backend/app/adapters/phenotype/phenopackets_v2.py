@@ -38,6 +38,12 @@ def _member_id(member: Any) -> str:
     return str(_value(member, "member_identifier") or _value(member, "id"))
 
 
+def _normalize_sex(value: Any) -> str | None:
+    normalized = str(value or "").upper()
+    normalized = {"UNKNOWN": "UNKNOWN_SEX", "OTHER": "OTHER_SEX"}.get(normalized, normalized)
+    return normalized if normalized in _SEX_VALUES else None
+
+
 def _term_resolution(row: Any) -> dict[str, Any]:
     resolution = _value(row, "ontology_resolution", {}) or {}
     primary = resolution.get("primary_term") if isinstance(resolution, dict) else None
@@ -258,8 +264,8 @@ def _packet(
     age_at_assessment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     subject: dict[str, Any] = {"id": subject_id}
-    normalized_sex = str(sex or "").upper()
-    if normalized_sex in _SEX_VALUES:
+    normalized_sex = _normalize_sex(sex)
+    if normalized_sex:
         subject["sex"] = normalized_sex
     age_time = _age_time_element(age_at_assessment)
     if age_time is not None:
@@ -345,6 +351,13 @@ def build_phenopackets_v2(
     warnings = _collect_loss_warnings(rows, clinical_intake_revision)
     for member in members:
         member_identifier = _member_id(member)
+        raw_sex = str(_value(member, "sex") or "").upper()
+        if raw_sex and _normalize_sex(raw_sex) is None:
+            warnings.append({
+                "observation_id": member_identifier,
+                "field": "pedigree.sex",
+                "reason": f"Recorded pedigree sex value {raw_sex!r} is not in the GA4GH Pedigree sex enum and is retained only in the SIRALOOM sidecar.",
+            })
         if _value(member, "relationship_to_proband"):
             warnings.append({
                 "observation_id": member_identifier,
