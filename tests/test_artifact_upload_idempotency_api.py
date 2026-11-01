@@ -25,6 +25,7 @@ from backend.app.infrastructure.db.models import (
 from backend.app.infrastructure.db.session import get_db
 from backend.app.main import app
 
+
 @pytest.fixture
 def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     engine = create_engine(
