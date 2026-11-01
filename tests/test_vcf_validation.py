@@ -602,6 +602,26 @@ def test_structured_header_ids_are_unique_per_type(tmp_path: Path):
         ("Character", "too-long"),
     ],
 )
+def test_info_number_g_with_mixed_sample_ploidy_is_explicitly_unchecked(tmp_path: Path):
+    path = tmp_path / "info-number-g-mixed-ploidy.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=IG,Number=G,Type=Float,Description="Genotype-indexed site values">'],
+        (
+            "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\tIG=0.1,0.2,0.3,0.1,0.1,0.2"
+            "\\tGT\\t1\\t0/1\\n"
+        ),
+        sample=True,
+    )
+
+    result = validate_vcf_strict(path)
+
+    # INFO is record-level, but sample genotypes can have different ploidies.
+    # The validator must not guess a single Number=G cardinality.
+    assert result["records"] == 1
+    assert result["unchecked_info_number_g_fields"] == ["IG"]
+
+
 def test_declared_info_payload_type_is_enforced(tmp_path: Path, field_type: str, value: str):
     path = tmp_path / "invalid-declared-type.vcf"
     write_vcf_with_metadata(
