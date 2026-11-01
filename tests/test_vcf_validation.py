@@ -1662,3 +1662,32 @@ def test_vcf45_empty_laa_cannot_describe_called_alt_genotype(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+
+
+@pytest.mark.parametrize(
+    "metadata,kind,identifier",
+    [
+        ('##FORMAT=<ID=LAA,Number=1,Type=Integer,Description="Local ALT indices">', "FORMAT", "LAA"),
+        ('##FORMAT=<ID=GT,Number=2,Type=String,Description="Genotype">', "FORMAT", "GT"),
+        ('##FORMAT=<ID=PSL,Number=P,Type=Integer,Description="Phase set list">', "FORMAT", "PSL"),
+        ('##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">', "INFO", "AF"),
+        ('##INFO=<ID=DB,Number=1,Type=Flag,Description="dbSNP membership">', "INFO", "DB"),
+        ('##INFO=<ID=MQ,Number=1,Type=Integer,Description="RMS mapping quality">', "INFO", "MQ"),
+    ],
+)
+def test_vcf45_reserved_field_definitions_enforce_spec_number_and_type(
+    tmp_path: Path, metadata: str, kind: str, identifier: str
+):
+    path = tmp_path / f"vcf45-reserved-{kind.lower()}-{identifier}.vcf"
+    write_vcf_with_metadata(
+        path,
+        [metadata],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
