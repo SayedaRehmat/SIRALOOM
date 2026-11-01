@@ -68,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           ASSET_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}/assets"
-          FASTA="$ASSET_DIR/$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["reference_fasta"]["path"].split("/")[-1])' "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json")"
+          FASTA="$ASSET_DIR/$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"].split("/")[-1])' "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json")"
           python - "$FASTA" <<'PY'
           import sys
           from pathlib import Path
