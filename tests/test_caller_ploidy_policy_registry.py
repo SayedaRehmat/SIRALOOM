@@ -229,3 +229,14 @@ def test_draft_to_qualified_transition_keeps_identical_mapping(monkeypatch):
     assert result["status"] == "QUALIFIED"
     assert db.added[0].region_copy_number_to_gt_ploidy == mapping
     assert db.added[0].qualified_by == user_id
+
+
+
+def test_caller_ploidy_policy_routes_are_registered_in_application_openapi():
+    from backend.app.main import app
+
+    paths = app.openapi()["paths"]
+    route = "/api/v1/assays/{assay_id}/ploidy-policies"
+    assert route in paths
+    assert "post" in paths[route]
+    assert "get" in paths[route]
