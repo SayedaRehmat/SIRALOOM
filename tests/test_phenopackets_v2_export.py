@@ -99,12 +99,13 @@ def test_family_export_preserves_member_attribution_and_parentage():
     )
 
     assert warnings == []
-    assert payload["proband"]["subject"]["id"] == "PROBAND"
+    assert payload["proband"]["subject"]["id"] == f"SIRALOOM:{proband.id}"
     assert len(payload["relatives"]) == 1
     persons = {person["individualId"]: person for person in payload["pedigree"]["persons"]}
-    assert persons["PROBAND"]["paternalId"] == "FATHER"
-    assert persons["PROBAND"]["maternalId"] == "MOTHER"
-    assert persons["PROBAND"]["affectedStatus"] == "AFFECTED"
+    proband_id = f"SIRALOOM:{proband.id}"
+    assert persons[proband_id]["paternalId"] == f"SIRALOOM:{father.id}"
+    assert persons[proband_id]["maternalId"] == f"SIRALOOM:{mother.id}"
+    assert persons[proband_id]["affectedStatus"] == "AFFECTED"
 
 
 def test_strict_export_rejects_states_that_ga4gh_cannot_represent():
