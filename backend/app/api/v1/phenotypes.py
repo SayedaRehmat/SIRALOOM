@@ -374,7 +374,10 @@ def add_case_phenotype(
     active_analyses = db.scalars(
         select(Analysis).where(
             Analysis.case_id == case_id,
-            Analysis.status.in_(("QUEUED", "PENDING", "RUNNING", "RETRYING")),
+            Analysis.status.in_((
+                "CREATED", "QUEUED", "PENDING", "RUNNING", "RETRYING",
+                "REQUIRES_REVIEW", "BLOCKED", "RESOURCE_FAILURE", "CANCEL_REQUESTED",
+            )),
         )
     ).all()
     for active_analysis in active_analyses:
