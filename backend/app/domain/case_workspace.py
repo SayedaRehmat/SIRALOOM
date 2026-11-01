@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictInt
 
 
 class CaseUpdate(BaseModel):
@@ -28,6 +28,6 @@ class SpecimenPloidyEvidenceCreate(BaseModel):
     schema_version: Literal[1] = 1
     reference_build: str = Field(min_length=1, max_length=40)
     status: Literal["VERIFIED", "UNVERIFIED", "CONFLICTED", "MOSAIC_OR_COMPLEX"]
-    region_copy_number: dict[str, int] = Field(default_factory=dict)
+    region_copy_number: dict[str, StrictInt] = Field(default_factory=dict)
     source_type: str | None = Field(default=None, min_length=1, max_length=120)
     evidence_reference: str | None = Field(default=None, min_length=1, max_length=500)
