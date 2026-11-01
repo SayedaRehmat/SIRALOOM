@@ -69,7 +69,7 @@ Review the JSON and generated artifacts against the acceptance policy approved b
 - Selected-sample variant iteration completes without sample substitution or genotype reinterpretation.
 - Wall time, CPU time, peak RSS, temporary/persistent disk use, queue impact and concurrency meet the lab's predeclared thresholds on the target worker profile.
 - Repeated runs against identical immutable inputs/reference/toolchain produce the same normalized record hash and equivalent routing/reconciliation counts.
-- A failure or resource shortage is recorded with its stage/reason and can be recovered without duplicate or partially published artifacts.
+- The failure report records the failed stage and exception class without persisting potentially sensitive exception text; capture the reviewed operational reason in the laboratory's controlled record. Confirm that recovery does not create duplicate or partially published artifacts.
 
 Run at least one representative WES and one representative WGS input per caller/version/build combination included in the lab's intended use. Include small, typical, and upper-percentile file sizes, high-multiallelic regions, indel-rich regions, gVCF input if accepted by the lab's workflow, and concurrent uploads/analyses. The sample name, input hash, reference hashes, caller/version, workflow profile, resource profile and review decision must be linked in the laboratory's controlled validation record, not copied into a public issue.
 
