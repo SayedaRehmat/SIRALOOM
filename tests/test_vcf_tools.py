@@ -570,6 +570,9 @@ def test_vcf45_router_uses_sample_specific_reference_blocks_for_mixed_variant_re
         encoding="utf-8",
     )
 
+    from backend.app.domain.vcf_validation import validate_vcf_strict
+
+    validate_vcf_strict(source)
     routed = route_vcf_records(source, tmp_path / "routed")
 
     assert routed["sequence_records"] == 1
