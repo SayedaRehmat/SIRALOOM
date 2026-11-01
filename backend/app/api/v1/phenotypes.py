@@ -25,9 +25,13 @@ from backend.app.domain.resource_capabilities import CapabilityRequirement, Reso
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
+from backend.app.adapters.phenotype.phenopackets_v2 import (
+    PhenopacketExportError,
+    build_phenopackets_v2,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, PedigreeMember, PhenotypeObservation, WorkflowStep,
+    Analysis, Case, PedigreeMember, PedigreeRelationship, PhenotypeObservation, WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.phenotype import normalize_hpo_id
@@ -494,4 +498,80 @@ def list_analysis_phenotypes(
         "analysis_id": str(analysis_id),
         "count": len(rows),
         "phenotypes": [_payload(r) for r in rows],
+    }
+
+
+@router.get("/cases/{case_id}/phenopackets-v2")
+def export_case_phenopackets_v2(
+    case_id: UUID,
+    allow_lossy: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Export the case as a GA4GH Phenopacket v2 or Family document.
+
+    The response envelope carries the schema-validated GA4GH document and
+    explicit loss warnings. Strict export is the default.
+    """
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+
+    observations = list(db.scalars(
+        select(PhenotypeObservation)
+        .where(PhenotypeObservation.case_id == case_id)
+        .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
+    ))
+    members = list(db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
+    ))
+
+    try:
+        document, warnings = build_phenopackets_v2(
+            case=case,
+            phenotype_observations=observations,
+            pedigree_members=members,
+            pedigree_relationships=relationships,
+            allow_lossy=allow_lossy,
+        )
+    except PhenopacketExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    AuditService(db).record(
+        event_type="CLINICAL_INTEROPERABILITY_EXPORT",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case_id),
+        operation="EXPORT",
+        after_state={
+            "format": "GA4GH_PHENOPACKETS",
+            "schema_version": "2.0",
+            "lossy": bool(warnings),
+            "warning_count": len(warnings),
+        },
+        payload={
+            "allow_lossy": allow_lossy,
+            "warning_fields": sorted({item["field"] for item in warnings}),
+        },
+    )
+    db.commit()
+    return {
+        "format": "GA4GH_PHENOPACKETS",
+        "schema_version": "2.0",
+        "lossy": bool(warnings),
+        "warnings": warnings,
+        "document": document,
     }
