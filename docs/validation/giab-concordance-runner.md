@@ -11,6 +11,7 @@ The runner is an evidence-generation tool. It always emits `CONCORDANCE_RUN_COMP
 Required:
 - one-sample truth VCF;
 - one-sample query VCF (no implicit sample selection from multisample inputs);
+- explicit expected truth and query sample-column names (`--truth-sample-name`, `--query-sample-name`), checked against the exact VCF header columns without retaining either identifier in the JSON report;
 - matching GIAB confident-region BED;
 - exact reference FASTA and adjacent `.fai`;
 - explicit GRCh37/GRCh38 build;
@@ -19,7 +20,7 @@ Required:
 - truth-set identifier and release (for example, GIAB HG002 GRCh38 v4.2.1);
 - preapproved laboratory acceptance-policy identifier.
 
-WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`; each referenced BED is resolved relative to the TSV when needed, hashed, and rechecked, and the resulting extended CSV is retained. An adjacent reference `.gzi` is also hashed when present. Symbolic alleles, spanning-deletion alleles, and breakends are rejected because this runner is scoped to small variants. All input files and each stratification BED are SHA-256 recorded and rechecked after execution.
+WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`; each referenced BED is resolved relative to the TSV when needed, hashed, and rechecked, and the resulting extended CSV is retained. An adjacent reference `.gzi` is also hashed when present. Symbolic alleles, spanning-deletion alleles, and breakends are rejected because this runner is scoped to small variants. The runner verifies FASTA/FAI byte-level geometry and derives a canonical contig-manifest digest. Every confident, target, and stratification BED is checked for valid 0-based half-open coordinates, exact contig membership, in-bounds intervals, and unsupported track/browser directives before hap.py starts. All input files and each stratification BED are SHA-256 recorded and rechecked after execution.
 
 Truth and query sample identifiers are not written to the JSON report. The restricted output directory contains hap.py's own outputs/log; protect it as controlled laboratory evidence because upstream tools may include source metadata in their files. The output directory must not already exist and is created with mode 0700; the log uses mode 0600.
 
@@ -29,7 +30,7 @@ Truth and query sample identifiers are not written to the JSON report. The restr
 - Default engine is `xcmp`, hap.py's haplotype-level engine. `vcfeval` is permitted only where the laboratory has installed and qualified the compatible RTG-Tools build.
 - ALL and PASS summaries are retained; `--pass-only` is an explicit option and is not enabled by default.
 - The runner requires SNP and INDEL rows for both ALL and PASS in hap.py's `summary.csv`.
-- Raw `TRUTH.TOTAL`, `TRUTH.TP`, `TRUTH.FN`, `QUERY.TOTAL`, `QUERY.TP`, `QUERY.FP`, `QUERY.UNK`, `FP.gt` and `FP.al` counts are retained; the runner also recomputes `Frac_NA = QUERY.UNK / QUERY.TOTAL`; truth totals must reconcile to `TRUTH.TP + TRUTH.FN`. Precision uses query-representation TP, while recall uses truth-representation TP, as specified by hap.py/GA4GH. Precision, recall and F1 are recomputed from those respective count spaces. Descriptive 95% Wilson intervals are retained for precision and recall. A zero denominator is `null`.
+- Raw `TRUTH.TOTAL`, `TRUTH.TP`, `TRUTH.FN`, `QUERY.TOTAL`, `QUERY.TP`, `QUERY.FP`, `QUERY.UNK`, `FP.gt` and `FP.al` counts are retained; the runner also recomputes `Frac_NA = QUERY.UNK / QUERY.TOTAL`; truth totals must reconcile to `TRUTH.TP + TRUTH.FN`; query totals must reconcile to `QUERY.TP + QUERY.FP + QUERY.UNK`; and genotype/allele mismatch subcounts must not exceed `QUERY.FP`. Precision uses query-representation TP, while recall uses truth-representation TP, as specified by hap.py/GA4GH. Precision, recall and F1 are recomputed from those respective count spaces. Descriptive 95% Wilson intervals are retained for precision and recall. A zero denominator is `null`.
 - For optional stratification, the source `.extended.csv` is retained and SHA-256 recorded.
 - Tool stdout/stderr is redirected to a restricted log. Failures return a nonzero exit code and exception class; existing evidence directories are never modified.
 
@@ -49,6 +50,8 @@ python scripts/validation/run_giab_concordance.py \
   --stratification-tsv /secure/ga4gh/stratification.tsv \
   --caller approved-caller \
   --caller-version 4.2.1 \
+  --truth-sample-name HG002 \
+  --query-sample-name CASE_SAMPLE_001 \
   --truth-set-id GIAB-HG002-GRCh38 \
   --truth-set-version 4.2.1 \
   --acceptance-policy-id LAB-APPROVED-SNV-INDEL-001 \
