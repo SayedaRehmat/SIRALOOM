@@ -153,6 +153,35 @@ def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tm
         parse_happy_summary(path)
 
 
+def test_sample_mapping_sidecar_must_match_both_vcf_columns(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    inputs["sample_mapping"].write_text(
+        json.dumps({"truth_sample_name": "WRONG_TRUTH", "query_sample_name": "CASE_SAMPLE_001"}),
+        encoding="utf-8",
+    )
+    inputs["sample_mapping"].chmod(0o600)
+
+    with pytest.raises(ConcordanceError, match="explicitly declared specimen mapping") as exc:
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "wrong-sample",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
+    assert "WRONG_TRUTH" not in str(exc.value)
+    assert "HG002" not in str(exc.value)
+
+
 def test_sample_mapping_file_must_be_private(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     inputs["sample_mapping"].chmod(0o644)
