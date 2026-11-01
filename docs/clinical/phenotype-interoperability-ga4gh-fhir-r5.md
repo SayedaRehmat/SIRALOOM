@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This implementation adds case-level export for the phenotype and family context already stored by SIRALOOM:
+This implementation adds case-level export for the phenotype and family context already stored by SIRALOOM. Only analysis-independent clinical-intake phenotype observations (analysis_id IS NULL) are exported; analysis-derived annotations/observations are not reclassified as patient-reported clinical findings:
 
 - GA4GH Phenopackets v2 Phenopacket export for a case without a pedigree.
 - GA4GH Phenopackets v2 Family export when exactly one proband is explicitly designated.
