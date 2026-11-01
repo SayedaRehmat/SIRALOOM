@@ -136,7 +136,7 @@ def _integer(row: dict[str, str], key: str, row_number: int) -> int:
 
 
 def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
-    required = {"Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK"}
+    required = {"Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.TP", "QUERY.FP", "QUERY.UNK"}
     try:
         with path.open("r", encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)
@@ -157,13 +157,14 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                 tp = _integer(row, "TRUTH.TP", row_number)
                 fn = _integer(row, "TRUTH.FN", row_number)
                 query_total = _integer(row, "QUERY.TOTAL", row_number)
+                query_tp = _integer(row, "QUERY.TP", row_number)
                 fp = _integer(row, "QUERY.FP", row_number)
                 query_unknown = _integer(row, "QUERY.UNK", row_number)
                 if truth_total != tp + fn:
                     raise ConcordanceError(f"hap.py summary row {row_number} truth counts do not reconcile.")
-                precision_denominator = tp + fp
+                precision_denominator = query_tp + fp
                 recall = tp / truth_total if truth_total else None
-                precision = tp / precision_denominator if precision_denominator else None
+                precision = query_tp / precision_denominator if precision_denominator else None
                 f1 = (
                     2.0 * precision * recall / (precision + recall)
                     if precision is not None and recall is not None and precision + recall > 0
@@ -172,7 +173,8 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                 parsed.append({
                     "variant_type": variant_type,
                     "filter": filter_name,
-                    "true_positive": tp,
+                    "truth_true_positive": tp,
+                    "query_true_positive": query_tp,
                     "false_negative": fn,
                     "false_positive": fp,
                     "query_unknown": query_unknown,
@@ -183,7 +185,7 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                     "recall": round(recall, 6) if recall is not None else None,
                     "recall_wilson_95_ci": wilson_interval(tp, truth_total),
                     "precision": round(precision, 6) if precision is not None else None,
-                    "precision_wilson_95_ci": wilson_interval(tp, precision_denominator),
+                    "precision_wilson_95_ci": wilson_interval(query_tp, precision_denominator),
                     "f1": round(f1, 6) if f1 is not None else None,
                 })
     except OSError as exc:
