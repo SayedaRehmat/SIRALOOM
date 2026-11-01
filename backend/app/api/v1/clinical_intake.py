@@ -68,6 +68,10 @@ class PriorTestingInput(BaseModel):
             value = getattr(self, name)
             if isinstance(value, str):
                 setattr(self, name, value.strip() or None)
+        if self.result_status in {"POSITIVE", "NEGATIVE", "INCONCLUSIVE"} and not (
+            self.result_summary or self.source_reference or self.artifact_id
+        ):
+            raise ValueError("Prior-test result requires a result summary or traceable source/artifact reference")
         return self
 
 
@@ -369,8 +373,7 @@ def create_case_clinical_intake_revision(
         "version": version,
         "intake_status": body.intake_status,
     }
-    if body.referral_indication:
-        case_context["indication"] = body.referral_indication
+    case_context["indication"] = body.referral_indication
     case.clinical_context = case_context
 
     AuditService(db).record(

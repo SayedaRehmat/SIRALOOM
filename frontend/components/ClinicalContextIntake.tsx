@@ -77,7 +77,7 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const applyRevision = (revision: Revision | null, legacy: Record<string, any> = {}) => {
+  const applyRevision = useCallback((revision: Revision | null, legacy: Record<string, any> = {}) => {
     setLatest(revision);
     const context = revision?.context ?? {};
     setReferralIndication(context.referral_indication ?? legacy.indication ?? "");
@@ -109,7 +109,7 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
     setPhenotypeReviewNote(revision?.phenotype_review_note ?? "");
     setFamilyReviewNote(revision?.family_history_review_note ?? "");
     setCompletionNote(revision?.completion_note ?? "");
-  };
+  }, []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -123,7 +123,7 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [apiFetch, caseId]);
+  }, [apiFetch, caseId, applyRevision]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -230,7 +230,7 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
           <label>Age unit
             <select value={ageUnit} onChange={event => setAgeUnit(event.target.value)}>{["YEARS", "MONTHS", "WEEKS", "DAYS"].map(unit => <option key={unit}>{unit}</option>)}</select>
           </label>
-          <label>Age recorded as of
+          <label>Age recorded as of (required with age)
             <input type="date" value={ageAsOfDate} onChange={event => setAgeAsOfDate(event.target.value)} />
           </label>
         </div>

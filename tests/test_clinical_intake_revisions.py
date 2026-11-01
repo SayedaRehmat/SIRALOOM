@@ -12,6 +12,7 @@ from backend.app.api.v1.clinical_intake import (
     AgeAtAssessmentInput,
     ClinicalIntakeInput,
     DifferentialDiagnosisInput,
+    PriorTestingInput,
     clinical_intake_fingerprint,
 )
 
@@ -140,3 +141,15 @@ def test_clinical_intake_revision_migration_creates_versioned_append_only_table(
         indexes = {item["name"] for item in inspect(connection).get_indexes("clinical_intake_revisions")}
         assert "ix_clinical_intake_revisions_case_version" in indexes
     engine.dispose()
+
+
+
+def test_interpretable_prior_test_result_requires_traceable_result_content():
+    with pytest.raises(ValidationError):
+        PriorTestingInput(test_type="Chromosomal microarray", result_status="NEGATIVE")
+    result = PriorTestingInput(
+        test_type="Chromosomal microarray",
+        result_status="NEGATIVE",
+        source_reference="LAB-REPORT-2024-001",
+    )
+    assert result.source_reference == "LAB-REPORT-2024-001"
