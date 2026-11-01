@@ -83,6 +83,14 @@ The normalization artifact contract is versioned independently from the uploaded
 
 This contract improves genotype and source-record traceability; it does not itself qualify every caller-specific FORMAT field, every VCF 4.0–4.5 optional feature, or downstream inheritance/segregation logic. Those remain separate feature-level and end-to-end laboratory qualification requirements.
 
+## Interrupted upload recovery and idempotency
+
+The artifact upload endpoint accepts an optional `Idempotency-Key` header. Clients performing uploads that must survive transport or API-process interruption should generate one high-entropy key per logical upload and reuse that exact key for every retry. The key is scoped to the authenticated organization and case; the raw key is never persisted.
+
+Before artifact bytes are published, SIRALOOM commits an upload-intent reservation containing the key digest, a fingerprint of the complete upload request, and one stable artifact UUID. The fingerprint binds the file SHA-256 and byte count to filename, artifact type, media type, genome build, specimen, and paired-index identity. Reusing a key with different content or metadata returns HTTP 409. A matching retry reuses the reserved artifact identity and can safely adopt byte-identical local or cloud objects left by a process interruption. After the artifact row, case-state transition, audit event, and intent state commit together, a retry returns the original artifact with HTTP 200 and does not create a duplicate audit or artifact row.
+
+The intent is tenant- and case-scoped and is committed before storage writes. An interrupted reservation remains recoverable by retrying the same request and key. A reservation marked `RECOVERY_REQUIRED`, or a committed reservation whose artifact row is missing, is not silently recreated; it requires administrator reconciliation. Uploads without the header retain the legacy non-idempotent request behavior. The idempotency intent is a transport/durability mechanism, not a substitute for VCF validation, reference verification, assay qualification, or clinical review.
+
 ## Validation layers
 
 1. **Accession and transport:** filename/type, non-empty upload, configured byte limit, storage-capacity preflight, SHA-256, original artifact preservation.
