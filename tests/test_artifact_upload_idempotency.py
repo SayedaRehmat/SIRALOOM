@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -19,6 +18,7 @@ from backend.app.infrastructure.db.artifact_upload_intents import ArtifactUpload
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db import models as _models
 from backend.app.infrastructure.db.models import Artifact, Case, Organization, User
+from backend.app.main import app
 
 
 def _request_fingerprint(content: bytes = b"VCF source bytes") -> str:
@@ -245,3 +245,10 @@ def test_reserved_upload_recovers_identical_orphaned_storage_bytes(tmp_path):
     finally:
         db.close()
         engine.dispose()
+
+
+def test_artifact_upload_route_exposes_optional_idempotency_header():
+    operation = app.openapi()["paths"]["/api/v1/cases/{case_id}/artifacts"]["post"]
+    parameter_names = {parameter["name"] for parameter in operation.get("parameters", [])}
+
+    assert "Idempotency-Key" in parameter_names
