@@ -1,13 +1,10 @@
 """Persistence operations for durable artifact upload idempotency intents."""
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from backend.app.domain.upload_idempotency import (
-    idempotency_key_sha256,
-)
 from backend.app.infrastructure.db.artifact_upload_intents import ArtifactUploadIntent
 
 
@@ -18,8 +15,8 @@ class UploadIdempotencyConflict(ValueError):
 def reserve_upload_intent(
     db: Session,
     *,
-    organization_id,
-    case_id,
+    organization_id: UUID,
+    case_id: UUID,
     key_sha256: str,
     request_fingerprint: str,
 ) -> tuple[ArtifactUploadIntent, bool]:
