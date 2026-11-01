@@ -191,3 +191,41 @@ def test_caller_policy_version_is_immutable_and_requires_version_bump_for_change
     assert error.value.status_code == 409
     assert "new policy_version" in error.value.detail or "immutable within a policy_version" in error.value.detail
     assert db.added == []
+
+
+
+def test_draft_to_qualified_transition_keeps_identical_mapping(monkeypatch):
+    organization_id = uuid4()
+    assay_id = uuid4()
+    user_id = uuid4()
+    mapping = {
+        "PAR": {"2": 2},
+        "X_NON_PAR": {"1": 1, "2": 2},
+        "Y_NON_PAR": {"0": "NOT_CALLABLE", "1": 1},
+    }
+    draft = SimpleNamespace(
+        status="DRAFT",
+        revision_fingerprint="draft-fingerprint",
+        region_copy_number_to_gt_ploidy=mapping,
+    )
+    assay = SimpleNamespace(id=assay_id, organization_id=organization_id, status="ACTIVE")
+    db = _PolicySession(assay, existing=draft)
+    _PolicyAuditRecorder.calls = []
+    monkeypatch.setattr(ploidy_api, "AuditService", _PolicyAuditRecorder)
+    monkeypatch.setattr(ploidy_api, "require_role", lambda *_args: None)
+
+    result = ploidy_api.create_caller_ploidy_policy(
+        assay_id=assay_id,
+        payload=CallerPloidyPolicyCreate(**_policy_payload()),
+        db=db,
+        principal=Principal(
+            user_id=user_id,
+            organization_id=organization_id,
+            role="lab_director",
+            subject="reviewer-subject",
+        ),
+    )
+
+    assert result["status"] == "QUALIFIED"
+    assert db.added[0].region_copy_number_to_gt_ploidy == mapping
+    assert db.added[0].qualified_by == user_id
