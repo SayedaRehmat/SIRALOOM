@@ -1619,6 +1619,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     routing["gvcf_reference_blocks"]
                     + routing["gvcf_unresolved_variant_records"]
                     + routing["structural_variant_records"]
+                    + routing["cnv_variant_records"]
+                    + routing["repeat_expansion_records"]
+                    + routing["mitochondrial_variant_records"]
                     + routing["spanning_deletion_records"]
                     + routing["telomere_records"]
                     + routing["telomere_after_contig_records"]
@@ -1626,10 +1629,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 routed_count = specialized_review_count + routing["reference_only_records"]
                 if specialized_review_count:
                     reason = (
-                        "The source contains preserved GVCF, structural, spanning-deletion, or telomere "
-                        "records requiring a specialized review path; no sequence-resolved variant records "
-                        "were eligible for ordinary normalization. Original records remain in the source "
-                        "artifact and routed artifacts."
+                        "The source contains preserved GVCF, mitochondrial, repeat-expansion, CNV, "
+                        "structural, spanning-deletion, or telomere records requiring a specialized pipeline "
+                        "or review path; no sequence-resolved nuclear SNV/INDEL records were eligible for "
+                        "ordinary normalization. Original records remain in the source artifact and routed "
+                        "artifacts."
                     )
                     if routing["reference_only_records"]:
                         reason += (
@@ -1640,7 +1644,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         routing["telomere_records"] + routing["telomere_after_contig_records"]
                         == specialized_review_count
                     )
-                    next_step = "VCF_TELOMERE_COORDINATE_REVIEW" if telomere_only else "GVCF_OR_STRUCTURAL_VARIANT_REVIEW"
+                    if telomere_only:
+                        next_step = "VCF_TELOMERE_COORDINATE_REVIEW"
+                    else:
+                        pending_steps = [
+                            (routing["mitochondrial_variant_records"], "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING"),
+                            (routing["repeat_expansion_records"], "REPEAT_EXPANSION_PIPELINE_PENDING"),
+                            (routing["cnv_variant_records"], "CNV_PIPELINE_PENDING"),
+                            (routing["structural_variant_records"], "STRUCTURAL_VARIANT_PIPELINE_PENDING"),
+                            (routing["gvcf_reference_blocks"], "GVCF_REFERENCE_CONFIDENCE_REVIEW"),
+                            (routing["gvcf_unresolved_variant_records"], "GVCF_UNRESOLVED_VARIANT_REVIEW"),
+                            (routing["spanning_deletion_records"], "SPANNING_DELETION_REVIEW"),
+                            (
+                                routing["telomere_records"] + routing["telomere_after_contig_records"],
+                                "VCF_TELOMERE_COORDINATE_REVIEW",
+                            ),
+                        ]
+                        active_steps = [step for count, step in pending_steps if count]
+                        next_step = active_steps[0] if len(active_steps) == 1 else "SPECIALIZED_VARIANT_PIPELINE_REVIEW"
                     review_reason_codes = sorted({
                         item.metadata_json["review_reason_code"]
                         for item in routed_artifacts
@@ -1716,6 +1737,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "STRUCTURAL_VARIANT_INTERPRETATION_UNSUPPORTED",
                     ),
                     (
+                        "cnv_path",
+                        "CNV_VARIANT_RECORDS",
+                        "copy-number-variants.vcf",
+                        "CNV_PIPELINE_PENDING",
+                    ),
+                    (
+                        "repeat_expansion_path",
+                        "REPEAT_EXPANSION_RECORDS",
+                        "repeat-expansions.vcf",
+                        "REPEAT_EXPANSION_PIPELINE_PENDING",
+                    ),
+                    (
+                        "mitochondrial_path",
+                        "MITOCHONDRIAL_VARIANT_RECORDS",
+                        "mitochondrial-variants.vcf",
+                        "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
+                    ),
+                    (
                         "spanning_deletions_path",
                         "SPANNING_DELETION_RECORDS",
                         "spanning-deletion-records.vcf",
@@ -1757,6 +1796,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "GVCF_REFERENCE_BLOCKS": "gvcf_reference_blocks",
                                 "UNRESOLVED_GVCF_VARIANTS": "gvcf_unresolved_variant_records",
                                 "STRUCTURAL_VARIANT_RECORDS": "structural_variant_records",
+                                "CNV_VARIANT_RECORDS": "cnv_variant_records",
+                                "REPEAT_EXPANSION_RECORDS": "repeat_expansion_records",
+                                "MITOCHONDRIAL_VARIANT_RECORDS": "mitochondrial_variant_records",
                                 "SPANNING_DELETION_RECORDS": "spanning_deletion_records",
                                 "TELOMERE_COORDINATE_RECORDS": "telomere_records",
                                 "TELOMERE_AFTER_CONTIG_RECORDS": "telomere_after_contig_records",

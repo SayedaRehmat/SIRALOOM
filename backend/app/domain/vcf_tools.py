@@ -27,6 +27,82 @@ SOURCE_RECORD_TAG_HEADER = (
     'Description="Base64url JSON source record identity and ALT mapping">')
 
 
+def _is_mitochondrial_contig(chrom: str) -> bool:
+    normalized = chrom.strip().lower()
+    if normalized.startswith("chr"):
+        normalized = normalized[3:]
+    return normalized in {"m", "mt", "mitochondrial", "mitochondrion_genome"} or chrom.upper().startswith(
+        "NC_012920."
+    )
+
+
+def _routing_info_values(info_text: str) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if info_text in {"", "."}:
+        return values
+    for item in info_text.split(";"):
+        key, separator, value = item.partition("=")
+        if key:
+            values[key.upper()] = value if separator else ""
+    return values
+
+
+def _symbolic_alt_body(alt: str) -> str:
+    if len(alt) > 2 and alt.startswith("<") and alt.endswith(">"):
+        return alt[1:-1].upper()
+    return ""
+
+
+def _is_repeat_expansion_record(
+    alts: list[str],
+    info_values: dict[str, str],
+    format_keys: list[str],
+) -> bool:
+    svtype = info_values.get("SVTYPE", "").upper()
+    if svtype in {"STR", "CNV:TR"} or svtype.startswith("STR:"):
+        return True
+
+    symbolic_bodies = [_symbolic_alt_body(alt) for alt in alts]
+    if any(
+        body.startswith(("STR", "VNTR", "REPEAT", "CNV:TR"))
+        for body in symbolic_bodies
+    ):
+        return True
+
+    info_keys = set(info_values)
+    format_key_set = {key.upper() for key in format_keys}
+    if {"TRID", "MOTIFS"}.issubset(info_keys):
+        return True
+    if {"RU", "REPID"}.issubset(info_keys):
+        return True
+    if "RU" in info_keys and {"REPCN", "REPCI"}.intersection(format_key_set):
+        return True
+    return False
+
+
+def _is_copy_number_record(
+    alts: list[str],
+    info_values: dict[str, str],
+    format_keys: list[str],
+) -> bool:
+    if info_values.get("SVTYPE", "").upper() == "CNV":
+        return True
+
+    symbolic_bodies = [_symbolic_alt_body(alt) for alt in alts]
+    if any(
+        body == "CNV" or (body.startswith("CNV:") and not body.startswith("CNV:TR"))
+        for body in symbolic_bodies
+    ):
+        return True
+
+    copy_number_fields = {"CN", "CNL", "CNQ"}
+    info_keys = set(info_values)
+    format_key_set = {key.upper() for key in format_keys}
+    has_copy_number_evidence = bool(copy_number_fields.intersection(info_keys | format_key_set))
+    has_del_dup_allele = any(body in {"DEL", "DUP"} for body in symbolic_bodies)
+    return has_copy_number_evidence and has_del_dup_allele
+
+
 def route_vcf_records(
     input_path: str | Path,
     output_dir: str | Path,
@@ -57,6 +133,9 @@ def route_vcf_records(
         "gvcf_blocks": output / "gvcf-reference-blocks.vcf",
         "gvcf_unresolved": output / "gvcf-unresolved-variants.vcf",
         "structural": output / "structural-variants.vcf",
+        "cnv": output / "copy-number-variants.vcf",
+        "repeat_expansions": output / "repeat-expansion-variants.vcf",
+        "mitochondrial": output / "mitochondrial-variants.vcf",
         "spanning_deletions": output / "spanning-deletion-records.vcf",
         "telomere": output / "telomere-records.vcf",
         "telomere_after": output / "telomere-after-contig-records.vcf",
@@ -208,6 +287,37 @@ def route_vcf_records(
                     record_exclusion(line, "VCF_TELOMERE_COORDINATE_UNSUPPORTED", "TELOMERE_AFTER_CONTIG_RECORDS")
                     continue
                 wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
+                if wildcard_indexes and all(alt in GVCF_WILDCARD_ALLELES for alt in alts):
+                    emit("gvcf_blocks", line)
+                    record_exclusion(line, "GVCF_REFERENCE_CONFIDENCE_ANALYSIS_UNSUPPORTED", "GVCF_REFERENCE_BLOCKS")
+                    continue
+
+                info_values = _routing_info_values(fields[7])
+                format_keys = fields[8].split(":") if len(fields) > 8 else []
+                if _is_mitochondrial_contig(fields[0]):
+                    emit("mitochondrial", line)
+                    record_exclusion(
+                        line,
+                        "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
+                        "MITOCHONDRIAL_VARIANT_RECORDS",
+                    )
+                    continue
+                if _is_repeat_expansion_record(alts, info_values, format_keys):
+                    emit("repeat_expansions", line)
+                    record_exclusion(
+                        line,
+                        "REPEAT_EXPANSION_PIPELINE_PENDING",
+                        "REPEAT_EXPANSION_RECORDS",
+                    )
+                    continue
+                if _is_copy_number_record(alts, info_values, format_keys):
+                    emit("cnv", line)
+                    record_exclusion(
+                        line,
+                        "CNV_PIPELINE_PENDING",
+                        "CNV_VARIANT_RECORDS",
+                    )
+                    continue
                 if any(alt == "*" for alt in alts):
                     emit("spanning_deletions", line)
                     record_exclusion(line, "SPANNING_DELETION_NOT_INTERPRETED", "SPANNING_DELETION_RECORDS")
@@ -267,6 +377,9 @@ def route_vcf_records(
         "gvcf_reference_blocks": counts["gvcf_blocks"],
         "gvcf_unresolved_variants": counts["gvcf_unresolved"],
         "structural_variants": counts["structural"],
+        "copy_number_variants": counts["cnv"],
+        "repeat_expansions": counts["repeat_expansions"],
+        "mitochondrial_variants": counts["mitochondrial"],
         "spanning_deletions": counts["spanning_deletions"],
         "telomere_coordinates": counts["telomere"],
         "after_contig_coordinates": counts["telomere_after"],
@@ -281,7 +394,7 @@ def route_vcf_records(
         )
 
     return {
-        "routing_version": "2",
+        "routing_version": "3",
         "source_record_count": source_record_index,
         "records_total": routed_record_count,
         "record_reconciliation": {
@@ -298,6 +411,9 @@ def route_vcf_records(
         "gvcf_reference_blocks": counts["gvcf_blocks"],
         "gvcf_unresolved_variant_records": counts["gvcf_unresolved"],
         "structural_variant_records": counts["structural"],
+        "cnv_variant_records": counts["cnv"],
+        "repeat_expansion_records": counts["repeat_expansions"],
+        "mitochondrial_variant_records": counts["mitochondrial"],
         "spanning_deletion_records": counts["spanning_deletions"],
         "telomere_records": counts["telomere"],
         "telomere_after_contig_records": counts["telomere_after"],
@@ -306,12 +422,15 @@ def route_vcf_records(
         "exclusion_manifest_records": sum(counts[key] for key in (
             "reference_only", "gvcf_blocks", "gvcf_unresolved", "structural",
             "spanning_deletions", "telomere", "telomere_after",
-            "reference_only_genotype_alleles",
+            "reference_only_genotype_alleles", "cnv", "repeat_expansions", "mitochondrial",
         )),
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
         "gvcf_unresolved_path": str(names["gvcf_unresolved"]) if counts["gvcf_unresolved"] else None,
         "structural_path": str(names["structural"]) if counts["structural"] else None,
+        "cnv_path": str(names["cnv"]) if counts["cnv"] else None,
+        "repeat_expansion_path": str(names["repeat_expansions"]) if counts["repeat_expansions"] else None,
+        "mitochondrial_path": str(names["mitochondrial"]) if counts["mitochondrial"] else None,
         "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
         "telomere_path": str(names["telomere"]) if counts["telomere"] else None,
         "telomere_after_contig_path": str(names["telomere_after"]) if counts["telomere_after"] else None,

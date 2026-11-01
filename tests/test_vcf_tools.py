@@ -1024,3 +1024,134 @@ def test_vcf45_len_reference_block_csi_index_includes_last_covered_base(tmp_path
     assert excluded.returncode == 0, excluded.stderr
     excluded_records = [line for line in excluded.stdout.splitlines() if line and not line.startswith("#")]
     assert excluded_records == []
+
+
+def test_router_separates_mitochondrial_contigs_from_nuclear_sequence_normalization(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "mitochondrial.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "MT\t100\t.\tA\tG\t.\tPASS\t.\n"
+        "chrM\t101\t.\tC\tCT\t.\tPASS\t.\n"
+        "chrMT\t102\t.\tG\tA\t.\tPASS\t.\n"
+        "NC_012920.1\t103\t.\tT\tC\t.\tPASS\t.\n"
+        "1\t104\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-mt")
+
+    mitochondrial_lines = [
+        line
+        for line in Path(routed["mitochondrial_path"]).read_text(encoding="utf-8").splitlines()
+        if not line.startswith("#")
+    ]
+    sequence_lines = [
+        line
+        for line in Path(routed["sequence_path"]).read_text(encoding="utf-8").splitlines()
+        if not line.startswith("#")
+    ]
+
+    assert routed["routing_version"] == "3"
+    assert routed["mitochondrial_variant_records"] == 4
+    assert routed["sequence_records"] == 1
+    assert len(mitochondrial_lines) == 4
+    assert len(sequence_lines) == 1
+    assert routed["record_reconciliation"]["balanced"] is True
+
+
+def test_router_keeps_mitochondrial_gvcf_reference_blocks_in_gvcf_output(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "mitochondrial.g.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "MT\t100\t.\tA\t<*>\t.\tPASS\tEND=120\tGT\t0/0\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-mt-gvcf")
+
+    assert routed["gvcf_reference_blocks"] == 1
+    assert routed["mitochondrial_variant_records"] == 0
+    assert routed["record_reconciliation"]["balanced"] is True
+
+
+def test_router_routes_expansionhunter_str_records_to_repeat_expansion_pipeline(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "expansionhunter.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Variant type">\n'
+        '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">\n'
+        '##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit">\n'
+        '##INFO=<ID=REPID,Number=1,Type=String,Description="Repeat identifier">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=REPCN,Number=1,Type=String,Description="Repeat copy number">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr4\t3076604\t.\tC\t<STR2>,<STR349>\t.\tPASS\tSVTYPE=STR;END=3076605;RU=CAG;REPID=HTT\tGT:REPCN\t1/2:2/349\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-expansionhunter")
+
+    assert routed["repeat_expansion_records"] == 1
+    assert routed["structural_variant_records"] == 0
+    assert routed["sequence_records"] == 0
+    assert routed["record_reconciliation"]["balanced"] is True
+    assert Path(routed["repeat_expansion_path"]).exists()
+
+
+def test_router_routes_trgt_repeat_records_using_trid_and_motifs(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "trgt.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=TRID,Number=1,Type=String,Description="Tandem repeat identifier">\n'
+        '##INFO=<ID=MOTIFS,Number=.,Type=String,Description="Repeat motifs">\n'
+        '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AL,Number=.,Type=Integer,Description="Allele lengths">\n'
+        '##FORMAT=<ID=MC,Number=.,Type=String,Description="Motif counts">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr4\t3076604\t.\tC\tCAGCAGCAG\t.\tPASS\tTRID=HTT;MOTIFS=CAG,CCG;END=3076612\tGT:AL:MC\t0/1:3,9:1,3\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-trgt")
+
+    assert routed["repeat_expansion_records"] == 1
+    assert routed["sequence_records"] == 0
+    assert routed["record_reconciliation"]["balanced"] is True
+
+
+def test_router_separates_explicit_cnv_and_copy_number_genotyped_deletions_from_other_sv(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "cnv-and-sv.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Variant type">\n'
+        '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">\n'
+        '##INFO=<ID=SVLEN,Number=A,Type=Integer,Description="Variant length">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=CN,Number=1,Type=Integer,Description="Copy number">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t100\t.\tN\t<CNV>\t.\tPASS\tSVTYPE=CNV;END=200;SVLEN=100\tGT:CN\t0/1:3\n"
+        "1\t300\t.\tN\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=400;SVLEN=-100\tGT:CN\t0/1:1\n"
+        "1\t500\t.\tN\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=600;SVLEN=-100\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+
+    routed = route_vcf_records(source, tmp_path / "routed-cnv-sv")
+
+    assert routed["cnv_variant_records"] == 2
+    assert routed["structural_variant_records"] == 1
+    assert routed["record_reconciliation"]["balanced"] is True
