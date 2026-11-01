@@ -46,6 +46,20 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def reference_artifact_snapshot(reference_fasta: Path, reference_fai: Path) -> dict[str, dict[str, Any]]:
+    artifacts = {
+        "fasta": reference_fasta,
+        "fai": reference_fai,
+    }
+    gzi = Path(str(reference_fasta) + ".gzi")
+    if gzi.is_file():
+        artifacts["gzi"] = gzi
+    return {
+        name: {"size_bytes": path.stat().st_size, "sha256": sha256_file(path)}
+        for name, path in artifacts.items()
+    }
+
+
 def _rss_to_mb(value: float) -> float:
     # Linux reports KiB; macOS reports bytes. This harness is intended for Linux.
     return round(value / (1024 * 1024), 2) if sys.platform == "darwin" else round(value / 1024, 2)
@@ -149,27 +163,20 @@ def run_benchmark(
     if timeout_seconds < 1:
         raise ScaleBenchmarkError("Normalization timeout must be positive.")
 
+    input_size_bytes = vcf_path.stat().st_size
     output_dir = prepare_output_dir(output_dir)
     stage_metrics: dict[str, dict[str, Any]] = {}
     current_stage = "input_hashing"
     try:
         input_sha256 = timed_stage(
-            "input_hashing",
+            current_stage,
             lambda: sha256_file(vcf_path),
             stage_metrics,
         )
         current_stage = "reference_hashing"
         reference_artifacts = timed_stage(
             current_stage,
-            lambda: {
-                "fasta": {"size_bytes": reference_fasta.stat().st_size, "sha256": sha256_file(reference_fasta)},
-                "fai": {"size_bytes": reference_fai.stat().st_size, "sha256": sha256_file(reference_fai)},
-                **(
-                    {"gzi": {"size_bytes": Path(str(reference_fasta) + ".gzi").stat().st_size,
-                             "sha256": sha256_file(Path(str(reference_fasta) + ".gzi"))}}
-                    if Path(str(reference_fasta) + ".gzi").is_file() else {}
-                ),
-            },
+            lambda: reference_artifact_snapshot(reference_fasta, reference_fai),
             stage_metrics,
         )
 
@@ -261,6 +268,24 @@ def run_benchmark(
         )
         stage_metrics[current_stage]["selected_sample_normalized_record_count"] = selected_normalized_record_count
 
+        current_stage = "input_integrity_postcheck"
+        input_sha256_after = timed_stage(
+            current_stage,
+            lambda: sha256_file(vcf_path),
+            stage_metrics,
+        )
+        if input_sha256_after != input_sha256 or vcf_path.stat().st_size != input_size_bytes:
+            raise ScaleBenchmarkError("The source VCF changed during the benchmark run.")
+
+        current_stage = "reference_integrity_postcheck"
+        reference_artifacts_after = timed_stage(
+            current_stage,
+            lambda: reference_artifact_snapshot(reference_fasta, reference_fai),
+            stage_metrics,
+        )
+        if reference_artifacts_after != reference_artifacts:
+            raise ScaleBenchmarkError("The selected reference FASTA/index artifacts changed during the benchmark run.")
+
         report = {
             "schema_version": "1",
             "status": "RUN_COMPLETE_REVIEW_REQUIRED",
@@ -276,8 +301,9 @@ def run_benchmark(
             },
             "input": {
                 "reference_build": reference_build,
-                "size_bytes": vcf_path.stat().st_size,
+                "size_bytes": input_size_bytes,
                 "sha256": input_sha256,
+                "integrity_verified_across_run": True,
                 "sample_count": len(validation.sample_names),
                 "selected_sample_identifier_recorded": False,
                 "fileformat": validation.fileformat,
@@ -285,6 +311,7 @@ def run_benchmark(
             },
             "reference": {
                 "artifacts": reference_artifacts,
+                "integrity_verified_across_run": True,
                 "validation": {
                     "checked_record_count": reference_validation.get("checked_record_count"),
                     "checked_breakend_mate_count": reference_validation.get("checked_breakend_mate_count"),
