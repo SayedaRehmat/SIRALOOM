@@ -236,9 +236,9 @@ def test_artifact_upload_stages_on_configured_worker_scratch_volume(upload_api, 
         recording_temporary_directory,
     )
     content = (
-        b"##fileformat=VCFv4.2\\n"
-        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+        b"##fileformat=VCFv4.2\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t10\t.\tA\tG\t.\tPASS\t.\n"
     )
 
     response = _post_vcf(
@@ -260,9 +260,9 @@ def test_artifact_upload_fails_closed_when_configured_scratch_root_is_unavailabl
         artifacts_api.settings, "worker_scratch_root", str(invalid_scratch_root)
     )
     content = (
-        b"##fileformat=VCFv4.2\\n"
-        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+        b"##fileformat=VCFv4.2\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t10\t.\tA\tG\t.\tPASS\t.\n"
     )
 
     response = _post_vcf(
