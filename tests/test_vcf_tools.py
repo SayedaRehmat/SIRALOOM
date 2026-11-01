@@ -1162,3 +1162,65 @@ def test_router_separates_explicit_cnv_and_copy_number_genotyped_deletions_from_
     assert routed["cnv_variant_records"] == 2
     assert routed["structural_variant_records"] == 1
     assert routed["record_reconciliation"]["balanced"] is True
+
+
+@pytest.mark.parametrize(
+    ("mapping_field_index", "replacement"),
+    [(0, "2"), (1, "3"), (2, "C")],
+)
+def test_source_child_reconciliation_rejects_original_locus_or_ref_mapping_drift(
+    tmp_path: Path, mapping_field_index: int, replacement: str
+):
+    require_bcftools()
+    import gzip
+
+    from backend.app.domain.vcf_tools import (
+        _validate_source_child_reconciliation,
+        route_vcf_records,
+    )
+
+    fasta = make_reference(tmp_path)
+    source = tmp_path / "source-mapping-drift.vcf"
+    routed_dir = tmp_path / "routed-mapping-drift"
+    normalized = tmp_path / "normalized-mapping-drift.vcf.gz"
+    mutated = tmp_path / "mutated-mapping-drift.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
+        "1\\t4\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT\\t0/1\n",
+        encoding="utf-8",
+    )
+    routed = route_vcf_records(source, routed_dir)
+    normalize_vcf_with_bcftools(
+        routed["sequence_path"],
+        normalized,
+        reference_fasta=fasta,
+        expected_bcftools_version="1.24",
+    )
+
+    with gzip.open(normalized, "rt", encoding="utf-8") as input_handle:
+        lines = input_handle.read().splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith("#"):
+            continue
+        fields = line.split("\t")
+        info_items = fields[7].split(";")
+        mapping_index = next(
+            i for i, item in enumerate(info_items) if item.startswith("SIRALOOM_ORIG=")
+        )
+        mapping = info_items[mapping_index].split("=", 1)[1].split("|", 4)
+        mapping[mapping_field_index] = replacement
+        info_items[mapping_index] = "SIRALOOM_ORIG=" + "|".join(mapping)
+        fields[7] = ";".join(info_items)
+        lines[index] = "\t".join(fields)
+        break
+    else:
+        pytest.fail("Normalization produced no child record")
+
+    with gzip.open(mutated, "wt", encoding="utf-8", newline="") as output_handle:
+        output_handle.write("\n".join(lines) + "\n")
+
+    with pytest.raises(VCFToolError, match="source ALT mapping"):
+        _validate_source_child_reconciliation(Path(routed["sequence_path"]), mutated)
