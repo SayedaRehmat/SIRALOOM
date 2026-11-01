@@ -62,8 +62,14 @@ def load_sample_mapping(path_value: str | Path) -> tuple[Path, str, str]:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ConcordanceError("Sample mapping file is not valid readable JSON.") from exc
-    if not isinstance(payload, dict) or set(payload) != {"truth_sample_name", "query_sample_name"}:
-        raise ConcordanceError("Sample mapping file must contain exactly the truth_sample_name and query_sample_name fields.")
+    if not isinstance(payload, dict) or set(payload) != {
+        "schema_version", "truth_sample_name", "query_sample_name"
+    }:
+        raise ConcordanceError(
+            "Sample mapping file must contain exactly schema_version, truth_sample_name, and query_sample_name."
+        )
+    if payload.get("schema_version") != "1.0":
+        raise ConcordanceError("Sample mapping file schema_version must be 1.0.")
     truth_name = payload.get("truth_sample_name")
     query_name = payload.get("query_sample_name")
     if (
@@ -505,6 +511,7 @@ def run_concordance(
             }
             for index, region in enumerate(stratification_regions, start=1)
         ],
+        "sample_mapping_schema_version": "1.0",
         "sample_identity": {
             "truth_sample_column_verified": True,
             "query_sample_column_verified": True,
