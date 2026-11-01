@@ -41,6 +41,11 @@ def _extension(url: str, value_key: str, value: Any) -> dict[str, Any]:
     return {"url": f"{EXTENSION_BASE}/{url}", value_key: value}
 
 
+def _sub_extension(url: str, value_key: str, value: Any) -> dict[str, Any]:
+    """Build a child of a complex extension using its required relative URL."""
+    return {"url": url, value_key: value}
+
+
 def _coding(system: str, code: str, display: str | None = None) -> dict[str, Any]:
     result = {"system": system, "code": code}
     if display:
@@ -116,7 +121,7 @@ def _clinical_attribute_extensions(row: Any) -> list[dict[str, Any]]:
     return result
 
 
-def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
+def _clinical_intake_sub_extension(revision: Any | None) -> dict[str, Any] | None:
     if revision is None:
         return None
     context = _get(revision, "context", {}) or {}
@@ -134,20 +139,20 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
         value = _get(revision, field)
         if value is not None:
             value_type = "valueCode" if field.endswith("_status") else "valueString"
-            children.append(_extension(url, value_type, str(value)))
+            children.append(_sub_extension(url, value_type, str(value)))
     version = _get(revision, "version")
     if version is not None:
-        children.append(_extension("revision-version", "valueInteger", int(version)))
+        children.append(_sub_extension("revision-version", "valueInteger", int(version)))
     schema_version = _get(revision, "schema_version")
     if schema_version is not None:
-        children.append(_extension("revision-schema-version", "valueInteger", int(schema_version)))
+        children.append(_sub_extension("revision-schema-version", "valueInteger", int(schema_version)))
     recorded_at = _iso(_get(revision, "recorded_at"))
     if recorded_at:
-        children.append(_extension("revision-recorded-at", "valueDateTime", recorded_at))
+        children.append(_sub_extension("revision-recorded-at", "valueDateTime", recorded_at))
 
     for field in ("referral_indication", "referral_question", "clinical_summary"):
         if context.get(field):
-            children.append(_extension(field.replace("_", "-"), "valueString", str(context[field])))
+            children.append(_sub_extension(field.replace("_", "-"), "valueString", str(context[field])))
 
     age = context.get("age_at_assessment")
     if isinstance(age, dict):
@@ -178,9 +183,9 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
             ("source_reference", "source-reference", "valueString"),
         ):
             if item.get(field) is not None:
-                test_children.append(_extension(url, value_type, str(item[field])))
+                test_children.append(_sub_extension(url, value_type, str(item[field])))
         if item.get("artifact_id"):
-            test_children.append(_extension("artifact-reference-present", "valueBoolean", True))
+            test_children.append(_sub_extension("artifact-reference-present", "valueBoolean", True))
         if test_children:
             children.append({
                 "url": f"{EXTENSION_BASE}/prior-testing",
@@ -199,7 +204,7 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
             ("clinical_status", "clinical-status"),
         ):
             if item.get(field) is not None:
-                diagnosis_children.append(_extension(url, "valueString", str(item[field])))
+                diagnosis_children.append(_sub_extension(url, "valueString", str(item[field])))
         if diagnosis_children:
             children.append({
                 "url": f"{EXTENSION_BASE}/differential-diagnosis",
@@ -207,7 +212,7 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
             })
 
     for reference in context.get("source_document_references", []) or []:
-        children.append(_extension("source-document-reference", "valueString", str(reference)))
+        children.append(_sub_extension("source-document-reference", "valueString", str(reference)))
 
     if not children:
         return None
@@ -276,13 +281,13 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
     resource["extension"].append({
         "url": f"{EXTENSION_BASE}/ontology-resolution",
         "extension": [
-            _extension("input-id", "valueString", str(_get(row, "hpo_id"))),
+            _sub_extension("input-id", "valueString", str(_get(row, "hpo_id"))),
             *(
-                [_extension("status", "valueCode", str(primary["status"]))]
+                [_sub_extension("status", "valueCode", str(primary["status"]))]
                 if isinstance(primary, dict) and primary.get("status") else []
             ),
             *(
-                [_extension("canonical-id", "valueString", str(primary["canonical_id"]))]
+                [_sub_extension("canonical-id", "valueString", str(primary["canonical_id"]))]
                 if isinstance(primary, dict) and primary.get("canonical_id") else []
             ),
         ],
@@ -473,10 +478,10 @@ def build_fhir_r5_bundle(
             resources_by_member[child_id].setdefault("extension", []).append({
                 "url": f"{EXTENSION_BASE}/pedigree-relationship-metadata",
                 "extension": [
-                    _extension("relationship-type", "valueCode", "PARENT_CHILD"),
-                    _extension("parent-member", "valueString", str(_get(by_member_id[parent_id], "member_identifier"))),
-                    _extension("child-member", "valueString", str(_get(by_member_id[child_id], "member_identifier"))),
-                    _extension(
+                    _sub_extension("relationship-type", "valueCode", "PARENT_CHILD"),
+                    _sub_extension("parent-member", "valueString", str(_get(by_member_id[parent_id], "member_identifier"))),
+                    _sub_extension("child-member", "valueString", str(_get(by_member_id[child_id], "member_identifier"))),
+                    _sub_extension(
                         "metadata",
                         "valueString",
                         json.dumps(relationship_metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
