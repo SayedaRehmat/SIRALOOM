@@ -2,7 +2,7 @@
 
 **Scope:** Genomic artifact intake → strict VCF/BCF validation → reference verification → variant routing → reference-aware normalization → sorting/indexing → source/child reconciliation.
 
-**Assessment basis:** current `main` at `dea24dbe15cfcf050df129776ade3034b577e934` (2026-11-01), including the merged VCFv4.5 sample-specific reference-block routing fix (`40be1c3be19e5fba89b61f970bad9646b3671c08`) and the merged laboratory scale-benchmark implementation (`dea24dbe15cfcf050df129776ade3034b577e934`).
+**Initial assessment baseline:** `main` at `dea24dbe15cfcf050df129776ade3034b577e934` (2026-11-01), including the merged VCFv4.5 sample-specific reference-block routing fix and laboratory scale-benchmark implementation. This branch's final review also accounts for subsequent `main` commits through `2f22d98c5b73d4fd3f8fd569ed9766d79da2d9c8`, including PR #255's production-normalizer/paired-CSI worker-loss recovery integration test, PR #256's audit refresh, and PR #257's benchmark output-directory contract clarification.
 
 **Important:** this document is a qualification ledger, not a declaration of clinical validation. A repository implementation/test result is not equivalent to an analytical validation result on representative laboratory material. ISO 15189:2022 establishes requirements for quality and competence in medical laboratories; CLSI MM09 (3rd ed., 2023) provides lifecycle guidance for designing, validating, and implementing sequencing-based clinical tests. Those standards require laboratory-specific evidence and do not permit software unit tests alone to establish clinical intended-use performance.
 
@@ -138,7 +138,7 @@ The following matrix is the critical laboratory boundary. The repository must no
 | REF mismatch | Fail closed | Production negative control | AUTOMATED / NOT-EVIDENCED |
 | Missing reference | Resource gate | Production deployment test | AUTOMATED / NOT-EVIDENCED |
 | Invalid index | Index validation | Production negative control | AUTOMATED / NOT-EVIDENCED |
-| Worker interruption during normalization | Durable workflow/recovery architecture | Controlled production-like failure injection | PARTIAL |
+| Worker interruption during normalization | Durable workflow/recovery architecture | PR #255: PostgreSQL/Redis Celery prefork worker-loss integration test executes the production normalizer, persists paired normalized VCF/CSI, redelivers/replays, and verifies deterministic bytes, index queries, artifact identity, and source-child reconciliation on a small synthetic fixture | AUTOMATED / PARTIAL |
 | Scratch-volume exhaustion | Capacity controls exist | Measured failure/recovery test on target host | NOT-EVIDENCED |
 | Object-storage failure | Durable artifact architecture | Controlled target-storage failure test | NOT-EVIDENCED |
 | Database restart | CI integration coverage | Deployment recovery test | PARTIAL |
@@ -148,7 +148,7 @@ The following matrix is the critical laboratory boundary. The repository must no
 
 ## 9. Scale / performance qualification
 
-The merged benchmark records stage wall time, CPU, throughput, process/child memory, input/reference hashes and counts. That is useful engineering evidence, but it is not by itself an acceptance result.
+The merged benchmark records stage wall time, CPU, throughput, process/child memory, input/reference hashes and counts. The executable Stage-1 matrix runner added in this branch orchestrates that benchmark across predeclared WES/WGS × caller/version × build cells and evaluates preapproved criteria. This is useful evidence-generation infrastructure, but it is not by itself an acceptance result.
 
 Required workload classes:
 
