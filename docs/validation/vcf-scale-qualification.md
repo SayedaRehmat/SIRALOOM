@@ -18,6 +18,7 @@ A completed run is always RUN_COMPLETE_REVIEW_REQUIRED. It is not an automatic p
 
 - Use a de-identified or otherwise specifically approved VCF from a representative WES/WGS workload.
 - Use the exact GRCh37 or GRCh38 reference FASTA used by the deployment, including its .fai and (when applicable) .gzi index.
+- Mount the input VCF and reference artifacts read-only, or use immutable snapshots for the duration of the run. The post-run hash check detects content changes but does not replace immutable storage controls.
 - Run inside the same pinned Linux worker image/toolchain intended for laboratory operation. The validator enforces the repository's configured BCFtools/HTSlib versions.
 - Confirm the specimen-to-sample mapping independently. The script requires the exact sample name but never records it in the report.
 - Ensure the output filesystem has enough free space for routed artifacts, normalized BGZF VCF, CSI index and temporary normalization files. Normalization stages temporary files on the destination filesystem.
