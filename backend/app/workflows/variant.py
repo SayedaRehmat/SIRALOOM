@@ -1745,7 +1745,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     (
                         "repeat_expansion_path",
                         "REPEAT_EXPANSION_RECORDS",
-                        "repeat-expansions.vcf",
+                        "repeat-expansion-variants.vcf",
                         "REPEAT_EXPANSION_PIPELINE_PENDING",
                     ),
                     (
