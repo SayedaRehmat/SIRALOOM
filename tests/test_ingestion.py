@@ -610,8 +610,8 @@ def test_index_validation_records_primary_vcf_concordance(tmp_path: Path, monkey
         "status": "VALIDATED",
         "index_type": "TBI",
         "tool": "bcftools",
-        "tool_version": "bcftools 1.24",
-        "expected_tool_version": "1.24",
+        "tool_version": "bcftools 1.25",
+        "expected_tool_version": "1.25",
         "concordance": {
             "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
             "records": 2,
@@ -630,7 +630,7 @@ def test_index_validation_records_primary_vcf_concordance(tmp_path: Path, monkey
         tbi,
         primary.name,
         primary_path=primary,
-        expected_bcftools_version="1.24",
+        expected_bcftools_version="1.25",
     )
 
     assert result.status == "VALID"
@@ -658,7 +658,7 @@ def test_index_validation_tool_outage_is_retryable(tmp_path: Path, monkeypatch):
             tbi,
             primary.name,
             primary_path=primary,
-            expected_bcftools_version="1.24",
+            expected_bcftools_version="1.25",
         )
 
 
@@ -782,7 +782,7 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.24\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.25\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -790,10 +790,10 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
     result = ingestion.validate_vcf(path)
 
     assert result.status == "VALID"
-    assert result.metadata["bcftools_version"] == "bcftools 1.24"
-    assert result.metadata["expected_bcftools_version"] == "1.24"
-    assert result.metadata["htslib_version"] == "1.24"
-    assert result.metadata["expected_htslib_version"] == "1.24"
+    assert result.metadata["bcftools_version"] == "bcftools 1.25"
+    assert result.metadata["expected_bcftools_version"] == "1.25"
+    assert result.metadata["htslib_version"] == "1.25"
+    assert result.metadata["expected_htslib_version"] == "1.25"
     assert result.metadata["toolchain_validation_status"] == "PASS"
 
 
@@ -810,7 +810,7 @@ def test_vcf_intake_rejects_bcftools_version_drift_as_retryable_operational_fail
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.24\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.25\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -837,7 +837,7 @@ def test_vcf_validation_separates_source_records_from_alternate_alleles(tmp_path
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.24\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.25\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -864,7 +864,7 @@ def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failur
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.23\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.23\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)

@@ -164,8 +164,8 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
                 "source_record_count": 3,
                 "alternate_allele_count": 3,
                 "base_modification_format_fields": [],
-                "bcftools_version": "1.24",
-                "htslib_version": "1.24",
+                "bcftools_version": "1.25",
+                "htslib_version": "1.25",
                 "toolchain_validation_status": "PASS",
             },
             record_count=3,
@@ -211,7 +211,7 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
         Path(str(output_path) + ".csi").write_bytes(b"CSI")
         return {
             "tool": "bcftools",
-            "tool_version": "bcftools 1.24",
+            "tool_version": "bcftools 1.25",
             "operation": "reference_aware_normalization_sort_index",
             "compression": "BGZF",
             "index": "CSI",

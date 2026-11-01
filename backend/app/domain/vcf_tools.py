@@ -120,7 +120,7 @@ def route_vcf_records(
     sequence path when every called genotype avoids wildcard alleles and any
     missing VCFv4.5 genotype is explained by an active sample-specific reference
     block. Such missing genotypes remain missing; they are never converted to
-    reference calls. BCFtools 1.24 ``view -A`` removes only unseen wildcards.
+    reference calls. BCFtools 1.25 ``view -A`` removes only unseen wildcards.
     """
     import gzip
 
@@ -1111,7 +1111,7 @@ def _strip_vcf45_number_m_format_fields(
 ) -> list[str]:
     """Remove Number=M FORMAT values from the per-ALT artifact.
 
-    BCFtools 1.24 preserves Number=M values when splitting a multiallelic
+    BCFtools 1.25 preserves Number=M values when splitting a multiallelic
     record, although the emitted GT and ALT representation changes. Those
     values are therefore not safe to publish as if they described each
     normalized child. The immutable source VCF remains authoritative; this
@@ -1306,7 +1306,7 @@ def normalize_vcf_with_bcftools(
         sorted_stderr = ""
         indexed_stderr = ""
 
-        # ``view -A`` is available in the pinned 1.24 release. The router only
+        # ``view -A`` is available in the pinned 1.25 release. The router only
         # places records here when the GVCF wildcard is provably uncalled.
         prepared_path = work / "prepared.vcf.gz"
         view_command = [

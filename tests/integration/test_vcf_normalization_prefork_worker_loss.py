@@ -39,11 +39,11 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
 
     bcftools = shutil.which("bcftools")
     if bcftools is None:
-        pytest.skip("Pinned BCFtools 1.24 is required for normalization worker-loss test")
+        pytest.skip("Pinned BCFtools 1.25 is required for normalization worker-loss test")
     version = subprocess.run(
         [bcftools, "--version"], capture_output=True, text=True, check=True
     ).stdout.splitlines()
-    assert version[:2] == ["bcftools 1.24", "Using htslib 1.24"]
+    assert version[:2] == ["bcftools 1.25", "Using htslib 1.25"]
 
     import importlib
 
@@ -229,7 +229,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         assert workflow_result["index_artifact_count"] == 1
         assert workflow_result["replayed_bytes_match"] is True
         assert workflow_result["replayed_index_bytes_match"] is True
-        assert workflow_result["normalization_tool_version"] == "bcftools 1.24"
+        assert workflow_result["normalization_tool_version"] == "bcftools 1.25"
         assert workflow_result["source_child_reconciliation"]["status"] == "VALIDATED"
         assert workflow_result["source_child_reconciliation"]["balanced"] is True
         assert workflow_result["source_child_reconciliation"]["normalized_child_records"] == 1
