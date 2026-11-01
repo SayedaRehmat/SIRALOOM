@@ -5,7 +5,7 @@
 This document records a read-only review of the current GitHub implementation, relevant pull requests, VCF parsing/normalization code, regression tests, and the VCF intake contract. It is a repository and software-correctness audit, not laboratory assay qualification. No local WSL execution is claimed.
 
 Repository: `SayedaRehmat/SIRALOOM`  
-Audited main commit: `40be1c3be19e5fba89b61f970bad9646b3671c08`  
+Audited main commit: `dea24dbe15cfcf050df129776ade3034b577e934`  
 Audit date: 2026-11-01
 
 ## Supported format versions versus tool versions
@@ -36,7 +36,7 @@ Audit date: 2026-11-01
 - PR #250 is merged at `bd3bab207692dec52ae302c92914d202f65c9f03`. It stages uploads on the configured scratch volume.
 - PR #251 is merged at `0cbfbb30042c610b3876ec8375efa94fb37f16be`. It fixes reportability so preserved unsupported variant classes do not block an otherwise complete in-scope SNV/INDEL sign-out; unsupported classes remain explicitly disclosed as not analysed.
 - PR #252 is merged at `40be1c3be19e5fba89b61f970bad9646b3671c08`. It makes mixed VCFv4.5 variant/reference-block routing sample-aware: a missing GT is allowed through the SNV/INDEL route only when that exact sample is covered by a preceding validated reference block; the GT remains missing, while unexplained missing GTs remain unresolved. Its complete GitHub Actions suite and the fresh main-branch CI run passed backend, PostgreSQL/Celery integration, frontend, and production container checks.
-- PR #253 adds a lab VCF processing scale benchmark harness and standards-aligned runbook. It remains open pending full CI; the harness is not a WES/WGS benchmark result until run on representative lab inputs.
+- PR #253 is merged at `dea24dbe15cfcf050df129776ade3034b577e934`. It adds a privacy-conscious lab VCF processing scale benchmark harness, per-stage wall/CPU/throughput and process/child memory metrics, input/reference integrity hashes, a real pinned-BCFtools end-to-end fixture, and a runbook aligned to GA4GH VCF, ISO 15189 and CLSI guidance. Its full PR CI passed. The harness is not a WES/WGS benchmark result until run on representative lab inputs and reviewed against preapproved criteria.
 
 - PR #223 and PR #231 are closed as superseded. PR #232 and #233 remain the merged genotype-provenance and VCFv4.5 Number=M implementations; #234 and #252 add sample-specific reference-block validation and routing.
 - PR #224 is this audit document; this revision updates its evidence through main commit `dea24dbe`.
@@ -60,6 +60,7 @@ Audit date: 2026-11-01
 10. VCFv4.5 base-modification fields are validated using sample GT and source allele sequences, including reserved aliases without explicit FORMAT declarations. The immutable source VCF remains authoritative for those values; they are not propagated into the normalized per-ALT small-variant artifact because the pinned splitter does not safely project their cardinality.
 11. Existing tests cover left alignment, REF mismatch, tool-version pinning, failure-safe output publication, routing, multiallelic FORMAT cardinality, per-ALT genotype projection, missing/partial calls, leading phase indicators, source lineage, ploidy mismatch, VCFv4.5 Number=M cardinality, and source-only normalization behavior.
 12. VCFv4.5 sample-specific reference blocks now validate reserved FORMAT/LEN, sample-specific block spans, LAA requirements and END consistency. The router tracks active block coverage per sample and permits a missing GT at a mixed variant site only when the sample is covered by a preceding validated block; it preserves that GT as missing. Unexplained missing GTs remain unresolved.
+13. The lab scale benchmark now exercises validation, reference checks, routing, normalization, CSI/index and source-child reconciliation, and selected-sample iteration. It records per-stage timings/throughput, Python and child-process CPU/RSS, input/reference/output hashes, and counts without persisting sample identifiers in the report. A real pinned-BCFtools synthetic integration test validates the harness mechanics; representative WES/WGS lab runs remain outstanding.
 
 ## Remaining implementation and qualification gaps
 
@@ -82,14 +83,14 @@ Audit date: 2026-11-01
 4. Complete FASTA/FAI/GZI consistency checks and trusted GRCh37/GRCh38 known-answer reference qualification.
 5. Verify genotype provenance and sample identity across all downstream consumers, especially inheritance/segregation, review and report generation.
 6. Execute the GIAB HG001/GRCh38 known-answer benchmark with independently pinned input/truth/confident-region/reference assets.
-7. Run representative WES and WGS inputs per intended caller/version/build on the target worker profile; measure CPU, memory, scratch/persistent storage, throughput and concurrency against preapproved laboratory thresholds.
+7. Execute `scripts/validation/run_vcf_scale_benchmark.py` against representative WES and WGS inputs per intended caller/version/build on the target worker profile; measure CPU, memory, scratch/persistent storage, throughput and concurrency against preapproved laboratory thresholds.
 8. Complete failure/replay qualification across upload, validation, normalization, publication and downstream handoff, including disk-full, process loss and concurrent retries.
 9. Run full repository CI and publish evidence. Keep software verification distinct from laboratory assay validation, clinical validity, and authorized clinical sign-out. BCF is not an advertised input format in the current VCF product scope; do not add it without a separate product/architecture decision.
 
 ## Governance observations
 
 - At the time of this audit, the GitHub `main` branch was not protected and no repository ruleset was returned. Required backend, PostgreSQL integration, and frontend checks are therefore not enforced by branch protection. Establish release-branch protection and required checks before production release.
-- PR #233 and later PR previews encountered the Vercel account's daily deployment quota. PR #252's GitHub Actions checks and main-branch workflow for commit `40be1c3` passed backend, PostgreSQL/Celery integration, frontend, and production container checks. PR #253's full PR CI also passed before merge; its fresh main-branch workflow is pending at this audit snapshot. The Vercel preview/production deployment is not established by those checks; re-attempt only after the quota resets and verify the actual deployed commit.
+- PR #233 and later PR previews encountered the Vercel account's daily deployment quota. PR #252's GitHub Actions checks and main-branch workflow for commit `40be1c3` passed backend, PostgreSQL/Celery integration, frontend, and production container checks. PR #253's full PR CI passed before merge; its fresh main-branch workflow for commit `dea24dbe` is pending at this audit snapshot. The Vercel preview/production deployment is not established by those checks; re-attempt only after the quota resets and verify the actual deployed commit.
 - The prior audit found no main-branch protection/ruleset response. Recheck branch protection and required checks before a controlled laboratory release.
 
 ## Non-claims
