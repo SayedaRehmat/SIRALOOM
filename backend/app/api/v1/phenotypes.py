@@ -511,6 +511,17 @@ def list_analysis_phenotypes(
 def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[str, Any] | None:
     if row is None:
         return None
+    context = dict(row.context or {})
+    prior_testing = []
+    for item in context.get("prior_testing", []) or []:
+        if not isinstance(item, dict):
+            continue
+        exported = {key: value for key, value in item.items() if key != "artifact_id"}
+        if item.get("artifact_id"):
+            exported["artifact_reference_present"] = True
+        prior_testing.append(exported)
+    if "prior_testing" in context:
+        context["prior_testing"] = prior_testing
     return {
         "revision_id": str(row.id),
         "version": row.version,
@@ -519,7 +530,7 @@ def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[
         "intake_status": row.intake_status,
         "phenotype_review_status": row.phenotype_review_status,
         "family_history_review_status": row.family_history_review_status,
-        "context": row.context or {},
+        "context": context,
         "phenotype_review_note": row.phenotype_review_note,
         "family_history_review_note": row.family_history_review_note,
         "completion_note": row.completion_note,
