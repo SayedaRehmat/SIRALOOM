@@ -509,7 +509,6 @@ def build_phenopackets_v2(
         subject_id=_member_id(proband),
         rows=proband_rows,
         sex=_value(proband, "sex"),
-        age_at_assessment=age_at_assessment,
     )
     relative_packets = []
     for member in members:
