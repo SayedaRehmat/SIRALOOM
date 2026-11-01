@@ -782,7 +782,7 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.20\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.24\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -792,6 +792,8 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
     assert result.status == "VALID"
     assert result.metadata["bcftools_version"] == "bcftools 1.24"
     assert result.metadata["expected_bcftools_version"] == "1.24"
+    assert result.metadata["htslib_version"] == "1.24"
+    assert result.metadata["expected_htslib_version"] == "1.24"
     assert result.metadata["toolchain_validation_status"] == "PASS"
 
 
@@ -808,7 +810,7 @@ def test_vcf_intake_rejects_bcftools_version_drift_as_retryable_operational_fail
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.20\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.24\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -835,7 +837,7 @@ def test_vcf_validation_separates_source_records_from_alternate_alleles(tmp_path
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.24\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -862,7 +864,7 @@ def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failur
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.21\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.23\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
