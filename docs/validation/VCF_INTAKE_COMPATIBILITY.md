@@ -59,12 +59,22 @@ These are deterministic software conformance fixtures, not a claim that every op
 | Reference-only rows (ALT=.) and telomere sentinels | Preserved and counted | Not turned into candidate variants or a negative clinical result |
 | Unsupported major version, malformed header/record, or conflicting build declarations | Rejected with an explicit validation error | No downstream analysis dispatch |
 
-Repeat-expansion routing is intentionally signature-based rather than inferred from long alleles alone. The implementation recognizes ExpansionHunter-style `SVTYPE=STR`, `<STRn>`, `RU`/`REPID` and repeat-copy fields, and TRGT-style `TRID`+`MOTIFS`. CNV routing uses explicit `SVTYPE=CNV`, `<CNV>`, or copy-number fields accompanying symbolic DEL/DUP alleles. Other symbolic SVs and breakends remain in the SV route. These are routing rules only: they do not constitute repeat/CNV/SV clinical interpretation. Any routed artifact carrying `review_status=REQUIRES_SPECIALIZED_REVIEW` blocks reportability finalization and clinical report eligibility until a laboratory-approved disposition or the corresponding specialized pipeline resolves it. This prevents a partial nuclear SNV/INDEL result from being signed out as though all submitted variant classes had been analyzed.
+Repeat-expansion routing is intentionally signature-based rather than inferred from long alleles alone. The implementation recognizes ExpansionHunter-style `SVTYPE=STR`, `<STRn>`, `RU`/`REPID` and repeat-copy fields, and TRGT-style `TRID`+`MOTIFS`. CNV routing uses explicit `SVTYPE=CNV`, `<CNV>`, or copy-number fields accompanying symbolic DEL/DUP alleles. Other symbolic SVs and breakends remain in the SV route. These are routing rules only: they do not constitute repeat/CNV/SV/mitochondrial clinical interpretation. In the first SIRALOOM product, every routed CNV, SV, mitochondrial, or repeat-expansion artifact carrying `review_status=REQUIRES_SPECIALIZED_REVIEW` is an unconditional reportability blocker. A reviewer cannot clear this blocker by manually classifying the artifact, overriding the review status, or signing out the nuclear SNV/INDEL subset. The blocker is released only by the separately developed second product after its specialized pipeline, resource governance, validation evidence, and reportability contract have been qualified and explicitly integrated. Until then, SIRALOOM may preserve and route these records for traceability, but the analysis is not clinically reportable. This prevents a partial nuclear SNV/INDEL result from being signed out as though all submitted variant classes had been analyzed.
 
 Reference formats used to define these routing signatures:
 - [VCF v4.5 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex)
 - [ExpansionHunter](https://github.com/Illumina/ExpansionHunter)
 - [TRGT](https://github.com/PacificBiosciences/trgt)
+
+## Product boundary: specialized variant classes
+
+SIRALOOM is being delivered as two distinct products with a controlled integration boundary.
+
+**First product — SIRALOOM rare-disease SNV/INDEL interpretation:** the current product accepts and validates supported VCF inputs, preserves the original source, identifies specialized record classes, and routes those records into immutable, traceable specialized artifacts. It does not perform clinical interpretation for CNV, structural SV, mitochondrial variants, or repeat expansions.
+
+**Second product — specialized variant analysis:** CNV, SV, mitochondrial, and repeat-expansion interpretation will be developed as a separate product with its own qualified pipelines, approved resources, analytical validation, workflow controls, review experience, and reportability contract. These pipelines are not part of the current product scope and must not be implied to exist.
+
+Until that second product is qualified and integrated, any analysis containing one or more of these specialized artifact classes is **reportability blocked**. The block is independent of whether the nuclear SNV/INDEL subset completed successfully and cannot be cleared through manual reportability disposition or by ignoring the specialized artifacts. The source and routed artifacts remain accessible for traceability and future second-product processing.
 
 ## Multiallelic genotype and source-lineage contract
 
