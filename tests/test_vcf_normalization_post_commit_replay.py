@@ -2,10 +2,9 @@ import hashlib
 from datetime import UTC, datetime
 from uuid import uuid4, uuid5
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
-
-import pytest
 
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
@@ -125,5 +124,3 @@ def test_normalization_replay_after_durable_commit_before_worker_ack_is_idempote
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "NORMALIZED_VCF",
             )) == 1
-    finally:
-        engine.dispose()
