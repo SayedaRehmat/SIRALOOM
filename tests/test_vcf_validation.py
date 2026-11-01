@@ -5,6 +5,7 @@ import pytest
 
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    _validate_record,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -1577,3 +1578,43 @@ def test_core_multiallelic_cardinality_mismatch_is_rejected_across_vcf_versions(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    ("alt", "expected"),
+    [
+        ("a", ["A"]),
+        ("<del>", ["<del>"]),
+        ("<DEL>,<del>", ["<DEL>", "<del>"]),
+        ("A]chr1:123]", ["A]chr1:123]"]),
+        ("a]chr1:123]", ["a]chr1:123]"]),
+    ],
+)
+def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
+    alt: str, expected: list[str]
+):
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
+
+    _chrom, _position, observed = _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert observed == expected
+
+
+@pytest.mark.parametrize(
+    ("version", "alt"),
+    [
+        (version, alt)
+        for version in ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+        for alt in ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],A]chr1:123]"]
+    ],
+)
+def test_duplicate_alt_values_are_rejected_across_supported_vcf_versions(
+    version: str, alt: str
+):
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, version)
+
+    assert exc.value.code == "VCF_ALT_DUPLICATE"
