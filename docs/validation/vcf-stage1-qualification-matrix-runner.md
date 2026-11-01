@@ -33,7 +33,7 @@ Criteria use a dotted JSON metric path into the benchmark report, for example:
 
 Supported operators are `<=`, `<`, `>=`, `>`, and `==`.
 
-A missing metric becomes `NOT_EVALUABLE`; it is never converted to a pass or zero. An observed value outside the criterion is retained as `OBSERVED_OUTSIDE_CRITERION` for review.
+A missing metric becomes `NOT_EVALUABLE`; it is never converted to a pass or zero. An observed value outside the criterion is retained as `OBSERVED_OUTSIDE_CRITERION` for review. Non-finite observed metrics (`NaN`, positive infinity, or negative infinity) are invalid evidence and fail that matrix cell rather than being compared with a threshold.
 
 ## Controlled execution
 
@@ -46,6 +46,8 @@ python scripts/validation/run_vcf_qualification_matrix.py \
 ```
 
 The matrix runner passes the selected sample identifier to the existing benchmark through the environment rather than command-line arguments. It checks that the identifier is absent from retained benchmark JSON before accepting the cell evidence. Raw VCF content and sample names are not copied into the matrix result.
+
+A cell whose benchmark exits non-zero or does not produce `RUN_COMPLETE_REVIEW_REQUIRED` is recorded as `REVIEW_REQUIRED_FAILURE`, including its typed failure stage/exception class when available. The matrix runner continues remaining cells to retain the full evidence set, writes the matrix report with top-level status `RUN_COMPLETE_WITH_CELL_FAILURES`, and returns exit code `1` if any cell failed. If no cell fails, the top-level status is `RUN_COMPLETE_REVIEW_REQUIRED`. Neither status is an acceptance decision; criteria results never authorize release.
 
 The matrix output directory and each cell directory are created with owner-only permissions (mode `0700`). Use a dedicated, access-controlled filesystem and retain its access-control/backup policy with the laboratory record. Each cell gets its own directory containing the existing benchmark evidence. The matrix-level artifact is:
 

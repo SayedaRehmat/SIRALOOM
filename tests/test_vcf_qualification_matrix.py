@@ -137,6 +137,22 @@ def test_evaluate_criteria_preserves_review_boundary() -> None:
     assert evaluated[1]["status"] == "NOT_EVALUABLE"
 
 
+@pytest.mark.parametrize("observed", [float("nan"), float("inf"), float("-inf")])
+def test_evaluate_criteria_rejects_non_finite_observed_metrics(observed: float) -> None:
+    report = {"runtime": {"stages": {"vcf_validation": {"wall_seconds": observed}}}}
+    criteria = [
+        {
+            "id": "MAX_WALL",
+            "metric": "runtime.stages.vcf_validation.wall_seconds",
+            "operator": "<=",
+            "threshold": 60,
+        }
+    ]
+
+    with pytest.raises(ValueError, match="not finite"):
+        evaluate_criteria(report, criteria)
+
+
 def test_evaluate_criteria_marks_observed_failure_without_relabeling_run() -> None:
     report = {"runtime": {"stages": {"vcf_validation": {"wall_seconds": 75}}}}
     criteria = [
@@ -151,6 +167,44 @@ def test_evaluate_criteria_marks_observed_failure_without_relabeling_run() -> No
     evaluated = evaluate_criteria(report, criteria)
     assert evaluated[0]["status"] == "OBSERVED_OUTSIDE_CRITERION"
 
+
+
+def test_matrix_runner_marks_failed_benchmark_cell_and_returns_nonzero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest_path = _configured_manifest(tmp_path)
+    benchmark_script = tmp_path / "run_vcf_scale_benchmark.py"
+    benchmark_script.write_text("# controlled test executable\\n", encoding="utf-8")
+    output_dir = tmp_path / "matrix-failed-output"
+
+    def fake_failed_benchmark(*, cell: dict, output_dir: Path, script: Path):
+        output_dir.mkdir(mode=0o700)
+        return 2, {"status": "FAILED", "failed_stage": "reference_validation"}
+
+    monkeypatch.setattr(matrix_runner, "run_benchmark", fake_failed_benchmark)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_vcf_qualification_matrix.py",
+            "--manifest",
+            str(manifest_path),
+            "--output-dir",
+            str(output_dir),
+            "--benchmark-script",
+            str(benchmark_script),
+        ],
+    )
+
+    assert matrix_runner.main() == 1
+    result = json.loads((output_dir / "qualification-matrix.json").read_text(encoding="utf-8"))
+    assert result["status"] == "RUN_COMPLETE_WITH_CELL_FAILURES"
+    assert result["cells"][0]["benchmark_exit_code"] == 2
+    assert result["cells"][0]["benchmark_status"] == "FAILED"
+    assert result["cells"][0]["failure_stage"] == "reference_validation"
+    assert result["cells"][0]["cell_status"] == "REVIEW_REQUIRED_FAILURE"
+    assert result["cells"][0]["criteria"][0]["status"] == "NOT_EVALUABLE"
+    assert result["release_decision"] == "NOT_AUTOMATICALLY_QUALIFIED"
 
 
 def test_matrix_runner_leaves_cell_output_path_for_atomic_benchmark_creation(
