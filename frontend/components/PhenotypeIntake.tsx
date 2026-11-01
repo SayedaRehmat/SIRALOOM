@@ -41,7 +41,7 @@ const TEMPORAL = ["UNKNOWN", "CONTINUOUS", "EPISODIC", "RECURRENT", "PROGRESSIVE
 
 function parseIso8601Duration(value?: string | null): { value: string; unit: string } | null {
   if (!value) return null;
-  const match = /^P(\\d+(?:\\.\\d+)?)([YMWD])$/.exec(value);
+  const match = /^P(\d+(?:\.\d+)?)([YMWD])$/.exec(value);
   if (!match) return null;
   const unit: Record<string, string> = { Y: "YEARS", M: "MONTHS", W: "WEEKS", D: "DAYS" };
   return { value: match[1], unit: unit[match[2]] };
@@ -205,6 +205,10 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     }
     setOnset(row.onset ?? "");
     setSeverity(row.severity ?? "");
+    setAgeValue("");
+    setAgeUnit("YEARS");
+    setResolutionAgeValue("");
+    setResolutionAgeUnit("YEARS");
     const onsetAge = parseIso8601Duration(attributes.onset_age_iso8601);
     if (onsetAge) {
       setAgeValue(onsetAge.value);
