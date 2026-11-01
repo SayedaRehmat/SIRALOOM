@@ -96,14 +96,20 @@ def validate_single_sample_vcf(
     if not isinstance(expected_sample_name, str) or not expected_sample_name.strip():
         raise ConcordanceError(f"{label} requires an explicit specimen-to-sample-column mapping.")
     header = None
+    fixed_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
     try:
         with _open_text(path) as handle:
+            fileformat = handle.readline().rstrip("\r\n")
+            if not re.fullmatch(r"##fileformat=VCFv4\\.[0-5]", fileformat):
+                raise ConcordanceError(f"{label} must begin with a supported VCFv4 fileformat declaration.")
             for line in handle:
                 if line.startswith("#CHROM"):
                     header = line.rstrip("\r\n").split("\t")
                     break
-            if header is None or len(header) < 10 or header[8] != "FORMAT":
-                raise ConcordanceError(f"{label} must contain exactly one sample column.")
+                if not line.startswith("#"):
+                    raise ConcordanceError(f"{label} contains data before the #CHROM header.")
+            if header is None or header[:9] != fixed_columns:
+                raise ConcordanceError(f"{label} must contain the nine fixed VCF columns in specification order.")
             if len(header) != 10 or not header[9].strip():
                 raise ConcordanceError(f"{label} must contain exactly one named sample column.")
             if header[9] != expected_sample_name:
@@ -111,8 +117,10 @@ def validate_single_sample_vcf(
                     f"{label} sample column does not match the explicitly declared specimen mapping."
                 )
             for line in handle:
-                if not line or line.startswith("#"):
-                    continue
+                if not line.strip():
+                    raise ConcordanceError(f"{label} contains an empty data line.")
+                if line.startswith("#"):
+                    raise ConcordanceError(f"{label} contains a header/comment line after #CHROM.")
                 fields = line.rstrip("\r\n").split("\t")
                 if len(fields) != len(header):
                     raise ConcordanceError(f"{label} contains a malformed variant record.")
