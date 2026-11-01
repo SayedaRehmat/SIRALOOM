@@ -51,6 +51,33 @@ def upgrade():
         sa.UniqueConstraint("specimen_id", "revision_fingerprint", name="uq_specimen_ploidy_evidence_fingerprint"),
         sa.UniqueConstraint("audit_event_id", name="uq_specimen_ploidy_evidence_audit_event"),
     )
+    connection = op.get_bind()
+    if connection.dialect.name == "postgresql":
+        op.execute("""
+            CREATE FUNCTION siraloom_reject_specimen_ploidy_revision_mutation()
+            RETURNS trigger AS $
+            BEGIN
+                RAISE EXCEPTION 'specimen ploidy evidence revisions are append-only';
+            END;
+            $ LANGUAGE plpgsql
+        """)
+        op.execute("""
+            CREATE TRIGGER trg_specimen_ploidy_evidence_no_update
+            BEFORE UPDATE OR DELETE ON specimen_ploidy_evidence_revisions
+            FOR EACH ROW EXECUTE FUNCTION siraloom_reject_specimen_ploidy_revision_mutation()
+        """)
+    elif connection.dialect.name == "sqlite":
+        op.execute("""
+            CREATE TRIGGER trg_specimen_ploidy_evidence_no_update
+            BEFORE UPDATE ON specimen_ploidy_evidence_revisions
+            BEGIN SELECT RAISE(ABORT, 'specimen ploidy evidence revisions are append-only'); END
+        """)
+        op.execute("""
+            CREATE TRIGGER trg_specimen_ploidy_evidence_no_delete
+            BEFORE DELETE ON specimen_ploidy_evidence_revisions
+            BEGIN SELECT RAISE(ABORT, 'specimen ploidy evidence revisions are append-only'); END
+        """)
+
     op.create_index(
         "ix_specimen_ploidy_evidence_specimen_version",
         "specimen_ploidy_evidence_revisions",
@@ -69,6 +96,13 @@ def downgrade():
             "Refusing to downgrade specimen ploidy evidence revisions: this would "
             "destroy reviewed specimen evidence and its audit linkage."
         )
+    connection = op.get_bind()
+    if connection.dialect.name == "postgresql":
+        op.execute("DROP TRIGGER IF EXISTS trg_specimen_ploidy_evidence_no_update ON specimen_ploidy_evidence_revisions")
+        op.execute("DROP FUNCTION IF EXISTS siraloom_reject_specimen_ploidy_revision_mutation()")
+    elif connection.dialect.name == "sqlite":
+        op.execute("DROP TRIGGER IF EXISTS trg_specimen_ploidy_evidence_no_update")
+        op.execute("DROP TRIGGER IF EXISTS trg_specimen_ploidy_evidence_no_delete")
     op.drop_index(
         "ix_specimen_ploidy_evidence_specimen_version",
         table_name="specimen_ploidy_evidence_revisions",
