@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
@@ -366,3 +367,43 @@ def test_phenotype_time_elements_reject_invalid_iso8601_durations(duration):
             hpo_id="HP:0001250",
             clinical_attributes={"onset_age_iso8601": duration},
         )
+
+
+
+def test_phenotype_intake_rejects_change_after_active_analysis_snapshot(monkeypatch):
+    case_id = uuid4()
+    user_id = uuid4()
+    case = SimpleNamespace(id=case_id, case_identifier="PHENO-LOCK")
+    analysis = SimpleNamespace(id=uuid4())
+    evidence_step = SimpleNamespace(metadata_json={"clinical_input_snapshot": {"schema_version": 1}})
+
+    class FakeDB:
+        def get(self, model, object_id, *, with_for_update=False):
+            assert object_id == case_id
+            return case
+
+        def refresh(self, row, *, with_for_update=False):
+            assert row is case
+
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [analysis])
+
+        def scalar(self, _query):
+            return evidence_step
+
+    monkeypatch.setattr(phenotype_api, "require_case_permission", lambda *_args: None)
+    monkeypatch.setattr(phenotype_api, "require_role", lambda *_args: None)
+
+    with pytest.raises(HTTPException) as error:
+        phenotype_api.add_case_phenotype(
+            case_id=case_id,
+            body=PhenotypeInput(hpo_id="HP:0001250"),
+            db=FakeDB(),
+            principal=Principal(
+                user_id=user_id,
+                organization_id=uuid4(),
+                role="clinical_geneticist",
+                subject="phenotype-lock-test",
+            ),
+        )
+    assert error.value.status_code == 409
