@@ -6,7 +6,7 @@ import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
-import { getOrCreateUploadIdempotencyAttempt } from "../../../../lib/upload-idempotency.mjs";
+import { clearUploadIdempotencyAttempt, getOrCreateUploadIdempotencyAttempt } from "../../../../lib/upload-idempotency.mjs";
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 import ClinicalContextIntake from "../../../../components/ClinicalContextIntake";
@@ -199,7 +199,6 @@ export default function Home() {
   const [caseLoadError, setCaseLoadError] = useState("");
   const [caseLoadAttempt, setCaseLoadAttempt] = useState(0);
   const caseIdRef = useRef("");
-  const uploadAttemptRef = useRef<{ file: File; caseId: string; specimenId: string; genomeBuild: string; key: string } | null>(null);
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
   const [vcfSampleName, setVcfSampleName] = useState("");
@@ -671,12 +670,11 @@ export default function Home() {
       form.append("file", file, file.name);
       if (selectedSpecimenId) form.append("specimen_id", selectedSpecimenId);
       form.append("genome_build", genomeBuild);
-      const uploadAttempt = getOrCreateUploadIdempotencyAttempt(
-        uploadAttemptRef.current,
+      const uploadAttempt = await getOrCreateUploadIdempotencyAttempt(
+        window.sessionStorage,
         { file, caseId, specimenId: selectedSpecimenId, genomeBuild },
         () => crypto.randomUUID(),
       );
-      uploadAttemptRef.current = uploadAttempt;
       const result = await apiFetch(`/cases/${caseId}/artifacts`, {
         method: "POST",
         headers: { "Idempotency-Key": uploadAttempt.key },
@@ -686,7 +684,7 @@ export default function Home() {
       const siteLevelOnly = result?.workflow_eligibility === "SITE_LEVEL_ONLY";
       setArtifactId(siteLevelOnly ? "" : validatedId);
       await refreshCaseArtifacts();
-      uploadAttemptRef.current = null;
+      clearUploadIdempotencyAttempt(window.sessionStorage, uploadAttempt);
       const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
       if (siteLevelOnly) {
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
