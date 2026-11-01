@@ -1203,11 +1203,16 @@ def _validate_record(
                 f"CHROM {chrom!r} violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
                 code="VCF_CHROM_INVALID",
             )
-    if reference_contigs is not None and chrom not in reference_contigs:
-        raise StrictVCFValidationError(
-            f"Contig {chrom!r} is not present in the selected reference package at line {line_no}",
-            code="REFERENCE_CONTIG_MISMATCH",
-        )
+    if reference_contigs is not None:
+        from backend.app.domain.reference import FastaReference, ReferenceError
+
+        try:
+            FastaReference.resolve_contig_name(chrom, reference_contigs)
+        except ReferenceError as exc:
+            raise StrictVCFValidationError(
+                f"Contig {chrom!r} cannot be resolved in the selected reference package at line {line_no}",
+                code="REFERENCE_CONTIG_MISMATCH",
+            ) from exc
 
     try:
         pos = int(pos_text)
@@ -1998,7 +2003,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "vcf45_max_reference_end": vcf45_max_reference_end,
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
-        "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
+        "reference_contig_policy": "EXACT_OR_EXPLICIT_ALIAS" if reference_contigs is not None else "NOT_CHECKED",
         "declared_contig_md5s": contig_md5s,
     }
 
