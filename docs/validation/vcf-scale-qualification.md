@@ -72,6 +72,15 @@ Review the JSON and generated artifacts against the acceptance policy approved b
 
 Run at least one representative WES and one representative WGS input per caller/version/build combination included in the lab's intended use. Include small, typical, and upper-percentile file sizes, high-multiallelic regions, indel-rich regions, gVCF input if accepted by the lab's workflow, and concurrent uploads/analyses. The sample name, input hash, reference hashes, caller/version, workflow profile, resource profile and review decision must be linked in the laboratory's controlled validation record, not copied into a public issue.
 
+## Standards alignment
+
+- **GA4GH/HTS specifications:** VCF format syntax and semantics are governed by the version-specific VCF specifications, including VCFv4.5. The implementation's supported version range is VCFv4.0–VCFv4.5; format recognition is not proof that every caller-specific extension is qualified. See https://samtools.github.io/hts-specs/.
+- **ISO 15189:2022:** the laboratory remains responsible for its quality system, competence, controlled procedures, records, review and authorization. This software harness is evidence for a defined process step, not an accreditation claim. See https://www.iso.org/standard/15189.
+- **CLSI MM09, 3rd edition:** informs the design, validation, implementation, reporting and continual quality management of clinical sequencing tests. See https://clsi.org/shop/standards/mm09/.
+- **CLSI MM01, 4th edition:** provides hereditary genetic testing guidance, including specimen identification, variation types, validation, QA and reporting. See https://clsi.org/shop/standards/mm01/.
+
+These standards do not provide one universal performance threshold for every laboratory, caller, assay or deployment. The laboratory must predefine and approve acceptance criteria for its intended use and local regulatory/accreditation requirements.
+
 ## Evidence boundary
 
 This harness measures the actual validation, reference-check, routing, normalization and sample-iteration code. It does not measure ingress/proxy multipart spooling or concurrent upload capacity; use docs/validation/upload-capacity.md for that separate test. It does not establish GIAB concordance; use docs/validation/GIAB_HG001_GRCh38_BENCHMARK.md with a separately pinned truth VCF, confident regions, reference and hap.py toolchain. It does not validate upstream assay/caller performance or downstream clinical interpretation/sign-out.
