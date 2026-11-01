@@ -181,6 +181,8 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
 
     serialized = json.dumps(report)
     assert report["status"] == "RUN_COMPLETE_REVIEW_REQUIRED"
+    assert report["input"]["integrity_verified_across_run"] is True
+    assert report["reference"]["integrity_verified_across_run"] is True
     assert report["routing"]["record_reconciliation"]["balanced"] is True
     assert report["normalization"]["selected_sample_normalized_record_count"] == 2
     assert consumed["count"] == 2
