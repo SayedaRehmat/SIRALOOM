@@ -480,7 +480,7 @@ def build_fhir_r5_bundle(
     if proband:
         member_references[patient_id] = f"Patient/{patient_id}"
         for member in members:
-            if str(_get(member, "id")) == patient_id:
+            if str(_get(member, "id")) == proband_member_id:
                 continue
             member_key = str(_get(member, "id"))
             relative_id = related_person_ids[member_key]
@@ -528,7 +528,7 @@ def build_fhir_r5_bundle(
     # links use named SIRALOOM extensions rather than being discarded.
     resources_by_member = {
         str(_get(member, "id")): (
-            patient if str(_get(member, "id")) == patient_id
+            patient if str(_get(member, "id")) == proband_member_id
             else next(resource for resource in resources
                       if resource.get("resourceType") == "RelatedPerson"
                       and resource.get("id") == related_person_ids[str(_get(member, "id"))])
