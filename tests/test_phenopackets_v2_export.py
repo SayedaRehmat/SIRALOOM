@@ -79,11 +79,13 @@ def test_family_export_preserves_member_attribution_and_parentage():
             parent_member_id=father.id,
             child_member_id=proband.id,
             relationship_type="PARENT_CHILD",
+            metadata_json={"consanguinous_parents": False},
         ),
         SimpleNamespace(
             parent_member_id=mother.id,
             child_member_id=proband.id,
             relationship_type="PARENT_CHILD",
+            metadata_json={},
         ),
     ]
     observations = [
