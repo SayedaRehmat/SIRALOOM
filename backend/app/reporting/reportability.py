@@ -179,15 +179,15 @@ def finalize_reportability(
             "Reportability decision is stale because it is not linked to the latest "
             "approved classification"
         )
-    if decision.status == "FINAL":
-        return decision
-
     pending_artifact_errors = pending_specialized_artifact_errors(db, analysis.id)
     if pending_artifact_errors:
         raise ValueError(
             "Cannot finalize reportability while specialized routed artifacts remain unresolved: "
             + "; ".join(pending_artifact_errors)
         )
+
+    if decision.status == "FINAL":
+        return decision
 
     if decision.review_version != expected_version:
         raise ValueError(
