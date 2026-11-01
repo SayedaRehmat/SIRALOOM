@@ -17,7 +17,10 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.clinical_input_snapshot import saved_case_clinical_input_snapshot
+from backend.app.domain.clinical_input_snapshot import (
+    clinical_input_snapshot_digest,
+    saved_case_clinical_input_snapshot,
+)
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -536,6 +539,12 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
                     "filename": artifact.filename if artifact else reference.get("filename"),
                     "validation_status": artifact.validation_status if artifact else reference.get("validation_status"),
                 })
+        step_metadata = dict(row.metadata_json or {})
+        persisted_clinical_snapshot = step_metadata.pop("clinical_input_snapshot", None)
+        if persisted_clinical_snapshot is not None:
+            step_metadata["clinical_input_snapshot_sha256"] = clinical_input_snapshot_digest(
+                persisted_clinical_snapshot
+            )
         workflow_steps.append({
             "step_id": row.step_id,
             "step_order": row.step_order,
@@ -543,7 +552,7 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
             "error_code": row.error_code,
             "error_message": row.error_message,
             "artifacts": sorted(artifact_refs, key=_canonical_json),
-            "metadata": row.metadata_json or {},
+            "metadata": step_metadata,
         })
 
     workflow_decisions = [
