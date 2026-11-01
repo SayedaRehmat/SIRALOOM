@@ -274,7 +274,7 @@ def test_existing_evidence_directory_is_not_modified_by_failed_cli_run(
 def test_stratification_extended_output_is_required_and_hashed(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     stratification = tmp_path / "stratification.tsv"
-    stratification.write_text("name\tbed\ncoding\tcoding.bed\n", encoding="utf-8")
+    stratification.write_text("coding\tcoding.bed\n", encoding="utf-8")
     (tmp_path / "coding.bed").write_text("chr1\t0\t1000\n", encoding="utf-8")
     report = run_concordance(
         truth_vcf=inputs["truth_vcf"],
@@ -295,3 +295,5 @@ def test_stratification_extended_output_is_required_and_hashed(tmp_path: Path) -
     assert report["source_artifacts"]["hap_py_extended"] == "comparison.extended.csv"
     assert report["source_artifacts"]["hap_py_extended_sha256"]
     assert report["inputs"]["stratification_tsv"]["sha256"]
+    assert report["stratification_regions"][0]["name"] == "coding"
+    assert report["stratification_regions"][0]["sha256"]
