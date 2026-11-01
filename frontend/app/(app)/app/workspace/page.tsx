@@ -7,6 +7,7 @@ import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
+import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 
 type Step = {
   step_id: string;
@@ -1020,6 +1021,7 @@ export default function Home() {
 
       <nav className="workspace-section-nav" aria-label={t("workspace.title")}>
         <a href="#case-intake">{t("workspace.caseSection")}</a>
+        <a href="#clinical-phenotype-intake">Clinical phenotypes</a>
         <a href="#analysis-workflow">{t("workspace.executionSection")}</a>
         <a href="#artifacts">{t("workspace.files")}</a>
         <a href="#variants">{t("workspace.interpretationSection")}</a>
@@ -1078,6 +1080,8 @@ export default function Home() {
           <button className="primary" onClick={requestReanalysis} disabled={busy}>{t("workspace.reanalysisRequest")}</button>
         </section>
       )}
+
+      {caseId && <PhenotypeIntake caseId={caseId} apiFetch={apiFetch} />}
 
       <section id="case-intake" className="workspace-grid">
         <aside className="panel case-panel">

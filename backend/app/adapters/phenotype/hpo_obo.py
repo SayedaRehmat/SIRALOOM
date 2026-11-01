@@ -34,6 +34,7 @@ class HpoTerm:
     label: str
     parents: tuple[str, ...]
     alternate_ids: tuple[str, ...]
+    synonyms: tuple[str, ...]
     obsolete: bool
     replaced_by: tuple[str, ...]
     consider: tuple[str, ...]
@@ -158,6 +159,7 @@ class HPOOboProvider:
                 label=label,
                 parents=tuple(current.get("parents", ())),
                 alternate_ids=tuple(current.get("alternate_ids", ())),
+                synonyms=tuple(current.get("synonyms", ())),
                 obsolete=bool(current.get("obsolete", False)),
                 replaced_by=tuple(current.get("replaced_by", ())),
                 consider=tuple(current.get("consider", ())),
@@ -169,7 +171,7 @@ class HPOOboProvider:
             if line.startswith("[") and line.endswith("]"):
                 finish()
                 if line == "[Term]":
-                    current = {"parents": [], "alternate_ids": [], "replaced_by": [], "consider": []}
+                    current = {"parents": [], "alternate_ids": [], "synonyms": [], "replaced_by": [], "consider": []}
                 continue
             if not line or line.startswith("!"):
                 continue
@@ -200,6 +202,12 @@ class HPOOboProvider:
                 if target is None:
                     raise HPOOntologyError(f"HPO OBO has invalid is_a target {value!r}")
                 current["parents"].append(target)
+            elif key == "synonym":
+                synonym_match = re.match(r'^"((?:\\.|[^"\\])*)"\s+(?:EXACT|BROAD|NARROW|RELATED)\b', value)
+                if synonym_match:
+                    synonym = re.sub(r'\\(["\\])', r'\1', synonym_match.group(1)).strip()
+                    if synonym and synonym not in current["synonyms"]:
+                        current["synonyms"].append(synonym)
             elif key == "alt_id":
                 target = _term_reference(value)
                 if target is None:
@@ -297,6 +305,32 @@ class HPOOboProvider:
         if term is None:
             return HpoTermResolution(term_id, "UNKNOWN")
         return HpoTermResolution(term_id, "ALTERNATE_ID" if canonical != term_id else "CURRENT", canonical, term.label)
+
+    def search_terms(self, query: str, *, limit: int = 20) -> list[dict[str, str]]:
+        """Search the pinned ontology labels/IDs; results never imply clinical presence."""
+        needle = str(query or "").strip().casefold()
+        if len(needle) < 2:
+            return []
+        bounded_limit = min(max(int(limit), 1), 50)
+        matches = [
+            term for term in self.terms.values()
+            if not term.obsolete and (
+                needle in term.term_id.casefold()
+                or needle in term.label.casefold()
+                or any(needle in synonym.casefold() for synonym in term.synonyms)
+            )
+        ]
+        matches.sort(key=lambda term: (
+            0 if term.term_id.casefold().startswith(needle) else
+            1 if term.label.casefold().startswith(needle) else
+            2 if any(synonym.casefold().startswith(needle) for synonym in term.synonyms) else 3,
+            term.label.casefold(),
+            term.term_id,
+        ))
+        return [
+            {"hpo_id": term.term_id, "label": term.label}
+            for term in matches[:bounded_limit]
+        ]
 
     def ancestors(self, value: str) -> frozenset[str]:
         resolution = self.resolve(value)

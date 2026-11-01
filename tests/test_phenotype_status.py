@@ -1,9 +1,11 @@
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
+from fastapi import HTTPException
 from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
@@ -14,6 +16,10 @@ from backend.app.api.v1 import phenotypes as phenotype_api
 from backend.app.api.v1.phenotypes import PhenotypeInput
 from backend.app.auth.principal import Principal
 from backend.app.phenotype import match_hpo, normalize_terms
+from backend.app.domain.clinical_input_snapshot import (
+    family_phenotype_observations,
+    patient_phenotype_observations,
+)
 
 
 @pytest.mark.parametrize(
@@ -72,9 +78,18 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
         def scalar(self, _query):
             return None
 
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [])
+
         def add(self, row):
             self.row = row
             row.created_at = datetime.now(UTC)
+
+        def begin_nested(self):
+            return nullcontext()
+
+        def flush(self):
+            return None
 
         def commit(self):
             return None
@@ -90,6 +105,11 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
     monkeypatch.setattr(phenotype_api, "require_role", lambda *_args: None)
     monkeypatch.setattr(phenotype_api, "AuditService", FakeAudit)
     monkeypatch.setattr(phenotype_api, "create_case_change_candidates", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        phenotype_api,
+        "_resolution_bundle",
+        lambda *_args: (None, {"schema_version": 1, "primary_term": {"status": "ONTOLOGY_UNAVAILABLE"}, "related_terms": [], "resource": None}),
+    )
     db = FakeDB()
 
     result = phenotype_api.add_case_phenotype(
@@ -144,7 +164,7 @@ def test_phenotype_state_migration_backfills_and_keeps_states_distinct(tmp_path,
             "(id, case_id, analysis_id, hpo_id, label, present, onset, severity, source, evidence, created_at) "
             "VALUES (:id, :case_id, NULL, :hpo_id, NULL, :present, NULL, NULL, 'TEST', '{}', CURRENT_TIMESTAMP)"
         ), [
-            {"id": "10000000-0000-0000-0000-000000000001", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000001", "present": True},
+            {"id": "10000000000000000000000000000001", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000001", "present": True},
             {"id": "10000000-0000-0000-0000-000000000002", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000002", "present": False},
         ])
 
@@ -174,3 +194,217 @@ def test_phenotype_state_migration_backfills_and_keeps_states_distinct(tmp_path,
     engine.dispose()
     with pytest.raises(RuntimeError, match="Cannot downgrade phenotype states"):
         command.downgrade(config, "0049_case_access_role_capabilities")
+
+
+
+def test_clinical_phenotype_attributes_validate_structured_onset_and_modifiers():
+    body = PhenotypeInput(
+        hpo_id="hp:0001250",
+        clinical_attributes={
+            "onset_age": {"value": 3.5, "unit": "years", "comparator": "exact"},
+            "laterality": "bilateral",
+            "temporal_pattern": "recurrent",
+            "modifier_hpo_ids": ["HP:0000002", "hp:0000003"],
+            "anatomical_site": {
+                "system": "http://snomed.info/sct",
+                "code": "123456",
+                "display": "Example anatomical site",
+            },
+            "episode_frequency": {
+                "count": 2,
+                "period_value": 1,
+                "period_unit": "months",
+            },
+        },
+    )
+    assert body.hpo_id == "HP:0001250"
+    assert body.clinical_attributes["onset_age"]["unit"] == "YEARS"
+    assert body.clinical_attributes["laterality"] == "BILATERAL"
+    assert body.clinical_attributes["modifier_hpo_ids"] == ["HP:0000002", "HP:0000003"]
+    assert body.clinical_attributes["episode_frequency"]["period_unit"] == "MONTHS"
+
+
+@pytest.mark.parametrize(
+    "attributes",
+    [
+        {"unrecognized_field": "value"},
+        {"onset_age": {"value": -1, "unit": "YEARS"}},
+        {"onset_age": {"value": 2, "unit": "FORTNIGHTS"}},
+        {"modifier_hpo_ids": ["not-an-hpo-id"]},
+        {"laterality": "LEFT_AND_RIGHT"},
+        {"anatomical_site": {"code": "123"}},
+        {"episode_frequency": {"count": 0, "period_value": 1, "period_unit": "WEEKS"}},
+    ],
+)
+def test_clinical_phenotype_attributes_reject_invalid_semantics(attributes):
+    with pytest.raises(ValidationError):
+        PhenotypeInput(hpo_id="HP:0001250", clinical_attributes=attributes)
+
+
+def test_phenotype_observation_fingerprint_distinguishes_family_subject_and_observation_time():
+    base = PhenotypeInput(hpo_id="HP:0001250", phenotype_status="PRESENT")
+    family = PhenotypeInput(
+        hpo_id="HP:0001250",
+        phenotype_status="PRESENT",
+        subject_member_id=uuid4(),
+    )
+    later = PhenotypeInput(
+        hpo_id="HP:0001250",
+        phenotype_status="PRESENT",
+        observed_at=datetime(2026, 10, 1, tzinfo=UTC),
+    )
+    assert phenotype_api._phenotype_record_fingerprint(base) != phenotype_api._phenotype_record_fingerprint(family)
+    assert phenotype_api._phenotype_record_fingerprint(base) != phenotype_api._phenotype_record_fingerprint(later)
+
+
+
+def test_clinical_snapshot_separates_proband_and_family_phenotypes():
+    proband_id = str(uuid4())
+    sibling_id = str(uuid4())
+    snapshot = {
+        "schema_version": 1,
+        "pedigree_context": {
+            "members": [
+                {"member_id": proband_id, "is_proband": True},
+                {"member_id": sibling_id, "is_proband": False},
+            ],
+            "relationships": [],
+        },
+        "phenotype_observations": [
+            {"scope": "CASE", "hpo_id": "HP:0001250", "phenotype_status": "PRESENT", "subject_member_id": None},
+            {"scope": "CASE", "hpo_id": "HP:0001251", "phenotype_status": "PRESENT", "subject_member_id": proband_id},
+            {"scope": "CASE", "hpo_id": "HP:0001252", "phenotype_status": "ABSENT", "subject_member_id": sibling_id},
+        ],
+        "gene_disease_evidence": [],
+        "literature_evidence": [],
+    }
+    assert [row["hpo_id"] for row in patient_phenotype_observations(snapshot)] == [
+        "HP:0001250", "HP:0001251"
+    ]
+    assert [row["hpo_id"] for row in family_phenotype_observations(snapshot)] == [
+        "HP:0001252"
+    ]
+
+
+def test_clinical_phenotype_migrations_preserve_legacy_rows_and_allow_longitudinal_identity(tmp_path, monkeypatch):
+    database = tmp_path / "clinical-phenotype-intake.sqlite"
+    url = f"sqlite:///{database}"
+    monkeypatch.setenv("DATABASE_URL", url)
+    config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
+    config.set_main_option("sqlalchemy.url", url)
+    command.upgrade(config, "0053_qc_observation_snapshot")
+
+    engine = create_engine(url)
+    case_id = "20000000-0000-0000-0000-000000000001"
+    with engine.begin() as connection:
+        connection.execute(text(
+            "INSERT INTO phenotype_observations "
+            "(id, case_id, analysis_id, hpo_id, label, present, phenotype_status, onset, severity, source, evidence, created_at) "
+            "VALUES (:id, :case_id, NULL, 'HP:0001250', 'Seizures', true, 'PRESENT', NULL, NULL, 'TEST', '{}', CURRENT_TIMESTAMP)"
+        ), {"id": "10000000000000000000000000000001", "case_id": case_id})
+
+    command.upgrade(config, "0056_phenotype_observation_fingerprint")
+    with engine.begin() as connection:
+        columns = {column["name"] for column in inspect(connection).get_columns("phenotype_observations")}
+        assert {
+            "canonical_hpo_id", "subject_member_id", "observed_at",
+            "clinical_attributes", "ontology_resolution", "record_fingerprint",
+        }.issubset(columns)
+        prior = connection.execute(text(
+            "SELECT record_fingerprint, clinical_attributes, ontology_resolution "
+            "FROM phenotype_observations WHERE id = :id"
+        ), {"id": "10000000000000000000000000000001"}).one()
+        assert len(prior.record_fingerprint) == 64
+        assert prior.clinical_attributes == "{}" or prior.clinical_attributes == {}
+
+        family_id = str(uuid4())
+        observation = PhenotypeInput(
+            hpo_id="HP:0001250",
+            phenotype_status="PRESENT",
+            subject_member_id=UUID(family_id),
+            observed_at=datetime(2026, 10, 1, tzinfo=UTC),
+            label="Seizures",
+            source="FAMILY_HISTORY",
+        )
+        fingerprint_value = phenotype_api._phenotype_record_fingerprint(observation)
+        connection.execute(text(
+            "INSERT INTO phenotype_observations "
+            "(id, case_id, analysis_id, hpo_id, canonical_hpo_id, record_fingerprint, label, present, "
+            "phenotype_status, subject_member_id, observed_at, clinical_attributes, ontology_resolution, "
+            "source, evidence, created_at) "
+            "VALUES (:id, :case_id, NULL, :hpo_id, NULL, :fingerprint, :label, true, 'PRESENT', "
+            ":subject_member_id, :observed_at, '{}', '{}', 'FAMILY_HISTORY', '{}', CURRENT_TIMESTAMP)"
+        ), {
+            "id": str(uuid4()), "case_id": case_id, "hpo_id": "HP:0001250",
+            "fingerprint": fingerprint_value, "label": "Seizures",
+            "subject_member_id": family_id, "observed_at": "2026-10-01T00:00:00+00:00",
+        })
+    engine.dispose()
+
+
+
+@pytest.mark.parametrize(
+    "duration",
+    ["P3Y6M", "P6M", "P2W", "P1DT2H", "P0D"],
+)
+def test_phenotype_time_elements_accept_iso8601_durations(duration):
+    body = PhenotypeInput(
+        hpo_id="HP:0001250",
+        clinical_attributes={
+            "onset_age_iso8601": duration,
+            "resolution_age_iso8601": "P4Y2M",
+            "severity_hpo_id": "HP:0012825",
+        },
+    )
+    assert body.clinical_attributes["onset_age_iso8601"] == duration
+    assert body.clinical_attributes["resolution_age_iso8601"] == "P4Y2M"
+    assert body.clinical_attributes["severity_hpo_id"] == "HP:0012825"
+
+
+@pytest.mark.parametrize("duration", ["3Y", "P", "P-2Y", "P3Q", "PT", "P1Y2Y"])
+def test_phenotype_time_elements_reject_invalid_iso8601_durations(duration):
+    with pytest.raises(ValidationError):
+        PhenotypeInput(
+            hpo_id="HP:0001250",
+            clinical_attributes={"onset_age_iso8601": duration},
+        )
+
+
+
+def test_phenotype_intake_rejects_change_after_active_analysis_snapshot(monkeypatch):
+    case_id = uuid4()
+    user_id = uuid4()
+    case = SimpleNamespace(id=case_id, case_identifier="PHENO-LOCK")
+    analysis = SimpleNamespace(id=uuid4())
+    evidence_step = SimpleNamespace(metadata_json={"clinical_input_snapshot": {"schema_version": 1}})
+
+    class FakeDB:
+        def get(self, model, object_id, *, with_for_update=False):
+            assert object_id == case_id
+            return case
+
+        def refresh(self, row, *, with_for_update=False):
+            assert row is case
+
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [analysis])
+
+        def scalar(self, _query):
+            return evidence_step
+
+    monkeypatch.setattr(phenotype_api, "require_case_permission", lambda *_args: None)
+    monkeypatch.setattr(phenotype_api, "require_role", lambda *_args: None)
+
+    with pytest.raises(HTTPException) as error:
+        phenotype_api.add_case_phenotype(
+            case_id=case_id,
+            body=PhenotypeInput(hpo_id="HP:0001250"),
+            db=FakeDB(),
+            principal=Principal(
+                user_id=user_id,
+                organization_id=uuid4(),
+                role="clinical_geneticist",
+                subject="phenotype-lock-test",
+            ),
+        )
+    assert error.value.status_code == 409

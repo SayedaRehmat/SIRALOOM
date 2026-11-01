@@ -4114,6 +4114,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         hpoa_resource_metadata = None
                 from backend.app.domain.clinical_input_snapshot import (
                     capture_or_reuse_case_clinical_input_snapshot,
+                    patient_phenotype_observations,
                 )
 
                 try:
@@ -4130,7 +4131,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "present": row.get("present"),
                         "phenotype_status": row["phenotype_status"],
                     }
-                    for row in clinical_input_snapshot["phenotype_observations"]
+                    for row in patient_phenotype_observations(clinical_input_snapshot)
                 ]
                 gene_disease_records = clinical_input_snapshot["gene_disease_evidence"]
                 literature_records = clinical_input_snapshot["literature_evidence"]
