@@ -1838,12 +1838,12 @@ def test_variable_number_format_fields_still_validate_declared_value_type(tmp_pa
     assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
-def test_unresolved_number_g_fields_still_validate_declared_value_type(tmp_path: Path):
+def test_number_g_fields_without_gt_still_validate_declared_value_type(tmp_path: Path):
     path = tmp_path / "unresolved-number-g-invalid-type.vcf"
     write_vcf_with_metadata(
         path,
         ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
-        "1\t2\t.\tA\tC\t.\tPASS\t.\tPL\t0,not-an-integer\n",
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tPL\t0,not-an-integer,2\n",
         sample=True,
     )
 
