@@ -9,6 +9,7 @@ import pytest
 
 from scripts.validation.run_giab_concordance import (
     ConcordanceError,
+    load_sample_mapping,
     parse_happy_summary,
     run_concordance,
     validate_bed_file,
@@ -153,6 +154,22 @@ def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tm
 
     with pytest.raises(ConcordanceError, match="mismatch subcounts exceed QUERY.FP"):
         parse_happy_summary(path)
+
+
+def test_sample_mapping_sidecar_rejects_unsupported_schema_version(tmp_path: Path) -> None:
+    path = tmp_path / "sample-mapping.json"
+    path.write_text(
+        json.dumps({
+            "schema_version": "2.0",
+            "truth_sample_name": "HG002",
+            "query_sample_name": "CASE_SAMPLE_001",
+        }),
+        encoding="utf-8",
+    )
+    path.chmod(0o600)
+
+    with pytest.raises(ConcordanceError, match="schema_version must be 1.0"):
+        load_sample_mapping(path)
 
 
 def test_sample_mapping_sidecar_must_match_both_vcf_columns(tmp_path: Path) -> None:
