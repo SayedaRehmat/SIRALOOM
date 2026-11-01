@@ -254,12 +254,12 @@ def run_benchmark(
                 count += 1
             return count
 
-        selected_variant_count = timed_stage(
+        selected_normalized_record_count = timed_stage(
             current_stage,
             count_selected_sample_variants,
             stage_metrics,
         )
-        stage_metrics[current_stage]["selected_sample_variant_count"] = selected_variant_count
+        stage_metrics[current_stage]["selected_sample_normalized_record_count"] = selected_normalized_record_count
 
         report = {
             "schema_version": "1",
@@ -315,7 +315,7 @@ def run_benchmark(
                 "normalized_vcf_size_bytes": normalized_path.stat().st_size,
                 "normalized_vcf_sha256": sha256_file(normalized_path),
                 "csi_size_bytes": index_path.stat().st_size,
-                "selected_sample_variant_count": selected_variant_count,
+                "selected_sample_normalized_record_count": selected_normalized_record_count,
             },
             "acceptance_boundary": (
                 "This run measures this input and deployment only. It does not establish clinical "
@@ -384,7 +384,7 @@ def main() -> int:
         "status": report["status"],
         "report": str(args.output_dir.resolve() / REPORT_NAME),
         "source_record_count": report["validation"]["source_record_count"],
-        "selected_sample_variant_count": report["normalization"]["selected_sample_variant_count"],
+        "selected_sample_normalized_record_count": report["normalization"]["selected_sample_normalized_record_count"],
         "python_process_peak_rss_mb": report["runtime"]["python_process_peak_rss_mb"],
         "largest_child_peak_rss_mb": report["runtime"]["largest_child_peak_rss_mb"],
     }, indent=2))
