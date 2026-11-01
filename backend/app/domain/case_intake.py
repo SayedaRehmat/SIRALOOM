@@ -18,6 +18,7 @@ _INTAKE_STATUSES = frozenset(
 def case_status_after_vcf_upload(
     current_status: str,
     *,
+    has_valid_vcf: bool,
     has_analysis_ready_vcf: bool,
     has_vcf: bool,
     has_site_only_vcf: bool = False,
@@ -33,9 +34,9 @@ def case_status_after_vcf_upload(
         return current_status
     if has_analysis_ready_vcf:
         return CaseStatus.READY_FOR_ANALYSIS
-    if has_site_only_vcf:
-        # A conformant site-level VCF is not a patient callset; keep the case
-        # at artifact intake rather than marking it clinically ready or invalid.
+    if has_valid_vcf or has_site_only_vcf:
+        # A structurally valid VCF is not automatically accepted for analysis.
+        # Site-only files also cannot establish a patient-specific callset.
         return CaseStatus.ARTIFACT_UPLOADED
     if has_vcf:
         return CaseStatus.INVALID
