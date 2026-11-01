@@ -455,8 +455,21 @@ async def upload_artifact(
                 if upload_intent.status != "COMMITTED":
                     upload_intent.status = "COMMITTED"
                     db.commit()
+                db.refresh(case)
                 response.status_code = 200
                 return _artifact_upload_response(existing_artifact, case)
+
+            if upload_intent.status == "COMMITTED":
+                upload_intent.status = "RECOVERY_REQUIRED"
+                db.commit()
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "code": "UPLOAD_RECOVERY_REQUIRED",
+                        "message": "The committed upload reservation has no matching artifact row; administrator reconciliation is required.",
+                        "retryable": False,
+                    },
+                )
 
             if upload_intent.status == "RECOVERY_REQUIRED":
                 raise HTTPException(
@@ -516,6 +529,7 @@ async def upload_artifact(
                         "message": "The durable artifact does not match the reserved upload request.",
                     },
                 ) from exc
+            db.refresh(case)
             response.status_code = 200
             return _artifact_upload_response(existing_artifact, case)
 
