@@ -125,6 +125,59 @@ def resolve_stratification_beds(tsv_path: Path) -> list[dict[str, Any]]:
     return regions
 
 
+def validate_bed_file(
+    path: Path,
+    *,
+    contig_lengths: dict[str, int],
+    label: str,
+) -> dict[str, Any]:
+    """Validate BED3+ coordinates against the exact selected reference contigs."""
+    records = 0
+    observed_contigs: set[str] = set()
+    try:
+        with _open_text(path) as handle:
+            for line_number, line in enumerate(handle, start=1):
+                stripped = line.rstrip("\r\n")
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if stripped.startswith(("track ", "browser ")):
+                    raise ConcordanceError(
+                        f"{label} contains a track/browser directive unsupported by hap.py."
+                    )
+                fields = stripped.split("\t")
+                if len(fields) < 3 or not fields[0]:
+                    raise ConcordanceError(f"{label} has a malformed BED record at line {line_number}.")
+                chrom = fields[0]
+                if chrom not in contig_lengths:
+                    raise ConcordanceError(
+                        f"{label} uses a contig absent from the exact selected reference at line {line_number}."
+                    )
+                try:
+                    start, end = int(fields[1]), int(fields[2])
+                except ValueError as exc:
+                    raise ConcordanceError(
+                        f"{label} has non-integer BED coordinates at line {line_number}."
+                    ) from exc
+                if start < 0 or end <= start or end > contig_lengths[chrom]:
+                    raise ConcordanceError(
+                        f"{label} has out-of-bounds or invalid 0-based half-open coordinates at line {line_number}."
+                    )
+                records += 1
+                observed_contigs.add(chrom)
+    except ConcordanceError:
+        raise
+    except (OSError, UnicodeError, gzip.BadGzipFile) as exc:
+        raise ConcordanceError(f"{label} could not be read.") from exc
+    if records == 0:
+        raise ConcordanceError(f"{label} contains no BED intervals.")
+    return {
+        "record_count": records,
+        "contig_count": len(observed_contigs),
+        "contigs": sorted(observed_contigs),
+        "sha256": sha256_file(path),
+    }
+
+
 def wilson_interval(successes: int, total: int, z: float = 1.959963984540054) -> list[float] | None:
     if total <= 0:
         return None
@@ -275,6 +328,33 @@ def run_concordance(
         stratification_regions = resolve_stratification_beds(inputs["stratification_tsv"])
         for index, region in enumerate(stratification_regions, start=1):
             inputs[f"stratification_bed_{index}"] = region["path"]
+
+    from backend.app.domain.reference_package import (
+        contig_manifest_sha256,
+        validate_fasta_index_consistency,
+    )
+
+    try:
+        reference_contigs = validate_fasta_index_consistency(
+            inputs["reference_fasta"], inputs["reference_fai"]
+        )
+    except ValueError as exc:
+        raise ConcordanceError("Reference FASTA and FAI geometry are inconsistent.") from exc
+    contig_lengths = {str(item["name"]): int(item["length"]) for item in reference_contigs}
+    region_validation: dict[str, Any] = {
+        "confident_bed": validate_bed_file(
+            inputs["confident_bed"], contig_lengths=contig_lengths, label="GIAB confident-region BED"
+        )
+    }
+    if "target_regions" in inputs:
+        region_validation["target_regions"] = validate_bed_file(
+            inputs["target_regions"], contig_lengths=contig_lengths, label="Assay target BED"
+        )
+    for index, region in enumerate(stratification_regions, start=1):
+        region_validation[f"stratification_bed_{index}"] = validate_bed_file(
+            region["path"], contig_lengths=contig_lengths, label=f"Stratification BED {region['name']}"
+        )
+
     validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF", truth_sample_name)
     validate_single_sample_vcf(inputs["query_vcf"], "Query VCF", query_sample_name)
 
@@ -383,6 +463,14 @@ def run_concordance(
             name: {"size_bytes": path.stat().st_size, "sha256": hashes_before[name]}
             for name, path in inputs.items()
         },
+        "reference_identity": {
+            "declared_build": reference_build,
+            "fasta_sha256": hashes_before["reference_fasta"],
+            "fai_sha256": hashes_before["reference_fai"],
+            "contig_manifest_sha256": contig_manifest_sha256(reference_contigs),
+            "contig_count": len(reference_contigs),
+        },
+        "region_validation": region_validation,
         "stratification_regions": [
             {
                 "name": region["name"],
