@@ -10,6 +10,8 @@ A successful HTTP 201 means an artifact was accepted; it does not mean the uploa
 
 The application enforces its configured upload cap while copying the already-parsed multipart upload into a staging file. That application check is **not** an ingress-level request limit and is not a concurrent disk reservation. Multipart parsing may already have consumed temporary disk before the route begins. The endpoint can also have both a multipart temporary file and an application staging copy at the same time.
 
+The route's application staging copy is created explicitly under the configured `WORKER_SCRATCH_ROOT`; if that directory cannot be created or written, the upload fails with HTTP 507 (`UPLOAD_STAGING_UNAVAILABLE`) before an artifact is persisted. The ASGI multipart parser still receives and spools the request before the route executes, so its temporary-file location must be configured separately (for example, `TMPDIR`) and monitored. In the production Compose deployment, API and worker containers set `TMPDIR` to the shared SIRALOOM scratch mount; deployments using another runtime must preserve the same storage-capacity alignment.
+
 ## Before running
 
 1. Use a non-production deployment and a disposable case with a specimen belonging to that case.

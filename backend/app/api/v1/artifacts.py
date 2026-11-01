@@ -287,7 +287,23 @@ async def upload_artifact(
             },
         )
 
-    with tempfile.TemporaryDirectory(prefix="siraloom-ingest-") as tmp:
+    try:
+        staging_root = Path(settings.worker_scratch_root).expanduser()
+        staging_root.mkdir(parents=True, exist_ok=True)
+        staging_directory = tempfile.TemporaryDirectory(
+            prefix="siraloom-ingest-", dir=staging_root
+        )
+    except OSError as exc:
+        await file.close()
+        raise HTTPException(
+            status_code=507,
+            detail={
+                "code": "UPLOAD_STAGING_UNAVAILABLE",
+                "message": "Configured upload staging storage is unavailable.",
+            },
+        ) from exc
+
+    with staging_directory as tmp:
         staged = Path(tmp) / filename
         digest_size = 0
         try:
@@ -297,6 +313,14 @@ async def upload_artifact(
                     if digest_size > max_bytes:
                         raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
                     out.write(chunk)
+        except OSError as exc:
+            raise HTTPException(
+                status_code=507,
+                detail={
+                    "code": "UPLOAD_STAGING_UNAVAILABLE",
+                    "message": "Configured upload staging storage is unavailable.",
+                },
+            ) from exc
         finally:
             await file.close()
 
