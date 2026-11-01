@@ -778,17 +778,18 @@ def _expected_cardinality(
 
 def _genotype_order(allele_count: int, ploidy: int):
     """Yield VCF colexicographic genotype order for the given allele count."""
-    def walk(max_allele: int, remaining: int, prefix: tuple[int, ...]):
+    def walk(max_allele: int, remaining: int):
         if remaining == 1:
             for allele in range(max_allele + 1):
-                yield prefix + (allele,)
+                yield (allele,)
             return
         for last_allele in range(max_allele + 1):
-            yield from walk(last_allele, remaining - 1, prefix + (last_allele,))
+            for prefix in walk(last_allele, remaining - 1):
+                yield prefix + (last_allele,)
 
     if allele_count < 1 or ploidy < 1:
         return
-    yield from walk(allele_count - 1, ploidy, ())
+    yield from walk(allele_count - 1, ploidy)
 
 
 def _genotype_order_index(genotype: tuple[int, ...]) -> int:
