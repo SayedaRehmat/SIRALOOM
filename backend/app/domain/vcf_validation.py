@@ -8,6 +8,9 @@ from pathlib import Path
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
+VCF_CONTIG_NAME_RE = re.compile(
+    r"^[0-9A-Za-z!#$%&+./:;?@^_|~-][0-9A-Za-z!#$%&*+./:;=?@^_|~-]*$"
+)
 SYMBOLIC_RE = re.compile(r"^<[^<>,\s]+>$")
 BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
@@ -992,6 +995,17 @@ def _validate_record(
 
     if not chrom or chrom.startswith("#") or any(char.isspace() for char in chrom):
         raise StrictVCFValidationError(f"Invalid CHROM at line {line_no}", code="VCF_CHROM_INVALID")
+    if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+        if re.fullmatch(r"<[^<>,\\s]+>", chrom):
+            raise StrictVCFValidationError(
+                f"External assembly contig {chrom!r} is valid VCF syntax but is not supported by the configured reference-package contract at line {line_no}",
+                code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
+            )
+        if not VCF_CONTIG_NAME_RE.fullmatch(chrom):
+            raise StrictVCFValidationError(
+                f"CHROM {chrom!r} violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                code="VCF_CHROM_INVALID",
+            )
     if reference_contigs is not None and chrom not in reference_contigs:
         raise StrictVCFValidationError(
             f"Contig {chrom!r} is not present in the selected reference package at line {line_no}",
@@ -1229,6 +1243,15 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"
                 }:
                     identifier = _structured_header_id(line, header_key, line_no)
+                    if (
+                        header_key == "contig"
+                        and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
+                        and not VCF_CONTIG_NAME_RE.fullmatch(identifier)
+                    ):
+                        raise StrictVCFValidationError(
+                            f"Contig header ID {identifier!r} violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                            code="VCF_CONTIG_HEADER_INVALID",
+                        )
                     ids_for_type = structured_header_ids.setdefault(header_key, set())
                     if identifier in ids_for_type:
                         raise StrictVCFValidationError(
@@ -1405,6 +1428,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
                     if match is not None
                 ]
+                if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
+                    not VCF_CONTIG_NAME_RE.fullmatch(contig) for contig, _position in remote_loci
+                ):
+                    raise StrictVCFValidationError(
+                        f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                        code="VCF_BREAKEND_ALT_INVALID",
+                    )
                 if len(remote_loci) != len(breakend_alts):
                     raise StrictVCFValidationError(
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
