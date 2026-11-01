@@ -351,8 +351,6 @@ def build_fhir_r5_bundle(
     }
     if proband:
         sex = str(_get(proband, "sex") or "").upper()
-        if sex in {"MALE", "FEMALE", "OTHER_SEX"}:
-            patient["gender"] = {"MALE": "male", "FEMALE": "female", "OTHER_SEX": "other"}[sex]
         patient["extension"] = [
             _extension("family-affected-status", "valueCode", str(_get(proband, "affected_status", "UNKNOWN"))),
             _extension("pedigree-sex", "valueCode", sex or "UNKNOWN"),
