@@ -1618,3 +1618,13 @@ def test_duplicate_alt_values_are_rejected_across_supported_vcf_versions(
         _validate_record(fields, 1, None, version)
 
     assert exc.value.code == "VCF_ALT_DUPLICATE"
+
+
+@pytest.mark.parametrize("alt", ["<DEL,FOO>", "<DEL FOO>", "<<DEL>>", "A]chr 1:123]"])
+def test_malformed_symbolic_and_breakend_alt_identifiers_are_rejected(alt: str):
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_ALT_INVALID"
