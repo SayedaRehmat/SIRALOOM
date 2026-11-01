@@ -1,7 +1,7 @@
 import json
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from backend.app.api.v1 import phenotypes as phenotype_api
 from backend.app.auth.principal import Principal
@@ -164,3 +164,55 @@ def test_phenotype_export_sidecar_preserves_source_semantics_without_internal_fo
     assert result[0]["evidence"]["source_note"] == "reported by family"
     assert "analysis_id" not in result[0]
     assert "subject_member_id" not in result[0]
+
+
+def test_pedigree_sidecar_uses_pseudonymous_subjects_and_sanitizes_internal_keys():
+    case = SimpleNamespace(clinical_context={})
+    father_id = uuid4()
+    proband_id = uuid4()
+    father = SimpleNamespace(
+        id=father_id,
+        member_identifier="FATHER",
+        relationship_to_proband="father",
+        sex="MALE",
+        affected_status="UNAFFECTED",
+        is_proband=False,
+        sampled=True,
+        specimen_id=uuid4(),
+        metadata_json={
+            "consanguinous_parents": False,
+            "analysis_id": str(uuid4()),
+            "family_note": "Reported by proband",
+        },
+    )
+    proband = SimpleNamespace(
+        id=proband_id,
+        member_identifier="PROBAND",
+        relationship_to_proband=None,
+        sex="FEMALE",
+        affected_status="AFFECTED",
+        is_proband=True,
+        sampled=False,
+        specimen_id=None,
+        metadata_json={},
+    )
+    relationship = SimpleNamespace(
+        parent_member_id=father_id,
+        child_member_id=proband_id,
+        relationship_type="PARENT_CHILD",
+        metadata_json={"consanguinous_parents": False, "parent_member_id": str(father_id)},
+    )
+
+    result = phenotype_api._pedigree_export_sidecar(
+        case, [father, proband], [relationship], None
+    )
+
+    father_export = next(item for item in result["members"] if item["member_identifier"] == "FATHER")
+    assert father_export["phenopacket_subject_id"] == (
+        f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{father_id}')}"
+    )
+    assert father_export["specimen_reference_present"] is True
+    assert "analysis_id" not in father_export["metadata"]
+    assert "parent_member_id" not in result["relationships"][0]["metadata"]
+    assert str(father_id) not in str(result)
+    assert result["consanguinous_parents"] is False
