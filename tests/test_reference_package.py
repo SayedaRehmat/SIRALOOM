@@ -4,7 +4,11 @@ from types import SimpleNamespace
 import pytest
 
 from backend.app.domain.reference import FastaReference, ReferenceError
-from backend.app.domain.vcf_validation import validate_vcf_reference_alleles, validate_vcf_strict
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    validate_vcf_reference_alleles,
+    validate_vcf_strict,
+)
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
     REFERENCE_PACKAGE_SCHEMA_VERSION,
@@ -160,7 +164,7 @@ def test_strict_vcf_validation_accepts_only_explicit_reference_contig_aliases(tm
         "NC_012920.2\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
         encoding="utf-8",
     )
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(invalid, reference_contigs={"chrM"})
     assert getattr(exc.value, "code", None) == "REFERENCE_CONTIG_MISMATCH"
 
