@@ -64,7 +64,7 @@ def worker_loss_after_checkpoint(self, analysis_id: str, marker_prefix: str):
             with SessionLocal() as db:
                 db.add_all([
                     WorkflowStep(
-                        id=__import__("uuid").uuid4(),
+                        id=uuid4(),
                         analysis_id=analysis_uuid,
                         step_id="annotate",
                         step_order=3,
@@ -181,7 +181,7 @@ def vcf_normalization_worker_loss(
     import subprocess
     from datetime import datetime, timezone
     from pathlib import Path
-    from uuid import UUID, uuid5
+    from uuid import UUID, uuid4, uuid5
 
     from redis import Redis
     from sqlalchemy import func, select
