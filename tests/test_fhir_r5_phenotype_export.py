@@ -115,6 +115,11 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     assert relative_observation["subject"]["reference"] == f"Patient/{proband.id}"
     assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{mother.id}"
     assert any(item["resourceType"] == "FamilyMemberHistory" for item in resources)
+    full_urls = [entry["fullUrl"] for entry in bundle["entry"]]
+    assert len(full_urls) == len(set(full_urls))
+    for full_url in full_urls:
+        assert full_url.startswith("urn:uuid:")
+        uuid.UUID(full_url.removeprefix("urn:uuid:"))
 
 
 def test_fhir_r5_preserves_parent_child_relationships_as_explicit_extensions():
