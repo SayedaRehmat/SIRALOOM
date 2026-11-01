@@ -1260,3 +1260,227 @@ def test_vcf45_reserved_base_modification_header_cannot_override_builtin_type_or
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_vcf45_len_only_reference_block_is_accepted_and_counted_per_sample(tmp_path: Path):
+    path = tmp_path / "vcf45-len-only.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##contig=<ID=1,length=200>', '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:50\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_reference_span_records"] == 1
+    assert profile["vcf45_reference_block_sample_count"] == 1
+    assert profile["vcf45_max_reference_end"] == 149
+
+
+def test_vcf45_non_ref_is_alias_for_star_reference_block_len(tmp_path: Path):
+    path = tmp_path / "vcf45-non-ref-len-only.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##contig=<ID=1,length=200>', '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t100\t.\tA\t<NON_REF>\t.\tPASS\t.\tGT:LEN\t0/0:25\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 124
+    assert profile["vcf45_reference_block_sample_count"] == 1
+
+
+def test_vcf45_end_must_equal_maximum_sample_len_end(tmp_path: Path):
+    path = tmp_path / "vcf45-len-end.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##contig=<ID=1,length=200>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\tSAMPLE2\n"
+        "1\t100\t.\tA\t<*>\t.\tPASS\tEND=124\tGT:LEN\t0/0:10\t0/0:25\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 124
+    assert profile["vcf45_reference_block_sample_count"] == 2
+
+
+@pytest.mark.parametrize("end_value", ["123", "125"])
+def test_vcf45_end_rejects_mismatch_with_complete_sample_len_values(tmp_path: Path, end_value: str):
+    path = tmp_path / "vcf45-len-end-mismatch.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        f"1\t100\t.\tA\t<*>\t.\tPASS\tEND={end_value}\tGT:LEN\t0/0:25\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_END_MISMATCH"
+
+
+@pytest.mark.parametrize("length", ["0", "-1", "abc", "0.5", "2147483648"])
+def test_vcf45_len_rejects_invalid_integer_or_range(tmp_path: Path, length: str):
+    path = tmp_path / "vcf45-invalid-len.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        f"1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:{length}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError):
+        validate_vcf_strict(path)
+
+
+def test_vcf45_len_requires_reference_genotype(tmp_path: Path):
+    path = tmp_path / "vcf45-len-invalid-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/1:10\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LEN_GENOTYPE_INVALID"
+
+
+def test_vcf45_len_must_include_star_in_laa_when_laa_is_present(tmp_path: Path):
+    path = tmp_path / "vcf45-len-laa-invalid.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t100\t.\tA\tC,<*>\t.\tPASS\t.\tGT:LAA:LEN\t0/0:1:10\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GVCF_BLOCK_LAA_INVALID"
+
+
+def test_vcf45_records_inside_reference_block_require_missing_gt_and_empty_other_fields(tmp_path: Path):
+    path = tmp_path / "vcf45-block-coverage-valid.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:10\n"
+        "1\t105\t.\tA\tC\t.\tPASS\t.\tGT:DP\t.:.\n"
+        "1\t110\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 3
+
+
+@pytest.mark.parametrize(("genotype", "depth"), [("0/1", "."), (".", "20")])
+def test_vcf45_records_inside_reference_block_reject_populated_sample_fields(
+    tmp_path: Path, genotype: str, depth: str
+):
+    path = tmp_path / "vcf45-block-coverage-invalid.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:10\n"
+        f"1\t105\t.\tA\tC\t.\tPASS\t.\tGT:DP\t{genotype}:{depth}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GVCF_BLOCK_OVERLAP_INVALID"
+
+
+def test_vcf45_reference_blocks_are_tracked_per_sample_with_different_lengths(tmp_path: Path):
+    path = tmp_path / "vcf45-multisample-blocks.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\tSAMPLE2\n"
+        "1\t100\t.\tA\t<*>\t.\tPASS\tEND=119\tGT:LEN\t0/0:10\t0/0:20\n"
+        "1\t110\t.\tA\tC\t.\tPASS\t.\tGT:DP\t0/1:30\t.:.\n"
+        "1\t120\t.\tA\tG\t.\tPASS\t.\tGT:DP\t0/1:30\t0/1:30\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 3
+    assert profile["vcf45_reference_block_sample_count"] == 2
+
+
+def test_vcf45_len_derived_span_must_fit_declared_contig_length(tmp_path: Path):
+    path = tmp_path / "vcf45-len-out-of-bounds.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##contig=<ID=1,length=120>', '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:50\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_REFERENCE_SPAN_OUT_OF_BOUNDS"
+
+
+def test_vcf44_non_ref_reference_block_still_requires_end(tmp_path: Path):
+    path = tmp_path / "vcf44-non-ref-no-end.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t100\t.\tA\t<NON_REF>\t.\tPASS\t.\tGT\t0/0\n",
+        sample=True,
+        version="VCFv4.4",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GVCF_BLOCK_INVALID"
+
+
+def test_vcf45_len_derived_reference_span_is_checked_against_selected_reference(tmp_path: Path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\n" + "A" * 30 + "\n", encoding="ascii", newline="\n")
+    (tmp_path / "reference.fa.fai").write_text("1\t30\t3\t30\t31\n", encoding="ascii")
+    source = tmp_path / "vcf45-len-out-of-bounds-reference.vcf"
+    write_vcf_with_metadata(
+        source,
+        [],
+        "1\t20\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:15\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    validate_vcf_strict(source)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_reference_alleles(source, fasta)
+
+    assert exc.value.code == "VCF_REFERENCE_SPAN_OUT_OF_BOUNDS"
