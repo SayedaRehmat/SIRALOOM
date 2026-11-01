@@ -1273,6 +1273,23 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                 code="VCF_LOCAL_ALLELE_INVALID",
                             )
                         local_allele_count = len(local_alt_indexes) + 1
+                    # LAA defines the ALT alleles in play for this sample.
+                    # Every called non-reference GT allele must therefore be
+                    # represented in LAA; LAA may additionally contain <*> for
+                    # reference-block semantics or alleles used by likelihoods.
+                    if gt_index is not None and gt_index < len(sample_values):
+                        sample_gt = sample_values[gt_index]
+                        if sample_gt not in {"", "."}:
+                            called_alt_indexes = {
+                                int(allele)
+                                for allele in _gt_allele_tokens(sample_gt, fileformat, line_no)
+                                if allele != "." and int(allele) > 0
+                            }
+                            if not called_alt_indexes.issubset(set(local_alt_indexes if raw_laa != "." else [])):
+                                raise StrictVCFValidationError(
+                                    f"FORMAT/LAA omits a called GT ALT allele at line {line_no}, sample {sample_index}",
+                                    code="VCF_LOCAL_ALLELE_INVALID",
+                                )
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.5":
