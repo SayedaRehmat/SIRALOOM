@@ -29,7 +29,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 ## Clinical semantic invariants
 
 1. A phenotype observation is not a diagnosis. SIRALOOM exports it as a GA4GH PhenotypicFeature or FHIR Observation, never as a FHIR Condition.
-2. PRESENT, ABSENT, EXCLUDED, UNKNOWN, and NOT_ASSESSED remain distinct in SIRALOOM.
+2. PRESENT, ABSENT, EXCLUDED, UNKNOWN, and NOT_ASSESSED remain distinct in SIRALOOM and in the FHIR export: EXCLUDED is a coded SIRALOOM result, not valueBoolean=false.
 3. A family observation remains attached to the explicitly selected family member. It is not silently added to the proband's phenotype vector.
 4. A family export requires exactly one explicitly designated proband. SIRALOOM does not infer a proband.
 5. Parent-child edges are exported only when the stored relationship type is PARENT_CHILD. Parent roles are not inferred from absent or ambiguous sex information.
@@ -85,7 +85,8 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bun
 | Family relationship summary | FamilyMemberHistory | Emitted only when relationship-to-proband was explicitly recorded; status is partial; no condition is invented |
 | Phenotype | Observation.code | HPO coding system http://purl.obolibrary.org/obo/hp.owl |
 | PRESENT | Observation.valueBoolean=true | Positive assertion |
-| ABSENT / EXCLUDED | Observation.valueBoolean=false | Exact SIRALOOM status is retained in an extension |
+| ABSENT | Observation.valueBoolean=false | Negative phenotype assertion |
+| EXCLUDED | Observation.valueCodeableConcept with the SIRALOOM phenotype-observation-status code system | Explicitly excluded finding; never collapsed into a negative assertion |
 | UNKNOWN | Observation.dataAbsentReason=unknown | Not encoded as a negative or positive finding |
 | NOT_ASSESSED | Observation.dataAbsentReason=not-performed | Not encoded as a negative or positive finding |
 | Family phenotype | Observation.focus | References the corresponding RelatedPerson; Observation.subject remains the proband Patient |
@@ -96,9 +97,9 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bun
 
 Observations use status=preliminary because the current phenotype record does not itself carry an observation-level verification/sign-off attestation. The export does not assert that a clinical director has reviewed or signed out the observation.
 
-## SIRALOOM FHIR extension contract
+## SIRALOOM FHIR extension and terminology contract
 
-The canonical base is https://siraloom.org/fhir/StructureDefinition/.
+The canonical extension base is https://siraloom.org/fhir/StructureDefinition/. The local phenotype-observation-status CodeSystem URI is https://siraloom.org/fhir/CodeSystem/phenotype-observation-status; its EXCLUDED code preserves the local state without presenting it as a negative finding. These canonical identifiers are implementation contracts, not a claim that the CodeSystem or StructureDefinitions have been published in a terminology registry.
 
 | Extension suffix | Value | Purpose |
 |---|---|---|
