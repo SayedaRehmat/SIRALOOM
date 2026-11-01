@@ -50,7 +50,7 @@ Recognition of a fileformat string does not mean that all caller-specific tags, 
 
 ## 4. Requirement-to-implementation traceability
 
-Evidence paths below refer to the current audit branch unless explicitly stated otherwise. The changes in PR #262 are not merged into `main` at the time of this snapshot.
+Evidence paths below refer to the current audit branch unless explicitly stated otherwise. The combined changes in PR #263 are not merged into `main` at the time of this snapshot.
 
 | Requirement | Normative basis | Implementation/evidence | Status | Residual boundary |
 |---|---|---|---|---|
@@ -72,8 +72,8 @@ Evidence paths below refer to the current audit branch unless explicitly stated 
 | INFO/FORMAT declared cardinality and type | VCF Number/Type definitions | A/R/G and numeric cardinalities; sample Number=G uses GT ploidy or the specification's diploid default when GT is absent; variable-cardinality values still undergo type validation; reserved count and probability domains are checked | PASS (software; latest audit branch) | INFO Number=G without a defined ploidy context remains unresolved; any unresolved cardinality must be explicitly recorded rather than guessed |
 | VCFv4.5 reserved INFO/FORMAT definitions | VCFv4.5 reserved INFO and genotype tables | Reserved Number/Type maps cover common INFO/FORMAT tags, local-allele tags, base modifications, and structural INFO tags | PASS/PARTIAL | Reserved-field semantic rules are not all implemented; see SV/phase-set rows |
 | VCFv4.4/4.5 leading GT phasing separator | Versioned GT syntax | Version-aware GT parser; VCFv4.3 rejects newer leading separator syntax | PASS (software) | Phasing across records remains a separate evidence model |
-| LAA local-allele index and ordering constraints | VCFv4.5 local-allele section | LAA placement, distinct/in-range indices, local-field cardinality, called non-reference GT ALT inclusion, and projection equality for standard/local AD, ADF, ADR, EC, GL, GP, PL and PP pairs | PASS (software; PR #262) | Remaining sample/caller-specific local-field combinations require corpus qualification |
-| PSL and PS/PSL constraints | VCFv4.5 phase-set section | PS non-negative; PS and PSL cannot both be populated; PSL values for unphased GT alleles must be missing; PSO/PSQ dependencies and missing placeholders are checked | PARTIAL (software; PR #262) | Cross-record phase-set consistency, global phase-set naming, PSO requirements for structural-variant phase sets, and reciprocal BND phasing are not fully qualified |
+| LAA local-allele index and ordering constraints | VCFv4.5 local-allele section | LAA placement, distinct/in-range indices, local-field cardinality, called non-reference GT ALT inclusion, and projection equality for standard/local AD, ADF, ADR, EC, GL, GP, PL and PP pairs | PASS (software; PR #263) | Remaining sample/caller-specific local-field combinations require corpus qualification |
+| PSL and PS/PSL constraints | VCFv4.5 phase-set section | PS non-negative; PS and PSL cannot both be populated; PSL values for unphased GT alleles must be missing; PSO/PSQ dependencies and missing placeholders are checked | PARTIAL (software; PR #263) | Cross-record phase-set consistency, global phase-set naming, PSO requirements for structural-variant phase sets, and reciprocal BND phasing are not fully qualified |
 | VCFv4.5 base-modification Number=M | VCFv4.5 base-modification section | Number=M cardinality, allele/strand interpretation, ranges, and source-only preservation policy | PASS (software fixture scope) | Not used as rare-disease evidence; real modified-base caller corpus is pending |
 | VCFv4.5 gVCF/reference blocks | VCFv4.5 reference-block and LEN rules | Sample-specific LEN, wildcard semantics, overlap behavior, END fallback, LAA and CSI boundary tests | PASS (software fixture scope) | Does not perform reference-confidence joint genotyping |
 | SV INFO semantics | VCFv4.5 structural-variant INFO section | Reserved definitions; CIPOS/CIEND interval rules; IMPRECISE requires explicit CIPOS for precise ALT alleles while symbolic SV alleles may retain unspecified intervals; MEINFO/METRANS cardinality | PARTIAL (software; PR #263) | EVENT/EVENTTYPE graph semantics, all BND pairing/orientation cases, PSO/PSQ interpretation, all SV tags, and clinical SV analysis are not fully implemented |
@@ -137,7 +137,7 @@ The following are not software-only tasks. They require an authorized laboratory
 
 - Main branch inspected: `9c03133ebe11bc8fab28869f87a85964e2b6e4d0`.
 - Existing main CI run: [#41305303496](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41305303496), previously reported successful with backend, frontend, PostgreSQL/Celery integration, and production-container checks.
-- Focused conformance work: [PR #263](https://github.com/SayedaRehmat/SIRALOOM/pull/263), which carries the VCFv4.5 conformance changes from PR #262 plus fixes for the two backend regressions found in PR #262's CI. It remains separate from main until the combined checks pass and is not a release qualification.
+- Focused conformance work: [PR #263](https://github.com/SayedaRehmat/SIRALOOM/pull/263), which carries the VCFv4.5 conformance changes from PR #263 plus fixes for the two backend regressions found in PR #263's CI. It remains separate from main until the combined checks pass and is not a release qualification.
 - Existing GIAB runner and metric semantics corrections are merged in PRs #260 and #261. No real GIAB result is asserted by those code changes.
 - The release gate remains [issue #171](https://github.com/SayedaRehmat/SIRALOOM/issues/171). Its controlled deployed end-to-end workflow, recovery, scientific benchmark, and deployment/security evidence are not replaced by this parser audit.
 
