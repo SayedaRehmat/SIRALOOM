@@ -450,8 +450,13 @@ def test_info_number_a_and_r_cardinality_is_checked_for_multiallelic_records(tmp
 @pytest.mark.parametrize(
     ("genotype", "pl_values", "expected_count"),
     [
+        # Number=G cardinality is C(number_of_alleles + ploidy - 1, ploidy).
+        # Three alleles (REF + two ALT): haploid=3, diploid=6,
+        # triploid=10, and tetraploid=15.
+        ("1", "0,1,2", 3),
         ("0/1", "0,1,2,3,4,5", 6),
         ("0/1/2", "0,1,2,3,4,5,6,7,8,9", 10),
+        ("0/1/2/2", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14", 15),
     ],
 )
 def test_format_number_g_cardinality_uses_sample_ploidy(
