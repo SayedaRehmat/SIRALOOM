@@ -6,9 +6,19 @@ import tempfile
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Response, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Response,
+    UploadFile,
+)
 from fastapi.responses import FileResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
@@ -54,7 +64,6 @@ from backend.app.infrastructure.artifacts.upload_intents import (
     reserve_upload_intent,
 )
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.artifact_upload_intents import ArtifactUploadIntent
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
 from backend.app.infrastructure.db.session import SessionLocal, get_db
 
@@ -503,8 +512,6 @@ async def upload_artifact(
         except Exception as exc:
             if upload_intent is None:
                 raise
-            from sqlalchemy.exc import IntegrityError
-
             if not isinstance(exc, (IntegrityError, FileExistsError)):
                 raise
             db.rollback()
