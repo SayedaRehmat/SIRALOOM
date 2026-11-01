@@ -1622,3 +1622,43 @@ def test_malformed_symbolic_and_breakend_alt_identifiers_are_rejected(alt: str):
         _validate_record(fields, 1, None, "VCFv4.5")
 
     assert exc.value.code == "VCF_ALT_INVALID"
+
+
+def test_vcf45_local_allele_array_must_include_each_called_gt_alt(tmp_path: Path):
+    path = tmp_path / "vcf45-laa-omits-called-alt.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+            '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:LAD\t0/1:2:20,10\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+
+
+def test_vcf45_empty_laa_cannot_describe_called_alt_genotype(tmp_path: Path):
+    path = tmp_path / "vcf45-empty-laa-called-alt.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+            '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+        ],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:LAA:LAD\t0/1:.:20\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
