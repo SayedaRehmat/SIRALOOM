@@ -80,7 +80,7 @@ def _validate_clinical_attributes(value: dict[str, Any]) -> dict[str, Any]:
         if duration is not None:
             duration = str(duration).strip().upper()
             if not re.fullmatch(
-                r"P(?=\d|T)(?:\d+(?:\.\d+)?Y)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?W)?(?:\d+(?:\.\d+)?D)?(?:T(?:\d+(?:\.\d+)?H)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?S)?)?",
+                r"P(?=\d|T\d)(?:\d+(?:\.\d+)?Y)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?W)?(?:\d+(?:\.\d+)?D)?(?:T(?:\d+(?:\.\d+)?H)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?S)?)?",
                 duration,
             ):
                 raise ValueError(f"{time_key} must be an ISO 8601 duration")
