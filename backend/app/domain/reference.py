@@ -116,11 +116,20 @@ class FastaReference:
                     aliases.append(candidate)
         return aliases
 
-    def resolve_contig(self, contig: str) -> str:
-        for candidate in self._aliases(contig):
-            if candidate in self._entries:
+    @classmethod
+    def resolve_contig_name(
+        cls,
+        contig: str,
+        available_contigs: set[str] | frozenset[str] | dict[str, object],
+    ) -> str:
+        """Resolve an exact contig name or one of the finite supported aliases."""
+        for candidate in cls._aliases(contig):
+            if candidate in available_contigs:
                 return candidate
         raise ReferenceError(f"Contig {contig!r} is not present in the reference")
+
+    def resolve_contig(self, contig: str) -> str:
+        return self.resolve_contig_name(contig, self._entries)
 
     def fetch(self, contig: str, start0: int, end0: int) -> str:
         if start0 < 0 or end0 < start0:
