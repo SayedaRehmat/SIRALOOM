@@ -617,12 +617,21 @@ class PhenotypeObservation(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"))
     analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"))
+    # hpo_id is the identifier submitted by the clinician and is never silently
+    # rewritten. canonical_hpo_id is populated only after an approved HPO
+    # release resolves the submitted identifier as CURRENT or ALTERNATE_ID.
     hpo_id: Mapped[str] = mapped_column(Text)
+    canonical_hpo_id: Mapped[str | None] = mapped_column(Text)
     label: Mapped[str | None] = mapped_column(Text)
     present: Mapped[bool] = mapped_column(default=True)
     phenotype_status: Mapped[str] = mapped_column(Text, default="PRESENT", server_default="PRESENT")
     onset: Mapped[str | None] = mapped_column(Text)
     severity: Mapped[str | None] = mapped_column(Text)
+    # Optional family subject; NULL denotes the case proband/primary patient.
+    subject_member_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_members.id"))
+    observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    clinical_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
+    ontology_resolution: Mapped[dict] = mapped_column(JSON, default=dict)
     source: Mapped[str] = mapped_column(Text, default="CLINICAL_INPUT")
     evidence: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -637,18 +646,32 @@ class PhenotypeObservation(Base):
             name="ck_phenotype_observations_present_consistency",
         ),
         Index(
-            "uq_phenotype_case_term_status",
+            "uq_phenotype_case_proband_term_status",
             "case_id", "hpo_id", "phenotype_status",
             unique=True,
-            sqlite_where=text("analysis_id IS NULL"),
-            postgresql_where=text("analysis_id IS NULL"),
+            sqlite_where=text("analysis_id IS NULL AND subject_member_id IS NULL"),
+            postgresql_where=text("analysis_id IS NULL AND subject_member_id IS NULL"),
         ),
         Index(
-            "uq_phenotype_analysis_term_status",
+            "uq_phenotype_case_member_term_status",
+            "case_id", "subject_member_id", "hpo_id", "phenotype_status",
+            unique=True,
+            sqlite_where=text("analysis_id IS NULL AND subject_member_id IS NOT NULL"),
+            postgresql_where=text("analysis_id IS NULL AND subject_member_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_phenotype_analysis_proband_term_status",
             "case_id", "analysis_id", "hpo_id", "phenotype_status",
             unique=True,
-            sqlite_where=text("analysis_id IS NOT NULL"),
-            postgresql_where=text("analysis_id IS NOT NULL"),
+            sqlite_where=text("analysis_id IS NOT NULL AND subject_member_id IS NULL"),
+            postgresql_where=text("analysis_id IS NOT NULL AND subject_member_id IS NULL"),
+        ),
+        Index(
+            "uq_phenotype_analysis_member_term_status",
+            "case_id", "analysis_id", "subject_member_id", "hpo_id", "phenotype_status",
+            unique=True,
+            sqlite_where=text("analysis_id IS NOT NULL AND subject_member_id IS NOT NULL"),
+            postgresql_where=text("analysis_id IS NOT NULL AND subject_member_id IS NOT NULL"),
         ),
     )
 
