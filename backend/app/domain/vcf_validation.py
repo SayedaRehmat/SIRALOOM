@@ -721,6 +721,7 @@ def _validate_declared_value(
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
+    field_scope = "FORMAT" if kind.startswith("FORMAT") else kind
     if field_type == "Flag":
         if value is not None:
             raise StrictVCFValidationError(
@@ -761,7 +762,7 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
-                if (kind, key) in NONNEGATIVE_INTEGER_FIELDS:
+                if (field_scope, key) in NONNEGATIVE_INTEGER_FIELDS:
                     valid = valid and integer_value >= 0
                 if _base_modification_field_kind(key) == "depth":
                     valid = valid and integer_value >= 0
@@ -775,9 +776,9 @@ def _validate_declared_value(
             )
             if valid:
                 numeric_value = float(item)
-                if (kind, key) in PROBABILITY_FLOAT_FIELDS:
+                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
                     valid = 0.0 <= numeric_value <= 1.0
-                if (kind, key) in NONNEGATIVE_FLOAT_FIELDS:
+                if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
                     valid = valid and 0.0 <= numeric_value <= 1.0
