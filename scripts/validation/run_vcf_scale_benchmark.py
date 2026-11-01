@@ -281,6 +281,7 @@ def run_benchmark(
             index_validation.get("records") is None
             or index_validation.get("indexed_query_records_verified") != index_validation.get("records")
             or index_validation.get("indexed_query_contigs_verified") != index_validation.get("contigs")
+            or source_reconciliation.get("normalized_child_records") != index_validation.get("records")
         ):
             raise ScaleBenchmarkError("CSI indexed-query record streams do not reconcile with the sequential VCF stream.")
         add_record_throughput(
