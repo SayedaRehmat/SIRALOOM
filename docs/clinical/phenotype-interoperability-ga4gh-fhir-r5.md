@@ -55,6 +55,8 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 | HPO severity/modifiers/course | severity / modifiers | Included only when the stored related-term resolution is CURRENT or ALTERNATE_ID |
 | ISO 8601 onset/resolution age | TimeElement.age.iso8601duration | No conversion from ambiguous free text |
 | HPO release | MetaData.resources | HPO release included only when a single release is represented |
+| Age at assessment | Individual.time_at_last_encounter | Age value/unit mapped to an ISO 8601 TimeElement; the as-of date remains in the SIRALOOM response sidecar |
+| Referral, prior testing, differential diagnoses, and review attestations | SIRALOOM response sidecar | Not forced into Phenopacket disease/diagnosis fields; field-level loss warnings are returned |
 | SIRALOOM-only attributes | Export warnings | Laterality, anatomical site, temporal pattern, patient-specific episode frequency, and other non-equivalent fields are reported rather than silently discarded |
 
 ### Strict and lossy export
@@ -90,6 +92,7 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns a validated FHIR R5 Bundl
 | Onset/attributes/term resolution | SIRALOOM extensions | Retains local values and terminology-resolution provenance |
 | Export assembly provenance | Provenance | Identifies SIRALOOM as the assembler of the exchange representation, not as the original clinical observer |
 | Export audit | SIRALOOM audit ledger | Records the export action separately from clinical provenance |
+| Clinical intake revision | Patient extension clinical-intake-revision | Preserves revision/version, referral, age at assessment, prior testing, clinician-entered differentials, source references, and review attestations |
 
 Observations use status=preliminary because the current phenotype record does not itself carry an observation-level verification/sign-off attestation. The export does not assert that a clinical director has reviewed or signed out the observation.
 
@@ -99,6 +102,11 @@ The canonical base is https://siraloom.org/fhir/StructureDefinition/.
 
 | Extension suffix | Value | Purpose |
 |---|---|---|
+| clinical-intake-revision | Nested extensions | Versioned clinical context, review attestations, referral indication/question, prior testing, differentials, age at assessment, and source references |
+| age-at-assessment | Nested valueDecimal/valueCode/valueDate | Exact age value, unit, and assessment date; never converted into a fabricated birth date |
+| prior-testing | Nested extensions | Prior test type, date, laboratory, accession, result state/summary, and source reference; internal artifact UUID is not exported |
+| differential-diagnosis | Nested extensions | Original coding system/code/display and clinician-entered certainty/status; not emitted as a confirmed Condition |
+| revision-id / revision-version / revision-fingerprint | valueString/valueInteger | Stable clinical intake revision lineage |
 | phenotype-status | valueCode | Exact local phenotype state |
 | source | valueString | SIRALOOM source category |
 | ontology-resolution | Nested extensions | Submitted HPO ID, resolution status, canonical ID |
@@ -127,6 +135,7 @@ These canonical URLs are implementation identifiers and documentation contracts 
 - The FHIR export returns a FHIR Bundle inside an envelope so the API format/version is explicit. Consumers should extract the bundle property.
 - SIRALOOM is the assembler in FHIR Provenance; the original clinical observer is not fabricated because the current phenotype observation model does not store a direct author reference.
 - The export does not include source VCF/BAM/FASTQ artifacts or expose internal storage URIs.
+- Clinical intake revision context from the versioned clinical-intake model is included in the FHIR patient extension and in the Phenopackets response sidecar. Age at assessment is mapped to Phenopackets TimeElement; referral details, prior testing, differential diagnoses and review attestations remain in the sidecar because the base Phenopackets schema does not represent them without changing their meaning.
 - Family-member specimens are not yet emitted as FHIR Specimen resources; the current export preserves the local specimen reference ID as a SIRALOOM extension. A later specimen-interoperability stage must add the resource only when the complete specimen status, type, collection, processing and subject linkage can be represented without guessing.
 
 ## Verification and qualification boundary
