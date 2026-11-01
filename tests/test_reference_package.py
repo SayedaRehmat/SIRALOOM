@@ -223,7 +223,7 @@ def test_fasta_index_consistency_accepts_gzip_fasta_with_uncompressed_fai_offset
     with gzip.open(fasta, "wb") as handle:
         handle.write(b">1 description\nACGT\nAC\n")
     fai = tmp_path / "reference.fa.gz.fai"
-    fai.write_text("1\t6\t14\t4\t5\n", encoding="utf-8")
+    fai.write_text("1\t6\t15\t4\t5\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
 
