@@ -849,6 +849,9 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                 raise VCFToolError("SIRALOOM_SOURCE source-record SHA-256 does not match the original record.")
             expected[source_index] = {
                 "payload": payload,
+                "chrom": fields[0],
+                "pos": fields[1],
+                "ref": fields[3],
                 "alt_indexes": actual_indexes,
                 "prepared_alt_values": [source_alts[index - 1] for index in actual_indexes],
             }
@@ -885,11 +888,16 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                 prepared_alts = original_fields[3].split(",")
                 used_alt_index = int(original_fields[4])
                 if (
-                    prepared_alts != source["prepared_alt_values"]
+                    original_fields[0] != source["chrom"]
+                    or original_fields[1] != source["pos"]
+                    or original_fields[2] != source["ref"]
+                    or prepared_alts != source["prepared_alt_values"]
                     or used_alt_index < 1
                     or used_alt_index > len(prepared_alts)
                 ):
-                    raise ValueError("ALT index or prepared ALT list disagrees with source mapping")
+                    raise ValueError(
+                        "source CHROM/POS/REF, ALT list, or selected ALT index disagrees with source mapping"
+                    )
             except ValueError as exc:
                 raise VCFToolError("SIRALOOM_ORIG contains an invalid source ALT mapping.") from exc
             mapping = (source_index, source["alt_indexes"][used_alt_index - 1])
