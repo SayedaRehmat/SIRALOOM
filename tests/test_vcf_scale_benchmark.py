@@ -89,6 +89,66 @@ def test_benchmark_requires_an_explicit_sample_mapping(tmp_path, monkeypatch):
     assert "SAMPLE_B" not in json.dumps(failure)
 
 
+
+
+
+def test_scale_benchmark_executes_real_pinned_vcf_pipeline(tmp_path):
+    import shutil
+    import subprocess
+
+    from backend.app.config import settings
+
+    executable = shutil.which("bcftools")
+    if executable is None:
+        pytest.skip("Pinned BCFtools is not installed in this test environment.")
+    version = subprocess.run(
+        [executable, "--version"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+    first_line = next((line for line in version.stdout.splitlines() if line.strip()), "")
+    detected = first_line.split()[1] if len(first_line.split()) > 1 else None
+    if version.returncode != 0 or detected != settings.bcftools_version:
+        pytest.skip("The test environment does not provide the repository-pinned BCFtools version.")
+
+    module = _load_runner()
+    vcf = tmp_path / "one-sample.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t4\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    reference = tmp_path / "GRCh38.fa"
+    reference.write_text(">1\nCAAAAAC\n", encoding="utf-8")
+    Path(str(reference) + ".fai").write_text("1\t7\t3\t7\t8\n", encoding="utf-8")
+
+    output = tmp_path / "real-run"
+    report = module.run_benchmark(
+        vcf_path=vcf,
+        reference_fasta=reference,
+        reference_build="GRCh38",
+        sample_name="SAMPLE1",
+        output_dir=output,
+    )
+
+    assert report["status"] == "RUN_COMPLETE_REVIEW_REQUIRED"
+    assert report["validation"]["status"] == "VALID"
+    assert report["validation"]["source_record_count"] == 1
+    assert report["reference"]["validation"]["result"] == "PASS"
+    assert report["routing"]["record_reconciliation"]["balanced"] is True
+    assert report["normalization"]["source_child_reconciliation"]["status"] == "VALIDATED"
+    assert report["normalization"]["index_validation"]["indexed_query_records_verified"] == 1
+    assert report["normalization"]["selected_sample_normalized_record_count"] == 1
+    assert (output / "normalized.vcf.gz").is_file()
+    assert (output / "normalized.vcf.gz.csi").is_file()
+    assert "SAMPLE1" not in json.dumps(report)
+
+
 def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp_path, monkeypatch):
     module = _load_runner()
     vcf, reference = _inputs(tmp_path)
