@@ -549,6 +549,23 @@ def build_fhir_r5_bundle(
         "name": "SIRALOOM",
     }
     resources.append(organization)
+    status_code_system_id = str(uuid5(NAMESPACE_URL, "siraloom:fhir-r5:phenotype-observation-status"))
+    resources.append({
+        "resourceType": "CodeSystem",
+        "id": status_code_system_id,
+        "url": "https://siraloom.org/fhir/CodeSystem/phenotype-observation-status",
+        "version": "1.0.0",
+        "name": "SIRALOOMPhenotypeObservationStatus",
+        "title": "SIRALOOM Phenotype Observation Status",
+        "status": "active",
+        "caseSensitive": True,
+        "content": "complete",
+        "concept": [{
+            "code": "EXCLUDED",
+            "display": "Excluded finding",
+            "definition": "The finding was explicitly excluded from the current phenotype assertion; this is not equivalent to an absent or not-assessed finding.",
+        }],
+    })
     recorded = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     for row in rows:
         observation_id = str(_get(row, "id"))
