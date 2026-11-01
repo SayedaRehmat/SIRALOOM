@@ -75,6 +75,7 @@ def _fake_happy(tmp_path: Path) -> Path:
         "with prefix.with_suffix('.summary.csv').open('w', newline='') as handle:\n"
         " writer = csv.writer(handle)\n"
         f" writer.writerow({SUMMARY_HEADER!r})\n"
+        " pathlib.Path(str(prefix) + '.runinfo.json').write_text('{}', encoding='utf-8')\n"
         " writer.writerows([\n"
         " ['INDEL','ALL',10,8,2,12,2,2,0,0.8,0.8,0.1],\n"
         " ['INDEL','PASS',10,7,3,10,1,2,0,0.7,0.875,0.2],\n"
@@ -136,6 +137,9 @@ def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
             assay="WES",
             caller="approved-caller",
             caller_version="1.0",
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
             output_dir=tmp_path / "out",
         )
 
@@ -162,6 +166,8 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["status"] == "CONCORDANCE_RUN_COMPLETE_REVIEW_REQUIRED"
     assert report["environment"]["hap_py_version"] == "0.3.15"
     assert report["intended_use_cell"]["assay"] == "WES"
+    assert report["intended_use_cell"]["truth_set_version"] == "4.2.1"
+    assert report["intended_use_cell"]["acceptance_policy_id"] == "LAB-POLICY-001"
     assert report["inputs"]["truth_vcf"]["sha256"]
     assert len(report["metrics"]) == 4
     assert report["sample_identifiers_recorded"] is False
@@ -189,6 +195,9 @@ def test_query_must_have_exactly_one_sample(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
             output_dir=tmp_path / "out",
             hap_py=str(_fake_happy(tmp_path)),
         )
