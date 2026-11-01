@@ -128,3 +128,37 @@ def test_fhir_endpoint_passes_revision_to_bundle_builder_and_audits_export(monke
     assert payload["resourceType"] == "Bundle"
     assert db.committed is True
     assert _FakeAudit.calls[0]["after_state"]["clinical_intake_revision_version"] == 2
+
+
+def test_phenotype_export_sidecar_preserves_source_semantics_without_internal_foreign_keys():
+    member_id = uuid4()
+    member = SimpleNamespace(id=member_id, member_identifier="SIBLING-1")
+    observation = SimpleNamespace(
+        id=uuid4(),
+        record_fingerprint="e" * 64,
+        subject_member_id=member_id,
+        hpo_id="HP:0001250",
+        canonical_hpo_id="HP:0001250",
+        label="Seizures",
+        phenotype_status="ABSENT",
+        present=False,
+        onset="childhood",
+        severity="mild",
+        observed_at=datetime(2025, 1, 1, tzinfo=UTC),
+        created_at=datetime(2025, 1, 2, tzinfo=UTC),
+        clinical_attributes={"laterality": "BILATERAL"},
+        ontology_resolution={"primary_term": {"status": "CURRENT"}},
+        source="FAMILY_HISTORY",
+        evidence={"source_note": "reported by family"},
+        analysis_id=uuid4(),
+    )
+
+    result = phenotype_api._phenotype_export_sidecar([observation], [member])
+
+    assert result[0]["subject_member_identifier"] == "SIBLING-1"
+    assert result[0]["phenotype_status"] == "ABSENT"
+    assert result[0]["clinical_attributes"]["laterality"] == "BILATERAL"
+    assert result[0]["evidence"]["source_note"] == "reported by family"
+    assert result[0]["analysis_reference_present"] is True
+    assert "analysis_id" not in result[0]
+    assert "subject_member_id" not in result[0]
