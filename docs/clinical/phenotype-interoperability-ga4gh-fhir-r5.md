@@ -185,8 +185,10 @@ java -jar phenopacket-tools-cli-1.0.0.jar validate -H build/clinical-interop/phe
 java -jar phenopacket-tools-cli-1.0.0.jar validate -H -e family build/clinical-interop/family.json
 
 # Download validator_cli.jar from the pinned HL7/HAPI release 7.0.3.
-java -jar validator_cli.jar build/clinical-interop/fhir-r5-bundle.json -version 5.0.0 -tx n/a
+java -jar validator_cli.jar build/clinical-interop/fhir-r5-bundle.json -version 5.0.0 -tx n/a -extension any
 ```
+
+The explicit `-extension any` option permits the currently unpublished SIRALOOM extension domain while the validator checks the FHIR R5 core resource structure. It does not validate the extension value types, cardinalities, contexts, or nested child contracts. That stronger check remains blocked on publishing and loading the SIRALOOM StructureDefinitions. The validator is not being configured to ignore malformed core FHIR resources.
 
 The Phenopacket CLI is GPL-3.0 licensed and is used as a CI qualification tool only; it is not added to SIRALOOM's runtime dependencies or distributed by the application.
 
