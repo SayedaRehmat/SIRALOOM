@@ -622,6 +622,7 @@ class PhenotypeObservation(Base):
     # release resolves the submitted identifier as CURRENT or ALTERNATE_ID.
     hpo_id: Mapped[str] = mapped_column(Text)
     canonical_hpo_id: Mapped[str | None] = mapped_column(Text)
+    record_fingerprint: Mapped[str | None] = mapped_column(Text)
     label: Mapped[str | None] = mapped_column(Text)
     present: Mapped[bool] = mapped_column(default=True)
     phenotype_status: Mapped[str] = mapped_column(Text, default="PRESENT", server_default="PRESENT")
@@ -646,32 +647,18 @@ class PhenotypeObservation(Base):
             name="ck_phenotype_observations_present_consistency",
         ),
         Index(
-            "uq_phenotype_case_proband_term_status",
-            "case_id", "hpo_id", "phenotype_status",
+            "uq_phenotype_case_record_fingerprint",
+            "case_id", "record_fingerprint",
             unique=True,
-            sqlite_where=text("analysis_id IS NULL AND subject_member_id IS NULL"),
-            postgresql_where=text("analysis_id IS NULL AND subject_member_id IS NULL"),
+            sqlite_where=text("analysis_id IS NULL AND record_fingerprint IS NOT NULL"),
+            postgresql_where=text("analysis_id IS NULL AND record_fingerprint IS NOT NULL"),
         ),
         Index(
-            "uq_phenotype_case_member_term_status",
-            "case_id", "subject_member_id", "hpo_id", "phenotype_status",
+            "uq_phenotype_analysis_record_fingerprint",
+            "case_id", "analysis_id", "record_fingerprint",
             unique=True,
-            sqlite_where=text("analysis_id IS NULL AND subject_member_id IS NOT NULL"),
-            postgresql_where=text("analysis_id IS NULL AND subject_member_id IS NOT NULL"),
-        ),
-        Index(
-            "uq_phenotype_analysis_proband_term_status",
-            "case_id", "analysis_id", "hpo_id", "phenotype_status",
-            unique=True,
-            sqlite_where=text("analysis_id IS NOT NULL AND subject_member_id IS NULL"),
-            postgresql_where=text("analysis_id IS NOT NULL AND subject_member_id IS NULL"),
-        ),
-        Index(
-            "uq_phenotype_analysis_member_term_status",
-            "case_id", "analysis_id", "subject_member_id", "hpo_id", "phenotype_status",
-            unique=True,
-            sqlite_where=text("analysis_id IS NOT NULL AND subject_member_id IS NOT NULL"),
-            postgresql_where=text("analysis_id IS NOT NULL AND subject_member_id IS NOT NULL"),
+            sqlite_where=text("analysis_id IS NOT NULL AND record_fingerprint IS NOT NULL"),
+            postgresql_where=text("analysis_id IS NOT NULL AND record_fingerprint IS NOT NULL"),
         ),
     )
 
