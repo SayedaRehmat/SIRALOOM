@@ -257,3 +257,17 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
             disposition="REPORT",
             reason="Attempt to sign out while a routed variant class is pending",
         )
+
+    # A retry against an already-final decision must not bypass a specialized
+    # artifact that was subsequently attached to the analysis.
+    proposals[0].status = "FINAL"
+    db.commit()
+    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
+        finalize_reportability(
+            db,
+            decision_id=proposals[0].id,
+            reviewer_id=user.id,
+            expected_version=proposals[0].review_version,
+            disposition="REPORT",
+            reason="Retry must re-check unresolved specialized artifacts",
+        )
