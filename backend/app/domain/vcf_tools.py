@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import subprocess
 import tempfile
 from contextlib import ExitStack
@@ -974,6 +975,43 @@ def _sha256_file(path: Path) -> str:
     )
 
 
+def _validate_gzi_index(gzi_path: Path, bgzf_path: Path) -> dict:
+    """Validate the BGZF .gzi binary structure and monotonic block offsets."""
+    try:
+        raw_size = gzi_path.stat().st_size
+        bgzf_size = bgzf_path.stat().st_size
+        with gzi_path.open("rb") as handle:
+            header = handle.read(8)
+            if len(header) != 8:
+                raise VCFToolError(f"BGZF index is truncated: {gzi_path}")
+            entry_count = struct.unpack("<Q", header)[0]
+            expected_size = 8 + entry_count * 16
+            if raw_size != expected_size:
+                raise VCFToolError(
+                    f"BGZF index has invalid length: expected {expected_size} bytes, found {raw_size}: {gzi_path}"
+                )
+            previous_compressed = 0
+            previous_uncompressed = 0
+            for entry_number in range(entry_count):
+                pair = handle.read(16)
+                if len(pair) != 16:
+                    raise VCFToolError(f"BGZF index entry {entry_number} is truncated: {gzi_path}")
+                compressed_offset, uncompressed_offset = struct.unpack("<QQ", pair)
+                if (
+                    compressed_offset <= previous_compressed
+                    or compressed_offset >= bgzf_size
+                    or uncompressed_offset <= previous_uncompressed
+                ):
+                    raise VCFToolError(
+                        f"BGZF index offsets are non-monotonic or out of bounds at entry {entry_number}: {gzi_path}"
+                    )
+                previous_compressed = compressed_offset
+                previous_uncompressed = uncompressed_offset
+    except OSError as exc:
+        raise VCFToolError(f"Unable to validate BGZF index {gzi_path}: {exc}") from exc
+    return {"entry_count": entry_count, "size_bytes": raw_size}
+
+
 def _reference_artifact_identity(reference_fasta: Path) -> dict:
     """Attest the exact FASTA and index files used for normalization."""
     artifacts = {
@@ -982,6 +1020,9 @@ def _reference_artifact_identity(reference_fasta: Path) -> dict:
     }
     if reference_fasta.name.lower().endswith((".gz", ".bgz")):
         artifacts["gzi"] = Path(str(reference_fasta) + ".gzi")
+
+    if "gzi" in artifacts:
+        _validate_gzi_index(artifacts["gzi"], reference_fasta)
 
     identity_artifacts: dict[str, dict] = {}
     for role, artifact_path in artifacts.items():
