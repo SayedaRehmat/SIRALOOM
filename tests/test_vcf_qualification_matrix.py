@@ -200,6 +200,7 @@ def test_matrix_runner_marks_failed_benchmark_cell_and_returns_nonzero(
     result = json.loads((output_dir / "qualification-matrix.json").read_text(encoding="utf-8"))
     assert result["cells"][0]["benchmark_exit_code"] == 2
     assert result["cells"][0]["benchmark_status"] == "FAILED"
+    assert result["cells"][0]["failure_stage"] == "reference_validation"
     assert result["cells"][0]["cell_status"] == "REVIEW_REQUIRED_FAILURE"
     assert result["cells"][0]["criteria"][0]["status"] == "NOT_EVALUABLE"
     assert result["release_decision"] == "NOT_AUTOMATICALLY_QUALIFIED"
