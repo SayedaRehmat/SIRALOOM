@@ -517,7 +517,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         if escaped:
             current.append(char)
             escaped = False
-        elif char == "\\" and quoted:
+        elif char == chr(92) and quoted:
             current.append(char)
             escaped = True
         elif char == '"':
