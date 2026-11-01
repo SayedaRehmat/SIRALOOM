@@ -29,8 +29,11 @@ def _get(obj: Any, name: str, default: Any = None) -> Any:
 def _iso(value: Any) -> str | None:
     if value is None:
         return None
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=UTC)
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise FHIRExportError(
+            "Cannot export a timezone-naive clinical timestamp as FHIR dateTime/instant; "
+            "the source timezone must be supplied rather than inferred."
+        )
     return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
