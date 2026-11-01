@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
@@ -95,16 +96,61 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
     return headers, detected_build, has_fileformat, fileformat
 
 
-def _bcftools_validate(path: Path) -> str | None:
+def _bcftools_validate(path: Path) -> tuple[str | None, str]:
     executable = shutil.which("bcftools")
     if executable is None:
         raise VCFValidationUnavailable(
             "bcftools/htslib is required to validate VCF input, but the executable was not found. "
             "The VCF was not accepted; restore the configured laboratory toolchain and retry."
         )
+    expected_version = settings.bcftools_version
+    try:
+        version_result = subprocess.run(
+            [executable, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise VCFValidationUnavailable(
+            "bcftools/htslib version attestation timed out. The VCF was not accepted; "
+            "restore the configured laboratory toolchain and retry."
+        ) from exc
+    except OSError as exc:
+        raise VCFValidationUnavailable(
+            "bcftools/htslib could not be executed for version attestation. "
+            "The VCF was not accepted; retry after the laboratory execution issue is resolved."
+        ) from exc
+    if version_result.returncode != 0:
+        detail = (version_result.stderr or version_result.stdout or "unknown bcftools error").strip()
+        raise VCFValidationUnavailable(
+            f"Unable to attest the configured bcftools version: {detail}"
+        )
+    version_output = version_result.stdout or version_result.stderr
+    version_line = next(
+        (line.strip() for line in version_output.splitlines() if line.strip()),
+        "unknown",
+    )
+    version_parts = version_line.split()
+    detected_version = (
+        version_parts[1]
+        if len(version_parts) > 1 and version_parts[0].lower() == "bcftools"
+        else None
+    )
+    if detected_version is None:
+        raise VCFValidationUnavailable(
+            f"Unable to parse the installed bcftools version from {version_line!r}."
+        )
+    if expected_version and detected_version != expected_version:
+        raise VCFValidationUnavailable(
+            "bcftools version mismatch during VCF intake: "
+            f"expected {expected_version}, found {detected_version}. "
+            "The VCF was not accepted; restore the organization-approved toolchain and retry."
+        )
     try:
         completed = subprocess.run(
-            [executable, "view", "-Ov", "-o", "/dev/null", str(path)],
+            [executable, "view", "--no-version", "-Ov", "-o", "/dev/null", str(path)],
             capture_output=True,
             text=True,
             timeout=120,
@@ -121,8 +167,11 @@ def _bcftools_validate(path: Path) -> str | None:
             "retry after the laboratory execution issue is resolved."
         ) from exc
     if completed.returncode != 0:
-        return (completed.stderr or completed.stdout or "bcftools rejected the VCF").strip()
-    return None
+        return (
+            (completed.stderr or completed.stdout or "bcftools rejected the VCF").strip(),
+            version_line,
+        )
+    return None, version_line
 
 
 def validate_vcf(path: str | Path) -> ValidationResult:
@@ -130,6 +179,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     if classify_filename(p.name) != "VCF":
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
     fileformat: str | None = None
+    bcftools_version: str | None = None
     try:
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
@@ -164,14 +214,14 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
         strict_profile = validate_vcf_strict(p)
-        bcftools_error = _bcftools_validate(p)
+        bcftools_error, bcftools_version = _bcftools_validate(p)
         if bcftools_error:
             raise VCFValidationError(
                 "VCF structural validation failed in bcftools/htslib: "
                 + bcftools_error
             )
 
-        records = 0
+        parsed_variant_record_count = 0
         warnings: list[str] = []
         reference_only_records = strict_profile["reference_only_records"]
         telomere_records = strict_profile["telomere_records"]
@@ -195,8 +245,8 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                         for token in alt.split(",")
                     )
         for _ in parse_vcf(str(p), allow_unselected_multisample=True):
-            records += 1
-        if records == 0:
+            parsed_variant_record_count += 1
+        if parsed_variant_record_count == 0:
             if reference_only_records:
                 raise VCFValidationError(
                     "VCF contains no variant records: every row has ALT='.' (no alternate allele). "
@@ -245,9 +295,46 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 + ", ".join(unchecked_format_number_g)
                 + "."
             )
-        return ValidationResult("VALID", "VCF", records, headers[9:] if len(headers) > 9 else [], detected_build, [], warnings, strict_profile["fileformat"])
+        validation_metadata = {
+            "source_record_count": strict_profile["records"],
+            "alternate_allele_count": strict_profile["alternate_allele_count"],
+            "parsed_variant_record_count": parsed_variant_record_count,
+            "reference_only_record_count": reference_only_records,
+            "telomere_record_count": telomere_records,
+            "multiallelic_source_record_count": strict_profile["multiallelic_records"],
+            "symbolic_source_record_count": strict_profile["symbolic_records"],
+            "breakend_source_record_count": strict_profile["breakend_records"],
+            "gvcf_marker_count": strict_profile["gvcf_markers"],
+            "vcf45_reference_span_records": strict_profile["vcf45_reference_span_records"],
+            "vcf45_max_reference_end": strict_profile["vcf45_max_reference_end"],
+            "vcf45_reference_block_sample_count": strict_profile["vcf45_reference_block_sample_count"],
+            "base_modification_format_fields": strict_profile["base_modification_format_fields"],
+            "unchecked_info_number_g_fields": strict_profile["unchecked_info_number_g_fields"],
+            "unchecked_format_number_g_fields": strict_profile["unchecked_format_number_g_fields"],
+            "bcftools_version": bcftools_version,
+            "expected_bcftools_version": settings.bcftools_version,
+            "toolchain_validation_status": "PASS",
+        }
+        return ValidationResult(
+            "VALID",
+            "VCF",
+            strict_profile["records"],
+            headers[9:] if len(headers) > 9 else [],
+            detected_build,
+            [],
+            warnings,
+            strict_profile["fileformat"],
+            validation_metadata,
+        )
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
-        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat)
+        failure_metadata = None
+        if bcftools_version is not None:
+            failure_metadata = {
+                "bcftools_version": bcftools_version,
+                "expected_bcftools_version": settings.bcftools_version,
+                "toolchain_validation_status": "PASS",
+            }
+        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat, failure_metadata)
 
 
 def validate_index(

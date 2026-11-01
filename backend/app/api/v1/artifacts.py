@@ -285,6 +285,7 @@ async def upload_artifact(
                     "record_count": result.record_count, "sample_count": len(result.sample_names),
                     "sample_names": result.sample_names, "detected_build": result.detected_build,
                     "errors": result.errors, "warnings": result.warnings,
+                    **(result.metadata or {}),
                 },
                 "ingestion": {"file_kind": "VCF", "original_filename": filename, "capacity_preflight": capacity_preflight},
             }
