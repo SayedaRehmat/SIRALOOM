@@ -165,6 +165,24 @@ def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
     assert result["resolved_contig_aliases"] == {"NC_012920.1": "chrM"}
 
 
+def test_vcf_reference_validation_records_aliases_when_contig_header_is_absent(tmp_path: Path):
+    fasta = tmp_path / "reference-no-contig-header.fa"
+    fasta.write_text(">chrM\\nACGT\\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\\t4\\t6\\t4\\t5\\n", encoding="utf-8")
+    vcf = tmp_path / "mitochondrial-accession-no-contig-header.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "NC_012920.1\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_reference_alleles(vcf, fasta)
+
+    assert result["checked_record_count"] == 1
+    assert result["resolved_contig_aliases"] == {"NC_012920.1": "chrM"}
+
+
 def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(
     tmp_path: Path,
 ):
