@@ -16,6 +16,7 @@ from backend.app.infrastructure.db.models import (
     ClinicalIntakeRevision,
     Artifact,
     PhenotypeObservation,
+    PhenotypeObservationAmendment,
     PedigreeMember,
     PedigreeRelationship,
     Specimen,
@@ -49,6 +50,12 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         )
         .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
     ).all()
+    amendments = db.scalars(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id.in_([row.id for row in rows])
+        )
+    ).all() if rows else []
+    amendment_by_observation = {item.observation_id: item for item in amendments}
     context = case.clinical_context if isinstance(case.clinical_context, dict) else {}
     gene_disease_evidence = context.get("gene_disease_evidence") or []
     literature_evidence = context.get("literature_evidence") or []
@@ -199,7 +206,16 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         },
         "phenotype_observations": [
             {
+                "phenotype_id": str(row.id),
+                "case_id": str(row.case_id),
+                "analysis_id": str(row.analysis_id) if row.analysis_id else None,
                 "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
+                "record_lifecycle_status": amendment_by_observation[row.id].amendment_type if row.id in amendment_by_observation else "ACTIVE",
+                "amendment_id": str(amendment_by_observation[row.id].id) if row.id in amendment_by_observation else None,
+                "amendment_reason": amendment_by_observation[row.id].reason if row.id in amendment_by_observation else None,
+                "replacement_observation_id": str(amendment_by_observation[row.id].replacement_observation_id) if row.id in amendment_by_observation and amendment_by_observation[row.id].replacement_observation_id else None,
+                "amendment_recorded_by": str(amendment_by_observation[row.id].recorded_by) if row.id in amendment_by_observation else None,
+                "amendment_recorded_at": amendment_by_observation[row.id].recorded_at.isoformat() if row.id in amendment_by_observation else None,
                 "hpo_id": row.hpo_id,
                 "canonical_hpo_id": row.canonical_hpo_id,
                 "subject_member_id": str(row.subject_member_id) if row.subject_member_id else None,
@@ -266,6 +282,9 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
             or (row.get("clinical_attributes") is not None and not isinstance(row.get("clinical_attributes"), dict))
             or (row.get("ontology_resolution") is not None and not isinstance(row.get("ontology_resolution"), dict))
             or (row.get("subject_member_id") is not None and not isinstance(row.get("subject_member_id"), str))
+            or row.get("record_lifecycle_status", "ACTIVE") not in {"ACTIVE", "SUPERSEDED", "RETRACTED"}
+            or (row.get("record_lifecycle_status") == "SUPERSEDED" and not row.get("replacement_observation_id"))
+            or (row.get("record_lifecycle_status") == "RETRACTED" and not row.get("amendment_reason"))
         ):
             raise ValueError("Persisted clinical input snapshot contains an invalid phenotype row")
     return value
@@ -286,8 +305,8 @@ def patient_phenotype_observations(value: dict[str, Any]) -> list[dict[str, Any]
     }
     return [
         row for row in validated["phenotype_observations"]
-        if row.get("subject_member_id") is None
-        or str(row.get("subject_member_id")) in proband_ids
+        if row.get("record_lifecycle_status", "ACTIVE") == "ACTIVE"
+        and (row.get("subject_member_id") is None or str(row.get("subject_member_id")) in proband_ids)
     ]
 
 
@@ -302,7 +321,8 @@ def family_phenotype_observations(value: dict[str, Any]) -> list[dict[str, Any]]
     }
     return [
         row for row in validated["phenotype_observations"]
-        if row.get("subject_member_id") is not None
+        if row.get("record_lifecycle_status", "ACTIVE") == "ACTIVE"
+        and row.get("subject_member_id") is not None
         and str(row.get("subject_member_id")) not in proband_ids
     ]
 
