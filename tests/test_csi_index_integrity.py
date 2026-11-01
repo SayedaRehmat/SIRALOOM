@@ -90,12 +90,16 @@ def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
     _require_bcftools()
     source = tmp_path / "long-contig.vcf"
     bgzf = tmp_path / "long-contig.vcf.gz"
-    position = (1 << 29) + 1
+    positions = [1, (1 << 14) - 1, 1 << 14, (1 << 14) + 1,
+                 (1 << 29) - 1, 1 << 29, (1 << 29) + 1]
     source.write_text(
         "##fileformat=VCFv4.3\n"
-        f"##contig=<ID=1,length={position + 100}>\n"
+        f"##contig=<ID=1,length={(1 << 29) + 100}>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        f"1\t{position}\t.\tA\tG\t.\tPASS\t.\n",
+        + "".join(
+            f"1\t{position}\t.\tA\tG\t.\tPASS\t.\n"
+            for position in positions
+        ),
         encoding="utf-8",
     )
     _compress_and_index(source, bgzf)
@@ -107,5 +111,5 @@ def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
 
     assert result["status"] == "VALIDATED"
     assert result["index_type"] == "CSI"
-    assert result["concordance"]["records"] == 1
-    assert result["concordance"]["indexed_query_records_verified"] == 1
+    assert result["concordance"]["records"] == len(positions)
+    assert result["concordance"]["indexed_query_records_verified"] == len(positions)
