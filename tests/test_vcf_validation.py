@@ -1796,3 +1796,47 @@ def test_duplicate_alt_entries_are_not_rejected_by_legacy_version_contracts(vers
     _chrom, _position, observed = _validate_record(fields, 1, None, version)
 
     assert observed == ["C", "C"]
+
+
+def test_variable_number_info_fields_still_validate_declared_value_type(tmp_path: Path):
+    path = tmp_path / "variable-number-info-invalid-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=CUSTOM,Number=.,Type=Integer,Description="Variable integer list">'],
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tCUSTOM=1,not-an-integer\\n",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_variable_number_format_fields_still_validate_declared_value_type(tmp_path: Path):
+    path = tmp_path / "variable-number-format-invalid-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=CUSTOM,Number=.,Type=Integer,Description="Variable integer list">'],
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tCUSTOM\\t1,not-an-integer\\n",
+        sample=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_unresolved_number_g_fields_still_validate_declared_value_type(tmp_path: Path):
+    path = tmp_path / "unresolved-number-g-invalid-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tPL\\t0,not-an-integer\\n",
+        sample=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
