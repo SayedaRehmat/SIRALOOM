@@ -1224,3 +1224,42 @@ def test_source_child_reconciliation_rejects_original_locus_or_ref_mapping_drift
 
     with pytest.raises(VCFToolError, match="source ALT mapping"):
         _validate_source_child_reconciliation(Path(routed["sequence_path"]), mutated)
+
+
+def test_bgzf_gzi_index_accepts_well_formed_monotonic_offsets(tmp_path: Path):
+    import struct
+
+    from backend.app.domain.vcf_tools import _validate_gzi_index
+
+    bgzf = tmp_path / "reference.fa.gz"
+    bgzf.write_bytes(b"x" * 128)
+    gzi = tmp_path / "reference.fa.gz.gzi"
+    gzi.write_bytes(
+        struct.pack("<Q", 2)
+        + struct.pack("<QQ", 32, 65536)
+        + struct.pack("<QQ", 64, 131072)
+    )
+    result = _validate_gzi_index(gzi, bgzf)
+    assert result == {"entry_count": 2, "size_bytes": 40}
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        b"\\x01\\x00\\x00",  # truncated count header
+        __import__("struct").pack("<Q", 1),  # missing offset pair
+        __import__("struct").pack("<Q", 1) + __import__("struct").pack("<QQ", 128, 65536),
+        __import__("struct").pack("<Q", 2)
+        + __import__("struct").pack("<QQ", 32, 65536)
+        + __import__("struct").pack("<QQ", 16, 131072),
+    ],
+)
+def test_bgzf_gzi_index_rejects_truncated_or_invalid_offsets(tmp_path: Path, payload: bytes):
+    from backend.app.domain.vcf_tools import VCFToolError, _validate_gzi_index
+
+    bgzf = tmp_path / "reference.fa.gz"
+    bgzf.write_bytes(b"x" * 128)
+    gzi = tmp_path / "reference.fa.gz.gzi"
+    gzi.write_bytes(payload)
+    with pytest.raises(VCFToolError):
+        _validate_gzi_index(gzi, bgzf)
