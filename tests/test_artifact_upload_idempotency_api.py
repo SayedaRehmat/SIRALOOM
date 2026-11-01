@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+import backend.app.api.v1.artifacts as artifacts_api
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.ingestion import ValidationResult
 from backend.app.infrastructure.artifacts.store import ArtifactStore
@@ -23,8 +24,6 @@ from backend.app.infrastructure.db.models import (
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.main import app
-import backend.app.api.v1.artifacts as artifacts_api
-
 
 @pytest.fixture
 def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
