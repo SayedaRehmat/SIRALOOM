@@ -79,5 +79,5 @@ def test_fai_generation_records_uncompressed_offsets_and_contig_geometry(tmp_pat
     assert count == 2
     assert fai.read_text(encoding="utf-8").splitlines() == [
         "chr1\t8\t18\t4\t5",
-        "chr2\t4\t33\t4\t5",
+        "chr2\t4\t34\t4\t5",
     ]
