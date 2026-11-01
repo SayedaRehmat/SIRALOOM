@@ -1671,7 +1671,7 @@ def test_vcf45_empty_laa_cannot_describe_called_alt_genotype(tmp_path: Path):
         ('##FORMAT=<ID=GT,Number=2,Type=String,Description="Genotype">', "FORMAT", "GT"),
         ('##FORMAT=<ID=PSL,Number=P,Type=Integer,Description="Phase set list">', "FORMAT", "PSL"),
         ('##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">', "INFO", "AF"),
-        ('##INFO=<ID=DB,Number=1,Type=Flag,Description="dbSNP membership">', "INFO", "DB"),
+        ('##INFO=<ID=DP,Number=1,Type=Float,Description="Read depth">', "INFO", "DB"),
         ('##INFO=<ID=MQ,Number=1,Type=Integer,Description="RMS mapping quality">', "INFO", "MQ"),
     ],
 )
