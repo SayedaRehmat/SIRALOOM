@@ -138,10 +138,11 @@ The following are not software-only tasks. They require an authorized laboratory
 
 ## 8. Evidence snapshot and release boundary
 
-- Main branch inspected: `9c03133ebe11bc8fab28869f87a85964e2b6e4d0`.
-- Existing main CI run: [#41305303496](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41305303496), previously reported successful with backend, frontend, PostgreSQL/Celery integration, and production-container checks.
-- Focused conformance work: [PR #263](https://github.com/SayedaRehmat/SIRALOOM/pull/263), which carries the VCFv4.5 conformance changes from PR #262 plus fixes for the two backend regressions found in PR #262's CI. It remains separate from main until the combined checks pass and is not a release qualification.
-- Existing GIAB runner and metric semantics corrections are merged in PRs #260 and #261. No real GIAB result is asserted by those code changes.
+- Main branch inspected: `82ec3fdef76a6ebec5567fe5bfb4f2c8d29a3dd7` (2026-11-01).
+- Main CI run: [#41316998289](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41316998289), successful for backend, frontend, and PostgreSQL integration at the inspected main commit.
+- VCFv4.5 conformance changes from [PR #263](https://github.com/SayedaRehmat/SIRALOOM/pull/263) are merged in commit `2cb159a8a05ca2a39ccee752b385b6067eaeaf15`. The earlier [PR #262](https://github.com/SayedaRehmat/SIRALOOM/pull/262) is superseded; it is not an outstanding implementation branch.
+- GIAB small-variant concordance implementation and metric-semantics corrections are merged in [PR #260](https://github.com/SayedaRehmat/SIRALOOM/pull/260) and [PR #261](https://github.com/SayedaRehmat/SIRALOOM/pull/261). Sample/reference identity, BED interval, FAI geometry, and private sample-mapping evidence hardening is merged in [PR #265](https://github.com/SayedaRehmat/SIRALOOM/pull/265). These code changes provide an executable benchmark path; they do not assert that a real GIAB or laboratory sample run has been completed.
+- Generic sample-ploidy-derived `Number=G` cardinality regression coverage for haploid through tetraploid genotypes is merged in [PR #266](https://github.com/SayedaRehmat/SIRALOOM/pull/266). The follow-on [PR #267](https://github.com/SayedaRehmat/SIRALOOM/pull/267) adds PL/GL/GP field-specific coverage; it is pending CI and is not included in this main snapshot.
 - The release gate remains [issue #171](https://github.com/SayedaRehmat/SIRALOOM/issues/171). Its controlled deployed end-to-end workflow, recovery, scientific benchmark, and deployment/security evidence are not replaced by this parser audit.
 
 **Release decision: NOT CLINICALLY QUALIFIED.** The repository contains substantial VCF software-conformance and recovery work, but this audit does not establish that every optional feature of every VCF version/caller is supported, that all standards clauses have been met, that a laboratory's complete assay is analytically validated, or that the system is accredited. Every remaining requirement must stay marked PARTIAL, NOT TESTED, BLOCKED, or NOT APPLICABLE until evidence changes its status.

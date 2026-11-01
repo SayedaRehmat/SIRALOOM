@@ -448,7 +448,11 @@ def test_info_number_a_and_r_cardinality_is_checked_for_multiallelic_records(tmp
 
 
 @pytest.mark.parametrize(
-    ("genotype", "pl_values", "expected_count"),
+    ("field_id", "field_type"),
+    [("PL", "Integer"), ("GL", "Float"), ("GP", "Float")],
+)
+@pytest.mark.parametrize(
+    ("genotype", "values", "expected_count"),
     [
         # Number=G cardinality is C(number_of_alleles + ploidy - 1, ploidy).
         # Three alleles (REF + two ALT): haploid=3, diploid=6,
@@ -460,21 +464,31 @@ def test_info_number_a_and_r_cardinality_is_checked_for_multiallelic_records(tmp
     ],
 )
 def test_format_number_g_cardinality_uses_sample_ploidy(
-    tmp_path: Path, genotype: str, pl_values: str, expected_count: int,
+    tmp_path: Path,
+    field_id: str,
+    field_type: str,
+    genotype: str,
+    values: str,
+    expected_count: int,
 ):
-    path = tmp_path / "format-number-g.vcf"
+    # GP is a probability vector: use finite values in [0, 1] that sum to 1.
+    # PL and GL fixtures intentionally test cardinality/type, not calibration.
+    if field_id == "GP":
+        values = ",".join([f"{1 / expected_count:.8f}"] * expected_count)
+
+    path = tmp_path / f"format-number-g-{field_id}.vcf"
     write_vcf_with_metadata(
         path,
         [
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
-            '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">',
+            f'##FORMAT=<ID={field_id},Number=G,Type={field_type},Description="Genotype likelihood/probability values">',
         ],
-        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t{genotype}:{pl_values}\n",
+        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:{field_id}\t{genotype}:{values}\n",
         sample=True,
     )
 
     assert validate_vcf_strict(path)["records"] == 1
-    assert len(pl_values.split(",")) == expected_count
+    assert len(values.split(",")) == expected_count
 
 
 def test_format_number_r_rejects_wrong_per_sample_allele_count(tmp_path: Path):
