@@ -281,11 +281,10 @@ The Stage-1 scale benchmark measures SIRALOOM's intake/normalization performance
 
 For each SNP/INDEL × ALL/PASS stratum the runner records:
 
-- TP = hap.py `TRUTH.TP`;
-- FN = hap.py `TRUTH.FN`;
-- FP = hap.py `QUERY.FP`;
-- recall = TP / (TP + FN);
-- precision = TP / (TP + FP);
+- Truth TP = hap.py `TRUTH.TP`; query TP = hap.py `QUERY.TP`;
+- FN = hap.py `TRUTH.FN`; FP = hap.py `QUERY.FP`;
+- recall = `TRUTH.TP / (TRUTH.TP + TRUTH.FN)`;
+- precision = `QUERY.TP / (QUERY.TP + QUERY.FP)`;
 - F1 = harmonic mean of precision and recall;
 - descriptive 95% Wilson intervals for precision and recall.
 
