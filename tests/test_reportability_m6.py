@@ -49,7 +49,7 @@ def test_evaluate_creates_first_class_decision():
     db.commit()
     assert len(created) == 1
     assert created[0].disposition == "REVIEW"
-    assert created[0].policy_version == "2.1.0"
+    assert created[0].policy_version == "2.2.0"
     assert created[0].priority_score is None
     assert created[0].priority_band is None
     assert "classification alone does not determine reportability" in created[0].reasons[0]
