@@ -338,7 +338,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         return ValidationResult(
             "VALID",
             "VCF",
-            strict_profile["records"],
+            parsed_variant_record_count,
             headers[9:] if len(headers) > 9 else [],
             detected_build,
             [],

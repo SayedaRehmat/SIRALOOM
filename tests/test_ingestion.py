@@ -843,7 +843,7 @@ def test_vcf_validation_separates_source_records_from_alternate_alleles(tmp_path
     result = ingestion.validate_vcf(path)
 
     assert result.status == "VALID"
-    assert result.record_count == 1
+    assert result.record_count == 2
     assert result.metadata["source_record_count"] == 1
     assert result.metadata["alternate_allele_count"] == 2
     assert result.metadata["parsed_variant_record_count"] == 2
