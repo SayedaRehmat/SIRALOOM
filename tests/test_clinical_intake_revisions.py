@@ -119,8 +119,11 @@ def test_clinical_intake_revision_fingerprint_is_deterministic_and_version_sensi
         referral_indication="Developmental delay",
         clinical_summary="Updated referral summary",
     )
-    assert clinical_intake_fingerprint(base) == clinical_intake_fingerprint(same)
-    assert clinical_intake_fingerprint(base) != clinical_intake_fingerprint(changed)
+    actor_a = uuid4()
+    actor_b = uuid4()
+    assert clinical_intake_fingerprint(base, actor_a) == clinical_intake_fingerprint(same, actor_a)
+    assert clinical_intake_fingerprint(base, actor_a) != clinical_intake_fingerprint(changed, actor_a)
+    assert clinical_intake_fingerprint(base, actor_a) != clinical_intake_fingerprint(base, actor_b)
 
 
 def test_clinical_intake_revision_migration_creates_versioned_append_only_table(tmp_path, monkeypatch):

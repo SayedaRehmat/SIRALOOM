@@ -57,5 +57,14 @@ def upgrade():
 
 
 def downgrade():
+    connection = op.get_bind()
+    revision_count = connection.execute(
+        sa.text("SELECT COUNT(*) FROM clinical_intake_revisions")
+    ).scalar_one()
+    if revision_count:
+        raise RuntimeError(
+            "Refusing to downgrade clinical intake revisions: this would destroy "
+            "recorded clinical context and review attestations."
+        )
     op.drop_index("ix_clinical_intake_revisions_case_version", table_name="clinical_intake_revisions")
     op.drop_table("clinical_intake_revisions")

@@ -158,8 +158,9 @@ def _revision_context(body: ClinicalIntakeInput) -> dict[str, Any]:
     })
 
 
-def clinical_intake_fingerprint(body: ClinicalIntakeInput) -> str:
+def clinical_intake_fingerprint(body: ClinicalIntakeInput, recorded_by: UUID | None = None) -> str:
     material = {
+        "recorded_by": str(recorded_by) if recorded_by is not None else None,
         "intake_status": body.intake_status,
         "phenotype_review_status": body.phenotype_review_status,
         "family_history_review_status": body.family_history_review_status,
@@ -311,7 +312,7 @@ def create_case_clinical_intake_revision(
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
 
-    fingerprint = clinical_intake_fingerprint(body)
+    fingerprint = clinical_intake_fingerprint(body, principal.user_id)
     existing = db.scalar(
         select(ClinicalIntakeRevision).where(
             ClinicalIntakeRevision.case_id == case.id,
