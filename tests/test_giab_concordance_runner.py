@@ -174,7 +174,7 @@ def test_bed_regions_must_match_reference_contigs_and_bounds(tmp_path: Path, bed
 
 def test_bed_regions_report_validated_interval_counts_and_hash(tmp_path: Path) -> None:
     path = tmp_path / "valid.bed"
-    path.write_text("chr1\\t0\\t10\\nchr1\\t20\\t30\\n", encoding="utf-8")
+    path.write_text("chr1\t0\t10\nchr1\t20\t30\n", encoding="utf-8")
 
     result = validate_bed_file(path, contig_lengths={"chr1": 1000}, label="Test BED")
 
@@ -197,7 +197,7 @@ def test_parse_happy_summary_rejects_incomplete_variant_type_coverage(tmp_path: 
 def test_reference_fai_must_match_fasta_geometry(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     Path(str(inputs["reference_fasta"]) + ".fai").write_text(
-        "chr1\\t999\\t6\\t999\\t1000\\n", encoding="utf-8"
+        "chr1\t999\t6\t999\t1000\n", encoding="utf-8"
     )
 
     with pytest.raises(ConcordanceError, match="FASTA and FAI geometry are inconsistent"):
