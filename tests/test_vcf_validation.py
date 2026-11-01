@@ -1867,6 +1867,34 @@ def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp
     assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
 
 
+def test_vcf45_imprecise_requires_cipos_for_precise_alt_but_allows_unspecified_symbolic_sv(tmp_path: Path):
+    missing_cipos = tmp_path / "vcf45-imprecise-precise-alt-missing-cipos.vcf"
+    write_vcf(
+        missing_cipos,
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tIMPRECISE\\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(missing_cipos)
+    assert exc.value.code == "VCF_SV_IMPRECISE_CIPOS_MISSING"
+
+    explicit_precise_cipos = tmp_path / "vcf45-imprecise-precise-alt-explicit-cipos.vcf"
+    write_vcf(
+        explicit_precise_cipos,
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tIMPRECISE;CIPOS=0,0\\n",
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(explicit_precise_cipos)["records"] == 1
+
+    unspecified_symbolic_sv = tmp_path / "vcf45-imprecise-symbolic-sv-unspecified-cipos.vcf"
+    write_vcf(
+        unspecified_symbolic_sv,
+        "1\\t100\\t.\\tN\\t<DEL>\\t.\\tPASS\\tIMPRECISE;SVTYPE=DEL;END=110\\n",
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(unspecified_symbolic_sv)["records"] == 1
+
+
 def test_vcf45_ciend_must_be_missing_for_non_symbolic_alleles(tmp_path: Path):
     path = tmp_path / "vcf45-ciend-on-sequence-allele.vcf"
     write_vcf(path, "1\t2\t.\tA\tC\t.\tPASS\tCIEND=-1,1\n", version="VCFv4.5")
