@@ -1,6 +1,9 @@
 name: Public GIAB VCF qualification
 
 on:
+  push:
+    branches:
+      - feat/giab-public-benchmark-workflow
   workflow_dispatch:
     inputs:
       reference_build:
@@ -28,7 +31,7 @@ concurrency:
 jobs:
   qualification:
     name: HG001 ${{ matrix.build }} public benchmark
-    if: inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    if: github.event_name == 'push' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
@@ -101,7 +104,7 @@ jobs:
             --reference-fasta "$FASTA" \
             --reference-build "${{ matrix.build }}" \
             --output-dir "$RUNNER_TEMP/giab-${{ matrix.build }}/evidence/scale" \
-            --timeout-seconds "${{ inputs.timeout_seconds }}"
+            --timeout-seconds "${{ inputs.timeout_seconds || '14400' }}"
 
       - name: Assemble immutable run provenance
         if: always()
