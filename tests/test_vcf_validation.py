@@ -604,14 +604,12 @@ def test_structured_header_ids_are_unique_per_type(tmp_path: Path):
 )
 def test_info_number_g_with_mixed_sample_ploidy_is_explicitly_unchecked(tmp_path: Path):
     path = tmp_path / "info-number-g-mixed-ploidy.vcf"
-    write_vcf_with_metadata(
-        path,
-        ['##INFO=<ID=IG,Number=G,Type=Float,Description="Genotype-indexed site values">'],
-        (
-            "1\t2\t.\tA\tC,G\t.\tPASS\tIG=0.1,0.2,0.3,0.1,0.1,0.2"
-            "\tGT\t1\t0/1\n"
-        ),
-        sample=True,
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=IG,Number=G,Type=Float,Description="Genotype-indexed site values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHAPLOID\tDIPLOID\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\tIG=0.1,0.2,0.3,0.1,0.1,0.2\tGT\t1\t0/1\n",
+        encoding="utf-8",
     )
 
     result = validate_vcf_strict(path)
