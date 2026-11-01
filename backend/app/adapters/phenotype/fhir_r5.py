@@ -154,7 +154,6 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
     context = _get(revision, "context", {}) or {}
     children: list[dict[str, Any]] = []
     for field, url in (
-        ("revision_id", "revision-id"),
         ("revision_fingerprint", "revision-fingerprint"),
         ("intake_status", "intake-status"),
         ("phenotype_review_status", "phenotype-review-status"),
@@ -249,7 +248,33 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
     }
 
 
-def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[str, Any]:
+def _safe_ontology_resolution(resolution: Any) -> Any:
+    if not isinstance(resolution, dict):
+        return resolution
+    safe = json.loads(json.dumps(resolution))
+    resource = safe.get("resource")
+    if isinstance(resource, dict):
+        for key in ("resource_id", "qualification_id", "execution_id", "provider_id"):
+            resource.pop(key, None)
+    return safe
+
+
+def _observation_resource_id(case: Any, row: Any, index: int) -> str:
+    fingerprint = _get(row, "record_fingerprint")
+    identity = str(fingerprint) if fingerprint else f"{index}:{_get(row, 'hpo_id')}:{_get(row, 'phenotype_status')}"
+    return str(uuid5(
+        NAMESPACE_URL,
+        f"siraloom:fhir-r5:phenotype-observation:{_get(case, 'id')}:{identity}",
+    ))
+
+
+def _observation(
+    row: Any,
+    *,
+    patient_id: str,
+    relative_id: str | None,
+    observation_id: str,
+) -> dict[str, Any]:
     status = str(_get(row, "phenotype_status", "PRESENT")).upper()
     if status not in {"PRESENT", "ABSENT", "EXCLUDED", "UNKNOWN", "NOT_ASSESSED"}:
         raise FHIRExportError(f"Unsupported phenotype status {status!r}.")
@@ -257,10 +282,10 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
     code, display = _hpo_code(row)
     resource: dict[str, Any] = {
         "resourceType": "Observation",
-        "id": str(_get(row, "id")),
+        "id": observation_id,
         "identifier": [{
             "system": "https://siraloom.org/identifier/phenotype-observation",
-            "value": str(_get(row, "id")),
+            "value": str(_get(row, "record_fingerprint") or observation_id),
         }],
         "status": "preliminary",
         "code": {"coding": [_coding(HPO_SYSTEM, code, display)]},
@@ -322,21 +347,17 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
     resource["extension"].append(_extension(
         "ontology-resolution-detail",
         "valueString",
-        json.dumps(resolution, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+        json.dumps(_safe_ontology_resolution(resolution), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
     ))
     if _get(row, "record_fingerprint"):
         resource["extension"].append(
             _extension("record-fingerprint", "valueString", str(_get(row, "record_fingerprint")))
         )
-    if _get(row, "analysis_id"):
-        resource["extension"].append(
-            _extension("analysis-id", "valueString", str(_get(row, "analysis_id")))
-        )
     if isinstance(resolution, dict) and resolution.get("resource"):
         resource["extension"].append(_extension(
             "ontology-resource-provenance",
             "valueString",
-            json.dumps(resolution["resource"], sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+            json.dumps(_safe_ontology_resolution({"resource": resolution["resource"]})["resource"], sort_keys=True, separators=(",", ":"), ensure_ascii=False),
         ))
     evidence = _get(row, "evidence", {}) or {}
     if evidence:
@@ -385,13 +406,26 @@ def build_fhir_r5_bundle(
         raise FHIRExportError("FHIR family export requires exactly one explicitly designated proband.")
 
     proband = probands[0] if probands else None
-    patient_id = str(_get(proband, "id")) if proband else str(_get(case, "id"))
+    patient_seed = (
+        f"proband:{_get(case, 'id')}:{_get(proband, 'id')}"
+        if proband else f"case:{_get(case, 'id')}"
+    )
+    patient_id = str(uuid5(NAMESPACE_URL, f"siraloom:fhir-r5:patient:{patient_seed}"))
+    proband_member_id = str(_get(proband, "id")) if proband else None
+    related_person_ids = {
+        str(_get(member, "id")): str(uuid5(
+            NAMESPACE_URL,
+            f"siraloom:fhir-r5:related-person:{_get(case, 'id')}:{_get(member, 'id')}",
+        ))
+        for member in members
+        if proband and str(_get(member, "id")) != proband_member_id
+    }
     patient: dict[str, Any] = {
         "resourceType": "Patient",
         "id": patient_id,
         "identifier": [{
-            "system": "https://siraloom.org/identifier/case",
-            "value": str(_get(case, "id")),
+            "system": "https://siraloom.org/identifier/case-pseudonym",
+            "value": patient_id,
         }],
     }
     if proband:
@@ -448,9 +482,10 @@ def build_fhir_r5_bundle(
         for member in members:
             if str(_get(member, "id")) == patient_id:
                 continue
-            relative_id = str(_get(member, "id"))
-            relative_ids.add(relative_id)
-            member_references[relative_id] = f"RelatedPerson/{relative_id}"
+            member_key = str(_get(member, "id"))
+            relative_id = related_person_ids[member_key]
+            relative_ids.add(member_key)
+            member_references[member_key] = f"RelatedPerson/{relative_id}"
             related: dict[str, Any] = {
                 "resourceType": "RelatedPerson",
                 "id": relative_id,
@@ -496,7 +531,7 @@ def build_fhir_r5_bundle(
             patient if str(_get(member, "id")) == patient_id
             else next(resource for resource in resources
                       if resource.get("resourceType") == "RelatedPerson"
-                      and resource.get("id") == str(_get(member, "id")))
+                      and resource.get("id") == related_person_ids[str(_get(member, "id"))])
         )
         for member in members
     }
@@ -531,16 +566,21 @@ def build_fhir_r5_bundle(
                 ],
             })
 
-    for row in rows:
+    observation_ids: list[str] = []
+    for index, row in enumerate(rows):
         subject_member_id = _get(row, "subject_member_id")
-        relative_id = (
-            str(subject_member_id)
-            if subject_member_id is not None and str(subject_member_id) != patient_id
-            else None
-        )
-        if relative_id and relative_id not in relative_ids:
+        member_key = str(subject_member_id) if subject_member_id is not None else None
+        if member_key is not None and member_key != proband_member_id and member_key not in relative_ids:
             raise FHIRExportError("A family phenotype does not resolve to an exported RelatedPerson.")
-        resources.append(_observation(row, patient_id=patient_id, relative_id=relative_id))
+        relative_id = related_person_ids.get(member_key) if member_key is not None and member_key != proband_member_id else None
+        observation_id = _observation_resource_id(case, row, index)
+        observation_ids.append(observation_id)
+        resources.append(_observation(
+            row,
+            patient_id=patient_id,
+            relative_id=relative_id,
+            observation_id=observation_id,
+        ))
 
     organization_id = str(uuid5(NAMESPACE_URL, "siraloom:fhir-r5:organization"))
     organization = {
@@ -568,8 +608,7 @@ def build_fhir_r5_bundle(
         }],
     })
     recorded = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-    for row in rows:
-        observation_id = str(_get(row, "id"))
+    for observation_id in observation_ids:
         provenance_id = str(uuid5(NAMESPACE_URL, f"siraloom:fhir-r5:export:{observation_id}"))
         resources.append({
             "resourceType": "Provenance",
