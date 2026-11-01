@@ -1840,3 +1840,66 @@ def test_unresolved_number_g_fields_still_validate_declared_value_type(tmp_path:
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp_path: Path):
+    valid = tmp_path / "vcf45-cipos-valid.vcf"
+    write_vcf(valid, "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\tCIPOS=-2,2,0,0\\n", version="VCFv4.5")
+
+    profile = validate_vcf_strict(valid)
+    assert profile["records"] == 1
+
+    invalid = tmp_path / "vcf45-cipos-invalid.vcf"
+    write_vcf(invalid, "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tCIPOS=1,2\\n", version="VCFv4.5")
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
+
+
+def test_vcf45_ciend_must_be_missing_for_non_symbolic_alleles(tmp_path: Path):
+    path = tmp_path / "vcf45-ciend-on-sequence-allele.vcf"
+    write_vcf(path, "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tCIEND=-1,1\\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
+
+
+def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality(tmp_path: Path):
+    valid = tmp_path / "vcf45-meinfo-empty-values.vcf"
+    write_vcf(
+        valid,
+        "1\\t100\\t.\\tN\\t<INS>\\t.\\tPASS\\tSVTYPE=INS;END=110;MEINFO=,,,\\n",
+        version="VCFv4.5",
+    )
+    profile = validate_vcf_strict(valid)
+    assert profile["records"] == 1
+
+    invalid = tmp_path / "vcf45-meinfo-wrong-cardinality.vcf"
+    write_vcf(
+        invalid,
+        "1\\t100\\t.\\tN\\t<INS>\\t.\\tPASS\\tSVTYPE=INS;END=110;MEINFO=foo,bar\\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_SV_INFO_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        '##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval">',
+        '##INFO=<ID=MEINFO,Number=A,Type=String,Description="Mobile element information">',
+        '##INFO=<ID=IMPRECISE,Number=1,Type=Flag,Description="Imprecise structural variation">',
+    ],
+)
+def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path, metadata: str):
+    path = tmp_path / "vcf45-invalid-structural-info-definition.vcf"
+    write_vcf_with_metadata(path, [metadata], "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
