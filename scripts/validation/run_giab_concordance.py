@@ -396,6 +396,7 @@ def run_concordance(
             "query_sample_column_verified": True,
             "sample_identifiers_recorded": False,
         },
+        "sample_identifiers_recorded": False,
         "filter_policy": "PASS_ONLY" if pass_only else "ALL_FILTER_STATES_REPORTED",
         "metrics": metrics,
         "source_artifacts": {
