@@ -800,6 +800,61 @@ def _validate_structural_alt(alt: str, *, alt_index: int, alts: list[str], info:
         )
 
 
+def _validate_vcf45_structural_info(
+    info: dict[str, str | None],
+    alts: list[str],
+    line_no: int,
+) -> None:
+    """Validate VCFv4.5 reserved structural-variant INFO list semantics."""
+    for key in ("CIPOS", "CIEND"):
+        raw_value = info.get(key)
+        if raw_value in {None, "."}:
+            continue
+        values = raw_value.split(",")
+        if len(values) != 2 * len(alts):
+            raise StrictVCFValidationError(
+                f"INFO/{key} requires two offsets per ALT allele at line {line_no}",
+                code="VCF_SV_INFO_CARDINALITY_INVALID",
+            )
+        for alt_index, alternate in enumerate(alts):
+            lower, upper = values[2 * alt_index : 2 * alt_index + 2]
+            if lower == "." or upper == ".":
+                if lower != upper:
+                    raise StrictVCFValidationError(
+                        f"INFO/{key} interval must provide both offsets or both missing values at line {line_no}",
+                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                    )
+                continue
+            lower_offset, upper_offset = int(lower), int(upper)
+            if key == "CIPOS" and (lower_offset > 0 or upper_offset < 0):
+                raise StrictVCFValidationError(
+                    f"INFO/CIPOS interval must span zero at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+            if key == "CIEND":
+                symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
+                if not symbolic_sv:
+                    raise StrictVCFValidationError(
+                        f"INFO/CIEND must be missing for non-symbolic structural alleles at line {line_no}",
+                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                    )
+                if lower_offset > 0 or upper_offset < 0:
+                    raise StrictVCFValidationError(
+                        f"INFO/CIEND interval must extend on both sides of zero at line {line_no}",
+                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                    )
+
+    for key in ("MEINFO", "METRANS"):
+        raw_value = info.get(key)
+        if raw_value in {None, "."}:
+            continue
+        if len(raw_value.split(",")) != 4 * len(alts):
+            raise StrictVCFValidationError(
+                f"INFO/{key} requires four values per ALT allele at line {line_no}",
+                code="VCF_SV_INFO_CARDINALITY_INVALID",
+            )
+
+
 def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int] | None:
     prefix = 0
     while prefix < min(len(ref), len(alt)) and ref[prefix] == alt[prefix]:
@@ -1307,6 +1362,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
                         ),
                     )
+            if fileformat == "VCFv4.5":
+                _validate_vcf45_structural_info(info_values, alts, line_no)
             breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
             if breakend_alts:
                 if info_values.get("SVTYPE") != "BND":
