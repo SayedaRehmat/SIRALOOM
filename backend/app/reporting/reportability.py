@@ -13,7 +13,7 @@ from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Analysis, Classification, ReportabilityDecision
 
 POLICY_NAME = "SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY"
-POLICY_VERSION = "2.1.0"
+POLICY_VERSION = "2.2.0"
 DISPOSITIONS = {"REPORT", "DO_NOT_REPORT", "REVIEW"}
 STATUSES = {"PROPOSED", "FINAL"}
 
@@ -223,7 +223,12 @@ def finalize_reportability(
 
 
 def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[str]:
-    """Block first-product sign-out while second-product variant classes remain uninterpreted."""
+    """Return unresolved review flags that apply within the first-product report scope.
+
+    CNV, SV, mitochondrial, and repeat-expansion artifacts are out of scope for
+    the first product and are intentionally non-blocking for an SNV/INDEL
+    report. They remain retained for provenance and are never interpreted here.
+    """
     artifact_rows = db.execute(
         select(Artifact.id, Artifact.artifact_type, Artifact.metadata_json)
         .where(Artifact.analysis_id == analysis_id)
@@ -232,15 +237,17 @@ def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[
     errors: list[str] = []
     for artifact_id, artifact_type, raw_metadata in artifact_rows:
         metadata = raw_metadata if isinstance(raw_metadata, dict) else {}
-        is_second_product_artifact = artifact_type in SECOND_PRODUCT_ARTIFACT_REASON_CODES
-        requires_specialized_review = metadata.get("review_status") == "REQUIRES_SPECIALIZED_REVIEW"
-        if not is_second_product_artifact and not requires_specialized_review:
+        # The first product has a fixed SNV/INDEL analytical scope. Other
+        # routed variant classes are explicitly outside that scope; their
+        # presence must not prevent completion or sign-out of the supported
+        # SNV/INDEL report. They remain preserved as traceable source artifacts.
+        if artifact_type in SECOND_PRODUCT_ARTIFACT_REASON_CODES:
             continue
-        reason_code = (
-            SECOND_PRODUCT_ARTIFACT_REASON_CODES.get(artifact_type)
-            or metadata.get("review_reason_code")
-            or "REQUIRES_SPECIALIZED_REVIEW"
-        )
+
+        requires_specialized_review = metadata.get("review_status") == "REQUIRES_SPECIALIZED_REVIEW"
+        if not requires_specialized_review:
+            continue
+        reason_code = metadata.get("review_reason_code") or "REQUIRES_SPECIALIZED_REVIEW"
         errors.append(
             f"{artifact_type} artifact {artifact_id} requires specialized pipeline/review "
             f"({reason_code}); the separately qualified specialized-variant product is required before reportability can be finalized"
