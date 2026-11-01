@@ -106,6 +106,7 @@ def test_specimen_ploidy_evidence_migration_rejects_update_and_delete(tmp_path, 
             "'{\"X_NON_PAR\":1}', :reviewer, CURRENT_TIMESTAMP, :recorder, :audit)"
         ), {
             "id": str(uuid4()), "specimen": str(specimen_id), "fingerprint": "a" * 64,
+            "region_copy_number": '{"X_NON_PAR": 1}',
             "reviewer": str(user_id), "recorder": str(user_id), "audit": str(audit_id),
         })
     with engine.begin() as connection:
