@@ -1563,13 +1563,14 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             code="VCF_PHASE_SET_INVALID",
                         )
                 if gt_index is None:
-                    # GT is optional in VCF. Number=G cardinality depends on
-                    # ploidy, so do not silently impose a diploid assumption
-                    # when the record supplies no genotype from which to derive it.
-                    genotype_ploidy = None
-                elif gt_index >= len(sample_values) or sample_values[gt_index] == ".":
+                    # The VCF specification defines diploidy as the default
+                    # when a Number=G FORMAT field is present without GT.
+                    genotype_ploidy = 2
+                elif gt_index >= len(sample_values) or sample_values[gt_index] == "":
                     genotype_ploidy = None
                 else:
+                    # A missing GT value still carries ploidy: "." is haploid,
+                    # "./." is diploid, and so on.
                     genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
                 local_allele_count: int | None = None
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
