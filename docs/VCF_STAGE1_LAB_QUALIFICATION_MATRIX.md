@@ -308,6 +308,9 @@ python scripts/validation/run_giab_concordance.py \
   --target-regions /controlled/assay/capture-design-v3.bed \
   --caller approved-caller \
   --caller-version 4.2.1 \
+  --truth-set-id GIAB-HG002-GRCh38 \
+  --truth-set-version 4.2.1 \
+  --acceptance-policy-id LAB-APPROVED-SNV-INDEL-001 \
   --engine xcmp \
   --threads 8 \
   --output-dir /controlled/evidence/HG002-WES-GRCh38-run-001
