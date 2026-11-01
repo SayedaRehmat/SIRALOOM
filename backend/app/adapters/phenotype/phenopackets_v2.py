@@ -343,6 +343,39 @@ def build_phenopackets_v2(
     ):
         raise PhenopacketExportError("A phenotype observation references a family member outside this case.")
     warnings = _collect_loss_warnings(rows, clinical_intake_revision)
+    for member in members:
+        member_identifier = _member_id(member)
+        if _value(member, "relationship_to_proband"):
+            warnings.append({
+                "observation_id": member_identifier,
+                "field": "pedigree.relationship_to_proband",
+                "reason": "The free-text relationship-to-proband assertion is retained in the SIRALOOM pedigree sidecar; GA4GH Pedigree only encodes paternal/maternal parentage.",
+            })
+        if bool(_value(member, "sampled", False)):
+            warnings.append({
+                "observation_id": member_identifier,
+                "field": "pedigree.sampled",
+                "reason": "The sampled flag is retained in the SIRALOOM pedigree sidecar and has no direct GA4GH Pedigree person field.",
+            })
+        if _value(member, "specimen_id"):
+            warnings.append({
+                "observation_id": member_identifier,
+                "field": "pedigree.specimen_id",
+                "reason": "The specimen linkage is retained as a SIRALOOM sidecar reference; GA4GH Biosample export requires a complete specimen record.",
+            })
+        if _value(member, "metadata_json", {}) or {}:
+            warnings.append({
+                "observation_id": member_identifier,
+                "field": "pedigree.member_metadata",
+                "reason": "Local pedigree member metadata is retained in the SIRALOOM sidecar and is not interpreted as GA4GH pedigree semantics.",
+            })
+    for relationship in relationships:
+        if _value(relationship, "metadata_json", {}) or {}:
+            warnings.append({
+                "observation_id": "pedigree-relationship",
+                "field": "pedigree.relationship_metadata",
+                "reason": "Local pedigree relationship metadata is retained in the SIRALOOM sidecar and is not interpreted as GA4GH parentage semantics.",
+            })
     releases = {
         str(resource["ontology_release"])
         for row in rows
