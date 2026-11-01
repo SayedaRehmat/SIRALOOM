@@ -582,15 +582,11 @@ def _pedigree_export_sidecar(
 ) -> dict[str, Any]:
     identifiers = {str(member.id): member.member_identifier for member in members}
     consanguinity_values = []
-    sources = (
-        [case.clinical_context or {}]
-        + [member.metadata_json or {} for member in members]
-        + [relationship.metadata_json or {} for relationship in relationships]
-        + [clinical_intake_revision.context or {}] if clinical_intake_revision is not None else
-        [case.clinical_context or {}]
-        + [member.metadata_json or {} for member in members]
-        + [relationship.metadata_json or {} for relationship in relationships]
-    )
+    sources = [case.clinical_context or {}]
+    sources.extend(member.metadata_json or {} for member in members)
+    sources.extend(relationship.metadata_json or {} for relationship in relationships)
+    if clinical_intake_revision is not None:
+        sources.append(clinical_intake_revision.context or {})
     for source in sources:
         if "consanguinous_parents" in source:
             consanguinity_values.append(source["consanguinous_parents"])
