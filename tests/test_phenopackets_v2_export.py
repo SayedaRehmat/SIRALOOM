@@ -114,6 +114,10 @@ def test_family_export_preserves_member_attribution_and_parentage():
     persons = {person["individualId"]: person for person in payload["pedigree"]["persons"]}
     assert persons[proband_id]["paternalId"] == father_id
     assert persons[proband_id]["maternalId"] == mother_id
+    assert persons[father_id]["paternalId"] == "0"
+    assert persons[father_id]["maternalId"] == "0"
+    assert persons[mother_id]["paternalId"] == "0"
+    assert persons[mother_id]["maternalId"] == "0"
     assert persons[proband_id]["affectedStatus"] == "AFFECTED"
 
 
