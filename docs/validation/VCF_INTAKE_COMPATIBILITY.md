@@ -51,7 +51,10 @@ These are deterministic software conformance fixtures, not a claim that every op
 | Sites-only VCF (eight fixed columns, no sample columns) | Accepted as VALID_SITE_ONLY | Site-level artifact only; cannot create a patient-specific genotype interpretation or clinical report |
 | VCF with FORMAT but no sample columns | Rejected as malformed | Correct the header; sites-only files must use only the eight fixed columns |
 | Multiallelic small-variant records | Preserved and routed through configured splitting/normalization | Source ALT index mapping must remain traceable through splitting |
-| Symbolic structural variants/breakends | Preserved and routed to the structural/review route | Not silently treated as SNV/INDEL |
+| Mitochondrial-contig variants (`M`, `MT`, `chrM`, `chrMT`, human `NC_012920.*`) | Preserved and routed to a mitochondrial artifact | Excluded from nuclear SNV/INDEL normalization; the dedicated mitochondrial pipeline remains pending |
+| Explicit CNV records (`SVTYPE=CNV`, `<CNV>`, or copy-number genotype fields on symbolic DEL/DUP records) | Preserved and routed to a CNV artifact | Not silently treated as ordinary structural SVs or SNV/INDELs; the dedicated CNV pipeline remains pending |
+| Repeat-expansion records (ExpansionHunter `SVTYPE=STR`/`<STRn>`/RU+REPID; TRGT `TRID`+`MOTIFS`) | Preserved and routed to a repeat-expansion artifact | Not silently treated as ordinary sequence variants or generic SVs; the dedicated repeat-expansion pipeline remains pending |
+| Other symbolic structural variants/breakends | Preserved and routed to the structural/SV review artifact | Not silently treated as SNV/INDEL; the dedicated SV pipeline remains pending |
 | GVCF reference blocks or unresolved wildcard alleles | Preserved and routed to a dedicated/review artifact | Not treated as ordinary small-variant calls; reference confidence/joint genotyping is a separate workflow |
 | Reference-only rows (ALT=.) and telomere sentinels | Preserved and counted | Not turned into candidate variants or a negative clinical result |
 | Unsupported major version, malformed header/record, or conflicting build declarations | Rejected with an explicit validation error | No downstream analysis dispatch |
