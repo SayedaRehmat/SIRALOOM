@@ -455,6 +455,8 @@ def run_concordance(
     hashes_after = {name: sha256_file(path) for name, path in inputs.items()}
     if hashes_before != hashes_after:
         raise ConcordanceError("One or more benchmark inputs changed during execution.")
+    if os.name == "posix" and inputs["sample_mapping"].stat().st_mode & 0o077:
+        raise ConcordanceError("Sample mapping file permissions became group/other accessible during execution.")
     if sha256_file(executable_path) != executable_sha256_before:
         raise ConcordanceError("The hap.py executable changed during benchmark execution.")
 
