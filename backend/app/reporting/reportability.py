@@ -214,7 +214,7 @@ def finalize_reportability(
 
 
 def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[str]:
-    """Return unresolved routed artifacts that must block clinical reportability."""
+    """Block first-product sign-out while second-product variant classes remain uninterpreted."""
     artifact_rows = db.execute(
         select(Artifact.id, Artifact.artifact_type, Artifact.metadata_json)
         .where(Artifact.analysis_id == analysis_id)
@@ -228,7 +228,7 @@ def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[
         reason_code = metadata.get("review_reason_code") or "REQUIRES_SPECIALIZED_REVIEW"
         errors.append(
             f"{artifact_type} artifact {artifact_id} requires specialized pipeline/review "
-            f"({reason_code}) before reportability can be finalized"
+            f"({reason_code}); the separately qualified specialized-variant product is required before reportability can be finalized"
         )
     return errors
 
