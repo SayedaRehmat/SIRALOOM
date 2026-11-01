@@ -1235,6 +1235,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             info_values = _info_values(fields[7])
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
+                if definition is None and fileformat == "VCFv4.5":
+                    definition = _reserved_vcf45_info_definition(key)
                 if definition is not None:
                     # INFO/Number=G has no single sample ploidy to use when a
                     # record carries multiple samples; leave it unresolved here.
