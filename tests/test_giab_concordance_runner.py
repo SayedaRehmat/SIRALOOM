@@ -180,6 +180,7 @@ def test_sample_mapping_sidecar_must_match_both_vcf_columns(tmp_path: Path) -> N
         )
     assert "WRONG_TRUTH" not in str(exc.value)
     assert "HG002" not in str(exc.value)
+    assert not (tmp_path / "wrong-sample").exists()
 
 
 def test_sample_mapping_file_must_be_private(tmp_path: Path) -> None:
