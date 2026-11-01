@@ -238,6 +238,15 @@ def build_fhir_r5_bundle(
         sex = str(_get(proband, "sex") or "").upper()
         if sex in {"MALE", "FEMALE", "OTHER_SEX"}:
             patient["gender"] = {"MALE": "male", "FEMALE": "female", "OTHER_SEX": "other"}[sex]
+        patient["extension"] = [
+            _extension("family-affected-status", "valueCode", str(_get(proband, "affected_status", "UNKNOWN"))),
+            _extension("pedigree-sex", "valueCode", sex or "UNKNOWN"),
+            _extension("sampled", "valueBoolean", bool(_get(proband, "sampled", False))),
+        ]
+        if _get(proband, "specimen_id"):
+            patient["extension"].append(
+                _extension("specimen-reference-id", "valueString", str(_get(proband, "specimen_id")))
+            )
 
     resources: list[dict[str, Any]] = [patient]
     relative_ids: set[str] = set()
