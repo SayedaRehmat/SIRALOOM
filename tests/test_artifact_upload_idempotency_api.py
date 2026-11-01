@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -192,7 +192,7 @@ def test_artifact_upload_http_retry_fails_closed_for_committed_intent_without_ar
 
     first = _post_vcf(client, case_id, content, key)
     assert first.status_code == 201, first.text
-    artifact_id = first.json()["artifact_id"]
+    artifact_id = UUID(first.json()["artifact_id"])
 
     with upload_api["session_factory"]() as db:
         artifact = db.get(Artifact, artifact_id)
