@@ -502,7 +502,7 @@ class VCFToolUnavailable(VCFToolError):
 
 
 _BGZF_EOF_MARKER = bytes.fromhex(
-    "1f8b08040000000000ff0600424302001b00030000000000000000"
+    "1f8b08040000000000ff0600424302001b0003000000000000000000"
 )
 
 
@@ -557,7 +557,6 @@ def inspect_vcf_compression(path: str | Path) -> dict:
                 raise VCFToolError(
                     f"Compressed VCF has a truncated gzip extra field: {vcf_path.name}"
                 )
-            bgzf_header = first_header + extra
             bc_found = False
             cursor = 0
             while cursor + 4 <= len(extra):
@@ -575,6 +574,10 @@ def inspect_vcf_compression(path: str | Path) -> dict:
                         )
                     bc_found = True
                 cursor += subfield_length
+            if cursor != len(extra):
+                raise VCFToolError(
+                    f"Compressed VCF gzip extra-field boundary is invalid: {vcf_path.name}"
+                )
             if not bc_found:
                 return _validate_regular_gzip_stream(vcf_path)
             handle.seek(0)
@@ -621,6 +624,10 @@ def inspect_vcf_compression(path: str | Path) -> dict:
                             block_extra[cursor:cursor + 2], "little"
                         ) + 1
                     cursor += subfield_length
+                if cursor != len(block_extra):
+                    raise VCFToolError(
+                        f"BGZF extra-field boundary is invalid at byte offset {block_start}."
+                    )
                 header_size = 12 + block_xlen
                 if block_size_value is None or block_size_value < header_size + 8:
                     raise VCFToolError(
