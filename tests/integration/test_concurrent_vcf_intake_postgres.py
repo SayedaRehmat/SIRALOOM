@@ -12,7 +12,7 @@ from backend.app.infrastructure.db.models import Artifact, Case, Organization, U
 
 
 @pytest.mark.integration
-def test_postgres_concurrent_valid_and_invalid_vcf_uploads_preserve_ready_state():
+def test_postgres_concurrent_valid_and_invalid_vcf_uploads_preserve_uploaded_state_until_acceptance():
     database_url = os.environ.get("DATABASE_URL", "")
     if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
         pytest.skip("PostgreSQL integration test requires DATABASE_URL")
@@ -69,7 +69,7 @@ def test_postgres_concurrent_valid_and_invalid_vcf_uploads_preserve_ready_state(
                     specimen_id=None,
                     paired_artifact_id=None,
                     validation_status=validation_status,
-                    metadata_json={},
+                    metadata_json={"workflow_eligibility": "SAMPLE_LEVEL"} if validation_status == "VALID" else {},
                 ))
                 db.flush()
                 # Both uploads have persisted their artifact row in an open
@@ -101,7 +101,9 @@ def test_postgres_concurrent_valid_and_invalid_vcf_uploads_preserve_ready_state(
                 )
             ).all()
             assert sorted(statuses) == ["INVALID", "VALID"]
-            assert case.status == CaseStatus.READY_FOR_ANALYSIS
+            # Structural validation and sample mapping do not constitute the
+            # separate laboratory acceptance decision required for analysis.
+            assert case.status == CaseStatus.ARTIFACT_UPLOADED
     finally:
         with Session(engine) as db:
             db.query(Artifact).filter(Artifact.case_id == case_id).delete()
