@@ -995,6 +995,13 @@ def _html_document(content: dict[str, Any]) -> str:
     lang = content["language"]
     direction = "rtl" if lang == "ar" else "ltr"
     bilingual = lang == "bilingual"
+    product_scope = content.get("product_scope") or {}
+    product_scope_statement = html.escape(
+        str(
+            product_scope.get("scope_statement")
+            or "SIRALOOM first-product analytical scope: SNV and INDEL only."
+        )
+    )
     findings_html: list[str] = []
     for finding in content["findings"]:
         g = html.escape(str(finding.get("gene") or "-"))
@@ -1189,6 +1196,8 @@ th,td {{ border:1px solid #bbb; padding:4px; vertical-align:top; }} th {{ backgr
 <h2>{'Final Result' if not bilingual else 'Final Result / النتيجة النهائية'}</h2>
 <p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — {html.escape(release_notice)}</p>
 {signout_details}
+<h2>{'Product Analytical Scope' if not bilingual else 'Product Analytical Scope / نطاق المنتج التحليلي'}</h2>
+<p>{product_scope_statement}</p>
 {''.join(findings_html)}
 {family_context_html}
 <h2>{'Technical Quality Assessment' if not bilingual else 'Technical Quality Assessment / تقييم الجودة التقنية'}</h2>
