@@ -91,21 +91,42 @@ def create_caller_ploidy_policy(
     canonical = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
-    exact_version = db.scalar(select(CallerPloidyPolicyRevision).where(
-        CallerPloidyPolicyRevision.assay_id == assay.id,
-        CallerPloidyPolicyRevision.caller_id == policy.caller_id,
-        CallerPloidyPolicyRevision.caller_version == policy.caller_version,
-        CallerPloidyPolicyRevision.policy_version == policy.policy_version,
-        CallerPloidyPolicyRevision.reference_build == policy.reference_build,
-        CallerPloidyPolicyRevision.status == policy.status,
-    ))
-    if exact_version is not None:
-        if exact_version.revision_fingerprint == fingerprint:
-            return _policy_payload(exact_version)
+    identity_rows = db.scalars(
+        select(CallerPloidyPolicyRevision).where(
+            CallerPloidyPolicyRevision.assay_id == assay.id,
+            CallerPloidyPolicyRevision.caller_id == policy.caller_id,
+            CallerPloidyPolicyRevision.caller_version == policy.caller_version,
+            CallerPloidyPolicyRevision.policy_version == policy.policy_version,
+            CallerPloidyPolicyRevision.reference_build == policy.reference_build,
+        )
+    ).all()
+    existing_statuses = {row.status for row in identity_rows}
+    existing_same_status = next(
+        (row for row in identity_rows if row.status == policy.status),
+        None,
+    )
+    if existing_same_status is not None:
+        if existing_same_status.revision_fingerprint == fingerprint:
+            return _policy_payload(existing_same_status)
         raise HTTPException(
             status_code=409,
             detail="This caller/assay/policy-version/build/status identity already exists; issue a new policy_version for changed content",
         )
+
+    # A policy_version denotes one immutable mapping across its lifecycle.
+    # DRAFT -> QUALIFIED -> RETIRED may change status/attestation, never mapping.
+    for existing_row in identity_rows:
+        if (existing_row.region_copy_number_to_gt_ploidy or {}) != fingerprint_payload["region_copy_number_to_gt_ploidy"]:
+            raise HTTPException(
+                status_code=409,
+                detail="Caller ploidy mapping is immutable within a policy_version; issue a new policy_version",
+            )
+    if policy.status == "DRAFT" and existing_statuses:
+        raise HTTPException(status_code=409, detail="A caller policy cannot return to DRAFT after qualification")
+    if policy.status == "QUALIFIED" and ({"QUALIFIED", "RETIRED"} & existing_statuses):
+        raise HTTPException(status_code=409, detail="This caller policy version has already been qualified or retired")
+    if policy.status == "RETIRED" and "QUALIFIED" not in existing_statuses:
+        raise HTTPException(status_code=409, detail="Only a previously qualified caller policy can be retired")
 
     audit_event_id = AuditService(db).record(
         event_type="CALLER_PLOIDY_POLICY_RECORDED",
