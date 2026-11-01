@@ -1691,3 +1691,23 @@ def test_vcf45_reserved_field_definitions_enforce_spec_number_and_type(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("info", "expected_code"),
+    [
+        ("DP=not-an-integer", "VCF_FIELD_VALUE_INVALID"),
+        ("AF=0.1,0.2", "VCF_FIELD_CARDINALITY_INVALID"),
+        ("DB=1", "VCF_FIELD_CARDINALITY_INVALID"),
+    ],
+)
+def test_vcf45_implicit_reserved_info_definitions_validate_record_values(
+    tmp_path: Path, info: str, expected_code: str
+):
+    path = tmp_path / "vcf45-implicit-info.vcf"
+    write_vcf(path, f"1\t2\t.\tA\tC\t.\tPASS\t{info}\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == expected_code
