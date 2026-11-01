@@ -91,12 +91,13 @@ A cell is **not QUALIFIED** merely because it is IMPLEMENTED or AUTOMATED.
 | `.` in VCFv4.5 block context | Preserve missingness, do not synthesize 0/0 | PR #252 regression | AUTOMATED / NOT-EVIDENCED |
 | INFO Number=A | Correct ALT-specific remapping | Existing multiallelic fixture | AUTOMATED / PARTIAL |
 | FORMAT AD Number=R | Correct allele cardinality after splitting | Existing fixture | AUTOMATED / PARTIAL |
-| FORMAT PL Number=G | Correct genotype-likelihood cardinality after splitting | Existing fixture | AUTOMATED / PARTIAL |
+| FORMAT PL Number=G | Validate genotype-likelihood cardinality from each sample GT ploidy (haploid, diploid, triploid, tetraploid) | `tests/test_vcf_validation.py::test_format_number_g_cardinality_uses_sample_ploidy`; automated cardinality only | AUTOMATED / PARTIAL |
+| FORMAT GL Number=G | Validate genotype-likelihood cardinality from each sample GT ploidy | Same parameterized regression; values are syntax/cardinality fixtures, not likelihood calibration | AUTOMATED / PARTIAL |
+| FORMAT GP Number=G | Validate genotype-probability cardinality from each sample GT ploidy | Same parameterized regression; does not establish normalization or probability semantics | AUTOMATED / PARTIAL |
 | PS | Preserve phase-set identifier | Existing fixture | AUTOMATED / PARTIAL |
-| GL/GP | Must not be assumed correct merely because GT is correct | No complete qualification evidence identified | NOT-EVIDENCED |
-| Haploid calls | Must be explicitly qualified by chromosome/caller context | No complete qualification evidence identified | NOT-EVIDENCED |
-| Sex-chromosome ploidy | Must be explicitly qualified | No complete qualification evidence identified | NOT-EVIDENCED |
-| Polyploid calls | Must be explicitly qualified if supported | No complete qualification evidence identified | NOT-EVIDENCED |
+| Haploid calls | Validate generic Number=G cardinality; additionally qualify chromosome/caller-specific haploid semantics | Synthetic haploid GT cardinality regression; no representative assay/caller evidence | AUTOMATED / NOT-EVIDENCED |
+| Sex-chromosome ploidy | Must be explicitly qualified for PAR/non-PAR, karyotype, build and caller context | No complete qualification evidence identified | NOT-EVIDENCED |
+| Polyploid calls | Validate generic Number=G cardinality; additionally qualify caller and biological use if supported | Synthetic triploid/tetraploid GT cardinality regression; no representative assay/caller evidence | AUTOMATED / NOT-EVIDENCED |
 
 ## 6. WES / WGS / caller matrix
 
