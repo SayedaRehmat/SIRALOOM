@@ -100,7 +100,7 @@ def validate_single_sample_vcf(
     try:
         with _open_text(path) as handle:
             fileformat = handle.readline().rstrip("\r\n")
-            if not re.fullmatch(r"##fileformat=VCFv4\\.[0-5]", fileformat):
+            if not re.fullmatch(r"##fileformat=VCFv4\.[0-5]", fileformat):
                 raise ConcordanceError(f"{label} must begin with a supported VCFv4 fileformat declaration.")
             for line in handle:
                 if line.startswith("#CHROM"):
