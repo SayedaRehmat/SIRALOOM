@@ -1,13 +1,13 @@
 """Extend phenotype observations for clinical intake and family subjects.
 
-Revision ID: 0054_clinical_phenotype_intake
-Revises: 0053_qc_observation_snapshot
+Revision ID: 0055_clinical_phenotype_intake
+Revises: 0054_artifact_analysis_id_index
 """
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0054_clinical_phenotype_intake"
-down_revision = "0053_qc_observation_snapshot"
+revision = "0055_clinical_phenotype_intake"
+down_revision = "0054_artifact_analysis_id_index"
 branch_labels = None
 depends_on = None
 

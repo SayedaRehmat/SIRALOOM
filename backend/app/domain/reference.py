@@ -102,7 +102,10 @@ class FastaReference:
             aliases.append(bare)
         if prefixed not in aliases:
             aliases.append(prefixed)
-        if bare.upper() in {"M", "MT"}:
+        if (
+            bare.upper() in {"M", "MT"}
+            or c.upper() in {"NC_012920", "NC_012920.1"}
+        ):
             for candidate in ("M", "MT", "chrM", "chrMT"):
                 if candidate not in aliases:
                     aliases.append(candidate)

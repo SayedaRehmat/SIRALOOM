@@ -302,7 +302,7 @@ def test_clinical_phenotype_migrations_preserve_legacy_rows_and_allow_longitudin
             "VALUES (:id, :case_id, NULL, 'HP:0001250', 'Seizures', true, 'PRESENT', NULL, NULL, 'TEST', '{}', CURRENT_TIMESTAMP)"
         ), {"id": "10000000-0000-0000-0000-000000000001", "case_id": case_id})
 
-    command.upgrade(config, "0055_phenotype_observation_fingerprint")
+    command.upgrade(config, "0056_phenotype_observation_fingerprint")
     with engine.begin() as connection:
         columns = {column["name"] for column in inspect(connection).get_columns("phenotype_observations")}
         assert {

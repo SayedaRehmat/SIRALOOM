@@ -1,7 +1,7 @@
 """Use observation-level identity for longitudinal phenotype records.
 
-Revision ID: 0055_phenotype_observation_fingerprint
-Revises: 0054_clinical_phenotype_intake
+Revision ID: 0056_phenotype_observation_fingerprint
+Revises: 0055_clinical_phenotype_intake
 """
 import hashlib
 import json
@@ -9,8 +9,8 @@ import json
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0055_phenotype_observation_fingerprint"
-down_revision = "0054_clinical_phenotype_intake"
+revision = "0056_phenotype_observation_fingerprint"
+down_revision = "0055_clinical_phenotype_intake"
 branch_labels = None
 depends_on = None
 

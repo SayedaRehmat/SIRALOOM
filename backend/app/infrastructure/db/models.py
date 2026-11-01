@@ -241,7 +241,7 @@ class AnalysisDispatch(Base):
 class Artifact(Base):
     __tablename__ = "artifacts"
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"))
+    analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"), index=True)
     case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"))
     artifact_type: Mapped[str] = mapped_column(Text)
     filename: Mapped[str] = mapped_column(Text)

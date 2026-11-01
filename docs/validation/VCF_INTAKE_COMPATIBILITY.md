@@ -18,7 +18,7 @@ The parser applies version-specific rules where implemented:
 - VCFv4.5 reserved base-modification FORMAT fields (M, DPM, and ADM ChEBI-ID forms and the specification aliases) are recognized even when explicit FORMAT metadata declarations are absent. Their Number=M cardinality is validated from sample GT and concrete REF/ALT allele sequences, including strand complements, U/T equivalence, N modifications, unphased-allele aggregation, missing alleles, and symbolic alleles. Fraction values are constrained to [0, 1] and depth values to non-negative integers.
 - Base-modification values remain intact in the immutable uploaded source VCF. Because the pinned BCFtools 1.24 multiallelic splitter does not project Number=M values to each emitted ALT child, SIRALOOM removes Number=M fields from the derived normalized SNV/INDEL artifact and records their names and source-only policy in normalization provenance. This prevents downstream consumers from interpreting source-genotype values against a different per-ALT GT. These fields are not used as rare-disease pathogenicity evidence.
 - Arbitrary declared FORMAT values are retained in sample-call provenance instead of being reduced to a small fixed whitelist.
-- The pinned BCFtools version is 1.24 and HTSlib version is 1.24 so the independent parser and transformation toolchain can handle VCFv4.4/v4.5 cardinality fields. VCF intake attests both installed versions before parsing; either mismatch is an operational/retryable failure, never an input-invalid result. VCF intake attests the installed BCFtools version before parsing; a mismatch is an operational/retryable failure, never an input-invalid result.
+- The pinned BCFtools version is 1.24 and HTSlib version is 1.24 so the independent parser and transformation toolchain can handle VCFv4.4/v4.5 cardinality fields. VCF intake attests both installed versions before parsing; either mismatch is an operational/retryable failure, never an input-invalid result.
 - Validation metadata distinguishes source VCF data rows (`source_record_count`), ALT entries (`alternate_allele_count`), and parsed per-ALT records (`record_count` / `parsed_variant_record_count`). The existing `record_count` API meaning is preserved: reference-only and telomere-only rows are not counted as parsed variant records.
 
 Recognition of a version is not a claim that every optional extension or every caller-specific tag has clinical semantics in SIRALOOM. Unknown INFO/FORMAT tags are preserved as source data; a downstream stage must not infer unsupported semantics from them.
@@ -51,10 +51,20 @@ These are deterministic software conformance fixtures, not a claim that every op
 | Sites-only VCF (eight fixed columns, no sample columns) | Accepted as VALID_SITE_ONLY | Site-level artifact only; cannot create a patient-specific genotype interpretation or clinical report |
 | VCF with FORMAT but no sample columns | Rejected as malformed | Correct the header; sites-only files must use only the eight fixed columns |
 | Multiallelic small-variant records | Preserved and routed through configured splitting/normalization | Source ALT index mapping must remain traceable through splitting |
-| Symbolic structural variants/breakends | Preserved and routed to the structural/review route | Not silently treated as SNV/INDEL |
+| Mitochondrial-contig variants (`M`, `MT`, `chrM`, `chrMT`, human `NC_012920.*`) | Preserved and routed to a mitochondrial artifact | Excluded from nuclear SNV/INDEL normalization; the dedicated mitochondrial pipeline remains pending |
+| Explicit CNV records (`SVTYPE=CNV`, `<CNV>`, or copy-number genotype fields on symbolic DEL/DUP records) | Preserved and routed to a CNV artifact | Not silently treated as ordinary structural SVs or SNV/INDELs; the dedicated CNV pipeline remains pending |
+| Repeat-expansion records (ExpansionHunter `SVTYPE=STR`/`<STRn>`/RU+REPID; TRGT `TRID`+`MOTIFS`) | Preserved and routed to a repeat-expansion artifact | Not silently treated as ordinary sequence variants or generic SVs; the dedicated repeat-expansion pipeline remains pending |
+| Other symbolic structural variants/breakends | Preserved and routed to the structural/SV review artifact | Not silently treated as SNV/INDEL; the dedicated SV pipeline remains pending |
 | GVCF reference blocks or unresolved wildcard alleles | Preserved and routed to a dedicated/review artifact | Not treated as ordinary small-variant calls; reference confidence/joint genotyping is a separate workflow |
 | Reference-only rows (ALT=.) and telomere sentinels | Preserved and counted | Not turned into candidate variants or a negative clinical result |
 | Unsupported major version, malformed header/record, or conflicting build declarations | Rejected with an explicit validation error | No downstream analysis dispatch |
+
+Repeat-expansion routing is intentionally signature-based rather than inferred from long alleles alone. The implementation recognizes ExpansionHunter-style `SVTYPE=STR`, `<STRn>`, `RU`/`REPID` and repeat-copy fields, and TRGT-style `TRID`+`MOTIFS`. CNV routing uses explicit `SVTYPE=CNV`, `<CNV>`, or copy-number fields accompanying symbolic DEL/DUP alleles. Other symbolic SVs and breakends remain in the SV route. These are routing rules only: they do not constitute repeat/CNV/SV clinical interpretation. Any routed artifact carrying `review_status=REQUIRES_SPECIALIZED_REVIEW` blocks reportability finalization and clinical report eligibility until a laboratory-approved disposition or the corresponding specialized pipeline resolves it. This prevents a partial nuclear SNV/INDEL result from being signed out as though all submitted variant classes had been analyzed.
+
+Reference formats used to define these routing signatures:
+- [VCF v4.5 specification](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex)
+- [ExpansionHunter](https://github.com/Illumina/ExpansionHunter)
+- [TRGT](https://github.com/PacificBiosciences/trgt)
 
 ## Multiallelic genotype and source-lineage contract
 
@@ -69,7 +79,7 @@ The parser exposes the routed source GT as the authoritative sample genotype and
 
 **Non-selected ALT alleles are never rewritten as reference alleles.** BCFtools normalization uses the missing-other-ALT policy. A per-ALT candidate is excluded as a known non-carrier only when selected-ALT dosage is zero and no allele is missing. Partial calls, no-calls, invalid mappings, and source/normalized ploidy mismatches remain unresolved; they are not converted into reference-negative evidence.
 
-The normalization artifact contract is versioned independently from the uploaded source artifact. The current source-genotype provenance implementation uses normalization version `5.0`, normalized-artifact identity `v5`, and partition metadata schema `4`. Historical artifacts are not silently upgraded or interpreted as if they contained this provenance contract.
+The normalization artifact contract is versioned independently from the uploaded source artifact. The current source-genotype provenance implementation, including the VCFv4.5 Number=M source-only policy, uses normalization version `6.0`, normalized-artifact identity `v6`, and partition metadata schema `4`. Historical artifacts are not silently upgraded or interpreted as if they contained this provenance contract.
 
 This contract improves genotype and source-record traceability; it does not itself qualify every caller-specific FORMAT field, every VCF 4.0–4.5 optional feature, or downstream inheritance/segregation logic. Those remain separate feature-level and end-to-end laboratory qualification requirements.
 

@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import subprocess
 import tempfile
 from contextlib import ExitStack
@@ -25,6 +26,83 @@ SOURCE_RECORD_TAG = "SIRALOOM_SOURCE"
 SOURCE_RECORD_TAG_HEADER = (
     '##INFO=<ID=SIRALOOM_SOURCE,Number=1,Type=String,'
     'Description="Base64url JSON source record identity and ALT mapping">')
+
+
+def _is_mitochondrial_contig(chrom: str) -> bool:
+    normalized = chrom.strip().lower()
+    if normalized.startswith("chr"):
+        normalized = normalized[3:]
+    return normalized in {"m", "mt", "mitochondrial", "mitochondrion_genome"} or chrom.upper() in {
+        "NC_012920",
+        "NC_012920.1",
+    }
+
+
+def _routing_info_values(info_text: str) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if info_text in {"", "."}:
+        return values
+    for item in info_text.split(";"):
+        key, separator, value = item.partition("=")
+        if key:
+            values[key.upper()] = value if separator else ""
+    return values
+
+
+def _symbolic_alt_body(alt: str) -> str:
+    if len(alt) > 2 and alt.startswith("<") and alt.endswith(">"):
+        return alt[1:-1].upper()
+    return ""
+
+
+def _is_repeat_expansion_record(
+    alts: list[str],
+    info_values: dict[str, str],
+    format_keys: list[str],
+) -> bool:
+    svtype = info_values.get("SVTYPE", "").upper()
+    if svtype in {"STR", "CNV:TR"} or svtype.startswith("STR:"):
+        return True
+
+    symbolic_bodies = [_symbolic_alt_body(alt) for alt in alts]
+    if any(
+        body.startswith(("STR", "VNTR", "REPEAT", "CNV:TR"))
+        for body in symbolic_bodies
+    ):
+        return True
+
+    info_keys = set(info_values)
+    format_key_set = {key.upper() for key in format_keys}
+    if {"TRID", "MOTIFS"}.issubset(info_keys):
+        return True
+    if {"RU", "REPID"}.issubset(info_keys):
+        return True
+    if "RU" in info_keys and {"REPCN", "REPCI"}.intersection(format_key_set):
+        return True
+    return False
+
+
+def _is_copy_number_record(
+    alts: list[str],
+    info_values: dict[str, str],
+    format_keys: list[str],
+) -> bool:
+    if info_values.get("SVTYPE", "").upper() == "CNV":
+        return True
+
+    symbolic_bodies = [_symbolic_alt_body(alt) for alt in alts]
+    if any(
+        body == "CNV" or (body.startswith("CNV:") and not body.startswith("CNV:TR"))
+        for body in symbolic_bodies
+    ):
+        return True
+
+    copy_number_fields = {"CN", "CNL", "CNQ"}
+    info_keys = set(info_values)
+    format_key_set = {key.upper() for key in format_keys}
+    has_copy_number_evidence = bool(copy_number_fields.intersection(info_keys | format_key_set))
+    has_del_dup_allele = any(body in {"DEL", "DUP"} for body in symbolic_bodies)
+    return has_copy_number_evidence and has_del_dup_allele
 
 
 def route_vcf_records(
@@ -57,6 +135,9 @@ def route_vcf_records(
         "gvcf_blocks": output / "gvcf-reference-blocks.vcf",
         "gvcf_unresolved": output / "gvcf-unresolved-variants.vcf",
         "structural": output / "structural-variants.vcf",
+        "cnv": output / "copy-number-variants.vcf",
+        "repeat_expansions": output / "repeat-expansion-variants.vcf",
+        "mitochondrial": output / "mitochondrial-variants.vcf",
         "spanning_deletions": output / "spanning-deletion-records.vcf",
         "telomere": output / "telomere-records.vcf",
         "telomere_after": output / "telomere-after-contig-records.vcf",
@@ -208,6 +289,37 @@ def route_vcf_records(
                     record_exclusion(line, "VCF_TELOMERE_COORDINATE_UNSUPPORTED", "TELOMERE_AFTER_CONTIG_RECORDS")
                     continue
                 wildcard_indexes = {i + 1 for i, alt in enumerate(alts) if alt in GVCF_WILDCARD_ALLELES}
+                if wildcard_indexes and all(alt in GVCF_WILDCARD_ALLELES for alt in alts):
+                    emit("gvcf_blocks", line)
+                    record_exclusion(line, "GVCF_REFERENCE_CONFIDENCE_ANALYSIS_UNSUPPORTED", "GVCF_REFERENCE_BLOCKS")
+                    continue
+
+                info_values = _routing_info_values(fields[7])
+                format_keys = fields[8].split(":") if len(fields) > 8 else []
+                if _is_mitochondrial_contig(fields[0]):
+                    emit("mitochondrial", line)
+                    record_exclusion(
+                        line,
+                        "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
+                        "MITOCHONDRIAL_VARIANT_RECORDS",
+                    )
+                    continue
+                if _is_repeat_expansion_record(alts, info_values, format_keys):
+                    emit("repeat_expansions", line)
+                    record_exclusion(
+                        line,
+                        "REPEAT_EXPANSION_PIPELINE_PENDING",
+                        "REPEAT_EXPANSION_RECORDS",
+                    )
+                    continue
+                if _is_copy_number_record(alts, info_values, format_keys):
+                    emit("cnv", line)
+                    record_exclusion(
+                        line,
+                        "CNV_PIPELINE_PENDING",
+                        "CNV_VARIANT_RECORDS",
+                    )
+                    continue
                 if any(alt == "*" for alt in alts):
                     emit("spanning_deletions", line)
                     record_exclusion(line, "SPANNING_DELETION_NOT_INTERPRETED", "SPANNING_DELETION_RECORDS")
@@ -267,6 +379,9 @@ def route_vcf_records(
         "gvcf_reference_blocks": counts["gvcf_blocks"],
         "gvcf_unresolved_variants": counts["gvcf_unresolved"],
         "structural_variants": counts["structural"],
+        "copy_number_variants": counts["cnv"],
+        "repeat_expansions": counts["repeat_expansions"],
+        "mitochondrial_variants": counts["mitochondrial"],
         "spanning_deletions": counts["spanning_deletions"],
         "telomere_coordinates": counts["telomere"],
         "after_contig_coordinates": counts["telomere_after"],
@@ -281,7 +396,7 @@ def route_vcf_records(
         )
 
     return {
-        "routing_version": "2",
+        "routing_version": "3",
         "source_record_count": source_record_index,
         "records_total": routed_record_count,
         "record_reconciliation": {
@@ -298,6 +413,9 @@ def route_vcf_records(
         "gvcf_reference_blocks": counts["gvcf_blocks"],
         "gvcf_unresolved_variant_records": counts["gvcf_unresolved"],
         "structural_variant_records": counts["structural"],
+        "cnv_variant_records": counts["cnv"],
+        "repeat_expansion_records": counts["repeat_expansions"],
+        "mitochondrial_variant_records": counts["mitochondrial"],
         "spanning_deletion_records": counts["spanning_deletions"],
         "telomere_records": counts["telomere"],
         "telomere_after_contig_records": counts["telomere_after"],
@@ -306,12 +424,15 @@ def route_vcf_records(
         "exclusion_manifest_records": sum(counts[key] for key in (
             "reference_only", "gvcf_blocks", "gvcf_unresolved", "structural",
             "spanning_deletions", "telomere", "telomere_after",
-            "reference_only_genotype_alleles",
+            "reference_only_genotype_alleles", "cnv", "repeat_expansions", "mitochondrial",
         )),
         "sequence_path": str(names["sequence"]) if counts["sequence"] else None,
         "gvcf_blocks_path": str(names["gvcf_blocks"]) if counts["gvcf_blocks"] else None,
         "gvcf_unresolved_path": str(names["gvcf_unresolved"]) if counts["gvcf_unresolved"] else None,
         "structural_path": str(names["structural"]) if counts["structural"] else None,
+        "cnv_path": str(names["cnv"]) if counts["cnv"] else None,
+        "repeat_expansion_path": str(names["repeat_expansions"]) if counts["repeat_expansions"] else None,
+        "mitochondrial_path": str(names["mitochondrial"]) if counts["mitochondrial"] else None,
         "spanning_deletions_path": str(names["spanning_deletions"]) if counts["spanning_deletions"] else None,
         "telomere_path": str(names["telomere"]) if counts["telomere"] else None,
         "telomere_after_contig_path": str(names["telomere_after"]) if counts["telomere_after"] else None,
@@ -729,6 +850,9 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                 raise VCFToolError("SIRALOOM_SOURCE source-record SHA-256 does not match the original record.")
             expected[source_index] = {
                 "payload": payload,
+                "chrom": fields[0],
+                "pos": fields[1],
+                "ref": fields[3],
                 "alt_indexes": actual_indexes,
                 "prepared_alt_values": [source_alts[index - 1] for index in actual_indexes],
             }
@@ -765,11 +889,16 @@ def _validate_source_child_reconciliation(source_path: Path, normalized_path: Pa
                 prepared_alts = original_fields[3].split(",")
                 used_alt_index = int(original_fields[4])
                 if (
-                    prepared_alts != source["prepared_alt_values"]
+                    original_fields[0] != source["chrom"]
+                    or original_fields[1] != source["pos"]
+                    or original_fields[2] != source["ref"]
+                    or prepared_alts != source["prepared_alt_values"]
                     or used_alt_index < 1
                     or used_alt_index > len(prepared_alts)
                 ):
-                    raise ValueError("ALT index or prepared ALT list disagrees with source mapping")
+                    raise ValueError(
+                        "source CHROM/POS/REF, ALT list, or selected ALT index disagrees with source mapping"
+                    )
             except ValueError as exc:
                 raise VCFToolError("SIRALOOM_ORIG contains an invalid source ALT mapping.") from exc
             mapping = (source_index, source["alt_indexes"][used_alt_index - 1])
@@ -846,6 +975,43 @@ def _sha256_file(path: Path) -> str:
     )
 
 
+def _validate_gzi_index(gzi_path: Path, bgzf_path: Path) -> dict:
+    """Validate the BGZF .gzi binary structure and monotonic block offsets."""
+    try:
+        raw_size = gzi_path.stat().st_size
+        bgzf_size = bgzf_path.stat().st_size
+        with gzi_path.open("rb") as handle:
+            header = handle.read(8)
+            if len(header) != 8:
+                raise VCFToolError(f"BGZF index is truncated: {gzi_path}")
+            entry_count = struct.unpack("<Q", header)[0]
+            expected_size = 8 + entry_count * 16
+            if raw_size != expected_size:
+                raise VCFToolError(
+                    f"BGZF index has invalid length: expected {expected_size} bytes, found {raw_size}: {gzi_path}"
+                )
+            previous_compressed = 0
+            previous_uncompressed = 0
+            for entry_number in range(entry_count):
+                pair = handle.read(16)
+                if len(pair) != 16:
+                    raise VCFToolError(f"BGZF index entry {entry_number} is truncated: {gzi_path}")
+                compressed_offset, uncompressed_offset = struct.unpack("<QQ", pair)
+                if (
+                    compressed_offset <= previous_compressed
+                    or compressed_offset >= bgzf_size
+                    or uncompressed_offset <= previous_uncompressed
+                ):
+                    raise VCFToolError(
+                        f"BGZF index offsets are non-monotonic or out of bounds at entry {entry_number}: {gzi_path}"
+                    )
+                previous_compressed = compressed_offset
+                previous_uncompressed = uncompressed_offset
+    except OSError as exc:
+        raise VCFToolError(f"Unable to validate BGZF index {gzi_path}: {exc}") from exc
+    return {"entry_count": entry_count, "size_bytes": raw_size}
+
+
 def _reference_artifact_identity(reference_fasta: Path) -> dict:
     """Attest the exact FASTA and index files used for normalization."""
     artifacts = {
@@ -854,6 +1020,9 @@ def _reference_artifact_identity(reference_fasta: Path) -> dict:
     }
     if reference_fasta.name.lower().endswith((".gz", ".bgz")):
         artifacts["gzi"] = Path(str(reference_fasta) + ".gzi")
+
+    if "gzi" in artifacts:
+        _validate_gzi_index(artifacts["gzi"], reference_fasta)
 
     identity_artifacts: dict[str, dict] = {}
     for role, artifact_path in artifacts.items():
