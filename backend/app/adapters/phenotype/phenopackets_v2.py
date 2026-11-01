@@ -35,7 +35,9 @@ def _value(obj: Any, name: str, default: Any = None) -> Any:
 
 
 def _member_id(member: Any) -> str:
-    return str(_value(member, "member_identifier") or _value(member, "id"))
+    # Use the opaque SIRALOOM UUID in the standard document; human-entered
+    # member identifiers remain only in the separately identified sidecar.
+    return f"SIRALOOM:{_value(member, 'id')}"
 
 
 def _normalize_sex(value: Any) -> str | None:
@@ -310,7 +312,7 @@ def _family_pedigree(*, case: Any, members: list[Any], relationships: list[Any])
         parent_ids[child_id][role] = _member_id(parent)
 
     persons = []
-    family_id = str(_value(case, "case_identifier") or _value(case, "id"))
+    family_id = f"SIRALOOM:{_value(case, 'id')}"
     for member in members:
         sex = str(_value(member, "sex") or "").upper()
         affected = str(_value(member, "affected_status", "UNKNOWN") or "UNKNOWN").upper()
@@ -452,7 +454,7 @@ def build_phenopackets_v2(
         if member_rows:
             relative_packets.append(
                 _packet(
-                    packet_id=f"SIRALOOM:{_value(case, 'id')}:{_member_id(member)}",
+                    packet_id=f"SIRALOOM:{_value(member, 'id')}:relative",
                     subject_id=_member_id(member),
                     rows=member_rows,
                     sex=_value(member, "sex"),
