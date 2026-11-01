@@ -1,16 +1,26 @@
 export type UploadIdempotencyContext = {
-  file: File;
+  file: Pick<File, "name" | "size" | "lastModified" | "type">;
   caseId: string;
   specimenId: string;
   genomeBuild: string;
 };
 
-export type UploadIdempotencyAttempt = UploadIdempotencyContext & {
+export type UploadIdempotencyAttempt = {
   key: string;
+  storageKey: string;
+  fingerprint: string;
 };
 
+export type UploadIdempotencyStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
 export function getOrCreateUploadIdempotencyAttempt(
-  previous: UploadIdempotencyAttempt | null,
-  next: UploadIdempotencyContext,
+  storage: UploadIdempotencyStorage,
+  context: UploadIdempotencyContext,
   createKey: () => string,
-): UploadIdempotencyAttempt;
+  digest?: (value: string) => Promise<string>,
+): Promise<UploadIdempotencyAttempt>;
+
+export function clearUploadIdempotencyAttempt(
+  storage: UploadIdempotencyStorage,
+  attempt: UploadIdempotencyAttempt,
+): void;

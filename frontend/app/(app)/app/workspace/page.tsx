@@ -6,7 +6,7 @@ import { firebaseAuth } from "../../../../lib/firebase";
 import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
-import { getOrCreateUploadIdempotencyAttempt } from "../../../../lib/upload-idempotency.mjs";
+import { clearUploadIdempotencyAttempt, getOrCreateUploadIdempotencyAttempt } from "../../../../lib/upload-idempotency.mjs";
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 import ClinicalContextIntake from "../../../../components/ClinicalContextIntake";
@@ -123,6 +123,18 @@ const steps = [
   ["export_provenance", "workflow.caseHistory"],
 ] as const;
 
+class ApiRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(status: number, message: string, code?: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function apiFetch(path: string, init?: RequestInit) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
   const response = await fetch(`${API_BASE}${path}`, {
@@ -140,8 +152,19 @@ async function apiFetch(path: string, init?: RequestInit) {
     body = text;
   }
   if (!response.ok) {
-    const message = typeof body === "object" && body && "detail" in body ? String((body as { detail: unknown }).detail) : `HTTP ${response.status}`;
-    throw new Error(message);
+    const detail = typeof body === "object" && body && "detail" in body
+      ? (body as { detail: unknown }).detail
+      : undefined;
+    const detailObject = detail && typeof detail === "object"
+      ? detail as Record<string, unknown>
+      : null;
+    const message = typeof detailObject?.message === "string"
+      ? detailObject.message
+      : typeof detail === "string"
+        ? detail
+        : `HTTP ${response.status}`;
+    const code = typeof detailObject?.code === "string" ? detailObject.code : undefined;
+    throw new ApiRequestError(response.status, message, code);
   }
   return body as any;
 }
@@ -199,7 +222,6 @@ export default function Home() {
   const [caseLoadError, setCaseLoadError] = useState("");
   const [caseLoadAttempt, setCaseLoadAttempt] = useState(0);
   const caseIdRef = useRef("");
-  const uploadAttemptRef = useRef<{ file: File; caseId: string; specimenId: string; genomeBuild: string; key: string } | null>(null);
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
   const [vcfSampleName, setVcfSampleName] = useState("");
@@ -666,17 +688,17 @@ export default function Home() {
     }
     setBusy(true);
     setMessage("");
+    let uploadAttempt: Awaited<ReturnType<typeof getOrCreateUploadIdempotencyAttempt>> | null = null;
     try {
       const form = new FormData();
       form.append("file", file, file.name);
       if (selectedSpecimenId) form.append("specimen_id", selectedSpecimenId);
       form.append("genome_build", genomeBuild);
-      const uploadAttempt = getOrCreateUploadIdempotencyAttempt(
-        uploadAttemptRef.current,
+      uploadAttempt = await getOrCreateUploadIdempotencyAttempt(
+        window.sessionStorage,
         { file, caseId, specimenId: selectedSpecimenId, genomeBuild },
         () => crypto.randomUUID(),
       );
-      uploadAttemptRef.current = uploadAttempt;
       const result = await apiFetch(`/cases/${caseId}/artifacts`, {
         method: "POST",
         headers: { "Idempotency-Key": uploadAttempt.key },
@@ -686,7 +708,7 @@ export default function Home() {
       const siteLevelOnly = result?.workflow_eligibility === "SITE_LEVEL_ONLY";
       setArtifactId(siteLevelOnly ? "" : validatedId);
       await refreshCaseArtifacts();
-      uploadAttemptRef.current = null;
+      clearUploadIdempotencyAttempt(window.sessionStorage, uploadAttempt);
       const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
       if (siteLevelOnly) {
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
@@ -697,6 +719,15 @@ export default function Home() {
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
       }
     } catch (error) {
+      if (
+        uploadAttempt &&
+        error instanceof ApiRequestError &&
+        error.code === "IDEMPOTENCY_KEY_REUSED"
+      ) {
+        // The server rejected a metadata-colliding/different-byte retry. Clear
+        // only this exact attempt so the next explicit user retry gets a new key.
+        clearUploadIdempotencyAttempt(window.sessionStorage, uploadAttempt);
+      }
       setMessage(error instanceof Error ? error.message : t("workspace.uploadFailed"));
     } finally {
       setBusy(false);

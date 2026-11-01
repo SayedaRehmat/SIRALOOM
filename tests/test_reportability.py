@@ -166,7 +166,18 @@ def test_final_reportability_state_rejects_decision_linked_to_stale_classificati
     assert exc_info.value.status_code == 409
 
 
-def test_pending_specialized_variant_artifact_blocks_reportability_finalization():
+@pytest.mark.parametrize(
+    ("artifact_type", "filename", "reason_code"),
+    [
+        ("CNV_VARIANT_RECORDS", "cnv-variants.vcf", "CNV_PIPELINE_PENDING"),
+        ("STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf", "SV_PIPELINE_PENDING"),
+        ("MITOCHONDRIAL_VARIANT_RECORDS", "mitochondrial-variants.vcf", "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING"),
+        ("REPEAT_EXPANSION_RECORDS", "repeat-expansion-variants.vcf", "REPEAT_EXPANSION_PIPELINE_PENDING"),
+    ],
+)
+def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
+    artifact_type, filename, reason_code
+):
     db = make_db()
     org = Organization(id=uuid4(), name="Lab")
     user = User(
@@ -224,18 +235,17 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
         id=uuid4(),
         case_id=case.id,
         analysis_id=analysis.id,
-        artifact_type="MITOCHONDRIAL_VARIANT_RECORDS",
-        filename="mitochondrial-variants.vcf",
+        artifact_type=artifact_type,
+        filename=filename,
         media_type="text/vcf",
         size_bytes=1,
         sha256="a" * 64,
         storage_uri="file:///tmp/mitochondrial-variants.vcf",
         genome_build="GRCh38",
         validation_status="VALID",
-        metadata_json={
-            "review_status": "REQUIRES_SPECIALIZED_REVIEW",
-            "review_reason_code": "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
-        },
+        # Deliberately omit review_status: the artifact type itself must
+        # remain a hard reportability blocker in the first product.
+        metadata_json={"interpretation_status": "NOT_ANALYZED"},
     )
     db.add_all([org, user, case, analysis, variant, classification, routed_artifact])
     db.commit()
@@ -246,7 +256,7 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
 
     ready, errors = final_reportability_state(db, analysis.id)
     assert not ready
-    assert any("MITOCHONDRIAL_VARIANT_PIPELINE_PENDING" in error for error in errors)
+    assert any(reason_code in error for error in errors)
 
     with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
         finalize_reportability(
