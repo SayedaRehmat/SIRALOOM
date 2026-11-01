@@ -36,9 +36,9 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 5. Parent-child edges are exported only when the stored relationship type is PARENT_CHILD. Parent roles are not inferred from absent or ambiguous sex information.
 6. A submitted HPO identifier is retained. A canonical identifier is emitted only when the stored ontology resolution is CURRENT or ALTERNATE_ID.
 7. An ontology release/checksum is never invented. The actual HPO release and resource provenance are included only when they exist in the stored resolution record.
-10. A timezone is never inferred for a naive clinical timestamp during FHIR serialization; export fails until the source timezone is explicit.
-8. Export does not infer a disease, inheritance model, penetrance, de novo status, pathogenicity criterion, causal variant, or clinical diagnosis.
-9. The export audit event records format, schema version, warning/resource counts, and actor identity. It does not replace the clinical observation's source provenance.
+8. A timezone is never inferred for a naive clinical timestamp during FHIR serialization; export fails until the source timezone is explicit.
+9. Export does not infer a disease, inheritance model, penetrance, de novo status, pathogenicity criterion, causal variant, or clinical diagnosis.
+10. The export audit event records format, schema version, warning/resource counts, and actor identity. It does not replace the clinical observation's source provenance.
 
 ## GA4GH Phenopackets v2 mapping
 
