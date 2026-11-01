@@ -90,7 +90,12 @@ def test_fhir_r5_preserves_absent_excluded_unknown_and_not_assessed_semantics():
     }
 
     assert observations["ABSENT"]["valueBoolean"] is False
-    assert observations["EXCLUDED"]["valueBoolean"] is False
+    assert "valueBoolean" not in observations["EXCLUDED"]
+    assert observations["EXCLUDED"]["valueCodeableConcept"]["coding"][0] == {
+        "system": "https://siraloom.org/fhir/CodeSystem/phenotype-observation-status",
+        "code": "EXCLUDED",
+        "display": "Excluded finding",
+    }
     assert observations["UNKNOWN"]["dataAbsentReason"]["coding"][0]["code"] == "unknown"
     assert observations["NOT_ASSESSED"]["dataAbsentReason"]["coding"][0]["code"] == "not-performed"
 
