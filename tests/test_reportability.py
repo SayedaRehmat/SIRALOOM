@@ -174,6 +174,9 @@ def test_final_reportability_state_rejects_decision_linked_to_stale_classificati
         ("STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf"),
         ("MITOCHONDRIAL_VARIANT_RECORDS", "mitochondrial-variants.vcf"),
         ("REPEAT_EXPANSION_RECORDS", "repeat-expansion-variants.vcf"),
+        ("GVCF_REFERENCE_BLOCKS", "gvcf-reference-blocks.vcf"),
+        ("TELOMERE_COORDINATE_RECORDS", "telomere-records.vcf"),
+        ("TELOMERE_AFTER_CONTIG_RECORDS", "telomere-after-contig-records.vcf"),
     ],
 )
 def test_out_of_scope_variant_artifacts_are_not_first_product_reportability_blockers(
