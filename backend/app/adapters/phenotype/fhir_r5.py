@@ -404,10 +404,6 @@ def build_fhir_r5_bundle(
                 "resourceType": "RelatedPerson",
                 "id": relative_id,
                 "patient": {"reference": f"Patient/{patient_id}"},
-                "identifier": [{
-                    "system": "https://siraloom.org/identifier/pedigree-member",
-                    "value": str(_get(member, "member_identifier")),
-                }],
                 "extension": [
                     _extension("family-affected-status", "valueCode", str(_get(member, "affected_status", "UNKNOWN"))),
                     _extension("pedigree-sex", "valueCode", str(_get(member, "sex", "UNKNOWN"))),
