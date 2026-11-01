@@ -167,6 +167,22 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
         or not isinstance(value["pedigree_context"].get("relationships"), list)
     ):
         raise ValueError("Persisted clinical input snapshot has invalid pedigree context")
+    if "pedigree_context" in value:
+        member_ids = {
+            str(member.get("member_id"))
+            for member in value["pedigree_context"]["members"]
+            if isinstance(member, dict) and member.get("member_id")
+        }
+        proband_count = sum(
+            1 for member in value["pedigree_context"]["members"]
+            if isinstance(member, dict) and member.get("is_proband")
+        )
+        if proband_count > 1:
+            raise ValueError("Persisted clinical input snapshot has multiple probands")
+        for row in value["phenotype_observations"]:
+            subject_id = row.get("subject_member_id") if isinstance(row, dict) else None
+            if subject_id is not None and str(subject_id) not in member_ids:
+                raise ValueError("Persisted phenotype observation references a missing pedigree member")
     for key in ("gene_disease_evidence", "literature_evidence"):
         if not isinstance(value.get(key), list) or not all(
             isinstance(item, dict) for item in value[key]
