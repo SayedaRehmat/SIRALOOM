@@ -571,7 +571,6 @@ def _phenotype_export_sidecar(
             "ontology_resolution": row.ontology_resolution or {},
             "source": row.source,
             "evidence": row.evidence or {},
-            "analysis_reference_present": row.analysis_id is not None,
         })
     return exported
 
@@ -624,7 +623,10 @@ def export_case_phenopackets_v2(
 
     observations = list(db.scalars(
         select(PhenotypeObservation)
-        .where(PhenotypeObservation.case_id == case_id)
+        .where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.analysis_id.is_(None),
+        )
         .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
     ))
     members = list(db.scalars(
@@ -714,7 +716,10 @@ def export_case_phenotypes_fhir_r5(
 
     observations = list(db.scalars(
         select(PhenotypeObservation)
-        .where(PhenotypeObservation.case_id == case_id)
+        .where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.analysis_id.is_(None),
+        )
         .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
     ))
     members = list(db.scalars(
