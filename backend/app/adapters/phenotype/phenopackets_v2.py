@@ -435,18 +435,32 @@ def build_phenopackets_v2(
                 "field": "pedigree.specimen_id",
                 "reason": "The specimen linkage is retained as a SIRALOOM sidecar reference; GA4GH Biosample export requires a complete specimen record.",
             })
-        if _value(member, "metadata_json", {}) or {}:
+        member_metadata = _value(member, "metadata_json", {}) or {}
+        unrepresented_member_metadata = (
+            {key: value for key, value in member_metadata.items() if key != "consanguinous_parents"}
+            if isinstance(member_metadata, dict) else member_metadata
+        )
+        if unrepresented_member_metadata:
             warnings.append({
                 "observation_id": member_identifier,
                 "field": "pedigree.member_metadata",
-                "reason": "Local pedigree member metadata is retained in the SIRALOOM sidecar and is not interpreted as GA4GH pedigree semantics.",
+                "reason": "Local pedigree member metadata beyond the explicitly mapped consanguinity assertion is retained in the SIRALOOM sidecar and is not interpreted as GA4GH pedigree semantics.",
             })
     for relationship in relationships:
-        if _value(relationship, "metadata_json", {}) or {}:
+        relationship_metadata = _value(relationship, "metadata_json", {}) or {}
+        unrepresented_relationship_metadata = (
+            {
+                key: value
+                for key, value in relationship_metadata.items()
+                if key != "consanguinous_parents"
+            }
+            if isinstance(relationship_metadata, dict) else relationship_metadata
+        )
+        if unrepresented_relationship_metadata:
             warnings.append({
                 "observation_id": "pedigree-relationship",
                 "field": "pedigree.relationship_metadata",
-                "reason": "Local pedigree relationship metadata is retained in the SIRALOOM sidecar and is not interpreted as GA4GH parentage semantics.",
+                "reason": "Local pedigree relationship metadata beyond the explicitly mapped consanguinity assertion is retained in the SIRALOOM sidecar and is not interpreted as GA4GH parentage semantics.",
             })
     releases = {
         str(resource["ontology_release"])
