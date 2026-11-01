@@ -101,9 +101,9 @@ def test_specimen_ploidy_evidence_migration_rejects_update_and_delete(tmp_path, 
         connection.execute(text(
             "INSERT INTO specimen_ploidy_evidence_revisions "
             "(id, specimen_id, version, schema_version, revision_fingerprint, reference_build, status, "
-            "region_copy_number, reviewed_by, reviewed_at, recorded_by, audit_event_id) "
+            "region_copy_number, source_type, evidence_reference, reviewed_by, reviewed_at, recorded_by, audit_event_id) "
             "VALUES (:id, :specimen, 1, 1, :fingerprint, 'GRCh38', 'VERIFIED', "
-            ":region_copy_number, :reviewer, CURRENT_TIMESTAMP, :recorder, :audit)"
+            ":region_copy_number, 'CYTOGENETIC_REPORT', 'report-123', :reviewer, CURRENT_TIMESTAMP, :recorder, :audit)"
         ), {
             "id": str(uuid4()), "specimen": str(specimen_id), "fingerprint": "a" * 64,
             "region_copy_number": '{"X_NON_PAR": 1}',
