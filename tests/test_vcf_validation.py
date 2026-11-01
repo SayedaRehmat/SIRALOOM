@@ -1606,7 +1606,8 @@ def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
     ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],A]chr1:123]"],
 )
 def test_repeated_alt_values_are_preserved_as_distinct_source_entries(alt: str):
-    fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
+    info = "END=100" if "<" in alt else "SVTYPE=BND" if "[" in alt or "]" in alt else "."
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", info]
 
     _chrom, _position, observed = _validate_record(fields, 1, None, "VCFv4.5")
 
