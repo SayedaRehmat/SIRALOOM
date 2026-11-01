@@ -15,6 +15,7 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.vcf_tools import route_vcf_records
 from backend.app.infrastructure.db.models import (
     Analysis,
     Artifact,
@@ -24,7 +25,6 @@ from backend.app.infrastructure.db.models import (
     User,
     WorkflowStep,
 )
-from backend.app.domain.vcf_tools import route_vcf_records
 
 
 @pytest.mark.integration
@@ -224,7 +224,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         assert workflow_result["step_status"] == StepStatus.SUCCEEDED.value
         assert workflow_result["step_error_code"] is None
         assert workflow_result["recovery"] == "CELERY_REDELIVERY"
-        assert workflow_result["checkpoint"] == "normalized-artifact-committed"
+        assert workflow_result["checkpoint"] == "normalized-artifact-pair-committed"
         assert workflow_result["artifact_count"] == 1
         assert workflow_result["index_artifact_count"] == 1
         assert workflow_result["replayed_bytes_match"] is True
