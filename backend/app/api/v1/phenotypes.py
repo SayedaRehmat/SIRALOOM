@@ -35,7 +35,7 @@ from backend.app.adapters.phenotype.fhir_r5 import (
 )
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, PedigreeMember, PedigreeRelationship, PhenotypeObservation, WorkflowStep,
+    Analysis, Case, ClinicalIntakeRevision, PedigreeMember, PedigreeRelationship, PhenotypeObservation, WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.phenotype import normalize_hpo_id
@@ -505,6 +505,26 @@ def list_analysis_phenotypes(
     }
 
 
+
+
+def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    return {
+        "revision_id": str(row.id),
+        "version": row.version,
+        "schema_version": row.schema_version,
+        "revision_fingerprint": row.revision_fingerprint,
+        "intake_status": row.intake_status,
+        "phenotype_review_status": row.phenotype_review_status,
+        "family_history_review_status": row.family_history_review_status,
+        "context": row.context or {},
+        "phenotype_review_note": row.phenotype_review_note,
+        "family_history_review_note": row.family_history_review_note,
+        "completion_note": row.completion_note,
+        "recorded_at": row.recorded_at.isoformat(),
+    }
+
 @router.get("/cases/{case_id}/phenopackets-v2")
 def export_case_phenopackets_v2(
     case_id: UUID,
@@ -537,6 +557,12 @@ def export_case_phenopackets_v2(
         .where(PedigreeRelationship.case_id == case_id)
         .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
     ))
+    clinical_intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
 
     try:
         document, warnings = build_phenopackets_v2(
@@ -544,6 +570,7 @@ def export_case_phenopackets_v2(
             phenotype_observations=observations,
             pedigree_members=members,
             pedigree_relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
             allow_lossy=allow_lossy,
         )
     except PhenopacketExportError as exc:
@@ -577,6 +604,7 @@ def export_case_phenopackets_v2(
         "schema_version": "2.0",
         "lossy": bool(warnings),
         "warnings": warnings,
+        "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
         "document": document,
     }
 
@@ -608,6 +636,12 @@ def export_case_phenotypes_fhir_r5(
         .where(PedigreeRelationship.case_id == case_id)
         .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
     ))
+    clinical_intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
 
     try:
         bundle = build_fhir_r5_bundle(
@@ -615,6 +649,7 @@ def export_case_phenotypes_fhir_r5(
             phenotype_observations=observations,
             pedigree_members=members,
             pedigree_relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
         )
     except FHIRExportError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -641,5 +676,6 @@ def export_case_phenotypes_fhir_r5(
     return {
         "format": "HL7_FHIR_R5",
         "fhir_version": "5.0.0",
+        "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
         "bundle": bundle,
     }
