@@ -1696,7 +1696,7 @@ def test_vcf45_reserved_field_definitions_enforce_spec_number_and_type(
 @pytest.mark.parametrize(
     ("info", "expected_code"),
     [
-        ("DP=not-an-integer", "VCF_FIELD_VALUE_INVALID"),
+        ("DP=not-an-integer", "VCF_FIELD_TYPE_INVALID"),
         ("AF=0.1,0.2", "VCF_FIELD_CARDINALITY_INVALID"),
         ("DB=1", "VCF_FIELD_CARDINALITY_INVALID"),
     ],
