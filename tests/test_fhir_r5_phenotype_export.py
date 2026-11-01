@@ -119,7 +119,7 @@ def test_fhir_r5_preserves_absent_excluded_unknown_and_not_assessed_semantics():
         "display": "Excluded finding",
     }
     assert observations["UNKNOWN"]["dataAbsentReason"]["coding"][0]["code"] == "unknown"
-    assert observations["NOT_ASSESSED"]["dataAbsentReason"]["coding"][0]["code"] == "not-performed"
+    assert observations["NOT_ASSESSED"]["dataAbsentReason"]["coding"][0]["code"] == "not-asked"
 
 
 def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
