@@ -157,11 +157,11 @@ def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Pa
 @pytest.mark.parametrize(
     "bed_line",
     [
-        "chr2\\t0\\t10\\n",
-        "chr1\\t0\\t1001\\n",
-        "chr1\\t10\\t10\\n",
-        "track name=confident\\n",
-        "chr1\\tzero\\t10\\n",
+        "chr2\t0\t10\n",
+        "chr1\t0\t1001\n",
+        "chr1\t10\t10\n",
+        "track name=confident\n",
+        "chr1\tzero\t10\n",
     ],
 )
 def test_bed_regions_must_match_reference_contigs_and_bounds(tmp_path: Path, bed_line: str) -> None:
