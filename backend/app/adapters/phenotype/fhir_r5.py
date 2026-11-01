@@ -382,6 +382,33 @@ def _observation(
 
 
 def _validate_bundle(payload: dict[str, Any]) -> dict[str, Any]:
+    entries = payload.get("entry", [])
+    full_urls = [entry.get("fullUrl") for entry in entries]
+    if len(full_urls) != len(set(full_urls)):
+        raise FHIRExportError("FHIR Bundle contains duplicate fullUrl values.")
+    resource_refs = {
+        f"{entry['resource']['resourceType']}/{entry['resource']['id']}"
+        for entry in entries
+    }
+    if len(resource_refs) != len(entries):
+        raise FHIRExportError("FHIR Bundle contains duplicate resource type/id identities.")
+
+    def validate_references(value: Any) -> None:
+        if isinstance(value, dict):
+            reference = value.get("reference")
+            if isinstance(reference, str) and "/" in reference and reference.split("/", 1)[0] in {
+                "Patient", "RelatedPerson", "FamilyMemberHistory", "Observation",
+                "Provenance", "Organization", "CodeSystem",
+            }:
+                if reference not in resource_refs:
+                    raise FHIRExportError(f"FHIR Bundle contains an unresolved internal reference: {reference}")
+            for nested in value.values():
+                validate_references(nested)
+        elif isinstance(value, list):
+            for nested in value:
+                validate_references(nested)
+
+    validate_references(entries)
     try:
         from fhir.resources.bundle import Bundle
     except ImportError as exc:
