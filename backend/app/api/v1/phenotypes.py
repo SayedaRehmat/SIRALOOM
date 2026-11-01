@@ -543,7 +543,7 @@ def add_case_phenotype(
             "phenotype_status": body.phenotype_status,
             "subject_member_id": str(body.subject_member_id) if body.subject_member_id else None,
             "replacement_observation_id": str(row.id) if superseded_row is not None else None,
-            "amendment_reason": body.amendment_reason,
+            "amendment_fingerprint": amendment.amendment_fingerprint if amendment is not None else None,
             "ontology_resolution": ontology_resolution,
         },
     )
@@ -637,7 +637,7 @@ def retract_case_phenotype(
         actor_type="HUMAN", actor_id=str(principal.user_id),
         subject_type="PHENOTYPE", subject_id=str(observation.id), operation="RETRACT",
         after_state={"phenotype_id": str(observation.id), "hpo_id": observation.hpo_id,
-                     "amendment_id": str(amendment.id), "amendment_reason": body.reason},
+                     "amendment_id": str(amendment.id), "amendment_fingerprint": fingerprint},
     )
     create_case_change_candidates(
         db, case=case, trigger_type="PHENOTYPE_UPDATE",
