@@ -119,6 +119,21 @@ def timed_stage(
     return result
 
 
+def add_record_throughput(
+    measurements: dict[str, dict[str, Any]],
+    stage_name: str,
+    *,
+    record_count: int,
+    record_basis: str,
+) -> None:
+    elapsed = measurements[stage_name]["wall_seconds"]
+    measurements[stage_name]["throughput_record_count"] = record_count
+    measurements[stage_name]["throughput_record_basis"] = record_basis
+    measurements[stage_name]["records_per_second"] = (
+        round(record_count / elapsed, 2) if elapsed > 0 else None
+    )
+
+
 def _route_summary(routing: dict[str, Any]) -> dict[str, Any]:
     reconciliation = routing.get("record_reconciliation") or {}
     return {
@@ -196,12 +211,25 @@ def run_benchmark(
             raise ScaleBenchmarkError("VCF validation did not provide toolchain attestation metadata.")
         if validation.metadata.get("toolchain_validation_status") != "PASS":
             raise ScaleBenchmarkError("Pinned BCFtools/HTSlib toolchain attestation did not pass.")
+        source_record_count = int(validation.metadata.get("source_record_count") or 0)
+        add_record_throughput(
+            stage_metrics,
+            current_stage,
+            record_count=source_record_count,
+            record_basis="source_vcf_records",
+        )
 
         current_stage = "reference_validation"
         reference_validation = timed_stage(
             current_stage,
             lambda: validate_vcf_reference_alleles(vcf_path, reference_fasta),
             stage_metrics,
+        )
+        add_record_throughput(
+            stage_metrics,
+            current_stage,
+            record_count=source_record_count,
+            record_basis="source_vcf_records",
         )
 
         current_stage = "record_routing"
@@ -217,6 +245,12 @@ def run_benchmark(
         validated_source_count = validation.metadata.get("source_record_count")
         if validated_source_count is None or routing.get("source_record_count") != validated_source_count:
             raise ScaleBenchmarkError("Validation and routing source-record counts disagree.")
+        add_record_throughput(
+            stage_metrics,
+            current_stage,
+            record_count=source_record_count,
+            record_basis="source_vcf_records",
+        )
         if not routing.get("sequence_path"):
             raise ScaleBenchmarkError("The input contains no supported SNV/INDEL records to normalize.")
 
@@ -249,6 +283,12 @@ def run_benchmark(
             or index_validation.get("indexed_query_contigs_verified") != index_validation.get("contigs")
         ):
             raise ScaleBenchmarkError("CSI indexed-query record streams do not reconcile with the sequential VCF stream.")
+        add_record_throughput(
+            stage_metrics,
+            current_stage,
+            record_count=int(routing.get("sequence_records") or 0),
+            record_basis="routed_sequence_source_records",
+        )
 
         current_stage = "selected_sample_iteration"
         def count_selected_sample_records() -> int:
@@ -267,6 +307,12 @@ def run_benchmark(
             stage_metrics,
         )
         stage_metrics[current_stage]["selected_sample_normalized_record_count"] = selected_normalized_record_count
+        add_record_throughput(
+            stage_metrics,
+            current_stage,
+            record_count=selected_normalized_record_count,
+            record_basis="selected_sample_normalized_records",
+        )
 
         current_stage = "input_integrity_postcheck"
         input_sha256_after = timed_stage(
