@@ -78,6 +78,34 @@ def _sha256(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
+def _semantic_phenotype_rows(
+    rows: list[dict[str, Any]], clinical_snapshot: dict[str, Any] | None
+) -> list[dict[str, Any]]:
+    """Keep clinical meaning and lifecycle, excluding database-generated row identities."""
+    member_identifiers = {}
+    if isinstance(clinical_snapshot, dict):
+        pedigree = clinical_snapshot.get("pedigree_context") or {}
+        member_identifiers = {
+            str(member["member_id"]): str(member["member_identifier"])
+            for member in pedigree.get("members", [])
+            if isinstance(member, dict) and member.get("member_id") and member.get("member_identifier")
+        }
+    normalized = []
+    for source in rows:
+        row = dict(source)
+        subject_id = row.pop("subject_member_id", None)
+        if subject_id is not None:
+            row["subject_member_identifier"] = member_identifiers.get(str(subject_id), str(subject_id))
+        for key in (
+            "phenotype_id", "case_id", "analysis_id", "amendment_id",
+            "replacement_observation_id", "amendment_recorded_by", "amendment_recorded_at",
+        ):
+            row.pop(key, None)
+        row.setdefault("record_lifecycle_status", "ACTIVE")
+        normalized.append(row)
+    return sorted(normalized, key=_canonical_json)
+
+
 def _is_sha256(value: Any) -> bool:
     return isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{64}", value) is not None
 
@@ -306,6 +334,8 @@ def build_reproducibility_manifest(db: Session, analysis_id: UUID) -> dict[str, 
             }
             for row in clinical_input_snapshot["phenotype_observations"]
         ]
+
+    phenotypes = _semantic_phenotype_rows(phenotypes, clinical_input_snapshot)
 
     technical_qc = [
         {
