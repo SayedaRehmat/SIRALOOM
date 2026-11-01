@@ -1309,7 +1309,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 header_key, separator, header_value = line[2:].partition("=")
                 if separator and header_value.startswith("<") and (
                     header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
-                    or (header_key == "PEDIGREE" and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"})
                     or fileformat == "VCFv4.5"
                 ):
                     identifier = _structured_header_id(line, header_key, line_no)
