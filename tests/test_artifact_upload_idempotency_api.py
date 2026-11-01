@@ -79,6 +79,9 @@ def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     app.dependency_overrides[get_current_principal] = lambda: principal
 
     storage_root = tmp_path / "artifact-storage"
+    scratch_root = tmp_path / "worker-scratch"
+    scratch_root.mkdir()
+    monkeypatch.setattr(artifacts_api.settings, "worker_scratch_root", str(scratch_root))
     monkeypatch.setattr(artifacts_api, "require_case_permission", lambda *args, **kwargs: None)
     monkeypatch.setattr(artifacts_api, "require_role", lambda *args, **kwargs: None)
     monkeypatch.setattr(artifacts_api, "effective_max_upload_bytes", lambda *args, **kwargs: 10_000_000)
@@ -122,6 +125,7 @@ def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
                 "user_id": user_id,
                 "case_id": case_id,
                 "storage_root": storage_root,
+                "scratch_root": scratch_root,
             }
     finally:
         app.dependency_overrides.clear()
@@ -215,4 +219,60 @@ def test_artifact_upload_http_retry_fails_closed_for_committed_intent_without_ar
         assert intent.status == "RECOVERY_REQUIRED"
         assert db.scalar(
             select(func.count(Artifact.id)).where(Artifact.case_id == case_id)
+        ) == 0
+
+
+def test_artifact_upload_stages_on_configured_worker_scratch_volume(upload_api, monkeypatch):
+    observed = {}
+    original_temporary_directory = artifacts_api.tempfile.TemporaryDirectory
+
+    def recording_temporary_directory(*args, **kwargs):
+        observed["dir"] = Path(kwargs["dir"])
+        return original_temporary_directory(*args, **kwargs)
+
+    monkeypatch.setattr(
+        artifacts_api.tempfile,
+        "TemporaryDirectory",
+        recording_temporary_directory,
+    )
+    content = (
+        b"##fileformat=VCFv4.2\\n"
+        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+    )
+
+    response = _post_vcf(
+        upload_api["client"], upload_api["case_id"], content,
+        "browser-upload-attempt-scratch-000001",
+    )
+
+    assert response.status_code == 201, response.text
+    assert observed["dir"] == upload_api["scratch_root"]
+    assert list(upload_api["scratch_root"].iterdir()) == []
+
+
+def test_artifact_upload_fails_closed_when_configured_scratch_root_is_unavailable(
+    upload_api, monkeypatch, tmp_path
+):
+    invalid_scratch_root = tmp_path / "not-a-directory"
+    invalid_scratch_root.write_text("not a directory", encoding="utf-8")
+    monkeypatch.setattr(
+        artifacts_api.settings, "worker_scratch_root", str(invalid_scratch_root)
+    )
+    content = (
+        b"##fileformat=VCFv4.2\\n"
+        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+    )
+
+    response = _post_vcf(
+        upload_api["client"], upload_api["case_id"], content,
+        "browser-upload-attempt-scratch-000002",
+    )
+
+    assert response.status_code == 507, response.text
+    assert response.json()["detail"]["code"] == "UPLOAD_STAGING_UNAVAILABLE"
+    with upload_api["session_factory"]() as db:
+        assert db.scalar(
+            select(func.count(Artifact.id)).where(Artifact.case_id == upload_api["case_id"])
         ) == 0
