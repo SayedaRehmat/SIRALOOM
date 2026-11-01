@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 import re
 from datetime import datetime
 from typing import Any
@@ -63,12 +64,16 @@ def _validate_clinical_attributes(value: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("onset_age requires a supported unit and comparator")
         if comparator == "RANGE":
             lower, upper = onset_age.get("lower_value"), onset_age.get("upper_value")
-            if lower is None or upper is None or float(lower) < 0 or float(upper) < float(lower):
-                raise ValueError("RANGE onset_age requires non-negative ordered lower_value and upper_value")
+            if (
+                lower is None or upper is None
+                or not math.isfinite(float(lower)) or not math.isfinite(float(upper))
+                or float(lower) < 0 or float(upper) < float(lower)
+            ):
+                raise ValueError("RANGE onset_age requires finite, non-negative ordered lower_value and upper_value")
         else:
             age = onset_age.get("value")
-            if age is None or float(age) < 0:
-                raise ValueError("onset_age requires a non-negative value")
+            if age is None or not math.isfinite(float(age)) or float(age) < 0:
+                raise ValueError("onset_age requires a finite, non-negative value")
         normalized["onset_age"] = {**onset_age, "unit": unit, "comparator": comparator}
     for time_key in ("onset_age_iso8601", "resolution_age_iso8601"):
         duration = normalized.get(time_key)
@@ -111,8 +116,9 @@ def _validate_clinical_attributes(value: dict[str, Any]) -> dict[str, Any]:
         count = frequency.get("count")
         if isinstance(count, bool) or not isinstance(count, int) or count < 1:
             raise ValueError("episode_frequency count must be a positive integer")
-        if float(frequency.get("period_value", 0)) <= 0:
-            raise ValueError("episode_frequency requires a positive period_value")
+        period_value = float(frequency.get("period_value", 0))
+        if not math.isfinite(period_value) or period_value <= 0:
+            raise ValueError("episode_frequency requires a finite, positive period_value")
         if str(frequency.get("period_unit") or "").upper() not in {"HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS"}:
             raise ValueError("episode_frequency requires a supported period_unit")
         frequency["period_unit"] = str(frequency["period_unit"]).upper()
