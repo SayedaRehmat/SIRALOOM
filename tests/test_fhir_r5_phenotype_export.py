@@ -164,3 +164,72 @@ def test_fhir_r5_family_export_requires_one_explicit_proband():
         assert "exactly one explicitly designated proband" in str(exc)
     else:
         raise AssertionError("Family export must not infer a proband.")
+
+
+def test_fhir_r5_preserves_versioned_clinical_intake_and_differentials_without_diagnosis_conversion():
+    revision = SimpleNamespace(
+        id=uuid4(),
+        version=4,
+        schema_version=1,
+        revision_fingerprint="d" * 64,
+        intake_status="COMPLETE",
+        phenotype_review_status="COMPLETE",
+        family_history_review_status="NOT_ASSESSED",
+        phenotype_review_note=None,
+        family_history_review_note="Family history unavailable from referral source.",
+        completion_note=None,
+        recorded_at=datetime(2026, 10, 20, tzinfo=UTC),
+        context={
+            "referral_indication": "Unexplained seizures",
+            "referral_question": "Evaluate a suspected inherited epilepsy",
+            "clinical_summary": "Recurrent seizures since early childhood.",
+            "age_at_assessment": {
+                "value": 7,
+                "unit": "YEARS",
+                "as_of_date": "2026-10-15",
+            },
+            "prior_testing": [{
+                "test_type": "Chromosomal microarray",
+                "performed_at": "2024-05-01",
+                "laboratory": "Regional genetics laboratory",
+                "accession_reference": "LAB-2024-001",
+                "result_status": "NEGATIVE",
+                "result_summary": "No reportable copy-number finding.",
+                "source_reference": "REPORT-001",
+                "artifact_id": str(uuid4()),
+            }],
+            "differential_diagnoses": [{
+                "system": "http://snomed.info/sct",
+                "code": "84757009",
+                "display": "Epilepsy",
+                "certainty": "SUSPECTED",
+                "clinical_status": "ACTIVE",
+            }],
+            "source_document_references": ["REFERRAL-001"],
+        },
+    )
+    bundle = build_fhir_r5_bundle(
+        case=_case(),
+        phenotype_observations=[_observation()],
+        clinical_intake_revision=revision,
+    )
+
+    resources = _resources(bundle)
+    patient = next(item for item in resources if item["resourceType"] == "Patient")
+    intake = next(
+        item for item in patient["extension"]
+        if item["url"].endswith("/clinical-intake-revision")
+    )
+    fields = {item["url"].rsplit("/", 1)[-1]: item for item in intake["extension"]}
+    assert fields["revision-version"]["valueInteger"] == 4
+    assert fields["intake-status"]["valueCode"] == "COMPLETE"
+    assert fields["referral-indication"]["valueString"] == "Unexplained seizures"
+    age = next(item for item in intake["extension"] if item["url"].endswith("/age-at-assessment"))
+    age_fields = {item["url"]: item for item in age["extension"]}
+    assert age_fields["value"]["valueDecimal"] == 7
+    assert age_fields["unit"]["valueCode"] == "YEARS"
+    prior = next(item for item in intake["extension"] if item["url"].endswith("/prior-testing"))
+    assert any(item["url"] == "result-status" and item["valueCode"] == "NEGATIVE" for item in prior["extension"])
+    differential = next(item for item in intake["extension"] if item["url"].endswith("/differential-diagnosis"))
+    assert any(item["url"] == "certainty" and item["valueString"] == "SUSPECTED" for item in differential["extension"])
+    assert not any(item["resourceType"] == "Condition" for item in resources)
