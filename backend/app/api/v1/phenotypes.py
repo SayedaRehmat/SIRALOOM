@@ -27,7 +27,7 @@ from backend.app.domain.resource_execution_plan import build_resource_execution_
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, PedigreeMember, PhenotypeObservation,
+    Analysis, Case, PedigreeMember, PhenotypeObservation, WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.phenotype import normalize_hpo_id
@@ -371,6 +371,24 @@ def add_case_phenotype(
     db.refresh(case, with_for_update=True)
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
+    active_analyses = db.scalars(
+        select(Analysis).where(
+            Analysis.case_id == case_id,
+            Analysis.status.in_(("QUEUED", "PENDING", "RUNNING", "RETRYING")),
+        )
+    ).all()
+    for active_analysis in active_analyses:
+        evidence_step = db.scalar(
+            select(WorkflowStep).where(
+                WorkflowStep.analysis_id == active_analysis.id,
+                WorkflowStep.step_id == "build_evidence",
+            )
+        )
+        if (evidence_step.metadata_json or {}).get("clinical_input_snapshot") is not None:
+            raise HTTPException(
+                409,
+                "Clinical phenotype input is frozen for an active analysis because its evidence-stage snapshot has already been persisted. Wait for the analysis to reach a terminal state, then record the new observation and request reanalysis.",
+            )
     if body.subject_member_id is not None:
         member = db.get(PedigreeMember, body.subject_member_id)
         if member is None or member.case_id != case.id:
