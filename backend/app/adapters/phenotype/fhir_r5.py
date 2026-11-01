@@ -496,7 +496,7 @@ def build_fhir_r5_bundle(
             clinical_intake_revision=clinical_intake_revision,
         )
         consanguinity_children = [
-            _extension(
+            _sub_extension(
                 "status",
                 "valueCode",
                 "CONSANGUINOUS" if consanguinous_parents is True
@@ -506,7 +506,7 @@ def build_fhir_r5_bundle(
         ]
         if consanguinous_parents is not None:
             consanguinity_children.append(
-                _extension("consanguinous-parents", "valueBoolean", consanguinous_parents)
+                _sub_extension("consanguinous-parents", "valueBoolean", consanguinous_parents)
             )
         patient.setdefault("extension", []).append({
             "url": f"{EXTENSION_BASE}/consanguinity-assessment",
