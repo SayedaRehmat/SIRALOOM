@@ -298,7 +298,7 @@ def test_parse_happy_summary_rejects_incomplete_variant_type_coverage(tmp_path: 
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(SUMMARY_HEADER)
-        writer.writerow(["SNP", "ALL", 1, 1, 0, 1, 0, 0, 0, 1, 1, 0])
+        writer.writerow(["SNP", "ALL", 1, 1, 0, 1, 1, 0, 0, 0, 0, 1.0, 1.0, 0.0])
 
     with pytest.raises(ConcordanceError, match="SNP and INDEL"):
         parse_happy_summary(path)
