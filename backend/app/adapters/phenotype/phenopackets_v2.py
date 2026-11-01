@@ -139,12 +139,6 @@ def _collect_loss_warnings(
                     "field": "related_hpo_term_resolution",
                     "reason": f"Related HPO term {term_id} is not resolved as CURRENT or ALTERNATE_ID and is omitted from the Phenopackets feature.",
                 })
-        if _value(row, "source"):
-            warnings.append({
-                "observation_ref": observation_ref,
-                "field": "source",
-                "reason": "The SIRALOOM phenotype source assertion has no direct Phenopackets v2 field and is retained in the sidecar.",
-            })
         if _value(row, "observed_at"):
             warnings.append({
                 "observation_ref": observation_ref,
@@ -156,13 +150,6 @@ def _collect_loss_warnings(
                 "observation_ref": observation_ref,
                 "field": "record_fingerprint",
                 "reason": "The SIRALOOM source-record fingerprint is retained in the sidecar, not the base Phenopacket.",
-            })
-        resolution_payload = _value(row, "ontology_resolution", {}) or {}
-        if resolution_payload:
-            warnings.append({
-                "observation_ref": observation_ref,
-                "field": "ontology_resolution_detail",
-                "reason": "The complete term-resolution decision and resource qualification lineage are retained in the sidecar; Phenopackets carries only the resolved ontology term and resource release.",
             })
         if _value(row, "evidence", {}) or {}:
             warnings.append({
