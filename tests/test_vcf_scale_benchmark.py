@@ -152,7 +152,11 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
                 "indexed_query_records_verified": 2,
                 "indexed_query_contigs_verified": 1,
             },
-            "source_child_reconciliation": {"status": "VALIDATED", "balanced": True},
+            "source_child_reconciliation": {
+                "status": "VALIDATED",
+                "balanced": True,
+                "normalized_child_records": 2,
+            },
             "source_only_format_fields": [],
             "source_only_format_fields_policy": None,
         }
