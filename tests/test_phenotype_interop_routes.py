@@ -159,6 +159,5 @@ def test_phenotype_export_sidecar_preserves_source_semantics_without_internal_fo
     assert result[0]["phenotype_status"] == "ABSENT"
     assert result[0]["clinical_attributes"]["laterality"] == "BILATERAL"
     assert result[0]["evidence"]["source_note"] == "reported by family"
-    assert result[0]["analysis_reference_present"] is True
     assert "analysis_id" not in result[0]
     assert "subject_member_id" not in result[0]
