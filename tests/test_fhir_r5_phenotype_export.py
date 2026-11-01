@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
-from backend.app.adapters.phenotype.fhir_r5 import build_fhir_r5_bundle
+from backend.app.adapters.phenotype.fhir_r5 import FHIRExportError, build_fhir_r5_bundle
 
 
 def _case():
@@ -317,3 +317,20 @@ def test_fhir_r5_preserves_explicit_consanguinity_without_inference():
     values = {item["url"]: item for item in assessment["extension"]}
     assert values["status"]["valueCode"] == "CONSANGUINOUS"
     assert values["consanguinous-parents"]["valueBoolean"] is True
+
+
+def test_fhir_rejects_timezone_naive_clinical_observation_time_but_normalizes_server_utc():
+    observation = _observation()
+    observation.observed_at = datetime(2025, 3, 1, 12, 0, 0)
+    try:
+        build_fhir_r5_bundle(case=_case(), phenotype_observations=[observation])
+    except FHIRExportError as exc:
+        assert "timezone-naive clinical timestamp" in str(exc)
+    else:
+        raise AssertionError("Clinical observation time must not receive an inferred timezone.")
+
+    observation.observed_at = None
+    observation.created_at = datetime(2025, 3, 2, 12, 0, 0)
+    bundle = build_fhir_r5_bundle(case=_case(), phenotype_observations=[observation])
+    resource = next(item for item in _resources(bundle) if item["resourceType"] == "Observation")
+    assert resource["issued"] == "2025-03-02T12:00:00Z"
