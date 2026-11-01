@@ -35,10 +35,19 @@ def test_prepare_output_dir_preserves_existing_evidence(tmp_path):
     evidence = output / "previous.json"
     evidence.write_text('{"preserve":true}\n', encoding="utf-8")
 
-    with pytest.raises(module.ScaleBenchmarkError, match="new or empty"):
+    with pytest.raises(module.ScaleBenchmarkError, match="must not already exist"):
         module.prepare_output_dir(output)
 
     assert evidence.read_text(encoding="utf-8") == '{"preserve":true}\n'
+
+
+def test_prepare_output_dir_rejects_existing_empty_directory(tmp_path):
+    module = _load_runner()
+    output = tmp_path / "empty-existing"
+    output.mkdir()
+
+    with pytest.raises(module.ScaleBenchmarkError, match="must not already exist"):
+        module.prepare_output_dir(output)
 
 
 def test_prepare_output_dir_sets_private_permissions(tmp_path):
