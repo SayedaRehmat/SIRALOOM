@@ -68,12 +68,25 @@ def validate_single_sample_vcf(path: Path, label: str) -> None:
                 if line.startswith("#CHROM"):
                     header = line.rstrip("\r\n").split("\t")
                     break
+            if header is None or len(header) < 10 or header[8] != "FORMAT":
+                raise ConcordanceError(f"{label} must contain exactly one sample column.")
+            if len(header) != 10 or not header[9].strip():
+                raise ConcordanceError(f"{label} must contain exactly one named sample column.")
+            for line in handle:
+                if not line or line.startswith("#"):
+                    continue
+                fields = line.rstrip("\r\n").split("\t")
+                if len(fields) < 10:
+                    raise ConcordanceError(f"{label} contains a malformed variant record.")
+                for allele in fields[4].split(","):
+                    if allele == "*" or allele.startswith("<") or any(char in allele for char in "[]"):
+                        raise ConcordanceError(
+                            f"{label} contains symbolic, spanning-deletion, or breakend alleles outside this small-variant benchmark."
+                        )
+    except ConcordanceError:
+        raise
     except (OSError, UnicodeError, gzip.BadGzipFile) as exc:
-        raise ConcordanceError(f"{label} header could not be read.") from exc
-    if header is None or len(header) < 10 or header[8] != "FORMAT":
-        raise ConcordanceError(f"{label} must contain exactly one sample column.")
-    if len(header) != 10 or not header[9].strip():
-        raise ConcordanceError(f"{label} must contain exactly one named sample column.")
+        raise ConcordanceError(f"{label} could not be read.") from exc
 
 
 def wilson_interval(successes: int, total: int, z: float = 1.959963984540054) -> list[float] | None:
@@ -158,6 +171,9 @@ def run_concordance(
     assay: str,
     caller: str,
     caller_version: str,
+    truth_set_id: str,
+    truth_set_version: str,
+    acceptance_policy_id: str,
     output_dir: Path,
     hap_py: str = "hap.py",
     engine: str = "xcmp",
@@ -173,6 +189,8 @@ def run_concordance(
         raise ConcordanceError("assay must be WES, WGS, or PANEL.")
     if not caller.strip() or not caller_version.strip():
         raise ConcordanceError("Exact caller name and version are required.")
+    if not truth_set_id.strip() or not truth_set_version.strip() or not acceptance_policy_id.strip():
+        raise ConcordanceError("Truth-set identity, release, and preapproved acceptance-policy ID are required.")
     if engine not in {"xcmp", "vcfeval"}:
         raise ConcordanceError("engine must be xcmp or vcfeval.")
     if threads < 1 or timeout_seconds < 1:
@@ -252,6 +270,9 @@ def run_concordance(
 
     summary_path = Path(str(prefix) + SUMMARY_SUFFIX)
     metrics = parse_happy_summary(summary_path)
+    runinfo_path = Path(str(prefix) + ".runinfo.json")
+    if not runinfo_path.is_file():
+        raise ConcordanceError("hap.py runinfo.json is missing; runtime argument provenance is incomplete.")
     extended_path = Path(str(prefix) + ".extended.csv")
     if stratification_tsv is not None and not extended_path.is_file():
         raise ConcordanceError("Stratification was requested but hap.py did not produce extended.csv.")
@@ -278,6 +299,9 @@ def run_concordance(
             "caller": caller.strip(),
             "caller_version": caller_version.strip(),
             "reference_build": reference_build,
+            "truth_set_id": truth_set_id.strip(),
+            "truth_set_version": truth_set_version.strip(),
+            "acceptance_policy_id": acceptance_policy_id.strip(),
         },
         "inputs": {
             name: {"size_bytes": path.stat().st_size, "sha256": hashes_before[name]}
@@ -289,6 +313,8 @@ def run_concordance(
         "source_artifacts": {
             "hap_py_summary": summary_path.name,
             "hap_py_summary_sha256": sha256_file(summary_path),
+            "hap_py_runinfo": runinfo_path.name,
+            "hap_py_runinfo_sha256": sha256_file(runinfo_path),
             "hap_py_extended": extended_path.name if extended_path.is_file() else None,
             "hap_py_extended_sha256": sha256_file(extended_path) if extended_path.is_file() else None,
             "hap_py_log": log_path.name,
@@ -319,6 +345,9 @@ def main() -> int:
     parser.add_argument("--assay", required=True, choices=("WES", "WGS", "PANEL"))
     parser.add_argument("--caller", required=True)
     parser.add_argument("--caller-version", required=True)
+    parser.add_argument("--truth-set-id", required=True)
+    parser.add_argument("--truth-set-version", required=True)
+    parser.add_argument("--acceptance-policy-id", required=True)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--hap-py", default="hap.py")
     parser.add_argument("--engine", choices=("xcmp", "vcfeval"), default="xcmp")
@@ -334,6 +363,8 @@ def main() -> int:
             confident_bed=args.confident_bed, reference_fasta=args.reference_fasta,
             reference_build=args.reference_build, assay=args.assay,
             caller=args.caller, caller_version=args.caller_version,
+            truth_set_id=args.truth_set_id, truth_set_version=args.truth_set_version,
+            acceptance_policy_id=args.acceptance_policy_id,
             output_dir=args.output_dir, hap_py=args.hap_py, engine=args.engine,
             threads=args.threads, target_regions=args.target_regions,
             stratification_tsv=args.stratification_tsv,
