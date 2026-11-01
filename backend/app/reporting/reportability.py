@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from backend.app.auth.authorization import get_analysis_variant_ids
 from backend.app.domain.sample_call import get_analysis_sample_calls
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Classification, ReportabilityDecision
+from backend.app.infrastructure.db.models import Artifact, Analysis, Classification, ReportabilityDecision
 
 POLICY_NAME = "SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY"
 POLICY_VERSION = "2.0.0"
@@ -164,6 +164,12 @@ def finalize_reportability(
     db.refresh(decision, with_for_update=True)
     if decision.analysis_id != analysis.id:
         raise ValueError("Reportability decision analysis changed during finalization")
+    pending_artifact_errors = pending_specialized_artifact_errors(db, analysis.id)
+    if pending_artifact_errors:
+        raise ValueError(
+            "Cannot finalize reportability while specialized routed artifacts remain unresolved: "
+            + "; ".join(pending_artifact_errors)
+        )
     manifest_variant_ids = get_analysis_variant_ids(analysis, db)
     if manifest_variant_ids is not None and decision.variant_id not in manifest_variant_ids:
         raise ValueError("Reportability decision references a variant outside the normalized analysis input")
@@ -206,6 +212,28 @@ def finalize_reportability(
     return decision
 
 
+def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[str]:
+    """Return unresolved routed artifacts that must block clinical reportability."""
+    artifacts = list(
+        db.scalars(
+            select(Artifact)
+            .where(Artifact.analysis_id == analysis_id)
+            .order_by(Artifact.artifact_type, Artifact.created_at, Artifact.id)
+        )
+    )
+    errors: list[str] = []
+    for artifact in artifacts:
+        metadata = artifact.metadata_json if isinstance(artifact.metadata_json, dict) else {}
+        if metadata.get("review_status") != "REQUIRES_SPECIALIZED_REVIEW":
+            continue
+        reason_code = metadata.get("review_reason_code") or "REQUIRES_SPECIALIZED_REVIEW"
+        errors.append(
+            f"{artifact.artifact_type} artifact {artifact.id} requires specialized pipeline/review "
+            f"({reason_code}) before reportability can be finalized"
+        )
+    return errors
+
+
 def final_reportability_state(db: Session, analysis_id: UUID) -> tuple[bool, list[str]]:
     analysis = db.get(Analysis, analysis_id)
     if not analysis:
@@ -215,7 +243,7 @@ def final_reportability_state(db: Session, analysis_id: UUID) -> tuple[bool, lis
     for row in classifications:
         if row.variant_id not in latest or row.version > latest[row.variant_id].version:
             latest[row.variant_id] = row
-    errors: list[str] = []
+    errors: list[str] = pending_specialized_artifact_errors(db, analysis_id)
     manifest_variant_ids = get_analysis_variant_ids(analysis, db)
     if manifest_variant_ids is not None and set(latest) != manifest_variant_ids:
         errors.append(
