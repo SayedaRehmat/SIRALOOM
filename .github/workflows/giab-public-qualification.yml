@@ -1,9 +1,9 @@
 name: Public GIAB VCF qualification
 
 on:
-  push:
+  pull_request:
     branches:
-      - feat/giab-public-benchmark-workflow
+      - main
   workflow_dispatch:
     inputs:
       reference_build:
@@ -25,13 +25,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: giab-public-qualification-${{ github.ref }}-${{ inputs.reference_build }}
+  group: giab-public-qualification-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   qualification:
     name: HG001 ${{ matrix.build }} public benchmark
-    if: github.event_name == 'push' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    if: github.event_name != 'workflow_dispatch' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
