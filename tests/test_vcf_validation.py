@@ -593,15 +593,6 @@ def test_structured_header_ids_are_unique_per_type(tmp_path: Path):
     assert validate_vcf_strict(path)["records"] == 1
 
 
-@pytest.mark.parametrize(
-    ("field_type", "value"),
-    [
-        ("Integer", "1.5"),
-        ("Integer", "2147483648"),
-        ("Float", "not-a-number"),
-        ("Character", "too-long"),
-    ],
-)
 def test_info_number_g_with_mixed_sample_ploidy_is_explicitly_unchecked(tmp_path: Path):
     path = tmp_path / "info-number-g-mixed-ploidy.vcf"
     path.write_text(
@@ -620,6 +611,15 @@ def test_info_number_g_with_mixed_sample_ploidy_is_explicitly_unchecked(tmp_path
     assert result["unchecked_info_number_g_fields"] == ["IG"]
 
 
+@pytest.mark.parametrize(
+    ("field_type", "value"),
+    [
+        ("Integer", "1.5"),
+        ("Integer", "2147483648"),
+        ("Float", "not-a-number"),
+        ("Character", "too-long"),
+    ],
+)
 def test_declared_info_payload_type_is_enforced(tmp_path: Path, field_type: str, value: str):
     path = tmp_path / "invalid-declared-type.vcf"
     write_vcf_with_metadata(
