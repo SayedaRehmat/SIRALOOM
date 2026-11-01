@@ -78,7 +78,12 @@ def largest_child_peak_rss_mb() -> float | None:
     return _rss_to_mb(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
 
 
-def _read_cgroup_integer(path: Path) -> int | None:
+CGROUP_V1_UNLIMITED_MEMORY_LIMIT = (1 << 63) - 4096
+
+
+def _read_cgroup_integer(
+    path: Path, *, unlimited_sentinel: int | None = None
+) -> int | None:
     try:
         value = path.read_text(encoding="ascii").strip()
     except (OSError, UnicodeError):
@@ -89,7 +94,9 @@ def _read_cgroup_integer(path: Path) -> int | None:
         parsed = int(value)
     except ValueError:
         return None
-    return parsed if parsed >= 0 else None
+    if parsed < 0 or (unlimited_sentinel is not None and parsed == unlimited_sentinel):
+        return None
+    return parsed
 
 
 def deployment_resource_snapshot(
@@ -122,7 +129,7 @@ def deployment_resource_snapshot(
             ) else None,
             "current_bytes": _read_cgroup_integer(v1_root / "memory.usage_in_bytes"),
             "peak_bytes": _read_cgroup_integer(v1_root / "memory.max_usage_in_bytes"),
-            "limit_bytes": _read_cgroup_integer(v1_root / "memory.limit_in_bytes"),
+            "limit_bytes": _read_cgroup_integer(\n                v1_root / "memory.limit_in_bytes",\n                unlimited_sentinel=CGROUP_V1_UNLIMITED_MEMORY_LIMIT,\n            ),
         }
     usage = shutil.disk_usage(output_dir)
     return {
