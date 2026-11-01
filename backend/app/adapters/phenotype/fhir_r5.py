@@ -173,6 +173,19 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
             ),
         ],
     })
+    resource["extension"].append(_extension(
+        "ontology-resolution-detail",
+        "valueString",
+        json.dumps(resolution, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+    ))
+    if _get(row, "record_fingerprint"):
+        resource["extension"].append(
+            _extension("record-fingerprint", "valueString", str(_get(row, "record_fingerprint")))
+        )
+    if _get(row, "analysis_id"):
+        resource["extension"].append(
+            _extension("analysis-id", "valueString", str(_get(row, "analysis_id")))
+        )
     if isinstance(resolution, dict) and resolution.get("resource"):
         resource["extension"].append(_extension(
             "ontology-resource-provenance",
