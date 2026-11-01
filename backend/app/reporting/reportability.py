@@ -19,7 +19,7 @@ STATUSES = {"PROPOSED", "FINAL"}
 
 # These artifact classes are outside the fixed first-product SNV/INDEL scope.
 # They are retained for provenance and excluded from first-product interpretation.
-SECOND_PRODUCT_ARTIFACT_REASON_CODES = {
+FIRST_PRODUCT_OUT_OF_SCOPE_ARTIFACT_CODES = {
     "CNV_VARIANT_RECORDS": "CNV_PIPELINE_PENDING",
     "STRUCTURAL_VARIANT_RECORDS": "SV_PIPELINE_PENDING",
     "MITOCHONDRIAL_VARIANT_RECORDS": "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
@@ -244,7 +244,7 @@ def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[
         # routed variant classes are explicitly outside that scope; their
         # presence must not prevent completion or sign-out of the supported
         # SNV/INDEL report. They remain preserved as traceable source artifacts.
-        if artifact_type in SECOND_PRODUCT_ARTIFACT_REASON_CODES:
+        if artifact_type in FIRST_PRODUCT_OUT_OF_SCOPE_ARTIFACT_CODES:
             continue
 
         requires_specialized_review = metadata.get("review_status") == "REQUIRES_SPECIALIZED_REVIEW"
