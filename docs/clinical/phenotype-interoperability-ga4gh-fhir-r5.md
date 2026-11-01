@@ -141,6 +141,7 @@ These canonical URLs are implementation identifiers and documentation contracts 
 
 - Both endpoints require authenticated case-read permission and tenant/case authorization.
 - Every export writes a CLINICAL_INTEROPERABILITY_EXPORT audit event with actor, case, format, version, and export metrics.
+- Server-generated SIRALOOM timestamps use the model's UTC clock contract. Clinician-entered observed_at values must carry an explicit timezone for FHIR dateTime export; the serializer rejects timezone-naive clinical timestamps rather than guessing.
 - The export is read-only with respect to clinical observations, pedigree members, and source artifacts.
 - The Phenopackets export returns a response envelope so loss warnings and SIRALOOM sidecars are explicit. Consumers should extract the document property for the GA4GH message and retain the sidecars with it when local semantics/provenance are required.
 - The FHIR export returns a FHIR Bundle directly as the response body with application/fhir+json media type; clinical-intake revision details are carried in the documented Patient extension.
