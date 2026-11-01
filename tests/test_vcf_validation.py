@@ -1903,3 +1903,45 @@ def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path,
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize(
+    "info",
+    ["DP=-1", "AC=-1", "AF=1.01", "BQ=-0.1", "MQ=-1"],
+)
+def test_vcf45_reserved_info_numeric_domains_are_enforced(tmp_path: Path, info: str):
+    path = tmp_path / "vcf45-invalid-info-domain.vcf"
+    write_vcf(path, f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t{info}\\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize(
+    "format_key,number,field_type,sample_value",
+    [
+        ("DP", "1", "Integer", "-1"),
+        ("AD", "R", "Integer", "10,-1"),
+        ("GP", "G", "Float", "1.1,0.0,0.0"),
+        ("PL", "G", "Integer", "0,-1,2"),
+        ("GQ", "1", "Integer", "-1"),
+    ],
+)
+def test_vcf45_reserved_format_numeric_domains_are_enforced(
+    tmp_path: Path, format_key: str, number: str, field_type: str, sample_value: str
+):
+    path = tmp_path / "vcf45-invalid-format-domain.vcf"
+    write_vcf_with_metadata(
+        path,
+        [f'##FORMAT=<ID={format_key},Number={number},Type={field_type},Description="Reserved field">'],
+        f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:{format_key}\\t0/1:{sample_value}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
