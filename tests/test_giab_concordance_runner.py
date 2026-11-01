@@ -234,17 +234,6 @@ def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Pa
 
 
 @pytest.mark.parametrize(
-    "bed_line",
-    [
-        "chr2\t0\t10\n",
-        "chr1\t0\t1001\n",
-        "chr1\t10\t10\n",
-        "track name=confident\n",
-        "track\tname=confident\n",
-        "chr1\tzero\t10\n",
-    ],
-)
-@pytest.mark.parametrize(
     ("vcf_text", "error"),
     [
         (
@@ -274,6 +263,17 @@ def test_single_sample_vcf_requires_specification_header_and_record_cardinality(
         validate_single_sample_vcf(path, "Query VCF", "CASE_SAMPLE_001")
 
 
+@pytest.mark.parametrize(
+    "bed_line",
+    [
+        "chr2\t0\t10\n",
+        "chr1\t0\t1001\n",
+        "chr1\t10\t10\n",
+        "track name=confident\n",
+        "track\tname=confident\n",
+        "chr1\tzero\t10\n",
+    ],
+)
 def test_bed_regions_must_match_reference_contigs_and_bounds(tmp_path: Path, bed_line: str) -> None:
     path = tmp_path / "invalid.bed"
     path.write_text(bed_line, encoding="utf-8")
