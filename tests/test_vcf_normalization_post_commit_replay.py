@@ -124,3 +124,6 @@ def test_normalization_replay_after_durable_commit_before_worker_ack_is_idempote
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "NORMALIZED_VCF",
             )) == 1
+
+    finally:
+        engine.dispose()
