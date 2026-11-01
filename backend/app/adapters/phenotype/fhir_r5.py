@@ -360,6 +360,12 @@ def build_fhir_r5_bundle(
             patient["extension"].append(
                 _extension("specimen-reference-id", "valueString", str(_get(proband, "specimen_id")))
             )
+        if _get(proband, "metadata_json", {}) or {}:
+            patient["extension"].append(_extension(
+                "pedigree-member-metadata",
+                "valueString",
+                json.dumps(_get(proband, "metadata_json", {}), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+            ))
 
     intake_extension = _clinical_intake_extension(clinical_intake_revision)
     if intake_extension is not None:
@@ -397,6 +403,12 @@ def build_fhir_r5_bundle(
                 related["extension"].append(
                     _extension("specimen-reference-id", "valueString", str(_get(member, "specimen_id")))
                 )
+            if _get(member, "metadata_json", {}) or {}:
+                related["extension"].append(_extension(
+                    "pedigree-member-metadata",
+                    "valueString",
+                    json.dumps(_get(member, "metadata_json", {}), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                ))
             resources.append(related)
             if relationship:
                 sex = str(_get(member, "sex") or "").upper()
@@ -418,6 +430,7 @@ def build_fhir_r5_bundle(
     # Preserve the directed parent-child graph. FHIR RelatedPerson describes
     # each relative in relation to the proband, so explicit relative-to-relative
     # links use named SIRALOOM extensions rather than being discarded.
+    by_member_id = {str(_get(member, "id")): member for member in members}
     resources_by_member = {
         str(_get(member, "id")): (
             patient if str(_get(member, "id")) == patient_id
@@ -442,6 +455,21 @@ def build_fhir_r5_bundle(
             "url": f"{EXTENSION_BASE}/pedigree-parent",
             "valueReference": {"reference": member_references[parent_id]},
         })
+        relationship_metadata = _get(relationship, "metadata_json", {}) or {}
+        if relationship_metadata:
+            resources_by_member[child_id].setdefault("extension", []).append({
+                "url": f"{EXTENSION_BASE}/pedigree-relationship-metadata",
+                "extension": [
+                    _extension("relationship-type", "valueCode", "PARENT_CHILD"),
+                    _extension("parent-member", "valueString", str(_get(by_member_id[parent_id], "member_identifier"))),
+                    _extension("child-member", "valueString", str(_get(by_member_id[child_id], "member_identifier"))),
+                    _extension(
+                        "metadata",
+                        "valueString",
+                        json.dumps(relationship_metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                    ),
+                ],
+            })
 
     for row in rows:
         subject_member_id = _get(row, "subject_member_id")
