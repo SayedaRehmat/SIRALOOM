@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import sys
 import time
 from datetime import UTC, datetime
@@ -75,6 +76,68 @@ def largest_child_peak_rss_mb() -> float | None:
     if resource is None:
         return None
     return _rss_to_mb(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+
+
+def _read_cgroup_integer(path: Path) -> int | None:
+    try:
+        value = path.read_text(encoding="ascii").strip()
+    except (OSError, UnicodeError):
+        return None
+    if value in {"", "max"}:
+        return None
+    try:
+        parsed = int(value)
+    except ValueError:
+        return None
+    return parsed if parsed >= 0 else None
+
+
+def deployment_resource_snapshot(
+    output_dir: Path,
+    *,
+    cgroup_root: Path = Path("/sys/fs/cgroup"),
+) -> dict[str, Any]:
+    """Capture container-level memory and output-filesystem capacity evidence.
+
+    cgroup peak is a container/workload-group measurement, not an attribution
+    to this Python process. Missing cgroup interfaces remain null rather than
+    being inferred from process RSS.
+    """
+    v2_current = cgroup_root / "memory.current"
+    v2_peak = cgroup_root / "memory.peak"
+    v2_limit = cgroup_root / "memory.max"
+    v1_root = cgroup_root / "memory"
+    if any(path.is_file() for path in (v2_current, v2_peak, v2_limit)):
+        memory = {
+            "cgroup_version": 2,
+            "current_bytes": _read_cgroup_integer(v2_current),
+            "peak_bytes": _read_cgroup_integer(v2_peak),
+            "limit_bytes": _read_cgroup_integer(v2_limit),
+        }
+    else:
+        memory = {
+            "cgroup_version": 1 if any(
+                (v1_root / name).is_file()
+                for name in ("memory.usage_in_bytes", "memory.max_usage_in_bytes", "memory.limit_in_bytes")
+            ) else None,
+            "current_bytes": _read_cgroup_integer(v1_root / "memory.usage_in_bytes"),
+            "peak_bytes": _read_cgroup_integer(v1_root / "memory.max_usage_in_bytes"),
+            "limit_bytes": _read_cgroup_integer(v1_root / "memory.limit_in_bytes"),
+        }
+    usage = shutil.disk_usage(output_dir)
+    return {
+        "container_memory": {
+            **memory,
+            "measurement_scope": "cgroup workload/container; not process-attributed",
+        },
+        "output_filesystem": {
+            "device_id": output_dir.stat().st_dev,
+            "total_bytes": usage.total,
+            "used_bytes": usage.used,
+            "free_bytes": usage.free,
+            "output_directory_mode": oct(output_dir.stat().st_mode & 0o777),
+        },
+    }
 
 
 def child_cpu_seconds() -> float | None:
@@ -346,6 +409,7 @@ def run_benchmark(
                 "largest_child_peak_rss_mb": largest_child_peak_rss_mb(),
                 "stages": stage_metrics,
             },
+            "deployment_resources": deployment_resource_snapshot(output_dir),
             "input": {
                 "reference_build": reference_build,
                 "size_bytes": input_size_bytes,
