@@ -147,12 +147,11 @@ def test_invalid_caller_policy_is_rejected(payload):
         parse_caller_ploidy_policy(payload)
 
 
-def test_pedigree_sex_or_observed_genotype_is_not_a_supported_evidence_source():
-    # The contract has no sex, karyotype, GT, or allele-balance input. Only a
-    # verified specimen-level region copy-number assertion is accepted.
+@pytest.mark.parametrize("forbidden_field", ["sex", "karyotype", "observed_gt", "allele_balance"])
+def test_pedigree_sex_karyotype_and_observed_calls_are_not_accepted_as_ploidy_evidence(forbidden_field):
+    # The versioned evidence contract accepts only explicit, reviewed region
+    # copy-number assertions; no inference source is silently consumed.
     payload = sample_evidence()
-    payload["sex"] = "FEMALE"
-    payload["karyotype"] = "46,XX"
-    payload["observed_gt"] = "0/1"
-    parsed = parse_sample_ploidy_evidence(payload)
-    assert parsed.region_copy_number["X_NON_PAR"] == 1
+    payload[forbidden_field] = "not-an-input"
+    with pytest.raises(PloidyPolicyValidationError, match="Unsupported sample ploidy evidence fields"):
+        parse_sample_ploidy_evidence(payload)
