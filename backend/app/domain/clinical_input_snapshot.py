@@ -14,6 +14,9 @@ from backend.app.infrastructure.db.models import (
     Analysis,
     Case,
     PhenotypeObservation,
+    PedigreeMember,
+    PedigreeRelationship,
+    Specimen,
     WorkflowStep,
 )
 
@@ -55,8 +58,70 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         isinstance(item, dict) for item in literature_evidence
     ):
         raise ValueError("Case literature evidence must be a list of records")
+    members = db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == analysis.case_id)
+        .order_by(PedigreeMember.member_identifier, PedigreeMember.id)
+    ).all()
+    member_by_id = {member.id: member for member in members}
+    relationships = db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == analysis.case_id)
+        .order_by(PedigreeRelationship.parent_member_id, PedigreeRelationship.child_member_id)
+    ).all()
+    if any(
+        relationship.parent_member_id not in member_by_id
+        or relationship.child_member_id not in member_by_id
+        for relationship in relationships
+    ):
+        raise ValueError("Pedigree relationships reference members outside the case")
+    specimen_ids = {member.specimen_id for member in members if member.specimen_id}
+    specimens = {
+        specimen.id: specimen
+        for specimen in db.scalars(select(Specimen).where(Specimen.id.in_(specimen_ids)))
+    } if specimen_ids else {}
+    if any(
+        member.specimen_id is not None
+        and (member.specimen_id not in specimens or specimens[member.specimen_id].case_id != analysis.case_id)
+        for member in members
+    ):
+        raise ValueError("Pedigree member specimen does not belong to the case")
+
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
+        "pedigree_context": {
+            "members": [
+                {
+                    "member_id": str(member.id),
+                    "member_identifier": member.member_identifier,
+                    "relationship_to_proband": member.relationship_to_proband,
+                    "sex": member.sex,
+                    "affected_status": member.affected_status,
+                    "is_proband": member.is_proband,
+                    "sampled": member.sampled,
+                    "specimen_id": str(member.specimen_id) if member.specimen_id else None,
+                    "specimen_identifier": (
+                        specimens[member.specimen_id].specimen_identifier
+                        if member.specimen_id in specimens else None
+                    ),
+                    "specimen_type": (
+                        specimens[member.specimen_id].specimen_type
+                        if member.specimen_id in specimens else None
+                    ),
+                    "metadata": member.metadata_json or {},
+                }
+                for member in members
+            ],
+            "relationships": [
+                {
+                    "parent_member_id": str(relationship.parent_member_id),
+                    "child_member_id": str(relationship.child_member_id),
+                    "relationship_type": relationship.relationship_type,
+                    "metadata": relationship.metadata_json or {},
+                }
+                for relationship in relationships
+            ],
+        },
         "phenotype_observations": [
             {
                 "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
@@ -86,6 +151,12 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
         raise ValueError("Persisted clinical input snapshot has an unsupported schema")
     if not isinstance(value.get("phenotype_observations"), list):
         raise ValueError("Persisted clinical input snapshot has invalid phenotype observations")
+    if "pedigree_context" in value and (
+        not isinstance(value["pedigree_context"], dict)
+        or not isinstance(value["pedigree_context"].get("members"), list)
+        or not isinstance(value["pedigree_context"].get("relationships"), list)
+    ):
+        raise ValueError("Persisted clinical input snapshot has invalid pedigree context")
     for key in ("gene_disease_evidence", "literature_evidence"):
         if not isinstance(value.get(key), list) or not all(
             isinstance(item, dict) for item in value[key]
