@@ -58,7 +58,7 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
     confident.write_text("chr1\t0\t1000\n", encoding="utf-8")
     targets.write_text("chr1\t0\t1000\n", encoding="utf-8")
     sample_mapping.write_text(
-        json.dumps({"truth_sample_name": "HG002", "query_sample_name": "CASE_SAMPLE_001"}),
+        json.dumps({"schema_version": "1.0", "truth_sample_name": "HG002", "query_sample_name": "CASE_SAMPLE_001"}),
         encoding="utf-8",
     )
     sample_mapping.chmod(0o600)
@@ -158,7 +158,7 @@ def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tm
 def test_sample_mapping_sidecar_must_match_both_vcf_columns(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     inputs["sample_mapping"].write_text(
-        json.dumps({"truth_sample_name": "WRONG_TRUTH", "query_sample_name": "CASE_SAMPLE_001"}),
+        json.dumps({"schema_version": "1.0", "truth_sample_name": "WRONG_TRUTH", "query_sample_name": "CASE_SAMPLE_001"}),
         encoding="utf-8",
     )
     inputs["sample_mapping"].chmod(0o600)
@@ -337,6 +337,7 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["region_validation"]["confident_bed"]["record_count"] == 1
     assert report["region_validation"]["target_regions"]["record_count"] == 1
     assert len(report["metrics"]) == 4
+    assert report["sample_mapping_schema_version"] == "1.0"
     assert report["sample_identifiers_recorded"] is False
     assert report["sample_identity"]["truth_sample_column_verified"] is True
     assert report["sample_identity"]["query_sample_column_verified"] is True
