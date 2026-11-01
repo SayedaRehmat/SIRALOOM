@@ -76,6 +76,8 @@ def _fake_happy(tmp_path: Path) -> Path:
         " writer = csv.writer(handle)\n"
         f" writer.writerow({SUMMARY_HEADER!r})\n"
         " pathlib.Path(str(prefix) + '.runinfo.json').write_text('{}', encoding='utf-8')\n"
+        " if '--stratification' in sys.argv:\n"
+        " pathlib.Path(str(prefix) + '.extended.csv').write_text('Type,Subtype,Subset\n', encoding='utf-8')\n"
         " writer.writerows([\n"
         " ['INDEL','ALL',10,8,2,12,2,2,0,0.8,0.8,0.1],\n"
         " ['INDEL','PASS',10,7,3,10,1,2,0,0.7,0.875,0.2],\n"
@@ -267,3 +269,29 @@ def test_existing_evidence_directory_is_not_modified_by_failed_cli_run(
     assert run_giab_concordance.main() == 2
     assert sentinel.read_text(encoding="utf-8") == '{"reviewed": true}\n'
     assert sorted(path.name for path in output.iterdir()) == ["reviewed-result.json"]
+
+
+def test_stratification_extended_output_is_required_and_hashed(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    stratification = tmp_path / "stratification.tsv"
+    stratification.write_text("name\tbed\ncoding\tcoding.bed\n", encoding="utf-8")
+    (tmp_path / "coding.bed").write_text("chr1\t0\t1000\n", encoding="utf-8")
+    report = run_concordance(
+        truth_vcf=inputs["truth_vcf"],
+        query_vcf=inputs["query_vcf"],
+        confident_bed=inputs["confident_bed"],
+        reference_fasta=inputs["reference_fasta"],
+        reference_build="GRCh38",
+        assay="WGS",
+        caller="approved-caller",
+        caller_version="1.0",
+        truth_set_id="GIAB-HG002-GRCh38",
+        truth_set_version="4.2.1",
+        acceptance_policy_id="LAB-POLICY-001",
+        output_dir=tmp_path / "stratified-output",
+        hap_py=str(_fake_happy(tmp_path)),
+        stratification_tsv=stratification,
+    )
+    assert report["source_artifacts"]["hap_py_extended"] == "comparison.extended.csv"
+    assert report["source_artifacts"]["hap_py_extended_sha256"]
+    assert report["inputs"]["stratification_tsv"]["sha256"]
