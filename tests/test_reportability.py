@@ -102,6 +102,17 @@ def test_reportability_evaluation_is_idempotent_for_same_classification():
         == 1
     )
 
+    # A still-proposed decision from the previous policy must be superseded
+    # rather than silently finalized under stale policy provenance.
+    first[0].policy_version = "2.1.0"
+    db.commit()
+    refreshed = evaluate_analysis(db, analysis)
+    db.commit()
+    assert len(refreshed) == 1
+    assert refreshed[0].policy_version == "2.2.0"
+    assert refreshed[0].version == 2
+    assert refreshed[0].supersedes_decision_id == first[0].id
+
 
 def test_reportability_finalization_rejects_stale_decision_after_new_classification():
     db = make_db()
