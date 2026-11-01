@@ -292,3 +292,31 @@ def test_family_export_reports_unmapped_pedigree_context_in_lossy_mode():
         "pedigree.member_metadata",
         "pedigree.relationship_metadata",
     }.issubset(fields)
+
+
+def test_family_export_preserves_explicit_consanguinity_and_refuses_to_assume_false():
+    father = _member("FATHER", sex="MALE", affected="UNAFFECTED")
+    proband = _member("PROBAND", sex="FEMALE", affected="AFFECTED", proband=True)
+    relationship = SimpleNamespace(
+        parent_member_id=father.id,
+        child_member_id=proband.id,
+        relationship_type="PARENT_CHILD",
+        metadata_json={"consanguinous_parents": True},
+    )
+    payload, warnings = build_phenopackets_v2(
+        case=_case(),
+        phenotype_observations=[],
+        pedigree_members=[father, proband],
+        pedigree_relationships=[relationship],
+    )
+    assert payload["consanguinousParents"] is True
+    assert not any(item["field"] == "pedigree.consanguinous_parents" for item in warnings)
+
+    relationship.metadata_json = {}
+    with pytest.raises(PhenopacketExportError, match="pedigree.consanguinous_parents"):
+        build_phenopackets_v2(
+            case=_case(),
+            phenotype_observations=[],
+            pedigree_members=[father, proband],
+            pedigree_relationships=[relationship],
+        )
