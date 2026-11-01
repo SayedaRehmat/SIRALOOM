@@ -539,6 +539,42 @@ def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[
 
 
 
+
+
+def _phenotype_export_sidecar(
+    observations: list[PhenotypeObservation],
+    members: list[PedigreeMember],
+) -> list[dict[str, Any]]:
+    member_identifiers = {str(member.id): member.member_identifier for member in members}
+    exported = []
+    for row in observations:
+        subject_member_id = (
+            member_identifiers.get(str(row.subject_member_id))
+            if row.subject_member_id is not None else None
+        )
+        if row.subject_member_id is not None and subject_member_id is None:
+            raise HTTPException(409, "Phenotype observation references a family member outside this case")
+        exported.append({
+            "observation_id": str(row.id),
+            "record_fingerprint": row.record_fingerprint,
+            "subject_member_identifier": subject_member_id,
+            "hpo_id": row.hpo_id,
+            "canonical_hpo_id": row.canonical_hpo_id,
+            "label": row.label,
+            "phenotype_status": row.phenotype_status,
+            "present": row.present,
+            "onset": row.onset,
+            "severity": row.severity,
+            "observed_at": row.observed_at.isoformat() if row.observed_at else None,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "clinical_attributes": row.clinical_attributes or {},
+            "ontology_resolution": row.ontology_resolution or {},
+            "source": row.source,
+            "evidence": row.evidence or {},
+            "analysis_reference_present": row.analysis_id is not None,
+        })
+    return exported
+
 def _pedigree_export_sidecar(
     members: list[PedigreeMember],
     relationships: list[PedigreeRelationship],
@@ -658,6 +694,7 @@ def export_case_phenopackets_v2(
         "lossy": bool(warnings),
         "warnings": warnings,
         "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
+        "phenotype_observation_sidecar": _phenotype_export_sidecar(observations, members),
         "pedigree_sidecar": _pedigree_export_sidecar(members, relationships),
         "document": document,
     }
