@@ -431,7 +431,7 @@ def main() -> int:
     parser.add_argument("--vcf", required=True, type=Path, help="De-identified VCF/VCF.GZ input.")
     parser.add_argument("--reference-fasta", required=True, type=Path, help="Exact GRCh37/GRCh38 FASTA used by the lab.")
     parser.add_argument("--reference-build", required=True, choices=("GRCh37", "GRCh38"))
-    parser.add_argument("--output-dir", required=True, type=Path, help="New or empty directory for benchmark artifacts.")
+    parser.add_argument("--output-dir", required=True, type=Path, help="New, non-existent directory for benchmark artifacts; existing paths are never reused.")
     parser.add_argument(
         "--sample-name-env",
         default="SIRALOOM_BENCHMARK_SAMPLE_NAME",
