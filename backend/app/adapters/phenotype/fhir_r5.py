@@ -248,15 +248,27 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
     }
 
 
+_INTERNAL_EXPORT_KEYS = {
+    "case_id", "analysis_id", "member_id", "parent_member_id", "child_member_id",
+    "specimen_id", "artifact_id", "user_id", "recorded_by", "created_by",
+    "revision_id", "resource_id", "qualification_id", "execution_id", "provider_id",
+}
+
+
+def _sanitize_export_metadata(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_export_metadata(item)
+            for key, item in value.items()
+            if key not in _INTERNAL_EXPORT_KEYS
+        }
+    if isinstance(value, list):
+        return [_sanitize_export_metadata(item) for item in value]
+    return value
+
+
 def _safe_ontology_resolution(resolution: Any) -> Any:
-    if not isinstance(resolution, dict):
-        return resolution
-    safe = json.loads(json.dumps(resolution))
-    resource = safe.get("resource")
-    if isinstance(resource, dict):
-        for key in ("resource_id", "qualification_id", "execution_id", "provider_id"):
-            resource.pop(key, None)
-    return safe
+    return _sanitize_export_metadata(resolution)
 
 
 def _observation_resource_id(case: Any, row: Any, index: int) -> str:
@@ -364,7 +376,7 @@ def _observation(
         resource["extension"].append(_extension(
             "source-evidence",
             "valueString",
-            json.dumps(evidence, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+            json.dumps(_sanitize_export_metadata(evidence), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
         ))
     return resource
 
@@ -443,7 +455,7 @@ def build_fhir_r5_bundle(
             patient["extension"].append(_extension(
                 "pedigree-member-metadata",
                 "valueString",
-                json.dumps(_get(proband, "metadata_json", {}), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                json.dumps(_sanitize_export_metadata(_get(proband, "metadata_json", {})), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
             ))
 
     intake_extension = _clinical_intake_extension(clinical_intake_revision)
@@ -507,7 +519,7 @@ def build_fhir_r5_bundle(
                 related["extension"].append(_extension(
                     "pedigree-member-metadata",
                     "valueString",
-                    json.dumps(_get(member, "metadata_json", {}), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                    json.dumps(_sanitize_export_metadata(_get(member, "metadata_json", {})), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
                 ))
             resources.append(related)
             if relationship:
@@ -561,7 +573,7 @@ def build_fhir_r5_bundle(
                     _sub_extension(
                         "metadata",
                         "valueString",
-                        json.dumps(relationship_metadata, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+                        json.dumps(_sanitize_export_metadata(relationship_metadata), sort_keys=True, separators=(",", ":"), ensure_ascii=False),
                     ),
                 ],
             })
