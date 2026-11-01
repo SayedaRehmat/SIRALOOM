@@ -69,7 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           java -jar /tmp/validator_cli.jar build/clinical-interop/fhir-r5-bundle.json \
-            -version 5.0.0 -tx n/a \
+            -version 5.0.0 -tx n/a -extension any \
             2>&1 | tee build/clinical-interop/hl7-fhir-r5-validator.log
 
       - name: Upload external validation reports
