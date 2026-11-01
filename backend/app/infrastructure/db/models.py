@@ -210,6 +210,43 @@ class Specimen(Base):
         ),
     )
 
+class SpecimenPloidyEvidenceRevision(Base):
+    """Append-only, specimen-scoped copy-number evidence with reviewer provenance."""
+    __tablename__ = "specimen_ploidy_evidence_revisions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    specimen_id: Mapped[UUID] = mapped_column(ForeignKey("specimens.id"), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    revision_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    reference_build: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False)
+    region_copy_number: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    source_type: Mapped[str | None] = mapped_column(Text)
+    evidence_reference: Mapped[str | None] = mapped_column(Text)
+    reviewed_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    audit_event_id: Mapped[UUID] = mapped_column(ForeignKey("audit_events.id"), nullable=False, unique=True)
+    __table_args__ = (
+        UniqueConstraint("specimen_id", "version", name="uq_specimen_ploidy_evidence_version"),
+        UniqueConstraint("specimen_id", "revision_fingerprint", name="uq_specimen_ploidy_evidence_fingerprint"),
+        CheckConstraint("version > 0", name="ck_specimen_ploidy_revision_positive_version"),
+        CheckConstraint("schema_version = 1", name="ck_specimen_ploidy_schema_version"),
+        CheckConstraint(
+            "status IN ('VERIFIED', 'UNVERIFIED', 'CONFLICTED', 'MOSAIC_OR_COMPLEX')",
+            name="ck_specimen_ploidy_evidence_status",
+        ),
+        CheckConstraint(
+            "(status != 'VERIFIED') OR "
+            "(reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL "
+            "AND source_type IS NOT NULL AND evidence_reference IS NOT NULL)",
+            name="ck_specimen_ploidy_verified_provenance",
+        ),
+        Index("ix_specimen_ploidy_evidence_specimen_version", "specimen_id", "version"),
+    )
+
+
 class Assay(Base):
     __tablename__ = "assays"
     id: Mapped[UUID] = mapped_column(primary_key=True)
