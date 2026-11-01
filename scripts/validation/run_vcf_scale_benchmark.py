@@ -1,0 +1,332 @@
+#!/usr/bin/env python3
+"""Measure the production VCF intake/normalization path on a lab-supplied VCF.
+
+This is an operational scale-qualification harness, not a clinical validation
+or acceptance test. It records reproducible counts, hashes, timings and process
+peak RSS without recording sample identifiers or raw VCF content.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import platform
+import sys
+import tempfile
+import time
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any, Callable
+
+try:
+    import resource
+except ImportError:  # pragma: no cover - Windows is not the target runtime.
+    resource = None  # type: ignore[assignment]
+
+from backend.app.config import settings
+from backend.app.domain.ingestion import validate_vcf
+from backend.app.domain.normalization import iter_normalized_vcf
+from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
+from backend.app.domain.vcf_validation import validate_vcf_reference_alleles
+
+REPORT_NAME = "vcf-scale-benchmark.json"
+FAILURE_NAME = "vcf-scale-benchmark.failure.json"
+
+
+class ScaleBenchmarkError(RuntimeError):
+    """The input or execution did not satisfy the benchmark contract."""
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def peak_rss_mb() -> float | None:
+    if resource is None:
+        return None
+    value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # Linux reports KiB; macOS reports bytes. This harness is intended for Linux.
+    if sys.platform == "darwin":
+        return round(value / (1024 * 1024), 2)
+    return round(value / 1024, 2)
+
+
+def prepare_output_dir(path: Path) -> Path:
+    if path.is_symlink():
+        raise ScaleBenchmarkError("Output directory must not be a symbolic link.")
+    if path.exists() and not path.is_dir():
+        raise ScaleBenchmarkError("Output path exists and is not a directory.")
+    if path.exists() and any(path.iterdir()):
+        raise ScaleBenchmarkError("Output directory must be new or empty; existing evidence is preserved.")
+    path.mkdir(parents=True, exist_ok=True)
+    path.chmod(0o700)
+    return path.resolve()
+
+
+def timed_stage(
+    name: str,
+    operation: Callable[[], Any],
+    measurements: dict[str, dict[str, Any]],
+) -> Any:
+    wall_start = time.perf_counter()
+    cpu_start = time.process_time()
+    result = operation()
+    measurements[name] = {
+        "wall_seconds": round(time.perf_counter() - wall_start, 3),
+        "process_cpu_seconds": round(time.process_time() - cpu_start, 3),
+        "process_peak_rss_mb_after_stage": peak_rss_mb(),
+    }
+    return result
+
+
+def _route_summary(routing: dict[str, Any]) -> dict[str, Any]:
+    reconciliation = routing.get("record_reconciliation") or {}
+    return {
+        "routing_version": routing.get("routing_version"),
+        "source_record_count": routing.get("source_record_count"),
+        "records_total": routing.get("records_total"),
+        "record_reconciliation": reconciliation,
+        "sequence_records": routing.get("sequence_records"),
+        "gvcf_reference_blocks": routing.get("gvcf_reference_blocks"),
+        "gvcf_unresolved_variant_records": routing.get("gvcf_unresolved_variant_records"),
+        "structural_variant_records": routing.get("structural_variant_records"),
+        "cnv_variant_records": routing.get("cnv_variant_records"),
+        "repeat_expansion_records": routing.get("repeat_expansion_records"),
+        "mitochondrial_variant_records": routing.get("mitochondrial_variant_records"),
+        "spanning_deletion_records": routing.get("spanning_deletion_records"),
+        "telomere_records": routing.get("telomere_records"),
+        "telomere_after_contig_records": routing.get("telomere_after_contig_records"),
+        "reference_only_records": routing.get("reference_only_records"),
+    }
+
+
+def run_benchmark(
+    *,
+    vcf_path: Path,
+    reference_fasta: Path,
+    reference_build: str,
+    sample_name: str,
+    output_dir: Path,
+    timeout_seconds: int = 1800,
+) -> dict[str, Any]:
+    vcf_path = vcf_path.resolve(strict=True)
+    reference_fasta = reference_fasta.resolve(strict=True)
+    if not vcf_path.is_file() or not reference_fasta.is_file():
+        raise ScaleBenchmarkError("VCF and reference FASTA must be regular files.")
+    if reference_build not in {"GRCh37", "GRCh38"}:
+        raise ScaleBenchmarkError("Reference build must be GRCh37 or GRCh38.")
+    if not sample_name or not sample_name.strip():
+        raise ScaleBenchmarkError("An explicit specimen-mapped VCF sample name is required.")
+    if timeout_seconds < 1:
+        raise ScaleBenchmarkError("Normalization timeout must be positive.")
+
+    output_dir = prepare_output_dir(output_dir)
+    stage_metrics: dict[str, dict[str, Any]] = {}
+    current_stage = "input_hashing"
+    try:
+        input_sha256 = timed_stage(
+            "input_hashing",
+            lambda: sha256_file(vcf_path),
+            stage_metrics,
+        )
+        reference_sha256 = timed_stage(
+            "reference_hashing",
+            lambda: sha256_file(reference_fasta),
+            stage_metrics,
+        )
+
+        current_stage = "vcf_validation"
+        validation = timed_stage(
+            current_stage,
+            lambda: validate_vcf(vcf_path),
+            stage_metrics,
+        )
+        if validation.status != "VALID":
+            raise ScaleBenchmarkError("VCF intake validation did not return VALID.")
+        if sample_name not in validation.sample_names:
+            raise ScaleBenchmarkError("The explicitly selected sample is absent from the VCF header.")
+        if not validation.metadata:
+            raise ScaleBenchmarkError("VCF validation did not provide toolchain attestation metadata.")
+
+        current_stage = "reference_validation"
+        reference_validation = timed_stage(
+            current_stage,
+            lambda: validate_vcf_reference_alleles(vcf_path, reference_fasta),
+            stage_metrics,
+        )
+
+        current_stage = "record_routing"
+        routing = timed_stage(
+            current_stage,
+            lambda: route_vcf_records(vcf_path, output_dir / "routed"),
+            stage_metrics,
+        )
+        route_summary = _route_summary(routing)
+        reconciliation = route_summary["record_reconciliation"]
+        if not reconciliation or reconciliation.get("balanced") is not True:
+            raise ScaleBenchmarkError("Source-record and exclusive-routing disposition counts do not reconcile.")
+        if not routing.get("sequence_path"):
+            raise ScaleBenchmarkError("The input contains no supported SNV/INDEL records to normalize.")
+
+        current_stage = "reference_aware_normalization"
+        normalized_path = output_dir / "normalized.vcf.gz"
+        normalization = timed_stage(
+            current_stage,
+            lambda: normalize_vcf_with_bcftools(
+                routing["sequence_path"],
+                normalized_path,
+                reference_fasta=reference_fasta,
+                expected_bcftools_version=settings.bcftools_version,
+                source_only_format_fields=validation.metadata.get("base_modification_format_fields", []),
+                timeout_seconds=timeout_seconds,
+            ),
+            stage_metrics,
+        )
+        index_path = Path(str(normalized_path) + ".csi")
+        if not normalized_path.is_file() or normalized_path.stat().st_size == 0:
+            raise ScaleBenchmarkError("Normalization did not publish a non-empty BGZF VCF.")
+        if not index_path.is_file() or index_path.stat().st_size == 0:
+            raise ScaleBenchmarkError("Normalization did not publish its CSI index.")
+
+        current_stage = "selected_sample_iteration"
+        selected_variant_count = 0
+        for _variant in timed_stage(
+            current_stage,
+            lambda: iter_normalized_vcf(
+                normalized_path,
+                reference_build,
+                sample_name=sample_name,
+            ),
+            stage_metrics,
+        ):
+            selected_variant_count += 1
+        stage_metrics[current_stage]["selected_sample_variant_count"] = selected_variant_count
+
+        report = {
+            "schema_version": "1",
+            "status": "RUN_COMPLETE_REVIEW_REQUIRED",
+            "benchmark_kind": "LAB_SUPPLIED_VCF_PROCESSING_SCALE",
+            "generated_at_utc": datetime.now(UTC).isoformat(),
+            "repository_commit": os.environ.get("GITHUB_SHA"),
+            "runtime": {
+                "platform": platform.platform(),
+                "python_version": platform.python_version(),
+                "process_peak_rss_mb": peak_rss_mb(),
+                "stages": stage_metrics,
+            },
+            "input": {
+                "reference_build": reference_build,
+                "size_bytes": vcf_path.stat().st_size,
+                "sha256": input_sha256,
+                "sample_count": len(validation.sample_names),
+                "selected_sample_identifier_recorded": False,
+                "fileformat": validation.fileformat,
+            },
+            "reference": {
+                "size_bytes": reference_fasta.stat().st_size,
+                "sha256": reference_sha256,
+                "validation": {
+                    "checked_record_count": reference_validation.get("checked_record_count"),
+                    "checked_breakend_mate_count": reference_validation.get("checked_breakend_mate_count"),
+                    "unvalidated_telomere_record_count": reference_validation.get("unvalidated_telomere_record_count"),
+                    "result": reference_validation.get("result"),
+                },
+            },
+            "validation": {
+                "status": validation.status,
+                "source_record_count": validation.metadata.get("source_record_count"),
+                "alternate_allele_count": validation.metadata.get("alternate_allele_count"),
+                "parsed_variant_record_count": validation.record_count,
+                "bcftools_version": validation.metadata.get("bcftools_version"),
+                "htslib_version": validation.metadata.get("htslib_version"),
+                "toolchain_validation_status": validation.metadata.get("toolchain_validation_status"),
+            },
+            "routing": route_summary,
+            "normalization": {
+                "tool": normalization.get("tool"),
+                "tool_version": normalization.get("tool_version"),
+                "operation": normalization.get("operation"),
+                "compression": normalization.get("compression"),
+                "index": normalization.get("index"),
+                "index_validation": normalization.get("index_validation"),
+                "source_child_reconciliation": normalization.get("source_child_reconciliation"),
+                "source_only_format_fields": normalization.get("source_only_format_fields"),
+                "source_only_format_fields_policy": normalization.get("source_only_format_fields_policy"),
+                "normalized_vcf_size_bytes": normalized_path.stat().st_size,
+                "normalized_vcf_sha256": sha256_file(normalized_path),
+                "csi_size_bytes": index_path.stat().st_size,
+                "selected_sample_variant_count": selected_variant_count,
+            },
+            "acceptance_boundary": (
+                "This run measures this input and deployment only. It does not establish clinical "
+                "validity, caller qualification, GIAB concordance, production capacity, or a PASS "
+                "against laboratory-defined performance thresholds. A laboratory reviewer must "
+                "evaluate the metrics against preapproved intended-use criteria."
+            ),
+        }
+        report_path = output_dir / REPORT_NAME
+        temporary_report = output_dir / f".{REPORT_NAME}.tmp"
+        temporary_report.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary_report, report_path)
+        return report
+    except Exception as exc:
+        failure = {
+            "schema_version": "1",
+            "status": "FAILED",
+            "failed_stage": current_stage,
+            "exception_type": type(exc).__name__,
+            "generated_at_utc": datetime.now(UTC).isoformat(),
+        }
+        failure_path = output_dir / FAILURE_NAME
+        temporary_failure = output_dir / f".{FAILURE_NAME}.tmp"
+        temporary_failure.write_text(
+            json.dumps(failure, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary_failure, failure_path)
+        raise
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Measure VCF validation, reference checking, routing and normalization on a lab-supplied VCF."
+    )
+    parser.add_argument("--vcf", required=True, type=Path, help="De-identified VCF/VCF.GZ input.")
+    parser.add_argument("--reference-fasta", required=True, type=Path, help="Exact GRCh37/GRCh38 FASTA used by the lab.")
+    parser.add_argument("--reference-build", required=True, choices=("GRCh37", "GRCh38"))
+    parser.add_argument("--sample-name", required=True, help="Exact specimen-mapped VCF sample name; not written to the report.")
+    parser.add_argument("--output-dir", required=True, type=Path, help="New or empty directory for benchmark artifacts.")
+    parser.add_argument("--timeout-seconds", type=int, default=1800)
+    args = parser.parse_args()
+    try:
+        report = run_benchmark(
+            vcf_path=args.vcf,
+            reference_fasta=args.reference_fasta,
+            reference_build=args.reference_build,
+            sample_name=args.sample_name,
+            output_dir=args.output_dir,
+            timeout_seconds=args.timeout_seconds,
+        )
+    except Exception as exc:
+        print(f"VCF scale benchmark failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps({
+        "status": report["status"],
+        "report": str(args.output_dir.resolve() / REPORT_NAME),
+        "source_record_count": report["validation"]["source_record_count"],
+        "selected_sample_variant_count": report["normalization"]["selected_sample_variant_count"],
+        "process_peak_rss_mb": report["runtime"]["process_peak_rss_mb"],
+    }, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
