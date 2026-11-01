@@ -123,6 +123,18 @@ const steps = [
   ["export_provenance", "workflow.caseHistory"],
 ] as const;
 
+class ApiRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+
+  constructor(status: number, message: string, code?: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function apiFetch(path: string, init?: RequestInit) {
   const token = await firebaseAuth?.currentUser?.getIdToken();
   const response = await fetch(`${API_BASE}${path}`, {
@@ -140,8 +152,19 @@ async function apiFetch(path: string, init?: RequestInit) {
     body = text;
   }
   if (!response.ok) {
-    const message = typeof body === "object" && body && "detail" in body ? String((body as { detail: unknown }).detail) : `HTTP ${response.status}`;
-    throw new Error(message);
+    const detail = typeof body === "object" && body && "detail" in body
+      ? (body as { detail: unknown }).detail
+      : undefined;
+    const detailObject = detail && typeof detail === "object"
+      ? detail as Record<string, unknown>
+      : null;
+    const message = typeof detailObject?.message === "string"
+      ? detailObject.message
+      : typeof detail === "string"
+        ? detail
+        : `HTTP ${response.status}`;
+    const code = typeof detailObject?.code === "string" ? detailObject.code : undefined;
+    throw new ApiRequestError(response.status, message, code);
   }
   return body as any;
 }
@@ -665,12 +688,13 @@ export default function Home() {
     }
     setBusy(true);
     setMessage("");
+    let uploadAttempt: Awaited<ReturnType<typeof getOrCreateUploadIdempotencyAttempt>> | null = null;
     try {
       const form = new FormData();
       form.append("file", file, file.name);
       if (selectedSpecimenId) form.append("specimen_id", selectedSpecimenId);
       form.append("genome_build", genomeBuild);
-      const uploadAttempt = await getOrCreateUploadIdempotencyAttempt(
+      uploadAttempt = await getOrCreateUploadIdempotencyAttempt(
         window.sessionStorage,
         { file, caseId, specimenId: selectedSpecimenId, genomeBuild },
         () => crypto.randomUUID(),
@@ -695,6 +719,15 @@ export default function Home() {
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
       }
     } catch (error) {
+      if (
+        uploadAttempt &&
+        error instanceof ApiRequestError &&
+        error.code === "IDEMPOTENCY_KEY_REUSED"
+      ) {
+        // The server rejected a metadata-colliding/different-byte retry. Clear
+        // only this exact attempt so the next explicit user retry gets a new key.
+        clearUploadIdempotencyAttempt(window.sessionStorage, uploadAttempt);
+      }
       setMessage(error instanceof Error ? error.message : t("workspace.uploadFailed"));
     } finally {
       setBusy(false);
