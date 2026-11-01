@@ -1982,6 +1982,11 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
     try:
         with FastaReference(reference_fasta) as reference, _open(path) as handle:
             for contig, declared_length in declared_contig_lengths.items():
+                if contig not in reference.contigs:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {contig!r} is not an exact contig identifier in the selected reference",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    )
                 try:
                     reference_length = reference.contig_length(contig)
                 except ReferenceError as exc:
@@ -1995,6 +2000,11 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         code="VCF_CONTIG_LENGTH_MISMATCH",
                     )
             for contig, expected_md5 in declared_contig_md5s.items():
+                if contig not in reference.contigs:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {contig!r} with an MD5 declaration is not an exact contig identifier in the selected reference",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    )
                 try:
                     reference_length = reference.contig_length(contig)
                 except ReferenceError as exc:
@@ -2026,6 +2036,11 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     continue  # validate_vcf_strict reports the structural error first.
                 chrom, pos_text, _identifier, ref, alt_text = fields[:5]
                 pos = int(pos_text)
+                if chrom not in reference.contigs:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {chrom!r} is not an exact contig identifier in the selected reference at line {line_no}",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    )
                 try:
                     contig_length = reference.contig_length(chrom)
                 except ReferenceError as exc:
@@ -2075,6 +2090,11 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     if match is None:
                         continue
                     mate_contig, mate_position = match.group(1), int(match.group(2))
+                    if mate_contig not in reference.contigs:
+                        raise StrictVCFValidationError(
+                            f"Breakend mate contig {mate_contig!r} is not an exact contig identifier in the selected reference at line {line_no}",
+                            code="VCF_BREAKEND_REFERENCE_MISMATCH",
+                        )
                     try:
                         mate_length = reference.contig_length(mate_contig)
                     except ReferenceError as exc:
