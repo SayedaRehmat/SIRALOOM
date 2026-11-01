@@ -74,9 +74,31 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
     if any(
         relationship.parent_member_id not in member_by_id
         or relationship.child_member_id not in member_by_id
+        or relationship.parent_member_id == relationship.child_member_id
         for relationship in relationships
     ):
-        raise ValueError("Pedigree relationships reference members outside the case")
+        raise ValueError("Pedigree relationships reference invalid members in the case")
+    children_by_parent: dict[UUID, set[UUID]] = {}
+    for relationship in relationships:
+        children_by_parent.setdefault(relationship.parent_member_id, set()).add(
+            relationship.child_member_id
+        )
+    visiting: set[UUID] = set()
+    visited: set[UUID] = set()
+
+    def visit(member_id: UUID) -> None:
+        if member_id in visiting:
+            raise ValueError("Pedigree relationships contain an ancestry cycle")
+        if member_id in visited:
+            return
+        visiting.add(member_id)
+        for child_id in children_by_parent.get(member_id, set()):
+            visit(child_id)
+        visiting.remove(member_id)
+        visited.add(member_id)
+
+    for member_id in member_by_id:
+        visit(member_id)
     if any(
         row.subject_member_id is not None and row.subject_member_id not in member_by_id
         for row in rows
