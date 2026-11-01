@@ -149,9 +149,16 @@ def test_phenotype_export_sidecar_preserves_source_semantics_without_internal_fo
         observed_at=datetime(2025, 1, 1, tzinfo=UTC),
         created_at=datetime(2025, 1, 2, tzinfo=UTC),
         clinical_attributes={"laterality": "BILATERAL"},
-        ontology_resolution={"primary_term": {"status": "CURRENT"}},
+        ontology_resolution={
+            "primary_term": {"status": "CURRENT"},
+            "resource": {
+                "resource_id": str(uuid4()),
+                "qualification_id": str(uuid4()),
+                "resource_checksum": "sha256:abcd",
+            },
+        },
         source="FAMILY_HISTORY",
-        evidence={"source_note": "reported by family"},
+        evidence={"source_note": "reported by family", "analysis_id": str(uuid4())},
         analysis_id=uuid4(),
     )
 
@@ -162,7 +169,10 @@ def test_phenotype_export_sidecar_preserves_source_semantics_without_internal_fo
     assert "observation_id" not in result[0]
     assert result[0]["clinical_attributes"]["laterality"] == "BILATERAL"
     assert result[0]["evidence"]["source_note"] == "reported by family"
-    assert "analysis_id" not in result[0]
+    assert "analysis_id" not in result[0]["evidence"]
+    assert "resource_id" not in result[0]["ontology_resolution"]["resource"]
+    assert "qualification_id" not in result[0]["ontology_resolution"]["resource"]
+    assert result[0]["ontology_resolution"]["resource"]["resource_checksum"] == "sha256:abcd"
     assert "subject_member_id" not in result[0]
 
 
