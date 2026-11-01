@@ -7,6 +7,7 @@ import { useLanguage } from "../../../../lib/i18n";
 import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
+import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 
 type Step = {
   step_id: string;
@@ -1078,6 +1079,8 @@ export default function Home() {
           <button className="primary" onClick={requestReanalysis} disabled={busy}>{t("workspace.reanalysisRequest")}</button>
         </section>
       )}
+
+      {caseId && <PhenotypeIntake caseId={caseId} apiFetch={apiFetch} />}
 
       <section id="case-intake" className="workspace-grid">
         <aside className="panel case-panel">
