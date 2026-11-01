@@ -58,7 +58,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 | HPO severity/modifiers/course | severity / modifiers | Included only when the stored related-term resolution is CURRENT or ALTERNATE_ID |
 | ISO 8601 onset/resolution age | TimeElement.age.iso8601duration | No conversion from ambiguous free text |
 | HPO release | MetaData.resources | The pinned OBO data-version is encoded as the dated HPO OBO version PURL; it is included only when a single valid release is represented |
-| Age at assessment | Individual.time_at_last_encounter | Age value/unit mapped to an ISO 8601 TimeElement; the as-of date remains in the SIRALOOM response sidecar |
+| Age at assessment | SIRALOOM response sidecar | Not equated with Individual.time_at_last_encounter, which specifically represents age at last encounter; exact age value/unit/as-of date are preserved in the sidecar |
 | Referral, prior testing, differential diagnoses, and review attestations | SIRALOOM response sidecar | Not forced into Phenopacket disease/diagnosis fields; field-level loss warnings are returned |
 | SIRALOOM-only attributes | Export warnings and response sidecars | Laterality, anatomical site, temporal pattern, episode frequency, relationship-to-proband text, sampled flags, specimen links, and arbitrary pedigree metadata are reported rather than silently discarded |
 
