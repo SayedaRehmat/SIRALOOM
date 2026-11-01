@@ -2242,3 +2242,19 @@ def test_vcf45_phase_set_dependent_fields_reject_inconsistent_context(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+def test_vcf45_empty_gt_value_is_not_treated_as_unknown_ploidy(tmp_path: Path):
+    path = tmp_path / "vcf45-empty-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PL\t:0,1,2\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GENOTYPE_INVALID"
