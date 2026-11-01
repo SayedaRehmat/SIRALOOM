@@ -3,6 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from backend.app.domain.reference import FastaReference, ReferenceError
+from backend.app.domain.vcf_validation import validate_vcf_reference_alleles
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
     REFERENCE_PACKAGE_SCHEMA_VERSION,
@@ -136,3 +138,38 @@ def test_reference_package_rejects_missing_assembly_identity(tmp_path: Path):
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_ASSEMBLY_IDENTITY_MISSING"
+
+
+def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
+    tmp_path: Path,
+):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
+    vcf = tmp_path / "mitochondrial-accession.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##contig=<ID=NC_012920.1,length=4>\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    with FastaReference(fasta) as reference:
+        assert reference.resolve_contig("NC_012920.1") == "chrM"
+
+    result = validate_vcf_reference_alleles(vcf, fasta)
+
+    assert result["checked_records"] == 1
+
+
+def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(
+    tmp_path: Path,
+):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
+
+    with FastaReference(fasta) as reference:
+        with pytest.raises(ReferenceError):
+            reference.resolve_contig("NC_012920.2")

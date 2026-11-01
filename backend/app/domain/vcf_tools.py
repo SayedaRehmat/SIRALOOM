@@ -31,9 +31,10 @@ def _is_mitochondrial_contig(chrom: str) -> bool:
     normalized = chrom.strip().lower()
     if normalized.startswith("chr"):
         normalized = normalized[3:]
-    return normalized in {"m", "mt", "mitochondrial", "mitochondrion_genome"} or chrom.upper().startswith(
-        "NC_012920."
-    )
+    return normalized in {"m", "mt", "mitochondrial", "mitochondrion_genome"} or chrom.upper() in {
+        "NC_012920",
+        "NC_012920.1",
+    }
 
 
 def _routing_info_values(info_text: str) -> dict[str, str]:
