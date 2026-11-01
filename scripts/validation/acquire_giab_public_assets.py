@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
@@ -46,9 +47,13 @@ def download_verified(url: str, destination: Path, expected_md5: str) -> dict[st
         sha256 = hashlib.sha256()
         size = 0
         request = urllib.request.Request(url, headers={"User-Agent": "SIRALOOM-GIAB-qualification/1.0"})
-        with os.fdopen(fd, "wb") as output, urllib.request.urlopen(request, timeout=180) as response:
+        try:
+            response_context = urllib.request.urlopen(request, timeout=180)
+        except urllib.error.HTTPError as exc:
+            raise AcquisitionError(f"HTTP {exc.code} fetching pinned asset URL: {url}") from exc
+        with os.fdopen(fd, "wb") as output, response_context as response:
             if response.status != 200:
-                raise AcquisitionError(f"Unexpected HTTP status {response.status} for {url}")
+                raise AcquisitionError(f"Unexpected HTTP status {response.status} for pinned asset URL: {url}")
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
@@ -157,7 +162,7 @@ def main() -> int:
         for key, url, expected_md5 in entries:
             if key in acquired or not isinstance(expected_md5, str) or len(expected_md5) != 32:
                 raise AcquisitionError(f"Invalid or duplicate asset declaration: {key}")
-            filename = Path(urllib.request.urlparse(url).path).name if hasattr(urllib.request, "urlparse") else url.rsplit("/", 1)[-1]
+            filename = Path(urllib.parse.urlparse(url).path).name
             if key == "reference_source_fasta":
                 filename = f"{args.build}.source.{filename}"
             acquired[key] = download_verified(url, args.output_dir / filename, expected_md5)
