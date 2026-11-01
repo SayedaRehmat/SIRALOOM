@@ -2043,7 +2043,7 @@ def test_vcf45_arbitrary_structured_header_requires_unique_id(tmp_path: Path):
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
 
 
-def test_vcf45_pedigree_structured_header_requires_id(tmp_path: Path):
+def test_vcf45_pedigree_structured_header_with_id_is_valid(tmp_path: Path):
     path = tmp_path / "vcf45-pedigree-header.vcf"
     write_vcf_with_metadata(
         path,
