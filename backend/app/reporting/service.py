@@ -906,7 +906,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     technical_quality = technical_quality_snapshot(db, analysis.id)
 
     return {
-        "report_schema_version": "1.3.0",
+        "report_schema_version": "1.4.0",
         "report_version": 1,
         "report_status": "DRAFT",
         "report_type": report_type,
