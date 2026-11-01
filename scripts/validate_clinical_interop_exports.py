@@ -33,13 +33,13 @@ def fixtures() -> tuple[dict, dict, dict]:
     father = SimpleNamespace(
         id=FATHER_ID, member_identifier="SYNTHETIC-FATHER", sex="MALE",
         affected_status="UNAFFECTED", is_proband=False,
-        relationship_to_proband="father", sampled=False, specimen_id=None,
+        relationship_to_proband=None, sampled=False, specimen_id=None,
         metadata_json={},
     )
     mother = SimpleNamespace(
         id=MOTHER_ID, member_identifier="SYNTHETIC-MOTHER", sex="FEMALE",
         affected_status="UNAFFECTED", is_proband=False,
-        relationship_to_proband="mother", sampled=False, specimen_id=None,
+        relationship_to_proband=None, sampled=False, specimen_id=None,
         metadata_json={},
     )
     proband = SimpleNamespace(
