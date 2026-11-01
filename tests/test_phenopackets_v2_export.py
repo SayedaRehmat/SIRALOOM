@@ -200,3 +200,46 @@ def test_non_equivalent_clinical_attributes_are_reported_not_silently_dropped():
     )
     assert payload["phenotypicFeatures"]
     assert any(item["field"] == "episode_frequency" for item in warnings)
+
+
+def test_clinical_intake_age_maps_to_time_element_and_unmapped_context_is_reported():
+    revision = SimpleNamespace(
+        id=uuid4(),
+        version=3,
+        schema_version=1,
+        revision_fingerprint="c" * 64,
+        intake_status="COMPLETE",
+        phenotype_review_status="COMPLETE",
+        family_history_review_status="NOT_ASSESSED",
+        phenotype_review_note=None,
+        family_history_review_note="Family history was not available.",
+        completion_note=None,
+        context={
+            "referral_indication": "Unexplained seizures",
+            "referral_question": "Evaluate a suspected inherited epilepsy",
+            "age_at_assessment": {
+                "value": 7,
+                "unit": "YEARS",
+                "as_of_date": "2026-10-15",
+            },
+            "prior_testing": [],
+            "differential_diagnoses": [],
+            "source_document_references": [],
+        },
+    )
+    with pytest.raises(PhenopacketExportError, match="clinical_intake"):
+        build_phenopackets_v2(
+            case=_case(),
+            phenotype_observations=[_observation()],
+            clinical_intake_revision=revision,
+        )
+
+    payload, warnings = build_phenopackets_v2(
+        case=_case(),
+        phenotype_observations=[_observation()],
+        clinical_intake_revision=revision,
+        allow_lossy=True,
+    )
+    assert payload["subject"]["timeAtLastEncounter"]["age"]["iso8601duration"] == "P7Y"
+    assert any(item["field"] == "clinical_intake.referral_indication" for item in warnings)
+    assert any(item["field"] == "clinical_intake.age_at_assessment.as_of_date" for item in warnings)
