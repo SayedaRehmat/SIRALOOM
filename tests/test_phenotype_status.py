@@ -164,7 +164,7 @@ def test_phenotype_state_migration_backfills_and_keeps_states_distinct(tmp_path,
             "(id, case_id, analysis_id, hpo_id, label, present, onset, severity, source, evidence, created_at) "
             "VALUES (:id, :case_id, NULL, :hpo_id, NULL, :present, NULL, NULL, 'TEST', '{}', CURRENT_TIMESTAMP)"
         ), [
-            {"id": "10000000-0000-0000-0000-000000000001", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000001", "present": True},
+            {"id": "10000000000000000000000000000001", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000001", "present": True},
             {"id": "10000000-0000-0000-0000-000000000002", "case_id": "20000000-0000-0000-0000-000000000001", "hpo_id": "HP:0000002", "present": False},
         ])
 
@@ -301,7 +301,7 @@ def test_clinical_phenotype_migrations_preserve_legacy_rows_and_allow_longitudin
             "INSERT INTO phenotype_observations "
             "(id, case_id, analysis_id, hpo_id, label, present, phenotype_status, onset, severity, source, evidence, created_at) "
             "VALUES (:id, :case_id, NULL, 'HP:0001250', 'Seizures', true, 'PRESENT', NULL, NULL, 'TEST', '{}', CURRENT_TIMESTAMP)"
-        ), {"id": "10000000-0000-0000-0000-000000000001", "case_id": case_id})
+        ), {"id": "10000000000000000000000000000001", "case_id": case_id})
 
     command.upgrade(config, "0056_phenotype_observation_fingerprint")
     with engine.begin() as connection:
@@ -313,7 +313,7 @@ def test_clinical_phenotype_migrations_preserve_legacy_rows_and_allow_longitudin
         prior = connection.execute(text(
             "SELECT record_fingerprint, clinical_attributes, ontology_resolution "
             "FROM phenotype_observations WHERE id = :id"
-        ), {"id": "10000000-0000-0000-0000-000000000001"}).one()
+        ), {"id": "10000000000000000000000000000001"}).one()
         assert len(prior.record_fingerprint) == 64
         assert prior.clinical_attributes == "{}" or prior.clinical_attributes == {}
 
