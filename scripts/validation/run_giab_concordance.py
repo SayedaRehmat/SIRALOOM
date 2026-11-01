@@ -175,7 +175,7 @@ def validate_bed_file(
         with _open_text(path) as handle:
             for line_number, line in enumerate(handle, start=1):
                 stripped = line.rstrip("\r\n")
-                if not stripped or stripped.startswith("#"):
+                if not stripped.strip() or stripped.startswith("#"):
                     continue
                 if stripped.split(maxsplit=1)[0] in {"track", "browser"}:
                     raise ConcordanceError(
@@ -376,7 +376,7 @@ def run_concordance(
         reference_contigs = validate_fasta_index_consistency(
             inputs["reference_fasta"], inputs["reference_fai"]
         )
-    except ValueError as exc:
+    except (OSError, ValueError) as exc:
         raise ConcordanceError("Reference FASTA and FAI geometry are inconsistent.") from exc
     contig_lengths = {str(item["name"]): int(item["length"]) for item in reference_contigs}
     region_validation: dict[str, Any] = {
