@@ -14,6 +14,10 @@ from backend.app.api.v1 import phenotypes as phenotype_api
 from backend.app.api.v1.phenotypes import PhenotypeInput
 from backend.app.auth.principal import Principal
 from backend.app.phenotype import match_hpo, normalize_terms
+from backend.app.domain.clinical_input_snapshot import (
+    family_phenotype_observations,
+    patient_phenotype_observations,
+)
 
 
 @pytest.mark.parametrize(
@@ -240,3 +244,88 @@ def test_phenotype_observation_fingerprint_distinguishes_family_subject_and_obse
     )
     assert phenotype_api._phenotype_record_fingerprint(base) != phenotype_api._phenotype_record_fingerprint(family)
     assert phenotype_api._phenotype_record_fingerprint(base) != phenotype_api._phenotype_record_fingerprint(later)
+
+
+
+def test_clinical_snapshot_separates_proband_and_family_phenotypes():
+    proband_id = str(uuid4())
+    sibling_id = str(uuid4())
+    snapshot = {
+        "schema_version": 1,
+        "pedigree_context": {
+            "members": [
+                {"member_id": proband_id, "is_proband": True},
+                {"member_id": sibling_id, "is_proband": False},
+            ],
+            "relationships": [],
+        },
+        "phenotype_observations": [
+            {"hpo_id": "HP:0001250", "phenotype_status": "PRESENT", "subject_member_id": None},
+            {"hpo_id": "HP:0001251", "phenotype_status": "PRESENT", "subject_member_id": proband_id},
+            {"hpo_id": "HP:0001252", "phenotype_status": "ABSENT", "subject_member_id": sibling_id},
+        ],
+        "gene_disease_evidence": [],
+        "literature_evidence": [],
+    }
+    assert [row["hpo_id"] for row in patient_phenotype_observations(snapshot)] == [
+        "HP:0001250", "HP:0001251"
+    ]
+    assert [row["hpo_id"] for row in family_phenotype_observations(snapshot)] == [
+        "HP:0001252"
+    ]
+
+
+def test_clinical_phenotype_migrations_preserve_legacy_rows_and_allow_longitudinal_identity(tmp_path, monkeypatch):
+    database = tmp_path / "clinical-phenotype-intake.sqlite"
+    url = f"sqlite:///{database}"
+    monkeypatch.setenv("DATABASE_URL", url)
+    config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
+    config.set_main_option("sqlalchemy.url", url)
+    command.upgrade(config, "0053_qc_observation_snapshot")
+
+    engine = create_engine(url)
+    case_id = "20000000-0000-0000-0000-000000000001"
+    with engine.begin() as connection:
+        connection.execute(text(
+            "INSERT INTO phenotype_observations "
+            "(id, case_id, analysis_id, hpo_id, label, present, phenotype_status, onset, severity, source, evidence, created_at) "
+            "VALUES (:id, :case_id, NULL, 'HP:0001250', 'Seizures', true, 'PRESENT', NULL, NULL, 'TEST', '{}', CURRENT_TIMESTAMP)"
+        ), {"id": "10000000-0000-0000-0000-000000000001", "case_id": case_id})
+
+    command.upgrade(config, "0055_phenotype_observation_fingerprint")
+    with engine.begin() as connection:
+        columns = {column["name"] for column in inspect(connection).get_columns("phenotype_observations")}
+        assert {
+            "canonical_hpo_id", "subject_member_id", "observed_at",
+            "clinical_attributes", "ontology_resolution", "record_fingerprint",
+        }.issubset(columns)
+        prior = connection.execute(text(
+            "SELECT record_fingerprint, clinical_attributes, ontology_resolution "
+            "FROM phenotype_observations WHERE id = :id"
+        ), {"id": "10000000-0000-0000-0000-000000000001"}).one()
+        assert len(prior.record_fingerprint) == 64
+        assert prior.clinical_attributes == "{}" or prior.clinical_attributes == {}
+
+        family_id = str(uuid4())
+        observation = PhenotypeInput(
+            hpo_id="HP:0001250",
+            phenotype_status="PRESENT",
+            subject_member_id=UUID(family_id),
+            observed_at=datetime(2026, 10, 1, tzinfo=UTC),
+            label="Seizures",
+            source="FAMILY_HISTORY",
+        )
+        fingerprint_value = phenotype_api._phenotype_record_fingerprint(observation)
+        connection.execute(text(
+            "INSERT INTO phenotype_observations "
+            "(id, case_id, analysis_id, hpo_id, canonical_hpo_id, record_fingerprint, label, present, "
+            "phenotype_status, subject_member_id, observed_at, clinical_attributes, ontology_resolution, "
+            "source, evidence, created_at) "
+            "VALUES (:id, :case_id, NULL, :hpo_id, NULL, :fingerprint, :label, true, 'PRESENT', "
+            ":subject_member_id, :observed_at, '{}', '{}', 'FAMILY_HISTORY', '{}', CURRENT_TIMESTAMP)"
+        ), {
+            "id": str(uuid4()), "case_id": case_id, "hpo_id": "HP:0001250",
+            "fingerprint": fingerprint_value, "label": "Seizures",
+            "subject_member_id": family_id, "observed_at": "2026-10-01T00:00:00+00:00",
+        })
+    engine.dispose()
