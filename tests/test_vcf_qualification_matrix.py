@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pytest
 
+from scripts.validation import run_vcf_qualification_matrix as matrix_runner
 from scripts.validation.run_vcf_qualification_matrix import (
     MatrixConfigurationError,
     evaluate_criteria,
@@ -148,3 +150,44 @@ def test_evaluate_criteria_marks_observed_failure_without_relabeling_run() -> No
 
     evaluated = evaluate_criteria(report, criteria)
     assert evaluated[0]["status"] == "OBSERVED_OUTSIDE_CRITERION"
+
+
+
+def test_matrix_runner_leaves_cell_output_path_for_atomic_benchmark_creation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest_path = _configured_manifest(tmp_path)
+    benchmark_script = tmp_path / "run_vcf_scale_benchmark.py"
+    benchmark_script.write_text("# controlled test executable\n", encoding="utf-8")
+    output_dir = tmp_path / "matrix-output"
+
+    def fake_run_benchmark(*, cell: dict, output_dir: Path, script: Path):
+        # The production scale benchmark requires a non-existent destination and
+        # owns its atomic directory reservation.
+        assert not output_dir.exists()
+        output_dir.mkdir(mode=0o700)
+        return 0, {
+            "status": "RUN_COMPLETE_REVIEW_REQUIRED",
+            "runtime": {"stages": {"vcf_validation": {"wall_seconds": 2.0}}},
+        }
+
+    monkeypatch.setattr(matrix_runner, "run_benchmark", fake_run_benchmark)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "run_vcf_qualification_matrix.py",
+            "--manifest",
+            str(manifest_path),
+            "--output-dir",
+            str(output_dir),
+            "--benchmark-script",
+            str(benchmark_script),
+        ],
+    )
+
+    assert matrix_runner.main() == 0
+    result = json.loads((output_dir / "qualification-matrix.json").read_text(encoding="utf-8"))
+    assert result["cells"][0]["benchmark_status"] == "RUN_COMPLETE_REVIEW_REQUIRED"
+    assert result["cells"][0]["criteria"][0]["status"] == "OBSERVED_MEETS_CRITERION"
+    assert (output_dir / "WES_CALLER_GRCH38").is_dir()
