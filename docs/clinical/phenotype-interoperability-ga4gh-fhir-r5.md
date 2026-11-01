@@ -63,7 +63,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 
 GET /api/v1/cases/{case_id}/phenopackets-v2 is strict by default.
 
-The endpoint returns a response envelope containing the schema-validated GA4GH document and field-level warnings. If a local field cannot be represented faithfully, strict export returns HTTP 422. A caller may explicitly request allow_lossy=true; the response then reports each known loss. This option does not modify the stored clinical data.
+The endpoint returns a response envelope containing the schema-validated GA4GH document, field-level warnings, a complete phenotype-observation sidecar, a pedigree sidecar, and the latest clinical-intake revision sidecar. If a local field cannot be represented faithfully, strict export returns HTTP 422. A caller may explicitly request allow_lossy=true; the response then reports each known loss. This option does not modify the stored clinical data.
 
 The following distinctions are not fully represented by the base Phenopackets v2 PhenotypicFeature model:
 
@@ -72,7 +72,7 @@ The following distinctions are not fully represented by the base Phenopackets v2
 - Patient-specific episode frequency, laterality, anatomical site, and temporal pattern.
 - Arbitrary local evidence payloads and free-text onset/severity without an ontology/time mapping.
 
-A caller must retain the SIRALOOM clinical record/snapshot alongside any lossy Phenopackets exchange.
+The phenotype-observation sidecar preserves the original submitted/canonical HPO identifiers, exact status, clinical attributes, ontology resolution/resource provenance, source, evidence, timestamps, and family-member attribution without exporting internal analysis/member foreign keys. The pedigree sidecar preserves relationship text, sampled flags, specimen-link presence, and opaque member/relationship metadata. The clinical-intake sidecar preserves revision context while replacing internal artifact UUIDs with a presence flag. These sidecars are SIRALOOM-specific and must accompany any lossy Phenopackets exchange; the GA4GH document alone does not contain these fields.
 
 ## HL7 FHIR R5 mapping
 
@@ -133,7 +133,7 @@ These canonical URLs are implementation identifiers and documentation contracts 
 - Both endpoints require authenticated case-read permission and tenant/case authorization.
 - Every export writes a CLINICAL_INTEROPERABILITY_EXPORT audit event with actor, case, format, version, and export metrics.
 - The export is read-only with respect to clinical observations, pedigree members, and source artifacts.
-- The Phenopackets export returns a document inside an envelope so loss warnings are explicit. Consumers should extract the document property for the GA4GH message.
+- The Phenopackets export returns a response envelope so loss warnings and SIRALOOM sidecars are explicit. Consumers should extract the document property for the GA4GH message and retain the sidecars with it when local semantics/provenance are required.
 - The FHIR export returns a FHIR Bundle directly as the response body with application/fhir+json media type; clinical-intake revision details are carried in the documented Patient extension.
 - SIRALOOM is the assembler in FHIR Provenance; the original clinical observer is not fabricated because the current phenotype observation model does not store a direct author reference.
 - The export does not include source VCF/BAM/FASTQ artifacts or expose internal storage URIs.
