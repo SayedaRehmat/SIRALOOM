@@ -49,6 +49,9 @@ python scripts/validation/run_giab_concordance.py \
   --stratification-tsv /secure/ga4gh/stratification.tsv \
   --caller approved-caller \
   --caller-version 4.2.1 \
+  --truth-set-id GIAB-HG002-GRCh38 \
+  --truth-set-version 4.2.1 \
+  --acceptance-policy-id LAB-APPROVED-SNV-INDEL-001 \
   --engine xcmp \
   --threads 8 \
   --output-dir /secure/evidence/giab-wes-grch38-001
