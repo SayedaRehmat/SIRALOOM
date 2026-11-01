@@ -79,10 +79,10 @@ def _fake_happy(tmp_path: Path) -> Path:
         " if '--stratification' in sys.argv:\n"
         "  pathlib.Path(str(prefix) + '.extended.csv').write_text('Type,Subtype,Subset', encoding='utf-8')\n"
         " writer.writerows([\n"
-        " ['INDEL','ALL',10,8,2,12,2,2,0,0.8,0.8,0.1],\n"
-        " ['INDEL','PASS',10,7,3,10,1,2,0,0.7,0.875,0.2],\n"
-        " ['SNP','ALL',20,18,2,22,2,2,0,0.9,0.9,0.1],\n"
-        " ['SNP','PASS',20,17,3,20,1,2,0,0.85,0.9444,0.1],\n"
+        " ['INDEL','ALL',10,8,2,12,7,3,2,0,0.8,0.7,0.1],\n"
+        " ['INDEL','PASS',10,7,3,10,7,1,2,0,0.7,0.875,0.2],\n"
+        " ['SNP','ALL',20,18,2,22,18,2,2,0,0.9,0.9,0.1],\n"
+        " ['SNP','PASS',20,17,3,20,17,1,2,0,0.85,0.9444,0.1],\n"
         " ])\n"
         "raise SystemExit(0)\n",
         encoding="utf-8",
