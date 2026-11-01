@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import pytest
 
@@ -106,12 +106,14 @@ def test_family_export_preserves_member_attribution_and_parentage():
     )
 
     assert warnings == []
-    assert payload["proband"]["subject"]["id"] == f"SIRALOOM:{proband.id}"
+    proband_id = f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{proband.id}')}"
+    father_id = f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{father.id}')}"
+    mother_id = f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{mother.id}')}"
+    assert payload["proband"]["subject"]["id"] == proband_id
     assert len(payload["relatives"]) == 1
     persons = {person["individualId"]: person for person in payload["pedigree"]["persons"]}
-    proband_id = f"SIRALOOM:{proband.id}"
-    assert persons[proband_id]["paternalId"] == f"SIRALOOM:{father.id}"
-    assert persons[proband_id]["maternalId"] == f"SIRALOOM:{mother.id}"
+    assert persons[proband_id]["paternalId"] == father_id
+    assert persons[proband_id]["maternalId"] == mother_id
     assert persons[proband_id]["affectedStatus"] == "AFFECTED"
 
 
