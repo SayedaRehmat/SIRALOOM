@@ -17,17 +17,17 @@ from scripts.validation.run_giab_concordance import (
 
 SUMMARY_HEADER = [
     "Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN",
-    "QUERY.TOTAL", "QUERY.FP", "QUERY.UNK", "FP.gt",
+    "QUERY.TOTAL", "QUERY.TP", "QUERY.FP", "QUERY.UNK", "FP.gt", "FP.al",
     "METRIC.Recall", "METRIC.Precision", "METRIC.Frac_NA",
 ]
 
 
 def _summary(path: Path) -> None:
     rows = [
-        ["INDEL", "ALL", 10, 8, 2, 12, 2, 2, 0, 0.8, 0.8, 0.1],
-        ["INDEL", "PASS", 10, 7, 3, 10, 1, 2, 0, 0.7, 0.875, 0.2],
-        ["SNP", "ALL", 20, 18, 2, 22, 2, 2, 0, 0.9, 0.9, 0.1],
-        ["SNP", "PASS", 20, 17, 3, 20, 1, 2, 0, 0.85, 0.9444, 0.1],
+        ["INDEL", "ALL", 10, 8, 2, 12, 7, 3, 2, 0, 0, 0.8, 0.7, 0.1],
+        ["INDEL", "PASS", 10, 7, 3, 10, 7, 1, 2, 0, 0, 0.7, 0.875, 0.2],
+        ["SNP", "ALL", 20, 18, 2, 22, 18, 2, 2, 0, 0, 0.9, 0.9, 0.1],
+        ["SNP", "PASS", 20, 17, 3, 20, 17, 1, 2, 0, 0, 0.85, 0.9444, 0.1],
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
@@ -79,10 +79,10 @@ def _fake_happy(tmp_path: Path) -> Path:
         " if '--stratification' in sys.argv:\n"
         "  pathlib.Path(str(prefix) + '.extended.csv').write_text('Type,Subtype,Subset', encoding='utf-8')\n"
         " writer.writerows([\n"
-        " ['INDEL','ALL',10,8,2,12,2,2,0,0.8,0.8,0.1],\n"
-        " ['INDEL','PASS',10,7,3,10,1,2,0,0.7,0.875,0.2],\n"
-        " ['SNP','ALL',20,18,2,22,2,2,0,0.9,0.9,0.1],\n"
-        " ['SNP','PASS',20,17,3,20,1,2,0,0.85,0.9444,0.1],\n"
+        " ['INDEL','ALL',10,8,2,12,7,3,2,0,0,0.8,0.7,0.1],\n"
+        " ['INDEL','PASS',10,7,3,10,7,1,2,0,0,0.7,0.875,0.2],\n"
+        " ['SNP','ALL',20,18,2,22,18,2,2,0,0,0.9,0.9,0.1],\n"
+        " ['SNP','PASS',20,17,3,20,17,1,2,0,0,0.85,0.9444,0.1],\n"
         " ])\n"
         "raise SystemExit(0)\n",
         encoding="utf-8",
@@ -107,12 +107,16 @@ def test_parse_happy_summary_recomputes_precision_recall_and_f1(tmp_path: Path) 
         item for item in metrics
         if item["variant_type"] == "INDEL" and item["filter"] == "ALL"
     )
-    assert indel_all["true_positive"] == 8
+    assert indel_all["truth_true_positive"] == 8
+    assert indel_all["query_true_positive"] == 7
+    assert indel_all["genotype_mismatches"] == 0
+    assert indel_all["allele_mismatches"] == 0
+    assert indel_all["fraction_not_assessed"] == pytest.approx(2 / 12)
     assert indel_all["false_negative"] == 2
     assert indel_all["false_positive"] == 2
     assert indel_all["recall"] == pytest.approx(0.8)
-    assert indel_all["precision"] == pytest.approx(0.8)
-    assert indel_all["f1"] == pytest.approx(0.8)
+    assert indel_all["precision"] == pytest.approx(0.7)
+    assert indel_all["f1"] == pytest.approx(2 * 0.7 * 0.8 / 1.5)
     assert indel_all["recall_wilson_95_ci"] is not None
 
 
