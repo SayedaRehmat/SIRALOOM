@@ -575,15 +575,23 @@ def _phenotype_export_sidecar(
     return exported
 
 def _pedigree_export_sidecar(
+    case: Case,
     members: list[PedigreeMember],
     relationships: list[PedigreeRelationship],
+    clinical_intake_revision: ClinicalIntakeRevision | None,
 ) -> dict[str, Any]:
     identifiers = {str(member.id): member.member_identifier for member in members}
     consanguinity_values = []
-    for source in (
-        [member.metadata_json or {} for member in members]
+    sources = (
+        [case.clinical_context or {}]
+        + [member.metadata_json or {} for member in members]
         + [relationship.metadata_json or {} for relationship in relationships]
-    ):
+        + [clinical_intake_revision.context or {}] if clinical_intake_revision is not None else
+        [case.clinical_context or {}]
+        + [member.metadata_json or {} for member in members]
+        + [relationship.metadata_json or {} for relationship in relationships]
+    )
+    for source in sources:
         if "consanguinous_parents" in source:
             consanguinity_values.append(source["consanguinous_parents"])
     consanguinous_parents = consanguinity_values[0] if consanguinity_values else None
@@ -709,7 +717,9 @@ def export_case_phenopackets_v2(
         "warnings": warnings,
         "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
         "phenotype_observation_sidecar": _phenotype_export_sidecar(observations, members),
-        "pedigree_sidecar": _pedigree_export_sidecar(members, relationships),
+        "pedigree_sidecar": _pedigree_export_sidecar(
+            case, members, relationships, clinical_intake_revision
+        ),
         "document": document,
     }
 
