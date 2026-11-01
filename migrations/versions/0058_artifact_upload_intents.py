@@ -1,7 +1,7 @@
 """Add durable, tenant-scoped artifact upload idempotency reservations.
 
 Revision ID: 0058_artifact_upload_intents
-Revises: 0056_phenotype_observation_fingerprint
+Revises: 0057_clinical_intake_revisions
 """
 import sqlalchemy as sa
 from alembic import op
