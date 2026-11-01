@@ -252,8 +252,8 @@ def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[
             continue
         reason_code = metadata.get("review_reason_code") or "REQUIRES_SPECIALIZED_REVIEW"
         errors.append(
-            f"{artifact_type} artifact {artifact_id} requires specialized pipeline/review "
-            f"({reason_code}); the separately qualified specialized-variant product is required before reportability can be finalized"
+            f"{artifact_type} artifact {artifact_id} requires review before the in-scope "
+            f"SNV/INDEL report can be finalized ({reason_code})"
         )
     return errors
 
