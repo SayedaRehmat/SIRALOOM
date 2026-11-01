@@ -47,7 +47,7 @@ def test_csi_corruption_is_rejected_during_index_concordance(tmp_path: Path):
     original = csi.read_bytes()
     # HTSlib writes CSI as BGZF-compressed data; corrupt the BGZF signature
     # rather than incorrectly expecting the decompressed CSI magic at byte zero.
-    assert original.startswith(b"\\x1f\\x8b\\x08\\x04")
+    assert original.startswith(b"\x1f\x8b\x08\x04")
     csi.write_bytes(b"NOT-A-CSI" + original[9:])
 
     with pytest.raises(VCFToolError, match="index record-count validation failed"):
