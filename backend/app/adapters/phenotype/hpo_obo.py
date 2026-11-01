@@ -298,6 +298,29 @@ class HPOOboProvider:
             return HpoTermResolution(term_id, "UNKNOWN")
         return HpoTermResolution(term_id, "ALTERNATE_ID" if canonical != term_id else "CURRENT", canonical, term.label)
 
+    def search_terms(self, query: str, *, limit: int = 20) -> list[dict[str, str]]:
+        """Search the pinned ontology labels/IDs; results never imply clinical presence."""
+        needle = str(query or "").strip().casefold()
+        if len(needle) < 2:
+            return []
+        bounded_limit = min(max(int(limit), 1), 50)
+        matches = [
+            term for term in self.terms.values()
+            if not term.obsolete and (
+                needle in term.term_id.casefold() or needle in term.label.casefold()
+            )
+        ]
+        matches.sort(key=lambda term: (
+            0 if term.term_id.casefold().startswith(needle) else
+            1 if term.label.casefold().startswith(needle) else 2,
+            term.label.casefold(),
+            term.term_id,
+        ))
+        return [
+            {"hpo_id": term.term_id, "label": term.label}
+            for term in matches[:bounded_limit]
+        ]
+
     def ancestors(self, value: str) -> frozenset[str]:
         resolution = self.resolve(value)
         if resolution.status not in _RESOLVED_TERM_STATUSES or not resolution.canonical_id:
