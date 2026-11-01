@@ -81,17 +81,17 @@ def test_specimen_ploidy_evidence_migration_rejects_update_and_delete(tmp_path, 
         case_id = uuid4()
         specimen_id = uuid4()
         audit_id = uuid4()
-        connection.execute(text("INSERT INTO organizations (id, name) VALUES (:id, 'test')"), {"id": str(organization_id)})
+        connection.execute(text("INSERT INTO organizations (id, name, created_at, updated_at) VALUES (:id, 'test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"), {"id": str(organization_id)})
         connection.execute(text(
-            "INSERT INTO users (id, organization_id, display_name, role, status) "
-            "VALUES (:id, :org, 'Reviewer', 'lab_director', 'ACTIVE')"
+            "INSERT INTO users (id, organization_id, display_name, role, status, created_at, updated_at) "
+            "VALUES (:id, :org, 'Reviewer', 'lab_director', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
         ), {"id": str(user_id), "org": str(organization_id)})
         connection.execute(text(
             "INSERT INTO cases (id, organization_id, case_identifier, status, language, created_by) "
             "VALUES (:id, :org, 'CASE-1', 'DRAFT', 'en', :user)"
         ), {"id": str(case_id), "org": str(organization_id), "user": str(user_id)})
         connection.execute(text(
-            "INSERT INTO specimens (id, case_id, specimen_identifier) VALUES (:id, :case, 'SPEC-1')"
+            "INSERT INTO specimens (id, case_id, specimen_identifier, metadata, created_at) VALUES (:id, :case, 'SPEC-1', '{}', CURRENT_TIMESTAMP)"
         ), {"id": str(specimen_id), "case": str(case_id)})
         connection.execute(text(
             "INSERT INTO audit_events (id, event_version, event_type, actor_type, actor_id, "
@@ -139,10 +139,6 @@ class _EvidenceSession:
             return self.specimen
         raise AssertionError(model)
 
-    def refresh(self, row, **kwargs):
-        assert row is self.case
-        assert kwargs.get("with_for_update") is True
-
     def scalar(self, statement):
         self.scalar_calls += 1
         if self.scalar_calls == 1:
@@ -155,11 +151,8 @@ class _EvidenceSession:
     def commit(self):
         self.committed = True
 
-    def refresh_after_commit(self, row):
-        pass
-
     def refresh(self, row, **kwargs):
-        # Case is refreshed with a row lock; the persisted revision is refreshed after commit.
+        # The fake session has no identity map.
         return None
 
     def rollback(self):
