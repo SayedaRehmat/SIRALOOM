@@ -80,14 +80,17 @@ def fixtures() -> tuple[dict, dict, dict]:
         source="CLINICAL_INPUT", evidence={},
     )
 
+    # GA4GH PhenotypicFeature v2 has no observation timestamp field. Keep the
+    # timestamp on the FHIR source row, but do not invent a GA4GH mapping for it.
+    packet_observation = SimpleNamespace(**vars(observation), observed_at=None)
     phenopacket, packet_warnings = build_phenopackets_v2(
-        case=case, phenotype_observations=[observation],
+        case=case, phenotype_observations=[packet_observation],
     )
     if packet_warnings:
         raise RuntimeError(f"Synthetic Phenopacket unexpectedly has loss warnings: {packet_warnings}")
 
     family, family_warnings = build_phenopackets_v2(
-        case=case, phenotype_observations=[observation],
+        case=case, phenotype_observations=[packet_observation],
         pedigree_members=[father, mother, proband],
         pedigree_relationships=relationships,
     )
