@@ -1671,7 +1671,7 @@ def test_vcf45_empty_laa_cannot_describe_called_alt_genotype(tmp_path: Path):
         ('##FORMAT=<ID=GT,Number=2,Type=String,Description="Genotype">', "FORMAT", "GT"),
         ('##FORMAT=<ID=PSL,Number=P,Type=Integer,Description="Phase set list">', "FORMAT", "PSL"),
         ('##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">', "INFO", "AF"),
-        ('##INFO=<ID=DP,Number=1,Type=Float,Description="Read depth">', "INFO", "DB"),
+        ('##INFO=<ID=DP,Number=1,Type=Float,Description="Read depth">', "INFO", "DP"),
         ('##INFO=<ID=MQ,Number=1,Type=Integer,Description="RMS mapping quality">', "INFO", "MQ"),
     ],
 )
@@ -1711,3 +1711,38 @@ def test_vcf45_implicit_reserved_info_definitions_validate_record_values(
         validate_vcf_strict(path)
 
     assert exc.value.code == expected_code
+
+
+def test_vcf45_ps_must_be_nonnegative(tmp_path: Path):
+    path = tmp_path / "vcf45-negative-ps.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PS\t0|1:-1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_VALUE_INVALID"
+
+
+def test_vcf45_ps_and_psl_cannot_both_be_populated_for_one_sample(tmp_path: Path):
+    path = tmp_path / "vcf45-ps-and-psl.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">',
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">',
+        ],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PS:PSL\t0|1:10:chr1*2*1,.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
