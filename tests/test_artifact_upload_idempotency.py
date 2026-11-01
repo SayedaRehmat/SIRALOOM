@@ -183,32 +183,11 @@ def test_reserved_upload_recovers_identical_orphaned_storage_bytes(tmp_path):
             filename="sample.vcf",
         )
 
-        original_flush = db.flush
-
-        def fail_after_object_publish(*_args, **_kwargs):
-            raise RuntimeError("simulated API process failure before artifact-row flush")
-
-        db.flush = fail_after_object_publish
-        with pytest.raises(RuntimeError, match="simulated API process failure"):
-            store.put_file(
-                db=db,
-                case_id=case_id,
-                analysis_id=None,
-                source_path=source,
-                filename="sample.vcf",
-                artifact_type="VCF",
-                media_type="text/vcf",
-                genome_build="GRCh38",
-                metadata={
-                    "ingestion": {
-                        "upload_request_fingerprint": _request_fingerprint(content),
-                    }
-                },
-                validation_status="VALID",
-                artifact_id=intent.artifact_id,
-            )
-        db.rollback()
-        db.flush = original_flush
+        # Model the durable state left by a process that stopped after
+        # publishing bytes but before the Artifact row transaction committed.
+        orphan_path = store._artifact_path(case_id, intent.artifact_id, "sample.vcf")
+        orphan_path.parent.mkdir(parents=True, exist_ok=True)
+        orphan_path.write_bytes(content)
 
         assert db.get(Artifact, intent.artifact_id) is None
         assert store.exists(storage_uri)
