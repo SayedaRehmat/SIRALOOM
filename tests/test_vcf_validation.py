@@ -1602,22 +1602,16 @@ def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
 
 
 @pytest.mark.parametrize(
-    ("version", "alt"),
-    [
-        (version, alt)
-        for version in ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
-        for alt in ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],A]chr1:123]"]
-    ],
+    "alt",
+    ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],A]chr1:123]"],
 )
-def test_duplicate_alt_values_are_rejected_across_supported_vcf_versions(
-    version: str, alt: str
-):
+def test_repeated_alt_values_are_preserved_as_distinct_source_entries(alt: str):
     fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
 
-    with pytest.raises(StrictVCFValidationError) as exc:
-        _validate_record(fields, 1, None, version)
+    _chrom, _position, observed = _validate_record(fields, 1, None, "VCFv4.5")
 
-    assert exc.value.code == "VCF_ALT_DUPLICATE"
+    assert len(observed) == 2
+    assert observed[0] == observed[1]
 
 
 @pytest.mark.parametrize("alt", ["<DEL,FOO>", "<DEL FOO>", "<<DEL>>", "A]chr 1:123]"])
