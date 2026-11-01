@@ -121,7 +121,7 @@ def _clinical_attribute_extensions(row: Any) -> list[dict[str, Any]]:
     return result
 
 
-def _clinical_intake_sub_extension(revision: Any | None) -> dict[str, Any] | None:
+def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
     if revision is None:
         return None
     context = _get(revision, "context", {}) or {}
