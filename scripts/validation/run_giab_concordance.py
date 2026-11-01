@@ -18,6 +18,7 @@ import platform
 import re
 import subprocess
 import sys
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
@@ -219,6 +220,13 @@ def run_concordance(
     output_dir.chmod(0o700)
     output_dir = output_dir.resolve()
 
+    executable = shutil.which(hap_py)
+    if executable is None:
+        raise ConcordanceError("hap.py executable could not be resolved from PATH.")
+    executable_path = Path(executable).resolve(strict=True)
+    if not executable_path.is_file():
+        raise ConcordanceError("hap.py executable is not a regular file.")
+    executable_sha256_before = sha256_file(executable_path)
     version_cmd = [hap_py, "--version"]
     log_path = output_dir / "hap.py.log"
     try:
@@ -277,6 +285,8 @@ def run_concordance(
     hashes_after = {name: sha256_file(path) for name, path in inputs.items()}
     if hashes_before != hashes_after:
         raise ConcordanceError("One or more benchmark inputs changed during execution.")
+    if sha256_file(executable_path) != executable_sha256_before:
+        raise ConcordanceError("The hap.py executable changed during benchmark execution.")
 
     report = {
         "schema_version": "1",
@@ -289,6 +299,8 @@ def run_concordance(
             "platform": platform.platform(),
             "python_version": platform.python_version(),
             "hap_py_version": hap_version,
+            "hap_py_executable_sha256": executable_sha256_before,
+            "repository_commit": os.environ.get("GITHUB_SHA"),
             "comparison_engine": engine,
             "threads": threads,
         },
