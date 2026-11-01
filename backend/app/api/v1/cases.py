@@ -1,7 +1,10 @@
+from datetime import UTC, datetime
+import hashlib
+import json
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -14,11 +17,12 @@ from backend.app.auth.authorization import (
 )
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.case_change import create_case_change_candidates
-from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate
+from backend.app.domain.case_workspace import CaseUpdate, SpecimenCreate, SpecimenPloidyEvidenceCreate
+from backend.app.domain.sample_ploidy_policy import PloidyPolicyValidationError, parse_sample_ploidy_evidence
 from backend.app.domain.enums import CaseStatus
 from backend.app.domain.schemas import CaseCreate
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Assay, Case, CaseAccessGrant, Specimen
+from backend.app.infrastructure.db.models import Analysis, Assay, Case, CaseAccessGrant, Specimen, SpecimenPloidyEvidenceRevision
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/cases", tags=["cases"])
@@ -215,3 +219,161 @@ def create_specimen(case_id: UUID, payload: SpecimenCreate, db: Session = Depend
             ) from exc
         raise
     return {"specimen_id": str(specimen.id), "case_id": str(case.id), "specimen_identifier": specimen.specimen_identifier, "specimen_type": specimen.specimen_type, "vcf_sample_name": specimen_metadata.get("vcf_sample_name")}
+
+
+def _specimen_ploidy_revision_payload(row: SpecimenPloidyEvidenceRevision) -> dict:
+    return {
+        "revision_id": str(row.id),
+        "specimen_id": str(row.specimen_id),
+        "version": row.version,
+        "schema_version": row.schema_version,
+        "reference_build": row.reference_build,
+        "status": row.status,
+        "region_copy_number": row.region_copy_number or {},
+        "source_type": row.source_type,
+        "evidence_reference": row.evidence_reference,
+        "reviewed_by": str(row.reviewed_by) if row.reviewed_by else None,
+        "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None,
+        "recorded_by": str(row.recorded_by),
+        "recorded_at": row.recorded_at.isoformat() if row.recorded_at else None,
+        "audit_event_id": str(row.audit_event_id),
+    }
+
+
+@router.post("/{case_id}/specimens/{specimen_id}/ploidy-evidence", status_code=201)
+def record_specimen_ploidy_evidence(
+    case_id: UUID,
+    specimen_id: UUID,
+    payload: SpecimenPloidyEvidenceCreate,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Append a specimen-scoped ploidy evidence revision and its audit event atomically."""
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    db.refresh(case, with_for_update=True)
+    specimen = db.get(Specimen, specimen_id, with_for_update=True)
+    if specimen is None or specimen.case_id != case.id:
+        raise HTTPException(status_code=404, detail="Specimen not found")
+
+    if payload.status == "VERIFIED":
+        require_case_permission(case, principal, db, "review")
+        require_role(principal, REVIEW_ROLES)
+    else:
+        require_case_permission(case, principal, db, "write")
+        require_role(principal, CASE_WRITE_ROLES)
+
+    reviewed_at = datetime.now(UTC) if payload.status == "VERIFIED" else None
+    evidence_payload = payload.model_dump(mode="json")
+    evidence_payload.update({
+        "specimen_id": str(specimen.id),
+        "reviewed_by": str(principal.user_id) if reviewed_at else None,
+        "reviewed_at": reviewed_at.isoformat() if reviewed_at else None,
+    })
+    try:
+        evidence = parse_sample_ploidy_evidence(evidence_payload)
+    except PloidyPolicyValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    fingerprint_payload = {
+        "schema_version": 1,
+        "specimen_id": str(specimen.id),
+        "reference_build": evidence.reference_build,
+        "status": evidence.status,
+        "region_copy_number": evidence.region_copy_number,
+        "source_type": evidence.source_type,
+        "evidence_reference": evidence.evidence_reference,
+        "reviewed_by": str(principal.user_id) if reviewed_at else None,
+        "recorded_by": str(principal.user_id),
+    }
+    canonical = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    existing = db.scalar(select(SpecimenPloidyEvidenceRevision).where(
+        SpecimenPloidyEvidenceRevision.specimen_id == specimen.id,
+        SpecimenPloidyEvidenceRevision.revision_fingerprint == fingerprint,
+    ))
+    if existing is not None:
+        return _specimen_ploidy_revision_payload(existing)
+
+    latest = db.scalar(
+        select(SpecimenPloidyEvidenceRevision)
+        .where(SpecimenPloidyEvidenceRevision.specimen_id == specimen.id)
+        .order_by(desc(SpecimenPloidyEvidenceRevision.version))
+        .limit(1)
+    )
+    version = (latest.version if latest else 0) + 1
+    audit_event_id = AuditService(db).record(
+        event_type="SPECIMEN_PLOIDY_EVIDENCE_RECORDED",
+        case_id=case.id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="SPECIMEN_PLOIDY_EVIDENCE",
+        subject_id=str(specimen.id),
+        operation="CREATE_REVISION",
+        after_state={
+            "version": version,
+            "schema_version": 1,
+            "reference_build": evidence.reference_build,
+            "status": evidence.status,
+            "region_copy_number": evidence.region_copy_number,
+            "source_type": evidence.source_type,
+            "evidence_reference": evidence.evidence_reference,
+            "reviewed_by": str(principal.user_id) if reviewed_at else None,
+            "reviewed_at": reviewed_at.isoformat() if reviewed_at else None,
+        },
+        reason="Specimen ploidy evidence revision recorded",
+    )
+    revision = SpecimenPloidyEvidenceRevision(
+        id=uuid4(),
+        specimen_id=specimen.id,
+        version=version,
+        schema_version=1,
+        revision_fingerprint=fingerprint,
+        reference_build=evidence.reference_build,
+        status=evidence.status,
+        region_copy_number=evidence.region_copy_number,
+        source_type=evidence.source_type,
+        evidence_reference=evidence.evidence_reference,
+        reviewed_by=principal.user_id if reviewed_at else None,
+        reviewed_at=reviewed_at,
+        recorded_by=principal.user_id,
+        audit_event_id=audit_event_id,
+    )
+    db.add(revision)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        duplicate = db.scalar(select(SpecimenPloidyEvidenceRevision).where(
+            SpecimenPloidyEvidenceRevision.specimen_id == specimen.id,
+            SpecimenPloidyEvidenceRevision.revision_fingerprint == fingerprint,
+        ))
+        if duplicate is not None:
+            return _specimen_ploidy_revision_payload(duplicate)
+        raise HTTPException(status_code=409, detail="Specimen ploidy evidence changed concurrently; retry the request") from exc
+    db.refresh(revision)
+    return _specimen_ploidy_revision_payload(revision)
+
+
+@router.get("/{case_id}/specimens/{specimen_id}/ploidy-evidence")
+def list_specimen_ploidy_evidence(
+    case_id: UUID,
+    specimen_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+    specimen = db.get(Specimen, specimen_id)
+    if specimen is None or specimen.case_id != case.id:
+        raise HTTPException(status_code=404, detail="Specimen not found")
+    rows = db.scalars(
+        select(SpecimenPloidyEvidenceRevision)
+        .where(SpecimenPloidyEvidenceRevision.specimen_id == specimen.id)
+        .order_by(SpecimenPloidyEvidenceRevision.version)
+    ).all()
+    return [_specimen_ploidy_revision_payload(row) for row in rows]
