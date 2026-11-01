@@ -1316,7 +1316,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             f"FORMAT/PS and FORMAT/PSL cannot both be populated for one sample at line {line_no}",
                             code="VCF_PHASE_SET_INVALID",
                         )
-                sample_values = sample.split(":")
                 if gt_index is None:
                     # GT is optional in VCF. Number=G cardinality depends on
                     # ploidy, so do not silently impose a diploid assumption
