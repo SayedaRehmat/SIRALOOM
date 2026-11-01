@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
@@ -174,11 +173,11 @@ def _collect_loss_warnings(
                     "reason": "This clinical intake field has no equivalent in the base GA4GH Phenopacket v2 model; it is retained in the SIRALOOM response sidecar.",
                 })
         age = context.get("age_at_assessment")
-        if age and age.get("as_of_date"):
+        if age:
             warnings.append({
                 "observation_id": "clinical-intake",
-                "field": "clinical_intake.age_at_assessment.as_of_date",
-                "reason": "Phenopackets TimeElement preserves the age duration but not the date on which that age was recorded; the date is retained in the SIRALOOM response sidecar.",
+                "field": "clinical_intake.age_at_assessment",
+                "reason": "The GA4GH Individual.time_at_last_encounter field specifically represents age at the last encounter; SIRALOOM age_at_assessment is not assumed to be that encounter and is retained exactly in the SIRALOOM response sidecar.",
             })
         for field in (
             "intake_status", "phenotype_review_status", "family_history_review_status",
@@ -265,38 +264,17 @@ def _metadata(rows: list[Any]) -> dict[str, Any]:
     }
 
 
-def _age_time_element(age: dict[str, Any] | None) -> dict[str, Any] | None:
-    if not age:
-        return None
-    unit = str(age.get("unit") or "").upper()
-    symbol = {"YEARS": "Y", "MONTHS": "M", "WEEKS": "W", "DAYS": "D"}.get(unit)
-    if symbol is None:
-        raise PhenopacketExportError("Clinical intake age_at_assessment has an unsupported unit.")
-    try:
-        value = Decimal(str(age.get("value")))
-    except (InvalidOperation, TypeError, ValueError) as exc:
-        raise PhenopacketExportError("Clinical intake age_at_assessment is not a valid decimal value.") from exc
-    if not value.is_finite() or value < 0:
-        raise PhenopacketExportError("Clinical intake age_at_assessment must be finite and non-negative.")
-    amount = format(value.normalize(), "f")
-    return {"age": {"iso8601duration": f"P{amount}{symbol}"}}
-
-
 def _packet(
     *,
     packet_id: str,
     subject_id: str,
     rows: list[Any],
     sex: str | None = None,
-    age_at_assessment: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     subject: dict[str, Any] = {"id": subject_id}
     normalized_sex = _normalize_sex(sex)
     if normalized_sex:
         subject["sex"] = normalized_sex
-    age_time = _age_time_element(age_at_assessment)
-    if age_time is not None:
-        subject["timeAtLastEncounter"] = age_time
     return {
         "id": packet_id,
         "subject": subject,
@@ -454,7 +432,6 @@ def build_phenopackets_v2(
             "reason": "The case contains observations resolved against multiple HPO releases; one Phenopacket metadata resource cannot preserve per-observation release identity.",
         })
     intake_context = _value(clinical_intake_revision, "context", {}) or {}
-    age_at_assessment = intake_context.get("age_at_assessment")
     probands = [member for member in members if bool(_value(member, "is_proband", False))]
     if len(probands) > 1:
         raise PhenopacketExportError("A case with multiple designated probands cannot be exported as one Family.")
@@ -475,7 +452,6 @@ def build_phenopackets_v2(
             packet_id=f"{_case_id(case)}:phenopacket",
             subject_id=_case_id(case),
             rows=case_rows,
-            age_at_assessment=age_at_assessment,
         )
         return _validate_message(packet, family=False), warnings
 
