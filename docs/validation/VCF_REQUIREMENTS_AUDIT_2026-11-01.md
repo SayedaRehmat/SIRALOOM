@@ -53,7 +53,7 @@ A VERIFIED software row is not a laboratory QUALIFIED row.
 | TBI/CSI upload validation and index concordance | PARTIAL | `validate_vcf_index_concordance()`; indexed-query SHA-256 vs sequential BGZF scan; `tests/test_csi_index_integrity.py` | Expand real malformed, stale, missing, empty, truncated, partial-write, boundary and large-WGS index fixtures. |
 | Deterministic normalized BGZF VCF + CSI publication | VERIFIED (software fixtures) | `normalize_vcf_with_bcftools()`; staged outputs, index validation and publication compensation | Exercise target object storage, disk-full and crash points around each publication boundary. |
 | Immutable source and normalized lineage/provenance | VERIFIED (software contract) | Source SHA-256, source record/ALT mappings, tool/version/command, reference identity and normalized artifact lineage | Verify lineage across deployed downstream consumers and retained lab records. |
-| Pinned BCFtools/HTSlib security baseline | VERIFIED (PR CI) | PR #274 merged as `8d0c09115c0867a2189b89ba2bbb42c24f763939`; 1.25 pins, runtime attestation and tests | Main-branch CI after merge was still running when this audit was authored; verify separately. |
+| Pinned BCFtools/HTSlib security baseline | VERIFIED (PR CI) | PR #274 merged as `8d0c09115c0867a2189b89ba2bbb42c24f763939`; 1.25 pins, runtime attestation and tests | Post-merge main CI run #41328160303 passed backend, PostgreSQL integration and frontend jobs. |
 | Upload idempotency and duplicate retry | VERIFIED (bounded software) | Upload intent/idempotency implementation; API and PostgreSQL tests | Concurrent retries against each production storage provider and interrupted uploads need deployment testing. |
 | Normalization worker-loss recovery | VERIFIED (bounded integration test) | PR #255; real PostgreSQL/Redis Celery prefork worker loss after paired normalized VCF/CSI persistence; byte/hash and lineage replay assertions | Only one stage boundary and synthetic fixture covered. |
 | Whole-stage crash/replay and operational recovery | PARTIAL | Durable checkpoints, outbox, idempotency and worker-loss tests at selected boundaries | Add fault injection at every stage, DB/Redis restart, disk-full, timeout, object-store outage and concurrent retry. |
@@ -86,7 +86,7 @@ PR #274 changed BCFtools/HTSlib version references and corresponding tests/docum
 - Bioconda's BCFtools 1.25 package requires HTSlib >=1.25,<1.26; explicit 1.25/1.25 pins are compatible.
 - PR #274 CI run #41326887267 passed backend, PostgreSQL integration and frontend jobs.
 - PR #274 merged on 2026-11-01 as `8d0c09115c0867a2189b89ba2bbb42c24f763939`.
-- Main-branch CI run #41328160303 was in progress when this audit was authored. A green PR run is confirmed; post-merge main CI must be confirmed separately.
+- Post-merge main CI run #41328160303 completed successfully for backend, PostgreSQL integration and frontend jobs.
 
 ## 5. Priority-ordered remaining work
 
