@@ -8,7 +8,7 @@ from pathlib import Path
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
-SYMBOLIC_RE = re.compile(r"^<[^>]+>$")
+SYMBOLIC_RE = re.compile(r"^<[^<>,\\s]+>$")
 BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=left)|"
     r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
