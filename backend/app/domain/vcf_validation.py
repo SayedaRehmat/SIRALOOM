@@ -964,7 +964,7 @@ def _validate_record(
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
 
     alt_identity_keys = [_alt_identity_key(allele) for allele in alts]
-    if len(alt_identity_keys) != len(set(alt_identity_keys)):
+    if fileformat == "VCFv4.5" and len(alt_identity_keys) != len(set(alt_identity_keys)):
         raise StrictVCFValidationError(
             f"ALT contains duplicate allele values at line {line_no}",
             code="VCF_ALT_DUPLICATE",
