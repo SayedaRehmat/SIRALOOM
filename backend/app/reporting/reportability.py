@@ -230,7 +230,8 @@ def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[
 
     CNV, SV, mitochondrial, and repeat-expansion artifacts are out of scope for
     the first product and are intentionally non-blocking for an SNV/INDEL
-    report. They remain retained for provenance and are never interpreted here.
+    report. GVCF reference blocks and telomere sentinels are non-variant records
+    and are also non-blocking. All remain retained for provenance.
     """
     artifact_rows = db.execute(
         select(Artifact.id, Artifact.artifact_type, Artifact.metadata_json)
