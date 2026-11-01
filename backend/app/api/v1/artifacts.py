@@ -313,6 +313,14 @@ async def upload_artifact(
                     if digest_size > max_bytes:
                         raise HTTPException(status_code=413, detail=f"Artifact exceeds maximum allowed size of {max_bytes} bytes")
                     out.write(chunk)
+        except OSError as exc:
+            raise HTTPException(
+                status_code=507,
+                detail={
+                    "code": "UPLOAD_STAGING_UNAVAILABLE",
+                    "message": "Configured upload staging storage is unavailable.",
+                },
+            ) from exc
         finally:
             await file.close()
 
