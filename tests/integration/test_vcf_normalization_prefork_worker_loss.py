@@ -8,11 +8,11 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from redis import Redis
-from sqlalchemy import func, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
@@ -47,7 +47,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
 
     from tests.integration.worker_loss_celery_app import celery_app
 
-    engine = __import__("sqlalchemy").create_engine(database_url, pool_pre_ping=True)
+    engine = create_engine(database_url, pool_pre_ping=True)
     redis = Redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
     organization_id, user_id, case_id, analysis_id = (uuid4() for _ in range(4))
     dispatch_id = str(uuid4())
@@ -215,7 +215,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         result = json.loads(result_payload)
         workflow_result = result["workflow_result"]
         assert result["delivery_redelivered"] is True
-        assert workflow_result["step_status"] == StepStatus.SUCCEEDED
+        assert workflow_result["step_status"] == StepStatus.SUCCEEDED.value
         assert workflow_result["step_error_code"] is None
         assert workflow_result["recovery"] == "CELERY_REDELIVERY"
         assert workflow_result["checkpoint"] == "normalized-artifact-committed"
@@ -242,7 +242,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
             assert analysis.status == AnalysisStatus.RUNNING
             assert step is not None and step.status == StepStatus.SUCCEEDED
             assert len(artifact_rows) == 1
-            assert artifact_rows[0].id == __import__("uuid").UUID(workflow_result["artifact_id"])
+            assert artifact_rows[0].id == UUID(workflow_result["artifact_id"])
             assert artifact_rows[0].sha256 == workflow_result["artifact_sha256"]
             assert len(recovery_events) == 1
             assert recovery_events[0].payload["recovered_steps"] == ["normalize"]
