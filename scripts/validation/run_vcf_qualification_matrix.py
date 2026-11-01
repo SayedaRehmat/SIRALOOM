@@ -253,7 +253,8 @@ def main() -> int:
         cells: list[dict[str, Any]] = []
         for cell in manifest["matrix"]:
             cell_output = output_dir / cell["id"]
-            cell_output.mkdir(mode=0o700)
+            # The underlying scale benchmark atomically creates its own output
+            # directory and deliberately rejects pre-existing paths.
             started_cell = datetime.now(UTC)
             try:
                 return_code, report = run_benchmark(cell=cell, output_dir=cell_output, script=benchmark_script)
