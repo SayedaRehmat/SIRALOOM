@@ -4,7 +4,11 @@ from types import SimpleNamespace
 import pytest
 
 from backend.app.domain.reference import FastaReference, ReferenceError
-from backend.app.domain.vcf_validation import validate_vcf_reference_alleles
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    validate_vcf_reference_alleles,
+    validate_vcf_strict,
+)
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
     REFERENCE_PACKAGE_SCHEMA_VERSION,
@@ -141,6 +145,32 @@ def test_reference_package_rejects_missing_assembly_identity(tmp_path: Path):
     assert exc.value.code == "REFERENCE_ASSEMBLY_IDENTITY_MISSING"
 
 
+def test_strict_vcf_validation_accepts_only_explicit_reference_contig_aliases(tmp_path: Path):
+    valid = tmp_path / "mitochondrial-explicit-alias.vcf"
+    valid.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    profile = validate_vcf_strict(valid, reference_contigs={"chrM"})
+    assert profile["records"] == 1
+    assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
+    with pytest.raises(ReferenceError, match="maps ambiguously"):
+        FastaReference.resolve_contig_name("NC_012920.1", {"M", "chrM"})
+
+    invalid = tmp_path / "mitochondrial-wrong-accession-version.vcf"
+    invalid.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.2\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid, reference_contigs={"chrM"})
+    assert getattr(exc.value, "code", None) == "REFERENCE_CONTIG_MISMATCH"
+
+
 def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
     tmp_path: Path,
 ):
@@ -162,6 +192,44 @@ def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
     result = validate_vcf_reference_alleles(vcf, fasta)
 
     assert result["checked_record_count"] == 1
+    assert result["resolved_contig_aliases"] == {"NC_012920.1": "chrM"}
+
+
+def test_vcf_reference_validation_records_aliases_when_contig_header_is_absent(tmp_path: Path):
+    fasta = tmp_path / "reference-no-contig-header.fa"
+    fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
+    vcf = tmp_path / "mitochondrial-accession-no-contig-header.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.1\t1\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_reference_alleles(vcf, fasta)
+
+    assert result["checked_record_count"] == 1
+    assert result["resolved_contig_aliases"] == {"NC_012920.1": "chrM"}
+
+
+def test_reference_validation_records_aliases_resolved_from_breakend_mates(tmp_path: Path):
+    fasta = tmp_path / "reference-breakend-alias.fa"
+    fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
+    vcf = tmp_path / "breakend-mate-alias.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chrM\t1\t.\tA\tA]NC_012920.1:2]\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_reference_alleles(vcf, fasta)
+
+    assert result["checked_record_count"] == 1
+    assert result["checked_breakend_mate_count"] == 1
+    assert result["resolved_contig_aliases"] == {"NC_012920.1": "chrM"}
 
 
 def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(

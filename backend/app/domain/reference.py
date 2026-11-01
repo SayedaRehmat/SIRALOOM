@@ -69,6 +69,11 @@ class FastaReference:
     def __enter__(self) -> "FastaReference":
         return self
 
+    @property
+    def contigs(self) -> frozenset[str]:
+        """Return exact indexed contig identifiers without applying aliases."""
+        return frozenset(self._entries)
+
     def __exit__(self, exc_type, exc, tb) -> None:
         self.close()
 
@@ -110,6 +115,29 @@ class FastaReference:
                 if candidate not in aliases:
                     aliases.append(candidate)
         return aliases
+
+    @classmethod
+    def resolve_contig_name(
+        cls,
+        contig: str,
+        available_contigs: set[str] | frozenset[str] | dict[str, object],
+    ) -> str:
+        """Resolve exact names plus the explicitly supported human MT RefSeq accession."""
+        if contig in available_contigs:
+            return contig
+        if contig.strip().upper() == "NC_012920.1":
+            matches = [
+                candidate
+                for candidate in ("M", "MT", "chrM", "chrMT")
+                if candidate in available_contigs
+            ]
+            if len(matches) == 1:
+                return matches[0]
+            if len(matches) > 1:
+                raise ReferenceError(
+                    f"Versioned mitochondrial accession {contig!r} maps ambiguously to reference contigs {matches}"
+                )
+        raise ReferenceError(f"Contig {contig!r} is not present in the reference")
 
     def resolve_contig(self, contig: str) -> str:
         for candidate in self._aliases(contig):

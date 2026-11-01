@@ -1,24 +1,66 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import re
-from math import comb
+from math import comb, isnan
 from pathlib import Path
 
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
-SYMBOLIC_RE = re.compile(r"^<[^>]+>$")
-BREAKEND_RE = re.compile(
-    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=left)|"
-    r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
+VCF_CONTIG_NAME_RE = re.compile(
+    r"^[0-9A-Za-z!#$%&+./:;?@^_|~-][0-9A-Za-z!#$%&*+./:;=?@^_|~-]*$"
 )
+SYMBOLIC_RE = re.compile(r"^<[^<>,\s]+>$")
+BREAKEND_RE = re.compile(
+    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
+    r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
+)
+
+def _alt_identity_key(allele: str) -> tuple[str, ...]:
+    """Return VCF allele identity while respecting sequence and contig case rules."""
+    if DNA_RE.fullmatch(allele):
+        return ("SEQUENCE", allele.upper())
+    if BREAKEND_RE.fullmatch(allele):
+        if allele[0] in "[]":
+            bracket = allele[0]
+            closing = allele.find(bracket, 1)
+            locus = allele[1:closing]
+            contig, position = locus.rsplit(":", 1)
+            inserted_sequence = allele[closing + 1 :]
+            return ("BREAKEND", bracket, contig, position, inserted_sequence.upper())
+        opening = next(index for index, character in enumerate(allele) if character in "[]")
+        bracket = allele[opening]
+        locus = allele[opening + 1 : -1]
+        contig, position = locus.rsplit(":", 1)
+        inserted_sequence = allele[:opening]
+        return ("BREAKEND", inserted_sequence.upper(), bracket, contig, position)
+    # Symbolic allele IDs and remote contig names are case-sensitive.
+    return ("LITERAL", allele)
+
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
 INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
+
+NONNEGATIVE_INTEGER_FIELDS = frozenset({
+    ("INFO", "AC"), ("INFO", "AD"), ("INFO", "ADF"), ("INFO", "ADR"),
+    ("INFO", "AN"), ("INFO", "DP"), ("INFO", "MQ0"), ("INFO", "NS"),
+    ("INFO", "SB"), ("INFO", "HOMLEN"),
+    ("FORMAT", "AD"), ("FORMAT", "ADF"), ("FORMAT", "ADR"),
+    ("FORMAT", "DP"), ("FORMAT", "EC"), ("FORMAT", "GQ"),
+    ("FORMAT", "HQ"), ("FORMAT", "LAD"), ("FORMAT", "LADF"),
+    ("FORMAT", "LADR"), ("FORMAT", "LEC"), ("FORMAT", "LPL"),
+    ("FORMAT", "LPP"), ("FORMAT", "MQ"), ("FORMAT", "PL"),
+    ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
+    ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
+})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
+NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
+_CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
 
 VCF45_BASE_MODIFICATION_FLOAT_ALIASES = frozenset({
     "M5mC", "M5hmC", "M5fC", "M5caC", "M5hmU", "M5fU",
@@ -58,17 +100,94 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
 
 
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
-    if field_id == "LEN":
-        return {"Number": "1", "Type": "Integer"}
+    # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
+    # cardinality/type even when a caller omits a redundant FORMAT header line.
+    reserved = {
+        "AD": ("R", "Integer"),
+        "ADF": ("R", "Integer"),
+        "ADR": ("R", "Integer"),
+        "DP": ("1", "Integer"),
+        "EC": ("A", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("G", "Float"),
+        "GP": ("G", "Float"),
+        "GQ": ("1", "Integer"),
+        "GT": ("1", "String"),
+        "HQ": ("2", "Integer"),
+        "LA": (".", "Integer"),
+        "LAA": (".", "Integer"),
+        "LAD": ("LR", "Integer"),
+        "LADF": ("LR", "Integer"),
+        "LADR": ("LR", "Integer"),
+        "LEC": ("LA", "Integer"),
+        "LGL": ("LG", "Float"),
+        "LGP": ("LG", "Float"),
+        "LPL": ("LG", "Integer"),
+        "LPP": ("LG", "Integer"),
+        "LEN": ("1", "Integer"),
+        "MQ": ("1", "Integer"),
+        "PL": ("G", "Integer"),
+        "PP": ("G", "Integer"),
+        "PQ": ("1", "Integer"),
+        "PS": ("1", "Integer"),
+        "PSL": ("P", "String"),
+        "PSO": ("P", "Integer"),
+        "PSQ": ("P", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    if definition is not None:
+        return {"Number": definition[0], "Type": definition[1]}
     return _reserved_base_modification_format_definition(field_id)
 
 
 def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
-    if field_id == "END":
-        return {"Number": "1", "Type": "Integer"}
-    if field_id == "SVLEN":
-        return {"Number": "A", "Type": "Integer"}
-    return None
+    # VCFv4.5 Table of reserved INFO keys and structural-variant definitions.
+    reserved = {
+        "AA": ("1", "String"),
+        "AC": ("A", "Integer"),
+        "AD": ("R", "Integer"),
+        "ADF": ("R", "Integer"),
+        "ADR": ("R", "Integer"),
+        "AF": ("A", "Float"),
+        "AN": ("1", "Integer"),
+        "BQ": ("1", "Float"),
+        "CIGAR": ("A", "String"),
+        "DB": ("0", "Flag"),
+        "DP": ("1", "Integer"),
+        "END": ("1", "Integer"),
+        "H2": ("0", "Flag"),
+        "H3": ("0", "Flag"),
+        "MQ": ("1", "Float"),
+        "MQ0": ("1", "Integer"),
+        "NS": ("1", "Integer"),
+        "SB": ("4", "Integer"),
+        "SOMATIC": ("0", "Flag"),
+        "VALIDATED": ("0", "Flag"),
+        "1000G": ("0", "Flag"),
+        "SVLEN": ("A", "Integer"),
+        # VCFv4.5 structural-variant INFO definitions.
+        "IMPRECISE": ("0", "Flag"),
+        "NOVEL": ("0", "Flag"),
+        "SVTYPE": ("1", "String"),
+        "CIPOS": (".", "Integer"),
+        "CIEND": (".", "Integer"),
+        "HOMLEN": ("A", "Integer"),
+        "HOMSEQ": ("A", "String"),
+        "BKPTID": ("A", "String"),
+        "MEINFO": (".", "String"),
+        "METRANS": (".", "String"),
+        "DGVID": ("A", "String"),
+        "DBVARID": ("A", "String"),
+        "DBRIPID": ("A", "String"),
+        "MATEID": ("A", "String"),
+        "PARID": ("A", "String"),
+        "EVENT": ("A", "String"),
+        "EVENTTYPE": ("A", "String"),
+    }
+    definition = reserved.get(field_id)
+    if definition is None:
+        return None
+    return {"Number": definition[0], "Type": definition[1]}
 
 
 class StrictVCFValidationError(ValueError):
@@ -80,6 +199,42 @@ class StrictVCFValidationError(ValueError):
 def _open(path: str | Path):
     p = Path(path)
     return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
+
+
+def declared_vcf_contig_md5s(path: str | Path) -> dict[str, str]:
+    """Return and syntax-check optional SAM/VCF contig MD5 digests."""
+    digests: dict[str, str] = {}
+    with _open(path) as handle:
+        for line_no, raw in enumerate(handle, 1):
+            if raw.startswith("#CHROM"):
+                break
+            if not raw.startswith("##contig=<") or not raw.rstrip("\r\n").endswith(">"):
+                continue
+            line = raw.rstrip("\r\n")
+            body = line[len("##contig=<"):-1]
+            if "md5=" not in body:
+                continue
+            id_match = _CONTIG_ID.search(body)
+            md5_match = _CONTIG_MD5.search(body + ",")
+            if id_match is None or md5_match is None:
+                raise StrictVCFValidationError(
+                    f"Malformed VCF contig MD5 declaration at line {line_no}",
+                    code="VCF_CONTIG_MD5_INVALID",
+                )
+            contig = id_match.group(1) or id_match.group(2)
+            digest = md5_match.group(1)
+            if not re.fullmatch(r"[0-9a-f]{32}", digest):
+                raise StrictVCFValidationError(
+                    f"VCF contig {contig!r} MD5 must be 32 lowercase hexadecimal characters at line {line_no}",
+                    code="VCF_CONTIG_MD5_INVALID",
+                )
+            if contig in digests and digests[contig] != digest:
+                raise StrictVCFValidationError(
+                    f"VCF contig {contig!r} has conflicting MD5 declarations",
+                    code="VCF_CONTIG_MD5_CONFLICT",
+                )
+            digests[contig] = digest
+    return digests
 
 
 def declared_vcf_contig_lengths(path: str | Path) -> dict[str, int]:
@@ -113,7 +268,7 @@ def declared_vcf_contig_lengths(path: str | Path) -> dict[str, int]:
     return lengths
 
 
-def _validate_info(value: str, line_no: int) -> None:
+def _validate_info(value: str, line_no: int, fileformat: str | None = None) -> None:
     if value == ".":
         return
     if not value:
@@ -129,7 +284,10 @@ def _validate_info(value: str, line_no: int) -> None:
                 or val == ""
                 or "=" in val
                 or INVALID_PERCENT_ESCAPE_RE.search(val)
-                or any(value == "" for value in val.split(","))
+                or (
+                    not (fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"})
+                    and any(value == "" for value in val.split(","))
+                )
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         elif not INFO_KEY_RE.fullmatch(item):
@@ -397,7 +555,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         if escaped:
             current.append(char)
             escaped = False
-        elif char == "\\" and quoted:
+        elif char == chr(92) and quoted:
             current.append(char)
             escaped = True
         elif char == '"':
@@ -505,8 +663,8 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
-def _structured_header_id(line: str, kind: str, line_no: int) -> str:
-    """Extract the required ID from a structured VCF header line."""
+def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: bool = True) -> str:
+    """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
         raise StrictVCFValidationError(
@@ -518,42 +676,71 @@ def _structured_header_id(line: str, kind: str, line_no: int) -> str:
     current: list[str] = []
     quoted = False
     escaped = False
+    square_bracket_depth = 0
     for char in body:
         if escaped:
             current.append(char)
             escaped = False
-        elif char == "\\" and quoted:
+        elif char == "\\\\" and quoted:
             current.append(char)
             escaped = True
         elif char == '"':
             current.append(char)
             quoted = not quoted
-        elif char == "," and not quoted:
+        elif not quoted and char == "[":
+            square_bracket_depth += 1
+            current.append(char)
+        elif not quoted and char == "]":
+            square_bracket_depth -= 1
+            if square_bracket_depth < 0:
+                raise StrictVCFValidationError(
+                    f"Malformed list value in {kind} structured header at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
+            current.append(char)
+        elif char == "," and not quoted and square_bracket_depth == 0:
             attributes.append("".join(current))
             current = []
         else:
             current.append(char)
-    if quoted or escaped:
+    if quoted or escaped or square_bracket_depth != 0:
         raise StrictVCFValidationError(
-            f"Malformed quoted {kind} structured header at line {line_no}",
+            f"Malformed quoted or list value in {kind} structured header at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     attributes.append("".join(current))
 
-    identifiers = []
+    identifiers: list[str] = []
+    seen_attributes: set[str] = set()
     for attribute in attributes:
-        key, separator, value = attribute.partition("=")
-        if separator and key.strip() == "ID":
-            value = value.strip()
-            if value.startswith('"') and value.endswith('"') and len(value) >= 2:
-                value = value[1:-1]
+        key, separator, raw_value = attribute.partition("=")
+        key, value = key.strip(), raw_value.strip()
+        if not separator or not key or not value or key in seen_attributes:
+            raise StrictVCFValidationError(
+                f"Malformed or duplicate {kind} structured header attribute at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        seen_attributes.add(key)
+        if value.startswith('"'):
+            if len(value) < 2 or not value.endswith('"'):
+                raise StrictVCFValidationError(
+                    f"Malformed quoted {kind} structured header attribute at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
+            value = value[1:-1]
+        elif '"' in value:
+            raise StrictVCFValidationError(
+                f"Malformed quoted {kind} structured header attribute at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if key == "ID":
             identifiers.append(value)
-    if len(identifiers) != 1 or not identifiers[0]:
+    if (require_id and (len(identifiers) != 1 or not identifiers[0])) or len(identifiers) > 1:
         raise StrictVCFValidationError(
             f"{kind} structured header must contain exactly one non-empty ID at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
-    return identifiers[0]
+    return identifiers[0] if identifiers else ""
 
 
 def _expected_cardinality(
@@ -589,6 +776,110 @@ def _expected_cardinality(
     return int(number)
 
 
+def _genotype_order(allele_count: int, ploidy: int):
+    """Yield VCF colexicographic genotype order for the given allele count."""
+    def walk(max_allele: int, remaining: int):
+        if remaining == 1:
+            for allele in range(max_allele + 1):
+                yield (allele,)
+            return
+        for last_allele in range(max_allele + 1):
+            for prefix in walk(last_allele, remaining - 1):
+                yield prefix + (last_allele,)
+
+    if allele_count < 1 or ploidy < 1:
+        return
+    yield from walk(allele_count - 1, ploidy)
+
+
+def _genotype_order_index(genotype: tuple[int, ...]) -> int:
+    return sum(comb(allele + position - 1, position) for position, allele in enumerate(genotype, 1))
+
+
+def _validate_local_field_equivalence(
+    *,
+    format_keys: list[str],
+    sample_values: list[str],
+    alternate_count: int,
+    local_alt_indexes: list[int],
+    ploidy: int | None,
+    line_no: int,
+    sample_index: int,
+) -> None:
+    """Verify standard and VCFv4.5 local-allele fields encode the same data."""
+    local_pairs = (
+        ("AD", "LAD"),
+        ("ADF", "LADF"),
+        ("ADR", "LADR"),
+        ("EC", "LEC"),
+        ("GL", "LGL"),
+        ("GP", "LGP"),
+        ("PL", "LPL"),
+        ("PP", "LPP"),
+    )
+    for standard_key, local_key in local_pairs:
+        if standard_key not in format_keys or local_key not in format_keys:
+            continue
+        standard_index = format_keys.index(standard_key)
+        local_index = format_keys.index(local_key)
+        standard_value = sample_values[standard_index] if standard_index < len(sample_values) else "."
+        local_value = sample_values[local_index] if local_index < len(sample_values) else "."
+        if standard_value in {"", "."} or local_value in {"", "."}:
+            continue
+
+        definition = _reserved_vcf45_format_definition(standard_key)
+        if definition is None:
+            continue
+        number = definition["Number"]
+        standard_values = standard_value.split(",")
+        local_values = local_value.split(",")
+        local_alleles = [0, *local_alt_indexes]
+
+        if number == "A":
+            source_indexes = [allele_index - 1 for allele_index in local_alt_indexes]
+        elif number == "R":
+            source_indexes = local_alleles
+        elif number == "G":
+            if ploidy is None:
+                raise StrictVCFValidationError(
+                    f"Cannot verify {standard_key}/{local_key} equivalence without a known sample ploidy at line {line_no}, sample {sample_index}",
+                    code="VCF_LOCAL_FIELD_EQUIVALENCE_UNRESOLVED",
+                )
+            source_indexes = [
+                _genotype_order_index(
+                    tuple(sorted(local_alleles[local_allele] for local_allele in genotype))
+                )
+                for genotype in _genotype_order(len(local_alleles), ploidy)
+            ]
+        else:
+            continue
+
+        if any(index >= len(standard_values) for index in source_indexes):
+            raise StrictVCFValidationError(
+                f"Cannot project {standard_key} into {local_key} at line {line_no}, sample {sample_index}",
+                code="VCF_LOCAL_FIELD_EQUIVALENCE_INVALID",
+            )
+        expected_values = [standard_values[index] for index in source_indexes]
+        field_type = definition["Type"]
+        for expected, observed in zip(expected_values, local_values):
+            if expected == "." or observed == ".":
+                equivalent = expected == observed
+            elif field_type == "Integer":
+                equivalent = int(expected) == int(observed)
+            elif field_type == "Float":
+                expected_float, observed_float = float(expected), float(observed)
+                equivalent = expected_float == observed_float or (
+                    isnan(expected_float) and isnan(observed_float)
+                )
+            else:
+                equivalent = expected == observed
+            if not equivalent:
+                raise StrictVCFValidationError(
+                    f"FORMAT/{standard_key} and FORMAT/{local_key} encode different values at line {line_no}, sample {sample_index}",
+                    code="VCF_LOCAL_FIELD_EQUIVALENCE_INVALID",
+                )
+
+
 def _validate_declared_value(
     *,
     kind: str,
@@ -600,9 +891,11 @@ def _validate_declared_value(
     ploidy: int | None = None,
     local_allele_count: int | None = None,
     base_modification_cardinality: int | None = None,
+    allow_empty_values: bool = False,
 ) -> None:
     number = definition["Number"]
     field_type = definition["Type"]
+    field_scope = "FORMAT" if kind.startswith("FORMAT") else kind
     if field_type == "Flag":
         if value is not None:
             raise StrictVCFValidationError(
@@ -622,10 +915,13 @@ def _validate_declared_value(
         if number == "M"
         else _expected_cardinality(number, alternate_count, ploidy, local_allele_count)
     )
-    if expected is None:
-        return
     observed = value.split(",")
-    if any(item == "" for item in observed) or len(observed) != expected:
+    if not allow_empty_values and any(item == "" for item in observed):
+        raise StrictVCFValidationError(
+            f"{kind}/{key} contains an empty list value at line {line_no}",
+            code="VCF_FIELD_CARDINALITY_INVALID",
+        )
+    if expected is not None and len(observed) != expected:
         raise StrictVCFValidationError(
             f"{kind}/{key} has {len(observed)} values but Number={number} requires {expected} at line {line_no}",
             code="VCF_FIELD_CARDINALITY_INVALID",
@@ -640,6 +936,8 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
+                if (field_scope, key) in NONNEGATIVE_INTEGER_FIELDS:
+                    valid = valid and integer_value >= 0
                 if _base_modification_field_kind(key) == "depth":
                     valid = valid and integer_value >= 0
         elif field_type == "Float":
@@ -650,9 +948,14 @@ def _validate_declared_value(
                     flags=re.IGNORECASE,
                 )
             )
-            if valid and _base_modification_field_kind(key) == "fraction":
+            if valid:
                 numeric_value = float(item)
-                valid = 0.0 <= numeric_value <= 1.0
+                if (field_scope, key) in PROBABILITY_FLOAT_FIELDS:
+                    valid = 0.0 <= numeric_value <= 1.0
+                if (field_scope, key) in NONNEGATIVE_FLOAT_FIELDS:
+                    valid = numeric_value >= 0.0
+                if _base_modification_field_kind(key) == "fraction":
+                    valid = valid and 0.0 <= numeric_value <= 1.0
         elif field_type == "Character":
             valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
         if not valid:
@@ -690,6 +993,87 @@ def _validate_structural_alt(alt: str, *, alt_index: int, alts: list[str], info:
             f"Symbolic structural ALT {alt} requires END or allele-specific SVLEN at line {line_no}",
             code="VCF_SV_SPAN_MISSING",
         )
+
+
+def _validate_vcf45_structural_info(
+    info: dict[str, str | None],
+    alts: list[str],
+    line_no: int,
+) -> None:
+    """Validate VCFv4.5 reserved structural-variant INFO list semantics."""
+    for key in ("CIPOS", "CIEND"):
+        raw_value = info.get(key)
+        if raw_value in {None, "."}:
+            continue
+        values = raw_value.split(",")
+        if len(values) != 2 * len(alts):
+            raise StrictVCFValidationError(
+                f"INFO/{key} requires two offsets per ALT allele at line {line_no}",
+                code="VCF_SV_INFO_CARDINALITY_INVALID",
+            )
+        for alt_index, alternate in enumerate(alts):
+            lower, upper = values[2 * alt_index : 2 * alt_index + 2]
+            if lower == "." or upper == ".":
+                if lower != upper:
+                    raise StrictVCFValidationError(
+                        f"INFO/{key} interval must provide both offsets or both missing values at line {line_no}",
+                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                    )
+                continue
+            lower_offset, upper_offset = int(lower), int(upper)
+            if key == "CIPOS" and (lower_offset > 0 or upper_offset < 0):
+                raise StrictVCFValidationError(
+                    f"INFO/CIPOS interval must span zero at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+            if key == "CIEND":
+                symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
+                if not symbolic_sv:
+                    raise StrictVCFValidationError(
+                        f"INFO/CIEND must be missing for non-symbolic structural alleles at line {line_no}",
+                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                    )
+                if lower_offset > 0 or upper_offset < 0:
+                    raise StrictVCFValidationError(
+                        f"INFO/CIEND interval must extend on both sides of zero at line {line_no}",
+                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                    )
+
+    # VCFv4.5: when IMPRECISE is present, symbolic SV alleles may omit
+    # CIPOS to indicate an unspecified confidence interval. Any precise ALT
+    # allele in the same record must nevertheless carry an explicit CIPOS pair,
+    # including 0,0 when its position is exact.
+    imprecise_flag = "IMPRECISE" in info and info.get("IMPRECISE") is None
+    if imprecise_flag:
+        cipos_value = info.get("CIPOS")
+        cipos_entries = cipos_value.split(",") if cipos_value not in {None, "."} else []
+        precise_alt_indexes = [
+            index
+            for index, alternate in enumerate(alts)
+            if alternate not in {".", "*", "<*>", "<NON_REF>"}
+            and not SYMBOLIC_RE.fullmatch(alternate)
+        ]
+        for alt_index in precise_alt_indexes:
+            pair = (
+                cipos_entries[2 * alt_index : 2 * alt_index + 2]
+                if len(cipos_entries) >= 2 * alt_index + 2
+                else []
+            )
+            if len(pair) != 2 or pair == [".", "."]:
+                raise StrictVCFValidationError(
+                    f"INFO/IMPRECISE requires an explicit INFO/CIPOS interval for precise ALT allele {alt_index + 1} at line {line_no}",
+                    code="VCF_SV_IMPRECISE_CIPOS_MISSING",
+                )
+
+    for key in ("MEINFO", "METRANS"):
+        raw_value = info.get(key)
+        if raw_value in {None, "."}:
+            continue
+        if len(raw_value.split(",")) != 4 * len(alts):
+            raise StrictVCFValidationError(
+                f"INFO/{key} requires four values per ALT allele at line {line_no}",
+                code="VCF_SV_INFO_CARDINALITY_INVALID",
+            )
 
 
 def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int] | None:
@@ -808,11 +1192,27 @@ def _validate_record(
 
     if not chrom or chrom.startswith("#") or any(char.isspace() for char in chrom):
         raise StrictVCFValidationError(f"Invalid CHROM at line {line_no}", code="VCF_CHROM_INVALID")
-    if reference_contigs is not None and chrom not in reference_contigs:
-        raise StrictVCFValidationError(
-            f"Contig {chrom!r} is not present in the selected reference package at line {line_no}",
-            code="REFERENCE_CONTIG_MISMATCH",
-        )
+    if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+        if re.fullmatch(r"<[^<>,\s]+>", chrom):
+            raise StrictVCFValidationError(
+                f"External assembly contig {chrom!r} is valid VCF syntax but is not supported by the configured reference-package contract at line {line_no}",
+                code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
+            )
+        if not VCF_CONTIG_NAME_RE.fullmatch(chrom):
+            raise StrictVCFValidationError(
+                f"CHROM {chrom!r} violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                code="VCF_CHROM_INVALID",
+            )
+    if reference_contigs is not None:
+        from backend.app.domain.reference import FastaReference, ReferenceError
+
+        try:
+            FastaReference.resolve_contig_name(chrom, reference_contigs)
+        except ReferenceError as exc:
+            raise StrictVCFValidationError(
+                f"Contig {chrom!r} cannot be resolved in the selected reference package at line {line_no}",
+                code="REFERENCE_CONTIG_MISMATCH",
+            ) from exc
 
     try:
         pos = int(pos_text)
@@ -835,18 +1235,35 @@ def _validate_record(
     if not DNA_RE.fullmatch(ref):
         raise StrictVCFValidationError(f"REF must contain only A/C/G/T/N for Phase 1 at line {line_no}", code="VCF_REF_INVALID")
 
-    raw_alts = [a.upper() for a in alt.split(",")]
+    raw_alts = alt.split(",")
     if not alt or ("." in raw_alts and raw_alts != ["."]):
         raise StrictVCFValidationError(
             f"ALT '.' must be the only allele when no alternate is present at line {line_no}",
             code="VCF_ALT_INVALID",
         )
-    alts = [] if raw_alts == ["."] else raw_alts
+    # Sequence allele bases are case-insensitive in VCF and can be canonicalized
+    # to uppercase. Symbolic IDs and breakend mate-contig identifiers are
+    # case-sensitive; uppercasing the complete ALT token corrupts their identity.
+    alts = (
+        []
+        if raw_alts == ["."]
+        else [
+            allele.upper() if re.fullmatch(r"[ACGTNacgtn]+", allele) else allele
+            for allele in raw_alts
+        ]
+    )
     if any(
         not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and a != "*"
         for a in alts
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
+
+    alt_identity_keys = [_alt_identity_key(allele) for allele in alts]
+    if fileformat == "VCFv4.5" and len(alt_identity_keys) != len(set(alt_identity_keys)):
+        raise StrictVCFValidationError(
+            f"ALT contains duplicate allele values at line {line_no}",
+            code="VCF_ALT_DUPLICATE",
+        )
 
     if qual != ".":
         try:
@@ -876,7 +1293,7 @@ def _validate_record(
                 code="VCF_FILTER_INVALID",
             )
 
-    _validate_info(info, line_no)
+    _validate_info(info, line_no, fileformat)
     info_values = _info_values(info)
     for alt_index, alternate in enumerate(alts):
         _validate_structural_alt(
@@ -931,11 +1348,23 @@ def _validate_record(
                 )
         for sample_index, sample in enumerate(fields[9:], start=1):
             values = sample.split(":")
-            if not sample or any(value == "" for value in values) or len(values) > len(keys):
+            if not sample or len(values) > len(keys):
                 raise StrictVCFValidationError(
                     f"Sample {sample_index} has malformed FORMAT values for {len(keys)} keys at line {line_no}",
                     code="VCF_SAMPLE_INVALID",
                 )
+            for value_index, value in enumerate(values):
+                if value == "":
+                    field_key = keys[value_index] if value_index < len(keys) else None
+                    if field_key == "GT":
+                        raise StrictVCFValidationError(
+                            f"FORMAT/GT must contain an explicit genotype or missing-value token at line {line_no}, sample {sample_index}",
+                            code="VCF_GENOTYPE_INVALID",
+                        )
+                    raise StrictVCFValidationError(
+                        f"Sample {sample_index} has an empty FORMAT/{field_key or 'value'} field at line {line_no}; use '.' for a missing value",
+                        code="VCF_SAMPLE_INVALID",
+                    )
             # VCF permits trailing FORMAT fields to be omitted. A missing value
             # within the supplied values must still use the explicit '.' token.
             if "GT" in keys:
@@ -991,6 +1420,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     closed_chroms: set[str] = set()
     last_position_on_chrom: int | None = None
     contig_lengths = declared_vcf_contig_lengths(path)
+    contig_md5s = declared_vcf_contig_md5s(path)
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -1024,17 +1454,33 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_ORDER_INVALID",
                     )
                 header_key, separator, header_value = line[2:].partition("=")
-                if separator and header_value.startswith("<") and header_key in {
-                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"
-                }:
-                    identifier = _structured_header_id(line, header_key, line_no)
-                    ids_for_type = structured_header_ids.setdefault(header_key, set())
-                    if identifier in ids_for_type:
+                if separator and header_value.startswith("<") and (
+                    header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
+                    or fileformat == "VCFv4.5"
+                ):
+                    identifier = _structured_header_id(
+                        line,
+                        header_key,
+                        line_no,
+                        require_id=not (header_key == "PEDIGREE" and fileformat == "VCFv4.5"),
+                    )
+                    if (
+                        header_key == "contig"
+                        and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
+                        and not VCF_CONTIG_NAME_RE.fullmatch(identifier)
+                    ):
                         raise StrictVCFValidationError(
-                            f"Duplicate {header_key} ID {identifier!r} at line {line_no}",
-                            code="VCF_HEADER_DEFINITION_INVALID",
+                            f"Contig header ID {identifier!r} violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                            code="VCF_CONTIG_HEADER_INVALID",
                         )
-                    ids_for_type.add(identifier)
+                    if identifier:
+                        ids_for_type = structured_header_ids.setdefault(header_key, set())
+                        if identifier in ids_for_type:
+                            raise StrictVCFValidationError(
+                                f"Duplicate {header_key} ID {identifier!r} at line {line_no}",
+                                code="VCF_HEADER_DEFINITION_INVALID",
+                            )
+                        ids_for_type.add(identifier)
                 if line.startswith("##fileformat="):
                     if fileformat is not None:
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
@@ -1164,6 +1610,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             info_values = _info_values(fields[7])
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
+                if definition is None and fileformat == "VCFv4.5":
+                    definition = _reserved_vcf45_info_definition(key)
                 if definition is not None:
                     # INFO/Number=G has no single sample ploidy to use when a
                     # record carries multiple samples; leave it unresolved here.
@@ -1176,7 +1624,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         definition=definition,
                         alternate_count=len(alts),
                         line_no=line_no,
+                        allow_empty_values=(
+                            fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
+                        ),
                     )
+            if fileformat == "VCFv4.5":
+                _validate_vcf45_structural_info(info_values, alts, line_no)
             breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
             if breakend_alts:
                 if info_values.get("SVTYPE") != "BND":
@@ -1197,6 +1650,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
                     if match is not None
                 ]
+                if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
+                    not VCF_CONTIG_NAME_RE.fullmatch(contig) for contig, _position in remote_loci
+                ):
+                    raise StrictVCFValidationError(
+                        f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                        code="VCF_BREAKEND_ALT_INVALID",
+                    )
                 if len(remote_loci) != len(breakend_alts):
                     raise StrictVCFValidationError(
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
@@ -1233,16 +1693,94 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
+                if "PSL" in format_keys:
+                    psl_index = format_keys.index("PSL")
+                    psl_value = sample_values[psl_index] if psl_index < len(sample_values) else "."
+                    gt_value = (
+                        sample_values[format_keys.index("GT")]
+                        if "GT" in format_keys and format_keys.index("GT") < len(sample_values)
+                        else "."
+                    )
+                    if gt_value == "." and psl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PSL cannot assign phase sets to a fully missing GT at line {line_no}, sample {sample_index}",
+                            code="VCF_PHASE_SET_INVALID",
+                        )
+                    if "GT" not in format_keys and psl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PSL requires FORMAT/GT at line {line_no}, sample {sample_index}",
+                            code="VCF_PHASE_SET_INVALID",
+                        )
+                    if gt_value not in {"", "."} and psl_value not in {"", "."}:
+                        psl_entries = psl_value.split(",")
+                        allele_phase = _gt_alleles_with_phase(gt_value, fileformat, line_no)
+                        if len(psl_entries) == len(allele_phase) and any(
+                            separator != "|" and phase_set != "."
+                            for (_allele, separator), phase_set in zip(allele_phase, psl_entries)
+                        ):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/PSL must use '.' for every unphased GT allele at line {line_no}, sample {sample_index}",
+                                code="VCF_PHASE_SET_INVALID",
+                            )
+                    for dependent_key in ("PSO", "PSQ"):
+                        if dependent_key not in format_keys:
+                            continue
+                        dependent_index = format_keys.index(dependent_key)
+                        dependent_value = (
+                            sample_values[dependent_index]
+                            if dependent_index < len(sample_values)
+                            else "."
+                        )
+                        if dependent_value in {"", "."}:
+                            continue
+                        if psl_value in {"", "."}:
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{dependent_key} requires populated FORMAT/PSL at line {line_no}, sample {sample_index}",
+                                code="VCF_PHASE_SET_INVALID",
+                            )
+                        dependent_entries = dependent_value.split(",")
+                        psl_entries = psl_value.split(",")
+                        if len(dependent_entries) == len(psl_entries) and any(
+                            phase_set == "." and dependent_entry != "."
+                            for phase_set, dependent_entry in zip(psl_entries, dependent_entries)
+                        ):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{dependent_key} must use '.' where the corresponding PSL value is missing at line {line_no}, sample {sample_index}",
+                                code="VCF_PHASE_SET_INVALID",
+                            )
+                elif any(
+                    key in format_keys
+                    and format_keys.index(key) < len(sample_values)
+                    and sample_values[format_keys.index(key)] not in {"", "."}
+                    for key in ("PSO", "PSQ")
+                ):
+                    raise StrictVCFValidationError(
+                        f"FORMAT/PSO and FORMAT/PSQ require FORMAT/PSL at line {line_no}, sample {sample_index}",
+                        code="VCF_PHASE_SET_INVALID",
+                    )
+                if "PS" in format_keys and "PSL" in format_keys:
+                    ps_value = sample_values[format_keys.index("PS")] if format_keys.index("PS") < len(sample_values) else "."
+                    psl_value = sample_values[format_keys.index("PSL")] if format_keys.index("PSL") < len(sample_values) else "."
+                    if ps_value not in {"", "."} and psl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PS and FORMAT/PSL cannot both be populated for one sample at line {line_no}",
+                            code="VCF_PHASE_SET_INVALID",
+                        )
                 if gt_index is None:
-                    # GT is optional in VCF. Number=G cardinality depends on
-                    # ploidy, so do not silently impose a diploid assumption
-                    # when the record supplies no genotype from which to derive it.
-                    genotype_ploidy = None
-                elif gt_index >= len(sample_values) or sample_values[gt_index] == ".":
-                    genotype_ploidy = None
+                    # The VCF specification defines diploidy as the default
+                    # when a Number=G FORMAT field is present without GT.
+                    genotype_ploidy = 2
+                elif gt_index >= len(sample_values) or sample_values[gt_index] == "":
+                    raise StrictVCFValidationError(
+                        f"FORMAT/GT must contain an explicit genotype or missing-value token at line {line_no}, sample {sample_index}",
+                        code="VCF_GENOTYPE_INVALID",
+                    )
                 else:
+                    # A missing GT value still carries ploidy: "." is haploid,
+                    # "./." is diploid, and so on.
                     genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
                 local_allele_count: int | None = None
+                local_alt_indexes: list[int] = []
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
                     raw_laa = sample_values[format_keys.index("LAA")]
                     if raw_laa == ".":
@@ -1261,6 +1799,23 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                 code="VCF_LOCAL_ALLELE_INVALID",
                             )
                         local_allele_count = len(local_alt_indexes) + 1
+                    # LAA defines the ALT alleles in play for this sample.
+                    # Every called non-reference GT allele must therefore be
+                    # represented in LAA; LAA may additionally contain <*> for
+                    # reference-block semantics or alleles used by likelihoods.
+                    if gt_index is not None and gt_index < len(sample_values):
+                        sample_gt = sample_values[gt_index]
+                        if sample_gt not in {"", "."}:
+                            called_alt_indexes = {
+                                int(allele)
+                                for allele in _gt_allele_tokens(sample_gt, fileformat, line_no)
+                                if allele != "." and int(allele) > 0
+                            }
+                            if not called_alt_indexes.issubset(set(local_alt_indexes if raw_laa != "." else [])):
+                                raise StrictVCFValidationError(
+                                    f"FORMAT/LAA omits a called GT ALT allele at line {line_no}, sample {sample_index}",
+                                    code="VCF_LOCAL_ALLELE_INVALID",
+                                )
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.5":
@@ -1300,6 +1855,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
                         )
+                if fileformat == "VCFv4.5":
+                    _validate_local_field_equivalence(
+                        format_keys=format_keys,
+                        sample_values=sample_values,
+                        alternate_count=len(alts),
+                        local_alt_indexes=local_alt_indexes,
+                        ploidy=genotype_ploidy,
+                        line_no=line_no,
+                        sample_index=sample_index,
+                    )
 
             if fileformat == "VCFv4.5" and _pos > 0:
                 record_span = compute_vcf45_record_span(fields, line_no)
@@ -1438,7 +2003,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "vcf45_max_reference_end": vcf45_max_reference_end,
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
-        "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
+        "reference_contig_policy": "EXACT_OR_EXPLICIT_ALIAS" if reference_contigs is not None else "NOT_CHECKED",
+        "declared_contig_md5s": contig_md5s,
     }
 
 
@@ -1455,20 +2021,52 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
     checked_breakend_mates = 0
     telomere_records = 0
     declared_contig_lengths = declared_vcf_contig_lengths(path)
+    declared_contig_md5s = declared_vcf_contig_md5s(path)
     try:
         with FastaReference(reference_fasta) as reference, _open(path) as handle:
+            # Resolve only the deterministic aliases explicitly supported by
+            # FastaReference (for example NC_012920.1 -> chrM). Unknown or
+            # version-mismatched accessions remain hard failures; no network
+            # lookup, assembly conversion, or heuristic contig substitution occurs.
+            resolved_contigs: dict[str, str] = {}
             for contig, declared_length in declared_contig_lengths.items():
                 try:
-                    reference_length = reference.contig_length(contig)
+                    resolved_contig = FastaReference.resolve_contig_name(contig, reference.contigs)
+                    reference_length = reference.contig_length(resolved_contig)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
-                        f"Declared VCF contig {contig!r} is absent from the selected reference",
+                        f"Declared VCF contig {contig!r} cannot be resolved in the selected reference",
                         code="REFERENCE_CONTIG_MISMATCH",
                     ) from exc
+                resolved_contigs[contig] = resolved_contig
                 if declared_length != reference_length:
                     raise StrictVCFValidationError(
-                        f"VCF declares contig {contig!r} length {declared_length}, but the selected reference length is {reference_length}",
+                        f"VCF declares contig {contig!r} length {declared_length}, but resolved selected-reference contig {resolved_contig!r} has length {reference_length}",
                         code="VCF_CONTIG_LENGTH_MISMATCH",
+                    )
+            for contig, expected_md5 in declared_contig_md5s.items():
+                try:
+                    resolved_contig = resolved_contigs.get(contig)
+                    if resolved_contig is None:
+                        resolved_contig = FastaReference.resolve_contig_name(contig, reference.contigs)
+                        resolved_contigs[contig] = resolved_contig
+                    reference_length = reference.contig_length(resolved_contig)
+                except ReferenceError as exc:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {contig!r} with an MD5 declaration cannot be resolved in the selected reference",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    ) from exc
+                digest = hashlib.md5(usedforsecurity=False)
+                for start in range(0, reference_length, 1_000_000):
+                    sequence = reference.fetch(resolved_contig, start, min(start + 1_000_000, reference_length))
+                    canonical_sequence = "".join(
+                        character for character in sequence if 33 <= ord(character) <= 126
+                    ).upper()
+                    digest.update(canonical_sequence.encode("ascii"))
+                if digest.hexdigest() != expected_md5:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {contig!r} MD5 does not match the selected reference sequence",
+                        code="VCF_CONTIG_MD5_MISMATCH",
                     )
             fileformat: str | None = None
             for line_no, raw in enumerate(handle, 1):
@@ -1483,10 +2081,14 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                 chrom, pos_text, _identifier, ref, alt_text = fields[:5]
                 pos = int(pos_text)
                 try:
-                    contig_length = reference.contig_length(chrom)
+                    resolved_chrom = resolved_contigs.get(chrom)
+                    if resolved_chrom is None:
+                        resolved_chrom = FastaReference.resolve_contig_name(chrom, reference.contigs)
+                        resolved_contigs[chrom] = resolved_chrom
+                    contig_length = reference.contig_length(resolved_chrom)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
-                        f"VCF contig {chrom!r} is absent from the selected reference at line {line_no}",
+                        f"VCF contig {chrom!r} cannot be resolved in the selected reference at line {line_no}",
                         code="REFERENCE_CONTIG_MISMATCH",
                     ) from exc
                 if pos == 0:
@@ -1501,7 +2103,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     telomere_records += 1
                     continue
                 try:
-                    observed = reference.fetch(chrom, pos - 1, pos - 1 + len(ref))
+                    observed = reference.fetch(resolved_chrom, pos - 1, pos - 1 + len(ref))
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
                         f"Reference interval is invalid at {chrom}:{pos} line {line_no}: {exc}",
@@ -1532,10 +2134,14 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         continue
                     mate_contig, mate_position = match.group(1), int(match.group(2))
                     try:
-                        mate_length = reference.contig_length(mate_contig)
+                        resolved_mate_contig = resolved_contigs.get(mate_contig)
+                        if resolved_mate_contig is None:
+                            resolved_mate_contig = FastaReference.resolve_contig_name(mate_contig, reference.contigs)
+                            resolved_contigs[mate_contig] = resolved_mate_contig
+                        mate_length = reference.contig_length(resolved_mate_contig)
                     except ReferenceError as exc:
                         raise StrictVCFValidationError(
-                            f"Breakend mate contig {mate_contig!r} is absent from the selected reference at line {line_no}",
+                            f"Breakend mate contig {mate_contig!r} cannot be resolved in the selected reference at line {line_no}",
                             code="VCF_BREAKEND_REFERENCE_MISMATCH",
                         ) from exc
                     if mate_position > mate_length:
@@ -1555,5 +2161,10 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
         "checked_breakend_mate_count": checked_breakend_mates,
         "unvalidated_telomere_record_count": telomere_records,
         "reference_fasta": str(reference_fasta),
+        "resolved_contig_aliases": {
+            source: resolved
+            for source, resolved in resolved_contigs.items()
+            if source != resolved
+        },
         "result": "PARTIAL" if telomere_records else "PASS",
     }

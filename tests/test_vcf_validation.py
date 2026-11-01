@@ -5,6 +5,7 @@ import pytest
 
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    _validate_record,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -47,7 +48,7 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n")
     profile = validate_vcf_strict(path, reference_contigs={"1"})
     assert profile["records"] == 1
-    assert profile["reference_contig_policy"] == "EXACT"
+    assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
 
 
 def test_strict_validation_rejects_whitespace_in_chromosome_name(tmp_path: Path):
@@ -249,9 +250,9 @@ def test_declared_vcf_contig_length_parses_quoted_id_and_attributes_in_any_order
     path = tmp_path / "quoted-contig.vcf"
     path.write_text(
         "##fileformat=VCFv4.3\n"
-        '##contig=<assembly="GRCh38",length=10,ID="chr,1">\n'
+        '##contig=<assembly="GRCh38",length=10,ID="chr_1">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "chr,1\t11\ttelo-after\tA\tG\t.\tPASS\t.\n",
+        "chr_1\t11\ttelo-after\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
@@ -505,9 +506,16 @@ def test_format_number_g_rejects_wrong_genotype_cardinality(tmp_path: Path):
     assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
 
 
-@pytest.mark.parametrize("pl_values", ["0,1,2", "0,1,2,3,4,5", "0,1,2,3,4,5,6,7,8,9"])
-def test_format_number_g_without_gt_does_not_assume_diploid_ploidy(
-    tmp_path: Path, pl_values: str,
+@pytest.mark.parametrize(
+    ("pl_values", "valid"),
+    [
+        ("0,1,2,3,4,5", True),
+        ("0,1,2", False),
+        ("0,1,2,3,4,5,6,7,8,9", False),
+    ],
+)
+def test_format_number_g_without_gt_uses_specified_diploid_default(
+    tmp_path: Path, pl_values: str, valid: bool,
 ):
     path = tmp_path / "format-number-g-without-gt.vcf"
     write_vcf_with_metadata(
@@ -517,10 +525,14 @@ def test_format_number_g_without_gt_does_not_assume_diploid_ploidy(
         sample=True,
     )
 
-    profile = validate_vcf_strict(path)
-
-    assert profile["records"] == 1
-    assert profile["unchecked_format_number_g_fields"] == ["PL"]
+    if valid:
+        profile = validate_vcf_strict(path)
+        assert profile["records"] == 1
+        assert profile["unchecked_format_number_g_fields"] == []
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
 
 
 def test_strict_validation_rejects_duplicate_info_keys(tmp_path: Path):
@@ -906,9 +918,9 @@ def test_vcf45_local_allele_cardinality_is_validated(tmp_path: Path):
         '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
         '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
         '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
-        '##FORMAT=<ID=PP,Number=P,Type=Integer,Description="Per-ploidy values">\n'
+        '##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description="Per-ploidy values">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t2\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:PP\t0/2:2:20,10:0,50,100:12,13\n",
+        "1\t2\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:CUSTOM_P\t0/2:2:20,10:0,50,100:12,13\n",
         encoding="utf-8",
     )
 
@@ -1577,3 +1589,700 @@ def test_core_multiallelic_cardinality_mismatch_is_rejected_across_vcf_versions(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    ("alt", "expected"),
+    [
+        ("a", ["A"]),
+        ("<del>", ["<del>"]),
+        ("<DEL>,<del>", ["<DEL>", "<del>"]),
+        ("A]chr1:123]", ["A]chr1:123]"]),
+        ("a]chr1:123]", ["a]chr1:123]"]),
+    ],
+)
+def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
+    alt: str, expected: list[str]
+):
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", "END=100" if "<" in alt else "SVTYPE=BND" if "[" in alt or "]" in alt else "."]
+
+    _chrom, _position, observed = _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert observed == expected
+
+
+@pytest.mark.parametrize(
+    "alt",
+    ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],a]chr1:123]"],
+)
+def test_duplicate_alt_values_are_rejected_with_case_aware_identity(alt: str):
+    info = "END=100" if "<" in alt else "SVTYPE=BND" if "[" in alt or "]" in alt else "."
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", info]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_ALT_DUPLICATE"
+
+
+@pytest.mark.parametrize("alt", ["<DEL,FOO>", "<DEL FOO>", "<<DEL>>", "A]chr 1:123]"])
+def test_malformed_symbolic_and_breakend_alt_identifiers_are_rejected(alt: str):
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_ALT_INVALID"
+
+
+def test_vcf45_local_allele_array_must_include_each_called_gt_alt(tmp_path: Path):
+    path = tmp_path / "vcf45-laa-omits-called-alt.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+            '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:LAD\t0/1:2:20,10\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+
+
+def test_vcf45_empty_laa_cannot_describe_called_alt_genotype(tmp_path: Path):
+    path = tmp_path / "vcf45-empty-laa-called-alt.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+            '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+        ],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:LAA:LAD\t0/1:.:20\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+
+
+@pytest.mark.parametrize(
+    "metadata,kind,identifier",
+    [
+        ('##FORMAT=<ID=LAA,Number=1,Type=Integer,Description="Local ALT indices">', "FORMAT", "LAA"),
+        ('##FORMAT=<ID=GT,Number=2,Type=String,Description="Genotype">', "FORMAT", "GT"),
+        ('##FORMAT=<ID=PSL,Number=P,Type=Integer,Description="Phase set list">', "FORMAT", "PSL"),
+        ('##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">', "INFO", "AF"),
+        ('##INFO=<ID=DP,Number=1,Type=Float,Description="Read depth">', "INFO", "DP"),
+        ('##INFO=<ID=MQ,Number=1,Type=Integer,Description="RMS mapping quality">', "INFO", "MQ"),
+    ],
+)
+def test_vcf45_reserved_field_definitions_enforce_spec_number_and_type(
+    tmp_path: Path, metadata: str, kind: str, identifier: str
+):
+    path = tmp_path / f"vcf45-reserved-{kind.lower()}-{identifier}.vcf"
+    write_vcf_with_metadata(
+        path,
+        [metadata],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("info", "expected_code"),
+    [
+        ("DP=not-an-integer", "VCF_FIELD_TYPE_INVALID"),
+        ("AF=0.1,0.2", "VCF_FIELD_CARDINALITY_INVALID"),
+        ("DB=1", "VCF_FIELD_CARDINALITY_INVALID"),
+    ],
+)
+def test_vcf45_implicit_reserved_info_definitions_validate_record_values(
+    tmp_path: Path, info: str, expected_code: str
+):
+    path = tmp_path / "vcf45-implicit-info.vcf"
+    write_vcf(path, f"1\t2\t.\tA\tC\t.\tPASS\t{info}\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == expected_code
+
+
+def test_vcf45_ps_must_be_nonnegative(tmp_path: Path):
+    path = tmp_path / "vcf45-negative-ps.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PS\t0|1:-1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_ps_and_psl_cannot_both_be_populated_for_one_sample(tmp_path: Path):
+    path = tmp_path / "vcf45-ps-and-psl.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">',
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">',
+        ],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PS:PSL\t0|1:10:chr1*2*1,.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+@pytest.mark.parametrize(
+    "gt,psl",
+    [
+        ("0/1", "chr1*2*1,."),
+        ("|0/1", "chr1*2*1,chr1*2*1"),
+    ],
+)
+def test_vcf45_psl_requires_missing_value_for_unphased_gt_alleles(
+    tmp_path: Path, gt: str, psl: str
+):
+    path = tmp_path / "vcf45-psl-unphased-allele.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">'],
+        f"1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PSL\t{gt}:{psl}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+def test_vcf45_psl_accepts_phase_set_only_for_explicitly_phased_gt_allele(tmp_path: Path):
+    path = tmp_path / "vcf45-psl-partially-phased.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PSL\t|0/1:chr1*2*1,.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+
+
+@pytest.mark.parametrize("version", ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"])
+def test_duplicate_alt_entries_are_not_rejected_by_legacy_version_contracts(version: str):
+    fields = ["1", "100", ".", "A", "C,c", ".", "PASS", "."]
+
+    _chrom, _position, observed = _validate_record(fields, 1, None, version)
+
+    assert observed == ["C", "C"]
+
+
+def test_variable_number_info_fields_still_validate_declared_value_type(tmp_path: Path):
+    path = tmp_path / "variable-number-info-invalid-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=CUSTOM,Number=.,Type=Integer,Description="Variable integer list">'],
+        "1\t2\t.\tA\tC\t.\tPASS\tCUSTOM=1,not-an-integer\n",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_variable_number_format_fields_still_validate_declared_value_type(tmp_path: Path):
+    path = tmp_path / "variable-number-format-invalid-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=CUSTOM,Number=.,Type=Integer,Description="Variable integer list">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM\t1,not-an-integer\n",
+        sample=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_number_g_fields_without_gt_still_validate_declared_value_type(tmp_path: Path):
+    path = tmp_path / "unresolved-number-g-invalid-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tPL\t0,not-an-integer,2\n",
+        sample=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp_path: Path):
+    valid = tmp_path / "vcf45-cipos-valid.vcf"
+    write_vcf(valid, "1\t2\t.\tA\tC,G\t.\tPASS\tCIPOS=-2,2,0,0\n", version="VCFv4.5")
+
+    profile = validate_vcf_strict(valid)
+    assert profile["records"] == 1
+
+    invalid = tmp_path / "vcf45-cipos-invalid.vcf"
+    write_vcf(invalid, "1\t2\t.\tA\tC\t.\tPASS\tCIPOS=1,2\n", version="VCFv4.5")
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
+
+
+def test_vcf45_imprecise_requires_cipos_for_precise_alt_but_allows_unspecified_symbolic_sv(tmp_path: Path):
+    missing_cipos = tmp_path / "vcf45-imprecise-precise-alt-missing-cipos.vcf"
+    write_vcf(
+        missing_cipos,
+        "1\t2\t.\tA\tC\t.\tPASS\tIMPRECISE\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(missing_cipos)
+    assert exc.value.code == "VCF_SV_IMPRECISE_CIPOS_MISSING"
+
+    explicit_precise_cipos = tmp_path / "vcf45-imprecise-precise-alt-explicit-cipos.vcf"
+    write_vcf(
+        explicit_precise_cipos,
+        "1\t2\t.\tA\tC\t.\tPASS\tIMPRECISE;CIPOS=0,0\n",
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(explicit_precise_cipos)["records"] == 1
+
+    unspecified_symbolic_sv = tmp_path / "vcf45-imprecise-symbolic-sv-unspecified-cipos.vcf"
+    write_vcf(
+        unspecified_symbolic_sv,
+        "1\t100\t.\tN\t<DEL>\t.\tPASS\tIMPRECISE;SVTYPE=DEL;END=110\n",
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(unspecified_symbolic_sv)["records"] == 1
+
+
+def test_vcf45_ciend_must_be_missing_for_non_symbolic_alleles(tmp_path: Path):
+    path = tmp_path / "vcf45-ciend-on-sequence-allele.vcf"
+    write_vcf(path, "1\t2\t.\tA\tC\t.\tPASS\tCIEND=-1,1\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
+
+
+def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality(tmp_path: Path):
+    valid = tmp_path / "vcf45-meinfo-empty-values.vcf"
+    write_vcf(
+        valid,
+        "1\t100\t.\tN\t<INS>\t.\tPASS\tSVTYPE=INS;END=110;MEINFO=,,,\n",
+        version="VCFv4.5",
+    )
+    profile = validate_vcf_strict(valid)
+    assert profile["records"] == 1
+
+    invalid = tmp_path / "vcf45-meinfo-wrong-cardinality.vcf"
+    write_vcf(
+        invalid,
+        "1\t100\t.\tN\t<INS>\t.\tPASS\tSVTYPE=INS;END=110;MEINFO=foo,bar\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_SV_INFO_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        '##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval">',
+        '##INFO=<ID=MEINFO,Number=A,Type=String,Description="Mobile element information">',
+        '##INFO=<ID=IMPRECISE,Number=1,Type=Flag,Description="Imprecise structural variation">',
+    ],
+)
+def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path, metadata: str):
+    path = tmp_path / "vcf45-invalid-structural-info-definition.vcf"
+    write_vcf_with_metadata(path, [metadata], "1\t2\t.\tA\tC\t.\tPASS\t.\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize(
+    "info",
+    ["DP=-1", "AC=-1", "AF=1.01", "BQ=-0.1", "MQ=-1"],
+)
+def test_vcf45_reserved_info_numeric_domains_are_enforced(tmp_path: Path, info: str):
+    path = tmp_path / "vcf45-invalid-info-domain.vcf"
+    write_vcf(path, f"1\t2\t.\tA\tC\t.\tPASS\t{info}\n", version="VCFv4.5")
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize(
+    "format_key,number,field_type,sample_value",
+    [
+        ("DP", "1", "Integer", "-1"),
+        ("AD", "R", "Integer", "10,-1"),
+        ("GP", "G", "Float", "1.1,0.0,0.0"),
+        ("PL", "G", "Integer", "0,-1,2"),
+        ("GQ", "1", "Integer", "-1"),
+    ],
+)
+def test_vcf45_reserved_format_numeric_domains_are_enforced(
+    tmp_path: Path, format_key: str, number: str, field_type: str, sample_value: str
+):
+    path = tmp_path / "vcf45-invalid-format-domain.vcf"
+    write_vcf_with_metadata(
+        path,
+        [f'##FORMAT=<ID={format_key},Number={number},Type={field_type},Description="Reserved field">'],
+        f"1\t2\t.\tA\tC\t.\tPASS\t.\tGT:{format_key}\t0/1:{sample_value}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize("chrom", ["chr[1]", "chr,1", "=chr1", "*chr1", 'chr"1'])
+def test_vcf43_plus_chrom_must_follow_sam_reference_name_grammar(chrom: str):
+    fields = [chrom, "100", ".", "A", "C", ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_CHROM_INVALID"
+
+
+def test_vcf43_plus_external_assembly_contig_is_explicitly_unsupported():
+    fields = ["<contigA>", "100", ".", "A", "C", ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED"
+
+
+def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_path: Path):
+    path = tmp_path / "vcf45-invalid-contig-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##contig=<ID=chr[1],length=100>'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CONTIG_HEADER_INVALID"
+
+
+def test_vcf43_plus_breakend_mate_contig_must_follow_sam_reference_name_grammar(tmp_path: Path):
+    path = tmp_path / "vcf45-invalid-breakend-contig.vcf"
+    write_vcf(
+        path,
+        '1\t100\t.\tA\tA]chr"1:123]\t.\tPASS\tSVTYPE=BND\n',
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BREAKEND_ALT_INVALID"
+
+
+def test_vcf45_meta_values_list_is_parsed_without_splitting_inner_commas(tmp_path: Path):
+    path = tmp_path / "vcf45-meta-list.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##META=<ID=Assay,Type=String,Number=.,Values=[WES, WGS]>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+
+
+def test_vcf45_arbitrary_structured_header_requires_unique_id(tmp_path: Path):
+    missing_id = tmp_path / "vcf45-structured-header-no-id.vcf"
+    write_vcf_with_metadata(
+        missing_id,
+        ["##CUSTOM=<Name=custom>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(missing_id)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+    duplicate_id = tmp_path / "vcf45-structured-header-duplicate-id.vcf"
+    write_vcf_with_metadata(
+        duplicate_id,
+        ["##CUSTOM=<ID=custom>", "##CUSTOM=<ID=custom>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(duplicate_id)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_vcf45_pedigree_structured_header_with_id_is_valid(tmp_path: Path):
+    path = tmp_path / "vcf45-pedigree-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##PEDIGREE=<ID=child1,Original=father1>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+
+
+def test_vcf45_structured_header_rejects_attributes_without_values(tmp_path: Path):
+    path = tmp_path / "vcf45-malformed-structured-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##contig=<ID=chr1,length>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_vcf_contig_md5_is_verified_against_selected_reference(tmp_path: Path):
+    import hashlib
+
+    sequence = "ACGTACGT"
+    fasta = tmp_path / "md5-reference.fa"
+    fasta.write_text(f">1\n{sequence}\n", encoding="ascii", newline="\n")
+    (tmp_path / "md5-reference.fa.fai").write_text(
+        "1\t8\t3\t8\t9\n", encoding="ascii"
+    )
+    digest = hashlib.md5(sequence.encode("ascii"), usedforsecurity=False).hexdigest()
+    source = tmp_path / "md5-match.vcf"
+    write_vcf_with_metadata(
+        source,
+        [f"##contig=<ID=1,length=8,md5={digest}>"],
+        "1\t1\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(source)
+    assert profile["declared_contig_md5s"] == {"1": digest}
+    assert validate_vcf_reference_alleles(source, fasta)["result"] == "PASS"
+
+    mismatch = tmp_path / "md5-mismatch.vcf"
+    write_vcf_with_metadata(
+        mismatch,
+        ["##contig=<ID=1,length=8,md5=00000000000000000000000000000000>"],
+        "1\t1\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_reference_alleles(mismatch, fasta)
+    assert exc.value.code == "VCF_CONTIG_MD5_MISMATCH"
+
+
+def test_vcf_contig_md5_must_be_32_lowercase_hex_characters(tmp_path: Path):
+    path = tmp_path / "invalid-contig-md5.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##contig=<ID=1,length=8,md5=NOT_A_DIGEST>"],
+        "1\t1\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CONTIG_MD5_INVALID"
+
+
+def test_vcf45_standard_and_local_allele_depth_fields_must_project_identically(tmp_path: Path):
+    metadata = [
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depths">',
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+    ]
+    valid = tmp_path / "vcf45-ad-lad-match.vcf"
+    write_vcf_with_metadata(
+        valid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:AD:LAD\t0/2:2:10,5,7:10,7\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / "vcf45-ad-lad-mismatch.vcf"
+    write_vcf_with_metadata(
+        invalid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:AD:LAD\t0/2:2:10,5,7:10,5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID"
+
+
+def test_vcf45_standard_and_local_genotype_likelihoods_use_vcf_genotype_order(tmp_path: Path):
+    metadata = [
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">',
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">',
+    ]
+    valid = tmp_path / "vcf45-pl-lpl-match.vcf"
+    write_vcf_with_metadata(
+        valid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t0/2:2:0,1,2,3,4,5:0,3,5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / "vcf45-pl-lpl-mismatch.vcf"
+    write_vcf_with_metadata(
+        invalid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t0/2:2:0,1,2,3,4,5:0,3,4\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID"
+
+
+def test_vcf45_missing_standard_or_local_equivalent_is_permitted(tmp_path: Path):
+    path = tmp_path / "vcf45-missing-local-equivalent.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+            '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depths">',
+            '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:AD:LAD\t0/2:2:10,5,7:.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_pso_psq_follow_psl_missing_positions(tmp_path: Path):
+    path = tmp_path / "vcf45-psl-pso-psq-valid.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">',
+            '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">',
+            '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set qualities">',
+        ],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PSL:PSO:PSQ\t|0/1:chr1*2*1,.:3,.:40,.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("format_keys", "sample_value"),
+    [
+        ("GT:PSL:PSQ", "|0/1:phaseA,.:40,5"),
+        ("GT:PSL:PSO", "|0/1:phaseA,.:3,4"),
+        ("PSQ", "40"),
+        ("PSO", "3"),
+        ("GT:PSL", ".:phaseA"),
+    ],
+)
+def test_vcf45_phase_set_dependent_fields_reject_inconsistent_context(
+    tmp_path: Path, format_keys: str, sample_value: str
+):
+    path = tmp_path / "vcf45-invalid-phase-set-dependency.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">',
+            '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">',
+            '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set qualities">',
+        ],
+        f"1\t2\t.\tA\tC\t.\tPASS\t.\t{format_keys}\t{sample_value}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+def test_vcf45_empty_gt_value_is_not_treated_as_unknown_ploidy(tmp_path: Path):
+    path = tmp_path / "vcf45-empty-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PL\t:0,1,2\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_GENOTYPE_INVALID"

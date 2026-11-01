@@ -2,6 +2,8 @@
 
 ## Purpose and boundary
 
+**Standards traceability:** see [VCF standards traceability and qualification status (2026-11-01)](VCF_STANDARDS_TRACEABILITY_2026-11-01.md) for the versioned HTS-specs baseline, code-to-requirement matrix, VCFv4.5 conformance details, reference/normalization standards, and explicit software-versus-laboratory qualification boundary. That audit records partial conformance and does not claim clinical qualification or zero remaining gaps.
+
 SIRALOOM consumes variant call data produced by an upstream assay/caller. It does not perform FASTQ quality control, alignment, variant calling, joint genotyping, or assay validation. A syntactically valid VCF is not proof that the upstream assay or caller is analytically valid. Laboratories must qualify the complete intended process, including upstream assay, calling pipeline, reference build, file transfer, SIRALOOM normalization, annotation, interpretation, review, and report generation.
 
 The immutable uploaded artifact and its SHA-256 remain the source record. Derived normalized artifacts must retain the source-record/allele mapping and tool/resource provenance.
