@@ -12,13 +12,14 @@
     "findings": {"type": "array"},
     "product_scope": {
       "type": "object",
-      "required": ["product", "scope_version", "included_variant_classes", "excluded_variant_classes", "excluded_classes_interpreted", "scope_statement"],
+      "required": ["product", "scope_version", "included_variant_classes", "excluded_variant_classes", "excluded_classes_interpreted", "excluded_record_types", "scope_statement"],
       "properties": {
         "product": {"const": "SIRALOOM Rare-Disease SNV/INDEL"},
         "scope_version": {"type": "string"},
         "included_variant_classes": {"const": ["SNV", "INDEL"]},
         "excluded_variant_classes": {"type": "array", "items": {"enum": ["CNV", "STRUCTURAL_VARIANT", "MITOCHONDRIAL_VARIANT", "REPEAT_EXPANSION"]}},
         "excluded_classes_interpreted": {"const": false},
+        "excluded_record_types": {"type": "array", "items": {"enum": ["GVCF_REFERENCE_BLOCKS", "TELOMERE_COORDINATE_RECORDS", "TELOMERE_AFTER_CONTIG_RECORDS"]}},
         "scope_statement": {"type": "string", "minLength": 1}
       }
     },
