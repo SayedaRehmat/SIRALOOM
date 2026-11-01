@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import socket
 import subprocess
 import sys
 import time
@@ -59,7 +58,6 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
     ]
     queue_name = f"vcf-normalization-loss-{uuid4().hex[:12]}"
     worker_name = f"vcf-normalization-loss-{uuid4().hex[:12]}"
-    worker_destination = f"{worker_name}@{socket.gethostname()}"
 
     reference = tmp_path / "reference.fa"
     reference.write_text(">1\nAAAAACCCCC\n", encoding="utf-8", newline="\n")
@@ -161,9 +159,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
 
         # Do not publish until the real worker has registered its remote-control
         # endpoint. This avoids mistaking startup latency for broker redelivery.
-        inspector = celery_app.control.inspect(
-            timeout=1, destination=[worker_destination]
-        )
+        inspector = celery_app.control.inspect(timeout=1)
         ready_deadline = time.monotonic() + 45
         while time.monotonic() < ready_deadline:
             if worker_process.poll() is not None:
