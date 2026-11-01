@@ -87,6 +87,26 @@ def _collect_loss_warnings(rows: list[Any]) -> list[dict[str, str]]:
                 "field": "severity",
                 "reason": "Free-text severity is not an ontology-coded Phenopackets severity.",
             })
+        related_terms = {
+            str(item.get("input_id")): item
+            for item in (_value(row, "ontology_resolution", {}) or {}).get("related_terms", [])
+            if isinstance(item, dict) and item.get("input_id")
+        }
+        related_ids = list(attributes.get("modifier_hpo_ids", []) or [])
+        related_ids.extend(
+            term_id for term_id in (
+                attributes.get("severity_hpo_id"),
+                attributes.get("clinical_course_hpo_id"),
+            ) if term_id
+        )
+        for term_id in related_ids:
+            resolution = related_terms.get(str(term_id), {})
+            if resolution.get("status") not in {"CURRENT", "ALTERNATE_ID"} or not resolution.get("canonical_id"):
+                warnings.append({
+                    "observation_id": observation_id,
+                    "field": "related_hpo_term_resolution",
+                    "reason": f"Related HPO term {term_id} is not resolved as CURRENT or ALTERNATE_ID and is omitted from the Phenopackets feature.",
+                })
         if _value(row, "evidence", {}) or {}:
             warnings.append({
                 "observation_id": observation_id,
