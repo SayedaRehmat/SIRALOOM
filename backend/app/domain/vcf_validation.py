@@ -39,6 +39,21 @@ FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
 INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
+
+NONNEGATIVE_INTEGER_FIELDS = frozenset({
+    ("INFO", "AC"), ("INFO", "AD"), ("INFO", "ADF"), ("INFO", "ADR"),
+    ("INFO", "AN"), ("INFO", "DP"), ("INFO", "MQ0"), ("INFO", "NS"),
+    ("INFO", "SB"), ("INFO", "HOMLEN"),
+    ("FORMAT", "AD"), ("FORMAT", "ADF"), ("FORMAT", "ADR"),
+    ("FORMAT", "DP"), ("FORMAT", "EC"), ("FORMAT", "GQ"),
+    ("FORMAT", "HQ"), ("FORMAT", "LAD"), ("FORMAT", "LADF"),
+    ("FORMAT", "LADR"), ("FORMAT", "LEC"), ("FORMAT", "LPL"),
+    ("FORMAT", "LPP"), ("FORMAT", "MQ"), ("FORMAT", "PL"),
+    ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
+    ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
+})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
+NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 
@@ -746,7 +761,7 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
-                if kind.startswith("FORMAT") and key == "PS":
+                if (kind, key) in NONNEGATIVE_INTEGER_FIELDS:
                     valid = valid and integer_value >= 0
                 if _base_modification_field_kind(key) == "depth":
                     valid = valid and integer_value >= 0
@@ -758,9 +773,14 @@ def _validate_declared_value(
                     flags=re.IGNORECASE,
                 )
             )
-            if valid and _base_modification_field_kind(key) == "fraction":
+            if valid:
                 numeric_value = float(item)
-                valid = 0.0 <= numeric_value <= 1.0
+                if (kind, key) in PROBABILITY_FLOAT_FIELDS:
+                    valid = 0.0 <= numeric_value <= 1.0
+                if (kind, key) in NONNEGATIVE_FLOAT_FIELDS:
+                    valid = numeric_value >= 0.0
+                if _base_modification_field_kind(key) == "fraction":
+                    valid = valid and 0.0 <= numeric_value <= 1.0
         elif field_type == "Character":
             valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
         if not valid:
