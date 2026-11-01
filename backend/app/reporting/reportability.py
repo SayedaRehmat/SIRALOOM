@@ -13,7 +13,7 @@ from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Analysis, Classification, ReportabilityDecision
 
 POLICY_NAME = "SIRALOOM_DEFAULT_GERMLINE_REPORTABILITY"
-POLICY_VERSION = "2.0.0"
+POLICY_VERSION = "2.1.0"
 DISPOSITIONS = {"REPORT", "DO_NOT_REPORT", "REVIEW"}
 STATUSES = {"PROPOSED", "FINAL"}
 
