@@ -1,3 +1,5 @@
+import hashlib
+import json
 from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -22,7 +24,7 @@ from backend.app.domain.resource_execution_plan import build_resource_execution_
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, PedigreeMember, PhenotypeObservation, ResourceExecutionRecord,
+    Analysis, Case, PedigreeMember, PhenotypeObservation,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.phenotype import normalize_hpo_id
@@ -167,6 +169,24 @@ def _hpo_runtime(db: Session, case: Case):
     if not checksum or checksum != contract_checksum or checksum != ontology.sha256:
         raise HPOOntologyError("HPO resource checksum does not match its qualified execution contract")
     return item.resource, execution, ontology
+
+
+def _phenotype_record_fingerprint(body: PhenotypeInput) -> str:
+    """Stable idempotency key for one clinical observation, not for a term/status pair."""
+    identity = {
+        "hpo_id": body.hpo_id,
+        "phenotype_status": body.phenotype_status,
+        "subject_member_id": str(body.subject_member_id) if body.subject_member_id else None,
+        "observed_at": body.observed_at.isoformat() if body.observed_at else None,
+        "label": body.label,
+        "onset": body.onset,
+        "severity": body.severity,
+        "clinical_attributes": body.clinical_attributes,
+        "source": body.source,
+        "evidence": body.evidence,
+    }
+    canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 def _resolve_term(ontology, term_id: str) -> dict[str, Any]:
@@ -328,13 +348,12 @@ def add_case_phenotype(
         if member is None or member.case_id != case.id:
             raise HTTPException(400, "Phenotype subject must be a pedigree member in this case")
     canonical_hpo_id, ontology_resolution = _resolution_bundle(db, case, body)
+    record_fingerprint = _phenotype_record_fingerprint(body)
     row = db.scalar(
         select(PhenotypeObservation).where(
             PhenotypeObservation.case_id == case_id,
             PhenotypeObservation.analysis_id.is_(None),
-            PhenotypeObservation.subject_member_id == body.subject_member_id,
-            PhenotypeObservation.hpo_id == body.hpo_id,
-            PhenotypeObservation.phenotype_status == body.phenotype_status,
+            PhenotypeObservation.record_fingerprint == record_fingerprint,
         )
     )
     if row:
@@ -347,6 +366,7 @@ def add_case_phenotype(
         subject_member_id=body.subject_member_id,
         hpo_id=body.hpo_id,
         canonical_hpo_id=canonical_hpo_id,
+        record_fingerprint=record_fingerprint,
         label=body.label,
         present=present,
         phenotype_status=body.phenotype_status,
