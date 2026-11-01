@@ -227,6 +227,36 @@ def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Pa
         "chr1\tzero\t10\n",
     ],
 )
+@pytest.mark.parametrize(
+    ("vcf_text", "error"),
+    [
+        (
+            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tCASE_SAMPLE_001\\n",
+            "fileformat declaration",
+        ),
+        (
+            "##fileformat=VCFv4.2\\n"
+            "#CHROM\\tPOS\\tID\\tALT\\tREF\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tCASE_SAMPLE_001\\n",
+            "nine fixed VCF columns",
+        ),
+        (
+            "##fileformat=VCFv4.2\\n"
+            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tCASE_SAMPLE_001\\n"
+            "chr1\\t10\\t.\\tA\\tC\\t60\\tPASS\\t.\\tGT\\t0/1\\textra\\n",
+            "malformed variant record",
+        ),
+    ],
+)
+def test_single_sample_vcf_requires_specification_header_and_record_cardinality(
+    tmp_path: Path, vcf_text: str, error: str
+) -> None:
+    path = tmp_path / "malformed-query.vcf"
+    path.write_text(vcf_text, encoding="utf-8")
+
+    with pytest.raises(ConcordanceError, match=error):
+        validate_single_sample_vcf(path, "Query VCF", "CASE_SAMPLE_001")
+
+
 def test_bed_regions_must_match_reference_contigs_and_bounds(tmp_path: Path, bed_line: str) -> None:
     path = tmp_path / "invalid.bed"
     path.write_text(bed_line, encoding="utf-8")
