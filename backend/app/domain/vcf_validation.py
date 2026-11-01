@@ -145,6 +145,24 @@ def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
         "VALIDATED": ("0", "Flag"),
         "1000G": ("0", "Flag"),
         "SVLEN": ("A", "Integer"),
+        # VCFv4.5 structural-variant INFO definitions.
+        "IMPRECISE": ("0", "Flag"),
+        "NOVEL": ("0", "Flag"),
+        "SVTYPE": ("1", "String"),
+        "CIPOS": (".", "Integer"),
+        "CIEND": (".", "Integer"),
+        "HOMLEN": ("A", "Integer"),
+        "HOMSEQ": ("A", "String"),
+        "BKPTID": ("A", "String"),
+        "MEINFO": (".", "String"),
+        "METRANS": (".", "String"),
+        "DGVID": ("A", "String"),
+        "DBVARID": ("A", "String"),
+        "DBRIPID": ("A", "String"),
+        "MATEID": ("A", "String"),
+        "PARID": ("A", "String"),
+        "EVENT": ("A", "String"),
+        "EVENTTYPE": ("A", "String"),
     }
     definition = reserved.get(field_id)
     if definition is None:
