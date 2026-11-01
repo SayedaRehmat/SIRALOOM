@@ -148,9 +148,9 @@ def test_reference_package_rejects_missing_assembly_identity(tmp_path: Path):
 def test_strict_vcf_validation_accepts_only_explicit_reference_contig_aliases(tmp_path: Path):
     valid = tmp_path / "mitochondrial-explicit-alias.vcf"
     valid.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "NC_012920.1\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.1\t1\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     profile = validate_vcf_strict(valid, reference_contigs={"chrM"})
@@ -159,9 +159,9 @@ def test_strict_vcf_validation_accepts_only_explicit_reference_contig_aliases(tm
 
     invalid = tmp_path / "mitochondrial-wrong-accession-version.vcf"
     invalid.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "NC_012920.2\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.2\t1\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -195,13 +195,13 @@ def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
 
 def test_vcf_reference_validation_records_aliases_when_contig_header_is_absent(tmp_path: Path):
     fasta = tmp_path / "reference-no-contig-header.fa"
-    fasta.write_text(">chrM\\nACGT\\n", encoding="utf-8")
-    Path(f"{fasta}.fai").write_text("chrM\\t4\\t6\\t4\\t5\\n", encoding="utf-8")
+    fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
     vcf = tmp_path / "mitochondrial-accession-no-contig-header.vcf"
     vcf.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "NC_012920.1\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "NC_012920.1\t1\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
@@ -213,13 +213,13 @@ def test_vcf_reference_validation_records_aliases_when_contig_header_is_absent(t
 
 def test_reference_validation_records_aliases_resolved_from_breakend_mates(tmp_path: Path):
     fasta = tmp_path / "reference-breakend-alias.fa"
-    fasta.write_text(">chrM\\nACGT\\n", encoding="utf-8")
-    Path(f"{fasta}.fai").write_text("chrM\\t4\\t6\\t4\\t5\\n", encoding="utf-8")
+    fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
     vcf = tmp_path / "breakend-mate-alias.vcf"
     vcf.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "chrM\\t1\\t.\\tA\\tA]NC_012920.1:2]\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chrM\t1\t.\tA\tA]NC_012920.1:2]\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
