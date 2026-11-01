@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 from backend.app.infrastructure.db.models import (
     Analysis,
     Case,
+    ClinicalIntakeRevision,
+    Artifact,
     PhenotypeObservation,
     PedigreeMember,
     PedigreeRelationship,
@@ -20,7 +22,7 @@ from backend.app.infrastructure.db.models import (
     WorkflowStep,
 )
 
-SNAPSHOT_SCHEMA_VERSION = 1
+SNAPSHOT_SCHEMA_VERSION = 2
 
 
 def _canonical_json(value: Any) -> str:
@@ -58,6 +60,48 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         isinstance(item, dict) for item in literature_evidence
     ):
         raise ValueError("Case literature evidence must be a list of records")
+    intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == analysis.case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
+    intake_revision_snapshot = None
+    if intake_revision is not None:
+        intake_context = intake_revision.context or {}
+        prior_testing = intake_context.get("prior_testing") or []
+        artifact_ids = {
+            UUID(str(item["artifact_id"]))
+            for item in prior_testing
+            if isinstance(item, dict) and item.get("artifact_id")
+        }
+        if artifact_ids:
+            source_artifacts = {
+                artifact.id: artifact
+                for artifact in db.scalars(select(Artifact).where(Artifact.id.in_(artifact_ids)))
+            }
+            if any(
+                artifact_id not in source_artifacts
+                or source_artifacts[artifact_id].case_id != analysis.case_id
+                for artifact_id in artifact_ids
+            ):
+                raise ValueError("Clinical prior-testing evidence references an artifact outside the case")
+        intake_revision_snapshot = {
+            "revision_id": str(intake_revision.id),
+            "version": intake_revision.version,
+            "schema_version": intake_revision.schema_version,
+            "revision_fingerprint": intake_revision.revision_fingerprint,
+            "intake_status": intake_revision.intake_status,
+            "phenotype_review_status": intake_revision.phenotype_review_status,
+            "family_history_review_status": intake_revision.family_history_review_status,
+            "context": intake_context,
+            "phenotype_review_note": intake_revision.phenotype_review_note,
+            "family_history_review_note": intake_revision.family_history_review_note,
+            "completion_note": intake_revision.completion_note,
+            "recorded_by": str(intake_revision.recorded_by),
+            "recorded_at": intake_revision.recorded_at.isoformat(),
+        }
+
     members = db.scalars(
         select(PedigreeMember)
         .where(PedigreeMember.case_id == analysis.case_id)
@@ -119,6 +163,7 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "clinical_context": context,
+        "clinical_context_revision": intake_revision_snapshot,
         "pedigree_context": {
             "members": [
                 {
@@ -177,12 +222,14 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
 
 
 def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
-    if not isinstance(value, dict) or value.get("schema_version") != SNAPSHOT_SCHEMA_VERSION:
+    if not isinstance(value, dict) or value.get("schema_version") not in {1, SNAPSHOT_SCHEMA_VERSION}:
         raise ValueError("Persisted clinical input snapshot has an unsupported schema")
     if not isinstance(value.get("phenotype_observations"), list):
         raise ValueError("Persisted clinical input snapshot has invalid phenotype observations")
     if "clinical_context" in value and not isinstance(value["clinical_context"], dict):
         raise ValueError("Persisted clinical input snapshot has invalid clinical context")
+    if "clinical_context_revision" in value and value["clinical_context_revision"] is not None and not isinstance(value["clinical_context_revision"], dict):
+        raise ValueError("Persisted clinical input snapshot has invalid clinical context revision")
     if "pedigree_context" in value and (
         not isinstance(value["pedigree_context"], dict)
         or not isinstance(value["pedigree_context"].get("members"), list)

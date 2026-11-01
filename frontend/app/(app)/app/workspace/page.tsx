@@ -8,6 +8,7 @@ import { isWorkspaceCaseReady } from "../../../../lib/workspace-context.mjs";
 import { validatedArtifactId } from "../../../../lib/validated-upload.mjs";
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 import PhenotypeIntake from "../../../../components/PhenotypeIntake";
+import ClinicalContextIntake from "../../../../components/ClinicalContextIntake";
 
 type Step = {
   step_id: string;
@@ -1021,6 +1022,7 @@ export default function Home() {
 
       <nav className="workspace-section-nav" aria-label={t("workspace.title")}>
         <a href="#case-intake">{t("workspace.caseSection")}</a>
+        <a href="#clinical-context-intake">Clinical context</a>
         <a href="#clinical-phenotype-intake">Clinical phenotypes</a>
         <a href="#analysis-workflow">{t("workspace.executionSection")}</a>
         <a href="#artifacts">{t("workspace.files")}</a>
@@ -1081,6 +1083,7 @@ export default function Home() {
         </section>
       )}
 
+      {caseId && <ClinicalContextIntake caseId={caseId} apiFetch={apiFetch} />}
       {caseId && <PhenotypeIntake caseId={caseId} apiFetch={apiFetch} />}
 
       <section id="case-intake" className="workspace-grid">

@@ -135,6 +135,43 @@ class Case(Base):
     __table_args__ = (UniqueConstraint("organization_id", "case_identifier"),)
 
 
+class ClinicalIntakeRevision(Base):
+    """Append-only, versioned clinical context and review attestation for a case."""
+    __tablename__ = "clinical_intake_revisions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    revision_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    intake_status: Mapped[str] = mapped_column(Text, nullable=False)
+    phenotype_review_status: Mapped[str] = mapped_column(Text, nullable=False)
+    family_history_review_status: Mapped[str] = mapped_column(Text, nullable=False)
+    context: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    phenotype_review_note: Mapped[str | None] = mapped_column(Text)
+    family_history_review_note: Mapped[str | None] = mapped_column(Text)
+    completion_note: Mapped[str | None] = mapped_column(Text)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "version", name="uq_clinical_intake_case_version"),
+        UniqueConstraint("case_id", "revision_fingerprint", name="uq_clinical_intake_case_fingerprint"),
+        CheckConstraint("version > 0", name="ck_clinical_intake_revision_positive_version"),
+        CheckConstraint(
+            "intake_status IN ('DRAFT', 'COMPLETE', 'NOT_APPLICABLE')",
+            name="ck_clinical_intake_revision_status",
+        ),
+        CheckConstraint(
+            "phenotype_review_status IN ('COMPLETE', 'NOT_ASSESSED', 'NOT_APPLICABLE', 'PENDING')",
+            name="ck_clinical_intake_phenotype_review_status",
+        ),
+        CheckConstraint(
+            "family_history_review_status IN ('COMPLETE', 'NOT_ASSESSED', 'NOT_APPLICABLE', 'PENDING')",
+            name="ck_clinical_intake_family_review_status",
+        ),
+        Index("ix_clinical_intake_revisions_case_version", "case_id", "version"),
+    )
+
+
 class CaseAccessGrant(Base):
     """Per-user case capabilities, bounded by the user's organization role."""
     __tablename__ = "case_access_grants"
