@@ -9,6 +9,7 @@ This implementation adds case-level export for the phenotype and family context 
 - HL7 FHIR R5 Bundle export containing Patient, Observation, RelatedPerson, FamilyMemberHistory (where a relationship-to-proband assertion exists), Organization, and Provenance resources.
 - Case-read authorization and a persisted SIRALOOM audit event for each export.
 - Schema/model validation before the export is returned.
+- Timezone-aware serialization only; naive source timestamps are rejected instead of being assigned UTC.
 
 This is an export capability. It does not claim that Phenopackets or FHIR import, round-trip reconciliation, profile publication, terminology server conformance, or a full EHR integration has been implemented. The returned exchange documents do not replace the immutable SIRALOOM analysis snapshot or source records.
 
@@ -35,6 +36,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 5. Parent-child edges are exported only when the stored relationship type is PARENT_CHILD. Parent roles are not inferred from absent or ambiguous sex information.
 6. A submitted HPO identifier is retained. A canonical identifier is emitted only when the stored ontology resolution is CURRENT or ALTERNATE_ID.
 7. An ontology release/checksum is never invented. The actual HPO release and resource provenance are included only when they exist in the stored resolution record.
+10. A timezone is never inferred for a naive clinical timestamp during FHIR serialization; export fails until the source timezone is explicit.
 8. Export does not infer a disease, inheritance model, penetrance, de novo status, pathogenicity criterion, causal variant, or clinical diagnosis.
 9. The export audit event records format, schema version, warning/resource counts, and actor identity. It does not replace the clinical observation's source provenance.
 
