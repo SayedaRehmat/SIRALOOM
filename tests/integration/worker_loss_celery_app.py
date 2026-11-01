@@ -7,7 +7,7 @@ commits an interrupted-stage checkpoint and exits abruptly.
 """
 import json
 import os
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from celery import Celery
 from redis import Redis
