@@ -172,3 +172,126 @@ def test_local_allele_number_is_rejected_before_vcf45(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_declared_info_number_a_matches_each_alt_allele(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-info-number-a.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\tTEST=3,4",
+        metadata=(
+            '##INFO=<ID=TEST,Number=A,Type=Integer,Description="One value per ALT">',
+        ),
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_declared_info_number_a_rejects_wrong_alt_cardinality(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-bad-info-number-a.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\tTEST=3",
+        metadata=(
+            '##INFO=<ID=TEST,Number=A,Type=Integer,Description="One value per ALT">',
+        ),
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_declared_format_number_r_includes_reference_and_alt(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-format-number-r.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:XAD\\t0/1:10,5",
+        metadata=(
+            '##FORMAT=<ID=XAD,Number=R,Type=Integer,Description="Allelic depths">',
+        ),
+        samples=True,
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_explicit_dot_is_valid_missing_format_value(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-missing-format-dot.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:XDP\\t0/1:.",
+        metadata=(
+            '##FORMAT=<ID=XDP,Number=1,Type=Integer,Description="Depth">',
+        ),
+        samples=True,
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_empty_format_value_is_not_a_missing_value(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-empty-format-value.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:XDP\\t0/1:",
+        metadata=(
+            '##FORMAT=<ID=XDP,Number=1,Type=Integer,Description="Depth">',
+        ),
+        samples=True,
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_SAMPLE_INVALID"
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_integer_field_rejects_values_outside_vcf_32_bit_range(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-integer-overflow.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\tTEST=2147483648",
+        metadata=(
+            '##INFO=<ID=TEST,Number=1,Type=Integer,Description="Integer test">',
+        ),
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_crlf_line_endings_are_accepted(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-crlf.vcf",
+        version,
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.",
+    )
+    path.write_bytes(path.read_bytes().replace(b"\\n", b"\\r\\n"))
+
+    assert validate_vcf_strict(path)["records"] == 1
