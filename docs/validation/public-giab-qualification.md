@@ -8,9 +8,9 @@ The workflow deliberately uses the GIAB truth VCF as a public **input-processing
 
 ## Source pinning
 
-All files and official MD5 values are pinned in `benchmarks/giab/public_assets.v1.json`. The acquisition script has no fallback mirror and never refreshes checksums automatically. A changed upstream file fails closed. Each acquired file is retained with URL, byte size, official MD5, local SHA-256 and verification status.
+The HG001 benchmark VCF/TBI/BED assets and reference source FASTAs are pinned by exact URL and official MD5 in `benchmarks/giab/public_assets.v1.json`. Benchmark assets use the GIAB S3 mirror; GRCh37 hs37d5 uses the 1000 Genomes EBI reference mirror; the exact GRCh38 GIAB-compatible reference bytes use the checksum-matched Zenodo mirror (MD5 `3a3347eae0893f96ecf495d1c39e2284`). The generic NCBI no-ALT FASTA has a different MD5 (`a08035b6a6e31780e96a34008ff21bd6`) and must not be substituted for this benchmark reference. The acquisition script has no fallback mirror and never refreshes checksums automatically. A changed upstream file fails closed. Each acquired file is retained with URL, byte size, official MD5, local SHA-256 and verification status.
 
-NIST GIAB describes the HG001 v4.2.1 benchmark VCF and high-confidence BED for GRCh37 and GRCh38. Use the matching BED with the matching build for a future independent hap.py/vcfeval comparison. Do not compare across reference builds or substitute an arbitrary hg19/hg38 reference.
+NIST GIAB describes the HG001 v4.2.1 benchmark VCF and high-confidence BED for GRCh37 and GRCh38. The GRCh38 reference source is mirrored in the public Zenodo record [10.5281/zenodo.10557082](https://zenodo.org/records/10557082), whose published file checksum matches the pinned GIAB-compatible reference. Use the matching BED with the matching build for a future independent hap.py/vcfeval comparison. Do not compare across reference builds or substitute an arbitrary hg19/hg38 reference.
 
 ## Run
 
