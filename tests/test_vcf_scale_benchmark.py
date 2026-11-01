@@ -62,7 +62,7 @@ def test_deployment_resource_snapshot_supports_cgroup_v1_and_unavailable_metrics
     memory.mkdir(parents=True)
     (memory / "memory.usage_in_bytes").write_text("512\n", encoding="ascii")
     (memory / "memory.max_usage_in_bytes").write_text("1024\n", encoding="ascii")
-    (memory / "memory.limit_in_bytes").write_text("max\n", encoding="ascii")
+    (memory / "memory.limit_in_bytes").write_text(str((1 << 63) - 4096) + "\n", encoding="ascii")
     output = tmp_path / "evidence"
     output.mkdir()
 
@@ -72,6 +72,10 @@ def test_deployment_resource_snapshot_supports_cgroup_v1_and_unavailable_metrics
     assert snapshot["container_memory"]["current_bytes"] == 512
     assert snapshot["container_memory"]["peak_bytes"] == 1024
     assert snapshot["container_memory"]["limit_bytes"] is None
+
+    (memory / "memory.limit_in_bytes").write_text("max\\n", encoding="ascii")
+    unlimited_text = module.deployment_resource_snapshot(output, cgroup_root=cgroup)
+    assert unlimited_text["container_memory"]["limit_bytes"] is None
 
     empty_cgroup = tmp_path / "no-cgroup"
     empty_cgroup.mkdir()
