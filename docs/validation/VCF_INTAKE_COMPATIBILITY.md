@@ -101,6 +101,12 @@ Before artifact bytes are published, SIRALOOM commits an upload-intent reservati
 
 The intent is tenant- and case-scoped and is committed before storage writes. An interrupted reservation remains recoverable by retrying the same request and key. A reservation marked `RECOVERY_REQUIRED`, or a committed reservation whose artifact row is missing, is not silently recreated; it requires administrator reconciliation. Uploads without the header retain the legacy non-idempotent request behavior. The idempotency intent is a transport/durability mechanism, not a substitute for VCF validation, reference verification, assay qualification, or clinical review.
 
+### Browser upload retry identity
+
+The workspace browser client persists one opaque idempotency key per logical upload in tab-scoped `sessionStorage`. The storage key is a SHA-256 digest of the file's browser metadata and upload scope; the stored value is the random idempotency key. Raw filenames, case identifiers, specimen identifiers, and file contents are not written to browser storage. This survives a page reload in the same tab and allows the user to reselect the same file and safely retry with the original key. A successful HTTP response removes the completed attempt. A failed or interrupted request leaves the key available for retry.
+
+The browser metadata digest is only a client-side lookup key, not proof of file identity. The server recomputes SHA-256 over the actual uploaded bytes and binds it to the full request fingerprint. If two different files happen to share the same browser metadata, the server returns HTTP 409 rather than accepting different bytes under the existing key. The client fails closed if secure browser cryptography or session storage is unavailable; it does not silently fall back to a fresh key. Tab-scoped storage is intentionally cleared when the browser tab session ends; cross-device or post-tab-close recovery requires a future server-side upload-session discovery workflow and is not claimed here.
+
 ## Validation layers
 
 1. **Accession and transport:** filename/type, non-empty upload, configured byte limit, storage-capacity preflight, SHA-256, original artifact preservation.
