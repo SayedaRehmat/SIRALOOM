@@ -53,6 +53,29 @@ def _regular_file(value: str | Path, label: str) -> Path:
     return resolved
 
 
+def load_sample_mapping(path_value: str | Path) -> tuple[Path, str, str]:
+    """Load a private specimen-to-VCF-column map without exposing IDs in CLI args."""
+    path = _regular_file(path_value, "Sample mapping file")
+    if os.name == "posix" and path.stat().st_mode & 0o077:
+        raise ConcordanceError("Sample mapping file permissions must deny group and other access.")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ConcordanceError("Sample mapping file is not valid readable JSON.") from exc
+    if not isinstance(payload, dict) or set(payload) != {"truth_sample_name", "query_sample_name"}:
+        raise ConcordanceError("Sample mapping file must contain exactly the truth_sample_name and query_sample_name fields.")
+    truth_name = payload.get("truth_sample_name")
+    query_name = payload.get("query_sample_name")
+    if (
+        not isinstance(truth_name, str)
+        or not truth_name.strip()
+        or not isinstance(query_name, str)
+        or not query_name.strip()
+    ):
+        raise ConcordanceError("Sample mapping file must contain non-empty sample-column names.")
+    return path, truth_name, query_name
+
+
 def _open_text(path: Path) -> TextIO:
     if path.name.endswith((".gz", ".bgz")):
         return gzip.open(path, "rt", encoding="utf-8", errors="strict")
@@ -280,8 +303,7 @@ def run_concordance(
     assay: str,
     caller: str,
     caller_version: str,
-    truth_sample_name: str,
-    query_sample_name: str,
+    sample_mapping_file: Path,
     truth_set_id: str,
     truth_set_version: str,
     acceptance_policy_id: str,
@@ -309,11 +331,13 @@ def run_concordance(
     if assay in {"WES", "PANEL"} and target_regions is None:
         raise ConcordanceError("WES and PANEL comparisons require the assay target BED.")
 
+    sample_mapping_path, truth_sample_name, query_sample_name = load_sample_mapping(sample_mapping_file)
     inputs: dict[str, Path] = {
         "truth_vcf": _regular_file(truth_vcf, "Truth VCF"),
         "query_vcf": _regular_file(query_vcf, "Query VCF"),
         "confident_bed": _regular_file(confident_bed, "GIAB confident-region BED"),
         "reference_fasta": _regular_file(reference_fasta, "Reference FASTA"),
+        "sample_mapping": sample_mapping_path,
     }
     reference_fai = _regular_file(str(inputs["reference_fasta"]) + ".fai", "Reference FASTA .fai")
     inputs["reference_fai"] = reference_fai
@@ -522,8 +546,7 @@ def main() -> int:
     parser.add_argument("--assay", required=True, choices=("WES", "WGS", "PANEL"))
     parser.add_argument("--caller", required=True)
     parser.add_argument("--caller-version", required=True)
-    parser.add_argument("--truth-sample-name", required=True)
-    parser.add_argument("--query-sample-name", required=True)
+    parser.add_argument("--sample-mapping-file", required=True)
     parser.add_argument("--truth-set-id", required=True)
     parser.add_argument("--truth-set-version", required=True)
     parser.add_argument("--acceptance-policy-id", required=True)
@@ -542,7 +565,7 @@ def main() -> int:
             confident_bed=args.confident_bed, reference_fasta=args.reference_fasta,
             reference_build=args.reference_build, assay=args.assay,
             caller=args.caller, caller_version=args.caller_version,
-            truth_sample_name=args.truth_sample_name, query_sample_name=args.query_sample_name,
+            sample_mapping_file=Path(args.sample_mapping_file),
             truth_set_id=args.truth_set_id, truth_set_version=args.truth_set_version,
             acceptance_policy_id=args.acceptance_policy_id,
             output_dir=args.output_dir, hap_py=args.hap_py, engine=args.engine,
