@@ -29,7 +29,7 @@ Truth and query sample identifiers are not written to the JSON report. The restr
 - Default engine is `xcmp`, hap.py's haplotype-level engine. `vcfeval` is permitted only where the laboratory has installed and qualified the compatible RTG-Tools build.
 - ALL and PASS summaries are retained; `--pass-only` is an explicit option and is not enabled by default.
 - The runner requires SNP and INDEL rows for both ALL and PASS in hap.py's `summary.csv`.
-- Precision, recall and F1 are recomputed from raw TP/FN/FP counts. Descriptive 95% Wilson intervals are retained for precision and recall. A zero denominator is `null`.
+- Raw `TRUTH.TOTAL`, `QUERY.TOTAL`, `QUERY.UNK`, TP, FN and FP counts are retained; truth totals must reconcile to TP + FN. Precision, recall and F1 are recomputed from raw TP/FN/FP counts. Descriptive 95% Wilson intervals are retained for precision and recall. A zero denominator is `null`.
 - For optional stratification, the source `.extended.csv` is retained and SHA-256 recorded.
 - Tool stdout/stderr is redirected to a restricted log. Failures return a nonzero exit code and exception class; existing evidence directories are never modified.
 
