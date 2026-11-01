@@ -384,7 +384,7 @@ def add_case_phenotype(
                 WorkflowStep.step_id == "build_evidence",
             )
         )
-        if (evidence_step.metadata_json or {}).get("clinical_input_snapshot") is not None:
+        if evidence_step is not None and (evidence_step.metadata_json or {}).get("clinical_input_snapshot") is not None:
             raise HTTPException(
                 409,
                 "Clinical phenotype input is frozen for an active analysis because its evidence-stage snapshot has already been persisted. Wait for the analysis to reach a terminal state, then record the new observation and request reanalysis.",
