@@ -65,7 +65,7 @@ The benchmark JSON now includes a deployment_resources snapshot:
 - output-filesystem device identity and total, used and free bytes;
 - output-directory permission mode.
 
-Cgroup peak is a workload/container measurement and may include sidecars or concurrent tasks. It is not attributed to this benchmark process and must not be substituted for process RSS. A missing cgroup interface is recorded as null. The snapshot is taken at benchmark completion; it is not a time-series sampler and does not establish transient peak scratch usage. During upper-percentile and concurrency qualification, collect the platform's cgroup/container time series and scratch-volume high-water metrics independently.
+Cgroup peak is a workload/container measurement and may include sidecars or concurrent tasks. It is not attributed to this benchmark process and must not be substituted for process RSS. The cgroup peak counter may reflect the lifetime of the cgroup (or the period since its peak counter was reset), not just this benchmark invocation; record the cgroup lifecycle and do not interpret it as a per-run peak unless the deployment deliberately provides an isolated/resettable cgroup. A missing cgroup interface is recorded as null. The snapshot is taken at benchmark completion; it is not a time-series sampler and does not establish transient peak scratch usage. During upper-percentile and concurrency qualification, collect the platform's cgroup/container time series and scratch-volume high-water metrics independently.
 
 ## Production storage and index recovery qualification
 
