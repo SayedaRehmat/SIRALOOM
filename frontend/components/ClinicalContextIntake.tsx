@@ -27,6 +27,9 @@ type Revision = {
   intake_status: string;
   phenotype_review_status: string;
   family_history_review_status: string;
+  phenotype_review_note: string | null;
+  family_history_review_note: string | null;
+  completion_note: string | null;
   context: Record<string, any>;
   recorded_at: string;
   recorded_by: string;
