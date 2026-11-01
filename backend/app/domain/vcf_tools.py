@@ -593,9 +593,9 @@ def inspect_vcf_compression(path: str | Path) -> dict:
                     raise VCFToolError(
                         f"BGZF block header is malformed at byte offset {block_start}."
                     )
-                if fixed[3] & 0xE0:
+                if fixed[3] != 0x04:
                     raise VCFToolError(
-                        f"BGZF block uses reserved gzip flags at byte offset {block_start}."
+                        f"BGZF block must use only the FEXTRA gzip flag at byte offset {block_start}."
                     )
                 block_xlen = int.from_bytes(fixed[10:12], "little")
                 block_extra = handle.read(block_xlen)
