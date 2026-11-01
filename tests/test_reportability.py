@@ -243,10 +243,9 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
         storage_uri="file:///tmp/mitochondrial-variants.vcf",
         genome_build="GRCh38",
         validation_status="VALID",
-        metadata_json={
-            "review_status": "REQUIRES_SPECIALIZED_REVIEW",
-            "review_reason_code": reason_code,
-        },
+        # Deliberately omit review_status: the artifact type itself must
+        # remain a hard reportability blocker in the first product.
+        metadata_json={"interpretation_status": "NOT_ANALYZED"},
     )
     db.add_all([org, user, case, analysis, variant, classification, routed_artifact])
     db.commit()
