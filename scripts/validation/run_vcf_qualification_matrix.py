@@ -276,6 +276,8 @@ def main() -> int:
                     "reference_fasta_sha256": cell["reference_fasta_sha256"],
                     "benchmark_exit_code": return_code,
                     "benchmark_status": benchmark_status,
+                    "failure_stage": report.get("failed_stage") if not benchmark_succeeded else None,
+                    "failure_exception_class": report.get("exception_type") if not benchmark_succeeded else None,
                     "criteria": criteria,
                     "cell_status": "REVIEW_REQUIRED" if benchmark_succeeded else "REVIEW_REQUIRED_FAILURE",
                     "started_at_utc": started_cell.isoformat(),
