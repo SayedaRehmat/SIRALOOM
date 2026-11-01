@@ -537,6 +537,38 @@ def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[
         "recorded_at": row.recorded_at.isoformat(),
     }
 
+
+
+def _pedigree_export_sidecar(
+    members: list[PedigreeMember],
+    relationships: list[PedigreeRelationship],
+) -> dict[str, Any]:
+    identifiers = {str(member.id): member.member_identifier for member in members}
+    return {
+        "members": [
+            {
+                "member_identifier": member.member_identifier,
+                "relationship_to_proband": member.relationship_to_proband,
+                "sex": member.sex,
+                "affected_status": member.affected_status,
+                "is_proband": member.is_proband,
+                "sampled": member.sampled,
+                "specimen_reference_present": member.specimen_id is not None,
+                "metadata": member.metadata_json or {},
+            }
+            for member in members
+        ],
+        "relationships": [
+            {
+                "parent_member_identifier": identifiers.get(str(row.parent_member_id)),
+                "child_member_identifier": identifiers.get(str(row.child_member_id)),
+                "relationship_type": row.relationship_type,
+                "metadata": row.metadata_json or {},
+            }
+            for row in relationships
+        ],
+    } if members else {"members": [], "relationships": []}
+
 @router.get("/cases/{case_id}/phenopackets-v2")
 def export_case_phenopackets_v2(
     case_id: UUID,
@@ -626,6 +658,7 @@ def export_case_phenopackets_v2(
         "lossy": bool(warnings),
         "warnings": warnings,
         "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
+        "pedigree_sidecar": _pedigree_export_sidecar(members, relationships),
         "document": document,
     }
 
