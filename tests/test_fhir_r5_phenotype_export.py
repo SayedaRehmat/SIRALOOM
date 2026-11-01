@@ -75,6 +75,17 @@ def test_fhir_r5_bundle_uses_observation_and_never_promotes_phenotype_to_conditi
     assert not any(item["resourceType"] == "Condition" for item in resources)
 
 
+def test_fhir_r5_rejects_timezone_naive_clinical_timestamps_instead_of_assuming_utc():
+    row = _observation()
+    row.observed_at = datetime(2025, 3, 1)
+    try:
+        build_fhir_r5_bundle(case=_case(), phenotype_observations=[row])
+    except ValueError as exc:
+        assert "timezone-naive clinical timestamp" in str(exc)
+    else:
+        raise AssertionError("FHIR export must not invent a timezone for a clinical timestamp.")
+
+
 def test_fhir_r5_preserves_absent_excluded_unknown_and_not_assessed_semantics():
     rows = [
         _observation(status="ABSENT"),
