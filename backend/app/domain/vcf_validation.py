@@ -791,28 +791,6 @@ def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int]
     return (start, end) if end >= start else None
 
 
-def _gt_allele_phase_flags(gt: str, fileformat: str | None, line_no: int) -> list[bool]:
-    """Return whether each GT allele has a phasing separator before it."""
-    value = gt
-    leading_separator: str | None = None
-    if fileformat in {"VCFv4.4", "VCFv4.5"} and value[:1] in {"/", "|"}:
-        leading_separator = value[0]
-        value = value[1:]
-    separators = re.findall(r"[/|]", value)
-    if leading_separator is not None:
-        allele_separators = [leading_separator, *separators]
-    else:
-        implicit_separator = "/" if "/" in value else "|" if "|" in value else None
-        allele_separators = [implicit_separator, *separators]
-    allele_count = len(_gt_allele_tokens(gt, fileformat, line_no))
-    if len(allele_separators) != allele_count:
-        raise StrictVCFValidationError(
-            f"Malformed GT phasing separators at line {line_no}",
-            code="VCF_GENOTYPE_INVALID",
-        )
-    return [separator == "|" for separator in allele_separators]
-
-
 def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str]:
     """Parse GT tokens, including VCFv4.4+ leading phasing separators."""
     value = gt
@@ -1362,10 +1340,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     psl_value = sample_values[format_keys.index("PSL")] if format_keys.index("PSL") < len(sample_values) else "."
                     if gt_value not in {"", "."} and psl_value not in {"", "."}:
                         psl_entries = psl_value.split(",")
-                        phase_flags = _gt_allele_phase_flags(gt_value, fileformat, line_no)
-                        if len(psl_entries) == len(phase_flags) and any(
-                            not is_phased and phase_set != "."
-                            for is_phased, phase_set in zip(phase_flags, psl_entries)
+                        allele_phase = _gt_alleles_with_phase(gt_value, fileformat, line_no)
+                        if len(psl_entries) == len(allele_phase) and any(
+                            separator != "|" and phase_set != "."
+                            for (_allele, separator), phase_set in zip(allele_phase, psl_entries)
                         ):
                             raise StrictVCFValidationError(
                                 f"FORMAT/PSL must use '.' for every unphased GT allele at line {line_no}, sample {sample_index}",
