@@ -1,10 +1,12 @@
 # Human sex-chromosome PAR region policy for VCF Stage 1
 
-## Purpose
+## Purpose and implementation boundary
 
-SIRALOOM's strict VCF validator derives FORMAT Number=G cardinality from each sample's GT ploidy. This policy adds reference-build-aware classification of X/Y reference intervals so that downstream validation can distinguish pseudoautosomal (PAR) from non-PAR records.
+SIRALOOM's existing VCF validator derives FORMAT Number=G cardinality from each sample's GT ploidy. This change introduces an isolated, tested reference-data utility for classifying X/Y intervals against GRCh37 and GRCh38 pseudoautosomal regions (PARs).
 
-**This implementation classifies genomic intervals only. It does not infer karyotype, biological sex, sample ploidy, or inheritance. It does not reject a genotype merely because it differs from a presumed chromosome ploidy.**
+**This PR does not yet wire the classifier into the production VCF workflow.** The production validator and workflow files are intentionally not modified because independent open pull requests are concurrently changing those shared files. The helper must be integrated into the production validation/reporting path after those changes are reconciled.
+
+The classifier does not infer karyotype, biological sex, sample ploidy, or inheritance. It does not reject genotypes based on presumed chromosome ploidy.
 
 ## Authoritative coordinate source
 
@@ -17,7 +19,7 @@ The interval table follows the Genome Reference Consortium (GRC) human assembly 
 
 Coordinates are 1-based and inclusive, matching VCF POS. Patch releases retain the coordinate system of their major assembly. The implementation accepts GRCh37/GRCh38 and patch labels, plus hg19/hg38 aliases. It does not accept arbitrary assemblies such as T2T-CHM13.
 
-## Runtime behavior
+## Runtime behavior of the isolated helper
 
 The classifier returns:
 
@@ -26,18 +28,19 @@ The classifier returns:
 - PAR_BOUNDARY_CROSSING: the interval overlaps a PAR but extends outside it.
 - NOT_SEX_CHROMOSOME: the contig is not recognized as X or Y.
 
-The strict validator accepts an optional reference_build. When supplied, it records X/Y region counts in sex_chromosome_region_assessment. The report explicitly states NOT_APPLIED_SAMPLE_PLOIDY_AND_CALLER_POLICY_REQUIRED. When the build is omitted, no PAR classification is attempted. An unsupported explicitly supplied build fails closed.
+It accepts a 1-based closed interval and checks the full supplied interval, not only its first base. Unknown builds and invalid coordinates fail closed.
 
 ## Deliberate limits and next qualification requirements
 
-This does not establish a complete sex-chromosome ploidy policy. Before applying genotype expectations, SIRALOOM still needs:
+This helper is not a complete sex-chromosome ploidy policy. Before applying genotype expectations, SIRALOOM still needs:
 
-1. A governed sample-ploidy/karyotype metadata model with provenance and permissioned access.
-2. Caller- and version-specific documentation of how sex chromosomes and PARs are represented.
-3. A policy for X/Y PAR duplicate representation, masking, and contig aliases in each approved reference package.
-4. A separate mitochondrial ploidy/heteroplasmy policy; mitochondrial records are not classified here.
-5. Representative GRCh37 and GRCh38 assay/caller fixtures and independently reviewed expected results.
-6. Tests for all PAR boundary transitions, missing metadata, discordant caller metadata, and variants whose REF span crosses a boundary.
+1. Production workflow integration with the selected reference package's exact assembly identity.
+2. A governed sample-ploidy/karyotype metadata model with provenance and permissioned access.
+3. Caller- and version-specific documentation of how sex chromosomes and PARs are represented.
+4. A policy for X/Y PAR duplicate representation, masking, and contig aliases in each approved reference package.
+5. A separate mitochondrial ploidy/heteroplasmy policy; mitochondrial records are not classified here.
+6. Representative GRCh37 and GRCh38 assay/caller fixtures and independently reviewed expected results.
+7. Tests for missing metadata, discordant caller metadata, and variants whose REF span crosses a boundary.
 
 No ploidy is inferred from GT, observed allele balance, or a sample's X/Y calls. Ambiguous or missing metadata must remain unresolved rather than being converted into a guessed haploid/diploid expectation.
 
