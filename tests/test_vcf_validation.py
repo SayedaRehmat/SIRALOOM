@@ -250,9 +250,9 @@ def test_declared_vcf_contig_length_parses_quoted_id_and_attributes_in_any_order
     path = tmp_path / "quoted-contig.vcf"
     path.write_text(
         "##fileformat=VCFv4.3\n"
-        '##contig=<assembly="GRCh38",length=10,ID="chr,1">\n'
+        '##contig=<assembly="GRCh38",length=10,ID="chr_1">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "chr,1\t11\ttelo-after\tA\tG\t.\tPASS\t.\n",
+        "chr_1\t11\ttelo-after\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
@@ -1981,11 +1981,16 @@ def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_
     assert exc.value.code == "VCF_CONTIG_HEADER_INVALID"
 
 
-def test_vcf43_plus_breakend_mate_contig_must_follow_sam_reference_name_grammar():
-    fields = ["1", "100", ".", "A", 'A]chr"1:123]', ".", "PASS", "SVTYPE=BND"]
+def test_vcf43_plus_breakend_mate_contig_must_follow_sam_reference_name_grammar(tmp_path: Path):
+    path = tmp_path / "vcf45-invalid-breakend-contig.vcf"
+    write_vcf(
+        path,
+        '1\t100\t.\tA\tA]chr"1:123]\t.\tPASS\tSVTYPE=BND\n',
+        version="VCFv4.5",
+    )
 
     with pytest.raises(StrictVCFValidationError) as exc:
-        _validate_record(fields, 1, None, "VCFv4.5")
+        validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_BREAKEND_ALT_INVALID"
 
