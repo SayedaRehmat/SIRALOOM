@@ -996,7 +996,7 @@ def _validate_record(
     if not chrom or chrom.startswith("#") or any(char.isspace() for char in chrom):
         raise StrictVCFValidationError(f"Invalid CHROM at line {line_no}", code="VCF_CHROM_INVALID")
     if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
-        if re.fullmatch(r"<[^<>,\\s]+>", chrom):
+        if re.fullmatch(r"<[^<>,\s]+>", chrom):
             raise StrictVCFValidationError(
                 f"External assembly contig {chrom!r} is valid VCF syntax but is not supported by the configured reference-package contract at line {line_no}",
                 code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
