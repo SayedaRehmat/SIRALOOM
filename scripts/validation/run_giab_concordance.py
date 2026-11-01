@@ -136,7 +136,7 @@ def _integer(row: dict[str, str], key: str, row_number: int) -> int:
 
 
 def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
-    required = {"Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.TP", "QUERY.FP", "QUERY.UNK"}
+    required = {"Type", "Filter", "TRUTH.TOTAL", "TRUTH.TP", "TRUTH.FN", "QUERY.TOTAL", "QUERY.TP", "QUERY.FP", "QUERY.UNK", "FP.gt", "FP.al"}
     try:
         with path.open("r", encoding="utf-8", newline="") as handle:
             reader = csv.DictReader(handle)
@@ -160,6 +160,8 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                 query_tp = _integer(row, "QUERY.TP", row_number)
                 fp = _integer(row, "QUERY.FP", row_number)
                 query_unknown = _integer(row, "QUERY.UNK", row_number)
+                genotype_mismatches = _integer(row, "FP.gt", row_number)
+                allele_mismatches = _integer(row, "FP.al", row_number)
                 if truth_total != tp + fn:
                     raise ConcordanceError(f"hap.py summary row {row_number} truth counts do not reconcile.")
                 precision_denominator = query_tp + fp
@@ -178,6 +180,9 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                     "false_negative": fn,
                     "false_positive": fp,
                     "query_unknown": query_unknown,
+                    "genotype_mismatches": genotype_mismatches,
+                    "allele_mismatches": allele_mismatches,
+                    "fraction_not_assessed": round(query_unknown / query_total, 6) if query_total else None,
                     "truth_total": truth_total,
                     "query_total": query_total,
                     "truth_positive_denominator": truth_total,
