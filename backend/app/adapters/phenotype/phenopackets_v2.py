@@ -91,27 +91,31 @@ def _collect_loss_warnings(
             })
         elif status == "EXCLUDED":
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "phenotype_status",
                 "reason": "Phenopackets v2 excluded=true cannot distinguish SIRALOOM EXCLUDED from ABSENT.",
             })
         attributes = _value(row, "clinical_attributes", {}) or {}
-        for field in ("laterality", "anatomical_site", "temporal_pattern", "episode_frequency"):
-            if attributes.get(field) is not None:
+        supported_attributes = {
+            "onset_age_iso8601", "resolution_age_iso8601", "severity_hpo_id",
+            "modifier_hpo_ids", "clinical_course_hpo_id",
+        }
+        for field, value in attributes.items():
+            if value is not None and field not in supported_attributes:
                 warnings.append({
-                    "observation_id": observation_id,
-                    "field": field,
-                    "reason": f"{field} has no semantically equivalent PhenotypicFeature v2 field.",
+                    "observation_ref": observation_ref,
+                    "field": f"clinical_attributes.{field}",
+                    "reason": f"{field} has no semantically equivalent PhenotypicFeature v2 field and is retained in the SIRALOOM sidecar.",
                 })
-        if _value(row, "onset") and not attributes.get("onset_age_iso8601"):
+        if _value(row, "onset"):
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "onset",
                 "reason": "Free-text onset cannot be converted to a Phenopackets TimeElement without interpretation.",
             })
-        if _value(row, "severity") and not attributes.get("severity_hpo_id"):
+        if _value(row, "severity"):
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "severity",
                 "reason": "Free-text severity is not an ontology-coded Phenopackets severity.",
             })
@@ -131,20 +135,45 @@ def _collect_loss_warnings(
             resolution = related_terms.get(str(term_id), {})
             if resolution.get("status") not in {"CURRENT", "ALTERNATE_ID"} or not resolution.get("canonical_id"):
                 warnings.append({
-                    "observation_id": observation_id,
+                    "observation_ref": observation_ref,
                     "field": "related_hpo_term_resolution",
                     "reason": f"Related HPO term {term_id} is not resolved as CURRENT or ALTERNATE_ID and is omitted from the Phenopackets feature.",
                 })
+        if _value(row, "source"):
+            warnings.append({
+                "observation_ref": observation_ref,
+                "field": "source",
+                "reason": "The SIRALOOM phenotype source assertion has no direct Phenopackets v2 field and is retained in the sidecar.",
+            })
+        if _value(row, "observed_at"):
+            warnings.append({
+                "observation_ref": observation_ref,
+                "field": "observed_at",
+                "reason": "PhenotypicFeature v2 does not carry the SIRALOOM observation timestamp; it is retained in the sidecar.",
+            })
+        if _value(row, "record_fingerprint"):
+            warnings.append({
+                "observation_ref": observation_ref,
+                "field": "record_fingerprint",
+                "reason": "The SIRALOOM source-record fingerprint is retained in the sidecar, not the base Phenopacket.",
+            })
+        resolution_payload = _value(row, "ontology_resolution", {}) or {}
+        if resolution_payload:
+            warnings.append({
+                "observation_ref": observation_ref,
+                "field": "ontology_resolution_detail",
+                "reason": "The complete term-resolution decision and resource qualification lineage are retained in the sidecar; Phenopackets carries only the resolved ontology term and resource release.",
+            })
         if _value(row, "evidence", {}) or {}:
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "evidence",
                 "reason": "SIRALOOM evidence payload is not mapped without an explicitly supported ECO code and reference.",
             })
         primary = _term_resolution(row)
         if primary.get("status") not in {"CURRENT", "ALTERNATE_ID"} or not primary.get("canonical_id"):
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "ontology_term_resolution",
                 "reason": "The submitted HPO identifier is not resolved as CURRENT or ALTERNATE_ID; it is exported unchanged and must not be treated as ontology-validated.",
             })
@@ -155,7 +184,7 @@ def _collect_loss_warnings(
             or _hpo_version_iri(resource.get("ontology_release")) is None
         ):
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "ontology_provenance",
                 "reason": "No pinned HPO release is recorded; the submitted HPO identifier is exported without a release claim.",
             })
