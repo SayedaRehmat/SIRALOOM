@@ -16,7 +16,6 @@ import math
 import os
 import platform
 import re
-import shutil
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -164,6 +163,7 @@ def run_concordance(
     engine: str = "xcmp",
     threads: int = 4,
     target_regions: Path | None = None,
+    stratification_tsv: Path | None = None,
     pass_only: bool = False,
     timeout_seconds: int = 86400,
 ) -> dict[str, Any]:
@@ -177,6 +177,8 @@ def run_concordance(
         raise ConcordanceError("engine must be xcmp or vcfeval.")
     if threads < 1 or timeout_seconds < 1:
         raise ConcordanceError("threads and timeout_seconds must be positive.")
+    if assay in {"WES", "PANEL"} and target_regions is None:
+        raise ConcordanceError("WES and PANEL comparisons require the assay target BED.")
 
     inputs: dict[str, Path] = {
         "truth_vcf": _regular_file(truth_vcf, "Truth VCF"),
@@ -188,6 +190,8 @@ def run_concordance(
     inputs["reference_fai"] = reference_fai
     if target_regions is not None:
         inputs["target_regions"] = _regular_file(target_regions, "Assay target BED")
+    if stratification_tsv is not None:
+        inputs["stratification_tsv"] = _regular_file(stratification_tsv, "GA4GH stratification TSV")
     validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF")
     validate_single_sample_vcf(inputs["query_vcf"], "Query VCF")
 
@@ -214,17 +218,7 @@ def run_concordance(
     hap_version = version_match.group(0)
 
     prefix = output_dir / "comparison"
-    command = [
-        hap_py,
-        str(inputs["truth_vcf"]),
-        str(inputs["query_vcf"]),
-        "--reference", str(inputs["reference_fasta"]),
-        "--confident-regions", str(inputs["confident_bed"]),
-        "--engine", engine,
-        "--threads", str(threads),
-        "--output", str(prefix),
-    ]
-    # hap.py's documented short options are stable across supported releases.
+    # hap.py documents -f for confident regions and -T for dense assay targets.
     command = [
         hap_py, str(inputs["truth_vcf"]), str(inputs["query_vcf"]),
         "-r", str(inputs["reference_fasta"]),
@@ -237,6 +231,8 @@ def run_concordance(
         command.extend(["--target-regions", str(inputs["target_regions"])])
     if pass_only:
         command.append("--pass-only")
+    if stratification_tsv is not None:
+        command.extend(["--stratification", str(inputs["stratification_tsv"])])
 
     started = datetime.now(UTC)
     try:
@@ -256,6 +252,9 @@ def run_concordance(
 
     summary_path = Path(str(prefix) + SUMMARY_SUFFIX)
     metrics = parse_happy_summary(summary_path)
+    extended_path = Path(str(prefix) + ".extended.csv")
+    if stratification_tsv is not None and not extended_path.is_file():
+        raise ConcordanceError("Stratification was requested but hap.py did not produce extended.csv.")
     hashes_after = {name: sha256_file(path) for name, path in inputs.items()}
     if hashes_before != hashes_after:
         raise ConcordanceError("One or more benchmark inputs changed during execution.")
@@ -289,6 +288,9 @@ def run_concordance(
         "metrics": metrics,
         "source_artifacts": {
             "hap_py_summary": summary_path.name,
+            "hap_py_summary_sha256": sha256_file(summary_path),
+            "hap_py_extended": extended_path.name if extended_path.is_file() else None,
+            "hap_py_extended_sha256": sha256_file(extended_path) if extended_path.is_file() else None,
             "hap_py_log": log_path.name,
         },
         "acceptance_boundary": (
@@ -322,6 +324,7 @@ def main() -> int:
     parser.add_argument("--engine", choices=("xcmp", "vcfeval"), default="xcmp")
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--target-regions", type=Path)
+    parser.add_argument("--stratification-tsv", type=Path)
     parser.add_argument("--pass-only", action="store_true")
     parser.add_argument("--timeout-seconds", type=int, default=86400)
     args = parser.parse_args()
@@ -333,6 +336,7 @@ def main() -> int:
             caller=args.caller, caller_version=args.caller_version,
             output_dir=args.output_dir, hap_py=args.hap_py, engine=args.engine,
             threads=args.threads, target_regions=args.target_regions,
+            stratification_tsv=args.stratification_tsv,
             pass_only=args.pass_only, timeout_seconds=args.timeout_seconds,
         )
     except Exception as exc:
