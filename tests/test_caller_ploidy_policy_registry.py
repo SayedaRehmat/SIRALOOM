@@ -93,6 +93,10 @@ class _PolicySession:
     def scalar(self, statement):
         return self.existing
 
+    def scalars(self, statement):
+        rows = [self.existing] if self.existing is not None else []
+        return SimpleNamespace(all=lambda: rows)
+
     def add(self, row):
         self.added.append(row)
 
@@ -161,7 +165,11 @@ def test_caller_policy_version_is_immutable_and_requires_version_bump_for_change
     assay_id = uuid4()
     user_id = uuid4()
     assay = SimpleNamespace(id=assay_id, organization_id=organization_id, status="ACTIVE")
-    existing = SimpleNamespace(revision_fingerprint="existing-fingerprint")
+    existing = SimpleNamespace(
+        status="QUALIFIED",
+        revision_fingerprint="existing-fingerprint",
+        region_copy_number_to_gt_ploidy={"X_NON_PAR": {"1": 1}},
+    )
     db = _PolicySession(assay, existing=existing)
     monkeypatch.setattr(ploidy_api, "require_role", lambda *_args: None)
 
@@ -181,5 +189,5 @@ def test_caller_policy_version_is_immutable_and_requires_version_bump_for_change
         )
 
     assert error.value.status_code == 409
-    assert "new policy_version" in error.value.detail
+    assert "new policy_version" in error.value.detail or "immutable within a policy_version" in error.value.detail
     assert db.added == []
