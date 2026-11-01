@@ -1273,6 +1273,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     closed_chroms: set[str] = set()
     last_position_on_chrom: int | None = None
     contig_lengths = declared_vcf_contig_lengths(path)
+    contig_md5s = declared_vcf_contig_md5s(path)
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -1785,6 +1786,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
+        "declared_contig_md5s": contig_md5s,
     }
 
 
@@ -1801,6 +1803,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
     checked_breakend_mates = 0
     telomere_records = 0
     declared_contig_lengths = declared_vcf_contig_lengths(path)
+    declared_contig_md5s = declared_vcf_contig_md5s(path)
     try:
         with FastaReference(reference_fasta) as reference, _open(path) as handle:
             for contig, declared_length in declared_contig_lengths.items():
@@ -1815,6 +1818,26 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     raise StrictVCFValidationError(
                         f"VCF declares contig {contig!r} length {declared_length}, but the selected reference length is {reference_length}",
                         code="VCF_CONTIG_LENGTH_MISMATCH",
+                    )
+            for contig, expected_md5 in declared_contig_md5s.items():
+                try:
+                    reference_length = reference.contig_length(contig)
+                except ReferenceError as exc:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {contig!r} with an MD5 declaration is absent from the selected reference",
+                        code="REFERENCE_CONTIG_MISMATCH",
+                    ) from exc
+                digest = hashlib.md5(usedforsecurity=False)
+                for start in range(0, reference_length, 1_000_000):
+                    sequence = reference.fetch(contig, start, min(start + 1_000_000, reference_length))
+                    canonical_sequence = "".join(
+                        character for character in sequence if 33 <= ord(character) <= 126
+                    ).upper()
+                    digest.update(canonical_sequence.encode("ascii"))
+                if digest.hexdigest() != expected_md5:
+                    raise StrictVCFValidationError(
+                        f"VCF contig {contig!r} MD5 does not match the selected reference sequence",
+                        code="VCF_CONTIG_MD5_MISMATCH",
                     )
             fileformat: str | None = None
             for line_no, raw in enumerate(handle, 1):
