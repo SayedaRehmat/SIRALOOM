@@ -190,6 +190,9 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
     iteration_metrics = report["runtime"]["stages"]["selected_sample_iteration"]
     assert iteration_metrics["wall_seconds"] >= 0
     assert iteration_metrics["python_process_cpu_seconds"] >= 0
+    assert iteration_metrics["throughput_record_basis"] == "selected_sample_normalized_records"
+    assert iteration_metrics["throughput_record_count"] == 2
+    assert "records_per_second" in iteration_metrics
     assert "child_process_cpu_seconds" in iteration_metrics
     assert "largest_child_peak_rss_mb_after_stage" in iteration_metrics
     assert sample_name not in serialized
