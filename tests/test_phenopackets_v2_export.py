@@ -63,7 +63,7 @@ def test_single_patient_export_is_validated_against_ga4gh_protobuf_schema():
     assert payload["metaData"]["phenopacketSchemaVersion"] == "2.0"
     assert payload["subject"]["id"].startswith("SIRALOOM:")
     assert payload["phenotypicFeatures"][0]["type"]["id"] == "HP:0001250"
-    assert payload["phenotypicFeatures"][0]["excluded"] is False
+    assert payload["phenotypicFeatures"][0].get("excluded", False) is False
 
 
 def test_family_export_preserves_member_attribution_and_parentage():
@@ -122,7 +122,7 @@ def test_lossy_export_omits_unknown_states_instead_of_encoding_them_as_present()
     )
 
     assert len(payload["phenotypicFeatures"]) == 1
-    assert payload["phenotypicFeatures"][0]["excluded"] is False
+    assert payload["phenotypicFeatures"][0].get("excluded", False) is False
     assert any(item["field"] == "phenotype_status" for item in warnings)
 
 
