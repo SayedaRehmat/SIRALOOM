@@ -579,7 +579,18 @@ def _pedigree_export_sidecar(
     relationships: list[PedigreeRelationship],
 ) -> dict[str, Any]:
     identifiers = {str(member.id): member.member_identifier for member in members}
+    consanguinity_values = []
+    for source in (
+        [member.metadata_json or {} for member in members]
+        + [relationship.metadata_json or {} for relationship in relationships]
+    ):
+        if "consanguinous_parents" in source:
+            consanguinity_values.append(source["consanguinous_parents"])
+    consanguinous_parents = consanguinity_values[0] if consanguinity_values else None
     return {
+        "consanguinous_parents": (
+            consanguinous_parents if consanguinous_parents is not None else "NOT_RECORDED"
+        ),
         "members": [
             {
                 "member_identifier": member.member_identifier,
