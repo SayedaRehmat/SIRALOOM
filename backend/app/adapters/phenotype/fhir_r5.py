@@ -489,7 +489,6 @@ def build_fhir_r5_bundle(
     # Preserve the directed parent-child graph. FHIR RelatedPerson describes
     # each relative in relation to the proband, so explicit relative-to-relative
     # links use named SIRALOOM extensions rather than being discarded.
-    by_member_id = {str(_get(member, "id")): member for member in members}
     resources_by_member = {
         str(_get(member, "id")): (
             patient if str(_get(member, "id")) == patient_id
