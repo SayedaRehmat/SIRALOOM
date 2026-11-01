@@ -45,9 +45,9 @@ Required semantic elements:
 | `hpo_id` / `canonical_hpo_id` | `PhenotypicFeature.type` (`OntologyClass.id`) | Preserve submitted ID locally; emit canonical ID only when resolution policy permits |
 | `label` | `PhenotypicFeature.description` / ontology label | Free text supplements the coded type; it is not a replacement for the ontology term |
 | `phenotype_status` | `PhenotypicFeature.excluded` plus a SIRALOOM extension | `ABSENT`/`EXCLUDED` can map to excluded=true while retaining their distinction locally; `UNKNOWN` and `NOT_ASSESSED` must never be converted to excluded=true |
-| `severity_hpo_id` (planned extension) | `PhenotypicFeature.severity` | Must be an ontology-coded severity concept; free-text severity alone is not equivalent |
-| `modifier_hpo_ids` | `PhenotypicFeature.modifiers` | Each modifier is a separately resolved ontology class |
-| onset/resolution time (structured) | `PhenotypicFeature.onset` / `resolution` (`TimeElement`) | Prefer the Phenopackets time representation; preserve source wording where supplied |
+| `clinical_attributes.severity_hpo_id` | `PhenotypicFeature.severity` | Must resolve to an ontology-coded severity concept; free-text severity remains supplementary |
+| `clinical_attributes.modifier_hpo_ids` | `PhenotypicFeature.modifiers` | Each modifier is a separately resolved ontology class |
+| `clinical_attributes.onset_age_iso8601` / `resolution_age_iso8601` | `PhenotypicFeature.onset` / `resolution` (`TimeElement`) | Stored as ISO 8601 durations; preserve source wording where supplied |
 | `evidence` | `PhenotypicFeature.evidence` | Emit structured Evidence only when its evidence type/reference is known; do not invent evidence codes |
 | `subject_member_id` | `Family.proband` / `Family.relatives` / pedigree linkage | A relative's phenotype is scoped to that relative, not to the proband |
 | case specimens and sample mapping | `Biosample` and family/pedigree file linkage | Preserve the exact specimen-to-member relationship |
