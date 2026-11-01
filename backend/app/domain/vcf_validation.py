@@ -6,6 +6,11 @@ import re
 from math import comb, isnan
 from pathlib import Path
 
+from backend.app.domain.sex_chromosome_regions import (
+    classify_sex_chromosome_interval,
+    normalize_human_reference_build,
+)
+
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
@@ -1389,7 +1394,12 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
+def validate_vcf_strict(
+    path: str | Path,
+    *,
+    reference_contigs: set[str] | None = None,
+    reference_build: str | None = None,
+) -> dict:
     fileformat: str | None = None
     chrom_header: list[str] | None = None
     found_header = False
@@ -1421,6 +1431,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     last_position_on_chrom: int | None = None
     contig_lengths = declared_vcf_contig_lengths(path)
     contig_md5s = declared_vcf_contig_md5s(path)
+    normalized_reference_build = (
+        normalize_human_reference_build(reference_build) if reference_build is not None else None
+    )
+    sex_chromosome_region_counts: dict[str, int] = {}
 
     with _open(path) as fh:
         for line_no, raw in enumerate(fh, 1):
@@ -1557,6 +1571,14 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     ):
                         base_modification_format_fields.add(format_key)
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
+            if normalized_reference_build is not None and _pos > 0 and _chrom in {"X", "Y", "chrX", "chrY"}:
+                region = classify_sex_chromosome_interval(
+                    _chrom,
+                    _pos,
+                    _pos + len(fields[3]) - 1,
+                    normalized_reference_build,
+                )
+                sex_chromosome_region_counts[region] = sex_chromosome_region_counts.get(region, 0) + 1
             if fileformat == "VCFv4.5" and _pos > 0:
                 _validate_vcf45_reference_block_coverage(
                     fields,
@@ -2004,6 +2026,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT_OR_EXPLICIT_ALIAS" if reference_contigs is not None else "NOT_CHECKED",
+        "sex_chromosome_region_assessment": {
+            "reference_build": normalized_reference_build,
+            "record_counts": dict(sorted(sex_chromosome_region_counts.items())),
+            "ploidy_validation": "NOT_APPLIED_SAMPLE_PLOIDY_AND_CALLER_POLICY_REQUIRED",
+        } if normalized_reference_build is not None else None,
         "declared_contig_md5s": contig_md5s,
     }
 
