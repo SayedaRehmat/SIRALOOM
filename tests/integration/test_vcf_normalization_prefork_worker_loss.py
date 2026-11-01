@@ -15,6 +15,7 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.vcf_tools import route_vcf_records
 from backend.app.infrastructure.db.models import (
     Analysis,
     Artifact,
@@ -79,6 +80,10 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         encoding="utf-8",
         newline="\n",
     )
+    routing = route_vcf_records(source_vcf, tmp_path / "routed")
+    assert routing["sequence_records"] == 1
+    assert routing["record_reconciliation"]["balanced"] is True
+    routed_source_vcf = Path(routing["sequence_path"])
     first_output = tmp_path / "normalized-attempt-1.vcf.gz"
     replay_output = tmp_path / "normalized-attempt-2.vcf.gz"
     artifact_root = tmp_path / "durable-artifacts"
@@ -185,7 +190,7 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
             args=[
                 str(analysis_id),
                 marker_prefix,
-                str(source_vcf),
+                str(routed_source_vcf),
                 str(reference),
                 str(first_output),
                 str(replay_output),
@@ -219,10 +224,17 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
         assert workflow_result["step_status"] == StepStatus.SUCCEEDED.value
         assert workflow_result["step_error_code"] is None
         assert workflow_result["recovery"] == "CELERY_REDELIVERY"
-        assert workflow_result["checkpoint"] == "normalized-artifact-committed"
+        assert workflow_result["checkpoint"] == "normalized-artifact-pair-committed"
         assert workflow_result["artifact_count"] == 1
+        assert workflow_result["index_artifact_count"] == 1
         assert workflow_result["replayed_bytes_match"] is True
+        assert workflow_result["replayed_index_bytes_match"] is True
         assert workflow_result["normalization_tool_version"] == "bcftools 1.24"
+        assert workflow_result["source_child_reconciliation"]["status"] == "VALIDATED"
+        assert workflow_result["source_child_reconciliation"]["balanced"] is True
+        assert workflow_result["source_child_reconciliation"]["normalized_child_records"] == 1
+        assert workflow_result["index_validation"]["indexed_query_records_verified"] == 1
+        assert workflow_result["index_validation"]["indexed_query_contigs_verified"] == 1
         assert workflow_result["normalized_record"][1] == "1"
         assert workflow_result["normalized_record"][3:5] == ["A", "AA"]
 
@@ -236,6 +248,10 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "NORMALIZED_VCF",
             )).all()
+            index_rows = db.scalars(select(Artifact).where(
+                Artifact.analysis_id == analysis_id,
+                Artifact.artifact_type == "VCF_INDEX",
+            )).all()
             recovery_events = db.scalars(select(AuditEvent).where(
                 AuditEvent.analysis_id == analysis_id,
                 AuditEvent.event_type == "WORKFLOW_WORKER_RECOVERY",
@@ -243,8 +259,13 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
             assert analysis.status == AnalysisStatus.RUNNING
             assert step is not None and step.status == StepStatus.SUCCEEDED
             assert len(artifact_rows) == 1
+            assert len(index_rows) == 1
             assert artifact_rows[0].id == UUID(workflow_result["artifact_id"])
             assert artifact_rows[0].sha256 == workflow_result["artifact_sha256"]
+            assert index_rows[0].id == UUID(workflow_result["index_artifact_id"])
+            assert index_rows[0].sha256 == workflow_result["index_artifact_sha256"]
+            assert artifact_rows[0].paired_artifact_id == index_rows[0].id
+            assert index_rows[0].paired_artifact_id == artifact_rows[0].id
             assert len(recovery_events) == 1
             assert recovery_events[0].payload["recovered_steps"] == ["normalize"]
 
