@@ -474,19 +474,15 @@ def build_fhir_r5_bundle(
                 ))
             resources.append(related)
             if relationship:
-                sex = str(_get(member, "sex") or "").upper()
-                gender = {"MALE": "male", "FEMALE": "female", "OTHER_SEX": "other"}.get(sex, "unknown")
                 resources.append({
                     "resourceType": "FamilyMemberHistory",
                     "id": str(uuid5(NAMESPACE_URL, f"siraloom:fhir-r5:family-member-history:{relative_id}")),
                     "status": "partial",
                     "patient": {"reference": f"Patient/{patient_id}"},
                     "relationship": {"text": str(relationship)},
-                    "sex": {
-                        "coding": [_coding("http://hl7.org/fhir/administrative-gender", gender)]
-                    },
                     "extension": [
-                        _extension("family-affected-status", "valueCode", str(_get(member, "affected_status", "UNKNOWN")))
+                        _extension("family-affected-status", "valueCode", str(_get(member, "affected_status", "UNKNOWN"))),
+                        _extension("pedigree-sex", "valueCode", str(_get(member, "sex", "UNKNOWN"))),
                     ],
                 })
 
@@ -524,8 +520,8 @@ def build_fhir_r5_bundle(
                 "url": f"{EXTENSION_BASE}/pedigree-relationship-metadata",
                 "extension": [
                     _sub_extension("relationship-type", "valueCode", "PARENT_CHILD"),
-                    _sub_extension("parent-member", "valueString", str(_get(by_member_id[parent_id], "member_identifier"))),
-                    _sub_extension("child-member", "valueString", str(_get(by_member_id[child_id], "member_identifier"))),
+                    _sub_extension("parent-member", "valueReference", {"reference": member_references[parent_id]}),
+                    _sub_extension("child-member", "valueReference", {"reference": member_references[child_id]}),
                     _sub_extension(
                         "metadata",
                         "valueString",
