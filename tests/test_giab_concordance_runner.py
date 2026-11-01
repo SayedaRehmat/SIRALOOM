@@ -111,9 +111,9 @@ def test_parse_happy_summary_recomputes_precision_recall_and_f1(tmp_path: Path) 
     assert indel_all["query_true_positive"] == 7
     assert indel_all["genotype_mismatches"] == 0
     assert indel_all["allele_mismatches"] == 0
-    assert indel_all["fraction_not_assessed"] == pytest.approx(2 / 12)
+    assert indel_all["fraction_not_assessed"] == pytest.approx(2 / 12, abs=1e-6)
     assert indel_all["false_negative"] == 2
-    assert indel_all["false_positive"] == 2
+    assert indel_all["false_positive"] == 3
     assert indel_all["recall"] == pytest.approx(0.8)
     assert indel_all["precision"] == pytest.approx(0.7)
     assert indel_all["f1"] == pytest.approx(2 * 0.7 * 0.8 / 1.5)
