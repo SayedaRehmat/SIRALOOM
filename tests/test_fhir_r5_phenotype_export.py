@@ -86,6 +86,17 @@ def test_fhir_r5_rejects_timezone_naive_clinical_timestamps_instead_of_assuming_
         raise AssertionError("FHIR export must not invent a timezone for a clinical timestamp.")
 
 
+def test_fhir_r5_bundle_includes_the_code_system_for_excluded_findings():
+    bundle = build_fhir_r5_bundle(
+        case=_case(),
+        phenotype_observations=[_observation(status="EXCLUDED")],
+    )
+    resources = _resources(bundle)
+    code_system = next(item for item in resources if item["resourceType"] == "CodeSystem")
+    assert code_system["url"] == "https://siraloom.org/fhir/CodeSystem/phenotype-observation-status"
+    assert code_system["concept"][0]["code"] == "EXCLUDED"
+
+
 def test_fhir_r5_preserves_absent_excluded_unknown_and_not_assessed_semantics():
     rows = [
         _observation(status="ABSENT"),
@@ -130,8 +141,10 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     assert proband_observation["subject"]["reference"] == f"Patient/{proband.id}"
     assert relative_observation["subject"]["reference"] == f"Patient/{proband.id}"
     assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{mother.id}"
-    assert any(item["resourceType"] == "FamilyMemberHistory" for item in resources)
+    family_history = next(item for item in resources if item["resourceType"] == "FamilyMemberHistory")
+    assert "sex" not in family_history
     patient = next(item for item in resources if item["resourceType"] == "Patient")
+    assert "gender" not in patient
     consanguinity = next(
         item for item in patient["extension"]
         if item["url"].endswith("/consanguinity-assessment")
