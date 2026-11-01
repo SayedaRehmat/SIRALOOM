@@ -541,7 +541,7 @@ def inspect_vcf_compression(path: str | Path) -> dict:
     try:
         with vcf_path.open("rb") as handle:
             first_header = handle.read(12)
-            if len(first_header) < 10 or first_header[:3] != b"\\x1f\\x8b\\x08":
+            if len(first_header) < 10 or first_header[:3] != b"\x1f\x8b\x08":
                 raise VCFToolError(
                     f"Compressed VCF has an invalid gzip header: {vcf_path.name}"
                 )
@@ -589,7 +589,7 @@ def inspect_vcf_compression(path: str | Path) -> dict:
                 fixed = handle.read(12)
                 if not fixed:
                     break
-                if len(fixed) != 12 or fixed[:3] != b"\\x1f\\x8b\\x08" or not (fixed[3] & 0x04):
+                if len(fixed) != 12 or fixed[:3] != b"\x1f\x8b\x08" or not (fixed[3] & 0x04):
                     raise VCFToolError(
                         f"BGZF block header is malformed at byte offset {block_start}."
                     )
