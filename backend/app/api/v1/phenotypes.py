@@ -508,6 +508,25 @@ def list_analysis_phenotypes(
 
 
 
+_INTERNAL_EXPORT_KEYS = {
+    "case_id", "analysis_id", "member_id", "parent_member_id", "child_member_id",
+    "specimen_id", "artifact_id", "user_id", "recorded_by", "created_by",
+    "revision_id", "resource_id", "qualification_id", "execution_id", "provider_id",
+}
+
+
+def _sanitize_export_sidecar(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_export_sidecar(item)
+            for key, item in value.items()
+            if key not in _INTERNAL_EXPORT_KEYS
+        }
+    if isinstance(value, list):
+        return [_sanitize_export_sidecar(item) for item in value]
+    return value
+
+
 def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[str, Any] | None:
     if row is None:
         return None
@@ -516,7 +535,7 @@ def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[
     for item in context.get("prior_testing", []) or []:
         if not isinstance(item, dict):
             continue
-        exported = {key: value for key, value in item.items() if key != "artifact_id"}
+        exported = _sanitize_export_sidecar(item)
         if item.get("artifact_id"):
             exported["artifact_reference_present"] = True
         prior_testing.append(exported)
@@ -565,10 +584,10 @@ def _phenotype_export_sidecar(
             "severity": row.severity,
             "observed_at": row.observed_at.isoformat() if row.observed_at else None,
             "created_at": row.created_at.isoformat() if row.created_at else None,
-            "clinical_attributes": row.clinical_attributes or {},
-            "ontology_resolution": row.ontology_resolution or {},
+            "clinical_attributes": _sanitize_export_sidecar(row.clinical_attributes or {}),
+            "ontology_resolution": _sanitize_export_sidecar(row.ontology_resolution or {}),
             "source": row.source,
-            "evidence": row.evidence or {},
+            "evidence": _sanitize_export_sidecar(row.evidence or {}),
         })
     return exported
 
@@ -605,7 +624,7 @@ def _pedigree_export_sidecar(
                 "is_proband": member.is_proband,
                 "sampled": member.sampled,
                 "specimen_reference_present": member.specimen_id is not None,
-                "metadata": member.metadata_json or {},
+                "metadata": _sanitize_export_sidecar(member.metadata_json or {}),
             }
             for member in members
         ],
@@ -614,7 +633,7 @@ def _pedigree_export_sidecar(
                 "parent_member_identifier": identifiers.get(str(row.parent_member_id)),
                 "child_member_identifier": identifiers.get(str(row.child_member_id)),
                 "relationship_type": row.relationship_type,
-                "metadata": row.metadata_json or {},
+                "metadata": _sanitize_export_sidecar(row.metadata_json or {}),
             }
             for row in relationships
         ],
