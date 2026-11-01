@@ -11,6 +11,7 @@ from backend.app.domain.sample_ploidy_policy import (
 
 
 SPECIMEN_ID = str(uuid4())
+_DEFAULT = object()
 
 
 def sample_evidence(**overrides):
@@ -51,10 +52,10 @@ def caller_policy(**overrides):
     return payload
 
 
-def resolve(evidence=None, policy=None, **kwargs):
+def resolve(evidence=_DEFAULT, policy=_DEFAULT, **kwargs):
     return resolve_expected_gt_ploidy(
-        sample_evidence() if evidence is None else evidence,
-        caller_policy() if policy is None else policy,
+        sample_evidence() if evidence is _DEFAULT else evidence,
+        caller_policy() if policy is _DEFAULT else policy,
         specimen_id=kwargs.get("specimen_id", SPECIMEN_ID),
         caller_id=kwargs.get("caller_id", "validated-caller"),
         caller_version=kwargs.get("caller_version", "4.2.1"),
@@ -112,6 +113,7 @@ def test_missing_unverified_conflicted_or_mismatched_evidence_fails_closed(evide
     "payload",
     [
         sample_evidence(schema_version=2),
+        sample_evidence(schema_version=True),
         sample_evidence(specimen_id="not-a-uuid"),
         sample_evidence(reference_build="T2T-CHM13"),
         sample_evidence(region_copy_number={"X_NON_PAR": -1}),
