@@ -223,6 +223,7 @@ def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Pa
         "chr1\t0\t1001\n",
         "chr1\t10\t10\n",
         "track name=confident\n",
+        "track\tname=confident\n",
         "chr1\tzero\t10\n",
     ],
 )
