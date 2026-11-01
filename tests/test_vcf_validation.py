@@ -1988,3 +1988,68 @@ def test_vcf43_plus_breakend_mate_contig_must_follow_sam_reference_name_grammar(
         _validate_record(fields, 1, None, "VCFv4.5")
 
     assert exc.value.code == "VCF_BREAKEND_ALT_INVALID"
+
+
+def test_vcf45_meta_values_list_is_parsed_without_splitting_inner_commas(tmp_path: Path):
+    path = tmp_path / "vcf45-meta-list.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##META=<ID=Assay,Type=String,Number=.,Values=[WES, WGS]>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+
+
+def test_vcf45_arbitrary_structured_header_requires_unique_id(tmp_path: Path):
+    missing_id = tmp_path / "vcf45-structured-header-no-id.vcf"
+    write_vcf_with_metadata(
+        missing_id,
+        ["##CUSTOM=<Name=custom>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(missing_id)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+    duplicate_id = tmp_path / "vcf45-structured-header-duplicate-id.vcf"
+    write_vcf_with_metadata(
+        duplicate_id,
+        ["##CUSTOM=<ID=custom>", "##CUSTOM=<ID=custom>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(duplicate_id)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_vcf45_pedigree_structured_header_requires_id(tmp_path: Path):
+    path = tmp_path / "vcf45-pedigree-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##PEDIGREE=<ID=child1,Original=father1>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+
+
+def test_vcf45_structured_header_rejects_attributes_without_values(tmp_path: Path):
+    path = tmp_path / "vcf45-malformed-structured-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##contig=<ID=chr1,length>"],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
