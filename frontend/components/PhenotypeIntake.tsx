@@ -6,6 +6,7 @@ type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = { caseId: string; apiFetch: ApiFetch };
 type PhenotypeRow = {
   phenotype_id: string;
+  analysis_id?: string | null;
   hpo_id: string;
   canonical_hpo_id?: string | null;
   label?: string | null;
@@ -506,7 +507,8 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
                     {row.evidence && Object.keys(row.evidence).length > 0 && <details><summary>Source evidence</summary><pre>{JSON.stringify(row.evidence, null, 2)}</pre></details>}
                     {(row.record_lifecycle_status ?? "ACTIVE") === "SUPERSEDED" && <small>Superseded by {row.replacement_observation_id} · {row.amendment_reason}</small>}
                     {(row.record_lifecycle_status ?? "ACTIVE") === "RETRACTED" && <small>Retracted · {row.amendment_reason}</small>}
-                    {(row.record_lifecycle_status ?? "ACTIVE") === "ACTIVE" && (
+                    {row.analysis_id && <small>Analysis-scoped observation · immutable within its historical analysis record.</small>}
+                    {(row.record_lifecycle_status ?? "ACTIVE") === "ACTIVE" && !row.analysis_id && (
                       <div className="actions-row">
                         <button type="button" className="secondary" onClick={() => startCorrection(row)} disabled={saving}>Correct / supersede</button>
                         <button type="button" className="secondary" onClick={() => { setRetractingPhenotypeId(row.phenotype_id); setRetractionReason(""); }} disabled={saving}>Retract</button>
