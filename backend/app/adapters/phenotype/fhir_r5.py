@@ -417,7 +417,7 @@ def _validate_bundle(payload: dict[str, Any]) -> dict[str, Any]:
         bundle = Bundle.model_validate(payload)
     except Exception as exc:
         raise FHIRExportError(f"FHIR R5 Bundle validation failed: {exc}") from exc
-    return bundle.model_dump(by_alias=True, exclude_none=True)
+    return bundle.model_dump(mode="json", by_alias=True, exclude_none=True)
 
 
 def build_fhir_r5_bundle(
