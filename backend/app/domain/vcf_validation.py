@@ -663,7 +663,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
-def _structured_header_id(line: str, kind: str, line_no: int) -> str:
+def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: bool = True) -> str:
     """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
@@ -735,12 +735,12 @@ def _structured_header_id(line: str, kind: str, line_no: int) -> str:
             )
         if key == "ID":
             identifiers.append(value)
-    if len(identifiers) != 1 or not identifiers[0]:
+    if (require_id and (len(identifiers) != 1 or not identifiers[0])) or len(identifiers) > 1:
         raise StrictVCFValidationError(
             f"{kind} structured header must contain exactly one non-empty ID at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
-    return identifiers[0]
+    return identifiers[0] if identifiers else ""
 
 
 def _expected_cardinality(
@@ -1414,7 +1414,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
                     or fileformat == "VCFv4.5"
                 ):
-                    identifier = _structured_header_id(line, header_key, line_no)
+                    identifier = _structured_header_id(
+                        line,
+                        header_key,
+                        line_no,
+                        require_id=not (header_key == "PEDIGREE" and fileformat == "VCFv4.5"),
+                    )
                     if (
                         header_key == "contig"
                         and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
@@ -1424,13 +1429,14 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             f"Contig header ID {identifier!r} violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
                             code="VCF_CONTIG_HEADER_INVALID",
                         )
-                    ids_for_type = structured_header_ids.setdefault(header_key, set())
-                    if identifier in ids_for_type:
-                        raise StrictVCFValidationError(
-                            f"Duplicate {header_key} ID {identifier!r} at line {line_no}",
-                            code="VCF_HEADER_DEFINITION_INVALID",
-                        )
-                    ids_for_type.add(identifier)
+                    if identifier:
+                        ids_for_type = structured_header_ids.setdefault(header_key, set())
+                        if identifier in ids_for_type:
+                            raise StrictVCFValidationError(
+                                f"Duplicate {header_key} ID {identifier!r} at line {line_no}",
+                                code="VCF_HEADER_DEFINITION_INVALID",
+                            )
+                        ids_for_type.add(identifier)
                 if line.startswith("##fileformat="):
                     if fileformat is not None:
                         raise StrictVCFValidationError("Duplicate ##fileformat header", code="VCF_HEADER_INVALID")
