@@ -68,3 +68,16 @@ def test_download_verified_never_overwrites_existing_asset(tmp_path):
     else:
         raise AssertionError("existing evidence must not be overwritten")
     assert destination.read_bytes() == b"preserved"
+
+
+def test_fai_generation_records_uncompressed_offsets_and_contig_geometry(tmp_path):
+    module = _module()
+    fasta = tmp_path / "reference.fa"
+    fasta.write_bytes(b">chr1 description\nACGT\nTGCA\n>chr2\nAAAA\n")
+    fai = tmp_path / "reference.fa.fai"
+    count = module._write_fai_from_plain_fasta(fasta, fai)
+    assert count == 2
+    assert fai.read_text(encoding="utf-8").splitlines() == [
+        "chr1\t8\t18\t4\t5",
+        "chr2\t4\t33\t4\t5",
+    ]
