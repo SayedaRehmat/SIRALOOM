@@ -213,7 +213,7 @@ def test_non_equivalent_clinical_attributes_are_reported_not_silently_dropped():
         allow_lossy=True,
     )
     assert payload["phenotypicFeatures"]
-    assert any(item["field"] == "episode_frequency" for item in warnings)
+    assert any(item["field"] == "clinical_attributes.episode_frequency" for item in warnings)
 
 
 def test_clinical_intake_assessment_age_is_not_equated_with_last_encounter_age():
