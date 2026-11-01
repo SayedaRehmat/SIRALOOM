@@ -1,0 +1,32 @@
+{
+  "schema_version": "1",
+  "status": "UNCONFIGURED",
+  "acceptance_policy": {
+    "id": "LAB-CONTROLLED-POLICY-ID",
+    "approved_by": "LAB-QUALITY-APPROVER",
+    "effective_date": "YYYY-MM-DD",
+    "criteria": [
+      {
+        "id": "MAX_VALIDATION_WALL_SECONDS",
+        "metric": "runtime.stages.vcf_validation.wall_seconds",
+        "operator": "<=",
+        "threshold": 0
+      }
+    ]
+  },
+  "matrix": [
+    {
+      "id": "WES_CALLER_VERSION_BUILD",
+      "assay": "WES",
+      "caller": "LAB_APPROVED_CALLER_NAME",
+      "caller_version": "LAB_EXACT_CALLER_VERSION",
+      "reference_build": "GRCh38",
+      "vcf": "/controlled/laboratory/path/input.vcf.gz",
+      "vcf_sha256": "REPLACE_WITH_64_HEX_SHA256",
+      "reference_fasta": "/controlled/laboratory/reference/GRCh38.fa",
+      "reference_fasta_sha256": "REPLACE_WITH_64_HEX_SHA256",
+      "sample_name": "CONTROLLED_SAMPLE_IDENTIFIER",
+      "timeout_seconds": 1800
+    }
+  ]
+}
