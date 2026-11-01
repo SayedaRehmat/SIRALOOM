@@ -89,6 +89,7 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
 
     return {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
+        "clinical_context": context,
         "pedigree_context": {
             "members": [
                 {
@@ -151,6 +152,8 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
         raise ValueError("Persisted clinical input snapshot has an unsupported schema")
     if not isinstance(value.get("phenotype_observations"), list):
         raise ValueError("Persisted clinical input snapshot has invalid phenotype observations")
+    if "clinical_context" in value and not isinstance(value["clinical_context"], dict):
+        raise ValueError("Persisted clinical input snapshot has invalid clinical context")
     if "pedigree_context" in value and (
         not isinstance(value["pedigree_context"], dict)
         or not isinstance(value["pedigree_context"].get("members"), list)
