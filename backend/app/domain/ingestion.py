@@ -186,9 +186,9 @@ def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
         return (
             (completed.stderr or completed.stdout or "bcftools rejected the VCF").strip(),
             version_line,
-            htslib_line,
+            detected_htslib_version,
         )
-    return None, version_line, htslib_line
+    return None, version_line, detected_htslib_version
 
 
 def validate_vcf(path: str | Path) -> ValidationResult:
@@ -197,7 +197,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
     fileformat: str | None = None
     bcftools_version: str | None = None
-    htslib_version_line: str | None = None
+    htslib_version: str | None = None
     try:
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
@@ -232,7 +232,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
         strict_profile = validate_vcf_strict(p)
-        bcftools_error, bcftools_version, htslib_version_line = _bcftools_validate(p)
+        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
         if bcftools_error:
             raise VCFValidationError(
                 "VCF structural validation failed in bcftools/htslib: "
@@ -331,7 +331,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "unchecked_format_number_g_fields": strict_profile["unchecked_format_number_g_fields"],
             "bcftools_version": bcftools_version,
             "expected_bcftools_version": settings.bcftools_version,
-            "htslib_version": htslib_version_line,
+            "htslib_version": htslib_version,
             "expected_htslib_version": settings.htslib_version,
             "toolchain_validation_status": "PASS",
         }
@@ -352,7 +352,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             failure_metadata = {
                 "bcftools_version": bcftools_version,
                 "expected_bcftools_version": settings.bcftools_version,
-                "htslib_version": htslib_version_line,
+                "htslib_version": htslib_version,
                 "expected_htslib_version": settings.htslib_version,
                 "toolchain_validation_status": "PASS",
             }
