@@ -17,8 +17,8 @@ POLICY_VERSION = "2.2.0"
 DISPOSITIONS = {"REPORT", "DO_NOT_REPORT", "REVIEW"}
 STATUSES = {"PROPOSED", "FINAL"}
 
-# These artifact classes belong to the separately qualified second product.
-# Their artifact type is itself a reportability blocker; metadata cannot waive it.
+# These artifact classes are outside the fixed first-product SNV/INDEL scope.
+# They are retained for provenance and excluded from first-product interpretation.
 SECOND_PRODUCT_ARTIFACT_REASON_CODES = {
     "CNV_VARIANT_RECORDS": "CNV_PIPELINE_PENDING",
     "STRUCTURAL_VARIANT_RECORDS": "SV_PIPELINE_PENDING",
