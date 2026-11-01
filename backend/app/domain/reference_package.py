@@ -73,6 +73,145 @@ def contigs_from_fai(fai_path: str | Path) -> list[dict[str, int | str]]:
     return entries
 
 
+def validate_fasta_index_consistency(
+    fasta_path: str | Path,
+    fai_path: str | Path,
+) -> list[dict[str, int | str]]:
+    """Verify every FAI offset/line geometry against the actual FASTA byte stream.
+
+    gzip.open transparently reads BGZF's concatenated gzip members, so the same
+    uncompressed FASTA geometry check applies to plain and BGZF-compressed FASTA.
+    """
+    import gzip
+
+    fasta = Path(fasta_path)
+    fai = Path(fai_path)
+    expected: dict[str, tuple[int, int, int, int]] = {}
+    order: list[str] = []
+    for line_no, line in enumerate(fai.read_text(encoding="utf-8").splitlines(), 1):
+        fields = line.split("\\t")
+        if len(fields) < 5:
+            raise ReferencePackageError(
+                f"Malformed FASTA index at line {line_no}.",
+                code="REFERENCE_FAI_INVALID",
+            )
+        try:
+            name = fields[0]
+            length, offset, line_bases, line_width = map(int, fields[1:5])
+        except ValueError as exc:
+            raise ReferencePackageError(
+                f"Non-numeric FASTA index field at line {line_no}.",
+                code="REFERENCE_FAI_INVALID",
+            ) from exc
+        if name in expected or not name or length <= 0 or offset < 0 or line_bases <= 0 or line_width < line_bases:
+            raise ReferencePackageError(
+                f"Invalid or duplicate FASTA index entry at line {line_no}.",
+                code="REFERENCE_FAI_INVALID",
+            )
+        expected[name] = (length, offset, line_bases, line_width)
+        order.append(name)
+
+    observed: list[dict[str, int | str]] = []
+    try:
+        opener = gzip.open if fasta.name.lower().endswith((".gz", ".bgz")) else open
+        with opener(fasta, "rb") as handle:
+            current_name: str | None = None
+            sequence_length = 0
+            sequence_offset = 0
+            first_line_bases = 0
+            first_line_width = 0
+            previous_line_bases: int | None = None
+            for raw_line in handle:
+                if raw_line.startswith(b">"):
+                    if current_name is not None:
+                        if sequence_length <= 0:
+                            raise ReferencePackageError(
+                                f"Reference contig {current_name!r} has no sequence.",
+                                code="REFERENCE_FASTA_INVALID",
+                            )
+                        observed.append({
+                            "name": current_name,
+                            "length": sequence_length,
+                            "offset": sequence_offset,
+                            "line_bases": first_line_bases,
+                            "line_width": first_line_width,
+                        })
+                    header = raw_line[1:].strip().split()
+                    if not header:
+                        raise ReferencePackageError(
+                            "Reference FASTA contains an empty sequence identifier.",
+                            code="REFERENCE_FASTA_INVALID",
+                        )
+                    current_name = header[0].decode("utf-8")
+                    sequence_length = 0
+                    sequence_offset = handle.tell()
+                    first_line_bases = 0
+                    first_line_width = 0
+                    previous_line_bases = None
+                    continue
+                if current_name is None:
+                    raise ReferencePackageError(
+                        "Reference FASTA sequence appears before the first header.",
+                        code="REFERENCE_FASTA_INVALID",
+                    )
+                sequence = raw_line.rstrip(b"\\r\\n")
+                if not sequence or any(base in b" \\t" for base in sequence):
+                    raise ReferencePackageError(
+                        f"Invalid sequence line in reference contig {current_name!r}.",
+                        code="REFERENCE_FASTA_INVALID",
+                    )
+                line_bases = len(sequence)
+                line_width = len(raw_line)
+                if first_line_bases == 0:
+                    first_line_bases = line_bases
+                    first_line_width = line_width
+                elif previous_line_bases != first_line_bases:
+                    raise ReferencePackageError(
+                        f"Inconsistent FASTA line wrapping in contig {current_name!r}.",
+                        code="REFERENCE_FASTA_INVALID",
+                    )
+                previous_line_bases = line_bases
+                sequence_length += line_bases
+            if current_name is not None:
+                if sequence_length <= 0:
+                    raise ReferencePackageError(
+                        f"Reference contig {current_name!r} has no sequence.",
+                        code="REFERENCE_FASTA_INVALID",
+                    )
+                observed.append({
+                    "name": current_name,
+                    "length": sequence_length,
+                    "offset": sequence_offset,
+                    "line_bases": first_line_bases,
+                    "line_width": first_line_width,
+                })
+    except (OSError, EOFError) as exc:
+        raise ReferencePackageError(
+            f"Unable to read reference FASTA or BGZF stream: {exc}",
+            code="REFERENCE_FASTA_INVALID",
+        ) from exc
+
+    if [entry["name"] for entry in observed] != order:
+        raise ReferencePackageError(
+            "FASTA sequence identifiers/order do not match the FAI index.",
+            code="REFERENCE_FAI_MISMATCH",
+        )
+    for entry in observed:
+        indexed = expected[str(entry["name"])]
+        actual = (
+            int(entry["length"]),
+            int(entry["offset"]),
+            int(entry["line_bases"]),
+            int(entry["line_width"]),
+        )
+        if actual != indexed:
+            raise ReferencePackageError(
+                f"FASTA index geometry does not match sequence {entry['name']!r}.",
+                code="REFERENCE_FAI_MISMATCH",
+            )
+    return [{"name": str(entry["name"]), "length": int(entry["length"])} for entry in observed]
+
+
 def contig_manifest_sha256(contigs: list[dict[str, int | str]]) -> str:
     payload = json.dumps(contigs, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
@@ -184,7 +323,7 @@ def validate_reference_package(
             code="REFERENCE_CHECKSUM_MISMATCH",
         )
 
-    contigs = contigs_from_fai(fai_path)
+    contigs = validate_fasta_index_consistency(fasta_path, fai_path)
     actual_contigs_sha = contig_manifest_sha256(contigs)
     expected_contigs_sha = str(metadata.get("contigs_sha256") or "")
     if actual_contigs_sha != expected_contigs_sha:
