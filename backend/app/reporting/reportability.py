@@ -122,7 +122,13 @@ def evaluate_analysis(db: Session, analysis: Analysis) -> list[ReportabilityDeci
         if current and current.classification_id == cls.id and current.status == "FINAL":
             continue
         proposal = propose_reportability(cls)
-        if current and current.classification_id == cls.id and current.status == "PROPOSED":
+        if (
+            current
+            and current.classification_id == cls.id
+            and current.status == "PROPOSED"
+            and current.policy_name == POLICY_NAME
+            and current.policy_version == POLICY_VERSION
+        ):
             continue
         version = (current.version + 1) if current else 1
         decision = ReportabilityDecision(
