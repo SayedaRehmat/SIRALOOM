@@ -1643,9 +1643,19 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
-                if "PSL" in format_keys and "GT" in format_keys:
-                    gt_value = sample_values[format_keys.index("GT")] if format_keys.index("GT") < len(sample_values) else "."
-                    psl_value = sample_values[format_keys.index("PSL")] if format_keys.index("PSL") < len(sample_values) else "."
+                if "PSL" in format_keys:
+                    psl_index = format_keys.index("PSL")
+                    psl_value = sample_values[psl_index] if psl_index < len(sample_values) else "."
+                    gt_value = (
+                        sample_values[format_keys.index("GT")]
+                        if "GT" in format_keys and format_keys.index("GT") < len(sample_values)
+                        else "."
+                    )
+                    if "GT" not in format_keys and psl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PSL requires FORMAT/GT at line {line_no}, sample {sample_index}",
+                            code="VCF_PHASE_SET_INVALID",
+                        )
                     if gt_value not in {"", "."} and psl_value not in {"", "."}:
                         psl_entries = psl_value.split(",")
                         allele_phase = _gt_alleles_with_phase(gt_value, fileformat, line_no)
@@ -1655,6 +1665,32 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         ):
                             raise StrictVCFValidationError(
                                 f"FORMAT/PSL must use '.' for every unphased GT allele at line {line_no}, sample {sample_index}",
+                                code="VCF_PHASE_SET_INVALID",
+                            )
+                    for dependent_key in ("PSO", "PSQ"):
+                        if dependent_key not in format_keys:
+                            continue
+                        dependent_index = format_keys.index(dependent_key)
+                        dependent_value = (
+                            sample_values[dependent_index]
+                            if dependent_index < len(sample_values)
+                            else "."
+                        )
+                        if dependent_value in {"", "."}:
+                            continue
+                        if psl_value in {"", "."}:
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{dependent_key} requires populated FORMAT/PSL at line {line_no}, sample {sample_index}",
+                                code="VCF_PHASE_SET_INVALID",
+                            )
+                        dependent_entries = dependent_value.split(",")
+                        psl_entries = psl_value.split(",")
+                        if len(dependent_entries) == len(psl_entries) and any(
+                            phase_set == "." and dependent_entry != "."
+                            for phase_set, dependent_entry in zip(psl_entries, dependent_entries)
+                        ):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{dependent_key} must use '.' where the corresponding PSL value is missing at line {line_no}, sample {sample_index}",
                                 code="VCF_PHASE_SET_INVALID",
                             )
                 if "PS" in format_keys and "PSL" in format_keys:
