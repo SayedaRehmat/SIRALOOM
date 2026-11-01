@@ -132,7 +132,8 @@ def test_parse_happy_summary_recomputes_precision_recall_and_f1(tmp_path: Path) 
 def test_parse_happy_summary_rejects_non_reconciling_query_counts(tmp_path: Path) -> None:
     path = tmp_path / "query-count-mismatch.summary.csv"
     _summary(path)
-    rows = list(csv.reader(path.open("r", encoding="utf-8", newline="")))
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.reader(handle))
     rows[1][5] = "999"
     with path.open("w", encoding="utf-8", newline="") as handle:
         csv.writer(handle).writerows(rows)
@@ -144,7 +145,8 @@ def test_parse_happy_summary_rejects_non_reconciling_query_counts(tmp_path: Path
 def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tmp_path: Path) -> None:
     path = tmp_path / "mismatch-subcounts.csv"
     _summary(path)
-    rows = list(csv.reader(path.open("r", encoding="utf-8", newline="")))
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.reader(handle))
     rows[1][9] = "4"
     with path.open("w", encoding="utf-8", newline="") as handle:
         csv.writer(handle).writerows(rows)
