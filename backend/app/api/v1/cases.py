@@ -285,6 +285,7 @@ def record_specimen_ploidy_evidence(
         "source_type": evidence.source_type,
         "evidence_reference": evidence.evidence_reference,
         "reviewed_by": str(principal.user_id) if reviewed_at else None,
+        "recorded_by": str(principal.user_id),
     }
     canonical = json.dumps(fingerprint_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
