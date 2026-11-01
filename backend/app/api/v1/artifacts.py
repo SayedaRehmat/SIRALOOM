@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import shutil
 import tempfile
 from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -37,6 +38,10 @@ from backend.app.domain.ingestion import (
     validate_vcf,
 )
 from backend.app.domain.storage_capacity import preflight_upload_capacity
+from backend.app.domain.upload_idempotency import (
+    idempotency_key_sha256,
+    upload_request_fingerprint,
+)
 from backend.app.domain.storage_profiles import (
     StorageProfileError,
     artifact_storage_target_for_organization,
@@ -44,7 +49,12 @@ from backend.app.domain.storage_profiles import (
     artifact_store_for_uri,
 )
 from backend.app.infrastructure.artifacts.compensation import compensate_uncommitted_artifact
+from backend.app.infrastructure.artifacts.upload_intents import (
+    UploadIdempotencyConflict,
+    reserve_upload_intent,
+)
 from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.artifact_upload_intents import ArtifactUploadIntent
 from backend.app.infrastructure.db.models import Artifact, Case, Specimen
 from backend.app.infrastructure.db.session import SessionLocal, get_db
 
@@ -61,6 +71,32 @@ def _compensate_uncommitted_artifact(db: Session, store, artifact_id: UUID, stor
         storage_uri,
         verification_session_factory=SessionLocal,
     )
+
+
+def _artifact_upload_response(artifact: Artifact, case: Case) -> dict:
+    metadata = artifact.metadata_json or {}
+    ingestion = metadata.get("ingestion") or {}
+    return {
+        "artifact_id": str(artifact.id),
+        "sha256": artifact.sha256,
+        "size_bytes": artifact.size_bytes,
+        "artifact_type": artifact.artifact_type,
+        "validation_status": artifact.validation_status,
+        "case_status": case.status,
+        "genome_build": artifact.genome_build,
+        "specimen_id": str(artifact.specimen_id) if artifact.specimen_id else None,
+        "paired_artifact_id": str(artifact.paired_artifact_id) if artifact.paired_artifact_id else None,
+        "validation": metadata.get("validation") or {},
+        "workflow_eligibility": metadata.get("workflow_eligibility"),
+        "capacity_preflight": ingestion.get("capacity_preflight"),
+    }
+
+
+def _artifact_matches_upload_intent(
+    artifact: Artifact, *, request_fingerprint: str
+) -> bool:
+    ingestion = (artifact.metadata_json or {}).get("ingestion") or {}
+    return ingestion.get("upload_request_fingerprint") == request_fingerprint
 
 
 def _store(db: Session, organization_id: UUID):
@@ -153,10 +189,12 @@ def list_case_artifacts(case_id: UUID, db: Session = Depends(get_db), principal:
 @router.post("/cases/{case_id}/artifacts", status_code=201)
 async def upload_artifact(
     case_id: UUID,
+    response: Response,
     file: UploadFile = File(...),
     specimen_id: UUID | None = Form(default=None),
     genome_build: str | None = Form(default=None),
     paired_artifact_id: UUID | None = Form(default=None),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
@@ -165,6 +203,13 @@ async def upload_artifact(
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
+    try:
+        key_sha256 = idempotency_key_sha256(idempotency_key)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "INVALID_IDEMPOTENCY_KEY", "message": str(exc)},
+        ) from exc
     max_bytes = effective_max_upload_bytes(db, principal.organization_id, MAX_BYTES)
 
     filename = _safe_filename(file.filename or "")
@@ -363,13 +408,98 @@ async def upload_artifact(
             }
             build_for_artifact = primary.genome_build
 
+        upload_intent = None
+        request_fingerprint = None
+        if key_sha256 is not None:
+            with staged.open("rb") as source_handle:
+                content_sha256 = hashlib.file_digest(source_handle, "sha256").hexdigest()
+            request_fingerprint = upload_request_fingerprint(
+                content_sha256=content_sha256,
+                size_bytes=digest_size,
+                filename=filename,
+                artifact_type=str(artifact_type),
+                media_type=file.content_type,
+                genome_build=build_for_artifact,
+                specimen_id=specimen_id,
+                paired_artifact_id=paired_artifact_id,
+            )
+            try:
+                upload_intent, _created = reserve_upload_intent(
+                    db,
+                    organization_id=principal.organization_id,
+                    case_id=case_id,
+                    key_sha256=key_sha256,
+                    request_fingerprint=request_fingerprint,
+                )
+            except UploadIdempotencyConflict as exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "IDEMPOTENCY_KEY_REUSED",
+                        "message": str(exc),
+                    },
+                ) from exc
+
+            existing_artifact = db.get(Artifact, upload_intent.artifact_id)
+            if existing_artifact is not None:
+                if not _artifact_matches_upload_intent(
+                    existing_artifact, request_fingerprint=request_fingerprint
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail={
+                            "code": "IDEMPOTENCY_ARTIFACT_MISMATCH",
+                            "message": "The reserved artifact identity does not match this upload request.",
+                        },
+                    )
+                if upload_intent.status != "COMMITTED":
+                    upload_intent.status = "COMMITTED"
+                    db.commit()
+                response.status_code = 200
+                return _artifact_upload_response(existing_artifact, case)
+
+            if upload_intent.status == "RECOVERY_REQUIRED":
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "code": "UPLOAD_RECOVERY_REQUIRED",
+                        "message": "The prior upload reservation requires laboratory administrator reconciliation.",
+                        "retryable": False,
+                    },
+                )
+            validation_metadata["ingestion"]["upload_intent_id"] = str(upload_intent.id)
+            validation_metadata["ingestion"]["upload_request_fingerprint"] = request_fingerprint
+
         store = _store(db, principal.organization_id)
-        artifact = store.put_file(
+        try:
+            artifact = store.put_file(
             db=db, case_id=case_id, analysis_id=None, source_path=staged, filename=filename,
             artifact_type=artifact_type, media_type=file.content_type, genome_build=build_for_artifact,
-            metadata=validation_metadata, specimen_id=specimen_id, paired_artifact_id=paired_artifact_id,
-            validation_status=artifact_validation_status or result.status,
-        )
+                metadata=validation_metadata, specimen_id=specimen_id, paired_artifact_id=paired_artifact_id,
+                validation_status=artifact_validation_status or result.status,
+                artifact_id=upload_intent.artifact_id if upload_intent is not None else None,
+            )
+        except Exception as exc:
+            if upload_intent is None:
+                raise
+            from sqlalchemy.exc import IntegrityError
+
+            if not isinstance(exc, (IntegrityError, FileExistsError)):
+                raise
+            db.rollback()
+            existing_artifact = db.get(Artifact, upload_intent.artifact_id)
+            if existing_artifact is None or not _artifact_matches_upload_intent(
+                existing_artifact, request_fingerprint=request_fingerprint
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "IDEMPOTENT_UPLOAD_CONFLICT",
+                        "message": "The upload identity is already in use or its stored bytes failed verification.",
+                    },
+                ) from exc
+            response.status_code = 200
+            return _artifact_upload_response(existing_artifact, case)
 
         try:
             if kind in {"TBI", "CSI"} and primary:
@@ -426,21 +556,14 @@ async def upload_artifact(
                 output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
                 payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
             )
+            if upload_intent is not None:
+                upload_intent.status = "COMMITTED"
             db.commit()
         except Exception:
             _compensate_uncommitted_artifact(db, store, artifact.id, artifact.storage_uri)
             raise
 
-        return {
-            "artifact_id": str(artifact.id), "sha256": artifact.sha256, "size_bytes": artifact.size_bytes,
-            "artifact_type": artifact.artifact_type, "validation_status": artifact.validation_status,
-            "case_status": case.status, "genome_build": artifact.genome_build,
-            "specimen_id": str(artifact.specimen_id) if artifact.specimen_id else None,
-            "paired_artifact_id": str(artifact.paired_artifact_id) if artifact.paired_artifact_id else None,
-            "validation": validation_metadata["validation"],
-            "workflow_eligibility": validation_metadata.get("workflow_eligibility"),
-            "capacity_preflight": capacity_preflight,
-        }
+        return _artifact_upload_response(artifact, case)
 
 
 @router.get("/artifacts/{artifact_id}/download")
