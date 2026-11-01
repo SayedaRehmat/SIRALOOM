@@ -1747,3 +1747,43 @@ def test_vcf45_ps_and_psl_cannot_both_be_populated_for_one_sample(tmp_path: Path
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+@pytest.mark.parametrize(
+    "gt,psl",
+    [
+        ("0/1", "chr1*2*1,."),
+        ("|0/1", "chr1*2*1,chr1*2*1"),
+    ],
+)
+def test_vcf45_psl_requires_missing_value_for_unphased_gt_alleles(
+    tmp_path: Path, gt: str, psl: str
+):
+    path = tmp_path / "vcf45-psl-unphased-allele.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">'],
+        f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL\\t{gt}:{psl}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+def test_vcf45_psl_accepts_phase_set_only_for_explicitly_phased_gt_allele(tmp_path: Path):
+    path = tmp_path / "vcf45-psl-partially-phased.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">'],
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL\\t|0/1:chr1*2*1,.\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
