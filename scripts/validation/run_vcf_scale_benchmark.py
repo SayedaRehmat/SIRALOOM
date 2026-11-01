@@ -129,7 +129,10 @@ def deployment_resource_snapshot(
             ) else None,
             "current_bytes": _read_cgroup_integer(v1_root / "memory.usage_in_bytes"),
             "peak_bytes": _read_cgroup_integer(v1_root / "memory.max_usage_in_bytes"),
-            "limit_bytes": _read_cgroup_integer(\n                v1_root / "memory.limit_in_bytes",\n                unlimited_sentinel=CGROUP_V1_UNLIMITED_MEMORY_LIMIT,\n            ),
+            "limit_bytes": _read_cgroup_integer(
+                v1_root / "memory.limit_in_bytes",
+                unlimited_sentinel=CGROUP_V1_UNLIMITED_MEMORY_LIMIT,
+            ),
         }
     usage = shutil.disk_usage(output_dir)
     return {
