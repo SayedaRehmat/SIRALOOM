@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import re
 from math import comb
 from pathlib import Path
@@ -59,6 +60,7 @@ PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
 NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
+_CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
 
 VCF45_BASE_MODIFICATION_FLOAT_ALIASES = frozenset({
     "M5mC", "M5hmC", "M5fC", "M5caC", "M5hmU", "M5fU",
@@ -197,6 +199,42 @@ class StrictVCFValidationError(ValueError):
 def _open(path: str | Path):
     p = Path(path)
     return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
+
+
+def declared_vcf_contig_md5s(path: str | Path) -> dict[str, str]:
+    """Return and syntax-check optional SAM/VCF contig MD5 digests."""
+    digests: dict[str, str] = {}
+    with _open(path) as handle:
+        for line_no, raw in enumerate(handle, 1):
+            if raw.startswith("#CHROM"):
+                break
+            if not raw.startswith("##contig=<") or not raw.rstrip("\r\n").endswith(">"):
+                continue
+            line = raw.rstrip("\r\n")
+            body = line[len("##contig=<"):-1]
+            if "md5=" not in body:
+                continue
+            id_match = _CONTIG_ID.search(body)
+            md5_match = _CONTIG_MD5.search(body + ",")
+            if id_match is None or md5_match is None:
+                raise StrictVCFValidationError(
+                    f"Malformed VCF contig MD5 declaration at line {line_no}",
+                    code="VCF_CONTIG_MD5_INVALID",
+                )
+            contig = id_match.group(1) or id_match.group(2)
+            digest = md5_match.group(1)
+            if not re.fullmatch(r"[0-9a-f]{32}", digest):
+                raise StrictVCFValidationError(
+                    f"VCF contig {contig!r} MD5 must be 32 lowercase hexadecimal characters at line {line_no}",
+                    code="VCF_CONTIG_MD5_INVALID",
+                )
+            if contig in digests and digests[contig] != digest:
+                raise StrictVCFValidationError(
+                    f"VCF contig {contig!r} has conflicting MD5 declarations",
+                    code="VCF_CONTIG_MD5_CONFLICT",
+                )
+            digests[contig] = digest
+    return digests
 
 
 def declared_vcf_contig_lengths(path: str | Path) -> dict[str, int]:
