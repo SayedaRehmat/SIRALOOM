@@ -57,6 +57,20 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
     return None
 
 
+def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
+    if field_id == "LEN":
+        return {"Number": "1", "Type": "Integer"}
+    return _reserved_base_modification_format_definition(field_id)
+
+
+def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
+    if field_id == "END":
+        return {"Number": "1", "Type": "Integer"}
+    if field_id == "SVLEN":
+        return {"Number": "A", "Type": "Integer"}
+    return None
+
+
 class StrictVCFValidationError(ValueError):
     def __init__(self, message: str, *, code: str = "VCF_INVALID"):
         super().__init__(message)
@@ -135,6 +149,235 @@ def _info_values(value: str) -> dict[str, str | None]:
         key, separator, raw = item.partition("=")
         result[key] = raw if separator else None
     return result
+
+
+
+def compute_vcf45_record_span(
+    fields: list[str],
+    line_no: int,
+) -> tuple[int, list[tuple[int, int]], str] | None:
+    """Compute VCFv4.5 reference span and sample-specific <*> block lengths."""
+    if len(fields) < 8:
+        return None
+    pos = int(fields[1])
+    ref = fields[3].upper()
+    alts = fields[4].split(",") if fields[4] != "." else []
+    ref_end = pos + len(ref) - 1
+    end_candidates = [ref_end]
+    unknown_span = False
+    sample_lengths: list[tuple[int, int]] = []
+    info_values = _info_values(fields[7])
+
+    raw_end = info_values.get("END")
+    declared_end: int | None = None
+    if raw_end not in {None, "."}:
+        try:
+            declared_end = int(raw_end)
+        except ValueError as exc:
+            raise StrictVCFValidationError(
+                f"INFO/END must be an integer at line {line_no}",
+                code="VCF_END_INVALID",
+            ) from exc
+        if declared_end < ref_end:
+            raise StrictVCFValidationError(
+                f"INFO/END precedes the end of REF at line {line_no}",
+                code="VCF_END_INVALID",
+            )
+
+    raw_svlen = info_values.get("SVLEN")
+    svlen_values = raw_svlen.split(",") if raw_svlen not in {None, "."} else []
+    if svlen_values and len(svlen_values) != len(alts):
+        raise StrictVCFValidationError(
+            f"INFO/SVLEN cardinality must match ALT at line {line_no}",
+            code="VCF_SVLEN_INVALID",
+        )
+
+    wildcard_indexes = {
+        index for index, alt in enumerate(alts, start=1)
+        if alt in {"<*>", "<NON_REF>"}
+    }
+    for alt_index, alt in enumerate(alts):
+        raw_value = svlen_values[alt_index] if svlen_values else None
+        is_symbolic_sv = alt not in {"<*>", "<NON_REF>"} and bool(SYMBOLIC_RE.fullmatch(alt))
+        if not is_symbolic_sv:
+            if raw_value not in {None, "", "."}:
+                raise StrictVCFValidationError(
+                    f"INFO/SVLEN must be missing for non-structural ALT {alt!r} at line {line_no}",
+                    code="VCF_SVLEN_INVALID",
+                )
+            continue
+        if raw_value in {None, "", "."}:
+            if declared_end is None:
+                raise StrictVCFValidationError(
+                    f"Symbolic structural ALT {alt!r} requires SVLEN or END at line {line_no}",
+                    code="VCF_SV_INVALID",
+                )
+            unknown_span = True
+            continue
+        try:
+            svlen = int(raw_value)
+        except ValueError as exc:
+            raise StrictVCFValidationError(
+                f"INFO/SVLEN must contain integers at line {line_no}",
+                code="VCF_SVLEN_INVALID",
+            ) from exc
+        if svlen == 0:
+            raise StrictVCFValidationError(
+                f"INFO/SVLEN must be non-zero for symbolic structural ALT {alt!r} at line {line_no}",
+                code="VCF_SVLEN_INVALID",
+            )
+        end_candidates.append(pos + abs(svlen))
+
+    format_keys = fields[8].split(":") if len(fields) > 8 else []
+    gt_index = format_keys.index("GT") if "GT" in format_keys else None
+    len_index = format_keys.index("LEN") if "LEN" in format_keys else None
+    laa_index = format_keys.index("LAA") if "LAA" in format_keys else None
+
+    def sample_value(values: list[str], index: int | None) -> str:
+        return values[index] if index is not None and index < len(values) else "."
+
+    def is_reference_genotype(values: list[str]) -> bool:
+        if gt_index is None:
+            return False
+        gt = sample_value(values, gt_index)
+        if gt in {"", "."}:
+            return False
+        tokens = _gt_allele_tokens(gt, "VCFv4.5", line_no)
+        return bool(tokens) and all(token == "0" for token in tokens)
+
+    def validate_laa(values: list[str], sample_index: int) -> None:
+        if laa_index is None:
+            return
+        raw_laa = sample_value(values, laa_index)
+        try:
+            local_indexes = set() if raw_laa in {"", "."} else {
+                int(value) for value in raw_laa.split(",")
+            }
+        except ValueError as exc:
+            raise StrictVCFValidationError(
+                f"FORMAT/LAA contains a non-integer ALT index at line {line_no}, sample {sample_index}",
+                code="VCF_LOCAL_ALLELE_INVALID",
+            ) from exc
+        if not wildcard_indexes.intersection(local_indexes):
+            raise StrictVCFValidationError(
+                f"FORMAT/LAA must include <*> when starting a reference block at line {line_no}, sample {sample_index}",
+                code="VCF_GVCF_BLOCK_LAA_INVALID",
+            )
+
+    if len_index is not None and not wildcard_indexes:
+        for sample_index, sample in enumerate(fields[9:], 1):
+            raw_length = sample_value(sample.split(":"), len_index)
+            if raw_length not in {"", "."}:
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN is only valid when ALT contains <*> or <NON_REF> at line {line_no}",
+                    code="VCF_LEN_INVALID",
+                )
+
+    for sample_index, sample in enumerate(fields[9:], 1):
+        values = sample.split(":")
+        raw_length = sample_value(values, len_index)
+        reference_gt = is_reference_genotype(values)
+        if raw_length not in {"", "."}:
+            if not wildcard_indexes:
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN is only valid when ALT contains <*> or <NON_REF> at line {line_no}",
+                    code="VCF_LEN_INVALID",
+                )
+            if not reference_gt:
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN requires a reference GT at line {line_no}, sample {sample_index}",
+                    code="VCF_LEN_GENOTYPE_INVALID",
+                )
+            try:
+                length = int(raw_length)
+            except ValueError as exc:
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN must contain integers at line {line_no}, sample {sample_index}",
+                    code="VCF_LEN_INVALID",
+                ) from exc
+            if length <= 0 or length < len(ref) or length > 2_147_483_647:
+                raise StrictVCFValidationError(
+                    f"FORMAT/LEN must be a positive 32-bit integer at least as long as REF at line {line_no}, sample {sample_index}",
+                    code="VCF_LEN_INVALID",
+                )
+            validate_laa(values, sample_index)
+            sample_lengths.append((sample_index, length))
+            end_candidates.append(pos + length - 1)
+        elif wildcard_indexes and declared_end is not None and reference_gt:
+            # Backwards compatibility: infer a missing sample LEN from INFO/END.
+            length = declared_end - pos + 1
+            if length < len(ref):
+                raise StrictVCFValidationError(
+                    f"INFO/END is shorter than REF for a reference block at line {line_no}, sample {sample_index}",
+                    code="VCF_END_INVALID",
+                )
+            validate_laa(values, sample_index)
+            sample_lengths.append((sample_index, length))
+            unknown_span = True
+
+    if wildcard_indexes and declared_end is not None and len(fields) == 8:
+        unknown_span = True
+
+    computed_end = max(end_candidates)
+    if declared_end is not None:
+        if declared_end < computed_end:
+            raise StrictVCFValidationError(
+                f"INFO/END is shorter than the computed VCFv4.5 reference span at line {line_no}",
+                code="VCF_END_MISMATCH",
+            )
+        if not unknown_span and declared_end != computed_end:
+            raise StrictVCFValidationError(
+                f"INFO/END must equal the computed VCFv4.5 reference span at line {line_no}",
+                code="VCF_END_MISMATCH",
+            )
+        return declared_end, sample_lengths, "INFO_END"
+    return computed_end, sample_lengths, "COMPUTED"
+
+
+def _validate_vcf45_reference_block_coverage(
+    fields: list[str],
+    *,
+    chrom: str,
+    pos: int,
+    active_blocks: dict[int, tuple[str, int]],
+    line_no: int,
+) -> None:
+    """Enforce sample-level missing-call semantics inside preceding <*> blocks."""
+    if not active_blocks:
+        return
+    format_keys = fields[8].split(":") if len(fields) > 8 else []
+    gt_index = format_keys.index("GT") if "GT" in format_keys else None
+    for sample_index, (block_chrom, block_end) in list(active_blocks.items()):
+        if block_chrom != chrom or pos > block_end:
+            del active_blocks[sample_index]
+            continue
+        if gt_index is None:
+            raise StrictVCFValidationError(
+                f"Record inside a preceding <*> block must contain FORMAT/GT at line {line_no}, sample {sample_index}",
+                code="VCF_GVCF_BLOCK_OVERLAP_INVALID",
+            )
+        sample_column = 8 + sample_index
+        if sample_column >= len(fields):
+            raise StrictVCFValidationError(
+                f"Record inside a preceding <*> block is missing sample {sample_index} at line {line_no}",
+                code="VCF_GVCF_BLOCK_OVERLAP_INVALID",
+            )
+        values = fields[sample_column].split(":")
+        gt = values[gt_index] if gt_index < len(values) else "."
+        if gt != ".":
+            raise StrictVCFValidationError(
+                f"Sample {sample_index} must have GT='.' inside its preceding <*> block at line {line_no}",
+                code="VCF_GVCF_BLOCK_OVERLAP_INVALID",
+            )
+        for value_index, key in enumerate(format_keys):
+            if key in {"GT", "LAA"}:
+                continue
+            value = values[value_index] if value_index < len(values) else "."
+            if value not in {"", "."}:
+                raise StrictVCFValidationError(
+                    f"Sample {sample_index} must not provide FORMAT/{key} inside its preceding <*> block at line {line_no}",
+                    code="VCF_GVCF_BLOCK_OVERLAP_INVALID",
+                )
 
 
 def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str | None = None) -> tuple[str, dict[str, str]]:
@@ -243,19 +486,20 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
-    reserved_base_modification = (
-        _reserved_base_modification_format_definition(identifier)
-        if kind == "FORMAT" and fileformat == "VCFv4.5"
-        else None
-    )
-    if reserved_base_modification is not None and (
-        number != reserved_base_modification["Number"]
-        or parsed["Type"] != reserved_base_modification["Type"]
+    reserved_vcf45_definition = None
+    if fileformat == "VCFv4.5":
+        if kind == "FORMAT":
+            reserved_vcf45_definition = _reserved_vcf45_format_definition(identifier)
+        elif kind == "INFO":
+            reserved_vcf45_definition = _reserved_vcf45_info_definition(identifier)
+    if reserved_vcf45_definition is not None and (
+        number != reserved_vcf45_definition["Number"]
+        or parsed["Type"] != reserved_vcf45_definition["Type"]
     ):
         raise StrictVCFValidationError(
-            f"Reserved VCFv4.5 base-modification field {identifier!r} requires "
-            f"Number={reserved_base_modification['Number']} and "
-            f"Type={reserved_base_modification['Type']} at line {line_no}",
+            f"Reserved VCFv4.5 {kind} field {identifier!r} requires "
+            f"Number={reserved_vcf45_definition['Number']} and "
+            f"Type={reserved_vcf45_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     return identifier, {"Number": number, "Type": parsed["Type"]}
@@ -640,13 +884,15 @@ def _validate_record(
         )
     if alts and all(alt in {"<NON_REF>", "<*>"} for alt in alts):
         end_value = info_values.get("END")
-        if end_value is None:
+        vcf45_wildcard_record = fileformat == "VCFv4.5"
+        if end_value in {None, "."} and not vcf45_wildcard_record:
             raise StrictVCFValidationError(f"GVCF reference block requires END at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
-        try:
-            if int(end_value) < pos:
-                raise StrictVCFValidationError(f"GVCF block END precedes POS at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
-        except ValueError as exc:
-            raise StrictVCFValidationError(f"GVCF block END must be an integer at line {line_no}", code="VCF_GVCF_BLOCK_INVALID") from exc
+        if end_value not in {None, "."}:
+            try:
+                if int(end_value) < pos:
+                    raise StrictVCFValidationError(f"GVCF block END precedes POS at line {line_no}", code="VCF_GVCF_BLOCK_INVALID")
+            except ValueError as exc:
+                raise StrictVCFValidationError(f"GVCF block END must be an integer at line {line_no}", code="VCF_GVCF_BLOCK_INVALID") from exc
 
     if len(fields) >= 9:
         fmt = fields[8]
@@ -728,6 +974,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     unchecked_info_number_g_fields: set[str] = set()
     unchecked_format_number_g_fields: set[str] = set()
     base_modification_format_fields: set[str] = set()
+    vcf45_reference_span_records = 0
+    vcf45_max_reference_end = 0
+    vcf45_reference_block_sample_count = 0
+    active_vcf45_reference_blocks: dict[int, tuple[str, int]] = {}
     structured_header_ids: dict[str, set[str]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
@@ -860,6 +1110,14 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     ):
                         base_modification_format_fields.add(format_key)
             _chrom, _pos, alts = _validate_record(fields, line_no, reference_contigs, fileformat, format_definitions)
+            if fileformat == "VCFv4.5" and _pos > 0:
+                _validate_vcf45_reference_block_coverage(
+                    fields,
+                    chrom=_chrom,
+                    pos=_pos,
+                    active_blocks=active_vcf45_reference_blocks,
+                    line_no=line_no,
+                )
             if _chrom != current_chrom:
                 if _chrom in closed_chroms:
                     raise StrictVCFValidationError(
@@ -1003,7 +1261,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.5":
-                        definition = _reserved_base_modification_format_definition(key)
+                        definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
                         if (
                             definition["Number"] == "G"
@@ -1038,6 +1296,24 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
+                        )
+
+            if fileformat == "VCFv4.5" and _pos > 0:
+                record_span = compute_vcf45_record_span(fields, line_no)
+                if record_span is not None:
+                    vcf45_reference_span_records += 1
+                    vcf45_max_reference_end = max(vcf45_max_reference_end, record_span[0])
+                    vcf45_reference_block_sample_count += len(record_span[1])
+                    declared_contig_length = contig_lengths.get(_chrom)
+                    if declared_contig_length is not None and record_span[0] > declared_contig_length:
+                        raise StrictVCFValidationError(
+                            f"Computed VCFv4.5 reference span END={record_span[0]} exceeds declared contig {_chrom} length {declared_contig_length} at line {line_no}",
+                            code="VCF_REFERENCE_SPAN_OUT_OF_BOUNDS",
+                        )
+                    for sample_index, block_length in record_span[1]:
+                        active_vcf45_reference_blocks[sample_index] = (
+                            _chrom,
+                            _pos + block_length - 1,
                         )
 
             def carriers(alt_index: int) -> set[int] | None:
@@ -1154,6 +1430,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "base_modification_format_fields": sorted(base_modification_format_fields),
+        "vcf45_reference_span_records": vcf45_reference_span_records,
+        "vcf45_max_reference_end": vcf45_max_reference_end,
+        "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT" if reference_contigs is not None else "NOT_CHECKED",
     }
@@ -1187,7 +1466,11 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         f"VCF declares contig {contig!r} length {declared_length}, but the selected reference length is {reference_length}",
                         code="VCF_CONTIG_LENGTH_MISMATCH",
                     )
+            fileformat: str | None = None
             for line_no, raw in enumerate(handle, 1):
+                if raw.startswith("##fileformat="):
+                    fileformat = raw.rstrip("\r\n").split("=", 1)[1]
+                    continue
                 if not raw or raw.startswith("#"):
                     continue
                 fields = raw.rstrip("\r\n").split("\t")
@@ -1227,13 +1510,16 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         code="VCF_REFERENCE_MISMATCH",
                     )
                 info = _info_values(fields[7])
-                if info.get("END") is not None:
-                    end = int(info["END"])
-                    if end > contig_length:
-                        raise StrictVCFValidationError(
-                            f"Reference span END={end} exceeds contig {chrom} length {contig_length} at line {line_no}",
-                            code="VCF_REFERENCE_SPAN_OUT_OF_BOUNDS",
-                        )
+                if fileformat == "VCFv4.5":
+                    span = compute_vcf45_record_span(fields, line_no)
+                    end = span[0] if span is not None else pos + len(ref) - 1
+                else:
+                    end = int(info["END"]) if info.get("END") not in {None, "."} else None
+                if end is not None and end > contig_length:
+                    raise StrictVCFValidationError(
+                        f"Reference span END={end} exceeds contig {chrom} length {contig_length} at line {line_no}",
+                        code="VCF_REFERENCE_SPAN_OUT_OF_BOUNDS",
+                    )
                 for alt in alt_text.split(","):
                     if "[" not in alt and "]" not in alt:
                         continue

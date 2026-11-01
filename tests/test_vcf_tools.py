@@ -982,3 +982,45 @@ def test_bcftools_124_multiallelic_normalization_keeps_number_m_fields_source_on
         assert sample_values[format_keys.index("SIRALOOM_SOURCE_ALT_COUNT")] == "2"
     assert "GT:M5mC" in input_vcf.read_text(encoding="utf-8")
     assert "1/2:0.5,0.6,0.7,0.8" in input_vcf.read_text(encoding="utf-8")
+
+
+def test_vcf45_len_reference_block_csi_index_includes_last_covered_base(tmp_path: Path):
+    require_bcftools()
+    source = tmp_path / "vcf45-len-reference-block.vcf"
+    bgzf = tmp_path / "vcf45-len-reference-block.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##contig=<ID=1,length=200>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LEN,Number=1,Type=Integer,Description="Length of <*> reference block">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:50\n",
+        encoding="utf-8",
+    )
+    compressed = subprocess.run(
+        ["bcftools", "view", "--no-version", "-Oz", "-o", str(bgzf), str(source)],
+        capture_output=True, text=True, check=False,
+    )
+    assert compressed.returncode == 0, compressed.stderr
+    indexed = subprocess.run(
+        ["bcftools", "index", "--csi", str(bgzf)],
+        capture_output=True, text=True, check=False,
+    )
+    assert indexed.returncode == 0, indexed.stderr
+
+    included = subprocess.run(
+        ["bcftools", "view", "--regions-overlap", "1", "-r", "1:149-149", str(bgzf)],
+        capture_output=True, text=True, check=False,
+    )
+    assert included.returncode == 0, included.stderr
+    included_records = [line for line in included.stdout.splitlines() if line and not line.startswith("#")]
+    assert len(included_records) == 1
+    assert included_records[0].split("\t")[:5] == ["1", "100", ".", "A", "<*>"]
+
+    excluded = subprocess.run(
+        ["bcftools", "view", "--regions-overlap", "1", "-r", "1:150-150", str(bgzf)],
+        capture_output=True, text=True, check=False,
+    )
+    assert excluded.returncode == 0, excluded.stderr
+    excluded_records = [line for line in excluded.stdout.splitlines() if line and not line.startswith("#")]
+    assert excluded_records == []

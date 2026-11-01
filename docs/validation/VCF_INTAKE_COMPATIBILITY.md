@@ -13,6 +13,8 @@ The validator recognizes VCFv4.0, VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, and VCFv4.
 The parser applies version-specific rules where implemented:
 - VCFv4.4 and VCFv4.5 leading genotype phasing separators are parsed without inflating ploidy.
 - VCFv4.5 FORMAT cardinalities LA, LR, LG, P, and M are recognized. Local-allele fields require LAA in the prescribed position and validate distinct, in-range 1-based ALT indices.
+- VCFv4.5 reserved FORMAT/LEN (Number=1, Integer) is recognized with or without an explicit header declaration. It defines a sample-specific <*> reference block from POS through POS+LEN-1; legacy INFO/END is the documented fallback when that sample has no LEN. <NON_REF> is treated as the <*> alias.
+- VCFv4.5 INFO/END is checked against the maximum computed reference end from REF, symbolic SVLEN, and sample-specific LEN. Positions covered by a preceding sample block must have GT='.' and no populated FORMAT fields other than LAA. If LAA is present when a block starts, it must include the <*> allele.
 - VCFv4.5 reserved base-modification FORMAT fields (M, DPM, and ADM ChEBI-ID forms and the specification aliases) are recognized even when explicit FORMAT metadata declarations are absent. Their Number=M cardinality is validated from sample GT and concrete REF/ALT allele sequences, including strand complements, U/T equivalence, N modifications, unphased-allele aggregation, missing alleles, and symbolic alleles. Fraction values are constrained to [0, 1] and depth values to non-negative integers.
 - Base-modification values remain intact in the immutable uploaded source VCF. Because the pinned BCFtools 1.24 multiallelic splitter does not project Number=M values to each emitted ALT child, SIRALOOM removes Number=M fields from the derived normalized SNV/INDEL artifact and records their names and source-only policy in normalization provenance. This prevents downstream consumers from interpreting source-genotype values against a different per-ALT GT. These fields are not used as rare-disease pathogenicity evidence.
 - Arbitrary declared FORMAT values are retained in sample-call provenance instead of being reduced to a small fixed whitelist.
@@ -33,6 +35,7 @@ The GitHub CI suite exercises the supported version range against the upload val
 | Uploaded index concordance | VCFv4.3 fixture | Both TBI and CSI; per-contig counts and indexed-query record-line SHA-256 match the sequential BGZF stream |
 | Version-specific genotype syntax | VCFv4.3–VCFv4.5 | VCFv4.4/4.5 leading GT phasing separators are accepted; VCFv4.3 rejects that syntax |
 | VCFv4.5 local-allele fields | VCFv4.5 | LA/LR/LG/P cardinality and LAA constraints |
+| VCFv4.5 reference blocks | VCFv4.5 | Implicit/declared FORMAT/LEN, sample-specific intervals, legacy END fallback, END/SVLEN span consistency, overlap semantics, and CSI boundary query |
 | VCFv4.5 base modifications | VCFv4.5 | Reserved implicit fields, Number=M cardinality, field types, fraction/depth ranges, and source-only normalization policy |
 
 These are deterministic software conformance fixtures, not a claim that every optional feature emitted by every caller has been qualified. Laboratory release still requires the caller-specific positive/negative corpus, representative WES/WGS data, known-answer reference and indel checks, and the operational/reproducibility checks listed below.
