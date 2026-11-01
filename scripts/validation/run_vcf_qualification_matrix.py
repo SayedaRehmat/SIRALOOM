@@ -194,7 +194,10 @@ def get_metric(report: dict[str, Any], path: str) -> float:
         value = value[component]
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TypeError(f"Metric {path} is not numeric")
-    return float(value)
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value):
+        raise ValueError(f"Metric {path} is not finite")
+    return numeric_value
 
 
 def evaluate_criteria(report: dict[str, Any], criteria: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -259,6 +262,10 @@ def main() -> int:
             try:
                 return_code, report = run_benchmark(cell=cell, output_dir=cell_output, script=benchmark_script)
                 criteria = evaluate_criteria(report, policy["criteria"])
+                benchmark_status = report.get("status")
+                benchmark_succeeded = (
+                    return_code == 0 and benchmark_status == "RUN_COMPLETE_REVIEW_REQUIRED"
+                )
                 cells.append({
                     "id": cell["id"],
                     "assay": cell["assay"],
@@ -268,9 +275,9 @@ def main() -> int:
                     "input_sha256": cell["vcf_sha256"],
                     "reference_fasta_sha256": cell["reference_fasta_sha256"],
                     "benchmark_exit_code": return_code,
-                    "benchmark_status": report.get("status"),
+                    "benchmark_status": benchmark_status,
                     "criteria": criteria,
-                    "cell_status": "REVIEW_REQUIRED",
+                    "cell_status": "REVIEW_REQUIRED" if benchmark_succeeded else "REVIEW_REQUIRED_FAILURE",
                     "started_at_utc": started_cell.isoformat(),
                     "completed_at_utc": datetime.now(UTC).isoformat(),
                 })
@@ -317,7 +324,7 @@ def main() -> int:
             json.dumps(result, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
-        return 0
+        return 1 if any(cell["cell_status"] == "REVIEW_REQUIRED_FAILURE" for cell in cells) else 0
     except Exception as exc:  # noqa: BLE001 - CLI boundary must return controlled failure.
         failure = {
             "schema_version": SCHEMA_VERSION,
