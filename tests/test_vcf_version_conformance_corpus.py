@@ -94,7 +94,7 @@ def test_duplicate_alt_alleles_remain_accepted_before_v45_contract(
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 1
-    assert profile["alternate_alleles"] == 2
+    assert profile["alternate_allele_count"] == 2
 
 
 def test_vcf45_duplicate_alt_alleles_are_rejected(tmp_path: Path) -> None:
