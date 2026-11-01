@@ -15,3 +15,4 @@ from .resources import router as resources_router
 
 from .storage import router as storage_router
 from .workflow import router as workflow_router
+from .ploidy import router as ploidy_router
