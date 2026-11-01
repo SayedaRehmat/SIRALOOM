@@ -7,6 +7,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -694,9 +695,4 @@ def export_case_phenotypes_fhir_r5(
         },
     )
     db.commit()
-    return {
-        "format": "HL7_FHIR_R5",
-        "fhir_version": "5.0.0",
-        "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
-        "bundle": bundle,
-    }
+    return JSONResponse(content=bundle, media_type="application/fhir+json")
