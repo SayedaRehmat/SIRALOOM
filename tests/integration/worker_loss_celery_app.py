@@ -337,7 +337,7 @@ def vcf_normalization_worker_loss(
                 raise AssertionError("Durable normalized artifact checksum mismatch.")
 
             normalized_records = [
-                line.split("\\t")
+                line.split("\t")
                 for line in gzip.decompress(replay_bytes).decode("utf-8").splitlines()
                 if line and not line.startswith("#")
             ]
