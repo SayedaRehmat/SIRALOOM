@@ -48,7 +48,7 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n")
     profile = validate_vcf_strict(path, reference_contigs={"1"})
     assert profile["records"] == 1
-    assert profile["reference_contig_policy"] == "EXACT"
+    assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
 
 
 def test_strict_validation_rejects_whitespace_in_chromosome_name(tmp_path: Path):
