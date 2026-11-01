@@ -29,6 +29,10 @@ from backend.app.adapters.phenotype.phenopackets_v2 import (
     PhenopacketExportError,
     build_phenopackets_v2,
 )
+from backend.app.adapters.phenotype.fhir_r5 import (
+    FHIRExportError,
+    build_fhir_r5_bundle,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis, Case, PedigreeMember, PedigreeRelationship, PhenotypeObservation, WorkflowStep,
@@ -574,4 +578,68 @@ def export_case_phenopackets_v2(
         "lossy": bool(warnings),
         "warnings": warnings,
         "document": document,
+    }
+
+
+@router.get("/cases/{case_id}/fhir-r5/phenotypes")
+def export_case_phenotypes_fhir_r5(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Export phenotype and family context as a validated HL7 FHIR R5 Bundle."""
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+
+    observations = list(db.scalars(
+        select(PhenotypeObservation)
+        .where(PhenotypeObservation.case_id == case_id)
+        .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
+    ))
+    members = list(db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
+    ))
+
+    try:
+        bundle = build_fhir_r5_bundle(
+            case=case,
+            phenotype_observations=observations,
+            pedigree_members=members,
+            pedigree_relationships=relationships,
+        )
+    except FHIRExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    AuditService(db).record(
+        event_type="CLINICAL_INTEROPERABILITY_EXPORT",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case_id),
+        operation="EXPORT",
+        after_state={
+            "format": "HL7_FHIR_R5",
+            "fhir_version": "5.0.0",
+            "resource_count": len(bundle.get("entry", [])),
+        },
+        payload={"format": "HL7_FHIR_R5", "resource_count": len(bundle.get("entry", []))},
+    )
+    db.commit()
+    return {
+        "format": "HL7_FHIR_R5",
+        "fhir_version": "5.0.0",
+        "bundle": bundle,
     }
