@@ -63,6 +63,12 @@ class PloidyResolution:
     assay_id: str | None = None
     caller_policy_version: str | None = None
     evidence_reference: str | None = None
+    evidence_source_type: str | None = None
+    evidence_reviewed_by: str | None = None
+    evidence_reviewed_at: datetime | None = None
+    caller_validation_evidence_reference: str | None = None
+    caller_qualified_by: str | None = None
+    caller_qualified_at: datetime | None = None
 
 
 def _required_text(payload: Mapping[str, Any], key: str) -> str:
@@ -265,6 +271,12 @@ def resolve_expected_gt_ploidy(
             assay_id=policy.assay_id if policy else assay_id,
             caller_policy_version=policy.policy_version if policy else None,
             evidence_reference=evidence.evidence_reference if evidence else None,
+            evidence_source_type=evidence.source_type if evidence else None,
+            evidence_reviewed_by=evidence.reviewed_by if evidence else None,
+            evidence_reviewed_at=evidence.reviewed_at if evidence else None,
+            caller_validation_evidence_reference=policy.validation_evidence_reference if policy else None,
+            caller_qualified_by=policy.qualified_by if policy else None,
+            caller_qualified_at=policy.qualified_at if policy else None,
         )
 
     if sample_evidence_payload is None:
@@ -318,6 +330,12 @@ def resolve_expected_gt_ploidy(
             assay_id=policy.assay_id,
             caller_policy_version=policy.policy_version,
             evidence_reference=evidence.evidence_reference,
+            evidence_source_type=evidence.source_type,
+            evidence_reviewed_by=evidence.reviewed_by,
+            evidence_reviewed_at=evidence.reviewed_at,
+            caller_validation_evidence_reference=policy.validation_evidence_reference,
+            caller_qualified_by=policy.qualified_by,
+            caller_qualified_at=policy.qualified_at,
         )
     return PloidyResolution(
         status="RESOLVED_CALLABLE",
@@ -332,4 +350,10 @@ def resolve_expected_gt_ploidy(
         assay_id=policy.assay_id,
         caller_policy_version=policy.policy_version,
         evidence_reference=evidence.evidence_reference,
+        evidence_source_type=evidence.source_type,
+        evidence_reviewed_by=evidence.reviewed_by,
+        evidence_reviewed_at=evidence.reviewed_at,
+        caller_validation_evidence_reference=policy.validation_evidence_reference,
+        caller_qualified_by=policy.qualified_by,
+        caller_qualified_at=policy.qualified_at,
     )
