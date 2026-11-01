@@ -202,7 +202,7 @@ class HPOOboProvider:
                 if target is None:
                     raise HPOOntologyError(f"HPO OBO has invalid is_a target {value!r}")
                 current["parents"].append(target)
-                        elif key == "synonym":
+            elif key == "synonym":
                 synonym_match = re.match(r'^"((?:\\.|[^"\\])*)"\s+(?:EXACT|BROAD|NARROW|RELATED)\b', value)
                 if synonym_match:
                     synonym = re.sub(r'\\(["\\])', r'\1', synonym_match.group(1)).strip()
