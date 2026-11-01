@@ -123,12 +123,20 @@ class FastaReference:
         available_contigs: set[str] | frozenset[str] | dict[str, object],
     ) -> str:
         """Resolve exact names plus the explicitly supported human MT RefSeq accession."""
-        candidates = [contig]
-        if contig.strip().upper() in {"NC_012920", "NC_012920.1"}:
-            candidates.extend(("M", "MT", "chrM", "chrMT"))
-        for candidate in candidates:
-            if candidate in available_contigs:
-                return candidate
+        if contig in available_contigs:
+            return contig
+        if contig.strip().upper() == "NC_012920.1":
+            matches = [
+                candidate
+                for candidate in ("M", "MT", "chrM", "chrMT")
+                if candidate in available_contigs
+            ]
+            if len(matches) == 1:
+                return matches[0]
+            if len(matches) > 1:
+                raise ReferenceError(
+                    f"Versioned mitochondrial accession {contig!r} maps ambiguously to reference contigs {matches}"
+                )
         raise ReferenceError(f"Contig {contig!r} is not present in the reference")
 
     def resolve_contig(self, contig: str) -> str:
