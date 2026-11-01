@@ -2118,3 +2118,78 @@ def test_vcf_contig_md5_must_be_32_lowercase_hex_characters(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_CONTIG_MD5_INVALID"
+
+
+def test_vcf45_standard_and_local_allele_depth_fields_must_project_identically(tmp_path: Path):
+    metadata = [
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depths">',
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+    ]
+    valid = tmp_path / "vcf45-ad-lad-match.vcf"
+    write_vcf_with_metadata(
+        valid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:AD:LAD\t0/2:2:10,5,7:10,7\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / "vcf45-ad-lad-mismatch.vcf"
+    write_vcf_with_metadata(
+        invalid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:AD:LAD\t0/2:2:10,5,7:10,5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID"
+
+
+def test_vcf45_standard_and_local_genotype_likelihoods_use_vcf_genotype_order(tmp_path: Path):
+    metadata = [
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">',
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">',
+    ]
+    valid = tmp_path / "vcf45-pl-lpl-match.vcf"
+    write_vcf_with_metadata(
+        valid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t0/2:2:0,1,2,3,4,5:0,3,5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / "vcf45-pl-lpl-mismatch.vcf"
+    write_vcf_with_metadata(
+        invalid,
+        metadata,
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t0/2:2:0,1,2,3,4,5:0,3,4\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID"
+
+
+def test_vcf45_missing_standard_or_local_equivalent_is_permitted(tmp_path: Path):
+    path = tmp_path / "vcf45-missing-local-equivalent.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">',
+            '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depths">',
+            '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">',
+        ],
+        "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:AD:LAD\t0/2:2:10,5,7:.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
