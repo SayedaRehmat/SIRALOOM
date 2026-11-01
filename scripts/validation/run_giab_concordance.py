@@ -59,7 +59,13 @@ def _open_text(path: Path) -> TextIO:
     return path.open("rt", encoding="utf-8", errors="strict")
 
 
-def validate_single_sample_vcf(path: Path, label: str) -> None:
+def validate_single_sample_vcf(
+    path: Path,
+    label: str,
+    expected_sample_name: str,
+) -> None:
+    if not isinstance(expected_sample_name, str) or not expected_sample_name.strip():
+        raise ConcordanceError(f"{label} requires an explicit specimen-to-sample-column mapping.")
     header = None
     try:
         with _open_text(path) as handle:
@@ -71,11 +77,15 @@ def validate_single_sample_vcf(path: Path, label: str) -> None:
                 raise ConcordanceError(f"{label} must contain exactly one sample column.")
             if len(header) != 10 or not header[9].strip():
                 raise ConcordanceError(f"{label} must contain exactly one named sample column.")
+            if header[9] != expected_sample_name:
+                raise ConcordanceError(
+                    f"{label} sample column does not match the explicitly declared specimen mapping."
+                )
             for line in handle:
                 if not line or line.startswith("#"):
                     continue
                 fields = line.rstrip("\r\n").split("\t")
-                if len(fields) < 10:
+                if len(fields) != len(header):
                     raise ConcordanceError(f"{label} contains a malformed variant record.")
                 for allele in fields[4].split(","):
                     if allele == "*" or allele.startswith("<") or any(char in allele for char in "[]"):
@@ -164,6 +174,12 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                 allele_mismatches = _integer(row, "FP.al", row_number)
                 if truth_total != tp + fn:
                     raise ConcordanceError(f"hap.py summary row {row_number} truth counts do not reconcile.")
+                if query_total != query_tp + fp + query_unknown:
+                    raise ConcordanceError(f"hap.py summary row {row_number} query counts do not reconcile.")
+                if genotype_mismatches > fp or allele_mismatches > fp:
+                    raise ConcordanceError(
+                        f"hap.py summary row {row_number} mismatch subcounts exceed QUERY.FP."
+                    )
                 precision_denominator = query_tp + fp
                 recall = tp / truth_total if truth_total else None
                 precision = query_tp / precision_denominator if precision_denominator else None
@@ -211,6 +227,8 @@ def run_concordance(
     assay: str,
     caller: str,
     caller_version: str,
+    truth_sample_name: str,
+    query_sample_name: str,
     truth_set_id: str,
     truth_set_version: str,
     acceptance_policy_id: str,
@@ -257,8 +275,8 @@ def run_concordance(
         stratification_regions = resolve_stratification_beds(inputs["stratification_tsv"])
         for index, region in enumerate(stratification_regions, start=1):
             inputs[f"stratification_bed_{index}"] = region["path"]
-    validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF")
-    validate_single_sample_vcf(inputs["query_vcf"], "Query VCF")
+    validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF", truth_sample_name)
+    validate_single_sample_vcf(inputs["query_vcf"], "Query VCF", query_sample_name)
 
     hashes_before = {name: sha256_file(path) for name, path in inputs.items()}
     if output_dir.is_symlink() or output_dir.exists():
@@ -373,7 +391,11 @@ def run_concordance(
             }
             for index, region in enumerate(stratification_regions, start=1)
         ],
-        "sample_identifiers_recorded": False,
+        "sample_identity": {
+            "truth_sample_column_verified": True,
+            "query_sample_column_verified": True,
+            "sample_identifiers_recorded": False,
+        },
         "filter_policy": "PASS_ONLY" if pass_only else "ALL_FILTER_STATES_REPORTED",
         "metrics": metrics,
         "source_artifacts": {
@@ -411,6 +433,8 @@ def main() -> int:
     parser.add_argument("--assay", required=True, choices=("WES", "WGS", "PANEL"))
     parser.add_argument("--caller", required=True)
     parser.add_argument("--caller-version", required=True)
+    parser.add_argument("--truth-sample-name", required=True)
+    parser.add_argument("--query-sample-name", required=True)
     parser.add_argument("--truth-set-id", required=True)
     parser.add_argument("--truth-set-version", required=True)
     parser.add_argument("--acceptance-policy-id", required=True)
@@ -429,6 +453,7 @@ def main() -> int:
             confident_bed=args.confident_bed, reference_fasta=args.reference_fasta,
             reference_build=args.reference_build, assay=args.assay,
             caller=args.caller, caller_version=args.caller_version,
+            truth_sample_name=args.truth_sample_name, query_sample_name=args.query_sample_name,
             truth_set_id=args.truth_set_id, truth_set_version=args.truth_set_version,
             acceptance_policy_id=args.acceptance_policy_id,
             output_dir=args.output_dir, hap_py=args.hap_py, engine=args.engine,
