@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import shutil
 import subprocess
 from pathlib import Path
@@ -88,6 +89,105 @@ def test_stale_csi_offsets_are_rejected_when_bgzf_header_shifts_record_blocks(
     Path(str(bgzf) + ".csi").write_bytes(original_csi)
 
     with pytest.raises(VCFToolError):
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+
+
+def test_valid_ordinary_gzip_without_index_is_classified_as_sequential_only(
+    tmp_path: Path,
+):
+    path = tmp_path / "sequential-only.vcf.gz"
+    path.write_bytes(
+        gzip.compress(
+            b"##fileformat=VCFv4.3\\n"
+            b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+            b"1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n"
+        )
+    )
+
+    with pytest.raises(VCFToolError, match="valid ordinary gzip stream, not BGZF"):
+        validate_vcf_index_concordance(path)
+
+
+def test_valid_bgzf_without_index_is_distinguished_from_corrupt_bgzf(
+    tmp_path: Path,
+):
+    _require_bcftools()
+    source = tmp_path / "valid.vcf"
+    bgzf = tmp_path / "valid.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "##contig=<ID=1,length=100>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    _compress_and_index(source, bgzf)
+    Path(str(bgzf) + ".csi").unlink()
+
+    with pytest.raises(VCFToolError, match="passed block and EOF integrity checks but has no adjacent"):
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+
+
+def test_bgzf_missing_terminal_eof_marker_is_rejected(tmp_path: Path):
+    _require_bcftools()
+    source = tmp_path / "valid.vcf"
+    bgzf = tmp_path / "valid.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "##contig=<ID=1,length=100>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    _compress_and_index(source, bgzf)
+    compressed = bgzf.read_bytes()
+    assert compressed.endswith(bytes.fromhex(
+        "1f8b08040000000000ff0600424302001b0003000000000000000000"
+    ))
+    bgzf.write_bytes(compressed[:-28])
+
+    with pytest.raises(VCFToolError, match="BGZF EOF marker is missing"):
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+
+
+def test_bgzf_truncated_block_size_is_rejected_before_index_queries(tmp_path: Path):
+    _require_bcftools()
+    source = tmp_path / "valid.vcf"
+    bgzf = tmp_path / "valid.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "##contig=<ID=1,length=100>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    _compress_and_index(source, bgzf)
+    damaged = bytearray(bgzf.read_bytes())
+    assert damaged[12:14] == b"BC"
+    damaged[16:18] = (65535 - 1).to_bytes(2, "little")
+    bgzf.write_bytes(damaged)
+
+    with pytest.raises(VCFToolError, match="BGZF block is truncated"):
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+
+
+def test_bgzf_crc_corruption_is_rejected_before_index_queries(tmp_path: Path):
+    _require_bcftools()
+    source = tmp_path / "valid.vcf"
+    bgzf = tmp_path / "valid.vcf.gz"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "##contig=<ID=1,length=100>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    _compress_and_index(source, bgzf)
+    damaged = bytearray(bgzf.read_bytes())
+    damaged[-28 - 8] ^= 0x01
+    bgzf.write_bytes(damaged)
+
+    with pytest.raises(VCFToolError, match="decompression or CRC validation failed"):
         validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
 
 
