@@ -84,6 +84,25 @@ def test_load_manifest_requires_real_asset_hashes(tmp_path: Path) -> None:
         load_manifest(path)
 
 
+def test_load_manifest_rejects_path_traversal_cell_id(tmp_path: Path) -> None:
+    path = _configured_manifest(tmp_path)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["matrix"][0]["id"] = "../outside"
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+    with pytest.raises(MatrixConfigurationError, match="safe path component"):
+        load_manifest(path)
+
+
+def test_load_manifest_requires_adjacent_reference_fai(tmp_path: Path) -> None:
+    path = _configured_manifest(tmp_path)
+    fai = tmp_path / "GRCh38.fa.fai"
+    fai.unlink()
+
+    with pytest.raises(MatrixConfigurationError, match="adjacent .fai"):
+        load_manifest(path)
+
+
 def test_load_manifest_accepts_strict_configured_cell(tmp_path: Path) -> None:
     path = _configured_manifest(tmp_path)
     manifest = load_manifest(path)
