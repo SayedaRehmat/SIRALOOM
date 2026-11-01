@@ -88,25 +88,83 @@ def download_verified(url: str, destination: Path, expected_md5: str) -> dict[st
         raise
 
 
+def _write_fai_from_plain_fasta(fasta_path: Path, fai_path: Path) -> int:
+    """Write a standard FAI using uncompressed FASTA byte offsets."""
+    entries: list[tuple[str, int, int, int, int]] = []
+    with fasta_path.open("rb") as handle:
+        name: str | None = None
+        length = 0
+        offset = 0
+        line_bases = 0
+        line_width = 0
+        previous_bases: int | None = None
+        previous_width: int | None = None
+        for raw_line in handle:
+            if raw_line.startswith(b">"):
+                if name is not None:
+                    if length <= 0:
+                        raise AcquisitionError(f"Reference contig {name!r} has no sequence.")
+                    entries.append((name, length, offset, line_bases, line_width))
+                header = raw_line[1:].strip().split()
+                if not header:
+                    raise AcquisitionError("Reference contains an empty FASTA sequence identifier.")
+                name = header[0].decode("utf-8")
+                if any(entry[0] == name for entry in entries):
+                    raise AcquisitionError(f"Duplicate reference contig identifier: {name}")
+                length = 0
+                offset = handle.tell()
+                line_bases = 0
+                line_width = 0
+                previous_bases = None
+                previous_width = None
+                continue
+            if name is None:
+                raise AcquisitionError("Reference sequence occurs before first FASTA header.")
+            sequence = raw_line.rstrip(b"\\r\\n")
+            if not sequence or any(base in b" \\t" for base in sequence):
+                raise AcquisitionError(f"Invalid sequence line in reference contig {name!r}.")
+            bases = len(sequence)
+            width = len(raw_line)
+            if line_bases == 0:
+                line_bases, line_width = bases, width
+            elif previous_bases != line_bases or previous_width != line_width or bases > line_bases:
+                raise AcquisitionError(f"Inconsistent FASTA line wrapping in contig {name!r}.")
+            previous_bases, previous_width = bases, width
+            length += bases
+        if name is not None:
+            if length <= 0:
+                raise AcquisitionError(f"Reference contig {name!r} has no sequence.")
+            entries.append((name, length, offset, line_bases, line_width))
+    with fai_path.open("x", encoding="utf-8", newline="") as output:
+        for entry in entries:
+            output.write("\\t".join(map(str, entry)) + "\\n")
+    return len(entries)
+
+
 def build_bgzf_reference(source_gzip: Path, output_fasta: Path) -> dict[str, Any]:
     """Recompress source FASTA as BGZF and build its paired FAI/GZI."""
     output_fasta.parent.mkdir(parents=True, exist_ok=True)
     if output_fasta.exists():
         raise AcquisitionError(f"Refusing to overwrite derived reference: {output_fasta}")
-    with tempfile.TemporaryDirectory(prefix="siraloom-reference-build-") as temporary:
-        plain = Path(temporary) / "reference.fa"
-        try:
-            with gzip.open(source_gzip, "rb") as source, plain.open("xb") as target:
-                while chunk := source.read(1024 * 1024):
-                    target.write(chunk)
-                target.flush()
-                os.fsync(target.fileno())
-        except (OSError, EOFError) as exc:
-            raise AcquisitionError("Reference source gzip stream failed integrity/decompression.") from exc
-        try:
+    fai = Path(str(output_fasta) + ".fai")
+    gzi = Path(str(output_fasta) + ".gzi")
+    try:
+        with tempfile.TemporaryDirectory(prefix="siraloom-reference-build-") as temporary:
+            plain = Path(temporary) / "reference.fa"
+            try:
+                with gzip.open(source_gzip, "rb") as source, plain.open("xb") as target:
+                    while chunk := source.read(1024 * 1024):
+                        target.write(chunk)
+                    target.flush()
+                    os.fsync(target.fileno())
+            except (OSError, EOFError) as exc:
+                raise AcquisitionError("Reference source gzip stream failed integrity/decompression.") from exc
+            contig_count = _write_fai_from_plain_fasta(plain, fai)
+            if contig_count <= 0:
+                raise AcquisitionError("Reference FASTA contains no contigs.")
             with output_fasta.open("xb") as output:
                 completed = subprocess.run(
-                    ["bgzip", "-@", "2", "-c", str(plain)],
+                    ["bgzip", "-@", "2", "-i", "-I", str(gzi), "-c", str(plain)],
                     check=False,
                     stdout=output,
                     stderr=subprocess.PIPE,
@@ -117,27 +175,22 @@ def build_bgzf_reference(source_gzip: Path, output_fasta: Path) -> dict[str, Any
                 os.fsync(output.fileno())
             if completed.returncode != 0:
                 raise AcquisitionError(f"bgzip failed: {completed.stderr[-2000:]}")
-            subprocess.run(
-                ["samtools", "faidx", str(output_fasta)],
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=7200,
-            )
-        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-            output_fasta.unlink(missing_ok=True)
-            Path(str(output_fasta) + ".fai").unlink(missing_ok=True)
-            Path(str(output_fasta) + ".gzi").unlink(missing_ok=True)
-            raise AcquisitionError("Unable to build BGZF reference and matching FAI/GZI.") from exc
-    fai = Path(str(output_fasta) + ".fai")
-    gzi = Path(str(output_fasta) + ".gzi")
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        output_fasta.unlink(missing_ok=True)
+        fai.unlink(missing_ok=True)
+        gzi.unlink(missing_ok=True)
+        raise AcquisitionError("Unable to build BGZF reference and matching FAI/GZI.") from exc
     if not output_fasta.is_file() or not fai.is_file() or not gzi.is_file():
+        output_fasta.unlink(missing_ok=True)
+        fai.unlink(missing_ok=True)
+        gzi.unlink(missing_ok=True)
         raise AcquisitionError("BGZF reference publication is incomplete: FASTA, FAI and GZI are all required.")
     return {
         "fasta": {"path": str(output_fasta), "size_bytes": output_fasta.stat().st_size, "sha256": digest_file(output_fasta, "sha256")},
         "fai": {"path": str(fai), "size_bytes": fai.stat().st_size, "sha256": digest_file(fai, "sha256")},
         "gzi": {"path": str(gzi), "size_bytes": gzi.stat().st_size, "sha256": digest_file(gzi, "sha256")},
-        "construction": "gzip source decompressed then bgzip-compressed; samtools faidx generated adjacent FAI and GZI",
+        "contig_count": contig_count,
+        "construction": "gzip source decompressed; bgzip -i generated BGZF and GZI; FAI generated from source FASTA byte geometry",
     }
 
 
