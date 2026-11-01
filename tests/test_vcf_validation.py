@@ -1726,7 +1726,7 @@ def test_vcf45_ps_must_be_nonnegative(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
 
-    assert exc.value.code == "VCF_FIELD_VALUE_INVALID"
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
 def test_vcf45_ps_and_psl_cannot_both_be_populated_for_one_sample(tmp_path: Path):
