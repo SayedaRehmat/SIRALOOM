@@ -1,3 +1,5 @@
+> **Superseded snapshot:** This historical repository audit predates merged PRs #263–#274. For current requirement-level status, use [`VCF_REQUIREMENTS_AUDIT_2026-11-01.md`](VCF_REQUIREMENTS_AUDIT_2026-11-01.md) and the refreshed [`VCF_STANDARDS_TRACEABILITY_2026-11-01.md`](VCF_STANDARDS_TRACEABILITY_2026-11-01.md). Historical PR observations below are retained as a dated record, not as the current main-branch state.
+
 # SIRALOOM VCF Stage Repository Audit — 2026-11-01
 
 ## Scope and evidence boundary

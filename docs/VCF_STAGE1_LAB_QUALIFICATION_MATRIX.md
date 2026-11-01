@@ -2,7 +2,7 @@
 
 **Scope:** Genomic artifact intake → strict VCF/BCF validation → reference verification → variant routing → reference-aware normalization → sorting/indexing → source/child reconciliation.
 
-**Initial assessment baseline:** `main` at `dea24dbe15cfcf050df129776ade3034b577e934` (2026-11-01), including the merged VCFv4.5 sample-specific reference-block routing fix and laboratory scale-benchmark implementation. This branch's final review also accounts for subsequent `main` commits through `2f22d98c5b73d4fd3f8fd569ed9766d79da2d9c8`, including PR #255's production-normalizer/paired-CSI worker-loss recovery integration test, PR #256's audit refresh, and PR #257's benchmark output-directory contract clarification.
+**Current assessment baseline:** `main` at `8d0c09115c0867a2189b89ba2bbb42c24f763939` (2026-11-01). This includes PRs #255–#272: production-normalizer/paired-CSI worker-loss recovery, scale and qualification harnesses, GIAB concordance tooling, VCFv4.5 conformance, Number=G/ploidy coverage, PAR classification, specimen ploidy evidence and immutable caller ploidy policy registry. PR #274 then upgrades the pinned BCFtools/HTSlib pair to security-patched 1.25. See `docs/validation/VCF_REQUIREMENTS_AUDIT_2026-11-01.md` for the current requirements-to-code assessment and explicit remaining gaps.
 
 **Important:** this document is a qualification ledger, not a declaration of clinical validation. A repository implementation/test result is not equivalent to an analytical validation result on representative laboratory material. ISO 15189:2022 establishes requirements for quality and competence in medical laboratories; CLSI MM09 (3rd ed., 2023) provides lifecycle guidance for designing, validating, and implementing sequencing-based clinical tests. Those standards require laboratory-specific evidence and do not permit software unit tests alone to establish clinical intended-use performance.
 
@@ -96,7 +96,7 @@ A cell is **not QUALIFIED** merely because it is IMPLEMENTED or AUTOMATED.
 | FORMAT GP Number=G | Validate genotype-probability cardinality from each sample GT ploidy | Same parameterized regression; does not establish normalization or probability semantics | AUTOMATED / PARTIAL |
 | PS | Preserve phase-set identifier | Existing fixture | AUTOMATED / PARTIAL |
 | Haploid calls | Validate generic Number=G cardinality; additionally qualify chromosome/caller-specific haploid semantics | Synthetic haploid GT cardinality regression; no representative assay/caller evidence | AUTOMATED / NOT-EVIDENCED |
-| Sex-chromosome ploidy | Must be explicitly qualified for PAR/non-PAR, karyotype, build and caller context | No complete qualification evidence identified | NOT-EVIDENCED |
+| Sex-chromosome ploidy | Resolve PAR/non-PAR only from explicit specimen evidence and exact qualified caller policy, build and assay context | PRs #269–#272 add GRCh37/GRCh38 PAR interval classification, specimen ploidy evidence revisions, policy resolution and immutable caller-policy registry | IMPLEMENTED / PARTIAL; NOT LAB-QUALIFIED |
 | Polyploid calls | Validate generic Number=G cardinality; additionally qualify caller and biological use if supported | Synthetic triploid/tetraploid GT cardinality regression; no representative assay/caller evidence | AUTOMATED / NOT-EVIDENCED |
 
 ## 6. WES / WGS / caller matrix

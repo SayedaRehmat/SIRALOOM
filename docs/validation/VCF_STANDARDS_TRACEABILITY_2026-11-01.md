@@ -53,7 +53,7 @@ Recognition of a fileformat string does not mean that all caller-specific tags, 
 
 ## 4. Requirement-to-implementation traceability
 
-Evidence paths below refer to the current audit branch unless explicitly stated otherwise. The combined changes in PR #263 are not merged into `main` at the time of this snapshot.
+Evidence paths below refer to `main` at `8d0c09115c0867a2189b89ba2bbb42c24f763939` unless explicitly stated otherwise. PR #263 and PRs #265–#272 are merged; see the evidence snapshot at the end of this document and the refreshed `VCF_REQUIREMENTS_AUDIT_2026-11-01.md`.
 
 | Requirement | Normative basis | Implementation/evidence | Status | Residual boundary |
 |---|---|---|---|---|
@@ -138,11 +138,11 @@ The following are not software-only tasks. They require an authorized laboratory
 
 ## 8. Evidence snapshot and release boundary
 
-- Main branch inspected: `82ec3fdef76a6ebec5567fe5bfb4f2c8d29a3dd7` (2026-11-01).
-- Main CI run: [#41316998289](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41316998289), successful for backend, frontend, and PostgreSQL integration at the inspected main commit.
-- VCFv4.5 conformance changes from [PR #263](https://github.com/SayedaRehmat/SIRALOOM/pull/263) are merged in commit `2cb159a8a05ca2a39ccee752b385b6067eaeaf15`. The earlier [PR #262](https://github.com/SayedaRehmat/SIRALOOM/pull/262) is superseded; it is not an outstanding implementation branch.
-- GIAB small-variant concordance implementation and metric-semantics corrections are merged in [PR #260](https://github.com/SayedaRehmat/SIRALOOM/pull/260) and [PR #261](https://github.com/SayedaRehmat/SIRALOOM/pull/261). Sample/reference identity, BED interval, FAI geometry, and private sample-mapping evidence hardening is merged in [PR #265](https://github.com/SayedaRehmat/SIRALOOM/pull/265). These code changes provide an executable benchmark path; they do not assert that a real GIAB or laboratory sample run has been completed.
-- Generic sample-ploidy-derived `Number=G` cardinality regression coverage for haploid through tetraploid genotypes is merged in [PR #266](https://github.com/SayedaRehmat/SIRALOOM/pull/266). The follow-on [PR #267](https://github.com/SayedaRehmat/SIRALOOM/pull/267) adds PL/GL/GP field-specific coverage; it is pending CI and is not included in this main snapshot.
-- The release gate remains [issue #171](https://github.com/SayedaRehmat/SIRALOOM/issues/171). Its controlled deployed end-to-end workflow, recovery, scientific benchmark, and deployment/security evidence are not replaced by this parser audit.
+- Main branch inspected: `8d0c09115c0867a2189b89ba2bbb42c24f763939` (2026-11-01).
+- PR #263 (VCFv4.5 conformance) is merged. PRs #260/#261 add GIAB concordance and metric semantics; PR #265 hardens sample/reference/BED/FAI evidence; PRs #266–#268 add Number=G cardinality and PL/GL/GP field coverage plus explicit INFO Number=G ambiguity handling.
+- PR #269 adds GRCh37/GRCh38 PAR interval classification without inferring sample ploidy. PR #270 adds an evidence-backed sample-ploidy resolver. PR #271 persists audited specimen ploidy evidence revisions. PR #272 adds an immutable qualified caller ploidy policy registry. These are software controls; representative caller/assay qualification and real specimen evidence remain required.
+- PR #274 is merged as `8d0c09115c0867a2189b89ba2bbb42c24f763939`; it pins BCFtools/HTSlib 1.25 and updates runtime/CI/container attestation following the upstream HTSlib security disclosure. PR #274 CI run #41326887267 passed backend, PostgreSQL integration and frontend jobs. Post-merge main CI run #41328160303 completed successfully for backend, PostgreSQL integration and frontend jobs.
+- The release gate remains [issue #171](https://github.com/SayedaRehmat/SIRALOOM/issues/171). Its controlled deployed end-to-end workflow, recovery, scientific benchmark and deployment/security evidence are not replaced by this parser audit.
+- The complete current requirement-level status and remaining work are recorded in `docs/validation/VCF_REQUIREMENTS_AUDIT_2026-11-01.md`.
 
 **Release decision: NOT CLINICALLY QUALIFIED.** The repository contains substantial VCF software-conformance and recovery work, but this audit does not establish that every optional feature of every VCF version/caller is supported, that all standards clauses have been met, that a laboratory's complete assay is analytically validated, or that the system is accredited. Every remaining requirement must stay marked PARTIAL, NOT TESTED, BLOCKED, or NOT APPLICABLE until evidence changes its status.
