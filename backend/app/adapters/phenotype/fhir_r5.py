@@ -415,7 +415,7 @@ def build_fhir_r5_bundle(
                 gender = {"MALE": "male", "FEMALE": "female", "OTHER_SEX": "other"}.get(sex, "unknown")
                 resources.append({
                     "resourceType": "FamilyMemberHistory",
-                    "id": relative_id,
+                    "id": str(uuid5(NAMESPACE_URL, f"siraloom:fhir-r5:family-member-history:{relative_id}")),
                     "status": "partial",
                     "patient": {"reference": f"Patient/{patient_id}"},
                     "relationship": {"text": str(relationship)},
@@ -482,9 +482,10 @@ def build_fhir_r5_bundle(
             raise FHIRExportError("A family phenotype does not resolve to an exported RelatedPerson.")
         resources.append(_observation(row, patient_id=patient_id, relative_id=relative_id))
 
+    organization_id = str(uuid5(NAMESPACE_URL, "siraloom:fhir-r5:organization"))
     organization = {
         "resourceType": "Organization",
-        "id": "siraloom",
+        "id": organization_id,
         "active": True,
         "name": "SIRALOOM",
     }
@@ -505,7 +506,7 @@ def build_fhir_r5_bundle(
                         "assembler",
                     )]
                 },
-                "who": {"reference": "Organization/siraloom"},
+                "who": {"reference": f"Organization/{organization_id}"},
             }],
         })
 
