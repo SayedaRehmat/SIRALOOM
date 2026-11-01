@@ -93,7 +93,7 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bun
 | ABSENT | Observation.valueBoolean=false | Negative phenotype assertion |
 | EXCLUDED | Observation.valueCodeableConcept with the SIRALOOM phenotype-observation-status code system | Explicitly excluded finding; never collapsed into a negative assertion |
 | UNKNOWN | Observation.dataAbsentReason=unknown | Not encoded as a negative or positive finding |
-| NOT_ASSESSED | Observation.dataAbsentReason=not-performed | Not encoded as a negative or positive finding |
+| NOT_ASSESSED | Observation.dataAbsentReason=not-asked | Not encoded as a negative or positive finding; exact local state remains in the status extension |
 | Family phenotype | Observation.focus | References the corresponding RelatedPerson; Observation.subject remains the proband Patient |
 | Onset/attributes/term resolution | SIRALOOM extensions | Retains local values and terminology-resolution provenance |
 | Export assembly provenance | Provenance | Identifies SIRALOOM as the assembler of the exchange representation, not as the original clinical observer |
