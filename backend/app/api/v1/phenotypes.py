@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.auth.authorization import (
@@ -92,8 +93,11 @@ def _validate_clinical_attributes(value: dict[str, Any]) -> dict[str, Any]:
     if frequency is not None:
         if not isinstance(frequency, dict) or set(frequency) - {"count", "period_value", "period_unit"}:
             raise ValueError("episode_frequency must contain count, period_value and period_unit")
-        if int(frequency.get("count", 0)) < 1 or float(frequency.get("period_value", 0)) <= 0:
-            raise ValueError("episode_frequency requires positive count and period_value")
+        count = frequency.get("count")
+        if isinstance(count, bool) or not isinstance(count, int) or count < 1:
+            raise ValueError("episode_frequency count must be a positive integer")
+        if float(frequency.get("period_value", 0)) <= 0:
+            raise ValueError("episode_frequency requires a positive period_value")
         if str(frequency.get("period_unit") or "").upper() not in {"HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS"}:
             raise ValueError("episode_frequency requires a supported period_unit")
         frequency["period_unit"] = str(frequency["period_unit"]).upper()
@@ -378,7 +382,21 @@ def add_case_phenotype(
         source=body.source,
         evidence=body.evidence,
     )
-    db.add(row)
+    try:
+        with db.begin_nested():
+            db.add(row)
+            db.flush()
+    except IntegrityError:
+        existing = db.scalar(
+            select(PhenotypeObservation).where(
+                PhenotypeObservation.case_id == case_id,
+                PhenotypeObservation.analysis_id.is_(None),
+                PhenotypeObservation.record_fingerprint == record_fingerprint,
+            )
+        )
+        if existing is not None:
+            return _payload(existing)
+        raise
     AuditService(db).record(
         event_type="PHENOTYPE_ADDED",
         case_id=case_id,
