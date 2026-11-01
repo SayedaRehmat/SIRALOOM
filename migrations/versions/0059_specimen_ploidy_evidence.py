@@ -55,7 +55,7 @@ def upgrade():
     if connection.dialect.name == "postgresql":
         op.execute("""
             CREATE FUNCTION siraloom_reject_specimen_ploidy_revision_mutation()
-            RETURNS trigger AS $
+            RETURNS trigger AS $siraloom$
             BEGIN
                 RAISE EXCEPTION 'specimen ploidy evidence revisions are append-only';
             END;
