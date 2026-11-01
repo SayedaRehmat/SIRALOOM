@@ -61,6 +61,11 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
             {
                 "scope": "CASE" if row.analysis_id is None else "ANALYSIS",
                 "hpo_id": row.hpo_id,
+                "canonical_hpo_id": row.canonical_hpo_id,
+                "subject_member_id": str(row.subject_member_id) if row.subject_member_id else None,
+                "observed_at": row.observed_at.isoformat() if row.observed_at else None,
+                "clinical_attributes": row.clinical_attributes or {},
+                "ontology_resolution": row.ontology_resolution or {},
                 "label": row.label,
                 "present": row.present,
                 "phenotype_status": row.phenotype_status,
@@ -92,6 +97,9 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
             or row.get("scope") not in {"CASE", "ANALYSIS"}
             or not isinstance(row.get("hpo_id"), str)
             or not isinstance(row.get("phenotype_status"), str)
+            or (row.get("clinical_attributes") is not None and not isinstance(row.get("clinical_attributes"), dict))
+            or (row.get("ontology_resolution") is not None and not isinstance(row.get("ontology_resolution"), dict))
+            or (row.get("subject_member_id") is not None and not isinstance(row.get("subject_member_id"), str))
         ):
             raise ValueError("Persisted clinical input snapshot contains an invalid phenotype row")
     return value
