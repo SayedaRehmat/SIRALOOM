@@ -243,7 +243,7 @@ def resolve_expected_gt_ploidy(
     region: str,
 ) -> PloidyResolution:
     """Resolve ploidy only from verified specimen evidence and exact qualified policy."""
-    if region not in SEX_CHROMOSOME_REGIONS:
+    if not isinstance(region, str) or region not in SEX_CHROMOSOME_REGIONS:
         raise PloidyPolicyValidationError(f"Unsupported sex-chromosome region: {region}")
     try:
         build = normalize_human_reference_build(reference_build)
