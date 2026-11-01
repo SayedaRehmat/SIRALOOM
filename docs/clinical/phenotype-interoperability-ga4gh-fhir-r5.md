@@ -163,6 +163,35 @@ Automated tests validate:
 
 Passing software tests does not establish clinical validity, ISO 15189 accreditation, laboratory SOP approval, or conformance to a national implementation guide. Before laboratory use, qualify the local extension definitions, identity/pseudonymization policy, consent/legal basis, retention, access controls, receiving-system profiles, terminology releases, and round-trip reconciliation process.
 
+## Independent external-validator qualification
+
+The clinical interoperability CI adds an independent validation layer in addition to SIRALOOM's Python model/Protobuf parsing and application-level reference checks. The workflow creates deterministic synthetic fixtures only; no real patient records or production exports are used.
+
+| Validator | Pinned release | Scope in CI |
+|---|---:|---|
+| GA4GH `phenopacket-tools` CLI | 1.0.0 | Base schema requirements and semantic checks for one Phenopacket and one Family |
+| HL7 FHIR Validator CLI | 7.0.3 | FHIR R5 core validation using FHIR version 5.0.0; terminology-server lookups are disabled for deterministic core validation |
+
+The downloaded validator archives are SHA-256 checked before execution. The validator reports are retained as a GitHub Actions artifact named `clinical-interop-external-validation`.
+
+Reproduce locally after installing the project and Java 17 or newer:
+
+```bash
+python scripts/validate_clinical_interop_exports.py --output-dir build/clinical-interop
+
+# Download/unpack the GA4GH phenopacket-tools 1.0.0 distribution from:
+# https://github.com/phenopackets/phenopacket-tools/releases/tag/v1.0.0
+java -jar phenopacket-tools-cli-1.0.0.jar validate -H build/clinical-interop/phenopacket.json
+java -jar phenopacket-tools-cli-1.0.0.jar validate -H -e family build/clinical-interop/family.json
+
+# Download validator_cli.jar from the pinned HL7/HAPI release 7.0.3.
+java -jar validator_cli.jar build/clinical-interop/fhir-r5-bundle.json -version 5.0.0 -tx n/a
+```
+
+The Phenopacket CLI is GPL-3.0 licensed and is used as a CI qualification tool only; it is not added to SIRALOOM's runtime dependencies or distributed by the application.
+
+This gate validates the GA4GH base schema semantics and FHIR R5 core resource constraints. It does **not** validate SIRALOOM's custom extension URLs against published StructureDefinitions, because those profiles have not yet been published. It also does not validate a receiving laboratory's national or vendor-specific implementation guide, establish terminology-server completeness, or replace clinical review. The FHIR validator's own specification documentation explicitly distinguishes computable conformance checks from narrative/business rules and human inspection.
+
 ## Primary references
 
 - GA4GH Phenopackets product and v2 version record: https://www.ga4gh.org/product/phenopackets/
