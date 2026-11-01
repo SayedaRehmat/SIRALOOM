@@ -231,18 +231,18 @@ def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Pa
     ("vcf_text", "error"),
     [
         (
-            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tCASE_SAMPLE_001\\n",
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n",
             "fileformat declaration",
         ),
         (
-            "##fileformat=VCFv4.2\\n"
-            "#CHROM\\tPOS\\tID\\tALT\\tREF\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tCASE_SAMPLE_001\\n",
+            "##fileformat=VCFv4.2\n"
+            "#CHROM\tPOS\tID\tALT\tREF\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n",
             "nine fixed VCF columns",
         ),
         (
-            "##fileformat=VCFv4.2\\n"
-            "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tCASE_SAMPLE_001\\n"
-            "chr1\\t10\\t.\\tA\\tC\\t60\\tPASS\\t.\\tGT\\t0/1\\textra\\n",
+            "##fileformat=VCFv4.2\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n"
+            "chr1\t10\t.\tA\tC\t60\tPASS\t.\tGT\t0/1\textra\n",
             "malformed variant record",
         ),
     ],
