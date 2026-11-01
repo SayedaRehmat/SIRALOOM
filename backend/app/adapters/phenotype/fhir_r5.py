@@ -241,12 +241,15 @@ def build_fhir_r5_bundle(
 
     resources: list[dict[str, Any]] = [patient]
     relative_ids: set[str] = set()
+    member_references: dict[str, str] = {}
     if proband:
+        member_references[patient_id] = f"Patient/{patient_id}"
         for member in members:
             if str(_get(member, "id")) == patient_id:
                 continue
             relative_id = str(_get(member, "id"))
             relative_ids.add(relative_id)
+            member_references[relative_id] = f"RelatedPerson/{relative_id}"
             related: dict[str, Any] = {
                 "resourceType": "RelatedPerson",
                 "id": relative_id,
@@ -255,11 +258,64 @@ def build_fhir_r5_bundle(
                     "system": "https://siraloom.org/identifier/pedigree-member",
                     "value": str(_get(member, "member_identifier")),
                 }],
+                "extension": [
+                    _extension("family-affected-status", "valueCode", str(_get(member, "affected_status", "UNKNOWN"))),
+                    _extension("pedigree-sex", "valueCode", str(_get(member, "sex", "UNKNOWN"))),
+                    _extension("sampled", "valueBoolean", bool(_get(member, "sampled", False))),
+                ],
             }
             relationship = _get(member, "relationship_to_proband")
             if relationship:
                 related["relationship"] = [{"text": str(relationship)}]
+            if _get(member, "specimen_id"):
+                related["extension"].append(
+                    _extension("specimen-reference-id", "valueString", str(_get(member, "specimen_id")))
+                )
             resources.append(related)
+            if relationship:
+                sex = str(_get(member, "sex") or "").upper()
+                gender = {"MALE": "male", "FEMALE": "female", "OTHER_SEX": "other"}.get(sex, "unknown")
+                resources.append({
+                    "resourceType": "FamilyMemberHistory",
+                    "id": relative_id,
+                    "status": "partial",
+                    "patient": {"reference": f"Patient/{patient_id}"},
+                    "relationship": {"text": str(relationship)},
+                    "sex": {
+                        "coding": [_coding("http://hl7.org/fhir/administrative-gender", gender)]
+                    },
+                    "extension": [
+                        _extension("family-affected-status", "valueCode", str(_get(member, "affected_status", "UNKNOWN")))
+                    ],
+                })
+
+    # Preserve the directed parent-child graph. FHIR RelatedPerson describes
+    # each relative in relation to the proband, so explicit relative-to-relative
+    # links use named SIRALOOM extensions rather than being discarded.
+    resources_by_member = {
+        str(_get(member, "id")): (
+            patient if str(_get(member, "id")) == patient_id
+            else next(resource for resource in resources
+                      if resource.get("resourceType") == "RelatedPerson"
+                      and resource.get("id") == str(_get(member, "id")))
+        )
+        for member in members
+    }
+    for relationship in relationships:
+        if str(_get(relationship, "relationship_type") or "").upper() != "PARENT_CHILD":
+            raise FHIRExportError("FHIR pedigree export currently requires explicit PARENT_CHILD relationship records.")
+        parent_id = str(_get(relationship, "parent_member_id"))
+        child_id = str(_get(relationship, "child_member_id"))
+        if parent_id not in member_references or child_id not in member_references or parent_id == child_id:
+            raise FHIRExportError("Pedigree relationship references a member outside this case.")
+        resources_by_member[parent_id].setdefault("extension", []).append({
+            "url": f"{EXTENSION_BASE}/pedigree-child",
+            "valueReference": {"reference": member_references[child_id]},
+        })
+        resources_by_member[child_id].setdefault("extension", []).append({
+            "url": f"{EXTENSION_BASE}/pedigree-parent",
+            "valueReference": {"reference": member_references[parent_id]},
+        })
 
     for row in rows:
         subject_member_id = _get(row, "subject_member_id")
