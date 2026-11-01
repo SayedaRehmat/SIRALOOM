@@ -413,8 +413,8 @@ def test_strict_validation_rejects_corrupt_or_truncated_gzip_stream(
     path = tmp_path / f"damaged-{damage}.vcf.gz"
     content = (
         b"##fileformat=VCFv4.3\n"
-        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\n"
-        b"1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t.\n"
     )
     compressed = gzip.compress(content)
     if damage == "invalid_header":
