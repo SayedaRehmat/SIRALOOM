@@ -215,21 +215,19 @@ def finalize_reportability(
 
 def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[str]:
     """Return unresolved routed artifacts that must block clinical reportability."""
-    artifacts = list(
-        db.scalars(
-            select(Artifact)
-            .where(Artifact.analysis_id == analysis_id)
-            .order_by(Artifact.artifact_type, Artifact.created_at, Artifact.id)
-        )
-    )
+    artifact_rows = db.execute(
+        select(Artifact.id, Artifact.artifact_type, Artifact.metadata_json)
+        .where(Artifact.analysis_id == analysis_id)
+        .order_by(Artifact.artifact_type, Artifact.id)
+    ).all()
     errors: list[str] = []
-    for artifact in artifacts:
-        metadata = artifact.metadata_json if isinstance(artifact.metadata_json, dict) else {}
+    for artifact_id, artifact_type, raw_metadata in artifact_rows:
+        metadata = raw_metadata if isinstance(raw_metadata, dict) else {}
         if metadata.get("review_status") != "REQUIRES_SPECIALIZED_REVIEW":
             continue
         reason_code = metadata.get("review_reason_code") or "REQUIRES_SPECIALIZED_REVIEW"
         errors.append(
-            f"{artifact.artifact_type} artifact {artifact.id} requires specialized pipeline/review "
+            f"{artifact_type} artifact {artifact_id} requires specialized pipeline/review "
             f"({reason_code}) before reportability can be finalized"
         )
     return errors
