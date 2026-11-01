@@ -140,7 +140,7 @@ def validate_bed_file(
                 stripped = line.rstrip("\r\n")
                 if not stripped or stripped.startswith("#"):
                     continue
-                if stripped.startswith(("track ", "browser ")):
+                if stripped.split(maxsplit=1)[0] in {"track", "browser"}:
                     raise ConcordanceError(
                         f"{label} contains a track/browser directive unsupported by hap.py."
                     )
