@@ -1,29 +1,13 @@
 name: Public GIAB VCF qualification
 
 on:
-  pull_request:
-    branches:
-      - main
-  workflow_call:
-    inputs:
-      reference_build:
-        required: false
-        type: string
-        default: BOTH
-      timeout_seconds:
-        required: false
-        type: string
-        default: '14400'
   workflow_dispatch:
     inputs:
       reference_build:
         description: "Reference build to execute (runs are independent)"
         required: true
         type: choice
-        options:
-          - GRCh38
-          - GRCh37
-          - BOTH
+        options: [GRCh38, GRCh37, BOTH]
         default: BOTH
       timeout_seconds:
         description: "Per-run normalization timeout"
@@ -35,13 +19,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: giab-public-qualification-${{ github.ref }}
+  group: giab-public-qualification-${{ github.ref }}-${{ inputs.reference_build }}
   cancel-in-progress: false
 
 jobs:
   qualification:
     name: HG001 ${{ matrix.build }} public benchmark
-    if: github.event_name != 'workflow_dispatch' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    if: inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
