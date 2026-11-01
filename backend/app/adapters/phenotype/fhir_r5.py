@@ -26,14 +26,16 @@ def _get(obj: Any, name: str, default: Any = None) -> Any:
     return getattr(obj, name, default)
 
 
-def _iso(value: Any) -> str | None:
+def _iso(value: Any, *, assume_utc: bool = False) -> str | None:
     if value is None:
         return None
     if value.tzinfo is None or value.utcoffset() is None:
-        raise FHIRExportError(
-            "Cannot export a timezone-naive clinical timestamp as FHIR dateTime/instant; "
-            "the source timezone must be supplied rather than inferred."
-        )
+        if not assume_utc:
+            raise FHIRExportError(
+                "Cannot export a timezone-naive clinical timestamp as FHIR dateTime/instant; "
+                "the source timezone must be supplied rather than inferred."
+            )
+        value = value.replace(tzinfo=UTC)
     return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
@@ -171,7 +173,7 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
     schema_version = _get(revision, "schema_version")
     if schema_version is not None:
         children.append(_sub_extension("revision-schema-version", "valueInteger", int(schema_version)))
-    recorded_at = _iso(_get(revision, "recorded_at"))
+    recorded_at = _iso(_get(revision, "recorded_at"), assume_utc=True)
     if recorded_at:
         children.append(_sub_extension("revision-recorded-at", "valueDateTime", recorded_at))
 
@@ -294,7 +296,7 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
         }
 
     observed_at = _iso(_get(row, "observed_at"))
-    issued = _iso(_get(row, "created_at"))
+    issued = _iso(_get(row, "created_at"), assume_utc=True)
     if observed_at:
         resource["effectiveDateTime"] = observed_at
     if issued:
