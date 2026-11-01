@@ -699,7 +699,7 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
-                if kind == "FORMAT" and key == "PS":
+                if kind.startswith("FORMAT") and key == "PS":
                     valid = valid and integer_value >= 0
                 if _base_modification_field_kind(key) == "depth":
                     valid = valid and integer_value >= 0
