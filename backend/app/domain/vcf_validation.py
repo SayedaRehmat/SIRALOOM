@@ -58,17 +58,76 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
 
 
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
-    if field_id == "LEN":
-        return {"Number": "1", "Type": "Integer"}
+    # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
+    # cardinality/type even when a caller omits a redundant FORMAT header line.
+    reserved = {
+        "AD": ("R", "Integer"),
+        "ADF": ("R", "Integer"),
+        "ADR": ("R", "Integer"),
+        "DP": ("1", "Integer"),
+        "EC": ("A", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("G", "Float"),
+        "GP": ("G", "Float"),
+        "GQ": ("1", "Integer"),
+        "GT": ("1", "String"),
+        "HQ": ("2", "Integer"),
+        "LA": (".", "Integer"),
+        "LAA": (".", "Integer"),
+        "LAD": ("LR", "Integer"),
+        "LADF": ("LR", "Integer"),
+        "LADR": ("LR", "Integer"),
+        "LEC": ("LA", "Integer"),
+        "LGL": ("LG", "Float"),
+        "LGP": ("LG", "Float"),
+        "LPL": ("LG", "Integer"),
+        "LPP": ("LG", "Integer"),
+        "LEN": ("1", "Integer"),
+        "MQ": ("1", "Integer"),
+        "PL": ("G", "Integer"),
+        "PP": ("G", "Integer"),
+        "PQ": ("1", "Integer"),
+        "PS": ("1", "Integer"),
+        "PSL": ("P", "String"),
+        "PSO": ("P", "Integer"),
+        "PSQ": ("P", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    if definition is not None:
+        return {"Number": definition[0], "Type": definition[1]}
     return _reserved_base_modification_format_definition(field_id)
 
 
 def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
-    if field_id == "END":
-        return {"Number": "1", "Type": "Integer"}
-    if field_id == "SVLEN":
-        return {"Number": "A", "Type": "Integer"}
-    return None
+    # VCFv4.5 Table of reserved INFO keys and structural-variant definitions.
+    reserved = {
+        "AA": ("1", "String"),
+        "AC": ("A", "Integer"),
+        "AD": ("R", "Integer"),
+        "ADF": ("R", "Integer"),
+        "ADR": ("R", "Integer"),
+        "AF": ("A", "Float"),
+        "AN": ("1", "Integer"),
+        "BQ": ("1", "Float"),
+        "CIGAR": ("A", "String"),
+        "DB": ("0", "Flag"),
+        "DP": ("1", "Integer"),
+        "END": ("1", "Integer"),
+        "H2": ("0", "Flag"),
+        "H3": ("0", "Flag"),
+        "MQ": ("1", "Float"),
+        "MQ0": ("1", "Integer"),
+        "NS": ("1", "Integer"),
+        "SB": ("4", "Integer"),
+        "SOMATIC": ("0", "Flag"),
+        "VALIDATED": ("0", "Flag"),
+        "1000G": ("0", "Flag"),
+        "SVLEN": ("A", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    if definition is None:
+        return None
+    return {"Number": definition[0], "Type": definition[1]}
 
 
 class StrictVCFValidationError(ValueError):
