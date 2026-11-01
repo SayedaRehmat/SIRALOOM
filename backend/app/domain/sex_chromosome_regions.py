@@ -20,7 +20,7 @@ _HUMAN_PAR_INTERVALS = {
         "Y": ((10_001, 2_781_479), (56_887_903, 57_217_415)),
     },
 }
-_BUILD_RE = re.compile(r"^(?:GRCH)?(37|38)(?:\.P[0-9]+)?$", re.IGNORECASE)
+_BUILD_RE = re.compile(r"^GRCH(37|38)(?:\.P[0-9]+)?$", re.IGNORECASE)
 _CONTIG_ALIASES = {"X": "X", "CHRX": "X", "Y": "Y", "CHRY": "Y"}
 
 
