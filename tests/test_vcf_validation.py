@@ -1871,7 +1871,7 @@ def test_vcf45_imprecise_requires_cipos_for_precise_alt_but_allows_unspecified_s
     missing_cipos = tmp_path / "vcf45-imprecise-precise-alt-missing-cipos.vcf"
     write_vcf(
         missing_cipos,
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tIMPRECISE\\n",
+        "1\t2\t.\tA\tC\t.\tPASS\tIMPRECISE\n",
         version="VCFv4.5",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -1881,7 +1881,7 @@ def test_vcf45_imprecise_requires_cipos_for_precise_alt_but_allows_unspecified_s
     explicit_precise_cipos = tmp_path / "vcf45-imprecise-precise-alt-explicit-cipos.vcf"
     write_vcf(
         explicit_precise_cipos,
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tIMPRECISE;CIPOS=0,0\\n",
+        "1\t2\t.\tA\tC\t.\tPASS\tIMPRECISE;CIPOS=0,0\n",
         version="VCFv4.5",
     )
     assert validate_vcf_strict(explicit_precise_cipos)["records"] == 1
@@ -1889,7 +1889,7 @@ def test_vcf45_imprecise_requires_cipos_for_precise_alt_but_allows_unspecified_s
     unspecified_symbolic_sv = tmp_path / "vcf45-imprecise-symbolic-sv-unspecified-cipos.vcf"
     write_vcf(
         unspecified_symbolic_sv,
-        "1\\t100\\t.\\tN\\t<DEL>\\t.\\tPASS\\tIMPRECISE;SVTYPE=DEL;END=110\\n",
+        "1\t100\t.\tN\t<DEL>\t.\tPASS\tIMPRECISE;SVTYPE=DEL;END=110\n",
         version="VCFv4.5",
     )
     assert validate_vcf_strict(unspecified_symbolic_sv)["records"] == 1
