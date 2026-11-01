@@ -93,7 +93,9 @@ def test_phenopackets_endpoint_returns_schema_document_and_revision_sidecar(monk
 
     assert captured["clinical_intake_revision"] is revision
     assert result["document"]["id"] == "GA4GH-PACKET"
-    assert result["clinical_intake_revision"]["revision_id"] == str(revision.id)
+    assert result["clinical_intake_revision"]["version"] == revision.version
+    assert result["clinical_intake_revision"]["revision_fingerprint"] == revision.revision_fingerprint
+    assert "revision_id" not in result["clinical_intake_revision"]
     assert "recorded_by" not in result["clinical_intake_revision"]
     prior_test = result["clinical_intake_revision"]["context"]["prior_testing"][0]
     assert "artifact_id" not in prior_test
@@ -157,6 +159,7 @@ def test_phenotype_export_sidecar_preserves_source_semantics_without_internal_fo
 
     assert result[0]["subject_member_identifier"] == "SIBLING-1"
     assert result[0]["phenotype_status"] == "ABSENT"
+    assert "observation_id" not in result[0]
     assert result[0]["clinical_attributes"]["laterality"] == "BILATERAL"
     assert result[0]["evidence"]["source_note"] == "reported by family"
     assert "analysis_id" not in result[0]
