@@ -808,7 +808,7 @@ def test_vcf_intake_rejects_bcftools_version_drift_as_retryable_operational_fail
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\n", "")
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.20\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -847,3 +847,25 @@ def test_vcf_validation_separates_source_records_from_alternate_alleles(tmp_path
     assert result.metadata["source_record_count"] == 1
     assert result.metadata["alternate_allele_count"] == 2
     assert result.metadata["parsed_variant_record_count"] == 2
+
+
+def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failure(
+    tmp_path: Path, monkeypatch
+):
+    import subprocess
+
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
+
+    def run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.21\n", "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", run)
+
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="HTSlib version mismatch"):
+        ingestion.validate_vcf(path)
