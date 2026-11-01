@@ -941,6 +941,11 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
                 "REPEAT_EXPANSION",
             ],
             "excluded_classes_interpreted": False,
+            "excluded_record_types": [
+                "GVCF_REFERENCE_BLOCKS",
+                "TELOMERE_COORDINATE_RECORDS",
+                "TELOMERE_AFTER_CONTIG_RECORDS",
+            ],
             "scope_statement": (
                 "This report covers SNV and INDEL findings analyzed by SIRALOOM. "
                 "CNV, structural variant, mitochondrial, and repeat-expansion "
@@ -966,7 +971,9 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "SIRALOOM starts from VCF and does not perform primary sequencing, alignment, "
             "or variant calling. CNV, structural variant, mitochondrial, and repeat-expansion "
             "classes are outside this product's scope and are not analyzed or excluded as absent. "
-            "Clinical use requires validation of the deployed product/workflow, qualified review, "
+            "GVCF reference-confidence blocks and telomere coordinate sentinels are not "
+            "clinical findings. Unresolved sample genotype encodings that could affect an "
+            "SNV/INDEL call remain subject to the normal review gate. Clinical use requires validation of the deployed product/workflow, qualified review, "
             "and applicable quality/regulatory controls."
         ),
         "recommendations": case.clinical_context.get("recommendations"),
