@@ -140,9 +140,9 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     relative_observation = next(item for item in observations if "focus" in item)
     patient = next(item for item in resources if item["resourceType"] == "Patient")
     relative = next(item for item in resources if item["resourceType"] == "RelatedPerson")
-    assert proband_observation["subject"]["reference"] == f"Patient/{patient['id']}"
-    assert relative_observation["subject"]["reference"] == f"Patient/{patient['id']}"
-    assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{relative['id']}"
+    assert proband_observation["subject"]["reference"] == f"urn:uuid:{patient['id']}"
+    assert relative_observation["subject"]["reference"] == f"urn:uuid:{patient['id']}"
+    assert relative_observation["focus"][0]["reference"] == f"urn:uuid:{relative['id']}"
     assert patient["id"] != str(proband.id)
     assert relative["id"] != str(mother.id)
     family_history = next(item for item in resources if item["resourceType"] == "FamilyMemberHistory")
@@ -192,12 +192,12 @@ def test_fhir_r5_preserves_parent_child_relationships_as_explicit_extensions():
     assert father_resource["id"] != str(father.id)
     assert any(
         ext["url"].endswith("/pedigree-parent")
-        and ext["valueReference"]["reference"] == f"RelatedPerson/{father_resource['id']}"
+        and ext["valueReference"]["reference"] == f"urn:uuid:{father_resource['id']}"
         for ext in patient["extension"]
     )
     assert any(
         ext["url"].endswith("/pedigree-child")
-        and ext["valueReference"]["reference"] == f"Patient/{patient['id']}"
+        and ext["valueReference"]["reference"] == f"urn:uuid:{patient['id']}"
         for ext in father_resource["extension"]
     )
     assert any(ext["url"].endswith("/pedigree-member-metadata") for ext in father_resource["extension"])
