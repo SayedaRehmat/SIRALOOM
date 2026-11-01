@@ -25,7 +25,7 @@ Truth and query sample identifiers are not written to the JSON report. The restr
 
 ## Tool behavior
 
-- Runtime hap.py version is obtained from the executable's `--version` output; the runner does not trust a user-supplied version string. The tool-generated `.runinfo.json` is required and hashed to retain execution-argument provenance.
+- Runtime hap.py version is obtained from the executable's `--version` output; the runner does not trust a user-supplied version string. The resolved executable SHA-256 and repository revision (when supplied by the execution environment) are recorded, and the executable is re-hashed after the run. The tool-generated `.runinfo.json` is required and hashed to retain execution-argument provenance.
 - Default engine is `xcmp`, hap.py's haplotype-level engine. `vcfeval` is permitted only where the laboratory has installed and qualified the compatible RTG-Tools build.
 - ALL and PASS summaries are retained; `--pass-only` is an explicit option and is not enabled by default.
 - The runner requires SNP and INDEL rows for both ALL and PASS in hap.py's `summary.csv`.
