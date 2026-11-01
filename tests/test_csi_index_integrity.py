@@ -222,6 +222,9 @@ def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
     )
 
     assert result["status"] == "VALIDATED"
+    assert result["compression"]["format"] == "BGZF"
+    assert result["compression"]["eof_marker_present"] is True
+    assert result["compression"]["random_access_capable"] is True
     assert result["index_type"] == "CSI"
     assert result["concordance"]["records"] == len(positions)
     assert result["concordance"]["indexed_query_records_verified"] == len(positions)
