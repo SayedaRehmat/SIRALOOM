@@ -121,6 +121,31 @@ def _clinical_attribute_extensions(row: Any) -> list[dict[str, Any]]:
     return result
 
 
+def _explicit_consanguinous_parents(
+    *,
+    case: Any,
+    members: list[Any],
+    relationships: list[Any],
+    clinical_intake_revision: Any | None,
+) -> bool | None:
+    sources = [_get(case, "clinical_context", {}) or {}]
+    sources.extend(_get(member, "metadata_json", {}) or {} for member in members)
+    sources.extend(_get(relationship, "metadata_json", {}) or {} for relationship in relationships)
+    sources.append(_get(clinical_intake_revision, "context", {}) or {})
+    values = []
+    for source in sources:
+        if isinstance(source, dict) and "consanguinous_parents" in source:
+            value = source["consanguinous_parents"]
+            if not isinstance(value, bool):
+                raise FHIRExportError(
+                    "consanguinous_parents must be an explicitly recorded boolean; string/number coercion is prohibited."
+                )
+            values.append(value)
+    if len(set(values)) > 1:
+        raise FHIRExportError("Conflicting explicit consanguinous_parents assertions exist in the case pedigree.")
+    return values[0] if values else None
+
+
 def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
     if revision is None:
         return None
@@ -388,6 +413,30 @@ def build_fhir_r5_bundle(
     intake_extension = _clinical_intake_extension(clinical_intake_revision)
     if intake_extension is not None:
         patient.setdefault("extension", []).append(intake_extension)
+    if members:
+        consanguinous_parents = _explicit_consanguinous_parents(
+            case=case,
+            members=members,
+            relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
+        )
+        consanguinity_children = [
+            _extension(
+                "status",
+                "valueCode",
+                "CONSANGUINOUS" if consanguinous_parents is True
+                else "NOT_CONSANGUINOUS" if consanguinous_parents is False
+                else "NOT_RECORDED",
+            )
+        ]
+        if consanguinous_parents is not None:
+            consanguinity_children.append(
+                _extension("consanguinous-parents", "valueBoolean", consanguinous_parents)
+            )
+        patient.setdefault("extension", []).append({
+            "url": f"{EXTENSION_BASE}/consanguinity-assessment",
+            "extension": consanguinity_children,
+        })
 
     resources: list[dict[str, Any]] = [patient]
     relative_ids: set[str] = set()
