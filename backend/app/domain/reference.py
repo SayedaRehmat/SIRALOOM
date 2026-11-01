@@ -69,6 +69,11 @@ class FastaReference:
     def __enter__(self) -> "FastaReference":
         return self
 
+    @property
+    def contigs(self) -> frozenset[str]:
+        """Return exact indexed contig identifiers without applying aliases."""
+        return frozenset(self._entries)
+
     def __exit__(self, exc_type, exc, tb) -> None:
         self.close()
 
