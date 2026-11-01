@@ -90,6 +90,11 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
     monkeypatch.setattr(phenotype_api, "require_role", lambda *_args: None)
     monkeypatch.setattr(phenotype_api, "AuditService", FakeAudit)
     monkeypatch.setattr(phenotype_api, "create_case_change_candidates", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        phenotype_api,
+        "_resolution_bundle",
+        lambda *_args: (None, {"schema_version": 1, "primary_term": {"status": "ONTOLOGY_UNAVAILABLE"}, "related_terms": [], "resource": None}),
+    )
     db = FakeDB()
 
     result = phenotype_api.add_case_phenotype(
@@ -174,3 +179,64 @@ def test_phenotype_state_migration_backfills_and_keeps_states_distinct(tmp_path,
     engine.dispose()
     with pytest.raises(RuntimeError, match="Cannot downgrade phenotype states"):
         command.downgrade(config, "0049_case_access_role_capabilities")
+
+
+
+def test_clinical_phenotype_attributes_validate_structured_onset_and_modifiers():
+    body = PhenotypeInput(
+        hpo_id="hp:0001250",
+        clinical_attributes={
+            "onset_age": {"value": 3.5, "unit": "years", "comparator": "exact"},
+            "laterality": "bilateral",
+            "temporal_pattern": "recurrent",
+            "modifier_hpo_ids": ["HP:0000002", "hp:0000003"],
+            "anatomical_site": {
+                "system": "http://snomed.info/sct",
+                "code": "123456",
+                "display": "Example anatomical site",
+            },
+            "episode_frequency": {
+                "count": 2,
+                "period_value": 1,
+                "period_unit": "months",
+            },
+        },
+    )
+    assert body.hpo_id == "HP:0001250"
+    assert body.clinical_attributes["onset_age"]["unit"] == "YEARS"
+    assert body.clinical_attributes["laterality"] == "BILATERAL"
+    assert body.clinical_attributes["modifier_hpo_ids"] == ["HP:0000002", "HP:0000003"]
+    assert body.clinical_attributes["episode_frequency"]["period_unit"] == "MONTHS"
+
+
+@pytest.mark.parametrize(
+    "attributes",
+    [
+        {"unrecognized_field": "value"},
+        {"onset_age": {"value": -1, "unit": "YEARS"}},
+        {"onset_age": {"value": 2, "unit": "FORTNIGHTS"}},
+        {"modifier_hpo_ids": ["not-an-hpo-id"]},
+        {"laterality": "LEFT_AND_RIGHT"},
+        {"anatomical_site": {"code": "123"}},
+        {"episode_frequency": {"count": 0, "period_value": 1, "period_unit": "WEEKS"}},
+    ],
+)
+def test_clinical_phenotype_attributes_reject_invalid_semantics(attributes):
+    with pytest.raises(ValidationError):
+        PhenotypeInput(hpo_id="HP:0001250", clinical_attributes=attributes)
+
+
+def test_phenotype_observation_fingerprint_distinguishes_family_subject_and_observation_time():
+    base = PhenotypeInput(hpo_id="HP:0001250", phenotype_status="PRESENT")
+    family = PhenotypeInput(
+        hpo_id="HP:0001250",
+        phenotype_status="PRESENT",
+        subject_member_id=uuid4(),
+    )
+    later = PhenotypeInput(
+        hpo_id="HP:0001250",
+        phenotype_status="PRESENT",
+        observed_at=datetime(2026, 10, 1, tzinfo=UTC),
+    )
+    assert phenotype_api._phenotype_record_fingerprint(base) != phenotype_api._phenotype_record_fingerprint(family)
+    assert phenotype_api._phenotype_record_fingerprint(base) != phenotype_api._phenotype_record_fingerprint(later)
