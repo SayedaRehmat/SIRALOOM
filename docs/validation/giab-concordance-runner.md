@@ -21,7 +21,7 @@ Required:
 
 WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`, and the resulting extended CSV is retained. Symbolic alleles, spanning-deletion alleles, and breakends are rejected because this runner is scoped to small variants. All input files are SHA-256 recorded and rechecked after execution.
 
-Truth and query sample identifiers are not written to the JSON report. The restricted output directory contains hap.py's own outputs/log; protect it as controlled laboratory evidence because upstream tools may include source metadata in their files. The output directory must not already exist and is created with mode 0700; the log and failure record use mode 0600.
+Truth and query sample identifiers are not written to the JSON report. The restricted output directory contains hap.py's own outputs/log; protect it as controlled laboratory evidence because upstream tools may include source metadata in their files. The output directory must not already exist and is created with mode 0700; the log uses mode 0600.
 
 ## Tool behavior
 
@@ -31,7 +31,7 @@ Truth and query sample identifiers are not written to the JSON report. The restr
 - The runner requires SNP and INDEL rows for both ALL and PASS in hap.py's `summary.csv`.
 - Precision, recall and F1 are recomputed from raw TP/FN/FP counts. Descriptive 95% Wilson intervals are retained for precision and recall. A zero denominator is `null`.
 - For optional stratification, the source `.extended.csv` is retained and SHA-256 recorded.
-- Tool stdout/stderr is redirected to a restricted log. Failure JSON stores only the exception class, not exception text or paths.
+- Tool stdout/stderr is redirected to a restricted log. Failures return a nonzero exit code and exception class; existing evidence directories are never modified.
 
 ## Example
 
