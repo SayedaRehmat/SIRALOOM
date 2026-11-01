@@ -17,6 +17,15 @@ POLICY_VERSION = "2.1.0"
 DISPOSITIONS = {"REPORT", "DO_NOT_REPORT", "REVIEW"}
 STATUSES = {"PROPOSED", "FINAL"}
 
+# These artifact classes belong to the separately qualified second product.
+# Their artifact type is itself a reportability blocker; metadata cannot waive it.
+SECOND_PRODUCT_ARTIFACT_REASON_CODES = {
+    "CNV_VARIANT_RECORDS": "CNV_PIPELINE_PENDING",
+    "STRUCTURAL_VARIANT_RECORDS": "SV_PIPELINE_PENDING",
+    "MITOCHONDRIAL_VARIANT_RECORDS": "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
+    "REPEAT_EXPANSION_RECORDS": "REPEAT_EXPANSION_PIPELINE_PENDING",
+}
+
 
 @dataclass(frozen=True)
 class ReportabilityProposal:
@@ -223,9 +232,15 @@ def pending_specialized_artifact_errors(db: Session, analysis_id: UUID) -> list[
     errors: list[str] = []
     for artifact_id, artifact_type, raw_metadata in artifact_rows:
         metadata = raw_metadata if isinstance(raw_metadata, dict) else {}
-        if metadata.get("review_status") != "REQUIRES_SPECIALIZED_REVIEW":
+        is_second_product_artifact = artifact_type in SECOND_PRODUCT_ARTIFACT_REASON_CODES
+        requires_specialized_review = metadata.get("review_status") == "REQUIRES_SPECIALIZED_REVIEW"
+        if not is_second_product_artifact and not requires_specialized_review:
             continue
-        reason_code = metadata.get("review_reason_code") or "REQUIRES_SPECIALIZED_REVIEW"
+        reason_code = (
+            SECOND_PRODUCT_ARTIFACT_REASON_CODES.get(artifact_type)
+            or metadata.get("review_reason_code")
+            or "REQUIRES_SPECIALIZED_REVIEW"
+        )
         errors.append(
             f"{artifact_type} artifact {artifact_id} requires specialized pipeline/review "
             f"({reason_code}); the separately qualified specialized-variant product is required before reportability can be finalized"
