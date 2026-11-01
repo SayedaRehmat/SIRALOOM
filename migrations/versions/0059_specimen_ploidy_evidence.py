@@ -59,7 +59,7 @@ def upgrade():
             BEGIN
                 RAISE EXCEPTION 'specimen ploidy evidence revisions are append-only';
             END;
-            $ LANGUAGE plpgsql
+            $siraloom$ LANGUAGE plpgsql
         """)
         op.execute("""
             CREATE TRIGGER trg_specimen_ploidy_evidence_no_update
