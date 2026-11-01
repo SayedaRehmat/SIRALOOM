@@ -44,6 +44,7 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
     fai = tmp_path / "reference.fa.fai"
     confident = tmp_path / "confident.bed"
     targets = tmp_path / "targets.bed"
+    sample_mapping = tmp_path / "sample-mapping.json"
     vcf_header = (
         "##fileformat=VCFv4.2\n"
         "##contig=<ID=chr1,length=1000>\n"
@@ -56,7 +57,13 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
     fai.write_text("chr1\t1000\t6\t1000\t1001\n", encoding="utf-8")
     confident.write_text("chr1\t0\t1000\n", encoding="utf-8")
     targets.write_text("chr1\t0\t1000\n", encoding="utf-8")
+    sample_mapping.write_text(
+        json.dumps({"truth_sample_name": "HG002", "query_sample_name": "CASE_SAMPLE_001"}),
+        encoding="utf-8",
+    )
+    sample_mapping.chmod(0o600)
     return {
+        "sample_mapping": sample_mapping,
         "truth_vcf": truth,
         "query_vcf": query,
         "reference_fasta": reference,
@@ -146,6 +153,29 @@ def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tm
         parse_happy_summary(path)
 
 
+def test_sample_mapping_file_must_be_private(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    inputs["sample_mapping"].chmod(0o644)
+
+    with pytest.raises(ConcordanceError, match="permissions must deny group and other access"):
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "out",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
+
+
 def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     with pytest.raises(ConcordanceError, match="explicitly declared specimen mapping") as exc:
@@ -210,8 +240,7 @@ def test_reference_fai_must_match_fasta_geometry(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
-            truth_sample_name="HG002",
-            query_sample_name="CASE_SAMPLE_001",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -232,8 +261,7 @@ def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
             assay="WES",
             caller="approved-caller",
             caller_version="1.0",
-            truth_sample_name="HG002",
-            query_sample_name="CASE_SAMPLE_001",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -254,8 +282,7 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
         assay="WES",
         caller="approved-caller",
         caller_version="1.2.3",
-        truth_sample_name="HG002",
-        query_sample_name="CASE_SAMPLE_001",
+        sample_mapping_file=inputs["sample_mapping"],
         truth_set_id="GIAB-HG002-GRCh38",
         truth_set_version="4.2.1",
         acceptance_policy_id="LAB-POLICY-001",
@@ -282,6 +309,9 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["sample_identity"]["query_sample_column_verified"] is True
     serialized = json.dumps(report)
     assert "SAMPLE_PRIVATE_ID" not in serialized
+    assert "HG002" not in serialized
+    assert "CASE_SAMPLE_001" not in serialized
+    assert report["inputs"]["sample_mapping"]["sha256"]
     assert (output / "giab-concordance.json").is_file()
     assert (output / "hap.py.log").is_file()
     assert os.stat(output).st_mode & 0o777 == 0o700
@@ -304,8 +334,7 @@ def test_query_must_have_exactly_one_sample(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
-            truth_sample_name="HG002",
-            query_sample_name="CASE_SAMPLE_001",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -332,8 +361,7 @@ def test_symbolic_small_variant_input_is_rejected(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
-            truth_sample_name="HG002",
-            query_sample_name="CASE_SAMPLE_001",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -365,8 +393,7 @@ def test_existing_evidence_directory_is_not_modified_by_failed_cli_run(
             "--assay", "WGS",
             "--caller", "approved-caller",
             "--caller-version", "1.0",
-            "--truth-sample-name", "HG002",
-            "--query-sample-name", "CASE_SAMPLE_001",
+            "--sample-mapping-file", str(inputs["sample_mapping"]),
             "--truth-set-id", "GIAB-HG002-GRCh38",
             "--truth-set-version", "4.2.1",
             "--acceptance-policy-id", "LAB-POLICY-001",
@@ -395,8 +422,7 @@ def test_stratification_extended_output_is_required_and_hashed(tmp_path: Path) -
         assay="WGS",
         caller="approved-caller",
         caller_version="1.0",
-        truth_sample_name="HG002",
-        query_sample_name="CASE_SAMPLE_001",
+        sample_mapping_file=inputs["sample_mapping"],
         truth_set_id="GIAB-HG002-GRCh38",
         truth_set_version="4.2.1",
         acceptance_policy_id="LAB-POLICY-001",
