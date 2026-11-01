@@ -1544,8 +1544,8 @@ def test_core_info_and_format_cardinality_contract_is_stable_across_vcf_versions
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
         '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\n"
-        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\tAF=0.1,0.2\\tGT:AD:PL\\t1/2:10,4,6:0,10,20,30,40,50\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\tAF=0.1,0.2\tGT:AD:PL\t1/2:10,4,6:0,10,20,30,40,50\n",
         encoding="utf-8",
     )
 
@@ -1568,8 +1568,8 @@ def test_core_multiallelic_cardinality_mismatch_is_rejected_across_vcf_versions(
     path.write_text(
         f"##fileformat={version}\n"
         '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency">\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\n"
-        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\tAF=0.1\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\tAF=0.1\n",
         encoding="utf-8",
     )
 
