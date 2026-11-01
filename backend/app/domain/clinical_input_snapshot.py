@@ -23,7 +23,7 @@ from backend.app.infrastructure.db.models import (
     WorkflowStep,
 )
 
-SNAPSHOT_SCHEMA_VERSION = 2
+SNAPSHOT_SCHEMA_VERSION = 3
 
 
 def _canonical_json(value: Any) -> str:
@@ -238,7 +238,7 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
 
 
 def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
-    if not isinstance(value, dict) or value.get("schema_version") not in {1, SNAPSHOT_SCHEMA_VERSION}:
+    if not isinstance(value, dict) or value.get("schema_version") not in {1, 2, SNAPSHOT_SCHEMA_VERSION}:
         raise ValueError("Persisted clinical input snapshot has an unsupported schema")
     if not isinstance(value.get("phenotype_observations"), list):
         raise ValueError("Persisted clinical input snapshot has invalid phenotype observations")
