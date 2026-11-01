@@ -608,8 +608,8 @@ def test_info_number_g_with_mixed_sample_ploidy_is_explicitly_unchecked(tmp_path
         path,
         ['##INFO=<ID=IG,Number=G,Type=Float,Description="Genotype-indexed site values">'],
         (
-            "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\tIG=0.1,0.2,0.3,0.1,0.1,0.2"
-            "\\tGT\\t1\\t0/1\\n"
+            "1\t2\t.\tA\tC,G\t.\tPASS\tIG=0.1,0.2,0.3,0.1,0.1,0.2"
+            "\tGT\t1\t0/1\n"
         ),
         sample=True,
     )
