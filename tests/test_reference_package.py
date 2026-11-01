@@ -156,6 +156,8 @@ def test_strict_vcf_validation_accepts_only_explicit_reference_contig_aliases(tm
     profile = validate_vcf_strict(valid, reference_contigs={"chrM"})
     assert profile["records"] == 1
     assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
+    with pytest.raises(ReferenceError, match="maps ambiguously"):
+        FastaReference.resolve_contig_name("NC_012920.1", {"M", "chrM"})
 
     invalid = tmp_path / "mitochondrial-wrong-accession-version.vcf"
     invalid.write_text(
