@@ -261,3 +261,73 @@ A failed or unevaluated cell remains **NOT-EVIDENCED**, **PARTIAL**, or **UNSUPP
 **Clinical use:** NOT QUALIFIED.
 
 This conclusion is intentionally conservative and matches the current repository's own live-validation and release-gate policy: deployed-software validation is distinct from clinical-assay validation, and engineering/CI results do not establish clinical performance.
+
+## 12. Independent GIAB / GA4GH concordance execution (added 2026-11-01)
+
+The Stage-1 scale benchmark measures SIRALOOM's intake/normalization performance; it does **not** measure caller analytical concordance. These are separate evidence streams. The new `scripts/validation/run_giab_concordance.py` executes an independent truth-versus-query comparison with Illumina hap.py and retains TP/FN/FP counts for SNP and INDEL, separately for ALL and PASS filter strata.
+
+### Benchmark design
+
+- Use a GIAB truth VCF **and its matching confident-region BED** for the exact reference assembly. The truth VCF, BED, query VCF, FASTA, FAI, optional assay target BED, and optional stratification TSV are SHA-256 recorded and rechecked after execution.
+- Use a sample-specific query VCF containing exactly one sample column. Do not let a multi-sample VCF silently select an arbitrary sample; create an authorized sample-specific derivative upstream and retain its derivation/provenance under the laboratory's controlled process.
+- The FASTA and FAI must be the exact approved reference pair for the declared GRCh37/GRCh38 build. The runner does not perform reference conversion, contig renaming, or reference substitution.
+- WES and PANEL runs require the assay target BED and use hap.py `-T`; the GIAB confident BED is separately supplied with `-f`. The target BED must represent the validated capture design/target definition for the exact assay version.
+- WGS runs use the confident BED without an exome target restriction unless the predeclared intended-use design explicitly defines one.
+- hap.py's `xcmp` engine is the default because it performs haplotype-level matching and supports genotype/allele mismatch accounting. `vcfeval` is selectable only when the laboratory has installed and qualified the compatible RTG-Tools integration. Do not compare results from different engines as if they were identical methods.
+- Optional GA4GH stratification TSVs are passed to hap.py and the generated `.extended.csv` is retained and hashed. Stratification resources must be assembly-matched and versioned.
+- ALL and PASS results are retained separately. Do not use `--pass-only` as a silent default or discard filtered-call performance.
+
+### Metrics and interpretation
+
+For each SNP/INDEL × ALL/PASS stratum the runner records:
+
+- TP = hap.py `TRUTH.TP`;
+- FN = hap.py `TRUTH.FN`;
+- FP = hap.py `QUERY.FP`;
+- recall = TP / (TP + FN);
+- precision = TP / (TP + FP);
+- F1 = harmonic mean of precision and recall;
+- descriptive 95% Wilson intervals for precision and recall.
+
+Zero denominators remain `null`; they are not reported as 0% or 100%. The report includes raw counts so the laboratory can independently recalculate metrics. The Wilson intervals are descriptive binomial intervals; they do not correct for dependence between variants or replace a laboratory's preapproved statistical analysis plan. For exome/panel assays, confidence intervals and the limited representation of difficult variants in benchmark exons are especially important.
+
+### GIAB version policy
+
+Select a benchmark by **sample, release, assembly, and confident-region BED as a matched set**, not by filename alone. NIST currently lists v4.2.1 small-variant benchmarks for GRCh37 and GRCh38 across the GIAB samples, while noting that HG002 has a newer v5.0q benchmark based on a T2T-HG002 assembly. v5.0q must not be substituted into a GRCh37/GRCh38 run unless the laboratory's reference assembly and benchmark package are explicitly compatible. For a GRCh37/GRCh38 Phase-1 matrix, use a matching GIAB release/assembly pair and record the exact release and checksums; where HG002 v4.2.1 is used, document that NIST identifies v5.0q as its newer HG002 benchmark for the T2T context.
+
+### Execution
+
+```bash
+python scripts/validation/run_giab_concordance.py \
+  --truth-vcf /controlled/giab/HG002.truth.vcf.gz \
+  --query-vcf /controlled/specimen/sample-specific.query.vcf.gz \
+  --confident-bed /controlled/giab/HG002.confident.bed.gz \
+  --reference-fasta /controlled/reference/GRCh38.fa \
+  --reference-build GRCh38 \
+  --assay WES \
+  --target-regions /controlled/assay/capture-design-v3.bed \
+  --caller approved-caller \
+  --caller-version 4.2.1 \
+  --engine xcmp \
+  --threads 8 \
+  --output-dir /controlled/evidence/HG002-WES-GRCh38-run-001
+```
+
+For WGS, omit `--target-regions`. Optional `--stratification-tsv` accepts the hap.py/GA4GH region-name-to-BED TSV. Install and validate hap.py separately; the runner records its runtime version and never installs or downloads benchmark data implicitly.
+
+### Evidence and acceptance boundary
+
+The private run directory contains `comparison.summary.csv`, optional `comparison.extended.csv`, `hap.py.log`, and `giab-concordance.json`. The JSON records input hashes, runtime version, engine, intended-use cell, counts, derived metrics, and confidence intervals. The run status remains `CONCORDANCE_RUN_COMPLETE_REVIEW_REQUIRED`; it is never promoted automatically to QUALIFIED. A reviewer must compare results with criteria approved before the run, assess benchmark limitations and variant classes, and retain the signed decision under the laboratory quality system.
+
+This benchmark assesses small-variant concordance **within the benchmark's confident regions and any declared target regions only**. It does not establish performance outside those regions, validate structural variants/CNVs, validate phenotype interpretation or ACMG classification, or authorize clinical use.
+
+### Research basis
+
+- NIST Genome in a Bottle benchmark resources and current release notes: https://www.nist.gov/programs-projects/genome-bottle
+- NIST GIAB FAQ, including exome/targeted-region limitations and recommendation to calculate confidence intervals: https://www.nist.gov/programs-projects/faqs-genome-bottle
+- GA4GH Benchmarking Team tools and reference implementations: https://github.com/ga4gh/benchmarking-tools
+- Zook et al., *Best practices for benchmarking germline small-variant calls in human genomes*, Nature Biotechnology (2019): https://doi.org/10.1038/s41587-019-0054-x
+- Illumina hap.py manual: https://github.com/Illumina/hap.py/blob/master/doc/happy.md
+- CLSI MM09, 3rd edition (2023), sequencing-based clinical test design, validation, reporting and quality management: https://clsi.org/shop/standards/mm09/
+
+The exact controlled standard text remains subject to the laboratory's licensed copy and quality-system interpretation; this repository mapping is not a substitute for purchasing, reviewing, and implementing the standard.
