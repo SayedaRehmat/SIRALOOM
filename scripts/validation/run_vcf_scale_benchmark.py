@@ -137,8 +137,9 @@ def run_benchmark(
             lambda: sha256_file(vcf_path),
             stage_metrics,
         )
+        current_stage = "reference_hashing"
         reference_artifacts = timed_stage(
-            "reference_hashing",
+            current_stage,
             lambda: {
                 "fasta": {"size_bytes": reference_fasta.stat().st_size, "sha256": sha256_file(reference_fasta)},
                 "fai": {"size_bytes": reference_fai.stat().st_size, "sha256": sha256_file(reference_fai)},
@@ -159,10 +160,14 @@ def run_benchmark(
         )
         if validation.status != "VALID":
             raise ScaleBenchmarkError("VCF intake validation did not return VALID.")
+        if validation.detected_build and validation.detected_build != reference_build:
+            raise ScaleBenchmarkError("The VCF-declared reference build conflicts with the selected reference build.")
         if sample_name not in validation.sample_names:
             raise ScaleBenchmarkError("The explicitly selected sample is absent from the VCF header.")
         if not validation.metadata:
             raise ScaleBenchmarkError("VCF validation did not provide toolchain attestation metadata.")
+        if validation.metadata.get("toolchain_validation_status") != "PASS":
+            raise ScaleBenchmarkError("Pinned BCFtools/HTSlib toolchain attestation did not pass.")
 
         current_stage = "reference_validation"
         reference_validation = timed_stage(
@@ -181,6 +186,9 @@ def run_benchmark(
         reconciliation = route_summary["record_reconciliation"]
         if not reconciliation or reconciliation.get("balanced") is not True:
             raise ScaleBenchmarkError("Source-record and exclusive-routing disposition counts do not reconcile.")
+        validated_source_count = validation.metadata.get("source_record_count")
+        if validated_source_count is None or routing.get("source_record_count") != validated_source_count:
+            raise ScaleBenchmarkError("Validation and routing source-record counts disagree.")
         if not routing.get("sequence_path"):
             raise ScaleBenchmarkError("The input contains no supported SNV/INDEL records to normalize.")
 
@@ -203,6 +211,16 @@ def run_benchmark(
             raise ScaleBenchmarkError("Normalization did not publish a non-empty BGZF VCF.")
         if not index_path.is_file() or index_path.stat().st_size == 0:
             raise ScaleBenchmarkError("Normalization did not publish its CSI index.")
+        source_reconciliation = normalization.get("source_child_reconciliation") or {}
+        if source_reconciliation.get("status") != "VALIDATED" or source_reconciliation.get("balanced") is not True:
+            raise ScaleBenchmarkError("Normalized child records do not reconcile to their immutable source ALTs.")
+        index_validation = normalization.get("index_validation") or {}
+        if (
+            index_validation.get("records") is None
+            or index_validation.get("indexed_query_records_verified") != index_validation.get("records")
+            or index_validation.get("indexed_query_contigs_verified") != index_validation.get("contigs")
+        ):
+            raise ScaleBenchmarkError("CSI indexed-query record streams do not reconcile with the sequential VCF stream.")
 
         current_stage = "selected_sample_iteration"
         def count_selected_sample_variants() -> int:
@@ -241,6 +259,7 @@ def run_benchmark(
                 "sample_count": len(validation.sample_names),
                 "selected_sample_identifier_recorded": False,
                 "fileformat": validation.fileformat,
+                "vcf_declared_reference_build": validation.detected_build,
             },
             "reference": {
                 "artifacts": reference_artifacts,
