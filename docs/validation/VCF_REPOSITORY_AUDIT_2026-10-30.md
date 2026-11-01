@@ -39,9 +39,7 @@ Audit date: 2026-11-01
 - PR #253 adds a lab VCF processing scale benchmark harness and standards-aligned runbook. It remains open pending full CI; the harness is not a WES/WGS benchmark result until run on representative lab inputs.
 
 - PR #223 and PR #231 are closed as superseded. PR #232 and #233 remain the merged genotype-provenance and VCFv4.5 Number=M implementations; #234 and #252 add sample-specific reference-block validation and routing.
-- PR #224 is this audit document; this revision updates its evidence to the 2026-11-01 main commit.
-- PR #253 is the open scale-qualification harness workstream; it is not yet merged or executed against lab WES/WGS inputs.
-- PR #224 is this audit document.
+- PR #224 is this audit document; this revision updates its evidence through main commit `dea24dbe`.
 - PR #221 concerns PP3/BP4 predictor-calibration provenance and is scientifically adjacent, but is not a VCF parser implementation.
 - PR #220 defines the broader laboratory workflow and release gates. It is requirements/architecture documentation, not proof that every stage is implemented or qualified.
 - Branch search is paginated and historical branches may remain. This audit does not claim every branch or historical PR has been reconciled. Branch names are not evidence of implementation; compare commit ancestry, inspect diffs, and run relevant tests before recovering work.
@@ -91,7 +89,7 @@ Audit date: 2026-11-01
 ## Governance observations
 
 - At the time of this audit, the GitHub `main` branch was not protected and no repository ruleset was returned. Required backend, PostgreSQL integration, and frontend checks are therefore not enforced by branch protection. Establish release-branch protection and required checks before production release.
-- PR #233 and later PR previews encountered the Vercel account's daily deployment quota. PR #252's GitHub Actions checks passed, and the main-branch workflow for commit `40be1c3` passed backend, PostgreSQL/Celery integration, frontend, and production container checks. The Vercel preview/production deployment is not established by those checks; re-attempt only after the quota resets and verify the actual deployed commit.
+- PR #233 and later PR previews encountered the Vercel account's daily deployment quota. PR #252's GitHub Actions checks and main-branch workflow for commit `40be1c3` passed backend, PostgreSQL/Celery integration, frontend, and production container checks. PR #253's full PR CI also passed before merge; its fresh main-branch workflow is pending at this audit snapshot. The Vercel preview/production deployment is not established by those checks; re-attempt only after the quota resets and verify the actual deployed commit.
 - The prior audit found no main-branch protection/ruleset response. Recheck branch protection and required checks before a controlled laboratory release.
 
 ## Non-claims
