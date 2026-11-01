@@ -185,7 +185,11 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
     assert report["normalization"]["selected_sample_variant_count"] == 2
     assert consumed["count"] == 2
     assert "selected_sample_iteration" in report["runtime"]["stages"]
-    assert report["runtime"]["stages"]["selected_sample_iteration"]["wall_seconds"] >= 0
+    iteration_metrics = report["runtime"]["stages"]["selected_sample_iteration"]
+    assert iteration_metrics["wall_seconds"] >= 0
+    assert iteration_metrics["python_process_cpu_seconds"] >= 0
+    assert "child_process_cpu_seconds" in iteration_metrics
+    assert "largest_child_peak_rss_mb_after_stage" in iteration_metrics
     assert sample_name not in serialized
     assert (output / module.REPORT_NAME).is_file()
     assert (output / "normalized.vcf.gz.csi").is_file()
