@@ -290,7 +290,7 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
         }
     else:
         resource["dataAbsentReason"] = {
-            "coding": [_coding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "not-performed")]
+            "coding": [_coding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "not-asked")]
         }
 
     observed_at = _iso(_get(row, "observed_at"))
