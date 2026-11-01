@@ -87,6 +87,7 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bun
 | Family member | RelatedPerson | References the proband Patient; uses an opaque UUID resource ID and stores recorded relationship text without exporting the human-entered member identifier |
 | Family relationship summary | FamilyMemberHistory | Emitted only when relationship-to-proband was explicitly recorded; status is partial; no condition is invented |
 | Parental consanguinity | SIRALOOM consanguinity-assessment extension | Explicit true/false or NOT_RECORDED; never inferred from pedigree structure |
+| Excluded phenotype state | SIRALOOM phenotype-observation-status CodeSystem | Bundled code system defines EXCLUDED distinctly from ABSENT and UNKNOWN |
 | Phenotype | Observation.code | HPO coding system http://purl.obolibrary.org/obo/hp.owl |
 | PRESENT | Observation.valueBoolean=true | Positive assertion |
 | ABSENT | Observation.valueBoolean=false | Negative phenotype assertion |
@@ -130,6 +131,7 @@ The canonical extension base is https://siraloom.org/fhir/StructureDefinition/. 
 | pedigree-parent / pedigree-child | valueReference | Directed parent-child edge between Patient/RelatedPerson resources |
 | pedigree-member-metadata / pedigree-relationship-metadata | valueString JSON | Opaque local pedigree metadata is preserved but not interpreted as standard inheritance or consanguinity evidence |
 | consanguinity-assessment | Nested status/valueBoolean | Explicit parental consanguinity assertion; NOT_RECORDED remains distinct from false |
+| phenotype-observation-status | CodeSystem resource | Defines EXCLUDED as a separate state; FHIR Observation uses this code rather than valueBoolean=false |
 
 The only recognized consanguinity metadata key for the GA4GH boolean is consanguinous_parents, and its value must be a JSON boolean. SIRALOOM searches the case clinical-context JSON, clinical-intake revision context, pedigree-member metadata, and pedigree-relationship metadata; conflicting values or string/number coercion are rejected. If no value is recorded, Phenopackets strict export refuses the Family because the GA4GH boolean cannot distinguish unknown from false, while FHIR records NOT_RECORDED.
 
