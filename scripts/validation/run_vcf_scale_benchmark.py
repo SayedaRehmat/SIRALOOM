@@ -85,13 +85,13 @@ def child_cpu_seconds() -> float | None:
 
 
 def prepare_output_dir(path: Path) -> Path:
-    if path.is_symlink():
-        raise ScaleBenchmarkError("Output directory must not be a symbolic link.")
-    if path.exists() and not path.is_dir():
-        raise ScaleBenchmarkError("Output path exists and is not a directory.")
-    if path.exists() and any(path.iterdir()):
-        raise ScaleBenchmarkError("Output directory must be new or empty; existing evidence is preserved.")
-    path.mkdir(parents=True, exist_ok=True)
+    if path.is_symlink() or path.exists():
+        raise ScaleBenchmarkError("Output directory must not already exist; prior evidence is preserved.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        path.mkdir(mode=0o700)
+    except FileExistsError as exc:
+        raise ScaleBenchmarkError("Output directory was created by another process; choose a unique run path.") from exc
     path.chmod(0o700)
     return path.resolve()
 
