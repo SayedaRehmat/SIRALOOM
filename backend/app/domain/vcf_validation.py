@@ -13,6 +13,38 @@ BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
     r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
+
+BREAKEND_IDENTITY_RE = re.compile(
+    r"^(?:(?P<prefix>[ACGTNacgtn.]+)(?P<left>[\\[\\]])"
+    r"(?P<contig>[^:\\[\\]\\s]+):(?P<position>[1-9][0-9]*)(?P=left)|"
+    r"(?P<right>[\\[\\]])(?P<right_contig>[^:\\[\\]\\s]+):"
+    r"(?P<right_position>[1-9][0-9]*)(?P=right)(?P<suffix>[ACGTNacgtn.]+))$"
+)
+
+
+def _alt_identity_key(allele: str) -> tuple[str, ...]:
+    """Return VCF allele identity while respecting sequence and contig case rules."""
+    if DNA_RE.fullmatch(allele):
+        return ("SEQUENCE", allele.upper())
+    breakend = BREAKEND_IDENTITY_RE.fullmatch(allele)
+    if breakend is not None:
+        if breakend.group("prefix") is not None:
+            return (
+                "BREAKEND",
+                breakend.group("prefix").upper(),
+                breakend.group("left") or "",
+                breakend.group("contig") or "",
+                breakend.group("position") or "",
+            )
+        return (
+            "BREAKEND",
+            breakend.group("right") or "",
+            breakend.group("right_contig") or "",
+            breakend.group("right_position") or "",
+            (breakend.group("suffix") or "").upper(),
+        )
+    # Symbolic allele IDs and remote contig names are case-sensitive.
+    return ("LITERAL", allele)
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
@@ -919,7 +951,12 @@ def _validate_record(
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
 
-
+    alt_identity_keys = [_alt_identity_key(allele) for allele in alts]
+    if len(alt_identity_keys) != len(set(alt_identity_keys)):
+        raise StrictVCFValidationError(
+            f"ALT contains duplicate allele values at line {line_no}",
+            code="VCF_ALT_DUPLICATE",
+        )
 
     if qual != ".":
         try:
