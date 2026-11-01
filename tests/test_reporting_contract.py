@@ -101,7 +101,7 @@ def test_report_preserves_and_renders_descriptive_family_observations():
     report_observation = finding["inheritance_context"]["segregation_observations"][0]
     html_content = render_html(content).decode("utf-8")
 
-    assert content["report_schema_version"] == "1.3.0"
+    assert content["report_schema_version"] == "1.4.0"
     assert next(member for member in content["pedigree_context"]["members"] if member["id"] == str(parent.id))["member_identifier"] == "PARENT-01"
     assert content["pedigree_context"]["relationships"][0]["parent_member_identifier"] == "PARENT-01"
     assert report_observation["observation_id"] == str(observation.id)
