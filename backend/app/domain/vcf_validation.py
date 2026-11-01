@@ -197,35 +197,36 @@ def compute_vcf45_record_span(
         if alt in {"<*>", "<NON_REF>"}
     }
     for alt_index, alt in enumerate(alts):
-        if alt in {"<*>", "<NON_REF>"} or not SYMBOLIC_RE.fullmatch(alt):
-            continue
-        if alt[1:-1].split(":", 1)[0].upper() == "INS":
-            continue
-        if svlen_values:
-            raw_value = svlen_values[alt_index]
-            if raw_value in {"", "."}:
-                if declared_end is None:
-                    raise StrictVCFValidationError(
-                        f"Symbolic structural ALT {alt!r} requires SVLEN or END at line {line_no}",
-                        code="VCF_SV_INVALID",
-                    )
-                unknown_span = True
-                continue
-            try:
-                svlen = int(raw_value)
-            except ValueError as exc:
+        raw_value = svlen_values[alt_index] if svlen_values else None
+        is_symbolic_sv = alt not in {"<*>", "<NON_REF>"} and bool(SYMBOLIC_RE.fullmatch(alt))
+        if not is_symbolic_sv:
+            if raw_value not in {None, "", "."}:
                 raise StrictVCFValidationError(
-                    f"INFO/SVLEN must contain integers at line {line_no}",
+                    f"INFO/SVLEN must be missing for non-structural ALT {alt!r} at line {line_no}",
                     code="VCF_SVLEN_INVALID",
-                ) from exc
-            end_candidates.append(pos + abs(svlen))
-        elif declared_end is not None:
+                )
+            continue
+        if raw_value in {None, "", "."}:
+            if declared_end is None:
+                raise StrictVCFValidationError(
+                    f"Symbolic structural ALT {alt!r} requires SVLEN or END at line {line_no}",
+                    code="VCF_SV_INVALID",
+                )
             unknown_span = True
-        else:
+            continue
+        try:
+            svlen = int(raw_value)
+        except ValueError as exc:
             raise StrictVCFValidationError(
-                f"Symbolic structural ALT {alt!r} requires SVLEN or END at line {line_no}",
-                code="VCF_SV_INVALID",
+                f"INFO/SVLEN must contain integers at line {line_no}",
+                code="VCF_SVLEN_INVALID",
+            ) from exc
+        if svlen == 0:
+            raise StrictVCFValidationError(
+                f"INFO/SVLEN must be non-zero for symbolic structural ALT {alt!r} at line {line_no}",
+                code="VCF_SVLEN_INVALID",
             )
+        end_candidates.append(pos + abs(svlen))
 
     format_keys = fields[8].split(":") if len(fields) > 8 else []
     gt_index = format_keys.index("GT") if "GT" in format_keys else None

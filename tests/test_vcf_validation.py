@@ -1484,3 +1484,46 @@ def test_vcf45_len_derived_reference_span_is_checked_against_selected_reference(
         validate_vcf_reference_alleles(source, fasta)
 
     assert exc.value.code == "VCF_REFERENCE_SPAN_OUT_OF_BOUNDS"
+
+
+def test_vcf45_symbolic_insertion_svleng_contributes_to_computed_end(tmp_path: Path):
+    path = tmp_path / "vcf45-insertion-svlen.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t100\t.\tA\t<INS>\t.\tPASS\tSVLEN=5\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 105
+
+
+def test_vcf45_end_must_match_symbolic_insertion_svleng(tmp_path: Path):
+    path = tmp_path / "vcf45-insertion-end.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t100\t.\tA\t<INS>\t.\tPASS\tSVLEN=5;END=105\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["vcf45_max_reference_end"] == 105
+
+
+def test_vcf45_svleng_must_be_missing_for_sequence_alt(tmp_path: Path):
+    path = tmp_path / "vcf45-svlen-sequence-alt.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t100\t.\tA\tG\t.\tPASS\tSVLEN=5\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_SVLEN_INVALID"
