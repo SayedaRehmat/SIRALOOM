@@ -131,6 +131,12 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     assert relative_observation["subject"]["reference"] == f"Patient/{proband.id}"
     assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{mother.id}"
     assert any(item["resourceType"] == "FamilyMemberHistory" for item in resources)
+    patient = next(item for item in resources if item["resourceType"] == "Patient")
+    consanguinity = next(
+        item for item in patient["extension"]
+        if item["url"].endswith("/consanguinity-assessment")
+    )
+    assert consanguinity["extension"][0]["valueCode"] == "NOT_RECORDED"
     full_urls = [entry["fullUrl"] for entry in bundle["entry"]]
     assert len(full_urls) == len(set(full_urls))
     for full_url in full_urls:
@@ -273,3 +279,28 @@ def test_fhir_r5_preserves_versioned_clinical_intake_and_differentials_without_d
     assert any(item["url"] == "certainty" and item["valueString"] == "SUSPECTED" for item in differential["extension"])
     assert all(not item["url"].startswith(("http://", "https://")) for item in differential["extension"])
     assert not any(item["resourceType"] == "Condition" for item in resources)
+
+
+def test_fhir_r5_preserves_explicit_consanguinity_without_inference():
+    father = _member("FATHER", sex="MALE", affected="UNAFFECTED")
+    proband = _member("PROBAND", sex="FEMALE", affected="AFFECTED", proband=True)
+    relationship = SimpleNamespace(
+        parent_member_id=father.id,
+        child_member_id=proband.id,
+        relationship_type="PARENT_CHILD",
+        metadata_json={"consanguinous_parents": True},
+    )
+    bundle = build_fhir_r5_bundle(
+        case=_case(),
+        phenotype_observations=[],
+        pedigree_members=[father, proband],
+        pedigree_relationships=[relationship],
+    )
+    patient = next(item for item in _resources(bundle) if item["resourceType"] == "Patient")
+    assessment = next(
+        item for item in patient["extension"]
+        if item["url"].endswith("/consanguinity-assessment")
+    )
+    values = {item["url"]: item for item in assessment["extension"]}
+    assert values["status"]["valueCode"] == "CONSANGUINOUS"
+    assert values["consanguinous-parents"]["valueBoolean"] is True
