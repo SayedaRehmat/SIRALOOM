@@ -176,6 +176,42 @@ def validate_case_clinical_input_snapshot(value: Any) -> dict[str, Any]:
     return value
 
 
+def patient_phenotype_observations(value: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return only primary-patient observations for patient phenotype interpretation.
+
+    Family-member findings remain in the same immutable snapshot but must not be
+    silently mixed into the proband's phenotype vector.
+    """
+    validated = validate_case_clinical_input_snapshot(value)
+    pedigree = validated.get("pedigree_context") or {}
+    proband_ids = {
+        str(member.get("member_id"))
+        for member in pedigree.get("members", [])
+        if isinstance(member, dict) and member.get("is_proband") and member.get("member_id")
+    }
+    return [
+        row for row in validated["phenotype_observations"]
+        if row.get("subject_member_id") is None
+        or str(row.get("subject_member_id")) in proband_ids
+    ]
+
+
+def family_phenotype_observations(value: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return explicitly family-member observations, excluding the proband."""
+    validated = validate_case_clinical_input_snapshot(value)
+    pedigree = validated.get("pedigree_context") or {}
+    proband_ids = {
+        str(member.get("member_id"))
+        for member in pedigree.get("members", [])
+        if isinstance(member, dict) and member.get("is_proband") and member.get("member_id")
+    }
+    return [
+        row for row in validated["phenotype_observations"]
+        if row.get("subject_member_id") is not None
+        and str(row.get("subject_member_id")) not in proband_ids
+    ]
+
+
 def clinical_input_snapshot_digest(value: dict[str, Any]) -> str:
     validated = validate_case_clinical_input_snapshot(value)
     return hashlib.sha256(_canonical_json(validated).encode("utf-8")).hexdigest()
