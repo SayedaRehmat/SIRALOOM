@@ -11,6 +11,7 @@ from scripts.validation.run_giab_concordance import (
     ConcordanceError,
     parse_happy_summary,
     run_concordance,
+    validate_bed_file,
     validate_single_sample_vcf,
     wilson_interval,
 )
@@ -153,6 +154,35 @@ def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Pa
     assert "WRONG_SAMPLE" not in str(exc.value)
 
 
+@pytest.mark.parametrize(
+    "bed_line",
+    [
+        "chr2\\t0\\t10\\n",
+        "chr1\\t0\\t1001\\n",
+        "chr1\\t10\\t10\\n",
+        "track name=confident\\n",
+        "chr1\\tzero\\t10\\n",
+    ],
+)
+def test_bed_regions_must_match_reference_contigs_and_bounds(tmp_path: Path, bed_line: str) -> None:
+    path = tmp_path / "invalid.bed"
+    path.write_text(bed_line, encoding="utf-8")
+
+    with pytest.raises(ConcordanceError):
+        validate_bed_file(path, contig_lengths={"chr1": 1000}, label="Test BED")
+
+
+def test_bed_regions_report_validated_interval_counts_and_hash(tmp_path: Path) -> None:
+    path = tmp_path / "valid.bed"
+    path.write_text("chr1\\t0\\t10\\nchr1\\t20\\t30\\n", encoding="utf-8")
+
+    result = validate_bed_file(path, contig_lengths={"chr1": 1000}, label="Test BED")
+
+    assert result["record_count"] == 2
+    assert result["contig_count"] == 1
+    assert result["sha256"]
+
+
 def test_parse_happy_summary_rejects_incomplete_variant_type_coverage(tmp_path: Path) -> None:
     path = tmp_path / "result.summary.csv"
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -162,6 +192,32 @@ def test_parse_happy_summary_rejects_incomplete_variant_type_coverage(tmp_path: 
 
     with pytest.raises(ConcordanceError, match="SNP and INDEL"):
         parse_happy_summary(path)
+
+
+def test_reference_fai_must_match_fasta_geometry(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    Path(str(inputs["reference_fasta"]) + ".fai").write_text(
+        "chr1\\t999\\t6\\t999\\t1000\\n", encoding="utf-8"
+    )
+
+    with pytest.raises(ConcordanceError, match="FASTA and FAI geometry are inconsistent"):
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            truth_sample_name="HG002",
+            query_sample_name="CASE_SAMPLE_001",
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "invalid-reference",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
 
 
 def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
@@ -215,6 +271,11 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["intended_use_cell"]["truth_set_version"] == "4.2.1"
     assert report["intended_use_cell"]["acceptance_policy_id"] == "LAB-POLICY-001"
     assert report["inputs"]["truth_vcf"]["sha256"]
+    assert report["reference_identity"]["declared_build"] == "GRCh38"
+    assert report["reference_identity"]["fai_sha256"]
+    assert report["reference_identity"]["contig_manifest_sha256"]
+    assert report["region_validation"]["confident_bed"]["record_count"] == 1
+    assert report["region_validation"]["target_regions"]["record_count"] == 1
     assert len(report["metrics"]) == 4
     assert report["sample_identifiers_recorded"] is False
     assert report["sample_identity"]["truth_sample_column_verified"] is True
