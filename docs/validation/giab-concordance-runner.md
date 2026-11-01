@@ -42,6 +42,7 @@ Create the sample mapping sidecar in a protected location; do not put specimen i
 umask 077
 cat > /secure/manifest/sample-mapping.json <<'JSON'
 {
+  "schema_version": "1.0",
   "truth_sample_name": "HG002",
   "query_sample_name": "CASE_SAMPLE_001"
 }
@@ -49,7 +50,7 @@ JSON
 chmod 600 /secure/manifest/sample-mapping.json
 ```
 
-The runner checks the exact sample-column names against the VCF headers, records only the sidecar's SHA-256, and rechecks the sidecar after execution.
+The runner checks the exact sample-column names against the VCF headers, validates the sidecar schema version (`1.0`), records only the sidecar's SHA-256 and schema version, and rechecks the sidecar after execution.
 
 GRCh38 WES:
 
