@@ -5,6 +5,7 @@ string is recognized. Expectations are derived from the GA4GH/HTS specifications
 and are kept separate from SIRALOOM's downstream SNV/INDEL scope.
 """
 
+import gzip
 from pathlib import Path
 
 import pytest
@@ -293,5 +294,41 @@ def test_crlf_line_endings_are_accepted(
         "1\t10\t.\tA\tC\t.\tPASS\t.",
     )
     path.write_bytes(path.read_bytes().replace(b"\n", b"\r\n"))
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_gzip_compressed_vcf_is_accepted_for_every_supported_version(
+    tmp_path: Path, version: str
+) -> None:
+    path = tmp_path / f"{version}.vcf.gz"
+    content = (
+        f"##fileformat={version}\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n"
+    )
+    with gzip.open(path, "wt", encoding="utf-8", newline="\n") as stream:
+        stream.write(content)
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["fileformat"] == version
+    assert profile["records"] == 1
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+def test_utf8_description_metadata_is_accepted(
+    tmp_path: Path, version: str
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-utf8-description.vcf",
+        version,
+        "1\t10\t.\tA\tC\t.\tPASS\tTEST=1",
+        metadata=(
+            '##INFO=<ID=TEST,Number=1,Type=Integer,Description="Cohort café">',
+        ),
+    )
 
     assert validate_vcf_strict(path)["records"] == 1
