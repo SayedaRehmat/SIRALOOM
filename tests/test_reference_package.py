@@ -162,6 +162,7 @@ def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
     result = validate_vcf_reference_alleles(vcf, fasta)
 
     assert result["checked_record_count"] == 1
+    assert result["resolved_contig_aliases"] == {"NC_012920.1": "chrM"}
 
 
 def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(
