@@ -276,3 +276,32 @@ def test_artifact_upload_fails_closed_when_configured_scratch_root_is_unavailabl
         assert db.scalar(
             select(func.count(Artifact.id)).where(Artifact.case_id == upload_api["case_id"])
         ) == 0
+
+def test_artifact_upload_fails_closed_when_scratch_volume_write_fails(
+    upload_api, monkeypatch
+):
+    original_open = Path.open
+
+    def fail_staging_write(path, mode="r", *args, **kwargs):
+        if mode == "wb" and path.parent.name.startswith("siraloom-ingest-"):
+            raise OSError("simulated scratch volume exhaustion")
+        return original_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(artifacts_api.Path, "open", fail_staging_write)
+    content = (
+        b"##fileformat=VCFv4.2\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t10\t.\tA\tG\t.\tPASS\t.\n"
+    )
+
+    response = _post_vcf(
+        upload_api["client"], upload_api["case_id"], content,
+        "browser-upload-attempt-scratch-000003",
+    )
+
+    assert response.status_code == 507, response.text
+    assert response.json()["detail"]["code"] == "UPLOAD_STAGING_UNAVAILABLE"
+    with upload_api["session_factory"]() as db:
+        assert db.scalar(
+            select(func.count(Artifact.id)).where(Artifact.case_id == upload_api["case_id"])
+        ) == 0
