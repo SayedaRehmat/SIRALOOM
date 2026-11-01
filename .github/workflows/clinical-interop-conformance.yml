@@ -57,6 +57,42 @@ jobs:
           java -jar "$TOOL_JAR" validate -H -e family build/clinical-interop/family.json \
             2>&1 | tee build/clinical-interop/phenopacket-tools-family.csv
 
+      - name: Assert GA4GH validators emitted no ERROR findings
+        run: |
+          set -euo pipefail
+          for report in \
+            build/clinical-interop/phenopacket-tools-phenopacket.csv \
+            build/clinical-interop/phenopacket-tools-family.csv; do
+            grep -q '^PATH,LEVEL,VALIDATOR_ID,CATEGORY,MESSAGE
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://github.com/hapifhir/org.hl7.fhir.core/releases/download/7.0.3/validator_cli.jar \
+            --output /tmp/validator_cli.jar
+          echo "57aa43fb40cec5de41def81c927725fd85908eeb71509b7f9313e04d9b8ec79b  /tmp/validator_cli.jar" | sha256sum --check
+
+      - name: Validate synthetic Bundle against HL7 FHIR R5 core
+        run: |
+          set -euo pipefail
+          java -jar /tmp/validator_cli.jar build/clinical-interop/fhir-r5-bundle.json \
+            -version 5.0.0 -tx n/a -extension any \
+            2>&1 | tee build/clinical-interop/hl7-fhir-r5-validator.log
+
+      - name: Upload external validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clinical-interop-external-validation
+          path: build/clinical-interop/
+          if-no-files-found: warn
+          retention-days: 30
+ "$report"
+            if grep -Eq ',ERROR,' "$report"; then
+              cat "$report"
+              exit 1
+            fi
+          done
+
       - name: Download and verify HL7 FHIR Validator 7.0.3
         run: |
           set -euo pipefail
