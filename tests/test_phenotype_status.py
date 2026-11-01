@@ -76,6 +76,9 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
         def scalar(self, _query):
             return None
 
+        def scalars(self, _query):
+            return SimpleNamespace(all=lambda: [])
+
         def add(self, row):
             self.row = row
             row.created_at = datetime.now(UTC)
