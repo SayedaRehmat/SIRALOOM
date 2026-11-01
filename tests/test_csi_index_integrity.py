@@ -98,9 +98,9 @@ def test_valid_ordinary_gzip_without_index_is_classified_as_sequential_only(
     path = tmp_path / "sequential-only.vcf.gz"
     path.write_bytes(
         gzip.compress(
-            b"##fileformat=VCFv4.3\\n"
-            b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-            b"1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n"
+            b"##fileformat=VCFv4.3\n"
+            b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            b"1\t10\t.\tA\tC\t.\tPASS\t.\n"
         )
     )
 
@@ -115,10 +115,10 @@ def test_valid_bgzf_without_index_is_distinguished_from_corrupt_bgzf(
     source = tmp_path / "valid.vcf"
     bgzf = tmp_path / "valid.vcf.gz"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##contig=<ID=1,length=100>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     _compress_and_index(source, bgzf)
@@ -133,10 +133,10 @@ def test_bgzf_missing_terminal_eof_marker_is_rejected(tmp_path: Path):
     source = tmp_path / "valid.vcf"
     bgzf = tmp_path / "valid.vcf.gz"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##contig=<ID=1,length=100>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     _compress_and_index(source, bgzf)
@@ -155,10 +155,10 @@ def test_bgzf_truncated_block_size_is_rejected_before_index_queries(tmp_path: Pa
     source = tmp_path / "valid.vcf"
     bgzf = tmp_path / "valid.vcf.gz"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##contig=<ID=1,length=100>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     _compress_and_index(source, bgzf)
@@ -176,10 +176,10 @@ def test_bgzf_crc_corruption_is_rejected_before_index_queries(tmp_path: Path):
     source = tmp_path / "valid.vcf"
     bgzf = tmp_path / "valid.vcf.gz"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##contig=<ID=1,length=100>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t10\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=100>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     _compress_and_index(source, bgzf)
