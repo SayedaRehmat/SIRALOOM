@@ -10,6 +10,7 @@ from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import IntegrityError
 
 from backend.app.api.v1 import phenotypes as phenotype_api
 from backend.app.api.v1.phenotypes import PhenotypeInput

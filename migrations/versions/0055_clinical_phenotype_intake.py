@@ -13,24 +13,22 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("phenotype_observations", sa.Column(
-        "canonical_hpo_id", sa.Text(), nullable=True
-    ))
-    op.add_column("phenotype_observations", sa.Column(
-        "subject_member_id",
-        sa.Uuid(),
-        sa.ForeignKey("pedigree_members.id"),
-        nullable=True,
-    ))
-    op.add_column("phenotype_observations", sa.Column(
-        "observed_at", sa.DateTime(timezone=True), nullable=True
-    ))
-    op.add_column("phenotype_observations", sa.Column(
-        "clinical_attributes", sa.JSON(), nullable=False, server_default=sa.text("'{}'")
-    ))
-    op.add_column("phenotype_observations", sa.Column(
-        "ontology_resolution", sa.JSON(), nullable=False, server_default=sa.text("'{}'")
-    ))
+    with op.batch_alter_table("phenotype_observations") as batch_op:
+        batch_op.add_column(sa.Column("canonical_hpo_id", sa.Text(), nullable=True))
+        batch_op.add_column(sa.Column("subject_member_id", sa.Uuid(), nullable=True))
+        batch_op.create_foreign_key(
+            "fk_phenotype_observations_subject_member_id",
+            "pedigree_members",
+            ["subject_member_id"],
+            ["id"],
+        )
+        batch_op.add_column(sa.Column("observed_at", sa.DateTime(timezone=True), nullable=True))
+        batch_op.add_column(sa.Column(
+            "clinical_attributes", sa.JSON(), nullable=False, server_default=sa.text("'{}'")
+        ))
+        batch_op.add_column(sa.Column(
+            "ontology_resolution", sa.JSON(), nullable=False, server_default=sa.text("'{}'")
+        ))
 
     op.drop_index("uq_phenotype_case_term_status", table_name="phenotype_observations")
     op.drop_index("uq_phenotype_analysis_term_status", table_name="phenotype_observations")
@@ -58,7 +56,6 @@ def upgrade():
         sqlite_where=sa.text("analysis_id IS NOT NULL AND subject_member_id IS NOT NULL"),
         postgresql_where=sa.text("analysis_id IS NOT NULL AND subject_member_id IS NOT NULL"),
     )
-
 
 def downgrade():
     connection = op.get_bind()
@@ -92,8 +89,12 @@ def downgrade():
         sqlite_where=sa.text("analysis_id IS NOT NULL"),
         postgresql_where=sa.text("analysis_id IS NOT NULL"),
     )
-    op.drop_column("phenotype_observations", "ontology_resolution")
-    op.drop_column("phenotype_observations", "clinical_attributes")
-    op.drop_column("phenotype_observations", "observed_at")
-    op.drop_column("phenotype_observations", "subject_member_id")
-    op.drop_column("phenotype_observations", "canonical_hpo_id")
+    with op.batch_alter_table("phenotype_observations") as batch_op:
+        batch_op.drop_constraint(
+            "fk_phenotype_observations_subject_member_id", type_="foreignkey"
+        )
+        batch_op.drop_column("ontology_resolution")
+        batch_op.drop_column("clinical_attributes")
+        batch_op.drop_column("observed_at")
+        batch_op.drop_column("subject_member_id")
+        batch_op.drop_column("canonical_hpo_id")

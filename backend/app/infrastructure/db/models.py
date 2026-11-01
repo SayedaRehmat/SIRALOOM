@@ -629,7 +629,9 @@ class PhenotypeObservation(Base):
     onset: Mapped[str | None] = mapped_column(Text)
     severity: Mapped[str | None] = mapped_column(Text)
     # Optional family subject; NULL denotes the case proband/primary patient.
-    subject_member_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_members.id"))
+    subject_member_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("pedigree_members.id", name="fk_phenotype_observations_subject_member_id")
+    )
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     clinical_attributes: Mapped[dict] = mapped_column(JSON, default=dict)
     ontology_resolution: Mapped[dict] = mapped_column(JSON, default=dict)
