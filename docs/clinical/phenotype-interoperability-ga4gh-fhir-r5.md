@@ -121,7 +121,7 @@ The canonical base is https://siraloom.org/fhir/StructureDefinition/.
 | family-affected-status | valueCode | Stored affected status for a relative |
 | pedigree-sex | valueCode | Stored pedigree sex; not silently conflated with gender identity |
 | sampled | valueBoolean | Stored pedigree sampling flag |
-| specimen-reference-id | valueString | Existing SIRALOOM specimen identifier |
+| specimen-reference-present | valueBoolean | Indicates a local specimen link exists without exposing an internal specimen UUID |
 | pedigree-parent / pedigree-child | valueReference | Directed parent-child edge between Patient/RelatedPerson resources |
 | pedigree-member-metadata / pedigree-relationship-metadata | valueString JSON | Opaque local pedigree metadata is preserved but not interpreted as standard inheritance or consanguinity evidence |
 
@@ -137,7 +137,7 @@ These canonical URLs are implementation identifiers and documentation contracts 
 - SIRALOOM is the assembler in FHIR Provenance; the original clinical observer is not fabricated because the current phenotype observation model does not store a direct author reference.
 - The export does not include source VCF/BAM/FASTQ artifacts or expose internal storage URIs.
 - Clinical intake revision context from the versioned clinical-intake model is included in the FHIR patient extension and in the Phenopackets response sidecar. Age at assessment is mapped to Phenopackets TimeElement; referral details, prior testing, differential diagnoses and review attestations remain in the sidecar because the base Phenopackets schema does not represent them without changing their meaning.
-- Family-member specimens are not yet emitted as FHIR Specimen resources; the current export preserves the local specimen reference ID as a SIRALOOM extension. GA4GH Phenopackets export returns the specimen-link presence and full pedigree metadata in its SIRALOOM sidecar, with a loss warning. A later specimen-interoperability stage must add the resource only when the complete specimen status, type, collection, processing and subject linkage can be represented without guessing.
+- Family-member specimens are not yet emitted as FHIR Specimen resources; the current export preserves only the presence of a local specimen link; it does not expose an internal specimen UUID or claim that a specimen is available. GA4GH Phenopackets export returns the specimen-link presence and full pedigree metadata in its SIRALOOM sidecar, with a loss warning. A later specimen-interoperability stage must add the resource only when the complete specimen status, type, collection, processing and subject linkage can be represented without guessing.
 
 ## Verification and qualification boundary
 
