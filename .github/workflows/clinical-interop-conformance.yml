@@ -9,8 +9,6 @@ on:
       - "tests/test_phenopackets_v2_export.py"
       - "pyproject.toml"
       - ".github/workflows/clinical-interop-conformance.yml"
-  push:
-    branches: ["feature/clinical-interop-release"]
   workflow_dispatch:
 
 permissions:
