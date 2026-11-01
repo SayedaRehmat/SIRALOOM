@@ -14,6 +14,7 @@ from backend.app.domain.reference_package import (
     package_checksum,
     sha256_file,
     validate_reference_package,
+    validate_fasta_index_consistency,
 )
 
 
@@ -173,3 +174,42 @@ def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(
     with FastaReference(fasta) as reference:
         with pytest.raises(ReferenceError):
             reference.resolve_contig("NC_012920.2")
+
+
+def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
+    resource, _fasta, fai = make_package(tmp_path)
+    fields = fai.read_text(encoding="utf-8").strip().split("\\t")
+    fields[2] = str(int(fields[2]) + 1)
+    fai.write_text("\\t".join(fields) + "\\n", encoding="utf-8")
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+    assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
+
+
+def test_fasta_index_consistency_rejects_sequence_length_mismatch(tmp_path: Path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\\nACGTAC\\n", encoding="utf-8")
+    fai = tmp_path / "reference.fa.fai"
+    fai.write_text("1\\t5\\t3\\t6\\t7\\n", encoding="utf-8")
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_fasta_index_consistency(fasta, fai)
+    assert exc.value.code == "REFERENCE_FAI_MISMATCH"
+
+
+def test_fasta_index_consistency_rejects_stale_byte_offset(tmp_path: Path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1 description\\nACGT\\n", encoding="utf-8")
+    fai = tmp_path / "reference.fa.fai"
+    fai.write_text("1\\t4\\t4\\t4\\t5\\n", encoding="utf-8")
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_fasta_index_consistency(fasta, fai)
+    assert exc.value.code == "REFERENCE_FAI_MISMATCH"
+
+
+def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
+    fasta = tmp_path / "reference.fa"
+    fasta.write_bytes(b">1 description\\r\\nACGT\\r\\nAC\\r\\n")
+    fai = tmp_path / "reference.fa.fai"
+    fai.write_text("1\\t6\\t15\\t4\\t6\\n", encoding="utf-8")
+    result = validate_fasta_index_consistency(fasta, fai)
+    assert result == [{"name": "1", "length": 6}]
