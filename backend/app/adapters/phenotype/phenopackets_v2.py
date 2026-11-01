@@ -176,13 +176,14 @@ def _phenotypic_feature(row: Any) -> dict[str, Any] | None:
     if status in {"UNKNOWN", "NOT_ASSESSED"}:
         return None
     attributes = _value(row, "clinical_attributes", {}) or {}
-    feature: dict[str, Any] = {
-        "type": {"id": _canonical_or_submitted(row)},
-        "excluded": str(_value(row, "phenotype_status", "PRESENT")).upper() in {"ABSENT", "EXCLUDED"},
-    }
+    ontology_type = {"id": _canonical_or_submitted(row)}
     label = _value(row, "label")
     if label:
-        feature["description"] = str(label)
+        ontology_type["label"] = str(label)
+    feature: dict[str, Any] = {
+        "type": ontology_type,
+        "excluded": str(_value(row, "phenotype_status", "PRESENT")).upper() in {"ABSENT", "EXCLUDED"},
+    }
 
     related = {
         str(item.get("input_id")): item
@@ -281,6 +282,31 @@ def _packet(
         ],
         "metaData": _metadata(rows),
     }
+
+
+def _explicit_consanguinous_parents(
+    *,
+    case: Any,
+    members: list[Any],
+    relationships: list[Any],
+    clinical_intake_revision: Any | None,
+) -> bool | None:
+    candidates: list[bool] = []
+    sources = [_value(case, "clinical_context", {}) or {}]
+    sources.extend(_value(member, "metadata_json", {}) or {} for member in members)
+    sources.extend(_value(relationship, "metadata_json", {}) or {} for relationship in relationships)
+    sources.append(_value(clinical_intake_revision, "context", {}) or {})
+    for source in sources:
+        if isinstance(source, dict) and "consanguinous_parents" in source:
+            value = source["consanguinous_parents"]
+            if not isinstance(value, bool):
+                raise PhenopacketExportError(
+                    "consanguinous_parents must be an explicitly recorded boolean; string/number coercion is prohibited."
+                )
+            candidates.append(value)
+    if len(set(candidates)) > 1:
+        raise PhenopacketExportError("Conflicting explicit consanguinous_parents assertions exist in the case pedigree.")
+    return candidates[0] if candidates else None
 
 
 def _family_pedigree(*, case: Any, members: list[Any], relationships: list[Any]) -> dict[str, Any]:
@@ -403,13 +429,6 @@ def build_phenopackets_v2(
             "field": "ontology_provenance",
             "reason": "The case contains observations resolved against multiple HPO releases; one Phenopacket metadata resource cannot preserve per-observation release identity.",
         })
-    if warnings and not allow_lossy:
-        fields = sorted({item["field"] for item in warnings})
-        raise PhenopacketExportError(
-            "Strict Phenopackets export would lose clinical semantics in: " + ", ".join(fields)
-            + ". Re-run with allow_lossy=true only after reviewing the warnings."
-        )
-
     intake_context = _value(clinical_intake_revision, "context", {}) or {}
     age_at_assessment = intake_context.get("age_at_assessment")
     probands = [member for member in members if bool(_value(member, "is_proband", False))]
@@ -422,6 +441,12 @@ def build_phenopackets_v2(
 
     if not members:
         case_rows = [row for row in rows if _value(row, "subject_member_id") is None]
+        if warnings and not allow_lossy:
+            fields = sorted({item["field"] for item in warnings})
+            raise PhenopacketExportError(
+                "Strict Phenopackets export would lose clinical semantics in: " + ", ".join(fields)
+                + ". Re-run with allow_lossy=true only after reviewing the warnings."
+            )
         packet = _packet(
             packet_id=f"SIRALOOM:{_value(case, 'id')}",
             subject_id=f"SIRALOOM:{_value(case, 'id')}",
@@ -461,6 +486,18 @@ def build_phenopackets_v2(
                 )
             )
 
+    consanguinous_parents = _explicit_consanguinous_parents(
+        case=case,
+        members=members,
+        relationships=relationships,
+        clinical_intake_revision=clinical_intake_revision,
+    )
+    if consanguinous_parents is None:
+        warnings.append({
+            "observation_id": "pedigree",
+            "field": "pedigree.consanguinous_parents",
+            "reason": "The GA4GH Family boolean cannot distinguish unknown/not-recorded from false; an explicit boolean is required for strict export.",
+        })
     family = {
         "id": f"SIRALOOM:{_value(case, 'id')}:family",
         "proband": proband_packet,
@@ -468,6 +505,14 @@ def build_phenopackets_v2(
         "pedigree": _family_pedigree(case=case, members=members, relationships=relationships),
         "metaData": _metadata(rows),
     }
+    if consanguinous_parents is not None:
+        family["consanguinousParents"] = consanguinous_parents
+    if warnings and not allow_lossy:
+        fields = sorted({item["field"] for item in warnings})
+        raise PhenopacketExportError(
+            "Strict Phenopackets export would lose clinical semantics in: " + ", ".join(fields)
+            + ". Re-run with allow_lossy=true only after reviewing the warnings."
+        )
     return _validate_message(family, family=True), warnings
 
 
