@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 from uuid import uuid4
 
@@ -22,8 +23,6 @@ from backend.app.main import app
 
 
 def _request_fingerprint(content: bytes = b"VCF source bytes") -> str:
-    import hashlib
-
     return upload_request_fingerprint(
         content_sha256=hashlib.sha256(content).hexdigest(),
         size_bytes=len(content),
@@ -236,7 +235,7 @@ def test_reserved_upload_recovers_identical_orphaned_storage_bytes(tmp_path):
         db.commit()
 
         assert recovered.id == intent.artifact_id
-        assert recovered.sha256 == __import__("hashlib").sha256(content).hexdigest()
+        assert recovered.sha256 == hashlib.sha256(content).hexdigest()
         assert store.read_bytes(storage_uri) == content
         assert db.scalar(
             select(func.count(Artifact.id)).where(Artifact.id == intent.artifact_id)
