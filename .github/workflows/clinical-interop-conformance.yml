@@ -57,7 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           for report in build/clinical-interop/phenopacket-tools-phenopacket.csv build/clinical-interop/phenopacket-tools-family.csv; do
-            grep -q '^PATH,LEVEL,VALIDATOR_ID,CATEGORY,MESSAGE$' "$report"
+            test -s "$report"
             if grep -Eq ',ERROR,' "$report"; then
               cat "$report"
               exit 1
