@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -79,6 +80,12 @@ def test_phenotype_endpoint_persists_explicit_state_and_legacy_boolean(
         def add(self, row):
             self.row = row
             row.created_at = datetime.now(UTC)
+
+        def begin_nested(self):
+            return nullcontext()
+
+        def flush(self):
+            return None
 
         def commit(self):
             return None
