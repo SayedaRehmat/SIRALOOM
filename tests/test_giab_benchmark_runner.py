@@ -410,12 +410,36 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
     assert any("--multi-overlaps ." in command for command in lineage["commands"])
     assert any("--old-rec-tag SIRALOOM_ORIG" in command for command in lineage["commands"])
     assert lineage["input_routing"] == {
-        "routing_version": "2",
+        "routing_version": "3",
+        "source_record_count": 5,
         "records_total": 5,
+        "record_reconciliation": {
+            "method": "SOURCE_RECORD_INDEX_VS_EXCLUSIVE_ROUTING_DISPOSITIONS",
+            "source_records": 5,
+            "routed_records": 5,
+            "delta": 0,
+            "balanced": True,
+            "disposition_counts": {
+                "sequence": 2,
+                "gvcf_reference_blocks": 1,
+                "gvcf_unresolved_variants": 0,
+                "structural_variants": 2,
+                "copy_number_variants": 0,
+                "repeat_expansions": 0,
+                "mitochondrial_variants": 0,
+                "spanning_deletions": 0,
+                "telomere_coordinates": 0,
+                "after_contig_coordinates": 0,
+                "reference_only": 0,
+            },
+        },
         "sequence_records": 2,
         "gvcf_reference_blocks": 1,
         "gvcf_unresolved_variant_records": 0,
         "structural_variant_records": 2,
+        "cnv_variant_records": 0,
+        "repeat_expansion_records": 0,
+        "mitochondrial_variant_records": 0,
         "spanning_deletion_records": 0,
         "policy": "BCFTOOLS_VIEW_TRIM_UNSEEN_AT_VARIANT_SITES",
     }

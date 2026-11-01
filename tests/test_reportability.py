@@ -1,11 +1,13 @@
 from uuid import uuid4
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis,
+    Artifact,
     Case,
     Classification,
     Organization,
@@ -13,7 +15,11 @@ from backend.app.infrastructure.db.models import (
     User,
     Variant,
 )
-from backend.app.reporting.reportability import evaluate_analysis, finalize_reportability
+from backend.app.reporting.reportability import (
+    evaluate_analysis,
+    finalize_reportability,
+    final_reportability_state,
+)
 
 
 def make_db():
@@ -158,3 +164,110 @@ def test_final_reportability_state_rejects_decision_linked_to_stale_classificati
             type("Principal", (), {"organization_id": org.id})(),
         )
     assert exc_info.value.status_code == 409
+
+
+def test_pending_specialized_variant_artifact_blocks_reportability_finalization():
+    db = make_db()
+    org = Organization(id=uuid4(), name="Lab")
+    user = User(
+        id=uuid4(),
+        organization_id=org.id,
+        display_name="Reviewer",
+        role="MEDICAL_REVIEWER",
+        status="ACTIVE",
+    )
+    case = Case(
+        id=uuid4(),
+        organization_id=org.id,
+        case_identifier="CASE-SPECIALIZED-ROUTING",
+        status="ACTIVE",
+        clinical_context={},
+        language="en",
+        created_by=user.id,
+    )
+    analysis = Analysis(
+        id=uuid4(),
+        case_id=case.id,
+        analysis_type="VARIANT_INTERPRETATION",
+        workflow_id="variant-v1",
+        workflow_version="1.0",
+        status="REQUIRES_REVIEW",
+        reference_build="GRCh38",
+        configuration={},
+    )
+    variant = Variant(
+        id=uuid4(),
+        genome_build="GRCh38",
+        chromosome="1",
+        position=20,
+        reference="A",
+        alternate="G",
+        normalization_status="NORMALIZED",
+        canonical_key="GRCh38:1:20:A:G",
+        identifiers={},
+    )
+    classification = Classification(
+        id=uuid4(),
+        variant_id=variant.id,
+        analysis_id=analysis.id,
+        framework_name="ACMG/AMP",
+        framework_version="2015",
+        result="LIKELY_PATHOGENIC",
+        criterion_ids=[],
+        metadata_json={},
+        state="FINAL",
+        review_status="APPROVED",
+        version=1,
+        review_version=1,
+    )
+    routed_artifact = Artifact(
+        id=uuid4(),
+        case_id=case.id,
+        analysis_id=analysis.id,
+        artifact_type="MITOCHONDRIAL_VARIANT_RECORDS",
+        filename="mitochondrial-variants.vcf",
+        media_type="text/vcf",
+        size_bytes=1,
+        sha256="a" * 64,
+        storage_uri="file:///tmp/mitochondrial-variants.vcf",
+        genome_build="GRCh38",
+        validation_status="VALID",
+        metadata_json={
+            "review_status": "REQUIRES_SPECIALIZED_REVIEW",
+            "review_reason_code": "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING",
+        },
+    )
+    db.add_all([org, user, case, analysis, variant, classification, routed_artifact])
+    db.commit()
+
+    proposals = evaluate_analysis(db, analysis)
+    db.commit()
+    assert len(proposals) == 1
+
+    ready, errors = final_reportability_state(db, analysis.id)
+    assert not ready
+    assert any("MITOCHONDRIAL_VARIANT_PIPELINE_PENDING" in error for error in errors)
+
+    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
+        finalize_reportability(
+            db,
+            decision_id=proposals[0].id,
+            reviewer_id=user.id,
+            expected_version=proposals[0].review_version,
+            disposition="REPORT",
+            reason="Attempt to sign out while a routed variant class is pending",
+        )
+
+    # A retry against an already-final decision must not bypass a specialized
+    # artifact that was subsequently attached to the analysis.
+    proposals[0].status = "FINAL"
+    db.commit()
+    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
+        finalize_reportability(
+            db,
+            decision_id=proposals[0].id,
+            reviewer_id=user.id,
+            expected_version=proposals[0].review_version,
+            disposition="REPORT",
+            reason="Retry must re-check unresolved specialized artifacts",
+        )

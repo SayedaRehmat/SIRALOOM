@@ -1527,3 +1527,53 @@ def test_vcf45_svleng_must_be_missing_for_sequence_alt(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_SVLEN_INVALID"
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_core_info_and_format_cardinality_contract_is_stable_across_vcf_versions(
+    tmp_path: Path, version: str
+):
+    """Exercise shared Number=A/R/G semantics across every accepted VCF 4.x version."""
+    path = tmp_path / f"core-cardinality-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\tAF=0.1,0.2\tGT:AD:PL\t1/2:10,4,6:0,10,20,30,40,50\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["fileformat"] == version
+    assert profile["records"] == 1
+    assert profile["multiallelic_records"] == 1
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_core_multiallelic_cardinality_mismatch_is_rejected_across_vcf_versions(
+    tmp_path: Path, version: str
+):
+    """A version label must not weaken allele-indexed field validation."""
+    path = tmp_path / f"bad-core-cardinality-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC,G\t.\tPASS\tAF=0.1\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
