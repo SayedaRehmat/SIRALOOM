@@ -58,6 +58,7 @@ def test_benchmark_requires_an_explicit_sample_mapping(tmp_path, monkeypatch):
         lambda _path: SimpleNamespace(
             status="VALID",
             sample_names=["SAMPLE_A"],
+            detected_build=None,
             metadata={"toolchain_validation_status": "PASS"},
             record_count=1,
             fileformat="VCFv4.5",
@@ -89,6 +90,7 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
         lambda _path: SimpleNamespace(
             status="VALID",
             sample_names=[sample_name],
+            detected_build="GRCh38",
             metadata={
                 "source_record_count": 3,
                 "alternate_allele_count": 3,
@@ -144,8 +146,13 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
             "operation": "reference_aware_normalization_sort_index",
             "compression": "BGZF",
             "index": "CSI",
-            "index_validation": {"status": "PASS"},
-            "source_child_reconciliation": {"status": "PASS"},
+            "index_validation": {
+                "records": 2,
+                "contigs": 1,
+                "indexed_query_records_verified": 2,
+                "indexed_query_contigs_verified": 1,
+            },
+            "source_child_reconciliation": {"status": "VALIDATED", "balanced": True},
             "source_only_format_fields": [],
             "source_only_format_fields_policy": None,
         }
