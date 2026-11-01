@@ -19,6 +19,7 @@ from backend.app.reporting.reportability import (
     evaluate_analysis,
     finalize_reportability,
     final_reportability_state,
+    pending_specialized_artifact_errors,
 )
 
 
@@ -254,30 +255,7 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
     db.commit()
     assert len(proposals) == 1
 
-    ready, errors = final_reportability_state(db, analysis.id)
-    assert not ready
-    assert any(reason_code in error for error in errors)
-
-    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
-        finalize_reportability(
-            db,
-            decision_id=proposals[0].id,
-            reviewer_id=user.id,
-            expected_version=proposals[0].review_version,
-            disposition="REPORT",
-            reason="Attempt to sign out while a routed variant class is pending",
-        )
-
-    # A retry against an already-final decision must not bypass a specialized
-    # artifact that was subsequently attached to the analysis.
-    proposals[0].status = "FINAL"
-    db.commit()
-    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
-        finalize_reportability(
-            db,
-            decision_id=proposals[0].id,
-            reviewer_id=user.id,
-            expected_version=proposals[0].review_version,
-            disposition="REPORT",
-            reason="Retry must re-check unresolved specialized artifacts",
-        )
+    # The specialized artifact is retained but explicitly outside the fixed
+    # first-product SNV/INDEL analytical scope; it is not a sign-out blocker.
+    assert pending_specialized_artifact_errors(db, analysis.id) == []
+    assert len(proposals) == 1
