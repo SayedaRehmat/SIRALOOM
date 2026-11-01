@@ -100,14 +100,20 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
     mother = _member("MOTHER", sex="FEMALE", affected="UNAFFECTED", relationship="mother")
     bundle = build_fhir_r5_bundle(
         case=_case(),
-        phenotype_observations=[_observation(subject_member_id=mother.id)],
+        phenotype_observations=[
+            _observation(subject_member_id=proband.id),
+            _observation(subject_member_id=mother.id),
+        ],
         pedigree_members=[proband, mother],
     )
 
     resources = _resources(bundle)
-    observation = next(item for item in resources if item["resourceType"] == "Observation")
-    assert observation["subject"]["reference"] == f"Patient/{proband.id}"
-    assert observation["focus"][0]["reference"] == f"RelatedPerson/{mother.id}"
+    observations = [item for item in resources if item["resourceType"] == "Observation"]
+    proband_observation = next(item for item in observations if "focus" not in item)
+    relative_observation = next(item for item in observations if "focus" in item)
+    assert proband_observation["subject"]["reference"] == f"Patient/{proband.id}"
+    assert relative_observation["subject"]["reference"] == f"Patient/{proband.id}"
+    assert relative_observation["focus"][0]["reference"] == f"RelatedPerson/{mother.id}"
     assert any(item["resourceType"] == "FamilyMemberHistory" for item in resources)
 
 
