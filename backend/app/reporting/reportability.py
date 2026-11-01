@@ -164,12 +164,6 @@ def finalize_reportability(
     db.refresh(decision, with_for_update=True)
     if decision.analysis_id != analysis.id:
         raise ValueError("Reportability decision analysis changed during finalization")
-    pending_artifact_errors = pending_specialized_artifact_errors(db, analysis.id)
-    if pending_artifact_errors:
-        raise ValueError(
-            "Cannot finalize reportability while specialized routed artifacts remain unresolved: "
-            + "; ".join(pending_artifact_errors)
-        )
     manifest_variant_ids = get_analysis_variant_ids(analysis, db)
     if manifest_variant_ids is not None and decision.variant_id not in manifest_variant_ids:
         raise ValueError("Reportability decision references a variant outside the normalized analysis input")
@@ -187,6 +181,13 @@ def finalize_reportability(
         )
     if decision.status == "FINAL":
         return decision
+
+    pending_artifact_errors = pending_specialized_artifact_errors(db, analysis.id)
+    if pending_artifact_errors:
+        raise ValueError(
+            "Cannot finalize reportability while specialized routed artifacts remain unresolved: "
+            + "; ".join(pending_artifact_errors)
+        )
 
     if decision.review_version != expected_version:
         raise ValueError(
