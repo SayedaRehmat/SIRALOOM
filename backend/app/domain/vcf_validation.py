@@ -965,6 +965,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     chrom_header: list[str] | None = None
     found_header = False
     records = 0
+    alternate_allele_count = 0
     multiallelic = 0
     reference_only = 0
     telomere_records = 0
@@ -1143,6 +1144,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 telomere_records += 1
             if not alts:
                 reference_only += 1
+            else:
+                alternate_allele_count += len(alts)
             if fields[2] != ".":
                 record_ids = fields[2].split(";")
                 if len(record_ids) != len(set(record_ids)):
@@ -1421,6 +1424,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     return {
         "fileformat": fileformat,
         "records": records,
+        "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,
         "telomere_records": telomere_records,
         "multiallelic_records": multiallelic,

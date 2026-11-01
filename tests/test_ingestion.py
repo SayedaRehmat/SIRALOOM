@@ -769,3 +769,105 @@ def test_vcf45_local_allele_callset_passes_full_intake_validation(tmp_path: Path
     assert result.status == "VALID"
     assert result.fileformat == "VCFv4.5"
     assert result.sample_names == ["SAMPLE1"]
+
+
+def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, monkeypatch):
+    import subprocess
+
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
+
+    def run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.24\n", "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", run)
+
+    result = ingestion.validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.metadata["bcftools_version"] == "bcftools 1.24"
+    assert result.metadata["expected_bcftools_version"] == "1.24"
+    assert result.metadata["htslib_version"] == "1.24"
+    assert result.metadata["expected_htslib_version"] == "1.24"
+    assert result.metadata["toolchain_validation_status"] == "PASS"
+
+
+def test_vcf_intake_rejects_bcftools_version_drift_as_retryable_operational_failure(
+    tmp_path: Path, monkeypatch
+):
+    import subprocess
+
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
+
+    def run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.24\n", "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", run)
+
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="version mismatch"):
+        ingestion.validate_vcf(path)
+
+
+def test_vcf_validation_separates_source_records_from_alternate_alleles(tmp_path: Path, monkeypatch):
+    import subprocess
+
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "multiallelic.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=1000>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t100\t.\tA\tG,T\t.\tPASS\t.\tGT\t1/2\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
+
+    def run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.24\n", "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", run)
+
+    result = ingestion.validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 2
+    assert result.metadata["source_record_count"] == 1
+    assert result.metadata["alternate_allele_count"] == 2
+    assert result.metadata["parsed_variant_record_count"] == 2
+
+
+def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failure(
+    tmp_path: Path, monkeypatch
+):
+    import subprocess
+
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    monkeypatch.setattr(ingestion.shutil, "which", lambda _name: "/usr/bin/bcftools")
+
+    def run(command, **kwargs):
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.24\nUsing htslib 1.23\n", "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", run)
+
+    with pytest.raises(ingestion.VCFValidationUnavailable, match="HTSlib version mismatch"):
+        ingestion.validate_vcf(path)
