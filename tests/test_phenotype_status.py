@@ -9,7 +9,6 @@ from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
 from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.exc import IntegrityError
 
 from backend.app.api.v1 import phenotypes as phenotype_api
 from backend.app.api.v1.phenotypes import PhenotypeInput
@@ -267,9 +266,9 @@ def test_clinical_snapshot_separates_proband_and_family_phenotypes():
             "relationships": [],
         },
         "phenotype_observations": [
-            {"hpo_id": "HP:0001250", "phenotype_status": "PRESENT", "subject_member_id": None},
-            {"hpo_id": "HP:0001251", "phenotype_status": "PRESENT", "subject_member_id": proband_id},
-            {"hpo_id": "HP:0001252", "phenotype_status": "ABSENT", "subject_member_id": sibling_id},
+            {"scope": "CASE", "hpo_id": "HP:0001250", "phenotype_status": "PRESENT", "subject_member_id": None},
+            {"scope": "CASE", "hpo_id": "HP:0001251", "phenotype_status": "PRESENT", "subject_member_id": proband_id},
+            {"scope": "CASE", "hpo_id": "HP:0001252", "phenotype_status": "ABSENT", "subject_member_id": sibling_id},
         ],
         "gene_disease_evidence": [],
         "literature_evidence": [],
