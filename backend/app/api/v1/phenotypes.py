@@ -588,7 +588,7 @@ def _pedigree_export_sidecar(
     if clinical_intake_revision is not None:
         sources.append(clinical_intake_revision.context or {})
     for source in sources:
-        if "consanguinous_parents" in source:
+        if isinstance(source, dict) and "consanguinous_parents" in source:
             consanguinity_values.append(source["consanguinous_parents"])
     consanguinous_parents = consanguinity_values[0] if consanguinity_values else None
     return {
