@@ -592,10 +592,19 @@ def export_case_phenopackets_v2(
             "schema_version": "2.0",
             "lossy": bool(warnings),
             "warning_count": len(warnings),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+            "clinical_intake_revision_version": (
+                clinical_intake_revision.version if clinical_intake_revision is not None else None
+            ),
         },
         payload={
             "allow_lossy": allow_lossy,
             "warning_fields": sorted({item["field"] for item in warnings}),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
         },
     )
     db.commit()
@@ -669,8 +678,20 @@ def export_case_phenotypes_fhir_r5(
             "format": "HL7_FHIR_R5",
             "fhir_version": "5.0.0",
             "resource_count": len(bundle.get("entry", [])),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+            "clinical_intake_revision_version": (
+                clinical_intake_revision.version if clinical_intake_revision is not None else None
+            ),
         },
-        payload={"format": "HL7_FHIR_R5", "resource_count": len(bundle.get("entry", []))},
+        payload={
+            "format": "HL7_FHIR_R5",
+            "resource_count": len(bundle.get("entry", [])),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+        },
     )
     db.commit()
     return {
