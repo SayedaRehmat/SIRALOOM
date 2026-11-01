@@ -15,15 +15,17 @@ Required:
 - exact reference FASTA and adjacent `.fai`;
 - explicit GRCh37/GRCh38 build;
 - assay (WES, WGS or PANEL);
-- exact caller name and caller version.
+- exact caller name and caller version;
+- truth-set identifier and release (for example, GIAB HG002 GRCh38 v4.2.1);
+- preapproved laboratory acceptance-policy identifier.
 
-WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`, and the resulting extended CSV is retained. All input files are SHA-256 recorded and rechecked after execution.
+WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`, and the resulting extended CSV is retained. Symbolic alleles, spanning-deletion alleles, and breakends are rejected because this runner is scoped to small variants. All input files are SHA-256 recorded and rechecked after execution.
 
 Truth and query sample identifiers are not written to the JSON report. The restricted output directory contains hap.py's own outputs/log; protect it as controlled laboratory evidence because upstream tools may include source metadata in their files. The output directory must not already exist and is created with mode 0700; the log and failure record use mode 0600.
 
 ## Tool behavior
 
-- Runtime hap.py version is obtained from the executable's `--version` output; the runner does not trust a user-supplied version string.
+- Runtime hap.py version is obtained from the executable's `--version` output; the runner does not trust a user-supplied version string. The tool-generated `.runinfo.json` is required and hashed to retain execution-argument provenance.
 - Default engine is `xcmp`, hap.py's haplotype-level engine. `vcfeval` is permitted only where the laboratory has installed and qualified the compatible RTG-Tools build.
 - ALL and PASS summaries are retained; `--pass-only` is an explicit option and is not enabled by default.
 - The runner requires SNP and INDEL rows for both ALL and PASS in hap.py's `summary.csv`.
