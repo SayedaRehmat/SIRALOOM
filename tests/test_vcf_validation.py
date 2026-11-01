@@ -1763,7 +1763,7 @@ def test_vcf45_psl_requires_missing_value_for_unphased_gt_alleles(
     write_vcf_with_metadata(
         path,
         ['##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">'],
-        f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL\\t{gt}:{psl}\\n",
+        f"1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PSL\t{gt}:{psl}\n",
         sample=True,
         version="VCFv4.5",
     )
@@ -1779,7 +1779,7 @@ def test_vcf45_psl_accepts_phase_set_only_for_explicitly_phased_gt_allele(tmp_pa
     write_vcf_with_metadata(
         path,
         ['##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">'],
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL\\t|0/1:chr1*2*1,.\\n",
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PSL\t|0/1:chr1*2*1,.\n",
         sample=True,
         version="VCFv4.5",
     )
@@ -1803,7 +1803,7 @@ def test_variable_number_info_fields_still_validate_declared_value_type(tmp_path
     write_vcf_with_metadata(
         path,
         ['##INFO=<ID=CUSTOM,Number=.,Type=Integer,Description="Variable integer list">'],
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tCUSTOM=1,not-an-integer\\n",
+        "1\t2\t.\tA\tC\t.\tPASS\tCUSTOM=1,not-an-integer\n",
     )
 
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -1817,7 +1817,7 @@ def test_variable_number_format_fields_still_validate_declared_value_type(tmp_pa
     write_vcf_with_metadata(
         path,
         ['##FORMAT=<ID=CUSTOM,Number=.,Type=Integer,Description="Variable integer list">'],
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tCUSTOM\\t1,not-an-integer\\n",
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM\t1,not-an-integer\n",
         sample=True,
     )
 
@@ -1832,7 +1832,7 @@ def test_unresolved_number_g_fields_still_validate_declared_value_type(tmp_path:
     write_vcf_with_metadata(
         path,
         ['##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">'],
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tPL\\t0,not-an-integer\\n",
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tPL\t0,not-an-integer\n",
         sample=True,
     )
 
@@ -1844,13 +1844,13 @@ def test_unresolved_number_g_fields_still_validate_declared_value_type(tmp_path:
 
 def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp_path: Path):
     valid = tmp_path / "vcf45-cipos-valid.vcf"
-    write_vcf(valid, "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\tCIPOS=-2,2,0,0\\n", version="VCFv4.5")
+    write_vcf(valid, "1\t2\t.\tA\tC,G\t.\tPASS\tCIPOS=-2,2,0,0\n", version="VCFv4.5")
 
     profile = validate_vcf_strict(valid)
     assert profile["records"] == 1
 
     invalid = tmp_path / "vcf45-cipos-invalid.vcf"
-    write_vcf(invalid, "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tCIPOS=1,2\\n", version="VCFv4.5")
+    write_vcf(invalid, "1\t2\t.\tA\tC\t.\tPASS\tCIPOS=1,2\n", version="VCFv4.5")
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(invalid)
     assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
@@ -1858,7 +1858,7 @@ def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp
 
 def test_vcf45_ciend_must_be_missing_for_non_symbolic_alleles(tmp_path: Path):
     path = tmp_path / "vcf45-ciend-on-sequence-allele.vcf"
-    write_vcf(path, "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tCIEND=-1,1\\n", version="VCFv4.5")
+    write_vcf(path, "1\t2\t.\tA\tC\t.\tPASS\tCIEND=-1,1\n", version="VCFv4.5")
 
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -1870,7 +1870,7 @@ def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality
     valid = tmp_path / "vcf45-meinfo-empty-values.vcf"
     write_vcf(
         valid,
-        "1\\t100\\t.\\tN\\t<INS>\\t.\\tPASS\\tSVTYPE=INS;END=110;MEINFO=,,,\\n",
+        "1\t100\t.\tN\t<INS>\t.\tPASS\tSVTYPE=INS;END=110;MEINFO=,,,\n",
         version="VCFv4.5",
     )
     profile = validate_vcf_strict(valid)
@@ -1879,7 +1879,7 @@ def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality
     invalid = tmp_path / "vcf45-meinfo-wrong-cardinality.vcf"
     write_vcf(
         invalid,
-        "1\\t100\\t.\\tN\\t<INS>\\t.\\tPASS\\tSVTYPE=INS;END=110;MEINFO=foo,bar\\n",
+        "1\t100\t.\tN\t<INS>\t.\tPASS\tSVTYPE=INS;END=110;MEINFO=foo,bar\n",
         version="VCFv4.5",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -1897,7 +1897,7 @@ def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality
 )
 def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path, metadata: str):
     path = tmp_path / "vcf45-invalid-structural-info-definition.vcf"
-    write_vcf_with_metadata(path, [metadata], "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n", version="VCFv4.5")
+    write_vcf_with_metadata(path, [metadata], "1\t2\t.\tA\tC\t.\tPASS\t.\n", version="VCFv4.5")
 
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -1911,7 +1911,7 @@ def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path,
 )
 def test_vcf45_reserved_info_numeric_domains_are_enforced(tmp_path: Path, info: str):
     path = tmp_path / "vcf45-invalid-info-domain.vcf"
-    write_vcf(path, f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t{info}\\n", version="VCFv4.5")
+    write_vcf(path, f"1\t2\t.\tA\tC\t.\tPASS\t{info}\n", version="VCFv4.5")
 
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -1936,7 +1936,7 @@ def test_vcf45_reserved_format_numeric_domains_are_enforced(
     write_vcf_with_metadata(
         path,
         [f'##FORMAT=<ID={format_key},Number={number},Type={field_type},Description="Reserved field">'],
-        f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:{format_key}\\t0/1:{sample_value}\\n",
+        f"1\t2\t.\tA\tC\t.\tPASS\t.\tGT:{format_key}\t0/1:{sample_value}\n",
         sample=True,
         version="VCFv4.5",
     )
