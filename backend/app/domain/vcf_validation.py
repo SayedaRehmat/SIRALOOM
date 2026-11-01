@@ -1728,7 +1728,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     # when a Number=G FORMAT field is present without GT.
                     genotype_ploidy = 2
                 elif gt_index >= len(sample_values) or sample_values[gt_index] == "":
-                    genotype_ploidy = None
+                    raise StrictVCFValidationError(
+                        f"FORMAT/GT must contain an explicit genotype or missing-value token at line {line_no}, sample {sample_index}",
+                        code="VCF_GENOTYPE_INVALID",
+                    )
                 else:
                     # A missing GT value still carries ploidy: "." is haploid,
                     # "./." is diploid, and so on.
