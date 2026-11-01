@@ -9,8 +9,11 @@ import pytest
 
 from scripts.validation.run_giab_concordance import (
     ConcordanceError,
+    load_sample_mapping,
     parse_happy_summary,
     run_concordance,
+    validate_bed_file,
+    validate_single_sample_vcf,
     wilson_interval,
 )
 
@@ -42,19 +45,26 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
     fai = tmp_path / "reference.fa.fai"
     confident = tmp_path / "confident.bed"
     targets = tmp_path / "targets.bed"
+    sample_mapping = tmp_path / "sample-mapping.json"
     vcf_header = (
         "##fileformat=VCFv4.2\n"
         "##contig=<ID=chr1,length=1000>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE_PRIVATE_ID\n"
         "chr1\t10\t.\tA\tC\t60\tPASS\t.\tGT\t0/1\n"
     )
-    truth.write_text(vcf_header, encoding="utf-8")
-    query.write_text(vcf_header, encoding="utf-8")
+    truth.write_text(vcf_header.replace("SAMPLE_PRIVATE_ID", "HG002"), encoding="utf-8")
+    query.write_text(vcf_header.replace("SAMPLE_PRIVATE_ID", "CASE_SAMPLE_001"), encoding="utf-8")
     reference.write_text(">chr1\n" + "A" * 1000 + "\n", encoding="utf-8")
     fai.write_text("chr1\t1000\t6\t1000\t1001\n", encoding="utf-8")
     confident.write_text("chr1\t0\t1000\n", encoding="utf-8")
     targets.write_text("chr1\t0\t1000\n", encoding="utf-8")
+    sample_mapping.write_text(
+        json.dumps({"schema_version": "1.0", "truth_sample_name": "HG002", "query_sample_name": "CASE_SAMPLE_001"}),
+        encoding="utf-8",
+    )
+    sample_mapping.chmod(0o600)
     return {
+        "sample_mapping": sample_mapping,
         "truth_vcf": truth,
         "query_vcf": query,
         "reference_fasta": reference,
@@ -120,15 +130,203 @@ def test_parse_happy_summary_recomputes_precision_recall_and_f1(tmp_path: Path) 
     assert indel_all["recall_wilson_95_ci"] is not None
 
 
+def test_parse_happy_summary_rejects_non_reconciling_query_counts(tmp_path: Path) -> None:
+    path = tmp_path / "query-count-mismatch.summary.csv"
+    _summary(path)
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.reader(handle))
+    rows[1][5] = "999"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.writer(handle).writerows(rows)
+
+    with pytest.raises(ConcordanceError, match="query counts do not reconcile"):
+        parse_happy_summary(path)
+
+
+def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tmp_path: Path) -> None:
+    path = tmp_path / "mismatch-subcounts.csv"
+    _summary(path)
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.reader(handle))
+    rows[1][9] = "4"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.writer(handle).writerows(rows)
+
+    with pytest.raises(ConcordanceError, match="mismatch subcounts exceed QUERY.FP"):
+        parse_happy_summary(path)
+
+
+def test_sample_mapping_sidecar_rejects_unsupported_schema_version(tmp_path: Path) -> None:
+    path = tmp_path / "sample-mapping.json"
+    path.write_text(
+        json.dumps({
+            "schema_version": "2.0",
+            "truth_sample_name": "HG002",
+            "query_sample_name": "CASE_SAMPLE_001",
+        }),
+        encoding="utf-8",
+    )
+    path.chmod(0o600)
+
+    with pytest.raises(ConcordanceError, match="schema_version must be 1.0"):
+        load_sample_mapping(path)
+
+
+def test_sample_mapping_sidecar_must_match_both_vcf_columns(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    inputs["sample_mapping"].write_text(
+        json.dumps({"schema_version": "1.0", "truth_sample_name": "WRONG_TRUTH", "query_sample_name": "CASE_SAMPLE_001"}),
+        encoding="utf-8",
+    )
+    inputs["sample_mapping"].chmod(0o600)
+
+    with pytest.raises(ConcordanceError, match="explicitly declared specimen mapping") as exc:
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "wrong-sample",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
+    assert "WRONG_TRUTH" not in str(exc.value)
+    assert "HG002" not in str(exc.value)
+    assert not (tmp_path / "wrong-sample").exists()
+
+
+def test_sample_mapping_file_must_be_private(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    inputs["sample_mapping"].chmod(0o644)
+
+    with pytest.raises(ConcordanceError, match="permissions must deny group and other access"):
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "out",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
+
+
+def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    with pytest.raises(ConcordanceError, match="explicitly declared specimen mapping") as exc:
+        validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF", "WRONG_SAMPLE")
+    assert "HG002" not in str(exc.value)
+    assert "WRONG_SAMPLE" not in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    ("vcf_text", "error"),
+    [
+        (
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n",
+            "fileformat declaration",
+        ),
+        (
+            "##fileformat=VCFv4.2\n"
+            "#CHROM\tPOS\tID\tALT\tREF\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n",
+            "nine fixed VCF columns",
+        ),
+        (
+            "##fileformat=VCFv4.2\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n"
+            "chr1\t10\t.\tA\tC\t60\tPASS\t.\tGT\t0/1\textra\n",
+            "malformed variant record",
+        ),
+    ],
+)
+def test_single_sample_vcf_requires_specification_header_and_record_cardinality(
+    tmp_path: Path, vcf_text: str, error: str
+) -> None:
+    path = tmp_path / "malformed-query.vcf"
+    path.write_text(vcf_text, encoding="utf-8")
+
+    with pytest.raises(ConcordanceError, match=error):
+        validate_single_sample_vcf(path, "Query VCF", "CASE_SAMPLE_001")
+
+
+@pytest.mark.parametrize(
+    "bed_line",
+    [
+        "chr2\t0\t10\n",
+        "chr1\t0\t1001\n",
+        "chr1\t10\t10\n",
+        "track name=confident\n",
+        "track\tname=confident\n",
+        "chr1\tzero\t10\n",
+    ],
+)
+def test_bed_regions_must_match_reference_contigs_and_bounds(tmp_path: Path, bed_line: str) -> None:
+    path = tmp_path / "invalid.bed"
+    path.write_text(bed_line, encoding="utf-8")
+
+    with pytest.raises(ConcordanceError):
+        validate_bed_file(path, contig_lengths={"chr1": 1000}, label="Test BED")
+
+
+def test_bed_regions_report_validated_interval_counts_and_hash(tmp_path: Path) -> None:
+    path = tmp_path / "valid.bed"
+    path.write_text("chr1\t0\t10\nchr1\t20\t30\n", encoding="utf-8")
+
+    result = validate_bed_file(path, contig_lengths={"chr1": 1000}, label="Test BED")
+
+    assert result["record_count"] == 2
+    assert result["contig_count"] == 1
+    assert result["sha256"]
+
+
 def test_parse_happy_summary_rejects_incomplete_variant_type_coverage(tmp_path: Path) -> None:
     path = tmp_path / "result.summary.csv"
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(SUMMARY_HEADER)
-        writer.writerow(["SNP", "ALL", 1, 1, 0, 1, 0, 0, 0, 1, 1, 0])
+        writer.writerow(["SNP", "ALL", 1, 1, 0, 1, 1, 0, 0, 0, 0, 1.0, 1.0, 0.0])
 
     with pytest.raises(ConcordanceError, match="SNP and INDEL"):
         parse_happy_summary(path)
+
+
+def test_reference_fai_must_match_fasta_geometry(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    Path(str(inputs["reference_fasta"]) + ".fai").write_text(
+        "chr1\t999\t6\t999\t1000\n", encoding="utf-8"
+    )
+
+    with pytest.raises(ConcordanceError, match="FASTA and FAI geometry are inconsistent"):
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=inputs["query_vcf"],
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=tmp_path / "invalid-reference",
+            hap_py=str(_fake_happy(tmp_path)),
+        )
 
 
 def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
@@ -143,6 +341,7 @@ def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
             assay="WES",
             caller="approved-caller",
             caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -163,6 +362,7 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
         assay="WES",
         caller="approved-caller",
         caller_version="1.2.3",
+        sample_mapping_file=inputs["sample_mapping"],
         truth_set_id="GIAB-HG002-GRCh38",
         truth_set_version="4.2.1",
         acceptance_policy_id="LAB-POLICY-001",
@@ -178,10 +378,20 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["intended_use_cell"]["truth_set_version"] == "4.2.1"
     assert report["intended_use_cell"]["acceptance_policy_id"] == "LAB-POLICY-001"
     assert report["inputs"]["truth_vcf"]["sha256"]
+    assert report["reference_identity"]["declared_build"] == "GRCh38"
+    assert report["reference_identity"]["fai_sha256"]
+    assert report["reference_identity"]["contig_manifest_sha256"]
+    assert report["region_validation"]["confident_bed"]["record_count"] == 1
+    assert report["region_validation"]["target_regions"]["record_count"] == 1
     assert len(report["metrics"]) == 4
+    assert report["sample_mapping_schema_version"] == "1.0"
     assert report["sample_identifiers_recorded"] is False
+    assert report["sample_identity"]["truth_sample_column_verified"] is True
+    assert report["sample_identity"]["query_sample_column_verified"] is True
     serialized = json.dumps(report)
     assert "SAMPLE_PRIVATE_ID" not in serialized
+    assert "CASE_SAMPLE_001" not in serialized
+    assert report["inputs"]["sample_mapping"]["sha256"]
     assert (output / "giab-concordance.json").is_file()
     assert (output / "hap.py.log").is_file()
     assert os.stat(output).st_mode & 0o777 == 0o700
@@ -204,6 +414,7 @@ def test_query_must_have_exactly_one_sample(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -216,7 +427,7 @@ def test_symbolic_small_variant_input_is_rejected(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     inputs["query_vcf"].write_text(
         "##fileformat=VCFv4.2\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n"
         "chr1\t10\t.\tA\t<DEL>\t60\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
@@ -230,6 +441,7 @@ def test_symbolic_small_variant_input_is_rejected(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -261,6 +473,7 @@ def test_existing_evidence_directory_is_not_modified_by_failed_cli_run(
             "--assay", "WGS",
             "--caller", "approved-caller",
             "--caller-version", "1.0",
+            "--sample-mapping-file", str(inputs["sample_mapping"]),
             "--truth-set-id", "GIAB-HG002-GRCh38",
             "--truth-set-version", "4.2.1",
             "--acceptance-policy-id", "LAB-POLICY-001",
@@ -289,6 +502,7 @@ def test_stratification_extended_output_is_required_and_hashed(tmp_path: Path) -
         assay="WGS",
         caller="approved-caller",
         caller_version="1.0",
+        sample_mapping_file=inputs["sample_mapping"],
         truth_set_id="GIAB-HG002-GRCh38",
         truth_set_version="4.2.1",
         acceptance_policy_id="LAB-POLICY-001",

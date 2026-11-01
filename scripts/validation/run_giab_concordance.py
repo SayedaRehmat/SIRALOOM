@@ -53,29 +53,76 @@ def _regular_file(value: str | Path, label: str) -> Path:
     return resolved
 
 
+def load_sample_mapping(path_value: str | Path) -> tuple[Path, str, str]:
+    """Load a private specimen-to-VCF-column map without exposing IDs in CLI args."""
+    path = _regular_file(path_value, "Sample mapping file")
+    if os.name == "posix" and path.stat().st_mode & 0o077:
+        raise ConcordanceError("Sample mapping file permissions must deny group and other access.")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ConcordanceError("Sample mapping file is not valid readable JSON.") from exc
+    if not isinstance(payload, dict) or set(payload) != {
+        "schema_version", "truth_sample_name", "query_sample_name"
+    }:
+        raise ConcordanceError(
+            "Sample mapping file must contain exactly schema_version, truth_sample_name, and query_sample_name."
+        )
+    if payload.get("schema_version") != "1.0":
+        raise ConcordanceError("Sample mapping file schema_version must be 1.0.")
+    truth_name = payload.get("truth_sample_name")
+    query_name = payload.get("query_sample_name")
+    if (
+        not isinstance(truth_name, str)
+        or not truth_name.strip()
+        or not isinstance(query_name, str)
+        or not query_name.strip()
+    ):
+        raise ConcordanceError("Sample mapping file must contain non-empty sample-column names.")
+    return path, truth_name, query_name
+
+
 def _open_text(path: Path) -> TextIO:
     if path.name.endswith((".gz", ".bgz")):
         return gzip.open(path, "rt", encoding="utf-8", errors="strict")
     return path.open("rt", encoding="utf-8", errors="strict")
 
 
-def validate_single_sample_vcf(path: Path, label: str) -> None:
+def validate_single_sample_vcf(
+    path: Path,
+    label: str,
+    expected_sample_name: str,
+) -> None:
+    if not isinstance(expected_sample_name, str) or not expected_sample_name.strip():
+        raise ConcordanceError(f"{label} requires an explicit specimen-to-sample-column mapping.")
     header = None
+    fixed_columns = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
     try:
         with _open_text(path) as handle:
+            fileformat = handle.readline().rstrip("\r\n")
+            if not re.fullmatch(r"##fileformat=VCFv4\.[0-5]", fileformat):
+                raise ConcordanceError(f"{label} must begin with a supported VCFv4 fileformat declaration.")
             for line in handle:
                 if line.startswith("#CHROM"):
                     header = line.rstrip("\r\n").split("\t")
                     break
-            if header is None or len(header) < 10 or header[8] != "FORMAT":
-                raise ConcordanceError(f"{label} must contain exactly one sample column.")
+                if not line.startswith("#"):
+                    raise ConcordanceError(f"{label} contains data before the #CHROM header.")
+            if header is None or header[:9] != fixed_columns:
+                raise ConcordanceError(f"{label} must contain the nine fixed VCF columns in specification order.")
             if len(header) != 10 or not header[9].strip():
                 raise ConcordanceError(f"{label} must contain exactly one named sample column.")
+            if header[9] != expected_sample_name:
+                raise ConcordanceError(
+                    f"{label} sample column does not match the explicitly declared specimen mapping."
+                )
             for line in handle:
-                if not line or line.startswith("#"):
-                    continue
+                if not line.strip():
+                    raise ConcordanceError(f"{label} contains an empty data line.")
+                if line.startswith("#"):
+                    raise ConcordanceError(f"{label} contains a header/comment line after #CHROM.")
                 fields = line.rstrip("\r\n").split("\t")
-                if len(fields) < 10:
+                if len(fields) != len(header):
                     raise ConcordanceError(f"{label} contains a malformed variant record.")
                 for allele in fields[4].split(","):
                     if allele == "*" or allele.startswith("<") or any(char in allele for char in "[]"):
@@ -113,6 +160,59 @@ def resolve_stratification_beds(tsv_path: Path) -> list[dict[str, Any]]:
     if not regions:
         raise ConcordanceError("GA4GH stratification TSV must define at least one BED region.")
     return regions
+
+
+def validate_bed_file(
+    path: Path,
+    *,
+    contig_lengths: dict[str, int],
+    label: str,
+) -> dict[str, Any]:
+    """Validate BED3+ coordinates against the exact selected reference contigs."""
+    records = 0
+    observed_contigs: set[str] = set()
+    try:
+        with _open_text(path) as handle:
+            for line_number, line in enumerate(handle, start=1):
+                stripped = line.rstrip("\r\n")
+                if not stripped.strip() or stripped.startswith("#"):
+                    continue
+                if stripped.split(maxsplit=1)[0] in {"track", "browser"}:
+                    raise ConcordanceError(
+                        f"{label} contains a track/browser directive unsupported by hap.py."
+                    )
+                fields = stripped.split("\t")
+                if len(fields) < 3 or not fields[0]:
+                    raise ConcordanceError(f"{label} has a malformed BED record at line {line_number}.")
+                chrom = fields[0]
+                if chrom not in contig_lengths:
+                    raise ConcordanceError(
+                        f"{label} uses a contig absent from the exact selected reference at line {line_number}."
+                    )
+                try:
+                    start, end = int(fields[1]), int(fields[2])
+                except ValueError as exc:
+                    raise ConcordanceError(
+                        f"{label} has non-integer BED coordinates at line {line_number}."
+                    ) from exc
+                if start < 0 or end <= start or end > contig_lengths[chrom]:
+                    raise ConcordanceError(
+                        f"{label} has out-of-bounds or invalid 0-based half-open coordinates at line {line_number}."
+                    )
+                records += 1
+                observed_contigs.add(chrom)
+    except ConcordanceError:
+        raise
+    except (OSError, UnicodeError, gzip.BadGzipFile) as exc:
+        raise ConcordanceError(f"{label} could not be read.") from exc
+    if records == 0:
+        raise ConcordanceError(f"{label} contains no BED intervals.")
+    return {
+        "record_count": records,
+        "contig_count": len(observed_contigs),
+        "contigs": sorted(observed_contigs),
+        "sha256": sha256_file(path),
+    }
 
 
 def wilson_interval(successes: int, total: int, z: float = 1.959963984540054) -> list[float] | None:
@@ -164,6 +264,12 @@ def parse_happy_summary(path: Path) -> list[dict[str, Any]]:
                 allele_mismatches = _integer(row, "FP.al", row_number)
                 if truth_total != tp + fn:
                     raise ConcordanceError(f"hap.py summary row {row_number} truth counts do not reconcile.")
+                if query_total != query_tp + fp + query_unknown:
+                    raise ConcordanceError(f"hap.py summary row {row_number} query counts do not reconcile.")
+                if genotype_mismatches > fp or allele_mismatches > fp:
+                    raise ConcordanceError(
+                        f"hap.py summary row {row_number} mismatch subcounts exceed QUERY.FP."
+                    )
                 precision_denominator = query_tp + fp
                 recall = tp / truth_total if truth_total else None
                 precision = query_tp / precision_denominator if precision_denominator else None
@@ -211,6 +317,7 @@ def run_concordance(
     assay: str,
     caller: str,
     caller_version: str,
+    sample_mapping_file: Path,
     truth_set_id: str,
     truth_set_version: str,
     acceptance_policy_id: str,
@@ -238,11 +345,13 @@ def run_concordance(
     if assay in {"WES", "PANEL"} and target_regions is None:
         raise ConcordanceError("WES and PANEL comparisons require the assay target BED.")
 
+    sample_mapping_path, truth_sample_name, query_sample_name = load_sample_mapping(sample_mapping_file)
     inputs: dict[str, Path] = {
         "truth_vcf": _regular_file(truth_vcf, "Truth VCF"),
         "query_vcf": _regular_file(query_vcf, "Query VCF"),
         "confident_bed": _regular_file(confident_bed, "GIAB confident-region BED"),
         "reference_fasta": _regular_file(reference_fasta, "Reference FASTA"),
+        "sample_mapping": sample_mapping_path,
     }
     reference_fai = _regular_file(str(inputs["reference_fasta"]) + ".fai", "Reference FASTA .fai")
     inputs["reference_fai"] = reference_fai
@@ -257,8 +366,35 @@ def run_concordance(
         stratification_regions = resolve_stratification_beds(inputs["stratification_tsv"])
         for index, region in enumerate(stratification_regions, start=1):
             inputs[f"stratification_bed_{index}"] = region["path"]
-    validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF")
-    validate_single_sample_vcf(inputs["query_vcf"], "Query VCF")
+
+    from backend.app.domain.reference_package import (
+        contig_manifest_sha256,
+        validate_fasta_index_consistency,
+    )
+
+    try:
+        reference_contigs = validate_fasta_index_consistency(
+            inputs["reference_fasta"], inputs["reference_fai"]
+        )
+    except (OSError, ValueError) as exc:
+        raise ConcordanceError("Reference FASTA and FAI geometry are inconsistent.") from exc
+    contig_lengths = {str(item["name"]): int(item["length"]) for item in reference_contigs}
+    region_validation: dict[str, Any] = {
+        "confident_bed": validate_bed_file(
+            inputs["confident_bed"], contig_lengths=contig_lengths, label="GIAB confident-region BED"
+        )
+    }
+    if "target_regions" in inputs:
+        region_validation["target_regions"] = validate_bed_file(
+            inputs["target_regions"], contig_lengths=contig_lengths, label="Assay target BED"
+        )
+    for index, region in enumerate(stratification_regions, start=1):
+        region_validation[f"stratification_bed_{index}"] = validate_bed_file(
+            region["path"], contig_lengths=contig_lengths, label=f"Stratification BED {region['name']}"
+        )
+
+    validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF", truth_sample_name)
+    validate_single_sample_vcf(inputs["query_vcf"], "Query VCF", query_sample_name)
 
     hashes_before = {name: sha256_file(path) for name, path in inputs.items()}
     if output_dir.is_symlink() or output_dir.exists():
@@ -333,6 +469,8 @@ def run_concordance(
     hashes_after = {name: sha256_file(path) for name, path in inputs.items()}
     if hashes_before != hashes_after:
         raise ConcordanceError("One or more benchmark inputs changed during execution.")
+    if os.name == "posix" and inputs["sample_mapping"].stat().st_mode & 0o077:
+        raise ConcordanceError("Sample mapping file permissions became group/other accessible during execution.")
     if sha256_file(executable_path) != executable_sha256_before:
         raise ConcordanceError("The hap.py executable changed during benchmark execution.")
 
@@ -365,6 +503,14 @@ def run_concordance(
             name: {"size_bytes": path.stat().st_size, "sha256": hashes_before[name]}
             for name, path in inputs.items()
         },
+        "reference_identity": {
+            "declared_build": reference_build,
+            "fasta_sha256": hashes_before["reference_fasta"],
+            "fai_sha256": hashes_before["reference_fai"],
+            "contig_manifest_sha256": contig_manifest_sha256(reference_contigs),
+            "contig_count": len(reference_contigs),
+        },
+        "region_validation": region_validation,
         "stratification_regions": [
             {
                 "name": region["name"],
@@ -373,6 +519,12 @@ def run_concordance(
             }
             for index, region in enumerate(stratification_regions, start=1)
         ],
+        "sample_mapping_schema_version": "1.0",
+        "sample_identity": {
+            "truth_sample_column_verified": True,
+            "query_sample_column_verified": True,
+            "sample_identifiers_recorded": False,
+        },
         "sample_identifiers_recorded": False,
         "filter_policy": "PASS_ONLY" if pass_only else "ALL_FILTER_STATES_REPORTED",
         "metrics": metrics,
@@ -411,6 +563,7 @@ def main() -> int:
     parser.add_argument("--assay", required=True, choices=("WES", "WGS", "PANEL"))
     parser.add_argument("--caller", required=True)
     parser.add_argument("--caller-version", required=True)
+    parser.add_argument("--sample-mapping-file", required=True)
     parser.add_argument("--truth-set-id", required=True)
     parser.add_argument("--truth-set-version", required=True)
     parser.add_argument("--acceptance-policy-id", required=True)
@@ -429,6 +582,7 @@ def main() -> int:
             confident_bed=args.confident_bed, reference_fasta=args.reference_fasta,
             reference_build=args.reference_build, assay=args.assay,
             caller=args.caller, caller_version=args.caller_version,
+            sample_mapping_file=Path(args.sample_mapping_file),
             truth_set_id=args.truth_set_id, truth_set_version=args.truth_set_version,
             acceptance_policy_id=args.acceptance_policy_id,
             output_dir=args.output_dir, hap_py=args.hap_py, engine=args.engine,
