@@ -45,7 +45,9 @@ def test_csi_corruption_is_rejected_during_index_concordance(tmp_path: Path):
     _compress_and_index(source, bgzf)
     csi = Path(str(bgzf) + ".csi")
     original = csi.read_bytes()
-    assert original.startswith(b"CSI\\x01")
+    # HTSlib writes CSI as BGZF-compressed data; corrupt the BGZF signature
+    # rather than incorrectly expecting the decompressed CSI magic at byte zero.
+    assert original.startswith(b"\\x1f\\x8b\\x08\\x04")
     csi.write_bytes(b"NOT-A-CSI" + original[9:])
 
     with pytest.raises(VCFToolError, match="index record-count validation failed"):
@@ -61,23 +63,26 @@ def test_stale_csi_offsets_are_rejected_when_bgzf_header_shifts_record_blocks(
     bgzf = tmp_path / "sample.vcf.gz"
     shifted_bgzf = tmp_path / "shifted.vcf.gz"
 
-    header = (
+    metadata_header = (
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=100000>\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
     )
+    column_header = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
     record = "1\t10\t.\tA\tC\t.\tPASS\t.\n"
-    original_source.write_text(header + record, encoding="utf-8")
+    original_source.write_text(metadata_header + column_header + record, encoding="utf-8")
     _compress_and_index(original_source, bgzf)
     original_csi = Path(str(bgzf) + ".csi").read_bytes()
 
-    # Push the record beyond the original CSI virtual offset by adding enough
-    # uncompressed header material to require additional BGZF blocks.
+    # Valid metadata lines before #CHROM shift the record into later BGZF
+    # blocks without turning the padding into malformed VCF records.
     padding = "".join(
-        f'##SIRALOOM_PADDING_{index}=x' + ("y" * 180) + "\n"
+        f"##SIRALOOM_PADDING_{index}=" + ("y" * 180) + "\n"
         for index in range(1200)
     )
-    shifted_source.write_text(header + padding + record, encoding="utf-8")
+    shifted_source.write_text(
+        metadata_header + padding + column_header + record,
+        encoding="utf-8",
+    )
     _compress_and_index(shifted_source, shifted_bgzf)
     shutil.copyfile(shifted_bgzf, bgzf)
     Path(str(bgzf) + ".csi").write_bytes(original_csi)
@@ -90,8 +95,15 @@ def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
     _require_bcftools()
     source = tmp_path / "long-contig.vcf"
     bgzf = tmp_path / "long-contig.vcf.gz"
-    positions = [1, (1 << 14) - 1, 1 << 14, (1 << 14) + 1,
-                 (1 << 29) - 1, 1 << 29, (1 << 29) + 1]
+    positions = [
+        1,
+        (1 << 14) - 1,
+        1 << 14,
+        (1 << 14) + 1,
+        (1 << 29) - 1,
+        1 << 29,
+        (1 << 29) + 1,
+    ]
     source.write_text(
         "##fileformat=VCFv4.3\n"
         f"##contig=<ID=1,length={(1 << 29) + 100}>\n"
