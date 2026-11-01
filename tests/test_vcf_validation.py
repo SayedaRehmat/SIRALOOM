@@ -1945,3 +1945,46 @@ def test_vcf45_reserved_format_numeric_domains_are_enforced(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize("chrom", ["chr[1]", "chr,1", "=chr1", "*chr1", 'chr"1'])
+def test_vcf43_plus_chrom_must_follow_sam_reference_name_grammar(chrom: str):
+    fields = [chrom, "100", ".", "A", "C", ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_CHROM_INVALID"
+
+
+def test_vcf43_plus_external_assembly_contig_is_explicitly_unsupported():
+    fields = ["<contigA>", "100", ".", "A", "C", ".", "PASS", "."]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED"
+
+
+def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_path: Path):
+    path = tmp_path / "vcf45-invalid-contig-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##contig=<ID=chr[1],length=100>'],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CONTIG_HEADER_INVALID"
+
+
+def test_vcf43_plus_breakend_mate_contig_must_follow_sam_reference_name_grammar():
+    fields = ["1", "100", ".", "A", 'A]chr"1:123]', ".", "PASS", "SVTYPE=BND"]
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
+
+    assert exc.value.code == "VCF_BREAKEND_ALT_INVALID"
