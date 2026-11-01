@@ -13,7 +13,6 @@ import json
 import os
 import platform
 import sys
-import tempfile
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -118,6 +117,9 @@ def run_benchmark(
     reference_fasta = reference_fasta.resolve(strict=True)
     if not vcf_path.is_file() or not reference_fasta.is_file():
         raise ScaleBenchmarkError("VCF and reference FASTA must be regular files.")
+    reference_fai = Path(str(reference_fasta) + ".fai")
+    if not reference_fai.is_file():
+        raise ScaleBenchmarkError("The selected reference FASTA index (.fai) is required.")
     if reference_build not in {"GRCh37", "GRCh38"}:
         raise ScaleBenchmarkError("Reference build must be GRCh37 or GRCh38.")
     if not sample_name or not sample_name.strip():
@@ -134,9 +136,17 @@ def run_benchmark(
             lambda: sha256_file(vcf_path),
             stage_metrics,
         )
-        reference_sha256 = timed_stage(
+        reference_artifacts = timed_stage(
             "reference_hashing",
-            lambda: sha256_file(reference_fasta),
+            lambda: {
+                "fasta": {"size_bytes": reference_fasta.stat().st_size, "sha256": sha256_file(reference_fasta)},
+                "fai": {"size_bytes": reference_fai.stat().st_size, "sha256": sha256_file(reference_fai)},
+                **(
+                    {"gzi": {"size_bytes": Path(str(reference_fasta) + ".gzi").stat().st_size,
+                             "sha256": sha256_file(Path(str(reference_fasta) + ".gzi"))}}
+                    if Path(str(reference_fasta) + ".gzi").is_file() else {}
+                ),
+            },
             stage_metrics,
         )
 
@@ -194,17 +204,21 @@ def run_benchmark(
             raise ScaleBenchmarkError("Normalization did not publish its CSI index.")
 
         current_stage = "selected_sample_iteration"
-        selected_variant_count = 0
-        for _variant in timed_stage(
-            current_stage,
-            lambda: iter_normalized_vcf(
+        def count_selected_sample_variants() -> int:
+            count = 0
+            for _variant in iter_normalized_vcf(
                 normalized_path,
                 reference_build,
                 sample_name=sample_name,
-            ),
+            ):
+                count += 1
+            return count
+
+        selected_variant_count = timed_stage(
+            current_stage,
+            count_selected_sample_variants,
             stage_metrics,
-        ):
-            selected_variant_count += 1
+        )
         stage_metrics[current_stage]["selected_sample_variant_count"] = selected_variant_count
 
         report = {
@@ -228,8 +242,7 @@ def run_benchmark(
                 "fileformat": validation.fileformat,
             },
             "reference": {
-                "size_bytes": reference_fasta.stat().st_size,
-                "sha256": reference_sha256,
+                "artifacts": reference_artifacts,
                 "validation": {
                     "checked_record_count": reference_validation.get("checked_record_count"),
                     "checked_breakend_mate_count": reference_validation.get("checked_breakend_mate_count"),
