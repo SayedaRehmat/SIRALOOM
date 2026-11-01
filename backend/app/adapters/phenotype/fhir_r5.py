@@ -478,7 +478,7 @@ def build_fhir_r5_bundle(
     relative_ids: set[str] = set()
     member_references: dict[str, str] = {}
     if proband:
-        member_references[patient_id] = f"Patient/{patient_id}"
+        member_references[proband_member_id] = f"Patient/{patient_id}"
         for member in members:
             if str(_get(member, "id")) == proband_member_id:
                 continue
