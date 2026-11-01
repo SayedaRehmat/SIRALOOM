@@ -112,7 +112,7 @@ The canonical extension base is https://siraloom.org/fhir/StructureDefinition/. 
 | age-at-assessment | Nested valueDecimal/valueCode/valueDate | Exact age value, unit, and assessment date; never converted into a fabricated birth date |
 | prior-testing | Nested extensions | Prior test type, date, laboratory, accession, result state/summary, and source reference; internal artifact UUID is not exported |
 | differential-diagnosis | Nested extensions | Original coding system/code/display and clinician-entered certainty/status; not emitted as a confirmed Condition |
-| revision-id / revision-version / revision-fingerprint | valueString/valueInteger | Stable clinical intake revision lineage |
+| revision-version / revision-fingerprint | valueInteger/valueString | Stable clinical-intake revision lineage without exposing the internal revision UUID |
 | phenotype-status | valueCode | Exact local phenotype state |
 | source | valueString | SIRALOOM source category |
 | ontology-resolution | Nested extensions | Submitted HPO ID, resolution status, canonical ID |
