@@ -1188,8 +1188,8 @@ def test_source_child_reconciliation_rejects_original_locus_or_ref_mapping_drift
         "##fileformat=VCFv4.3\n"
         "##contig=<ID=1,length=7>\n"
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1\n"
-        "1\\t4\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT\\t0/1\n",
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+        "1\t4\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
     routed = route_vcf_records(source, routed_dir)
