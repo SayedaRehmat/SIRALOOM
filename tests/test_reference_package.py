@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from backend.app.domain.reference import FastaReference, ReferenceError
-from backend.app.domain.vcf_validation import validate_vcf_reference_alleles
+from backend.app.domain.vcf_validation import validate_vcf_reference_alleles, validate_vcf_strict
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
     REFERENCE_PACKAGE_SCHEMA_VERSION,
@@ -139,6 +139,30 @@ def test_reference_package_rejects_missing_assembly_identity(tmp_path: Path):
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_ASSEMBLY_IDENTITY_MISSING"
+
+
+def test_strict_vcf_validation_accepts_only_explicit_reference_contig_aliases(tmp_path: Path):
+    valid = tmp_path / "mitochondrial-explicit-alias.vcf"
+    valid.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "NC_012920.1\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    profile = validate_vcf_strict(valid, reference_contigs={"chrM"})
+    assert profile["records"] == 1
+    assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
+
+    invalid = tmp_path / "mitochondrial-wrong-accession-version.vcf"
+    invalid.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "NC_012920.2\\t1\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(Exception) as exc:
+        validate_vcf_strict(invalid, reference_contigs={"chrM"})
+    assert getattr(exc.value, "code", None) == "REFERENCE_CONTIG_MISMATCH"
 
 
 def test_vcf_reference_validation_resolves_human_mitochondrial_refseq_accession(
