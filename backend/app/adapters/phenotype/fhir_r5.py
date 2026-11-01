@@ -239,8 +239,18 @@ def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[
         resource["focus"] = [{"reference": f"RelatedPerson/{relative_id}"}]
     if status == "PRESENT":
         resource["valueBoolean"] = True
-    elif status in {"ABSENT", "EXCLUDED"}:
+    elif status == "ABSENT":
         resource["valueBoolean"] = False
+    elif status == "EXCLUDED":
+        # EXCLUDED is not a negative phenotype finding. Preserve it as an
+        # explicit coded assertion rather than valueBoolean=false.
+        resource["valueCodeableConcept"] = {
+            "coding": [{
+                "system": "https://siraloom.org/fhir/CodeSystem/phenotype-observation-status",
+                "code": "EXCLUDED",
+                "display": "Excluded finding",
+            }]
+        }
     elif status == "UNKNOWN":
         resource["dataAbsentReason"] = {
             "coding": [_coding("http://terminology.hl7.org/CodeSystem/data-absent-reason", "unknown")]
