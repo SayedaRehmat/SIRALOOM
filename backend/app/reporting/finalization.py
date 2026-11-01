@@ -635,7 +635,7 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
 
     case = db.get(Case, report.case_id)
     signed_content = {
-        "report_schema_version": "1.1.0",
+        "report_schema_version": "1.4.0",
         "report_version": report.report_version,
         "report_status": "DRAFT",
         "report_type": report.report_type,

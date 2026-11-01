@@ -19,6 +19,7 @@ from backend.app.reporting.reportability import (
     evaluate_analysis,
     finalize_reportability,
     final_reportability_state,
+    pending_specialized_artifact_errors,
 )
 
 
@@ -101,6 +102,17 @@ def test_reportability_evaluation_is_idempotent_for_same_classification():
         == 1
     )
 
+    # A still-proposed decision from the previous policy must be superseded
+    # rather than silently finalized under stale policy provenance.
+    first[0].policy_version = "2.1.0"
+    db.commit()
+    refreshed = evaluate_analysis(db, analysis)
+    db.commit()
+    assert len(refreshed) == 1
+    assert refreshed[0].policy_version == "2.2.0"
+    assert refreshed[0].version == 2
+    assert refreshed[0].supersedes_decision_id == first[0].id
+
 
 def test_reportability_finalization_rejects_stale_decision_after_new_classification():
     db = make_db()
@@ -167,16 +179,19 @@ def test_final_reportability_state_rejects_decision_linked_to_stale_classificati
 
 
 @pytest.mark.parametrize(
-    ("artifact_type", "filename", "reason_code"),
+    ("artifact_type", "filename"),
     [
-        ("CNV_VARIANT_RECORDS", "cnv-variants.vcf", "CNV_PIPELINE_PENDING"),
-        ("STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf", "SV_PIPELINE_PENDING"),
-        ("MITOCHONDRIAL_VARIANT_RECORDS", "mitochondrial-variants.vcf", "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING"),
-        ("REPEAT_EXPANSION_RECORDS", "repeat-expansion-variants.vcf", "REPEAT_EXPANSION_PIPELINE_PENDING"),
+        ("CNV_VARIANT_RECORDS", "cnv-variants.vcf"),
+        ("STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf"),
+        ("MITOCHONDRIAL_VARIANT_RECORDS", "mitochondrial-variants.vcf"),
+        ("REPEAT_EXPANSION_RECORDS", "repeat-expansion-variants.vcf"),
+        ("GVCF_REFERENCE_BLOCKS", "gvcf-reference-blocks.vcf"),
+        ("TELOMERE_COORDINATE_RECORDS", "telomere-records.vcf"),
+        ("TELOMERE_AFTER_CONTIG_RECORDS", "telomere-after-contig-records.vcf"),
     ],
 )
-def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
-    artifact_type, filename, reason_code
+def test_out_of_scope_variant_artifacts_are_not_first_product_reportability_blockers(
+    artifact_type, filename
 ):
     db = make_db()
     org = Organization(id=uuid4(), name="Lab")
@@ -243,9 +258,12 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
         storage_uri="file:///tmp/mitochondrial-variants.vcf",
         genome_build="GRCh38",
         validation_status="VALID",
-        # Deliberately omit review_status: the artifact type itself must
-        # remain a hard reportability blocker in the first product.
-        metadata_json={"interpretation_status": "NOT_ANALYZED"},
+        # Routing metadata records that this class was not interpreted by the
+        # first product; it must not block the in-scope SNV/INDEL report.
+        metadata_json={
+            "interpretation_status": "NOT_ANALYZED",
+            "review_status": "REQUIRES_SPECIALIZED_REVIEW",
+        },
     )
     db.add_all([org, user, case, analysis, variant, classification, routed_artifact])
     db.commit()
@@ -254,30 +272,7 @@ def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
     db.commit()
     assert len(proposals) == 1
 
-    ready, errors = final_reportability_state(db, analysis.id)
-    assert not ready
-    assert any(reason_code in error for error in errors)
-
-    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
-        finalize_reportability(
-            db,
-            decision_id=proposals[0].id,
-            reviewer_id=user.id,
-            expected_version=proposals[0].review_version,
-            disposition="REPORT",
-            reason="Attempt to sign out while a routed variant class is pending",
-        )
-
-    # A retry against an already-final decision must not bypass a specialized
-    # artifact that was subsequently attached to the analysis.
-    proposals[0].status = "FINAL"
-    db.commit()
-    with pytest.raises(ValueError, match="specialized routed artifacts remain unresolved"):
-        finalize_reportability(
-            db,
-            decision_id=proposals[0].id,
-            reviewer_id=user.id,
-            expected_version=proposals[0].review_version,
-            disposition="REPORT",
-            reason="Retry must re-check unresolved specialized artifacts",
-        )
+    # The specialized artifact is retained but explicitly outside the fixed
+    # first-product SNV/INDEL analytical scope; it is not a sign-out blocker.
+    assert pending_specialized_artifact_errors(db, analysis.id) == []
+    assert len(proposals) == 1

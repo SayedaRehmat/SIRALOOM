@@ -61,7 +61,14 @@ def seed(approved=True):
 
 def test_report_content_contract_has_required_fields():
     d,_,_,_,a,_=seed(True); content=build_report_content(d,a,'en');
-    for key in ['report_schema_version','report_version','case_id','analysis_id','findings','methodology','limitations','final_result']: assert key in content
+    for key in ['report_schema_version','report_version','case_id','analysis_id','findings','methodology','limitations','product_scope','final_result']: assert key in content
+    assert content["product_scope"]["included_variant_classes"] == ["SNV", "INDEL"]
+    assert content["product_scope"]["excluded_classes_interpreted"] is False
+    assert "GVCF_REFERENCE_BLOCKS" in content["product_scope"]["excluded_record_types"]
+    assert "were not analyzed" in content["product_scope"]["scope_statement"]
+    html_content = render_html(content).decode("utf-8")
+    assert "Product Analytical Scope" in html_content
+    assert "were not analyzed" in html_content
 
 
 def test_report_preserves_and_renders_descriptive_family_observations():
@@ -94,7 +101,7 @@ def test_report_preserves_and_renders_descriptive_family_observations():
     report_observation = finding["inheritance_context"]["segregation_observations"][0]
     html_content = render_html(content).decode("utf-8")
 
-    assert content["report_schema_version"] == "1.3.0"
+    assert content["report_schema_version"] == "1.4.0"
     assert next(member for member in content["pedigree_context"]["members"] if member["id"] == str(parent.id))["member_identifier"] == "PARENT-01"
     assert content["pedigree_context"]["relationships"][0]["parent_member_identifier"] == "PARENT-01"
     assert report_observation["observation_id"] == str(observation.id)

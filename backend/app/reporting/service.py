@@ -906,7 +906,7 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     technical_quality = technical_quality_snapshot(db, analysis.id)
 
     return {
-        "report_schema_version": "1.3.0",
+        "report_schema_version": "1.4.0",
         "report_version": 1,
         "report_status": "DRAFT",
         "report_type": report_type,
@@ -930,6 +930,28 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "received_datetime": specimen.received_datetime.isoformat() if specimen and specimen.received_datetime else None,
         },
         "reference_build": analysis.reference_build,
+        "product_scope": {
+            "product": "SIRALOOM Rare-Disease SNV/INDEL",
+            "scope_version": "1.0.0",
+            "included_variant_classes": ["SNV", "INDEL"],
+            "excluded_variant_classes": [
+                "CNV",
+                "STRUCTURAL_VARIANT",
+                "MITOCHONDRIAL_VARIANT",
+                "REPEAT_EXPANSION",
+            ],
+            "excluded_classes_interpreted": False,
+            "excluded_record_types": [
+                "GVCF_REFERENCE_BLOCKS",
+                "TELOMERE_COORDINATE_RECORDS",
+                "TELOMERE_AFTER_CONTIG_RECORDS",
+            ],
+            "scope_statement": (
+                "This report covers SNV and INDEL findings analyzed by SIRALOOM. "
+                "CNV, structural variant, mitochondrial, and repeat-expansion "
+                "findings are outside this product's analytical scope and were not analyzed."
+            ),
+        },
         "final_result": {
             "status": "DRAFT",
             "release_state": "NOT_FOR_CLINICAL_RELEASE",
@@ -941,13 +963,18 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         },
         "findings": findings,
         "methodology": (
-            "SIRALOOM Variant Phase 1 VCF interpretation workflow. "
-            "The report reflects the configured laboratory workflow and resource versions."
+            "SIRALOOM Rare-Disease SNV/INDEL VCF interpretation workflow. "
+            "The product's analytical scope is fixed to SNV and INDEL; the report "
+            "records the exact reference, resource, and workflow versions used."
         ),
         "limitations": (
-            "This Phase 1 service starts from VCF and does not perform primary sequencing, "
-            "alignment, or variant calling. Clinical use requires laboratory-specific validation, "
-            "qualified review, and applicable quality/regulatory controls."
+            "SIRALOOM starts from VCF and does not perform primary sequencing, alignment, "
+            "or variant calling. CNV, structural variant, mitochondrial, and repeat-expansion "
+            "classes are outside this product's scope and are not analyzed or excluded as absent. "
+            "GVCF reference-confidence blocks and telomere coordinate sentinels are not "
+            "clinical findings. Unresolved sample genotype encodings that could affect an "
+            "SNV/INDEL call remain subject to the normal review gate. Clinical use requires validation of the deployed product/workflow, qualified review, "
+            "and applicable quality/regulatory controls."
         ),
         "recommendations": case.clinical_context.get("recommendations"),
         "references": case.clinical_context.get("references", []),
@@ -975,6 +1002,13 @@ def _html_document(content: dict[str, Any]) -> str:
     lang = content["language"]
     direction = "rtl" if lang == "ar" else "ltr"
     bilingual = lang == "bilingual"
+    product_scope = content.get("product_scope") or {}
+    product_scope_statement = html.escape(
+        str(
+            product_scope.get("scope_statement")
+            or "SIRALOOM first-product analytical scope: SNV and INDEL only."
+        )
+    )
     findings_html: list[str] = []
     for finding in content["findings"]:
         g = html.escape(str(finding.get("gene") or "-"))
@@ -1169,6 +1203,8 @@ th,td {{ border:1px solid #bbb; padding:4px; vertical-align:top; }} th {{ backgr
 <h2>{'Final Result' if not bilingual else 'Final Result / النتيجة النهائية'}</h2>
 <p><strong>{html.escape(str(final_result.get('release_state', 'NOT_FOR_CLINICAL_RELEASE')))}</strong> — {html.escape(release_notice)}</p>
 {signout_details}
+<h2>{'Product Analytical Scope' if not bilingual else 'Product Analytical Scope / نطاق المنتج التحليلي'}</h2>
+<p>{product_scope_statement}</p>
 {''.join(findings_html)}
 {family_context_html}
 <h2>{'Technical Quality Assessment' if not bilingual else 'Technical Quality Assessment / تقييم الجودة التقنية'}</h2>

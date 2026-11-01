@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SIRALOOMReport",
   "type": "object",
-  "required": ["report_schema_version", "report_version", "language", "case_id", "analysis_id", "findings", "methodology", "limitations", "final_result"],
+  "required": ["report_schema_version", "report_version", "language", "case_id", "analysis_id", "findings", "methodology", "limitations", "product_scope", "final_result"],
   "properties": {
     "report_schema_version": {"type": "string"},
     "report_version": {"type": "integer", "minimum": 1},
@@ -10,6 +10,19 @@
     "case_id": {"type": "string", "format": "uuid"},
     "analysis_id": {"type": "string", "format": "uuid"},
     "findings": {"type": "array"},
+    "product_scope": {
+      "type": "object",
+      "required": ["product", "scope_version", "included_variant_classes", "excluded_variant_classes", "excluded_classes_interpreted", "excluded_record_types", "scope_statement"],
+      "properties": {
+        "product": {"const": "SIRALOOM Rare-Disease SNV/INDEL"},
+        "scope_version": {"type": "string"},
+        "included_variant_classes": {"const": ["SNV", "INDEL"]},
+        "excluded_variant_classes": {"type": "array", "items": {"enum": ["CNV", "STRUCTURAL_VARIANT", "MITOCHONDRIAL_VARIANT", "REPEAT_EXPANSION"]}},
+        "excluded_classes_interpreted": {"const": false},
+        "excluded_record_types": {"type": "array", "items": {"enum": ["GVCF_REFERENCE_BLOCKS", "TELOMERE_COORDINATE_RECORDS", "TELOMERE_AFTER_CONTIG_RECORDS"]}},
+        "scope_statement": {"type": "string", "minLength": 1}
+      }
+    },
     "methodology": {"type": "string"},
     "limitations": {"type": "string"}
   },
