@@ -10,6 +10,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
+import zlib
 from contextlib import ExitStack
 from functools import lru_cache
 from pathlib import Path
@@ -500,6 +501,186 @@ class VCFToolUnavailable(VCFToolError):
     """A required VCF tool could not execute; retry after operational recovery."""
 
 
+_BGZF_EOF_MARKER = bytes.fromhex(
+    "1f8b08040000000000ff0600424302001b00030000000000000000"
+)
+
+
+def _validate_regular_gzip_stream(path: Path) -> dict:
+    """Fully consume a gzip stream without misclassifying it as BGZF."""
+    try:
+        with gzip.open(path, "rb") as handle:
+            while handle.read(1024 * 1024):
+                pass
+    except (OSError, EOFError, zlib.error) as exc:
+        raise VCFToolError(
+            f"Compressed VCF is corrupt or truncated: {path.name}: {exc}"
+        ) from exc
+    return {
+        "format": "GZIP",
+        "valid": True,
+        "bgzf": False,
+        "eof_marker_present": None,
+        "block_count": None,
+        "uncompressed_bytes": None,
+        "random_access_capable": False,
+    }
+
+
+def inspect_vcf_compression(path: str | Path) -> dict:
+    """Classify and integrity-check gzip/BGZF VCF streams.
+
+    Ordinary gzip is fully decompressed and reported as sequential-only.
+    BGZF is parsed block-by-block, including each BC/BSIZE boundary, gzip
+    checksum/trailer, and the canonical terminal BGZF EOF marker.
+    """
+    vcf_path = Path(path)
+    if not vcf_path.is_file():
+        raise VCFToolError(f"Compressed VCF does not exist: {vcf_path.name}")
+
+    try:
+        with vcf_path.open("rb") as handle:
+            first_header = handle.read(12)
+            if len(first_header) < 10 or first_header[:3] != b"\\x1f\\x8b\\x08":
+                raise VCFToolError(
+                    f"Compressed VCF has an invalid gzip header: {vcf_path.name}"
+                )
+            if not (first_header[3] & 0x04):
+                return _validate_regular_gzip_stream(vcf_path)
+            if len(first_header) < 12:
+                raise VCFToolError(
+                    f"Compressed VCF has a truncated gzip extra-field header: {vcf_path.name}"
+                )
+            xlen = int.from_bytes(first_header[10:12], "little")
+            extra = handle.read(xlen)
+            if len(extra) != xlen:
+                raise VCFToolError(
+                    f"Compressed VCF has a truncated gzip extra field: {vcf_path.name}"
+                )
+            bgzf_header = first_header + extra
+            bc_found = False
+            cursor = 0
+            while cursor + 4 <= len(extra):
+                subfield_id = extra[cursor:cursor + 2]
+                subfield_length = int.from_bytes(extra[cursor + 2:cursor + 4], "little")
+                cursor += 4
+                if cursor + subfield_length > len(extra):
+                    raise VCFToolError(
+                        f"BGZF extra-field boundary is invalid: {vcf_path.name}"
+                    )
+                if subfield_id == b"BC":
+                    if bc_found or subfield_length != 2:
+                        raise VCFToolError(
+                            f"BGZF BC subfield is invalid: {vcf_path.name}"
+                        )
+                    bc_found = True
+                cursor += subfield_length
+            if not bc_found:
+                return _validate_regular_gzip_stream(vcf_path)
+            handle.seek(0)
+            block_count = 0
+            uncompressed_bytes = 0
+            eof_marker_present = False
+            while True:
+                block_start = handle.tell()
+                fixed = handle.read(12)
+                if not fixed:
+                    break
+                if len(fixed) != 12 or fixed[:3] != b"\\x1f\\x8b\\x08" or not (fixed[3] & 0x04):
+                    raise VCFToolError(
+                        f"BGZF block header is malformed at byte offset {block_start}."
+                    )
+                if fixed[3] & 0xE0:
+                    raise VCFToolError(
+                        f"BGZF block uses reserved gzip flags at byte offset {block_start}."
+                    )
+                block_xlen = int.from_bytes(fixed[10:12], "little")
+                block_extra = handle.read(block_xlen)
+                if len(block_extra) != block_xlen:
+                    raise VCFToolError(
+                        f"BGZF extra field is truncated at byte offset {block_start}."
+                    )
+                block_size_value = None
+                cursor = 0
+                while cursor + 4 <= len(block_extra):
+                    subfield_id = block_extra[cursor:cursor + 2]
+                    subfield_length = int.from_bytes(
+                        block_extra[cursor + 2:cursor + 4], "little"
+                    )
+                    cursor += 4
+                    if cursor + subfield_length > len(block_extra):
+                        raise VCFToolError(
+                            f"BGZF extra-field boundary is invalid at byte offset {block_start}."
+                        )
+                    if subfield_id == b"BC":
+                        if block_size_value is not None or subfield_length != 2:
+                            raise VCFToolError(
+                                f"BGZF BC subfield is invalid at byte offset {block_start}."
+                            )
+                        block_size_value = int.from_bytes(
+                            block_extra[cursor:cursor + 2], "little"
+                        ) + 1
+                    cursor += subfield_length
+                header_size = 12 + block_xlen
+                if block_size_value is None or block_size_value < header_size + 8:
+                    raise VCFToolError(
+                        f"BGZF block size is invalid at byte offset {block_start}."
+                    )
+                remaining_size = block_size_value - header_size
+                remainder = handle.read(remaining_size)
+                if len(remainder) != remaining_size:
+                    raise VCFToolError(
+                        f"BGZF block is truncated at byte offset {block_start}."
+                    )
+                block = fixed + block_extra + remainder
+                try:
+                    decoder = zlib.decompressobj(wbits=31)
+                    uncompressed = decoder.decompress(block) + decoder.flush()
+                except zlib.error as exc:
+                    raise VCFToolError(
+                        f"BGZF block decompression or CRC validation failed at byte offset {block_start}."
+                    ) from exc
+                if not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+                    raise VCFToolError(
+                        f"BGZF block boundary or gzip trailer is invalid at byte offset {block_start}."
+                    )
+                if len(uncompressed) > 65536:
+                    raise VCFToolError(
+                        f"BGZF block expands beyond 65536 bytes at byte offset {block_start}."
+                    )
+                if block == _BGZF_EOF_MARKER:
+                    if handle.read(1):
+                        raise VCFToolError(
+                            "BGZF EOF marker is not the final block in the compressed VCF."
+                        )
+                    eof_marker_present = True
+                    break
+                block_count += 1
+                uncompressed_bytes += len(uncompressed)
+    except VCFToolError:
+        raise
+    except (OSError, EOFError, zlib.error) as exc:
+        raise VCFToolError(
+            f"Cannot inspect compressed VCF integrity: {vcf_path.name}: {exc}"
+        ) from exc
+
+    if block_count == 0 and not eof_marker_present:
+        raise VCFToolError(f"Compressed VCF contains no BGZF data blocks: {vcf_path.name}")
+    if not eof_marker_present:
+        raise VCFToolError(
+            f"BGZF EOF marker is missing; the compressed VCF may be truncated: {vcf_path.name}"
+        )
+    return {
+        "format": "BGZF",
+        "valid": True,
+        "bgzf": True,
+        "eof_marker_present": True,
+        "block_count": block_count,
+        "uncompressed_bytes": uncompressed_bytes,
+        "random_access_capable": True,
+    }
+
+
 def bcftools_available() -> bool:
     return shutil.which("bcftools") is not None
 
@@ -726,12 +907,23 @@ def validate_vcf_index_concordance(
     path = Path(vcf_path)
     if not path.is_file() or not path.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         raise VCFToolError("Index concordance requires an existing BGZF-compressed VCF.")
+    compression = inspect_vcf_compression(path)
+    if compression["format"] != "BGZF":
+        raise VCFToolError(
+            "The VCF is a valid ordinary gzip stream, not BGZF. It can be read "
+            "sequentially, but TBI/CSI random-access index concordance is not applicable."
+        )
     csi_path = Path(str(path) + ".csi")
     tbi_path = Path(str(path) + ".tbi")
     candidates = [candidate for candidate in (csi_path, tbi_path) if candidate.is_file()]
+    if not candidates:
+        raise VCFToolError(
+            "The BGZF VCF passed block and EOF integrity checks but has no adjacent "
+            "TBI or CSI index; sequential reading remains possible, random access is unavailable."
+        )
     if len(candidates) != 1:
         raise VCFToolError(
-            "Exactly one adjacent TBI or CSI index is required for VCF index concordance."
+            "Both TBI and CSI indexes are present; exactly one governed index is required."
         )
     index_type = "CSI" if candidates[0] == csi_path else "TBI"
 
@@ -777,6 +969,7 @@ def validate_vcf_index_concordance(
     )
     return {
         "status": "VALIDATED",
+        "compression": compression,
         "index_type": index_type,
         "tool": "bcftools",
         "tool_version": version_line,
