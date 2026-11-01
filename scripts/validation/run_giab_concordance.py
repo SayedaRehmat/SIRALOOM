@@ -88,6 +88,33 @@ def validate_single_sample_vcf(path: Path, label: str) -> None:
         raise ConcordanceError(f"{label} could not be read.") from exc
 
 
+def resolve_stratification_beds(tsv_path: Path) -> list[dict[str, Any]]:
+    regions: list[dict[str, Any]] = []
+    names: set[str] = set()
+    try:
+        lines = tsv_path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise ConcordanceError("GA4GH stratification TSV could not be read.") from exc
+    for line_number, line in enumerate(lines, start=1):
+        if not line.strip() or line.startswith("#"):
+            continue
+        fields = line.split("\t")
+        if len(fields) != 2 or not fields[0].strip() or not fields[1].strip():
+            raise ConcordanceError(f"GA4GH stratification TSV row {line_number} must contain region name and BED path.")
+        name, raw_path = fields[0].strip(), fields[1].strip()
+        if name in names:
+            raise ConcordanceError("GA4GH stratification region names must be unique.")
+        names.add(name)
+        bed_path = Path(raw_path)
+        if not bed_path.is_absolute():
+            bed_path = tsv_path.parent / bed_path
+        bed_path = _regular_file(bed_path, f"Stratification BED for region {name}")
+        regions.append({"name": name, "path": bed_path})
+    if not regions:
+        raise ConcordanceError("GA4GH stratification TSV must define at least one BED region.")
+    return regions
+
+
 def wilson_interval(successes: int, total: int, z: float = 1.959963984540054) -> list[float] | None:
     if total <= 0:
         return None
@@ -205,10 +232,17 @@ def run_concordance(
     }
     reference_fai = _regular_file(str(inputs["reference_fasta"]) + ".fai", "Reference FASTA .fai")
     inputs["reference_fai"] = reference_fai
+    reference_gzi = Path(str(inputs["reference_fasta"]) + ".gzi")
+    if reference_gzi.is_file():
+        inputs["reference_gzi"] = _regular_file(reference_gzi, "Reference FASTA .gzi")
     if target_regions is not None:
         inputs["target_regions"] = _regular_file(target_regions, "Assay target BED")
+    stratification_regions: list[dict[str, Any]] = []
     if stratification_tsv is not None:
         inputs["stratification_tsv"] = _regular_file(stratification_tsv, "GA4GH stratification TSV")
+        stratification_regions = resolve_stratification_beds(inputs["stratification_tsv"])
+        for index, region in enumerate(stratification_regions, start=1):
+            inputs[f"stratification_bed_{index}"] = region["path"]
     validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF")
     validate_single_sample_vcf(inputs["query_vcf"], "Query VCF")
 
@@ -317,6 +351,14 @@ def run_concordance(
             name: {"size_bytes": path.stat().st_size, "sha256": hashes_before[name]}
             for name, path in inputs.items()
         },
+        "stratification_regions": [
+            {
+                "name": region["name"],
+                "input_key": f"stratification_bed_{index}",
+                "sha256": hashes_before[f"stratification_bed_{index}"],
+            }
+            for index, region in enumerate(stratification_regions, start=1)
+        ],
         "sample_identifiers_recorded": False,
         "filter_policy": "PASS_ONLY" if pass_only else "ALL_FILTER_STATES_REPORTED",
         "metrics": metrics,
