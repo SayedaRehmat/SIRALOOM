@@ -552,6 +552,46 @@ def test_gvcf_router_preserves_blocks_and_routes_only_provably_called_variants(t
         assert item["pos"] == original.split("\t")[1]
 
 
+def test_vcf45_router_uses_sample_specific_reference_blocks_for_mixed_variant_records(tmp_path: Path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+
+    source = tmp_path / "sample-specific-blocks.g.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##contig=<ID=1,length=100>\n'
+        '##ALT=<ID=NON_REF,Description="Any possible allele">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LEN,Number=1,Type=Integer,Description="Reference block length">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBLOCK_SAMPLE\tVARIANT_SAMPLE\n"
+        "1\t1\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:10\t.:.\n"
+        "1\t5\trs1\tA\tC,<*>\t50\tPASS\t.\tGT:DP\t.:.\t0/1:30\n"
+        "1\t20\trs2\tA\tG,<*>\t50\tPASS\t.\tGT:DP\t.:.\t0/1:28\n",
+        encoding="utf-8",
+    )
+
+    from backend.app.domain.vcf_validation import validate_vcf_strict
+
+    validate_vcf_strict(source)
+    routed = route_vcf_records(source, tmp_path / "routed")
+
+    assert routed["sequence_records"] == 1
+    assert routed["gvcf_reference_blocks"] == 1
+    assert routed["gvcf_unresolved_variant_records"] == 1
+    sequence_records = [
+        line for line in Path(routed["sequence_path"]).read_text(encoding="utf-8").splitlines()
+        if line and not line.startswith("#")
+    ]
+    assert len(sequence_records) == 1
+    assert sequence_records[0].split("\t")[9:] == [".:.", "0/1:30"]
+    unresolved_records = [
+        line for line in Path(routed["gvcf_unresolved_path"]).read_text(encoding="utf-8").splitlines()
+        if line and not line.startswith("#")
+    ]
+    assert len(unresolved_records) == 1
+    assert unresolved_records[0].split("\t")[2] == "rs2"
+
+
 def test_router_exclusion_manifest_is_absent_when_no_source_records_are_excluded(tmp_path: Path):
     from backend.app.domain.vcf_tools import route_vcf_records
 

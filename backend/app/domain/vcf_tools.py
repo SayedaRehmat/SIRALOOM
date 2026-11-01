@@ -18,6 +18,7 @@ from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     _base_modification_field_kind,
     _parse_field_definition,
+    compute_vcf45_record_span,
     declared_vcf_contig_lengths,
 )
 
@@ -116,9 +117,10 @@ def route_vcf_records(
     Only sequence-resolved records are sent to ordinary normalization. GVCF
     reference blocks and structural records are copied byte-for-text unchanged
     into separate review artifacts. A GVCF variant is eligible for the
-    sequence path only when every sample has a complete GT that does not call
-    a wildcard allele; bcftools 1.24 ``view -A`` then removes that unseen
-    wildcard while updating allele-indexed fields.
+    sequence path when every called genotype avoids wildcard alleles and any
+    missing VCFv4.5 genotype is explained by an active sample-specific reference
+    block. Such missing genotypes remain missing; they are never converted to
+    reference calls. BCFtools 1.24 ``view -A`` removes only unseen wildcards.
     """
     import gzip
 
@@ -151,6 +153,9 @@ def route_vcf_records(
     handles = {}
     sample_count = 0
     source_record_index = 0
+    fileformat: str | None = None
+    active_vcf45_reference_blocks: dict[int, tuple[str, int]] = {}
+    active_vcf45_block_chrom: str | None = None
     exclusion_handle = None
     excluded_source_record_indexes: set[int] = set()
 
@@ -259,6 +264,8 @@ def route_vcf_records(
             for raw in handle:
                 line = raw.rstrip("\r\n")
                 if line.startswith("#"):
+                    if line.startswith("##fileformat="):
+                        fileformat = line.split("=", 1)[1].strip()
                     if line.startswith(f"##INFO=<ID={SOURCE_RECORD_TAG},"):
                         raise VCFToolError(
                             f"Input VCF already declares reserved INFO tag {SOURCE_RECORD_TAG}."
@@ -280,6 +287,35 @@ def route_vcf_records(
                     position = int(fields[1])
                 except ValueError as exc:
                     raise VCFToolError("Cannot route VCF record with a non-integer POS.") from exc
+                # Track VCFv4.5 reference blocks independently for each sample.
+                # Strict validation has already checked LEN/END and overlap
+                # semantics; this state distinguishes a spec-valid missing GT
+                # inside a preceding block from an unexplained missing call.
+                chrom = fields[0]
+                if active_vcf45_block_chrom != chrom:
+                    active_vcf45_reference_blocks.clear()
+                    active_vcf45_block_chrom = chrom
+                else:
+                    for sample_index, (block_chrom, block_end) in list(active_vcf45_reference_blocks.items()):
+                        if block_chrom != chrom or position > block_end:
+                            del active_vcf45_reference_blocks[sample_index]
+                covered_vcf45_block_samples = {
+                    sample_index
+                    for sample_index, (block_chrom, block_end) in active_vcf45_reference_blocks.items()
+                    if block_chrom == chrom and position <= block_end
+                }
+                if (
+                    fileformat == "VCFv4.5"
+                    and position > 0
+                    and position != coordinate_lengths.get(chrom, -2) + 1
+                ):
+                    record_span = compute_vcf45_record_span(fields, source_record_index)
+                    if record_span is not None:
+                        for sample_index, block_length in record_span[1]:
+                            active_vcf45_reference_blocks[sample_index] = (
+                                chrom,
+                                position + block_length - 1,
+                            )
                 if position == 0:
                     emit("telomere", line)
                     record_exclusion(line, "VCF_TELOMERE_COORDINATE_UNSUPPORTED", "TELOMERE_COORDINATE_RECORDS")
@@ -343,13 +379,21 @@ def route_vcf_records(
                     gt_index = format_keys.index("GT") if "GT" in format_keys else None
                     fully_unseen = sample_count > 0 and gt_index is not None
                     if fully_unseen:
-                        for sample in fields[9:]:
+                        for sample_index, sample in enumerate(fields[9:], start=1):
                             sample_values = sample.split(":")
                             if gt_index >= len(sample_values):
                                 fully_unseen = False
                                 break
                             gt = sample_values[gt_index]
-                            if gt in {".", "./.", ".|."}:
+                            if gt == ".":
+                                if fileformat == "VCFv4.5" and sample_index in covered_vcf45_block_samples:
+                                    # The validator proved this sample is inside
+                                    # a preceding reference block. Preserve its
+                                    # missing GT; do not convert it to 0/0.
+                                    continue
+                                fully_unseen = False
+                                break
+                            if gt in {"./.", ".|."}:
                                 fully_unseen = False
                                 break
                             for allele in re.split(r"[/|]", gt):
