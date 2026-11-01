@@ -178,9 +178,9 @@ def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(
 
 def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
     resource, _fasta, fai = make_package(tmp_path)
-    fields = fai.read_text(encoding="utf-8").strip().split("\\t")
+    fields = fai.read_text(encoding="utf-8").strip().split("\t")
     fields[2] = str(int(fields[2]) + 1)
-    fai.write_text("\\t".join(fields) + "\\n", encoding="utf-8")
+    fai.write_text("\t".join(fields) + "\\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
