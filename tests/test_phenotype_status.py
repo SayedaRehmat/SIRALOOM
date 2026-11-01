@@ -336,3 +336,31 @@ def test_clinical_phenotype_migrations_preserve_legacy_rows_and_allow_longitudin
             "subject_member_id": family_id, "observed_at": "2026-10-01T00:00:00+00:00",
         })
     engine.dispose()
+
+
+
+@pytest.mark.parametrize(
+    "duration",
+    ["P3Y6M", "P6M", "P2W", "P1DT2H", "P0D"],
+)
+def test_phenotype_time_elements_accept_iso8601_durations(duration):
+    body = PhenotypeInput(
+        hpo_id="HP:0001250",
+        clinical_attributes={
+            "onset_age_iso8601": duration,
+            "resolution_age_iso8601": "P4Y2M",
+            "severity_hpo_id": "HP:0012825",
+        },
+    )
+    assert body.clinical_attributes["onset_age_iso8601"] == duration
+    assert body.clinical_attributes["resolution_age_iso8601"] == "P4Y2M"
+    assert body.clinical_attributes["severity_hpo_id"] == "HP:0012825"
+
+
+@pytest.mark.parametrize("duration", ["3Y", "P", "P-2Y", "P3Q", "PT", "P1Y2Y"])
+def test_phenotype_time_elements_reject_invalid_iso8601_durations(duration):
+    with pytest.raises(ValidationError):
+        PhenotypeInput(
+            hpo_id="HP:0001250",
+            clinical_attributes={"onset_age_iso8601": duration},
+        )
