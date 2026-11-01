@@ -23,7 +23,6 @@ from pathlib import Path
 from typing import Any, TextIO
 
 REPORT_NAME = "giab-concordance.json"
-FAILURE_NAME = "giab-concordance.failure.json"
 SUMMARY_SUFFIX = ".summary.csv"
 VERSION_RE = re.compile(r"\b\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?\b")
 
@@ -370,20 +369,6 @@ def main() -> int:
             pass_only=args.pass_only, timeout_seconds=args.timeout_seconds,
         )
     except Exception as exc:
-        # Keep failure records free of exception messages, paths and sample identifiers.
-        try:
-            if args.output_dir.is_dir() and not args.output_dir.is_symlink():
-                failure = {
-                    "schema_version": "1",
-                    "status": "FAILED",
-                    "exception_type": type(exc).__name__,
-                    "generated_at_utc": datetime.now(UTC).isoformat(),
-                }
-                path = args.output_dir / FAILURE_NAME
-                path.write_text(json.dumps(failure, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-                path.chmod(0o600)
-        except OSError:
-            pass
         print(f"GIAB concordance benchmark failed: {type(exc).__name__}", file=sys.stderr)
         return 2
     print(json.dumps({
