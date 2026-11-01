@@ -40,7 +40,7 @@ def _observation(*, status="PRESENT", subject_member_id=None, attributes=None):
     )
 
 
-def _member(identifier, *, sex="UNKNOWN", affected="UNKNOWN", proband=False, relationship=None):
+def _member(identifier, *, sex="UNKNOWN", affected="UNKNOWN", proband=False, relationship=None, metadata=None):
     return SimpleNamespace(
         id=uuid4(),
         member_identifier=identifier,
@@ -50,6 +50,7 @@ def _member(identifier, *, sex="UNKNOWN", affected="UNKNOWN", proband=False, rel
         relationship_to_proband=relationship,
         sampled=False,
         specimen_id=None,
+        metadata_json=metadata or {},
     )
 
 
@@ -111,12 +112,19 @@ def test_fhir_r5_family_observation_is_attributed_to_relative_not_proband():
 
 
 def test_fhir_r5_preserves_parent_child_relationships_as_explicit_extensions():
-    father = _member("FATHER", sex="MALE", affected="UNAFFECTED", relationship="father")
+    father = _member(
+        "FATHER",
+        sex="MALE",
+        affected="UNAFFECTED",
+        relationship="father",
+        metadata={"consanguinity_reported": True},
+    )
     proband = _member("PROBAND", sex="MALE", affected="AFFECTED", proband=True)
     relationship = SimpleNamespace(
         parent_member_id=father.id,
         child_member_id=proband.id,
         relationship_type="PARENT_CHILD",
+        metadata_json={"source": "family_report"},
     )
     bundle = build_fhir_r5_bundle(
         case=_case(),
@@ -133,6 +141,8 @@ def test_fhir_r5_preserves_parent_child_relationships_as_explicit_extensions():
     )
     assert any(ext["url"].endswith("/pedigree-parent") for ext in patient["extension"])
     assert any(ext["url"].endswith("/pedigree-child") for ext in father_resource["extension"])
+    assert any(ext["url"].endswith("/pedigree-member-metadata") for ext in father_resource["extension"])
+    assert any(ext["url"].endswith("/pedigree-relationship-metadata") for ext in patient["extension"])
 
 
 def test_fhir_r5_preserves_patient_specific_episode_frequency_in_extension():
