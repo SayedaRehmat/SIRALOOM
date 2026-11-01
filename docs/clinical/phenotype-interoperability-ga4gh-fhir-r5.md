@@ -172,7 +172,7 @@ The clinical interoperability CI adds an independent validation layer in additio
 | GA4GH `phenopacket-tools` CLI | 1.0.0 | Base schema requirements and semantic checks for one Phenopacket and one Family |
 | HL7 FHIR Validator CLI | 7.0.3 | FHIR R5 core validation using FHIR version 5.0.0; terminology-server lookups are disabled for deterministic core validation |
 
-The downloaded validator archives are SHA-256 checked before execution. The validator reports are retained as a GitHub Actions artifact named `clinical-interop-external-validation`.
+The downloaded validator archives are SHA-256 checked before execution. CI inspects the GA4GH CSV findings and FHIR validator output and fails on any validator-level ERROR; warnings and informational findings are retained without being silently suppressed. The validator reports are retained as a GitHub Actions artifact named `clinical-interop-external-validation`.
 
 Reproduce locally after installing the project and Java 17 or newer:
 
