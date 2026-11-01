@@ -168,16 +168,16 @@ def test_final_reportability_state_rejects_decision_linked_to_stale_classificati
 
 
 @pytest.mark.parametrize(
-    ("artifact_type", "filename", "reason_code"),
+    ("artifact_type", "filename"),
     [
-        ("CNV_VARIANT_RECORDS", "cnv-variants.vcf", "CNV_PIPELINE_PENDING"),
-        ("STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf", "SV_PIPELINE_PENDING"),
-        ("MITOCHONDRIAL_VARIANT_RECORDS", "mitochondrial-variants.vcf", "MITOCHONDRIAL_VARIANT_PIPELINE_PENDING"),
-        ("REPEAT_EXPANSION_RECORDS", "repeat-expansion-variants.vcf", "REPEAT_EXPANSION_PIPELINE_PENDING"),
+        ("CNV_VARIANT_RECORDS", "cnv-variants.vcf"),
+        ("STRUCTURAL_VARIANT_RECORDS", "structural-variants.vcf"),
+        ("MITOCHONDRIAL_VARIANT_RECORDS", "mitochondrial-variants.vcf"),
+        ("REPEAT_EXPANSION_RECORDS", "repeat-expansion-variants.vcf"),
     ],
 )
-def test_pending_specialized_variant_artifact_blocks_reportability_finalization(
-    artifact_type, filename, reason_code
+def test_out_of_scope_variant_artifacts_are_not_first_product_reportability_blockers(
+    artifact_type, filename
 ):
     db = make_db()
     org = Organization(id=uuid4(), name="Lab")
