@@ -165,7 +165,7 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
             age_children.append({"url": "as-of-date", "valueDate": str(age["as_of_date"])})
         if age_children:
             children.append({
-                "url": f"{EXTENSION_BASE}/age-at-assessment",
+                "url": "age-at-assessment",
                 "extension": age_children,
             })
 
@@ -188,7 +188,7 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
             test_children.append(_sub_extension("artifact-reference-present", "valueBoolean", True))
         if test_children:
             children.append({
-                "url": f"{EXTENSION_BASE}/prior-testing",
+                "url": "prior-testing",
                 "extension": test_children,
             })
 
@@ -207,7 +207,7 @@ def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
                 diagnosis_children.append(_sub_extension(url, "valueString", str(item[field])))
         if diagnosis_children:
             children.append({
-                "url": f"{EXTENSION_BASE}/differential-diagnosis",
+                "url": "differential-diagnosis",
                 "extension": diagnosis_children,
             })
 
