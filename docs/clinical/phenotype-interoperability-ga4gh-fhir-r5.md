@@ -45,7 +45,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 | SIRALOOM record | GA4GH v2 representation | Rule |
 |---|---|---|
 | Case without pedigree | Phenopacket | Subject identifier is a SIRALOOM case UUID; no demographic value is fabricated |
-| Explicit proband | Family.proband.subject | Uses the designated pedigree member identifier |
+| Explicit proband | Family.proband.subject | Uses an opaque SIRALOOM member UUID; the mapping to the human-entered member identifier is carried only in the SIRALOOM sidecar |
 | Family members with recorded phenotype observations | Family.relatives | Each relative has a separate Phenopacket |
 | Pedigree members | Family.pedigree.persons | Includes recorded sex, affected status, and resolvable paternal/maternal parent IDs |
 | HPO observation | PhenotypicFeature.type | Uses canonical HPO ID only for CURRENT or ALTERNATE_ID; otherwise retains submitted ID |
@@ -83,7 +83,7 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bun
 | SIRALOOM concept | FHIR R5 resource/element | Rule |
 |---|---|---|
 | Case/proband | Patient | Uses case UUID when no pedigree exists; otherwise the explicitly designated proband |
-| Family member | RelatedPerson | References the proband Patient; stores the member identifier and recorded relationship text |
+| Family member | RelatedPerson | References the proband Patient; uses an opaque UUID resource ID and stores recorded relationship text without exporting the human-entered member identifier |
 | Family relationship summary | FamilyMemberHistory | Emitted only when relationship-to-proband was explicitly recorded; status is partial; no condition is invented |
 | Phenotype | Observation.code | HPO coding system http://purl.obolibrary.org/obo/hp.owl |
 | PRESENT | Observation.valueBoolean=true | Positive assertion |
