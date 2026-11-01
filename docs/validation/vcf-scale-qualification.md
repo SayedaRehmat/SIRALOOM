@@ -49,7 +49,7 @@ python scripts/validation/run_vcf_scale_benchmark.py \\
 unset SIRALOOM_BENCHMARK_SAMPLE_NAME
 \`\`\`
 
-Use a new or empty output directory. The script refuses to overwrite prior evidence. It writes:
+Use a new, non-existent output directory for each run. Directory creation is atomic, so concurrent runs cannot claim the same output path; the script refuses to reuse or overwrite prior evidence. It writes:
 
 - vcf-scale-benchmark.json after all stages complete.
 - vcf-scale-benchmark.failure.json if a stage fails; the failure report records the stage and exception class, not the exception message.
