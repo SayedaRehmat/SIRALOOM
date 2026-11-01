@@ -261,15 +261,15 @@ def test_fhir_r5_preserves_versioned_clinical_intake_and_differentials_without_d
     assert fields["revision-version"]["valueInteger"] == 4
     assert fields["intake-status"]["valueCode"] == "COMPLETE"
     assert fields["referral-indication"]["valueString"] == "Unexplained seizures"
-    age = next(item for item in intake["extension"] if item["url"].endswith("/age-at-assessment"))
+    age = next(item for item in intake["extension"] if item["url"] == "age-at-assessment")
     age_fields = {item["url"]: item for item in age["extension"]}
     assert age_fields["value"]["valueDecimal"] == 7
     assert age_fields["unit"]["valueCode"] == "YEARS"
-    prior = next(item for item in intake["extension"] if item["url"].endswith("/prior-testing"))
+    prior = next(item for item in intake["extension"] if item["url"] == "prior-testing")
     assert any(item["url"] == "result-status" and item["valueCode"] == "NEGATIVE" for item in prior["extension"])
     assert all(not item["url"].startswith(("http://", "https://")) for item in prior["extension"])
     assert all(not item["url"].startswith(("http://", "https://")) for item in intake["extension"])
-    differential = next(item for item in intake["extension"] if item["url"].endswith("/differential-diagnosis"))
+    differential = next(item for item in intake["extension"] if item["url"] == "differential-diagnosis")
     assert any(item["url"] == "certainty" and item["valueString"] == "SUSPECTED" for item in differential["extension"])
     assert all(not item["url"].startswith(("http://", "https://")) for item in differential["extension"])
     assert not any(item["resourceType"] == "Condition" for item in resources)
