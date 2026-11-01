@@ -216,7 +216,7 @@ def test_non_equivalent_clinical_attributes_are_reported_not_silently_dropped():
     assert any(item["field"] == "episode_frequency" for item in warnings)
 
 
-def test_clinical_intake_age_maps_to_time_element_and_unmapped_context_is_reported():
+def test_clinical_intake_assessment_age_is_not_equated_with_last_encounter_age():
     revision = SimpleNamespace(
         id=uuid4(),
         version=3,
@@ -241,7 +241,7 @@ def test_clinical_intake_age_maps_to_time_element_and_unmapped_context_is_report
             "source_document_references": [],
         },
     )
-    with pytest.raises(PhenopacketExportError, match="clinical_intake"):
+    with pytest.raises(PhenopacketExportError, match="clinical_intake.age_at_assessment"):
         build_phenopackets_v2(
             case=_case(),
             phenotype_observations=[_observation()],
@@ -254,9 +254,9 @@ def test_clinical_intake_age_maps_to_time_element_and_unmapped_context_is_report
         clinical_intake_revision=revision,
         allow_lossy=True,
     )
-    assert payload["subject"]["timeAtLastEncounter"]["age"]["iso8601duration"] == "P7Y"
+    assert "timeAtLastEncounter" not in payload["subject"]
     assert any(item["field"] == "clinical_intake.referral_indication" for item in warnings)
-    assert any(item["field"] == "clinical_intake.age_at_assessment.as_of_date" for item in warnings)
+    assert any(item["field"] == "clinical_intake.age_at_assessment" for item in warnings)
 
 
 def test_family_export_reports_unmapped_pedigree_context_in_lossy_mode():
