@@ -135,7 +135,7 @@ class FastaReference:
         for candidate in self._aliases(contig):
             if candidate in self._entries:
                 return candidate
-        raise ReferenceError(f"Contig {contig!r} is not present in the reference)
+        raise ReferenceError(f"Contig {contig!r} is not present in the reference")
 
     def fetch(self, contig: str, start0: int, end0: int) -> str:
         if start0 < 0 or end0 < start0:
