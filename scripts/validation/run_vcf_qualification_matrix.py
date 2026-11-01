@@ -18,7 +18,6 @@ import platform
 import re
 import subprocess
 import sys
-import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -46,19 +45,14 @@ def require_string(mapping: dict[str, Any], key: str, context: str) -> str:
     return value.strip()
 
 
-def require_positive_number(mapping: dict[str, Any], key: str, context: str) -> float:
-    value = mapping.get(key)
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
-        raise MatrixConfigurationError(f"{context}.{key} must be a positive number")
-    return float(value)
-
-
 def load_manifest(path: Path) -> dict[str, Any]:
     try:
         manifest = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise MatrixConfigurationError(f"Unable to read matrix manifest: {path}") from exc
 
+    if not isinstance(manifest, dict):
+        raise MatrixConfigurationError("matrix manifest root must be a JSON object")
     if manifest.get("schema_version") != SCHEMA_VERSION:
         raise MatrixConfigurationError("schema_version must be '1'")
     if manifest.get("status") != "CONFIGURED":
@@ -88,8 +82,6 @@ def load_manifest(path: Path) -> dict[str, Any]:
         operator = criterion.get("operator")
         if operator not in {"<=", "<", ">=", ">", "=="}:
             raise MatrixConfigurationError(f"acceptance_policy.criteria[{index}].operator is invalid")
-        if "threshold" not in criterion or isinstance(criterion["threshold"], bool) or not isinstance(criterion["threshold"], (int, float)):
-            raise MatrixConfigurationError(f"acceptance_policy.criteria[{index}].threshold must be numeric")
 
     matrix = manifest.get("matrix")
     if not isinstance(matrix, list) or not matrix:
