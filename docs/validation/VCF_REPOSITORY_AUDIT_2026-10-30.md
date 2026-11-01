@@ -80,14 +80,14 @@ Audit date: 2026-11-01
 
 1. Complete the positive/negative VCFv4.0–4.5 feature corpus and caller/version/build compatibility matrix; distinguish parser recognition from validated caller profiles.
 2. Split/review the useful VCF-specific tests from PR #245 only after removing its conflicting reportability changes, deduplicating upload idempotency, and upgrading the worker-loss test to exercise the production normalization/CSI/source-lineage path.
-2. Add real BCFtools/CSI indexed-query fixtures for sample-specific VCFv4.5 LEN/END spans, stale/corrupt/mismatched indexes, contig boundaries and duplicate positions.
-3. Complete end-to-end source/upload/routed/normalized/exclusion accounting, including duplicate ALT strings, mixed record classes, empty streams and per-ALT genotype edge cases.
-4. Complete FASTA/FAI/GZI consistency checks and trusted GRCh37/GRCh38 known-answer reference qualification.
-5. Verify genotype provenance and sample identity across all downstream consumers, especially inheritance/segregation, review and report generation.
-6. Execute the GIAB HG001/GRCh38 known-answer benchmark with independently pinned input/truth/confident-region/reference assets.
-7. Execute `scripts/validation/run_vcf_scale_benchmark.py` against representative WES and WGS inputs per intended caller/version/build on the target worker profile; measure CPU, memory, scratch/persistent storage, throughput and concurrency against preapproved laboratory thresholds.
-8. Complete failure/replay qualification across upload, validation, normalization, publication and downstream handoff, including disk-full, process loss and concurrent retries.
-9. Run full repository CI and publish evidence. Keep software verification distinct from laboratory assay validation, clinical validity, and authorized clinical sign-out. BCF is not an advertised input format in the current VCF product scope; do not add it without a separate product/architecture decision.
+3. Add real BCFtools/CSI indexed-query fixtures for sample-specific VCFv4.5 LEN/END spans, stale/corrupt/mismatched indexes, contig boundaries and duplicate positions.
+4. Complete end-to-end source/upload/routed/normalized/exclusion accounting, including duplicate ALT strings, mixed record classes, empty streams and per-ALT genotype edge cases.
+5. Complete FASTA/FAI/GZI consistency checks and trusted GRCh37/GRCh38 known-answer reference qualification.
+6. Verify genotype provenance and sample identity across all downstream consumers, especially inheritance/segregation, review and report generation.
+7. Execute the GIAB HG001/GRCh38 known-answer benchmark with independently pinned input/truth/confident-region/reference assets.
+8. Execute `scripts/validation/run_vcf_scale_benchmark.py` against representative WES and WGS inputs per intended caller/version/build on the target worker profile; measure CPU, memory, scratch/persistent storage, throughput and concurrency against preapproved laboratory thresholds.
+9. Complete failure/replay qualification across upload, validation, normalization, publication and downstream handoff, including disk-full, process loss and concurrent retries.
+10. Run full repository CI and publish evidence. Keep software verification distinct from laboratory assay validation, clinical validity, and authorized clinical sign-out. BCF is not an advertised input format in the current VCF product scope; do not add it without a separate product/architecture decision.
 
 ## Governance observations
 
