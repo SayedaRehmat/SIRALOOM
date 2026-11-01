@@ -87,8 +87,8 @@ def test_specimen_ploidy_evidence_migration_rejects_update_and_delete(tmp_path, 
             "VALUES (:id, :org, 'Reviewer', 'lab_director', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
         ), {"id": str(user_id), "org": str(organization_id)})
         connection.execute(text(
-            "INSERT INTO cases (id, organization_id, case_identifier, status, language, created_by) "
-            "VALUES (:id, :org, 'CASE-1', 'DRAFT', 'en', :user)"
+            "INSERT INTO cases (id, organization_id, case_identifier, status, clinical_context, language, created_by, created_at, updated_at) "
+            "VALUES (:id, :org, 'CASE-1', 'DRAFT', '{}', 'en', :user, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
         ), {"id": str(case_id), "org": str(organization_id), "user": str(user_id)})
         connection.execute(text(
             "INSERT INTO specimens (id, case_id, specimen_identifier, metadata, created_at) VALUES (:id, :case, 'SPEC-1', '{}', CURRENT_TIMESTAMP)"
