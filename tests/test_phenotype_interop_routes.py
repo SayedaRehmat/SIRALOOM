@@ -47,7 +47,14 @@ def _context():
         intake_status="COMPLETE",
         phenotype_review_status="COMPLETE",
         family_history_review_status="NOT_ASSESSED",
-        context={"referral_indication": "Unexplained seizures"},
+        context={
+            "referral_indication": "Unexplained seizures",
+            "prior_testing": [{
+                "test_type": "Chromosomal microarray",
+                "artifact_id": str(uuid4()),
+                "source_reference": "LAB-REPORT-1",
+            }],
+        },
         phenotype_review_note=None,
         family_history_review_note="No family history supplied.",
         completion_note=None,
@@ -88,6 +95,9 @@ def test_phenopackets_endpoint_returns_schema_document_and_revision_sidecar(monk
     assert result["document"]["id"] == "GA4GH-PACKET"
     assert result["clinical_intake_revision"]["revision_id"] == str(revision.id)
     assert "recorded_by" not in result["clinical_intake_revision"]
+    prior_test = result["clinical_intake_revision"]["context"]["prior_testing"][0]
+    assert "artifact_id" not in prior_test
+    assert prior_test["artifact_reference_present"] is True
     assert db.committed is True
     assert _FakeAudit.calls[0]["after_state"]["clinical_intake_revision_id"] == str(revision.id)
 
