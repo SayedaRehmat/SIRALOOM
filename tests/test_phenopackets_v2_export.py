@@ -65,6 +65,9 @@ def test_single_patient_export_is_validated_against_ga4gh_protobuf_schema():
 
     assert warnings == []
     assert payload["metaData"]["phenopacketSchemaVersion"] == "2.0"
+    assert payload["metaData"]["resources"][0]["version"] == (
+        "http://purl.obolibrary.org/obo/hp/releases/2026-10-01/hp.obo"
+    )
     assert payload["subject"]["id"].startswith("SIRALOOM:")
     assert payload["phenotypicFeatures"][0]["type"]["id"] == "HP:0001250"
     assert payload["phenotypicFeatures"][0]["type"]["label"] == "Seizures"
