@@ -703,10 +703,13 @@ def _validate_declared_value(
         if number == "M"
         else _expected_cardinality(number, alternate_count, ploidy, local_allele_count)
     )
-    if expected is None:
-        return
     observed = value.split(",")
-    if any(item == "" for item in observed) or len(observed) != expected:
+    if any(item == "" for item in observed):
+        raise StrictVCFValidationError(
+            f"{kind}/{key} contains an empty list value at line {line_no}",
+            code="VCF_FIELD_CARDINALITY_INVALID",
+        )
+    if expected is not None and len(observed) != expected:
         raise StrictVCFValidationError(
             f"{kind}/{key} has {len(observed)} values but Number={number} requires {expected} at line {line_no}",
             code="VCF_FIELD_CARDINALITY_INVALID",
