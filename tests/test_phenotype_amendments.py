@@ -50,7 +50,7 @@ def test_patient_and_family_phenotype_helpers_exclude_superseded_and_retracted_r
         "phenotype_observations": [
             {"phenotype_id": str(uuid4()), "scope": "CASE", "hpo_id": "HP:0001250", "phenotype_status": "PRESENT", "subject_member_id": None, "record_lifecycle_status": "ACTIVE"},
             {"phenotype_id": str(uuid4()), "scope": "CASE", "hpo_id": "HP:0001251", "phenotype_status": "PRESENT", "subject_member_id": proband_id, "record_lifecycle_status": "ACTIVE"},
-            {"phenotype_id": str(uuid4()), "scope": "CASE", "hpo_id": "HP:0001252", "phenotype_status": "PRESENT", "subject_member_id": proband_id, "record_lifecycle_status": "SUPERSEDED", "replacement_observation_id": str(uuid4())},
+            {"phenotype_id": str(uuid4()), "scope": "CASE", "hpo_id": "HP:0001252", "phenotype_status": "PRESENT", "subject_member_id": proband_id, "record_lifecycle_status": "SUPERSEDED", "replacement_observation_id": str(uuid4()), "replacement_observation_fingerprint": "f" * 64},
             {"phenotype_id": str(uuid4()), "scope": "CASE", "hpo_id": "HP:0001253", "phenotype_status": "PRESENT", "subject_member_id": relative_id, "record_lifecycle_status": "ACTIVE"},
             {"phenotype_id": str(uuid4()), "scope": "CASE", "hpo_id": "HP:0001254", "phenotype_status": "PRESENT", "subject_member_id": relative_id, "record_lifecycle_status": "RETRACTED", "amendment_reason": "Recorded in error"},
         ],
