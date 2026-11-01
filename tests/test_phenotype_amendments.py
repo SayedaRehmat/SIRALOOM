@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, inspect
 
 from backend.app.api.v1.phenotypes import PhenotypeInput, PhenotypeRetractionInput
 from backend.app.domain.clinical_input_snapshot import (
+    clinical_input_snapshot_digest,
     family_phenotype_observations,
     patient_phenotype_observations,
 )
@@ -80,3 +81,72 @@ def test_phenotype_amendment_migration_creates_append_only_event_table(tmp_path,
         indexes = {item["name"] for item in inspect(connection).get_indexes("phenotype_observation_amendments")}
         assert "ix_phenotype_amendments_case_recorded" in indexes
     engine.dispose()
+
+
+
+def test_clinical_snapshot_digest_ignores_database_ids_but_tracks_phenotype_lifecycle():
+    import copy
+
+    member_id = str(uuid4())
+    phenotype_id = str(uuid4())
+    snapshot = {
+        "schema_version": 3,
+        "clinical_context": {
+            "clinical_intake_revision": {
+                "revision_id": str(uuid4()),
+                "version": 1,
+                "intake_status": "COMPLETE",
+            }
+        },
+        "clinical_context_revision": {
+            "revision_id": str(uuid4()),
+            "version": 1,
+            "revision_fingerprint": "a" * 64,
+            "intake_status": "COMPLETE",
+            "phenotype_review_status": "COMPLETE",
+            "family_history_review_status": "COMPLETE",
+            "context": {},
+            "recorded_by": str(uuid4()),
+            "recorded_at": "2026-11-01T10:00:00+00:00",
+        },
+        "pedigree_context": {
+            "members": [{
+                "member_id": member_id,
+                "member_identifier": "proband",
+                "is_proband": True,
+                "specimen_id": str(uuid4()),
+                "specimen_identifier": "SAMPLE-1",
+            }],
+            "relationships": [],
+        },
+        "phenotype_observations": [{
+            "phenotype_id": phenotype_id,
+            "case_id": str(uuid4()),
+            "analysis_id": str(uuid4()),
+            "scope": "ANALYSIS",
+            "record_lifecycle_status": "ACTIVE",
+            "hpo_id": "HP:0001250",
+            "phenotype_status": "PRESENT",
+            "subject_member_id": member_id,
+        }],
+        "gene_disease_evidence": [],
+        "literature_evidence": [],
+    }
+    equivalent = copy.deepcopy(snapshot)
+    equivalent["clinical_context"]["clinical_intake_revision"]["revision_id"] = str(uuid4())
+    equivalent["clinical_context_revision"]["revision_id"] = str(uuid4())
+    equivalent["clinical_context_revision"]["revision_fingerprint"] = "b" * 64
+    equivalent["clinical_context_revision"]["recorded_by"] = str(uuid4())
+    equivalent["clinical_context_revision"]["recorded_at"] = "2026-11-02T11:00:00+00:00"
+    equivalent["pedigree_context"]["members"][0]["member_id"] = str(uuid4())
+    equivalent["pedigree_context"]["members"][0]["specimen_id"] = str(uuid4())
+    equivalent["phenotype_observations"][0]["phenotype_id"] = str(uuid4())
+    equivalent["phenotype_observations"][0]["case_id"] = str(uuid4())
+    equivalent["phenotype_observations"][0]["analysis_id"] = str(uuid4())
+    equivalent["phenotype_observations"][0]["subject_member_id"] = equivalent["pedigree_context"]["members"][0]["member_id"]
+    assert clinical_input_snapshot_digest(snapshot) == clinical_input_snapshot_digest(equivalent)
+
+    changed = copy.deepcopy(snapshot)
+    changed["phenotype_observations"][0]["record_lifecycle_status"] = "RETRACTED"
+    changed["phenotype_observations"][0]["amendment_reason"] = "Observation was entered in error."
+    assert clinical_input_snapshot_digest(snapshot) != clinical_input_snapshot_digest(changed)
