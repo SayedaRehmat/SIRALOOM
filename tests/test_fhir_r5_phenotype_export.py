@@ -186,10 +186,20 @@ def test_fhir_r5_preserves_parent_child_relationships_as_explicit_extensions():
     patient = next(item for item in resources if item["resourceType"] == "Patient")
     father_resource = next(
         item for item in resources
-        if item["resourceType"] == "RelatedPerson" and item["id"] == str(father.id)
+        if item["resourceType"] == "RelatedPerson"
     )
     assert any(ext["url"].endswith("/pedigree-parent") for ext in patient["extension"])
-    assert any(ext["url"].endswith("/pedigree-child") for ext in father_resource["extension"])
+    assert father_resource["id"] != str(father.id)
+    assert any(
+        ext["url"].endswith("/pedigree-parent")
+        and ext["valueReference"]["reference"] == f"RelatedPerson/{father_resource['id']}"
+        for ext in patient["extension"]
+    )
+    assert any(
+        ext["url"].endswith("/pedigree-child")
+        and ext["valueReference"]["reference"] == f"Patient/{patient['id']}"
+        for ext in father_resource["extension"]
+    )
     assert any(ext["url"].endswith("/pedigree-member-metadata") for ext in father_resource["extension"])
     assert any(ext["url"].endswith("/pedigree-relationship-metadata") for ext in patient["extension"])
 
