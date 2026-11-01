@@ -4,6 +4,16 @@ on:
   pull_request:
     branches:
       - main
+  workflow_call:
+    inputs:
+      reference_build:
+        required: false
+        type: string
+        default: BOTH
+      timeout_seconds:
+        required: false
+        type: string
+        default: '14400'
   workflow_dispatch:
     inputs:
       reference_build:
