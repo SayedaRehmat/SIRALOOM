@@ -358,7 +358,7 @@ def build_fhir_r5_bundle(
         ]
         if _get(proband, "specimen_id"):
             patient["extension"].append(
-                _extension("specimen-reference-id", "valueString", str(_get(proband, "specimen_id")))
+                _extension("specimen-reference-present", "valueBoolean", True)
             )
         if _get(proband, "metadata_json", {}) or {}:
             patient["extension"].append(_extension(
@@ -401,7 +401,7 @@ def build_fhir_r5_bundle(
                 related["relationship"] = [{"text": str(relationship)}]
             if _get(member, "specimen_id"):
                 related["extension"].append(
-                    _extension("specimen-reference-id", "valueString", str(_get(member, "specimen_id")))
+                    _extension("specimen-reference-present", "valueBoolean", True)
                 )
             if _get(member, "metadata_json", {}) or {}:
                 related["extension"].append(_extension(
