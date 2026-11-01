@@ -858,18 +858,7 @@ def _validate_record(
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
 
-    # The VCF specification prohibits duplicate ALT values. Treat sequence
-    # alleles case-insensitively, while preserving case-sensitive symbolic IDs
-    # and breakend mate-contig names.
-    alt_identity_keys = [
-        ("SEQUENCE", allele.upper()) if DNA_RE.fullmatch(allele) else ("LITERAL", allele)
-        for allele in alts
-    ]
-    if len(alt_identity_keys) != len(set(alt_identity_keys)):
-        raise StrictVCFValidationError(
-            f"ALT contains duplicate allele values at line {line_no}",
-            code="VCF_ALT_DUPLICATE",
-        )
+
 
     if qual != ".":
         try:
