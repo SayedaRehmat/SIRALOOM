@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 
@@ -50,7 +51,9 @@ def _canonical_or_submitted(row: Any) -> str:
     return str(_value(row, "hpo_id"))
 
 
-def _collect_loss_warnings(rows: list[Any]) -> list[dict[str, str]]:
+def _collect_loss_warnings(
+    rows: list[Any], clinical_intake_revision: Any | None = None
+) -> list[dict[str, str]]:
     warnings: list[dict[str, str]] = []
     for row in rows:
         status = str(_value(row, "phenotype_status", "PRESENT")).upper()
@@ -127,6 +130,36 @@ def _collect_loss_warnings(rows: list[Any]) -> list[dict[str, str]]:
                 "field": "ontology_provenance",
                 "reason": "No pinned HPO release is recorded; the submitted HPO identifier is exported without a release claim.",
             })
+
+    if clinical_intake_revision is not None:
+        context = _value(clinical_intake_revision, "context", {}) or {}
+        for field in (
+            "referral_indication", "referral_question", "clinical_summary",
+            "prior_testing", "differential_diagnoses", "source_document_references",
+        ):
+            if context.get(field):
+                warnings.append({
+                    "observation_id": "clinical-intake",
+                    "field": f"clinical_intake.{field}",
+                    "reason": "This clinical intake field has no equivalent in the base GA4GH Phenopacket v2 model; it is retained in the SIRALOOM response sidecar.",
+                })
+        age = context.get("age_at_assessment")
+        if age and age.get("as_of_date"):
+            warnings.append({
+                "observation_id": "clinical-intake",
+                "field": "clinical_intake.age_at_assessment.as_of_date",
+                "reason": "Phenopackets TimeElement preserves the age duration but not the date on which that age was recorded; the date is retained in the SIRALOOM response sidecar.",
+            })
+        for field in (
+            "intake_status", "phenotype_review_status", "family_history_review_status",
+            "phenotype_review_note", "family_history_review_note", "completion_note",
+        ):
+            if _value(clinical_intake_revision, field):
+                warnings.append({
+                    "observation_id": "clinical-intake",
+                    "field": f"clinical_intake.{field}",
+                    "reason": "SIRALOOM review attestation/revision state has no equivalent in the base GA4GH Phenopacket v2 model; it is retained in the SIRALOOM response sidecar.",
+                })
     return warnings
 
 
@@ -199,11 +232,38 @@ def _metadata(rows: list[Any]) -> dict[str, Any]:
     }
 
 
-def _packet(*, packet_id: str, subject_id: str, rows: list[Any], sex: str | None = None) -> dict[str, Any]:
+def _age_time_element(age: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not age:
+        return None
+    unit = str(age.get("unit") or "").upper()
+    symbol = {"YEARS": "Y", "MONTHS": "M", "WEEKS": "W", "DAYS": "D"}.get(unit)
+    if symbol is None:
+        raise PhenopacketExportError("Clinical intake age_at_assessment has an unsupported unit.")
+    try:
+        value = Decimal(str(age.get("value")))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise PhenopacketExportError("Clinical intake age_at_assessment is not a valid decimal value.") from exc
+    if not value.is_finite() or value < 0:
+        raise PhenopacketExportError("Clinical intake age_at_assessment must be finite and non-negative.")
+    amount = format(value.normalize(), "f")
+    return {"age": {"iso8601duration": f"P{amount}{symbol}"}}
+
+
+def _packet(
+    *,
+    packet_id: str,
+    subject_id: str,
+    rows: list[Any],
+    sex: str | None = None,
+    age_at_assessment: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     subject: dict[str, Any] = {"id": subject_id}
     normalized_sex = str(sex or "").upper()
     if normalized_sex in _SEX_VALUES:
         subject["sex"] = normalized_sex
+    age_time = _age_time_element(age_at_assessment)
+    if age_time is not None:
+        subject["timeAtLastEncounter"] = age_time
     return {
         "id": packet_id,
         "subject": subject,
@@ -268,6 +328,7 @@ def build_phenopackets_v2(
     phenotype_observations: list[Any],
     pedigree_members: list[Any] | None = None,
     pedigree_relationships: list[Any] | None = None,
+    clinical_intake_revision: Any | None = None,
     allow_lossy: bool = False,
 ) -> tuple[dict[str, Any], list[dict[str, str]]]:
     """Build a schema-validated Phenopacket or Family JSON document."""
@@ -281,7 +342,7 @@ def build_phenopackets_v2(
         for row in rows
     ):
         raise PhenopacketExportError("A phenotype observation references a family member outside this case.")
-    warnings = _collect_loss_warnings(rows)
+    warnings = _collect_loss_warnings(rows, clinical_intake_revision)
     releases = {
         str(resource["ontology_release"])
         for row in rows
@@ -301,6 +362,8 @@ def build_phenopackets_v2(
             + ". Re-run with allow_lossy=true only after reviewing the warnings."
         )
 
+    intake_context = _value(clinical_intake_revision, "context", {}) or {}
+    age_at_assessment = intake_context.get("age_at_assessment")
     probands = [member for member in members if bool(_value(member, "is_proband", False))]
     if len(probands) > 1:
         raise PhenopacketExportError("A case with multiple designated probands cannot be exported as one Family.")
@@ -315,6 +378,7 @@ def build_phenopackets_v2(
             packet_id=f"SIRALOOM:{_value(case, 'id')}",
             subject_id=f"SIRALOOM:{_value(case, 'id')}",
             rows=case_rows,
+            age_at_assessment=age_at_assessment,
         )
         return _validate_message(packet, family=False), warnings
 
@@ -329,6 +393,7 @@ def build_phenopackets_v2(
         subject_id=_member_id(proband),
         rows=proband_rows,
         sex=_value(proband, "sex"),
+        age_at_assessment=age_at_assessment,
     )
     relative_packets = []
     for member in members:
