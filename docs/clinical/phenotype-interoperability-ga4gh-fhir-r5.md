@@ -57,7 +57,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 | UNKNOWN / NOT_ASSESSED | No PhenotypicFeature emitted in lossy mode | Never emitted as a positive feature |
 | HPO severity/modifiers/course | severity / modifiers | Included only when the stored related-term resolution is CURRENT or ALTERNATE_ID |
 | ISO 8601 onset/resolution age | TimeElement.age.iso8601duration | No conversion from ambiguous free text |
-| HPO release | MetaData.resources | HPO release included only when a single release is represented |
+| HPO release | MetaData.resources | The pinned OBO data-version is encoded as the dated HPO OBO version PURL; it is included only when a single valid release is represented |
 | Age at assessment | Individual.time_at_last_encounter | Age value/unit mapped to an ISO 8601 TimeElement; the as-of date remains in the SIRALOOM response sidecar |
 | Referral, prior testing, differential diagnoses, and review attestations | SIRALOOM response sidecar | Not forced into Phenopacket disease/diagnosis fields; field-level loss warnings are returned |
 | SIRALOOM-only attributes | Export warnings and response sidecars | Laterality, anatomical site, temporal pattern, episode frequency, relationship-to-proband text, sampled flags, specimen links, and arbitrary pedigree metadata are reported rather than silently discarded |
@@ -166,6 +166,7 @@ Passing software tests does not establish clinical validity, ISO 15189 accredita
 - GA4GH Phenopacket Schema source: https://github.com/ga4gh/phenopacket-schema
 - GA4GH Phenopackets Python bindings: https://phenopacket-schema.readthedocs.io/en/latest/python.html
 - GA4GH Phenopacket schema paper: https://www.nature.com/articles/s41587-022-01357-4
+- OBO Foundry versioning principle FP-004: https://obofoundry.org/principles/fp-004-versioning.html
 - HL7 FHIR R5 Observation: https://hl7.org/fhir/R5/observation.html
 - HL7 FHIR R5 Observation definitions: https://hl7.org/fhir/R5/observation-definitions.html
 - HL7 FHIR R5 Patient: https://hl7.org/fhir/R5/patient.html
