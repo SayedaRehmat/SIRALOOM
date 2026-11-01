@@ -1095,7 +1095,8 @@ def test_router_routes_expansionhunter_str_records_to_repeat_expansion_pipeline(
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         '##FORMAT=<ID=REPCN,Number=1,Type=String,Description="Repeat copy number">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "chr4\t3076604\t.\tC\t<STR2>,<STR349>\t.\tPASS\tSVTYPE=STR;END=3076605;RU=CAG;REPID=HTT\tGT:REPCN\t1/2:2/349\n",
+        "chr4\t3076604\t.\tC\t<STR2>,<STR349>\t.\tPASS\t"
+        "SVTYPE=STR;END=3076605;RU=CAG;REPID=HTT\tGT:REPCN\t1/2:2/349\n",
         encoding="utf-8",
     )
 
@@ -1121,7 +1122,8 @@ def test_router_routes_trgt_repeat_records_using_trid_and_motifs(tmp_path: Path)
         '##FORMAT=<ID=AL,Number=.,Type=Integer,Description="Allele lengths">\n'
         '##FORMAT=<ID=MC,Number=.,Type=String,Description="Motif counts">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "chr4\t3076604\t.\tC\tCAGCAGCAG\t.\tPASS\tTRID=HTT;MOTIFS=CAG,CCG;END=3076612\tGT:AL:MC\t0/1:3,9:1,3\n",
+        "chr4\t3076604\t.\tC\tCAGCAGCAG\t.\tPASS\t"
+        "TRID=HTT;MOTIFS=CAG,CCG;END=3076612\tGT:AL:MC\t0/1:3,9:1,3\n",
         encoding="utf-8",
     )
 
@@ -1132,7 +1134,9 @@ def test_router_routes_trgt_repeat_records_using_trid_and_motifs(tmp_path: Path)
     assert routed["record_reconciliation"]["balanced"] is True
 
 
-def test_router_separates_explicit_cnv_and_copy_number_genotyped_deletions_from_other_sv(tmp_path: Path):
+def test_router_separates_explicit_cnv_and_copy_number_genotyped_deletions_from_other_sv(
+    tmp_path: Path,
+):
     from backend.app.domain.vcf_tools import route_vcf_records
 
     source = tmp_path / "cnv-and-sv.vcf"
