@@ -8,6 +8,7 @@ peak RSS without recording sample identifiers or raw VCF content.
 from __future__ import annotations
 
 import argparse
+import getpass
 import hashlib
 import json
 import os
@@ -315,16 +316,23 @@ def main() -> int:
     parser.add_argument("--vcf", required=True, type=Path, help="De-identified VCF/VCF.GZ input.")
     parser.add_argument("--reference-fasta", required=True, type=Path, help="Exact GRCh37/GRCh38 FASTA used by the lab.")
     parser.add_argument("--reference-build", required=True, choices=("GRCh37", "GRCh38"))
-    parser.add_argument("--sample-name", required=True, help="Exact specimen-mapped VCF sample name; not written to the report.")
     parser.add_argument("--output-dir", required=True, type=Path, help="New or empty directory for benchmark artifacts.")
+    parser.add_argument(
+        "--sample-name-env",
+        default="SIRALOOM_BENCHMARK_SAMPLE_NAME",
+        help="Environment variable containing the specimen-mapped sample name (default: SIRALOOM_BENCHMARK_SAMPLE_NAME).",
+    )
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     args = parser.parse_args()
+    sample_name = os.environ.get(args.sample_name_env)
+    if not sample_name:
+        sample_name = getpass.getpass("Specimen-mapped VCF sample name (input hidden): ").strip()
     try:
         report = run_benchmark(
             vcf_path=args.vcf,
             reference_fasta=args.reference_fasta,
             reference_build=args.reference_build,
-            sample_name=args.sample_name,
+            sample_name=sample_name,
             output_dir=args.output_dir,
             timeout_seconds=args.timeout_seconds,
         )
