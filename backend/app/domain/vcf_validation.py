@@ -2121,5 +2121,10 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
         "checked_breakend_mate_count": checked_breakend_mates,
         "unvalidated_telomere_record_count": telomere_records,
         "reference_fasta": str(reference_fasta),
+        "resolved_contig_aliases": {
+            source: resolved
+            for source, resolved in resolved_contigs.items()
+            if source != resolved
+        },
         "result": "PARTIAL" if telomere_records else "PASS",
     }
