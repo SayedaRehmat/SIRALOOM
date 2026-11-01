@@ -33,6 +33,18 @@ const AGE_UNITS = ["YEARS", "MONTHS", "WEEKS", "DAYS"];
 const LATERALITY = ["UNKNOWN", "LEFT", "RIGHT", "BILATERAL", "UNILATERAL", "MIDLINE", "NOT_APPLICABLE"];
 const TEMPORAL = ["UNKNOWN", "CONTINUOUS", "EPISODIC", "RECURRENT", "PROGRESSIVE", "REGRESSIVE", "STATIC"];
 
+function toIso8601Duration(value: string, unit: string): string {
+  const numeric = value.trim();
+  if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(numeric) || !Number.isFinite(Number(numeric)) || Number(numeric) < 0) {
+    throw new Error("Age values must be finite and non-negative.");
+  }
+  const suffix: Record<string, string> = { YEARS: "Y", MONTHS: "M", WEEKS: "W", DAYS: "D" };
+  const component = suffix[unit];
+  if (!component) throw new Error("Unsupported age unit.");
+  return `P${numeric}${component}`;
+}
+
+
 export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
   const [rows, setRows] = useState<PhenotypeRow[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -48,7 +60,9 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
   const [severity, setSeverity] = useState("");
   const [ageValue, setAgeValue] = useState("");
   const [ageUnit, setAgeUnit] = useState("YEARS");
-  const [ageComparator, setAgeComparator] = useState("EXACT");
+  const [resolutionAgeValue, setResolutionAgeValue] = useState("");
+  const [resolutionAgeUnit, setResolutionAgeUnit] = useState("YEARS");
+  const [severityHpoId, setSeverityHpoId] = useState("");
   const [laterality, setLaterality] = useState("UNKNOWN");
   const [temporalPattern, setTemporalPattern] = useState("UNKNOWN");
   const [courseHpoId, setCourseHpoId] = useState("");
@@ -91,7 +105,7 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     const query = termQuery.trim();
     if (query.length < 2) {
       setTerms([]);
-      setOntologyAvailability("READY");
+      setOntologyAvailability("NOT_CHECKED");
       return;
     }
     let cancelled = false;
@@ -134,7 +148,9 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setOnset("");
     setSeverity("");
     setAgeValue("");
-    setAgeComparator("EXACT");
+    setResolutionAgeValue("");
+    setResolutionAgeUnit("YEARS");
+    setSeverityHpoId("");
     setLaterality("UNKNOWN");
     setTemporalPattern("UNKNOWN");
     setCourseHpoId("");
@@ -157,13 +173,9 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
         laterality,
         temporal_pattern: temporalPattern,
       };
-      if (ageValue.trim()) {
-        clinicalAttributes.onset_age = {
-          value: Number(ageValue),
-          unit: ageUnit,
-          comparator: ageComparator,
-        };
-      }
+      if (ageValue.trim()) clinicalAttributes.onset_age_iso8601 = toIso8601Duration(ageValue, ageUnit);
+      if (resolutionAgeValue.trim()) clinicalAttributes.resolution_age_iso8601 = toIso8601Duration(resolutionAgeValue, resolutionAgeUnit);
+      if (severityHpoId.trim()) clinicalAttributes.severity_hpo_id = severityHpoId.trim();
       if (courseHpoId.trim()) clinicalAttributes.clinical_course_hpo_id = courseHpoId.trim();
       const modifiers = modifierIds.split(/[;,\s]+/).map(value => value.trim()).filter(Boolean);
       if (modifiers.length) clinicalAttributes.modifier_hpo_ids = modifiers;
@@ -284,11 +296,17 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
           <label>Age unit
             <select value={ageUnit} onChange={event => setAgeUnit(event.target.value)}>{AGE_UNITS.map(unit => <option key={unit}>{unit}</option>)}</select>
           </label>
-          <label>Age comparator
-            <select value={ageComparator} onChange={event => setAgeComparator(event.target.value)}><option>EXACT</option><option>LESS_THAN</option><option>GREATER_THAN</option></select>
+          <label>Resolution age value (if resolved)
+            <input type="number" min="0" step="any" value={resolutionAgeValue} onChange={event => setResolutionAgeValue(event.target.value)} placeholder="Age when feature resolved" />
           </label>
-          <label>Severity
+          <label>Resolution age unit
+            <select value={resolutionAgeUnit} onChange={event => setResolutionAgeUnit(event.target.value)}>{AGE_UNITS.map(unit => <option key={unit}>{unit}</option>)}</select>
+          </label>
+          <label>Severity (clinician wording)
             <input value={severity} onChange={event => setSeverity(event.target.value)} maxLength={100} placeholder="Clinician-recorded severity" />
+          </label>
+          <label>Severity HPO ID
+            <input value={severityHpoId} onChange={event => setSeverityHpoId(event.target.value.toUpperCase())} placeholder="Optional HP:... severity term" />
           </label>
           <label>Laterality
             <select value={laterality} onChange={event => setLaterality(event.target.value)}>{LATERALITY.map(value => <option key={value}>{value}</option>)}</select>
@@ -360,7 +378,7 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
                   <div>
                     <strong>{row.canonical_hpo_id || row.hpo_id} · {row.label || row.ontology_resolution?.primary_term?.label || "Unresolved term"}</strong>
                     <div>{row.phenotype_status.replaceAll("_", " ")} · {member ? member.member_identifier : "Proband / primary patient"} · HPO {resolution}</div>
-                    <small>{row.observed_at ? new Date(row.observed_at).toLocaleString() : "Observation time not supplied"}{row.onset ? ` · Onset: ${row.onset}` : ""}{row.severity ? ` · Severity: ${row.severity}` : ""}</small>
+                    <small>{row.observed_at ? new Date(row.observed_at).toLocaleString() : "Observation time not supplied"}{row.onset ? ` · Onset: ${row.onset}` : ""}{row.severity ? ` · Severity: ${row.severity}` : ""}{row.clinical_attributes?.severity_hpo_id ? ` · Severity term: ${row.clinical_attributes.severity_hpo_id}` : ""}</small>
                     {resolution !== "CURRENT" && resolution !== "ALTERNATE_ID" && <small className="danger-text">Requires terminology review; not treated as a validated HPO term.</small>}
                     {row.clinical_attributes && Object.keys(row.clinical_attributes).length > 0 && <details><summary>Clinical attributes</summary><pre>{JSON.stringify(row.clinical_attributes, null, 2)}</pre></details>}
                     {row.evidence && Object.keys(row.evidence).length > 0 && <details><summary>Source evidence</summary><pre>{JSON.stringify(row.evidence, null, 2)}</pre></details>}
