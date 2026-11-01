@@ -4,7 +4,7 @@ import math
 import re
 from datetime import datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -523,7 +523,6 @@ def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[
     if "prior_testing" in context:
         context["prior_testing"] = prior_testing
     return {
-        "revision_id": str(row.id),
         "version": row.version,
         "schema_version": row.schema_version,
         "revision_fingerprint": row.revision_fingerprint,
@@ -555,7 +554,6 @@ def _phenotype_export_sidecar(
         if row.subject_member_id is not None and subject_member_id is None:
             raise HTTPException(409, "Phenotype observation references a family member outside this case")
         exported.append({
-            "observation_id": str(row.id),
             "record_fingerprint": row.record_fingerprint,
             "subject_member_identifier": subject_member_id,
             "hpo_id": row.hpo_id,
@@ -598,7 +596,9 @@ def _pedigree_export_sidecar(
         "members": [
             {
                 "member_identifier": member.member_identifier,
-                "phenopacket_subject_id": f"SIRALOOM:{member.id}",
+                "phenopacket_subject_id": (
+                    f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{member.id}')}"
+                ),
                 "relationship_to_proband": member.relationship_to_proband,
                 "sex": member.sex,
                 "affected_status": member.affected_status,
