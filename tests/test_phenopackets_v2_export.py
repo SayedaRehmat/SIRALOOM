@@ -43,13 +43,17 @@ def _observation(*, status="PRESENT", subject_member_id=None, attributes=None, r
     )
 
 
-def _member(identifier, *, sex="UNKNOWN", affected="UNKNOWN", proband=False):
+def _member(identifier, *, sex="UNKNOWN", affected="UNKNOWN", proband=False, relationship=None, sampled=False, specimen_id=None, metadata=None):
     return SimpleNamespace(
         id=uuid4(),
         member_identifier=identifier,
         sex=sex,
         affected_status=affected,
         is_proband=proband,
+        relationship_to_proband=relationship,
+        sampled=sampled,
+        specimen_id=specimen_id,
+        metadata_json=metadata or {},
     )
 
 
@@ -243,3 +247,45 @@ def test_clinical_intake_age_maps_to_time_element_and_unmapped_context_is_report
     assert payload["subject"]["timeAtLastEncounter"]["age"]["iso8601duration"] == "P7Y"
     assert any(item["field"] == "clinical_intake.referral_indication" for item in warnings)
     assert any(item["field"] == "clinical_intake.age_at_assessment.as_of_date" for item in warnings)
+
+
+def test_family_export_reports_unmapped_pedigree_context_in_lossy_mode():
+    father = _member(
+        "FATHER",
+        sex="MALE",
+        affected="UNAFFECTED",
+        relationship="father",
+        sampled=True,
+        specimen_id=uuid4(),
+        metadata={"consanguinity_reported": True},
+    )
+    proband = _member("PROBAND", sex="FEMALE", affected="AFFECTED", proband=True)
+    relationship = SimpleNamespace(
+        parent_member_id=father.id,
+        child_member_id=proband.id,
+        relationship_type="PARENT_CHILD",
+        metadata_json={"source": "family_report"},
+    )
+    with pytest.raises(PhenopacketExportError, match="pedigree"):
+        build_phenopackets_v2(
+            case=_case(),
+            phenotype_observations=[],
+            pedigree_members=[father, proband],
+            pedigree_relationships=[relationship],
+        )
+
+    _, warnings = build_phenopackets_v2(
+        case=_case(),
+        phenotype_observations=[],
+        pedigree_members=[father, proband],
+        pedigree_relationships=[relationship],
+        allow_lossy=True,
+    )
+    fields = {item["field"] for item in warnings}
+    assert {
+        "pedigree.relationship_to_proband",
+        "pedigree.sampled",
+        "pedigree.specimen_id",
+        "pedigree.member_metadata",
+        "pedigree.relationship_metadata",
+    }.issubset(fields)
