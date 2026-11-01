@@ -71,6 +71,11 @@ def test_verified_specimen_evidence_and_exact_qualified_caller_policy_resolve_ha
     assert result.expected_gt_ploidy == 1
     assert result.copy_number == 1
     assert result.reason_code == "VERIFIED_SAMPLE_EVIDENCE_AND_QUALIFIED_CALLER_POLICY_MATCH"
+    assert result.evidence_reference == sample_evidence()["evidence_reference"]
+    assert result.evidence_source_type == "CYTOGENETIC_REPORT"
+    assert result.evidence_reviewed_by == "reviewer-123"
+    assert result.caller_validation_evidence_reference == "validation-record-456"
+    assert result.caller_qualified_by == "lab-director-17"
 
 
 def test_par_uses_explicit_total_region_copy_number_and_caller_policy():
