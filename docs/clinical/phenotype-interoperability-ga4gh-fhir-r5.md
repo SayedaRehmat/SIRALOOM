@@ -48,6 +48,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 | Explicit proband | Family.proband.subject | Uses an opaque SIRALOOM member UUID; the mapping to the human-entered member identifier is carried only in the SIRALOOM sidecar |
 | Family members with recorded phenotype observations | Family.relatives | Each relative has a separate Phenopacket |
 | Pedigree members | Family.pedigree.persons | Includes recorded sex, affected status, and resolvable paternal/maternal parent IDs |
+| Explicit parental consanguinity assertion | Family.consanguinous_parents | Only an explicitly stored boolean is mapped; strict export rejects not-recorded because the GA4GH boolean cannot represent unknown |
 | HPO observation | PhenotypicFeature.type | Uses canonical HPO ID only for CURRENT or ALTERNATE_ID; otherwise retains submitted ID |
 | Free-text label | PhenotypicFeature.description | Preserves supplied label; it is not treated as a replacement for the ontology code |
 | PRESENT | excluded=false | Positive feature |
@@ -85,6 +86,7 @@ GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bun
 | Case/proband | Patient | Uses case UUID when no pedigree exists; otherwise the explicitly designated proband |
 | Family member | RelatedPerson | References the proband Patient; uses an opaque UUID resource ID and stores recorded relationship text without exporting the human-entered member identifier |
 | Family relationship summary | FamilyMemberHistory | Emitted only when relationship-to-proband was explicitly recorded; status is partial; no condition is invented |
+| Parental consanguinity | SIRALOOM consanguinity-assessment extension | Explicit true/false or NOT_RECORDED; never inferred from pedigree structure |
 | Phenotype | Observation.code | HPO coding system http://purl.obolibrary.org/obo/hp.owl |
 | PRESENT | Observation.valueBoolean=true | Positive assertion |
 | ABSENT | Observation.valueBoolean=false | Negative phenotype assertion |
@@ -127,6 +129,9 @@ The canonical extension base is https://siraloom.org/fhir/StructureDefinition/. 
 | specimen-reference-present | valueBoolean | Indicates a local specimen link exists without exposing an internal specimen UUID |
 | pedigree-parent / pedigree-child | valueReference | Directed parent-child edge between Patient/RelatedPerson resources |
 | pedigree-member-metadata / pedigree-relationship-metadata | valueString JSON | Opaque local pedigree metadata is preserved but not interpreted as standard inheritance or consanguinity evidence |
+| consanguinity-assessment | Nested status/valueBoolean | Explicit parental consanguinity assertion; NOT_RECORDED remains distinct from false |
+
+The only recognized consanguinity metadata key for the GA4GH boolean is consanguinous_parents, and its value must be a JSON boolean. SIRALOOM searches the case clinical-context JSON, clinical-intake revision context, pedigree-member metadata, and pedigree-relationship metadata; conflicting values or string/number coercion are rejected. If no value is recorded, Phenopackets strict export refuses the Family because the GA4GH boolean cannot distinguish unknown from false, while FHIR records NOT_RECORDED.
 
 These canonical URLs are implementation identifiers and documentation contracts in this repository. They are not claimed to be published or externally governed StructureDefinitions. Before external production exchange, the laboratory must publish/version the corresponding StructureDefinitions and validate the Bundle against those profiles using the official HL7 validator and the receiving system's implementation guide.
 
