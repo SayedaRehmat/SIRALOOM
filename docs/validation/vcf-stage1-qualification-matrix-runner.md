@@ -19,7 +19,7 @@ Each matrix cell must identify:
 - the specimen-mapped VCF sample identifier;
 - an optional normalization timeout.
 
-The `.fai` must be adjacent to the declared reference FASTA because the underlying production benchmark requires the exact FASTA/index pair.
+The `.fai` must be adjacent to the declared reference FASTA because the underlying production benchmark requires the exact FASTA/index pair. The matrix runner verifies the actual VCF and FASTA SHA-256 values while loading the manifest and repeats those checks immediately before each benchmark cell. The FAI is checked for presence here; its content hash and reference-artifact integrity are recorded and checked by the underlying scale benchmark.
 
 Do not reuse an example manifest for execution. Copy it into a controlled laboratory workspace, replace every example value with the actual controlled record, set `status` to `CONFIGURED`, and retain the resulting manifest as part of the validation evidence package.
 
@@ -47,7 +47,7 @@ python scripts/validation/run_vcf_qualification_matrix.py \
 
 The matrix runner passes the selected sample identifier to the existing benchmark through the environment rather than command-line arguments. It checks that the identifier is absent from retained benchmark JSON before accepting the cell evidence. Raw VCF content and sample names are not copied into the matrix result.
 
-Each cell gets its own directory containing the existing benchmark evidence. The matrix-level artifact is:
+The matrix output directory and each cell directory are created with owner-only permissions (mode `0700`). Use a dedicated, access-controlled filesystem and retain its access-control/backup policy with the laboratory record. Each cell gets its own directory containing the existing benchmark evidence. The matrix-level artifact is:
 
 `qualification-matrix.json`
 
