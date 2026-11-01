@@ -2058,3 +2058,52 @@ def test_vcf45_structured_header_rejects_attributes_without_values(tmp_path: Pat
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_vcf_contig_md5_is_verified_against_selected_reference(tmp_path: Path):
+    import hashlib
+
+    sequence = "ACGTACGT"
+    fasta = tmp_path / "md5-reference.fa"
+    fasta.write_text(f">1\n{sequence}\n", encoding="ascii", newline="\n")
+    (tmp_path / "md5-reference.fa.fai").write_text(
+        "1\t8\t3\t8\t9\n", encoding="ascii"
+    )
+    digest = hashlib.md5(sequence.encode("ascii"), usedforsecurity=False).hexdigest()
+    source = tmp_path / "md5-match.vcf"
+    write_vcf_with_metadata(
+        source,
+        [f"##contig=<ID=1,length=8,md5={digest}>"],
+        "1\t1\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    profile = validate_vcf_strict(source)
+    assert profile["declared_contig_md5s"] == {"1": digest}
+    assert validate_vcf_reference_alleles(source, fasta)["result"] == "PASS"
+
+    mismatch = tmp_path / "md5-mismatch.vcf"
+    write_vcf_with_metadata(
+        mismatch,
+        ["##contig=<ID=1,length=8,md5=00000000000000000000000000000000>"],
+        "1\t1\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_reference_alleles(mismatch, fasta)
+    assert exc.value.code == "VCF_CONTIG_MD5_MISMATCH"
+
+
+def test_vcf_contig_md5_must_be_32_lowercase_hex_characters(tmp_path: Path):
+    path = tmp_path / "invalid-contig-md5.vcf"
+    write_vcf_with_metadata(
+        path,
+        ["##contig=<ID=1,length=8,md5=NOT_A_DIGEST>"],
+        "1\t1\t.\tA\tC\t.\tPASS\t.\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_CONTIG_MD5_INVALID"
