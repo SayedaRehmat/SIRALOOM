@@ -46,6 +46,17 @@ def _normalize_sex(value: Any) -> str | None:
     return normalized if normalized in _SEX_VALUES else None
 
 
+def _hpo_version_iri(release: Any) -> str | None:
+    value = str(release or "")
+    try:
+        parsed = datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+    if parsed.isoformat() != value:
+        return None
+    return f"http://purl.obolibrary.org/obo/hp/releases/{value}/hp.obo"
+
+
 def _term_resolution(row: Any) -> dict[str, Any]:
     resolution = _value(row, "ontology_resolution", {}) or {}
     primary = resolution.get("primary_term") if isinstance(resolution, dict) else None
@@ -132,7 +143,11 @@ def _collect_loss_warnings(
                 "reason": "The submitted HPO identifier is not resolved as CURRENT or ALTERNATE_ID; it is exported unchanged and must not be treated as ontology-validated.",
             })
         resource = (_value(row, "ontology_resolution", {}) or {}).get("resource")
-        if not isinstance(resource, dict) or not resource.get("ontology_release"):
+        if (
+            not isinstance(resource, dict)
+            or not resource.get("ontology_release")
+            or _hpo_version_iri(resource.get("ontology_release")) is None
+        ):
             warnings.append({
                 "observation_id": observation_id,
                 "field": "ontology_provenance",
@@ -231,7 +246,9 @@ def _metadata(rows: list[Any]) -> dict[str, Any]:
             releases.add(str(resource["ontology_release"]))
     resource = dict(_HPO_RESOURCE)
     if len(releases) == 1:
-        resource["version"] = next(iter(releases))
+        version_iri = _hpo_version_iri(next(iter(releases)))
+        if version_iri:
+            resource["version"] = version_iri
     return {
         "created": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "createdBy": "SIRALOOM",
