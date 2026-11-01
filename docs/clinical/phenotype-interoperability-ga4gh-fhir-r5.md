@@ -76,7 +76,7 @@ A caller must retain the SIRALOOM clinical record/snapshot alongside any lossy P
 
 ## HL7 FHIR R5 mapping
 
-GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns a validated FHIR R5 Bundle of type collection.
+GET /api/v1/cases/{case_id}/fhir-r5/phenotypes returns the validated FHIR R5 Bundle directly with Content-Type application/fhir+json.
 
 | SIRALOOM concept | FHIR R5 resource/element | Rule |
 |---|---|---|
@@ -132,7 +132,7 @@ These canonical URLs are implementation identifiers and documentation contracts 
 - Every export writes a CLINICAL_INTEROPERABILITY_EXPORT audit event with actor, case, format, version, and export metrics.
 - The export is read-only with respect to clinical observations, pedigree members, and source artifacts.
 - The Phenopackets export returns a document inside an envelope so loss warnings are explicit. Consumers should extract the document property for the GA4GH message.
-- The FHIR export returns a FHIR Bundle inside an envelope so the API format/version is explicit. Consumers should extract the bundle property.
+- The FHIR export returns a FHIR Bundle directly as the response body with application/fhir+json media type; clinical-intake revision details are carried in the documented Patient extension.
 - SIRALOOM is the assembler in FHIR Provenance; the original clinical observer is not fabricated because the current phenotype observation model does not store a direct author reference.
 - The export does not include source VCF/BAM/FASTQ artifacts or expose internal storage URIs.
 - Clinical intake revision context from the versioned clinical-intake model is included in the FHIR patient extension and in the Phenopackets response sidecar. Age at assessment is mapped to Phenopackets TimeElement; referral details, prior testing, differential diagnoses and review attestations remain in the sidecar because the base Phenopackets schema does not represent them without changing their meaning.
