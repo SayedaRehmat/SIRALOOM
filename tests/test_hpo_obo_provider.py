@@ -30,6 +30,7 @@ is_a: HP:0000001 ! Root
 [Term]
 id: HP:0000003
 name: Current term
+synonym: "Epileptic seizures" EXACT []
 alt_id: HP:0000099
 is_a: HP:0000002 ! Parent
 
@@ -476,5 +477,8 @@ def test_hpo_obo_search_terms_is_deterministic_and_excludes_obsolete_terms(tmp_p
         {"hpo_id": "HP:0000003", "label": "Current term"}
     ]
     assert provider.search_terms("HP:0000003", limit=10)[0]["hpo_id"] == "HP:0000003"
+    assert provider.search_terms("epileptic", limit=10) == [
+        {"hpo_id": "HP:0000003", "label": "Current term"}
+    ]
     assert provider.search_terms("obsolete", limit=10) == []
     assert provider.search_terms("x", limit=10) == []
