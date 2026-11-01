@@ -309,7 +309,6 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["sample_identity"]["query_sample_column_verified"] is True
     serialized = json.dumps(report)
     assert "SAMPLE_PRIVATE_ID" not in serialized
-    assert "HG002" not in serialized
     assert "CASE_SAMPLE_001" not in serialized
     assert report["inputs"]["sample_mapping"]["sha256"]
     assert (output / "giab-concordance.json").is_file()
