@@ -82,7 +82,9 @@ def fixtures() -> tuple[dict, dict, dict]:
 
     # GA4GH PhenotypicFeature v2 has no observation timestamp field. Keep the
     # timestamp on the FHIR source row, but do not invent a GA4GH mapping for it.
-    packet_observation = SimpleNamespace(**vars(observation), observed_at=None)
+    packet_observation_data = vars(observation).copy()
+    packet_observation_data["observed_at"] = None
+    packet_observation = SimpleNamespace(**packet_observation_data)
     phenopacket, packet_warnings = build_phenopackets_v2(
         case=case, phenotype_observations=[packet_observation],
     )
