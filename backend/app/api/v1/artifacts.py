@@ -417,7 +417,7 @@ async def upload_artifact(
                 content_sha256=content_sha256,
                 size_bytes=digest_size,
                 filename=filename,
-                artifact_type=str(artifact_type),
+                artifact_type=(artifact_type.value if isinstance(artifact_type, ArtifactType) else str(artifact_type)),
                 media_type=file.content_type,
                 genome_build=build_for_artifact,
                 specimen_id=specimen_id,
@@ -473,9 +473,17 @@ async def upload_artifact(
         store = _store(db, principal.organization_id)
         try:
             artifact = store.put_file(
-            db=db, case_id=case_id, analysis_id=None, source_path=staged, filename=filename,
-            artifact_type=artifact_type, media_type=file.content_type, genome_build=build_for_artifact,
-                metadata=validation_metadata, specimen_id=specimen_id, paired_artifact_id=paired_artifact_id,
+                db=db,
+                case_id=case_id,
+                analysis_id=None,
+                source_path=staged,
+                filename=filename,
+                artifact_type=artifact_type,
+                media_type=file.content_type,
+                genome_build=build_for_artifact,
+                metadata=validation_metadata,
+                specimen_id=specimen_id,
+                paired_artifact_id=paired_artifact_id,
                 validation_status=artifact_validation_status or result.status,
                 artifact_id=upload_intent.artifact_id if upload_intent is not None else None,
             )
@@ -488,14 +496,24 @@ async def upload_artifact(
                 raise
             db.rollback()
             existing_artifact = db.get(Artifact, upload_intent.artifact_id)
-            if existing_artifact is None or not _artifact_matches_upload_intent(
+            if existing_artifact is None:
+                if isinstance(exc, IntegrityError):
+                    raise
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "IDEMPOTENT_UPLOAD_CONFLICT",
+                        "message": "The reserved storage identity already contains different or unverifiable bytes.",
+                    },
+                ) from exc
+            if not _artifact_matches_upload_intent(
                 existing_artifact, request_fingerprint=request_fingerprint
             ):
                 raise HTTPException(
                     status_code=409,
                     detail={
                         "code": "IDEMPOTENT_UPLOAD_CONFLICT",
-                        "message": "The upload identity is already in use or its stored bytes failed verification.",
+                        "message": "The durable artifact does not match the reserved upload request.",
                     },
                 ) from exc
             response.status_code = 200
