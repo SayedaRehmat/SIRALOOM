@@ -188,9 +188,9 @@ def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
 
 def test_fasta_index_consistency_rejects_sequence_length_mismatch(tmp_path: Path):
     fasta = tmp_path / "reference.fa"
-    fasta.write_text(">1\\nACGTAC\\n", encoding="utf-8")
+    fasta.write_text(">1\nACGTAC\n", encoding="utf-8")
     fai = tmp_path / "reference.fa.fai"
-    fai.write_text("1\\t5\\t3\\t6\\t7\\n", encoding="utf-8")
+    fai.write_text("1\t5\t3\t6\t7\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_fasta_index_consistency(fasta, fai)
     assert exc.value.code == "REFERENCE_FAI_MISMATCH"
@@ -198,9 +198,9 @@ def test_fasta_index_consistency_rejects_sequence_length_mismatch(tmp_path: Path
 
 def test_fasta_index_consistency_rejects_stale_byte_offset(tmp_path: Path):
     fasta = tmp_path / "reference.fa"
-    fasta.write_text(">1 description\\nACGT\\n", encoding="utf-8")
+    fasta.write_text(">1 description\nACGT\n", encoding="utf-8")
     fai = tmp_path / "reference.fa.fai"
-    fai.write_text("1\\t4\\t4\\t4\\t5\\n", encoding="utf-8")
+    fai.write_text("1\t4\t4\t4\t5\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_fasta_index_consistency(fasta, fai)
     assert exc.value.code == "REFERENCE_FAI_MISMATCH"
@@ -230,8 +230,8 @@ def test_fasta_index_consistency_accepts_gzip_fasta_with_uncompressed_fai_offset
 
 def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
     fasta = tmp_path / "reference.fa"
-    fasta.write_bytes(b">1 description\\r\\nACGT\\r\\nAC\\r\\n")
+    fasta.write_bytes(b">1 description\r\nACGT\r\nAC\r\n")
     fai = tmp_path / "reference.fa.fai"
-    fai.write_text("1\\t6\\t16\\t4\\t6\\n", encoding="utf-8")
+    fai.write_text("1\t6\t16\t4\t6\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
