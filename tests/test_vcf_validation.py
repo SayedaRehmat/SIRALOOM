@@ -907,9 +907,9 @@ def test_vcf45_local_allele_cardinality_is_validated(tmp_path: Path):
         '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
         '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
         '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
-        '##FORMAT=<ID=PP,Number=P,Type=Integer,Description="Per-ploidy values">\n'
+        '##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description="Per-ploidy values">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t2\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:PP\t0/2:2:20,10:0,50,100:12,13\n",
+        "1\t2\t.\tA\tC,G,T\t.\tPASS\t.\tGT:LAA:LAD:LPL:CUSTOM_P\t0/2:2:20,10:0,50,100:12,13\n",
         encoding="utf-8",
     )
 
@@ -1594,7 +1594,7 @@ def test_core_multiallelic_cardinality_mismatch_is_rejected_across_vcf_versions(
 def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
     alt: str, expected: list[str]
 ):
-    fields = ["1", "100", ".", "A", alt, ".", "PASS", "."]
+    fields = ["1", "100", ".", "A", alt, ".", "PASS", "END=100" if "<" in alt else "SVTYPE=BND" if "[" in alt or "]" in alt else "."]
 
     _chrom, _position, observed = _validate_record(fields, 1, None, "VCFv4.5")
 
