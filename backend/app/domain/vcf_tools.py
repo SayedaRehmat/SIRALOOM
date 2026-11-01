@@ -304,7 +304,11 @@ def route_vcf_records(
                     for sample_index, (block_chrom, block_end) in active_vcf45_reference_blocks.items()
                     if block_chrom == chrom and position <= block_end
                 }
-                if fileformat == "VCFv4.5":
+                if (
+                    fileformat == "VCFv4.5"
+                    and position > 0
+                    and position != coordinate_lengths.get(chrom, -2) + 1
+                ):
                     record_span = compute_vcf45_record_span(fields, source_record_index)
                     if record_span is not None:
                         for sample_index, block_length in record_span[1]:
