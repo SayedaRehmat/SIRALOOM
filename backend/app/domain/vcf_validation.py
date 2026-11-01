@@ -2031,7 +2031,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
             resolved_contigs: dict[str, str] = {}
             for contig, declared_length in declared_contig_lengths.items():
                 try:
-                    resolved_contig = reference.resolve_contig(contig)
+                    resolved_contig = FastaReference.resolve_contig_name(contig, reference.contigs)
                     reference_length = reference.contig_length(resolved_contig)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
@@ -2048,7 +2048,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                 try:
                     resolved_contig = resolved_contigs.get(contig)
                     if resolved_contig is None:
-                        resolved_contig = reference.resolve_contig(contig)
+                        resolved_contig = FastaReference.resolve_contig_name(contig, reference.contigs)
                         resolved_contigs[contig] = resolved_contig
                     reference_length = reference.contig_length(resolved_contig)
                 except ReferenceError as exc:
@@ -2083,7 +2083,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                 try:
                     resolved_chrom = resolved_contigs.get(chrom)
                     if resolved_chrom is None:
-                        resolved_chrom = reference.resolve_contig(chrom)
+                        resolved_chrom = FastaReference.resolve_contig_name(chrom, reference.contigs)
                         resolved_contigs[chrom] = resolved_chrom
                     contig_length = reference.contig_length(resolved_chrom)
                 except ReferenceError as exc:
@@ -2136,7 +2136,7 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     try:
                         resolved_mate_contig = resolved_contigs.get(mate_contig)
                         if resolved_mate_contig is None:
-                            resolved_mate_contig = reference.resolve_contig(mate_contig)
+                            resolved_mate_contig = FastaReference.resolve_contig_name(mate_contig, reference.contigs)
                             resolved_contigs[mate_contig] = resolved_mate_contig
                         mate_length = reference.contig_length(resolved_mate_contig)
                     except ReferenceError as exc:
