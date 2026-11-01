@@ -95,7 +95,7 @@ Audit date: 2026-11-01
 ## Governance observations
 
 - At the time of this audit, the GitHub `main` branch was not protected and no repository ruleset was returned. Required backend, PostgreSQL integration, and frontend checks are therefore not enforced by branch protection. Establish release-branch protection and required checks before production release.
-- PR #233 and later PR previews encountered the Vercel account's daily deployment quota. PR #252's GitHub Actions checks and main-branch workflow for commit `40be1c3` passed backend, PostgreSQL/Celery integration, frontend, and production container checks. PR #253's full PR CI passed before merge; its fresh main-branch workflow for commit `dea24dbe` is pending at this audit snapshot. The Vercel preview/production deployment is not established by those checks; re-attempt only after the quota resets and verify the actual deployed commit.
+- PR #233 and later PR previews encountered the Vercel account's daily deployment quota. PR #252's GitHub Actions checks and main-branch workflow for commit `40be1c3` passed backend, PostgreSQL/Celery integration, frontend, and production container checks. PR #253's full PR CI passed before merge, and the fresh main-branch workflow for commit `dea24dbe` also completed successfully (GitHub Actions run `41299809001`). The Vercel preview/production deployment is not established by those checks; re-attempt only after the quota resets and verify the actual deployed commit.
 - The prior audit found no main-branch protection/ruleset response. Recheck branch protection and required checks before a controlled laboratory release.
 
 ## Non-claims
