@@ -107,6 +107,14 @@ The code-level changes above do not by themselves qualify SIRALOOM for a clinica
 - Corrupt/truncated streams, decompression and parser timeouts, large WES/WGS files, storage pressure, worker crash/replay, and immutable provenance.
 - Caller/reference/resource versions, acceptance thresholds, test corpus, intended use, and lab authorization recorded in the resource/assay qualification process.
 
+### Automated normalization worker-loss regression
+
+The PostgreSQL integration suite includes a real Celery prefork-process failure test for the normalization boundary. It runs the pinned BCFtools 1.24 normalization command against a left-normalizable indel, commits the resulting NORMALIZED_VCF artifact and a normalize workflow checkpoint, then terminates the executing prefork child with an abrupt process exit. The broker must redeliver the late-acknowledged task to a replacement child. The production analysis-task wrapper must reacquire its PostgreSQL execution fence and recover the interrupted workflow step before the test workflow resumes normalization.
+
+The replay runs BCFtools again, verifies byte-identical normalized output, and calls the production deterministic-artifact persistence path. The test asserts one artifact identity/row, matching SHA-256 and stored bytes, a recovered-and-completed normalization step, and one worker-recovery audit event. This is process-level fault-injection evidence for the normalization artifact boundary; it does not replace full assay/caller qualification, GIAB benchmarking, distributed object-store fault testing, or laboratory validation.
+
+
 ## Scientific safety rule
 
 Never convert “valid VCF syntax” into “analytically valid assay,” “variant absent,” “negative result,” or “clinically reportable.” Those are separate decisions requiring reference validation, genotype/call quality, assay QC, evidence assessment, human review, and lab-controlled sign-out.
+
