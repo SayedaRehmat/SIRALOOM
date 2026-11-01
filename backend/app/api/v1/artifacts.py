@@ -157,6 +157,7 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
     ).all()
     case.status = case_status_after_vcf_upload(
         case.status,
+        has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
         has_analysis_ready_vcf=any(
             status == "VALID"
             and isinstance(metadata, dict)
@@ -601,6 +602,7 @@ async def upload_artifact(
                 ).all()
                 case.status = case_status_after_vcf_upload(
                     case.status,
+                    has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
                     has_analysis_ready_vcf=any(
                         status == "VALID"
                         and isinstance(metadata, dict)
