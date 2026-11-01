@@ -1787,3 +1787,12 @@ def test_vcf45_psl_accepts_phase_set_only_for_explicitly_phased_gt_allele(tmp_pa
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 1
+
+
+@pytest.mark.parametrize("version", ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4"])
+def test_duplicate_alt_entries_are_not_rejected_by_legacy_version_contracts(version: str):
+    fields = ["1", "100", ".", "A", "C,c", ".", "PASS", "."]
+
+    _chrom, _position, observed = _validate_record(fields, 1, None, version)
+
+    assert observed == ["C", "C"]
