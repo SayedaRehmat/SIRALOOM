@@ -32,9 +32,9 @@ def test_deployment_resource_snapshot_captures_cgroup_v2_and_output_filesystem(t
     module = _load_runner()
     cgroup = tmp_path / "cgroup"
     cgroup.mkdir()
-    (cgroup / "memory.current").write_text("1048576\\n", encoding="ascii")
-    (cgroup / "memory.peak").write_text("2097152\\n", encoding="ascii")
-    (cgroup / "memory.max").write_text("4194304\\n", encoding="ascii")
+    (cgroup / "memory.current").write_text("1048576\n", encoding="ascii")
+    (cgroup / "memory.peak").write_text("2097152\n", encoding="ascii")
+    (cgroup / "memory.max").write_text("4194304\n", encoding="ascii")
     output = tmp_path / "evidence"
     output.mkdir(mode=0o700)
 
@@ -60,9 +60,9 @@ def test_deployment_resource_snapshot_supports_cgroup_v1_and_unavailable_metrics
     cgroup = tmp_path / "cgroup"
     memory = cgroup / "memory"
     memory.mkdir(parents=True)
-    (memory / "memory.usage_in_bytes").write_text("512\\n", encoding="ascii")
-    (memory / "memory.max_usage_in_bytes").write_text("1024\\n", encoding="ascii")
-    (memory / "memory.limit_in_bytes").write_text("max\\n", encoding="ascii")
+    (memory / "memory.usage_in_bytes").write_text("512\n", encoding="ascii")
+    (memory / "memory.max_usage_in_bytes").write_text("1024\n", encoding="ascii")
+    (memory / "memory.limit_in_bytes").write_text("max\n", encoding="ascii")
     output = tmp_path / "evidence"
     output.mkdir()
 
