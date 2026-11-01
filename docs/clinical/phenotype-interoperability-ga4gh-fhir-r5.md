@@ -57,7 +57,7 @@ FHIR R5 core resources are used here. This is not a claim of conformance to the 
 | HPO release | MetaData.resources | HPO release included only when a single release is represented |
 | Age at assessment | Individual.time_at_last_encounter | Age value/unit mapped to an ISO 8601 TimeElement; the as-of date remains in the SIRALOOM response sidecar |
 | Referral, prior testing, differential diagnoses, and review attestations | SIRALOOM response sidecar | Not forced into Phenopacket disease/diagnosis fields; field-level loss warnings are returned |
-| SIRALOOM-only attributes | Export warnings | Laterality, anatomical site, temporal pattern, patient-specific episode frequency, and other non-equivalent fields are reported rather than silently discarded |
+| SIRALOOM-only attributes | Export warnings and response sidecars | Laterality, anatomical site, temporal pattern, episode frequency, relationship-to-proband text, sampled flags, specimen links, and arbitrary pedigree metadata are reported rather than silently discarded |
 
 ### Strict and lossy export
 
@@ -123,6 +123,7 @@ The canonical base is https://siraloom.org/fhir/StructureDefinition/.
 | sampled | valueBoolean | Stored pedigree sampling flag |
 | specimen-reference-id | valueString | Existing SIRALOOM specimen identifier |
 | pedigree-parent / pedigree-child | valueReference | Directed parent-child edge between Patient/RelatedPerson resources |
+| pedigree-member-metadata / pedigree-relationship-metadata | valueString JSON | Opaque local pedigree metadata is preserved but not interpreted as standard inheritance or consanguinity evidence |
 
 These canonical URLs are implementation identifiers and documentation contracts in this repository. They are not claimed to be published or externally governed StructureDefinitions. Before external production exchange, the laboratory must publish/version the corresponding StructureDefinitions and validate the Bundle against those profiles using the official HL7 validator and the receiving system's implementation guide.
 
@@ -136,7 +137,7 @@ These canonical URLs are implementation identifiers and documentation contracts 
 - SIRALOOM is the assembler in FHIR Provenance; the original clinical observer is not fabricated because the current phenotype observation model does not store a direct author reference.
 - The export does not include source VCF/BAM/FASTQ artifacts or expose internal storage URIs.
 - Clinical intake revision context from the versioned clinical-intake model is included in the FHIR patient extension and in the Phenopackets response sidecar. Age at assessment is mapped to Phenopackets TimeElement; referral details, prior testing, differential diagnoses and review attestations remain in the sidecar because the base Phenopackets schema does not represent them without changing their meaning.
-- Family-member specimens are not yet emitted as FHIR Specimen resources; the current export preserves the local specimen reference ID as a SIRALOOM extension. A later specimen-interoperability stage must add the resource only when the complete specimen status, type, collection, processing and subject linkage can be represented without guessing.
+- Family-member specimens are not yet emitted as FHIR Specimen resources; the current export preserves the local specimen reference ID as a SIRALOOM extension. GA4GH Phenopackets export returns the specimen-link presence and full pedigree metadata in its SIRALOOM sidecar, with a loss warning. A later specimen-interoperability stage must add the resource only when the complete specimen status, type, collection, processing and subject linkage can be represented without guessing.
 
 ## Verification and qualification boundary
 
