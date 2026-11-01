@@ -44,7 +44,12 @@ def test_real_prefork_worker_loss_during_vcf_normalization_redelivers_and_reuses
     ).stdout.splitlines()
     assert version[:2] == ["bcftools 1.24", "Using htslib 1.24"]
 
-    from tests.integration.worker_loss_celery_app import celery_app
+    import importlib
+
+    integration_dir = str(Path(__file__).resolve().parent)
+    if integration_dir not in sys.path:
+        sys.path.insert(0, integration_dir)
+    celery_app = importlib.import_module("worker_loss_celery_app").celery_app
 
     engine = create_engine(database_url, pool_pre_ping=True)
     redis = Redis.from_url(os.environ["REDIS_URL"], decode_responses=True)
