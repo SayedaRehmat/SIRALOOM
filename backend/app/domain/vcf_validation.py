@@ -626,7 +626,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
 
 
 def _structured_header_id(line: str, kind: str, line_no: int) -> str:
-    """Extract the required ID from a structured VCF header line."""
+    """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
         raise StrictVCFValidationError(
@@ -638,35 +638,64 @@ def _structured_header_id(line: str, kind: str, line_no: int) -> str:
     current: list[str] = []
     quoted = False
     escaped = False
+    square_bracket_depth = 0
     for char in body:
         if escaped:
             current.append(char)
             escaped = False
-        elif char == "\\" and quoted:
+        elif char == "\\\\" and quoted:
             current.append(char)
             escaped = True
         elif char == '"':
             current.append(char)
             quoted = not quoted
-        elif char == "," and not quoted:
+        elif not quoted and char == "[":
+            square_bracket_depth += 1
+            current.append(char)
+        elif not quoted and char == "]":
+            square_bracket_depth -= 1
+            if square_bracket_depth < 0:
+                raise StrictVCFValidationError(
+                    f"Malformed list value in {kind} structured header at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
+            current.append(char)
+        elif char == "," and not quoted and square_bracket_depth == 0:
             attributes.append("".join(current))
             current = []
         else:
             current.append(char)
-    if quoted or escaped:
+    if quoted or escaped or square_bracket_depth != 0:
         raise StrictVCFValidationError(
-            f"Malformed quoted {kind} structured header at line {line_no}",
+            f"Malformed quoted or list value in {kind} structured header at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     attributes.append("".join(current))
 
-    identifiers = []
+    identifiers: list[str] = []
+    seen_attributes: set[str] = set()
     for attribute in attributes:
-        key, separator, value = attribute.partition("=")
-        if separator and key.strip() == "ID":
-            value = value.strip()
-            if value.startswith('"') and value.endswith('"') and len(value) >= 2:
-                value = value[1:-1]
+        key, separator, raw_value = attribute.partition("=")
+        key, value = key.strip(), raw_value.strip()
+        if not separator or not key or not value or key in seen_attributes:
+            raise StrictVCFValidationError(
+                f"Malformed or duplicate {kind} structured header attribute at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        seen_attributes.add(key)
+        if value.startswith('"'):
+            if len(value) < 2 or not value.endswith('"'):
+                raise StrictVCFValidationError(
+                    f"Malformed quoted {kind} structured header attribute at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
+            value = value[1:-1]
+        elif '"' in value:
+            raise StrictVCFValidationError(
+                f"Malformed quoted {kind} structured header attribute at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if key == "ID":
             identifiers.append(value)
     if len(identifiers) != 1 or not identifiers[0]:
         raise StrictVCFValidationError(
@@ -1239,9 +1268,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_ORDER_INVALID",
                     )
                 header_key, separator, header_value = line[2:].partition("=")
-                if separator and header_value.startswith("<") and header_key in {
-                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"
-                }:
+                if separator and header_value.startswith("<") and (
+                    header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
+                    or (header_key == "PEDIGREE" and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"})
+                    or fileformat == "VCFv4.5"
+                ):
                     identifier = _structured_header_id(line, header_key, line_no)
                     if (
                         header_key == "contig"
