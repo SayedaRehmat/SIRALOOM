@@ -11,6 +11,7 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
+from uuid import NAMESPACE_URL, uuid5
 
 
 class PhenopacketExportError(ValueError):
@@ -35,9 +36,15 @@ def _value(obj: Any, name: str, default: Any = None) -> Any:
 
 
 def _member_id(member: Any) -> str:
-    # Use the opaque SIRALOOM UUID in the standard document; human-entered
-    # member identifiers remain only in the separately identified sidecar.
-    return f"SIRALOOM:{_value(member, 'id')}"
+    # Deterministic pseudonym: do not expose the database primary key or the
+    # human-entered member identifier in the standards document.
+    opaque_id = uuid5(NAMESPACE_URL, f"siraloom:pedigree-member:{_value(member, 'id')}")
+    return f"SIRALOOM:{opaque_id}"
+
+
+def _case_id(case: Any) -> str:
+    opaque_id = uuid5(NAMESPACE_URL, f"siraloom:case:{_value(case, 'id')}")
+    return f"SIRALOOM:{opaque_id}"
 
 
 def _normalize_sex(value: Any) -> str | None:
@@ -355,7 +362,7 @@ def _family_pedigree(*, case: Any, members: list[Any], relationships: list[Any])
         parent_ids[child_id][role] = _member_id(parent)
 
     persons = []
-    family_id = f"SIRALOOM:{_value(case, 'id')}"
+    family_id = _case_id(case)
     for member in members:
         sex = str(_value(member, "sex") or "").upper()
         affected = str(_value(member, "affected_status", "UNKNOWN") or "UNKNOWN").upper()
@@ -465,8 +472,8 @@ def build_phenopackets_v2(
                 + ". Re-run with allow_lossy=true only after reviewing the warnings."
             )
         packet = _packet(
-            packet_id=f"SIRALOOM:{_value(case, 'id')}",
-            subject_id=f"SIRALOOM:{_value(case, 'id')}",
+            packet_id=f"{_case_id(case)}:phenopacket",
+            subject_id=_case_id(case),
             rows=case_rows,
             age_at_assessment=age_at_assessment,
         )
@@ -479,7 +486,7 @@ def build_phenopackets_v2(
         or str(_value(row, "subject_member_id")) == str(_value(proband, "id"))
     ]
     proband_packet = _packet(
-        packet_id=f"SIRALOOM:{_value(case, 'id')}:proband",
+        packet_id=f"{_case_id(case)}:proband",
         subject_id=_member_id(proband),
         rows=proband_rows,
         sex=_value(proband, "sex"),
@@ -496,7 +503,7 @@ def build_phenopackets_v2(
         if member_rows:
             relative_packets.append(
                 _packet(
-                    packet_id=f"SIRALOOM:{_value(member, 'id')}:relative",
+                    packet_id=f"{_member_id(member)}:relative",
                     subject_id=_member_id(member),
                     rows=member_rows,
                     sex=_value(member, "sex"),
@@ -516,7 +523,7 @@ def build_phenopackets_v2(
             "reason": "The GA4GH Family boolean cannot distinguish unknown/not-recorded from false; an explicit boolean is required for strict export.",
         })
     family = {
-        "id": f"SIRALOOM:{_value(case, 'id')}:family",
+        "id": f"{_case_id(case)}:family",
         "proband": proband_packet,
         "relatives": relative_packets,
         "pedigree": _family_pedigree(case=case, members=members, relationships=relationships),
