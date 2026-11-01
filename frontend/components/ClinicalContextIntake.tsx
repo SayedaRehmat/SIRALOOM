@@ -326,7 +326,7 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
             <button type="button" className="secondary" onClick={() => setPriorTests(current => current.filter((_, i) => i !== index))}>Remove prior test entry</button>
           </div>
         ))}
-        <p className="quiet">Use a terminology code such as LOINC when a governed code is available. The system URI, code and display must be supplied together; free-text assay names remain available when no suitable code exists.</p>
+        <p className="quiet">Use a terminology code such as LOINC when a governed code is available. The system URI, code and display must be supplied together; free-text assay names remain available when no suitable code exists. Codes are stored as supplied and are not yet validated against a pinned terminology release.</p>
         {priorTests.length === 0 && <p className="quiet">No prior tests recorded. This is not interpreted as evidence that prior testing was not performed.</p>}
       </div>
 
@@ -347,10 +347,20 @@ export default function ClinicalContextIntake({ caseId, apiFetch }: Props) {
               <input value={item.display} onChange={event => updateDifferential(index, "display", event.target.value)} />
             </label>
             <label>Certainty
-              <select value={item.certainty} onChange={event => updateDifferential(index, "certainty", event.target.value)}>{CERTAINTY.map(value => <option key={value}>{value}</option>)}</select>
+              <select value={item.certainty} onChange={event => {
+                const value = event.target.value;
+                updateDifferential(index, "certainty", value);
+                if (value === "RULED_OUT") updateDifferential(index, "clinical_status", "RULED_OUT");
+                else if (item.clinical_status === "RULED_OUT") updateDifferential(index, "clinical_status", "ACTIVE");
+              }}>{CERTAINTY.map(value => <option key={value}>{value}</option>)}</select>
             </label>
             <label>Clinical status
-              <select value={item.clinical_status} onChange={event => updateDifferential(index, "clinical_status", event.target.value)}>{CLINICAL_STATUS.map(value => <option key={value}>{value}</option>)}</select>
+              <select value={item.clinical_status} onChange={event => {
+                const value = event.target.value;
+                updateDifferential(index, "clinical_status", value);
+                if (value === "RULED_OUT") updateDifferential(index, "certainty", "RULED_OUT");
+                else if (item.certainty === "RULED_OUT") updateDifferential(index, "certainty", "CONSIDERED");
+              }}>{CLINICAL_STATUS.map(value => <option key={value}>{value}</option>)}</select>
             </label>
             <button type="button" className="secondary" onClick={() => setDifferentials(current => current.filter((_, i) => i !== index))}>Remove differential</button>
           </div>
