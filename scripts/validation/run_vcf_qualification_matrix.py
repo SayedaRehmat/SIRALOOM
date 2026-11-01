@@ -301,9 +301,12 @@ def main() -> int:
                     "completed_at_utc": datetime.now(UTC).isoformat(),
                 })
 
+        has_cell_failures = any(
+            cell["cell_status"] == "REVIEW_REQUIRED_FAILURE" for cell in cells
+        )
         result = {
             "schema_version": SCHEMA_VERSION,
-            "status": RUN_STATUS,
+            "status": "RUN_COMPLETE_WITH_CELL_FAILURES" if has_cell_failures else RUN_STATUS,
             "matrix_kind": "VCF_STAGE1_LABORATORY_QUALIFICATION",
             "generated_at_utc": datetime.now(UTC).isoformat(),
             "started_at_utc": started.isoformat(),
@@ -326,7 +329,7 @@ def main() -> int:
             json.dumps(result, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
-        return 1 if any(cell["cell_status"] == "REVIEW_REQUIRED_FAILURE" for cell in cells) else 0
+        return 1 if has_cell_failures else 0
     except Exception as exc:  # noqa: BLE001 - CLI boundary must return controlled failure.
         failure = {
             "schema_version": SCHEMA_VERSION,
