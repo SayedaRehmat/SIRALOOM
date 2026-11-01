@@ -1603,16 +1603,16 @@ def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
 
 @pytest.mark.parametrize(
     "alt",
-    ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],A]chr1:123]"],
+    ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],a]chr1:123]"],
 )
-def test_repeated_alt_values_are_preserved_as_distinct_source_entries(alt: str):
+def test_duplicate_alt_values_are_rejected_with_case_aware_identity(alt: str):
     info = "END=100" if "<" in alt else "SVTYPE=BND" if "[" in alt or "]" in alt else "."
     fields = ["1", "100", ".", "A", alt, ".", "PASS", info]
 
-    _chrom, _position, observed = _validate_record(fields, 1, None, "VCFv4.5")
+    with pytest.raises(StrictVCFValidationError) as exc:
+        _validate_record(fields, 1, None, "VCFv4.5")
 
-    assert len(observed) == 2
-    assert observed[0] == observed[1]
+    assert exc.value.code == "VCF_ALT_DUPLICATE"
 
 
 @pytest.mark.parametrize("alt", ["<DEL,FOO>", "<DEL FOO>", "<<DEL>>", "A]chr 1:123]"])
