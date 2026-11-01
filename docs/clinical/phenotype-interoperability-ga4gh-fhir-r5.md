@@ -101,7 +101,7 @@ Observations use status=preliminary because the current phenotype record does no
 
 ## SIRALOOM FHIR extension and terminology contract
 
-The canonical extension base is https://siraloom.org/fhir/StructureDefinition/. The local phenotype-observation-status CodeSystem URI is https://siraloom.org/fhir/CodeSystem/phenotype-observation-status; its EXCLUDED code preserves the local state without presenting it as a negative finding. These canonical identifiers are implementation contracts, not a claim that the CodeSystem or StructureDefinitions have been published in a terminology registry.
+The canonical extension base is https://siraloom.org/fhir/StructureDefinition/. The local phenotype-observation-status CodeSystem URI is https://siraloom.org/fhir/CodeSystem/phenotype-observation-status; its EXCLUDED code preserves the local state without presenting it as a negative finding. Child URLs inside complex extensions are relative to the parent extension, as required by FHIR. These canonical identifiers are implementation contracts, not a claim that the CodeSystem or StructureDefinitions have been published in a terminology registry.
 
 | Extension suffix | Value | Purpose |
 |---|---|---|
