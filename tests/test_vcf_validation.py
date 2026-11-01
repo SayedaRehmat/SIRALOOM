@@ -506,9 +506,16 @@ def test_format_number_g_rejects_wrong_genotype_cardinality(tmp_path: Path):
     assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
 
 
-@pytest.mark.parametrize("pl_values", ["0,1,2", "0,1,2,3,4,5", "0,1,2,3,4,5,6,7,8,9"])
-def test_format_number_g_without_gt_does_not_assume_diploid_ploidy(
-    tmp_path: Path, pl_values: str,
+@pytest.mark.parametrize(
+    ("pl_values", "valid"),
+    [
+        ("0,1,2,3,4,5", True),
+        ("0,1,2", False),
+        ("0,1,2,3,4,5,6,7,8,9", False),
+    ],
+)
+def test_format_number_g_without_gt_uses_specified_diploid_default(
+    tmp_path: Path, pl_values: str, valid: bool,
 ):
     path = tmp_path / "format-number-g-without-gt.vcf"
     write_vcf_with_metadata(
@@ -518,10 +525,14 @@ def test_format_number_g_without_gt_does_not_assume_diploid_ploidy(
         sample=True,
     )
 
-    profile = validate_vcf_strict(path)
-
-    assert profile["records"] == 1
-    assert profile["unchecked_format_number_g_fields"] == ["PL"]
+    if valid:
+        profile = validate_vcf_strict(path)
+        assert profile["records"] == 1
+        assert profile["unchecked_format_number_g_fields"] == []
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
 
 
 def test_strict_validation_rejects_duplicate_info_keys(tmp_path: Path):
