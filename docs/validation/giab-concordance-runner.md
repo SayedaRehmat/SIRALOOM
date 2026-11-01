@@ -19,7 +19,7 @@ Required:
 - truth-set identifier and release (for example, GIAB HG002 GRCh38 v4.2.1);
 - preapproved laboratory acceptance-policy identifier.
 
-WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`, and the resulting extended CSV is retained. Symbolic alleles, spanning-deletion alleles, and breakends are rejected because this runner is scoped to small variants. All input files are SHA-256 recorded and rechecked after execution.
+WES and PANEL additionally require the exact assay target BED. The target BED is passed with hap.py `-T`; the GIAB confident BED is separately passed with `-f`. Optional GA4GH stratification TSVs are passed with `--stratification`; each referenced BED is resolved relative to the TSV when needed, hashed, and rechecked, and the resulting extended CSV is retained. An adjacent reference `.gzi` is also hashed when present. Symbolic alleles, spanning-deletion alleles, and breakends are rejected because this runner is scoped to small variants. All input files and each stratification BED are SHA-256 recorded and rechecked after execution.
 
 Truth and query sample identifiers are not written to the JSON report. The restricted output directory contains hap.py's own outputs/log; protect it as controlled laboratory evidence because upstream tools may include source metadata in their files. The output directory must not already exist and is created with mode 0700; the log uses mode 0600.
 
