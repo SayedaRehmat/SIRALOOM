@@ -3,7 +3,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import re
-from math import comb
+from math import comb, isnan
 from pathlib import Path
 
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
@@ -774,6 +774,109 @@ def _expected_cardinality(
             return None
         return comb(local_allele_count + ploidy - 1, ploidy)
     return int(number)
+
+
+def _genotype_order(allele_count: int, ploidy: int):
+    """Yield VCF colexicographic genotype order for the given allele count."""
+    def walk(max_allele: int, remaining: int, prefix: tuple[int, ...]):
+        if remaining == 1:
+            for allele in range(max_allele + 1):
+                yield prefix + (allele,)
+            return
+        for last_allele in range(max_allele + 1):
+            yield from walk(last_allele, remaining - 1, prefix + (last_allele,))
+
+    if allele_count < 1 or ploidy < 1:
+        return
+    yield from walk(allele_count - 1, ploidy, ())
+
+
+def _genotype_order_index(genotype: tuple[int, ...]) -> int:
+    return sum(comb(allele + position - 1, position) for position, allele in enumerate(genotype, 1))
+
+
+def _validate_local_field_equivalence(
+    *,
+    format_keys: list[str],
+    sample_values: list[str],
+    alternate_count: int,
+    local_alt_indexes: list[int],
+    ploidy: int | None,
+    line_no: int,
+    sample_index: int,
+) -> None:
+    """Verify standard and VCFv4.5 local-allele fields encode the same data."""
+    local_pairs = (
+        ("AD", "LAD"),
+        ("ADF", "LADF"),
+        ("ADR", "LADR"),
+        ("EC", "LEC"),
+        ("GL", "LGL"),
+        ("GP", "LGP"),
+        ("PL", "LPL"),
+        ("PP", "LPP"),
+    )
+    for standard_key, local_key in local_pairs:
+        if standard_key not in format_keys or local_key not in format_keys:
+            continue
+        standard_index = format_keys.index(standard_key)
+        local_index = format_keys.index(local_key)
+        standard_value = sample_values[standard_index] if standard_index < len(sample_values) else "."
+        local_value = sample_values[local_index] if local_index < len(sample_values) else "."
+        if standard_value in {"", "."} or local_value in {"", "."}:
+            continue
+
+        definition = _reserved_vcf45_format_definition(standard_key)
+        if definition is None:
+            continue
+        number = definition["Number"]
+        standard_values = standard_value.split(",")
+        local_values = local_value.split(",")
+        local_alleles = [0, *local_alt_indexes]
+
+        if number == "A":
+            source_indexes = [allele_index - 1 for allele_index in local_alt_indexes]
+        elif number == "R":
+            source_indexes = local_alleles
+        elif number == "G":
+            if ploidy is None:
+                raise StrictVCFValidationError(
+                    f"Cannot verify {standard_key}/{local_key} equivalence without a known sample ploidy at line {line_no}, sample {sample_index}",
+                    code="VCF_LOCAL_FIELD_EQUIVALENCE_UNRESOLVED",
+                )
+            source_indexes = [
+                _genotype_order_index(
+                    tuple(sorted(local_alleles[local_allele] for local_allele in genotype))
+                )
+                for genotype in _genotype_order(len(local_alleles), ploidy)
+            ]
+        else:
+            continue
+
+        if any(index >= len(standard_values) for index in source_indexes):
+            raise StrictVCFValidationError(
+                f"Cannot project {standard_key} into {local_key} at line {line_no}, sample {sample_index}",
+                code="VCF_LOCAL_FIELD_EQUIVALENCE_INVALID",
+            )
+        expected_values = [standard_values[index] for index in source_indexes]
+        field_type = definition["Type"]
+        for expected, observed in zip(expected_values, local_values):
+            if expected == "." or observed == ".":
+                equivalent = expected == observed
+            elif field_type == "Integer":
+                equivalent = int(expected) == int(observed)
+            elif field_type == "Float":
+                expected_float, observed_float = float(expected), float(observed)
+                equivalent = expected_float == observed_float or (
+                    isnan(expected_float) and isnan(observed_float)
+                )
+            else:
+                equivalent = expected == observed
+            if not equivalent:
+                raise StrictVCFValidationError(
+                    f"FORMAT/{standard_key} and FORMAT/{local_key} encode different values at line {line_no}, sample {sample_index}",
+                    code="VCF_LOCAL_FIELD_EQUIVALENCE_INVALID",
+                )
 
 
 def _validate_declared_value(
@@ -1573,6 +1676,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     # "./." is diploid, and so on.
                     genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
                 local_allele_count: int | None = None
+                local_alt_indexes: list[int] = []
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
                     raw_laa = sample_values[format_keys.index("LAA")]
                     if raw_laa == ".":
@@ -1647,6 +1751,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
                         )
+                if fileformat == "VCFv4.5":
+                    _validate_local_field_equivalence(
+                        format_keys=format_keys,
+                        sample_values=sample_values,
+                        alternate_count=len(alts),
+                        local_alt_indexes=local_alt_indexes,
+                        ploidy=genotype_ploidy,
+                        line_no=line_no,
+                        sample_index=sample_index,
+                    )
 
             if fileformat == "VCFv4.5" and _pos > 0:
                 record_span = compute_vcf45_record_span(fields, line_no)
