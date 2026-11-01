@@ -81,12 +81,12 @@ def _collect_loss_warnings(
     rows: list[Any], clinical_intake_revision: Any | None = None
 ) -> list[dict[str, str]]:
     warnings: list[dict[str, str]] = []
-    for row in rows:
+    for row_index, row in enumerate(rows):
         status = str(_value(row, "phenotype_status", "PRESENT")).upper()
-        observation_id = str(_value(row, "id"))
+        observation_ref = str(_value(row, "record_fingerprint") or f"phenotype-record-{row_index + 1}")
         if status in {"UNKNOWN", "NOT_ASSESSED"}:
             warnings.append({
-                "observation_id": observation_id,
+                "observation_ref": observation_ref,
                 "field": "phenotype_status",
                 "reason": f"GA4GH Phenopackets v2 cannot preserve the SIRALOOM {status} state distinctly.",
             })
