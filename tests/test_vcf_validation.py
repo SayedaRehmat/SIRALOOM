@@ -2193,3 +2193,52 @@ def test_vcf45_missing_standard_or_local_equivalent_is_permitted(tmp_path: Path)
     )
 
     assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_pso_psq_follow_psl_missing_positions(tmp_path: Path):
+    path = tmp_path / "vcf45-psl-pso-psq-valid.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">',
+            '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">',
+            '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set qualities">',
+        ],
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:PSL:PSO:PSQ\t|0/1:chr1*2*1,.:3,.:40,.\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("format_keys", "sample_value"),
+    [
+        ("GT:PSL:PSQ", "|0/1:phaseA,.:40,5"),
+        ("GT:PSL:PSO", "|0/1:phaseA,.:3,4"),
+        ("PSQ", "40"),
+        ("PSO", "3"),
+        ("GT:PSL", ".:phaseA"),
+    ],
+)
+def test_vcf45_phase_set_dependent_fields_reject_inconsistent_context(
+    tmp_path: Path, format_keys: str, sample_value: str
+):
+    path = tmp_path / "vcf45-invalid-phase-set-dependency.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">',
+            '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">',
+            '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set qualities">',
+        ],
+        f"1\t2\t.\tA\tC\t.\tPASS\t.\t{format_keys}\t{sample_value}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
