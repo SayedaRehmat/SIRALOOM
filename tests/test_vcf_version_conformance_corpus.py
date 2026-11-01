@@ -332,3 +332,33 @@ def test_utf8_description_metadata_is_accepted(
     )
 
     assert validate_vcf_strict(path)["records"] == 1
+
+
+
+@pytest.mark.parametrize("version", VCF_VERSIONS)
+@pytest.mark.parametrize(
+    ("genotype", "likelihoods", "expected_ploidy"),
+    [
+        (".", "0,10", 1),
+        ("./.", "0,10,20", 2),
+        ("././.", "0,10,20,30", 3),
+    ],
+)
+def test_number_g_cardinality_uses_ploidy_even_for_missing_gt_alleles(
+    tmp_path: Path,
+    version: str,
+    genotype: str,
+    likelihoods: str,
+    expected_ploidy: int,
+) -> None:
+    path = _write_vcf(
+        tmp_path / f"{version}-missing-gt-ploidy-{expected_ploidy}.vcf",
+        version,
+        f"1\t10\t.\tA\tC\t.\tPASS\t.\tGT:XGL\t{genotype}:{likelihoods}",
+        metadata=(
+            '##FORMAT=<ID=XGL,Number=G,Type=Float,Description="Genotype likelihoods">',
+        ),
+        samples=True,
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
