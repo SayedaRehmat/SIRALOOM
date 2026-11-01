@@ -930,6 +930,23 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
             "received_datetime": specimen.received_datetime.isoformat() if specimen and specimen.received_datetime else None,
         },
         "reference_build": analysis.reference_build,
+        "product_scope": {
+            "product": "SIRALOOM Rare-Disease SNV/INDEL",
+            "scope_version": "1.0.0",
+            "included_variant_classes": ["SNV", "INDEL"],
+            "excluded_variant_classes": [
+                "CNV",
+                "STRUCTURAL_VARIANT",
+                "MITOCHONDRIAL_VARIANT",
+                "REPEAT_EXPANSION",
+            ],
+            "excluded_classes_interpreted": False,
+            "scope_statement": (
+                "This report covers SNV and INDEL findings analyzed by SIRALOOM. "
+                "CNV, structural variant, mitochondrial, and repeat-expansion "
+                "findings are outside this product's analytical scope and were not analyzed."
+            ),
+        },
         "final_result": {
             "status": "DRAFT",
             "release_state": "NOT_FOR_CLINICAL_RELEASE",
@@ -941,13 +958,16 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
         },
         "findings": findings,
         "methodology": (
-            "SIRALOOM Variant Phase 1 VCF interpretation workflow. "
-            "The report reflects the configured laboratory workflow and resource versions."
+            "SIRALOOM Rare-Disease SNV/INDEL VCF interpretation workflow. "
+            "The product's analytical scope is fixed to SNV and INDEL; the report "
+            "records the exact reference, resource, and workflow versions used."
         ),
         "limitations": (
-            "This Phase 1 service starts from VCF and does not perform primary sequencing, "
-            "alignment, or variant calling. Clinical use requires laboratory-specific validation, "
-            "qualified review, and applicable quality/regulatory controls."
+            "SIRALOOM starts from VCF and does not perform primary sequencing, alignment, "
+            "or variant calling. CNV, structural variant, mitochondrial, and repeat-expansion "
+            "classes are outside this product's scope and are not analyzed or excluded as absent. "
+            "Clinical use requires validation of the deployed product/workflow, qualified review, "
+            "and applicable quality/regulatory controls."
         ),
         "recommendations": case.clinical_context.get("recommendations"),
         "references": case.clinical_context.get("references", []),
