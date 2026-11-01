@@ -699,6 +699,8 @@ def _validate_declared_value(
             else:
                 integer_value = int(item)
                 valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
+                if kind == "FORMAT" and key == "PS":
+                    valid = valid and integer_value >= 0
                 if _base_modification_field_kind(key) == "depth":
                     valid = valid and integer_value >= 0
         elif field_type == "Float":
@@ -1305,6 +1307,15 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             format_keys = fields[8].split(":") if len(fields) > 8 else []
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
             for sample_index, sample in enumerate(fields[9:], start=1):
+                sample_values = sample.split(":")
+                if "PS" in format_keys and "PSL" in format_keys:
+                    ps_value = sample_values[format_keys.index("PS")] if format_keys.index("PS") < len(sample_values) else "."
+                    psl_value = sample_values[format_keys.index("PSL")] if format_keys.index("PSL") < len(sample_values) else "."
+                    if ps_value not in {"", "."} and psl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PS and FORMAT/PSL cannot both be populated for one sample at line {line_no}",
+                            code="VCF_PHASE_SET_INVALID",
+                        )
                 sample_values = sample.split(":")
                 if gt_index is None:
                     # GT is optional in VCF. Number=G cardinality depends on
