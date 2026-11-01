@@ -51,7 +51,7 @@ def test_csi_corruption_is_rejected_during_index_concordance(tmp_path: Path):
     csi.write_bytes(b"NOT-A-CSI" + original[9:])
 
     with pytest.raises(VCFToolError, match="index record-count validation failed"):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.24")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
 
 
 def test_stale_csi_offsets_are_rejected_when_bgzf_header_shifts_record_blocks(
@@ -88,7 +88,7 @@ def test_stale_csi_offsets_are_rejected_when_bgzf_header_shifts_record_blocks(
     Path(str(bgzf) + ".csi").write_bytes(original_csi)
 
     with pytest.raises(VCFToolError):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.24")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
 
 
 def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
@@ -118,7 +118,7 @@ def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
 
     result = validate_vcf_index_concordance(
         bgzf,
-        expected_bcftools_version="1.24",
+        expected_bcftools_version="1.25",
     )
 
     assert result["status"] == "VALIDATED"

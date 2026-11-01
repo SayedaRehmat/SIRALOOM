@@ -24,8 +24,8 @@ jobs:
           init-shell: bash
       - name: Verify pinned BCFtools/HTSlib
         run: |
-          test "$(bcftools --version | sed -n '1p')" = "bcftools 1.24"
-          test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.24"
+          test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
+          test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
       - name: Install backend
         run: pip install -e . pytest
       - name: Backend tests
@@ -60,8 +60,8 @@ jobs:
           done
       - name: Verify container BCFtools version
         run: |
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.24"
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.24"
+          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
+          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
 
   postgres-integration:
     runs-on: ubuntu-latest
@@ -104,8 +104,8 @@ jobs:
           init-shell: bash
       - name: Verify pinned BCFtools/HTSlib for PostgreSQL workflow integration
         run: |
-          test "$(bcftools --version | sed -n '1p')" = "bcftools 1.24"
-          test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.24"
+          test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
+          test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
       - name: Install backend
         run: pip install -e . pytest
       - name: Apply database migrations
