@@ -89,7 +89,7 @@ def validate_fasta_index_consistency(
     expected: dict[str, tuple[int, int, int, int]] = {}
     order: list[str] = []
     for line_no, line in enumerate(fai.read_text(encoding="utf-8").splitlines(), 1):
-        fields = line.split("\\t")
+        fields = line.split("\t")
         if len(fields) < 5:
             raise ReferencePackageError(
                 f"Malformed FASTA index at line {line_no}.",
