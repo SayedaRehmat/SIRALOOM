@@ -473,7 +473,11 @@ def build_fhir_r5_bundle(
 
     for row in rows:
         subject_member_id = _get(row, "subject_member_id")
-        relative_id = str(subject_member_id) if subject_member_id is not None else None
+        relative_id = (
+            str(subject_member_id)
+            if subject_member_id is not None and str(subject_member_id) != patient_id
+            else None
+        )
         if relative_id and relative_id not in relative_ids:
             raise FHIRExportError("A family phenotype does not resolve to an exported RelatedPerson.")
         resources.append(_observation(row, patient_id=patient_id, relative_id=relative_id))
