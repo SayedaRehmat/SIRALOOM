@@ -12,7 +12,6 @@ from backend.app.api.v1.clinical_intake import (
     AgeAtAssessmentInput,
     ClinicalIntakeInput,
     DifferentialDiagnosisInput,
-    PriorTestingInput,
     clinical_intake_fingerprint,
 )
 
@@ -98,7 +97,9 @@ def test_differential_diagnosis_requires_coded_concept_system_uri():
 
 def test_age_at_assessment_rejects_non_finite_values():
     with pytest.raises(ValidationError):
-        AgeAtAssessmentInput(value=float("nan"), unit="YEARS")
+        AgeAtAssessmentInput(value=float("nan"), unit="YEARS", as_of_date=date(2026, 10, 15))
+    with pytest.raises(ValidationError):
+        AgeAtAssessmentInput(value=7, unit="YEARS")
 
 
 def test_clinical_intake_revision_fingerprint_is_deterministic_and_version_sensitive():

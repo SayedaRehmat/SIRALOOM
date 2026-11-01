@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from datetime import date, datetime
+from datetime import date
 from typing import Any, Literal
 from uuid import UUID, uuid4
 
@@ -30,8 +30,6 @@ from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["clinical-intake"])
 
-_REVIEW_STATES = {"COMPLETE", "NOT_ASSESSED", "NOT_APPLICABLE", "PENDING"}
-
 
 class AgeAtAssessmentInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -44,6 +42,8 @@ class AgeAtAssessmentInput(BaseModel):
     def finite_age(self):
         if not math.isfinite(self.value):
             raise ValueError("age_at_assessment.value must be finite")
+        if self.as_of_date is None:
+            raise ValueError("age_at_assessment requires the date on which the age was recorded")
         return self
 
 
@@ -60,6 +60,15 @@ class PriorTestingInput(BaseModel):
     result_summary: str | None = Field(default=None, max_length=5000)
     source_reference: str | None = Field(default=None, max_length=1000)
     artifact_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def normalize_prior_test(self):
+        self.test_type = self.test_type.strip()
+        for name in ("laboratory", "accession_reference", "result_summary", "source_reference"):
+            value = getattr(self, name)
+            if isinstance(value, str):
+                setattr(self, name, value.strip() or None)
+        return self
 
 
 class DifferentialDiagnosisInput(BaseModel):
@@ -117,9 +126,20 @@ class ClinicalIntakeInput(BaseModel):
         if self.intake_status == "NOT_APPLICABLE" and not self.completion_note:
             raise ValueError("NOT_APPLICABLE clinical intake requires a documented reason")
         references = [item.strip() for item in self.source_document_references if item.strip()]
+        if any(len(item) > 1000 for item in references):
+            raise ValueError("Each source document reference must be at most 1000 characters")
         if len(references) != len(set(references)):
             raise ValueError("source_document_references must be unique")
         self.source_document_references = references
+        diagnosis_keys = [
+            (item.system.casefold(), item.code.casefold())
+            for item in self.differential_diagnoses
+        ]
+        if len(diagnosis_keys) != len(set(diagnosis_keys)):
+            raise ValueError("Differential diagnoses must not contain duplicate system/code pairs")
+        encoded = json.dumps(self.model_dump(mode="json"), separators=(",", ":"), ensure_ascii=False)
+        if len(encoded.encode("utf-8")) > 128 * 1024:
+            raise ValueError("Clinical intake revision exceeds the 128 KiB structured payload limit")
         return self
 
 
