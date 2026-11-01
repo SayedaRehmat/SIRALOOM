@@ -121,6 +121,7 @@ def validate_fasta_index_consistency(
             first_line_bases = 0
             first_line_width = 0
             previous_line_bases: int | None = None
+            previous_line_width: int | None = None
             for raw_line in handle:
                 if raw_line.startswith(b">"):
                     if current_name is not None:
@@ -154,8 +155,8 @@ def validate_fasta_index_consistency(
                         "Reference FASTA sequence appears before the first header.",
                         code="REFERENCE_FASTA_INVALID",
                     )
-                sequence = raw_line.rstrip(b"\\r\\n")
-                if not sequence or any(base in b" \\t" for base in sequence):
+                sequence = raw_line.rstrip(b"\r\n")
+                if not sequence or any(base in b" \t" for base in sequence):
                     raise ReferencePackageError(
                         f"Invalid sequence line in reference contig {current_name!r}.",
                         code="REFERENCE_FASTA_INVALID",
@@ -165,12 +166,17 @@ def validate_fasta_index_consistency(
                 if first_line_bases == 0:
                     first_line_bases = line_bases
                     first_line_width = line_width
-                elif previous_line_bases != first_line_bases:
+                elif (
+                    previous_line_bases != first_line_bases
+                    or previous_line_width != first_line_width
+                    or line_bases > first_line_bases
+                ):
                     raise ReferencePackageError(
                         f"Inconsistent FASTA line wrapping in contig {current_name!r}.",
                         code="REFERENCE_FASTA_INVALID",
                     )
                 previous_line_bases = line_bases
+                previous_line_width = line_width
                 sequence_length += line_bases
             if current_name is not None:
                 if sequence_length <= 0:
