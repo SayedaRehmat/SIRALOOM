@@ -2041,7 +2041,10 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                     )
             for contig, expected_md5 in declared_contig_md5s.items():
                 try:
-                    resolved_contig = resolved_contigs.get(contig) or reference.resolve_contig(contig)
+                    resolved_contig = resolved_contigs.get(contig)
+                    if resolved_contig is None:
+                        resolved_contig = reference.resolve_contig(contig)
+                        resolved_contigs[contig] = resolved_contig
                     reference_length = reference.contig_length(resolved_contig)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
@@ -2073,7 +2076,10 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                 chrom, pos_text, _identifier, ref, alt_text = fields[:5]
                 pos = int(pos_text)
                 try:
-                    resolved_chrom = resolved_contigs.get(chrom) or reference.resolve_contig(chrom)
+                    resolved_chrom = resolved_contigs.get(chrom)
+                    if resolved_chrom is None:
+                        resolved_chrom = reference.resolve_contig(chrom)
+                        resolved_contigs[chrom] = resolved_chrom
                     contig_length = reference.contig_length(resolved_chrom)
                 except ReferenceError as exc:
                     raise StrictVCFValidationError(
@@ -2123,7 +2129,10 @@ def validate_vcf_reference_alleles(path: str | Path, reference_fasta: str | Path
                         continue
                     mate_contig, mate_position = match.group(1), int(match.group(2))
                     try:
-                        resolved_mate_contig = resolved_contigs.get(mate_contig) or reference.resolve_contig(mate_contig)
+                        resolved_mate_contig = resolved_contigs.get(mate_contig)
+                        if resolved_mate_contig is None:
+                            resolved_mate_contig = reference.resolve_contig(mate_contig)
+                            resolved_contigs[mate_contig] = resolved_mate_contig
                         mate_length = reference.contig_length(resolved_mate_contig)
                     except ReferenceError as exc:
                         raise StrictVCFValidationError(
