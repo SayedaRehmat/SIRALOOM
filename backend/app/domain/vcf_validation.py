@@ -835,18 +835,41 @@ def _validate_record(
     if not DNA_RE.fullmatch(ref):
         raise StrictVCFValidationError(f"REF must contain only A/C/G/T/N for Phase 1 at line {line_no}", code="VCF_REF_INVALID")
 
-    raw_alts = [a.upper() for a in alt.split(",")]
+    raw_alts = alt.split(",")
     if not alt or ("." in raw_alts and raw_alts != ["."]):
         raise StrictVCFValidationError(
             f"ALT '.' must be the only allele when no alternate is present at line {line_no}",
             code="VCF_ALT_INVALID",
         )
-    alts = [] if raw_alts == ["."] else raw_alts
+    # Sequence allele bases are case-insensitive in VCF and can be canonicalized
+    # to uppercase. Symbolic IDs and breakend mate-contig identifiers are
+    # case-sensitive; uppercasing the complete ALT token corrupts their identity.
+    alts = (
+        []
+        if raw_alts == ["."]
+        else [
+            allele.upper() if re.fullmatch(r"[ACGTNacgtn]+", allele) else allele
+            for allele in raw_alts
+        ]
+    )
     if any(
         not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and a != "*"
         for a in alts
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
+
+    # The VCF specification prohibits duplicate ALT values. Treat sequence
+    # alleles case-insensitively, while preserving case-sensitive symbolic IDs
+    # and breakend mate-contig names.
+    alt_identity_keys = [
+        ("SEQUENCE", allele.upper()) if DNA_RE.fullmatch(allele) else ("LITERAL", allele)
+        for allele in alts
+    ]
+    if len(alt_identity_keys) != len(set(alt_identity_keys)):
+        raise StrictVCFValidationError(
+            f"ALT contains duplicate allele values at line {line_no}",
+            code="VCF_ALT_DUPLICATE",
+        )
 
     if qual != ".":
         try:
