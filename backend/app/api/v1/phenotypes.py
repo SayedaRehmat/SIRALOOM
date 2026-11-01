@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
@@ -33,7 +34,8 @@ from backend.app.phenotype import normalize_hpo_id
 router = APIRouter(tags=["phenotypes"])
 
 _ALLOWED_ATTRIBUTE_KEYS = {
-    "onset_age", "clinical_course_hpo_id", "modifier_hpo_ids", "laterality",
+    "onset_age", "onset_age_iso8601", "resolution_age_iso8601",
+    "severity_hpo_id", "clinical_course_hpo_id", "modifier_hpo_ids", "laterality",
     "anatomical_site", "temporal_pattern", "episode_frequency",
 }
 _AGE_UNITS = {"YEARS", "MONTHS", "WEEKS", "DAYS"}
@@ -68,6 +70,19 @@ def _validate_clinical_attributes(value: dict[str, Any]) -> dict[str, Any]:
             if age is None or float(age) < 0:
                 raise ValueError("onset_age requires a non-negative value")
         normalized["onset_age"] = {**onset_age, "unit": unit, "comparator": comparator}
+    for time_key in ("onset_age_iso8601", "resolution_age_iso8601"):
+        duration = normalized.get(time_key)
+        if duration is not None:
+            duration = str(duration).strip().upper()
+            if not re.fullmatch(
+                r"P(?=\\d|T)(?:\\d+(?:\\.\\d+)?Y)?(?:\\d+(?:\\.\\d+)?M)?(?:\\d+(?:\\.\\d+)?W)?(?:\\d+(?:\\.\\d+)?D)?(?:T(?:\\d+(?:\\.\\d+)?H)?(?:\\d+(?:\\.\\d+)?M)?(?:\\d+(?:\\.\\d+)?S)?)?",
+                duration,
+            ):
+                raise ValueError(f"{time_key} must be an ISO 8601 duration")
+            normalized[time_key] = duration
+    severity_hpo_id = normalized.get("severity_hpo_id")
+    if severity_hpo_id is not None:
+        normalized["severity_hpo_id"] = normalize_hpo_id(severity_hpo_id)
     course = normalized.get("clinical_course_hpo_id")
     if course is not None:
         normalized["clinical_course_hpo_id"] = normalize_hpo_id(course)
@@ -215,6 +230,9 @@ def _resolution_bundle(db: Session, case: Case, body: PhenotypeInput):
         resource = execution = ontology = None
     terms = [body.hpo_id]
     terms.extend(body.clinical_attributes.get("modifier_hpo_ids", []))
+    severity = body.clinical_attributes.get("severity_hpo_id")
+    if severity:
+        terms.append(severity)
     course = body.clinical_attributes.get("clinical_course_hpo_id")
     if course:
         terms.append(course)
