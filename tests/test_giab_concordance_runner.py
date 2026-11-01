@@ -11,6 +11,7 @@ from scripts.validation.run_giab_concordance import (
     ConcordanceError,
     parse_happy_summary,
     run_concordance,
+    validate_single_sample_vcf,
     wilson_interval,
 )
 
@@ -48,8 +49,8 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE_PRIVATE_ID\n"
         "chr1\t10\t.\tA\tC\t60\tPASS\t.\tGT\t0/1\n"
     )
-    truth.write_text(vcf_header, encoding="utf-8")
-    query.write_text(vcf_header, encoding="utf-8")
+    truth.write_text(vcf_header.replace("SAMPLE_PRIVATE_ID", "HG002"), encoding="utf-8")
+    query.write_text(vcf_header.replace("SAMPLE_PRIVATE_ID", "CASE_SAMPLE_001"), encoding="utf-8")
     reference.write_text(">chr1\n" + "A" * 1000 + "\n", encoding="utf-8")
     fai.write_text("chr1\t1000\t6\t1000\t1001\n", encoding="utf-8")
     confident.write_text("chr1\t0\t1000\n", encoding="utf-8")
@@ -120,6 +121,38 @@ def test_parse_happy_summary_recomputes_precision_recall_and_f1(tmp_path: Path) 
     assert indel_all["recall_wilson_95_ci"] is not None
 
 
+def test_parse_happy_summary_rejects_non_reconciling_query_counts(tmp_path: Path) -> None:
+    path = tmp_path / "query-count-mismatch.summary.csv"
+    _summary(path)
+    rows = list(csv.reader(path.open("r", encoding="utf-8", newline="")))
+    rows[1][5] = "999"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.writer(handle).writerows(rows)
+
+    with pytest.raises(ConcordanceError, match="query counts do not reconcile"):
+        parse_happy_summary(path)
+
+
+def test_parse_happy_summary_rejects_mismatch_subcounts_above_false_positives(tmp_path: Path) -> None:
+    path = tmp_path / "mismatch-subcounts.csv"
+    _summary(path)
+    rows = list(csv.reader(path.open("r", encoding="utf-8", newline="")))
+    rows[1][9] = "4"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.writer(handle).writerows(rows)
+
+    with pytest.raises(ConcordanceError, match="mismatch subcounts exceed QUERY.FP"):
+        parse_happy_summary(path)
+
+
+def test_truth_and_query_sample_columns_must_match_explicit_mapping(tmp_path: Path) -> None:
+    inputs = _inputs(tmp_path)
+    with pytest.raises(ConcordanceError, match="explicitly declared specimen mapping") as exc:
+        validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF", "WRONG_SAMPLE")
+    assert "HG002" not in str(exc.value)
+    assert "WRONG_SAMPLE" not in str(exc.value)
+
+
 def test_parse_happy_summary_rejects_incomplete_variant_type_coverage(tmp_path: Path) -> None:
     path = tmp_path / "result.summary.csv"
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -143,6 +176,8 @@ def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
             assay="WES",
             caller="approved-caller",
             caller_version="1.0",
+            truth_sample_name="HG002",
+            query_sample_name="CASE_SAMPLE_001",
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -163,6 +198,8 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
         assay="WES",
         caller="approved-caller",
         caller_version="1.2.3",
+        truth_sample_name="HG002",
+        query_sample_name="CASE_SAMPLE_001",
         truth_set_id="GIAB-HG002-GRCh38",
         truth_set_version="4.2.1",
         acceptance_policy_id="LAB-POLICY-001",
@@ -180,6 +217,8 @@ def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) 
     assert report["inputs"]["truth_vcf"]["sha256"]
     assert len(report["metrics"]) == 4
     assert report["sample_identifiers_recorded"] is False
+    assert report["sample_identity"]["truth_sample_column_verified"] is True
+    assert report["sample_identity"]["query_sample_column_verified"] is True
     serialized = json.dumps(report)
     assert "SAMPLE_PRIVATE_ID" not in serialized
     assert (output / "giab-concordance.json").is_file()
@@ -204,6 +243,8 @@ def test_query_must_have_exactly_one_sample(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
+            truth_sample_name="HG002",
+            query_sample_name="CASE_SAMPLE_001",
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -216,7 +257,7 @@ def test_symbolic_small_variant_input_is_rejected(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     inputs["query_vcf"].write_text(
         "##fileformat=VCFv4.2\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tCASE_SAMPLE_001\n"
         "chr1\t10\t.\tA\t<DEL>\t60\tPASS\t.\tGT\t0/1\n",
         encoding="utf-8",
     )
@@ -230,6 +271,8 @@ def test_symbolic_small_variant_input_is_rejected(tmp_path: Path) -> None:
             assay="WGS",
             caller="approved-caller",
             caller_version="1.0",
+            truth_sample_name="HG002",
+            query_sample_name="CASE_SAMPLE_001",
             truth_set_id="GIAB-HG002-GRCh38",
             truth_set_version="4.2.1",
             acceptance_policy_id="LAB-POLICY-001",
@@ -261,6 +304,8 @@ def test_existing_evidence_directory_is_not_modified_by_failed_cli_run(
             "--assay", "WGS",
             "--caller", "approved-caller",
             "--caller-version", "1.0",
+            "--truth-sample-name", "HG002",
+            "--query-sample-name", "CASE_SAMPLE_001",
             "--truth-set-id", "GIAB-HG002-GRCh38",
             "--truth-set-version", "4.2.1",
             "--acceptance-policy-id", "LAB-POLICY-001",
@@ -289,6 +334,8 @@ def test_stratification_extended_output_is_required_and_hashed(tmp_path: Path) -
         assay="WGS",
         caller="approved-caller",
         caller_version="1.0",
+        truth_sample_name="HG002",
+        query_sample_name="CASE_SAMPLE_001",
         truth_set_id="GIAB-HG002-GRCh38",
         truth_set_version="4.2.1",
         acceptance_policy_id="LAB-POLICY-001",
