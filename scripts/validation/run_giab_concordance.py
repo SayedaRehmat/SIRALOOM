@@ -25,7 +25,6 @@ from typing import Any, TextIO
 REPORT_NAME = "giab-concordance.json"
 FAILURE_NAME = "giab-concordance.failure.json"
 SUMMARY_SUFFIX = ".summary.csv"
-SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 VERSION_RE = re.compile(r"\b\d+\.\d+(?:\.\d+)?(?:[-+][0-9A-Za-z.-]+)?\b")
 
 
