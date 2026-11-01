@@ -1651,6 +1651,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         if "GT" in format_keys and format_keys.index("GT") < len(sample_values)
                         else "."
                     )
+                    if gt_value == "." and psl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PSL cannot assign phase sets to a fully missing GT at line {line_no}, sample {sample_index}",
+                            code="VCF_PHASE_SET_INVALID",
+                        )
                     if "GT" not in format_keys and psl_value not in {"", "."}:
                         raise StrictVCFValidationError(
                             f"FORMAT/PSL requires FORMAT/GT at line {line_no}, sample {sample_index}",
@@ -1693,6 +1698,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                 f"FORMAT/{dependent_key} must use '.' where the corresponding PSL value is missing at line {line_no}, sample {sample_index}",
                                 code="VCF_PHASE_SET_INVALID",
                             )
+                elif any(
+                    key in format_keys
+                    and format_keys.index(key) < len(sample_values)
+                    and sample_values[format_keys.index(key)] not in {"", "."}
+                    for key in ("PSO", "PSQ")
+                ):
+                    raise StrictVCFValidationError(
+                        f"FORMAT/PSO and FORMAT/PSQ require FORMAT/PSL at line {line_no}, sample {sample_index}",
+                        code="VCF_PHASE_SET_INVALID",
+                    )
                 if "PS" in format_keys and "PSL" in format_keys:
                     ps_value = sample_values[format_keys.index("PS")] if format_keys.index("PS") < len(sample_values) else "."
                     psl_value = sample_values[format_keys.index("PSL")] if format_keys.index("PSL") < len(sample_values) else "."
