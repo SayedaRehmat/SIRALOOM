@@ -150,6 +150,7 @@ def worker_loss_after_checkpoint(self, analysis_id: str, marker_prefix: str):
 
 
 
+
 @celery_app.task(
     bind=True,
     name="siraloom.test_vcf_normalization_worker_loss",
@@ -167,18 +168,16 @@ def vcf_normalization_worker_loss(
     artifact_root: str,
     bcftools_executable: str,
 ):
-    """Run real BCFtools normalization, kill its prefork child, then replay.
+    """Crash after committing production-normalizer VCF+CSI artifacts, then replay.
 
-    The production analysis-task wrapper owns dispatch fencing, PostgreSQL
-    execution locking, Celery redelivery recovery, and the workflow invocation.
-    Only the normalization-stage body is instrumented so the test can stop at
-    the durable artifact/checkpoint boundary without invoking downstream
-    annotation providers.
+    The real production normalization wrapper validates the pinned BCFtools
+    toolchain, reference identity, source-to-child mapping, BGZF output and CSI
+    index. The test-only workflow hook stops only after both artifacts and the
+    RUNNING checkpoint are durably committed.
     """
     import gzip
     import hashlib
     import importlib
-    import subprocess
     from datetime import datetime, timezone
     from pathlib import Path
     from uuid import UUID, uuid4, uuid5
@@ -187,6 +186,7 @@ def vcf_normalization_worker_loss(
     from sqlalchemy import func, select
 
     from backend.app.domain.enums import StepStatus
+    from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools
     from backend.app.infrastructure.artifacts.store import ArtifactStore
     from backend.app.infrastructure.db.models import (
         Analysis,
@@ -200,8 +200,11 @@ def vcf_normalization_worker_loss(
     redis = Redis.from_url(settings.redis_url, decode_responses=True)
     analysis_uuid = UUID(analysis_id)
     marker = lambda suffix: f"{marker_prefix}:{suffix}"
-    artifact_id = uuid5(
+    normalized_artifact_id = uuid5(
         analysis_uuid, "siraloom:normalization:normalized-vcf:v6"
+    )
+    index_artifact_id = uuid5(
+        analysis_uuid, "siraloom:normalization:normalized-vcf-index:v6"
     )
     store = ArtifactStore(artifact_root)
     production_queue = importlib.import_module(
@@ -210,65 +213,102 @@ def vcf_normalization_worker_loss(
     workflow_module = importlib.import_module("backend.app.workflows.variant")
     original_workflow = workflow_module.run_variant_analysis
 
-    version_result = subprocess.run(
-        [bcftools_executable, "--version"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    tool_version = version_result.stdout.splitlines()[0]
-    if tool_version != "bcftools 1.24":
-        raise RuntimeError(f"Unexpected BCFtools version: {tool_version}")
+    def normalize_to(output_path: str) -> dict:
+        return normalize_vcf_with_bcftools(
+            Path(source_vcf),
+            Path(output_path),
+            reference_fasta=Path(reference_fasta),
+            expected_bcftools_version=settings.bcftools_version,
+            source_only_format_fields=[],
+            bcftools_executable=bcftools_executable,
+        )
 
-    def normalize_to(output_path: str) -> list[str]:
-        command = [
-            bcftools_executable,
-            "norm",
-            "--no-version",
-            "-f",
-            reference_fasta,
-            "-Oz",
-            "-o",
-            output_path,
-            source_vcf,
-        ]
-        subprocess.run(command, check=True, capture_output=True, text=True)
-        return command
+    def artifact_metadata(stats: dict, output_path: str) -> dict:
+        reference_artifacts = stats["reference_identity"]["artifacts"]
+        stable_command = stats["command"].replace(output_path, "<NORMALIZED_VCF>")
+        return {
+            "normalization_version": "6.0",
+            "source_record_mapping_tag": stats["source_record_mapping_tag"],
+            "source_record_mapping_policy": stats["source_record_mapping_policy"],
+            "multiallelic_overlap_policy": stats["multiallelic_overlap_policy"],
+            "source_genotype_provenance_contract": "SIRALOOM_SOURCE_GT_AND_SOURCE_ALT_COUNT_V1",
+            "source_record_count": 1,
+            "record_count": 1,
+            "reference_source": "TEST_FIXTURE_FASTA_AND_FAI",
+            "reference_fasta_sha256": reference_artifacts["fasta"]["sha256"],
+            "reference_fai_sha256": reference_artifacts["fai"]["sha256"],
+            "normalization_tool": stats["tool"],
+            "normalization_tool_version": stats["tool_version"],
+            "normalization_expected_tool_version": stats["expected_tool_version"],
+            "normalization_command": stable_command,
+            "source_only_format_fields": stats["source_only_format_fields"],
+            "source_only_format_fields_policy": stats["source_only_format_fields_policy"],
+            "compression": stats["compression"],
+            "index": stats["index"],
+            "index_validation": stats["index_validation"],
+            "source_child_reconciliation": stats["source_child_reconciliation"],
+        }
+
+    def persist_normalized_pair(db, analysis, stats: dict, output_path: str):
+        normalized_path = Path(output_path)
+        index_path = Path(stats["index_path"])
+        metadata = artifact_metadata(stats, output_path)
+        normalized_artifact = _put_idempotent_stage_artifact(
+            store,
+            artifact_id=normalized_artifact_id,
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis_uuid,
+            source_path=normalized_path,
+            filename="normalized.vcf.gz",
+            artifact_type="NORMALIZED_VCF",
+            media_type="application/gzip",
+            genome_build=analysis.reference_build,
+            metadata=metadata,
+        )
+        index_artifact = _put_idempotent_stage_artifact(
+            store,
+            artifact_id=index_artifact_id,
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis_uuid,
+            source_path=index_path,
+            filename="normalized.vcf.gz.csi",
+            artifact_type="VCF_INDEX",
+            media_type="application/octet-stream",
+            genome_build=analysis.reference_build,
+            paired_artifact_id=normalized_artifact.id,
+            metadata={
+                "index_type": stats["index"],
+                "indexed_artifact_id": str(normalized_artifact.id),
+                "normalization_tool": stats["tool"],
+                "normalization_tool_version": stats["tool_version"],
+                "normalization_version": "6.0",
+                "reference_fasta_sha256": metadata["reference_fasta_sha256"],
+                "reference_fai_sha256": metadata["reference_fai_sha256"],
+                "index_validation": stats["index_validation"],
+            },
+        )
+        normalized_artifact.paired_artifact_id = index_artifact.id
+        db.add(normalized_artifact)
+        db.add(index_artifact)
+        return normalized_artifact, index_artifact
 
     def crashable_workflow(workflow_analysis_id):
         assert UUID(str(workflow_analysis_id)) == analysis_uuid
         if redis.get(marker("checkpoint")) is None:
-            command = normalize_to(first_output)
+            first_stats = normalize_to(first_output)
             with SessionLocal() as db:
                 analysis = db.get(Analysis, analysis_uuid)
                 if analysis is None:
                     raise RuntimeError("Normalization analysis disappeared.")
-                case = db.get(Case, analysis.case_id)
-                if case is None:
-                    raise RuntimeError("Normalization case disappeared.")
-                metadata = {
-                    "reference_package_checksum": "a" * 64,
-                    "normalization_tool_version": tool_version,
-                    "normalization_command": command,
-                    "normalization_version": "6.0",
-                }
-                artifact = _put_idempotent_stage_artifact(
-                    store,
-                    artifact_id=artifact_id,
-                    db=db,
-                    case_id=analysis.case_id,
-                    analysis_id=analysis_uuid,
-                    source_path=Path(first_output),
-                    filename="normalized.vcf.gz",
-                    artifact_type="NORMALIZED_VCF",
-                    media_type="application/gzip",
-                    genome_build=analysis.reference_build,
-                    metadata=metadata,
+                normalized_artifact, index_artifact = persist_normalized_pair(
+                    db, analysis, first_stats, first_output
                 )
                 now = datetime.now(timezone.utc)
                 db.add(
                     WorkflowStep(
-                        id=__import__("uuid").uuid4(),
+                        id=uuid4(),
                         analysis_id=analysis_uuid,
                         step_id="normalize",
                         step_order=2,
@@ -277,30 +317,34 @@ def vcf_normalization_worker_loss(
                         started_at=now,
                         last_heartbeat=now,
                         input_artifacts=["source-vcf"],
-                        output_artifacts=[str(artifact.id)],
+                        output_artifacts=[
+                            str(normalized_artifact.id),
+                            str(index_artifact.id),
+                        ],
                         metadata_json={
                             "next_step": "normalize",
-                            "checkpoint": "normalized-artifact-committed",
-                            "normalized_artifact_id": str(artifact.id),
+                            "checkpoint": "normalized-artifact-pair-committed",
+                            "normalized_artifact_id": str(normalized_artifact.id),
+                            "index_artifact_id": str(index_artifact.id),
                         },
                     )
                 )
                 db.commit()
-                durable_sha256 = artifact.sha256
+                durable = {
+                    "normalized_artifact_id": str(normalized_artifact.id),
+                    "normalized_sha256": normalized_artifact.sha256,
+                    "index_artifact_id": str(index_artifact.id),
+                    "index_sha256": index_artifact.sha256,
+                }
 
-            # The artifact bytes, artifact row, and RUNNING normalization
-            # checkpoint are committed before the prefork child is terminated.
-            redis.set(
-                marker("checkpoint"),
-                json.dumps({"artifact_id": str(artifact_id), "sha256": durable_sha256}),
-                ex=300,
-            )
+            # Both artifact rows/objects and the RUNNING checkpoint are durable
+            # before this prefork child exits without task acknowledgment.
+            redis.set(marker("checkpoint"), json.dumps(durable), ex=300)
             os._exit(73)
 
-        # This path is reached only when the broker redelivers the task to a
-        # replacement prefork child. The production wrapper has already run
-        # recover_interrupted_execution() before invoking this workflow body.
-        replay_command = normalize_to(replay_output)
+        # This path is reached only after Celery redelivery and production
+        # recover_interrupted_execution() have reset the interrupted step.
+        replay_stats = normalize_to(replay_output)
         with SessionLocal() as db:
             step = db.scalar(
                 select(WorkflowStep).where(
@@ -310,35 +354,40 @@ def vcf_normalization_worker_loss(
             )
             if step is None or step.status != StepStatus.RETRYING:
                 raise AssertionError("Normalization checkpoint was not recovered.")
-            metadata = {
-                "reference_package_checksum": "a" * 64,
-                "normalization_tool_version": tool_version,
-                "normalization_command": replay_command,
-                "normalization_version": "6.0",
-            }
-            replay_artifact = _put_idempotent_stage_artifact(
-                store,
-                artifact_id=artifact_id,
-                db=db,
-                case_id=db.get(Analysis, analysis_uuid).case_id,
-                analysis_id=analysis_uuid,
-                source_path=Path(replay_output),
-                filename="normalized.vcf.gz",
-                artifact_type="NORMALIZED_VCF",
-                media_type="application/gzip",
-                genome_build="GRCh38",
-                metadata=metadata,
+            analysis = db.get(Analysis, analysis_uuid)
+            if analysis is None:
+                raise RuntimeError("Normalization analysis disappeared during replay.")
+            normalized_artifact, index_artifact = persist_normalized_pair(
+                db, analysis, replay_stats, replay_output
             )
-            persisted_bytes = store.read_bytes(replay_artifact.storage_uri)
-            replay_bytes = Path(replay_output).read_bytes()
-            if persisted_bytes != replay_bytes:
-                raise AssertionError("Replayed normalized bytes differ from durable artifact.")
-            if hashlib.sha256(persisted_bytes).hexdigest() != replay_artifact.sha256:
-                raise AssertionError("Durable normalized artifact checksum mismatch.")
+
+            persisted_vcf = store.read_bytes(normalized_artifact.storage_uri)
+            replay_vcf = Path(replay_output).read_bytes()
+            persisted_index = store.read_bytes(index_artifact.storage_uri)
+            replay_index = Path(replay_stats["index_path"]).read_bytes()
+            if persisted_vcf != replay_vcf:
+                raise AssertionError("Replayed normalized VCF bytes differ from durable artifact.")
+            if persisted_index != replay_index:
+                raise AssertionError("Replayed CSI bytes differ from durable index artifact.")
+            if hashlib.sha256(persisted_vcf).hexdigest() != normalized_artifact.sha256:
+                raise AssertionError("Durable normalized VCF checksum mismatch.")
+            if hashlib.sha256(persisted_index).hexdigest() != index_artifact.sha256:
+                raise AssertionError("Durable CSI checksum mismatch.")
+
+            source_child = replay_stats["source_child_reconciliation"]
+            index_validation = replay_stats["index_validation"]
+            if source_child.get("status") != "VALIDATED" or source_child.get("balanced") is not True:
+                raise AssertionError("Normalized records do not reconcile to immutable source ALTs.")
+            if (
+                index_validation.get("indexed_query_records_verified") != index_validation.get("records")
+                or index_validation.get("indexed_query_contigs_verified") != index_validation.get("contigs")
+                or source_child.get("normalized_child_records") != index_validation.get("records")
+            ):
+                raise AssertionError("CSI indexed-query results do not reconcile with normalized source-child records.")
 
             normalized_records = [
                 line.split("\t")
-                for line in gzip.decompress(replay_bytes).decode("utf-8").splitlines()
+                for line in gzip.decompress(replay_vcf).decode("utf-8").splitlines()
                 if line and not line.startswith("#")
             ]
             if len(normalized_records) != 1 or normalized_records[0][1] != "1":
@@ -352,17 +401,35 @@ def vcf_normalization_worker_loss(
                     Artifact.artifact_type == "NORMALIZED_VCF",
                 )
             )
-            if artifact_count != 1:
-                raise AssertionError(f"Expected one normalized artifact, found {artifact_count}.")
+            index_artifact_count = db.scalar(
+                select(func.count(Artifact.id)).where(
+                    Artifact.analysis_id == analysis_uuid,
+                    Artifact.artifact_type == "VCF_INDEX",
+                )
+            )
+            if artifact_count != 1 or index_artifact_count != 1:
+                raise AssertionError(
+                    f"Expected one normalized VCF and one CSI artifact; found {artifact_count} and {index_artifact_count}."
+                )
+            if normalized_artifact.paired_artifact_id != index_artifact.id:
+                raise AssertionError("Normalized VCF does not point to its paired CSI artifact.")
+            if index_artifact.paired_artifact_id != normalized_artifact.id:
+                raise AssertionError("CSI artifact does not point to its paired normalized VCF.")
 
             step.status = StepStatus.SUCCEEDED
             step.error_code = None
             step.error_message = None
-            step.output_artifacts = [str(replay_artifact.id)]
+            step.output_artifacts = [
+                str(normalized_artifact.id),
+                str(index_artifact.id),
+            ]
             step.metadata_json = {
                 **dict(step.metadata_json or {}),
                 "replay_verified": True,
-                "normalized_artifact_sha256": replay_artifact.sha256,
+                "normalized_artifact_sha256": normalized_artifact.sha256,
+                "index_artifact_sha256": index_artifact.sha256,
+                "source_child_reconciliation": source_child,
+                "index_validation": index_validation,
             }
             db.add(step)
             db.commit()
@@ -372,12 +439,20 @@ def vcf_normalization_worker_loss(
                 "step_error_code": step.error_code,
                 "recovery": step.metadata_json.get("recovery"),
                 "checkpoint": step.metadata_json.get("checkpoint"),
-                "artifact_id": str(replay_artifact.id),
-                "artifact_sha256": replay_artifact.sha256,
+                "artifact_id": str(normalized_artifact.id),
+                "artifact_sha256": normalized_artifact.sha256,
                 "artifact_count": artifact_count,
-                "replayed_bytes_match": persisted_bytes == replay_bytes,
+                "index_artifact_id": str(index_artifact.id),
+                "index_artifact_sha256": index_artifact.sha256,
+                "index_artifact_count": index_artifact_count,
+                "paired_index_id": str(normalized_artifact.paired_artifact_id),
+                "paired_vcf_id": str(index_artifact.paired_artifact_id),
+                "replayed_bytes_match": persisted_vcf == replay_vcf,
+                "replayed_index_bytes_match": persisted_index == replay_index,
                 "normalized_record": normalized_records[0],
-                "normalization_tool_version": tool_version,
+                "normalization_tool_version": replay_stats["tool_version"],
+                "source_child_reconciliation": source_child,
+                "index_validation": index_validation,
             }
 
         redis.set(marker("workflow"), json.dumps(workflow_result), ex=300)
