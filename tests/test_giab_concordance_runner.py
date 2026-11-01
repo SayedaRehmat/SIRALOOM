@@ -77,7 +77,7 @@ def _fake_happy(tmp_path: Path) -> Path:
         f" writer.writerow({SUMMARY_HEADER!r})\n"
         " pathlib.Path(str(prefix) + '.runinfo.json').write_text('{}', encoding='utf-8')\n"
         " if '--stratification' in sys.argv:\n"
-        "  pathlib.Path(str(prefix) + '.extended.csv').write_text('Type,Subtype,Subset\n', encoding='utf-8')\n"
+        "  pathlib.Path(str(prefix) + '.extended.csv').write_text('Type,Subtype,Subset', encoding='utf-8')\n"
         " writer.writerows([\n"
         " ['INDEL','ALL',10,8,2,12,2,2,0,0.8,0.8,0.1],\n"
         " ['INDEL','PASS',10,7,3,10,1,2,0,0.7,0.875,0.2],\n"
