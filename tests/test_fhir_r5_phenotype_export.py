@@ -330,6 +330,7 @@ def test_fhir_r5_preserves_explicit_consanguinity_without_inference():
     values = {item["url"]: item for item in assessment["extension"]}
     assert values["status"]["valueCode"] == "CONSANGUINOUS"
     assert values["consanguinous-parents"]["valueBoolean"] is True
+    assert all(not item["url"].startswith(("http://", "https://")) for item in assessment["extension"])
 
 
 def test_fhir_rejects_timezone_naive_clinical_observation_time_but_normalizes_server_utc():
