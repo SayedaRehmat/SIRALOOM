@@ -107,3 +107,38 @@ This persistence layer does not yet persist or qualify caller/assay policies,
 does not invoke the ploidy resolver during VCF validation, and does not enforce
 expected GT ploidy in the production workflow. Those are explicit downstream
 integration gates, not implied by evidence intake.
+
+
+## Caller/assay policy registry (PR #272)
+
+Caller policies are persisted separately from specimen evidence in
+`caller_ploidy_policy_revisions`. Each immutable revision is bound to the
+assay UUID, exact caller ID and version, policy version, reference build,
+qualification status, validation-evidence reference, region-copy-number to
+GT-ploidy mapping, recording actor/time, and a unique audit event.
+
+Authenticated API routes:
+
+- `POST /api/v1/assays/{assay_id}/ploidy-policies` appends a policy revision.
+- `GET /api/v1/assays/{assay_id}/ploidy-policies` returns the assay's policy history.
+
+DRAFT policy registration requires an assay-management role. QUALIFIED and
+RETIRED submissions require a review role. For QUALIFIED policies, the API
+derives the qualifying reviewer from the authenticated principal and records
+the server-generated timezone-aware qualification timestamp. The client cannot
+supply or backdate the qualification attestation.
+
+An exact assay/caller/caller-version/policy-version/reference-build/status
+identity is immutable. Changed content requires a new policy version. DRAFT,
+QUALIFIED, and RETIRED states are separate append-only records; only QUALIFIED
+policies are eligible for the resolver. Database constraints and UPDATE/DELETE
+triggers protect the revision history, and the policy record is transactionally
+linked to the hash-chained audit event.
+
+This registry does not itself establish clinical qualification. The referenced
+validation dossier must contain laboratory evidence appropriate to the assay
+and intended use, including documented validation scope, expected genotype
+encoding, performance characteristics, approval and effective version. The
+registry does not yet select a policy for an analysis or enforce it during VCF
+validation; production workflow binding and enforcement remain a separate
+integration gate.
