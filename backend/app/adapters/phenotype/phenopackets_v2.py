@@ -362,9 +362,14 @@ def _family_pedigree(*, case: Any, members: list[Any], relationships: list[Any])
         affected = str(_value(member, "affected_status", "UNKNOWN") or "UNKNOWN").upper()
         if affected not in _AFFECTED_VALUES:
             raise PhenopacketExportError(f"Unsupported affected status for pedigree member {_member_id(member)}.")
+        # GA4GH Pedigree.Person requires both parent identifiers. The
+        # Phenopacket specification uses "0" for a founder whose parent is
+        # not represented in this pedigree; this is not a sex/role inference.
         person: dict[str, Any] = {
             "familyId": family_id,
             "individualId": _member_id(member),
+            "paternalId": "0",
+            "maternalId": "0",
             "affectedStatus": _AFFECTED_VALUES[affected],
         }
         if sex in _SEX_NUMBERS:
