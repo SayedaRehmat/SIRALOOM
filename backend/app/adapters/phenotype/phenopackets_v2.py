@@ -93,6 +93,13 @@ def _collect_loss_warnings(rows: list[Any]) -> list[dict[str, str]]:
                 "field": "evidence",
                 "reason": "SIRALOOM evidence payload is not mapped without an explicitly supported ECO code and reference.",
             })
+        primary = _term_resolution(row)
+        if primary.get("status") not in {"CURRENT", "ALTERNATE_ID"} or not primary.get("canonical_id"):
+            warnings.append({
+                "observation_id": observation_id,
+                "field": "ontology_term_resolution",
+                "reason": "The submitted HPO identifier is not resolved as CURRENT or ALTERNATE_ID; it is exported unchanged and must not be treated as ontology-validated.",
+            })
         resource = (_value(row, "ontology_resolution", {}) or {}).get("resource")
         if not isinstance(resource, dict) or not resource.get("ontology_release"):
             warnings.append({
@@ -103,7 +110,10 @@ def _collect_loss_warnings(rows: list[Any]) -> list[dict[str, str]]:
     return warnings
 
 
-def _phenotypic_feature(row: Any) -> dict[str, Any]:
+def _phenotypic_feature(row: Any) -> dict[str, Any] | None:
+    status = str(_value(row, "phenotype_status", "PRESENT")).upper()
+    if status in {"UNKNOWN", "NOT_ASSESSED"}:
+        return None
     attributes = _value(row, "clinical_attributes", {}) or {}
     feature: dict[str, Any] = {
         "type": {"id": _canonical_or_submitted(row)},
@@ -177,7 +187,10 @@ def _packet(*, packet_id: str, subject_id: str, rows: list[Any], sex: str | None
     return {
         "id": packet_id,
         "subject": subject,
-        "phenotypicFeatures": [_phenotypic_feature(row) for row in rows],
+        "phenotypicFeatures": [
+            feature for row in rows
+            if (feature := _phenotypic_feature(row)) is not None
+        ],
         "metaData": _metadata(rows),
     }
 
@@ -186,6 +199,11 @@ def _family_pedigree(*, case: Any, members: list[Any], relationships: list[Any])
     by_id = {str(_value(member, "id")): member for member in members}
     parent_ids: dict[str, dict[str, str]] = defaultdict(dict)
     for relationship in relationships:
+        relationship_type = str(_value(relationship, "relationship_type") or "").upper()
+        if relationship_type != "PARENT_CHILD":
+            raise PhenopacketExportError(
+                f"Relationship type {relationship_type!r} has no equivalent in the GA4GH Pedigree parentage fields."
+            )
         parent_id = str(_value(relationship, "parent_member_id"))
         child_id = str(_value(relationship, "child_member_id"))
         if parent_id not in by_id or child_id not in by_id or parent_id == child_id:
