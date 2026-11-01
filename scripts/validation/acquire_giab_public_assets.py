@@ -120,8 +120,8 @@ def _write_fai_from_plain_fasta(fasta_path: Path, fai_path: Path) -> int:
                 continue
             if name is None:
                 raise AcquisitionError("Reference sequence occurs before first FASTA header.")
-            sequence = raw_line.rstrip(b"\\r\\n")
-            if not sequence or any(base in b" \\t" for base in sequence):
+            sequence = raw_line.rstrip(b"\r\n")
+            if not sequence or any(base in b" \t" for base in sequence):
                 raise AcquisitionError(f"Invalid sequence line in reference contig {name!r}.")
             bases = len(sequence)
             width = len(raw_line)
@@ -137,7 +137,7 @@ def _write_fai_from_plain_fasta(fasta_path: Path, fai_path: Path) -> int:
             entries.append((name, length, offset, line_bases, line_width))
     with fai_path.open("x", encoding="utf-8", newline="") as output:
         for entry in entries:
-            output.write("\\t".join(map(str, entry)) + "\\n")
+            output.write("\t".join(map(str, entry)) + "\n")
     return len(entries)
 
 
