@@ -11,7 +11,7 @@ DNA_RE = re.compile(r"^[ACGTN]+$")
 SYMBOLIC_RE = re.compile(r"^<[^<>,\s]+>$")
 BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
-    r"(?P<right>[\[\]])[^:\[\]]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
+    r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
