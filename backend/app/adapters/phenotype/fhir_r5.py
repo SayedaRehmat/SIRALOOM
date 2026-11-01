@@ -113,6 +113,107 @@ def _clinical_attribute_extensions(row: Any) -> list[dict[str, Any]]:
     return result
 
 
+def _clinical_intake_extension(revision: Any | None) -> dict[str, Any] | None:
+    if revision is None:
+        return None
+    context = _get(revision, "context", {}) or {}
+    children: list[dict[str, Any]] = []
+    for field, url in (
+        ("revision_id", "revision-id"),
+        ("revision_fingerprint", "revision-fingerprint"),
+        ("intake_status", "intake-status"),
+        ("phenotype_review_status", "phenotype-review-status"),
+        ("family_history_review_status", "family-history-review-status"),
+        ("phenotype_review_note", "phenotype-review-note"),
+        ("family_history_review_note", "family-history-review-note"),
+        ("completion_note", "completion-note"),
+    ):
+        value = _get(revision, field)
+        if value is not None:
+            value_type = "valueCode" if field.endswith("_status") else "valueString"
+            children.append(_extension(url, value_type, str(value)))
+    version = _get(revision, "version")
+    if version is not None:
+        children.append(_extension("revision-version", "valueInteger", int(version)))
+    schema_version = _get(revision, "schema_version")
+    if schema_version is not None:
+        children.append(_extension("revision-schema-version", "valueInteger", int(schema_version)))
+    recorded_at = _iso(_get(revision, "recorded_at"))
+    if recorded_at:
+        children.append(_extension("revision-recorded-at", "valueDateTime", recorded_at))
+
+    for field in ("referral_indication", "referral_question", "clinical_summary"):
+        if context.get(field):
+            children.append(_extension(field.replace("_", "-"), "valueString", str(context[field])))
+
+    age = context.get("age_at_assessment")
+    if isinstance(age, dict):
+        age_children = []
+        if age.get("value") is not None:
+            age_children.append({"url": "value", "valueDecimal": float(age["value"])})
+        if age.get("unit") is not None:
+            age_children.append({"url": "unit", "valueCode": str(age["unit"])})
+        if age.get("as_of_date") is not None:
+            age_children.append({"url": "as-of-date", "valueDate": str(age["as_of_date"])})
+        if age_children:
+            children.append({
+                "url": f"{EXTENSION_BASE}/age-at-assessment",
+                "extension": age_children,
+            })
+
+    for item in context.get("prior_testing", []) or []:
+        if not isinstance(item, dict):
+            continue
+        test_children = []
+        for field, url, value_type in (
+            ("test_type", "test-type", "valueString"),
+            ("performed_at", "performed-at", "valueDate"),
+            ("laboratory", "laboratory", "valueString"),
+            ("accession_reference", "accession-reference", "valueString"),
+            ("result_status", "result-status", "valueCode"),
+            ("result_summary", "result-summary", "valueString"),
+            ("source_reference", "source-reference", "valueString"),
+        ):
+            if item.get(field) is not None:
+                test_children.append(_extension(url, value_type, str(item[field])))
+        if item.get("artifact_id"):
+            test_children.append(_extension("artifact-reference-present", "valueBoolean", True))
+        if test_children:
+            children.append({
+                "url": f"{EXTENSION_BASE}/prior-testing",
+                "extension": test_children,
+            })
+
+    for item in context.get("differential_diagnoses", []) or []:
+        if not isinstance(item, dict):
+            continue
+        diagnosis_children = []
+        for field, url in (
+            ("system", "system"),
+            ("code", "code"),
+            ("display", "display"),
+            ("certainty", "certainty"),
+            ("clinical_status", "clinical-status"),
+        ):
+            if item.get(field) is not None:
+                diagnosis_children.append(_extension(url, "valueString", str(item[field])))
+        if diagnosis_children:
+            children.append({
+                "url": f"{EXTENSION_BASE}/differential-diagnosis",
+                "extension": diagnosis_children,
+            })
+
+    for reference in context.get("source_document_references", []) or []:
+        children.append(_extension("source-document-reference", "valueString", str(reference)))
+
+    if not children:
+        return None
+    return {
+        "url": f"{EXTENSION_BASE}/clinical-intake-revision",
+        "extension": children,
+    }
+
+
 def _observation(row: Any, *, patient_id: str, relative_id: str | None) -> dict[str, Any]:
     status = str(_get(row, "phenotype_status", "PRESENT")).upper()
     if status not in {"PRESENT", "ABSENT", "EXCLUDED", "UNKNOWN", "NOT_ASSESSED"}:
@@ -220,6 +321,7 @@ def build_fhir_r5_bundle(
     phenotype_observations: list[Any],
     pedigree_members: list[Any] | None = None,
     pedigree_relationships: list[Any] | None = None,
+    clinical_intake_revision: Any | None = None,
 ) -> dict[str, Any]:
     """Build a FHIR R5 collection Bundle with explicit proband/family attribution."""
     members = list(pedigree_members or [])
@@ -260,6 +362,10 @@ def build_fhir_r5_bundle(
             patient["extension"].append(
                 _extension("specimen-reference-id", "valueString", str(_get(proband, "specimen_id")))
             )
+
+    intake_extension = _clinical_intake_extension(clinical_intake_revision)
+    if intake_extension is not None:
+        patient.setdefault("extension", []).append(intake_extension)
 
     resources: list[dict[str, Any]] = [patient]
     relative_ids: set[str] = set()
