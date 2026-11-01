@@ -2,7 +2,7 @@ import hashlib
 import json
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
@@ -527,6 +527,14 @@ def _sanitize_export_sidecar(value: Any) -> Any:
     return value
 
 
+def _server_utc_iso(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    if value.tzinfo is None or value.utcoffset() is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[str, Any] | None:
     if row is None:
         return None
@@ -552,7 +560,7 @@ def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[
         "phenotype_review_note": row.phenotype_review_note,
         "family_history_review_note": row.family_history_review_note,
         "completion_note": row.completion_note,
-        "recorded_at": row.recorded_at.isoformat(),
+        "recorded_at": _server_utc_iso(row.recorded_at),
     }
 
 
@@ -583,7 +591,7 @@ def _phenotype_export_sidecar(
             "onset": row.onset,
             "severity": row.severity,
             "observed_at": row.observed_at.isoformat() if row.observed_at else None,
-            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "created_at": _server_utc_iso(row.created_at),
             "clinical_attributes": _sanitize_export_sidecar(row.clinical_attributes or {}),
             "ontology_resolution": _sanitize_export_sidecar(row.ontology_resolution or {}),
             "source": row.source,
