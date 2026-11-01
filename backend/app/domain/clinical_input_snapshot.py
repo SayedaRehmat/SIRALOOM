@@ -69,12 +69,19 @@ def build_case_clinical_input_snapshot(db: Session, analysis: Analysis) -> dict[
         .where(PedigreeRelationship.case_id == analysis.case_id)
         .order_by(PedigreeRelationship.parent_member_id, PedigreeRelationship.child_member_id)
     ).all()
+    if sum(1 for member in members if member.is_proband) > 1:
+        raise ValueError("Pedigree contains more than one member marked as the proband")
     if any(
         relationship.parent_member_id not in member_by_id
         or relationship.child_member_id not in member_by_id
         for relationship in relationships
     ):
         raise ValueError("Pedigree relationships reference members outside the case")
+    if any(
+        row.subject_member_id is not None and row.subject_member_id not in member_by_id
+        for row in rows
+    ):
+        raise ValueError("Phenotype observation subject does not belong to the case pedigree")
     specimen_ids = {member.specimen_id for member in members if member.specimen_id}
     specimens = {
         specimen.id: specimen
