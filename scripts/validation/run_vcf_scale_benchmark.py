@@ -244,7 +244,7 @@ def run_benchmark(
             raise ScaleBenchmarkError("CSI indexed-query record streams do not reconcile with the sequential VCF stream.")
 
         current_stage = "selected_sample_iteration"
-        def count_selected_sample_variants() -> int:
+        def count_selected_sample_records() -> int:
             count = 0
             for _variant in iter_normalized_vcf(
                 normalized_path,
@@ -256,7 +256,7 @@ def run_benchmark(
 
         selected_normalized_record_count = timed_stage(
             current_stage,
-            count_selected_sample_variants,
+            count_selected_sample_records,
             stage_metrics,
         )
         stage_metrics[current_stage]["selected_sample_normalized_record_count"] = selected_normalized_record_count
