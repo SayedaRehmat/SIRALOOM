@@ -2098,14 +2098,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             for start, end, deletion_carriers in deletion_intervals.get(chrom, ())
             if start <= pos <= end
         ]
-        context_exists = any(
-            deletion_carriers is None
-            or (
-                star_carriers is not None
+        if star_carriers is None:
+            # Site-only VCFs have no sample genotypes to reconcile. In a
+            # sample-bearing VCF, missing GT cannot establish sample context.
+            context_exists = not sample_count and bool(overlaps)
+        else:
+            context_exists = any(
+                deletion_carriers is not None
                 and bool(star_carriers & deletion_carriers)
+                for deletion_carriers in overlaps
             )
-            for deletion_carriers in overlaps
-        )
         if not overlaps or not context_exists:
             unresolved_spanning_deletion_records.append({
                 "record_index": record_index,
