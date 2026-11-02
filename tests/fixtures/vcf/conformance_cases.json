@@ -1,4 +1,403 @@
 {
   "suite_id": "siraloom-vcf-native-conformance-v1",
-  "versions": {}
+  "normative_source": "https://github.com/samtools/hts-specs",
+  "normative_documents": {
+    "VCFv4.1": "https://samtools.github.io/hts-specs/VCFv4.1.pdf",
+    "VCFv4.2": "https://samtools.github.io/hts-specs/VCFv4.2.pdf",
+    "VCFv4.3": "https://samtools.github.io/hts-specs/VCFv4.3.pdf",
+    "VCFv4.4": "https://samtools.github.io/hts-specs/VCFv4.4.pdf",
+    "VCFv4.5": "https://samtools.github.io/hts-specs/VCFv4.5.pdf"
+  },
+  "legacy_compatibility_note": "VCFv4.0 is retained as a parser compatibility smoke profile; the current HTS specifications index lists VCFv4.1 through VCFv4.5 as normative documents.",
+  "versions": {
+    "VCFv4.1": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      }
+    ],
+    "VCFv4.2": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      }
+    ],
+    "VCFv4.3": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      }
+    ],
+    "VCFv4.4": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "vcf45_local_allele_encoding_rejected",
+        "category": "version_specific_gate",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.5-only local allele cardinality is not valid under VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description=\"Local allele depths\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tLAD\t20,10"
+        ]
+      }
+    ],
+    "VCFv4.5": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "local_allele_encoding_valid",
+        "category": "version_specific_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 local allele encoding (LAA)",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA\t0/2:2"
+        ]
+      }
+    ]
+  }
 }
