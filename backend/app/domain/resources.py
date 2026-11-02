@@ -566,7 +566,7 @@ def require_approved_vcf_specification(
     organization_id: UUID,
     version: str,
 ) -> dict[str, object]:
-    """Require an organization binding for non-built-in VCF specification versions."""
+    """Require an exact qualified resource and explicit organization approval."""
     from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
 
     requested_version = str(version or "").strip()
@@ -577,17 +577,37 @@ def require_approved_vcf_specification(
             "approval_required": False,
         }
 
-    resource = get_active_resource_for_organization(
-        db,
-        organization_id=organization_id,
-        name=f"VCF specification {requested_version}",
-        provider="HTS-Specifications",
-        resource_type="VCF_SPECIFICATION",
-        genome_build=None,
+    resource = db.scalar(
+        select(Resource).where(
+            Resource.organization_id.is_(None),
+            Resource.name == f"VCF specification {requested_version}",
+            Resource.provider == "HTS-Specifications",
+            Resource.resource_type == "VCF_SPECIFICATION",
+            Resource.version == requested_version,
+            Resource.genome_build.is_(None),
+            Resource.status.in_(("QUALIFIED", "ACTIVE", "SUPERSEDED", "REJECTED")),
+        ).limit(1)
     )
-    if resource is None or resource.version != requested_version:
+    if resource is None:
         raise ResourceRegistryError(
-            f"VCF specification {requested_version!r} requires a qualified, laboratory-approved resource binding"
+            f"VCF specification {requested_version!r} has no registered qualified release; "
+            "laboratory approval cannot be requested until the official release is discovered and qualified"
+        )
+
+    approval = db.scalar(
+        select(ResourceApproval).where(
+            ResourceApproval.organization_id == organization_id,
+            ResourceApproval.resource_id == resource.id,
+        ).limit(1)
+    )
+    if approval is not None and approval.status == "PENDING":
+        raise ResourceRegistryError(
+            f"VCF specification {requested_version!r} is awaiting an explicit laboratory approval decision"
+        )
+    if approval is not None and approval.status == "REJECTED":
+        raise ResourceRegistryError(
+            f"VCF specification {requested_version!r} was rejected by this laboratory; "
+            "the previously approved specification remains in effect"
         )
     if resource.status not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}:
         raise ResourceRegistryError(
