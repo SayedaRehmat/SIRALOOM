@@ -1,4 +1,5 @@
 from backend.app.infrastructure.resource_providers import normalization_releases
+from backend.app.infrastructure.resource_providers import vcf_specifications
 
 
 class FakeResponse:
@@ -86,3 +87,25 @@ def test_release_discovery_paginates_when_official_endpoint_has_full_page(monkey
 
     assert len(candidates) == 100
     assert calls == [1, 2]
+
+def test_vcf_specification_provider_discovers_new_official_versions_as_candidates(monkeypatch):
+    monkeypatch.setattr(
+        vcf_specifications.httpx,
+        "get",
+        lambda *_args, **_kwargs: FakeResponse([
+            {"name": "VCFv4.1.pdf", "sha": "a" * 40},
+            {"name": "VCFv4.5.pdf", "sha": "b" * 40},
+            {"name": "VCFv4.6.pdf", "sha": "c" * 40},
+            {"name": "SAMv1.pdf", "sha": "d" * 40},
+        ]),
+    )
+
+    candidates = vcf_specifications.VCFSpecificationProvider().discover()
+
+    assert [item["version"] for item in candidates] == ["VCFv4.1", "VCFv4.5", "VCFv4.6"]
+    assert candidates[-1]["resource_type"] == "VCF_SPECIFICATION"
+    assert candidates[-1]["metadata"]["parser_conformance_required"] is True
+    assert candidates[-1]["source_contract"]["checksum_status"] == "UNKNOWN"
+    assert candidates[-1]["source_contract"]["license_status"] == "REVIEW_REQUIRED"
+    assert candidates[-1]["source_contract"]["artifact_url"].endswith("VCFv4.6.pdf")
+
