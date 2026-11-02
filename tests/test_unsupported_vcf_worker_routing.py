@@ -1011,6 +1011,26 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
             assert event is not None
             assert event.payload["error_code"] == expected_code
             assert event.payload["vcf_version"] == "VCFv4.6"
+            # A governance/parser block is terminal before any scientific
+            # transformation: normalization, variant materialization and
+            # downstream annotation must not have started.
+            normalization = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "normalize",
+            ))
+            assert normalization is not None
+            assert normalization.status not in {StepStatus.RUNNING, StepStatus.SUCCEEDED}
+            assert db.scalar(select(Artifact).where(
+                Artifact.analysis_id == analysis_id,
+                Artifact.artifact_type == "NORMALIZED_VCF",
+            )) is None
+            assert db.scalar(select(Variant).where(
+                Variant.case_id == case_id,
+            )) is None
+            assert db.scalar(select(AuditEvent).where(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "ARTIFACT_VALIDATED",
+            )) is None
             if approval_state == "APPROVED":
                 assert validation.metadata_json["parser_support"] == "NOT_IMPLEMENTED"
                 assert validation.metadata_json["vcf_specification_approval"] == approval_snapshot
