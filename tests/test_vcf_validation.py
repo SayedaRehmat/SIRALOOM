@@ -4,7 +4,8 @@ import zlib
 
 import pytest
 
-from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version\nfrom backend.app.domain.vcf_validation import (
+from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
+from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     _validate_record,
     validate_vcf_reference_alleles,
@@ -2368,7 +2369,7 @@ def test_vcf45_empty_gt_value_is_not_treated_as_unknown_ploidy(tmp_path: Path):
 
 def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path: Path):
     vcf45 = tmp_path / "vcf45-feature-matrix.vcf"
-    write_vcf(vcf45, "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n", version="VCFv4.5")
+    write_vcf(vcf45, "1\t2\t.\tA\tC\t.\tPASS\t.\n", version="VCFv4.5")
     profile = validate_vcf_strict(vcf45)
     matrix = {
         item["feature_id"]: item
