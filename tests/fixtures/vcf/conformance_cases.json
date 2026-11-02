@@ -133,6 +133,21 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
         ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -257,6 +272,21 @@
           "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
         ]
       }
     ],
@@ -428,6 +458,21 @@
         "producer": "GATK",
         "producer_document": "https://gatk.broadinstitute.org/hc/en-us/articles/360035531812-GVCF-Genomic-Variant-Call-Format",
         "normative_vcf_conformance": false
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
       }
     ],
     "VCFv4.4": [
@@ -575,6 +620,21 @@
           "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
         ]
       }
     ],
@@ -824,6 +884,21 @@
           "##INFO=<ID=CIEND,Number=.,Type=Integer,Description=\"Confidence interval around END\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t5\t.\tA\tC\t.\tPASS\tCIEND=-1,1"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
         ]
       }
     ],
