@@ -133,6 +133,116 @@ def _validate_vcf_for_upload(path: Path) -> ValidationResult:
         ) from exc
 
 
+def _apply_vcf_specification_governance(
+    db: Session,
+    *,
+    organization_id: UUID,
+    result: ValidationResult,
+) -> ValidationResult:
+    """Apply the lab's exact-version approval gate to every non-built-in VCF.
+
+    A future format version is not a malformed VCF merely because this parser
+    build cannot yet interpret it. It is retained as a blocked intake artifact
+    with a specific governance/parser reason and cannot enter analysis.
+    """
+    version = str(result.fileformat or "").strip()
+    if not version:
+        return result
+
+    from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+    if version in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+        return result
+
+    from backend.app.domain.resources import (
+        ResourceRegistryError,
+        require_approved_vcf_specification,
+    )
+
+    try:
+        approval_snapshot = require_approved_vcf_specification(
+            db,
+            organization_id=organization_id,
+            version=version,
+        )
+    except ResourceRegistryError as exc:
+        code = getattr(exc, "code", "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED")
+        next_step = getattr(exc, "next_step", "LAB_APPROVAL_REQUIRED")
+        metadata = {
+            **(result.metadata or {}),
+            "vcf_specification_governance": {
+                "status": code,
+                "version": version,
+                "reason": str(exc),
+                "next_step": next_step,
+            },
+        }
+        return ValidationResult(
+            "BLOCKED",
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            [str(exc)],
+            result.warnings,
+            version,
+            metadata,
+            code,
+        )
+
+    if result.error_code == "VCF_FILEFORMAT_UNSUPPORTED":
+        code = "VCF_SPECIFICATION_PARSER_NOT_IMPLEMENTED"
+        message = (
+            f"The laboratory approved {version}, but this SIRALOOM parser build "
+            "does not implement that VCF specification."
+        )
+        metadata = {
+            **(result.metadata or {}),
+            "vcf_specification_approval": approval_snapshot,
+            "vcf_specification_governance": {
+                "status": code,
+                "version": version,
+                "reason": message,
+                "next_step": "PARSER_IMPLEMENTATION_AND_CONFORMANCE_REQUIRED",
+            },
+        }
+        return ValidationResult(
+            "BLOCKED",
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            [message],
+            result.warnings,
+            version,
+            metadata,
+            code,
+        )
+
+    if result.status == "VALID":
+        metadata = {
+            **(result.metadata or {}),
+            "vcf_specification_approval": approval_snapshot,
+            "vcf_specification_governance": {
+                "status": "APPROVED",
+                "version": version,
+                "next_step": "CONTINUE_VALIDATED_INTAKE",
+            },
+        }
+        return ValidationResult(
+            result.status,
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            result.errors,
+            result.warnings,
+            version,
+            metadata,
+            result.error_code,
+        )
+    return result
+
+
 def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, str]:
     """Recompute intake state under a case-row lock after a primary VCF insert."""
     case = db.scalar(
