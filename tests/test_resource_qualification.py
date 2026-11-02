@@ -511,4 +511,7 @@ def test_new_vcf_specification_qualification_executes_pinned_parser_corpus(tmp_p
     assert evidence["execution_report"]["execution_status"] == "PASSED"
     assert evidence["execution_report"]["target_version"] == "VCFv4.5"
     assert evidence["execution_report_sha256"] == evidence["execution_report"]["report_sha256"]
+    assert len(evidence["execution_report"]["corpus_sha256"]) == 64
+    assert len(evidence["execution_report"]["parser_source_sha256"]) == 64
+    assert len(evidence["execution_report"]["runner_source_sha256"]) == 64
     assert evidence["execution_report"]["test_case_count"] != 999999
