@@ -419,6 +419,29 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA\t0/2:2"
         ]
+      },
+      {
+        "id": "base_modification_fraction_valid",
+        "category": "version_specific_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M base-modification FORMAT values",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:M5mC\t0/1:0.95"
+        ]
+      },
+      {
+        "id": "base_modification_fraction_out_of_range",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_FIELD_TYPE_INVALID",
+        "spec_basis": "VCFv4.5 base-modification fractions must be in the closed interval zero to one",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:M5mC\t0/1:1.01"
+        ]
       }
     ],
     "VCFv4.0": [
