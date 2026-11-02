@@ -325,6 +325,26 @@ def _open(path: str | Path):
     return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
 
 
+def read_vcf_fileformat(path: str | Path) -> str | None:
+    """Read only the first VCF line to identify the declared specification.
+
+    This deliberately does not validate the file. It lets workflow governance
+    run before the strict parser rejects a syntactically valid but unimplemented
+    specification version.
+    """
+    try:
+        with _open(path) as handle:
+            first_line = handle.readline().rstrip("\r\n")
+    except (OSError, EOFError, UnicodeError):
+        return None
+    if not first_line.startswith("##fileformat="):
+        return None
+    version = first_line.partition("=")[2].strip()
+    if not re.fullmatch(r"VCFv[0-9]+\\.[0-9]+", version):
+        return None
+    return version
+
+
 def declared_vcf_contig_md5s(path: str | Path) -> dict[str, str]:
     """Return and syntax-check optional SAM/VCF contig MD5 digests."""
     digests: dict[str, str] = {}
