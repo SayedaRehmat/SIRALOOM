@@ -9,6 +9,7 @@ from backend.app.domain.vcf_spec_registry import get_vcf_specification_profile
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     _validate_record,
+    read_vcf_fileformat,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -56,6 +57,25 @@ def write_vcf_with_metadata(
         + body,
         encoding="utf-8",
     )
+
+
+def test_read_vcf_fileformat_identifies_future_version_before_parser_validation(tmp_path: Path):
+    path = tmp_path / "future.vcf"
+    write_vcf(path, "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n", version="VCFv4.6")
+
+    assert read_vcf_fileformat(path) == "VCFv4.6"
+
+
+def test_read_vcf_fileformat_supports_bgzf_gzip_streams(tmp_path: Path):
+    path = tmp_path / "future.vcf.gz"
+    content = (
+        b"##fileformat=VCFv4.6\\n"
+        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        b"1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+    )
+    path.write_bytes(_bgzf_block(content) + _bgzf_block(b""))
+
+    assert read_vcf_fileformat(path) == "VCFv4.6"
 
 
 def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
