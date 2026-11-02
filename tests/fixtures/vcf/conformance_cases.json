@@ -611,6 +611,19 @@
           "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
         ]
+      },
+      {
+        "id": "breakend_legacy_mateid_unordered_mixed_alt_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.1-4.3 define MATEID as Number=.; preserve the older unordered multi-value semantics rather than requiring one value per ALT.",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
       }
     ],
     "VCFv4.4": [
@@ -819,6 +832,20 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mixed_alt_mateid_alignment_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.4 MATEID Number=A aligns with the complete ALT list; non-breakend ALT has a missing placeholder.",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,.",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
         ]
       }
     ],
@@ -1220,6 +1247,63 @@
           "##INFO=<ID=END,Number=1,Type=Integer,Description=\"Deprecated computed end position\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t5\t.\tAT\t<DEL>\t.\tPASS\tSVLEN=-4;END=8"
+        ]
+      },
+      {
+        "id": "breakend_mixed_alt_mateid_alignment_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 MATEID Number=A preserves per-ALT mapping and uses a missing placeholder for a sequence ALT.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,.",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "breakend_multi_alt_mateid_alignment_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "Each VCFv4.5 breakend ALT is paired with the MATEID value at the same ALT index.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,bnd3",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1",
+          "3\t30\tbnd3\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "breakend_multi_alt_mateid_swapped_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID values mapped to the wrong ALT indexes must fail even when the set of mate IDs and remote loci is otherwise valid.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3,bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1",
+          "3\t30\tbnd3\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "breakend_mixed_alt_mateid_cardinality_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "VCFv4.5 MATEID Number=A requires one entry per ALT, including missing placeholders.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
         ]
       }
     ],
