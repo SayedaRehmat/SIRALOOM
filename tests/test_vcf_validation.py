@@ -1933,7 +1933,7 @@ def test_number_g_fields_without_gt_still_validate_declared_value_type(tmp_path:
 
 def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp_path: Path):
     valid = tmp_path / "vcf45-cipos-valid.vcf"
-    write_vcf(valid, "1\t2\t.\tA\tC,G\t.\tPASS\tCIPOS=-2,2,0,0\n", version="VCFv4.5")
+    write_vcf(valid, "1\t2\t.\tA\t<DEL>,<DUP>\t.\tPASS\tSVLEN=-4,-2;CIPOS=-2,2,0,0\n", version="VCFv4.5")
 
     profile = validate_vcf_strict(valid)
     assert profile["records"] == 1
