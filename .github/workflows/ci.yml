@@ -209,10 +209,10 @@ jobs:
           set -euo pipefail
           RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
           mkdir -p "$RUN_DIR"
-          python scripts/validation/acquire_giab_public_assets.py \\
-            --manifest benchmarks/giab/public_assets.v1.json \\
-            --build "${{ matrix.build }}" \\
-            --output-dir "$RUN_DIR/assets" \\
+          python scripts/validation/acquire_giab_public_assets.py \
+            --manifest benchmarks/giab/public_assets.v1.json \
+            --build "${{ matrix.build }}" \
+            --output-dir "$RUN_DIR/assets" \
             --provenance-out "$RUN_DIR/asset-provenance.json"
       - name: Record unchanged GIAB truth VCF validation outcome
         shell: bash -l {0}
@@ -241,7 +241,7 @@ jobs:
             "interpretation":"Unmodified public GIAB truth VCF intake result; a rejection remains a rejection."
           }
           out=Path(sys.argv[2]); out.parent.mkdir(parents=True,exist_ok=True)
-          out.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\\n")
+          out.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n")
           print(json.dumps({k:payload[k] for k in ("status","record_count","sample_count","error_code","errors")},sort_keys=True))
           PY
       - name: Diagnose known HG001 star loci against the build-matched confidence BED
@@ -251,8 +251,8 @@ jobs:
           RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
           VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$RUN_DIR/asset-provenance.json")"
           BED="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["confident_bed"]["path"])' "$RUN_DIR/asset-provenance.json")"
-          python scripts/validation/diagnose_giab_benchmark_loci.py \\
-            --vcf "$VCF" --bed "$BED" --reference-build "${{ matrix.build }}" \\
+          python scripts/validation/diagnose_giab_benchmark_loci.py \
+            --vcf "$VCF" --bed "$BED" --reference-build "${{ matrix.build }}" \
             --output "$RUN_DIR/evidence/known-star-locus-diagnostic.json"
       - name: Derive eligible processing input and quarantine whole star-containing records
         shell: bash -l {0}
@@ -260,10 +260,10 @@ jobs:
           set -euo pipefail
           RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
           VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$RUN_DIR/asset-provenance.json")"
-          python scripts/validation/prepare_giab_processing_input.py \\
-            --source-vcf "$VCF" \\
-            --output-vcf "$RUN_DIR/eligible-processing-input.vcf" \\
-            --excluded-records "$RUN_DIR/evidence/quarantined-spanning-deletion-records.jsonl" \\
+          python scripts/validation/prepare_giab_processing_input.py \
+            --source-vcf "$VCF" \
+            --output-vcf "$RUN_DIR/eligible-processing-input.vcf" \
+            --excluded-records "$RUN_DIR/evidence/quarantined-spanning-deletion-records.jsonl" \
             --provenance-out "$RUN_DIR/evidence/derivative-provenance.json"
       - name: Verify matching BGZF FASTA, FAI and GZI geometry
         shell: bash -l {0}
@@ -289,13 +289,13 @@ jobs:
           set -euo pipefail
           RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
           FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"])' "$RUN_DIR/asset-provenance.json")"
-          python scripts/validation/run_vcf_scale_benchmark.py \\
-            --vcf "$RUN_DIR/eligible-processing-input.vcf" \\
-            --reference-fasta "$FASTA" \\
-            --reference-build "${{ matrix.build }}" \\
-            --output-dir "$RUN_DIR/evidence/scale" \\
-            --timeout-seconds 14400 \\
-            --expected-bcftools-version 1.25 \\
+          python scripts/validation/run_vcf_scale_benchmark.py \
+            --vcf "$RUN_DIR/eligible-processing-input.vcf" \
+            --reference-fasta "$FASTA" \
+            --reference-build "${{ matrix.build }}" \
+            --output-dir "$RUN_DIR/evidence/scale" \
+            --timeout-seconds 14400 \
+            --expected-bcftools-version 1.25 \
             --expected-htslib-version 1.25
       - name: Assemble run provenance
         if: always()
@@ -322,7 +322,7 @@ jobs:
             "processing_failure":"evidence/scale/vcf-scale-benchmark.failure.json",
             "qualification_boundary":"Public HG001 input-processing evidence only; star-containing source records are quarantined whole in the derivative; this is not the complete truth set, caller concordance, clinical validation or laboratory qualification."
           }
-          (evidence/"run-provenance.json").write_text(json.dumps(payload,indent=2,sort_keys=True)+"\\n")
+          (evidence/"run-provenance.json").write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n")
           PY
       - name: Preserve public benchmark artifacts
         if: always()
