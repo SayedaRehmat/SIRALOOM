@@ -53,3 +53,4 @@ markers = [
 clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"
 bcftools = "backend.app.infrastructure.resource_providers.normalization_releases:BCFtoolsReleaseProvider"
 gatk = "backend.app.infrastructure.resource_providers.normalization_releases:GATKReleaseProvider"
+vcf_specifications = "backend.app.infrastructure.resource_providers.vcf_specifications:VCFSpecificationProvider"
