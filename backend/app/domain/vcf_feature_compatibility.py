@@ -34,7 +34,7 @@ VCF_CORE_FEATURES = (
         "breakend_replacement_and_mate_links",
         "VCFv4.1+",
         "Native breakend ALT grammar, reciprocal remote-locus and MATEID relationship validation.",
-        "tests/test_vcf_conformance_fixtures.py: reciprocal_breakend_pair_valid and breakend_mate_coordinate_mismatch_invalid",
+        "tests/test_vcf_conformance_fixtures.py: four_breakend_orientations_valid, reciprocal_breakend_pair_valid, and breakend_mate_coordinate_mismatch_invalid",
     ),
     (
         "genotype_ploidy_number_g_cardinality",
