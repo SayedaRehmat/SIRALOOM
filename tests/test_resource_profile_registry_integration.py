@@ -134,6 +134,14 @@ def _seed_required_resources(db: Session, organization_id):
             provider="REFERENCE",
             resource_type="REFERENCE_PACKAGE",
         ),
+        "normalization": _resource(
+            db,
+            organization_id=organization_id,
+            name="BCFtools normalization",
+            provider="bcftools",
+            resource_type="NORMALIZATION",
+            version="1.25",
+        ),
         "population": _resource(
             db,
             organization_id=organization_id,
@@ -206,6 +214,7 @@ def test_laboratory_profile_blocks_unbound_qualified_resource_then_recovers_from
             )
             assert {item.resource.id for item in blocked.selected} == {
                 resources["reference"].id,
+                resources["normalization"].id,
                 resources["population"].id,
                 resources["acmg"].id,
             }
@@ -234,11 +243,13 @@ def test_laboratory_profile_blocks_unbound_qualified_resource_then_recovers_from
             selected_by_capability = {item.capability: item for item in ready.selected}
             assert set(selected_by_capability) >= {
                 "REFERENCE_PACKAGE",
+                "NORMALIZATION",
                 "ANNOTATION_ENGINE",
                 "POPULATION",
                 "ACMG_RULE_SPECIFICATION",
             }
             assert selected_by_capability["REFERENCE_PACKAGE"].resource.id == resources["reference"].id
+            assert selected_by_capability["NORMALIZATION"].resource.id == resources["normalization"].id
             assert selected_by_capability["ANNOTATION_ENGINE"].resource.id == bound_vep.id
             assert selected_by_capability["POPULATION"].resource.id == resources["population"].id
             assert selected_by_capability["ACMG_RULE_SPECIFICATION"].resource.id == resources["acmg"].id
