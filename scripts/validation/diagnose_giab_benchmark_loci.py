@@ -173,7 +173,7 @@ def diagnose(vcf_path: Path, bed_path: Path, build: str) -> dict:
                                 "end": end_value,
                                 "carrier_sample_indexes": _gt_carriers(fields, allele_index),
                             })
-                if "[" in alt or "]" in alt:
+                if abs(pos - position) <= 10_000 and ("[" in alt or "]" in alt):
                     if "MATEID" in info or info.get("SVTYPE", "").upper() == "DEL":
                         breakend_deletion_evidence.append({
                             "line_number": line_number,
