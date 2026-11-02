@@ -17,6 +17,10 @@ The reference-provider contract now has four independently sourced variant examp
 
 The CFTR deletion has equivalent representations in a local repeat context; ClinGen documents alternate genomic expressions of the same canonical allele. These listed CTT coordinates are the ClinVar assembly-specific expressions, not a claim that all equivalent representations are identical before normalization.
 
+## Pinned RefSeq sequence spot checks
+
+On 2026-11-02, I independently retrieved the listed intervals using NCBI E-utilities `efetch` against versioned chromosome accessions. All eight matched the expected REF sequence: BRAF A (GRCh37 NC_000007.13:140453136; GRCh38 NC_000007.14:140753336), HBB T (GRCh37 NC_000011.9:5248232; GRCh38 NC_000011.10:5227002), EGFR T (GRCh37 NC_000007.13:55259515; GRCh38 NC_000007.14:55191822), and CFTR CTT (GRCh37 NC_000007.13:117199646-117199648; GRCh38 NC_000007.14:117559592-117559594). Retrieval used `db=nuccore`, the exact versioned accession and 1-based `seq_start`/`seq_stop`; expected alleles were independently recorded in the table above. These spot checks verify specific primary-assembly sequence intervals, not a complete assembly package, its full contig set, or full-genome checksum. NCBI identifies GRCh38.p14 as GCA_000001405.29 and GRCh37.p13 as GCA_000001405.14 / GCF_000001405.25.
+
 ## Automated checks
 
 `tests/test_reference_build_known_answers.py` provides two distinct levels of verification:
@@ -42,5 +46,8 @@ Reference packages support plain FASTA/FAI under schema 1.0 and BGZF FASTA/FAI/G
 - NCBI ClinVar HBB RCV000576548: https://www.ncbi.nlm.nih.gov/clinvar/RCV000576548/
 - NCBI ClinVar EGFR Variation 16609: https://www.ncbi.nlm.nih.gov/clinvar/variation/16609/
 - NCBI ClinVar CFTR Variation 7105: https://www.ncbi.nlm.nih.gov/clinvar/variation/7105/
+- NCBI Genome Reference Consortium human assembly overview (GRCh38.p14 / GRCh37.p13 accessions): https://www.ncbi.nlm.nih.gov/grc/human
+- NCBI RefSeq chromosome 7, GRCh38.p14: https://www.ncbi.nlm.nih.gov/nuccore/NC_000007.14/
+- NCBI E-utilities EFetch documentation: https://www.ncbi.nlm.nih.gov/books/NBK25499/
 - ClinGen allele representation examples for CFTR p.Phe508del: https://dataexchange.clinicalgenome.org/allele/implementation/integrated_examples/scenario_group_3.html
 - GA4GH VRS BRAF V600 example (GRCh38): https://cat-vrs.ga4gh.org/en/1.1.1/examples/braf-v600.html
