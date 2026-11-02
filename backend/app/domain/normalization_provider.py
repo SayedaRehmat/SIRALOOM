@@ -100,7 +100,19 @@ def resolve_normalization_provider(resource: Resource) -> NormalizationProviderS
         )
 
     execution = dict((resource.metadata_json or {}).get("execution") or {})
-    executable = str(execution.get("executable") or "bcftools").strip()
+    toolchain = dict(execution.get("toolchain") or {})
+    bcftools_tool = dict(toolchain.get("bcftools") or {})
+    declared_version = str(bcftools_tool.get("version") or "").strip()
+    if declared_version and declared_version != resource.version.strip():
+        raise NormalizationProviderError(
+            "The BCFtools toolchain version does not match the qualified Resource version.",
+            code="NORMALIZATION_EXECUTION_VERSION_CONTRACT_MISMATCH",
+        )
+    executable = str(
+        bcftools_tool.get("executable")
+        or execution.get("executable")
+        or "bcftools"
+    ).strip()
     if not executable:
         executable = "bcftools"
 
