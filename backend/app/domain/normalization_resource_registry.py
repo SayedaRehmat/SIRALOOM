@@ -20,6 +20,7 @@ from backend.app.domain.resource_execution import (
     ResourceExecutionError,
     resolve_resource_execution,
 )
+from backend.app.domain.resource_source_contract import ResourceSourceContractError, validate_source_contract
 from backend.app.infrastructure.db.models import (
     Analysis,
     Case,
@@ -84,6 +85,15 @@ def register_normalization_resource(
         raise NormalizationResourceRegistryError("checksum must be a SHA-256 digest")
 
     metadata = dict(metadata_json or {})
+    try:
+        source_contract = validate_source_contract(
+            dict(metadata.get("source_contract") or {})
+        )
+    except ResourceSourceContractError as exc:
+        raise NormalizationResourceRegistryError(
+            "normalization resources require a valid official source_contract"
+        ) from exc
+    metadata["source_contract"] = source_contract.as_dict()
     capabilities = {
         str(item).strip().upper()
         for item in (metadata.get("capabilities") or [])
@@ -100,6 +110,8 @@ def register_normalization_resource(
         "access_method": access_method,
         "location": location,
     }
+    if access_method in {"HTTPS", "HTTP", "GRAPHQL", "API"}:
+        metadata["execution"].setdefault("endpoint", source_contract.artifact_url)
 
     existing = db.scalar(
         select(Resource).where(
