@@ -191,8 +191,20 @@ def _qualify_vcf_specification(
     test_case_count = int(execution_report.get("test_case_count") or 0)
     failed_test_count = int(execution_report.get("failed_test_count") or 0)
     execution_integrity = _verify_vcf_conformance_execution_report(execution_report)
+    # Passing the available fixtures proves only that those fixtures pass.
+    # Laboratory qualification additionally requires an explicitly reviewed,
+    # complete normative section coverage declaration in the pinned corpus.
+    normative_coverage_complete = (
+        execution_report.get("normative_coverage_status") == "COMPLETE"
+        and bool(execution_report.get("normative_coverage_sections"))
+        and not execution_report.get("normative_uncovered_sections")
+    )
+    if not normative_coverage_complete:
+        blockers.append("VCF_SPECIFICATION_CONFORMANCE_SCOPE_INCOMPLETE")
+
     report_valid = (
-        execution_report.get("suite_id") == "siraloom-vcf-native-conformance-v1"
+        normative_coverage_complete
+        and execution_report.get("suite_id") == "siraloom-vcf-native-conformance-v1"
         and execution_report.get("target_version") == version
         and test_case_count > 0
         and failed_test_count == 0
