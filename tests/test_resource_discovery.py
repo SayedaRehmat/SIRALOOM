@@ -373,3 +373,126 @@ def test_qualified_normalization_release_creates_lab_decision_without_switching_
         assert binding.resource_id == previous.id
         assert approval.status == "REJECTED"
 
+def test_vcf_specification_approval_is_version_specific_and_preserves_previous_approval():
+    from backend.app.domain.resources import (
+        decide_resource_approval,
+        require_approved_vcf_specification,
+    )
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[
+        Organization.__table__,
+        User.__table__,
+        OrganizationMembership.__table__,
+        Notification.__table__,
+        Resource.__table__,
+        ResourceQualification.__table__,
+        ResourceApproval.__table__,
+        ResourceApprovalAction.__table__,
+        OrganizationResourceBinding.__table__,
+        AuditEvent.__table__,
+    ])
+
+    with Session(engine) as db:
+        organization_id = uuid4()
+        user_id = uuid4()
+        db.add(Organization(id=organization_id, name="VCF Lab", external_identifier="vcf-lab"))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject="vcf-director",
+            email="vcf-director@example.test",
+            display_name="VCF Lab Director",
+            role="lab_director",
+            status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(),
+            organization_id=organization_id,
+            user_id=user_id,
+            role="lab_director",
+            status="ACTIVE",
+        ))
+
+        def add_qualified_spec(version):
+            resource = Resource(
+                id=uuid4(),
+                organization_id=None,
+                name=f"VCF specification {version}",
+                provider="HTS-Specifications",
+                resource_type="VCF_SPECIFICATION",
+                version=version,
+                genome_build=None,
+                access_method="HTTPS",
+                license_text=None,
+                checksum=(("a" if version == "VCFv4.6" else "b") * 64),
+                location=f"https://samtools.github.io/hts-specs/{version}.pdf",
+                population_definition=None,
+                status="QUALIFIED",
+                metadata_json={},
+            )
+            qualification = ResourceQualification(
+                id=uuid4(),
+                resource_id=resource.id,
+                qualification_version="vcf-spec-qualification-v1",
+                status="QUALIFIED",
+                checks_json={"passed": True, "conformance": "PASS"},
+                qualified_by=None,
+            )
+            db.add_all([resource, qualification])
+            db.flush()
+            return resource, qualification
+
+        v46, q46 = add_qualified_spec("VCFv4.6")
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v46, qualification=q46
+        ) == 1
+        approval46 = db.query(ResourceApproval).filter_by(resource_id=v46.id).one()
+        decide_resource_approval(
+            db,
+            approval_id=approval46.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Laboratory approved the validated VCFv4.6 parser profile",
+        )
+        snapshot46 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )
+        assert snapshot46["resource_id"] == str(v46.id)
+
+        v47, q47 = add_qualified_spec("VCFv4.7")
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v47, qualification=q47
+        ) == 1
+        approval47 = db.query(ResourceApproval).filter_by(resource_id=v47.id).one()
+        assert approval47.status == "PENDING"
+
+        # A newly qualified version is not implicitly approved, and its
+        # pending request does not replace the laboratory's VCFv4.6 approval.
+        with pytest.raises(ValueError, match="laboratory-approved"):
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.7"
+            )
+        assert require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )["resource_id"] == str(v46.id)
+
+        decide_resource_approval(
+            db,
+            approval_id=approval47.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Laboratory separately approved VCFv4.7",
+        )
+        snapshot47 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.7"
+        )
+        assert snapshot47["resource_id"] == str(v47.id)
+        assert require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )["resource_id"] == str(v46.id)
+
