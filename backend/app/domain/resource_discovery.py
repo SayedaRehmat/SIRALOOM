@@ -256,14 +256,10 @@ def notify_organizations_of_qualified_release(
 
     created = 0
     for membership, user in db.execute(query).all():
-        binding = db.scalar(
-            select(OrganizationResourceBinding).where(
-                OrganizationResourceBinding.organization_id == membership.organization_id,
-                OrganizationResourceBinding.identity_key == identity_key,
-            ).limit(1)
-        )
-        if binding is not None and binding.resource_id == resource.id:
-            continue
+        # A binding to this release does not imply approval of a newer
+        # qualification record. The qualification-scoped approval below is
+        # the idempotency boundary and must be requested even for the same
+        # resource row when its qualification changes.
 
         existing = db.scalar(
             select(ResourceApproval).where(
