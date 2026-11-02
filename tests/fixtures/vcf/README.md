@@ -51,7 +51,7 @@ The current fixture manifest also exercises:
 - all four breakend replacement-string orientations across VCFv4.1-v4.5, plus reciprocal remote-locus/MATEID consistency, mismatched mate coordinates, dangling and non-reciprocal mate IDs, missing record IDs, and duplicate breakend record IDs;
 - triploid Number=G likelihood cardinality (10 values for three alleles at ploidy 3), plus a malformed cardinality case;
 - VCFv4.5 unspecified-allele reference blocks using per-sample FORMAT/LEN, including INFO/END mismatch rejection.
-- VCFv4.5 symbolic-SV SVLEN negative-length handling, zero-length rejection, CIPOS/CIEND per-ALT cardinality and interval-bound checks, and CILEN per-ALT lower/upper confidence bounds, including missing-value enforcement for non-structural alleles.
+- VCFv4.5 symbolic-SV SVLEN negative-length handling, zero-length rejection, CIPOS/CIEND per-ALT cardinality and interval-bound checks, CILEN per-ALT lower/upper confidence bounds, and non-structural missing-value rules; CIPOS also exercises the VCFv4.5 IMPRECISE exception for precise sequence alleles.
 
 A GATK <NON_REF>/END gVCF reference-block example is included under
 qualification_scope=producer_interoperability. It is checked through the
