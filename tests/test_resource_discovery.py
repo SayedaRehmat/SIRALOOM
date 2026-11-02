@@ -420,6 +420,30 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
             )
         assert undiscovered.value.code == "VCF_SPECIFICATION_RELEASE_NOT_REGISTERED"
 
+        discovered_candidate = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="VCF specification VCFv4.9",
+            provider="HTS-Specifications",
+            resource_type="VCF_SPECIFICATION",
+            version="VCFv4.9",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="c" * 64,
+            location="https://samtools.github.io/hts-specs/VCFv4.9.pdf",
+            population_definition=None,
+            status="CANDIDATE",
+            metadata_json={},
+        )
+        db.add(discovered_candidate)
+        db.flush()
+        with pytest.raises(ValueError, match="is not qualified for laboratory use") as unqualified:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.9"
+            )
+        assert unqualified.value.code == "VCF_SPECIFICATION_QUALIFICATION_REQUIRED"
+
         def add_qualified_spec(version):
             resource = Resource(
                 id=uuid4(),
