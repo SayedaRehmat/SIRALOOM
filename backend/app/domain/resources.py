@@ -23,6 +23,7 @@ _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _ALLOWED_TYPES = frozenset({
     # Legacy resource classes retained for backward compatibility.
     "REFERENCE", "REFERENCE_PACKAGE", "POPULATION", "ANNOTATION",
+    "NORMALIZATION",
     "EVIDENCE", "ACMG_RULE",
     # Canonical workflow capability classes. These names intentionally match
     # workflow_resource_contracts and resource_profile_resolver so a resource
