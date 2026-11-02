@@ -24,6 +24,7 @@ _ALLOWED_TYPES = frozenset({
     # Legacy resource classes retained for backward compatibility.
     "REFERENCE", "REFERENCE_PACKAGE", "POPULATION", "ANNOTATION",
     "NORMALIZATION",
+    "VCF_SPECIFICATION",
     "EVIDENCE", "ACMG_RULE",
     # Canonical workflow capability classes. These names intentionally match
     # workflow_resource_contracts and resource_profile_resolver so a resource
