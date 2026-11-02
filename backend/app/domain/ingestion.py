@@ -155,7 +155,6 @@ def _bcftools_validate(
             "Unable to attest the HTSlib version reported by the installed bcftools."
         )
     detected_htslib_version = htslib_line.split()[-1]
-    expected_htslib_version = expected_htslib_version
     if expected_htslib_version and detected_htslib_version != expected_htslib_version:
         raise VCFValidationUnavailable(
             "HTSlib version mismatch during VCF intake: "
