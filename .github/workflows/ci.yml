@@ -279,9 +279,12 @@ jobs:
           fileformat = first_line.strip().split("=", 1)[-1]
           with opener(vcf, "rt", encoding="utf-8") as handle:
               target_fields = None
+              sample_names = []
               for line_no, raw in enumerate(handle, 1):
+                  if raw.startswith("#CHROM"):
+                      sample_names = raw.rstrip("\r\n").split("\t")[9:]
                   if line_no == target_line:
-                      target_fields = raw.rstrip().split("\t")
+                      target_fields = raw.rstrip("\r\n").split("\t")
                       break
           if target_fields is None:
               raise RuntimeError(f"Could not recover rejected VCF line {target_line}")
@@ -305,9 +308,10 @@ jobs:
           star_index = alts.index("*") + 1
           star_carriers = carriers(target_fields, target_line, star_index)
           candidates = []
+          nearby_records = []
           with opener(vcf, "rt", encoding="utf-8") as handle:
               for line_no, raw in enumerate(handle, 1):
-                  if line_no == target_line or raw.startswith("#"):
+                  if raw.startswith("#"):
                       continue
                   row = raw.rstrip("\r\n").split("\t")
                   if len(row) < 8 or row[0] != chrom:
@@ -316,6 +320,28 @@ jobs:
                       row_pos = int(row[1])
                   except ValueError:
                       continue
+                  if abs(row_pos - pos) <= 10000:
+                      format_keys = row[8].split(":") if len(row) > 8 else []
+                      gt_index = format_keys.index("GT") if "GT" in format_keys else None
+                      genotypes = []
+                      for sample_index, sample in enumerate(row[9:]):
+                          values = sample.split(":")
+                          genotypes.append({
+                              "sample": sample_names[sample_index] if sample_index < len(sample_names) else f"sample_{sample_index + 1}",
+                              "GT": values[gt_index] if gt_index is not None and gt_index < len(values) else None,
+                          })
+                      nearby_records.append({
+                          "line": line_no,
+                          "pos": row_pos,
+                          "id": row[2],
+                          "ref": row[3],
+                          "alt": row[4],
+                          "qual": row[5],
+                          "filter": row[6],
+                          "info": row[7],
+                          "format": row[8] if len(row) > 8 else None,
+                          "genotypes": genotypes,
+                      })
                   for alt_index, alt in enumerate(row[4].split(","), 1):
                       interval = None
                       ref = row[3].upper()
@@ -337,13 +363,23 @@ jobs:
                               ),
                               "record": row[:8],
                           })
-          print(json.dumps({
+          diagnostic = {
               "validator_error": error_text,
               "star_line": target_line,
               "star_record": target_fields[:8],
+              "star_format": target_fields[8] if len(target_fields) > 8 else None,
+              "star_genotypes": [
+                  {"sample": sample_names[index] if index < len(sample_names) else f"sample_{index + 1}", "value": value}
+                  for index, value in enumerate(target_fields[9:])
+              ],
               "star_sample_indexes": sorted(star_carriers) if star_carriers is not None else None,
               "overlapping_deletion_candidates": candidates[:25],
-          }, indent=2))
+              "nearby_records_within_10kb": nearby_records,
+          }
+          diagnostic_path = Path(sys.argv[1]).parent / "evidence" / "spanning-deletion-diagnostic.json"
+          diagnostic_path.parent.mkdir(parents=True, exist_ok=True)
+          diagnostic_path.write_text(json.dumps(diagnostic, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(diagnostic, indent=2))
           PY
       - name: Assemble provenance
         if: always()
