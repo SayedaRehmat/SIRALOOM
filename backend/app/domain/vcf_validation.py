@@ -1180,11 +1180,6 @@ def _validate_vcf45_structural_info(
                         f"INFO/CILEN interval must provide both bounds or both missing values at line {line_no}",
                         code="VCF_SV_INFO_INTERVAL_INVALID",
                     )
-                if symbolic_sv:
-                    raise StrictVCFValidationError(
-                        f"INFO/CILEN bounds are required for symbolic structural ALT {alt_index + 1} when CILEN is present at line {line_no}",
-                        code="VCF_SV_INFO_INTERVAL_INVALID",
-                    )
                 continue
             if not symbolic_sv:
                 raise StrictVCFValidationError(
