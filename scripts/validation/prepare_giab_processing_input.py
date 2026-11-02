@@ -67,8 +67,9 @@ def derive(source_vcf: Path, output_vcf: Path, excluded_jsonl: Path, provenance_
         excluded_records = 0
         sample_names: list[str] = []
         header_seen = False
-        with open_vcf(source_vcf) as source, os.fdopen(fds[0], "w", encoding="utf-8", newline="") as out_vcf, os.fdopen(fds[1], "w", encoding="utf-8", newline="") as out_excluded:
-            fds = fds[2:]
+        fd_vcf, fd_excluded, fd_provenance = fds
+        fds = []
+        with open_vcf(source_vcf) as source, os.fdopen(fd_vcf, "w", encoding="utf-8", newline="") as out_vcf, os.fdopen(fd_excluded, "w", encoding="utf-8", newline="") as out_excluded:
             for line_number, raw in enumerate(source, start=1):
                 if raw.startswith("#CHROM"):
                     columns = raw.rstrip("\r\n").split("\t")
@@ -140,8 +141,7 @@ def derive(source_vcf: Path, output_vcf: Path, excluded_jsonl: Path, provenance_
             },
             "qualification_boundary": "The derivative is not the complete GIAB truth VCF and is not suitable for GIAB caller concordance. It exists only to exercise independent eligible input-processing paths while retaining every excluded source record and its exact provenance.",
         }
-        with os.fdopen(fds[2], "w", encoding="utf-8", newline="") as out_report:
-            fds = fds[:2]
+        with os.fdopen(fd_provenance, "w", encoding="utf-8", newline="") as out_report:
             json.dump(report, out_report, indent=2, sort_keys=True)
             out_report.write("\n")
             out_report.flush()
@@ -149,7 +149,10 @@ def derive(source_vcf: Path, output_vcf: Path, excluded_jsonl: Path, provenance_
         for temp, destination in zip(temps, destinations, strict=True):
             if destination.exists() or destination.is_symlink():
                 raise DerivationError(f"Refusing to overwrite existing evidence: {destination}")
-            os.replace(temp, destination)
+            # Hard-link publication is atomic and fails rather than overwriting a
+            # destination created concurrently after the preflight check.
+            os.link(temp, destination)
+            temp.unlink()
             published.append(destination)
         return report
     except Exception:
