@@ -236,12 +236,6 @@ def notify_organizations_of_qualified_release(
     ):
         return 0
 
-    identity_key = "|".join([
-        resource.name,
-        resource.provider,
-        resource.resource_type,
-        resource.genome_build or "UNSPECIFIED",
-    ])
     query = (
         select(OrganizationMembership, User)
         .join(User, User.id == OrganizationMembership.user_id)
