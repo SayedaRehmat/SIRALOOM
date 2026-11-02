@@ -423,3 +423,87 @@ def test_gatk_is_not_qualified_through_the_bcftools_adapter(tmp_path):
     assert result.passed is False
     assert "NORMALIZATION_PROVIDER_ADAPTER_NOT_IMPLEMENTED" in result.blockers
     assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+
+def _vcf_specification_resource(tmp_path: Path, *, include_conformance: bool):
+    document = tmp_path / "VCFv4.6.pdf"
+    document.write_bytes(b"%PDF-1.7\nSynthetic official-specification PDF fixture\n%%EOF\n")
+    report = tmp_path / "vcf-conformance-report.json"
+    report.write_text('{"suite":"siraloom-vcf-v4.6","passed":12,"failed":0}', encoding="utf-8")
+    document_sha256 = sha256(document.read_bytes()).hexdigest()
+    report_sha256 = sha256(report.read_bytes()).hexdigest()
+    metadata = {
+        "source_contract": {
+            "publisher": "Samtools HTS Specifications maintainers",
+            "canonical_source_url": "https://github.com/samtools/hts-specs",
+            "artifact_url": "https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+            "release_identity": "VCFv4.6",
+            "access_mode": "PUBLIC",
+            "license_status": "NOT_REQUIRED",
+            "checksum_status": "PUBLISHED_AND_VERIFIED",
+            "authority_evidence_url": "https://samtools.github.io/hts-specs/",
+        },
+        "execution": {
+            "provider_id": "HTS-Specifications",
+            "provider_version": "VCFv4.6",
+            "access_method": "HTTPS",
+            "endpoint": "https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+        },
+        "specification_version": "VCFv4.6",
+        "official_document_url": "https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+    }
+    if include_conformance:
+        metadata["specification_conformance"] = {
+            "profile_id": "siraloom-vcf-v4.6-profile-1",
+            "suite_version": "siraloom-vcf-conformance-1",
+            "execution_status": "PASSED",
+            "normative_clause_ids": ["VCFv4.6-4.2", "VCFv4.6-5.1"],
+            "unsupported_constructs": [],
+            "unsupported_policy": "FAIL_CLOSED",
+            "test_case_count": 12,
+            "failed_test_count": 0,
+            "report_path": str(report.resolve()),
+            "report_sha256": report_sha256,
+        }
+    resource = Resource(
+        id=uuid4(),
+        name="VCF specification VCFv4.6",
+        provider="HTS-Specifications",
+        resource_type="VCF_SPECIFICATION",
+        version="VCFv4.6",
+        genome_build=None,
+        access_method="HTTPS",
+        license_text=None,
+        checksum=document_sha256,
+        location=str(document.resolve()),
+        population_definition=None,
+        organization_id=None,
+        metadata_json=metadata,
+    )
+    return resource, report
+
+
+def test_new_vcf_specification_cannot_qualify_without_parser_conformance_evidence(tmp_path):
+    resource, _report = _vcf_specification_resource(tmp_path, include_conformance=False)
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "VCF_SPECIFICATION_CONFORMANCE_NOT_QUALIFIED" in result.blockers
+    assert result.checks["vcf_specification"]["status"] == "BLOCKED"
+
+
+def test_new_vcf_specification_qualification_verifies_pdf_and_conformance_report_hash(tmp_path):
+    resource, report = _vcf_specification_resource(tmp_path, include_conformance=True)
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is True
+    assert result.checks["vcf_specification"]["status"] == "QUALIFIED"
+    assert result.checks["vcf_specification"]["document_pdf_integrity"] == "PASS"
+    assert result.checks["vcf_specification"]["conformance_report_sha256"] == sha256(report.read_bytes()).hexdigest()
+
+    report.write_text("tampered", encoding="utf-8")
+    rerun = qualify_resource(resource, staging=_staging(resource))
+    assert rerun.passed is False
+    assert "VCF_SPECIFICATION_CONFORMANCE_NOT_QUALIFIED" in rerun.blockers
+
