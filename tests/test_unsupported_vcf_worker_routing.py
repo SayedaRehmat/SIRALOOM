@@ -858,10 +858,10 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
     organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
     source = tmp_path / f"{approval_state.lower()}-future.vcf"
     source.write_text(
-        "##fileformat=VCFv4.6\\n"
-        "##contig=<ID=1,length=1000>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.6\n"
+        "##contig=<ID=1,length=1000>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
