@@ -70,6 +70,12 @@ VCF45_FEATURES = (
         "tests/test_vcf_validation.py: VCFv4.5 reserved INFO/FORMAT definition tests",
     ),
     (
+        "unspecified_allele_reference_block_len",
+        "VCFv4.5",
+        "Native validation of per-sample FORMAT/LEN spans for the VCFv4.5 <*> unspecified allele.",
+        "tests/test_vcf_conformance_fixtures.py: unspecified_allele_len_reference_block_valid and unspecified_allele_len_end_mismatch_invalid",
+    ),
+    (
         "structured_meta_headers",
         "VCFv4.5",
         "Native parsing and validation of structured metadata attributes and identifiers.",
@@ -99,7 +105,7 @@ def feature_compatibility_for_version(version: str) -> list[dict[str, str | None
         VCFFeatureQualification(
             feature_id="gatk_gvcf_non_ref_end_interoperability",
             specification_scope="GATK producer interoperability; not a normative VCF feature",
-            status="PRODUCER_INTEROPERABILITY_VALIDATED" if version == "VCFv4.3" else "NOT_APPLICABLE_TO_DECLARED_VERSION",
+            status="PRODUCER_INTEROPERABILITY_VALIDATED" if version == "VCFv4.3" else "NOT_QUALIFIED",
             implementation="Validates the GATK <NON_REF> plus INFO/END reference-block dialect only in the explicitly tested VCFv4.3 profile." if version == "VCFv4.3" else "No producer-dialect interoperability fixture is qualified for this declared-version profile.",
             evidence="tests/test_vcf_conformance_fixtures.py: gatk_gvcf_nonvariant_reference_block_valid and gatk_gvcf_nonvariant_reference_block_missing_end_invalid" if version == "VCFv4.3" else "No version-specific GATK gVCF interoperability fixture.",
             limitation="This status is not normative VCF specification conformance and does not imply GATK gVCF import support throughout the pipeline.",
