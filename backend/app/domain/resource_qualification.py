@@ -102,6 +102,84 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_execution"] = "GOVERNED"
 
 
+def _qualify_vcf_specification(
+    resource: Resource,
+    path: Path | None,
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Require a staged official PDF and an independently hashed conformance report."""
+    metadata = dict(resource.metadata_json or {})
+    version = str(metadata.get("specification_version") or "").strip()
+    source_contract = dict(metadata.get("source_contract") or {})
+    document_url = str(metadata.get("official_document_url") or "").strip()
+    if version != resource.version:
+        blockers.append("VCF_SPECIFICATION_VERSION_IDENTITY_MISMATCH")
+    if not document_url or document_url != str(source_contract.get("artifact_url") or ""):
+        blockers.append("VCF_SPECIFICATION_DOCUMENT_PROVENANCE_MISMATCH")
+    if path is None or not path.is_file():
+        blockers.append("VCF_SPECIFICATION_DOCUMENT_NOT_STAGED")
+        checks["vcf_specification"] = {"status": "BLOCKED", "reason": "official PDF is not staged"}
+        return
+
+    try:
+        with path.open("rb") as handle:
+            header = handle.read(5)
+            handle.seek(max(0, path.stat().st_size - 2048))
+            tail = handle.read()
+        if header != b"%PDF-" or b"%%EOF" not in tail:
+            blockers.append("VCF_SPECIFICATION_DOCUMENT_INVALID")
+    except OSError:
+        blockers.append("VCF_SPECIFICATION_DOCUMENT_UNREADABLE")
+
+    conformance = dict(metadata.get("specification_conformance") or {})
+    report_path_value = str(conformance.get("report_path") or "").strip()
+    report_sha256 = str(conformance.get("report_sha256") or "").strip().lower()
+    report_path = Path(report_path_value) if report_path_value else None
+    report_valid = bool(
+        report_path
+        and report_path.is_absolute()
+        and report_path.is_file()
+        and re.fullmatch(r"[0-9a-f]{64}", report_sha256)
+    )
+    if report_valid:
+        try:
+            report_valid = _sha256(report_path) == report_sha256
+        except OSError:
+            report_valid = False
+
+    required_profile_fields = (
+        str(conformance.get("profile_id") or "").strip(),
+        str(conformance.get("suite_version") or "").strip(),
+        str(conformance.get("execution_status") or "").strip().upper() == "PASSED",
+        isinstance(conformance.get("normative_clause_ids"), list)
+        and len(conformance.get("normative_clause_ids") or []) > 0,
+        isinstance(conformance.get("unsupported_constructs"), list),
+        str(conformance.get("unsupported_policy") or "").strip().upper() == "FAIL_CLOSED",
+        int(conformance.get("test_case_count") or 0) > 0,
+        int(conformance.get("failed_test_count") or 0) == 0,
+        report_valid,
+    )
+    if not all(required_profile_fields):
+        blockers.append("VCF_SPECIFICATION_CONFORMANCE_NOT_QUALIFIED")
+
+    checks["vcf_specification"] = {
+        "status": "QUALIFIED" if all(required_profile_fields) and not any(
+            code.startswith("VCF_SPECIFICATION_") for code in blockers
+        ) else "BLOCKED",
+        "version": version,
+        "document_url": document_url,
+        "document_pdf_integrity": "PASS" if header == b"%PDF-" and b"%%EOF" in tail else "FAIL",
+        "conformance_profile_id": conformance.get("profile_id"),
+        "conformance_suite_version": conformance.get("suite_version"),
+        "test_case_count": conformance.get("test_case_count"),
+        "failed_test_count": conformance.get("failed_test_count"),
+        "normative_clause_count": len(conformance.get("normative_clause_ids") or []),
+        "unsupported_policy": conformance.get("unsupported_policy"),
+        "conformance_report_sha256": report_sha256 if report_valid else None,
+    }
+
+
 def _qualify_normalization_engine(
     resource: Resource,
     execution: Any,
@@ -343,6 +421,8 @@ def qualify_resource(
         _qualify_reference_toolchain(resource, execution, blockers, checks)
     if resource.resource_type == "NORMALIZATION":
         _qualify_normalization_engine(resource, execution, blockers, checks)
+    if resource.resource_type == "VCF_SPECIFICATION":
+        _qualify_vcf_specification(resource, path, blockers, checks)
     path = _local_path(resource)
     if (
         staging is not None
