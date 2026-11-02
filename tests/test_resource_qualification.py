@@ -497,19 +497,26 @@ def test_new_vcf_specification_cannot_qualify_from_metadata_claims_without_execu
     assert result.checks["vcf_specification"]["test_case_count"] == 0
 
 
-def test_new_vcf_specification_qualification_executes_pinned_parser_corpus(tmp_path):
+def test_vcf_specification_fixture_pass_does_not_claim_complete_normative_qualification(tmp_path):
     resource = _vcf_specification_resource(tmp_path, version="VCFv4.5")
 
     result = qualify_resource(resource, staging=_staging(resource))
 
-    assert result.passed is True
+    # The parser fixture suite executes successfully, but the corpus does not
+    # yet establish exhaustive coverage of the official normative document.
+    # Caller-supplied normative clause IDs must not promote partial evidence.
+    assert result.passed is False
+    assert "VCF_SPECIFICATION_CONFORMANCE_SCOPE_INCOMPLETE" in result.blockers
     evidence = result.checks["vcf_specification"]
-    assert evidence["status"] == "QUALIFIED"
+    assert evidence["status"] == "BLOCKED"
     assert evidence["document_pdf_integrity"] == "PASS"
     assert evidence["test_case_count"] > 0
     assert evidence["failed_test_count"] == 0
     assert evidence["execution_report"]["execution_status"] == "PASSED"
     assert evidence["execution_report"]["target_version"] == "VCFv4.5"
+    assert evidence["execution_report"]["normative_coverage_status"] == "PARTIAL"
+    assert evidence["execution_report"]["normative_coverage_sections"] == []
+    assert evidence["execution_report"]["normative_uncovered_sections"] == []
     assert evidence["execution_report_sha256"] == evidence["execution_report"]["report_sha256"]
     assert len(evidence["execution_report"]["corpus_sha256"]) == 64
     assert len(evidence["execution_report"]["parser_source_sha256"]) == 64
