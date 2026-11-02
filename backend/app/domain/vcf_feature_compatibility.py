@@ -85,7 +85,7 @@ VCF45_FEATURES = (
         "symbolic_sv_confidence_intervals",
         "VCFv4.5",
         "Native validation of per-ALT CIPOS/CIEND cardinality and interval rules, CILEN confidence bounds, and missing-value placeholders for non-structural alleles.",
-        "tests/test_vcf_conformance_fixtures.py: symbolic_cipos_cardinality_invalid, symbolic_cipos_interval_invalid, nonstructural_cipos_values_invalid, nonstructural_ciend_values_invalid, symbolic_cilen_cardinality_invalid, symbolic_cilen_bounds_reversed_invalid, nonstructural_cilen_values_invalid",
+        "tests/test_vcf_conformance_fixtures.py: symbolic_sv_confidence_intervals_with_nonstructural_alt_valid, symbolic_cipos_cardinality_invalid, symbolic_cipos_interval_invalid, nonstructural_cipos_values_invalid, nonstructural_ciend_values_invalid, symbolic_cilen_cardinality_invalid, symbolic_cilen_bounds_reversed_invalid, nonstructural_cilen_values_invalid",
     ),
 )
 
