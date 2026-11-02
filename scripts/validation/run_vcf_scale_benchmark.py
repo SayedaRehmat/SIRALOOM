@@ -163,6 +163,8 @@ def run_benchmark(
     sample_name: str,
     output_dir: Path,
     timeout_seconds: int = 1800,
+    expected_bcftools_version: str = "1.25",
+    expected_htslib_version: str = "1.25",
 ) -> dict[str, Any]:
     vcf_path = vcf_path.resolve(strict=True)
     reference_fasta = reference_fasta.resolve(strict=True)
@@ -177,11 +179,18 @@ def run_benchmark(
         raise ScaleBenchmarkError("An explicit specimen-mapped VCF sample name is required.")
     if timeout_seconds < 1:
         raise ScaleBenchmarkError("Normalization timeout must be positive.")
+    if not expected_bcftools_version.strip() or not expected_htslib_version.strip():
+        raise ScaleBenchmarkError("Expected BCFtools and HTSlib versions must be explicit.")
+    if expected_bcftools_version != settings.bcftools_version:
+        raise ScaleBenchmarkError("Benchmark BCFtools version differs from the repository-approved version.")
+    if expected_htslib_version != settings.htslib_version:
+        raise ScaleBenchmarkError("Benchmark HTSlib version differs from the repository-approved version.")
 
     input_size_bytes = vcf_path.stat().st_size
     output_dir = prepare_output_dir(output_dir)
     stage_metrics: dict[str, dict[str, Any]] = {}
     current_stage = "input_hashing"
+    validation = None
     try:
         input_sha256 = timed_stage(
             current_stage,
@@ -202,7 +211,12 @@ def run_benchmark(
             stage_metrics,
         )
         if validation.status != "VALID":
-            raise ScaleBenchmarkError("VCF intake validation did not return VALID.")
+            diagnostic_errors = getattr(validation, "errors", []) or []
+            if os.environ.get("SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS") == "1":
+                detail = "; ".join(str(error) for error in diagnostic_errors) or "No validator error details were returned."
+            else:
+                detail = "Detailed validator errors are suppressed for privacy."
+            raise ScaleBenchmarkError(f"VCF intake validation did not return VALID: {detail}")
         if validation.detected_build and validation.detected_build != reference_build:
             raise ScaleBenchmarkError("The VCF-declared reference build conflicts with the selected reference build.")
         if sample_name not in validation.sample_names:
@@ -262,7 +276,7 @@ def run_benchmark(
                 routing["sequence_path"],
                 normalized_path,
                 reference_fasta=reference_fasta,
-                expected_bcftools_version=settings.bcftools_version,
+                expected_bcftools_version=expected_bcftools_version,
                 source_only_format_fields=validation.metadata.get("base_modification_format_fields", []),
                 timeout_seconds=timeout_seconds,
             ),
@@ -414,6 +428,11 @@ def run_benchmark(
             "exception_type": type(exc).__name__,
             "generated_at_utc": datetime.now(UTC).isoformat(),
         }
+        # Detailed validation errors are opt-in because production VCF diagnostics
+        # can contain sensitive record content. The GIAB workflow enables this only
+        # for the public HG001 benchmark input.
+        if validation is not None and os.environ.get("SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS") == "1":
+            failure["validation_errors"] = [str(error) for error in (getattr(validation, "errors", []) or [])]
         failure_path = output_dir / FAILURE_NAME
         temporary_failure = output_dir / f".{FAILURE_NAME}.tmp"
         temporary_failure.write_text(
@@ -438,6 +457,16 @@ def main() -> int:
         help="Environment variable containing the specimen-mapped sample name (default: SIRALOOM_BENCHMARK_SAMPLE_NAME).",
     )
     parser.add_argument("--timeout-seconds", type=int, default=1800)
+    parser.add_argument(
+        "--expected-htslib-version",
+        default=os.environ.get("SIRALOOM_HTSLIB_VERSION", "1.25"),
+        help="Pinned HTSlib version expected by the qualification environment (default: 1.25).",
+    )
+    parser.add_argument(
+        "--expected-bcftools-version",
+        default=os.environ.get("SIRALOOM_BCFTOOLS_VERSION", "1.25"),
+        help="Pinned BCFtools version expected by the qualification environment (default: 1.25).",
+    )
     args = parser.parse_args()
     sample_name = os.environ.get(args.sample_name_env)
     if not sample_name:
@@ -450,6 +479,8 @@ def main() -> int:
             sample_name=sample_name,
             output_dir=args.output_dir,
             timeout_seconds=args.timeout_seconds,
+            expected_bcftools_version=args.expected_bcftools_version,
+            expected_htslib_version=args.expected_htslib_version,
         )
     except Exception as exc:
         print(f"VCF scale benchmark failed: {type(exc).__name__}: {exc}", file=sys.stderr)
