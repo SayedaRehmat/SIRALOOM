@@ -7,6 +7,10 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import re
+import shutil
+import subprocess
+import tempfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -98,6 +102,161 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_execution"] = "GOVERNED"
 
 
+def _qualify_normalization_engine(
+    resource: Resource,
+    execution: Any,
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Qualify BCFtools against the exact release and SIRALOOM's core contract.
+
+    GATK is intentionally blocked until a separate adapter has been qualified
+    against the complete normalization contract; it is not treated as a
+    drop-in replacement merely because it can left-align some indels.
+    """
+    provider = str(resource.provider or "").strip().casefold()
+    if provider != "bcftools":
+        blockers.append("NORMALIZATION_PROVIDER_ADAPTER_NOT_IMPLEMENTED")
+        checks["normalization_runtime"] = {
+            "status": "BLOCKED",
+            "provider": resource.provider,
+            "reason": "No qualified normalization adapter is registered for this provider.",
+        }
+        return
+
+    toolchain = dict(execution.toolchain or {})
+    bcftools = toolchain.get("bcftools")
+    if not isinstance(bcftools, dict):
+        blockers.append("BCFTOOLS_EXECUTION_NOT_DECLARED")
+        checks["normalization_runtime"] = {"status": "BLOCKED", "reason": "toolchain.bcftools is missing"}
+        return
+    executable = str(bcftools.get("executable") or "").strip()
+    if not executable:
+        blockers.append("BCFTOOLS_EXECUTABLE_NOT_DECLARED")
+        checks["normalization_runtime"] = {"status": "BLOCKED", "reason": "toolchain.bcftools.executable is missing"}
+        return
+
+    resolved_executable = shutil.which(executable)
+    if resolved_executable is None and Path(executable).is_file():
+        resolved_executable = str(Path(executable).resolve())
+    if resolved_executable is None:
+        blockers.append("BCFTOOLS_EXECUTABLE_UNAVAILABLE")
+        checks["normalization_runtime"] = {"status": "BLOCKED", "executable": executable}
+        return
+
+    try:
+        version_result = subprocess.run(
+            [resolved_executable, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        blockers.append("BCFTOOLS_VERSION_PROBE_FAILED")
+        checks["normalization_runtime"] = {
+            "status": "BLOCKED",
+            "executable": resolved_executable,
+            "error_type": type(exc).__name__,
+        }
+        return
+    version_output = "\n".join((version_result.stdout or "", version_result.stderr or ""))
+    version_match = re.search(r"(?im)^bcftools\s+([^\s]+)", version_output)
+    observed_version = version_match.group(1) if version_match else None
+    checks["normalization_runtime"] = {
+        "status": "VERSION_PROBED",
+        "provider": "bcftools",
+        "executable": resolved_executable,
+        "expected_version": resource.version,
+        "observed_version": observed_version,
+        "version_exit_code": version_result.returncode,
+    }
+    if version_result.returncode != 0 or observed_version != str(resource.version).strip():
+        blockers.append("BCFTOOLS_VERSION_MISMATCH")
+        checks["normalization_runtime"]["status"] = "BLOCKED"
+        return
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="siraloom-normalization-qualification-") as directory:
+            root = Path(directory)
+            reference = root / "reference.fa"
+            source = root / "source.vcf"
+            normalized = root / "normalized.vcf"
+            mismatch = root / "ref-mismatch.vcf"
+            mismatch_output = root / "ref-mismatch.out.vcf"
+            reference.write_text(">chr1\nCAAAAAC\n", encoding="ascii")
+            source.write_text(
+                "##fileformat=VCFv4.2\n"
+                "##contig=<ID=chr1,length=7>\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t3\t.\tAA\tA\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tT,G\t.\tPASS\t.\n",
+                encoding="ascii",
+            )
+            mismatch.write_text(
+                "##fileformat=VCFv4.2\n"
+                "##contig=<ID=chr1,length=7>\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t7\t.\tA\tT\t.\tPASS\t.\n",
+                encoding="ascii",
+            )
+            normalize_result = subprocess.run(
+                [
+                    resolved_executable, "norm", "-f", str(reference), "-c", "e",
+                    "-m", "-any", "-Ov", "-o", str(normalized), str(source),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            if normalize_result.returncode != 0 or not normalized.is_file():
+                raise RuntimeError("known-answer normalization command failed")
+            observed_records = []
+            for line in normalized.read_text(encoding="utf-8").splitlines():
+                if line and not line.startswith("#"):
+                    fields = line.split("\t")
+                    observed_records.append((fields[0], fields[1], fields[3], fields[4]))
+            expected_records = [
+                ("chr1", "1", "CA", "C"),
+                ("chr1", "7", "C", "T"),
+                ("chr1", "7", "C", "G"),
+            ]
+            if observed_records != expected_records:
+                raise RuntimeError(
+                    f"known-answer output mismatch: expected {expected_records!r}, observed {observed_records!r}"
+                )
+            mismatch_result = subprocess.run(
+                [
+                    resolved_executable, "norm", "-f", str(reference), "-c", "e",
+                    "-m", "-any", "-Ov", "-o", str(mismatch_output), str(mismatch),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            if mismatch_result.returncode == 0:
+                raise RuntimeError("REF-mismatch fixture unexpectedly succeeded under -c e")
+            checks["normalization_runtime"].update({
+                "status": "QUALIFIED",
+                "known_answer": "PASS",
+                "left_alignment": "PASS",
+                "multiallelic_decomposition": "PASS",
+                "ref_mismatch_rejection": "PASS",
+                "expected_records": [list(record) for record in expected_records],
+                "observed_records": [list(record) for record in observed_records],
+            })
+    except (OSError, subprocess.TimeoutExpired, RuntimeError, ValueError) as exc:
+        blockers.append("BCFTOOLS_NORMALIZATION_CONFORMANCE_FAILED")
+        checks["normalization_runtime"].update({
+            "status": "BLOCKED",
+            "known_answer": "FAIL",
+            "error_type": type(exc).__name__,
+            "error": str(exc)[:1000],
+        })
+
+
 def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
     """Require the governed VEP executable and cache to be usable offline.
 
@@ -182,6 +341,8 @@ def qualify_resource(
     }
     if resource.resource_type == "REFERENCE_PACKAGE":
         _qualify_reference_toolchain(resource, execution, blockers, checks)
+    if resource.resource_type == "NORMALIZATION":
+        _qualify_normalization_engine(resource, execution, blockers, checks)
     path = _local_path(resource)
     if (
         staging is not None
