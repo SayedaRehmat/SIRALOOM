@@ -1477,6 +1477,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "version": detected_vcf_version,
                     "reason": str(exc),
                 }
+                validation_metadata["next_step"] = "LAB_APPROVAL_REQUIRED"
+                validation_metadata["detected_vcf_version"] = detected_vcf_version
                 mark_step(
                     db,
                     validation_step,
