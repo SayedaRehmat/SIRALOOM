@@ -1836,13 +1836,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
                         code="VCF_BREAKEND_ALT_INVALID",
                     )
+                mate_links = []
                 if mate_ids:
                     if not record_ids:
                         raise StrictVCFValidationError(
                             f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    mate_links = []
                     if per_alt_mate_mapping:
                         remote_by_alt = iter(
                             (match.group(2), int(match.group(3)))
