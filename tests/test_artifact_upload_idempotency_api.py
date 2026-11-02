@@ -345,7 +345,7 @@ def test_future_vcf_upload_is_persisted_as_registry_block_not_malformed_input(
     assert response.status_code == 201, response.text
     payload = response.json()
     assert payload["validation_status"] == "BLOCKED"
-    assert payload["metadata"]["workflow_eligibility"] == "SPECIFICATION_GOVERNANCE_BLOCKED"
+    assert payload["workflow_eligibility"] == "SPECIFICATION_GOVERNANCE_BLOCKED"
     validation = payload["validation"]
     assert validation["fileformat"] == "VCFv4.6"
     assert validation["status"] == "BLOCKED"
