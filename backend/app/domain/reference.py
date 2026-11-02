@@ -57,6 +57,20 @@ class FastaReference:
         self.fai_path = Path(fai_path) if fai_path else Path(f"{self.fasta_path}.fai")
         if not self.fasta_path.exists():
             raise ReferenceError(f"Reference FASTA not found: {self.fasta_path}")
+        try:
+            with self.fasta_path.open("rb") as probe:
+                compressed = probe.read(2) == b"\x1f\x8b"
+        except OSError as exc:
+            raise ReferenceError(
+                f"Unable to read reference FASTA: {self.fasta_path}",
+                code="REFERENCE_FASTA_UNREADABLE",
+            ) from exc
+        if compressed or self.fasta_path.name.lower().endswith((".gz", ".bgz")):
+            raise ReferenceError(
+                "Compressed reference FASTA is not supported by the byte-offset reference reader; "
+                "use an uncompressed FASTA with its matching FAI.",
+                code="REFERENCE_COMPRESSED_UNSUPPORTED",
+            )
         if not self.fai_path.exists():
             raise ReferenceError(f"Reference FASTA index (.fai) not found: {self.fai_path}. Run a validated faidx process before use.")
         self._entries = self._load_fai()

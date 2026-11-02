@@ -93,6 +93,38 @@ def test_reference_package_rejects_checksum_change(tmp_path: Path):
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
 
 
+def test_reference_package_rejects_compressed_fasta_until_gzi_is_governed(tmp_path: Path):
+    import gzip
+
+    resource, _fasta, _fai = make_package(tmp_path)
+    compressed = tmp_path / "GRCh38.fa.gz"
+    with gzip.open(compressed, "wb") as handle:
+        handle.write(b">1\nCAAAAAC\n")
+    resource.metadata_json["fasta_path"] = str(compressed)
+
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
+
+    assert exc.value.code == "REFERENCE_COMPRESSED_UNSUPPORTED"
+
+
+@pytest.mark.parametrize("suffix", [".fa.gz", ".fa.bgz", ".fa"])
+def test_random_access_reference_reader_rejects_compressed_bytes(
+    tmp_path: Path, suffix: str
+):
+    import gzip
+
+    fasta = tmp_path / f"reference{suffix}"
+    with gzip.open(fasta, "wb") as handle:
+        handle.write(b">1\nACGT\n")
+    Path(f"{fasta}.fai").write_text("1\t4\t3\t4\t5\n", encoding="utf-8")
+
+    with pytest.raises(ReferenceError) as exc:
+        FastaReference(fasta)
+
+    assert exc.value.code == "REFERENCE_COMPRESSED_UNSUPPORTED"
+
+
 def test_reference_package_allows_explicitly_pinned_superseded_version(tmp_path: Path):
     resource, _fasta, _fai = make_package(tmp_path)
     resource.status = "SUPERSEDED"

@@ -303,6 +303,12 @@ def validate_reference_package(
 
     fasta_path = Path(str(metadata.get("fasta_path") or ""))
     fai_path = Path(str(metadata.get("fai_path") or ""))
+    if fasta_path.name.lower().endswith((".gz", ".bgz")):
+        raise ReferencePackageError(
+            "Compressed reference FASTA is not supported by the current indexed sequence reader; "
+            "register an uncompressed FASTA and its matching FAI.",
+            code="REFERENCE_COMPRESSED_UNSUPPORTED",
+        )
     if not fasta_path.is_file():
         raise ReferencePackageError(
             f"Reference FASTA is missing: {fasta_path}",

@@ -58,7 +58,7 @@ Software upgrades and database releases therefore follow the same governance mod
 - VEP: executable version plus compatible cache/release and reference assembly.
 - ClinVar: archived release identity and file/API provenance.
 - gnomAD: dataset/release or API selector plus request/response provenance.
-- Reference packages: assembly identity, FASTA/FAI checksums, exact contig manifest, and package checksum.
+- Reference packages: assembly identity, FASTA/FAI checksums, exact contig manifest, and package checksum. The current random-access reader requires an uncompressed FASTA; compressed FASTA packages are rejected until the package schema and reference reader can verify and consume a matching BGZF `.gzi` index.
 - Future sources: the same registry/lifecycle, with a source-specific adapter and qualification contract.
 
 ## Why activation is controlled

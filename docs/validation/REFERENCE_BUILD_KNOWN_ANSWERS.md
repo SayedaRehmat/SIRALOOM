@@ -32,6 +32,12 @@ SIRALOOM_ENABLE_LIVE_REFERENCE_TESTS=1 pytest -m integration tests/test_referenc
 
 The offline tests verify request construction and assembly selection; they do not query live sequence. The opt-in tests verify these exact reference segments against Ensembl, but do not qualify a complete FASTA package or the full contig set. Release qualification still requires independently sourced SNV and indel truth cases across relevant contigs, reference-package checksum and FAI/GZI validation, normalization equivalence checks, and a qualified truth-set benchmark.
 
+## Reference package reader boundary
+
+The current local random-access reader consumes FAI offsets as byte offsets in an uncompressed FASTA. A compressed FASTA therefore cannot be treated as a plain file: BGZF requires indexed block translation (a GZI index) in addition to the FAI. The package validator now rejects compressed references before they can enter analysis, and the low-level reader rejects compressed bytes even when the filename disguises them. Use an uncompressed FASTA and its matching FAI for this release. Although the BCFtools normalization adapter can validate and use BGZF FASTA plus GZI, that support is not sufficient for the earlier Python REF-validation reader or the current reference-package provenance contract. Supporting compressed references end to end requires governing the GZI artifact/checksum and using an indexed BGZF reader throughout.
+
+This boundary follows the HTSlib [FASTA index specification](https://www.htslib.org/doc/faidx.html), where FAI offsets are byte offsets into the FASTA, and its [samtools faidx documentation](https://www.htslib.org/doc/1.21/samtools-faidx.html), which describes BGZF-compressed FASTA support and GZI indexing. It is a safe limitation, not evidence that a given FASTA matches GRCh37 or GRCh38.
+
 ## Source records
 
 - NCBI ClinVar BRAF Variation 33312922: https://www.ncbi.nlm.nih.gov/clinvar/33312922/
