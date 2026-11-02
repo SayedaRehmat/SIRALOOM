@@ -81,6 +81,12 @@ VCF45_FEATURES = (
         "Native parsing and validation of structured metadata attributes and identifiers.",
         "tests/test_vcf_validation.py: VCFv4.5 structured-header tests",
     ),
+    (
+        "symbolic_sv_confidence_intervals",
+        "VCFv4.5",
+        "Native validation of per-ALT CIPOS/CIEND cardinality, interval bounds, and non-structural missing-value rules.",
+        "tests/test_vcf_conformance_fixtures.py: symbolic_cipos_cardinality_invalid, symbolic_cipos_interval_invalid, nonstructural_ciend_values_invalid",
+    ),
 )
 
 
