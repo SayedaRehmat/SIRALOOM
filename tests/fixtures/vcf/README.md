@@ -25,7 +25,8 @@ For VCFv4.1-v4.5, the manifest tests:
 - duplicate structured-header identifier rejection;
 - out-of-range genotype allele rejection;
 - VCFv4.3 versus VCFv4.4 leading GT phase-separator behavior;
-- VCFv4.4 rejection and VCFv4.5 acceptance of local-allele cardinality.
+- VCFv4.4 rejection and VCFv4.5 acceptance of local-allele cardinality;
+- VCFv4.5 base-modification FORMAT fraction acceptance and out-of-range rejection.
 
 VCFv4.0 is deliberately classified as a legacy parser compatibility smoke
 fixture only. The current HTS specifications index lists VCFv4.1 through
