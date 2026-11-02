@@ -13,7 +13,7 @@ SPEC.loader.exec_module(MODULE)
 
 def test_bed_membership_uses_zero_based_half_open_and_full_ref_span(tmp_path):
     bed = tmp_path / "regions.bed"
-    bed.write_text("3\t99\t110\n3\t200\t300\n", encoding="utf-8")
+    bed.write_text("3\t99\t108\n3\t200\t300\n", encoding="utf-8")
     full = MODULE.bed_membership(bed, "3", 100, 6)
     assert full["status"] == "FULLY_CONTAINED"
     assert full["bed_query_0based_half_open"] == [99, 105]
