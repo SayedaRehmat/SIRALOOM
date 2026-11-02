@@ -66,16 +66,19 @@ def resolve_normalization_provider(resource: Resource) -> NormalizationProviderS
     settings-level version override are allowed here. This is what permits a
     laboratory to retain an older approved release while a newer qualified
     release is merely available for approval.
+
+    Approval itself is enforced by ``resolve_approved_normalization_resource``;
+    this function only validates the already-selected resource contract.
     """
     if resource.resource_type.strip().upper() != NORMALIZATION_RESOURCE_TYPE:
         raise NormalizationProviderError(
             f"Resource {resource.id} is not a normalization resource.",
             code="NORMALIZATION_RESOURCE_TYPE_INVALID",
         )
-    if resource.status != "ACTIVE":
+    if resource.status not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}:
         raise NormalizationProviderError(
-            f"Normalization resource {resource.id} is not ACTIVE for execution.",
-            code="NORMALIZATION_RESOURCE_NOT_ACTIVE",
+            f"Normalization resource {resource.id} is not technically qualified for execution.",
+            code="NORMALIZATION_RESOURCE_NOT_QUALIFIED",
         )
     capabilities = _metadata_capabilities(resource)
     if capabilities and "NORMALIZATION" not in capabilities:
@@ -117,9 +120,15 @@ def normalize_with_selected_provider(
     output_path: str | Path,
     *,
     reference_fasta: str | Path,
+    approved: bool,
     source_only_format_fields: list[str] | None = None,
 ) -> tuple[dict, NormalizationProviderSelection]:
     """Execute the exact approved normalization release selected for an analysis."""
+    if not approved:
+        raise NormalizationProviderError(
+            "Normalization execution requires an organization-approved resource binding.",
+            code="NORMALIZATION_LAB_APPROVAL_REQUIRED",
+        )
     selection = resolve_normalization_provider(resource)
     try:
         result = normalize_vcf_with_bcftools(
