@@ -11,6 +11,8 @@ from typing import Any
 
 import httpx
 
+from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+
 
 _REPOSITORY = "samtools/hts-specs"
 _CONTENTS_URL = f"https://api.github.com/repos/{_REPOSITORY}/contents"
@@ -45,6 +47,8 @@ class VCFSpecificationProvider:
             if not match:
                 continue
             version = f"VCFv{match.group(1)}"
+            if version in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+                continue
             document_url = f"{_OFFICIAL_INDEX}{filename}"
             candidates.append({
                 "name": f"VCF specification {version}",
