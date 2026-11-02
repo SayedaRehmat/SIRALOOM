@@ -440,7 +440,12 @@ async def upload_artifact(
         artifact_validation_status = None
         if kind == "VCF":
             result = _validate_vcf_for_upload(staged)
-            if result.sample_names and specimen is None:
+            result = _apply_vcf_specification_governance(
+                db,
+                organization_id=case.organization_id,
+                result=result,
+            )
+            if result.status != "BLOCKED" and result.sample_names and specimen is None:
                 result = ValidationResult(
                     "INVALID", result.file_kind, result.record_count, result.sample_names,
                     result.detected_build,
@@ -448,7 +453,7 @@ async def upload_artifact(
                     result.warnings, result.fileformat, result.metadata,
                     "VCF_SPECIMEN_REQUIRED",
                 )
-            elif specimen is not None:
+            elif result.status != "BLOCKED" and specimen is not None:
                 result = validate_specimen_sample_identity(
                     result,
                     (specimen.metadata_json or {}).get("vcf_sample_name"),
@@ -490,6 +495,9 @@ async def upload_artifact(
             elif result.status == "VALID":
                 validation_metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
                 artifact_validation_status = "VALID"
+            elif result.status == "BLOCKED":
+                validation_metadata["workflow_eligibility"] = "SPECIFICATION_GOVERNANCE_BLOCKED"
+                artifact_validation_status = "BLOCKED"
             else:
                 validation_metadata["workflow_eligibility"] = "INELIGIBLE"
                 artifact_validation_status = result.status
@@ -724,12 +732,22 @@ async def upload_artifact(
 
             audit = AuditService(db)
             audit.record(
-                event_type="ARTIFACT_VALIDATION_COMPLETED" if result.status == "VALID" else "ARTIFACT_VALIDATION_FAILED",
+                event_type=(
+                    "ARTIFACT_VALIDATION_COMPLETED"
+                    if result.status == "VALID"
+                    else "ARTIFACT_VALIDATION_BLOCKED"
+                    if result.status == "BLOCKED"
+                    else "ARTIFACT_VALIDATION_FAILED"
+                ),
                 case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
                 subject_type="ARTIFACT", subject_id=str(artifact.id), operation="VALIDATE",
                 before_state={"case_status": before_status},
                 after_state={"case_status": case.status, "validation_status": result.status},
-                reason="Variant artifact ingestion validation",
+                reason=(
+                    "VCF specification governance blocked intake"
+                    if result.status == "BLOCKED"
+                    else "Variant artifact ingestion validation"
+                ),
                 output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
                 payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
             )
