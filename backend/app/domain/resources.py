@@ -560,6 +560,87 @@ def _record_resource_adoption_audit(
     db.add(event)
     return event
 
+def require_approved_vcf_specification(
+    db: Session,
+    *,
+    organization_id: UUID,
+    version: str,
+) -> dict[str, object]:
+    """Require an organization binding for non-built-in VCF specification versions."""
+    from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+
+    requested_version = str(version or "").strip()
+    if requested_version in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+        return {
+            "source": "BUILTIN_SIRALOOM_PROFILE",
+            "version": requested_version,
+            "approval_required": False,
+        }
+
+    resource = get_active_resource_for_organization(
+        db,
+        organization_id=organization_id,
+        name="VCF specification",
+        provider="HTS-Specifications",
+        resource_type="VCF_SPECIFICATION",
+        genome_build=None,
+    )
+    if resource is None or resource.version != requested_version:
+        raise ResourceRegistryError(
+            f"VCF specification {requested_version!r} requires a qualified, laboratory-approved resource binding"
+        )
+    if resource.status not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}:
+        raise ResourceRegistryError(
+            f"VCF specification {requested_version!r} is not qualified for laboratory use"
+        )
+
+    qualification = db.scalar(
+        select(ResourceQualification)
+        .where(
+            ResourceQualification.resource_id == resource.id,
+            ResourceQualification.status == "QUALIFIED",
+        )
+        .order_by(ResourceQualification.qualified_at.desc())
+        .limit(1)
+    )
+    if qualification is None:
+        raise ResourceRegistryError(
+            f"VCF specification {requested_version!r} has no successful conformance qualification"
+        )
+
+    identity_key = "|".join([
+        "VCF specification",
+        "HTS-Specifications",
+        "VCF_SPECIFICATION",
+        "UNSPECIFIED",
+    ])
+    binding = db.scalar(
+        select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == organization_id,
+            OrganizationResourceBinding.identity_key == identity_key,
+            OrganizationResourceBinding.resource_id == resource.id,
+        )
+    )
+    if binding is None:
+        raise ResourceRegistryError(
+            f"VCF specification {requested_version!r} has no active laboratory approval binding"
+        )
+
+    return {
+        "source": "LAB_APPROVED_RESOURCE",
+        "version": requested_version,
+        "approval_required": True,
+        "resource_id": str(resource.id),
+        "resource_checksum": resource.checksum,
+        "qualification_id": str(qualification.id),
+        "qualification_version": qualification.qualification_version,
+        "binding_id": str(binding.id),
+        "binding_version": binding.version,
+        "approved_at": binding.bound_at.isoformat() if binding.bound_at else None,
+        "approved_by": str(binding.bound_by) if binding.bound_by else None,
+    }
+
+
 def get_active_resource_for_organization(
     db: Session, *, organization_id: UUID, name: str, provider: str,
     resource_type: str, genome_build: str | None,
