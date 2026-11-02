@@ -9,7 +9,11 @@ from pathlib import Path
 
 from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
-from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    read_vcf_fileformat,
+    validate_vcf_strict,
+)
 
 PRIMARY_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
 INDEX_SUFFIXES = (".tbi", ".csi")
@@ -199,6 +203,10 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     fileformat: str | None = None
     bcftools_version: str | None = None
     htslib_version: str | None = None
+    # Preserve the declared version even when the current parser does not
+    # implement it. The upload boundary uses this identity for a governance
+    # block instead of misclassifying a future specification as malformed.
+    fileformat = read_vcf_fileformat(p)
     try:
         strict_profile = validate_vcf_strict(p)
         compression = strict_profile["compression"]
