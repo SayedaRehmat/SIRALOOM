@@ -41,7 +41,7 @@ def _pinned_ncbi_reference_resource():
         gzi_sha256=GZI_SHA256,
         contigs_sha256=contigs_sha256,
         assembly_name="GRCh38.p14",
-        assembly_accession="GCA_000001405.29",
+        assembly_accession="GCF_000001405.40",
         reference_source="NCBI RefSeq EFetch NC_000007.14",
         sequence_scope=REFERENCE_VERSION,
         schema_version=REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
@@ -58,7 +58,7 @@ def _pinned_ncbi_reference_resource():
         metadata_json={
             "schema_version": REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
             "assembly_name": "GRCh38.p14",
-            "assembly_accession": "GCA_000001405.29",
+            "assembly_accession": "GCF_000001405.40",
             "reference_source": "NCBI RefSeq EFetch NC_000007.14",
             "sequence_scope": REFERENCE_VERSION,
             "contig_policy": "EXACT",
@@ -78,7 +78,7 @@ def test_ncbi_grch38p14_bgzf_region_package_and_braf_ref_allele(tmp_path: Path):
     resource = _pinned_ncbi_reference_resource()
     package = validate_reference_package(resource, expected_genome_build="GRCh38")
     assert package["assembly_name"] == "GRCh38.p14"
-    assert package["assembly_accession"] == "GCA_000001405.29"
+    assert package["assembly_accession"] == "GCF_000001405.40"
     assert package["contigs"] == [{"name": "7", "length": 1_000_000}]
 
     vcf = tmp_path / "braf-v600e-region.vcf"

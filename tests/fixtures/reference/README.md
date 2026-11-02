@@ -1,7 +1,7 @@
 # Pinned regional reference fixture
 
 - **Source:** NCBI RefSeq primary-assembly chromosome `NC_000007.14`, GRCh38.p14.
-- **Assembly:** GRCh38.p14, GenBank assembly accession `GCA_000001405.29`.
+- **Assembly:** GRCh38.p14 RefSeq, assembly accession `GCF_000001405.40` (`NC_000007.14`). The NCBI assembly report states the RefSeq and GenBank assemblies are not identical; this fixture records the RefSeq source identity, not the GenBank accession.
 - **Interval:** 1-based `140253336-141253335` (1,000,000 bases).
 - **Retrieval:** NCBI E-utilities EFetch on 2026-11-02 with `db=nuccore`, `id=NC_000007.14`, `seq_start=140253336`, `seq_stop=141253335`, `rettype=fasta`, `retmode=text`.
 - **Index generation:** `bgzip (htslib) 1.19` generated the BGZF stream and GZI; `samtools 1.19.2` generated the FAI. The checked-in hashes pin all three bytes.
