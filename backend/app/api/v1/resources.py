@@ -779,6 +779,12 @@ def qualify_resource(
             checks=result.checks,
             qualified_by=principal.user_id,
         )
+        if result.passed:
+            from backend.app.domain.resource_discovery import notify_organizations_of_qualified_release
+
+            notify_organizations_of_qualified_release(
+                db, resource=row, qualification=qualification
+            )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     AuditService(db).record(
