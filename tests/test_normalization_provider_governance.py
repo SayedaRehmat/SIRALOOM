@@ -91,3 +91,32 @@ def test_execution_uses_selected_resource_version_not_global_settings(monkeypatc
     assert observed["bcftools_executable"] == "bcftools"
     assert result["provider_version"] == "1.25"
     assert selection.version == "1.25"
+
+def test_provider_uses_the_exact_executable_that_was_qualified():
+    resource = _resource(version="1.25")
+    resource.metadata_json["execution"]["toolchain"] = {
+        "bcftools": {
+            "version": "1.25",
+            "executable": "/opt/siraloom/tools/bcftools/1.25/bin/bcftools",
+        }
+    }
+
+    selection = resolve_normalization_provider(resource)
+
+    assert selection.executable == "/opt/siraloom/tools/bcftools/1.25/bin/bcftools"
+
+
+def test_provider_blocks_execution_contract_version_drift():
+    resource = _resource(version="1.25")
+    resource.metadata_json["execution"]["toolchain"] = {
+        "bcftools": {
+            "version": "1.26",
+            "executable": "/opt/siraloom/tools/bcftools/1.26/bin/bcftools",
+        }
+    }
+
+    with pytest.raises(NormalizationProviderError) as exc:
+        resolve_normalization_provider(resource)
+
+    assert exc.value.code == "NORMALIZATION_EXECUTION_VERSION_CONTRACT_MISMATCH"
+
