@@ -2381,6 +2381,11 @@ def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path:
     assert matrix["reserved_info_format_definitions"]["status"] == "NATIVE_VALIDATED"
     assert matrix["structured_meta_headers"]["status"] == "NATIVE_VALIDATED"
     assert matrix["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
+    assert matrix["breakend_replacement_and_mate_links"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["genotype_ploidy_number_g_cardinality"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["symbolic_structural_variant_span"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["gatk_gvcf_non_ref_end_interoperability"]["status"] == "PRODUCER_INTEROPERABILITY_VALIDATED"
+    assert matrix["gatk_gvcf_non_ref_end_interoperability"]["specification_scope"].startswith("GATK producer interoperability")
 
     older = {
         item["feature_id"]: item
