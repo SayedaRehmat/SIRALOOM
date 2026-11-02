@@ -130,6 +130,11 @@ def run_resource_lifecycle(
         )
     )
     if qualification is not None and qualification.status == "QUALIFIED":
+        from backend.app.domain.resource_discovery import notify_organizations_of_qualified_release
+
+        notify_organizations_of_qualified_release(
+            db, resource=resource, qualification=qualification
+        )
         return ResourceLifecycleResult(
             resource=resource,
             staging=staging,
@@ -191,6 +196,11 @@ def run_resource_lifecycle(
     )
 
     if result.passed:
+        from backend.app.domain.resource_discovery import notify_organizations_of_qualified_release
+
+        notify_organizations_of_qualified_release(
+            db, resource=resource, qualification=qualification
+        )
         return ResourceLifecycleResult(
             resource=resource,
             staging=staging,
