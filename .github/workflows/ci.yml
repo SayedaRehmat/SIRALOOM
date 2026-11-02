@@ -197,7 +197,7 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: demo
         run: npm run build
       - name: Build production frontend container
-        working-directory: . 
+        working-directory: .
         run: |
           docker build -f frontend/Dockerfile \
             --build-arg NEXT_PUBLIC_SIRALOOM_API_BASE=https://example.invalid/api/v1 \
