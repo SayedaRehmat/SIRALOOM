@@ -5,6 +5,7 @@ import zlib
 import pytest
 
 from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
+from backend.app.domain.vcf_spec_registry import get_vcf_specification_profile
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     _validate_record,
@@ -2420,3 +2421,24 @@ def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path:
 def test_vcf_feature_qualification_rejects_unknown_specification_versions():
     with pytest.raises(ValueError, match="Unsupported VCF specification version"):
         feature_compatibility_for_version("VCFv4.6")
+
+def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scope():
+    legacy = get_vcf_specification_profile("VCFv4.0")
+    assert legacy.support_status == "LEGACY_COMPATIBILITY_ONLY"
+    assert legacy.validation_mode == "LEGACY_PARSER_SMOKE_ONLY"
+    assert legacy.specification_document is None
+
+    for minor in range(1, 6):
+        version = f"VCFv4.{minor}"
+        profile = get_vcf_specification_profile(version)
+        assert profile.support_status == "SUPPORTED"
+        assert profile.specification_document == (
+            f"https://samtools.github.io/hts-specs/{version}.pdf"
+        )
+        assert "feature compatibility matrix" in profile.notes
+
+
+def test_unknown_future_vcf_specification_does_not_get_an_implicit_profile():
+    with pytest.raises(ValueError, match="Unsupported VCF specification version"):
+        get_vcf_specification_profile("VCFv4.6")
+
