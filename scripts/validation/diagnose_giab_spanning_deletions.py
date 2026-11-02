@@ -4,8 +4,8 @@
 This is a diagnostic, not a clinical qualification or a policy change. It runs
 the current production strict validator against the complete public benchmark
 VCF and records the exact target record, nearby records, overlapping deletion
-candidates, genotype-carrier indices, and validator outcome. Sample identifiers
-and non-target VCF records are never copied into the evidence.
+candidates, genotype-carrier indices, and validator outcome. Sample identifiers are never copied; only the target and
+bounded nearby records needed to explain its context are retained.
 """
 from __future__ import annotations
 
