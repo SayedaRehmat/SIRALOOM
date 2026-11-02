@@ -90,6 +90,24 @@ def test_strict_validation_records_orphan_spanning_deletion_as_record_warning(tm
     assert "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED" in profile["warning_codes"]
 
 
+
+
+def test_strict_validation_requires_spanning_deletion_context_in_same_sample(tmp_path: Path):
+    path = tmp_path / "different-sample-star.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSTAR_CARRIER\tDELETION_CARRIER\n"
+        "1\t10\tdel\tAT\tA\t.\tPASS\t.\tGT\t0/0\t0/1\n"
+        "1\t11\tstar\tT\t*\t.\tPASS\t.\tGT\t0/1\t0/0\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["unresolved_spanning_deletion_record_count"] == 1
+    assert profile["unresolved_spanning_deletion_records"][0]["record_index"] == 2
+
 def test_strict_validation_accepts_spanning_deletion_with_same_sample_context(tmp_path: Path):
     path = tmp_path / "resolved-star.vcf"
     write_vcf_with_metadata(
