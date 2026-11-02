@@ -39,6 +39,9 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["backend*"]
 
+[tool.setuptools.package-data]
+"backend.app.domain" = ["vcf_conformance_cases.json"]
+
 [tool.ruff]
 line-length = 100
 
