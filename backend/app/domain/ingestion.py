@@ -372,9 +372,9 @@ def validate_vcf(
         if bcftools_version is not None:
             failure_metadata = {
                 "bcftools_version": bcftools_version,
-                "expected_bcftools_version": settings.bcftools_version,
+                "expected_bcftools_version": expected_bcftools_version,
                 "htslib_version": htslib_version,
-                "expected_htslib_version": settings.htslib_version,
+                "expected_htslib_version": expected_htslib_version,
                 "toolchain_validation_status": "PASS",
             }
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat, failure_metadata)
