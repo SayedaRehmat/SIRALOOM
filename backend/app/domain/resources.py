@@ -48,6 +48,15 @@ class ResourceRegistryError(ValueError):
     pass
 
 
+class VCFSpecificationApprovalError(ResourceRegistryError):
+    """Typed, auditable VCF specification governance block."""
+
+    def __init__(self, message: str, *, code: str, next_step: str):
+        super().__init__(message)
+        self.code = code
+        self.next_step = next_step
+
+
 def _require_approvable_resource_status(resource: Resource) -> None:
     if resource.status not in _APPROVABLE_RESOURCE_STATUSES:
         raise ResourceRegistryError(
@@ -589,9 +598,10 @@ def require_approved_vcf_specification(
         ).limit(1)
     )
     if resource is None:
-        raise ResourceRegistryError(
-            f"VCF specification {requested_version!r} has no registered qualified release; "
-            "laboratory approval cannot be requested until the official release is discovered and qualified"
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} has no registered qualified release",
+            code="VCF_SPECIFICATION_RELEASE_NOT_REGISTERED",
+            next_step="OFFICIAL_SPECIFICATION_DISCOVERY_AND_QUALIFICATION_REQUIRED",
         )
 
     approval = db.scalar(
@@ -601,17 +611,23 @@ def require_approved_vcf_specification(
         ).limit(1)
     )
     if approval is not None and approval.status == "PENDING":
-        raise ResourceRegistryError(
-            f"VCF specification {requested_version!r} is awaiting an explicit laboratory approval decision"
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} is awaiting an explicit laboratory approval decision",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
+            next_step="LAB_APPROVAL_REQUIRED",
         )
     if approval is not None and approval.status == "REJECTED":
-        raise ResourceRegistryError(
+        raise VCFSpecificationApprovalError(
             f"VCF specification {requested_version!r} was rejected by this laboratory; "
-            "the previously approved specification remains in effect"
+            "the previously approved specification remains in effect",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
+            next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
         )
     if resource.status not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}:
-        raise ResourceRegistryError(
-            f"VCF specification {requested_version!r} is not qualified for laboratory use"
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} is not qualified for laboratory use",
+            code="VCF_SPECIFICATION_QUALIFICATION_REQUIRED",
+            next_step="PARSER_CONFORMANCE_QUALIFICATION_REQUIRED",
         )
 
     qualification = db.scalar(
@@ -624,8 +640,10 @@ def require_approved_vcf_specification(
         .limit(1)
     )
     if qualification is None:
-        raise ResourceRegistryError(
-            f"VCF specification {requested_version!r} has no successful conformance qualification"
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} has no successful conformance qualification",
+            code="VCF_SPECIFICATION_QUALIFICATION_REQUIRED",
+            next_step="PARSER_CONFORMANCE_QUALIFICATION_REQUIRED",
         )
 
     identity_key = "|".join([
@@ -642,8 +660,10 @@ def require_approved_vcf_specification(
         )
     )
     if binding is None:
-        raise ResourceRegistryError(
-            f"VCF specification {requested_version!r} has no active laboratory approval binding"
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} has no active laboratory approval binding",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            next_step="LAB_APPROVAL_REQUIRED",
         )
 
     return {
