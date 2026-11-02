@@ -8,7 +8,10 @@ import zlib
 from math import comb, isnan
 from pathlib import Path
 
-SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
+from backend.app.domain.vcf_spec_registry import (
+    SUPPORTED_VCF_VERSIONS,
+    get_vcf_specification_profile,
+)
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 VCF_CONTIG_NAME_RE = re.compile(
@@ -2108,8 +2111,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 code="VCF_SPANNING_DELETION_CONTEXT_MISSING",
             )
 
+    specification_profile = get_vcf_specification_profile(fileformat)
     return {
         "fileformat": fileformat,
+        "format_compatibility": {
+            "support_status": specification_profile.support_status,
+            "validation_mode": specification_profile.validation_mode,
+            "specification_repository": specification_profile.specification_repository,
+            "specification_document": specification_profile.specification_document,
+            "notes": specification_profile.notes,
+        },
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,
