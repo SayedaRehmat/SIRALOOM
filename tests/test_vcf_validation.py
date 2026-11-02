@@ -2380,6 +2380,7 @@ def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path:
     assert matrix["base_modification_format_fields"]["status"] == "NATIVE_VALIDATED"
     assert matrix["reserved_info_format_definitions"]["status"] == "NATIVE_VALIDATED"
     assert matrix["structured_meta_headers"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["unspecified_allele_reference_block_len"]["status"] == "NATIVE_VALIDATED"
     assert matrix["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
     assert matrix["breakend_replacement_and_mate_links"]["status"] == "NATIVE_VALIDATED"
     assert matrix["genotype_ploidy_number_g_cardinality"]["status"] == "NATIVE_VALIDATED"
