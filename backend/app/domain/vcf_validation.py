@@ -1847,7 +1847,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             (match.group(2), int(match.group(3)))
                             for alt in alts
                             if "[" in alt or "]" in alt
-                            for match in [re.search(r"([\\[\\]])([^:\\[\\]]+):([1-9][0-9]*)\\1", alt)]
+                            for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
                             if match is not None
                         )
                         mate_links = []
