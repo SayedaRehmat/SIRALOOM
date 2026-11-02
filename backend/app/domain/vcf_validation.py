@@ -178,6 +178,7 @@ def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
         "SVTYPE": ("1", "String"),
         "CIPOS": (".", "Integer"),
         "CIEND": (".", "Integer"),
+        "CILEN": (".", "Integer"),
         "HOMLEN": ("A", "Integer"),
         "HOMSEQ": ("A", "String"),
         "BKPTID": ("A", "String"),
@@ -1144,23 +1145,58 @@ def _validate_vcf45_structural_info(
                     )
                 continue
             lower_offset, upper_offset = int(lower), int(upper)
+            symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
+            if key in {"CIPOS", "CIEND"} and not symbolic_sv:
+                raise StrictVCFValidationError(
+                    f"INFO/{key} must be missing for non-symbolic structural alleles at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
             if key == "CIPOS" and (lower_offset > 0 or upper_offset < 0):
                 raise StrictVCFValidationError(
                     f"INFO/CIPOS interval must span zero at line {line_no}",
                     code="VCF_SV_INFO_INTERVAL_INVALID",
                 )
-            if key == "CIEND":
-                symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
-                if not symbolic_sv:
+            if key == "CIEND" and (lower_offset > 0 or upper_offset < 0):
+                raise StrictVCFValidationError(
+                    f"INFO/CIEND interval must extend on both sides of zero at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+
+    # VCFv4.5 CILEN stores lower/upper bounds for the SVLEN confidence interval.
+    raw_cilen = info.get("CILEN")
+    if raw_cilen not in {None, "."}:
+        cilen_values = raw_cilen.split(",")
+        if len(cilen_values) != 2 * len(alts):
+            raise StrictVCFValidationError(
+                f"INFO/CILEN requires two bounds per ALT allele at line {line_no}",
+                code="VCF_SV_INFO_CARDINALITY_INVALID",
+            )
+        for alt_index, alternate in enumerate(alts):
+            lower, upper = cilen_values[2 * alt_index : 2 * alt_index + 2]
+            symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
+            if lower == "." or upper == ".":
+                if lower != upper:
                     raise StrictVCFValidationError(
-                        f"INFO/CIEND must be missing for non-symbolic structural alleles at line {line_no}",
+                        f"INFO/CILEN interval must provide both bounds or both missing values at line {line_no}",
                         code="VCF_SV_INFO_INTERVAL_INVALID",
                     )
-                if lower_offset > 0 or upper_offset < 0:
+                if symbolic_sv:
                     raise StrictVCFValidationError(
-                        f"INFO/CIEND interval must extend on both sides of zero at line {line_no}",
+                        f"INFO/CILEN bounds are required for symbolic structural ALT {alt_index + 1} when CILEN is present at line {line_no}",
                         code="VCF_SV_INFO_INTERVAL_INVALID",
                     )
+                continue
+            if not symbolic_sv:
+                raise StrictVCFValidationError(
+                    f"INFO/CILEN must be missing for non-symbolic ALT {alt_index + 1} at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+            lower_bound, upper_bound = int(lower), int(upper)
+            if lower_bound > upper_bound:
+                raise StrictVCFValidationError(
+                    f"INFO/CILEN lower bound exceeds upper bound at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
 
     # VCFv4.5: when IMPRECISE is present, symbolic SV alleles may omit
     # CIPOS to indicate an unspecified confidence interval. Any precise ALT
