@@ -184,6 +184,32 @@ def _notify_organizations_of_release(
     recipients = db.execute(query).all()
     created = 0
     for membership, user in recipients:
+        if resource.resource_type == "VCF_SPECIFICATION":
+            title = f"Qualified VCF specification available: {resource.version}"
+            body = (
+                f"SIRALOOM has qualified parser conformance for {resource.version}. "
+                "Your laboratory must approve this exact specification version before "
+                "files declaring it can enter clinical analysis."
+            )
+            title_ar = f"مواصفة VCF مؤهلة متاحة: {resource.version}"
+            body_ar = (
+                f"أكمل SIRALOOM تأهيل توافق المحلل للمواصفة {resource.version}. "
+                "يجب على المختبر الموافقة على هذا الإصدار تحديدًا قبل إدخال الملفات "
+                "التي تعلنه في التحليل السريري."
+            )
+        else:
+            title = f"Qualified normalization release available: {resource.name} {resource.version}"
+            body = (
+                f"SIRALOOM has technically qualified {resource.provider} version {resource.version}. "
+                "Your laboratory must approve or reject this release before new analyses can use it. "
+                "Your currently approved normalization resource remains unchanged until approval."
+            )
+            title_ar = f"إصدار تطبيع مؤهل متاح: {resource.name} {resource.version}"
+            body_ar = (
+                f"أكمل SIRALOOM التأهيل التقني للإصدار {resource.version} من {resource.provider}. "
+                "يجب على المختبر الموافقة على هذا الإصدار أو رفضه قبل استخدامه في التحليلات الجديدة. "
+                "سيظل مورد التطبيع المعتمد حاليًا دون تغيير حتى الموافقة."
+            )
         db.add(Notification(
             id=uuid4(),
             organization_id=membership.organization_id,
@@ -230,7 +256,7 @@ def notify_organizations_of_qualified_release(
     receives its own pending decision; no active binding is changed here.
     """
     if (
-        str(resource.resource_type or "").strip().upper() != "NORMALIZATION"
+        str(resource.resource_type or "").strip().upper() not in {"NORMALIZATION", "VCF_SPECIFICATION"}
         or str(qualification.status or "").strip().upper() != "QUALIFIED"
         or str(resource.status or "").strip().upper() not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}
     ):
@@ -287,12 +313,8 @@ def notify_organizations_of_qualified_release(
             user_id=membership.user_id,
             notification_type="RESOURCE_RELEASE_QUALIFIED",
             status="UNREAD",
-            title=f"Qualified normalization release available: {resource.name} {resource.version}",
-            body=(
-                f"SIRALOOM has technically qualified {resource.provider} version {resource.version}. "
-                "Your laboratory must approve or reject this release before new analyses can use it. "
-                "Your currently approved normalization resource remains unchanged until approval."
-            ),
+            title=title,
+            body=body,
             metadata_json={
                 "resource_id": str(resource.id),
                 "qualification_id": str(qualification.id),
@@ -303,12 +325,8 @@ def notify_organizations_of_qualified_release(
                 "release_version": resource.version,
                 "checksum": resource.checksum,
                 "requires_lab_decision": True,
-                "title_ar": f"إصدار تطبيع مؤهل متاح: {resource.name} {resource.version}",
-                "body_ar": (
-                    f"أكمل SIRALOOM التأهيل التقني للإصدار {resource.version} من {resource.provider}. "
-                    "يجب على المختبر الموافقة على هذا الإصدار أو رفضه قبل استخدامه في التحليلات الجديدة. "
-                    "سيظل مورد التطبيع المعتمد حاليًا دون تغيير حتى الموافقة."
-                ),
+                "title_ar": title_ar,
+                "body_ar": body_ar,
             },
         ))
         AuditService(db).record(
