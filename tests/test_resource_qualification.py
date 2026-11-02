@@ -370,16 +370,16 @@ def test_bcftools_qualification_checks_exact_version_and_normalization_contract(
     def fake_run(command, **kwargs):
         calls.append(command)
         if command[-1] == "--version":
-            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\\nUsing htslib 1.25", stderr="")
+            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\nUsing htslib 1.25", stderr="")
         output_path = Path(command[command.index("-o") + 1])
         input_path = Path(command[-1])
         if input_path.name == "source.vcf":
             output_path.write_text(
-                "##fileformat=VCFv4.2\\n"
-                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-                "chr1\\t1\\t.\\tCA\\tC\\t.\\tPASS\\t.\\n"
-                "chr1\\t7\\t.\\tC\\tT\\t.\\tPASS\\t.\\n"
-                "chr1\\t7\\t.\\tC\\tG\\t.\\tPASS\\t.\\n",
+                "##fileformat=VCFv4.2\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t1\t.\tCA\tC\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tT\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tG\t.\tPASS\t.\n",
                 encoding="ascii",
             )
             return SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -404,7 +404,7 @@ def test_bcftools_qualification_blocks_exact_version_mismatch(monkeypatch, tmp_p
     monkeypatch.setattr(
         "backend.app.domain.resource_qualification.subprocess.run",
         lambda *_args, **_kwargs: SimpleNamespace(
-            returncode=0, stdout="bcftools 1.26\\nUsing htslib 1.26", stderr=""
+            returncode=0, stdout="bcftools 1.26\nUsing htslib 1.26", stderr=""
         ),
     )
 
