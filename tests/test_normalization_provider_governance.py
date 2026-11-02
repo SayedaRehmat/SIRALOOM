@@ -34,9 +34,10 @@ def test_selected_release_is_exact_version_not_latest_lookup():
     assert selection.executable == "bcftools"
 
 
-def test_new_qualified_release_does_not_execute_until_active_binding_selects_it():
-    with pytest.raises(NormalizationProviderError, match="not ACTIVE"):
-        resolve_normalization_provider(_resource(status="QUALIFIED", version="1.26"))
+def test_qualified_release_can_be_selected_after_approval_resolution():
+    selection = resolve_normalization_provider(_resource(status="QUALIFIED", version="1.26"))
+
+    assert selection.version == "1.26"
 
 
 def test_unknown_normalization_provider_fails_closed():
@@ -44,7 +45,25 @@ def test_unknown_normalization_provider_fails_closed():
         resolve_normalization_provider(_resource(provider="future-normalizer", version="2.0"))
 
 
-def test_execution_uses_resource_version_and_does_not_read_global_settings(monkeypatch, tmp_path):
+def test_unqualified_candidate_cannot_execute():
+    resource = _resource(status="CANDIDATE", version="1.26")
+    with pytest.raises(NormalizationProviderError, match="not technically qualified"):
+        resolve_normalization_provider(resource)
+
+
+def test_execution_requires_explicit_lab_approval(monkeypatch, tmp_path):
+    resource = _resource(version="1.25")
+    with pytest.raises(NormalizationProviderError, match="organization-approved"):
+        normalize_with_selected_provider(
+            resource,
+            tmp_path / "input.vcf",
+            tmp_path / "output.vcf.gz",
+            reference_fasta=tmp_path / "GRCh38.fa",
+            approved=False,
+        )
+
+
+def test_execution_uses_selected_resource_version_not_global_settings(monkeypatch, tmp_path):
     resource = _resource(version="1.25")
     observed = {}
 
@@ -65,6 +84,7 @@ def test_execution_uses_resource_version_and_does_not_read_global_settings(monke
         tmp_path / "input.vcf",
         tmp_path / "output.vcf.gz",
         reference_fasta=tmp_path / "GRCh38.fa",
+        approved=True,
     )
 
     assert observed["expected_bcftools_version"] == "1.25"
