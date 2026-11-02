@@ -471,7 +471,7 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
 
         # A newly qualified version is not implicitly approved, and its
         # pending request does not replace the laboratory's VCFv4.6 approval.
-        with pytest.raises(ValueError, match="laboratory-approved"):
+        with pytest.raises(ValueError, match="awaiting an explicit laboratory approval"):
             require_approved_vcf_specification(
                 db, organization_id=organization_id, version="VCFv4.7"
             )
@@ -484,14 +484,37 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
             approval_id=approval47.id,
             organization_id=organization_id,
             actor_id=user_id,
+            decision="REJECTED",
+            expected_version=1,
+            reason="Laboratory retains its previously approved specification",
+        )
+        with pytest.raises(ValueError, match="was rejected by this laboratory"):
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.7"
+            )
+        assert require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )["resource_id"] == str(v46.id)
+
+        v48, _q48 = add_qualified_spec("VCFv4.8")
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v48, qualification=_q48
+        ) == 1
+        approval48 = db.query(ResourceApproval).filter_by(resource_id=v48.id).one()
+        assert approval48.status == "PENDING"
+        decide_resource_approval(
+            db,
+            approval_id=approval48.id,
+            organization_id=organization_id,
+            actor_id=user_id,
             decision="APPROVED",
             expected_version=1,
-            reason="Laboratory separately approved VCFv4.7",
+            reason="Laboratory separately approved VCFv4.8",
         )
-        snapshot47 = require_approved_vcf_specification(
-            db, organization_id=organization_id, version="VCFv4.7"
+        snapshot48 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.8"
         )
-        assert snapshot47["resource_id"] == str(v47.id)
+        assert snapshot48["resource_id"] == str(v48.id)
         assert require_approved_vcf_specification(
             db, organization_id=organization_id, version="VCFv4.6"
         )["resource_id"] == str(v46.id)
