@@ -424,19 +424,21 @@ def test_gatk_is_not_qualified_through_the_bcftools_adapter(tmp_path):
     assert "NORMALIZATION_PROVIDER_ADAPTER_NOT_IMPLEMENTED" in result.blockers
     assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
 
-def _vcf_specification_resource(tmp_path: Path, *, include_conformance: bool):
-    document = tmp_path / "VCFv4.6.pdf"
+def _vcf_specification_resource(
+    tmp_path: Path,
+    *,
+    version: str = "VCFv4.6",
+    include_conformance: bool = True,
+):
+    document = tmp_path / f"{version}.pdf"
     document.write_bytes(b"%PDF-1.7\nSynthetic official-specification PDF fixture\n%%EOF\n")
-    report = tmp_path / "vcf-conformance-report.json"
-    report.write_text('{"suite":"siraloom-vcf-v4.6","passed":12,"failed":0}', encoding="utf-8")
     document_sha256 = sha256(document.read_bytes()).hexdigest()
-    report_sha256 = sha256(report.read_bytes()).hexdigest()
     metadata = {
         "source_contract": {
             "publisher": "Samtools HTS Specifications maintainers",
             "canonical_source_url": "https://github.com/samtools/hts-specs",
-            "artifact_url": "https://samtools.github.io/hts-specs/VCFv4.6.pdf",
-            "release_identity": "VCFv4.6",
+            "artifact_url": f"https://samtools.github.io/hts-specs/{version}.pdf",
+            "release_identity": version,
             "access_mode": "PUBLIC",
             "license_status": "NOT_REQUIRED",
             "checksum_status": "PUBLISHED_AND_VERIFIED",
@@ -444,32 +446,34 @@ def _vcf_specification_resource(tmp_path: Path, *, include_conformance: bool):
         },
         "execution": {
             "provider_id": "HTS-Specifications",
-            "provider_version": "VCFv4.6",
+            "provider_version": version,
             "access_method": "HTTPS",
-            "endpoint": "https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+            "endpoint": f"https://samtools.github.io/hts-specs/{version}.pdf",
         },
-        "specification_version": "VCFv4.6",
-        "official_document_url": "https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+        "specification_version": version,
+        "official_document_url": f"https://samtools.github.io/hts-specs/{version}.pdf",
     }
     if include_conformance:
+        # Deliberately spoofed claims: qualification must ignore these values
+        # and execute SIRALOOM's packaged parser conformance corpus itself.
         metadata["specification_conformance"] = {
-            "profile_id": "siraloom-vcf-v4.6-profile-1",
-            "suite_version": "siraloom-vcf-conformance-1",
+            "profile_id": f"siraloom-{version}-profile-1",
+            "suite_version": "1",
             "execution_status": "PASSED",
-            "normative_clause_ids": ["VCFv4.6-4.2", "VCFv4.6-5.1"],
+            "normative_clause_ids": [f"{version}-4.2", f"{version}-5.1"],
             "unsupported_constructs": [],
             "unsupported_policy": "FAIL_CLOSED",
-            "test_case_count": 12,
+            "test_case_count": 999999,
             "failed_test_count": 0,
-            "report_path": str(report.resolve()),
-            "report_sha256": report_sha256,
+            "report_path": "/tmp/fabricated-report.json",
+            "report_sha256": "0" * 64,
         }
     resource = Resource(
         id=uuid4(),
-        name="VCF specification VCFv4.6",
+        name=f"VCF specification {version}",
         provider="HTS-Specifications",
         resource_type="VCF_SPECIFICATION",
-        version="VCFv4.6",
+        version=version,
         genome_build=None,
         access_method="HTTPS",
         license_text=None,
@@ -479,31 +483,32 @@ def _vcf_specification_resource(tmp_path: Path, *, include_conformance: bool):
         organization_id=None,
         metadata_json=metadata,
     )
-    return resource, report
+    return resource
 
 
-def test_new_vcf_specification_cannot_qualify_without_parser_conformance_evidence(tmp_path):
-    resource, _report = _vcf_specification_resource(tmp_path, include_conformance=False)
+def test_new_vcf_specification_cannot_qualify_from_metadata_claims_without_executable_suite(tmp_path):
+    resource = _vcf_specification_resource(tmp_path, version="VCFv4.6")
 
     result = qualify_resource(resource, staging=_staging(resource))
 
     assert result.passed is False
-    assert "VCF_SPECIFICATION_CONFORMANCE_NOT_QUALIFIED" in result.blockers
+    assert "VCF_SPECIFICATION_CONFORMANCE_EXECUTION_FAILED" in result.blockers
     assert result.checks["vcf_specification"]["status"] == "BLOCKED"
+    assert result.checks["vcf_specification"]["test_case_count"] == 0
 
 
-def test_new_vcf_specification_qualification_verifies_pdf_and_conformance_report_hash(tmp_path):
-    resource, report = _vcf_specification_resource(tmp_path, include_conformance=True)
+def test_new_vcf_specification_qualification_executes_pinned_parser_corpus(tmp_path):
+    resource = _vcf_specification_resource(tmp_path, version="VCFv4.5")
 
     result = qualify_resource(resource, staging=_staging(resource))
 
     assert result.passed is True
-    assert result.checks["vcf_specification"]["status"] == "QUALIFIED"
-    assert result.checks["vcf_specification"]["document_pdf_integrity"] == "PASS"
-    assert result.checks["vcf_specification"]["conformance_report_sha256"] == sha256(report.read_bytes()).hexdigest()
-
-    report.write_text("tampered", encoding="utf-8")
-    rerun = qualify_resource(resource, staging=_staging(resource))
-    assert rerun.passed is False
-    assert "VCF_SPECIFICATION_CONFORMANCE_NOT_QUALIFIED" in rerun.blockers
-
+    evidence = result.checks["vcf_specification"]
+    assert evidence["status"] == "QUALIFIED"
+    assert evidence["document_pdf_integrity"] == "PASS"
+    assert evidence["test_case_count"] > 0
+    assert evidence["failed_test_count"] == 0
+    assert evidence["execution_report"]["execution_status"] == "PASSED"
+    assert evidence["execution_report"]["target_version"] == "VCFv4.5"
+    assert evidence["execution_report_sha256"] == evidence["execution_report"]["report_sha256"]
+    assert evidence["execution_report"]["test_case_count"] != 999999
