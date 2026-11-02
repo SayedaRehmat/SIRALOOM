@@ -15,7 +15,6 @@ import hashlib
 import json
 import os
 import re
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TextIO
@@ -193,8 +192,10 @@ def collect_context(vcf_path: Path, reference_build: str) -> dict[str, Any]:
         "overlapping_deletion_candidate_count": len(deletion_candidates),
         "overlapping_deletion_candidates": deletion_candidates,
         "candidate_carrier_matches": carrier_matches,
-        "same_sample_deletion_context_found": any(match is True for match in carrier_matches)
-        or any(carriers is None for carriers in deletion_candidate_carriers),
+        "same_sample_deletion_context_found": any(match is True for match in carrier_matches),
+        "same_sample_deletion_context_indeterminate": any(
+            match is None for match in carrier_matches
+        ) or star_carriers is None,
     }
 
 
