@@ -69,3 +69,20 @@ def test_conformance_manifest_has_normative_documents_for_maintained_versions():
     for version, document in manifest["normative_documents"].items():
         assert document.endswith(f"/{version}.pdf")
     assert "legacy compatibility smoke" in manifest["legacy_compatibility_note"].lower()
+
+
+def test_producer_interoperability_fixtures_are_not_misreported_as_normative_vcf_conformance():
+    manifest = _load_fixture_manifest()
+    interoperability = [
+        fixture
+        for fixtures in manifest["versions"].values()
+        for fixture in fixtures
+        if fixture.get("qualification_scope") == "producer_interoperability"
+    ]
+
+    assert interoperability
+    for fixture in interoperability:
+        assert fixture["producer"] == "GATK"
+        assert fixture["producer_document"].startswith("https://")
+        assert fixture["normative_vcf_conformance"] is False
+
