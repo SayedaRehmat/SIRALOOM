@@ -9,6 +9,7 @@ from math import comb, isnan
 from pathlib import Path
 
 from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
+from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
 from backend.app.domain.vcf_spec_registry import (
     SUPPORTED_VCF_VERSIONS,
     get_vcf_specification_profile,
@@ -2121,6 +2122,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             "specification_repository": specification_profile.specification_repository,
             "specification_document": specification_profile.specification_document,
             "notes": specification_profile.notes,
+            "feature_matrix": feature_compatibility_for_version(fileformat),
         },
         "records": records,
         "alternate_allele_count": alternate_allele_count,
