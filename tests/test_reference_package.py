@@ -1,3 +1,5 @@
+import struct
+import zlib
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,6 +13,7 @@ from backend.app.domain.vcf_validation import (
 )
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
+    REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
     REFERENCE_PACKAGE_SCHEMA_VERSION,
     ReferencePackageError,
     contig_manifest_sha256,
@@ -70,6 +73,80 @@ def make_package(tmp_path: Path):
     return resource, fasta, fai
 
 
+def _bgzf_block(data: bytes) -> bytes:
+    compressor = zlib.compressobj(level=6, wbits=-15)
+    payload = compressor.compress(data) + compressor.flush()
+    prefix = b"\x1f\x8b\x08\x04" + b"\0" * 4 + b"\0\xff" + struct.pack("<H", 6) + b"BC\x02\0"
+    block_size = len(prefix) + 2 + len(payload) + 8
+    return (
+        prefix
+        + struct.pack("<H", block_size - 1)
+        + payload
+        + struct.pack("<II", zlib.crc32(data) & 0xFFFFFFFF, len(data))
+    )
+
+
+def _write_bgzf_with_gzi(path: Path, data: bytes, *, chunk_size: int = 9) -> Path:
+    chunks = [data[offset:offset + chunk_size] for offset in range(0, len(data), chunk_size)]
+    blocks = [_bgzf_block(chunk) for chunk in chunks]
+    gzi_pairs = []
+    compressed_offset = 0
+    uncompressed_offset = 0
+    for index, (chunk, block) in enumerate(zip(chunks, blocks)):
+        if index:
+            gzi_pairs.append((compressed_offset, uncompressed_offset))
+        compressed_offset += len(block)
+        uncompressed_offset += len(chunk)
+    blocks.append(_bgzf_block(b""))
+    path.write_bytes(b"".join(blocks))
+    gzi_path = Path(f"{path}.gzi")
+    gzi_path.write_bytes(
+        struct.pack("<Q", len(gzi_pairs))
+        + b"".join(struct.pack("<QQ", compressed, uncompressed) for compressed, uncompressed in gzi_pairs)
+    )
+    return gzi_path
+
+
+def make_bgzf_package(tmp_path: Path):
+    resource, _plain_fasta, _plain_fai = make_package(tmp_path)
+    fasta_bytes = b">1 description\nACGT\nACGT\nAC\n"
+    fasta = tmp_path / "GRCh38.fa.bgz"
+    gzi = _write_bgzf_with_gzi(fasta, fasta_bytes)
+    fai = Path(f"{fasta}.fai")
+    fai.write_text("1\t10\t15\t4\t5\n", encoding="utf-8")
+    contigs = contigs_from_fai(fai)
+    fasta_sha = sha256_file(fasta)
+    fai_sha = sha256_file(fai)
+    gzi_sha = sha256_file(gzi)
+    contigs_sha = contig_manifest_sha256(contigs)
+    metadata = resource.metadata_json
+    metadata.update({
+        "schema_version": REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+        "fasta_path": str(fasta),
+        "fai_path": str(fai),
+        "gzi_path": str(gzi),
+        "fasta_sha256": fasta_sha,
+        "fai_sha256": fai_sha,
+        "gzi_sha256": gzi_sha,
+        "contigs_sha256": contigs_sha,
+        "contigs": contigs,
+    })
+    resource.checksum = package_checksum(
+        genome_build="GRCh38",
+        version=resource.version,
+        fasta_sha256=fasta_sha,
+        fai_sha256=fai_sha,
+        gzi_sha256=gzi_sha,
+        contigs_sha256=contigs_sha,
+        assembly_name="GRCh38",
+        assembly_accession="GCA_TEST_GRCH38",
+        reference_source="TEST_FIXTURE",
+        sequence_scope="TEST_CONTIG_SET",
+        schema_version=REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+    )
+    return resource, fasta, fai, gzi
+
+
 def test_reference_package_contract_verifies_identity_and_contigs(tmp_path: Path):
     resource, _fasta, _fai = make_package(tmp_path)
     package = validate_reference_package(resource, expected_genome_build="GRCh38")
@@ -93,36 +170,38 @@ def test_reference_package_rejects_checksum_change(tmp_path: Path):
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
 
 
-def test_reference_package_rejects_compressed_fasta_until_gzi_is_governed(tmp_path: Path):
-    import gzip
+def test_reference_package_verifies_bgzf_gzi_and_random_access_reads(tmp_path: Path):
+    resource, fasta, _fai, gzi = make_bgzf_package(tmp_path)
 
-    resource, _fasta, _fai = make_package(tmp_path)
-    compressed = tmp_path / "GRCh38.fa.gz"
-    with gzip.open(compressed, "wb") as handle:
-        handle.write(b">1\nCAAAAAC\n")
-    resource.metadata_json["fasta_path"] = str(compressed)
+    package = validate_reference_package(resource, expected_genome_build="GRCh38")
+    with FastaReference(fasta) as reference:
+        observed = reference.fetch("1", 2, 9)
+
+    assert observed == "GTACGTA"
+    assert package["gzi_path"] == str(gzi)
+    assert package["gzi_sha256"] == sha256_file(gzi)
+    assert package["package_checksum"] == resource.checksum
+
+
+def test_reference_package_rejects_missing_bgzf_gzi(tmp_path: Path):
+    resource, _fasta, _fai, _gzi = make_bgzf_package(tmp_path)
+    resource.metadata_json["gzi_path"] = str(tmp_path / "missing.gzi")
 
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
 
-    assert exc.value.code == "REFERENCE_COMPRESSED_UNSUPPORTED"
+    assert exc.value.code == "REFERENCE_GZI_MISSING"
 
 
-@pytest.mark.parametrize("suffix", [".fa.gz", ".fa.bgz", ".fa"])
-def test_random_access_reference_reader_rejects_compressed_bytes(
-    tmp_path: Path, suffix: str
-):
-    import gzip
+def test_reference_package_rejects_gzi_that_does_not_match_bgzf(tmp_path: Path):
+    resource, _fasta, _fai, gzi = make_bgzf_package(tmp_path)
+    gzi.write_bytes(struct.pack("<Q", 0))
+    resource.metadata_json["gzi_sha256"] = sha256_file(gzi)
 
-    fasta = tmp_path / f"reference{suffix}"
-    with gzip.open(fasta, "wb") as handle:
-        handle.write(b">1\nACGT\n")
-    Path(f"{fasta}.fai").write_text("1\t4\t3\t4\t5\n", encoding="utf-8")
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_reference_package(resource, expected_genome_build="GRCh38")
 
-    with pytest.raises(ReferenceError) as exc:
-        FastaReference(fasta)
-
-    assert exc.value.code == "REFERENCE_COMPRESSED_UNSUPPORTED"
+    assert exc.value.code == "REFERENCE_GZI_MISMATCH"
 
 
 def test_reference_package_allows_explicitly_pinned_superseded_version(tmp_path: Path):

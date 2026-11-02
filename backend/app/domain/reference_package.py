@@ -5,9 +5,15 @@ import json
 from pathlib import Path
 from uuid import UUID
 
+from backend.app.domain.reference import ReferenceError, validate_bgzf_gzi_index
 from backend.app.infrastructure.db.models import Resource
 
 REFERENCE_PACKAGE_SCHEMA_VERSION = "1.0"
+REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION = "1.1"
+SUPPORTED_REFERENCE_PACKAGE_SCHEMA_VERSIONS = {
+    REFERENCE_PACKAGE_SCHEMA_VERSION,
+    REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
+}
 REFERENCE_PACKAGE_RESOURCE_TYPE = "REFERENCE_PACKAGE"
 REFERENCE_PACKAGE_STATUS = "ACTIVE"
 CONTIG_POLICY_EXACT = "EXACT"
@@ -113,7 +119,9 @@ def validate_fasta_index_consistency(
 
     observed: list[dict[str, int | str]] = []
     try:
-        opener = gzip.open if fasta.name.lower().endswith((".gz", ".bgz")) else open
+        with fasta.open("rb") as probe:
+            is_gzip = probe.read(2) == b"\x1f\x8b"
+        opener = gzip.open if is_gzip else open
         with opener(fasta, "rb") as handle:
             current_name: str | None = None
             sequence_length = 0
@@ -234,9 +242,11 @@ def package_checksum(
     assembly_accession: str,
     reference_source: str,
     sequence_scope: str,
+    schema_version: str = REFERENCE_PACKAGE_SCHEMA_VERSION,
+    gzi_sha256: str | None = None,
 ) -> str:
     manifest = {
-        "schema_version": REFERENCE_PACKAGE_SCHEMA_VERSION,
+        "schema_version": schema_version,
         "genome_build": genome_build,
         "version": version,
         "fasta_sha256": fasta_sha256,
@@ -248,6 +258,8 @@ def package_checksum(
         "reference_source": reference_source,
         "sequence_scope": sequence_scope,
     }
+    if schema_version == REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION:
+        manifest["gzi_sha256"] = gzi_sha256
     payload = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
@@ -283,9 +295,10 @@ def validate_reference_package(
             code="REFERENCE_PACKAGE_INVALID",
         )
     metadata = dict(resource.metadata_json or {})
-    if metadata.get("schema_version") != REFERENCE_PACKAGE_SCHEMA_VERSION:
+    schema_version = metadata.get("schema_version")
+    if schema_version not in SUPPORTED_REFERENCE_PACKAGE_SCHEMA_VERSIONS:
         raise ReferencePackageError(
-            f"Unsupported reference package schema: {metadata.get('schema_version')!r}.",
+            f"Unsupported reference package schema: {schema_version!r}.",
             code="REFERENCE_PACKAGE_INVALID",
         )
     missing_identity = [field for field in REFERENCE_ASSEMBLY_METADATA_FIELDS if not metadata.get(field)]
@@ -303,11 +316,20 @@ def validate_reference_package(
 
     fasta_path = Path(str(metadata.get("fasta_path") or ""))
     fai_path = Path(str(metadata.get("fai_path") or ""))
-    if fasta_path.name.lower().endswith((".gz", ".bgz")):
+    try:
+        with fasta_path.open("rb") as probe:
+            compressed = probe.read(2) == b"\x1f\x8b"
+    except OSError:
+        compressed = fasta_path.name.lower().endswith((".gz", ".bgz"))
+    if compressed and schema_version != REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION:
         raise ReferencePackageError(
-            "Compressed reference FASTA is not supported by the current indexed sequence reader; "
-            "register an uncompressed FASTA and its matching FAI.",
-            code="REFERENCE_COMPRESSED_UNSUPPORTED",
+            "BGZF reference packages require schema 1.1 with a checksummed GZI index.",
+            code="REFERENCE_GZI_REQUIRED",
+        )
+    if schema_version == REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION and not compressed:
+        raise ReferencePackageError(
+            "Reference package schema 1.1 is reserved for BGZF FASTA packages.",
+            code="REFERENCE_PACKAGE_SCHEMA_INVALID",
         )
     if not fasta_path.is_file():
         raise ReferencePackageError(
@@ -319,6 +341,26 @@ def validate_reference_package(
             f"Reference FASTA index is missing: {fai_path}",
             code="REFERENCE_PACKAGE_NOT_FOUND",
         )
+
+    gzi_path: Path | None = None
+    actual_gzi_sha: str | None = None
+    if compressed:
+        gzi_path = Path(str(metadata.get("gzi_path") or ""))
+        if not gzi_path.is_file():
+            raise ReferencePackageError(
+                "BGZF reference package is missing its GZI index.",
+                code="REFERENCE_GZI_MISSING",
+            )
+        actual_gzi_sha = sha256_file(gzi_path)
+        if actual_gzi_sha != str(metadata.get("gzi_sha256") or ""):
+            raise ReferencePackageError(
+                "Reference GZI checksum mismatch.",
+                code="REFERENCE_CHECKSUM_MISMATCH",
+            )
+        try:
+            validate_bgzf_gzi_index(fasta_path, gzi_path)
+        except ReferenceError as exc:
+            raise ReferencePackageError(str(exc), code=exc.code) from exc
 
     actual_fasta_sha = sha256_file(fasta_path)
     actual_fai_sha = sha256_file(fai_path)
@@ -354,6 +396,8 @@ def validate_reference_package(
         assembly_accession=str(metadata["assembly_accession"]),
         reference_source=str(metadata["reference_source"]),
         sequence_scope=str(metadata["sequence_scope"]),
+        schema_version=str(schema_version),
+        gzi_sha256=actual_gzi_sha,
     )
     if not resource.checksum or resource.checksum != expected_package_checksum:
         raise ReferencePackageError(
@@ -382,6 +426,8 @@ def validate_reference_package(
         "fai_path": str(fai_path),
         "fasta_sha256": actual_fasta_sha,
         "fai_sha256": actual_fai_sha,
+        "gzi_path": str(gzi_path) if gzi_path is not None else None,
+        "gzi_sha256": actual_gzi_sha,
         "contigs_sha256": actual_contigs_sha,
         "package_checksum": expected_package_checksum,
         "contig_policy": CONTIG_POLICY_EXACT,

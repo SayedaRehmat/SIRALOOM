@@ -44,7 +44,7 @@ docker compose -f docker-compose.production.yml \
 
 The base Compose file's `/data/siraloom/artifacts` volume is the legacy single-root location. It does not mount any additional local target roots. Do not configure per-laboratory roots outside the container without adding explicit mounts to both API and worker.
 
-Copy the approved reference package into `/srv/siraloom/references`; set `REFERENCE_FASTA` and `REFERENCE_FAI` to the matching in-container paths. The current random-access reference reader requires an uncompressed FASTA with its matching FAI; do not register `.gz` or `.bgz` FASTA packages because their byte offsets cannot be read by this implementation. Do not silently replace a reference build or index after a case has been analyzed.
+Copy the approved reference package into `/srv/siraloom/references`; set `REFERENCE_FASTA` and `REFERENCE_FAI` to the matching in-container paths. Reference packages may use plain FASTA plus FAI (package schema 1.0) or BGZF FASTA plus matching FAI and GZI (schema 1.1). BGZF packages are accepted only after the GZI boundaries are checked against the stream and all three artifacts are checksum-bound to the package. Do not silently replace a reference build or index after a case has been analyzed.
 
 ## 4. Configure identity, secrets and URLs
 

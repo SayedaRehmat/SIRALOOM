@@ -1,6 +1,9 @@
 from __future__ import annotations
+import bisect
 import json
+import struct
 import time
+import zlib
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -50,9 +53,169 @@ class FaiEntry:
     line_bases: int
     line_width: int
 
+
+def _read_bgzf_block(handle, compressed_offset: int) -> tuple[bytes, int]:
+    """Read and integrity-check one BGZF block at its compressed byte offset."""
+    handle.seek(compressed_offset)
+    fixed = handle.read(12)
+    if len(fixed) != 12 or fixed[:3] != b"\x1f\x8b\x08" or fixed[3] != 4:
+        raise ReferenceError(
+            f"Invalid BGZF block at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_INVALID",
+        )
+    extra_length = struct.unpack_from("<H", fixed, 10)[0]
+    extra = handle.read(extra_length)
+    if len(extra) != extra_length:
+        raise ReferenceError(
+            f"Truncated BGZF extra field at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_TRUNCATED",
+        )
+    cursor = 0
+    block_size = None
+    while cursor + 4 <= len(extra):
+        tag = extra[cursor:cursor + 2]
+        field_length = struct.unpack_from("<H", extra, cursor + 2)[0]
+        cursor += 4
+        if cursor + field_length > len(extra):
+            raise ReferenceError(
+                f"Malformed BGZF extra field at compressed offset {compressed_offset}.",
+                code="REFERENCE_BGZF_INVALID",
+            )
+        if tag == b"BC":
+            if field_length != 2 or block_size is not None:
+                raise ReferenceError(
+                    f"Malformed BGZF BC field at compressed offset {compressed_offset}.",
+                    code="REFERENCE_BGZF_INVALID",
+                )
+            block_size = struct.unpack_from("<H", extra, cursor)[0] + 1
+        cursor += field_length
+    header_size = 12 + extra_length
+    if cursor != len(extra) or block_size is None or not header_size + 8 <= block_size <= 65536:
+        raise ReferenceError(
+            f"Invalid BGZF block size at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_INVALID",
+        )
+    remainder = handle.read(block_size - header_size)
+    if len(remainder) != block_size - header_size:
+        raise ReferenceError(
+            f"Truncated BGZF block at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_TRUNCATED",
+        )
+    compressed, trailer = remainder[:-8], remainder[-8:]
+    try:
+        inflater = zlib.decompressobj(wbits=-15)
+        sequence = inflater.decompress(compressed, 65537)
+    except zlib.error as exc:
+        raise ReferenceError(
+            f"Corrupt BGZF deflate stream at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_CORRUPT",
+        ) from exc
+    if (
+        len(sequence) > 65536
+        or not inflater.eof
+        or inflater.unused_data
+        or inflater.unconsumed_tail
+    ):
+        raise ReferenceError(
+            f"Invalid BGZF deflate payload at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_INVALID",
+        )
+    expected_crc, expected_length = struct.unpack("<II", trailer)
+    if zlib.crc32(sequence) & 0xFFFFFFFF != expected_crc or len(sequence) != expected_length:
+        raise ReferenceError(
+            f"BGZF checksum or uncompressed size mismatch at compressed offset {compressed_offset}.",
+            code="REFERENCE_BGZF_CHECKSUM_MISMATCH",
+        )
+    return sequence, block_size
+
+
+def read_gzi_index(gzi_path: str | Path, compressed_size: int) -> list[tuple[int, int]]:
+    """Load the little-endian GZI offset pairs, including the implicit first block."""
+    path = Path(gzi_path)
+    try:
+        raw_size = path.stat().st_size
+        with path.open("rb") as handle:
+            header = handle.read(8)
+            if len(header) != 8:
+                raise ReferenceError("BGZF GZI index is truncated.", code="REFERENCE_GZI_INVALID")
+            count = struct.unpack("<Q", header)[0]
+            if raw_size != 8 + count * 16:
+                raise ReferenceError("BGZF GZI index has an invalid byte length.", code="REFERENCE_GZI_INVALID")
+            offsets = [(0, 0)]
+            previous_compressed = 0
+            previous_uncompressed = 0
+            for entry_number in range(count):
+                pair = handle.read(16)
+                if len(pair) != 16:
+                    raise ReferenceError(
+                        f"BGZF GZI entry {entry_number} is truncated.",
+                        code="REFERENCE_GZI_INVALID",
+                    )
+                compressed, uncompressed = struct.unpack("<QQ", pair)
+                if (
+                    compressed <= previous_compressed
+                    or compressed >= compressed_size
+                    or uncompressed <= previous_uncompressed
+                ):
+                    raise ReferenceError(
+                        f"BGZF GZI entry {entry_number} is nonmonotonic or out of bounds.",
+                        code="REFERENCE_GZI_INVALID",
+                    )
+                offsets.append((compressed, uncompressed))
+                previous_compressed = compressed
+                previous_uncompressed = uncompressed
+    except OSError as exc:
+        raise ReferenceError(f"Unable to read BGZF GZI index: {path}", code="REFERENCE_GZI_INVALID") from exc
+    return offsets
+
+
+def validate_bgzf_gzi_index(
+    fasta_path: str | Path,
+    gzi_path: str | Path,
+) -> dict[str, int]:
+    """Verify the GZI entries exactly match the BGZF block boundaries."""
+    fasta = Path(fasta_path)
+    offsets = read_gzi_index(gzi_path, fasta.stat().st_size)
+    observed = [(0, 0)]
+    compressed_offset = 0
+    uncompressed_offset = 0
+    block_count = 0
+    try:
+        with fasta.open("rb") as handle:
+            while compressed_offset < fasta.stat().st_size:
+                block_start = compressed_offset
+                block_uncompressed_start = uncompressed_offset
+                sequence, block_size = _read_bgzf_block(handle, compressed_offset)
+                block_count += 1
+                # GZI records sequence-bearing block starts after the first;
+                # the terminal empty BGZF EOF marker has no GZI entry.
+                if block_start and sequence:
+                    observed.append((block_start, block_uncompressed_start))
+                compressed_offset += block_size
+                uncompressed_offset += len(sequence)
+            if compressed_offset != fasta.stat().st_size:
+                raise ReferenceError("BGZF reference has trailing bytes after its final block.", code="REFERENCE_BGZF_INVALID")
+    except OSError as exc:
+        raise ReferenceError("Unable to read compressed reference FASTA.", code="REFERENCE_BGZF_INVALID") from exc
+    if offsets != observed:
+        raise ReferenceError(
+            "BGZF GZI offsets do not match the reference FASTA block boundaries.",
+            code="REFERENCE_GZI_MISMATCH",
+        )
+    return {
+        "block_count": block_count,
+        "gzi_entry_count": len(offsets) - 1,
+        "uncompressed_size_bytes": uncompressed_offset,
+    }
+
 class FastaReference:
-    """Random-access FASTA reader backed by a .fai index."""
-    def __init__(self, fasta_path: str | Path, fai_path: str | Path | None = None):
+    """Random-access plain or BGZF FASTA reader backed by FAI and optional GZI."""
+    def __init__(
+        self,
+        fasta_path: str | Path,
+        fai_path: str | Path | None = None,
+        gzi_path: str | Path | None = None,
+    ):
         self.fasta_path = Path(fasta_path)
         self.fai_path = Path(fai_path) if fai_path else Path(f"{self.fasta_path}.fai")
         if not self.fasta_path.exists():
@@ -65,14 +228,28 @@ class FastaReference:
                 f"Unable to read reference FASTA: {self.fasta_path}",
                 code="REFERENCE_FASTA_UNREADABLE",
             ) from exc
-        if compressed or self.fasta_path.name.lower().endswith((".gz", ".bgz")):
+        if self.fasta_path.name.lower().endswith((".gz", ".bgz")) and not compressed:
             raise ReferenceError(
-                "Compressed reference FASTA is not supported by the byte-offset reference reader; "
-                "use an uncompressed FASTA with its matching FAI.",
-                code="REFERENCE_COMPRESSED_UNSUPPORTED",
+                "Reference FASTA filename indicates compression, but the file is not gzip/BGZF.",
+                code="REFERENCE_FASTA_INVALID",
             )
         if not self.fai_path.exists():
             raise ReferenceError(f"Reference FASTA index (.fai) not found: {self.fai_path}. Run a validated faidx process before use.")
+        self._bgzf = compressed
+        self.gzi_path = (
+            Path(gzi_path)
+            if gzi_path is not None
+            else Path(f"{self.fasta_path}.gzi") if compressed else None
+        )
+        self._gzi_offsets: list[tuple[int, int]] = []
+        if compressed:
+            if self.gzi_path is None or not self.gzi_path.is_file():
+                raise ReferenceError(
+                    f"BGZF reference requires its matching GZI index: {self.gzi_path}",
+                    code="REFERENCE_GZI_MISSING",
+                )
+            self._gzi_offsets = read_gzi_index(self.gzi_path, self.fasta_path.stat().st_size)
+            validate_bgzf_gzi_index(self.fasta_path, self.gzi_path)
         self._entries = self._load_fai()
         self._handle = self.fasta_path.open("rb")
 
@@ -176,14 +353,42 @@ class FastaReference:
             in_line = cursor % entry.line_bases
             take = min(remaining, entry.line_bases - in_line)
             file_offset = entry.offset + line_idx * entry.line_width + in_line
-            self._handle.seek(file_offset)
-            chunk = self._handle.read(take)
+            chunk = self._read_fasta_bytes(file_offset, take)
             if len(chunk) != take:
                 raise ReferenceError("Unexpected EOF while reading reference")
             out.extend(chunk)
             cursor += take
             remaining -= take
         return out.decode("ascii").upper()
+
+    def _read_fasta_bytes(self, uncompressed_offset: int, length: int) -> bytes:
+        if not self._bgzf:
+            self._handle.seek(uncompressed_offset)
+            return self._handle.read(length)
+
+        uncompressed_offsets = [item[1] for item in self._gzi_offsets]
+        index = bisect.bisect_right(uncompressed_offsets, uncompressed_offset) - 1
+        compressed_offset, block_uncompressed_offset = self._gzi_offsets[index]
+        output = bytearray()
+        while len(output) < length:
+            sequence, block_size = _read_bgzf_block(self._handle, compressed_offset)
+            local_offset = uncompressed_offset - block_uncompressed_offset
+            if local_offset < 0 or local_offset > len(sequence):
+                raise ReferenceError(
+                    "BGZF GZI offsets do not locate the requested FASTA sequence byte.",
+                    code="REFERENCE_GZI_MISMATCH",
+                )
+            if local_offset < len(sequence):
+                chunk = sequence[local_offset:local_offset + (length - len(output))]
+                output.extend(chunk)
+            if len(output) == length:
+                break
+            if not sequence and compressed_offset >= self.fasta_path.stat().st_size - block_size:
+                break
+            compressed_offset += block_size
+            block_uncompressed_offset += len(sequence)
+            uncompressed_offset = block_uncompressed_offset
+        return bytes(output)
 
     def base(self, contig: str, pos1: int) -> str:
         if pos1 <= 0:
