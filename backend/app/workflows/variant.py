@@ -1471,19 +1471,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     version=detected_vcf_version,
                 )
             except ResourceRegistryError as exc:
+                block_code = getattr(exc, "code", "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED")
+                next_step = getattr(exc, "next_step", "LAB_APPROVAL_REQUIRED")
                 validation_metadata = dict(validation_step.metadata_json or {})
                 validation_metadata["vcf_specification_approval"] = {
-                    "status": "LAB_APPROVAL_REQUIRED",
+                    "status": block_code,
                     "version": detected_vcf_version,
                     "reason": str(exc),
                 }
-                validation_metadata["next_step"] = "LAB_APPROVAL_REQUIRED"
+                validation_metadata["next_step"] = next_step
                 validation_metadata["detected_vcf_version"] = detected_vcf_version
                 mark_step(
                     db,
                     validation_step,
                     StepStatus.BLOCKED,
-                    error_code="VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+                    error_code=block_code,
                     error_message=str(exc),
                     metadata=validation_metadata,
                 )
@@ -1498,9 +1500,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     actor_id="vcf-specification-governance",
                     reason=str(exc),
                     payload={
-                        "error_code": "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+                        "error_code": block_code,
                         "vcf_version": detected_vcf_version,
-                        "next_step": "LAB_APPROVAL_REQUIRED",
+                        "next_step": next_step,
                     },
                 )
                 db.commit()
