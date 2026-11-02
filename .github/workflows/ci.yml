@@ -189,6 +189,9 @@ jobs:
     env:
       PYTHONUNBUFFERED: "1"
       SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
+      # This workflow processes the public GIAB HG001 benchmark; never enable
+      # detailed validator errors for private laboratory VCFs.
+      SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS: "1"
     steps:
       - uses: actions/checkout@v4
         with:
