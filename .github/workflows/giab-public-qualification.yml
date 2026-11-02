@@ -1,0 +1,141 @@
+name: Public GIAB VCF qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      reference_build:
+        description: "Reference build to execute (runs are independent)"
+        required: true
+        type: choice
+        options: [GRCh38, GRCh37, BOTH]
+        default: BOTH
+      timeout_seconds:
+        description: "Per-run normalization timeout"
+        required: true
+        default: "14400"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: giab-public-qualification-${{ github.ref }}-${{ inputs.reference_build }}
+  cancel-in-progress: false
+
+jobs:
+  qualification:
+    name: HG001 ${{ matrix.build }} public benchmark
+    if: inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [GRCh38, GRCh37]
+    env:
+      PYTHONUNBUFFERED: "1"
+      SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
+    steps:
+      - name: Checkout exact qualification commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Install pinned bioinformatics environment
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-name: bcftools
+          cache-environment: true
+          init-shell: bash
+
+      - name: Install SIRALOOM backend
+        shell: bash -l {0}
+        run: pip install -e .
+
+      - name: Acquire NIST assets and verify official MD5 plus local SHA-256
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          python scripts/validation/acquire_giab_public_assets.py \
+            --manifest benchmarks/giab/public_assets.v1.json \
+            --build "${{ matrix.build }}" \
+            --output-dir "$RUNNER_TEMP/giab-${{ matrix.build }}/assets" \
+            --provenance-out "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json"
+
+      - name: Verify reference FASTA, FAI and GZI pairing
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          ASSET_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}/assets"
+          FASTA="$ASSET_DIR/$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"].split("/")[-1])' "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json")"
+          python - "$FASTA" <<'PY'
+          import sys
+          from pathlib import Path
+          from backend.app.domain.reference_package import validate_fasta_index_consistency
+          fasta = Path(sys.argv[1])
+          fai = Path(str(fasta) + ".fai")
+          gzi = Path(str(fasta) + ".gzi")
+          if not fai.is_file() or not gzi.is_file():
+              raise SystemExit("Matching reference .fai and .gzi are mandatory")
+          contigs = validate_fasta_index_consistency(fasta, fai)
+          if not contigs:
+              raise SystemExit("Reference contains no indexed contigs")
+          print(f"Reference index geometry verified: {len(contigs)} contigs")
+          PY
+
+      - name: Execute SIRALOOM production VCF validation, routing, normalization and CSI reconciliation
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          ASSET_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}/assets"
+          PROVENANCE="$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json"
+          VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$PROVENANCE")"
+          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["reference_fasta"]["path"])' "$PROVENANCE")"
+          mkdir -p "$RUNNER_TEMP/giab-${{ matrix.build }}/evidence"
+          python scripts/validation/run_vcf_scale_benchmark.py \
+            --vcf "$VCF" \
+            --reference-fasta "$FASTA" \
+            --reference-build "${{ matrix.build }}" \
+            --output-dir "$RUNNER_TEMP/giab-${{ matrix.build }}/evidence/scale" \
+            --timeout-seconds "${{ inputs.timeout_seconds || '14400' }}"
+
+      - name: Assemble immutable run provenance
+        if: always()
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
+          mkdir -p "$RUN_DIR/evidence"
+          python - "$RUN_DIR" "${{ github.sha }}" "${{ matrix.build }}" <<'PY'
+          import json,sys
+          from datetime import datetime,timezone
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          payload={
+            "schema_version":"1",
+            "status":"EVIDENCE_BUNDLE_ASSEMBLED_REVIEW_REQUIRED",
+            "generated_at_utc":datetime.now(timezone.utc).isoformat(),
+            "repository":"${{ github.repository }}",
+            "repository_commit":sys.argv[2],
+            "reference_build":sys.argv[3],
+            "workflow_run_id":"${{ github.run_id }}",
+            "workflow_attempt":"${{ github.run_attempt }}",
+            "asset_provenance":"asset-provenance.json",
+            "benchmark_report":"evidence/scale/vcf-scale-benchmark.json",
+            "failure_report":"evidence/scale/vcf-scale-benchmark.failure.json",
+            "qualification_boundary":"Public HG001 input-processing evidence only; not independent caller concordance, clinical validation, laboratory qualification, or production deployment qualification."
+          }
+          (root/"evidence"/"run-provenance.json").write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n")
+          PY
+
+      - name: Preserve benchmark assets, hashes, logs and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-giab-hg001-${{ matrix.build }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/giab-${{ matrix.build }}/asset-provenance.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/**
+          if-no-files-found: warn
+          retention-days: 90

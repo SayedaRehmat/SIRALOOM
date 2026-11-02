@@ -7,7 +7,6 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
@@ -96,14 +95,19 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
     return headers, detected_build, has_fileformat, fileformat
 
 
-def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
+def _bcftools_validate(
+    path: Path,
+    *,
+    expected_bcftools_version: str | None,
+    expected_htslib_version: str | None,
+) -> tuple[str | None, str, str]:
     executable = shutil.which("bcftools")
     if executable is None:
         raise VCFValidationUnavailable(
             "bcftools/htslib is required to validate VCF input, but the executable was not found. "
             "The VCF was not accepted; restore the configured laboratory toolchain and retry."
         )
-    expected_version = settings.bcftools_version
+    expected_version = expected_bcftools_version
     try:
         version_result = subprocess.run(
             [executable, "--version"],
@@ -151,7 +155,6 @@ def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
             "Unable to attest the HTSlib version reported by the installed bcftools."
         )
     detected_htslib_version = htslib_line.split()[-1]
-    expected_htslib_version = settings.htslib_version
     if expected_htslib_version and detected_htslib_version != expected_htslib_version:
         raise VCFValidationUnavailable(
             "HTSlib version mismatch during VCF intake: "
@@ -191,7 +194,21 @@ def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
     return None, version_line, detected_htslib_version
 
 
-def validate_vcf(path: str | Path) -> ValidationResult:
+def validate_vcf(
+    path: str | Path,
+    *,
+    expected_bcftools_version: str | None = None,
+    expected_htslib_version: str | None = None,
+) -> ValidationResult:
+    # Resolve deployment policy lazily: importing the domain validator must not
+    # instantiate application settings or require database/queue configuration.
+    if expected_bcftools_version is None or expected_htslib_version is None:
+        from backend.app.config import settings
+
+        if expected_bcftools_version is None:
+            expected_bcftools_version = settings.bcftools_version
+        if expected_htslib_version is None:
+            expected_htslib_version = settings.htslib_version
     p = Path(path)
     if classify_filename(p.name) != "VCF":
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
@@ -232,7 +249,11 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
         strict_profile = validate_vcf_strict(p)
-        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
+        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(
+            p,
+            expected_bcftools_version=expected_bcftools_version,
+            expected_htslib_version=expected_htslib_version,
+        )
         if bcftools_error:
             raise VCFValidationError(
                 "VCF structural validation failed in bcftools/htslib: "
@@ -330,9 +351,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "unchecked_info_number_g_fields": strict_profile["unchecked_info_number_g_fields"],
             "unchecked_format_number_g_fields": strict_profile["unchecked_format_number_g_fields"],
             "bcftools_version": bcftools_version,
-            "expected_bcftools_version": settings.bcftools_version,
+            "expected_bcftools_version": expected_bcftools_version,
             "htslib_version": htslib_version,
-            "expected_htslib_version": settings.htslib_version,
+            "expected_htslib_version": expected_htslib_version,
             "toolchain_validation_status": "PASS",
         }
         return ValidationResult(
@@ -351,9 +372,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         if bcftools_version is not None:
             failure_metadata = {
                 "bcftools_version": bcftools_version,
-                "expected_bcftools_version": settings.bcftools_version,
+                "expected_bcftools_version": expected_bcftools_version,
                 "htslib_version": htslib_version,
-                "expected_htslib_version": settings.htslib_version,
+                "expected_htslib_version": expected_htslib_version,
                 "toolchain_validation_status": "PASS",
             }
         return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat, failure_metadata)

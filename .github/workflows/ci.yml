@@ -177,3 +177,193 @@ jobs:
             SIRALOOM_LAB_B_ARTIFACT_HOST_PATH=/tmp/siraloom-lab-b-artifacts \
             docker compose -f docker-compose.production.yml \
               -f deployment/storage-targets-local.compose.example.yml config --quiet
+
+  public-giab-qualification:
+    if: github.event_name == 'pull_request' && github.head_ref == 'feat/giab-public-benchmark-workflow'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [GRCh38, GRCh37]
+    env:
+      PYTHONUNBUFFERED: "1"
+      SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
+      # This workflow processes the public GIAB HG001 benchmark; never enable
+      # detailed validator errors for private laboratory VCFs.
+      SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-name: bcftools
+          cache-environment: true
+          init-shell: bash
+      - name: Install SIRALOOM backend
+        shell: bash -l {0}
+        run: pip install -e .
+      - name: Acquire and verify pinned GIAB assets; derive matching BGZF reference
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          python scripts/validation/acquire_giab_public_assets.py \
+            --manifest benchmarks/giab/public_assets.v1.json \
+            --build "${{ matrix.build }}" \
+            --output-dir "$RUNNER_TEMP/giab-${{ matrix.build }}/assets" \
+            --provenance-out "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json"
+      - name: Verify FASTA, FAI and GZI geometry
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          PROVENANCE="$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json"
+          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"])' "$PROVENANCE")"
+          python - "$FASTA" <<'PY'
+          import sys
+          from pathlib import Path
+          from backend.app.domain.reference_package import validate_fasta_index_consistency
+          fasta=Path(sys.argv[1])
+          if not Path(str(fasta)+".fai").is_file() or not Path(str(fasta)+".gzi").is_file():
+              raise SystemExit("Matching FASTA .fai and .gzi are mandatory")
+          contigs=validate_fasta_index_consistency(fasta,Path(str(fasta)+".fai"))
+          if not contigs:
+              raise SystemExit("Reference contains no indexed contigs")
+          print(f"Verified reference index geometry for {len(contigs)} contigs")
+          PY
+      - name: Execute SIRALOOM production VCF validation, routing, normalization and CSI reconciliation
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          PROVENANCE="$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json"
+          VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$PROVENANCE")"
+          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"])' "$PROVENANCE")"
+          python scripts/validation/run_vcf_scale_benchmark.py \
+            --vcf "$VCF" --reference-fasta "$FASTA" \
+            --reference-build "${{ matrix.build }}" \
+            --output-dir "$RUNNER_TEMP/giab-${{ matrix.build }}/evidence/scale" \
+            --timeout-seconds 14400
+      - name: Diagnose GIAB spanning-deletion context rejection
+        if: failure()
+        shell: bash -l {0}
+        run: |
+          python - "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json" <<'PY'
+          import gzip, json, re, sys
+          from pathlib import Path
+          if not Path(sys.argv[1]).is_file():
+              print("GIAB assets were not acquired; spanning-deletion diagnostic skipped.")
+              raise SystemExit(0)
+          from backend.app.domain.vcf_validation import (
+              StrictVCFValidationError,
+              _deleted_reference_interval,
+              _info_values,
+              _gt_allele_tokens,
+              validate_vcf_strict,
+          )
+          provenance = json.loads(Path(sys.argv[1]).read_text())
+          vcf = Path(provenance["assets"]["truth_vcf"]["path"])
+          try:
+              validate_vcf_strict(vcf)
+              print("Strict VCF validation passed during diagnostic rerun.")
+              raise SystemExit(0)
+          except StrictVCFValidationError as exc:
+              error_text = str(exc)
+              match = re.search(r"line (\d+)", error_text)
+              if not match:
+                  raise
+              target_line = int(match.group(1))
+          opener = gzip.open if vcf.name.endswith((".gz", ".bgz")) else open
+          with opener(vcf, "rt", encoding="utf-8") as handle:
+              first_line = handle.readline()
+          fileformat = first_line.strip().split("=", 1)[-1]
+          with opener(vcf, "rt", encoding="utf-8") as handle:
+              target_fields = None
+              for line_no, raw in enumerate(handle, 1):
+                  if line_no == target_line:
+                      target_fields = raw.rstrip().split("\t")
+                      break
+          if target_fields is None:
+              raise RuntimeError(f"Could not recover rejected VCF line {target_line}")
+          chrom, pos, alts = target_fields[0], int(target_fields[1]), target_fields[4].split(",")
+          def carriers(record_fields, line_no, alt_index):
+              if len(record_fields) <= 9:
+                  return None
+              keys = record_fields[8].split(":")
+              if "GT" not in keys:
+                  return None
+              gt_index = keys.index("GT")
+              result = set()
+              for sample_index, sample in enumerate(record_fields[9:]):
+                  values = sample.split(":")
+                  if gt_index >= len(values) or values[gt_index] == ".":
+                      continue
+                  tokens = _gt_allele_tokens(values[gt_index], fileformat, line_no)
+                  if str(alt_index) in tokens:
+                      result.add(sample_index)
+              return result
+          star_index = alts.index("*") + 1
+          star_carriers = carriers(target_fields, target_line, star_index)
+          candidates = []
+          with opener(vcf, "rt", encoding="utf-8") as handle:
+              for line_no, raw in enumerate(handle, 1):
+                  if line_no == target_line or raw.startswith("#"):
+                      continue
+                  row = raw.rstrip("\\n\\r").split("\\t")
+                  if len(row) < 8 or row[0] != chrom:
+                      continue
+                  try:
+                      row_pos = int(row[1])
+                  except ValueError:
+                      continue
+                  for alt_index, alt in enumerate(row[4].split(","), 1):
+                      interval = None
+                      ref = row[3].upper()
+                      if re.fullmatch(r"[ACGTNacgtn]+", alt) and len(ref) > len(alt):
+                          interval = _deleted_reference_interval(row_pos, ref, alt.upper())
+                      elif alt == "<DEL>":
+                          end = _info_values(row[7]).get("END")
+                          if end is not None and int(end) > row_pos:
+                              interval = (row_pos + 1, int(end))
+                      if interval and interval[0] <= pos <= interval[1]:
+                          deletion_carriers = carriers(row, line_no, alt_index)
+                          candidates.append({
+                              "line": line_no,
+                              "interval": interval,
+                              "sample_indexes": sorted(deletion_carriers) if deletion_carriers is not None else None,
+                              "overlaps_star_carriers": (
+                                  None if deletion_carriers is None or star_carriers is None
+                                  else bool(deletion_carriers & star_carriers)
+                              ),
+                              "record": row[:8],
+                          })
+          print(json.dumps({
+              "validator_error": error_text,
+              "star_line": target_line,
+              "star_record": target_fields[:8],
+              "star_sample_indexes": sorted(star_carriers) if star_carriers is not None else None,
+              "overlapping_deletion_candidates": candidates[:25],
+          }, indent=2))
+          PY
+      - name: Assemble provenance
+        if: always()
+        shell: bash -l {0}
+        run: |
+          python - "$RUNNER_TEMP/giab-${{ matrix.build }}" "${{ github.sha }}" "${{ matrix.build }}" <<'PY'
+          import json,sys
+          from datetime import datetime,timezone
+          from pathlib import Path
+          root=Path(sys.argv[1]); (root/"evidence").mkdir(parents=True,exist_ok=True)
+          data={"schema_version":"1","status":"EVIDENCE_BUNDLE_ASSEMBLED_REVIEW_REQUIRED","generated_at_utc":datetime.now(timezone.utc).isoformat(),"repository":"${{ github.repository }}","repository_commit":sys.argv[2],"reference_build":sys.argv[3],"workflow_run_id":"${{ github.run_id }}","asset_provenance":"asset-provenance.json","benchmark_report":"evidence/scale/vcf-scale-benchmark.json","failure_report":"evidence/scale/vcf-scale-benchmark.failure.json","qualification_boundary":"Public HG001 input-processing evidence only; not independent caller concordance, clinical validation or laboratory qualification."}
+          (root/"evidence"/"run-provenance.json").write_text(json.dumps(data,indent=2,sort_keys=True)+"\n")
+          PY
+      - name: Preserve public benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-giab-hg001-${{ matrix.build }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/giab-${{ matrix.build }}/asset-provenance.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/**
+          if-no-files-found: warn
+          retention-days: 90
