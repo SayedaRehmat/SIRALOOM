@@ -35,6 +35,7 @@ def test_context_capture_records_orphan_star_without_weakening_validator(tmp_pat
     assert result["target_star_carrier_sample_indexes"] == [0]
     assert result["overlapping_deletion_candidate_count"] == 0
     assert result["same_sample_deletion_context_found"] is False
+    assert result["same_sample_deletion_context_indeterminate"] is False
 
 
 def test_context_capture_identifies_same_sample_deletion_context(tmp_path):
@@ -50,3 +51,4 @@ def test_context_capture_identifies_same_sample_deletion_context(tmp_path):
     assert result["overlapping_deletion_candidate_count"] == 1
     assert result["candidate_carrier_matches"] == [True]
     assert result["same_sample_deletion_context_found"] is True
+    assert result["same_sample_deletion_context_indeterminate"] is False
