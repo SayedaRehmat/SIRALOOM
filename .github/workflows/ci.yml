@@ -192,6 +192,11 @@ jobs:
         build: [GRCh38, GRCh37]
     env:
       PYTHONUNBUFFERED: "1"
+      DATABASE_URL: sqlite:///./giab-qualification.db
+      REDIS_URL: redis://localhost:6379/0
+      GENEBE_ENABLED: "false"
+      GNOMAD_ENABLED: "false"
+      FIREBASE_AUTH_REQUIRED: "false"
       SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
     steps:
       - uses: actions/checkout@v4
