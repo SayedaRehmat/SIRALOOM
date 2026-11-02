@@ -1457,11 +1457,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 profile = validate_vcf_strict(str(input_path))
                 validation_step.input_artifacts = [str(input_artifact.id)]
                 validation_step.output_artifacts = [str(input_artifact.id)]
+                validation_status = "PASS_WITH_WARNINGS" if profile.get("warning_codes") else "PASS"
                 mark_step(
                     db,
                     validation_step,
                     StepStatus.SUCCEEDED,
-                    metadata={"variant_count": profile["records"], "validation": "PASS", "validation_profile": profile},
+                    metadata={
+                        "variant_count": profile["records"],
+                        "validation": validation_status,
+                        "warning_codes": profile.get("warning_codes", []),
+                        "validation_profile": profile,
+                    },
                 )
                 audit.record(
                     event_type="ARTIFACT_VALIDATED",
