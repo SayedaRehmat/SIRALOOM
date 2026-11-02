@@ -15,8 +15,12 @@ from backend.app.infrastructure.db.models import (
     Notification,
     Organization,
     OrganizationMembership,
+    OrganizationResourceBinding,
     Resource,
+    ResourceApproval,
+    ResourceApprovalAction,
     ResourceDiscovery,
+    ResourceQualification,
     ResourceStaging,
     User,
 )
@@ -228,3 +232,144 @@ def test_production_compose_runs_one_persistent_beat_scheduler():
     assert "celery" in beat_block
     assert "beat" in beat_block
     assert "${SIRALOOM_BEAT_HOST_PATH:-beat_data}:/data/siraloom/beat" in beat_block
+
+def test_qualified_normalization_release_creates_lab_decision_without_switching_binding():
+    from backend.app.domain.resources import decide_resource_approval
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[
+        Organization.__table__,
+        User.__table__,
+        OrganizationMembership.__table__,
+        Notification.__table__,
+        Resource.__table__,
+        ResourceQualification.__table__,
+        ResourceApproval.__table__,
+        ResourceApprovalAction.__table__,
+        OrganizationResourceBinding.__table__,
+        AuditEvent.__table__,
+    ])
+
+    with Session(engine) as db:
+        organization_id = uuid4()
+        user_id = uuid4()
+        db.add(Organization(
+            id=organization_id,
+            name="Normalization Lab",
+            external_identifier="normalization-lab",
+        ))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject="normalization-director",
+            email="director@example.test",
+            display_name="Lab Director",
+            role="lab_director",
+            status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(),
+            organization_id=organization_id,
+            user_id=user_id,
+            role="lab_director",
+            status="ACTIVE",
+        ))
+
+        previous = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="BCFtools",
+            provider="bcftools",
+            resource_type="NORMALIZATION",
+            version="1.24",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="a" * 64,
+            location="https://example.org/bcftools/1.24.tar.gz",
+            population_definition=None,
+            status="SUPERSEDED",
+            metadata_json={},
+        )
+        candidate = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="BCFtools",
+            provider="bcftools",
+            resource_type="NORMALIZATION",
+            version="1.25",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="b" * 64,
+            location="https://example.org/bcftools/1.25.tar.gz",
+            population_definition=None,
+            status="QUALIFIED",
+            metadata_json={},
+        )
+        qualification = ResourceQualification(
+            id=uuid4(),
+            resource_id=candidate.id,
+            qualification_version="normalization-qualification-v1",
+            status="QUALIFIED",
+            checks_json={"passed": True, "known_answer": "PASS"},
+            qualified_by=None,
+        )
+        identity_key = "BCFtools|bcftools|NORMALIZATION|UNSPECIFIED"
+        binding = OrganizationResourceBinding(
+            id=uuid4(),
+            organization_id=organization_id,
+            resource_id=previous.id,
+            resource_name=previous.name,
+            provider=previous.provider,
+            resource_type=previous.resource_type,
+            genome_build=None,
+            identity_key=identity_key,
+            bound_by=user_id,
+            reason="Existing laboratory-approved normalization release",
+            version=3,
+        )
+        db.add_all([previous, candidate, qualification, binding])
+        db.flush()
+
+        created = resource_discovery.notify_organizations_of_qualified_release(
+            db,
+            resource=candidate,
+            qualification=qualification,
+        )
+        db.commit()
+
+        assert created == 1
+        approval = db.query(ResourceApproval).one()
+        notification = db.query(Notification).one()
+        db.refresh(binding)
+        assert approval.status == "PENDING"
+        assert approval.resource_id == candidate.id
+        assert notification.notification_type == "RESOURCE_RELEASE_QUALIFIED"
+        assert notification.metadata_json["approval_id"] == str(approval.id)
+        assert notification.metadata_json["requires_lab_decision"] is True
+        assert binding.resource_id == previous.id
+
+        # Reprocessing the same qualification is idempotent and does not spam
+        # the laboratory with duplicate approval requests or notifications.
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db,
+            resource=candidate,
+            qualification=qualification,
+        ) == 0
+        assert db.query(ResourceApproval).count() == 1
+        assert db.query(Notification).count() == 1
+
+        decide_resource_approval(
+            db,
+            approval_id=approval.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="REJECTED",
+            expected_version=1,
+            reason="Laboratory retains its currently validated release",
+        )
+        db.refresh(binding)
+        assert binding.resource_id == previous.id
+        assert approval.status == "REJECTED"
+
