@@ -1024,9 +1024,10 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 Artifact.analysis_id == analysis_id,
                 Artifact.artifact_type == "NORMALIZED_VCF",
             )) is None
-            assert db.scalar(select(Variant).where(
-                Variant.case_id == case_id,
-            )) is None
+            # Variant rows are global canonical identities and do not
+            # carry a case/analysis foreign key. The isolated database must
+            # remain empty because the blocked workflow cannot materialize one.
+            assert db.scalar(select(Variant)) is None
             assert db.scalar(select(AuditEvent).where(
                 AuditEvent.analysis_id == analysis_id,
                 AuditEvent.event_type == "ARTIFACT_VALIDATED",
