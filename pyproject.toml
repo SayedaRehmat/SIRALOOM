@@ -51,3 +51,5 @@ markers = [
 
 [project.entry-points."siraloom.resource_providers"]
 clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"
+bcftools = "backend.app.infrastructure.resource_providers.normalization_releases:BCFtoolsReleaseProvider"
+gatk = "backend.app.infrastructure.resource_providers.normalization_releases:GATKReleaseProvider"
