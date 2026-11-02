@@ -48,7 +48,7 @@ certification suite.
 ## Expanded structural and genotype qualification
 
 The current fixture manifest also exercises:
-- all four breakend replacement-string orientations across VCFv4.1-v4.5, plus reciprocal remote-locus/MATEID consistency and a mismatched mate coordinate;
+- all four breakend replacement-string orientations across VCFv4.1-v4.5, plus reciprocal remote-locus/MATEID consistency, mismatched mate coordinates, dangling and non-reciprocal mate IDs, missing record IDs, and duplicate breakend record IDs;
 - triploid Number=G likelihood cardinality (10 values for three alleles at ploidy 3), plus a malformed cardinality case;
 - VCFv4.5 unspecified-allele reference blocks using per-sample FORMAT/LEN, including INFO/END mismatch rejection.
 - VCFv4.5 symbolic-SV SVLEN negative-length handling, zero-length rejection, CIPOS per-ALT cardinality and interval-bound checks, and CIEND missing-value enforcement for non-structural alleles.
