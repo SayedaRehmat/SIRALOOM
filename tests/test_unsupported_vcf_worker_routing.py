@@ -503,6 +503,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert "A\tC,<NON_REF>" in routed_text
             assert "AT\tA" in routed_text
             assert "\t*\t" not in routed_text
+            assert "\t*,G\t" not in routed_text
             assert "\t0\ttelo1\t" not in routed_text
             assert "\t1001\ttelo-after\t" not in routed_text
             assert "<NON_REF>\t.\tPASS\tEND=10" not in routed_text
@@ -606,6 +607,15 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             workflow.run_variant_analysis(analysis_id)
 
         with local_session() as db:
+            validation_step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "validate_input",
+            ))
+            assert validation_step.status == StepStatus.SUCCEEDED
+            assert validation_step.metadata_json["validation"] == "PASS_WITH_WARNINGS"
+            assert validation_step.metadata_json["warning_codes"] == [
+                "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED"
+            ]
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "normalize",
