@@ -2010,6 +2010,7 @@ def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality
         '##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval">',
         '##INFO=<ID=MEINFO,Number=A,Type=String,Description="Mobile element information">',
         '##INFO=<ID=IMPRECISE,Number=1,Type=Flag,Description="Imprecise structural variation">',
+        '##INFO=<ID=CILEN,Number=2,Type=Integer,Description="Confidence interval for SVLEN">',
     ],
 )
 def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path, metadata: str):
