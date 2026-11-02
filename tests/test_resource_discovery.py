@@ -509,6 +509,7 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
             organization_id=organization_id,
             identity_key="VCF specification VCFv4.6|HTS-Specifications|VCF_SPECIFICATION|UNSPECIFIED",
         ).one()
+        retained_binding_version = retained_binding.version
         assert retained_binding.resource_id == v46.id
 
         decide_resource_approval(
@@ -525,6 +526,8 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
         )
         assert snapshot46_v2["qualification_id"] == str(q46_v2.id)
         assert snapshot46_v2["resource_id"] == str(v46.id)
+        db.refresh(retained_binding)
+        assert retained_binding.version == retained_binding_version + 1
 
         v47, q47 = add_qualified_spec("VCFv4.7")
         assert resource_discovery.notify_organizations_of_qualified_release(
