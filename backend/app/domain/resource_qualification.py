@@ -102,6 +102,39 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_execution"] = "GOVERNED"
 
 
+def _verify_vcf_conformance_execution_report(report: dict[str, Any]) -> dict[str, bool]:
+    """Recompute report and source digests against files in this installed build."""
+    payload = dict(report)
+    claimed_report_digest = str(payload.pop("report_sha256", "") or "")
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    report_digest_verified = (
+        bool(re.fullmatch(r"[0-9a-f]{64}", claimed_report_digest))
+        and hashlib.sha256(canonical.encode("utf-8")).hexdigest() == claimed_report_digest
+    )
+
+    corpus_path = Path(__file__).with_name("vcf_conformance_cases.json")
+    parser_path = Path(__file__).with_name("vcf_validation.py")
+    runner_path = Path(__file__).with_name("vcf_conformance.py")
+    try:
+        corpus_digest = hashlib.sha256(corpus_path.read_bytes()).hexdigest()
+        parser_digest = hashlib.sha256(parser_path.read_bytes()).hexdigest()
+        runner_digest = hashlib.sha256(runner_path.read_bytes()).hexdigest()
+    except OSError:
+        return {
+            "report_digest_verified": report_digest_verified,
+            "corpus_digest_verified": False,
+            "parser_source_digest_verified": False,
+            "runner_source_digest_verified": False,
+        }
+
+    return {
+        "report_digest_verified": report_digest_verified,
+        "corpus_digest_verified": corpus_digest == report.get("corpus_sha256"),
+        "parser_source_digest_verified": parser_digest == report.get("parser_source_sha256"),
+        "runner_source_digest_verified": runner_digest == report.get("runner_source_sha256"),
+    }
+
+
 def _qualify_vcf_specification(
     resource: Resource,
     path: Path | None,
@@ -156,6 +189,7 @@ def _qualify_vcf_specification(
 
     test_case_count = int(execution_report.get("test_case_count") or 0)
     failed_test_count = int(execution_report.get("failed_test_count") or 0)
+    execution_integrity = _verify_vcf_conformance_execution_report(execution_report)
     report_valid = (
         execution_report.get("suite_id") == "siraloom-vcf-native-conformance-v1"
         and execution_report.get("target_version") == version
@@ -166,6 +200,7 @@ def _qualify_vcf_specification(
         and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("corpus_sha256") or "")))
         and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("parser_source_sha256") or "")))
         and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("runner_source_sha256") or "")))
+        and all(execution_integrity.values())
     )
     if not report_valid:
         blockers.append("VCF_SPECIFICATION_CONFORMANCE_EXECUTION_FAILED")
@@ -194,6 +229,7 @@ def _qualify_vcf_specification(
         "unsupported_policy": conformance.get("unsupported_policy"),
         "execution_report": execution_report,
         "execution_report_sha256": execution_report.get("report_sha256"),
+        "execution_integrity": execution_integrity,
         "test_case_count": test_case_count,
         "failed_test_count": failed_test_count,
     }
