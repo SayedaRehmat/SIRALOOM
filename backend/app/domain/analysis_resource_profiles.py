@@ -95,8 +95,6 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
             ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
-            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
-            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement(
@@ -117,6 +115,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh38",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
+            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement("POPULATION_SECONDARY", False, ("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"), True),
@@ -132,6 +131,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh37",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
+            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement(
