@@ -91,15 +91,27 @@ def feature_compatibility_for_version(version: str) -> list[dict[str, str | None
 
     qualifications: list[VCFFeatureQualification] = []
     for feature_id, scope, implementation, evidence in VCF_CORE_FEATURES:
-        qualifications.append(
-            VCFFeatureQualification(
-                feature_id=feature_id,
-                specification_scope=scope,
-                status="NATIVE_VALIDATED",
-                implementation=implementation,
-                evidence=evidence,
+        if version == "VCFv4.0":
+            qualifications.append(
+                VCFFeatureQualification(
+                    feature_id=feature_id,
+                    specification_scope=scope,
+                    status="NOT_APPLICABLE_TO_DECLARED_VERSION",
+                    implementation="This feature qualification is scoped to VCFv4.1 and later.",
+                    evidence="HTS specifications version registry",
+                    limitation="VCFv4.0 is retained as a legacy parser smoke profile, not a normative conformance target.",
+                )
             )
-        )
+        else:
+            qualifications.append(
+                VCFFeatureQualification(
+                    feature_id=feature_id,
+                    specification_scope=scope,
+                    status="NATIVE_VALIDATED",
+                    implementation=implementation,
+                    evidence=evidence,
+                )
+            )
 
     qualifications.append(
         VCFFeatureQualification(
