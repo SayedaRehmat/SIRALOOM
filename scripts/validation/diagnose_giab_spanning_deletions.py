@@ -265,6 +265,8 @@ def main() -> int:
         "overlapping_deletion_candidate_count": report["context"]["overlapping_deletion_candidate_count"],
         "same_sample_deletion_context_found": report["context"]["same_sample_deletion_context_found"],
         "evidence": str(args.output),
+        "context": report["context"],
+        "production_validator": validation,
     }, sort_keys=True))
     if validation["status"] == "REJECTED" and validation["error_code"] != "VCF_SPANNING_DELETION_CONTEXT_MISSING":
         return 1
