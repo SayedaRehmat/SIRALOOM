@@ -61,7 +61,7 @@ def write_vcf_with_metadata(
 
 def test_read_vcf_fileformat_identifies_future_version_before_parser_validation(tmp_path: Path):
     path = tmp_path / "future.vcf"
-    write_vcf(path, "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n", version="VCFv4.6")
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version="VCFv4.6")
 
     assert read_vcf_fileformat(path) == "VCFv4.6"
 
@@ -69,9 +69,9 @@ def test_read_vcf_fileformat_identifies_future_version_before_parser_validation(
 def test_read_vcf_fileformat_supports_bgzf_gzip_streams(tmp_path: Path):
     path = tmp_path / "future.vcf.gz"
     content = (
-        b"##fileformat=VCFv4.6\\n"
-        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        b"1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+        b"##fileformat=VCFv4.6\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t.\n"
     )
     path.write_bytes(_bgzf_block(content) + _bgzf_block(b""))
 
