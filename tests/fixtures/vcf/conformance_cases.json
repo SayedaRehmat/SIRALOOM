@@ -1296,7 +1296,7 @@
       {
         "id": "breakend_mixed_alt_mateid_cardinality_invalid",
         "category": "breakend_mate_relationship",
-        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
         "spec_basis": "VCFv4.5 MATEID Number=A requires one entry per ALT, including missing placeholders.",
         "lines": [
           "##fileformat=VCFv4.5",
