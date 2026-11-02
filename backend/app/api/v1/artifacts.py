@@ -277,6 +277,7 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
             )
             for status, metadata in vcf_rows
         ),
+        has_blocked_vcf=any(status == "BLOCKED" for status, _metadata in vcf_rows),
     )
     return case, before_status
 
@@ -728,6 +729,7 @@ async def upload_artifact(
                         )
                         for status, metadata in vcf_rows
                     ),
+                    has_blocked_vcf=any(status == "BLOCKED" for status, _metadata in vcf_rows),
                 )
 
             audit = AuditService(db)
