@@ -21,6 +21,12 @@ def test_packaged_vcf_conformance_executes_for_each_builtin_version(version):
     assert report["failed_test_count"] == 0
     assert report["passed_test_count"] == report["test_case_count"]
     assert report["execution_status"] == "PASSED"
+    # Execution success is deliberately distinct from complete normative
+    # coverage; the current corpus is a regression suite, not a full spec
+    # certification corpus.
+    assert report["normative_coverage_status"] == "PARTIAL"
+    assert report["normative_coverage_sections"] == []
+    assert report["normative_uncovered_sections"] == []
     assert len(report["corpus_sha256"]) == 64
     assert len(report["parser_source_sha256"]) == 64
     assert len(report["runner_source_sha256"]) == 64
