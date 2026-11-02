@@ -4,7 +4,7 @@ import zlib
 
 import pytest
 
-from backend.app.domain.vcf_validation import (
+from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version\nfrom backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     _validate_record,
     validate_vcf_reference_alleles,
@@ -2363,3 +2363,32 @@ def test_vcf45_empty_gt_value_is_not_treated_as_unknown_ploidy(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_GENOTYPE_INVALID"
+
+
+
+def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path: Path):
+    vcf45 = tmp_path / "vcf45-feature-matrix.vcf"
+    write_vcf(vcf45, "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n", version="VCFv4.5")
+    profile = validate_vcf_strict(vcf45)
+    matrix = {
+        item["feature_id"]: item
+        for item in profile["format_compatibility"]["feature_matrix"]
+    }
+
+    assert matrix["local_allele_encoding"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["base_modification_format_fields"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["reserved_info_format_definitions"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["structured_meta_headers"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
+
+    older = {
+        item["feature_id"]: item
+        for item in feature_compatibility_for_version("VCFv4.4")
+    }
+    assert older["local_allele_encoding"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+    assert older["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
+
+
+def test_vcf_feature_qualification_rejects_unknown_specification_versions():
+    with pytest.raises(ValueError, match="Unsupported VCF specification version"):
+        feature_compatibility_for_version("VCFv4.6")
