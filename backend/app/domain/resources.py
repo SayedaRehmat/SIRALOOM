@@ -604,25 +604,6 @@ def require_approved_vcf_specification(
             next_step="OFFICIAL_SPECIFICATION_DISCOVERY_AND_QUALIFICATION_REQUIRED",
         )
 
-    approval = db.scalar(
-        select(ResourceApproval).where(
-            ResourceApproval.organization_id == organization_id,
-            ResourceApproval.resource_id == resource.id,
-        ).limit(1)
-    )
-    if approval is not None and approval.status == "PENDING":
-        raise VCFSpecificationApprovalError(
-            f"VCF specification {requested_version!r} is awaiting an explicit laboratory approval decision",
-            code="VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
-            next_step="LAB_APPROVAL_REQUIRED",
-        )
-    if approval is not None and approval.status == "REJECTED":
-        raise VCFSpecificationApprovalError(
-            f"VCF specification {requested_version!r} was rejected by this laboratory; "
-            "the previously approved specification remains in effect",
-            code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
-            next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
-        )
     if resource.status not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}:
         raise VCFSpecificationApprovalError(
             f"VCF specification {requested_version!r} is not qualified for laboratory use",
@@ -636,7 +617,7 @@ def require_approved_vcf_specification(
             ResourceQualification.resource_id == resource.id,
             ResourceQualification.status == "QUALIFIED",
         )
-        .order_by(ResourceQualification.qualified_at.desc())
+        .order_by(ResourceQualification.qualified_at.desc(), ResourceQualification.created_at.desc())
         .limit(1)
     )
     if qualification is None:
@@ -644,6 +625,32 @@ def require_approved_vcf_specification(
             f"VCF specification {requested_version!r} has no successful conformance qualification",
             code="VCF_SPECIFICATION_QUALIFICATION_REQUIRED",
             next_step="PARSER_CONFORMANCE_QUALIFICATION_REQUIRED",
+        )
+
+    # Approval is bound to the exact qualification record, not merely the
+    # shared release resource. A new qualification must trigger a fresh lab
+    # decision even when an older qualification of this release was approved.
+    approval = db.scalar(
+        select(ResourceApproval).where(
+            ResourceApproval.organization_id == organization_id,
+            ResourceApproval.resource_id == resource.id,
+            ResourceApproval.qualification_id == qualification.id,
+        ).limit(1)
+    )
+    if approval is not None and approval.status == "PENDING":
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} qualification "
+            f"{qualification.qualification_version!r} is awaiting an explicit laboratory approval decision",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
+            next_step="LAB_APPROVAL_REQUIRED",
+        )
+    if approval is not None and approval.status == "REJECTED":
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} qualification "
+            f"{qualification.qualification_version!r} was rejected by this laboratory; "
+            "the previously approved specification remains in effect",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
+            next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
         )
 
     identity_key = "|".join([
