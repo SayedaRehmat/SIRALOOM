@@ -1577,7 +1577,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
     spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
     breakend_records_by_id: dict[str, dict] = {}
-    breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
+    breakend_links: list[tuple[str, str, int, list[tuple[str, tuple[str, int] | None]], list[tuple[str, int]], int]] = []
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
     closed_chroms: set[str] = set()
@@ -1802,7 +1802,18 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
                 mate_value = info_values.get("MATEID")
-                mate_ids = set(mate_value.split(",")) if mate_value else set()
+                mate_values = mate_value.split(",") if mate_value else []
+                # VCFv4.4+ defines MATEID as Number=A: preserve its positional
+                # correspondence to the complete ALT list, including '.' for
+                # non-breakend alleles. VCFv4.1-4.3 use Number=. and do not
+                # provide this per-ALT mapping contract.
+                per_alt_mate_mapping = fileformat in {"VCFv4.4", "VCFv4.5"}
+                if per_alt_mate_mapping and mate_value is not None and len(mate_values) != len(alts):
+                    raise StrictVCFValidationError(
+                        f"VCFv4.4+ MATEID must contain one value per ALT allele at line {line_no}",
+                        code="VCF_BREAKEND_MATE_INVALID",
+                    )
+                mate_ids = {value for value in mate_values if value not in {"", "."}}
                 # The ALT grammar above already requires one complete bracket
                 # pair. Retain its remote coordinates for MATEID checks after
                 # the whole file has been read; the VCF-defined orientations
@@ -1831,14 +1842,39 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    if len(mate_ids) != len(breakend_alts):
-                        raise StrictVCFValidationError(
-                            f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
-                            code="VCF_BREAKEND_MATE_INVALID",
+                    if per_alt_mate_mapping:
+                        remote_by_alt = iter(
+                            (match.group(2), int(match.group(3)))
+                            for alt in alts
+                            if "[" in alt or "]" in alt
+                            for match in [re.search(r"([\\[\\]])([^:\\[\\]]+):([1-9][0-9]*)\\1", alt)]
+                            if match is not None
                         )
-                    breakend_links.append((
-                        fields[2], _chrom, _pos, mate_ids, remote_loci, line_no,
-                    ))
+                        mate_links = []
+                        for alternate, mate_id in zip(alts, mate_values):
+                            if "[" not in alternate and "]" not in alternate:
+                                if mate_id not in {"", "."}:
+                                    raise StrictVCFValidationError(
+                                        f"VCFv4.4+ MATEID for a non-breakend ALT must be missing at line {line_no}",
+                                        code="VCF_BREAKEND_MATE_INVALID",
+                                    )
+                                continue
+                            remote_locus = next(remote_by_alt)
+                            if mate_id not in {"", "."}:
+                                mate_links.append((mate_id, remote_locus))
+                    else:
+                        if len(mate_ids) != len(breakend_alts):
+                            raise StrictVCFValidationError(
+                                f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
+                                code="VCF_BREAKEND_MATE_INVALID",
+                            )
+                        # Older versions specify Number=. rather than Number=A;
+                        # retain their historical unordered multi-value behavior.
+                        mate_links = [(mate_id, None) for mate_id in mate_ids]
+                    if mate_links:
+                        breakend_links.append((
+                            fields[2], _chrom, _pos, mate_links, remote_loci, line_no,
+                        ))
                 for record_id in record_ids:
                     if record_id in breakend_records_by_id:
                         raise StrictVCFValidationError(
@@ -2103,18 +2139,23 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
-    for source_id, chrom, pos, mate_ids, remote_loci, line_no in breakend_links:
+    for source_id, chrom, pos, mate_links, remote_loci, line_no in breakend_links:
         source_ids = set(source_id.split(";"))
-        for mate_id in mate_ids:
+        for mate_id, expected_remote_locus in mate_links:
             mate = breakend_records_by_id.get(mate_id)
             if mate is None:
                 raise StrictVCFValidationError(
                     f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
                     code="VCF_BREAKEND_MATE_MISSING",
                 )
-            if (mate["chrom"], mate["pos"]) not in remote_loci:
+            permitted_remote_loci = (
+                {expected_remote_locus}
+                if expected_remote_locus is not None
+                else set(remote_loci)
+            )
+            if (mate["chrom"], mate["pos"]) not in permitted_remote_loci:
                 raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not match the ALT mate coordinate at line {line_no}",
+                    f"Breakend MATEID {mate_id!r} does not match its ALT mate coordinate at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
             if not (mate["mate_ids"] & source_ids):
