@@ -414,6 +414,12 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
             status="ACTIVE",
         ))
 
+        with pytest.raises(ValueError, match="has no registered qualified release") as undiscovered:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert undiscovered.value.code == "VCF_SPECIFICATION_RELEASE_NOT_REGISTERED"
+
         def add_qualified_spec(version):
             resource = Resource(
                 id=uuid4(),
@@ -444,6 +450,11 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
             return resource, qualification
 
         v46, q46 = add_qualified_spec("VCFv4.6")
+        with pytest.raises(ValueError, match="has no explicit laboratory approval") as unapproved:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert unapproved.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED"
         assert resource_discovery.notify_organizations_of_qualified_release(
             db, resource=v46, qualification=q46
         ) == 1
@@ -524,10 +535,11 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
 
         # A newly qualified version is not implicitly approved, and its
         # pending request does not replace the laboratory's VCFv4.6 approval.
-        with pytest.raises(ValueError, match="awaiting an explicit laboratory approval"):
+        with pytest.raises(ValueError, match="awaiting an explicit laboratory approval") as pending_v47:
             require_approved_vcf_specification(
                 db, organization_id=organization_id, version="VCFv4.7"
             )
+        assert pending_v47.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
         assert require_approved_vcf_specification(
             db, organization_id=organization_id, version="VCFv4.6"
         )["resource_id"] == str(v46.id)
@@ -541,10 +553,12 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
             expected_version=1,
             reason="Laboratory retains its previously approved specification",
         )
-        with pytest.raises(ValueError, match="was rejected by this laboratory"):
+        with pytest.raises(ValueError, match="was rejected by this laboratory") as rejected_v47:
             require_approved_vcf_specification(
                 db, organization_id=organization_id, version="VCFv4.7"
             )
+        assert rejected_v47.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_REJECTED"
+        assert rejected_v47.value.next_step == "PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED"
         assert require_approved_vcf_specification(
             db, organization_id=organization_id, version="VCFv4.6"
         )["resource_id"] == str(v46.id)
