@@ -18,6 +18,8 @@ REFERENCE_PACKAGE_RESOURCE_TYPE = "REFERENCE_PACKAGE"
 REFERENCE_PACKAGE_STATUS = "ACTIVE"
 CONTIG_POLICY_EXACT = "EXACT"
 REFERENCE_ASSEMBLY_METADATA_FIELDS = ("assembly_name", "assembly_accession", "reference_source", "sequence_scope")
+_FASTA_BASES = b"ACGTRYSWKMBDHVNacgtryswkmbdhvn"
+_FASTA_TRANSLATION = bytes.maketrans(b"", b"")
 
 
 class ReferencePackageError(ValueError):
@@ -164,7 +166,11 @@ def validate_fasta_index_consistency(
                         code="REFERENCE_FASTA_INVALID",
                     )
                 sequence = raw_line.rstrip(b"\r\n")
-                if not sequence or any(base in b" \t" for base in sequence):
+                # Keep per-base validation in bytes.translate's C loop. Iterating
+                # over every nucleotide in Python made validation of human-sized
+                # references impractically slow.
+                invalid_bases = sequence.translate(_FASTA_TRANSLATION, _FASTA_BASES)
+                if not sequence or invalid_bases:
                     raise ReferencePackageError(
                         f"Invalid sequence line in reference contig {current_name!r}.",
                         code="REFERENCE_FASTA_INVALID",

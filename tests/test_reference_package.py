@@ -8,11 +8,6 @@ from types import SimpleNamespace
 import pytest
 
 from backend.app.domain.reference import FastaReference, ReferenceError, validate_bgzf_gzi_index
-from backend.app.domain.vcf_validation import (
-    StrictVCFValidationError,
-    validate_vcf_reference_alleles,
-    validate_vcf_strict,
-)
 from backend.app.domain.reference_package import (
     CONTIG_POLICY_EXACT,
     REFERENCE_PACKAGE_BGZF_SCHEMA_VERSION,
@@ -22,8 +17,13 @@ from backend.app.domain.reference_package import (
     contigs_from_fai,
     package_checksum,
     sha256_file,
-    validate_reference_package,
     validate_fasta_index_consistency,
+    validate_reference_package,
+)
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    validate_vcf_reference_alleles,
+    validate_vcf_strict,
 )
 
 
@@ -389,9 +389,8 @@ def test_reference_does_not_alias_unqualified_mitochondrial_accession_versions(
     fasta.write_text(">chrM\nACGT\n", encoding="utf-8")
     Path(f"{fasta}.fai").write_text("chrM\t4\t6\t4\t5\n", encoding="utf-8")
 
-    with FastaReference(fasta) as reference:
-        with pytest.raises(ReferenceError):
-            reference.resolve_contig("NC_012920.2")
+    with FastaReference(fasta) as reference, pytest.raises(ReferenceError):
+        reference.resolve_contig("NC_012920.2")
 
 
 def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
@@ -429,6 +428,20 @@ def test_fasta_index_consistency_rejects_oversized_final_sequence_line(tmp_path:
     fasta.write_text(">1\nACGT\nACGTA\n", encoding="utf-8")
     fai = tmp_path / "reference.fa.fai"
     fai.write_text("1\t9\t3\t4\t5\n", encoding="utf-8")
+    with pytest.raises(ReferencePackageError) as exc:
+        validate_fasta_index_consistency(fasta, fai)
+    assert exc.value.code == "REFERENCE_FASTA_INVALID"
+
+
+def test_fasta_index_consistency_accepts_iupac_bases_and_rejects_invalid_symbols(tmp_path: Path):
+    fasta = tmp_path / "reference.fa"
+    fai = tmp_path / "reference.fa.fai"
+    fasta.write_bytes(b">1\nACGTRYSWKMBDHVNacgtryswkmbdhvn\n")
+    fai.write_text("1\t30\t3\t30\t31\n", encoding="utf-8")
+    assert validate_fasta_index_consistency(fasta, fai) == [{"name": "1", "length": 30}]
+
+    fasta.write_bytes(b">1\nACGTX\n")
+    fai.write_text("1\t5\t3\t5\t6\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_fasta_index_consistency(fasta, fai)
     assert exc.value.code == "REFERENCE_FASTA_INVALID"
