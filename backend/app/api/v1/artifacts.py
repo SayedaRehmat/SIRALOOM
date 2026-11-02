@@ -441,12 +441,7 @@ async def upload_artifact(
         artifact_validation_status = None
         if kind == "VCF":
             result = _validate_vcf_for_upload(staged)
-            result = _apply_vcf_specification_governance(
-                db,
-                organization_id=case.organization_id,
-                result=result,
-            )
-            if result.status != "BLOCKED" and result.sample_names and specimen is None:
+            if result.sample_names and specimen is None:
                 result = ValidationResult(
                     "INVALID", result.file_kind, result.record_count, result.sample_names,
                     result.detected_build,
@@ -454,11 +449,16 @@ async def upload_artifact(
                     result.warnings, result.fileformat, result.metadata,
                     "VCF_SPECIMEN_REQUIRED",
                 )
-            elif result.status != "BLOCKED" and specimen is not None:
+            elif specimen is not None:
                 result = validate_specimen_sample_identity(
                     result,
                     (specimen.metadata_json or {}).get("vcf_sample_name"),
                 )
+            result = _apply_vcf_specification_governance(
+                db,
+                organization_id=case.organization_id,
+                result=result,
+            )
             if result.detected_build and result.detected_build != requested_build:
                 result = type(result)(
                     "INVALID",
