@@ -79,3 +79,6 @@ def get_vcf_specification_profile(version: str) -> VCFSpecificationProfile:
         raise ValueError(f"Unsupported VCF specification version: {version!r}") from exc
 
 SUPPORTED_VCF_VERSIONS = frozenset(VCF_SPECIFICATION_PROFILES)
+BUILTIN_VCF_SPECIFICATION_VERSIONS = frozenset({
+    "VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5",
+})
