@@ -819,3 +819,169 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert store.exists(original.storage_uri)
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize(
+    ("approval_state", "expected_code", "expected_next_step"),
+    [
+        (
+            "PENDING",
+            "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            "LAB_APPROVAL_REQUIRED",
+        ),
+        (
+            "REJECTED",
+            "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            "LAB_APPROVAL_REQUIRED",
+        ),
+        (
+            "APPROVED",
+            "VCF_SPECIFICATION_PARSER_NOT_IMPLEMENTED",
+            "PARSER_IMPLEMENTATION_AND_CONFORMANCE_REQUIRED",
+        ),
+    ],
+)
+def test_production_worker_audits_future_vcf_specification_governance_and_parser_state(
+    monkeypatch, tmp_path, approval_state, expected_code, expected_next_step
+):
+    """Exercise the real worker boundary for pending, rejected and approved VCFv4.6."""
+    import importlib
+
+    workflow = importlib.import_module("backend.app.workflows.variant")
+    resources = importlib.import_module("backend.app.domain.resources")
+    db_module = importlib.import_module("backend.app.infrastructure.db.session")
+
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / (approval_state.lower() + '-vcf-spec.db')}")
+    Base.metadata.create_all(engine)
+    local_session = sessionmaker(bind=engine, expire_on_commit=False)
+    store = ArtifactStore(tmp_path / "artifacts")
+    organization_id, user_id, case_id, analysis_id = uuid4(), uuid4(), uuid4(), uuid4()
+    source = tmp_path / f"{approval_state.lower()}-future.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.6\\n"
+        "##contig=<ID=1,length=1000>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+
+    try:
+        with local_session() as db:
+            db.add(Organization(id=organization_id, name="Future VCF Governance Lab"))
+            db.flush()
+            db.add(User(
+                id=user_id,
+                organization_id=organization_id,
+                external_subject=str(user_id),
+                email=f"{user_id}@test.local",
+                display_name="Future VCF Test",
+                role="ADMIN",
+                status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id,
+                organization_id=organization_id,
+                case_identifier=f"VCF-SPEC-{analysis_id}",
+                status="ACTIVE",
+                clinical_context={},
+                language="en",
+                created_by=user_id,
+            ))
+            db.flush()
+            artifact = store.put_file(
+                db=db,
+                case_id=case_id,
+                analysis_id=analysis_id,
+                source_path=source,
+                filename=source.name,
+                artifact_type="SOURCE_VCF",
+                media_type="text/plain",
+                genome_build="GRCh38",
+                metadata={},
+                validation_status="VALID",
+            )
+            db.add(Analysis(
+                id=analysis_id,
+                case_id=case_id,
+                parent_analysis_id=None,
+                assay_id=None,
+                analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1",
+                workflow_version="test",
+                status=AnalysisStatus.QUEUED,
+                queue_task_id=f"vcf-spec-{approval_state.lower()}",
+                reference_build="GRCh38",
+                configuration={"input_artifact_id": str(artifact.id)},
+                started_at=None,
+                completed_at=None,
+                created_by=user_id,
+                analysis_version=1,
+            ))
+            db.commit()
+
+        monkeypatch.setattr(db_module, "SessionLocal", local_session)
+        monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
+
+        approval_snapshot = {
+            "source": "LAB_APPROVED_RESOURCE",
+            "version": "VCFv4.6",
+            "approval_required": True,
+            "resource_id": "qualified-vcf46-resource",
+            "qualification_id": "executed-conformance-qualification",
+            "binding_id": "laboratory-vcf46-binding",
+        }
+
+        def resolve_approval(_db, *, organization_id, version):
+            assert organization_id
+            assert version == "VCFv4.6"
+            if approval_state == "PENDING":
+                raise resources.ResourceRegistryError(
+                    "VCF specification VCFv4.6 is awaiting an explicit laboratory approval decision"
+                )
+            if approval_state == "REJECTED":
+                raise resources.ResourceRegistryError(
+                    "VCF specification VCFv4.6 was rejected by this laboratory"
+                )
+            return approval_snapshot
+
+        monkeypatch.setattr(resources, "require_approved_vcf_specification", resolve_approval)
+
+        if approval_state in {"PENDING", "REJECTED"}:
+            def parser_must_not_run(*_args, **_kwargs):
+                raise AssertionError("strict parser must not run before laboratory approval")
+
+            monkeypatch.setattr(workflow, "validate_vcf_strict", parser_must_not_run)
+
+        workflow.run_variant_analysis(analysis_id)
+
+        with local_session() as db:
+            analysis = db.get(Analysis, analysis_id)
+            validation = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "validate_input",
+            ))
+            event = db.scalar(select(AuditEvent).where(
+                AuditEvent.analysis_id == analysis_id,
+                AuditEvent.event_type == "WORKFLOW_BLOCKED",
+            ))
+            assert analysis.status == AnalysisStatus.BLOCKED
+            assert validation.status == StepStatus.BLOCKED
+            assert validation.error_code == expected_code
+            assert validation.metadata_json["detected_vcf_version"] == "VCFv4.6" if approval_state == "APPROVED" else validation.metadata_json["vcf_specification_approval"]["version"] == "VCFv4.6"
+            assert validation.metadata_json["next_step"] == expected_next_step
+            assert event is not None
+            assert event.payload["error_code"] == expected_code
+            assert event.payload["vcf_version"] == "VCFv4.6"
+            if approval_state == "APPROVED":
+                assert validation.metadata_json["parser_support"] == "NOT_IMPLEMENTED"
+                assert validation.metadata_json["vcf_specification_approval"] == approval_snapshot
+                assert event.payload["laboratory_approval"] == approval_snapshot
+            else:
+                assert validation.metadata_json["vcf_specification_approval"]["status"] == "LAB_APPROVAL_REQUIRED"
+                assert approval_state.lower() in validation.error_message.lower() or (
+                    approval_state == "PENDING" and "awaiting" in validation.error_message.lower()
+                )
+    finally:
+        engine.dispose()
