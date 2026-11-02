@@ -76,6 +76,18 @@ def execute_vcf_conformance_suite(version: str) -> dict[str, Any]:
         "suite_id": str(manifest.get("suite_id") or ""),
         "suite_version": "1",
         "target_version": version,
+        # A passing finite fixture set is not equivalent to exhaustive
+        # normative conformance. The corpus must explicitly declare reviewed
+        # section coverage before a release can be qualified for lab use.
+        "normative_coverage_status": str(
+            (manifest.get("normative_coverage") or {}).get(version, {}).get("status") or "PARTIAL"
+        ).upper(),
+        "normative_coverage_sections": list(
+            (manifest.get("normative_coverage") or {}).get(version, {}).get("covered_sections") or []
+        ),
+        "normative_uncovered_sections": list(
+            (manifest.get("normative_coverage") or {}).get(version, {}).get("uncovered_sections") or []
+        ),
         "corpus_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
         "parser_source_sha256": parser_source_sha256,
         "runner_source_sha256": runner_source_sha256,
