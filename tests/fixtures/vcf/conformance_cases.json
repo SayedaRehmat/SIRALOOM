@@ -1130,6 +1130,71 @@
           "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
         ]
+      },
+      {
+        "id": "symbolic_sv_confidence_intervals_with_nonstructural_alt_valid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "PASS",
+        "spec_basis": "CIPOS and CIEND carry pairs for symbolic structural alleles and missing-value pairs for a sequence ALT; CILEN provides an SVLEN interval",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
+          "##INFO=<ID=CIEND,Number=.,Type=Integer,Description=\"Confidence interval around inferred END\">",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>,C\t.\tPASS\tSVLEN=-4,.;CIPOS=-2,2,.,.;CIEND=-1,1,.,.;CILEN=-6,-2,.,."
+        ]
+      },
+      {
+        "id": "nonstructural_cipos_values_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "CIPOS has no meaningful value for a sequence ALT and must use missing-value placeholders",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\tC\t.\tPASS\tCIPOS=-1,1"
+        ]
+      },
+      {
+        "id": "symbolic_cilen_cardinality_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_CARDINALITY_INVALID",
+        "spec_basis": "CILEN consists of two bounds per ALT allele",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;CILEN=-6,-2,0"
+        ]
+      },
+      {
+        "id": "symbolic_cilen_bounds_reversed_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "CILEN bounds are ordered lower then upper",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;CILEN=5,-5"
+        ]
+      },
+      {
+        "id": "nonstructural_cilen_values_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "CILEN must be missing for a sequence ALT with no symbolic SVLEN interval",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\tC\t.\tPASS\tCILEN=-2,2"
+        ]
       }
     ],
     "VCFv4.0": [
