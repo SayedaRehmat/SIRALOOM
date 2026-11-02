@@ -26,6 +26,7 @@ jobs:
         run: |
           test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
           test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
+          test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
       - name: Install backend
         run: pip install -e . pytest
       - name: Backend tests

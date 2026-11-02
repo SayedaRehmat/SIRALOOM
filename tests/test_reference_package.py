@@ -1,11 +1,13 @@
+import shutil
 import struct
+import subprocess
 import zlib
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from backend.app.domain.reference import FastaReference, ReferenceError
+from backend.app.domain.reference import FastaReference, ReferenceError, validate_bgzf_gzi_index
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     validate_vcf_reference_alleles,
@@ -202,6 +204,43 @@ def test_reference_package_rejects_gzi_that_does_not_match_bgzf(tmp_path: Path):
         validate_reference_package(resource, expected_genome_build="GRCh38")
 
     assert exc.value.code == "REFERENCE_GZI_MISMATCH"
+
+
+def test_reference_reader_interoperates_with_htslib_generated_bgzf_gzi(tmp_path: Path):
+    bgzip = shutil.which("bgzip")
+    if bgzip is None:
+        pytest.skip("HTSlib bgzip executable is not installed")
+
+    sequence = "ACGT" * 25_000
+    line_bases = 60
+    header = b">ctg1 description\n"
+    fasta_content = header + b"".join(
+        (sequence[offset:offset + line_bases] + "\n").encode("ascii")
+        for offset in range(0, len(sequence), line_bases)
+    )
+    plain_fasta = tmp_path / "reference.fa"
+    plain_fasta.write_bytes(fasta_content)
+    fasta = tmp_path / "reference.fa.bgz"
+    gzi = Path(f"{fasta}.gzi")
+
+    with fasta.open("wb") as output:
+        subprocess.run(
+            [bgzip, "-i", "-I", str(gzi), "-s", "1000", str(plain_fasta)],
+            stdout=output,
+            stderr=subprocess.PIPE,
+            check=True,
+            timeout=30,
+        )
+
+    fai = Path(f"{fasta}.fai")
+    fai.write_text(
+        f"ctg1\t{len(sequence)}\t{len(header)}\t{line_bases}\t{line_bases + 1}\n",
+        encoding="ascii",
+    )
+    assert validate_bgzf_gzi_index(fasta, gzi)["gzi_entry_count"] >= 1
+    with FastaReference(fasta, fai, gzi) as reference:
+        for start, end in ((0, 1), (999, 1002), (59_990, 60_070), (65_530, 65_580), (99_000, 100_000)):
+            assert reference.fetch("ctg1", start, end) == sequence[start:end]
 
 
 def test_reference_package_allows_explicitly_pinned_superseded_version(tmp_path: Path):
