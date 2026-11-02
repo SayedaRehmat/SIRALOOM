@@ -122,6 +122,54 @@ jobs:
           FIREBASE_AUTH_REQUIRED: "false"
         run: pytest -q tests/integration
 
+  giab-spanning-deletion-diagnostic:
+    name: GIAB public spanning-deletion diagnostic (not qualification)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'work/vcf-stage1-mainline-qualification-20261102'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install SIRALOOM backend
+        run: pip install -e .
+      - name: Download and verify official GIAB benchmark VCFs
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/giab-spanning-deletion-diagnostic
+          curl --fail --location --retry 5 --retry-all-errors --connect-timeout 30 --max-time 1800 \
+            "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh37/HG001_GRCh37_1_22_v4.2.1_benchmark.vcf.gz" \
+            --output artifacts/giab-spanning-deletion-diagnostic/HG001_GRCh37.vcf.gz
+          curl --fail --location --retry 5 --retry-all-errors --connect-timeout 30 --max-time 1800 \
+            "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh38/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" \
+            --output artifacts/giab-spanning-deletion-diagnostic/HG001_GRCh38.vcf.gz
+          echo "69f5cd5d990cf96c5844b92475624a54  artifacts/giab-spanning-deletion-diagnostic/HG001_GRCh37.vcf.gz" | md5sum --check --strict
+          echo "ec61d76ad725d808e3a9e1c8acec402a  artifacts/giab-spanning-deletion-diagnostic/HG001_GRCh38.vcf.gz" | md5sum --check --strict
+      - name: Capture GRCh37 production-validator diagnostic
+        run: |
+          python scripts/validation/diagnose_giab_spanning_deletions.py \
+            --vcf artifacts/giab-spanning-deletion-diagnostic/HG001_GRCh37.vcf.gz \
+            --reference-build GRCh37 \
+            --expected-md5 69f5cd5d990cf96c5844b92475624a54 \
+            --output artifacts/giab-spanning-deletion-diagnostic/GRCh37-diagnostic.json
+      - name: Capture GRCh38 production-validator diagnostic
+        run: |
+          python scripts/validation/diagnose_giab_spanning_deletions.py \
+            --vcf artifacts/giab-spanning-deletion-diagnostic/HG001_GRCh38.vcf.gz \
+            --reference-build GRCh38 \
+            --expected-md5 ec61d76ad725d808e3a9e1c8acec402a \
+            --output artifacts/giab-spanning-deletion-diagnostic/GRCh38-diagnostic.json
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: giab-spanning-deletion-diagnostic
+          path: artifacts/giab-spanning-deletion-diagnostic/
+          if-no-files-found: warn
+
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -149,7 +197,7 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: demo
         run: npm run build
       - name: Build production frontend container
-        working-directory: .
+        working-directory: . 
         run: |
           docker build -f frontend/Dockerfile \
             --build-arg NEXT_PUBLIC_SIRALOOM_API_BASE=https://example.invalid/api/v1 \
