@@ -474,6 +474,11 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
         )
         db.add(q46_v2)
         db.flush()
+        with pytest.raises(ValueError, match="has no explicit laboratory approval") as unrequested_v2:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert unrequested_v2.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED"
         assert resource_discovery.notify_organizations_of_qualified_release(
             db, resource=v46, qualification=q46_v2
         ) == 1
