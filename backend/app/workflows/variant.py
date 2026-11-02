@@ -1514,6 +1514,55 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
+        # New VCF specification versions require both SIRALOOM conformance
+        # qualification and this laboratory's explicit approval. Built-in
+        # historical profiles remain compatible without a new resource binding.
+        validation_metadata = dict(validation_step.metadata_json or {})
+        validation_profile = dict(validation_metadata.get("validation_profile") or {})
+        if not validation_profile:
+            validation_profile = validate_vcf_strict(str(input_path))
+        vcf_specification_version = str(validation_profile.get("fileformat") or "")
+        from backend.app.domain.resources import (
+            ResourceRegistryError,
+            require_approved_vcf_specification,
+        )
+
+        try:
+            specification_approval = require_approved_vcf_specification(
+                db,
+                organization_id=case.organization_id,
+                version=vcf_specification_version,
+            )
+        except ResourceRegistryError as exc:
+            validation_metadata["vcf_specification_approval"] = {
+                "status": "LAB_APPROVAL_REQUIRED",
+                "version": vcf_specification_version,
+            }
+            validation_step.metadata_json = validation_metadata
+            db.add(validation_step)
+            analysis.status = AnalysisStatus.BLOCKED
+            analysis.completed_at = None
+            db.commit()
+            audit.record(
+                event_type="WORKFLOW_BLOCKED",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="vcf-specification-governance",
+                reason=str(exc),
+                payload={
+                    "error_code": "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+                    "vcf_version": vcf_specification_version,
+                    "next_step": "LAB_APPROVAL_REQUIRED",
+                },
+            )
+            db.commit()
+            return
+        validation_metadata["vcf_specification_approval"] = specification_approval
+        validation_step.metadata_json = validation_metadata
+        db.add(validation_step)
+        db.commit()
+
         # 2. Reference-aware normalization + bounded-memory variant indexing.
         # M13 never retains the complete normalized variant set in Python memory.
         normalization_step = _step(db, analysis.id, "normalize")
