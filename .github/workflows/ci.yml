@@ -265,66 +265,79 @@ jobs:
               print("Strict VCF validation passed during diagnostic rerun.")
               raise SystemExit(0)
           except StrictVCFValidationError as exc:
-              match = re.search(r"line (\\d+)", str(exc))
+              error_text = str(exc)
+              match = re.search(r"line (\\d+)", error_text)
               if not match:
                   raise
               target_line = int(match.group(1))
           opener = gzip.open if vcf.name.endswith((".gz", ".bgz")) else open
           with opener(vcf, "rt", encoding="utf-8") as handle:
-              lines = list(handle)
-          fields = lines[target_line - 1].rstrip("\\n\\r").split("\\t")
-          chrom, pos, alts = fields[0], int(fields[1]), fields[4].split(",")
-          format_keys = fields[8].split(":") if len(fields) > 8 else []
-          gt_index = format_keys.index("GT") if "GT" in format_keys else None
-          def carriers(record_fields, alt_index):
-              if len(record_fields) <= 9 or gt_index is None:
+              first_line = handle.readline()
+          fileformat = first_line.strip().split("=", 1)[-1]
+          with opener(vcf, "rt", encoding="utf-8") as handle:
+              target_fields = None
+              for line_no, raw in enumerate(handle, 1):
+                  if line_no == target_line:
+                      target_fields = raw.rstrip("\\n\\r").split("\\t")
+                      break
+          if target_fields is None:
+              raise RuntimeError(f"Could not recover rejected VCF line {target_line}")
+          chrom, pos, alts = target_fields[0], int(target_fields[1]), target_fields[4].split(",")
+          def carriers(record_fields, line_no, alt_index):
+              if len(record_fields) <= 9:
                   return None
+              keys = record_fields[8].split(":")
+              if "GT" not in keys:
+                  return None
+              gt_index = keys.index("GT")
               result = set()
               for sample_index, sample in enumerate(record_fields[9:]):
                   values = sample.split(":")
                   if gt_index >= len(values) or values[gt_index] == ".":
                       continue
-                  tokens = _gt_allele_tokens(values[gt_index], None, target_line)
+                  tokens = _gt_allele_tokens(values[gt_index], fileformat, line_no)
                   if str(alt_index) in tokens:
                       result.add(sample_index)
               return result
           star_index = alts.index("*") + 1
-          star_carriers = carriers(fields, star_index)
+          star_carriers = carriers(target_fields, target_line, star_index)
           candidates = []
-          for line_no, raw in enumerate(lines, 1):
-              if line_no == target_line or raw.startswith("#"):
-                  continue
-              row = raw.rstrip("\\n\\r").split("\\t")
-              if len(row) < 8 or row[0] != chrom:
-                  continue
-              try:
-                  row_pos = int(row[1])
-              except ValueError:
-                  continue
-              for alt_index, alt in enumerate(row[4].split(","), 1):
-                  interval = None
-                  if re.fullmatch(r"[ACGTNacgtn]+", alt):
-                      interval = _deleted_reference_interval(row_pos, row[3].upper(), alt.upper())
-                  elif alt == "<DEL>":
-                      end = _info_values(row[7]).get("END")
-                      if end is not None and int(end) > row_pos:
-                          interval = (row_pos + 1, int(end))
-                  if interval and interval[0] <= pos <= interval[1]:
-                      deletion_carriers = carriers(row, alt_index)
-                      candidates.append({
-                          "line": line_no,
-                          "interval": interval,
-                          "sample_indexes": sorted(deletion_carriers) if deletion_carriers is not None else None,
-                          "overlaps_star_carriers": (
-                              None if deletion_carriers is None or star_carriers is None
-                              else bool(deletion_carriers & star_carriers)
-                          ),
-                          "record": row[:8],
-                      })
+          with opener(vcf, "rt", encoding="utf-8") as handle:
+              for line_no, raw in enumerate(handle, 1):
+                  if line_no == target_line or raw.startswith("#"):
+                      continue
+                  row = raw.rstrip("\\n\\r").split("\\t")
+                  if len(row) < 8 or row[0] != chrom:
+                      continue
+                  try:
+                      row_pos = int(row[1])
+                  except ValueError:
+                      continue
+                  for alt_index, alt in enumerate(row[4].split(","), 1):
+                      interval = None
+                      ref = row[3].upper()
+                      if re.fullmatch(r"[ACGTNacgtn]+", alt) and len(ref) > len(alt):
+                          interval = _deleted_reference_interval(row_pos, ref, alt.upper())
+                      elif alt == "<DEL>":
+                          end = _info_values(row[7]).get("END")
+                          if end is not None and int(end) > row_pos:
+                              interval = (row_pos + 1, int(end))
+                      if interval and interval[0] <= pos <= interval[1]:
+                          deletion_carriers = carriers(row, line_no, alt_index)
+                          candidates.append({
+                              "line": line_no,
+                              "interval": interval,
+                              "sample_indexes": sorted(deletion_carriers) if deletion_carriers is not None else None,
+                              "overlaps_star_carriers": (
+                                  None if deletion_carriers is None or star_carriers is None
+                                  else bool(deletion_carriers & star_carriers)
+                              ),
+                              "record": row[:8],
+                          })
           print(json.dumps({
-              "validator_error": str(exc),
+              "validator_error": error_text,
               "star_line": target_line,
-              "star_record": fields[:8],
+              "star_record": target_fields[:8],
               "star_sample_indexes": sorted(star_carriers) if star_carriers is not None else None,
               "overlapping_deletion_candidates": candidates[:25],
           }, indent=2))
