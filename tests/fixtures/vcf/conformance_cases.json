@@ -1195,6 +1195,32 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t5\t.\tA\tC\t.\tPASS\tCILEN=-2,2"
         ]
+      },
+      {
+        "id": "symbolic_svlen_end_computed_span_valid",
+        "category": "structural_variant_span_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 deprecated INFO/END equals the maximum of the REF end and the end position computed from symbolic SVLEN",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"Deprecated computed end position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tAT\t<DEL>\t.\tPASS\tSVLEN=-4;END=9"
+        ]
+      },
+      {
+        "id": "symbolic_svlen_end_computed_span_mismatch_invalid",
+        "category": "structural_variant_span_vcf45",
+        "expected": "VCF_END_MISMATCH",
+        "spec_basis": "VCFv4.5 INFO/END must equal the computed maximum reference span; END=8 is shorter than POS 5 plus absolute SVLEN 4",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"Deprecated computed end position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tAT\t<DEL>\t.\tPASS\tSVLEN=-4;END=8"
+        ]
       }
     ],
     "VCFv4.0": [
