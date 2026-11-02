@@ -1,6 +1,9 @@
 name: Public GIAB VCF qualification
 
 on:
+  push:
+    branches:
+      - feat/giab-public-benchmark-workflow
   workflow_dispatch:
     inputs:
       reference_build:
@@ -26,7 +29,7 @@ jobs:
   qualification:
     name: HG001 ${{ matrix.build }} public benchmark
     # Pushes to the qualification branch execute both assemblies; manual dispatch may select one.
-    if: github.event_name == 'push' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    if: github.event_name != 'workflow_dispatch' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
