@@ -108,7 +108,15 @@ def _qualify_vcf_specification(
     blockers: list[str],
     checks: dict[str, Any],
 ) -> None:
-    """Require a staged official PDF and an independently hashed conformance report."""
+    """Qualify a VCF specification using an executed, packaged parser corpus.
+
+    Metadata-supplied PASS flags, test counts, report paths, and report hashes
+    are not execution evidence. The qualification service executes SIRALOOM's
+    pinned conformance corpus against the production validator and persists
+    the resulting report and digest in the qualification record.
+    """
+    from backend.app.domain.vcf_conformance import execute_vcf_conformance_suite
+
     metadata = dict(resource.metadata_json or {})
     version = str(metadata.get("specification_version") or "").strip()
     source_contract = dict(metadata.get("source_contract") or {})
@@ -117,76 +125,75 @@ def _qualify_vcf_specification(
         blockers.append("VCF_SPECIFICATION_VERSION_IDENTITY_MISMATCH")
     if not document_url or document_url != str(source_contract.get("artifact_url") or ""):
         blockers.append("VCF_SPECIFICATION_DOCUMENT_PROVENANCE_MISMATCH")
-    if path is None or not path.is_file():
-        blockers.append("VCF_SPECIFICATION_DOCUMENT_NOT_STAGED")
-        checks["vcf_specification"] = {"status": "BLOCKED", "reason": "official PDF is not staged"}
-        return
 
     header = b""
     tail = b""
-    try:
-        with path.open("rb") as handle:
-            header = handle.read(5)
-            handle.seek(max(0, path.stat().st_size - 2048))
-            tail = handle.read()
-        if header != b"%PDF-" or b"%%EOF" not in tail:
-            blockers.append("VCF_SPECIFICATION_DOCUMENT_INVALID")
-    except OSError:
-        blockers.append("VCF_SPECIFICATION_DOCUMENT_UNREADABLE")
+    if path is None or not path.is_file():
+        blockers.append("VCF_SPECIFICATION_DOCUMENT_NOT_STAGED")
+    else:
+        try:
+            with path.open("rb") as handle:
+                header = handle.read(5)
+                handle.seek(max(0, path.stat().st_size - 2048))
+                tail = handle.read()
+            if header != b"%PDF-" or b"%%EOF" not in tail:
+                blockers.append("VCF_SPECIFICATION_DOCUMENT_INVALID")
+        except OSError:
+            blockers.append("VCF_SPECIFICATION_DOCUMENT_UNREADABLE")
 
     conformance = dict(metadata.get("specification_conformance") or {})
-    report_path_value = str(conformance.get("report_path") or "").strip()
-    report_sha256 = str(conformance.get("report_sha256") or "").strip().lower()
-    report_path = Path(report_path_value) if report_path_value else None
-    report_valid = bool(
-        report_path
-        and report_path.is_absolute()
-        and report_path.is_file()
-        and re.fullmatch(r"[0-9a-f]{64}", report_sha256)
-    )
-    if report_valid:
-        try:
-            report_valid = _sha256(report_path) == report_sha256
-        except OSError:
-            report_valid = False
-
     try:
-        test_case_count = int(conformance.get("test_case_count") or 0)
-        failed_test_count = int(conformance.get("failed_test_count") or 0)
-    except (TypeError, ValueError):
-        test_case_count = 0
-        failed_test_count = -1
-    required_profile_fields = (
+        execution_report = execute_vcf_conformance_suite(version)
+    except (OSError, ValueError, TypeError) as exc:
+        execution_report = {
+            "suite_id": None,
+            "target_version": version,
+            "test_case_count": 0,
+            "failed_test_count": 0,
+            "execution_status": "NOT_EXECUTED",
+            "execution_error": type(exc).__name__,
+        }
+
+    test_case_count = int(execution_report.get("test_case_count") or 0)
+    failed_test_count = int(execution_report.get("failed_test_count") or 0)
+    report_valid = (
+        execution_report.get("suite_id") == "siraloom-vcf-native-conformance-v1"
+        and execution_report.get("target_version") == version
+        and test_case_count > 0
+        and failed_test_count == 0
+        and execution_report.get("execution_status") == "PASSED"
+        and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("report_sha256") or "")))
+    )
+    if not report_valid:
+        blockers.append("VCF_SPECIFICATION_CONFORMANCE_EXECUTION_FAILED")
+
+    # Clause identifiers and fail-closed policy describe the intended
+    # qualification scope; they cannot override a failed or absent execution.
+    required_scope = (
         bool(str(conformance.get("profile_id") or "").strip()),
-        bool(str(conformance.get("suite_version") or "").strip()),
-        str(conformance.get("execution_status") or "").strip().upper() == "PASSED",
         isinstance(conformance.get("normative_clause_ids"), list)
         and len(conformance.get("normative_clause_ids") or []) > 0,
         isinstance(conformance.get("unsupported_constructs"), list),
         str(conformance.get("unsupported_policy") or "").strip().upper() == "FAIL_CLOSED",
-        test_case_count > 0,
-        failed_test_count == 0,
-        report_valid,
     )
-    if not all(required_profile_fields):
-        blockers.append("VCF_SPECIFICATION_CONFORMANCE_NOT_QUALIFIED")
+    if not all(required_scope):
+        blockers.append("VCF_SPECIFICATION_CONFORMANCE_SCOPE_INCOMPLETE")
 
     checks["vcf_specification"] = {
-        "status": "QUALIFIED" if all(required_profile_fields) and not any(
+        "status": "QUALIFIED" if report_valid and all(required_scope) and not any(
             code.startswith("VCF_SPECIFICATION_") for code in blockers
         ) else "BLOCKED",
         "version": version,
         "document_url": document_url,
         "document_pdf_integrity": "PASS" if header == b"%PDF-" and b"%%EOF" in tail else "FAIL",
         "conformance_profile_id": conformance.get("profile_id"),
-        "conformance_suite_version": conformance.get("suite_version"),
-        "test_case_count": conformance.get("test_case_count"),
-        "failed_test_count": conformance.get("failed_test_count"),
         "normative_clause_count": len(conformance.get("normative_clause_ids") or []),
         "unsupported_policy": conformance.get("unsupported_policy"),
-        "conformance_report_sha256": report_sha256 if report_valid else None,
+        "execution_report": execution_report,
+        "execution_report_sha256": execution_report.get("report_sha256"),
+        "test_case_count": test_case_count,
+        "failed_test_count": failed_test_count,
     }
-
 
 def _qualify_normalization_engine(
     resource: Resource,
