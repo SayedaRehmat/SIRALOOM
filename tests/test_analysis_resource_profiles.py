@@ -29,6 +29,16 @@ def test_standard_wes_profile_has_nonnegotiable_core_capabilities():
     )
 
 
+
+def test_all_standard_profiles_require_exactly_one_normalization_engine():
+    for profile_id in (
+        "WES_GRCh38_STANDARD",
+        "WGS_GRCh38_STANDARD",
+        "WES_GRCh37_STANDARD",
+    ):
+        profile = get_analysis_resource_profile(profile_id)
+        assert profile.required_capabilities.count(NORMALIZATION_ENGINE) == 1
+
 def test_standard_profile_treats_external_evidence_as_optional():
     profile = get_analysis_resource_profile("WES_GRCh38_STANDARD")
     optional = profile.optional_capabilities
