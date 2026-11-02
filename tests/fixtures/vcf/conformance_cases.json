@@ -186,8 +186,8 @@
       {
         "id": "breakend_duplicate_record_id_invalid",
         "category": "breakend_mate_relationship",
-        "expected": "VCF_BREAKEND_MATE_INVALID",
-        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
         "lines": [
           "##fileformat=VCFv4.1",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
@@ -372,8 +372,8 @@
       {
         "id": "breakend_duplicate_record_id_invalid",
         "category": "breakend_mate_relationship",
-        "expected": "VCF_BREAKEND_MATE_INVALID",
-        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
         "lines": [
           "##fileformat=VCFv4.2",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
@@ -603,8 +603,8 @@
       {
         "id": "breakend_duplicate_record_id_invalid",
         "category": "breakend_mate_relationship",
-        "expected": "VCF_BREAKEND_MATE_INVALID",
-        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
         "lines": [
           "##fileformat=VCFv4.3",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
@@ -812,8 +812,8 @@
       {
         "id": "breakend_duplicate_record_id_invalid",
         "category": "breakend_mate_relationship",
-        "expected": "VCF_BREAKEND_MATE_INVALID",
-        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
         "lines": [
           "##fileformat=VCFv4.4",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
@@ -1122,8 +1122,8 @@
       {
         "id": "breakend_duplicate_record_id_invalid",
         "category": "breakend_mate_relationship",
-        "expected": "VCF_BREAKEND_MATE_INVALID",
-        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
         "lines": [
           "##fileformat=VCFv4.5",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
