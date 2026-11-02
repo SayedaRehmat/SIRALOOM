@@ -1002,7 +1002,7 @@ def test_unsupported_future_vcf_retains_declared_version_sample_and_assembly(tmp
     path.write_text(
         "##fileformat=VCFv4.6\\n"
         "##contig=<ID=1,length=1000,assembly=GRCh38>\\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\\"Genotype\\">\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
         "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tPROBAND\\n"
         "1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
         encoding="utf-8",
