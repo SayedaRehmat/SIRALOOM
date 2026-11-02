@@ -8,7 +8,7 @@
     "VCFv4.4": "https://samtools.github.io/hts-specs/VCFv4.4.pdf",
     "VCFv4.5": "https://samtools.github.io/hts-specs/VCFv4.5.pdf"
   },
-  "legacy_compatibility_note": "VCFv4.0 is retained as a parser compatibility smoke profile; the current HTS specifications index lists VCFv4.1 through VCFv4.5 as normative documents.",
+  "legacy_compatibility_note": "VCFv4.0 is retained as a legacy compatibility smoke profile; the current HTS specifications index lists VCFv4.1 through VCFv4.5 as normative documents.",
   "versions": {
     "VCFv4.1": [
       {
