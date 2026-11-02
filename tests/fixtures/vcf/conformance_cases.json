@@ -1150,7 +1150,7 @@
         "id": "nonstructural_cipos_values_invalid",
         "category": "structural_variant_info_vcf45",
         "expected": "VCF_SV_INFO_INTERVAL_INVALID",
-        "spec_basis": "CIPOS has no meaningful value for a sequence ALT and must use missing-value placeholders",
+        "spec_basis": "Without INFO/IMPRECISE, CIPOS has no meaningful value for a sequence ALT and must use a missing-value placeholder.",
         "lines": [
           "##fileformat=VCFv4.5",
           "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
