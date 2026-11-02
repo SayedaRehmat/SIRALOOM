@@ -826,13 +826,13 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     [
         (
             "PENDING",
-            "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            "VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
             "LAB_APPROVAL_REQUIRED",
         ),
         (
             "REJECTED",
-            "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
-            "LAB_APPROVAL_REQUIRED",
+            "VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
+            "PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
         ),
         (
             "APPROVED",
@@ -941,12 +941,16 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
             assert organization_id
             assert version == "VCFv4.6"
             if approval_state == "PENDING":
-                raise resources.ResourceRegistryError(
-                    "VCF specification VCFv4.6 is awaiting an explicit laboratory approval decision"
+                raise resources.VCFSpecificationApprovalError(
+                    "VCF specification VCFv4.6 is awaiting an explicit laboratory approval decision",
+                    code="VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
+                    next_step="LAB_APPROVAL_REQUIRED",
                 )
             if approval_state == "REJECTED":
-                raise resources.ResourceRegistryError(
-                    "VCF specification VCFv4.6 was rejected by this laboratory"
+                raise resources.VCFSpecificationApprovalError(
+                    "VCF specification VCFv4.6 was rejected by this laboratory",
+                    code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
+                    next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
                 )
             return approval_snapshot
 
@@ -983,7 +987,7 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 assert validation.metadata_json["vcf_specification_approval"] == approval_snapshot
                 assert event.payload["laboratory_approval"] == approval_snapshot
             else:
-                assert validation.metadata_json["vcf_specification_approval"]["status"] == "LAB_APPROVAL_REQUIRED"
+                assert validation.metadata_json["vcf_specification_approval"]["status"] == expected_code
                 assert approval_state.lower() in validation.error_message.lower() or (
                     approval_state == "PENDING" and "awaiting" in validation.error_message.lower()
                 )
