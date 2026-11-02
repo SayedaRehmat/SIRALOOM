@@ -340,7 +340,7 @@ def read_vcf_fileformat(path: str | Path) -> str | None:
     if not first_line.startswith("##fileformat="):
         return None
     version = first_line.partition("=")[2].strip()
-    if not re.fullmatch(r"VCFv[0-9]+\\.[0-9]+", version):
+    if not re.fullmatch(r"VCFv[0-9]+\.[0-9]+", version):
         return None
     return version
 
