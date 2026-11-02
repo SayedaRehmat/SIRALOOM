@@ -617,7 +617,7 @@ def require_approved_vcf_specification(
             ResourceQualification.resource_id == resource.id,
             ResourceQualification.status == "QUALIFIED",
         )
-        .order_by(ResourceQualification.qualified_at.desc(), ResourceQualification.created_at.desc())
+        .order_by(ResourceQualification.qualified_at.desc().nulls_last(), ResourceQualification.created_at.desc())
         .limit(1)
     )
     if qualification is None:
@@ -651,6 +651,13 @@ def require_approved_vcf_specification(
             "the previously approved specification remains in effect",
             code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
             next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
+        )
+    if approval is None or approval.status != "APPROVED":
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} qualification "
+            f"{qualification.qualification_version!r} has no explicit laboratory approval",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            next_step="LAB_APPROVAL_REQUIRED",
         )
 
     identity_key = "|".join([
