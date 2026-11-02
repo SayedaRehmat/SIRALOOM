@@ -20,6 +20,9 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Case,
     Organization,
+    Resource,
+    ResourceApproval,
+    ResourceQualification,
     User,
 )
 from backend.app.infrastructure.db.session import get_db
@@ -305,3 +308,151 @@ def test_artifact_upload_fails_closed_when_scratch_volume_write_fails(
         assert db.scalar(
             select(func.count(Artifact.id)).where(Artifact.case_id == upload_api["case_id"])
         ) == 0
+
+
+def test_future_vcf_upload_is_persisted_as_registry_block_not_malformed_input(
+    upload_api, monkeypatch
+):
+    future_vcf = (
+        b"##fileformat=VCFv4.6\\n"
+        b"##contig=<ID=1,length=1000>\\n"
+        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+    )
+    monkeypatch.setattr(
+        artifacts_api,
+        "_validate_vcf_for_upload",
+        lambda _path: ValidationResult(
+            status="INVALID",
+            file_kind="VCF",
+            record_count=0,
+            sample_names=[],
+            detected_build=None,
+            errors=["Unsupported or missing ##fileformat header: 'VCFv4.6'"],
+            warnings=[],
+            fileformat="VCFv4.6",
+            error_code="VCF_FILEFORMAT_UNSUPPORTED",
+        ),
+    )
+
+    response = _post_vcf(
+        upload_api["client"],
+        upload_api["case_id"],
+        future_vcf,
+        "future-vcf-unregistered-000001",
+    )
+
+    assert response.status_code == 201, response.text
+    payload = response.json()
+    assert payload["validation_status"] == "BLOCKED"
+    assert payload["metadata"]["workflow_eligibility"] == "SPECIFICATION_GOVERNANCE_BLOCKED"
+    validation = payload["validation"]
+    assert validation["fileformat"] == "VCFv4.6"
+    assert validation["status"] == "BLOCKED"
+    assert validation["error_code"] == "VCF_SPECIFICATION_RELEASE_NOT_REGISTERED"
+    assert validation["vcf_specification_governance"]["next_step"] == (
+        "OFFICIAL_SPECIFICATION_DISCOVERY_AND_QUALIFICATION_REQUIRED"
+    )
+
+    with upload_api["session_factory"]() as db:
+        artifact = db.scalar(select(Artifact).where(Artifact.case_id == upload_api["case_id"]))
+        audit = db.scalar(select(AuditEvent).where(
+            AuditEvent.case_id == upload_api["case_id"],
+            AuditEvent.event_type == "ARTIFACT_VALIDATION_BLOCKED",
+        ))
+        assert artifact is not None
+        assert artifact.validation_status == "BLOCKED"
+        assert artifact.metadata_json["validation"]["fileformat"] == "VCFv4.6"
+        assert audit is not None
+        assert audit.payload["validation"]["error_code"] == (
+            "VCF_SPECIFICATION_RELEASE_NOT_REGISTERED"
+        )
+
+
+def test_future_vcf_upload_requires_exact_pending_lab_approval(
+    upload_api, monkeypatch
+):
+    organization_id = upload_api["organization_id"]
+    user_id = upload_api["user_id"]
+    resource_id, qualification_id = uuid4(), uuid4()
+    with upload_api["session_factory"]() as db:
+        resource = Resource(
+            id=resource_id,
+            organization_id=None,
+            name="VCF specification VCFv4.6",
+            provider="HTS-Specifications",
+            resource_type="VCF_SPECIFICATION",
+            version="VCFv4.6",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="a" * 64,
+            location="https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+            status="QUALIFIED",
+            population_definition=None,
+            metadata_json={},
+        )
+        qualification = ResourceQualification(
+            id=qualification_id,
+            resource_id=resource_id,
+            qualification_version="vcf-spec-qualification-v1",
+            status="QUALIFIED",
+            checks_json={"vcf_specification": {"status": "QUALIFIED"}},
+            qualified_by=None,
+        )
+        approval = ResourceApproval(
+            id=uuid4(),
+            resource_id=resource_id,
+            organization_id=organization_id,
+            qualification_id=qualification_id,
+            status="PENDING",
+            version=1,
+        )
+        db.add_all([resource, qualification, approval])
+        db.commit()
+
+    monkeypatch.setattr(
+        artifacts_api,
+        "_validate_vcf_for_upload",
+        lambda _path: ValidationResult(
+            status="INVALID",
+            file_kind="VCF",
+            record_count=0,
+            sample_names=[],
+            detected_build=None,
+            errors=["Unsupported VCF version"],
+            warnings=[],
+            fileformat="VCFv4.6",
+            error_code="VCF_FILEFORMAT_UNSUPPORTED",
+        ),
+    )
+    future_vcf = (
+        b"##fileformat=VCFv4.6\\n"
+        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+    )
+    response = _post_vcf(
+        upload_api["client"],
+        upload_api["case_id"],
+        future_vcf,
+        "future-vcf-pending-approval-000001",
+    )
+
+    assert response.status_code == 201, response.text
+    payload = response.json()
+    assert payload["validation_status"] == "BLOCKED"
+    assert payload["validation"]["error_code"] == "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
+    assert payload["validation"]["vcf_specification_governance"]["next_step"] == (
+        "LAB_APPROVAL_REQUIRED"
+    )
+    with upload_api["session_factory"]() as db:
+        artifact = db.scalar(select(Artifact).where(Artifact.case_id == upload_api["case_id"]))
+        audit = db.scalar(select(AuditEvent).where(
+            AuditEvent.case_id == upload_api["case_id"],
+            AuditEvent.event_type == "ARTIFACT_VALIDATION_BLOCKED",
+        ))
+        assert artifact.validation_status == "BLOCKED"
+        assert audit is not None
+        assert audit.payload["validation"]["vcf_specification_governance"]["status"] == (
+            "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
+        )
