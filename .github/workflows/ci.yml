@@ -250,10 +250,10 @@ jobs:
         run: |
           python - "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json" <<'PY'
           import gzip, json, re, sys
+          from pathlib import Path
           if not Path(sys.argv[1]).is_file():
               print("GIAB assets were not acquired; spanning-deletion diagnostic skipped.")
               raise SystemExit(0)
-          from pathlib import Path
           from backend.app.domain.vcf_validation import (
               StrictVCFValidationError,
               _deleted_reference_interval,
