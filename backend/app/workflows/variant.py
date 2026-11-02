@@ -46,10 +46,7 @@ from backend.app.config import settings
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.local_uri import local_path_from_uri
-from backend.app.domain.normalization_provider import (
-    NormalizationProviderError,
-    normalize_with_selected_provider,
-)
+from backend.app.domain.normalization_provider import normalize_with_selected_provider
 from backend.app.domain.resource_capabilities import NORMALIZATION_ENGINE
 from backend.app.domain.normalization import (
     NormalizationError,
@@ -2272,7 +2269,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                 try:
                     if profile_runtime_normalization is not None:
-                        normalization_stats, provider_selection = normalize_with_selected_provider(
+                        normalization_stats, _provider_selection = normalize_with_selected_provider(
                             profile_runtime_normalization.resource,
                             routing["sequence_path"],
                             temp_path,
