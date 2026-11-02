@@ -54,6 +54,7 @@ def derive(source_vcf: Path, output_vcf: Path, excluded_jsonl: Path, provenance_
     if len({str(p.resolve()) for p in destinations}) != 3:
         raise DerivationError("Output paths must be distinct.")
     fds: list[int] = []
+    fd_provenance: int | None = None
     temps: list[Path] = []
     published: list[Path] = []
     try:
@@ -142,6 +143,7 @@ def derive(source_vcf: Path, output_vcf: Path, excluded_jsonl: Path, provenance_
             "qualification_boundary": "The derivative is not the complete GIAB truth VCF and is not suitable for GIAB caller concordance. It exists only to exercise independent eligible input-processing paths while retaining every excluded source record and its exact provenance.",
         }
         with os.fdopen(fd_provenance, "w", encoding="utf-8", newline="") as out_report:
+            fd_provenance = None
             json.dump(report, out_report, indent=2, sort_keys=True)
             out_report.write("\n")
             out_report.flush()
@@ -156,7 +158,7 @@ def derive(source_vcf: Path, output_vcf: Path, excluded_jsonl: Path, provenance_
             published.append(destination)
         return report
     except Exception:
-        for fd in fds:
+        for fd in fds + ([fd_provenance] if fd_provenance is not None else []):
             try:
                 os.close(fd)
             except OSError:
