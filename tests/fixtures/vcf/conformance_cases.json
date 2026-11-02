@@ -1305,6 +1305,20 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
         ]
+      },
+      {
+        "id": "breakend_reciprocal_mateid_wrong_alt_index_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "The reciprocal MATEID must be attached to the ALT whose remote locus points back to the source breakend; set-level reciprocity is insufficient.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=.,bnd1"
+        ]
       }
     ],
     "VCFv4.0": [
