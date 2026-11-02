@@ -1125,6 +1125,7 @@ def _validate_vcf45_structural_info(
     line_no: int,
 ) -> None:
     """Validate VCFv4.5 reserved structural-variant INFO list semantics."""
+    imprecise_flag = "IMPRECISE" in info and info.get("IMPRECISE") is None
     for key in ("CIPOS", "CIEND"):
         raw_value = info.get(key)
         if raw_value in {None, "."}:
@@ -1146,9 +1147,14 @@ def _validate_vcf45_structural_info(
                 continue
             lower_offset, upper_offset = int(lower), int(upper)
             symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
-            if key in {"CIPOS", "CIEND"} and not symbolic_sv:
+            if key == "CIEND" and not symbolic_sv:
                 raise StrictVCFValidationError(
-                    f"INFO/{key} must be missing for non-symbolic structural alleles at line {line_no}",
+                    f"INFO/CIEND must be missing for non-symbolic structural alleles at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+            if key == "CIPOS" and not symbolic_sv and not imprecise_flag:
+                raise StrictVCFValidationError(
+                    f"INFO/CIPOS must be missing for non-structural ALT alleles unless IMPRECISE is set at line {line_no}",
                     code="VCF_SV_INFO_INTERVAL_INVALID",
                 )
             if key == "CIPOS" and (lower_offset > 0 or upper_offset < 0):
@@ -1197,7 +1203,6 @@ def _validate_vcf45_structural_info(
     # CIPOS to indicate an unspecified confidence interval. Any precise ALT
     # allele in the same record must nevertheless carry an explicit CIPOS pair,
     # including 0,0 when its position is exact.
-    imprecise_flag = "IMPRECISE" in info and info.get("IMPRECISE") is None
     if imprecise_flag:
         cipos_value = info.get("CIPOS")
         cipos_entries = cipos_value.split(",") if cipos_value not in {None, "."} else []
