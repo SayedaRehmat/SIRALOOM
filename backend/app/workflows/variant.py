@@ -1512,6 +1512,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
+        validation_profile = (validation_step.metadata_json or {}).get("validation_profile", {})
+        unresolved_spanning_deletion_record_indexes = {
+            int(item["record_index"])
+            for item in validation_profile.get("unresolved_spanning_deletion_records", [])
+            if isinstance(item, dict) and str(item.get("record_index", "")).isdigit()
+        }
+
         # 2. Reference-aware normalization + bounded-memory variant indexing.
         # M13 never retains the complete normalized variant set in Python memory.
         normalization_step = _step(db, analysis.id, "normalize")
@@ -1716,7 +1723,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 profile = classify_records(input_path)
                 routing_dir = Path(tempfile.mkdtemp(prefix=f"siraloom-vcf-routing-{analysis.id}-"))
                 temporary_artifact_paths.append(routing_dir)
-                routing = route_vcf_records(input_path, routing_dir, reference_contig_lengths={})
+                routing = route_vcf_records(
+                    input_path,
+                    routing_dir,
+                    reference_contig_lengths={},
+                    unresolved_spanning_deletion_record_indexes=unresolved_spanning_deletion_record_indexes,
+                )
                 routed_artifact_specs = (
                     (
                         "gvcf_blocks_path",
@@ -1982,6 +1994,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     input_path,
                     routing_dir,
                     reference_contig_lengths=reference_contig_lengths,
+                    unresolved_spanning_deletion_record_indexes=unresolved_spanning_deletion_record_indexes,
                 )
                 routing_contig_lengths_resolved = True
                 persist_exclusion_manifest(contig_lengths_resolved=True)
