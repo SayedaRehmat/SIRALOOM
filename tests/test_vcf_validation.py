@@ -2385,6 +2385,7 @@ def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path:
     assert matrix["breakend_replacement_and_mate_links"]["status"] == "NATIVE_VALIDATED"
     assert matrix["genotype_ploidy_number_g_cardinality"]["status"] == "NATIVE_VALIDATED"
     assert matrix["symbolic_structural_variant_span"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["symbolic_sv_confidence_intervals"]["status"] == "NATIVE_VALIDATED"
     # GATK gVCF is a producer dialect, not a normative VCFv4.5 feature.
     # Its interoperability qualification is intentionally limited to the
     # separately fixture-tested VCFv4.3 profile.
@@ -2402,6 +2403,7 @@ def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path:
         for item in feature_compatibility_for_version("VCFv4.4")
     }
     assert older["local_allele_encoding"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+    assert older["symbolic_sv_confidence_intervals"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
     assert older["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
     assert older["gatk_gvcf_non_ref_end_interoperability"]["status"] == "NOT_QUALIFIED"
 
