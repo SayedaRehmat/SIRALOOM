@@ -3,6 +3,10 @@ from uuid import uuid4
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from backend.app.domain.normalization_resource_registry import (
+    NormalizationResourceRegistryError,
+    register_normalization_resource,
+)
 from backend.app.domain.resources import (
     ResourceRegistryError,
     activate_resource_version,
@@ -521,3 +525,52 @@ def test_registry_accepts_canonical_workflow_capability_resource_types():
             )
             assert created is True
             assert resource.resource_type == resource_type
+
+def test_normalization_registry_requires_official_source_contract_and_starts_candidate():
+    engine = _engine()
+    with Session(engine) as db:
+        common = dict(
+            name="BCFtools",
+            provider="bcftools",
+            version="1.25",
+            genome_build=None,
+            access_method="HTTPS",
+            location=None,
+            checksum="a" * 64,
+        )
+        try:
+            register_normalization_resource(db, **common)
+        except NormalizationResourceRegistryError as exc:
+            assert "official source_contract" in str(exc)
+        else:
+            raise AssertionError("normalization resource without official source provenance must be rejected")
+
+        resource, created = register_normalization_resource(
+            db,
+            **common,
+            metadata_json={
+                "source_contract": {
+                    "publisher": "Samtools",
+                    "canonical_source_url": "https://github.com/samtools/bcftools",
+                    "artifact_url": "https://github.com/samtools/bcftools/releases/download/1.25/bcftools-1.25.tar.bz2",
+                    "release_identity": "1.25",
+                    "access_mode": "PUBLIC",
+                    "license_status": "NOT_REQUIRED",
+                    "checksum_status": "PUBLISHED_AND_VERIFIED",
+                    "authority_evidence_url": "https://samtools.github.io/bcftools/",
+                },
+                "execution": {
+                    "toolchain": {
+                        "bcftools": {"executable": "/opt/siraloom/bin/bcftools"}
+                    }
+                },
+            },
+        )
+
+        assert created is True
+        assert resource.resource_type == "NORMALIZATION"
+        assert resource.status == "CANDIDATE"
+        assert resource.metadata_json["source_contract"]["publisher"] == "Samtools"
+        assert resource.metadata_json["execution"]["endpoint"].endswith("bcftools-1.25.tar.bz2")
+        assert resource.metadata_json["execution"]["toolchain"]["bcftools"]["executable"] == "/opt/siraloom/bin/bcftools"
+
