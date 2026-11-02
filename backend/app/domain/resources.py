@@ -594,7 +594,6 @@ def require_approved_vcf_specification(
             Resource.resource_type == "VCF_SPECIFICATION",
             Resource.version == requested_version,
             Resource.genome_build.is_(None),
-            Resource.status.in_(("QUALIFIED", "ACTIVE", "SUPERSEDED", "REJECTED")),
         ).limit(1)
     )
     if resource is None:
