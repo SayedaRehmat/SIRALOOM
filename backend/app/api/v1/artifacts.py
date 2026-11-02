@@ -335,7 +335,8 @@ async def upload_artifact(
                     "INVALID", result.file_kind, result.record_count, result.sample_names,
                     result.detected_build,
                     [*result.errors, "A sample-bearing VCF must be linked to a specimen with an explicit VCF sample-name mapping."],
-                    result.warnings, result.fileformat,
+                    result.warnings, result.fileformat, result.metadata,
+                    "VCF_SPECIMEN_REQUIRED",
                 )
             elif specimen is not None:
                 result = validate_specimen_sample_identity(
@@ -355,6 +356,8 @@ async def upload_artifact(
                     ],
                     result.warnings,
                     result.fileformat,
+                    result.metadata,
+                    "VCF_REFERENCE_DECLARATION_MISMATCH",
                 )
             artifact_type = ArtifactType.VCF
             validation_metadata = {
@@ -363,6 +366,7 @@ async def upload_artifact(
                     "record_count": result.record_count, "sample_count": len(result.sample_names),
                     "sample_names": result.sample_names, "detected_build": result.detected_build,
                     "errors": result.errors, "warnings": result.warnings,
+                    "error_code": result.error_code,
                     **(result.metadata or {}),
                 },
                 "ingestion": {"file_kind": "VCF", "original_filename": filename, "capacity_preflight": capacity_preflight},

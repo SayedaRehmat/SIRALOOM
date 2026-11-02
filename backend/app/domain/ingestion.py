@@ -32,6 +32,7 @@ class ValidationResult:
     warnings: list[str]
     fileformat: str | None = None
     metadata: dict | None = None
+    error_code: str | None = None
 
 
 class VCFValidationUnavailable(RuntimeError):
@@ -199,6 +200,8 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     bcftools_version: str | None = None
     htslib_version: str | None = None
     try:
+        strict_profile = validate_vcf_strict(p)
+        compression = strict_profile["compression"]
         headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
             raise VCFValidationError(
@@ -231,7 +234,6 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
-        strict_profile = validate_vcf_strict(p)
         bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
         if bcftools_error:
             raise VCFValidationError(
@@ -313,6 +315,10 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 + ", ".join(unchecked_format_number_g)
                 + "."
             )
+        if "VCF_BGZF_EOF_MARKER_MISSING" in strict_profile["warning_codes"]:
+            warnings.append(
+                "BGZF stream has no terminal empty block; the HTS specification recommends an EOF marker to help detect truncation."
+            )
         validation_metadata = {
             "source_record_count": strict_profile["records"],
             "alternate_allele_count": strict_profile["alternate_allele_count"],
@@ -334,6 +340,8 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "htslib_version": htslib_version,
             "expected_htslib_version": settings.htslib_version,
             "toolchain_validation_status": "PASS",
+            "compression": compression,
+            "warning_codes": strict_profile["warning_codes"],
         }
         return ValidationResult(
             "VALID",
@@ -356,7 +364,11 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "expected_htslib_version": settings.htslib_version,
                 "toolchain_validation_status": "PASS",
             }
-        return ValidationResult("INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat, failure_metadata)
+        return ValidationResult(
+            "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
+            failure_metadata,
+            exc.code if isinstance(exc, StrictVCFValidationError) else None,
+        )
 
 
 def validate_index(
@@ -459,6 +471,8 @@ def validate_specimen_sample_identity(
             result.detected_build, result.errors,
             [*result.warnings, "Sites-only VCF: accepted as a site-level artifact; not eligible for sample-specific interpretation or clinical reporting."],
             result.fileformat,
+            result.metadata,
+            result.error_code,
         )
     if not expected:
         error = "The specimen must have an explicit VCF sample name mapping before intake can pass."
@@ -471,6 +485,8 @@ def validate_specimen_sample_identity(
             [*result.errors, error],
             result.warnings,
             result.fileformat,
+            result.metadata,
+            "VCF_SAMPLE_MAPPING_REQUIRED",
         )
     if expected in result.sample_names:
         return result
@@ -488,4 +504,6 @@ def validate_specimen_sample_identity(
         [*result.errors, error],
         result.warnings,
         result.fileformat,
+        result.metadata,
+        "VCF_SAMPLE_IDENTITY_MISMATCH",
     )

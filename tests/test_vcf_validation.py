@@ -1,5 +1,6 @@
-import gzip
+import struct
 from pathlib import Path
+import zlib
 
 import pytest
 
@@ -19,6 +20,18 @@ def write_vcf(path: Path, body: str, *, version: str = "VCFv4.3", columns: str |
         f"{body}",
         encoding="utf-8",
     )
+
+
+def _bgzf_block(data: bytes) -> bytes:
+    compressor = zlib.compressobj(level=6, wbits=-15)
+    payload = compressor.compress(data) + compressor.flush()
+    header = (
+        b"\x1f\x8b\x08\x04" + b"\0" * 4 + b"\0\xff"
+        + struct.pack("<H", 6) + b"BC\x02\0"
+    )
+    block_size = len(header) + 2 + len(payload) + 8
+    header += struct.pack("<H", block_size - 1)
+    return header + payload + struct.pack("<II", zlib.crc32(data) & 0xFFFFFFFF, len(data))
 
 
 def write_vcf_with_metadata(
@@ -324,6 +337,24 @@ def test_strict_validation_rejects_missing_fileformat(tmp_path: Path):
         validate_vcf_strict(path)
 
 
+def test_strict_validation_rejects_ordinary_gzip_with_vcf_suffix(tmp_path: Path):
+    import gzip
+
+    path = tmp_path / "ordinary-gzip.vcf.gz"
+    content = (
+        b"##fileformat=VCFv4.3\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t.\n"
+    )
+    with gzip.open(path, "wb") as stream:
+        stream.write(content)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BGZF_REQUIRED"
+
+
 @pytest.mark.parametrize(
     "version", ["VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
 )
@@ -395,8 +426,8 @@ def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
         "1\t2\t.\tA\tG\t.\tPASS\t.\n"
     )
     if compressed:
-        with gzip.open(path, "wt", encoding="utf-8") as stream:
-            stream.write(content)
+        content_bytes = content.encode("utf-8")
+        path.write_bytes(_bgzf_block(content_bytes) + _bgzf_block(b""))
     else:
         path.write_text(content, encoding="utf-8")
 

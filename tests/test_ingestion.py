@@ -1,4 +1,6 @@
 import gzip
+import struct
+import zlib
 from pathlib import Path
 
 import pytest
@@ -11,12 +13,32 @@ from backend.app.domain.ingestion import (
     validate_vcf,
 )
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
+from backend.app.domain.vcf_validation import StrictVCFValidationError, _verify_bgzf
 
 VALID_VCF = """##fileformat=VCFv4.3
 ##reference=GRCh38
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO
 chr1\t100\t.\tA\tG\t.\tPASS\t.
 """
+
+
+def _bgzf_block(data: bytes) -> bytes:
+    compressor = zlib.compressobj(level=6, wbits=-15)
+    payload = compressor.compress(data) + compressor.flush()
+    header = (
+        b"\x1f\x8b\x08\x04" + b"\0" * 4 + b"\0\xff"
+        + struct.pack("<H", 6) + b"BC\x02\0"
+    )
+    # ``header`` includes the BC subfield tag and length; the two-byte
+    # subfield value is appended next and is part of the declared block size.
+    block_size = len(header) + 2 + len(payload) + 8
+    header += struct.pack("<H", block_size - 1)
+    trailer = struct.pack("<II", zlib.crc32(data) & 0xFFFFFFFF, len(data))
+    return header + payload + trailer
+
+
+def _write_bgzf(path: Path, data: bytes) -> None:
+    path.write_bytes(_bgzf_block(data) + _bgzf_block(b""))
 
 
 def test_supported_filename_classification():
@@ -527,23 +549,123 @@ def test_vcf_record_parser_does_not_silently_strip_a_bom(tmp_path: Path):
         list(parse_vcf(str(path)))
 
 
-def test_vcfgz_validation_reads_real_content(tmp_path: Path):
+def test_vcfgz_validation_reads_real_content(tmp_path: Path, monkeypatch):
+    import backend.app.domain.ingestion as ingestion
+
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
     path = tmp_path / "sample.vcf.gz"
-    with gzip.open(path, "wt", encoding="utf-8") as fh:
-        fh.write(VALID_VCF)
+    _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
     assert result.status == "VALID"
     assert result.record_count == 1
 
 
-def test_vcfbgz_validation_parses_compressed_records(tmp_path: Path):
+def test_vcfbgz_validation_parses_compressed_records(tmp_path: Path, monkeypatch):
+    import backend.app.domain.ingestion as ingestion
+
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
     path = tmp_path / "sample.vcf.bgz"
-    with gzip.open(path, "wt", encoding="utf-8") as fh:
-        fh.write(VALID_VCF)
+    _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
     assert result.status == "VALID"
     assert result.record_count == 1
     assert result.detected_build == "GRCh38"
+
+
+def test_ordinary_gzip_vcf_is_rejected_instead_of_mistaken_for_bgzf(tmp_path: Path):
+    path = tmp_path / "ordinary-gzip.vcf.gz"
+    with gzip.open(path, "wt", encoding="utf-8") as stream:
+        stream.write(VALID_VCF)
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert "not BGZF" in result.errors[0]
+    assert result.error_code == "VCF_BGZF_REQUIRED"
+
+
+def test_bgzf_validator_checks_every_concatenated_block(tmp_path: Path, monkeypatch):
+    import backend.app.domain.ingestion as ingestion
+
+    # Keep this test focused on BGZF framing. The pinned BCFtools adapter has
+    # its own integration tests and is exercised by the repository CI image.
+    monkeypatch.setattr(
+        ingestion,
+        "_bcftools_validate",
+        lambda _path: (None, "bcftools 1.25", "1.25"),
+    )
+    path = tmp_path / "multi-block.vcf.gz"
+    content = VALID_VCF.encode("utf-8")
+    split = len(content) // 2
+    path.write_bytes(
+        _bgzf_block(content[:split])
+        + _bgzf_block(content[split:])
+        + _bgzf_block(b"")
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.record_count == 1
+    assert result.metadata["compression"] == {
+        "format": "BGZF",
+        "block_count": 3,
+        "compressed_size_bytes": path.stat().st_size,
+        "uncompressed_size_bytes": len(content),
+        "eof_marker_present": True,
+    }
+
+
+def test_bgzf_verification_detects_crc_corruption(tmp_path: Path):
+    path = tmp_path / "corrupt-crc.vcf.gz"
+    _write_bgzf(path, VALID_VCF.encode("utf-8"))
+    content = bytearray(path.read_bytes())
+    content[-36] ^= 0x01  # corrupt the data block CRC, not the EOF block
+    path.write_bytes(content)
+
+    with pytest.raises(StrictVCFValidationError, match="checksum"):
+        _verify_bgzf(path)
+
+
+def test_bgzf_verification_rejects_non_bgzf_member_after_valid_block(tmp_path: Path):
+    path = tmp_path / "mixed-members.vcf.gz"
+    ordinary = gzip.compress(b"trailing member")
+    path.write_bytes(_bgzf_block(VALID_VCF.encode("utf-8")) + ordinary)
+
+    with pytest.raises(StrictVCFValidationError, match="not BGZF"):
+        _verify_bgzf(path)
+
+
+def test_bgzf_without_terminal_empty_block_is_accepted_with_warning(tmp_path: Path, monkeypatch):
+    import backend.app.domain.ingestion as ingestion
+
+    monkeypatch.setattr(
+        ingestion,
+        "_bcftools_validate",
+        lambda _path: (None, "bcftools 1.25", "1.25"),
+    )
+    path = tmp_path / "bgzf-without-eof.vcf.gz"
+    _write_bgzf(path, VALID_VCF.encode("utf-8"))
+    path.write_bytes(_bgzf_block(VALID_VCF.encode("utf-8")))
+
+    result = validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert result.metadata["compression"]["eof_marker_present"] is False
+    assert any("no terminal empty block" in warning for warning in result.warnings)
+
+
+@pytest.mark.parametrize("truncate_bytes", [1, 8, 12])
+def test_truncated_bgzf_block_is_rejected(tmp_path: Path, truncate_bytes: int):
+    path = tmp_path / "truncated.vcf.gz"
+    _write_bgzf(path, VALID_VCF.encode("utf-8"))
+    path.write_bytes(path.read_bytes()[:-truncate_bytes])
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert any(token in result.errors[0] for token in ("Truncated BGZF", "checksum", "stream"))
+    assert result.error_code in {"VCF_BGZF_TRUNCATED", "VCF_BGZF_CHECKSUM_MISMATCH"}
 
 
 def test_invalid_vcf_header_is_rejected(tmp_path: Path):

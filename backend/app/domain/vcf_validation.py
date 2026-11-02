@@ -3,6 +3,8 @@ from __future__ import annotations
 import gzip
 import hashlib
 import re
+import struct
+import zlib
 from math import comb, isnan
 from pathlib import Path
 
@@ -194,6 +196,122 @@ class StrictVCFValidationError(ValueError):
     def __init__(self, message: str, *, code: str = "VCF_INVALID"):
         super().__init__(message)
         self.code = code
+
+
+def _verify_bgzf(path: str | Path) -> dict[str, int | str | bool]:
+    """Validate every BGZF block and return compression provenance."""
+    source = Path(path)
+    offset = 0
+    block_count = 0
+    uncompressed_size = 0
+    final_block_is_empty = False
+    with source.open("rb") as handle:
+        while True:
+            handle.seek(offset)
+            fixed_header = handle.read(12)
+            if not fixed_header:
+                break
+            if len(fixed_header) != 12 or fixed_header[:3] != b"\x1f\x8b\x08":
+                raise StrictVCFValidationError(
+                    f"Compressed VCF is not a valid BGZF stream at byte offset {offset}.",
+                    code="VCF_BGZF_INVALID",
+                )
+            if fixed_header[3] != 4:
+                raise StrictVCFValidationError(
+                    f"Compressed VCF is gzip but not BGZF at byte offset {offset}.",
+                    code="VCF_BGZF_REQUIRED",
+                )
+
+            extra_length = struct.unpack_from("<H", fixed_header, 10)[0]
+            extra = handle.read(extra_length)
+            if len(extra) != extra_length:
+                raise StrictVCFValidationError(
+                    f"Truncated BGZF extra field at byte offset {offset}.",
+                    code="VCF_BGZF_TRUNCATED",
+                )
+
+            cursor = 0
+            block_size: int | None = None
+            while cursor + 4 <= len(extra):
+                tag = extra[cursor:cursor + 2]
+                subfield_length = struct.unpack_from("<H", extra, cursor + 2)[0]
+                cursor += 4
+                if cursor + subfield_length > len(extra):
+                    raise StrictVCFValidationError(
+                        f"Malformed BGZF extra field at byte offset {offset}.",
+                        code="VCF_BGZF_INVALID",
+                    )
+                if tag == b"BC":
+                    if subfield_length != 2 or block_size is not None:
+                        raise StrictVCFValidationError(
+                            f"Malformed BGZF BC field at byte offset {offset}.",
+                            code="VCF_BGZF_INVALID",
+                        )
+                    block_size = struct.unpack_from("<H", extra, cursor)[0] + 1
+                cursor += subfield_length
+            if cursor != len(extra) or block_size is None:
+                raise StrictVCFValidationError(
+                    f"Compressed VCF is gzip but not BGZF at byte offset {offset}.",
+                    code="VCF_BGZF_REQUIRED",
+                )
+
+            header_size = 12 + extra_length
+            if block_size < header_size + 8 or block_size > 65536:
+                raise StrictVCFValidationError(
+                    f"Invalid BGZF block size at byte offset {offset}.",
+                    code="VCF_BGZF_INVALID",
+                )
+            remainder = handle.read(block_size - header_size)
+            if len(remainder) != block_size - header_size:
+                raise StrictVCFValidationError(
+                    f"Truncated BGZF block at byte offset {offset}.",
+                    code="VCF_BGZF_TRUNCATED",
+                )
+            compressed, trailer = remainder[:-8], remainder[-8:]
+            try:
+                inflater = zlib.decompressobj(wbits=-15)
+                uncompressed = inflater.decompress(compressed, 65537)
+            except zlib.error as exc:
+                raise StrictVCFValidationError(
+                    f"Corrupt BGZF deflate stream at byte offset {offset}.",
+                    code="VCF_BGZF_CORRUPT",
+                ) from exc
+            if (
+                len(uncompressed) > 65536
+                or not inflater.eof
+                or inflater.unused_data
+                or inflater.unconsumed_tail
+            ):
+                raise StrictVCFValidationError(
+                    f"Invalid or oversized BGZF deflate payload at byte offset {offset}.",
+                    code="VCF_BGZF_INVALID",
+                )
+            expected_crc, expected_size = struct.unpack("<II", trailer)
+            if (
+                zlib.crc32(uncompressed) & 0xFFFFFFFF != expected_crc
+                or len(uncompressed) != expected_size
+            ):
+                raise StrictVCFValidationError(
+                    f"BGZF checksum or uncompressed size mismatch at byte offset {offset}.",
+                    code="VCF_BGZF_CHECKSUM_MISMATCH",
+                )
+            offset += block_size
+            block_count += 1
+            uncompressed_size += len(uncompressed)
+            final_block_is_empty = len(uncompressed) == 0
+
+    if block_count == 0:
+        raise StrictVCFValidationError(
+            "Compressed VCF is empty and has no BGZF blocks.",
+            code="VCF_BGZF_EMPTY",
+        )
+    return {
+        "format": "BGZF",
+        "block_count": block_count,
+        "compressed_size_bytes": source.stat().st_size,
+        "uncompressed_size_bytes": uncompressed_size,
+        "eof_marker_present": final_block_is_empty,
+    }
 
 
 def _open(path: str | Path):
@@ -1390,6 +1508,10 @@ def _validate_record(
 
 
 def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
+    source = Path(path)
+    compression: dict[str, int | str | bool] = {"format": "NONE"}
+    if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
+        compression = _verify_bgzf(source)
     fileformat: str | None = None
     chrom_header: list[str] | None = None
     found_header = False
@@ -2005,6 +2127,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "sample_count": max(0, len(chrom_header) - 9),
         "reference_contig_policy": "EXACT_OR_EXPLICIT_ALIAS" if reference_contigs is not None else "NOT_CHECKED",
         "declared_contig_md5s": contig_md5s,
+        "compression": compression,
+        "warning_codes": (
+            ["VCF_BGZF_EOF_MARKER_MISSING"]
+            if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
+            else []
+        ),
     }
 
 
