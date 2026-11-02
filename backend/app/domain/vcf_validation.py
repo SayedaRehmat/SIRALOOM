@@ -1650,6 +1650,19 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     fileformat = line.split("=", 1)[1]
                 if line.startswith("##INFO="):
                     identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat)
+                    if identifier == "MATEID" and fileformat in {
+                        "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"
+                    }:
+                        expected_mateid_definition = (
+                            {"Number": "A", "Type": "String"}
+                            if fileformat in {"VCFv4.4", "VCFv4.5"}
+                            else {"Number": ".", "Type": "String"}
+                        )
+                        if definition != expected_mateid_definition:
+                            raise StrictVCFValidationError(
+                                f"{fileformat} INFO/MATEID must declare Number={expected_mateid_definition['Number']},Type=String at line {line_no}",
+                                code="VCF_HEADER_DEFINITION_INVALID",
+                            )
                     if identifier in info_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate INFO definition for {identifier!r} at line {line_no}",
