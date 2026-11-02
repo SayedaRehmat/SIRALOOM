@@ -923,6 +923,10 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
         monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
+        # The standalone header-reader has dedicated plain/BGZF tests. Pin the
+        # workflow boundary's declared version so this test isolates approval
+        # routing after artifact materialization.
+        monkeypatch.setattr(workflow, "read_vcf_fileformat", lambda _path: "VCFv4.6")
 
         approval_snapshot = {
             "source": "LAB_APPROVED_RESOURCE",
