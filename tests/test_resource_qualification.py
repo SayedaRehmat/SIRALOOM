@@ -514,4 +514,25 @@ def test_new_vcf_specification_qualification_executes_pinned_parser_corpus(tmp_p
     assert len(evidence["execution_report"]["corpus_sha256"]) == 64
     assert len(evidence["execution_report"]["parser_source_sha256"]) == 64
     assert len(evidence["execution_report"]["runner_source_sha256"]) == 64
+    assert all(evidence["execution_integrity"].values())
     assert evidence["execution_report"]["test_case_count"] != 999999
+
+
+def test_vcf_conformance_report_integrity_detects_modified_execution_results():
+    from copy import deepcopy
+
+    from backend.app.domain.resource_qualification import (
+        _verify_vcf_conformance_execution_report,
+    )
+    from backend.app.domain.vcf_conformance import execute_vcf_conformance_suite
+
+    report = execute_vcf_conformance_suite("VCFv4.5")
+    assert all(_verify_vcf_conformance_execution_report(report).values())
+
+    modified = deepcopy(report)
+    modified["results"][0]["observed"] = "FORGED_PASS"
+    integrity = _verify_vcf_conformance_execution_report(modified)
+    assert integrity["report_digest_verified"] is False
+    assert integrity["corpus_digest_verified"] is True
+    assert integrity["parser_source_digest_verified"] is True
+    assert integrity["runner_source_digest_verified"] is True
