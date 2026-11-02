@@ -2008,19 +2008,27 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         )
 
             def carriers(alt_index: int) -> set[int] | None:
-                if len(fields) <= 9 or gt_index is None:
+                record_format_keys = fields[8].split(":") if len(fields) > 8 else []
+                record_gt_index = (
+                    record_format_keys.index("GT") if "GT" in record_format_keys else None
+                )
+                if len(fields) <= 9 or record_gt_index is None:
                     return None
                 result: set[int] = set()
                 for sample_index, sample in enumerate(fields[9:]):
                     values = sample.split(":")
-                    if gt_index >= len(values):
+                    if record_gt_index >= len(values):
                         continue
-                    gt = values[gt_index]
-                    if gt == ".":
+                    gt = values[record_gt_index]
+                    if gt in {"", "."}:
                         continue
                     try:
-                        called = {int(item) for item in _gt_allele_tokens(gt, fileformat, line_no) if item != "."}
-                    except ValueError:
+                        called = {
+                            int(item)
+                            for item in _gt_allele_tokens(gt, fileformat, line_no)
+                            if item != "."
+                        }
+                    except (ValueError, StrictVCFValidationError):
                         continue
                     if alt_index in called:
                         result.add(sample_index)
