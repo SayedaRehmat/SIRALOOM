@@ -314,3 +314,112 @@ def test_vep_qualification_requires_staged_resource_artifact(tmp_path):
     assert result.passed is False
     assert "VEP_RESOURCE_ARTIFACT_NOT_STAGED" in result.blockers
     assert result.checks["vep_runtime"]["status"] == "NOT_RUN"
+
+
+def _normalization_resource(tmp_path: Path, *, provider: str = "bcftools", version: str = "1.25"):
+    artifact = tmp_path / f"{provider}-{version}.tar.gz"
+    artifact.write_bytes(b"verified staged normalization release fixture")
+    executable = tmp_path / "bin" / provider
+    executable.parent.mkdir(parents=True, exist_ok=True)
+    executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    executable.chmod(0o755)
+    digest = sha256(artifact.read_bytes()).hexdigest()
+    return Resource(
+        id=uuid4(),
+        name=f"{provider} {version}",
+        provider=provider,
+        resource_type="NORMALIZATION",
+        version=version,
+        genome_build=None,
+        access_method="HTTPS",
+        license_text=None,
+        checksum=digest,
+        location=str(artifact),
+        population_definition=None,
+        organization_id=None,
+        metadata_json={
+            "source_contract": {
+                "publisher": "Samtools" if provider == "bcftools" else "Broad Institute",
+                "canonical_source_url": "https://github.com/samtools/bcftools" if provider == "bcftools" else "https://github.com/broadinstitute/gatk",
+                "artifact_url": f"https://example.org/{provider}/{version}.tar.gz",
+                "release_identity": version,
+                "access_mode": "PUBLIC",
+                "license_status": "NOT_REQUIRED",
+                "checksum_status": "PUBLISHED_AND_VERIFIED",
+                "authority_evidence_url": "https://samtools.github.io/bcftools/" if provider == "bcftools" else "https://gatk.broadinstitute.org/",
+            },
+            "execution": {
+                "provider_id": provider,
+                "provider_version": version,
+                "access_method": "HTTPS",
+                "endpoint": f"https://example.org/{provider}/{version}.tar.gz",
+                "toolchain": {
+                    "bcftools": {"executable": str(executable)}
+                } if provider == "bcftools" else {
+                    "gatk": {"executable": str(executable)}
+                },
+            },
+        },
+    )
+
+
+def test_bcftools_qualification_checks_exact_version_and_normalization_contract(monkeypatch, tmp_path):
+    resource = _normalization_resource(tmp_path)
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\\nUsing htslib 1.25", stderr="")
+        output_path = Path(command[command.index("-o") + 1])
+        input_path = Path(command[-1])
+        if input_path.name == "source.vcf":
+            output_path.write_text(
+                "##fileformat=VCFv4.2\\n"
+                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+                "chr1\\t1\\t.\\tCA\\tC\\t.\\tPASS\\t.\\n"
+                "chr1\\t7\\t.\\tC\\tT\\t.\\tPASS\\t.\\n"
+                "chr1\\t7\\t.\\tC\\tG\\t.\\tPASS\\t.\\n",
+                encoding="ascii",
+            )
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr="REF mismatch")
+
+    monkeypatch.setattr("backend.app.domain.resource_qualification.subprocess.run", fake_run)
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is True
+    assert result.checks["normalization_runtime"]["status"] == "QUALIFIED"
+    assert result.checks["normalization_runtime"]["observed_version"] == "1.25"
+    assert result.checks["normalization_runtime"]["left_alignment"] == "PASS"
+    assert result.checks["normalization_runtime"]["multiallelic_decomposition"] == "PASS"
+    assert result.checks["normalization_runtime"]["ref_mismatch_rejection"] == "PASS"
+    assert len(calls) == 3
+    assert calls[1][1:8] == ["norm", "-f", calls[1][3], "-c", "e", "-m", "-any"]
+
+
+def test_bcftools_qualification_blocks_exact_version_mismatch(monkeypatch, tmp_path):
+    resource = _normalization_resource(tmp_path)
+    monkeypatch.setattr(
+        "backend.app.domain.resource_qualification.subprocess.run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout="bcftools 1.26\\nUsing htslib 1.26", stderr=""
+        ),
+    )
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "BCFTOOLS_VERSION_MISMATCH" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+
+
+def test_gatk_is_not_qualified_through_the_bcftools_adapter(tmp_path):
+    resource = _normalization_resource(tmp_path, provider="GATK", version="4.6.0.0")
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "NORMALIZATION_PROVIDER_ADAPTER_NOT_IMPLEMENTED" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
