@@ -207,10 +207,16 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     # implement it. The upload boundary uses this identity for a governance
     # block instead of misclassifying a future specification as malformed.
     fileformat = read_vcf_fileformat(p)
+    headers: list[str] = []
+    detected_build: str | None = None
     try:
+        # Extract specimen/build identity before strict parser dispatch so an
+        # unsupported future version can still be held with its true sample
+        # and assembly metadata instead of losing intake identity.
+        headers, detected_build, has_fileformat, header_fileformat = _header_info(p)
+        fileformat = fileformat or header_fileformat
         strict_profile = validate_vcf_strict(p)
         compression = strict_profile["compression"]
-        headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
             raise VCFValidationError(
                 "VCF is missing the required ##fileformat header. If this file looks "
@@ -373,7 +379,14 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "toolchain_validation_status": "PASS",
             }
         return ValidationResult(
-            "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
+            "INVALID",
+            "VCF",
+            0,
+            headers[9:] if len(headers) > 9 else [],
+            detected_build,
+            [str(exc)],
+            [],
+            fileformat,
             failure_metadata,
             exc.code if isinstance(exc, StrictVCFValidationError) else None,
         )
