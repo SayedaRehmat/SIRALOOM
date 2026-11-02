@@ -309,7 +309,7 @@ jobs:
               for line_no, raw in enumerate(handle, 1):
                   if line_no == target_line or raw.startswith("#"):
                       continue
-                  row = raw.rstrip("\\n\\r").split("\\t")
+                  row = raw.rstrip("\r\n").split("\t")
                   if len(row) < 8 or row[0] != chrom:
                       continue
                   try:
