@@ -462,6 +462,54 @@ def test_vcf_specification_approval_is_version_specific_and_preserves_previous_a
         )
         assert snapshot46["resource_id"] == str(v46.id)
 
+        # Requalifying the same immutable release creates a new qualification
+        # identity. The old approval must not authorize that new evidence set.
+        q46_v2 = ResourceQualification(
+            id=uuid4(),
+            resource_id=v46.id,
+            qualification_version="vcf-spec-qualification-v2",
+            status="QUALIFIED",
+            checks_json={"passed": True, "conformance": "PASS", "requalification": True},
+            qualified_by=None,
+        )
+        db.add(q46_v2)
+        db.flush()
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v46, qualification=q46_v2
+        ) == 1
+        approval46_v2 = db.query(ResourceApproval).filter_by(
+            resource_id=v46.id,
+            qualification_id=q46_v2.id,
+        ).one()
+        assert approval46_v2.status == "PENDING"
+        with pytest.raises(ValueError, match="awaiting an explicit laboratory approval") as pending_v2:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert pending_v2.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
+        # The prior binding is retained, but it cannot authorize the new
+        # qualification until the laboratory makes a fresh decision.
+        retained_binding = db.query(OrganizationResourceBinding).filter_by(
+            organization_id=organization_id,
+            identity_key="VCF specification VCFv4.6|HTS-Specifications|VCF_SPECIFICATION|UNSPECIFIED",
+        ).one()
+        assert retained_binding.resource_id == v46.id
+
+        decide_resource_approval(
+            db,
+            approval_id=approval46_v2.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Laboratory approved the updated qualification evidence",
+        )
+        snapshot46_v2 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )
+        assert snapshot46_v2["qualification_id"] == str(q46_v2.id)
+        assert snapshot46_v2["resource_id"] == str(v46.id)
+
         v47, q47 = add_qualified_spec("VCFv4.7")
         assert resource_discovery.notify_organizations_of_qualified_release(
             db, resource=v47, qualification=q47
