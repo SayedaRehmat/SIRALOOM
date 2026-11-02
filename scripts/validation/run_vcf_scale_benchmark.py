@@ -163,6 +163,7 @@ def run_benchmark(
     output_dir: Path,
     timeout_seconds: int = 1800,
     expected_bcftools_version: str = "1.25",
+    expected_htslib_version: str = "1.25",
 ) -> dict[str, Any]:
     vcf_path = vcf_path.resolve(strict=True)
     reference_fasta = reference_fasta.resolve(strict=True)
@@ -177,8 +178,8 @@ def run_benchmark(
         raise ScaleBenchmarkError("An explicit specimen-mapped VCF sample name is required.")
     if timeout_seconds < 1:
         raise ScaleBenchmarkError("Normalization timeout must be positive.")
-    if not expected_bcftools_version.strip():
-        raise ScaleBenchmarkError("Expected BCFtools version must be explicit.")
+    if not expected_bcftools_version.strip() or not expected_htslib_version.strip():
+        raise ScaleBenchmarkError("Expected BCFtools and HTSlib versions must be explicit.")
 
     input_size_bytes = vcf_path.stat().st_size
     output_dir = prepare_output_dir(output_dir)
@@ -200,7 +201,11 @@ def run_benchmark(
         current_stage = "vcf_validation"
         validation = timed_stage(
             current_stage,
-            lambda: validate_vcf(vcf_path),
+            lambda: validate_vcf(
+                vcf_path,
+                expected_bcftools_version=expected_bcftools_version,
+                expected_htslib_version=expected_htslib_version,
+            ),
             stage_metrics,
         )
         if validation.status != "VALID":
@@ -441,6 +446,11 @@ def main() -> int:
     )
     parser.add_argument("--timeout-seconds", type=int, default=1800)
     parser.add_argument(
+        "--expected-htslib-version",
+        default=os.environ.get("SIRALOOM_HTSLIB_VERSION", "1.25"),
+        help="Pinned HTSlib version expected by the qualification environment (default: 1.25).",
+    )
+    parser.add_argument(
         "--expected-bcftools-version",
         default=os.environ.get("SIRALOOM_BCFTOOLS_VERSION", "1.25"),
         help="Pinned BCFtools version expected by the qualification environment (default: 1.25).",
@@ -458,6 +468,7 @@ def main() -> int:
             output_dir=args.output_dir,
             timeout_seconds=args.timeout_seconds,
             expected_bcftools_version=args.expected_bcftools_version,
+            expected_htslib_version=args.expected_htslib_version,
         )
     except Exception as exc:
         print(f"VCF scale benchmark failed: {type(exc).__name__}: {exc}", file=sys.stderr)
