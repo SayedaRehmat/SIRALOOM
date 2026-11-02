@@ -185,6 +185,7 @@ def run_benchmark(
     output_dir = prepare_output_dir(output_dir)
     stage_metrics: dict[str, dict[str, Any]] = {}
     current_stage = "input_hashing"
+    validation = None
     try:
         input_sha256 = timed_stage(
             current_stage,
@@ -209,7 +210,12 @@ def run_benchmark(
             stage_metrics,
         )
         if validation.status != "VALID":
-            raise ScaleBenchmarkError("VCF intake validation did not return VALID.")
+            diagnostic_errors = getattr(validation, "errors", []) or []
+            if os.environ.get("SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS") == "1":
+                detail = "; ".join(str(error) for error in diagnostic_errors) or "No validator error details were returned."
+            else:
+                detail = "Detailed validator errors are suppressed for privacy."
+            raise ScaleBenchmarkError(f"VCF intake validation did not return VALID: {detail}")
         if validation.detected_build and validation.detected_build != reference_build:
             raise ScaleBenchmarkError("The VCF-declared reference build conflicts with the selected reference build.")
         if sample_name not in validation.sample_names:
@@ -421,6 +427,11 @@ def run_benchmark(
             "exception_type": type(exc).__name__,
             "generated_at_utc": datetime.now(UTC).isoformat(),
         }
+        # Detailed validation errors are opt-in because production VCF diagnostics
+        # can contain sensitive record content. The GIAB workflow enables this only
+        # for the public HG001 benchmark input.
+        if validation is not None and os.environ.get("SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS") == "1":
+            failure["validation_errors"] = [str(error) for error in (getattr(validation, "errors", []) or [])]
         failure_path = output_dir / FAILURE_NAME
         temporary_failure = output_dir / f".{FAILURE_NAME}.tmp"
         temporary_failure.write_text(
