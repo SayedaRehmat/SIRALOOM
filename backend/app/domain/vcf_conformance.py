@@ -88,6 +88,16 @@ def execute_vcf_conformance_suite(version: str) -> dict[str, Any]:
         "normative_uncovered_sections": list(
             (manifest.get("normative_coverage") or {}).get(version, {}).get("uncovered_sections") or []
         ),
+        "fixture_categories_exercised": sorted({
+            str(fixture.get("category"))
+            for fixture in fixtures
+            if fixture.get("category")
+        }),
+        "specification_requirements_exercised": sorted({
+            str(fixture.get("spec_basis"))
+            for fixture in fixtures
+            if fixture.get("spec_basis")
+        }),
         "corpus_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
         "parser_source_sha256": parser_source_sha256,
         "runner_source_sha256": runner_source_sha256,
