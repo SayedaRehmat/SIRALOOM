@@ -122,6 +122,8 @@ def _qualify_vcf_specification(
         checks["vcf_specification"] = {"status": "BLOCKED", "reason": "official PDF is not staged"}
         return
 
+    header = b""
+    tail = b""
     try:
         with path.open("rb") as handle:
             header = handle.read(5)
@@ -148,16 +150,22 @@ def _qualify_vcf_specification(
         except OSError:
             report_valid = False
 
+    try:
+        test_case_count = int(conformance.get("test_case_count") or 0)
+        failed_test_count = int(conformance.get("failed_test_count") or 0)
+    except (TypeError, ValueError):
+        test_case_count = 0
+        failed_test_count = -1
     required_profile_fields = (
-        str(conformance.get("profile_id") or "").strip(),
-        str(conformance.get("suite_version") or "").strip(),
+        bool(str(conformance.get("profile_id") or "").strip()),
+        bool(str(conformance.get("suite_version") or "").strip()),
         str(conformance.get("execution_status") or "").strip().upper() == "PASSED",
         isinstance(conformance.get("normative_clause_ids"), list)
         and len(conformance.get("normative_clause_ids") or []) > 0,
         isinstance(conformance.get("unsupported_constructs"), list),
         str(conformance.get("unsupported_policy") or "").strip().upper() == "FAIL_CLOSED",
-        int(conformance.get("test_case_count") or 0) > 0,
-        int(conformance.get("failed_test_count") or 0) == 0,
+        test_case_count > 0,
+        failed_test_count == 0,
         report_valid,
     )
     if not all(required_profile_fields):
