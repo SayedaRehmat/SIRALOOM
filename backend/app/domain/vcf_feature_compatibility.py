@@ -33,8 +33,8 @@ VCF_CORE_FEATURES = (
     (
         "breakend_replacement_and_mate_links",
         "VCFv4.1+",
-        "Native breakend ALT grammar, reciprocal remote-locus and MATEID relationship validation.",
-        "tests/test_vcf_conformance_fixtures.py: four_breakend_orientations_valid, reciprocal_breakend_pair_valid, breakend_mate_coordinate_mismatch_invalid, breakend_mate_id_missing_invalid, breakend_mate_not_reciprocal_invalid, breakend_mate_without_record_id_invalid, and breakend_duplicate_record_id_invalid",
+        "Native breakend ALT grammar and reciprocal remote-locus/MATEID validation. VCFv4.1-v4.3 retain Number=. unordered MATEID behavior; VCFv4.4-v4.5 validate Number=A positional ALT-to-mate correspondence, including missing placeholders for non-breakend ALTs.",
+        "tests/test_vcf_conformance_fixtures.py: four_breakend_orientations_valid, reciprocal_breakend_pair_valid, breakend_mate_coordinate_mismatch_invalid, breakend_mate_id_missing_invalid, breakend_mate_not_reciprocal_invalid, breakend_mate_without_record_id_invalid, breakend_duplicate_record_id_invalid, breakend_legacy_mateid_unordered_mixed_alt_valid, breakend_mixed_alt_mateid_alignment_valid, breakend_multi_alt_mateid_alignment_valid, breakend_multi_alt_mateid_swapped_invalid, and breakend_mixed_alt_mateid_cardinality_invalid",
     ),
     (
         "genotype_ploidy_number_g_cardinality",
