@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
+import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +27,10 @@ def execute_vcf_conformance_suite(version: str) -> dict[str, Any]:
     """Run every packaged fixture for exactly one VCF version and hash results."""
     manifest_bytes = _CORPUS.read_bytes()
     manifest = json.loads(manifest_bytes)
+    parser_source = Path(__import__("inspect").getsourcefile(validate_vcf_strict) or "").resolve()
+    runner_source = Path(__file__).resolve()
+    parser_source_sha256 = hashlib.sha256(parser_source.read_bytes()).hexdigest()
+    runner_source_sha256 = hashlib.sha256(runner_source.read_bytes()).hexdigest()
     fixtures = manifest.get("versions", {}).get(version, [])
     results: list[dict[str, Any]] = []
 
@@ -70,6 +77,11 @@ def execute_vcf_conformance_suite(version: str) -> dict[str, Any]:
         "suite_version": "1",
         "target_version": version,
         "corpus_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "parser_source_sha256": parser_source_sha256,
+        "runner_source_sha256": runner_source_sha256,
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "executed_at": datetime.now(timezone.utc).isoformat(),
         "test_case_count": len(results),
         "passed_test_count": len(results) - failed,
         "failed_test_count": failed,
