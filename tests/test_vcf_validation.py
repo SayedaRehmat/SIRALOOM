@@ -64,6 +64,49 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
 
 
+
+
+def test_strict_validation_records_orphan_spanning_deletion_as_record_warning(tmp_path: Path):
+    path = tmp_path / "orphan-star.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t10\tstar\tA\t*,G\t.\tPASS\t.\tGT\t1/2\n"
+        "1\t11\tsnv\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2
+    assert profile["unresolved_spanning_deletion_record_count"] == 1
+    assert profile["unresolved_spanning_deletion_records"] == [{
+        "record_index": 1,
+        "line_number": 4,
+        "chrom": "1",
+        "pos": 10,
+        "reason_code": "UNRESOLVED_SPANNING_DELETION_CONTEXT",
+    }]
+    assert "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED" in profile["warning_codes"]
+
+
+def test_strict_validation_accepts_spanning_deletion_with_same_sample_context(tmp_path: Path):
+    path = tmp_path / "resolved-star.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t10\tdel\tAT\tA\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t11\tstar\tT\t*\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2
+    assert profile["unresolved_spanning_deletion_record_count"] == 0
+    assert profile["unresolved_spanning_deletion_records"] == []
+    assert "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED" not in profile["warning_codes"]
+
 def test_strict_validation_rejects_whitespace_in_chromosome_name(tmp_path: Path):
     path = tmp_path / "whitespace-contig.vcf"
     write_vcf(path, "chr 1\t2\t.\tA\tG\t.\tPASS\t.\n")
