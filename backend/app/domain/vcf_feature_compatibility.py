@@ -46,7 +46,7 @@ VCF_CORE_FEATURES = (
         "symbolic_structural_variant_span",
         "VCFv4.1+",
         "Native symbolic structural allele span validation, including END/SVLEN consistency constraints.",
-        "tests/test_vcf_conformance_fixtures.py: symbolic_deletion_valid and symbolic_deletion_missing_span_invalid",
+        "tests/test_vcf_conformance_fixtures.py: symbolic_deletion_valid, symbolic_deletion_missing_span_invalid, symbolic_svlen_end_computed_span_valid, and symbolic_svlen_end_computed_span_mismatch_invalid",
     ),
 )
 
