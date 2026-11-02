@@ -425,7 +425,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD:PL\t0/0:30,0:0,40,400\n"
         "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9,0:100,50,60,40,0,30\n"
         "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
-        "1\t22\tstar1\tA\t*,G\t50\tPASS\t.\tGT:AD:PL\t1/2:10,10,10:0,20,200,20,0,200\n"
+        "1\t50\tstar1\tA\t*,G\t50\tPASS\t.\tGT:AD:PL\t1/2:10,10,10:0,20,200,20,0,200\n"
         + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD:PL\t0/1:10,10:0,20,200\n"
         + "1\t1001\ttelo-after\tA\tG\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n",
         encoding="utf-8",
