@@ -250,6 +250,9 @@ jobs:
         run: |
           python - "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json" <<'PY'
           import gzip, json, re, sys
+          if not Path(sys.argv[1]).is_file():
+              print("GIAB assets were not acquired; spanning-deletion diagnostic skipped.")
+              raise SystemExit(0)
           from pathlib import Path
           from backend.app.domain.vcf_validation import (
               StrictVCFValidationError,
@@ -266,7 +269,7 @@ jobs:
               raise SystemExit(0)
           except StrictVCFValidationError as exc:
               error_text = str(exc)
-              match = re.search(r"line (\\d+)", error_text)
+              match = re.search(r"line (\d+)", error_text)
               if not match:
                   raise
               target_line = int(match.group(1))
@@ -278,7 +281,7 @@ jobs:
               target_fields = None
               for line_no, raw in enumerate(handle, 1):
                   if line_no == target_line:
-                      target_fields = raw.rstrip("\\n\\r").split("\\t")
+                      target_fields = raw.rstrip().split("\t")
                       break
           if target_fields is None:
               raise RuntimeError(f"Could not recover rejected VCF line {target_line}")
