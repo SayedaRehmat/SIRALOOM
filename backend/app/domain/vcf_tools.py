@@ -111,6 +111,7 @@ def route_vcf_records(
     output_dir: str | Path,
     *,
     reference_contig_lengths: dict[str, int] | None = None,
+    unresolved_spanning_deletion_record_indexes: set[int] | None = None,
 ) -> dict:
     """Partition a validated VCF without changing records or sample semantics.
 
@@ -149,6 +150,8 @@ def route_vcf_records(
     headers: list[str] = []
     counts = {key: 0 for key in names}
     counts["reference_only"] = 0
+    counts["unresolved_spanning_deletions"] = 0
+    unresolved_star_indexes = unresolved_spanning_deletion_record_indexes or set()
     counts["reference_only_genotype_alleles"] = 0
     handles = {}
     sample_count = 0
@@ -358,7 +361,18 @@ def route_vcf_records(
                     continue
                 if any(alt == "*" for alt in alts):
                     emit("spanning_deletions", line)
-                    record_exclusion(line, "SPANNING_DELETION_NOT_INTERPRETED", "SPANNING_DELETION_RECORDS")
+                    unresolved_context = source_record_index in unresolved_star_indexes
+                    if unresolved_context:
+                        counts["unresolved_spanning_deletions"] += 1
+                    record_exclusion(
+                        line,
+                        (
+                            "UNRESOLVED_SPANNING_DELETION_CONTEXT"
+                            if unresolved_context
+                            else "SPANNING_DELETION_NOT_INTERPRETED"
+                        ),
+                        "SPANNING_DELETION_RECORDS",
+                    )
                     continue
                 is_structural = any(
                     alt not in GVCF_WILDCARD_ALLELES and
@@ -461,6 +475,7 @@ def route_vcf_records(
         "repeat_expansion_records": counts["repeat_expansions"],
         "mitochondrial_variant_records": counts["mitochondrial"],
         "spanning_deletion_records": counts["spanning_deletions"],
+        "unresolved_spanning_deletion_records": counts["unresolved_spanning_deletions"],
         "telomere_records": counts["telomere"],
         "telomere_after_contig_records": counts["telomere_after"],
         "reference_only_genotype_alleles": counts["reference_only_genotype_alleles"],
