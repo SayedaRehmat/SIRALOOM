@@ -993,3 +993,25 @@ def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failur
 
     with pytest.raises(ingestion.VCFValidationUnavailable, match="HTSlib version mismatch"):
         ingestion.validate_vcf(path)
+
+
+def test_unsupported_future_vcf_retains_declared_version_sample_and_assembly(tmp_path):
+    from backend.app.domain.ingestion import validate_vcf
+
+    path = tmp_path / "future.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.6\\n"
+        "##contig=<ID=1,length=1000,assembly=GRCh38>\\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\\"Genotype\\">\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tPROBAND\\n"
+        "1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.error_code == "VCF_FILEFORMAT_UNSUPPORTED"
+    assert result.fileformat == "VCFv4.6"
+    assert result.sample_names == ["PROBAND"]
+    assert result.detected_build == "GRCh38"
