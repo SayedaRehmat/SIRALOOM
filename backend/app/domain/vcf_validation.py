@@ -1842,6 +1842,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
+                    mate_links = []
                     if per_alt_mate_mapping:
                         remote_by_alt = iter(
                             (match.group(2), int(match.group(3)))
@@ -1850,7 +1851,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
                             if match is not None
                         )
-                        mate_links = []
                         for alternate, mate_id in zip(alts, mate_values):
                             if "[" not in alternate and "]" not in alternate:
                                 if mate_id not in {"", "."}:
@@ -1886,6 +1886,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         "pos": _pos,
                         "remote_loci": remote_loci,
                         "mate_ids": mate_ids,
+                        "mate_links": mate_links,
+                        "per_alt_mate_mapping": per_alt_mate_mapping,
                         "line_no": line_no,
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
@@ -2158,19 +2160,36 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"Breakend MATEID {mate_id!r} does not match its ALT mate coordinate at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
-            if not (mate["mate_ids"] & source_ids):
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
-                )
-            if not any(
-                (remote_chrom, remote_pos) == (chrom, pos)
-                for remote_chrom, remote_pos in mate["remote_loci"]
-            ):
-                raise StrictVCFValidationError(
-                    f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
-                )
+            if mate["per_alt_mate_mapping"]:
+                reciprocal_links = [
+                    (target_mate_id, target_remote_locus)
+                    for target_mate_id, target_remote_locus in mate["mate_links"]
+                    if target_mate_id in source_ids
+                ]
+                if not reciprocal_links:
+                    raise StrictVCFValidationError(
+                        f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                        code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+                    )
+                if not any(target_remote_locus == (chrom, pos) for _, target_remote_locus in reciprocal_links):
+                    raise StrictVCFValidationError(
+                        f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} through its corresponding MATEID ALT at line {line_no}",
+                        code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                    )
+            else:
+                if not (mate["mate_ids"] & source_ids):
+                    raise StrictVCFValidationError(
+                        f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                        code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+                    )
+                if not any(
+                    (remote_chrom, remote_pos) == (chrom, pos)
+                    for remote_chrom, remote_pos in mate["remote_loci"]
+                ):
+                    raise StrictVCFValidationError(
+                        f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
+                        code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                    )
     for chrom, pos, line_no, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
