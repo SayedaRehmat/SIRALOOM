@@ -46,6 +46,11 @@ from backend.app.config import settings
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.normalization_provider import (
+    NormalizationProviderError,
+    normalize_with_selected_provider,
+)
+from backend.app.domain.resource_capabilities import NORMALIZATION_ENGINE
 from backend.app.domain.normalization import (
     NormalizationError,
     UnsupportedVariantError,
@@ -2178,6 +2183,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 return
 
             temp_path: Path | None = None
+            profile_runtime_normalization = None
+            normalization_provider_execution = None
+            normalization_provider_record = None
+            if profile_bound_analysis:
+                try:
+                    profile_runtime_normalization = resolve_profile_runtime_resource(
+                        db,
+                        analysis_id=analysis.id,
+                        capability=NORMALIZATION_ENGINE,
+                    )
+                    normalization_provider_execution = profile_runtime_normalization.execution
+                except ProfileRuntimeResourceError as exc:
+                    raise ResourceConsumptionError(exc.code, str(exc)) from exc
             try:
                 suffix = ".vcf.gz"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
@@ -2189,7 +2207,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fasta_sha256": reference_package["fasta_sha256"],
                     "reference_fai_sha256": reference_package["fai_sha256"],
                     "reference_gzi_sha256": reference_package.get("gzi_sha256"),
-                    "bcftools_version": settings.bcftools_version,
+                    "normalization_provider": (
+                        {
+                            "resource_id": str(profile_runtime_normalization.resource.id),
+                            "provider": profile_runtime_normalization.resource.provider,
+                            "version": profile_runtime_normalization.resource.version,
+                            "checksum": profile_runtime_normalization.resource.checksum,
+                            "execution_contract_hash": normalization_provider_execution.contract_hash,
+                        }
+                        if profile_runtime_normalization is not None else {
+                            "provider": "bcftools",
+                            "version": settings.bcftools_version,
+                            "selection_policy": "LEGACY_SETTINGS_PIN",
+                        }
+                    ),
                     "execution_contract_hash": reference_execution.contract_hash,
                     "normalization_version": "6.0",
                     "source_record_mapping_tag": "SIRALOOM_ORIG",
@@ -2221,14 +2252,42 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
 
-                try:
-                    normalization_stats = normalize_vcf_with_bcftools(
-                        routing["sequence_path"],
-                        temp_path,
-                        reference_fasta=reference_fasta_path,
-                        expected_bcftools_version=settings.bcftools_version,
-                        source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                if normalization_provider_execution is not None:
+                    normalization_provider_record = start_resource_execution(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        attempt=normalization_step.attempt,
+                        resolved=normalization_provider_execution,
+                        requested_resource_id=profile_runtime_normalization.resource.id,
+                        batch_key="normalization-provider",
+                        metadata={
+                            "resource_type": NORMALIZATION_ENGINE,
+                            "provider": profile_runtime_normalization.resource.provider,
+                            "version": profile_runtime_normalization.resource.version,
+                            "checksum": profile_runtime_normalization.resource.checksum,
+                        },
                     )
+                    db.commit()
+
+                try:
+                    if profile_runtime_normalization is not None:
+                        normalization_stats, provider_selection = normalize_with_selected_provider(
+                            profile_runtime_normalization.resource,
+                            routing["sequence_path"],
+                            temp_path,
+                            reference_fasta=reference_fasta_path,
+                            approved=True,
+                            source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                        )
+                    else:
+                        normalization_stats = normalize_vcf_with_bcftools(
+                            routing["sequence_path"],
+                            temp_path,
+                            reference_fasta=reference_fasta_path,
+                            expected_bcftools_version=settings.bcftools_version,
+                            source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                        )
                     response_sha256 = sha256_file(temp_path)
                     complete_resource_execution(
                         db,
@@ -2237,6 +2296,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         request_fingerprint=request_fingerprint,
                         response_sha256=response_sha256,
                     )
+                    if normalization_provider_record is not None:
+                        complete_resource_execution(
+                            db,
+                            normalization_provider_record,
+                            status="SUCCEEDED",
+                            request_fingerprint=request_fingerprint,
+                            response_sha256=response_sha256,
+                        )
                     db.commit()
                 except Exception as exc:
                     complete_resource_execution(
@@ -2246,6 +2313,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         error_code=getattr(exc, "code", None) or "REFERENCE_NORMALIZATION_EXECUTION_FAILED",
                         error_message=str(exc),
                     )
+                    if normalization_provider_record is not None:
+                        complete_resource_execution(
+                            db,
+                            normalization_provider_record,
+                            status="FAILED",
+                            error_code=getattr(exc, "code", None) or "NORMALIZATION_EXECUTION_FAILED",
+                            error_message=str(exc),
+                        )
                     db.commit()
                     raise
 
@@ -2281,6 +2356,22 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "normalization_tool": normalization_stats["tool"],
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
+                        "normalization_provider_resource_id": (
+                            str(profile_runtime_normalization.resource.id)
+                            if profile_runtime_normalization is not None else None
+                        ),
+                        "normalization_provider_resource_name": (
+                            profile_runtime_normalization.resource.name
+                            if profile_runtime_normalization is not None else None
+                        ),
+                        "normalization_provider_version": (
+                            profile_runtime_normalization.resource.version
+                            if profile_runtime_normalization is not None else settings.bcftools_version
+                        ),
+                        "normalization_provider_checksum": (
+                            profile_runtime_normalization.resource.checksum
+                            if profile_runtime_normalization is not None else None
+                        ),
                         "normalization_command": normalization_stats["command"],
                         "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
                         "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
@@ -2323,7 +2414,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_provider_resource_id": str(profile_runtime_normalization.resource.id) if profile_runtime_normalization is not None else None, "normalization_provider_version": profile_runtime_normalization.resource.version if profile_runtime_normalization is not None else settings.bcftools_version, "normalization_provider_checksum": profile_runtime_normalization.resource.checksum if profile_runtime_normalization is not None else None, "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
