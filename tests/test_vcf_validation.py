@@ -2394,6 +2394,14 @@ def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path:
     }
     assert older["local_allele_encoding"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
     assert older["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
+    assert older["gatk_gvcf_non_ref_end_interoperability"]["status"] == "NOT_QUALIFIED"
+
+    legacy = {
+        item["feature_id"]: item
+        for item in feature_compatibility_for_version("VCFv4.0")
+    }
+    assert legacy["breakend_replacement_and_mate_links"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+    assert legacy["genotype_ploidy_number_g_cardinality"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
 
 
 def test_vcf_feature_qualification_rejects_unknown_specification_versions():
