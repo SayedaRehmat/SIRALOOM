@@ -25,7 +25,8 @@ concurrency:
 jobs:
   qualification:
     name: HG001 ${{ matrix.build }} public benchmark
-    if: inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    # Pushes to the qualification branch execute both assemblies; manual dispatch may select one.
+    if: github.event_name == 'push' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
