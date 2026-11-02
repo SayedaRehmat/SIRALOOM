@@ -41,7 +41,7 @@ def test_qualified_release_can_be_selected_after_approval_resolution():
 
 
 def test_unknown_normalization_provider_fails_closed():
-    with pytest.raises(NormalizationProviderError, match="not registered"):
+    with pytest.raises(NormalizationProviderError, match="adapter is registered"):
         resolve_normalization_provider(_resource(provider="future-normalizer", version="2.0"))
 
 
