@@ -580,7 +580,7 @@ def require_approved_vcf_specification(
     resource = get_active_resource_for_organization(
         db,
         organization_id=organization_id,
-        name="VCF specification",
+        name=f"VCF specification {requested_version}",
         provider="HTS-Specifications",
         resource_type="VCF_SPECIFICATION",
         genome_build=None,
@@ -609,7 +609,7 @@ def require_approved_vcf_specification(
         )
 
     identity_key = "|".join([
-        "VCF specification",
+        f"VCF specification {requested_version}",
         "HTS-Specifications",
         "VCF_SPECIFICATION",
         "UNSPECIFIED",
