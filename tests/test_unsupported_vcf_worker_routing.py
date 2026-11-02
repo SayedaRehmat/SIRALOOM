@@ -848,7 +848,11 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
     import importlib
 
     workflow = importlib.import_module("backend.app.workflows.variant")
-    resources = importlib.import_module("backend.app.domain.resources")
+    from backend.app.domain.resources import (
+        decide_resource_approval,
+        require_approved_vcf_specification,
+    )
+    from backend.app.infrastructure.db.models import ResourceApproval, ResourceQualification
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
 
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / (approval_state.lower() + '-vcf-spec.db')}")
@@ -918,7 +922,60 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 created_by=user_id,
                 analysis_version=1,
             ))
+            specification = Resource(
+                id=uuid4(),
+                organization_id=None,
+                name="VCF specification VCFv4.6",
+                provider="HTS-Specifications",
+                resource_type="VCF_SPECIFICATION",
+                version="VCFv4.6",
+                genome_build=None,
+                access_method="HTTPS",
+                license_text=None,
+                checksum="a" * 64,
+                location="https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+                status="QUALIFIED",
+                population_definition=None,
+                metadata_json={},
+            )
+            qualification = ResourceQualification(
+                id=uuid4(),
+                resource_id=specification.id,
+                qualification_version="vcf-spec-qualification-v1",
+                status="QUALIFIED",
+                checks_json={"vcf_specification": {"status": "QUALIFIED"}},
+                qualified_by=None,
+            )
+            approval = ResourceApproval(
+                id=uuid4(),
+                resource_id=specification.id,
+                organization_id=organization_id,
+                qualification_id=qualification.id,
+                status="PENDING",
+                version=1,
+            )
+            db.add_all([specification, qualification, approval])
+            db.flush()
+            if approval_state in {"REJECTED", "APPROVED"}:
+                decide_resource_approval(
+                    db,
+                    approval_id=approval.id,
+                    organization_id=organization_id,
+                    actor_id=user_id,
+                    decision=approval_state,
+                    expected_version=1,
+                    reason=f"Test laboratory decision: {approval_state}",
+                )
             db.commit()
+            approval_snapshot = (
+                require_approved_vcf_specification(
+                    db,
+                    organization_id=organization_id,
+                    version="VCFv4.6",
+                )
+                if approval_state == "APPROVED"
+                else None
+            )
 
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
@@ -927,34 +984,6 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
         # workflow boundary's declared version so this test isolates approval
         # routing after artifact materialization.
         monkeypatch.setattr(workflow, "read_vcf_fileformat", lambda _path: "VCFv4.6")
-
-        approval_snapshot = {
-            "source": "LAB_APPROVED_RESOURCE",
-            "version": "VCFv4.6",
-            "approval_required": True,
-            "resource_id": "qualified-vcf46-resource",
-            "qualification_id": "executed-conformance-qualification",
-            "binding_id": "laboratory-vcf46-binding",
-        }
-
-        def resolve_approval(_db, *, organization_id, version):
-            assert organization_id
-            assert version == "VCFv4.6"
-            if approval_state == "PENDING":
-                raise resources.VCFSpecificationApprovalError(
-                    "VCF specification VCFv4.6 is awaiting an explicit laboratory approval decision",
-                    code="VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
-                    next_step="LAB_APPROVAL_REQUIRED",
-                )
-            if approval_state == "REJECTED":
-                raise resources.VCFSpecificationApprovalError(
-                    "VCF specification VCFv4.6 was rejected by this laboratory",
-                    code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
-                    next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
-                )
-            return approval_snapshot
-
-        monkeypatch.setattr(resources, "require_approved_vcf_specification", resolve_approval)
 
         if approval_state in {"PENDING", "REJECTED"}:
             def parser_must_not_run(*_args, **_kwargs):
