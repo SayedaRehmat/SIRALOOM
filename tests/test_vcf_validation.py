@@ -977,6 +977,15 @@ def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, ver
 
     assert profile["fileformat"] == version
     assert profile["records"] == 1
+    assert profile["format_compatibility"]["support_status"] == "SUPPORTED"
+    assert profile["format_compatibility"]["validation_mode"] == "VERSION_AWARE_NATIVE"
+    assert profile["format_compatibility"]["specification_repository"] == (
+        "https://github.com/samtools/hts-specs"
+    )
+    if version == "VCFv4.5":
+        assert profile["format_compatibility"]["specification_document"] == (
+            "https://samtools.github.io/hts-specs/VCFv4.5.pdf"
+        )
 
 
 def test_vcf45_local_allele_cardinality_is_validated(tmp_path: Path):
