@@ -163,6 +163,9 @@ def _qualify_vcf_specification(
         and failed_test_count == 0
         and execution_report.get("execution_status") == "PASSED"
         and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("report_sha256") or "")))
+        and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("corpus_sha256") or "")))
+        and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("parser_source_sha256") or "")))
+        and bool(re.fullmatch(r"[0-9a-f]{64}", str(execution_report.get("runner_source_sha256") or "")))
     )
     if not report_valid:
         blockers.append("VCF_SPECIFICATION_CONFORMANCE_EXECUTION_FAILED")
