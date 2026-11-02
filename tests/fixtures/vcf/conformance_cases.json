@@ -194,6 +194,18 @@
           "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
         ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.1 reserves INFO/MATEID as Number=.,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
       }
     ],
     "VCFv4.2": [
@@ -624,6 +636,18 @@
           "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
           "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
         ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.3 reserves INFO/MATEID as Number=.,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
       }
     ],
     "VCFv4.4": [
@@ -846,6 +870,18 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,.",
           "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.4 reserves INFO/MATEID as Number=A,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
       }
     ],
@@ -1318,6 +1354,18 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
           "2\t20\tbnd2\tA\tA]1:15],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=.,bnd1"
+        ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.5 reserves INFO/MATEID as Number=A,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
       }
     ],
