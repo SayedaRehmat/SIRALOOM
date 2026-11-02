@@ -47,7 +47,7 @@ class VCFSpecificationProvider:
             version = f"VCFv{match.group(1)}"
             document_url = f"{_OFFICIAL_INDEX}{filename}"
             candidates.append({
-                "name": "VCF specification",
+                "name": f"VCF specification {version}",
                 "provider": "HTS-Specifications",
                 "resource_type": "VCF_SPECIFICATION",
                 "version": version,
