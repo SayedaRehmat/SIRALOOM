@@ -425,13 +425,13 @@ def qualify_resource(
         "staging_record_id": str(staging.id) if staging is not None else None,
         "activation_blockers": blockers,
     }
+    path = _local_path(resource)
     if resource.resource_type == "REFERENCE_PACKAGE":
         _qualify_reference_toolchain(resource, execution, blockers, checks)
     if resource.resource_type == "NORMALIZATION":
         _qualify_normalization_engine(resource, execution, blockers, checks)
     if resource.resource_type == "VCF_SPECIFICATION":
         _qualify_vcf_specification(resource, path, blockers, checks)
-    path = _local_path(resource)
     if (
         staging is not None
         and staging.status == "STAGED"
