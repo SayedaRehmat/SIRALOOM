@@ -491,6 +491,7 @@ def test_registry_accepts_canonical_workflow_capability_resource_types():
     engine = _engine()
     canonical_types = [
         "REFERENCE_PACKAGE",
+        "NORMALIZATION",
         "ANNOTATION_ENGINE",
         "POPULATION_SECONDARY",
         "CLINICAL_DATABASE",
