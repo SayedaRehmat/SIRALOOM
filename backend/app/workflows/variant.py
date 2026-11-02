@@ -95,6 +95,7 @@ from backend.app.domain.vcf_tools import (
 )
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    read_vcf_fileformat,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -1451,8 +1452,59 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             )
             db.commit()
 
-        # 1. Validate the source VCF before scientific transformation.
+        # 1. Identify the declared VCF specification before strict parsing.
+        # This makes pending/rejected future specifications an explicit lab
+        # governance block instead of misclassifying them as malformed VCFs.
         validation_step = _step(db, analysis.id, "validate_input")
+        detected_vcf_version = read_vcf_fileformat(input_path)
+        specification_approval = None
+        from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+        from backend.app.domain.resources import (
+            ResourceRegistryError,
+            require_approved_vcf_specification,
+        )
+        if detected_vcf_version and detected_vcf_version not in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+            try:
+                specification_approval = require_approved_vcf_specification(
+                    db,
+                    organization_id=case.organization_id,
+                    version=detected_vcf_version,
+                )
+            except ResourceRegistryError as exc:
+                validation_metadata = dict(validation_step.metadata_json or {})
+                validation_metadata["vcf_specification_approval"] = {
+                    "status": "LAB_APPROVAL_REQUIRED",
+                    "version": detected_vcf_version,
+                    "reason": str(exc),
+                }
+                mark_step(
+                    db,
+                    validation_step,
+                    StepStatus.BLOCKED,
+                    error_code="VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+                    error_message=str(exc),
+                    metadata=validation_metadata,
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                analysis.completed_at = None
+                db.commit()
+                audit.record(
+                    event_type="WORKFLOW_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="vcf-specification-governance",
+                    reason=str(exc),
+                    payload={
+                        "error_code": "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+                        "vcf_version": detected_vcf_version,
+                        "next_step": "LAB_APPROVAL_REQUIRED",
+                    },
+                )
+                db.commit()
+                return
+
+        # 2. Validate the source VCF before scientific transformation.
         if validation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, validation_step, StepStatus.RUNNING)
             try:
@@ -1478,24 +1530,53 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except StrictVCFValidationError as exc:
+                parser_not_implemented = (
+                    bool(detected_vcf_version)
+                    and detected_vcf_version not in BUILTIN_VCF_SPECIFICATION_VERSIONS
+                    and exc.code == "VCF_FILEFORMAT_UNSUPPORTED"
+                )
+                error_code = (
+                    "VCF_SPECIFICATION_PARSER_NOT_IMPLEMENTED"
+                    if parser_not_implemented else exc.code
+                )
+                next_step = (
+                    "PARSER_IMPLEMENTATION_AND_CONFORMANCE_REQUIRED"
+                    if parser_not_implemented else "VALID_VCF_REQUIRED"
+                )
+                failure_metadata = {
+                    "next_step": next_step,
+                    "detected_vcf_version": detected_vcf_version,
+                    "parser_support": "NOT_IMPLEMENTED" if parser_not_implemented else None,
+                    "vcf_specification_approval": specification_approval,
+                }
                 mark_step(
                     db,
                     validation_step,
                     StepStatus.BLOCKED,
-                    error_code=exc.code,
-                    error_message=str(exc),
-                    metadata={"next_step": "VALID_VCF_REQUIRED"},
+                    error_code=error_code,
+                    error_message=(
+                        f"VCF specification {detected_vcf_version} is approved by the laboratory, "
+                        "but this SIRALOOM parser build has no qualified implementation for it."
+                        if parser_not_implemented else str(exc)
+                    ),
+                    metadata=failure_metadata,
                 )
                 analysis.status = AnalysisStatus.BLOCKED
+                analysis.completed_at = None
                 db.commit()
                 audit.record(
                     event_type="WORKFLOW_BLOCKED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
-                    actor_id="vcf-validator",
+                    actor_id="vcf-specification-parser" if parser_not_implemented else "vcf-validator",
                     reason=str(exc),
-                    payload={"error_code": exc.code, "next_step": "VALID_VCF_REQUIRED"},
+                    payload={
+                        "error_code": error_code,
+                        "next_step": next_step,
+                        "vcf_version": detected_vcf_version,
+                        "laboratory_approval": specification_approval,
+                    },
                 )
                 db.commit()
                 return
@@ -1514,50 +1595,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
 
-        # New VCF specification versions require both SIRALOOM conformance
-        # qualification and this laboratory's explicit approval. Built-in
-        # historical profiles remain compatible without a new resource binding.
+        # Persist the exact approval snapshot alongside successful validation.
+        # Built-in versions carry an explicit built-in profile snapshot.
         validation_metadata = dict(validation_step.metadata_json or {})
-        validation_profile = dict(validation_metadata.get("validation_profile") or {})
-        if not validation_profile:
-            validation_profile = validate_vcf_strict(str(input_path))
-        vcf_specification_version = str(validation_profile.get("fileformat") or "")
-        from backend.app.domain.resources import (
-            ResourceRegistryError,
-            require_approved_vcf_specification,
-        )
-
-        try:
-            specification_approval = require_approved_vcf_specification(
-                db,
-                organization_id=case.organization_id,
-                version=vcf_specification_version,
-            )
-        except ResourceRegistryError as exc:
-            validation_metadata["vcf_specification_approval"] = {
-                "status": "LAB_APPROVAL_REQUIRED",
-                "version": vcf_specification_version,
+        if specification_approval is None and detected_vcf_version:
+            specification_approval = {
+                "source": "BUILTIN_SIRALOOM_PROFILE",
+                "version": detected_vcf_version,
+                "approval_required": False,
             }
-            validation_step.metadata_json = validation_metadata
-            db.add(validation_step)
-            analysis.status = AnalysisStatus.BLOCKED
-            analysis.completed_at = None
-            db.commit()
-            audit.record(
-                event_type="WORKFLOW_BLOCKED",
-                case_id=analysis.case_id,
-                analysis_id=analysis.id,
-                actor_type="SYSTEM",
-                actor_id="vcf-specification-governance",
-                reason=str(exc),
-                payload={
-                    "error_code": "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
-                    "vcf_version": vcf_specification_version,
-                    "next_step": "LAB_APPROVAL_REQUIRED",
-                },
-            )
-            db.commit()
-            return
         validation_metadata["vcf_specification_approval"] = specification_approval
         validation_step.metadata_json = validation_metadata
         db.add(validation_step)
