@@ -32,7 +32,7 @@ def test_canonical_workflow_contains_all_current_variant_steps_in_order():
 
 
 def test_normalization_and_annotation_have_explicit_resource_dependencies():
-    assert get_workflow_stage_contract("normalize").required_resources == (REFERENCE_PACKAGE,)
+    assert get_workflow_stage_contract("normalize").required_resources == (REFERENCE_PACKAGE, "NORMALIZATION")
     assert get_workflow_stage_contract("annotate").required_resources == (ANNOTATION_ENGINE,)
 
 
