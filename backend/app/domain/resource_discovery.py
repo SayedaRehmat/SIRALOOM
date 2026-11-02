@@ -9,13 +9,15 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backend.app.domain.resources import register_resource_version
+from backend.app.domain.resources import register_resource_version, request_resource_approval
 from backend.app.domain.resource_source_contract import validate_source_contract
 from backend.app.domain.resource_staging import create_staging_candidate
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Notification,
     OrganizationMembership,
+    OrganizationResourceBinding,
+    ResourceApproval,
     ResourceDiscovery,
     User,
 )
@@ -214,3 +216,130 @@ def _notify_organizations_of_release(
         ))
         created += 1
     return created
+
+def notify_organizations_of_qualified_release(
+    db: Session,
+    *,
+    resource,
+    qualification,
+) -> int:
+    """Create lab-specific approval requests and notifications after qualification.
+
+    Discovery alone never creates an approval request. Only a technically
+    QUALIFIED normalization release reaches this boundary. Each organization
+    receives its own pending decision; no active binding is changed here.
+    """
+    if (
+        str(resource.resource_type or "").strip().upper() != "NORMALIZATION"
+        or str(qualification.status or "").strip().upper() != "QUALIFIED"
+        or str(resource.status or "").strip().upper() not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}
+    ):
+        return 0
+
+    identity_key = "|".join([
+        resource.name,
+        resource.provider,
+        resource.resource_type,
+        resource.genome_build or "UNSPECIFIED",
+    ])
+    query = (
+        select(OrganizationMembership, User)
+        .join(User, User.id == OrganizationMembership.user_id)
+        .where(
+            OrganizationMembership.status == "ACTIVE",
+            OrganizationMembership.role.in_(RESOURCE_NOTIFICATION_ROLES),
+            User.status == "ACTIVE",
+        )
+    )
+    if resource.organization_id is not None:
+        query = query.where(OrganizationMembership.organization_id == resource.organization_id)
+
+    created = 0
+    for membership, user in db.execute(query).all():
+        binding = db.scalar(
+            select(OrganizationResourceBinding).where(
+                OrganizationResourceBinding.organization_id == membership.organization_id,
+                OrganizationResourceBinding.identity_key == identity_key,
+            ).limit(1)
+        )
+        if binding is not None and binding.resource_id == resource.id:
+            continue
+
+        existing = db.scalar(
+            select(ResourceApproval).where(
+                ResourceApproval.resource_id == resource.id,
+                ResourceApproval.organization_id == membership.organization_id,
+                ResourceApproval.qualification_id == qualification.id,
+            ).limit(1)
+        )
+        if existing is not None:
+            continue
+
+        approval = request_resource_approval(
+            db,
+            resource_id=resource.id,
+            organization_id=membership.organization_id,
+            qualification_version=qualification.qualification_version,
+        )
+        db.add(Notification(
+            id=uuid4(),
+            organization_id=membership.organization_id,
+            user_id=membership.user_id,
+            notification_type="RESOURCE_RELEASE_QUALIFIED",
+            status="UNREAD",
+            title=f"Qualified normalization release available: {resource.name} {resource.version}",
+            body=(
+                f"SIRALOOM has technically qualified {resource.provider} version {resource.version}. "
+                "Your laboratory must approve or reject this release before new analyses can use it. "
+                "Your currently approved normalization resource remains unchanged until approval."
+            ),
+            metadata_json={
+                "resource_id": str(resource.id),
+                "qualification_id": str(qualification.id),
+                "qualification_version": qualification.qualification_version,
+                "approval_id": str(approval.id),
+                "provider": resource.provider,
+                "resource_name": resource.name,
+                "release_version": resource.version,
+                "checksum": resource.checksum,
+                "requires_lab_decision": True,
+                "title_ar": f"إصدار تطبيع مؤهل متاح: {resource.name} {resource.version}",
+                "body_ar": (
+                    f"أكمل SIRALOOM التأهيل التقني للإصدار {resource.version} من {resource.provider}. "
+                    "يجب على المختبر الموافقة على هذا الإصدار أو رفضه قبل استخدامه في التحليلات الجديدة. "
+                    "سيظل مورد التطبيع المعتمد حاليًا دون تغيير حتى الموافقة."
+                ),
+            },
+        ))
+        AuditService(db).record(
+            event_type="RESOURCE_ADOPTION_REQUESTED",
+            case_id=None,
+            analysis_id=None,
+            actor_type="SYSTEM",
+            actor_id="resource-qualification",
+            subject_type="RESOURCE",
+            subject_id=str(resource.id),
+            operation="REQUEST_APPROVAL",
+            after_state={
+                "approval_id": str(approval.id),
+                "approval_version": approval.version,
+                "status": approval.status,
+                "qualification_id": str(qualification.id),
+                "qualification_version": qualification.qualification_version,
+            },
+            workflow={
+                "domain": "resource_registry",
+                "organization_id": str(membership.organization_id),
+                "trigger": "NORMALIZATION_RELEASE_QUALIFIED",
+            },
+            resource_versions={
+                "requested": {
+                    "resource_id": str(resource.id),
+                    "version": resource.version,
+                    "checksum": resource.checksum,
+                },
+            },
+        )
+        created += 1
+    return created
+
