@@ -225,7 +225,7 @@ def test_reference_reader_interoperates_with_htslib_generated_bgzf_gzi(tmp_path:
 
     with fasta.open("wb") as output:
         subprocess.run(
-            [bgzip, "-i", "-I", str(gzi), "-s", "1000", str(plain_fasta)],
+            [bgzip, "-i", "-c", "-I", str(gzi), "-s", "1000", str(plain_fasta)],
             stdout=output,
             stderr=subprocess.PIPE,
             check=True,
