@@ -51,6 +51,7 @@ The current fixture manifest also exercises:
 - reciprocal breakend pairs with remote-locus/MATEID consistency, plus a mismatched mate coordinate;
 - triploid Number=G likelihood cardinality (10 values for three alleles at ploidy 3), plus a malformed cardinality case;
 - VCFv4.5 unspecified-allele reference blocks using per-sample FORMAT/LEN, including INFO/END mismatch rejection.
+- VCFv4.5 symbolic-SV SVLEN negative-length handling, zero-length rejection, CIPOS per-ALT cardinality and interval-bound checks, and CIEND missing-value enforcement for non-structural alleles.
 
 A GATK <NON_REF>/END gVCF reference-block example is included under
 qualification_scope=producer_interoperability. It is checked through the
