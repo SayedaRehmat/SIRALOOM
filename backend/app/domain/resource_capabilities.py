@@ -176,6 +176,7 @@ def requirements_for_workflow(
 # capability checks remain backward-compatible while profile resolution can
 # express concrete scientific resource classes.
 REFERENCE_PACKAGE = "REFERENCE_PACKAGE"
+NORMALIZATION_ENGINE = "NORMALIZATION"
 ANNOTATION_ENGINE = "ANNOTATION_ENGINE"
 ANNOTATION_CACHE = "ANNOTATION_CACHE"
 POPULATION = "POPULATION"
@@ -372,7 +373,7 @@ def get_resource_capability(resource_type: str):
 
 def supported_resource_types() -> tuple[str, ...]:
     return tuple(sorted({
-        REFERENCE_PACKAGE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
+        REFERENCE_PACKAGE, NORMALIZATION_ENGINE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
         POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, PHENOTYPE_ONTOLOGY,
         DISEASE_PHENOTYPE_ASSOCIATION,
         COMPUTATIONAL_PREDICTOR, SPLICING_PREDICTOR, FUNCTIONAL_EVIDENCE,
