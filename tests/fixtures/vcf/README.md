@@ -44,3 +44,25 @@ cross-implementation tests are added. Unknown VCF versions remain fail-closed.
 These are SIRALOOM-authored fixtures derived from the cited normative clauses;
 they are not copied wholesale from upstream test data and are not an upstream
 certification suite.
+
+## Expanded structural and genotype qualification
+
+The current fixture manifest also exercises:
+- reciprocal breakend pairs with remote-locus/MATEID consistency, plus a mismatched mate coordinate;
+- triploid Number=G likelihood cardinality (10 values for three alleles at ploidy 3), plus a malformed cardinality case;
+- VCFv4.5 unspecified-allele reference blocks using per-sample FORMAT/LEN, including INFO/END mismatch rejection.
+
+A GATK <NON_REF>/END gVCF reference-block example is included under
+qualification_scope=producer_interoperability. It is checked through the
+production validator as a GATK interoperability profile, **not** presented as
+a separate normative VCF version or as proof of complete VCF specification
+conformance. The fixture carries the GATK documentation URL and an explicit
+normative_vcf_conformance=false marker.
+
+Breakend and genotype fixtures are versioned by declared VCF version. A
+passing case qualifies only the exact syntax/semantics exercised; it does not
+establish coverage of all breakend orientations, complex rearrangements,
+polyploid combinations, producer dialects, or every structural-variant INFO
+field. Those remain separate qualification targets until independently
+covered.
+
