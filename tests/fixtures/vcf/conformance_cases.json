@@ -148,6 +148,52 @@
           "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
           "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
         ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -287,6 +333,52 @@
           "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
           "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
         ]
       }
     ],
@@ -473,6 +565,52 @@
           "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
           "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
         ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
       }
     ],
     "VCFv4.4": [
@@ -635,6 +773,52 @@
           "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
           "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
         ]
       }
     ],
@@ -899,6 +1083,52 @@
           "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
           "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "Breakend record identifiers used for mate resolution must be unique",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
         ]
       }
     ],
