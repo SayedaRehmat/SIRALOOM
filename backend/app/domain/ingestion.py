@@ -11,6 +11,7 @@ from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    _verify_bgzf,
     read_vcf_fileformat,
     validate_vcf_strict,
 )
@@ -427,6 +428,7 @@ def validate_index(
             # the decompressed index stream, not at byte zero of the file.
             if magic[:2] != b"\x1f\x8b":
                 raise ValueError("CSI index does not contain a BGZF/gzip header")
+            _verify_bgzf(p)
             with gzip.open(p, "rb") as fh:
                 if fh.read(4) != b"CSI\x01":
                     raise ValueError("CSI index does not contain the CSI magic header")
