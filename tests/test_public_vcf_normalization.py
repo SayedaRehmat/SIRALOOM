@@ -53,6 +53,14 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _md5_file(path: Path) -> str:
+    digest = hashlib.md5(usedforsecurity=False)
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _reference_with_contig_name(reference: Path, contig: str, data_dir: Path) -> Path:
     """Alias the single reference contig to the VCF header without changing bases."""
     with reference.open("rb") as source:
@@ -204,9 +212,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     official_reference_md5 = _official_md5_from_manifest(
         checksum_manifest, reference_archive.name
     )
-    actual_reference_md5 = hashlib.md5(
-        reference_archive.read_bytes(), usedforsecurity=False
-    ).hexdigest()
+    actual_reference_md5 = _md5_file(reference_archive)
     assert actual_reference_md5 == official_reference_md5
     assert official_reference_md5 == os.getenv("SIRALOOM_PUBLIC_REFERENCE_MD5")
     assert _sha256_file(reference_archive) == EXPECTED_REFERENCE_ARCHIVE_SHA256
@@ -351,7 +357,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
 
     reference_filename = reference_archive.name
     official_reference_md5 = _official_md5_from_manifest(checksum_manifest, reference_filename)
-    actual_reference_md5 = hashlib.md5(reference_archive.read_bytes(), usedforsecurity=False).hexdigest()
+    actual_reference_md5 = _md5_file(reference_archive)
     assert actual_reference_md5 == official_reference_md5
     reference_archive_sha256 = _sha256_file(reference_archive)
     giab_archive_sha256 = _sha256_file(archive)
@@ -423,9 +429,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
             "HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz"
         ),
         "vcf_archive_sha256": giab_archive_sha256,
-        "vcf_archive_md5_locally_computed": hashlib.md5(
-            archive.read_bytes(), usedforsecurity=False
-        ).hexdigest(),
+        "vcf_archive_md5_locally_computed": _md5_file(archive),
         "vcf_index_sha256": giab_index_sha256,
         "vcf_slice_sha256": giab_slice_sha256,
         "vcf_fileformat": source_validation["fileformat"],
