@@ -830,6 +830,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             "OFFICIAL_SPECIFICATION_DISCOVERY_AND_QUALIFICATION_REQUIRED",
         ),
         (
+            "UNQUALIFIED",
+            "VCF_SPECIFICATION_QUALIFICATION_REQUIRED",
+            "PARSER_CONFORMANCE_QUALIFICATION_REQUIRED",
+        ),
+        (
             "PENDING",
             "VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
             "LAB_APPROVAL_REQUIRED",
@@ -849,7 +854,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 def test_production_worker_audits_future_vcf_specification_governance_and_parser_state(
     monkeypatch, tmp_path, approval_state, expected_code, expected_next_step
 ):
-    """Exercise the real worker boundary for pending, rejected and approved VCFv4.6."""
+    """Exercise real-worker gating for absent, unqualified, pending, rejected and approved VCFv4.6."""
     import importlib
 
     workflow = importlib.import_module("backend.app.workflows.variant")
@@ -940,7 +945,7 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                     license_text=None,
                     checksum="a" * 64,
                     location="https://samtools.github.io/hts-specs/VCFv4.6.pdf",
-                    status="QUALIFIED",
+                    status="CANDIDATE" if approval_state == "UNQUALIFIED" else "QUALIFIED",
                     population_definition=None,
                     metadata_json={},
                 )
@@ -948,19 +953,21 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                     id=uuid4(),
                     resource_id=specification.id,
                     qualification_version="vcf-spec-qualification-v1",
-                    status="QUALIFIED",
-                    checks_json={"vcf_specification": {"status": "QUALIFIED"}},
+                    status="BLOCKED" if approval_state == "UNQUALIFIED" else "QUALIFIED",
+                    checks_json={"vcf_specification": {"status": "BLOCKED" if approval_state == "UNQUALIFIED" else "QUALIFIED"}},
                     qualified_by=None,
                 )
-                approval = ResourceApproval(
-                    id=uuid4(),
-                    resource_id=specification.id,
-                    organization_id=organization_id,
-                    qualification_id=qualification.id,
-                    status="PENDING",
-                    version=1,
-                )
-                db.add_all([specification, qualification, approval])
+                db.add_all([specification, qualification])
+                if approval_state != "UNQUALIFIED":
+                    approval = ResourceApproval(
+                        id=uuid4(),
+                        resource_id=specification.id,
+                        organization_id=organization_id,
+                        qualification_id=qualification.id,
+                        status="PENDING",
+                        version=1,
+                    )
+                    db.add(approval)
                 db.flush()
                 if approval_state in {"REJECTED", "APPROVED"}:
                     decide_resource_approval(
@@ -993,7 +1000,7 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
         # routing after artifact materialization.
         monkeypatch.setattr(workflow, "read_vcf_fileformat", lambda _path: "VCFv4.6")
 
-        if approval_state in {"ABSENT", "PENDING", "REJECTED"}:
+        if approval_state in {"ABSENT", "UNQUALIFIED", "PENDING", "REJECTED"}:
             def parser_must_not_run(*_args, **_kwargs):
                 raise AssertionError("strict parser must not run before laboratory approval")
 
@@ -1048,6 +1055,8 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 assert validation.metadata_json["vcf_specification_approval"]["status"] == expected_code
                 if approval_state == "ABSENT":
                     assert "no registered qualified release" in validation.error_message.lower()
+                elif approval_state == "UNQUALIFIED":
+                    assert "not qualified for laboratory use" in validation.error_message.lower()
                 else:
                     assert approval_state.lower() in validation.error_message.lower() or (
                         approval_state == "PENDING" and "awaiting" in validation.error_message.lower()
