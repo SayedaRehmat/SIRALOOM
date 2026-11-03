@@ -77,27 +77,72 @@ jobs:
         run: |
           set -euo pipefail
           data_dir="${RUNNER_TEMP}/siraloom-public-vcf"
-          # Minimum eligible release is 1.23.1: upstream fixed silent read-error truncation in 1.23.1.
-          # Keep every stable patch release from that safety floor through the current pinned release in this real-data matrix.
-          for version in 1.23.1 1.23.2 1.23.3 1.24 1.24.1 1.25; do
+
+          qualify_executable() {
+            local version="$1"
+            local executable="$2"
+            local provenance="$3"
+            local version_output
+            local executable_sha256
+            local evidence_dir
+
+            version_output="$("${executable}" --version)"
+            test "$(printf '%s\\n' "${version_output}" | sed -n '1p')" = "bcftools ${version}"
+            test "$(printf '%s\\n' "${version_output}" | sed -n '2p')" = "Using htslib ${version}"
+            executable_sha256="$(sha256sum "${executable}" | awk '{print $1}')"
+
+            SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
+            SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
+              pytest -q tests/test_public_vcf_normalization.py
+
+            evidence_dir="${data_dir}/bcftools-${version}"
+            mkdir -p "${evidence_dir}"
+            printf '%s\\n' "${version_output}" > "${evidence_dir}/version.txt"
+            printf '%s\\n' "${provenance}" > "${evidence_dir}/build-provenance.txt"
+            printf '%s  %s\\n' "${executable_sha256}" "${executable}" > "${evidence_dir}/bcftools-executable.sha256"
+            cp "${data_dir}/qualification-report.json" "${evidence_dir}/qualification-report.json"
+            cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz" "${evidence_dir}/normalized.vcf.gz"
+            cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz.csi" "${evidence_dir}/normalized.vcf.gz.csi"
+          }
+
+          # Bioconda currently publishes binary builds for these supported releases.
+          for version in 1.23.1 1.24 1.25; do
             environment="bcftools-${version}"
             micromamba create --yes --name "${environment}" \
               --channel conda-forge --channel bioconda --strict-channel-priority \
               "bcftools=${version}"
             executable="$(micromamba run -n "${environment}" which bcftools)"
-            version_line="$(micromamba run -n "${environment}" "${executable}" --version | sed -n '1p')"
-            test "${version_line}" = "bcftools ${version}"
-            executable_sha256="$(sha256sum "${executable}" | awk '{print $1}')"
-            SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
-            SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
-            SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
-              pytest -q tests/test_public_vcf_normalization.py
-            evidence_dir="${data_dir}/bcftools-${version}"
-            mkdir -p "${evidence_dir}"
-            printf '%s  %s\\n' "${executable_sha256}" "${executable}" > "${evidence_dir}/bcftools-executable.sha256"
-            cp "${data_dir}/qualification-report.json" "${evidence_dir}/qualification-report.json"
-            cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz" "${evidence_dir}/normalized.vcf.gz"
-            cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz.csi" "${evidence_dir}/normalized.vcf.gz.csi"
+            package_manifest="$(micromamba list -n "${environment}")"
+            qualify_executable "${version}" "${executable}" "Bioconda package\\n${package_manifest}"
+          done
+
+          # Upstream stable releases without a Bioconda build are built from the
+          # exact signed BCFtools and HTSlib release tags, never from develop.
+          sudo apt-get update
+          sudo apt-get install --yes \
+            autoconf automake build-essential gcc make perl \
+            zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
+
+          for version in 1.23.2 1.23.3 1.24.1; do
+            source_root="${RUNNER_TEMP}/bcftools-source-${version}"
+            install_root="${RUNNER_TEMP}/bcftools-install-${version}"
+            mkdir -p "${source_root}"
+            git clone --depth 1 --branch "${version}" https://github.com/samtools/htslib.git "${source_root}/htslib"
+            git clone --depth 1 --branch "${version}" https://github.com/samtools/bcftools.git "${source_root}/bcftools"
+            pushd "${source_root}/bcftools"
+            if [[ ! -x ./configure ]]; then
+              autoheader
+              autoconf
+            fi
+            ./configure --prefix="${install_root}" --with-htslib="${source_root}/htslib"
+            make --jobs=2
+            make install
+            popd
+            export LD_LIBRARY_PATH="${install_root}/lib:${LD_LIBRARY_PATH:-}"
+            bcftools_commit="$(git -C "${source_root}/bcftools" rev-parse HEAD)"
+            htslib_commit="$(git -C "${source_root}/htslib" rev-parse HEAD)"
+            qualify_executable "${version}" "${install_root}/bin/bcftools" \
+              "Upstream BCFtools tag ${version} commit ${bcftools_commit}; HTSlib tag ${version} commit ${htslib_commit}"
           done
       - name: Preserve public VCF normalization qualification evidence
         if: always()
