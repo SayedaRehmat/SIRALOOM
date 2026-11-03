@@ -92,6 +92,7 @@ jobs:
               pytest -q tests/test_public_vcf_normalization.py
             evidence_dir="${data_dir}/bcftools-${version}"
             mkdir -p "${evidence_dir}"
+            printf '%s  %s\\n' "${executable_sha256}" "${executable}" > "${evidence_dir}/bcftools-executable.sha256"
             cp "${data_dir}/qualification-report.json" "${evidence_dir}/qualification-report.json"
             cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz" "${evidence_dir}/normalized.vcf.gz"
             cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz.csi" "${evidence_dir}/normalized.vcf.gz.csi"
