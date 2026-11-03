@@ -113,7 +113,8 @@ jobs:
               "bcftools=${version}"
             executable="$(micromamba run -n "${environment}" which bcftools)"
             package_manifest="$(micromamba list -n "${environment}")"
-            qualify_executable "${version}" "${executable}" "Bioconda package manifest follows\\n${package_manifest}"
+            qualify_executable "${version}" "${executable}" "Bioconda package"
+            printf '%s\\n' "${package_manifest}" > "${data_dir}/bcftools-${version}/package-manifest.txt"
           done
 
           # Build upstream stable releases that do not have Bioconda binaries
