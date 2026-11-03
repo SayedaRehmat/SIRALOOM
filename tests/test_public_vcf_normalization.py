@@ -181,11 +181,12 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     index_value = os.getenv("SIRALOOM_PUBLIC_VCF_INDEX_PATH")
     reference_archive_value = os.getenv("SIRALOOM_PUBLIC_REFERENCE_ARCHIVE_PATH")
     reference_value = os.getenv("SIRALOOM_PUBLIC_REFERENCE_PATH")
+    checksum_manifest_value = os.getenv("SIRALOOM_PUBLIC_REFERENCE_CHECKSUMS_PATH")
     contig = os.getenv("SIRALOOM_PUBLIC_REFERENCE_CONTIG")
     data_dir_value = os.getenv("SIRALOOM_PUBLIC_DATA_DIR")
     if not all((
         source_value, archive_value, index_value, reference_archive_value,
-        reference_value, contig, data_dir_value,
+        reference_value, checksum_manifest_value, contig, data_dir_value,
     )):
         pytest.skip("Pinned GIAB/GRCh38 public-data acquisition is enabled in GitHub Actions only.")
 
@@ -194,9 +195,18 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     source_index = Path(index_value)
     reference_archive = Path(reference_archive_value)
     reference = Path(reference_value)
+    checksum_manifest = Path(checksum_manifest_value)
     data_dir = Path(data_dir_value)
     assert source.is_file() and archive.is_file() and source_index.is_file()
-    assert reference.is_file() and reference_archive.is_file()
+    assert reference.is_file() and reference_archive.is_file() and checksum_manifest.is_file()
+    official_reference_md5 = _official_md5_from_manifest(
+        checksum_manifest, reference_archive.name
+    )
+    actual_reference_md5 = hashlib.md5(
+        reference_archive.read_bytes(), usedforsecurity=False
+    ).hexdigest()
+    assert actual_reference_md5 == official_reference_md5
+    assert official_reference_md5 == os.getenv("SIRALOOM_PUBLIC_REFERENCE_MD5")
     assert _sha256_file(reference_archive) == EXPECTED_REFERENCE_ARCHIVE_SHA256
     assert _sha256_file(archive) == EXPECTED_GIAB_VCF_SHA256
     assert _sha256_file(source_index) == EXPECTED_GIAB_INDEX_SHA256
@@ -282,6 +292,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         "source_child_reconciliation": reconciliation,
         "reference_source": ENSEMBL_REFERENCE_SOURCE,
         "reference_archive_sha256": _sha256_file(reference_archive),
+        "reference_archive_md5_official_ensembl": official_reference_md5,
+        "reference_checksum_manifest_sha256": _sha256_file(checksum_manifest),
         "reference_contig": contig,
         "reference_fasta_sha256": _sha256_file(reference_for_vcf),
         "reference_index_sha256": _sha256_file(Path(f"{reference_for_vcf}.fai")),
