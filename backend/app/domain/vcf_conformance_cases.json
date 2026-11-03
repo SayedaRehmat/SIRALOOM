@@ -1388,7 +1388,8 @@
       "status": "NOT_APPLICABLE",
       "covered_sections": [],
       "uncovered_sections": [],
-      "notes": "Legacy parser smoke only; no current normative target is claimed."
+      "notes": "Legacy parser smoke only; no current normative target is claimed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": []
     },
     "VCFv4.1": {
       "status": "PARTIAL",
@@ -1401,7 +1402,78 @@
         "Systematic grammar, boundary, fuzz and property-based conformance testing",
         "Independent scientific review and approval of the complete normative coverage matrix"
       ],
-      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
     },
     "VCFv4.2": {
       "status": "PARTIAL",
@@ -1414,7 +1486,76 @@
         "Systematic grammar, boundary, fuzz and property-based conformance testing",
         "Independent scientific review and approval of the complete normative coverage matrix"
       ],
-      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
     },
     "VCFv4.3": {
       "status": "PARTIAL",
@@ -1427,7 +1568,80 @@
         "Systematic grammar, boundary, fuzz and property-based conformance testing",
         "Independent scientific review and approval of the complete normative coverage matrix"
       ],
-      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid",
+            "vcf44_leading_phase_separator_rejected"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_legacy_mateid_unordered_mixed_alt_valid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
     },
     "VCFv4.4": {
       "status": "PARTIAL",
@@ -1440,7 +1654,81 @@
         "Systematic grammar, boundary, fuzz and property-based conformance testing",
         "Independent scientific review and approval of the complete normative coverage matrix"
       ],
-      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "leading_phase_separator_valid",
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid",
+            "vcf45_local_allele_encoding_rejected"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "breakend_mixed_alt_mateid_alignment_valid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
     },
     "VCFv4.5": {
       "status": "PARTIAL",
@@ -1453,7 +1741,112 @@
         "Systematic grammar, boundary, fuzz and property-based conformance testing",
         "Independent scientific review and approval of the complete normative coverage matrix"
       ],
-      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "base_modification_fraction_out_of_range",
+            "base_modification_fraction_valid",
+            "local_allele_encoding_valid",
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid",
+            "unspecified_allele_len_end_mismatch_invalid",
+            "unspecified_allele_len_reference_block_valid"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "nonstructural_ciend_values_invalid",
+            "nonstructural_cilen_values_invalid",
+            "nonstructural_cipos_values_invalid",
+            "symbolic_cilen_bounds_reversed_invalid",
+            "symbolic_cilen_cardinality_invalid",
+            "symbolic_cipos_cardinality_invalid",
+            "symbolic_cipos_interval_invalid",
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid",
+            "symbolic_sv_confidence_intervals_with_nonstructural_alt_valid",
+            "symbolic_svlen_end_computed_span_mismatch_invalid",
+            "symbolic_svlen_end_computed_span_valid",
+            "symbolic_svlen_negative_deletion_valid",
+            "symbolic_svlen_zero_invalid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid",
+            "symbolic_svlen_end_computed_span_mismatch_invalid",
+            "symbolic_svlen_end_computed_span_valid"
+          ]
+        },
+        {
+          "section_title": "Data types",
+          "fixture_ids": [
+            "base_modification_fraction_out_of_range",
+            "base_modification_fraction_valid",
+            "local_allele_encoding_valid",
+            "unspecified_allele_len_end_mismatch_invalid",
+            "unspecified_allele_len_reference_block_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "breakend_mixed_alt_mateid_alignment_valid",
+            "breakend_mixed_alt_mateid_cardinality_invalid",
+            "breakend_multi_alt_mateid_alignment_valid",
+            "breakend_multi_alt_mateid_swapped_invalid",
+            "breakend_reciprocal_mateid_wrong_alt_index_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
     }
   }
 }
