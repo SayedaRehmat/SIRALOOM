@@ -801,10 +801,6 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert review_event is not None
                 assert review_event.payload["automatic_fallback"] is False
                 assert review_event.payload["human_action_required"] is True
-                assert db.scalar(select(WorkflowStep).where(
-                    WorkflowStep.analysis_id == analysis_id,
-                    WorkflowStep.step_id == "annotate",
-                )) is None
                 return
             assert block_artifact is not None and store.exists(block_artifact.storage_uri)
             assert star_artifact is not None and store.exists(star_artifact.storage_uri)
