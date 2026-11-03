@@ -468,7 +468,7 @@ def validate_index(
             "VALID", kind, 0, [], None, [], [],
             metadata={"index_concordance": concordance},
         )
-    except (OSError, ValueError, EOFError, gzip.BadGzipFile) as exc:
+    except (OSError, ValueError, EOFError, gzip.BadGzipFile, StrictVCFValidationError) as exc:
         return ValidationResult("INVALID", kind, 0, [], None, [str(exc)], [])
 
 
