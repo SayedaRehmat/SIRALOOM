@@ -22,6 +22,8 @@ from backend.app.infrastructure.db.models import (
     User,
     Variant,
     WorkflowStep,
+    ResourceQualification,
+    ResourceExecutionRecord,
 )
 from backend.app.workflows.variant import _check_routed_artifact_validation_replay
 
@@ -390,12 +392,19 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
 def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_block(
     monkeypatch, tmp_path, reference_mismatch, worker_loss
 ):
-    """Exercise routing, reference validation, normalization persistence, and variant indexing in the worker."""
+    """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
     import gzip
     import importlib
     from types import SimpleNamespace
+    from datetime import UTC, datetime
+    import hashlib
+    import json
 
-    from backend.app.domain.vcf_tools import bcftools_available
+    from backend.app.domain.resource_source_contract import validate_execution_contract
+    from backend.app.domain.resource_execution import (
+        start_resource_execution as real_start_resource_execution,
+        complete_resource_execution as real_complete_resource_execution,
+    )
 
     workflow = importlib.import_module("backend.app.workflows.variant")
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
@@ -478,6 +487,40 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 metadata_json={"execution": {"executable": "/opt/siraloom/qualified/bcftools/1.25/bin/bcftools"}},
             )
             db.add(normalization_resource)
+            qualification_id = uuid4()
+            qualified_contract = validate_execution_contract(
+                {
+                    "provider_id": "bcftools",
+                    "provider_version": "1.25",
+                    "access_method": "LOCAL",
+                    "location": normalization_resource.location,
+                    "execution_scope": "ORGANIZATION_MANAGED",
+                    "toolchain": {"bcftools": {
+                        "executable": normalization_resource.location,
+                        "sha256": "f" * 64,
+                    }},
+                },
+                resource_provider=normalization_resource.provider,
+                resource_access_method=normalization_resource.access_method,
+                resource_location=normalization_resource.location,
+                resource_organization_id=organization_id,
+            )
+            qualified_contract_hash = hashlib.sha256(
+                json.dumps(
+                    qualified_contract.as_dict(),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+            db.add(ResourceQualification(
+                id=qualification_id,
+                resource_id=normalization_resource_id,
+                qualification_version="siraloom-resource-qualification-v1",
+                status="QUALIFIED",
+                checks_json={"execution_contract": qualified_contract.as_dict()},
+                qualified_by=user_id,
+                qualified_at=datetime.now(UTC),
+            ))
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
                 assay_id=None, analysis_type="VARIANT_INTERPRETATION",
@@ -491,7 +534,17 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     "resource_plan": {
                         "status": "READY",
                         "deployment": {"profile_type": "LABORATORY", "profile_version": "1"},
-                        "selected": [],
+                        "selected": [{
+                            "resource_id": str(normalization_resource_id),
+                            "capability": workflow.NORMALIZATION_ENGINE,
+                            "execution": {
+                                "resource_id": str(normalization_resource_id),
+                                "resource_version": "1.25",
+                                "qualification_id": str(qualification_id),
+                                "qualification_version": "siraloom-resource-qualification-v1",
+                                "contract_hash": qualified_contract_hash,
+                            },
+                        }],
                         "issues": [],
                     },
                 },
@@ -530,11 +583,17 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             ),
         )
 
+        real_resolve_profile_runtime_resource = workflow.resolve_profile_runtime_resource
+
         def resolve_profile_resource(_db, *, analysis_id, capability):
             if capability == "REFERENCE_PACKAGE":
                 return reference_runtime
             if capability == workflow.NORMALIZATION_ENGINE:
-                return normalization_runtime
+                return real_resolve_profile_runtime_resource(
+                    _db,
+                    analysis_id=analysis_id,
+                    capability=capability,
+                )
             if capability == "ANNOTATION_ENGINE":
                 raise workflow.ProfileRuntimeResourceError(
                     "ANNOTATION_PROVIDER_UNAVAILABLE",
@@ -554,8 +613,19 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             contract=SimpleNamespace(access_method="API"), snapshot={"test": True},
             contract_hash="e" * 64,
         ))
-        monkeypatch.setattr(workflow, "start_resource_execution", lambda *_a, **_k: SimpleNamespace())
-        monkeypatch.setattr(workflow, "complete_resource_execution", lambda *_a, **_k: None)
+        def start_execution(db, **kwargs):
+            resolved = kwargs.get("resolved")
+            if getattr(resolved, "resource_id", None) == normalization_resource_id:
+                return real_start_resource_execution(db, **kwargs)
+            return SimpleNamespace(metadata_json={})
+
+        def complete_execution(db, record, **kwargs):
+            if isinstance(record, ResourceExecutionRecord):
+                return real_complete_resource_execution(db, record, **kwargs)
+            return None
+
+        monkeypatch.setattr(workflow, "start_resource_execution", start_execution)
+        monkeypatch.setattr(workflow, "complete_resource_execution", complete_execution)
 
         def fake_normalize(resource, input_path, output_path, **kwargs):
             assert resource.id == normalization_resource_id
@@ -812,6 +882,17 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["normalization_provider_version"] == "1.25"
                 assert normalized.metadata_json["normalization_executable_identity"]["sha256"] == "f" * 64
                 assert normalized.metadata_json["normalization_executable_integrity_status"] == "MATCHED_QUALIFIED_SHA256"
+                executions = db.scalars(select(ResourceExecutionRecord).where(
+                    ResourceExecutionRecord.analysis_id == analysis_id,
+                    ResourceExecutionRecord.resource_id == normalization_resource_id,
+                )).all()
+                assert len(executions) == (2 if worker_loss else 1)
+                for execution in executions:
+                    assert execution.status == "SUCCEEDED"
+                    assert execution.qualification_id == qualification_id
+                    assert execution.contract_json["toolchain"]["bcftools"]["sha256"] == "f" * 64
+                    assert execution.metadata_json["executable_identity"]["sha256"] == "f" * 64
+                    assert execution.response_sha256 == normalized.sha256
                 assert str(exclusion_manifest.id) in step.output_artifacts
                 assert str(exclusion_manifest.id) in step.metadata_json["exclusion_manifest_artifact_ids"]
                 if worker_loss:
