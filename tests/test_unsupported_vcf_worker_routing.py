@@ -697,6 +697,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 "source_record_mapping_tag": "SIRALOOM_ORIG",
                 "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
                 "compression": "BGZF", "index": "CSI", "index_path": str(index),
+                "multiallelic_overlap_policy": ".",
                 "executable_identity": {
                     "path": kwargs["qualified_bcftools_executable"],
                     "sha256": kwargs["expected_bcftools_sha256"],
