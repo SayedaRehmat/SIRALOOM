@@ -108,7 +108,9 @@ def test_report_pdf_artifact_replay_reuses_same_identity_and_rejects_changed_byt
                 Artifact.artifact_type == "REPORT_PDF",
             )) == 1
 
-            with pytest.raises(RuntimeError, match="produced different bytes on replay"):
+            from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
+
+            with pytest.raises(ArtifactIdentityConflictError, match="produced different bytes on replay"):
                 _put_idempotent_stage_artifact(
                     store,
                     artifact_id=artifact_id,
