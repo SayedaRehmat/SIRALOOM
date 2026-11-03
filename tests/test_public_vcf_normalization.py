@@ -8,6 +8,7 @@ only checksums, execution metadata and the small normalized result are retained.
 """
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import os
@@ -16,8 +17,12 @@ from pathlib import Path
 
 import pytest
 
-from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools
-from backend.app.domain.vcf_validation import read_vcf_fileformat, validate_vcf_strict
+from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
+from backend.app.domain.vcf_validation import (
+    read_vcf_fileformat,
+    validate_vcf_reference_alleles,
+    validate_vcf_strict,
+)
 
 
 GIAB_VCF_SOURCE = (
@@ -96,6 +101,24 @@ def _build_single_contig_fai(fasta_path: Path) -> Path:
     return fai_path
 
 
+def _restrict_header_to_single_contig(
+    source_bgzf: Path,
+    destination_vcf: Path,
+    contig: str,
+) -> Path:
+    """Keep source records unchanged while limiting the test header to its used contig."""
+    with gzip.open(source_bgzf, "rt", encoding="utf-8") as source, destination_vcf.open(
+        "w", encoding="utf-8", newline="\\n"
+    ) as destination:
+        for line in source:
+            if line.startswith("##contig=<ID="):
+                declared_contig = line.split("##contig=<ID=", 1)[1].split(",", 1)[0].split(">", 1)[0]
+                if declared_contig != contig:
+                    continue
+            destination.write(line)
+    return destination_vcf
+
+
 def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: Path):
     source_value = os.getenv("SIRALOOM_PUBLIC_VCF_SLICE_PATH")
     archive_value = os.getenv("SIRALOOM_PUBLIC_VCF_ARCHIVE_PATH")
@@ -126,14 +149,35 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     reference_for_vcf = _reference_with_contig_name(reference, contig, data_dir)
     _build_single_contig_fai(reference_for_vcf)
 
-    source_validation = validate_vcf_strict(source, reference_contigs={contig})
+    source_for_validation = _restrict_header_to_single_contig(
+        source,
+        data_dir / "giab-hg002-grch38-chr1-1-5000000.vcf",
+        contig,
+    )
+    source_validation = validate_vcf_strict(
+        source_for_validation,
+        reference_contigs={contig},
+    )
     assert source_validation["fileformat"] == "VCFv4.2"
     assert source_validation["records"] > 0
     assert source_validation["sample_count"] == 1
 
+    reference_validation = validate_vcf_reference_alleles(
+        source_for_validation,
+        reference_for_vcf,
+    )
+    assert reference_validation["checked_records"] == source_validation["records"]
+
+    routing = route_vcf_records(source_for_validation, data_dir / "routed")
+    assert routing["record_reconciliation"]["balanced"] is True
+    assert routing["sequence_records"] == source_validation["records"]
+    assert routing["cnv_variant_records"] == 0
+    assert routing["repeat_expansion_records"] == 0
+    assert routing["structural_variant_records"] == 0
+
     output = data_dir / "giab-hg002-grch38-chr1.normalized.vcf.gz"
     execution = normalize_vcf_with_bcftools(
-        source,
+        routing["sequence_path"],
         output,
         reference_fasta=reference_for_vcf,
         expected_bcftools_version="1.25",
@@ -141,6 +185,11 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     output_validation = validate_vcf_strict(output, reference_contigs={contig})
     assert output_validation["fileformat"] == "VCFv4.2"
     assert output_validation["records"] > 0
+    reconciliation = execution["source_child_reconciliation"]
+    assert reconciliation["status"] == "VALIDATED"
+    assert reconciliation["balanced"] is True
+    assert reconciliation["source_records"] == source_validation["records"]
+    assert reconciliation["normalized_child_records"] == output_validation["records"]
     assert execution["tool_version"] == "bcftools 1.25"
     assert execution["reference_check"] == "error"
     assert execution["compression"] == "BGZF"
@@ -163,6 +212,9 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         "vcf_fileformat": source_validation["fileformat"],
         "source_record_count": source_validation["records"],
         "source_sample_count": source_validation["sample_count"],
+        "reference_validation": reference_validation,
+        "routing_summary": routing,
+        "source_child_reconciliation": reconciliation,
         "reference_source": ENSEMBL_REFERENCE_SOURCE,
         "reference_archive_sha256": _sha256_file(reference_archive),
         "reference_contig": contig,
