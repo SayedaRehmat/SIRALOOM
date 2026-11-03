@@ -15,7 +15,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from backend.app.domain.vcf_tools import VCFToolError, normalize_vcf_with_bcftools
+from backend.app.domain.vcf_tools import (
+    VCFToolError,
+    VCFToolUnavailable,
+    normalize_vcf_with_bcftools,
+)
 from backend.app.infrastructure.db.models import Resource
 
 
@@ -25,6 +29,14 @@ BCFTOOLS_PROVIDER = "bcftools"
 
 class NormalizationProviderError(VCFToolError):
     """Raised when a governed normalization resource cannot be executed."""
+
+    def __init__(self, message: str, *, code: str = "NORMALIZATION_PROVIDER_UNAVAILABLE"):
+        super().__init__(message)
+        self.code = code
+
+
+class NormalizationProviderUnavailable(VCFToolUnavailable):
+    """A governed provider is temporarily unavailable and should be retried."""
 
     def __init__(self, message: str, *, code: str = "NORMALIZATION_PROVIDER_UNAVAILABLE"):
         super().__init__(message)
@@ -157,6 +169,11 @@ def normalize_with_selected_provider(
                 ).get("bcftools", {}).get("sha256")
             ),
         )
+    except VCFToolUnavailable as exc:
+        raise NormalizationProviderUnavailable(
+            str(exc),
+            code=getattr(exc, "code", None) or "NORMALIZATION_PROVIDER_UNAVAILABLE",
+        ) from exc
     except VCFToolError as exc:
         raise NormalizationProviderError(
             str(exc),
