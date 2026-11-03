@@ -81,7 +81,7 @@ def resolve_normalization_provider(resource: Resource) -> NormalizationProviderS
             code="NORMALIZATION_RESOURCE_NOT_QUALIFIED",
         )
     capabilities = _metadata_capabilities(resource)
-    if capabilities and "NORMALIZATION" not in capabilities:
+    if "NORMALIZATION" not in capabilities:
         raise NormalizationProviderError(
             "Normalization resource does not declare the NORMALIZATION capability.",
             code="NORMALIZATION_CAPABILITY_MISSING",
