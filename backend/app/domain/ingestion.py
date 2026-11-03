@@ -421,8 +421,15 @@ def validate_index(
     try:
         with p.open("rb") as fh:
             magic = fh.read(4)
-        if kind == "CSI" and magic != b"CSI\x01":
-            raise ValueError("CSI index does not contain the CSI magic header")
+        if kind == "CSI":
+            # CSI indexes are BGZF-compressed. The on-disk bytes therefore
+            # begin with the BGZF header; the CSI\x01 signature is inside
+            # the decompressed index stream, not at byte zero of the file.
+            if magic[:2] != b"\x1f\x8b":
+                raise ValueError("CSI index does not contain a BGZF/gzip header")
+            with gzip.open(p, "rb") as fh:
+                if fh.read(4) != b"CSI\x01":
+                    raise ValueError("CSI index does not contain the CSI magic header")
         if kind == "TBI":
             if magic[:2] != b"\x1f\x8b":
                 raise ValueError("TBI index does not contain a BGZF/gzip header")
