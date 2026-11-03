@@ -921,7 +921,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.25"
                 assert normalized.metadata_json["normalization_provider_resource_id"] == str(normalization_resource_id)
                 assert normalized.metadata_json["normalization_provider_version"] == "1.25"
-                assert normalized.metadata_json["normalization_executable_identity"]["sha256"] == "f" * 64
+                assert normalized.metadata_json["normalization_executable_identity"]["sha256"] == bcftools_sha256
                 assert normalized.metadata_json["normalization_executable_integrity_status"] == "MATCHED_QUALIFIED_SHA256"
                 executions = db.scalars(select(ResourceExecutionRecord).where(
                     ResourceExecutionRecord.analysis_id == analysis_id,
@@ -931,8 +931,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 for execution in executions:
                     assert execution.status == "SUCCEEDED"
                     assert execution.qualification_id == qualification_id
-                    assert execution.contract_json["toolchain"]["bcftools"]["sha256"] == "f" * 64
-                    assert execution.metadata_json["executable_identity"]["sha256"] == "f" * 64
+                    assert execution.contract_json["toolchain"]["bcftools"]["sha256"] == bcftools_sha256
+                    assert execution.metadata_json["executable_identity"]["sha256"] == bcftools_sha256
                     assert execution.response_sha256 == normalized.sha256
                 assert str(exclusion_manifest.id) in step.output_artifacts
                 assert str(exclusion_manifest.id) in step.metadata_json["exclusion_manifest_artifact_ids"]
