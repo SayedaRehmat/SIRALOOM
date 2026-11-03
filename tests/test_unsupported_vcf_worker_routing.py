@@ -1329,3 +1329,47 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                     )
     finally:
         engine.dispose()
+
+
+def test_artifact_store_rejects_different_bytes_for_same_artifact_identity(tmp_path):
+    from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
+
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'artifact-conflict.db'}")
+    Base.metadata.create_all(engine)
+    local_session = sessionmaker(bind=engine, expire_on_commit=False)
+    store = ArtifactStore(tmp_path / "artifact-store")
+    case_id, analysis_id, artifact_id = uuid4(), uuid4(), uuid4()
+    first = tmp_path / "first.vcf.gz"
+    second = tmp_path / "second.vcf.gz"
+    first.write_bytes(b"first normalized VCF bytes")
+    second.write_bytes(b"different normalized VCF bytes")
+
+    with local_session() as db:
+        store.put_file(
+            db=db,
+            case_id=case_id,
+            analysis_id=analysis_id,
+            source_path=first,
+            filename="normalized.vcf.gz",
+            artifact_type="NORMALIZED_VCF",
+            media_type="application/gzip",
+            genome_build="GRCh38",
+            artifact_id=artifact_id,
+        )
+        db.commit()
+
+        with pytest.raises(ArtifactIdentityConflictError) as exc:
+            store.put_file(
+                db=db,
+                case_id=case_id,
+                analysis_id=analysis_id,
+                source_path=second,
+                filename="normalized.vcf.gz",
+                artifact_type="NORMALIZED_VCF",
+                media_type="application/gzip",
+                genome_build="GRCh38",
+                artifact_id=artifact_id,
+            )
+
+    assert exc.value.code == "ARTIFACT_IDENTITY_CONFLICT"
+    engine.dispose()
