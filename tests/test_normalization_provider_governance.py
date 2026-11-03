@@ -63,6 +63,32 @@ def test_unqualified_candidate_cannot_execute():
         resolve_normalization_provider(resource)
 
 
+def test_provider_preserves_retryable_executable_failures(monkeypatch, tmp_path):
+    from backend.app.domain.vcf_tools import VCFToolUnavailable
+    from backend.app.domain.normalization_provider import NormalizationProviderUnavailable
+
+    resource = _resource(version="1.25")
+
+    def unavailable(*_args, **_kwargs):
+        raise VCFToolUnavailable("binary temporarily unavailable")
+
+    monkeypatch.setattr(
+        "backend.app.domain.normalization_provider.normalize_vcf_with_bcftools",
+        unavailable,
+    )
+
+    with pytest.raises(NormalizationProviderUnavailable) as exc:
+        normalize_with_selected_provider(
+            resource,
+            tmp_path / "input.vcf",
+            tmp_path / "output.vcf.gz",
+            reference_fasta=tmp_path / "GRCh38.fa",
+            approved=True,
+        )
+
+    assert exc.value.code == "NORMALIZATION_PROVIDER_UNAVAILABLE"
+
+
 def test_execution_requires_explicit_lab_approval(monkeypatch, tmp_path):
     resource = _resource(version="1.25")
     with pytest.raises(NormalizationProviderError, match="organization-approved"):
