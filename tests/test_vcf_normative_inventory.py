@@ -71,12 +71,13 @@ def test_producer_interoperability_is_not_counted_as_normative_vcf_conformance()
 def test_normative_candidate_extraction_is_deterministic_and_tracks_sections(tmp_path: Path):
     source_dir = tmp_path / "specs"
     source_dir.mkdir()
+    slash = chr(92)
     fixture = (
-        r"\\section{Header}" + "\\n"
-        + "The fileformat line must be present.\\n"
-        + r"\\subsection{Samples}" + "\\n"
-        + "A sample field should not be omitted.\\n"
-        + "% A commented rule must not be counted.\\n"
+        f"{slash}section{{Header}}\n"
+        + "The fileformat line must be present.\n"
+        + f"{slash}subsection{{Samples}}\n"
+        + "A sample field should not be omitted.\n"
+        + "% A commented rule must not be counted.\n"
     ).encode("utf-8")
     expected_blobs = {}
     for version in SPEC_BLOB_SHA1:
@@ -104,7 +105,9 @@ def test_normative_candidate_extractor_rejects_unpinned_source_content(tmp_path:
     source_dir = tmp_path / "specs"
     source_dir.mkdir()
     for version in SPEC_BLOB_SHA1:
-        (source_dir / f"{version}.tex").write_text("untrusted replacement source\\n", encoding="utf-8")
+        (source_dir / f"{version}.tex").write_text(
+            "untrusted replacement source\n", encoding="utf-8"
+        )
 
     with pytest.raises(ValueError, match="Official source blob mismatch"):
         extract_vcf_normative_candidates(source_dir)
