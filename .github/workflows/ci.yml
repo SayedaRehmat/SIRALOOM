@@ -43,7 +43,7 @@ jobs:
             "${giab_base}/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi" --output "${giab_index}"
           test -s "${giab_vcf}" && test -s "${giab_index}"
           bcftools index --stats "${giab_vcf}" > "${data_dir}/giab-index-stats.txt"
-          vcf_contig="$(bcftools view --header-only "${giab_vcf}" | sed -n 's/^##contig=<ID=\\([^,>]*\\).*/\\1/p' | awk '$0 == "1" || $0 == "chr1" { print; exit }')"
+          vcf_contig="$(bcftools view --header-only "${giab_vcf}" | sed -n 's/^##contig=<ID=\([^,>]*\).*/\1/p' | awk '$0 == "1" || $0 == "chr1" { print; exit }')"
           test -n "${vcf_contig}"
           slice="${data_dir}/giab-hg002-grch38-chr1-1-5000000.vcf.gz"
           bcftools view --no-version --regions "${vcf_contig}:1-5000000" --output-type z --output "${slice}" "${giab_vcf}"
