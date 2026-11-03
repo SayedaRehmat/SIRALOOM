@@ -715,12 +715,14 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         if artifact_identity_conflict:
             from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
 
+            original_put_file = store.put_file
+
             def conflict_normalized_artifact(**kwargs):
                 if kwargs.get("artifact_type") == "NORMALIZED_VCF":
                     raise ArtifactIdentityConflictError(
                         "fixture: normalized artifact ID already contains different bytes"
                     )
-                return store.put_file(**kwargs)
+                return original_put_file(**kwargs)
 
             monkeypatch.setattr(store, "put_file", conflict_normalized_artifact)
 
