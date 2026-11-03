@@ -244,7 +244,7 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
     monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
-monkeypatch.setattr(
+    monkeypatch.setattr(
         vcf_tools,
         "_bcftools_executable_identity",
         lambda _executable: {
@@ -371,6 +371,18 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
     monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+    monkeypatch.setattr(
+        vcf_tools,
+        "_bcftools_executable_identity",
+        lambda _executable: {
+            "path": "/usr/bin/bcftools",
+            "sha256": "a" * 64,
+            "size_bytes": 1,
+            "device": 1,
+            "inode": 1,
+            "mtime_ns": 1,
+        },
+    )
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
