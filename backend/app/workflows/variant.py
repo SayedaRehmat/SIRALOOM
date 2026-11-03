@@ -2361,6 +2361,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         attempt=normalization_step.attempt,
                         resolved=normalization_provider_execution,
                         requested_resource_id=profile_runtime_normalization.resource.id,
+                        fallback_resource_id=None,
                         batch_key="normalization-provider",
                         metadata={
                             "resource_type": NORMALIZATION_ENGINE,
