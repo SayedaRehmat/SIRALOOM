@@ -477,11 +477,12 @@ jobs:
             --entrypoint python \
             siraloom-backend:ci /qualification/qualify.py
       - name: Preserve production-container GIAB qualification evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: siraloom-production-container-giab-qualification
           path: ${{ runner.temp }}/siraloom-container-qualification/*
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
 
   postgres-integration:
