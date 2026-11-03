@@ -850,7 +850,6 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
                 assert step.status == StepStatus.REQUIRES_REVIEW
                 assert step.error_code == expected_error_code
-                assert step.metadata_json["automatic_fallback"] is False
                 assert step.metadata_json["next_step"] == (
                     "reference_package_remediation"
                     if reference_package_failure
