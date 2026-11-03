@@ -403,8 +403,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     Base.metadata.create_all(engine)
     local_session = sessionmaker(bind=engine, expire_on_commit=False)
     store = ArtifactStore(tmp_path / "artifacts")
-    organization_id, user_id, case_id, analysis_id, resource_id = (
-        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
+    organization_id, user_id, case_id, analysis_id, resource_id, normalization_resource_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
     sequence = "A" * 20 + "T" + "A" * 979
     fasta = tmp_path / "reference.fa"
@@ -461,6 +461,23 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 status="ACTIVE", population_definition=None, metadata_json={},
             )
             db.add(reference)
+            normalization_resource = Resource(
+                id=normalization_resource_id,
+                organization_id=organization_id,
+                name="Qualified BCFtools 1.25",
+                provider="bcftools",
+                resource_type="NORMALIZATION",
+                version="1.25",
+                genome_build=None,
+                access_method="LOCAL",
+                license_text="test",
+                checksum="a" * 64,
+                location="/opt/siraloom/qualified/bcftools/1.25/bin/bcftools",
+                status="ACTIVE",
+                population_definition=None,
+                metadata_json={"execution": {"executable": "/opt/siraloom/qualified/bcftools/1.25/bin/bcftools"}},
+            )
+            db.add(normalization_resource)
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
                 assay_id=None, analysis_type="VARIANT_INTERPRETATION",
@@ -470,6 +487,13 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 configuration={
                     "input_artifact_id": str(input_artifact.id),
                     "reference_resource_id": str(resource_id),
+                    "resource_profile_id": str(uuid4()),
+                    "resource_plan": {
+                        "status": "READY",
+                        "deployment": {"profile_type": "LABORATORY", "profile_version": "1"},
+                        "selected": [],
+                        "issues": [],
+                    },
                 },
                 started_at=None, completed_at=None, created_by=user_id,
                 analysis_version=1,
@@ -484,6 +508,41 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             resource=db.get(Resource, resource_id), used_fallback=False,
             requested_resource_id=resource_id, fallback_resource_id=None, decision=decision,
         ))
+        reference_runtime = SimpleNamespace(
+            resource=reference,
+            execution=SimpleNamespace(
+                contract=SimpleNamespace(access_method="API", toolchain={}),
+                snapshot={"test": "reference-qualified"},
+                contract_hash="e" * 64,
+            ),
+        )
+        normalization_runtime = SimpleNamespace(
+            resource=normalization_resource,
+            execution=SimpleNamespace(
+                contract=SimpleNamespace(
+                    toolchain={"bcftools": {
+                        "executable": normalization_resource.location,
+                        "sha256": "f" * 64,
+                    }}
+                ),
+                snapshot={"test": "normalization-qualified"},
+                contract_hash="f" * 64,
+            ),
+        )
+
+        def resolve_profile_resource(_db, *, analysis_id, capability):
+            if capability == "REFERENCE_PACKAGE":
+                return reference_runtime
+            if capability == workflow.NORMALIZATION_ENGINE:
+                return normalization_runtime
+            if capability == "ANNOTATION_ENGINE":
+                raise workflow.ProfileRuntimeResourceError(
+                    "ANNOTATION_PROVIDER_UNAVAILABLE",
+                    "Fixture intentionally stops after normalization.",
+                )
+            raise AssertionError(f"Unexpected profile capability: {capability}")
+
+        monkeypatch.setattr(workflow, "resolve_profile_runtime_resource", resolve_profile_resource)
         monkeypatch.setattr(workflow, "load_reference_package", lambda *_a, **_k: {
             "resource_id": str(resource_id), "version": "fixture-1",
             "package_checksum": "a" * 64, "fasta_path": str(fasta),
@@ -498,7 +557,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         monkeypatch.setattr(workflow, "start_resource_execution", lambda *_a, **_k: SimpleNamespace())
         monkeypatch.setattr(workflow, "complete_resource_execution", lambda *_a, **_k: None)
 
-        def fake_normalize(input_path, output_path, **kwargs):
+        def fake_normalize(resource, input_path, output_path, **kwargs):
+            assert resource.id == normalization_resource_id
+            assert kwargs["approved"] is True
+            assert kwargs["expected_bcftools_sha256"] == "f" * 64
+            assert kwargs["qualified_bcftools_executable"] == normalization_resource.location
             routed_text = Path(input_path).read_text(encoding="utf-8")
             assert "A\tC,<NON_REF>" in routed_text
             assert "AT\tA" in routed_text
@@ -518,20 +581,23 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
                 )
             index.write_bytes(b"fixture-csi")
-            return {
+            stats = {
                 "tool": "bcftools", "tool_version": "bcftools 1.25",
                 "expected_tool_version": "1.25", "operation": "fixture-normalization",
                 "command": "bcftools view -A && bcftools norm -f ref.fa -c e -m -any",
                 "source_record_mapping_tag": "SIRALOOM_ORIG",
                 "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
                 "compression": "BGZF", "index": "CSI", "index_path": str(index),
+                "executable_identity": {
+                    "path": kwargs["qualified_bcftools_executable"],
+                    "sha256": kwargs["expected_bcftools_sha256"],
+                },
+                "executable_integrity_status": "MATCHED_QUALIFIED_SHA256",
             }
+            return stats, SimpleNamespace(snapshot={"qualified": True})
 
-        used_real_bcftools = bcftools_available()
-        if worker_loss and not used_real_bcftools:
-            pytest.skip("normalization worker-loss recovery requires pinned BCFtools")
-        if not used_real_bcftools:
-            monkeypatch.setattr(workflow, "normalize_vcf_with_bcftools", fake_normalize)
+        used_real_bcftools = False
+        monkeypatch.setattr(workflow, "normalize_with_selected_provider", fake_normalize)
         if worker_loss:
             queue_module = importlib.import_module(
                 "backend.app.infrastructure.queue.celery_app"
@@ -561,14 +627,14 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
             monkeypatch.setattr(store, "put_file", lose_worker_after_normalized_artifact_flush)
             normalization_calls = {"count": 0}
-            original_normalize = workflow.normalize_vcf_with_bcftools
+            original_normalize = workflow.normalize_with_selected_provider
 
             def count_real_normalization(*args, **kwargs):
                 normalization_calls["count"] += 1
                 return original_normalize(*args, **kwargs)
 
             monkeypatch.setattr(
-                workflow, "normalize_vcf_with_bcftools", count_real_normalization
+                workflow, "normalize_with_selected_provider", count_real_normalization
             )
 
             def deliver(*, redelivered):
@@ -742,6 +808,10 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["source_artifact_id"] == str(input_artifact.id)
                 assert normalized.metadata_json["source_record_count"] == 7
                 assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.25"
+                assert normalized.metadata_json["normalization_provider_resource_id"] == str(normalization_resource_id)
+                assert normalized.metadata_json["normalization_provider_version"] == "1.25"
+                assert normalized.metadata_json["normalization_executable_identity"]["sha256"] == "f" * 64
+                assert normalized.metadata_json["normalization_executable_integrity_status"] == "MATCHED_QUALIFIED_SHA256"
                 assert str(exclusion_manifest.id) in step.output_artifacts
                 assert str(exclusion_manifest.id) in step.metadata_json["exclusion_manifest_artifact_ids"]
                 if worker_loss:
