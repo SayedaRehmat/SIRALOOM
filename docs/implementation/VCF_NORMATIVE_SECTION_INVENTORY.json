@@ -4,7 +4,7 @@
   "normative_owner": "GA4GH Large Scale Genomics HTS specifications",
   "source_repository": "https://github.com/samtools/hts-specs",
   "scope": "VCF textual specification sections only; BCF encoding chapters are excluded from this VCF intake and normalization inventory.",
-  "qualification_warning": "This is a source-pinned section and table inventory, not a complete normative clause decomposition. Each normative requirement still requires an atomic requirement ID, applicability, production-code mapping, positive/negative test evidence, and independent review.",
+  "qualification_warning": "This source-pinned section/table inventory is not a complete normative clause decomposition. Every normative requirement still needs an atomic requirement ID, applicability, production-code mapping, positive and negative test evidence, and independent review.",
   "documents": [
     {
       "version": "VCFv4.1",
@@ -678,7 +678,8 @@
         },
         {
           "level": "subsubsection",
-          "title": "Alternative allele field format} \\label{altfield"
+          "title": "Alternative allele field format",
+          "anchor": "altfield"
         },
         {
           "level": "subsubsection",
@@ -918,7 +919,8 @@
         },
         {
           "level": "subsubsection",
-          "title": "Alternative allele field format} \\label{altfield"
+          "title": "Alternative allele field format",
+          "anchor": "altfield"
         },
         {
           "level": "subsubsection",
