@@ -494,11 +494,18 @@ SOURCE_ALT_COUNT_FORMAT_TAG = "SIRALOOM_SOURCE_ALT_COUNT"
 
 
 class VCFToolError(RuntimeError):
-    pass
+    """A deterministic VCF tool or artifact validation failure requiring review."""
+
+    def __init__(self, message: str, *, code: str = "VCF_TOOL_EXECUTION_FAILED"):
+        super().__init__(message)
+        self.code = code
 
 
 class VCFToolUnavailable(VCFToolError):
     """A required VCF tool could not execute; retry after operational recovery."""
+
+    def __init__(self, message: str, *, code: str = "VCF_TOOL_UNAVAILABLE"):
+        super().__init__(message, code=code)
 
 
 def bcftools_available() -> bool:
