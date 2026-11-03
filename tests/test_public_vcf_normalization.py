@@ -108,7 +108,7 @@ def _restrict_header_to_single_contig(
 ) -> Path:
     """Keep source records unchanged while limiting the test header to its used contig."""
     with gzip.open(source_bgzf, "rt", encoding="utf-8") as source, destination_vcf.open(
-        "w", encoding="utf-8", newline="\\n"
+        "w", encoding="utf-8", newline="\n"
     ) as destination:
         for line in source:
             if line.startswith("##contig=<ID="):
@@ -166,7 +166,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         source_for_validation,
         reference_for_vcf,
     )
-    assert reference_validation["checked_records"] == source_validation["records"]
+    assert reference_validation["checked_record_count"] == source_validation["records"]
 
     routing = route_vcf_records(source_for_validation, data_dir / "routed")
     assert routing["record_reconciliation"]["balanced"] is True
