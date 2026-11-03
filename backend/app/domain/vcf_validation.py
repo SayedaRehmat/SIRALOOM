@@ -9,7 +9,6 @@ from math import comb, isnan
 from pathlib import Path
 
 from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
-from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
 from backend.app.domain.vcf_spec_registry import (
     SUPPORTED_VCF_VERSIONS,
     get_vcf_specification_profile,
