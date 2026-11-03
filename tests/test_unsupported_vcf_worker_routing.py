@@ -402,7 +402,6 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     normalization_resource_failure, artifact_identity_conflict
 ):
     """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
-    import gzip
     import importlib
     from types import SimpleNamespace
     from datetime import UTC, datetime
@@ -619,20 +618,6 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 contract_hash="e" * 64,
             ),
         )
-        normalization_runtime = SimpleNamespace(
-            resource=normalization_resource,
-            execution=SimpleNamespace(
-                contract=SimpleNamespace(
-                    toolchain={"bcftools": {
-                        "executable": normalization_resource.location,
-                        "sha256": bcftools_sha256,
-                    }}
-                ),
-                snapshot={"test": "normalization-qualified"},
-                contract_hash="f" * 64,
-            ),
-        )
-
         real_resolve_profile_runtime_resource = workflow.resolve_profile_runtime_resource
 
         def resolve_profile_resource(_db, *, analysis_id, capability):
