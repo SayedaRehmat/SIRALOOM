@@ -137,14 +137,14 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
 def test_bcftools_binary_digest_pin_rejects_mismatched_executable(tmp_path: Path):
     fasta = make_reference(tmp_path)
     executable = tmp_path / "qualified-bcftools"
-    executable.write_bytes(b"#!/bin/sh\\necho bcftools 1.25\\n")
+    executable.write_bytes(b"#!/bin/sh\necho bcftools 1.25\n")
     executable.chmod(0o755)
     input_vcf = tmp_path / "input.vcf"
     output_vcf = tmp_path / "normalized.vcf.gz"
     input_vcf.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
