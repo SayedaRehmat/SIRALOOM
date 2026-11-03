@@ -2222,7 +2222,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "automatic_fallback": False,
                         "reference_resource_error": True,
                         "reference_error_code": exc.code,
-                        "reference_integrity_review_required": False,
+                        "reference_integrity_review_required": exc.code in {
+                            "REFERENCE_BGZF_TRUNCATED",
+                            "REFERENCE_FAI_INVALID",
+                            "REFERENCE_FASTA_INVALID",
+                            "REFERENCE_FAI_MISMATCH",
+                            "REFERENCE_PACKAGE_INVALID",
+                            "REFERENCE_GZI_MISSING",
+                            "REFERENCE_CHECKSUM_MISMATCH",
+                            "REFERENCE_CONTIG_MANIFEST_MISMATCH",
+                            "REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
+                        },
                     },
                 )
                 return
