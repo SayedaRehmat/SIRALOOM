@@ -29,6 +29,28 @@ jobs:
           test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
       - name: Install backend
         run: pip install -e . pytest
+      - name: Acquire pinned public VCF and GRCh38 reference test data
+        run: |
+          set -euo pipefail
+          data_dir="${RUNNER_TEMP}/siraloom-public-vcf"
+          mkdir -p "${data_dir}"
+          curl --fail --location --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 180 \
+            "https://raw.githubusercontent.com/samtools/bcftools/1.25/test/filter.39.out" \
+            --output "${data_dir}/bcftools-filter.39.vcf"
+          echo "4ca6d9e8eb53301e5a89e4bec8ca512a0367a2dd338c9c7e2f99d9ded305b369  ${data_dir}/bcftools-filter.39.vcf" | sha256sum --check -
+          curl --fail --location --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 300 \
+            "https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" \
+            --output "${data_dir}/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
+          curl --fail --location --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 60 \
+            "https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/MD5SUM" \
+            --output "${data_dir}/MD5SUM"
+          grep -F "Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" "${data_dir}/MD5SUM" \
+            | (cd "${data_dir}" && md5sum --check --status)
+          gzip --decompress --stdout "${data_dir}/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" \
+            > "${data_dir}/GRCh38.chr1.fa"
+          echo "SIRALOOM_PUBLIC_VCF_PATH=${data_dir}/bcftools-filter.39.vcf" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_PATH=${data_dir}/GRCh38.chr1.fa" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_DATA_DIR=${data_dir}" >> "${GITHUB_ENV}"
       - name: Backend tests
         env:
           DATABASE_URL: sqlite:///./ci.db
