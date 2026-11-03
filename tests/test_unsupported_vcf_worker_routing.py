@@ -408,12 +408,18 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     from datetime import UTC, datetime
     import hashlib
     import json
+    import shutil
 
     from backend.app.domain.resource_source_contract import validate_execution_contract
     from backend.app.domain.resource_execution import (
         start_resource_execution as real_start_resource_execution,
         complete_resource_execution as real_complete_resource_execution,
     )
+
+    bcftools_executable = shutil.which("bcftools")
+    assert bcftools_executable is not None, "CI must provide the pinned BCFtools executable"
+    bcftools_executable = str(Path(bcftools_executable).resolve(strict=True))
+    bcftools_sha256 = hashlib.sha256(Path(bcftools_executable).read_bytes()).hexdigest()
 
     workflow = importlib.import_module("backend.app.workflows.variant")
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
@@ -490,10 +496,13 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 access_method="LOCAL",
                 license_text="test",
                 checksum="a" * 64,
-                location="/opt/siraloom/qualified/bcftools/1.25/bin/bcftools",
+                location=bcftools_executable,
                 status="ACTIVE",
                 population_definition=None,
-                metadata_json={"execution": {"executable": "/opt/siraloom/qualified/bcftools/1.25/bin/bcftools"}},
+                metadata_json={
+                    "capabilities": ["NORMALIZATION"],
+                    "execution": {"executable": bcftools_executable},
+                },
             )
             db.add(normalization_resource)
             qualification_id = uuid4()
@@ -506,7 +515,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     "execution_scope": "ORGANIZATION_MANAGED",
                     "toolchain": {"bcftools": {
                         "executable": normalization_resource.location,
-                        "sha256": "f" * 64,
+                        "sha256": bcftools_sha256,
                     }},
                 },
                 resource_provider=normalization_resource.provider,
@@ -616,7 +625,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 contract=SimpleNamespace(
                     toolchain={"bcftools": {
                         "executable": normalization_resource.location,
-                        "sha256": "f" * 64,
+                        "sha256": bcftools_sha256,
                     }}
                 ),
                 snapshot={"test": "normalization-qualified"},
@@ -668,50 +677,6 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         monkeypatch.setattr(workflow, "start_resource_execution", start_execution)
         monkeypatch.setattr(workflow, "complete_resource_execution", complete_execution)
 
-        def fake_normalize(resource, input_path, output_path, **kwargs):
-            assert resource.id == normalization_resource_id
-            assert kwargs["approved"] is True
-            assert kwargs["expected_bcftools_sha256"] == "f" * 64
-            assert kwargs["qualified_bcftools_executable"] == normalization_resource.location
-            routed_text = Path(input_path).read_text(encoding="utf-8")
-            assert "A\tC,<NON_REF>" in routed_text
-            assert "AT\tA" in routed_text
-            assert "\t*\t" not in routed_text
-            assert "\t0\ttelo1\t" not in routed_text
-            assert "\t1001\ttelo-after\t" not in routed_text
-            assert "<NON_REF>\t.\tPASS\tEND=10" not in routed_text
-            index = Path(str(output_path) + ".csi")
-            vcf_payload = (
-                "##fileformat=VCFv4.3\n##contig=<ID=1,length=1000>\n"
-                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-                '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
-                '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
-                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
-                "1\t11\trs1\tA\tC\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9:100,50,60\n"
-                "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
-            )
-            with output_path.open("wb") as raw_handle:
-                with gzip.GzipFile(fileobj=raw_handle, mode="wb", filename="", mtime=0) as handle:
-                    handle.write(vcf_payload.encode("utf-8"))
-            index.write_bytes(b"fixture-csi")
-            stats = {
-                "tool": "bcftools", "tool_version": "bcftools 1.25",
-                "expected_tool_version": "1.25", "operation": "fixture-normalization",
-                "command": "bcftools view -A && bcftools norm -f ref.fa -c e -m -any",
-                "source_record_mapping_tag": "SIRALOOM_ORIG",
-                "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
-                "compression": "BGZF", "index": "CSI", "index_path": str(index),
-                "multiallelic_overlap_policy": ".",
-                "executable_identity": {
-                    "path": kwargs["qualified_bcftools_executable"],
-                    "sha256": kwargs["expected_bcftools_sha256"],
-                },
-                "executable_integrity_status": "MATCHED_QUALIFIED_SHA256",
-            }
-            return stats, SimpleNamespace(snapshot={"qualified": True})
-
-        used_real_bcftools = False
-        monkeypatch.setattr(workflow, "normalize_with_selected_provider", fake_normalize)
         if artifact_identity_conflict:
             from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
 
