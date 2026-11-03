@@ -63,17 +63,26 @@ jobs:
           bcftools index --csi "${slice}"
           source_records="$(bcftools view --no-header "${slice}" | wc -l)"
           test "${source_records}" -gt 0
-          reference_archive="${data_dir}/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
+          reference_name="Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
+          reference_archive="\${data_dir}/\${reference_name}"
+          reference_checksums="\${data_dir}/ENSEMBL_RELEASE_115_CHECKSUMS"
+          reference_base="https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 300 \
-            "https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" \
-            --output "${reference_archive}"
-          echo "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c  ${reference_archive}" | sha256sum --check -
+            "\${reference_base}/\${reference_name}" --output "\${reference_archive}"
+          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 120 \
+            "\${reference_base}/CHECKSUMS" --output "\${reference_checksums}"
+          reference_md5="$(awk -v filename="\${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "\${reference_checksums}")"
+          [[ "\${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
+          printf '%s  %s\n' "\${reference_md5}" "\${reference_archive}" | md5sum --check -
+          echo "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c  \${reference_archive}" | sha256sum --check -
           reference_fasta="${data_dir}/GRCh38.chr1.fa"
           gzip --decompress --stdout "${reference_archive}" > "${reference_fasta}"
           echo "SIRALOOM_PUBLIC_VCF_SLICE_PATH=${slice}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_VCF_ARCHIVE_PATH=${giab_vcf}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_VCF_INDEX_PATH=${giab_index}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_REFERENCE_ARCHIVE_PATH=${reference_archive}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_CHECKSUMS_PATH=${reference_checksums}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_MD5=${reference_md5}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_REFERENCE_PATH=${reference_fasta}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_REFERENCE_CONTIG=${vcf_contig}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_DATA_DIR=${data_dir}" >> "${GITHUB_ENV}"
