@@ -158,17 +158,20 @@ jobs:
 
           qualify_executable() {
             local version="$1"
-            local executable="$2"
-            local provenance="$3"
+            local htslib_version="$2"
+            local executable="$3"
+            local provenance="$4"
             local version_output
             local executable_sha256
             local evidence_dir
 
             version_output="$("${executable}" --version)"
             test "$(printf '%s\n' "${version_output}" | sed -n '1p')" = "bcftools ${version}"
-            test "$(printf '%s\n' "${version_output}" | sed -n '2p')" = "Using htslib ${version}"
+            test "$(printf '%s\n' "${version_output}" | sed -n '2p')" = "Using htslib ${htslib_version}"
             executable_sha256="$(sha256sum "${executable}" | awk '{print $1}')"
 
+            BCFTOOLS_VERSION="${version}" \
+            HTSLIB_VERSION="${htslib_version}" \
             SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
             SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
             SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
@@ -195,7 +198,13 @@ jobs:
               "bcftools=${version}"
             executable="$(micromamba run -n "${environment}" which bcftools)"
             package_manifest="$(micromamba list -n "${environment}")"
-            qualify_executable "${version}" "${executable}" "Bioconda package"
+            case "${version}" in
+              1.23.1) htslib_version="1.24" ;;
+              1.24) htslib_version="1.24" ;;
+              1.25) htslib_version="1.25" ;;
+              *) echo "No pinned Bioconda BCFtools/HTSlib pair for ${version}" >&2; exit 1 ;;
+            esac
+            qualify_executable "${version}" "${htslib_version}" "${executable}" "Bioconda package"
             printf '%s\n' "${package_manifest}" > "${data_dir}/bcftools-${version}/package-manifest.txt"
           done
 
@@ -244,7 +253,7 @@ jobs:
             esac
             test "${bcftools_commit}" = "${expected_bcftools_commit}"
             test "${htslib_commit}" = "${expected_htslib_commit}"
-            qualify_executable "${version}" "${install_root}/bin/bcftools" \
+            qualify_executable "${version}" "${version}" "${install_root}/bin/bcftools" \
               "Pinned upstream BCFtools commit ${bcftools_commit}; pinned HTSlib commit ${htslib_commit}"
           done
       - name: Preserve public VCF normalization qualification evidence
