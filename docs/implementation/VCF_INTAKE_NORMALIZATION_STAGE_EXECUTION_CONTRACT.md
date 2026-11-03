@@ -1,7 +1,7 @@
 # SIRALOOM VCF Intake and Normalization — Master Execution Contract
 
 **Document ID:** SIRALOOM-VCF-MEC-001  
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** AUTHORITATIVE EXECUTION CONTROL — all acceptance gates are mandatory  
 **Owner:** SIRALOOM Product, Platform and Bioinformatics Engineering  
 **Applies to:** VCF intake, validation, reference-controlled normalization, qualification, artifact publication and provenance  
@@ -10,6 +10,8 @@
 **Recorded baseline head:** 7b8abebf95d07c9eb6ce1ec00c6c5fe25e31d9c8  
 **CI run requiring revalidation:** #3202, run ID 41627304151  
 **This document does not declare the stage complete.**
+
+**Mandatory operational supplement:** [VCF Laboratory Operations, Error Handling and Performance Specification](./VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md). Its requirements and gates G17–G23 are part of this contract.
 
 ---
 
@@ -529,3 +531,41 @@ The VCF stage is complete only when SIRALOOM can take a real supported VCF, pres
 The result must be independently inspectable by another engineer and bioinformatics reviewer without relying on the memory of the agent that implemented it.
 
 **No shortcuts. No silent substitutions. No unsupported success claims. No stage completion without evidence.**
+
+
+## 15. Additional laboratory operations requirements (version 1.1)
+
+The following requirements are mandatory and are defined in full in the companion operational specification:
+
+[VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md](./VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md)
+
+The companion specification expands the stage with:
+- Producer metadata and sample-manifest reconciliation.
+- Explicit separation of file/representation QC, variant-call QC and upstream sequencing/assay QC.
+- Versioned laboratory policy and producer profiles.
+- Stable error codes, structured error envelopes, dispositions and safe retry rules.
+- Specific intake, compression, index, header, record, sample, version, reference, scope, normalizer, post-validation, capacity, storage, database, worker, policy, security and internal error classes.
+- Performance workload classes, phase timing, resource limits, capacity controls and measured service objectives.
+- Safe performance optimization, profiling and scientific-equivalence requirements.
+- Structured logs, metrics, traces, operator troubleshooting, alerting and incident handling.
+- Data retention, backup/restore, tenant isolation, encryption, secure temporary storage and software supply-chain controls.
+- Standards/interoperability boundaries, including VCF, HTSlib/BCFtools, GATK, GA4GH VRS, ISO 15189, CLSI MM09 and CDC/APHL guidance.
+
+The additional acceptance gates G17–G23 are mandatory and extend, rather than replace, G0–G16:
+
+| Gate | Acceptance condition |
+|---|---|
+| G17 Producer/sample interoperability | Producer metadata, sample manifest reconciliation, multisample/sites-only profiles and profile versioning tested |
+| G18 Error taxonomy and recovery | Stable codes, dispositions, safe retry matrix, user/operator diagnostics and regression tests |
+| G19 Performance and capacity | Representative workload benchmarks, phase timing, resource limits, throughput objectives and regression tests |
+| G20 Observability/troubleshooting | Structured logs/metrics/traces, runbooks, root-cause visibility and alert scenarios verified |
+| G21 QC provenance | File QC, variant-call QC and upstream assay QC distinguished; no unsupported assay-QC claims |
+| G22 Data lifecycle/security | Retention, encryption, least privilege, tenant isolation, secure temp handling, backup/restore and evidence access verified |
+| G23 Change/incident control | Resource/policy change impact, rollback/deactivation, affected-run discovery and incident audit tested |
+
+The same completion rule applies: every applicable gate must be PASS with inspectable evidence or have an explicitly approved NOT APPLICABLE disposition. Documentation alone does not close a gate.
+
+## 16. Contract change history
+
+- **1.0 (2026-11-03):** Initial VCF intake and normalization master execution contract.
+- **1.1 (2026-11-03):** Added mandatory laboratory operations, producer/sample interoperability, error taxonomy, recovery, performance/capacity, observability, QC provenance, data lifecycle/security and change/incident requirements through the companion specification; added gates G17–G23.
