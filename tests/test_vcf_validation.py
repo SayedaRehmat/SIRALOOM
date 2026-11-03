@@ -2446,7 +2446,9 @@ def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scop
     legacy = get_vcf_specification_profile("VCFv4.0")
     assert legacy.support_status == "LEGACY_COMPATIBILITY_ONLY"
     assert legacy.validation_mode == "LEGACY_PARSER_SMOKE_ONLY"
-    assert legacy.specification_document is None
+    assert legacy.specification_document == (
+        "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/"
+    )
 
     for minor in range(1, 6):
         version = f"VCFv4.{minor}"
