@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 
 from backend.app.domain.vcf_tools import (
     VCFToolError,
@@ -145,6 +146,7 @@ def normalize_with_selected_provider(
     *,
     reference_fasta: str | Path,
     approved: bool,
+    expected_bcftools_sha256: str | None = None,
     source_only_format_fields: list[str] | None = None,
 ) -> tuple[dict, NormalizationProviderSelection]:
     """Execute the exact approved normalization release selected for an analysis."""
@@ -154,6 +156,12 @@ def normalize_with_selected_provider(
             code="NORMALIZATION_LAB_APPROVAL_REQUIRED",
         )
     selection = resolve_normalization_provider(resource)
+    expected_digest = str(expected_bcftools_sha256 or "").strip().lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_digest):
+        raise NormalizationProviderError(
+            "The qualified normalization execution contract has no valid BCFtools executable SHA-256.",
+            code="NORMALIZATION_EXECUTABLE_SHA256_NOT_QUALIFIED",
+        )
     try:
         result = normalize_vcf_with_bcftools(
             input_path,
@@ -162,12 +170,7 @@ def normalize_with_selected_provider(
             expected_bcftools_version=selection.version,
             source_only_format_fields=source_only_format_fields,
             bcftools_executable=selection.executable,
-            expected_bcftools_sha256=(
-                dict(
-                    dict((resource.metadata_json or {}).get("execution") or {})
-                    .get("toolchain") or {}
-                ).get("bcftools", {}).get("sha256")
-            ),
+            expected_bcftools_sha256=expected_bcftools_sha256,
         )
     except VCFToolUnavailable as exc:
         raise NormalizationProviderUnavailable(
