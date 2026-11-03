@@ -2184,28 +2184,76 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except ReferenceError as exc:
+                persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
+                set_routed_reference_validation("NOT_RUN", exc.code)
+                if exc.code in {
+                    "ENSEMBL_TIMEOUT",
+                    "ENSEMBL_RATE_LIMITED",
+                    "ENSEMBL_SERVER_ERROR",
+                    "ENSEMBL_UNAVAILABLE",
+                }:
+                    _schedule_transient_step_retry(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        event_type="REFERENCE_RESOURCE_RETRY_SCHEDULED",
+                        actor_id="reference-provider",
+                        next_step="reference_resolution",
+                    )
+                    raise TransientWorkflowError(
+                        "The reference provider is temporarily unavailable; retrying from the durable normalization checkpoint.",
+                        countdown=10,
+                        max_retries=3,
+                        error_code="REFERENCE_PROVIDER_RETRY_EXHAUSTED",
+                    ) from exc
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="REFERENCE_RESOURCE_REQUIRES_REVIEW",
+                    actor_id="reference-provider",
+                    next_step="reference_resource_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_resource_error": True,
+                        "reference_error_code": exc.code,
+                        "reference_integrity_review_required": False,
+                    },
+                )
+                return
             except ReferencePackageError as exc:
                 persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation("NOT_RUN", exc.code)
-                mark_step(
+                _route_step_to_human_review(
                     db,
-                    normalization_step,
-                    StepStatus.BLOCKED,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
                     error_code=exc.code,
                     error_message=str(exc),
+                    event_type="REFERENCE_PACKAGE_REQUIRES_REVIEW",
+                    actor_id="reference-resource",
+                    next_step="reference_package_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_package_error": True,
+                        "reference_package_error_code": exc.code,
+                        "reference_integrity_review_required": exc.code in {
+                            "REFERENCE_FAI_INVALID",
+                            "REFERENCE_FASTA_INVALID",
+                            "REFERENCE_FAI_MISMATCH",
+                            "REFERENCE_PACKAGE_INVALID",
+                            "REFERENCE_GZI_MISSING",
+                            "REFERENCE_CHECKSUM_MISMATCH",
+                            "REFERENCE_CONTIG_MANIFEST_MISMATCH",
+                            "REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
+                        },
+                    },
                 )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
-                audit.record(
-                    event_type="WORKFLOW_BLOCKED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="reference-package",
-                    reason=str(exc),
-                    payload={"error_code": exc.code, "reference_build": reference_build},
-                )
-                db.commit()
                 return
             except StrictVCFValidationError as exc:
                 persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
