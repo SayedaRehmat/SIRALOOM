@@ -230,8 +230,25 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
         archive = root / "case_export.zip"
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
             for path in sorted(root.rglob("*")):
-                if path.is_file() and path != archive:
-                    zf.write(path, path.relative_to(root).as_posix())
+                if not path.is_file() or path == archive:
+                    continue
+                # A worker may die after the archive reaches durable storage but
+                # before its Artifact row commits. Redelivery must reproduce the
+                # exact same bytes so ArtifactStore can safely reuse that object.
+                # ZipFile.write() copies filesystem mtimes into each ZIP entry,
+                # making identical case data produce different archive digests
+                # when a retry crosses a timestamp boundary.
+                info = zipfile.ZipInfo(
+                    path.relative_to(root).as_posix(),
+                    date_time=(1980, 1, 1, 0, 0, 0),
+                )
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.create_system = 3
+                info.external_attr = 0o100644 << 16
+                info.file_size = path.stat().st_size
+                with path.open("rb") as source, zf.open(info, "w") as destination:
+                    while chunk := source.read(8 * 1024 * 1024):
+                        destination.write(chunk)
 
         # Bind the artifact identity to the durable export request. The export
         # worker may be redelivered after the broker acknowledged a task but
