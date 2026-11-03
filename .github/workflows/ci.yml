@@ -330,6 +330,7 @@ jobs:
           from backend.app.domain.ingestion import validate_vcf
           from backend.app.domain.vcf_tools import (
               normalize_vcf_with_bcftools,
+              route_vcf_records,
               validate_vcf_index_concordance,
           )
           from backend.app.domain.vcf_validation import validate_vcf_strict
@@ -350,13 +351,13 @@ jobs:
           cases = [
               (
                   "GRCh38",
-                  Path("/qualification/grch38/routed/sequence-input.vcf"),
+                  Path("/qualification/grch38/giab-hg002-grch38-chr1.vcf.gz"),
                   Path("/qualification/grch38") / os.environ["GRCH38_REFERENCE_FILENAME"],
                   "chr1",
               ),
               (
                   "GRCh37",
-                  Path("/qualification/grch37/routed/sequence-input.vcf"),
+                  Path("/qualification/grch37/giab-hg002-grch37-chr1.vcf.gz"),
                   Path("/qualification/grch37") / os.environ["GRCH37_REFERENCE_FILENAME"],
                   "1",
               ),
@@ -368,9 +369,20 @@ jobs:
               intake = validate_vcf(source)
               if intake.status != "VALID":
                   raise SystemExit(f"{build} production-container VCF intake failed: {intake.errors}")
+              source_index = validate_vcf_index_concordance(
+                  source,
+                  expected_bcftools_version="1.25",
+              )
+              routing = route_vcf_records(
+                  source,
+                  output_dir / f"{build.lower()}-routing",
+              )
+              if routing["record_reconciliation"]["balanced"] is not True:
+                  raise SystemExit(f"{build} source-record routing reconciliation failed")
+              sequence_input = Path(routing["sequence_path"])
               output = output_dir / f"normalized-{build.lower()}.vcf.gz"
               result = normalize_vcf_with_bcftools(
-                  source,
+                  sequence_input,
                   output,
                   reference_fasta=reference,
                   expected_bcftools_version="1.25",
@@ -396,6 +408,14 @@ jobs:
                       "fileformat": intake.fileformat,
                       "bcftools_version": intake.metadata["bcftools_version"],
                       "htslib_version": intake.metadata["htslib_version"],
+                  },
+                  "input_index_validation": source_index,
+                  "record_routing": {
+                      "record_reconciliation": routing["record_reconciliation"],
+                      "sequence_records": routing["sequence_records"],
+                      "structural_variant_records": routing["structural_variant_records"],
+                      "cnv_variant_records": routing["cnv_variant_records"],
+                      "repeat_expansion_records": routing["repeat_expansion_records"],
                   },
                   "normalization": {
                       "tool_version": result["tool_version"],
