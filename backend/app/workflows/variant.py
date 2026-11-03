@@ -2384,6 +2384,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     .get("bcftools") or {}
                                 ).get("sha256") or ""
                             ),
+                            qualified_bcftools_executable=str(
+                                dict(
+                                    dict(normalization_provider_execution.contract.toolchain or {})
+                                    .get("bcftools") or {}
+                                ).get("executable") or ""
+                            ),
                             source_only_format_fields=package_profile.get("base_modification_format_fields", []),
                         )
                     else:
