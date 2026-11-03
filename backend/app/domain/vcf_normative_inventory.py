@@ -32,7 +32,6 @@ SPEC_EXPECTED_CANDIDATE_LINES = {
     "VCFv4.5": 230,
 }
 
-_HEADING = re.compile(r"^\\(section|subsection|subsubsection|paragraph)\{(.*)\}")
 _NORMATIVE = re.compile(
     r"\b(must\s+not|shall\s+not|should\s+not|must|shall|should|"
     r"required|recommended|optional|may)\b",
@@ -83,12 +82,17 @@ def extract_vcf_normative_candidates(
             if not stripped or stripped.startswith("%"):
                 continue
 
-            heading = _HEADING.match(stripped)
-            if heading:
-                level = _HEADING_LEVEL[heading.group(1)]
+            heading_match: tuple[int, str] | None = None
+            for heading_name, level in _HEADING_LEVEL.items():
+                prefix = f"\\{heading_name}{{"
+                if stripped.startswith(prefix) and stripped.endswith("}"):
+                    heading_match = (level, stripped[len(prefix):-1].strip())
+                    break
+            if heading_match is not None:
+                level, heading_title = heading_match
                 while heading_stack and heading_stack[-1][0] >= level:
                     heading_stack.pop()
-                heading_stack.append((level, heading.group(2).strip(), line_number))
+                heading_stack.append((level, heading_title, line_number))
 
             matches = [match.group(0).lower() for match in _NORMATIVE.finditer(line)]
             if not matches:
