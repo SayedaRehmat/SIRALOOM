@@ -395,8 +395,51 @@ def test_bcftools_qualification_checks_exact_version_and_normalization_contract(
     assert result.checks["normalization_runtime"]["left_alignment"] == "PASS"
     assert result.checks["normalization_runtime"]["multiallelic_decomposition"] == "PASS"
     assert result.checks["normalization_runtime"]["ref_mismatch_rejection"] == "PASS"
+    assert result.checks["normalization_runtime"]["executable_integrity_status"] == "MEASURED_AND_PINNED_AT_QUALIFICATION"
+    qualified_toolchain = result.checks["execution_contract"]["toolchain"]["bcftools"]
+    assert qualified_toolchain["executable"] == str(
+        Path(resource.metadata_json["execution"]["toolchain"]["bcftools"]["executable"]).resolve()
+    )
+    assert qualified_toolchain["sha256"] == result.checks["normalization_runtime"]["executable_sha256"]
+    assert len(qualified_toolchain["sha256"]) == 64
     assert len(calls) == 3
     assert calls[1][1:8] == ["norm", "-f", calls[1][3], "-c", "e", "-m", "-any"]
+
+
+def test_bcftools_qualification_blocks_executable_mutation_during_known_answer_run(
+    monkeypatch, tmp_path
+):
+    resource = _normalization_resource(tmp_path)
+    executable = Path(resource.metadata_json["execution"]["toolchain"]["bcftools"]["executable"])
+    calls = 0
+
+    def fake_run(command, **kwargs):
+        nonlocal calls
+        calls += 1
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\\nUsing htslib 1.25", stderr="")
+        if calls == 2:
+            executable.write_text("#!/bin/sh\\nexit 99\\n", encoding="utf-8")
+        output_path = Path(command[command.index("-o") + 1])
+        input_path = Path(command[-1])
+        if input_path.name == "source.vcf":
+            output_path.write_text(
+                "##fileformat=VCFv4.2\\n"
+                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+                "chr1\\t1\\t.\\tCA\\tC\\t.\\tPASS\\t.\\n"
+                "chr1\\t7\\t.\\tC\\tT\\t.\\tPASS\\t.\\n"
+                "chr1\\t7\\t.\\tC\\tG\\t.\\tPASS\\t.\\n",
+                encoding="ascii",
+            )
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr="REF mismatch")
+
+    monkeypatch.setattr("backend.app.domain.resource_qualification.subprocess.run", fake_run)
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "BCFTOOLS_NORMALIZATION_CONFORMANCE_FAILED" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
 
 
 def test_bcftools_qualification_blocks_exact_version_mismatch(monkeypatch, tmp_path):
