@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.app.domain.ingestion import validate_vcf
+from backend.app.domain.ingestion import validate_index, validate_vcf
 from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools, route_vcf_records
 from backend.app.domain.vcf_validation import (
     read_vcf_fileformat,
@@ -249,7 +249,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert source_validation["fileformat"] == "VCFv4.2"
     assert source_validation["records"] > 0
     assert source_validation["sample_count"] == 1
-    intake = validate_vcf(source_for_validation)
+    intake = validate_vcf(source)
     expected_tool_version = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_VERSION", "1.25")
     expected_htslib_version = os.getenv("HTSLIB_VERSION", "1.25")
     assert intake.status == "VALID", intake.errors
@@ -263,6 +263,14 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert intake.metadata["htslib_version"] == expected_htslib_version
     assert intake.metadata["expected_htslib_version"] == expected_htslib_version
     assert intake.metadata["toolchain_validation_status"] == "PASS"
+    index_validation = validate_index(
+        Path(f"{source}.csi"),
+        source.name,
+        primary_path=source,
+        expected_bcftools_version=expected_tool_version,
+    )
+    assert index_validation.status == "VALID", index_validation.errors
+    assert index_validation.metadata["index_concordance"]["status"] == "VALIDATED"
 
     reference_validation = validate_vcf_reference_alleles(
         source_for_validation,
@@ -427,7 +435,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     assert source_validation["fileformat"] == "VCFv4.2"
     assert source_validation["records"] > 0
     assert source_validation["sample_count"] == 1
-    intake = validate_vcf(source_for_validation)
+    intake = validate_vcf(source)
     expected_tool_version = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_VERSION", "1.25")
     expected_htslib_version = os.getenv("HTSLIB_VERSION", "1.25")
     assert intake.status == "VALID", intake.errors
@@ -441,6 +449,14 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     assert intake.metadata["htslib_version"] == expected_htslib_version
     assert intake.metadata["expected_htslib_version"] == expected_htslib_version
     assert intake.metadata["toolchain_validation_status"] == "PASS"
+    index_validation = validate_index(
+        Path(f"{source}.csi"),
+        source.name,
+        primary_path=source,
+        expected_bcftools_version=expected_tool_version,
+    )
+    assert index_validation.status == "VALID", index_validation.errors
+    assert index_validation.metadata["index_concordance"]["status"] == "VALIDATED"
 
     reference_validation = validate_vcf_reference_alleles(source_for_validation, reference_for_vcf)
     assert reference_validation["checked_record_count"] == source_validation["records"]
