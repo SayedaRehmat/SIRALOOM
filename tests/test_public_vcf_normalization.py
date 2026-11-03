@@ -130,7 +130,7 @@ def test_bcftools_release_parses_valid_vcf_versions_and_v45_features(tmp_path: P
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
     fixture_ids = {
-        "VCFv4.0": ("minimal_snp_valid",),
+        "VCFv4.0": ("legacy_minimal_snp_parser_smoke",),
         "VCFv4.1": ("minimal_snp_valid", "multiallelic_genotype_valid"),
         "VCFv4.2": ("minimal_snp_valid", "multiallelic_genotype_valid"),
         "VCFv4.3": ("minimal_snp_valid", "multiallelic_genotype_valid"),
