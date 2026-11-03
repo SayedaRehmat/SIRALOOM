@@ -150,7 +150,7 @@ def test_bcftools_release_parses_valid_vcf_versions_and_v45_features(tmp_path: P
             assert case["expected"] == "PASS"
             source = tmp_path / f"{version}-{case_id}.vcf"
             output = tmp_path / f"{version}-{case_id}.roundtrip.vcf"
-            source.write_text("\\n".join(case["lines"]) + "\\n", encoding="utf-8")
+            source.write_text("\n".join(case["lines"]) + "\n", encoding="utf-8")
             result = subprocess.run(
                 [
                     executable,
