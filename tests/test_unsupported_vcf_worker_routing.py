@@ -841,7 +841,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     AuditEvent.analysis_id == analysis_id,
                     AuditEvent.event_type == "REFERENCE_RESOURCE_REQUIRES_REVIEW",
                 ))
-                assert analysis.status == AnalysisStatus.BLOCKED
+                assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
                 assert step.status == StepStatus.REQUIRES_REVIEW
                 assert step.error_code == "REFERENCE_BGZF_TRUNCATED"
                 assert step.metadata_json["next_step"] == "reference_resource_remediation"
