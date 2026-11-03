@@ -133,9 +133,11 @@ def test_execution_uses_selected_resource_version_not_global_settings(monkeypatc
         reference_fasta=tmp_path / "GRCh38.fa",
         approved=True,
         expected_bcftools_sha256="a" * 64,
+        qualified_bcftools_executable="/opt/siraloom/qualified/bcftools",
     )
 
     assert observed["expected_bcftools_version"] == "1.25"
+    assert observed["bcftools_executable"] == "/opt/siraloom/qualified/bcftools"
     assert observed["expected_bcftools_sha256"] == "a" * 64
     assert observed["bcftools_executable"] == "bcftools"
     assert result["provider_version"] == "1.25"
