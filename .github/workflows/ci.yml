@@ -273,6 +273,7 @@ jobs:
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz.csi
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-grch37-index-stats.txt
+            ${{ runner.temp }}/siraloom-container-qualification/*
           if-no-files-found: warn
           retention-days: 7
       - name: Validate process startup scripts
@@ -301,6 +302,138 @@ jobs:
         run: |
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
+      - name: Execute real GRCh38 and GRCh37 GIAB normalization inside the production container
+        env:
+          BCFTOOLS_VERSION: "1.25"
+          HTSLIB_VERSION: "1.25"
+        run: |
+          set -euo pipefail
+          grch38_reference="$(find "${SIRALOOM_PUBLIC_DATA_DIR}" -maxdepth 1 -name 'GRCh38.reference-for-*.fa' -print -quit)"
+          grch37_reference="${SIRALOOM_PUBLIC_GRCH37_REFERENCE_PATH}"
+          test -s "${SIRALOOM_PUBLIC_DATA_DIR}/routed/sequence-input.vcf"
+          test -s "${grch38_reference}"
+          test -s "${grch38_reference}.fai"
+          test -s "${SIRALOOM_PUBLIC_GRCH37_DATA_DIR}/routed/sequence-input.vcf"
+          test -s "${grch37_reference}"
+          test -s "${grch37_reference}.fai"
+          output_dir="${RUNNER_TEMP}/siraloom-container-qualification"
+          mkdir -p "${output_dir}"
+          chmod 0777 "${output_dir}"
+          qualification_script="${RUNNER_TEMP}/siraloom-container-qualification.py"
+          cat > "${qualification_script}" <<'PY'
+          import hashlib
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+
+          from backend.app.domain.ingestion import validate_vcf
+          from backend.app.domain.vcf_tools import (
+              normalize_vcf_with_bcftools,
+              validate_vcf_index_concordance,
+          )
+          from backend.app.domain.vcf_validation import validate_vcf_strict
+
+          def sha256(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          executable = shutil.which("bcftools")
+          if not executable:
+              raise SystemExit("Production container has no BCFtools executable")
+          executable_sha256 = sha256(Path(executable))
+          output_dir = Path("/qualification/output")
+          output_dir.mkdir(parents=True, exist_ok=True)
+          cases = [
+              (
+                  "GRCh38",
+                  Path("/qualification/grch38/routed/sequence-input.vcf"),
+                  Path("/qualification/grch38") / os.environ["GRCH38_REFERENCE_FILENAME"],
+                  "chr1",
+              ),
+              (
+                  "GRCh37",
+                  Path("/qualification/grch37/routed/sequence-input.vcf"),
+                  Path("/qualification/grch37") / os.environ["GRCH37_REFERENCE_FILENAME"],
+                  "1",
+              ),
+          ]
+          reports = []
+          for build, source, reference, contig in cases:
+              if not source.is_file() or not reference.is_file() or not Path(f"{reference}.fai").is_file():
+                  raise SystemExit(f"{build} input or reference/FAI is missing inside the container")
+              intake = validate_vcf(source)
+              if intake.status != "VALID":
+                  raise SystemExit(f"{build} production-container VCF intake failed: {intake.errors}")
+              output = output_dir / f"normalized-{build.lower()}.vcf.gz"
+              result = normalize_vcf_with_bcftools(
+                  source,
+                  output,
+                  reference_fasta=reference,
+                  expected_bcftools_version="1.25",
+                  expected_bcftools_sha256=executable_sha256,
+              )
+              normalized = validate_vcf_strict(output, reference_contigs={contig})
+              index = validate_vcf_index_concordance(
+                  output,
+                  expected_bcftools_version="1.25",
+              )
+              if result["source_child_reconciliation"]["balanced"] is not True:
+                  raise SystemExit(f"{build} source-to-child reconciliation failed")
+              if index["status"] != "VALIDATED":
+                  raise SystemExit(f"{build} normalized CSI validation failed")
+              reports.append({
+                  "genome_build": build,
+                  "input_vcf_sha256": sha256(source),
+                  "reference_fasta_sha256": sha256(reference),
+                  "reference_fai_sha256": sha256(Path(f"{reference}.fai")),
+                  "input_validation": {
+                      "status": intake.status,
+                      "record_count": intake.record_count,
+                      "fileformat": intake.fileformat,
+                      "bcftools_version": intake.metadata["bcftools_version"],
+                      "htslib_version": intake.metadata["htslib_version"],
+                  },
+                  "normalization": {
+                      "tool_version": result["tool_version"],
+                      "executable_sha256": result["executable_sha256"],
+                      "normalized_record_count": normalized["records"],
+                      "normalized_vcf_sha256": sha256(output),
+                      "normalized_csi_sha256": sha256(Path(f"{output}.csi")),
+                      "source_child_reconciliation": result["source_child_reconciliation"],
+                      "index_validation": index,
+                  },
+              })
+          report = {
+              "qualification_status": "PASSED",
+              "execution_environment": "siraloom-backend:ci",
+              "container_user": os.getuid(),
+              "bcftools_executable": executable,
+              "bcftools_executable_sha256": executable_sha256,
+              "bcftools_version": "1.25",
+              "htslib_version": "1.25",
+              "assemblies": reports,
+          }
+          (output_dir / "container-qualification-report.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+          docker run --rm \
+            --mount "type=bind,src=${SIRALOOM_PUBLIC_DATA_DIR},dst=/qualification/grch38,readonly" \
+            --mount "type=bind,src=${SIRALOOM_PUBLIC_GRCH37_DATA_DIR},dst=/qualification/grch37,readonly" \
+            --mount "type=bind,src=${output_dir},dst=/qualification/output" \
+            --mount "type=bind,src=${qualification_script},dst=/qualification/qualify.py,readonly" \
+            -e BCFTOOLS_VERSION=1.25 \
+            -e HTSLIB_VERSION=1.25 \
+            -e GRCH38_REFERENCE_FILENAME="$(basename "${grch38_reference}")" \
+            -e GRCH37_REFERENCE_FILENAME="$(basename "${grch37_reference}")" \
+            --entrypoint python \
+            siraloom-backend:ci /qualification/qualify.py
 
   postgres-integration:
     runs-on: ubuntu-latest
