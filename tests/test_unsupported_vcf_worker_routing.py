@@ -386,11 +386,16 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
 
 
 @pytest.mark.parametrize(
-    ("reference_mismatch", "worker_loss"),
-    [(False, False), (True, False), (False, True)],
+    ("reference_mismatch", "worker_loss", "normalization_resource_failure"),
+    [
+        (False, False, False),
+        (True, False, False),
+        (False, True, False),
+        (False, False, True),
+    ],
 )
 def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_block(
-    monkeypatch, tmp_path, reference_mismatch, worker_loss
+    monkeypatch, tmp_path, reference_mismatch, worker_loss, normalization_resource_failure
 ):
     """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
     import gzip
@@ -589,6 +594,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             if capability == "REFERENCE_PACKAGE":
                 return reference_runtime
             if capability == workflow.NORMALIZATION_ENGINE:
+                if normalization_resource_failure:
+                    raise workflow.ProfileRuntimeResourceError(
+                        "NORMALIZATION_EXECUTABLE_SHA256_NOT_QUALIFIED",
+                        "The selected normalization resource has no qualified executable digest.",
+                    )
                 return real_resolve_profile_runtime_resource(
                     _db,
                     analysis_id=analysis_id,
@@ -775,6 +785,27 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 Artifact.artifact_type == "VCF_EXCLUSION_MANIFEST",
             )).all()
             analysis = db.get(Analysis, analysis_id)
+            if normalization_resource_failure:
+                assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
+                assert step.status == StepStatus.REQUIRES_REVIEW
+                assert step.error_code == "NORMALIZATION_EXECUTABLE_SHA256_NOT_QUALIFIED"
+                assert normalized is None
+                assert db.scalar(select(ResourceExecutionRecord).where(
+                    ResourceExecutionRecord.analysis_id == analysis_id,
+                    ResourceExecutionRecord.resource_id == normalization_resource_id,
+                )) is None
+                review_event = db.scalar(select(AuditEvent).where(
+                    AuditEvent.analysis_id == analysis_id,
+                    AuditEvent.event_type == "NORMALIZATION_RESOURCE_REQUIRES_REVIEW",
+                ))
+                assert review_event is not None
+                assert review_event.payload["automatic_fallback"] is False
+                assert review_event.payload["human_action_required"] is True
+                assert db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "annotate",
+                )) is None
+                return
             assert block_artifact is not None and store.exists(block_artifact.storage_uri)
             assert star_artifact is not None and store.exists(star_artifact.storage_uri)
             assert sv_artifact is not None and store.exists(sv_artifact.storage_uri)
