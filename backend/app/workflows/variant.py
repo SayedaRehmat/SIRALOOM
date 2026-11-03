@@ -47,6 +47,7 @@ from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.domain.normalization_provider import (
+    NormalizationProviderError,
     NormalizationProviderUnavailable,
     normalize_with_selected_provider,
 )
@@ -2578,6 +2579,22 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     max_retries=3,
                     error_code="NORMALIZATION_TOOL_RETRY_EXHAUSTED",
                 ) from exc
+            except (NormalizationProviderError, ResourceConsumptionError) as exc:
+                # A stale, unqualified, unapproved, or integrity-mismatched
+                # normalization resource is a governance gap. Preserve the case
+                # for remediation and human action; never substitute another tool.
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_RESOURCE_REQUIRES_REVIEW",
+                    actor_id="normalization-resource",
+                    next_step="resource_remediation",
+                    payload={"automatic_fallback": False, "resource_gap": True},
+                )
+                return
             except (NormalizationError, ReferenceError, ReferencePackageError, VCFToolError) as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
