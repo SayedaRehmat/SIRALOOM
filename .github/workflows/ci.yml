@@ -273,6 +273,23 @@ jobs:
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz.csi
             ${{ runner.temp }}/siraloom-public-vcf/giab-index-stats.txt
+            ${{ runner.temp }}/siraloom-public-vcf/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi
+            ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.vcf.gz.csi
+            ${{ runner.temp }}/siraloom-public-vcf/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz
+            ${{ runner.temp }}/siraloom-public-vcf/ENSEMBL_RELEASE_115_CHECKSUMS
+            ${{ runner.temp }}/siraloom-public-vcf/GRCh38.chr1.fa
+            ${{ runner.temp }}/siraloom-public-vcf/GRCh38.reference-for-chr1.fa
+            ${{ runner.temp }}/siraloom-public-vcf/GRCh38.reference-for-chr1.fa.fai
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz.tbi
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.vcf.gz.csi
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/Homo_sapiens.GRCh37.75.dna.chromosome.1.fa.gz
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/ENSEMBL_RELEASE_75_CHECKSUMS
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/GRCh37.chr1.fa
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/GRCh37.chr1.fa.fai
             ${{ runner.temp }}/siraloom-public-vcf-grch37/qualification-report-grch37.json
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz.csi
