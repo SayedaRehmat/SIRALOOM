@@ -64,7 +64,9 @@ jobs:
           test -n "${vcf_contig}"
           slice="${data_dir}/giab-hg002-grch38-chr1.vcf.gz"
           bcftools view --no-version --regions "${vcf_contig}" --output-type z --output "${slice}" "${giab_vcf}"
-          bcftools index --csi "${slice}"
+          bcftools index --csi --force "${slice}"
+          csi_magic="$(od -An -tx1 -N4 "${slice}.csi" | tr -d '[:space:]')"
+          test "${csi_magic}" = "43534901"
           source_records="$(bcftools view --no-header "${slice}" | wc -l)"
           test "${source_records}" -gt 0
           reference_name="Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
@@ -112,7 +114,9 @@ jobs:
           test -n "${vcf_contig}"
           slice="${data_dir}/giab-hg002-grch37-chr1.vcf.gz"
           bcftools view --no-version --regions "${vcf_contig}" --output-type z --output "${slice}" "${giab_vcf}"
-          bcftools index --csi "${slice}"
+          bcftools index --csi --force "${slice}"
+          csi_magic="$(od -An -tx1 -N4 "${slice}.csi" | tr -d '[:space:]')"
+          test "${csi_magic}" = "43534901"
           source_records="$(bcftools view --no-header "${slice}" | wc -l)"
           test "${source_records}" -gt 0
 
