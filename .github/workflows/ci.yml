@@ -173,11 +173,6 @@ jobs:
             SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
             SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
               pytest -q tests/test_public_vcf_normalization.py
-            SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
-            SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
-            SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
-              pytest -q tests/test_public_vcf_normalization.py::test_downloaded_giab_vcf_validates_and_normalizes_against_grch37
-
             evidence_dir="${data_dir}/bcftools-${version}"
             mkdir -p "${evidence_dir}"
             printf '%s\n' "${version_output}" > "${evidence_dir}/version.txt"
@@ -264,6 +259,10 @@ jobs:
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz.csi
             ${{ runner.temp }}/siraloom-public-vcf/giab-index-stats.txt
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/qualification-report-grch37.json
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz.csi
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-grch37-index-stats.txt
           if-no-files-found: warn
           retention-days: 7
       - name: Validate process startup scripts
