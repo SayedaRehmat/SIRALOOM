@@ -442,6 +442,26 @@ def test_bcftools_qualification_blocks_executable_mutation_during_known_answer_r
     assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
 
 
+def test_bcftools_qualification_blocks_releases_before_read_integrity_fix(monkeypatch, tmp_path):
+    resource = _normalization_resource(tmp_path, version="1.23.0")
+    calls = []
+    monkeypatch.setattr(
+        "backend.app.domain.resource_qualification.subprocess.run",
+        lambda command, **_kwargs: (
+            calls.append(command)
+            or SimpleNamespace(returncode=0, stdout="bcftools 1.23.0\\nUsing htslib 1.23.0", stderr="")
+        ),
+    )
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "BCFTOOLS_VERSION_BELOW_SAFE_BASELINE" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+    assert result.checks["normalization_runtime"]["minimum_qualified_version"] == "1.23.1"
+    assert len(calls) == 1  # No normalization command runs on a known unsafe release.
+
+
 def test_bcftools_qualification_blocks_exact_version_mismatch(monkeypatch, tmp_path):
     resource = _normalization_resource(tmp_path)
     monkeypatch.setattr(
