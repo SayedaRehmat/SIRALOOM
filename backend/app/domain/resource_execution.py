@@ -141,7 +141,7 @@ def _assert_profile_bound_resource_execution(
         )
 
     allowed_capabilities = {
-        "normalize": {"REFERENCE_PACKAGE", "NORMALIZATION_ENGINE"},
+        "normalize": {"REFERENCE_PACKAGE", "NORMALIZATION_ENGINE", "NORMALIZATION"},
         "annotate": {"ANNOTATION_ENGINE"},
         "population": {"POPULATION", "POPULATION_SECONDARY"},
         "build_evidence": {
