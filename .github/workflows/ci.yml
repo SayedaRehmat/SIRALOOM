@@ -77,6 +77,8 @@ jobs:
         run: |
           set -euo pipefail
           data_dir="${RUNNER_TEMP}/siraloom-public-vcf"
+          # Minimum eligible release is 1.23.1: upstream fixed silent read-error truncation in 1.23.1.
+          # Keep every stable patch release from that safety floor through the current pinned release in this real-data matrix.
           for version in 1.23.1 1.23.2 1.23.3 1.24 1.24.1 1.25; do
             environment="bcftools-${version}"
             micromamba create --yes --name "${environment}" \
