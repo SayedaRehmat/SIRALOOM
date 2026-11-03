@@ -231,8 +231,6 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert read_vcf_fileformat(source) == "VCFv4.2"
     reference_for_vcf = _reference_with_contig_name(reference, contig, data_dir)
     _build_single_contig_fai(reference_for_vcf)
-    assert _sha256_file(reference_for_vcf) == EXPECTED_GRCH37_REFERENCE_FASTA_SHA256
-    assert _sha256_file(Path(f"{reference_for_vcf}.fai")) == EXPECTED_GRCH37_REFERENCE_FAI_SHA256
 
     source_for_validation = _restrict_header_to_single_contig(
         source,
@@ -398,6 +396,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     assert read_vcf_fileformat(source) == "VCFv4.2"
     reference_for_vcf = _reference_with_contig_name(reference, contig, data_dir)
     _build_single_contig_fai(reference_for_vcf)
+    assert _sha256_file(reference_for_vcf) == EXPECTED_GRCH37_REFERENCE_FASTA_SHA256
+    assert _sha256_file(Path(f"{reference_for_vcf}.fai")) == EXPECTED_GRCH37_REFERENCE_FAI_SHA256
     source_for_validation = _restrict_header_to_single_contig(
         source,
         data_dir / "giab-hg002-grch37-chr1.vcf",
