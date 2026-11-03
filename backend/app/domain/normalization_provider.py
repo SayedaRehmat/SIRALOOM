@@ -182,9 +182,15 @@ def normalize_with_selected_provider(
             expected_bcftools_sha256=expected_bcftools_sha256,
         )
     except VCFToolUnavailable as exc:
+        tool_error_code = getattr(exc, "code", None)
+        provider_error_code = (
+            "NORMALIZATION_PROVIDER_UNAVAILABLE"
+            if tool_error_code in {None, "VCF_TOOL_UNAVAILABLE"}
+            else tool_error_code
+        )
         raise NormalizationProviderUnavailable(
             str(exc),
-            code=getattr(exc, "code", None) or "NORMALIZATION_PROVIDER_UNAVAILABLE",
+            code=provider_error_code,
         ) from exc
     except VCFToolError as exc:
         raise NormalizationProviderError(
