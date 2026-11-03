@@ -72,7 +72,11 @@ def _metadata_capabilities(resource: Resource) -> set[str]:
     return {str(value).strip().upper() for value in raw if str(value).strip()}
 
 
-def resolve_normalization_provider(resource: Resource) -> NormalizationProviderSelection:
+def resolve_normalization_provider(
+    resource: Resource,
+    *,
+    qualified_executable: str | None = None,
+) -> NormalizationProviderSelection:
     """Resolve a selected Resource into an executable normalization provider.
 
     The resource's version is authoritative. No latest-version lookup and no
@@ -122,7 +126,8 @@ def resolve_normalization_provider(resource: Resource) -> NormalizationProviderS
             code="NORMALIZATION_EXECUTION_VERSION_CONTRACT_MISMATCH",
         )
     executable = str(
-        bcftools_tool.get("executable")
+        qualified_executable
+        or bcftools_tool.get("executable")
         or execution.get("executable")
         or "bcftools"
     ).strip()
@@ -147,6 +152,7 @@ def normalize_with_selected_provider(
     reference_fasta: str | Path,
     approved: bool,
     expected_bcftools_sha256: str | None = None,
+    qualified_bcftools_executable: str | None = None,
     source_only_format_fields: list[str] | None = None,
 ) -> tuple[dict, NormalizationProviderSelection]:
     """Execute the exact approved normalization release selected for an analysis."""
@@ -155,7 +161,10 @@ def normalize_with_selected_provider(
             "Normalization execution requires an organization-approved resource binding.",
             code="NORMALIZATION_LAB_APPROVAL_REQUIRED",
         )
-    selection = resolve_normalization_provider(resource)
+    selection = resolve_normalization_provider(
+        resource,
+        qualified_executable=qualified_bcftools_executable,
+    )
     expected_digest = str(expected_bcftools_sha256 or "").strip().lower()
     if not re.fullmatch(r"[0-9a-f]{64}", expected_digest):
         raise NormalizationProviderError(
