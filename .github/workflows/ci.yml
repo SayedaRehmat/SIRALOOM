@@ -65,7 +65,7 @@ jobs:
           slice="${data_dir}/giab-hg002-grch38-chr1.vcf.gz"
           bcftools view --no-version --regions "${vcf_contig}" --output-type z --output "${slice}" "${giab_vcf}"
           bcftools index --csi --force "${slice}"
-          csi_magic="$(od -An -tx1 -N4 "${slice}.csi" | tr -d '[:space:]')"
+          csi_magic="$(python -c 'import gzip,sys; print(gzip.open(sys.argv[1], "rb").read(4).hex())' "${slice}.csi")"
           test "${csi_magic}" = "43534901"
           source_records="$(bcftools view --no-header "${slice}" | wc -l)"
           test "${source_records}" -gt 0
@@ -115,7 +115,7 @@ jobs:
           slice="${data_dir}/giab-hg002-grch37-chr1.vcf.gz"
           bcftools view --no-version --regions "${vcf_contig}" --output-type z --output "${slice}" "${giab_vcf}"
           bcftools index --csi --force "${slice}"
-          csi_magic="$(od -An -tx1 -N4 "${slice}.csi" | tr -d '[:space:]')"
+          csi_magic="$(python -c 'import gzip,sys; print(gzip.open(sys.argv[1], "rb").read(4).hex())' "${slice}.csi")"
           test "${csi_magic}" = "43534901"
           source_records="$(bcftools view --no-header "${slice}" | wc -l)"
           test "${source_records}" -gt 0
@@ -205,7 +205,8 @@ jobs:
             micromamba create --yes --name "${environment}" \
               --channel conda-forge --channel bioconda --strict-channel-priority \
               "bcftools=${version}"
-            executable="$(micromamba run -n "${environment}" which bcftools)"
+            executable="${MAMBA_ROOT_PREFIX}/envs/${environment}/bin/bcftools"
+            test -x "${executable}"
             package_manifest="$(micromamba list -n "${environment}")"
             case "${version}" in
               1.23.1) htslib_version="1.24" ;;
