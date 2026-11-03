@@ -15,7 +15,7 @@
 | Repository | SayedaRehmat/SIRALOOM |
 | PR | [#282](https://github.com/SayedaRehmat/SIRALOOM/pull/282) |
 | Branch | feature/vcf-normalization-capability-governance |
-| Latest recorded PR head | c3c0381034d728436a35d9963c1c351e948acec0 (contract update; ledger update follows) |
+| Latest recorded PR head | 0665187054353002657de1f75ab31d761d1b8635 |
 | Latest commit | docs: establish VCF stage master execution contract |
 | Previous implementation head | 7b8abebf95d07c9eb6ce1ec00c6c5fe25e31d9c8 |
 | Contract path | docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md (v1.1) |
@@ -163,7 +163,17 @@ Any agent continuing SIRALOOM VCF work must read the master contract and this le
 - Performance policy: no arbitrary universal runtime target. Establish measured baselines on representative workload classes and the production container. Do not weaken scientific validation to improve speed.
 - Error policy: only transient infrastructure failures are retryable; malformed input, REF mismatch, unqualified resources and scientific discordance are not blindly retried.
 - Gates G17–G23 are added but remain NOT ASSESSED. No implementation gate is closed by this documentation work.
-- Current PR head at this entry: c3c0381034d728436a35d9963c1c351e948acec0.
+- Current PR head at this entry: 0665187054353002657de1f75ab31d761d1b8635 (ledger update commit).
 - CI for this exact commit: no workflow run was returned by commit-run lookup at the time of this entry. Recheck GitHub Actions after ledger commit.
 - Next task remains E0/E1 repository truth audit and gap matrix. Include G17–G23 and map existing architecture before implementing them. Do not start speculative performance optimization before profiling.
+
+
+
+### CI recheck after documentation commits
+
+- Run #3205 / 41630866062 tested operations-spec commit 44f2200000cc78c969fd2aa9226dd7163105c775 and was cancelled when the next commit superseded it.
+- Run #3206 / 41630896819 tested contract commit c3c0381034d728436a35d9963c1c351e948acec0 and was cancelled when the ledger update superseded it.
+- Run #3204 / 41629885242 for commit 2ac7b090c8a1c0d4ea75b36dd99d36cf56d58054 was still in progress at the latest branch-run query; it does not validate the latest documentation commits.
+- Run #3202 / 41627304151 was cancelled; its backend qualification outcome was not established.
+- No completed CI result is claimed for the current documentation head. Recheck the branch's latest Actions run after this ledger commit.
 
