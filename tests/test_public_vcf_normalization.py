@@ -148,7 +148,11 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert Path(execution["index_path"]).is_file()
     assert execution["executable_integrity_status"] == "MEASURED_UNPINNED"
     assert len(execution["executable_sha256"]) == 64
-    assert execution["reference_identity"]["sha256"]
+    reference_artifacts = execution["reference_identity"]["artifacts"]
+    assert reference_artifacts["fasta"]["sha256"] == _sha256_file(reference_for_vcf)
+    assert reference_artifacts["fai"]["sha256"] == _sha256_file(
+        Path(f"{reference_for_vcf}.fai")
+    )
 
     report = {
         "suite": "siraloom-giab-public-vcf-normalization-qualification-v1",
