@@ -1042,8 +1042,11 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                     AuditEvent.event_type == adoption_event_type,
                 ))
                 assert adoption_event is not None
-                assert adoption_event.payload["approval_id"] == str(approval_row.id)
-                if approval_state != "PENDING":
+                if approval_state == "PENDING":
+                    assert adoption_event.after_state["approval_id"] == str(approval_row.id)
+                    assert adoption_event.after_state["status"] == "PENDING"
+                else:
+                    assert adoption_event.payload["approval_id"] == str(approval_row.id)
                     assert adoption_event.payload["decision"] == approval_state
             else:
                 assert db.scalar(select(ResourceApproval)) is None
