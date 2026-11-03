@@ -229,20 +229,11 @@ jobs:
             source_root="${RUNNER_TEMP}/bcftools-source-${version}"
             install_root="${RUNNER_TEMP}/bcftools-install-${version}"
             mkdir -p "${source_root}"
-            git clone --depth 1 --branch "${version}" https://github.com/samtools/htslib.git "${source_root}/htslib"
-            git clone --depth 1 --branch "${version}" https://github.com/samtools/bcftools.git "${source_root}/bcftools"
-            pushd "${source_root}/bcftools"
-            if [[ ! -x ./configure ]]; then
-              autoheader
-              autoconf
-            fi
-            ./configure --prefix="${install_root}" --with-htslib="${source_root}/htslib"
-            make --jobs=2
-            make install
-            popd
-            export LD_LIBRARY_PATH="${source_root}/htslib:${install_root}/lib:${LD_LIBRARY_PATH:-}"
-            bcftools_commit="$(git -C "${source_root}/bcftools" rev-parse HEAD)"
-            htslib_commit="$(git -C "${source_root}/htslib" rev-parse HEAD)"
+
+            # Resolve immutable source pins before any compilation. The HTSlib
+            # release embeds htscodecs as a git submodule; a shallow parent
+            # clone without submodule initialization produces an incomplete
+            # source tree and fails during the HTSlib object-file build.
             case "${version}" in
               1.23.2)
                 expected_bcftools_commit="db87bf9833f06a5cde792a5118a0a83d2860a179"
@@ -261,10 +252,36 @@ jobs:
                 exit 1
                 ;;
             esac
+
+            git init "${source_root}/htslib"
+            git -C "${source_root}/htslib" remote add origin https://github.com/samtools/htslib.git
+            git -C "${source_root}/htslib" fetch --depth 1 origin "${expected_htslib_commit}"
+            git -C "${source_root}/htslib" checkout --detach FETCH_HEAD
+            test "$(git -C "${source_root}/htslib" rev-parse HEAD)" = "${expected_htslib_commit}"
+            git -C "${source_root}/htslib" submodule update --init --recursive --depth 1
+            htscodecs_commit="$(git -C "${source_root}/htslib/htscodecs" rev-parse HEAD)"
+            expected_htscodecs_commit="b9fc194f772e45bb0a1f44b08cbf8697a1384bae"
+            test "${htscodecs_commit}" = "${expected_htscodecs_commit}"
+
+            git init "${source_root}/bcftools"
+            git -C "${source_root}/bcftools" remote add origin https://github.com/samtools/bcftools.git
+            git -C "${source_root}/bcftools" fetch --depth 1 origin "${expected_bcftools_commit}"
+            git -C "${source_root}/bcftools" checkout --detach FETCH_HEAD
+            bcftools_commit="$(git -C "${source_root}/bcftools" rev-parse HEAD)"
             test "${bcftools_commit}" = "${expected_bcftools_commit}"
-            test "${htslib_commit}" = "${expected_htslib_commit}"
+
+            pushd "${source_root}/bcftools"
+            if [[ ! -x ./configure ]]; then
+              autoheader
+              autoconf
+            fi
+            ./configure --prefix="${install_root}" --with-htslib="${source_root}/htslib"
+            make --jobs=2
+            make install
+            popd
+            export LD_LIBRARY_PATH="${source_root}/htslib:${install_root}/lib:${LD_LIBRARY_PATH:-}"
             qualify_executable "${version}" "${version}" "${install_root}/bin/bcftools" \
-              "Pinned upstream BCFtools commit ${bcftools_commit}; pinned HTSlib commit ${htslib_commit}"
+              "Pinned upstream BCFtools commit ${bcftools_commit}; pinned HTSlib commit ${expected_htslib_commit}; pinned htscodecs commit ${htscodecs_commit}"
           done
       - name: Preserve public VCF normalization qualification evidence
         if: always()
