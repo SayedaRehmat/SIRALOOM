@@ -1320,9 +1320,9 @@ def normalize_vcf_with_bcftools(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise VCFToolError("Timed out while checking the bcftools version.") from exc
+        raise VCFToolUnavailable("Timed out while checking the bcftools version.") from exc
     except OSError as exc:
-        raise VCFToolError(f"Unable to execute bcftools: {exc}") from exc
+        raise VCFToolUnavailable(f"Unable to execute bcftools: {exc}") from exc
     if version_result.returncode != 0:
         detail = (version_result.stderr or version_result.stdout or "unknown bcftools error").strip()
         raise VCFToolError(f"Unable to determine bcftools version: {detail}")
@@ -1358,9 +1358,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
+            raise VCFToolUnavailable(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools GVCF wildcard preparation: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools GVCF wildcard preparation: {exc}") from exc
         view_stderr = (viewed.stderr or "").strip()
         if viewed.returncode != 0:
             detail = (viewed.stderr or viewed.stdout or "unknown bcftools view error").strip()
@@ -1389,9 +1389,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
+            raise VCFToolUnavailable(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools normalization: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools normalization: {exc}") from exc
         normalized_stderr = (completed.stderr or "").strip()
         if completed.returncode != 0:
             detail = (completed.stderr or completed.stdout or "unknown bcftools normalization error").strip()
@@ -1412,9 +1412,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError(f"bcftools sorting timed out after {timeout}s.") from exc
+            raise VCFToolUnavailable(f"bcftools sorting timed out after {timeout}s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools sorting: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools sorting: {exc}") from exc
         sorted_stderr = (sorted_result.stderr or "").strip()
         if sorted_result.returncode != 0:
             detail = (sorted_result.stderr or sorted_result.stdout or "unknown bcftools sort error").strip()
@@ -1451,11 +1451,11 @@ def normalize_vcf_with_bcftools(
                     check=False,
                 )
             except subprocess.TimeoutExpired as exc:
-                raise VCFToolError(
+                raise VCFToolUnavailable(
                     f"bcftools compression of source-only FORMAT output timed out after {timeout}s."
                 ) from exc
             except OSError as exc:
-                raise VCFToolError(
+                raise VCFToolUnavailable(
                     f"Unable to execute bcftools compression of source-only FORMAT output: {exc}"
                 ) from exc
             source_only_stderr = (source_only_result.stderr or "").strip()
@@ -1499,9 +1499,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError("bcftools VCF indexing timed out after 120s.") from exc
+            raise VCFToolUnavailable("bcftools VCF indexing timed out after 120s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools VCF indexing: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools VCF indexing: {exc}") from exc
         indexed_stderr = (indexed_result.stderr or "").strip()
         if indexed_result.returncode != 0:
             detail = (indexed_result.stderr or indexed_result.stdout or "unknown bcftools index error").strip()
