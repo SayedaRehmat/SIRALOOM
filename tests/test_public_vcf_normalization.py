@@ -1,10 +1,12 @@
 """Real GIAB HG002 VCF and GRCh38 reference normalization qualification.
 
 The source is the NIST/GIAB HG002 v4.2.1 GRCh38 benchmark VCF. CI downloads
-the official BGZF VCF and TBI, extracts a bounded chromosome-1 interval with
+the official BGZF VCF and TBI, extracts the complete chromosome-1 callset with
 the pinned BCFtools toolchain, and normalizes it against the Ensembl GRCh38
-chromosome-1 reference. All downloaded data stays in runner temporary storage;
-only checksums, execution metadata and the small normalized result are retained.
+chromosome-1 reference. The companion GRCh37 test uses the HG002 v4.2.1
+GRCh37 benchmark and Ensembl release-75 chromosome-1 reference. All downloaded
+data stays in runner temporary storage; only checksums, execution metadata and
+normalized chromosome-1 outputs are retained.
 """
 from __future__ import annotations
 
