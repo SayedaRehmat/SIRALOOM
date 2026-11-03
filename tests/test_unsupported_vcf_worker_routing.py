@@ -853,7 +853,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                     assert provider_execution is None
                 review_event = db.scalar(select(AuditEvent).where(
                     AuditEvent.analysis_id == analysis_id,
-                    AuditEvent.event_type=(
+                    AuditEvent.event_type == (
                         "NORMALIZATION_RESOURCE_REQUIRES_REVIEW"
                         if normalization_resource_failure
                         else "NORMALIZATION_ARTIFACT_IDENTITY_CONFLICT"
