@@ -295,3 +295,149 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         json.dumps(report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+
+def _official_md5_from_manifest(manifest_path: Path, filename: str) -> str:
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        fields = line.split()
+        if len(fields) >= 2 and Path(fields[-1]).name == filename:
+            digest = fields[0].lower()
+            if len(digest) == 32 and all(char in "0123456789abcdef" for char in digest):
+                return digest
+    raise AssertionError(f"Official Ensembl CHECKSUMS manifest has no valid MD5 for {filename}")
+
+
+def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: Path):
+    """Execute real HG002 GRCh37 benchmark records against the pinned Ensembl GRCh37 chr1."""
+    slice_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_SLICE_PATH")
+    archive_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_ARCHIVE_PATH")
+    index_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_PATH")
+    reference_archive_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_REFERENCE_ARCHIVE_PATH")
+    reference_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_REFERENCE_PATH")
+    checksum_manifest_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_REFERENCE_CHECKSUMS_PATH")
+    contig = os.getenv("SIRALOOM_PUBLIC_GRCH37_REFERENCE_CONTIG")
+    data_dir_value = os.getenv("SIRALOOM_PUBLIC_GRCH37_DATA_DIR")
+    if not all((
+        slice_value, archive_value, index_value, reference_archive_value,
+        reference_value, checksum_manifest_value, contig, data_dir_value,
+    )):
+        pytest.skip("Pinned GIAB/GRCh37 public-data acquisition is enabled in GitHub Actions only.")
+
+    source = Path(slice_value)
+    archive = Path(archive_value)
+    source_index = Path(index_value)
+    reference_archive = Path(reference_archive_value)
+    reference = Path(reference_value)
+    checksum_manifest = Path(checksum_manifest_value)
+    data_dir = Path(data_dir_value)
+    assert all(path.is_file() for path in (
+        source, archive, source_index, reference_archive, reference, checksum_manifest
+    ))
+
+    reference_filename = reference_archive.name
+    official_reference_md5 = _official_md5_from_manifest(checksum_manifest, reference_filename)
+    actual_reference_md5 = hashlib.md5(reference_archive.read_bytes(), usedforsecurity=False).hexdigest()
+    assert actual_reference_md5 == official_reference_md5
+    reference_archive_sha256 = _sha256_file(reference_archive)
+    giab_archive_sha256 = _sha256_file(archive)
+    giab_index_sha256 = _sha256_file(source_index)
+    giab_slice_sha256 = _sha256_file(source)
+    assert giab_archive_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_SHA256")
+    assert giab_index_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_SHA256")
+    assert reference_archive_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_REFERENCE_SHA256")
+
+    assert read_vcf_fileformat(archive) == "VCFv4.2"
+    assert read_vcf_fileformat(source) == "VCFv4.2"
+    reference_for_vcf = _reference_with_contig_name(reference, contig, data_dir)
+    _build_single_contig_fai(reference_for_vcf)
+    source_for_validation = _restrict_header_to_single_contig(
+        source,
+        data_dir / "giab-hg002-grch37-chr1-1-5000000.vcf",
+        contig,
+    )
+
+    source_validation = validate_vcf_strict(source_for_validation, reference_contigs={contig})
+    assert source_validation["fileformat"] == "VCFv4.2"
+    assert source_validation["records"] > 0
+    assert source_validation["sample_count"] == 1
+
+    reference_validation = validate_vcf_reference_alleles(source_for_validation, reference_for_vcf)
+    assert reference_validation["checked_record_count"] == source_validation["records"]
+
+    routing = route_vcf_records(source_for_validation, data_dir / "routed")
+    assert routing["record_reconciliation"]["balanced"] is True
+    assert routing["sequence_records"] == source_validation["records"]
+    assert routing["cnv_variant_records"] == 0
+    assert routing["repeat_expansion_records"] == 0
+    assert routing["structural_variant_records"] == 0
+
+    output = data_dir / "giab-hg002-grch37-chr1.normalized.vcf.gz"
+    executable = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE", "bcftools")
+    version = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_VERSION", "1.25")
+    expected_executable_sha256 = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_SHA256")
+    assert expected_executable_sha256 and len(expected_executable_sha256) == 64
+    execution = normalize_vcf_with_bcftools(
+        routing["sequence_path"],
+        output,
+        reference_fasta=reference_for_vcf,
+        expected_bcftools_version=version,
+        bcftools_executable=executable,
+        expected_bcftools_sha256=expected_executable_sha256,
+    )
+    output_validation = validate_vcf_strict(output, reference_contigs={contig})
+    reconciliation = execution["source_child_reconciliation"]
+    assert output_validation["fileformat"] == "VCFv4.2"
+    assert output_validation["records"] > 0
+    assert reconciliation["status"] == "VALIDATED"
+    assert reconciliation["balanced"] is True
+    assert reconciliation["source_records"] == source_validation["records"]
+    assert reconciliation["normalized_child_records"] == output_validation["records"]
+    assert execution["tool_version"] == f"bcftools {version}"
+    assert execution["executable_integrity_status"] == "MATCHED_QUALIFIED_SHA256"
+    assert execution["executable_sha256"] == expected_executable_sha256
+    assert execution["reference_check"] == "error"
+    assert execution["compression"] == "BGZF"
+    assert execution["index"] == "CSI"
+    assert Path(execution["index_path"]).is_file()
+
+    report = {
+        "suite": "siraloom-giab-public-vcf-normalization-grch37-v1",
+        "vcf_source": (
+            "https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/"
+            "AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh37/"
+            "HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz"
+        ),
+        "vcf_archive_sha256": giab_archive_sha256,
+        "vcf_archive_md5_locally_computed": hashlib.md5(
+            archive.read_bytes(), usedforsecurity=False
+        ).hexdigest(),
+        "vcf_index_sha256": giab_index_sha256,
+        "vcf_slice_sha256": giab_slice_sha256,
+        "vcf_fileformat": source_validation["fileformat"],
+        "source_record_count": source_validation["records"],
+        "source_sample_count": source_validation["sample_count"],
+        "reference_source": (
+            "https://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/"
+            "Homo_sapiens.GRCh37.75.dna.chromosome.1.fa.gz"
+        ),
+        "reference_archive_md5_official_ensembl": official_reference_md5,
+        "reference_archive_sha256": reference_archive_sha256,
+        "reference_checksum_manifest_sha256": _sha256_file(checksum_manifest),
+        "reference_contig": contig,
+        "reference_validation": reference_validation,
+        "reference_fasta_sha256": _sha256_file(reference_for_vcf),
+        "reference_index_sha256": _sha256_file(Path(f"{reference_for_vcf}.fai")),
+        "routing_summary": routing,
+        "source_child_reconciliation": reconciliation,
+        "normalized_vcf_sha256": _sha256_file(output),
+        "normalized_index_sha256": _sha256_file(Path(execution["index_path"])),
+        "normalized_validation": output_validation,
+        "normalization_execution": execution,
+        "expected_bcftools_version": version,
+        "source_integrity_status": "SHA256_MEASURED_AWAITING_IMMUTABLE_PIN",
+    }
+    (data_dir / "qualification-report-grch37.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
