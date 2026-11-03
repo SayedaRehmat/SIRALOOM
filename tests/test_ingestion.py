@@ -797,16 +797,14 @@ def test_index_validation_rejects_index_for_uncompressed_vcf(tmp_path: Path):
 
 def test_csi_magic_validation(tmp_path: Path):
     csi = tmp_path / "sample.vcf.bgz.csi"
-    with gzip.open(csi, "wb") as handle:
-        handle.write(b"CSI\x01dummy")
+    _write_bgzf(csi, b"CSI\x01dummy")
     result = validate_index(csi, "sample.vcf.bgz")
     assert result.status == "VALID"
 
 
 def test_csi_magic_validation_rejects_invalid_decompressed_signature(tmp_path: Path):
     csi = tmp_path / "sample.vcf.bgz.csi"
-    with gzip.open(csi, "wb") as handle:
-        handle.write(b"NOT-CSI")
+    _write_bgzf(csi, b"NOT-CSI")
     result = validate_index(csi, "sample.vcf.bgz")
     assert result.status == "INVALID"
     assert "CSI magic header" in result.errors[0]
@@ -818,7 +816,6 @@ def test_csi_magic_validation_rejects_uncompressed_index(tmp_path: Path):
     result = validate_index(csi, "sample.vcf.bgz")
     assert result.status == "INVALID"
     assert "BGZF/gzip header" in result.errors[0]
-
 
 def test_index_alone_is_not_primary_input():
     assert classify_filename("sample.vcf.gz.tbi") == "TBI"
