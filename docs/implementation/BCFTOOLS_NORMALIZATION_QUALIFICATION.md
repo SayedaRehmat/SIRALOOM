@@ -41,6 +41,15 @@ interchangeable. Each newly discovered stable release remains a candidate
 until the same execution qualification succeeds and the laboratory approves
 its exact resource binding.
 
+## VCF specification parser interoperability
+
+For every release in the executable matrix, CI also runs the actual BCFtools
+parser against the versioned VCF fixtures: VCFv4.0 legacy parser smoke and
+VCFv4.1 through VCFv4.5. The VCFv4.5 set includes local-allele encoding,
+base-modification FORMAT fields, and unspecified-allele reference-block
+fixtures. This is parser interoperability evidence only; it does not replace
+the native validator's normative clause conformance qualification.
+
 ## Immutable upstream source pins
 
 The following source-built releases are pinned to the commit objects behind
@@ -68,6 +77,10 @@ This bounded slice is an interoperability and normalization regression test.
 It is not a full-genome caller-accuracy benchmark, does not establish all VCF
 normative clause conformance, and does not replace laboratory qualification
 of the exact executable bytes and organization-approved resource binding.
+
+GRCh37 real-data normalization has not yet been demonstrated by this artifact. The
+GRCh37 reference-bound GIAB qualification remains an explicit open acceptance item;
+GRCh38 evidence must not be represented as GRCh37 evidence.
 
 ## Reference documentation
 
