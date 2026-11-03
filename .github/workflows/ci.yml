@@ -71,9 +71,11 @@ jobs:
             "${reference_base}/${reference_name}" --output "${reference_archive}"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 120 \
             "${reference_base}/CHECKSUMS" --output "${reference_checksums}"
-          reference_md5="$(awk -v filename="${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "${reference_checksums}")"
-          [[ "${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
-          printf '%s  %s\n' "${reference_md5}" "${reference_archive}" | md5sum --check -
+          reference_official_sum="$(awk -v filename="${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1 " " $2; exit}}' "${reference_checksums}")"
+          [[ "${reference_official_sum}" =~ ^[0-9]+[[:space:]]+[0-9]+$ ]]
+          reference_actual_sum="$(sum "${reference_archive}" | awk '{print $1 " " $2}')"
+          test "${reference_actual_sum}" = "${reference_official_sum}"
+          reference_md5="$(md5sum "${reference_archive}" | awk '{print $1}')"
           echo "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c  ${reference_archive}" | sha256sum --check -
           reference_fasta="${data_dir}/GRCh38.chr1.fa"
           gzip --decompress --stdout "${reference_archive}" > "${reference_fasta}"
@@ -118,9 +120,11 @@ jobs:
             "${reference_base}/${reference_name}" --output "${reference_archive}"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 120 \
             "${reference_base}/CHECKSUMS" --output "${checksum_manifest}"
-          reference_md5="$(awk -v filename="${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "${checksum_manifest}")"
-          [[ "${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
-          printf '%s  %s\n' "${reference_md5}" "${reference_archive}" | md5sum --check -
+          reference_official_sum="$(awk -v filename="${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1 " " $2; exit}}' "${checksum_manifest}")"
+          [[ "${reference_official_sum}" =~ ^[0-9]+[[:space:]]+[0-9]+$ ]]
+          reference_actual_sum="$(sum "${reference_archive}" | awk '{print $1 " " $2}')"
+          test "${reference_actual_sum}" = "${reference_official_sum}"
+          reference_md5="$(md5sum "${reference_archive}" | awk '{print $1}')"
           reference_sha256="$(sha256sum "${reference_archive}" | awk '{print $1}')"
           giab_sha256="$(sha256sum "${giab_vcf}" | awk '{print $1}')"
           giab_index_sha256="$(sha256sum "${giab_index}" | awk '{print $1}')"
