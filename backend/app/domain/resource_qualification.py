@@ -360,6 +360,38 @@ def _qualify_normalization_engine(
     qualified_toolchain["bcftools"] = qualified_bcftools
     qualified_contract["toolchain"] = qualified_toolchain
     checks["execution_contract"] = qualified_contract
+    try:
+        version_recheck = subprocess.run(
+            [str(executable_path), "--version"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        blockers.append("BCFTOOLS_VERSION_PROBE_FAILED")
+        checks["normalization_runtime"].update({
+            "status": "BLOCKED",
+            "version_recheck_error_type": type(exc).__name__,
+        })
+        return
+    version_recheck_output = "\\n".join(
+        (version_recheck.stdout or "", version_recheck.stderr or "")
+    )
+    version_recheck_match = re.search(
+        r"(?im)^bcftools\\s+([^\\s]+)", version_recheck_output
+    )
+    if (
+        version_recheck.returncode != 0
+        or not version_recheck_match
+        or version_recheck_match.group(1) != str(resource.version).strip()
+    ):
+        blockers.append("BCFTOOLS_VERSION_MISMATCH")
+        checks["normalization_runtime"].update({
+            "status": "BLOCKED",
+            "version_recheck": version_recheck_output[:500],
+        })
+        return
     checks["normalization_runtime"].update({
         "executable": str(executable_path),
         "executable_sha256": executable_sha256,
