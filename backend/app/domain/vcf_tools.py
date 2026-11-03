@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import stat as stat_module
 import struct
 import subprocess
 import tempfile
@@ -1230,6 +1231,42 @@ def _strip_vcf45_number_m_format_fields(
     return sorted(source_only_fields)
 
 
+def _bcftools_executable_identity(executable: str) -> dict[str, object]:
+    """Fingerprint the resolved executable and detect replacement during a run."""
+    candidate = shutil.which(executable)
+    if candidate is None and Path(executable).is_file():
+        candidate = executable
+    if candidate is None:
+        raise VCFToolUnavailable(f"Selected BCFtools executable is unavailable: {executable!r}.")
+    try:
+        resolved = Path(candidate).resolve(strict=True)
+        before = resolved.stat()
+    except OSError as exc:
+        raise VCFToolUnavailable(f"Unable to resolve selected BCFtools executable: {exc}") from exc
+    if not stat_module.S_ISREG(before.st_mode) or not os.access(resolved, os.X_OK):
+        raise VCFToolUnavailable("Selected BCFtools executable must be a regular executable file.")
+    digest = hashlib.sha256()
+    try:
+        with resolved.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        after = resolved.stat()
+    except OSError as exc:
+        raise VCFToolUnavailable(f"Unable to fingerprint selected BCFtools executable: {exc}") from exc
+    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns
+    ):
+        raise VCFToolUnavailable("Selected BCFtools executable changed while being fingerprinted.")
+    return {
+        "path": str(resolved),
+        "sha256": digest.hexdigest(),
+        "size_bytes": after.st_size,
+        "device": after.st_dev,
+        "inode": after.st_ino,
+        "mtime_ns": after.st_mtime_ns,
+    }
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -1240,6 +1277,7 @@ def normalize_vcf_with_bcftools(
     timeout_seconds: int = 1800,
     preserve_existing_source_mapping: bool = False,
     bcftools_executable: str = "bcftools",
+    expected_bcftools_sha256: str | None = None,
 ) -> dict:
     """Normalize, sort, and VCF-index a VCF before publishing either output.
 
@@ -1247,13 +1285,14 @@ def normalize_vcf_with_bcftools(
     filesystem. Existing output and index files remain untouched until
     normalization, sorting, and indexing have all succeeded.
     """
-    executable_available = (
-        bcftools_available()
-        if bcftools_executable == "bcftools"
-        else Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
-    )
-    if not executable_available:
-        raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
+    executable_identity_before = _bcftools_executable_identity(bcftools_executable)
+    bcftools_executable = str(executable_identity_before["path"])
+    if expected_bcftools_sha256:
+        expected_digest = str(expected_bcftools_sha256).strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", expected_digest):
+            raise VCFToolError("Qualified BCFtools executable SHA-256 must contain 64 hexadecimal characters.")
+        if executable_identity_before["sha256"] != expected_digest:
+            raise VCFToolError("Selected BCFtools executable SHA-256 differs from its qualified identity.")
     input_path = Path(input_path)
     output_path = Path(output_path)
     reference_fasta = Path(reference_fasta)
@@ -1440,6 +1479,11 @@ def normalize_vcf_with_bcftools(
             raise VCFToolError(
                 "Reference FASTA or index artifacts changed during normalization; staged outputs will not be published."
             )
+        executable_identity_after = _bcftools_executable_identity(bcftools_executable)
+        if executable_identity_after != executable_identity_before:
+            raise VCFToolError(
+                "Selected BCFtools executable changed during normalization; staged outputs will not be published."
+            )
 
         source_child_reconciliation = _validate_source_child_reconciliation(
             input_path, sorted_path
@@ -1510,6 +1554,11 @@ def normalize_vcf_with_bcftools(
             "tool": "bcftools",
             "tool_version": version_line,
             "expected_tool_version": expected_bcftools_version,
+            "executable_identity": executable_identity_before,
+            "executable_sha256": executable_identity_before["sha256"],
+            "executable_integrity_status": (
+                "MATCHED_QUALIFIED_SHA256" if expected_bcftools_sha256 else "MEASURED_UNPINNED"
+            ),
             "operation": "reference_aware_normalization_sort_index",
             "command": " && ".join([
                 " ".join(view_command),
