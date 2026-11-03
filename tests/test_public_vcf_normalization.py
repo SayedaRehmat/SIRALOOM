@@ -7,6 +7,7 @@ The downloaded data remains in the ephemeral GitHub Actions runner workspace.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from pathlib import Path
 
@@ -62,6 +63,14 @@ def _build_single_contig_fai(fasta_path: Path) -> Path:
     return fai_path
 
 
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def test_downloaded_public_vcf_validates_and_normalizes_against_grch38(
     tmp_path: Path,
 ):
@@ -75,6 +84,9 @@ def test_downloaded_public_vcf_validates_and_normalizes_against_grch38(
     assert source.is_file(), f"Missing downloaded upstream VCF from {PUBLIC_VCF_SOURCE}"
     assert reference.is_file(), "Missing downloaded Ensembl GRCh38 chromosome 1 FASTA"
     assert hashlib.sha256(source.read_bytes()).hexdigest() == PUBLIC_VCF_SHA256
+    assert os.getenv("SIRALOOM_PUBLIC_REFERENCE_MD5_VERIFIED") == "1", (
+        "Reference acquisition must pass Ensembl's official MD5SUM check."
+    )
 
     source_validation = validate_vcf_strict(source, reference_contigs={"1"})
     assert source_validation["fileformat"] == "VCFv4.3"
@@ -82,7 +94,8 @@ def test_downloaded_public_vcf_validates_and_normalizes_against_grch38(
     assert source_validation["sample_count"] == 1
 
     _build_single_contig_fai(reference)
-    output = tmp_path / "bcftools-upstream-fixture.normalized.vcf.gz"
+    data_dir = Path(os.environ["SIRALOOM_PUBLIC_DATA_DIR"])
+    output = data_dir / "bcftools-upstream-fixture.normalized.vcf.gz"
     execution = normalize_vcf_with_bcftools(
         source,
         output,
@@ -101,3 +114,26 @@ def test_downloaded_public_vcf_validates_and_normalizes_against_grch38(
     assert execution["executable_integrity_status"] == "MEASURED_UNPINNED"
     assert len(execution["executable_sha256"]) == 64
     assert execution["reference_identity"]["sha256"]
+    report = {
+        "suite": "siraloom-public-vcf-normalization-qualification-v1",
+        "vcf_source": PUBLIC_VCF_SOURCE,
+        "vcf_sha256": PUBLIC_VCF_SHA256,
+        "vcf_fileformat": source_validation["fileformat"],
+        "source_record_count": source_validation["records"],
+        "source_sample_count": source_validation["sample_count"],
+        "reference_source": (
+            "https://ftp.ensembl.org/pub/release-115/fasta/"
+            "homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
+        ),
+        "reference_md5_verified": True,
+        "reference_sha256": _sha256_file(reference),
+        "reference_index_sha256": _sha256_file(Path(f"{reference}.fai")),
+        "normalized_vcf_sha256": _sha256_file(output),
+        "normalized_index_sha256": _sha256_file(Path(execution["index_path"])),
+        "normalized_validation": output_validation,
+        "normalization_execution": execution,
+    }
+    (data_dir / "qualification-report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\\n",
+        encoding="utf-8",
+    )
