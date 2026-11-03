@@ -49,7 +49,7 @@ def _reference_with_contig_name(reference: Path, contig: str, data_dir: Path) ->
         original_name = header[1:].split(None, 1)[0].decode("ascii")
         if original_name == contig:
             return reference
-        aliased = data_dir / f"GRCh38.{contig}.fa"
+        aliased = data_dir / f"GRCh38.reference-for-{contig}.fa"
         with aliased.open("wb") as destination:
             destination.write(f">{contig}\n".encode("ascii"))
             shutil.copyfileobj(source, destination)
