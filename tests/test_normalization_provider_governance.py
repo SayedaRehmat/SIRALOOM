@@ -40,6 +40,16 @@ def test_qualified_release_can_be_selected_after_approval_resolution():
     assert selection.version == "1.26"
 
 
+def test_provider_requires_explicit_normalization_capability():
+    resource = _resource(version="1.25")
+    resource.metadata_json["capabilities"] = []
+
+    with pytest.raises(NormalizationProviderError) as exc:
+        resolve_normalization_provider(resource)
+
+    assert exc.value.code == "NORMALIZATION_CAPABILITY_MISSING"
+
+
 def test_unknown_normalization_provider_fails_closed():
     with pytest.raises(NormalizationProviderError, match="adapter is registered"):
         resolve_normalization_provider(_resource(provider="future-normalizer", version="2.0"))
