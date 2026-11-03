@@ -388,16 +388,18 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
 
 
 @pytest.mark.parametrize(
-    ("reference_mismatch", "worker_loss", "normalization_resource_failure"),
+    ("reference_mismatch", "worker_loss", "normalization_resource_failure", "artifact_identity_conflict"),
     [
-        (False, False, False),
-        (True, False, False),
-        (False, True, False),
-        (False, False, True),
+        (False, False, False, False),
+        (True, False, False, False),
+        (False, True, False, False),
+        (False, False, True, False),
+        (False, False, False, True),
     ],
 )
 def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_block(
-    monkeypatch, tmp_path, reference_mismatch, worker_loss, normalization_resource_failure
+    monkeypatch, tmp_path, reference_mismatch, worker_loss,
+    normalization_resource_failure, artifact_identity_conflict
 ):
     """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
     import gzip
@@ -679,16 +681,18 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert "\t1001\ttelo-after\t" not in routed_text
             assert "<NON_REF>\t.\tPASS\tEND=10" not in routed_text
             index = Path(str(output_path) + ".csi")
-            with gzip.open(output_path, "wt", encoding="utf-8", newline="\n") as handle:
-                handle.write(
-                    "##fileformat=VCFv4.3\n##contig=<ID=1,length=1000>\n"
-                    '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-                    '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
-                    '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
-                    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
-                    "1\t11\trs1\tA\tC\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9:100,50,60\n"
-                    "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
-                )
+            vcf_payload = (
+                "##fileformat=VCFv4.3\n##contig=<ID=1,length=1000>\n"
+                '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+                '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+                '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Phred likelihoods">\n'
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1\n"
+                "1\t11\trs1\tA\tC\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9:100,50,60\n"
+                "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
+            )
+            with output_path.open("wb") as raw_handle:
+                with gzip.GzipFile(fileobj=raw_handle, mode="wb", filename="", mtime=0) as handle:
+                    handle.write(vcf_payload.encode("utf-8"))
             index.write_bytes(b"fixture-csi")
             stats = {
                 "tool": "bcftools", "tool_version": "bcftools 1.25",
@@ -708,6 +712,18 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
         used_real_bcftools = False
         monkeypatch.setattr(workflow, "normalize_with_selected_provider", fake_normalize)
+        if artifact_identity_conflict:
+            from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
+
+            def conflict_normalized_artifact(**kwargs):
+                if kwargs.get("artifact_type") == "NORMALIZED_VCF":
+                    raise ArtifactIdentityConflictError(
+                        "fixture: normalized artifact ID already contains different bytes"
+                    )
+                return store.put_file(**kwargs)
+
+            monkeypatch.setattr(store, "put_file", conflict_normalized_artifact)
+
         if worker_loss:
             queue_module = importlib.import_module(
                 "backend.app.infrastructure.queue.celery_app"
@@ -815,21 +831,37 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 Artifact.artifact_type == "VCF_EXCLUSION_MANIFEST",
             )).all()
             analysis = db.get(Analysis, analysis_id)
-            if normalization_resource_failure:
+            if normalization_resource_failure or artifact_identity_conflict:
+                expected_error = (
+                    "RESOURCE_NOT_ADOPTED"
+                    if normalization_resource_failure
+                    else "ARTIFACT_IDENTITY_CONFLICT"
+                )
                 assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
                 assert step.status == StepStatus.REQUIRES_REVIEW
-                assert step.error_code == "RESOURCE_NOT_ADOPTED"
+                assert step.error_code == expected_error
                 assert normalized is None
-                assert db.scalar(select(ResourceExecutionRecord).where(
+                provider_execution = db.scalar(select(ResourceExecutionRecord).where(
                     ResourceExecutionRecord.analysis_id == analysis_id,
                     ResourceExecutionRecord.resource_id == normalization_resource_id,
-                )) is None
+                ))
+                if artifact_identity_conflict:
+                    assert provider_execution is not None
+                else:
+                    assert provider_execution is None
                 review_event = db.scalar(select(AuditEvent).where(
                     AuditEvent.analysis_id == analysis_id,
-                    AuditEvent.event_type == "NORMALIZATION_RESOURCE_REQUIRES_REVIEW",
+                    AuditEvent.event_type=(
+                        "NORMALIZATION_RESOURCE_REQUIRES_REVIEW"
+                        if normalization_resource_failure
+                        else "NORMALIZATION_ARTIFACT_IDENTITY_CONFLICT"
+                    ),
                 ))
                 assert review_event is not None
-                assert review_event.payload["automatic_fallback"] is False
+                if normalization_resource_failure:
+                    assert review_event.payload["automatic_fallback"] is False
+                else:
+                    assert review_event.payload["automatic_overwrite"] is False
                 assert review_event.payload["human_action_required"] is True
                 return
             assert block_artifact is not None and store.exists(block_artifact.storage_uri)
