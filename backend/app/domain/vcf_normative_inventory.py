@@ -32,7 +32,7 @@ SPEC_EXPECTED_CANDIDATE_LINES = {
     "VCFv4.5": 230,
 }
 
-_HEADING = re.compile(r"^\\(section|subsection|subsubsection|paragraph)\\{(.*)\\}")
+_HEADING = re.compile(r"^\\(section|subsection|subsubsection|paragraph)\{(.*)\}")
 _NORMATIVE = re.compile(
     r"\b(must\s+not|shall\s+not|should\s+not|must|shall|should|"
     r"required|recommended|optional|may)\b",
