@@ -141,8 +141,28 @@ jobs:
             export LD_LIBRARY_PATH="${source_root}/htslib:${install_root}/lib:${LD_LIBRARY_PATH:-}"
             bcftools_commit="$(git -C "${source_root}/bcftools" rev-parse HEAD)"
             htslib_commit="$(git -C "${source_root}/htslib" rev-parse HEAD)"
+            case "${version}" in
+              1.23.2)
+                expected_bcftools_commit="db87bf9833f06a5cde792a5118a0a83d2860a179"
+                expected_htslib_commit="3beae100a4c6b066e7f601f7e244bb371b9c1c16"
+                ;;
+              1.23.3)
+                expected_bcftools_commit="ec74c62952f53c14459acb5283a7483b41c4ade3"
+                expected_htslib_commit="02594b767d74e7992971d286a79dc2b60a7b9257"
+                ;;
+              1.24.1)
+                expected_bcftools_commit="2fd5931cdf3a7ef27ab843dda27da844b4ea2a51"
+                expected_htslib_commit="a6962b2d8d748d699258eb1def48d770544f73e2"
+                ;;
+              *)
+                echo "No immutable upstream source pin for BCFtools ${version}" >&2
+                exit 1
+                ;;
+            esac
+            test "${bcftools_commit}" = "${expected_bcftools_commit}"
+            test "${htslib_commit}" = "${expected_htslib_commit}"
             qualify_executable "${version}" "${install_root}/bin/bcftools" \
-              "Upstream BCFtools tag ${version} commit ${bcftools_commit}; HTSlib tag ${version} commit ${htslib_commit}"
+              "Pinned upstream BCFtools commit ${bcftools_commit}; pinned HTSlib commit ${htslib_commit}"
           done
       - name: Preserve public VCF normalization qualification evidence
         if: always()
