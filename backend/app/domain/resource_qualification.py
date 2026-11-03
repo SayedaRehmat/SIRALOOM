@@ -375,11 +375,11 @@ def _qualify_normalization_engine(
             "version_recheck_error_type": type(exc).__name__,
         })
         return
-    version_recheck_output = "\\n".join(
+    version_recheck_output = "\n".join(
         (version_recheck.stdout or "", version_recheck.stderr or "")
     )
     version_recheck_match = re.search(
-        r"(?im)^bcftools\\s+([^\\s]+)", version_recheck_output
+        r"(?im)^bcftools\s+([^\s]+)", version_recheck_output
     )
     if (
         version_recheck.returncode != 0
