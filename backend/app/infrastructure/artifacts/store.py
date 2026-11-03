@@ -149,7 +149,7 @@ class ArtifactStore:
 
         existing_artifact = db.get(Artifact, artifact_id)
         if existing_artifact is not None:
-            raise FileExistsError(
+            raise ArtifactIdentityConflictError(
                 f"Artifact identity {artifact_id} already has a durable database record."
             )
 
