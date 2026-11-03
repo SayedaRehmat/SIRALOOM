@@ -271,7 +271,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     reconciliation = execution["source_child_reconciliation"]
     assert reconciliation["status"] == "VALIDATED"
     assert reconciliation["balanced"] is True
-    assert reconciliation["source_records"] == source_validation["records"]
+    assert reconciliation["source_records"] == routing["sequence_records"]
     assert reconciliation["normalized_child_records"] == output_validation["records"]
     assert execution["tool_version"] == f"bcftools {expected_bcftools_version}"
     assert execution["reference_check"] == "error"
@@ -426,7 +426,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     assert output_validation["records"] > 0
     assert reconciliation["status"] == "VALIDATED"
     assert reconciliation["balanced"] is True
-    assert reconciliation["source_records"] == source_validation["records"]
+    assert reconciliation["source_records"] == routing["sequence_records"]
     assert reconciliation["normalized_child_records"] == output_validation["records"]
     assert execution["tool_version"] == f"bcftools {version}"
     assert execution["executable_integrity_status"] == "MATCHED_QUALIFIED_SHA256"
