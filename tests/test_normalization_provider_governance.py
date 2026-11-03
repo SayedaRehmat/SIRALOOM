@@ -98,6 +98,22 @@ def test_provider_preserves_retryable_executable_failures(monkeypatch, tmp_path)
     assert exc.value.code == "NORMALIZATION_PROVIDER_UNAVAILABLE"
 
 
+def test_execution_requires_a_qualified_executable_digest(monkeypatch, tmp_path):
+    resource = _resource(version="1.25")
+
+    with pytest.raises(NormalizationProviderError) as exc:
+        normalize_with_selected_provider(
+            resource,
+            tmp_path / "input.vcf",
+            tmp_path / "output.vcf.gz",
+            reference_fasta=tmp_path / "GRCh38.fa",
+            approved=True,
+            qualified_bcftools_executable="/opt/siraloom/bcftools",
+        )
+
+    assert exc.value.code == "NORMALIZATION_EXECUTABLE_SHA256_NOT_QUALIFIED"
+
+
 def test_execution_requires_explicit_lab_approval(monkeypatch, tmp_path):
     resource = _resource(version="1.25")
     with pytest.raises(NormalizationProviderError, match="organization-approved"):
