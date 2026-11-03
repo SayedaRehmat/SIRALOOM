@@ -822,7 +822,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized is None
                 assert event is not None
                 assert event.payload["automatic_fallback"] is False
-                assert db.scalar(select(Variant).where(Variant.analysis_id == analysis_id)) is None
+                assert db.scalar(select(AnalysisPartition).where(\n                    AnalysisPartition.analysis_id == analysis_id,\n                    AnalysisPartition.step_id == "normalize",\n                )) is None
                 assert store.exists(db.get(Artifact, input_artifact.id).storage_uri)
                 if tool_execution_failure:
                     failed_executions = db.scalars(select(ResourceExecutionRecord).where(
