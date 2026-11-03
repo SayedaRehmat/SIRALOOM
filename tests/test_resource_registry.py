@@ -15,6 +15,7 @@ from backend.app.domain.resources import (
     qualify_resource_version,
     register_resource_version,
     request_resource_approval,
+    require_approved_vcf_specification,
 )
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
@@ -574,3 +575,91 @@ def test_normalization_registry_requires_official_source_contract_and_starts_can
         assert resource.metadata_json["execution"]["endpoint"].endswith("bcftools-1.25.tar.bz2")
         assert resource.metadata_json["execution"]["toolchain"]["bcftools"]["executable"] == "/opt/siraloom/bin/bcftools"
 
+
+
+def test_vcf_specification_versions_keep_independent_lab_approvals():
+    engine = _engine()
+    with Session(engine) as db:
+        org = Organization(id=uuid4(), name="VCF Governance Lab", external_identifier=None)
+        user = User(
+            id=uuid4(),
+            organization_id=org.id,
+            display_name="Laboratory Director",
+            role="lab_director",
+            status="ACTIVE",
+        )
+        db.add_all([org, user])
+        db.flush()
+
+        def register_specification(version: str, checksum: str):
+            resource = Resource(
+                id=uuid4(),
+                organization_id=None,
+                name=f"VCF specification {version}",
+                provider="HTS-Specifications",
+                resource_type="VCF_SPECIFICATION",
+                version=version,
+                genome_build=None,
+                access_method="HTTPS",
+                license_text=None,
+                checksum=checksum,
+                location=f"https://samtools.github.io/hts-specs/{version}.pdf",
+                status="QUALIFIED",
+                population_definition=None,
+                metadata_json={},
+            )
+            qualification = ResourceQualification(
+                id=uuid4(),
+                resource_id=resource.id,
+                qualification_version=f"qualification-{version}",
+                status="QUALIFIED",
+                checks_json={"passed": True},
+                qualified_by=None,
+            )
+            db.add_all([resource, qualification])
+            db.flush()
+            approval = request_resource_approval(
+                db,
+                resource_id=resource.id,
+                organization_id=org.id,
+                qualification_version=f"qualification-{version}",
+            )
+            return resource, approval
+
+        older, older_approval = register_specification("VCFv4.6", "a" * 64)
+        decide_resource_approval(
+            db,
+            approval_id=older_approval.id,
+            organization_id=org.id,
+            actor_id=user.id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Approve VCFv4.6 baseline",
+        )
+        older_snapshot = require_approved_vcf_specification(
+            db, organization_id=org.id, version="VCFv4.6"
+        )
+
+        newer, newer_approval = register_specification("VCFv4.7", "b" * 64)
+        assert newer_approval.status == "PENDING"
+        assert require_approved_vcf_specification(
+            db, organization_id=org.id, version="VCFv4.6"
+        ) == older_snapshot
+
+        decide_resource_approval(
+            db,
+            approval_id=newer_approval.id,
+            organization_id=org.id,
+            actor_id=user.id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Approve VCFv4.7 independently",
+        )
+        newer_snapshot = require_approved_vcf_specification(
+            db, organization_id=org.id, version="VCFv4.7"
+        )
+        assert older_snapshot["resource_id"] == str(older.id)
+        assert newer_snapshot["resource_id"] == str(newer.id)
+        assert require_approved_vcf_specification(
+            db, organization_id=org.id, version="VCFv4.6"
+        ) == older_snapshot
