@@ -105,7 +105,7 @@ jobs:
             cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz.csi" "${evidence_dir}/normalized.vcf.gz.csi"
           }
 
-          # Bioconda currently publishes binary builds for these supported releases.
+          # Bioconda publishes binary builds for these releases.
           for version in 1.23.1 1.24 1.25; do
             environment="bcftools-${version}"
             micromamba create --yes --name "${environment}" \
@@ -113,11 +113,11 @@ jobs:
               "bcftools=${version}"
             executable="$(micromamba run -n "${environment}" which bcftools)"
             package_manifest="$(micromamba list -n "${environment}")"
-            qualify_executable "${version}" "${executable}" "Bioconda package\\n${package_manifest}"
+            qualify_executable "${version}" "${executable}" "Bioconda package manifest follows\\n${package_manifest}"
           done
 
-          # Upstream stable releases without a Bioconda build are built from the
-          # exact signed BCFtools and HTSlib release tags, never from develop.
+          # Build upstream stable releases that do not have Bioconda binaries
+          # from matching, exact BCFtools and HTSlib release tags.
           sudo apt-get update
           sudo apt-get install --yes \
             autoconf automake build-essential gcc make perl \
