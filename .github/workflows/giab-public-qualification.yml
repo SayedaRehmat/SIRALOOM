@@ -22,20 +22,21 @@ permissions:
   contents: read
 
 concurrency:
-  group: giab-public-qualification-${{ github.ref }}-${{ inputs.reference_build }}
+  group: giab-public-qualification-${{ github.ref }}-${{ inputs.reference_build || 'BOTH' }}
   cancel-in-progress: false
 
 jobs:
   qualification:
     name: HG001 ${{ matrix.build }} public benchmark
-    # Pushes to the qualification branch execute both assemblies; manual dispatch may select one.
-    if: github.event_name != 'workflow_dispatch' || inputs.reference_build == 'BOTH' || inputs.reference_build == matrix.build
+    # Build the selected matrix before job evaluation. The matrix context is not
+    # available in jobs.<job_id>.if; referencing it there prevents GitHub from
+    # materializing the matrix jobs and leaves a failed run with zero jobs.
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
-        build: [GRCh38, GRCh37]
+        build: ${{ fromJSON(inputs.reference_build == 'GRCh38' && '["GRCh38"]' || inputs.reference_build == 'GRCh37' && '["GRCh37"]' || '["GRCh38","GRCh37"]') }}
     env:
       PYTHONUNBUFFERED: "1"
       SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
