@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -120,6 +121,57 @@ def _restrict_header_to_single_contig(
                     continue
             destination.write(line)
     return destination_vcf
+
+
+def test_bcftools_release_parses_valid_vcf_versions_and_v45_features(tmp_path: Path):
+    """Exercise the actual selected BCFtools binary against VCFv4.1-v4.5 files."""
+    executable = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE", "bcftools")
+    manifest_path = Path("backend/app/domain/vcf_conformance_cases.json")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    fixture_ids = {
+        "VCFv4.1": ("minimal_snp_valid", "multiallelic_genotype_valid"),
+        "VCFv4.2": ("minimal_snp_valid", "multiallelic_genotype_valid"),
+        "VCFv4.3": ("minimal_snp_valid", "multiallelic_genotype_valid"),
+        "VCFv4.4": ("minimal_snp_valid", "multiallelic_genotype_valid"),
+        "VCFv4.5": (
+            "minimal_snp_valid",
+            "multiallelic_genotype_valid",
+            "local_allele_encoding_valid",
+            "base_modification_fraction_valid",
+            "unspecified_allele_len_reference_block_valid",
+        ),
+    }
+
+    for version, case_ids in fixture_ids.items():
+        cases = {case["id"]: case for case in manifest["versions"][version]}
+        for case_id in case_ids:
+            case = cases[case_id]
+            assert case["expected"] == "PASS"
+            source = tmp_path / f"{version}-{case_id}.vcf"
+            output = tmp_path / f"{version}-{case_id}.roundtrip.vcf"
+            source.write_text("\\n".join(case["lines"]) + "\\n", encoding="utf-8")
+            result = subprocess.run(
+                [
+                    executable,
+                    "view",
+                    "--no-version",
+                    "--output-type",
+                    "v",
+                    "--output",
+                    str(output),
+                    str(source),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            assert result.returncode == 0, (
+                f"{version} fixture {case_id} was rejected by {executable}: "
+                f"{result.stderr}"
+            )
+            assert output.is_file() and output.stat().st_size > 0
+            assert read_vcf_fileformat(output) == version
 
 
 def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: Path):
