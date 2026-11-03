@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 HTS_SPECIFICATIONS_REPOSITORY = "https://github.com/samtools/hts-specs"
 VCF_45_SPECIFICATION_URL = "https://samtools.github.io/hts-specs/VCFv4.5.pdf"
+VCF_40_LEGACY_SPECIFICATION_URL = "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/"
 
 @dataclass(frozen=True)
 class VCFSpecificationProfile:
@@ -25,9 +26,9 @@ VCF_SPECIFICATION_PROFILES: dict[str, VCFSpecificationProfile] = {
         version="VCFv4.0",
         support_status="LEGACY_COMPATIBILITY_ONLY",
         validation_mode="LEGACY_PARSER_SMOKE_ONLY",
-        specification_repository=HTS_SPECIFICATIONS_REPOSITORY,
-        specification_document=None,
-        notes="Retained for parser compatibility only; not a normative conformance target.",
+        specification_repository=VCF_40_LEGACY_SPECIFICATION_URL,
+        specification_document=VCF_40_LEGACY_SPECIFICATION_URL,
+        notes="Historical 1000 Genomes VCFv4.0 profile; retained for compatibility, not current GA4GH/HTS-specs normative conformance.",
     ),
     "VCFv4.1": VCFSpecificationProfile(
         version="VCFv4.1",
