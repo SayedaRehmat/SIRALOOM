@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 
 from backend.app.application.entitlements import effective_max_upload_bytes
 from backend.app.auth.authorization import (
@@ -440,7 +441,9 @@ async def upload_artifact(
 
         artifact_validation_status = None
         if kind == "VCF":
-            result = _validate_vcf_for_upload(staged)
+            # Strict parsing and BCFtools validation can be CPU/I/O intensive.
+            # Never execute them directly on the ASGI event-loop thread.
+            result = await run_in_threadpool(_validate_vcf_for_upload, staged)
             if result.sample_names and specimen is None:
                 result = ValidationResult(
                     "INVALID", result.file_kind, result.record_count, result.sample_names,
