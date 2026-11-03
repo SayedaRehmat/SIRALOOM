@@ -175,7 +175,7 @@ jobs:
             SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
             SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
             SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
-            PATH="$(dirname "${executable}"):${PATH}" \\
+            PATH="$(dirname "${executable}"):${PATH}" \
               pytest -q tests/test_public_vcf_normalization.py
             evidence_dir="${data_dir}/bcftools-${version}"
             mkdir -p "${evidence_dir}"
