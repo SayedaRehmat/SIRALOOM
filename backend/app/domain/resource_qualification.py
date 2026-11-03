@@ -8,6 +8,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -322,6 +323,53 @@ def _qualify_normalization_engine(
         return
 
     try:
+        executable_path = Path(resolved_executable).resolve(strict=True)
+        if not executable_path.is_file() or not os.access(executable_path, os.X_OK):
+            raise OSError("resolved BCFtools path is not a regular executable file")
+        executable_sha256 = _sha256(executable_path)
+    except OSError as exc:
+        blockers.append("BCFTOOLS_EXECUTABLE_FINGERPRINT_FAILED")
+        checks["normalization_runtime"].update({
+            "status": "BLOCKED",
+            "executable": resolved_executable,
+            "fingerprint_error_type": type(exc).__name__,
+        })
+        return
+
+    declared_sha256 = str(bcftools.get("sha256") or "").strip().lower()
+    if declared_sha256 and (
+        not re.fullmatch(r"[0-9a-f]{64}", declared_sha256)
+        or declared_sha256 != executable_sha256
+    ):
+        blockers.append("BCFTOOLS_EXECUTABLE_SHA256_MISMATCH")
+        checks["normalization_runtime"].update({
+            "status": "BLOCKED",
+            "executable_sha256": executable_sha256,
+            "declared_executable_sha256": declared_sha256,
+        })
+        return
+
+    # Pin the measured executable bytes into the qualified execution contract.
+    # resolve_resource_execution hashes this contract, so later replacement is
+    # detected by the profile-bound runtime resolver before any worker executes.
+    qualified_contract = dict(checks.get("execution_contract") or {})
+    qualified_toolchain = dict(qualified_contract.get("toolchain") or {})
+    qualified_bcftools = dict(qualified_toolchain.get("bcftools") or {})
+    qualified_bcftools["executable"] = str(executable_path)
+    qualified_bcftools["sha256"] = executable_sha256
+    qualified_toolchain["bcftools"] = qualified_bcftools
+    qualified_contract["toolchain"] = qualified_toolchain
+    checks["execution_contract"] = qualified_contract
+    checks["normalization_runtime"].update({
+        "executable": str(executable_path),
+        "executable_sha256": executable_sha256,
+        "executable_integrity_status": (
+            "MATCHED_DECLARED_SHA256" if declared_sha256 else "MEASURED_AND_PINNED_AT_QUALIFICATION"
+        ),
+    })
+    resolved_executable = str(executable_path)
+
+    try:
         with tempfile.TemporaryDirectory(prefix="siraloom-normalization-qualification-") as directory:
             root = Path(directory)
             reference = root / "reference.fa"
@@ -383,6 +431,8 @@ def _qualify_normalization_engine(
             )
             if mismatch_result.returncode == 0:
                 raise RuntimeError("REF-mismatch fixture unexpectedly succeeded under -c e")
+            if _sha256(executable_path) != executable_sha256:
+                raise RuntimeError("BCFtools executable changed during qualification")
             checks["normalization_runtime"].update({
                 "status": "QUALIFIED",
                 "known_answer": "PASS",
