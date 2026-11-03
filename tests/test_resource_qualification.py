@@ -516,7 +516,8 @@ def test_vcf_specification_fixture_pass_does_not_claim_complete_normative_qualif
     assert evidence["execution_report"]["target_version"] == "VCFv4.5"
     assert evidence["execution_report"]["normative_coverage_status"] == "PARTIAL"
     assert evidence["execution_report"]["normative_coverage_sections"] == []
-    assert evidence["execution_report"]["normative_uncovered_sections"] == []
+    assert evidence["execution_report"]["normative_uncovered_sections"]
+    assert "Complete normative clause inventory with stable clause identifiers for this VCF release" in evidence["execution_report"]["normative_uncovered_sections"]
     assert evidence["execution_report_sha256"] == evidence["execution_report"]["report_sha256"]
     assert len(evidence["execution_report"]["corpus_sha256"]) == 64
     assert len(evidence["execution_report"]["parser_source_sha256"]) == 64
