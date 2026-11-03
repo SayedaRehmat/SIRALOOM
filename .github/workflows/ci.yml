@@ -277,7 +277,6 @@ jobs:
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.normalized.vcf.gz.csi
             ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-grch37-index-stats.txt
-            ${{ runner.temp }}/siraloom-container-qualification/*
           if-no-files-found: warn
           retention-days: 7
       - name: Validate process startup scripts
@@ -460,6 +459,13 @@ jobs:
             -e GRCH37_REFERENCE_FILENAME="$(basename "${grch37_reference}")" \
             --entrypoint python \
             siraloom-backend:ci /qualification/qualify.py
+      - name: Preserve production-container GIAB qualification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-production-container-giab-qualification
+          path: ${{ runner.temp }}/siraloom-container-qualification/*
+          if-no-files-found: error
+          retention-days: 7
 
   postgres-integration:
     runs-on: ubuntu-latest
