@@ -15,9 +15,14 @@ Source: https://github.com/samtools/bcftools/blob/develop/NEWS
 
 ## Executable compatibility qualification
 
-The CI qualification workflow executes the same downloaded, checksum-pinned
-NIST GIAB HG002 GRCh38 VCF slice and the same pinned Ensembl GRCh38 reference
-against each stable release below:
+The CI qualification workflow executes the actual NIST GIAB HG002 v4.2.1
+benchmark callset on the complete chromosome 1 for both GRCh38 and GRCh37.
+Each assembly uses its matching Ensembl chromosome-1 reference. The GRCh38
+VCF/index and reference archives have immutable SHA-256 pins; Ensembl reference
+archives are also checked against the publisher's official CHECKSUMS MD5
+manifest. The GRCh37 VCF/index SHA-256 values are currently captured in
+qualification evidence and must be promoted to immutable pins after the first
+verified acquisition run.
 
 | BCFtools release | Acquisition and qualification |
 |---|---|
@@ -67,20 +72,26 @@ building different source bytes.
 
 ## Scope of the GIAB execution
 
-The real-data qualification uses the NIST GIAB HG002 v4.2.1 GRCh38 benchmark
-VCF, restricted to chromosome 1 positions 1–5,000,000, and Ensembl release 115
-chromosome 1 reference. It validates real input parsing, reference alleles,
-routing, reference-aware normalization, source-to-child lineage, BGZF output,
-and CSI index concordance.
+The real-data qualification downloads the complete NIST GIAB HG002 v4.2.1
+benchmark VCF and TBI for each assembly, extracts the complete chromosome-1
+callset, and executes strict validation, reference-allele validation, record
+routing, reference-aware normalization, source-to-child reconciliation,
+BGZF output validation, and CSI index concordance.
 
-This bounded slice is an interoperability and normalization regression test.
-It is not a full-genome caller-accuracy benchmark, does not establish all VCF
-normative clause conformance, and does not replace laboratory qualification
-of the exact executable bytes and organization-approved resource binding.
+- GRCh38: Ensembl release 115 chromosome 1 reference; the archive is pinned by
+  SHA-256 and checked against the official Ensembl CHECKSUMS MD5 manifest.
+- GRCh37: Ensembl release 75 chromosome 1 reference; the archive is checked
+  against the official Ensembl CHECKSUMS MD5 manifest. The GIAB VCF and TBI
+  SHA-256 values are captured in the generated report; immutable pins remain
+  pending the first successful acquisition run.
 
-GRCh37 real-data normalization has not yet been demonstrated by this artifact. The
-GRCh37 reference-bound GIAB qualification remains an explicit open acceptance item;
-GRCh38 evidence must not be represented as GRCh37 evidence.
+This is real-data normalization and interoperability evidence, not a
+full-genome caller-accuracy benchmark. It does not establish all VCF normative
+clause conformance and does not replace laboratory qualification of exact
+executable bytes and organization-approved resource binding. The current
+matrix records an executable digest measured for the run and verifies that
+the same bytes remain in use throughout execution; a lab-approved resource
+still requires its independently qualified, immutable digest and approval.
 
 ## Reference documentation
 
