@@ -209,12 +209,12 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     data_dir = Path(data_dir_value)
     assert source.is_file() and archive.is_file() and source_index.is_file()
     assert reference.is_file() and reference_archive.is_file() and checksum_manifest.is_file()
-    official_reference_md5 = _official_md5_from_manifest(
+    official_reference_sum = _official_sum_from_manifest(
         checksum_manifest, reference_archive.name
     )
+    assert _bsd_sum_file(reference_archive) == official_reference_sum
     actual_reference_md5 = _md5_file(reference_archive)
-    assert actual_reference_md5 == official_reference_md5
-    assert official_reference_md5 == os.getenv("SIRALOOM_PUBLIC_REFERENCE_MD5")
+    assert actual_reference_md5 == os.getenv("SIRALOOM_PUBLIC_REFERENCE_MD5")
     assert _sha256_file(reference_archive) == EXPECTED_REFERENCE_ARCHIVE_SHA256
     assert _sha256_file(archive) == EXPECTED_GIAB_VCF_SHA256
     assert _sha256_file(source_index) == EXPECTED_GIAB_INDEX_SHA256
@@ -300,7 +300,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         "source_child_reconciliation": reconciliation,
         "reference_source": ENSEMBL_REFERENCE_SOURCE,
         "reference_archive_sha256": _sha256_file(reference_archive),
-        "reference_archive_md5_official_ensembl": official_reference_md5,
+        "reference_archive_ensembl_bsd_sum": official_reference_sum,
+        "reference_archive_md5_locally_computed": actual_reference_md5,
         "reference_checksum_manifest_sha256": _sha256_file(checksum_manifest),
         "reference_contig": contig,
         "reference_fasta_sha256": _sha256_file(reference_for_vcf),
@@ -318,14 +319,28 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
 
 
 
-def _official_md5_from_manifest(manifest_path: Path, filename: str) -> str:
+def _official_sum_from_manifest(manifest_path: Path, filename: str) -> tuple[int, int]:
     for line in manifest_path.read_text(encoding="utf-8").splitlines():
         fields = line.split()
-        if len(fields) >= 2 and Path(fields[-1]).name == filename:
-            digest = fields[0].lower()
-            if len(digest) == 32 and all(char in "0123456789abcdef" for char in digest):
-                return digest
-    raise AssertionError(f"Official Ensembl CHECKSUMS manifest has no valid MD5 for {filename}")
+        if len(fields) >= 3 and Path(fields[-1]).name == filename:
+            try:
+                return int(fields[0]), int(fields[1])
+            except ValueError:
+                continue
+    raise AssertionError(f"Official Ensembl CHECKSUMS manifest has no valid BSD sum for {filename}")
+
+
+def _bsd_sum_file(path: Path) -> tuple[int, int]:
+    result = subprocess.run(
+        ["sum", str(path)],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    fields = result.stdout.split()
+    assert len(fields) >= 2
+    return int(fields[0]), int(fields[1])
 
 
 def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: Path):
@@ -356,9 +371,9 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     ))
 
     reference_filename = reference_archive.name
-    official_reference_md5 = _official_md5_from_manifest(checksum_manifest, reference_filename)
+    official_reference_sum = _official_sum_from_manifest(checksum_manifest, reference_filename)
     actual_reference_md5 = _md5_file(reference_archive)
-    assert actual_reference_md5 == official_reference_md5
+    assert _bsd_sum_file(reference_archive) == official_reference_sum
     reference_archive_sha256 = _sha256_file(reference_archive)
     giab_archive_sha256 = _sha256_file(archive)
     giab_index_sha256 = _sha256_file(source_index)
@@ -439,7 +454,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
             "https://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/"
             "Homo_sapiens.GRCh37.75.dna.chromosome.1.fa.gz"
         ),
-        "reference_archive_md5_official_ensembl": official_reference_md5,
+        "reference_archive_ensembl_bsd_sum": official_reference_sum,
+        "reference_archive_md5_locally_computed": actual_reference_md5,
         "reference_archive_sha256": reference_archive_sha256,
         "reference_checksum_manifest_sha256": _sha256_file(checksum_manifest),
         "reference_contig": contig,
