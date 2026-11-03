@@ -46,7 +46,10 @@ from backend.app.config import settings
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.local_uri import local_path_from_uri
-from backend.app.domain.normalization_provider import normalize_with_selected_provider
+from backend.app.domain.normalization_provider import (
+    NormalizationProviderUnavailable,
+    normalize_with_selected_provider,
+)
 from backend.app.domain.resource_capabilities import NORMALIZATION_ENGINE
 from backend.app.domain.normalization import (
     NormalizationError,
@@ -89,6 +92,7 @@ from backend.app.domain.variant_identity import canonical_key, normalize_build, 
 from backend.app.domain.vcf_tools import (
     MULTIALLELIC_OVERLAP_POLICY,
     VCFToolError,
+    VCFToolUnavailable,
     classify_records,
     normalize_vcf_with_bcftools,
     route_vcf_records,
@@ -2542,6 +2546,27 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except (NormalizationProviderUnavailable, VCFToolUnavailable) as exc:
+            except (NormalizationProviderUnavailable, VCFToolUnavailable) as exc:
+                # Missing/replaced executables and process-launch/time-limit
+                # failures are operationally recoverable. Preserve the stage
+                # checkpoint and retry; do not misclassify them as bad VCF data.
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=getattr(exc, "code", None) or "NORMALIZATION_TOOL_UNAVAILABLE",
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_RETRY_SCHEDULED",
+                    actor_id="siraloom-normalizer",
+                    next_step="normalize",
+                )
+                raise TransientWorkflowError(
+                    "The selected normalization executable is temporarily unavailable; retrying from the durable stage checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="NORMALIZATION_TOOL_RETRY_EXHAUSTED",
+                ) from exc
             except (NormalizationError, ReferenceError, ReferencePackageError, VCFToolError) as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
                 mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
