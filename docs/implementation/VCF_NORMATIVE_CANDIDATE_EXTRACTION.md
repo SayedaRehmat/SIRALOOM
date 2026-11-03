@@ -12,16 +12,17 @@
 
 The extractor records source line numbers, line SHA-256, enclosing section path,
 and normative-language markers. It does not copy specification prose into the
-repository.
+repository. Its scope is limited to VCF-specific normative sections; the separate
+BCF specification and historical change logs are excluded.
 
 | Specification | Candidate lines |
 |---|---:|
-| VCFv4.1 | 60 |
-| VCFv4.2 | 66 |
-| VCFv4.3 | 119 |
-| VCFv4.4 | 205 |
-| VCFv4.5 | 230 |
-| **Total** | **680** |
+| VCFv4.1 | 38 |
+| VCFv4.2 | 44 |
+| VCFv4.3 | 82 |
+| VCFv4.4 | 161 |
+| VCFv4.5 | 185 |
+| **Total** | **510** |
 
 ## Qualification status
 
