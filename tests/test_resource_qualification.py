@@ -402,8 +402,8 @@ def test_bcftools_qualification_checks_exact_version_and_normalization_contract(
     )
     assert qualified_toolchain["sha256"] == result.checks["normalization_runtime"]["executable_sha256"]
     assert len(qualified_toolchain["sha256"]) == 64
-    assert len(calls) == 3
-    assert calls[1][1:8] == ["norm", "-f", calls[1][3], "-c", "e", "-m", "-any"]
+    assert len(calls) == 4
+    assert calls[2][1:8] == ["norm", "-f", calls[2][3], "-c", "e", "-m", "-any"]
 
 
 def test_bcftools_qualification_blocks_executable_mutation_during_known_answer_run(
@@ -418,7 +418,7 @@ def test_bcftools_qualification_blocks_executable_mutation_during_known_answer_r
         calls += 1
         if command[-1] == "--version":
             return SimpleNamespace(returncode=0, stdout="bcftools 1.25\nUsing htslib 1.25", stderr="")
-        if calls == 2:
+        if calls == 3:
             executable.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
         output_path = Path(command[command.index("-o") + 1])
         input_path = Path(command[-1])
