@@ -3,7 +3,15 @@ from __future__ import annotations
 
 import json
 import re
+import pytest
 from pathlib import Path
+
+from app.domain.vcf_normative_inventory import (
+    SPEC_BLOB_SHA1,
+    SPEC_EXPECTED_CANDIDATE_LINES,
+    extract_vcf_normative_candidates,
+    git_blob_sha1,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -58,3 +66,45 @@ def test_producer_interoperability_is_not_counted_as_normative_vcf_conformance()
             if case.get("qualification_scope") == "producer_interoperability":
                 assert case["normative_vcf_conformance"] is False
                 assert case["producer"] == "GATK"
+
+
+def test_normative_candidate_extraction_is_deterministic_and_tracks_sections(tmp_path: Path):
+    source_dir = tmp_path / "specs"
+    source_dir.mkdir()
+    fixture = (
+        r"\\section{Header}" + "\\n"
+        + "The fileformat line must be present.\\n"
+        + r"\\subsection{Samples}" + "\\n"
+        + "A sample field should not be omitted.\\n"
+        + "% A commented rule must not be counted.\\n"
+    ).encode("utf-8")
+    expected_blobs = {}
+    for version in SPEC_BLOB_SHA1:
+        path = source_dir / f"{version}.tex"
+        path.write_bytes(fixture)
+        expected_blobs[version] = git_blob_sha1(fixture)
+
+    inventory = extract_vcf_normative_candidates(
+        source_dir,
+        expected_blob_shas=expected_blobs,
+        expected_candidate_lines={version: 2 for version in SPEC_BLOB_SHA1},
+    )
+    assert inventory["inventory_status"] == "EXTRACTED_UNREVIEWED"
+    assert inventory["qualification_status"] == "BLOCKED_PENDING_CLAUSE_REVIEW_AND_TRACEABILITY"
+    for version in SPEC_BLOB_SHA1:
+        candidates = inventory["versions"][version]["candidates"]
+        assert [candidate["source_line"] for candidate in candidates] == [2, 4]
+        assert candidates[1]["section_path"][-1]["heading"] == "Samples"
+        assert candidates[0]["review_status"] == "UNREVIEWED"
+        assert candidates[0]["traceability_status"] == "UNMAPPED"
+        assert "text" not in candidates[0]
+
+
+def test_normative_candidate_extractor_rejects_unpinned_source_content(tmp_path: Path):
+    source_dir = tmp_path / "specs"
+    source_dir.mkdir()
+    for version in SPEC_BLOB_SHA1:
+        (source_dir / f"{version}.tex").write_text("untrusted replacement source\\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Official source blob mismatch"):
+        extract_vcf_normative_candidates(source_dir)
