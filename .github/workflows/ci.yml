@@ -78,6 +78,7 @@ jobs:
           echo "SIRALOOM_PUBLIC_REFERENCE_CONTIG=${vcf_contig}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_DATA_DIR=${data_dir}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_REFERENCE_SHA256_VERIFIED=1" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_BCFTOOLS_SHA256=$(sha256sum "$(command -v bcftools)" | awk '{print $1}')" >> "${GITHUB_ENV}"
       - name: Backend tests
         env:
           DATABASE_URL: sqlite:///./ci.db
@@ -106,6 +107,7 @@ jobs:
 
             SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
             SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
+            SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
               pytest -q tests/test_public_vcf_normalization.py
 
             evidence_dir="${data_dir}/bcftools-${version}"
