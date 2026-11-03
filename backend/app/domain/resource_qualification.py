@@ -322,6 +322,24 @@ def _qualify_normalization_engine(
         checks["normalization_runtime"]["status"] = "BLOCKED"
         return
 
+    # BCFtools 1.23.1 fixed silent output truncation in norm and related
+    # commands when an input read error occurred. Older releases are not
+    # eligible for laboratory normalization qualification.
+    try:
+        observed_version_parts = tuple(int(part) for part in str(observed_version).split("."))
+    except (TypeError, ValueError):
+        blockers.append("BCFTOOLS_VERSION_FORMAT_UNSUPPORTED")
+        checks["normalization_runtime"]["status"] = "BLOCKED"
+        return
+    if observed_version_parts < (1, 23, 1):
+        blockers.append("BCFTOOLS_VERSION_BELOW_SAFE_BASELINE")
+        checks["normalization_runtime"].update({
+            "status": "BLOCKED",
+            "minimum_qualified_version": "1.23.1",
+            "release_notes_url": "https://github.com/samtools/bcftools/blob/develop/NEWS",
+        })
+        return
+
     try:
         executable_path = Path(resolved_executable).resolve(strict=True)
         if not executable_path.is_file() or not os.access(executable_path, os.X_OK):
