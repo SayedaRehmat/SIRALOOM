@@ -817,6 +817,14 @@ def test_csi_magic_validation_rejects_uncompressed_index(tmp_path: Path):
     assert result.status == "INVALID"
     assert "BGZF/gzip header" in result.errors[0]
 
+def test_csi_magic_validation_rejects_malformed_bgzf_stream(tmp_path: Path):
+    csi = tmp_path / "sample.vcf.bgz.csi"
+    csi.write_bytes(b"\x1f\x8b\x08\x04" + b"\x00" * 8)
+    result = validate_index(csi, "sample.vcf.bgz")
+    assert result.status == "INVALID"
+    assert result.errors
+
+
 def test_index_alone_is_not_primary_input():
     assert classify_filename("sample.vcf.gz.tbi") == "TBI"
 
