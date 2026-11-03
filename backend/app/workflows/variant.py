@@ -2296,7 +2296,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     )
                     normalization_provider_execution = profile_runtime_normalization.execution
                 except ProfileRuntimeResourceError as exc:
-                    raise ResourceConsumptionError(exc.code, str(exc)) from exc
+                    _route_step_to_human_review(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        event_type="NORMALIZATION_RESOURCE_REQUIRES_REVIEW",
+                        actor_id="normalization-resource",
+                        next_step="resource_remediation",
+                        payload={"automatic_fallback": False, "resource_gap": True},
+                    )
+                    return
             try:
                 suffix = ".vcf.gz"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
