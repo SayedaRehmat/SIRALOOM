@@ -1332,6 +1332,8 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
 
 
 def test_artifact_store_rejects_different_bytes_for_same_artifact_identity(tmp_path):
+    import hashlib
+
     from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
 
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'artifact-conflict.db'}")
