@@ -1,8 +1,10 @@
+from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
+from backend.app.domain.vcf_tools import _bcftools_executable_identity
 from backend.app.domain.normalization_provider import (
     NormalizationProviderError,
     normalize_with_selected_provider,
@@ -130,3 +132,32 @@ def test_provider_blocks_execution_contract_version_drift():
 
     assert exc.value.code == "NORMALIZATION_EXECUTION_VERSION_CONTRACT_MISMATCH"
 
+
+
+def test_bcftools_executable_identity_is_content_addressed(tmp_path):
+    executable = tmp_path / "bcftools"
+    payload = b"#!/bin/sh\necho bcftools 1.25\n"
+    executable.write_bytes(payload)
+    executable.chmod(0o755)
+
+    identity = _bcftools_executable_identity(str(executable))
+
+    import hashlib
+
+    assert identity["path"] == str(executable.resolve())
+    assert identity["sha256"] == hashlib.sha256(payload).hexdigest()
+    assert identity["size_bytes"] == len(payload)
+    assert identity["inode"] == executable.stat().st_ino
+
+
+def test_bcftools_executable_identity_changes_when_binary_changes(tmp_path):
+    executable = tmp_path / "bcftools"
+    executable.write_bytes(b"#!/bin/sh\necho bcftools 1.25\n")
+    executable.chmod(0o755)
+    first = _bcftools_executable_identity(str(executable))
+
+    executable.write_bytes(b"#!/bin/sh\necho bcftools 1.26\n")
+    executable.chmod(0o755)
+    second = _bcftools_executable_identity(str(executable))
+
+    assert first["sha256"] != second["sha256"]
