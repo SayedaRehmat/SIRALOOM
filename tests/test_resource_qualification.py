@@ -449,7 +449,7 @@ def test_bcftools_qualification_blocks_releases_before_read_integrity_fix(monkey
         "backend.app.domain.resource_qualification.subprocess.run",
         lambda command, **_kwargs: (
             calls.append(command)
-            or SimpleNamespace(returncode=0, stdout="bcftools 1.23.0\\nUsing htslib 1.23.0", stderr="")
+            or SimpleNamespace(returncode=0, stdout="bcftools 1.23.0\nUsing htslib 1.23.0", stderr="")
         ),
     )
 
