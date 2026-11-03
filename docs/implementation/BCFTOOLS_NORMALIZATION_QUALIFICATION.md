@@ -79,9 +79,10 @@ routing, reference-aware normalization, source-to-child reconciliation,
 BGZF output validation, and CSI index concordance.
 
 - GRCh38: Ensembl release 115 chromosome 1 reference; the archive is pinned by
-  SHA-256 and checked against the official Ensembl CHECKSUMS MD5 manifest.
+  SHA-256 and checked against the official Ensembl CHECKSUMS BSD-sum manifest.
 - GRCh37: Ensembl release 75 chromosome 1 reference; the archive is checked
-  against the official Ensembl CHECKSUMS MD5 manifest. The GIAB VCF and TBI
+  against the official Ensembl CHECKSUMS BSD-sum manifest. A local MD5 is
+  recorded separately. The GIAB VCF and TBI
   SHA-256 values are captured in the generated report; immutable pins remain
   pending the first successful acquisition run.
 
