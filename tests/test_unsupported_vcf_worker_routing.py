@@ -388,18 +388,33 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
 
 
 @pytest.mark.parametrize(
-    ("reference_mismatch", "worker_loss", "normalization_resource_failure", "artifact_identity_conflict"),
+    (
+        "reference_mismatch",
+        "worker_loss",
+        "normalization_resource_failure",
+        "artifact_identity_conflict",
+        "reference_package_failure",
+        "tool_execution_failure",
+    ),
     [
-        (False, False, False, False),
-        (True, False, False, False),
-        (False, True, False, False),
-        (False, False, True, False),
-        (False, False, False, True),
+        (False, False, False, False, False, False),
+        (True, False, False, False, False, False),
+        (False, True, False, False, False, False),
+        (False, False, True, False, False, False),
+        (False, False, False, True, False, False),
+        (False, False, False, False, True, False),
+        (False, False, False, False, False, True),
     ],
 )
 def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_block(
-    monkeypatch, tmp_path, reference_mismatch, worker_loss,
-    normalization_resource_failure, artifact_identity_conflict
+    monkeypatch,
+    tmp_path,
+    reference_mismatch,
+    worker_loss,
+    normalization_resource_failure,
+    artifact_identity_conflict,
+    reference_package_failure,
+    tool_execution_failure,
 ):
     """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
     import gzip
@@ -411,6 +426,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     import shutil
 
     from backend.app.domain.resource_source_contract import validate_execution_contract
+    from backend.app.domain.reference_package import ReferencePackageError
+    from backend.app.domain.vcf_tools import VCFToolError
     from backend.app.domain.resource_execution import (
         start_resource_execution as real_start_resource_execution,
         complete_resource_execution as real_complete_resource_execution,
@@ -638,13 +655,22 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             raise AssertionError(f"Unexpected profile capability: {capability}")
 
         monkeypatch.setattr(workflow, "resolve_profile_runtime_resource", resolve_profile_resource)
-        monkeypatch.setattr(workflow, "load_reference_package", lambda *_a, **_k: {
-            "resource_id": str(resource_id), "version": "fixture-1",
-            "package_checksum": "a" * 64, "fasta_path": str(fasta),
-            "fasta_sha256": "b" * 64, "fai_sha256": "c" * 64,
-            "contigs_sha256": "d" * 64, "contig_policy": "EXACT",
-            "contigs": [{"name": "1", "length": 1000}],
-        })
+
+        def load_reference_package_fixture(*_args, **_kwargs):
+            if reference_package_failure:
+                raise ReferencePackageError(
+                    "fixture: approved reference package is unavailable",
+                    code="REFERENCE_PACKAGE_NOT_FOUND",
+                )
+            return {
+                "resource_id": str(resource_id), "version": "fixture-1",
+                "package_checksum": "a" * 64, "fasta_path": str(fasta),
+                "fasta_sha256": "b" * 64, "fai_sha256": "c" * 64,
+                "contigs_sha256": "d" * 64, "contig_policy": "EXACT",
+                "contigs": [{"name": "1", "length": 1000}],
+            }
+
+        monkeypatch.setattr(workflow, "load_reference_package", load_reference_package_fixture)
         monkeypatch.setattr(workflow, "resolve_resource_execution", lambda *_a, **_k: SimpleNamespace(
             contract=SimpleNamespace(access_method="API"), snapshot={"test": True},
             contract_hash="e" * 64,
@@ -662,6 +688,15 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
         monkeypatch.setattr(workflow, "start_resource_execution", start_execution)
         monkeypatch.setattr(workflow, "complete_resource_execution", complete_execution)
+
+        if tool_execution_failure:
+            def fail_normalization_tool(*_args, **_kwargs):
+                raise VCFToolError(
+                    "fixture: BCFtools returned a deterministic execution error",
+                    code="BCFTOOLS_FIXTURE_FAILURE",
+                )
+
+            monkeypatch.setattr(workflow, "normalize_with_selected_provider", fail_normalization_tool)
 
         if artifact_identity_conflict:
             from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
@@ -749,6 +784,54 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             deliver(redelivered=True)
         else:
             workflow.run_variant_analysis(analysis_id)
+
+        if reference_package_failure or tool_execution_failure:
+            with local_session() as db:
+                analysis = db.get(Analysis, analysis_id)
+                step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "normalize",
+                ))
+                normalized = db.scalar(select(Artifact).where(
+                    Artifact.analysis_id == analysis_id,
+                    Artifact.artifact_type == "NORMALIZED_VCF",
+                ))
+                event_type = (
+                    "REFERENCE_PACKAGE_REQUIRES_REVIEW"
+                    if reference_package_failure
+                    else "VCF_TOOL_EXECUTION_REQUIRES_REVIEW"
+                )
+                event = db.scalar(select(AuditEvent).where(
+                    AuditEvent.analysis_id == analysis_id,
+                    AuditEvent.event_type == event_type,
+                ))
+                expected_error_code = (
+                    "REFERENCE_PACKAGE_NOT_FOUND"
+                    if reference_package_failure
+                    else "BCFTOOLS_FIXTURE_FAILURE"
+                )
+                assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
+                assert step.status == StepStatus.REQUIRES_REVIEW
+                assert step.error_code == expected_error_code
+                assert step.metadata_json["automatic_fallback"] is False
+                assert step.metadata_json["next_step"] == (
+                    "reference_package_remediation"
+                    if reference_package_failure
+                    else "normalization_tool_remediation"
+                )
+                assert normalized is None
+                assert event is not None
+                assert event.payload["automatic_fallback"] is False
+                assert db.scalar(select(Variant).where(Variant.analysis_id == analysis_id)) is None
+                assert store.exists(db.get(Artifact, input_artifact.id).storage_uri)
+                if tool_execution_failure:
+                    failed_executions = db.scalars(select(ResourceExecutionRecord).where(
+                        ResourceExecutionRecord.analysis_id == analysis_id,
+                        ResourceExecutionRecord.resource_id == normalization_resource_id,
+                    )).all()
+                    assert failed_executions
+                    assert all(item.status == "FAILED" for item in failed_executions)
+            return
 
         with local_session() as db:
             step = db.scalar(select(WorkflowStep).where(
