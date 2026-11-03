@@ -2547,7 +2547,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 return
             except (NormalizationProviderUnavailable, VCFToolUnavailable) as exc:
-            except (NormalizationProviderUnavailable, VCFToolUnavailable) as exc:
                 # Missing/replaced executables and process-launch/time-limit
                 # failures are operationally recoverable. Preserve the stage
                 # checkpoint and retry; do not misclassify them as bad VCF data.
