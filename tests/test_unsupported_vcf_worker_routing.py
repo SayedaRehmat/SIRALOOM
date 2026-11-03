@@ -825,6 +825,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     ("approval_state", "expected_code", "expected_next_step"),
     [
         (
+            "ABSENT",
+            "VCF_SPECIFICATION_RELEASE_NOT_REGISTERED",
+            "OFFICIAL_SPECIFICATION_DISCOVERY_AND_QUALIFICATION_REQUIRED",
+        ),
+        (
             "PENDING",
             "VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
             "LAB_APPROVAL_REQUIRED",
@@ -922,60 +927,63 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 created_by=user_id,
                 analysis_version=1,
             ))
-            specification = Resource(
-                id=uuid4(),
-                organization_id=None,
-                name="VCF specification VCFv4.6",
-                provider="HTS-Specifications",
-                resource_type="VCF_SPECIFICATION",
-                version="VCFv4.6",
-                genome_build=None,
-                access_method="HTTPS",
-                license_text=None,
-                checksum="a" * 64,
-                location="https://samtools.github.io/hts-specs/VCFv4.6.pdf",
-                status="QUALIFIED",
-                population_definition=None,
-                metadata_json={},
-            )
-            qualification = ResourceQualification(
-                id=uuid4(),
-                resource_id=specification.id,
-                qualification_version="vcf-spec-qualification-v1",
-                status="QUALIFIED",
-                checks_json={"vcf_specification": {"status": "QUALIFIED"}},
-                qualified_by=None,
-            )
-            approval = ResourceApproval(
-                id=uuid4(),
-                resource_id=specification.id,
-                organization_id=organization_id,
-                qualification_id=qualification.id,
-                status="PENDING",
-                version=1,
-            )
-            db.add_all([specification, qualification, approval])
-            db.flush()
-            if approval_state in {"REJECTED", "APPROVED"}:
-                decide_resource_approval(
-                    db,
-                    approval_id=approval.id,
-                    organization_id=organization_id,
-                    actor_id=user_id,
-                    decision=approval_state,
-                    expected_version=1,
-                    reason=f"Test laboratory decision: {approval_state}",
-                )
-            db.commit()
-            approval_snapshot = (
-                require_approved_vcf_specification(
-                    db,
-                    organization_id=organization_id,
+            if approval_state != "ABSENT":
+                specification = Resource(
+                    id=uuid4(),
+                    organization_id=None,
+                    name="VCF specification VCFv4.6",
+                    provider="HTS-Specifications",
+                    resource_type="VCF_SPECIFICATION",
                     version="VCFv4.6",
+                    genome_build=None,
+                    access_method="HTTPS",
+                    license_text=None,
+                    checksum="a" * 64,
+                    location="https://samtools.github.io/hts-specs/VCFv4.6.pdf",
+                    status="QUALIFIED",
+                    population_definition=None,
+                    metadata_json={},
                 )
-                if approval_state == "APPROVED"
-                else None
-            )
+                qualification = ResourceQualification(
+                    id=uuid4(),
+                    resource_id=specification.id,
+                    qualification_version="vcf-spec-qualification-v1",
+                    status="QUALIFIED",
+                    checks_json={"vcf_specification": {"status": "QUALIFIED"}},
+                    qualified_by=None,
+                )
+                approval = ResourceApproval(
+                    id=uuid4(),
+                    resource_id=specification.id,
+                    organization_id=organization_id,
+                    qualification_id=qualification.id,
+                    status="PENDING",
+                    version=1,
+                )
+                db.add_all([specification, qualification, approval])
+                db.flush()
+                if approval_state in {"REJECTED", "APPROVED"}:
+                    decide_resource_approval(
+                        db,
+                        approval_id=approval.id,
+                        organization_id=organization_id,
+                        actor_id=user_id,
+                        decision=approval_state,
+                        expected_version=1,
+                        reason=f"Test laboratory decision: {approval_state}",
+                    )
+                db.commit()
+                approval_snapshot = (
+                    require_approved_vcf_specification(
+                        db,
+                        organization_id=organization_id,
+                        version="VCFv4.6",
+                    )
+                    if approval_state == "APPROVED"
+                    else None
+                )
+            else:
+                db.commit()
 
         monkeypatch.setattr(db_module, "SessionLocal", local_session)
         monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
@@ -985,7 +993,7 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
         # routing after artifact materialization.
         monkeypatch.setattr(workflow, "read_vcf_fileformat", lambda _path: "VCFv4.6")
 
-        if approval_state in {"PENDING", "REJECTED"}:
+        if approval_state in {"ABSENT", "PENDING", "REJECTED"}:
             def parser_must_not_run(*_args, **_kwargs):
                 raise AssertionError("strict parser must not run before laboratory approval")
 
@@ -1038,8 +1046,11 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 assert event.payload["laboratory_approval"] == approval_snapshot
             else:
                 assert validation.metadata_json["vcf_specification_approval"]["status"] == expected_code
-                assert approval_state.lower() in validation.error_message.lower() or (
-                    approval_state == "PENDING" and "awaiting" in validation.error_message.lower()
-                )
+                if approval_state == "ABSENT":
+                    assert "no registered qualified release" in validation.error_message.lower()
+                else:
+                    assert approval_state.lower() in validation.error_message.lower() or (
+                        approval_state == "PENDING" and "awaiting" in validation.error_message.lower()
+                    )
     finally:
         engine.dispose()
