@@ -106,7 +106,10 @@ from backend.app.domain.vcf_validation import (
 )
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
-from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.infrastructure.artifacts.store import (
+    ArtifactIdentityConflictError,
+    ArtifactStore,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -2614,6 +2617,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
                 audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
                 db.commit()
+                return
+            except ArtifactIdentityConflictError as exc:
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_ARTIFACT_IDENTITY_CONFLICT",
+                    actor_id="siraloom-normalizer",
+                    next_step="artifact_integrity_review",
+                    payload={"automatic_overwrite": False, "artifact_integrity_conflict": True},
+                )
                 return
             except (SQLAlchemyError, OSError) as exc:
                 # Database and artifact-storage failures are operationally retryable.
