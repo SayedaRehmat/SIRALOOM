@@ -73,7 +73,7 @@ def test_normative_candidate_extraction_is_deterministic_and_tracks_sections(tmp
     source_dir.mkdir()
     slash = chr(92)
     fixture = (
-        f"{slash}section{{Header}}\n"
+        f"{slash}section{{The VCF specification}}\n"
         + "The fileformat line must be present.\n"
         + f"{slash}subsection{{Samples}}\n"
         + "A sample field should not be omitted.\n"
@@ -98,6 +98,7 @@ def test_normative_candidate_extraction_is_deterministic_and_tracks_sections(tmp
         assert candidates[1]["section_path"][-1]["heading"] == "Samples"
         assert candidates[0]["review_status"] == "UNREVIEWED"
         assert candidates[0]["traceability_status"] == "UNMAPPED"
+        assert candidates[0]["section_path"][0]["heading"] == "The VCF specification"
         assert "text" not in candidates[0]
 
 
