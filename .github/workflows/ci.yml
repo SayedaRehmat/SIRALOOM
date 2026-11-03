@@ -73,13 +73,37 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: pytest -q
+      - name: Qualify supported BCFtools releases against the real GIAB HG002 VCF
+        run: |
+          set -euo pipefail
+          data_dir="${RUNNER_TEMP}/siraloom-public-vcf"
+          for version in 1.23.1 1.23.2 1.23.3 1.24 1.24.1 1.25; do
+            environment="bcftools-${version}"
+            micromamba create --yes --name "${environment}" \
+              --channel conda-forge --channel bioconda --strict-channel-priority \
+              "bcftools=${version}"
+            executable="$(micromamba run -n "${environment}" which bcftools)"
+            version_line="$(micromamba run -n "${environment}" "${executable}" --version | sed -n '1p')"
+            test "${version_line}" = "bcftools ${version}"
+            executable_sha256="$(sha256sum "${executable}" | awk '{print $1}')"
+            SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
+            SIRALOOM_PUBLIC_BCFTOOLS_VERSION="${version}" \
+            SIRALOOM_PUBLIC_BCFTOOLS_SHA256="${executable_sha256}" \
+              pytest -q tests/test_public_vcf_normalization.py
+            evidence_dir="${data_dir}/bcftools-${version}"
+            mkdir -p "${evidence_dir}"
+            cp "${data_dir}/qualification-report.json" "${evidence_dir}/qualification-report.json"
+            cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz" "${evidence_dir}/normalized.vcf.gz"
+            cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz.csi" "${evidence_dir}/normalized.vcf.gz.csi"
+          done
       - name: Preserve public VCF normalization qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: siraloom-public-vcf-qualification-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/siraloom-public-vcf/qualification-report.json
+            ${{ runner.temp }}/siraloom-public-vcf/qualification-report*.json
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz.csi
             ${{ runner.temp }}/siraloom-public-vcf/giab-index-stats.txt
