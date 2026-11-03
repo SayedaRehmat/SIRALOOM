@@ -1360,6 +1360,19 @@ def test_artifact_store_rejects_different_bytes_for_same_artifact_identity(tmp_p
         )
         db.commit()
         assert first_artifact.sha256 == hashlib.sha256(first.read_bytes()).hexdigest()
+        replayed_artifact = store.put_file(
+            db=db,
+            case_id=case_id,
+            analysis_id=analysis_id,
+            source_path=first,
+            filename="normalized.vcf.gz",
+            artifact_type="NORMALIZED_VCF",
+            media_type="application/gzip",
+            genome_build="GRCh38",
+            artifact_id=artifact_id,
+        )
+        assert replayed_artifact.id == first_artifact.id
+        assert replayed_artifact.sha256 == first_artifact.sha256
 
         with pytest.raises(ArtifactIdentityConflictError) as exc:
             store.put_file(
