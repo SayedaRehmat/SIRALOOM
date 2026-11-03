@@ -417,18 +417,18 @@ def test_bcftools_qualification_blocks_executable_mutation_during_known_answer_r
         nonlocal calls
         calls += 1
         if command[-1] == "--version":
-            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\\nUsing htslib 1.25", stderr="")
+            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\nUsing htslib 1.25", stderr="")
         if calls == 2:
-            executable.write_text("#!/bin/sh\\nexit 99\\n", encoding="utf-8")
+            executable.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
         output_path = Path(command[command.index("-o") + 1])
         input_path = Path(command[-1])
         if input_path.name == "source.vcf":
             output_path.write_text(
-                "##fileformat=VCFv4.2\\n"
-                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-                "chr1\\t1\\t.\\tCA\\tC\\t.\\tPASS\\t.\\n"
-                "chr1\\t7\\t.\\tC\\tT\\t.\\tPASS\\t.\\n"
-                "chr1\\t7\\t.\\tC\\tG\\t.\\tPASS\\t.\\n",
+                "##fileformat=VCFv4.2\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t1\t.\tCA\tC\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tT\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tG\t.\tPASS\t.\n",
                 encoding="ascii",
             )
             return SimpleNamespace(returncode=0, stdout="", stderr="")
