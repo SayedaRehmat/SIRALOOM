@@ -101,8 +101,8 @@ jobs:
             local evidence_dir
 
             version_output="$("${executable}" --version)"
-            test "$(printf '%s\\n' "${version_output}" | sed -n '1p')" = "bcftools ${version}"
-            test "$(printf '%s\\n' "${version_output}" | sed -n '2p')" = "Using htslib ${version}"
+            test "$(printf '%s\n' "${version_output}" | sed -n '1p')" = "bcftools ${version}"
+            test "$(printf '%s\n' "${version_output}" | sed -n '2p')" = "Using htslib ${version}"
             executable_sha256="$(sha256sum "${executable}" | awk '{print $1}')"
 
             SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE="${executable}" \
@@ -112,9 +112,9 @@ jobs:
 
             evidence_dir="${data_dir}/bcftools-${version}"
             mkdir -p "${evidence_dir}"
-            printf '%s\\n' "${version_output}" > "${evidence_dir}/version.txt"
-            printf '%s\\n' "${provenance}" > "${evidence_dir}/build-provenance.txt"
-            printf '%s  %s\\n' "${executable_sha256}" "${executable}" > "${evidence_dir}/bcftools-executable.sha256"
+            printf '%s\n' "${version_output}" > "${evidence_dir}/version.txt"
+            printf '%s\n' "${provenance}" > "${evidence_dir}/build-provenance.txt"
+            printf '%s  %s\n' "${executable_sha256}" "${executable}" > "${evidence_dir}/bcftools-executable.sha256"
             cp "${data_dir}/qualification-report.json" "${evidence_dir}/qualification-report.json"
             cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz" "${evidence_dir}/normalized.vcf.gz"
             cp "${data_dir}/giab-hg002-grch38-chr1.normalized.vcf.gz.csi" "${evidence_dir}/normalized.vcf.gz.csi"
@@ -129,7 +129,7 @@ jobs:
             executable="$(micromamba run -n "${environment}" which bcftools)"
             package_manifest="$(micromamba list -n "${environment}")"
             qualify_executable "${version}" "${executable}" "Bioconda package"
-            printf '%s\\n' "${package_manifest}" > "${data_dir}/bcftools-${version}/package-manifest.txt"
+            printf '%s\n' "${package_manifest}" > "${data_dir}/bcftools-${version}/package-manifest.txt"
           done
 
           # Build upstream stable releases that do not have Bioconda binaries
