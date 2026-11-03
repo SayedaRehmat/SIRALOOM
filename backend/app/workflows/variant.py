@@ -2378,6 +2378,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             temp_path,
                             reference_fasta=reference_fasta_path,
                             approved=True,
+                            expected_bcftools_sha256=str(
+                                dict(
+                                    dict(normalization_provider_execution.contract.toolchain or {})
+                                    .get("bcftools") or {}
+                                ).get("sha256") or ""
+                            ),
                             source_only_format_fields=package_profile.get("base_modification_format_fields", []),
                         )
                     else:
