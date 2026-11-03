@@ -2610,12 +2610,131 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     payload={"automatic_fallback": False, "resource_gap": True},
                 )
                 return
-            except (NormalizationError, ReferenceError, ReferencePackageError, VCFToolError) as exc:
+            except ReferenceError as exc:
+                if exc.code in {
+                    "ENSEMBL_TIMEOUT",
+                    "ENSEMBL_RATE_LIMITED",
+                    "ENSEMBL_SERVER_ERROR",
+                    "ENSEMBL_UNAVAILABLE",
+                }:
+                    _schedule_transient_step_retry(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        event_type="REFERENCE_RESOURCE_RETRY_SCHEDULED",
+                        actor_id="reference-provider",
+                        next_step="reference_resolution",
+                    )
+                    raise TransientWorkflowError(
+                        "The reference provider is temporarily unavailable; retrying from the durable normalization checkpoint.",
+                        countdown=10,
+                        max_retries=3,
+                        error_code="REFERENCE_PROVIDER_RETRY_EXHAUSTED",
+                    ) from exc
+                if exc.code == "ENSEMBL_INVALID_REGION":
+                    mark_step(
+                        db,
+                        normalization_step,
+                        StepStatus.FAILED,
+                        error_code=exc.code,
+                        error_message=str(exc),
+                    )
+                    analysis.status = AnalysisStatus.FAILED
+                    db.commit()
+                    audit.record(
+                        event_type="REFERENCE_INPUT_REGION_REJECTED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="siraloom-reference",
+                        reason=str(exc),
+                        payload={"error_code": exc.code, "next_step": "CORRECT_INPUT_COORDINATES"},
+                    )
+                    db.commit()
+                    return
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="REFERENCE_RESOURCE_REQUIRES_REVIEW",
+                    actor_id="reference-resource",
+                    next_step="reference_resource_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_resource_error": True,
+                        "reference_error_code": exc.code,
+                        "reference_integrity_review_required": True,
+                    },
+                )
+                return
+            except ReferencePackageError as exc:
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="REFERENCE_PACKAGE_REQUIRES_REVIEW",
+                    actor_id="reference-resource",
+                    next_step="reference_package_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_package_error": True,
+                        "reference_package_error_code": exc.code,
+                        "reference_integrity_review_required": exc.code in {
+                            "REFERENCE_FAI_INVALID",
+                            "REFERENCE_FASTA_INVALID",
+                            "REFERENCE_FAI_MISMATCH",
+                            "REFERENCE_PACKAGE_INVALID",
+                            "REFERENCE_GZI_MISSING",
+                            "REFERENCE_CHECKSUM_MISMATCH",
+                            "REFERENCE_CONTIG_MANIFEST_MISMATCH",
+                            "REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
+                        },
+                    },
+                )
+                return
+            except VCFToolError as exc:
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=getattr(exc, "code", None) or "VCF_TOOL_EXECUTION_FAILED",
+                    error_message=str(exc),
+                    event_type="VCF_TOOL_EXECUTION_REQUIRES_REVIEW",
+                    actor_id="normalization-resource",
+                    next_step="normalization_tool_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "normalization_tool_error": True,
+                        "normalization_tool_error_code": getattr(exc, "code", None) or "VCF_TOOL_EXECUTION_FAILED",
+                    },
+                )
+                return
+            except NormalizationError as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
-                mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.FAILED,
+                    error_code=error_code,
+                    error_message=str(exc),
+                )
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
-                audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
+                audit.record(
+                    event_type="NORMALIZATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    reason=str(exc),
+                    payload={"error_code": error_code, "next_step": "INPUT_OR_NORMALIZATION_CORRECTION"},
+                )
                 db.commit()
                 return
             except ArtifactIdentityConflictError as exc:
