@@ -1522,6 +1522,21 @@ def normalize_vcf_with_bcftools(
             timeout_seconds=120,
         )
 
+        # Re-attest after the final BCFtools invocation (including index
+        # validation), not merely after normalization and sorting. A binary
+        # replaced while indexing must never publish output under the earlier
+        # executable identity.
+        final_executable_identity = _bcftools_executable_identity(bcftools_executable)
+        if final_executable_identity != executable_identity_before:
+            raise VCFToolError(
+                "Selected BCFtools executable changed during normalization or index validation; staged outputs will not be published."
+            )
+        final_reference_identity = _reference_artifact_identity(reference_fasta)
+        if final_reference_identity != reference_identity_before:
+            raise VCFToolError(
+                "Reference FASTA or index artifacts changed during normalization or index validation; staged outputs will not be published."
+            )
+
         # Flush staged files before publication. The private directory is on the
         # destination filesystem, so os.replace avoids cross-device partial copies.
         for staged in (sorted_path, staged_index_path):
