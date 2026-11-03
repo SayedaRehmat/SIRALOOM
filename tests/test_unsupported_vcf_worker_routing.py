@@ -860,6 +860,7 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
     workflow = importlib.import_module("backend.app.workflows.variant")
     from backend.app.domain.resources import (
         decide_resource_approval,
+        request_resource_approval,
         require_approved_vcf_specification,
     )
     from backend.app.infrastructure.db.models import ResourceApproval, ResourceQualification
@@ -959,15 +960,13 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
                 )
                 db.add_all([specification, qualification])
                 if approval_state != "UNQUALIFIED":
-                    approval = ResourceApproval(
-                        id=uuid4(),
+                    approval = request_resource_approval(
+                        db,
                         resource_id=specification.id,
                         organization_id=organization_id,
-                        qualification_id=qualification.id,
-                        status="PENDING",
-                        version=1,
+                        qualification_version="vcf-spec-qualification-v1",
+                        actor_id=user_id,
                     )
-                    db.add(approval)
                 db.flush()
                 if approval_state in {"REJECTED", "APPROVED"}:
                     decide_resource_approval(
@@ -1026,6 +1025,28 @@ def test_production_worker_audits_future_vcf_specification_governance_and_parser
             assert event is not None
             assert event.payload["error_code"] == expected_code
             assert event.payload["vcf_version"] == "VCFv4.6"
+            if approval_state in {"PENDING", "REJECTED", "APPROVED"}:
+                approval_row = db.scalar(select(ResourceApproval).where(
+                    ResourceApproval.resource_id == specification.id,
+                    ResourceApproval.organization_id == organization_id,
+                ))
+                assert approval_row is not None
+                assert approval_row.status == approval_state
+                adoption_event_type = (
+                    "RESOURCE_ADOPTION_REQUESTED"
+                    if approval_state == "PENDING"
+                    else "RESOURCE_ADOPTION_DECISION"
+                )
+                adoption_event = db.scalar(select(AuditEvent).where(
+                    AuditEvent.subject_id == str(specification.id),
+                    AuditEvent.event_type == adoption_event_type,
+                ))
+                assert adoption_event is not None
+                assert adoption_event.payload["approval_id"] == str(approval_row.id)
+                if approval_state != "PENDING":
+                    assert adoption_event.payload["decision"] == approval_state
+            else:
+                assert db.scalar(select(ResourceApproval)) is None
             # A governance/parser block is terminal before any scientific
             # transformation: normalization, variant materialization and
             # downstream annotation must not have started.
