@@ -23,7 +23,16 @@ def _resource(*, status="ACTIVE", provider="bcftools", version="1.25"):
         checksum="a" * 64,
         metadata_json={
             "capabilities": ["NORMALIZATION"],
-            "execution": {"executable": "bcftools"},
+            "execution": {
+                "executable": "bcftools",
+                "toolchain": {
+                    "bcftools": {
+                        "version": version,
+                        "executable": "bcftools",
+                        "sha256": "a" * 64,
+                    }
+                },
+            },
         },
     )
 
@@ -123,9 +132,11 @@ def test_execution_uses_selected_resource_version_not_global_settings(monkeypatc
         tmp_path / "output.vcf.gz",
         reference_fasta=tmp_path / "GRCh38.fa",
         approved=True,
+        expected_bcftools_sha256="a" * 64,
     )
 
     assert observed["expected_bcftools_version"] == "1.25"
+    assert observed["expected_bcftools_sha256"] == "a" * 64
     assert observed["bcftools_executable"] == "bcftools"
     assert result["provider_version"] == "1.25"
     assert selection.version == "1.25"
@@ -136,6 +147,7 @@ def test_provider_uses_the_exact_executable_that_was_qualified():
         "bcftools": {
             "version": "1.25",
             "executable": "/opt/siraloom/tools/bcftools/1.25/bin/bcftools",
+            "sha256": "a" * 64,
         }
     }
 
@@ -150,6 +162,7 @@ def test_provider_blocks_execution_contract_version_drift():
         "bcftools": {
             "version": "1.26",
             "executable": "/opt/siraloom/tools/bcftools/1.26/bin/bcftools",
+            "sha256": "a" * 64,
         }
     }
 
