@@ -29,29 +29,42 @@ jobs:
           test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
       - name: Install backend
         run: pip install -e . pytest
-      - name: Acquire pinned public VCF and GRCh38 reference test data
+      - name: Acquire NIST GIAB HG002 VCF and pinned Ensembl GRCh38 reference
         run: |
           set -euo pipefail
           data_dir="${RUNNER_TEMP}/siraloom-public-vcf"
           mkdir -p "${data_dir}"
-          curl --fail --location --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 180 \
-            "https://raw.githubusercontent.com/samtools/bcftools/1.25/test/filter.39.out" \
-            --output "${data_dir}/bcftools-filter.39.vcf"
-          echo "4ca6d9e8eb53301e5a89e4bec8ca512a0367a2dd338c9c7e2f99d9ded305b369  ${data_dir}/bcftools-filter.39.vcf" | sha256sum --check -
-          curl --fail --location --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 300 \
+          giab_base="https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh38"
+          giab_vcf="${data_dir}/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
+          giab_index="${giab_vcf}.tbi"
+          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 900 \
+            "${giab_base}/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz" --output "${giab_vcf}"
+          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 180 \
+            "${giab_base}/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi" --output "${giab_index}"
+          test -s "${giab_vcf}" && test -s "${giab_index}"
+          bcftools index --stats "${giab_vcf}" > "${data_dir}/giab-index-stats.txt"
+          vcf_contig="$(bcftools view --header-only "${giab_vcf}" | sed -n 's/^##contig=<ID=\\([^,>]*\\).*/\\1/p' | awk '$0 == "1" || $0 == "chr1" { print; exit }')"
+          test -n "${vcf_contig}"
+          slice="${data_dir}/giab-hg002-grch38-chr1-1-5000000.vcf.gz"
+          bcftools view --no-version --regions "${vcf_contig}:1-5000000" --output-type z --output "${slice}" "${giab_vcf}"
+          bcftools index --csi "${slice}"
+          source_records="$(bcftools view --no-header "${slice}" | wc -l)"
+          test "${source_records}" -gt 0
+          reference_archive="${data_dir}/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
+          curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 300 \
             "https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" \
-            --output "${data_dir}/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
-          curl --fail --location --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 60 \
-            "https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna/MD5SUM" \
-            --output "${data_dir}/MD5SUM"
-          grep -F "Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" "${data_dir}/MD5SUM" \
-            | (cd "${data_dir}" && md5sum --check --status)
-          gzip --decompress --stdout "${data_dir}/Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz" \
-            > "${data_dir}/GRCh38.chr1.fa"
-          echo "SIRALOOM_PUBLIC_VCF_PATH=${data_dir}/bcftools-filter.39.vcf" >> "${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_REFERENCE_PATH=${data_dir}/GRCh38.chr1.fa" >> "${GITHUB_ENV}"
+            --output "${reference_archive}"
+          echo "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c  ${reference_archive}" | sha256sum --check -
+          reference_fasta="${data_dir}/GRCh38.chr1.fa"
+          gzip --decompress --stdout "${reference_archive}" > "${reference_fasta}"
+          echo "SIRALOOM_PUBLIC_VCF_SLICE_PATH=${slice}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_VCF_ARCHIVE_PATH=${giab_vcf}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_VCF_INDEX_PATH=${giab_index}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_ARCHIVE_PATH=${reference_archive}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_PATH=${reference_fasta}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_CONTIG=${vcf_contig}" >> "${GITHUB_ENV}"
           echo "SIRALOOM_PUBLIC_DATA_DIR=${data_dir}" >> "${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_REFERENCE_MD5_VERIFIED=1" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_REFERENCE_SHA256_VERIFIED=1" >> "${GITHUB_ENV}"
       - name: Backend tests
         env:
           DATABASE_URL: sqlite:///./ci.db
@@ -65,7 +78,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: siraloom-public-vcf-qualification-${{ github.sha }}
-          path: ${{ runner.temp }}/siraloom-public-vcf/
+          path: |
+            ${{ runner.temp }}/siraloom-public-vcf/qualification-report.json
+            ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz.csi
+            ${{ runner.temp }}/siraloom-public-vcf/giab-index-stats.txt
           if-no-files-found: warn
           retention-days: 7
       - name: Validate process startup scripts
