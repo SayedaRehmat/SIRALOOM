@@ -19,14 +19,14 @@ The CI qualification workflow executes the same downloaded, checksum-pinned
 NIST GIAB HG002 GRCh38 VCF slice and the same pinned Ensembl GRCh38 reference
 against each stable release below:
 
-| BCFtools release | Qualification |
+| BCFtools release | Acquisition and qualification |
 |---|---|
-| 1.23.1 | Bioconda binary; executed in CI |
-| 1.23.2 | Executed in CI |
-| 1.23.3 | Executed in CI |
-| 1.24 | Executed in CI |
-| 1.24.1 | Executed in CI |
-| 1.25 | Executed in CI |
+| 1.23.1 | Bioconda binary; real GIAB execution |
+| 1.23.2 | Built from matching upstream BCFtools/HTSlib tags; real GIAB execution |
+| 1.23.3 | Built from matching upstream BCFtools/HTSlib tags; real GIAB execution |
+| 1.24 | Bioconda binary; real GIAB execution |
+| 1.24.1 | Built from matching upstream BCFtools/HTSlib tags; real GIAB execution |
+| 1.25 | Bioconda binary; real GIAB execution |
 
 A release is not considered compatible until its actual CI run passes. The
 matrix records the executable SHA-256, exact tool version, normalized VCF,
