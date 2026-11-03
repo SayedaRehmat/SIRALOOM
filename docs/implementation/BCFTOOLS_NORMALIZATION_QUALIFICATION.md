@@ -29,9 +29,11 @@ against each stable release below:
 | 1.25 | Bioconda binary; real GIAB execution |
 
 A release is not considered compatible until its actual CI run passes. The
-matrix records the executable SHA-256, exact tool version, normalized VCF,
-CSI index, source-child reconciliation, and reference identity in the
-qualification artifact.
+matrix uses Bioconda binaries where published and builds exact matching upstream
+BCFtools and HTSlib release tags where a binary package is unavailable. It
+records source/package provenance, executable SHA-256, exact tool version,
+normalized VCF, CSI index, source-child reconciliation, and reference identity
+in the qualification artifact.
 
 This matrix is a finite, explicit compatibility contract—not a claim that
 every historical, prerelease, vendor-patched, or future BCFtools build is
