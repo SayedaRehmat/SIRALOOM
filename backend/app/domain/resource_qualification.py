@@ -327,7 +327,7 @@ def _qualify_normalization_engine(
         if not executable_path.is_file() or not os.access(executable_path, os.X_OK):
             raise OSError("resolved BCFtools path is not a regular executable file")
         executable_sha256 = _sha256(executable_path)
-    except OSError as exc:
+    except (OSError, RuntimeError) as exc:
         blockers.append("BCFTOOLS_EXECUTABLE_FINGERPRINT_FAILED")
         checks["normalization_runtime"].update({
             "status": "BLOCKED",
