@@ -6,10 +6,10 @@ import re
 from pathlib import Path
 
 
-ROOT = Path(__file__).parent
-MANIFEST_PATH = ROOT / "backend" / "app" / "domain" / "vcf_conformance_cases.json"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+MANIFEST_PATH = REPO_ROOT / "backend" / "app" / "domain" / "vcf_conformance_cases.json"
 INVENTORY_PATH = (
-    ROOT / "docs" / "implementation" / "VCF_NORMATIVE_SECTION_INVENTORY.json"
+    REPO_ROOT / "docs" / "implementation" / "VCF_NORMATIVE_SECTION_INVENTORY.json"
 )
 
 
