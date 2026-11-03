@@ -122,6 +122,9 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
     )
 
     assert result["tool_version"] == "bcftools 1.25"
+    assert result["executable_identity"]["sha256"] == result["executable_sha256"]
+    assert len(result["executable_sha256"]) == 64
+    assert result["executable_integrity_status"] == "MEASURED_UNPINNED"
     import gzip
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
@@ -241,6 +244,18 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
     monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+monkeypatch.setattr(
+        vcf_tools,
+        "_bcftools_executable_identity",
+        lambda _executable: {
+            "path": "/usr/bin/bcftools",
+            "sha256": "a" * 64,
+            "size_bytes": 1,
+            "device": 1,
+            "inode": 1,
+            "mtime_ns": 1,
+        },
+    )
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
