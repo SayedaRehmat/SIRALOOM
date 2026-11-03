@@ -40,8 +40,7 @@ class NormalizationProviderUnavailable(VCFToolUnavailable):
     """A governed provider is temporarily unavailable and should be retried."""
 
     def __init__(self, message: str, *, code: str = "NORMALIZATION_PROVIDER_UNAVAILABLE"):
-        super().__init__(message)
-        self.code = code
+        super().__init__(message, code=code)
 
 
 @dataclass(frozen=True)
