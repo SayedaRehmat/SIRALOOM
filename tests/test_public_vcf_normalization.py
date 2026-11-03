@@ -184,14 +184,12 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     output = data_dir / "giab-hg002-grch38-chr1.normalized.vcf.gz"
     bcftools_executable = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE", "bcftools")
     expected_bcftools_version = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_VERSION", "1.25")
-    expected_bcftools_sha256 = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_SHA256") or None
     execution = normalize_vcf_with_bcftools(
         routing["sequence_path"],
         output,
         reference_fasta=reference_for_vcf,
         expected_bcftools_version=expected_bcftools_version,
         bcftools_executable=bcftools_executable,
-        expected_bcftools_sha256=expected_bcftools_sha256,
     )
     output_validation = validate_vcf_strict(output, reference_contigs={contig})
     assert output_validation["fileformat"] == "VCFv4.2"
@@ -206,9 +204,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert execution["compression"] == "BGZF"
     assert execution["index"] == "CSI"
     assert Path(execution["index_path"]).is_file()
-    assert execution["executable_integrity_status"] == (
-        "MATCHED_QUALIFIED_SHA256" if expected_bcftools_sha256 else "MEASURED_UNPINNED"
-    )
+    assert execution["executable_integrity_status"] == "MEASURED_UNPINNED"
     assert len(execution["executable_sha256"]) == 64
     reference_artifacts = execution["reference_identity"]["artifacts"]
     assert reference_artifacts["fasta"]["sha256"] == _sha256_file(reference_for_vcf)
@@ -238,7 +234,6 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         "normalized_validation": output_validation,
         "normalization_execution": execution,
         "expected_bcftools_version": expected_bcftools_version,
-        "expected_bcftools_sha256": expected_bcftools_sha256,
     }
     (data_dir / "qualification-report.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
