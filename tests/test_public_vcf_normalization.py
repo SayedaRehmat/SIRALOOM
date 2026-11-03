@@ -44,6 +44,9 @@ EXPECTED_GIAB_VCF_SHA256 = "adb4d4a50048aa13353a06b84fcfcbca09a5d17525efaa4cea44
 EXPECTED_GIAB_GRCH37_VCF_SHA256 = "a40525db0ecba79a7e5c28e7765b97a265f3a143fd1141c66b1f5fd7c6092e69"
 EXPECTED_GIAB_GRCH37_INDEX_SHA256 = "a67da54fc965bbb4268c649a58763ad9f641c8f3746a9faf7bbc5d10b58b630f"
 EXPECTED_GRCH37_REFERENCE_ARCHIVE_SHA256 = "6eacda29a7285dbe184c3d572ce22eba64eee4f295d5744d1be9136c3af17c24"
+EXPECTED_GIAB_GRCH37_SLICE_SHA256 = "7747a3c0549aaaf872d51d510233c8f52f414d5469bf84a65fd89fc06e0b00c1"
+EXPECTED_GRCH37_REFERENCE_FASTA_SHA256 = "e06ebf75ca6d6c6cf1bd9b185db0e10f8749ffa9d70e9c422023a8a877cfa6bd"
+EXPECTED_GRCH37_REFERENCE_FAI_SHA256 = "a3db0f192ec730777ec589a5ae583e0e71e65471ea876a4f09bf8488aa82e2cd"
 EXPECTED_GIAB_INDEX_SHA256 = "23162712553413b10f88916c28bd1238deb703a7237be2910440773beea71894"
 EXPECTED_GIAB_SLICE_SHA256 = "16252fe135400282e196e691ae4064a95d3e5c5fee058f64dad2b5dc32c3ae41"
 
@@ -228,6 +231,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert read_vcf_fileformat(source) == "VCFv4.2"
     reference_for_vcf = _reference_with_contig_name(reference, contig, data_dir)
     _build_single_contig_fai(reference_for_vcf)
+    assert _sha256_file(reference_for_vcf) == EXPECTED_GRCH37_REFERENCE_FASTA_SHA256
+    assert _sha256_file(Path(f"{reference_for_vcf}.fai")) == EXPECTED_GRCH37_REFERENCE_FAI_SHA256
 
     source_for_validation = _restrict_header_to_single_contig(
         source,
@@ -382,6 +387,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     giab_index_sha256 = _sha256_file(source_index)
     giab_slice_sha256 = _sha256_file(source)
     assert giab_archive_sha256 == EXPECTED_GIAB_GRCH37_VCF_SHA256
+    assert giab_slice_sha256 == EXPECTED_GIAB_GRCH37_SLICE_SHA256
     assert giab_archive_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_SHA256")
     assert giab_index_sha256 == EXPECTED_GIAB_GRCH37_INDEX_SHA256
     assert giab_index_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_SHA256")
