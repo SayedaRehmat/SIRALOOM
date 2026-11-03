@@ -402,6 +402,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     normalization_resource_failure, artifact_identity_conflict
 ):
     """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
+    import gzip
     import importlib
     from types import SimpleNamespace
     from datetime import UTC, datetime
