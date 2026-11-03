@@ -150,6 +150,12 @@ def normalize_with_selected_provider(
             expected_bcftools_version=selection.version,
             source_only_format_fields=source_only_format_fields,
             bcftools_executable=selection.executable,
+            expected_bcftools_sha256=(
+                dict(
+                    dict((resource.metadata_json or {}).get("execution") or {})
+                    .get("toolchain") or {}
+                ).get("bcftools", {}).get("sha256")
+            ),
         )
     except VCFToolError as exc:
         raise NormalizationProviderError(
