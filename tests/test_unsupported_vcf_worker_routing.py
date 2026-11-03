@@ -395,15 +395,17 @@ def test_production_worker_rejects_malformed_symbolic_sv_with_precise_reason(mon
         "artifact_identity_conflict",
         "reference_package_failure",
         "tool_execution_failure",
+        "reference_provider_transient_failure",
     ),
     [
-        (False, False, False, False, False, False),
-        (True, False, False, False, False, False),
-        (False, True, False, False, False, False),
-        (False, False, True, False, False, False),
-        (False, False, False, True, False, False),
-        (False, False, False, False, True, False),
-        (False, False, False, False, False, True),
+        (False, False, False, False, False, False, False),
+        (True, False, False, False, False, False, False),
+        (False, True, False, False, False, False, False),
+        (False, False, True, False, False, False, False),
+        (False, False, False, True, False, False, False),
+        (False, False, False, False, True, False, False),
+        (False, False, False, False, False, True, False),
+        (False, False, False, False, False, False, True),
     ],
 )
 def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_block(
@@ -415,6 +417,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     artifact_identity_conflict,
     reference_package_failure,
     tool_execution_failure,
+    reference_provider_transient_failure,
 ):
     """Exercise the profile-bound, qualified BCFtools execution path and durable provenance in the production worker."""
     import gzip
@@ -426,6 +429,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
     import shutil
 
     from backend.app.domain.resource_source_contract import validate_execution_contract
+    from backend.app.domain.reference import ReferenceError
     from backend.app.domain.reference_package import ReferencePackageError
     from backend.app.domain.vcf_tools import VCFToolError
     from backend.app.domain.resource_execution import (
@@ -657,6 +661,11 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         monkeypatch.setattr(workflow, "resolve_profile_runtime_resource", resolve_profile_resource)
 
         def load_reference_package_fixture(*_args, **_kwargs):
+            if reference_provider_transient_failure:
+                raise ReferenceError(
+                    "fixture: reference provider timed out",
+                    code="ENSEMBL_TIMEOUT",
+                )
             if reference_package_failure:
                 raise ReferencePackageError(
                     "fixture: approved reference package is unavailable",
@@ -712,7 +721,10 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
             monkeypatch.setattr(store, "put_file", conflict_normalized_artifact)
 
-        if worker_loss:
+        if reference_provider_transient_failure:
+            with pytest.raises(workflow.TransientWorkflowError):
+                workflow.run_variant_analysis(analysis_id)
+        elif worker_loss:
             queue_module = importlib.import_module(
                 "backend.app.infrastructure.queue.celery_app"
             )
@@ -782,8 +794,33 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
 
             monkeypatch.setattr(store, "put_file", original_put_file)
             deliver(redelivered=True)
-        else:
+        elif not reference_provider_transient_failure:
             workflow.run_variant_analysis(analysis_id)
+
+        if reference_provider_transient_failure:
+            with local_session() as db:
+                analysis = db.get(Analysis, analysis_id)
+                step = db.scalar(select(WorkflowStep).where(
+                    WorkflowStep.analysis_id == analysis_id,
+                    WorkflowStep.step_id == "normalize",
+                ))
+                event = db.scalar(select(AuditEvent).where(
+                    AuditEvent.analysis_id == analysis_id,
+                    AuditEvent.event_type == "REFERENCE_RESOURCE_RETRY_SCHEDULED",
+                ))
+                assert analysis.status == AnalysisStatus.RUNNING
+                assert step.status == StepStatus.RETRYING
+                assert step.error_code == "ENSEMBL_TIMEOUT"
+                assert step.metadata_json["retry_policy"] == "bounded_transient_retry"
+                assert step.metadata_json["next_step"] == "reference_resolution"
+                assert event is not None
+                assert event.payload["error_code"] == "ENSEMBL_TIMEOUT"
+                assert db.scalar(select(Artifact).where(
+                    Artifact.analysis_id == analysis_id,
+                    Artifact.artifact_type == "NORMALIZED_VCF",
+                )) is None
+                assert store.exists(db.get(Artifact, input_artifact.id).storage_uri)
+            return
 
         if reference_package_failure or tool_execution_failure:
             with local_session() as db:
