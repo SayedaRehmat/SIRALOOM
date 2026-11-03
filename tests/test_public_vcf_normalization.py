@@ -41,6 +41,8 @@ ENSEMBL_REFERENCE_SOURCE = (
 EXPECTED_REFERENCE_ARCHIVE_SHA256 = (
     "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c"
 )
+EXPECTED_REFERENCE_FASTA_SHA256 = "749354128afbf131d512ed4daaee2a13aa60f3ddf983f90e8039931a974dae74"
+EXPECTED_REFERENCE_FAI_SHA256 = "ee7bb17307e03e1a3984ed842c7282d954e9dc71486836ec7a6906817550f872"
 EXPECTED_GIAB_VCF_SHA256 = "adb4d4a50048aa13353a06b84fcfcbca09a5d17525efaa4cea44f8822e81175c"
 EXPECTED_GIAB_GRCH37_VCF_SHA256 = "a40525db0ecba79a7e5c28e7765b97a265f3a143fd1141c66b1f5fd7c6092e69"
 EXPECTED_GIAB_GRCH37_INDEX_SHA256 = "a67da54fc965bbb4268c649a58763ad9f641c8f3746a9faf7bbc5d10b58b630f"
@@ -232,6 +234,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert read_vcf_fileformat(source) == "VCFv4.2"
     reference_for_vcf = _reference_with_contig_name(reference, contig, data_dir)
     _build_single_contig_fai(reference_for_vcf)
+    assert _sha256_file(reference_for_vcf) == EXPECTED_REFERENCE_FASTA_SHA256
+    assert _sha256_file(Path(f"{reference_for_vcf}.fai")) == EXPECTED_REFERENCE_FAI_SHA256
 
     source_for_validation = _restrict_header_to_single_contig(
         source,
