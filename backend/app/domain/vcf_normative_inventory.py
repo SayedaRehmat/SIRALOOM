@@ -25,12 +25,19 @@ SPEC_BLOB_SHA1 = {
 }
 
 SPEC_EXPECTED_CANDIDATE_LINES = {
-    "VCFv4.1": 60,
-    "VCFv4.2": 66,
-    "VCFv4.3": 119,
-    "VCFv4.4": 205,
-    "VCFv4.5": 230,
+    "VCFv4.1": 38,
+    "VCFv4.2": 44,
+    "VCFv4.3": 82,
+    "VCFv4.4": 161,
+    "VCFv4.5": 185,
 }
+VCF_NORMATIVE_SECTION_ROOTS = frozenset({
+    "The VCF specification",
+    "Representing variation in VCF records",
+    "INFO keys used for structural variants",
+    "FORMAT keys used for structural variants",
+    "Understanding the VCF format and the haplotype representation",
+})
 
 _NORMATIVE = re.compile(
     r"\b(must\s+not|shall\s+not|should\s+not|must|shall|should|"
@@ -94,6 +101,12 @@ def extract_vcf_normative_candidates(
                     heading_stack.pop()
                 heading_stack.append((level, heading_title, line_number))
 
+            # The HTS specifications repository also embeds the separate BCF
+            # specification and historical change logs. They are not VCF
+            # normative requirements and must not inflate this VCF-only ledger.
+            if not heading_stack or heading_stack[0][1] not in VCF_NORMATIVE_SECTION_ROOTS:
+                continue
+
             matches = [match.group(0).lower() for match in _NORMATIVE.finditer(line)]
             if not matches:
                 continue
@@ -139,9 +152,12 @@ def extract_vcf_normative_candidates(
         "source_commit_signature_verified_by_github": HTS_SPECS_COMMIT_SIGNATURE_VERIFIED,
         "inventory_status": "EXTRACTED_UNREVIEWED",
         "qualification_status": "BLOCKED_PENDING_CLAUSE_REVIEW_AND_TRACEABILITY",
+        "candidate_scope": "VCF_SPECIFICATION_SECTIONS_ONLY",
+        "included_section_roots": sorted(VCF_NORMATIVE_SECTION_ROOTS),
+        "excluded_section_roots": ["BCF specification", "List of changes"],
         "extraction_method": (
-            "Line-level extraction of normative modal language; candidate lines "
-            "are not assumed to equal complete normative clauses."
+            "Line-level extraction of normative modal language from VCF-specific "
+            "sections only; candidate lines are not assumed to equal complete normative clauses."
         ),
         "versions": versions,
     }
