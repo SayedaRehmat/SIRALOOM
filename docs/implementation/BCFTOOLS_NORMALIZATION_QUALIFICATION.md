@@ -41,6 +41,21 @@ interchangeable. Each newly discovered stable release remains a candidate
 until the same execution qualification succeeds and the laboratory approves
 its exact resource binding.
 
+## Immutable upstream source pins
+
+The following source-built releases are pinned to the commit objects behind
+their GitHub-verified release tags. CI checks both repositories' checked-out
+commit SHA before compiling or executing the binary.
+
+| Release | BCFtools commit | HTSlib commit |
+|---|---|---|
+| 1.23.2 | `db87bf9833f06a5cde792a5118a0a83d2860a179` | `3beae100a4c6b066e7f601f7e244bb371b9c1c16` |
+| 1.23.3 | `ec74c62952f53c14459acb5283a7483b41c4ade3` | `02594b767d74e7992971d286a79dc2b60a7b9257` |
+| 1.24.1 | `2fd5931cdf3a7ef27ab843dda27da844b4ea2a51` | `a6962b2d8d748d699258eb1def48d770544f73e2` |
+
+A changed or moved tag fails the qualification job rather than silently
+building different source bytes.
+
 ## Scope of the GIAB execution
 
 The real-data qualification uses the NIST GIAB HG002 v4.2.1 GRCh38 benchmark
