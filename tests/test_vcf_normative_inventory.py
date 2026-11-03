@@ -6,7 +6,7 @@ import re
 import pytest
 from pathlib import Path
 
-from app.domain.vcf_normative_inventory import (
+from backend.app.domain.vcf_normative_inventory import (
     SPEC_BLOB_SHA1,
     SPEC_EXPECTED_CANDIDATE_LINES,
     extract_vcf_normative_candidates,
