@@ -1345,7 +1345,7 @@ def test_artifact_store_rejects_different_bytes_for_same_artifact_identity(tmp_p
     second.write_bytes(b"different normalized VCF bytes")
 
     with local_session() as db:
-        store.put_file(
+        first_artifact = store.put_file(
             db=db,
             case_id=case_id,
             analysis_id=analysis_id,
@@ -1357,6 +1357,7 @@ def test_artifact_store_rejects_different_bytes_for_same_artifact_identity(tmp_p
             artifact_id=artifact_id,
         )
         db.commit()
+        assert first_artifact.sha256 == hashlib.sha256(first.read_bytes()).hexdigest()
 
         with pytest.raises(ArtifactIdentityConflictError) as exc:
             store.put_file(
