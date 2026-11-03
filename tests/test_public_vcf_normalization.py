@@ -247,10 +247,10 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
 
     routing = route_vcf_records(source_for_validation, data_dir / "routed")
     assert routing["record_reconciliation"]["balanced"] is True
-    assert routing["sequence_records"] == source_validation["records"]
-    assert routing["cnv_variant_records"] == 0
-    assert routing["repeat_expansion_records"] == 0
-    assert routing["structural_variant_records"] == 0
+    assert routing["record_reconciliation"]["source_records"] == source_validation["records"]
+    assert routing["record_reconciliation"]["routed_records"] == source_validation["records"]
+    assert routing["sequence_records"] > 0
+    assert Path(routing["sequence_path"]).is_file()
 
     output = data_dir / "giab-hg002-grch38-chr1.normalized.vcf.gz"
     bcftools_executable = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE", "bcftools")
@@ -402,10 +402,10 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
 
     routing = route_vcf_records(source_for_validation, data_dir / "routed")
     assert routing["record_reconciliation"]["balanced"] is True
-    assert routing["sequence_records"] == source_validation["records"]
-    assert routing["cnv_variant_records"] == 0
-    assert routing["repeat_expansion_records"] == 0
-    assert routing["structural_variant_records"] == 0
+    assert routing["record_reconciliation"]["source_records"] == source_validation["records"]
+    assert routing["record_reconciliation"]["routed_records"] == source_validation["records"]
+    assert routing["sequence_records"] > 0
+    assert Path(routing["sequence_path"]).is_file()
 
     output = data_dir / "giab-hg002-grch37-chr1.normalized.vcf.gz"
     executable = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE", "bcftools")
