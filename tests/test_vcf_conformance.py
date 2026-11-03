@@ -26,7 +26,8 @@ def test_packaged_vcf_conformance_executes_for_each_builtin_version(version):
     # certification corpus.
     assert report["normative_coverage_status"] == "PARTIAL"
     assert report["normative_coverage_sections"] == []
-    assert report["normative_uncovered_sections"] == []
+    assert report["normative_uncovered_sections"]
+    assert "Complete normative clause inventory with stable clause identifiers for this VCF release" in report["normative_uncovered_sections"]
     assert report["fixture_categories_exercised"]
     assert report["specification_requirements_exercised"]
     assert len(report["corpus_sha256"]) == 64
