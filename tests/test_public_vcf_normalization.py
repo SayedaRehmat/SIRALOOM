@@ -37,6 +37,9 @@ ENSEMBL_REFERENCE_SOURCE = (
 EXPECTED_REFERENCE_ARCHIVE_SHA256 = (
     "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c"
 )
+EXPECTED_GIAB_VCF_SHA256 = "adb4d4a50048aa13353a06b84fcfcbca09a5d17525efaa4cea44f8822e81175c"
+EXPECTED_GIAB_INDEX_SHA256 = "23162712553413b10f88916c28bd1238deb703a7237be2910440773beea71894"
+EXPECTED_GIAB_SLICE_SHA256 = "cddf1c35ad301947a73b9e38c416ef6a056fc3ab6533ff4b288b3c61c2c4c776"
 
 
 def _sha256_file(path: Path) -> str:
@@ -142,6 +145,9 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert source.is_file() and archive.is_file() and source_index.is_file()
     assert reference.is_file() and reference_archive.is_file()
     assert _sha256_file(reference_archive) == EXPECTED_REFERENCE_ARCHIVE_SHA256
+    assert _sha256_file(archive) == EXPECTED_GIAB_VCF_SHA256
+    assert _sha256_file(source_index) == EXPECTED_GIAB_INDEX_SHA256
+    assert _sha256_file(source) == EXPECTED_GIAB_SLICE_SHA256
     assert os.getenv("SIRALOOM_PUBLIC_REFERENCE_SHA256_VERIFIED") == "1"
 
     assert read_vcf_fileformat(archive) == "VCFv4.2"
@@ -176,11 +182,16 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert routing["structural_variant_records"] == 0
 
     output = data_dir / "giab-hg002-grch38-chr1.normalized.vcf.gz"
+    bcftools_executable = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_EXECUTABLE", "bcftools")
+    expected_bcftools_version = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_VERSION", "1.25")
+    expected_bcftools_sha256 = os.getenv("SIRALOOM_PUBLIC_BCFTOOLS_SHA256") or None
     execution = normalize_vcf_with_bcftools(
         routing["sequence_path"],
         output,
         reference_fasta=reference_for_vcf,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=expected_bcftools_version,
+        bcftools_executable=bcftools_executable,
+        expected_bcftools_sha256=expected_bcftools_sha256,
     )
     output_validation = validate_vcf_strict(output, reference_contigs={contig})
     assert output_validation["fileformat"] == "VCFv4.2"
@@ -190,12 +201,14 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     assert reconciliation["balanced"] is True
     assert reconciliation["source_records"] == source_validation["records"]
     assert reconciliation["normalized_child_records"] == output_validation["records"]
-    assert execution["tool_version"] == "bcftools 1.25"
+    assert execution["tool_version"] == f"bcftools {expected_bcftools_version}"
     assert execution["reference_check"] == "error"
     assert execution["compression"] == "BGZF"
     assert execution["index"] == "CSI"
     assert Path(execution["index_path"]).is_file()
-    assert execution["executable_integrity_status"] == "MEASURED_UNPINNED"
+    assert execution["executable_integrity_status"] == (
+        "MATCHED_QUALIFIED_SHA256" if expected_bcftools_sha256 else "MEASURED_UNPINNED"
+    )
     assert len(execution["executable_sha256"]) == 64
     reference_artifacts = execution["reference_identity"]["artifacts"]
     assert reference_artifacts["fasta"]["sha256"] == _sha256_file(reference_for_vcf)
@@ -224,6 +237,8 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
         "normalized_index_sha256": _sha256_file(Path(execution["index_path"])),
         "normalized_validation": output_validation,
         "normalization_execution": execution,
+        "expected_bcftools_version": expected_bcftools_version,
+        "expected_bcftools_sha256": expected_bcftools_sha256,
     }
     (data_dir / "qualification-report.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
