@@ -25,7 +25,7 @@ repository.
 
 ## Qualification status
 
-<badge>EXTRACTED_UNREVIEWED</badge>
+**Status:** `EXTRACTED_UNREVIEWED`
 
 These 680 entries are *candidate source lines*, not 680 proven atomic normative
 clauses. Modal-language extraction can produce false positives, miss
