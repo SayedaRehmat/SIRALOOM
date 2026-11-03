@@ -41,6 +41,9 @@ EXPECTED_REFERENCE_ARCHIVE_SHA256 = (
     "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c"
 )
 EXPECTED_GIAB_VCF_SHA256 = "adb4d4a50048aa13353a06b84fcfcbca09a5d17525efaa4cea44f8822e81175c"
+EXPECTED_GIAB_GRCH37_VCF_SHA256 = "a40525db0ecba79a7e5c28e7765b97a265f3a143fd1141c66b1f5fd7c6092e69"
+EXPECTED_GIAB_GRCH37_INDEX_SHA256 = "a67da54fc965bbb4268c649a58763ad9f641c8f3746a9faf7bbc5d10b58b630f"
+EXPECTED_GRCH37_REFERENCE_ARCHIVE_SHA256 = "6eacda29a7285dbe184c3d572ce22eba64eee4f295d5744d1be9136c3af17c24"
 EXPECTED_GIAB_INDEX_SHA256 = "23162712553413b10f88916c28bd1238deb703a7237be2910440773beea71894"
 EXPECTED_GIAB_SLICE_SHA256 = "16252fe135400282e196e691ae4064a95d3e5c5fee058f64dad2b5dc32c3ae41"
 
@@ -378,8 +381,11 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     giab_archive_sha256 = _sha256_file(archive)
     giab_index_sha256 = _sha256_file(source_index)
     giab_slice_sha256 = _sha256_file(source)
+    assert giab_archive_sha256 == EXPECTED_GIAB_GRCH37_VCF_SHA256
     assert giab_archive_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_SHA256")
+    assert giab_index_sha256 == EXPECTED_GIAB_GRCH37_INDEX_SHA256
     assert giab_index_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_SHA256")
+    assert reference_archive_sha256 == EXPECTED_GRCH37_REFERENCE_ARCHIVE_SHA256
     assert reference_archive_sha256 == os.getenv("SIRALOOM_PUBLIC_GRCH37_REFERENCE_SHA256")
 
     assert read_vcf_fileformat(archive) == "VCFv4.2"
@@ -469,7 +475,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
         "normalized_validation": output_validation,
         "normalization_execution": execution,
         "expected_bcftools_version": version,
-        "source_integrity_status": "SHA256_MEASURED_AWAITING_IMMUTABLE_PIN",
+        "source_integrity_status": "VERIFIED_PINNED_SHA256",
     }
     (data_dir / "qualification-report-grch37.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n",
