@@ -456,3 +456,29 @@ def test_future_vcf_upload_requires_exact_pending_lab_approval(
         assert audit.payload["validation"]["vcf_specification_governance"]["status"] == (
             "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
         )
+
+
+def test_artifact_upload_offloads_vcf_validation_from_asgi_event_loop(upload_api, monkeypatch):
+    observed = []
+    original_run_in_threadpool = artifacts_api.run_in_threadpool
+
+    async def recording_run_in_threadpool(function, *args, **kwargs):
+        observed.append(function)
+        return await original_run_in_threadpool(function, *args, **kwargs)
+
+    monkeypatch.setattr(artifacts_api, "run_in_threadpool", recording_run_in_threadpool)
+    content = (
+        b"##fileformat=VCFv4.2\\n"
+        b"#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        b"1\\t10\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+    )
+
+    response = _post_vcf(
+        upload_api["client"],
+        upload_api["case_id"],
+        content,
+        "browser-upload-threadpool-000001",
+    )
+
+    assert response.status_code == 201, response.text
+    assert observed == [artifacts_api._validate_vcf_for_upload]
