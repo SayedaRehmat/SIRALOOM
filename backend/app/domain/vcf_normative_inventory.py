@@ -34,8 +34,8 @@ SPEC_EXPECTED_CANDIDATE_LINES = {
 
 _HEADING = re.compile(r"^\\(section|subsection|subsubsection|paragraph)\\{(.*)\\}")
 _NORMATIVE = re.compile(
-    r"\\b(must\\s+not|shall\\s+not|should\\s+not|must|shall|should|"
-    r"required|recommended|optional|may)\\b",
+    r"\b(must\s+not|shall\s+not|should\s+not|must|shall|should|"
+    r"required|recommended|optional|may)\b",
     re.IGNORECASE,
 )
 _HEADING_LEVEL = {
@@ -48,7 +48,7 @@ _HEADING_LEVEL = {
 
 def git_blob_sha1(content: bytes) -> str:
     """Return the canonical Git blob object SHA-1 for exact source verification."""
-    header = f"blob {len(content)}\\0".encode("ascii")
+    header = f"blob {len(content)}\0".encode("ascii")
     return hashlib.sha1(header + content).hexdigest()
 
 
@@ -56,6 +56,7 @@ def extract_vcf_normative_candidates(
     source_dir: Path,
     *,
     expected_blob_shas: Mapping[str, str] | None = SPEC_BLOB_SHA1,
+    expected_candidate_lines: Mapping[str, int] | None = SPEC_EXPECTED_CANDIDATE_LINES,
 ) -> dict:
     """Extract line-level normative-language candidates from pinned VCF sources."""
     versions: dict[str, dict] = {}
@@ -111,8 +112,8 @@ def extract_vcf_normative_candidates(
                 }
             )
 
-        expected_count = SPEC_EXPECTED_CANDIDATE_LINES[version]
-        if len(candidates) != expected_count:
+        expected_count = expected_candidate_lines.get(version) if expected_candidate_lines is not None else None
+        if expected_count is not None and len(candidates) != expected_count:
             raise ValueError(
                 f"Normative candidate count changed for {version}: "
                 f"expected={expected_count}, actual={len(candidates)}"
