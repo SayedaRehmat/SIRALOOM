@@ -220,7 +220,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
 
     source_for_validation = _restrict_header_to_single_contig(
         source,
-        data_dir / "giab-hg002-grch38-chr1-1-5000000.vcf",
+        data_dir / "giab-hg002-grch38-chr1.vcf",
         contig,
     )
     source_validation = validate_vcf_strict(
@@ -365,7 +365,7 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     _build_single_contig_fai(reference_for_vcf)
     source_for_validation = _restrict_header_to_single_contig(
         source,
-        data_dir / "giab-hg002-grch37-chr1-1-5000000.vcf",
+        data_dir / "giab-hg002-grch37-chr1.vcf",
         contig,
     )
 
