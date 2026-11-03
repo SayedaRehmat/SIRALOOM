@@ -1369,9 +1369,9 @@ def test_identity_change_during_index_validation_aborts_publication(
     output = tmp_path / "normalized.vcf.gz"
     index = Path(f"{output}.csi")
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     output.write_bytes(b"previous-vcf")
@@ -1426,14 +1426,14 @@ def test_identity_change_during_index_validation_aborts_publication(
     def fake_run(command, **_kwargs):
         operation = command[1]
         if operation == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\n", stderr="")
         if operation in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             with gzip.open(target, "wt", encoding="utf-8") as handle:
                 handle.write(
-                    "##fileformat=VCFv4.3\\n"
-                    "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-                    "1\\t2\\t.\\tA\\tG\\t.\\tPASS\\t.\\n"
+                    "##fileformat=VCFv4.3\n"
+                    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                    "1\t2\t.\tA\tG\t.\tPASS\t.\n"
                 )
             return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
         if operation == "index":
