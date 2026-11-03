@@ -24,6 +24,8 @@ from backend.app.infrastructure.db.models import (
     WorkflowStep,
     ResourceQualification,
     ResourceExecutionRecord,
+    ResourceApproval,
+    OrganizationResourceBinding,
 )
 from backend.app.workflows.variant import _check_routed_artifact_validation_replay
 
@@ -526,6 +528,38 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 qualified_by=user_id,
                 qualified_at=datetime.now(UTC),
             ))
+            if not normalization_resource_failure:
+                approval_id = uuid4()
+                now = datetime.now(UTC)
+                db.add(ResourceApproval(
+                    id=approval_id,
+                    resource_id=normalization_resource_id,
+                    organization_id=organization_id,
+                    qualification_id=qualification_id,
+                    status="APPROVED",
+                    version=2,
+                    requested_at=now,
+                    decided_at=now,
+                    decided_by=user_id,
+                    reason="Approved qualified BCFtools resource for the integration fixture.",
+                ))
+                db.add(OrganizationResourceBinding(
+                    id=uuid4(),
+                    organization_id=organization_id,
+                    resource_id=normalization_resource_id,
+                    resource_name=normalization_resource.name,
+                    provider=normalization_resource.provider,
+                    resource_type=normalization_resource.resource_type,
+                    genome_build=None,
+                    identity_key="|".join([
+                        normalization_resource.name,
+                        normalization_resource.provider,
+                        normalization_resource.resource_type,
+                        "UNSPECIFIED",
+                    ]),
+                    bound_by=user_id,
+                    reason="Current approved normalization resource binding.",
+                ))
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
                 assay_id=None, analysis_type="VARIANT_INTERPRETATION",
@@ -594,11 +628,6 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             if capability == "REFERENCE_PACKAGE":
                 return reference_runtime
             if capability == workflow.NORMALIZATION_ENGINE:
-                if normalization_resource_failure:
-                    raise workflow.ProfileRuntimeResourceError(
-                        "NORMALIZATION_EXECUTABLE_SHA256_NOT_QUALIFIED",
-                        "The selected normalization resource has no qualified executable digest.",
-                    )
                 return real_resolve_profile_runtime_resource(
                     _db,
                     analysis_id=analysis_id,
@@ -788,7 +817,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             if normalization_resource_failure:
                 assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
                 assert step.status == StepStatus.REQUIRES_REVIEW
-                assert step.error_code == "NORMALIZATION_EXECUTABLE_SHA256_NOT_QUALIFIED"
+                assert step.error_code == "RESOURCE_NOT_ADOPTED"
                 assert normalized is None
                 assert db.scalar(select(ResourceExecutionRecord).where(
                     ResourceExecutionRecord.analysis_id == analysis_id,
