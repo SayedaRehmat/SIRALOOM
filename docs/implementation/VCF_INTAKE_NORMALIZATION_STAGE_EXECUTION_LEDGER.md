@@ -2,7 +2,7 @@
 
 **Ledger ID:** SIRALOOM-VCF-LEDGER-001  
 **Contract:** [VCF Intake and Normalization Master Execution Contract](./VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md)  
-**Ledger version:** 1.0  
+**Ledger version:** 1.1  
 **Snapshot timestamp:** 2026-11-03  
 **Status:** ACTIVE — stage not complete
 
@@ -15,10 +15,11 @@
 | Repository | SayedaRehmat/SIRALOOM |
 | PR | [#282](https://github.com/SayedaRehmat/SIRALOOM/pull/282) |
 | Branch | feature/vcf-normalization-capability-governance |
-| Latest recorded PR head | 64009e882c7090d09fd9e89e6a270969cbda92bc |
+| Latest recorded PR head | c3c0381034d728436a35d9963c1c351e948acec0 (contract update; ledger update follows) |
 | Latest commit | docs: establish VCF stage master execution contract |
 | Previous implementation head | 7b8abebf95d07c9eb6ce1ec00c6c5fe25e31d9c8 |
-| Contract path | docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md |
+| Contract path | docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md (v1.1) |
+| Operations supplement | docs/implementation/VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md (v1.0) |
 | Ledger path | docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_LEDGER.md |
 | Merge authorization | NOT GRANTED — do not merge |
 
@@ -145,3 +146,24 @@ Append newest entries at the top. Do not erase older failures or evidence.
 ## 7. Permanent handoff instruction
 
 Any agent continuing SIRALOOM VCF work must read the master contract and this ledger first, then revalidate live GitHub state. If an agent reaches a context or usage limit, it must update this ledger and leave the exact next task. Do not rely on chat memory, prior assistant summaries or verbal claims as the source of truth when repository evidence is available.
+
+
+## 8. Session entry — laboratory operations and performance expansion (2026-11-03)
+
+- User direction: expand the VCF intake/normalization requirements to cover global laboratory expectations, exact failure handling, troubleshooting, process speed and performance without limiting the platform to the currently implemented feature set.
+- Added mandatory companion specification: docs/implementation/VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md.
+- Companion specification commit: 44f2200000cc78c969fd2aa9226dd7163105c775.
+- Companion file was fetched back from GitHub; 34,720 characters returned. This verifies storage, not implementation.
+- Updated master execution contract to version 1.1 and added mandatory reference to the supplement plus acceptance gates G17–G23.
+- Master contract update commit: c3c0381034d728436a35d9963c1c351e948acec0.
+- Added requirements for producer/sample reconciliation; distinct file, variant-call and assay QC; versioned lab profiles; structured error codes and dispositions; bounded safe retries; phase-level performance metrics; workload-based benchmarks; resource limits; observability; operator runbooks; data lifecycle/security; backup/restore; change/incident management; and interoperability boundaries.
+- Research references added to the supplement include ISO 15189:2022, CLSI MM09, CDC/APHL NGS Quality Initiative, ACGS bioinformatics pipeline guidance, GATK ValidateVariants, GA4GH VRS, BCFtools performance guidance, HTSlib indexing documentation, VarSome input requirements and Illumina DRAGEN QC documentation.
+- Important technical distinction recorded: VCF left-normalization and GA4GH VRS fully-justified allele normalization are related but not interchangeable. VRS adoption must be a separately versioned representation layer.
+- Important QC boundary recorded: VCF-only processing cannot independently establish sequencing/assay metrics such as coverage, contamination or mapping quality; upstream QC evidence must be supplied and provenance-checked.
+- Performance policy: no arbitrary universal runtime target. Establish measured baselines on representative workload classes and the production container. Do not weaken scientific validation to improve speed.
+- Error policy: only transient infrastructure failures are retryable; malformed input, REF mismatch, unqualified resources and scientific discordance are not blindly retried.
+- Gates G17–G23 are added but remain NOT ASSESSED. No implementation gate is closed by this documentation work.
+- Current PR head at this entry: c3c0381034d728436a35d9963c1c351e948acec0.
+- CI for this exact commit: no workflow run was returned by commit-run lookup at the time of this entry. Recheck GitHub Actions after ledger commit.
+- Next task remains E0/E1 repository truth audit and gap matrix. Include G17–G23 and map existing architecture before implementing them. Do not start speculative performance optimization before profiling.
+
