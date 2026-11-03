@@ -957,27 +957,38 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert normalized.metadata_json["record_count"] == 2
                 assert normalized.metadata_json["source_reference_allele_profile"]["checked_record_count"] == 5
                 assert "bcftools view --no-version -A" in normalized.metadata_json["normalization_command"]
-                    assert normalized.metadata_json["normalization_version"] == "6.0"
-                    partition = db.scalar(select(AnalysisPartition).where(
-                        AnalysisPartition.analysis_id == analysis_id,
-                        AnalysisPartition.step_id == "normalize",
-                    ))
-                    assert partition is not None
-                    source_mappings = partition.metadata_json["source_record_mappings"]
-                    assert [
-                        (item["source_position"], item["source_reference"],
-                         item["source_alternate"], item["source_alt_index"])
-                        for item in source_mappings
-                    ] == [(11, "A", "C", 1), (20, "AT", "A", 1)]
-                    normalized_text = gzip.decompress(store.read_bytes(normalized.storage_uri)).decode("utf-8")
-                    normalized_records = [
-                        line.split("\t") for line in normalized_text.splitlines()
-                        if line and not line.startswith("#")
-                    ]
-                    called_variant = next(record for record in normalized_records if record[1] == "11")
-                    assert called_variant[4] == "C"
-                    assert called_variant[8] == "GT:AD:PL:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
-                    assert called_variant[9] == "0/1:15,9:100,50,60:0/1:1"
+                assert normalized.metadata_json["normalization_version"] == "6.0"
+                partition = db.scalar(select(AnalysisPartition).where(
+                    AnalysisPartition.analysis_id == analysis_id,
+                    AnalysisPartition.step_id == "normalize",
+                ))
+                assert partition is not None
+                source_mappings = partition.metadata_json["source_record_mappings"]
+                assert [
+                    (
+                        item["source_position"],
+                        item["source_reference"],
+                        item["source_alternate"],
+                        item["source_alt_index"],
+                    )
+                    for item in source_mappings
+                ] == [(11, "A", "C", 1), (20, "AT", "A", 1)]
+                normalized_text = gzip.decompress(
+                    store.read_bytes(normalized.storage_uri)
+                ).decode("utf-8")
+                normalized_records = [
+                    line.split("\t")
+                    for line in normalized_text.splitlines()
+                    if line and not line.startswith("#")
+                ]
+                called_variant = next(
+                    record for record in normalized_records if record[1] == "11"
+                )
+                assert called_variant[4] == "C"
+                assert called_variant[8] == (
+                    "GT:AD:PL:SIRALOOM_SOURCE_GT:SIRALOOM_SOURCE_ALT_COUNT"
+                )
+                assert called_variant[9] == "0/1:15,9:100,50,60:0/1:1"
                 assert analysis.status == AnalysisStatus.BLOCKED
                 annotation = db.scalar(select(WorkflowStep).where(
                     WorkflowStep.analysis_id == analysis_id,
