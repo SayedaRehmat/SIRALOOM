@@ -6191,8 +6191,9 @@ def _put_idempotent_stage_artifact(
                     "PENDING", "PASS", "FAILED", "NOT_RUN",
                     "NOT_VALIDATED_UNSUPPORTED_COORDINATE",
                 }:
-                    raise RuntimeError(
-                        f"Routed artifact {artifact_id} has invalid reference validation provenance."
+                    raise ArtifactIdentityConflictError(
+                        f"Routed artifact {artifact_id} has invalid reference validation provenance.",
+                        code="ARTIFACT_PROVENANCE_INVALID",
                     )
                 package_fields = {
                     "reference_package_id",
@@ -6201,13 +6202,15 @@ def _put_idempotent_stage_artifact(
                 }
                 present_package_fields = package_fields.intersection(existing_validation)
                 if present_package_fields and present_package_fields != package_fields:
-                    raise RuntimeError(
-                        f"Routed artifact {artifact_id} has incomplete reference package provenance."
+                    raise ArtifactIdentityConflictError(
+                        f"Routed artifact {artifact_id} has incomplete reference package provenance.",
+                        code="ARTIFACT_PROVENANCE_INCOMPLETE",
                     )
                 profile = existing_validation.get("source_reference_allele_profile")
                 if profile is not None and not isinstance(profile, dict):
-                    raise RuntimeError(
-                        f"Routed artifact {artifact_id} has invalid reference allele profile provenance."
+                    raise ArtifactIdentityConflictError(
+                        f"Routed artifact {artifact_id} has invalid reference allele profile provenance.",
+                        code="ARTIFACT_PROVENANCE_INVALID",
                     )
         if (
             existing.case_id != case_id
@@ -6220,17 +6223,20 @@ def _put_idempotent_stage_artifact(
             or existing.validation_status != validation_status
             or existing_metadata != expected_metadata
         ):
-            raise RuntimeError(
-                f"Deterministic artifact identity {artifact_id} is already bound to different workflow provenance."
+            raise ArtifactIdentityConflictError(
+                f"Deterministic artifact identity {artifact_id} is already bound to different workflow provenance.",
+                code="ARTIFACT_IDENTITY_CONFLICT",
             )
         source_sha256 = sha256_file(source)
         if existing.sha256 != source_sha256 or existing.size_bytes != source.stat().st_size:
-            raise RuntimeError(
-                f"Deterministic artifact identity {artifact_id} produced different bytes on replay."
+            raise ArtifactIdentityConflictError(
+                f"Deterministic artifact identity {artifact_id} produced different bytes on replay.",
+                code="ARTIFACT_IDENTITY_CONFLICT",
             )
         if not store.exists(existing.storage_uri):
-            raise RuntimeError(
-                f"Persisted artifact {artifact_id} is missing from its configured storage backend."
+            raise ArtifactIdentityConflictError(
+                f"Persisted artifact {artifact_id} is missing from its configured storage backend.",
+                code="ARTIFACT_STORAGE_OBJECT_MISSING",
             )
         return existing
 
