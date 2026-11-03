@@ -254,6 +254,9 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch38(tmp_path: P
     expected_htslib_version = os.getenv("HTSLIB_VERSION", "1.25")
     assert intake.status == "VALID", intake.errors
     assert intake.record_count == source_validation["alternate_allele_count"]
+    assert intake.metadata["source_record_count"] == source_validation["records"]
+    assert intake.metadata["alternate_allele_count"] == source_validation["alternate_allele_count"]
+    assert intake.record_count == intake.metadata["parsed_variant_record_count"]
     assert intake.sample_names and len(intake.sample_names) == 1
     assert intake.metadata["bcftools_version"] == f"bcftools {expected_tool_version}"
     assert intake.metadata["expected_bcftools_version"] == expected_tool_version
@@ -429,6 +432,9 @@ def test_downloaded_giab_vcf_validates_and_normalizes_against_grch37(tmp_path: P
     expected_htslib_version = os.getenv("HTSLIB_VERSION", "1.25")
     assert intake.status == "VALID", intake.errors
     assert intake.record_count == source_validation["alternate_allele_count"]
+    assert intake.metadata["source_record_count"] == source_validation["records"]
+    assert intake.metadata["alternate_allele_count"] == source_validation["alternate_allele_count"]
+    assert intake.record_count == intake.metadata["parsed_variant_record_count"]
     assert intake.sample_names and len(intake.sample_names) == 1
     assert intake.metadata["bcftools_version"] == f"bcftools {expected_tool_version}"
     assert intake.metadata["expected_bcftools_version"] == expected_tool_version
