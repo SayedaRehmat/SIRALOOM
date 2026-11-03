@@ -21,7 +21,7 @@ against each stable release below:
 
 | BCFtools release | Qualification |
 |---|---|
-| 1.23.1 | Executed in CI |
+| 1.23.1 | Bioconda binary; executed in CI |
 | 1.23.2 | Executed in CI |
 | 1.23.3 | Executed in CI |
 | 1.24 | Executed in CI |
