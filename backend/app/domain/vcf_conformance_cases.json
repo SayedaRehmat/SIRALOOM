@@ -1382,5 +1382,78 @@
         ]
       }
     ]
+  },
+  "normative_coverage": {
+    "VCFv4.0": {
+      "status": "NOT_APPLICABLE",
+      "covered_sections": [],
+      "uncovered_sections": [],
+      "notes": "Legacy parser smoke only; no current normative target is claimed."
+    },
+    "VCFv4.1": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+    },
+    "VCFv4.2": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+    },
+    "VCFv4.3": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+    },
+    "VCFv4.4": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+    },
+    "VCFv4.5": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed."
+    }
   }
 }
