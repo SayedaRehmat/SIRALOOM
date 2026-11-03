@@ -256,7 +256,7 @@ def test_production_worker_preserves_valid_non_sequence_records_for_review(
                 AuditEvent.analysis_id == analysis_id,
                 AuditEvent.event_type == "VCF_RECORDS_ROUTED_TO_REVIEW",
             ))
-            assert analysis.status == AnalysisStatus.BLOCKED
+            assert analysis.status == AnalysisStatus.REQUIRES_REVIEW
             assert normalization.status == StepStatus.REQUIRES_REVIEW
             assert normalization.error_code == "NO_SEQUENCE_VARIANTS_TO_NORMALIZE"
             assert normalization.metadata_json["review_reason_codes"] == [review_reason_code]
