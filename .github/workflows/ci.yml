@@ -64,17 +64,17 @@ jobs:
           source_records="$(bcftools view --no-header "${slice}" | wc -l)"
           test "${source_records}" -gt 0
           reference_name="Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz"
-          reference_archive="\${data_dir}/\${reference_name}"
-          reference_checksums="\${data_dir}/ENSEMBL_RELEASE_115_CHECKSUMS"
+          reference_archive="${data_dir}/${reference_name}"
+          reference_checksums="${data_dir}/ENSEMBL_RELEASE_115_CHECKSUMS"
           reference_base="https://ftp.ensembl.org/pub/release-115/fasta/homo_sapiens/dna"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 300 \
-            "\${reference_base}/\${reference_name}" --output "\${reference_archive}"
+            "${reference_base}/${reference_name}" --output "${reference_archive}"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 120 \
-            "\${reference_base}/CHECKSUMS" --output "\${reference_checksums}"
-          reference_md5="$(awk -v filename="\${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "\${reference_checksums}")"
-          [[ "\${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
-          printf '%s  %s\n' "\${reference_md5}" "\${reference_archive}" | md5sum --check -
-          echo "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c  \${reference_archive}" | sha256sum --check -
+            "${reference_base}/CHECKSUMS" --output "${reference_checksums}"
+          reference_md5="$(awk -v filename="${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "${reference_checksums}")"
+          [[ "${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
+          printf '%s  %s\n' "${reference_md5}" "${reference_archive}" | md5sum --check -
+          echo "05d4d42ed292962055afb9774a1a29a691d7b285fd85dbf9069c050a273e0d3c  ${reference_archive}" | sha256sum --check -
           reference_fasta="${data_dir}/GRCh38.chr1.fa"
           gzip --decompress --stdout "${reference_archive}" > "${reference_fasta}"
           echo "SIRALOOM_PUBLIC_VCF_SLICE_PATH=${slice}" >> "${GITHUB_ENV}"
@@ -91,54 +91,54 @@ jobs:
       - name: Acquire NIST GIAB HG002 GRCh37 VCF and Ensembl release-75 chromosome 1 reference
         run: |
           set -euo pipefail
-          data_dir="\${RUNNER_TEMP}/siraloom-public-vcf-grch37"
-          mkdir -p "\${data_dir}"
+          data_dir="${RUNNER_TEMP}/siraloom-public-vcf-grch37"
+          mkdir -p "${data_dir}"
           giab_base="https://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/AshkenazimTrio/HG002_NA24385_son/NISTv4.2.1/GRCh37"
-          giab_vcf="\${data_dir}/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz"
-          giab_index="\${giab_vcf}.tbi"
+          giab_vcf="${data_dir}/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz"
+          giab_index="${giab_vcf}.tbi"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 900 \
-            "\${giab_base}/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz" --output "\${giab_vcf}"
+            "${giab_base}/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz" --output "${giab_vcf}"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 180 \
-            "\${giab_base}/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz.tbi" --output "\${giab_index}"
-          test -s "\${giab_vcf}" && test -s "\${giab_index}"
-          bcftools index --stats "\${giab_vcf}" > "\${data_dir}/giab-grch37-index-stats.txt"
-          vcf_contig="$(bcftools view --header-only "\${giab_vcf}" | sed -n 's/^##contig=<ID=\([^,>]*\).*/\1/p' | awk '$0 == "1" || $0 == "chr1" { print; exit }')"
-          test -n "\${vcf_contig}"
-          slice="\${data_dir}/giab-hg002-grch37-chr1.vcf.gz"
-          bcftools view --no-version --regions "\${vcf_contig}:1-5000000" --output-type z --output "\${slice}" "\${giab_vcf}"
-          bcftools index --csi "\${slice}"
-          source_records="$(bcftools view --no-header "\${slice}" | wc -l)"
-          test "\${source_records}" -gt 0
+            "${giab_base}/HG002_GRCh37_1_22_v4.2.1_benchmark.vcf.gz.tbi" --output "${giab_index}"
+          test -s "${giab_vcf}" && test -s "${giab_index}"
+          bcftools index --stats "${giab_vcf}" > "${data_dir}/giab-grch37-index-stats.txt"
+          vcf_contig="$(bcftools view --header-only "${giab_vcf}" | sed -n 's/^##contig=<ID=\([^,>]*\).*/\1/p' | awk '$0 == "1" || $0 == "chr1" { print; exit }')"
+          test -n "${vcf_contig}"
+          slice="${data_dir}/giab-hg002-grch37-chr1.vcf.gz"
+          bcftools view --no-version --regions "${vcf_contig}" --output-type z --output "${slice}" "${giab_vcf}"
+          bcftools index --csi "${slice}"
+          source_records="$(bcftools view --no-header "${slice}" | wc -l)"
+          test "${source_records}" -gt 0
 
           reference_name="Homo_sapiens.GRCh37.75.dna.chromosome.1.fa.gz"
           reference_base="https://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna"
-          reference_archive="\${data_dir}/\${reference_name}"
-          checksum_manifest="\${data_dir}/ENSEMBL_RELEASE_75_CHECKSUMS"
+          reference_archive="${data_dir}/${reference_name}"
+          checksum_manifest="${data_dir}/ENSEMBL_RELEASE_75_CHECKSUMS"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 300 \
-            "\${reference_base}/\${reference_name}" --output "\${reference_archive}"
+            "${reference_base}/${reference_name}" --output "${reference_archive}"
           curl --fail --location --retry 3 --retry-delay 3 --connect-timeout 30 --max-time 120 \
-            "\${reference_base}/CHECKSUMS" --output "\${checksum_manifest}"
-          reference_md5="$(awk -v filename="\${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "\${checksum_manifest}")"
-          [[ "\${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
-          printf '%s  %s\n' "\${reference_md5}" "\${reference_archive}" | md5sum --check -
-          reference_sha256="$(sha256sum "\${reference_archive}" | awk '{print $1}')"
-          giab_sha256="$(sha256sum "\${giab_vcf}" | awk '{print $1}')"
-          giab_index_sha256="$(sha256sum "\${giab_index}" | awk '{print $1}')"
-          reference_fasta="\${data_dir}/GRCh37.chr1.fa"
-          gzip --decompress --stdout "\${reference_archive}" > "\${reference_fasta}"
+            "${reference_base}/CHECKSUMS" --output "${checksum_manifest}"
+          reference_md5="$(awk -v filename="${reference_name}" '{n=split($NF,path,"/"); if(path[n]==filename){print $1; exit}}' "${checksum_manifest}")"
+          [[ "${reference_md5}" =~ ^[0-9a-fA-F]{32}$ ]]
+          printf '%s  %s\n' "${reference_md5}" "${reference_archive}" | md5sum --check -
+          reference_sha256="$(sha256sum "${reference_archive}" | awk '{print $1}')"
+          giab_sha256="$(sha256sum "${giab_vcf}" | awk '{print $1}')"
+          giab_index_sha256="$(sha256sum "${giab_index}" | awk '{print $1}')"
+          reference_fasta="${data_dir}/GRCh37.chr1.fa"
+          gzip --decompress --stdout "${reference_archive}" > "${reference_fasta}"
 
-          echo "SIRALOOM_PUBLIC_GRCH37_VCF_SLICE_PATH=\${slice}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_VCF_ARCHIVE_PATH=\${giab_vcf}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_PATH=\${giab_index}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_ARCHIVE_PATH=\${reference_archive}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_PATH=\${reference_fasta}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_CHECKSUMS_PATH=\${checksum_manifest}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_CONTIG=\${vcf_contig}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_DATA_DIR=\${data_dir}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_VCF_SHA256=\${giab_sha256}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_SHA256=\${giab_index_sha256}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_SHA256=\${reference_sha256}" >> "\${GITHUB_ENV}"
-          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_MD5=\${reference_md5}" >> "\${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_VCF_SLICE_PATH=${slice}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_VCF_ARCHIVE_PATH=${giab_vcf}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_PATH=${giab_index}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_ARCHIVE_PATH=${reference_archive}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_PATH=${reference_fasta}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_CHECKSUMS_PATH=${checksum_manifest}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_CONTIG=${vcf_contig}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_DATA_DIR=${data_dir}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_VCF_SHA256=${giab_sha256}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_VCF_INDEX_SHA256=${giab_index_sha256}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_SHA256=${reference_sha256}" >> "${GITHUB_ENV}"
+          echo "SIRALOOM_PUBLIC_GRCH37_REFERENCE_MD5=${reference_md5}" >> "${GITHUB_ENV}"
       - name: Backend tests
         env:
           DATABASE_URL: sqlite:///./ci.db
