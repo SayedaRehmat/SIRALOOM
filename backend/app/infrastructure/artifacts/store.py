@@ -13,6 +13,14 @@ from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.infrastructure.db.models import Artifact
 
 
+class ArtifactIdentityConflictError(FileExistsError):
+    """Permanent artifact-ID collision or storage identity integrity violation."""
+
+    def __init__(self, message: str, *, code: str = "ARTIFACT_IDENTITY_CONFLICT") -> None:
+        super().__init__(message)
+        self.code = code
+
+
 class ArtifactStore:
     """
     Local filesystem artifact store.
@@ -170,12 +178,13 @@ class ArtifactStore:
                 created_destination = True
             except FileExistsError:
                 if destination.is_symlink() or not destination.is_file():
-                    raise FileExistsError(
-                        f"Artifact storage identity {artifact_id} is not a regular file."
+                    raise ArtifactIdentityConflictError(
+                        f"Artifact storage identity {artifact_id} is not a regular file.",
+                        code="ARTIFACT_STORAGE_IDENTITY_INVALID",
                     )
                 existing_sha256, existing_size = self._sha256_and_size(destination)
                 if (existing_sha256, existing_size) != (staged_sha256, size_bytes):
-                    raise FileExistsError(
+                    raise ArtifactIdentityConflictError(
                         f"Artifact storage identity {artifact_id} already contains different bytes."
                     )
 
