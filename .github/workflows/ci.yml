@@ -29,6 +29,19 @@ jobs:
           test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
       - name: Install backend
         run: pip install -e . pytest
+      - name: Extract source-pinned VCF normative-language candidates
+        run: |
+          set -euo pipefail
+          source_dir="${RUNNER_TEMP}/hts-specs"
+          mkdir -p "${source_dir}"
+          for version in 4.1 4.2 4.3 4.4 4.5; do
+            curl --fail --location --retry 3 --connect-timeout 30 --max-time 120 \
+              "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv${version}.tex" \
+              --output "${source_dir}/VCFv${version}.tex"
+          done
+          PYTHONPATH=backend python -m app.domain.vcf_normative_inventory \
+            --source-dir "${source_dir}" \
+            --output "${RUNNER_TEMP}/vcf-normative-candidate-inventory.json"
       - name: Acquire NIST GIAB HG002 VCF and pinned Ensembl GRCh38 reference
         run: |
           set -euo pipefail
@@ -173,6 +186,7 @@ jobs:
           path: |
             ${{ runner.temp }}/siraloom-public-vcf/qualification-report*.json
             ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/
+            ${{ runner.temp }}/vcf-normative-candidate-inventory.json
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz.csi
             ${{ runner.temp }}/siraloom-public-vcf/giab-index-stats.txt
