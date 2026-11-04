@@ -1391,6 +1391,99 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "legacy_multiallelic_genotype_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: multiallelic ALT indexing and GT encoding",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t1/2"
+        ]
+      },
+      {
+        "id": "legacy_indel_valid",
+        "category": "legacy_indel",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: indel allele representation with preceding reference base",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tAC\tA\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "legacy_missing_gt_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: missing genotype allele represented with dot",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t./."
+        ]
+      },
+      {
+        "id": "legacy_phased_gt_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: pipe denotes phased genotype",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1"
+        ]
+      },
+      {
+        "id": "legacy_invalid_pos_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_POS_INVALID",
+        "spec_basis": "VCFv4.0 core: POS is one-based",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t0\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "legacy_invalid_ref_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_REF_INVALID",
+        "spec_basis": "VCFv4.0 core: REF alphabet is A,C,G,T,N",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tX\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "legacy_duplicate_id_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "VCFv4.0 core: record IDs are unique",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\trs1\tA\tC\t.\tPASS\t.",
+          "1\t3\trs1\tA\tG\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "legacy_out_of_range_gt_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "VCFv4.0 core: GT allele index must identify REF or a listed ALT",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
       }
     ]
   },
@@ -1408,7 +1501,24 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "legacy_minimal_snp_valid"
+            "legacy_minimal_snp_valid",
+            "legacy_invalid_pos_rejected",
+            "legacy_invalid_ref_rejected"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "legacy_multiallelic_genotype_valid",
+            "legacy_missing_gt_valid",
+            "legacy_phased_gt_valid",
+            "legacy_out_of_range_gt_rejected"
+          ]
+        },
+        {
+          "section_title": "Haplotype representation",
+          "fixture_ids": [
+            "legacy_indel_valid"
           ]
         }
       ]
