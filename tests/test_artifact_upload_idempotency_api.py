@@ -538,6 +538,7 @@ def test_invalid_vcf_upload_is_retained_in_logical_quarantine_and_never_analysis
         assert artifact.validation_status == "INVALID"
         assert artifact.metadata_json["workflow_eligibility"] == "INELIGIBLE"
         ingestion = artifact.metadata_json["ingestion"]
+        assert ingestion["validation_outcome"] == "REJECT"
         assert ingestion["disposition"] == "QUARANTINED"
         assert ingestion["quarantine"]["status"] == "ACTIVE"
         assert ingestion["quarantine"]["reason_code"] == "VCF_HEADER_COLUMNS_INVALID"
