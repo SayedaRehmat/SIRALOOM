@@ -3063,3 +3063,166 @@ def test_vcf45_reserved_cnp_header_cannot_override_builtin_definition(tmp_path: 
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def _write_vcf_with_sample_and_pedigree_metadata(
+    path: Path,
+    metadata: list[str],
+    sample_columns: list[str],
+    *,
+    version: str = "VCFv4.5",
+) -> None:
+    header = (
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t"
+        + "\t".join(sample_columns)
+    )
+    record = (
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t"
+        + "\t".join("0/1" for _ in sample_columns)
+    )
+    path.write_text(
+        "\n".join([f"##fileformat={version}", *metadata, header, record, ""]),
+        encoding="utf-8",
+    )
+
+
+def test_sample_mixture_metadata_accepts_parallel_genome_and_fraction_lists(tmp_path: Path):
+    path = tmp_path / "sample-mixture-valid.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##SAMPLE=<ID=TissueSample,Genomes=Germline;Tumor,Mixture=.3;.7,Description="Germline;Tumor">',
+        ],
+        ["TissueSample"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["sample_genome_count"] == 2
+    assert profile["sample_mixture_count"] == 1
+    assert profile["sample_genome_mapping_complete"] is True
+
+
+@pytest.mark.parametrize(
+    "sample_definition",
+    [
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;1.2>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;-.1>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;.6>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;NAN>',
+        '##SAMPLE=<ID=Sample1,Mixture=.3; .7>',
+    ],
+)
+def test_sample_mixture_metadata_rejects_invalid_cardinality_or_proportions(
+    tmp_path: Path, sample_definition: str
+):
+    path = tmp_path / "sample-mixture-invalid.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path, [sample_definition], ["Sample1"]
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_SAMPLE_MIXTURE_INVALID"
+
+
+def test_sample_mixture_metadata_preserves_unknown_proportions(tmp_path: Path):
+    path = tmp_path / "sample-mixture-missing.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        ['##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.;.>'],
+        ["Sample1"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["sample_mixture_count"] == 1
+
+
+def test_pedigree_relationships_accept_family_trio_and_validate_genome_references(
+    tmp_path: Path,
+):
+    path = tmp_path / "pedigree-trio-valid.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##SAMPLE=<ID=FatherSample,Genomes=Father>',
+            '##SAMPLE=<ID=MotherSample,Genomes=Mother>',
+            '##SAMPLE=<ID=ChildSample,Genomes=Child>',
+            '##PEDIGREE=<ID=Child,Mother=Mother,Father=Father>',
+        ],
+        ["FatherSample", "MotherSample", "ChildSample"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_relationship_count"] == 2
+    assert profile["pedigree_node_count"] == 3
+    assert profile["pedigree_validation_status"] == "VALIDATED"
+
+
+def test_pedigree_relationships_reject_directed_ancestry_cycles(tmp_path: Path):
+    path = tmp_path / "pedigree-cycle.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##PEDIGREE=<ID=GenomeA,Original=GenomeB>',
+            '##PEDIGREE=<ID=GenomeB,Original=GenomeA>',
+        ],
+        ["Sample1"],
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PEDIGREE_CYCLE"
+
+
+def test_pedigree_relationships_reject_self_ancestry(tmp_path: Path):
+    path = tmp_path / "pedigree-self-reference.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        ['##PEDIGREE=<ID=GenomeA,Original=GenomeA>'],
+        ["Sample1"],
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PEDIGREE_INVALID"
+
+
+def test_pedigree_relationships_reject_unknown_genomes_when_sample_mapping_is_complete(
+    tmp_path: Path,
+):
+    path = tmp_path / "pedigree-unknown-genome.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##SAMPLE=<ID=ChildSample,Genomes=Child>',
+            '##SAMPLE=<ID=MotherSample,Genomes=Mother>',
+            '##PEDIGREE=<ID=Child,Mother=MissingGenome>',
+        ],
+        ["ChildSample", "MotherSample"],
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PEDIGREE_REFERENCE_UNRESOLVED"
+
+
+def test_legacy_vcf42_pedigree_without_id_remains_compatible(tmp_path: Path):
+    path = tmp_path / "pedigree-v42-legacy.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        ["##PEDIGREE=<Name_0=Child,Name_1=Parent>"],
+        ["Sample1"],
+        version="VCFv4.2",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_validation_status"] == "PARTIAL_LEGACY"
