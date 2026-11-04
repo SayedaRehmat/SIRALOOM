@@ -3111,7 +3111,7 @@ def test_sample_mixture_metadata_accepts_parallel_genome_and_fraction_lists(tmp_
         '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;-.1>',
         '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;.6>',
         '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;NAN>',
-        '##SAMPLE=<ID=Sample1,Mixture=.3; .7>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3; .7>',
     ],
 )
 def test_sample_mixture_metadata_rejects_invalid_cardinality_or_proportions(
@@ -3194,10 +3194,10 @@ def test_pedigree_relationships_reject_self_ancestry(tmp_path: Path):
     assert exc.value.code == "VCF_PEDIGREE_INVALID"
 
 
-def test_pedigree_relationships_reject_unknown_genomes_when_sample_mapping_is_complete(
+def test_pedigree_relationships_route_external_genome_references_for_review(
     tmp_path: Path,
 ):
-    path = tmp_path / "pedigree-unknown-genome.vcf"
+    path = tmp_path / "pedigree-external-genome.vcf"
     _write_vcf_with_sample_and_pedigree_metadata(
         path,
         [
@@ -3208,10 +3208,10 @@ def test_pedigree_relationships_reject_unknown_genomes_when_sample_mapping_is_co
         ["ChildSample", "MotherSample"],
     )
 
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
+    profile = validate_vcf_strict(path)
 
-    assert exc.value.code == "VCF_PEDIGREE_REFERENCE_UNRESOLVED"
+    assert profile["pedigree_validation_status"] == "REVIEW_REQUIRED"
+    assert "VCF_PEDIGREE_REFERENCE_UNRESOLVED" in profile["warning_codes"]
 
 
 def test_legacy_vcf42_pedigree_without_id_remains_compatible(tmp_path: Path):
@@ -3226,3 +3226,22 @@ def test_legacy_vcf42_pedigree_without_id_remains_compatible(tmp_path: Path):
     profile = validate_vcf_strict(path)
 
     assert profile["pedigree_validation_status"] == "PARTIAL_LEGACY"
+
+
+def test_pedigree_relationships_accept_consanguineous_ancestry_dag(tmp_path: Path):
+    path = tmp_path / "pedigree-consanguineous-dag.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##PEDIGREE=<ID=ParentA,Original=SharedAncestor>',
+            '##PEDIGREE=<ID=ParentB,Original=SharedAncestor>',
+            '##PEDIGREE=<ID=Child,Mother=ParentA,Father=ParentB>',
+        ],
+        ["Sample1"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_relationship_count"] == 4
+    assert profile["pedigree_node_count"] == 4
+    assert profile["pedigree_validation_status"] == "VALIDATED"
