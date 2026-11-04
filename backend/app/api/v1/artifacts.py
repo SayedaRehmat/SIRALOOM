@@ -127,9 +127,9 @@ def _validate_vcf_for_upload(path: Path) -> ValidationResult:
         raise HTTPException(
             status_code=503,
             detail={
-                "code": "VCF_VALIDATION_UNAVAILABLE",
+                "code": exc.code,
                 "message": str(exc),
-                "retryable": True,
+                "retryable": exc.retryable,
             },
         ) from exc
 
@@ -550,9 +550,9 @@ async def upload_artifact(
                 raise HTTPException(
                     status_code=503,
                     detail={
-                        "code": "VCF_VALIDATION_UNAVAILABLE",
+                        "code": exc.code,
                         "message": str(exc),
-                        "retryable": True,
+                        "retryable": exc.retryable,
                     },
                 ) from exc
             artifact_type = ArtifactType.VCF_INDEX_TBI if kind == "TBI" else ArtifactType.VCF_INDEX_CSI
