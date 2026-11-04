@@ -45,10 +45,13 @@
     }
   ],
   "next_required_actions": [
-    "Download each historical documentation page as exact response bytes from a controlled network-enabled CI runner.",
-    "Record status code, final URL, content type, ETag, Last-Modified, retrieval timestamp, and byte length.",
-    "Calculate SHA-256 over exact response bytes and commit immutable source artifacts or a controlled source bundle.",
-    "Download the historical CEU cohort VCF, verify its declared VCF version, compute SHA-256 and size, then pin both values in the public-corpus manifest.",
-    "Do not mark source acquisition complete while any raw_response_bytes_archived field is false."
-  ]
+    "Obtain a successful PR CI run and download the historical source-capture and cohort qualification artifacts.",
+    "Review exact response bytes and metadata, then commit immutable source snapshots and their SHA-256 values.",
+    "Pin the CEU cohort VCF size and SHA-256 in the public corpus manifest after acquisition review.",
+    "Re-run the corpus against the pinned digest and preserve the complete report and inputs.",
+    "Do not mark source acquisition complete while raw response artifact capture or digest pinning remains unverified."
+  ],
+  "workflow_capture_configured": true,
+  "workflow_capture_commit": "b158953b11cb9228292cabb046a23aaed8bf3fc2",
+  "notes": "CI now contains bootstrap steps to capture exact historical HTML response bytes, response headers, retrieval metadata, byte lengths and SHA-256 values, and to download/execute the historical CEU cohort VCF. These steps have not yet produced artifacts; all source hashes remain null until a successful CI run."
 }
