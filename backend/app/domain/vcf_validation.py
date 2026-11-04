@@ -846,7 +846,7 @@ def _structured_header_id(
     square_bracket_depth = 0
     for char in body:
         if escaped:
-            if char not in {'"', "\\\\"}:
+            if char not in {'"', chr(92)}:
                 raise StrictVCFValidationError(
                     f"Unsupported escape sequence in {kind} structured header at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
