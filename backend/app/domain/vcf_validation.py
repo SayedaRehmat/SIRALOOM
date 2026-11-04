@@ -2110,7 +2110,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         if star_carriers is None:
             # Site-only VCFs have no sample genotypes to reconcile. In a
             # sample-bearing VCF, missing GT cannot establish sample context.
-            context_exists = len(chrom_header or []) == 9 and bool(overlaps)
+            context_exists = len(chrom_header or []) == 8 and bool(overlaps)
         else:
             context_exists = any(
                 deletion_carriers is not None
