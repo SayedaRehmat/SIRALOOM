@@ -1457,11 +1457,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 profile = validate_vcf_strict(str(input_path))
                 validation_step.input_artifacts = [str(input_artifact.id)]
                 validation_step.output_artifacts = [str(input_artifact.id)]
+                validation_status = "PASS_WITH_WARNINGS" if profile.get("warning_codes") else "PASS"
                 mark_step(
                     db,
                     validation_step,
                     StepStatus.SUCCEEDED,
-                    metadata={"variant_count": profile["records"], "validation": "PASS", "validation_profile": profile},
+                    metadata={
+                        "variant_count": profile["records"],
+                        "validation": validation_status,
+                        "warning_codes": profile.get("warning_codes", []),
+                        "validation_profile": profile,
+                    },
                 )
                 audit.record(
                     event_type="ARTIFACT_VALIDATED",
@@ -1511,6 +1517,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+
+        validation_profile = (validation_step.metadata_json or {}).get("validation_profile", {})
+        unresolved_spanning_deletion_record_indexes = {
+            int(item["record_index"])
+            for item in validation_profile.get("unresolved_spanning_deletion_records", [])
+            if isinstance(item, dict) and str(item.get("record_index", "")).isdigit()
+        }
 
         # 2. Reference-aware normalization + bounded-memory variant indexing.
         # M13 never retains the complete normalized variant set in Python memory.
@@ -1716,7 +1729,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 profile = classify_records(input_path)
                 routing_dir = Path(tempfile.mkdtemp(prefix=f"siraloom-vcf-routing-{analysis.id}-"))
                 temporary_artifact_paths.append(routing_dir)
-                routing = route_vcf_records(input_path, routing_dir, reference_contig_lengths={})
+                routing = route_vcf_records(
+                    input_path,
+                    routing_dir,
+                    reference_contig_lengths={},
+                    unresolved_spanning_deletion_record_indexes=unresolved_spanning_deletion_record_indexes,
+                )
                 routed_artifact_specs = (
                     (
                         "gvcf_blocks_path",
@@ -1982,6 +2000,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     input_path,
                     routing_dir,
                     reference_contig_lengths=reference_contig_lengths,
+                    unresolved_spanning_deletion_record_indexes=unresolved_spanning_deletion_record_indexes,
                 )
                 routing_contig_lengths_resolved = True
                 persist_exclusion_manifest(contig_lengths_resolved=True)

@@ -1195,6 +1195,11 @@ def _validate_vcf45_structural_info(
 
 
 def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int] | None:
+    # Only alleles shorter than REF can delete reference bases. Equal-length
+    # substitutions (including MNVs) and insertions must never establish the
+    # overlap context used to validate a VCF spanning-deletion "*" allele.
+    if len(ref) <= len(alt):
+        return None
     prefix = 0
     while prefix < min(len(ref), len(alt)) and ref[prefix] == alt[prefix]:
         prefix += 1
@@ -1534,7 +1539,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
-    spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
+    spanning_deletion_records: list[tuple[str, int, int, int, set[int] | None]] = []
+    unresolved_spanning_deletion_records: list[dict[str, int | str]] = []
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
     record_ids_seen: set[str] = set()
@@ -2007,26 +2013,30 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         )
 
             def carriers(alt_index: int) -> set[int] | None:
-                if len(fields) <= 9 or gt_index is None:
+                record_format_keys = fields[8].split(":") if len(fields) > 8 else []
+                record_gt_index = (
+                    record_format_keys.index("GT") if "GT" in record_format_keys else None
+                )
+                if len(fields) <= 9 or record_gt_index is None:
                     return None
                 result: set[int] = set()
                 for sample_index, sample in enumerate(fields[9:]):
                     values = sample.split(":")
-                    if gt_index >= len(values):
+                    if record_gt_index >= len(values):
                         continue
-                    gt = values[gt_index]
-                    if gt == ".":
+                    gt = values[record_gt_index]
+                    if gt in {"", "."}:
                         continue
-                    try:
-                        called = {int(item) for item in _gt_allele_tokens(gt, fileformat, line_no) if item != "."}
-                    except ValueError:
-                        continue
-                    if alt_index in called:
+                    # GT syntax was already validated for this record above.
+                    # Compare the validated allele tokens directly so a parse
+                    # exception cannot silently erase a called '*' carrier.
+                    called = _gt_allele_tokens(gt, fileformat, line_no)
+                    if str(alt_index) in called:
                         result.add(sample_index)
                 return result
 
             if _pos > 0 and "*" in alts:
-                spanning_deletion_records.append((_chrom, _pos, line_no, carriers(alts.index("*") + 1)))
+                spanning_deletion_records.append((_chrom, _pos, line_no, records + 1, carriers(alts.index("*") + 1)))
             for alt_index, alternate in enumerate(alts, start=1):
                 if _pos == 0:
                     continue
@@ -2089,7 +2099,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
-    for chrom, pos, line_no, star_carriers in spanning_deletion_records:
+    for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
         overlaps = [
@@ -2097,16 +2107,24 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             for start, end, deletion_carriers in deletion_intervals.get(chrom, ())
             if start <= pos <= end
         ]
-        context_exists = any(
-            deletion_carriers is None
-            or bool(star_carriers & deletion_carriers)
-            for deletion_carriers in overlaps
-        )
-        if not overlaps or not context_exists:
-            raise StrictVCFValidationError(
-                f"Spanning-deletion ALT '*' has no overlapping deletion record on {chrom} at line {line_no}",
-                code="VCF_SPANNING_DELETION_CONTEXT_MISSING",
+        if star_carriers is None:
+            # Site-only VCFs have no sample genotypes to reconcile. In a
+            # sample-bearing VCF, missing GT cannot establish sample context.
+            context_exists = len(chrom_header or []) == 8 and bool(overlaps)
+        else:
+            context_exists = any(
+                deletion_carriers is not None
+                and bool(star_carriers & deletion_carriers)
+                for deletion_carriers in overlaps
             )
+        if not overlaps or not context_exists:
+            unresolved_spanning_deletion_records.append({
+                "record_index": record_index,
+                "line_number": line_no,
+                "chrom": chrom,
+                "pos": pos,
+                "reason_code": "UNRESOLVED_SPANNING_DELETION_CONTEXT",
+            })
 
     return {
         "fileformat": fileformat,
@@ -2118,6 +2136,18 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "symbolic_records": symbolic,
         "breakend_records": breakends,
         "gvcf_markers": gvcf_markers,
+        "spanning_deletion_records": [
+            {
+                "record_index": record_index,
+                "line_number": line_no,
+                "chrom": chrom,
+                "pos": pos,
+                "called_sample_count": len(star_carriers) if star_carriers is not None else None,
+            }
+            for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records
+        ],
+        "unresolved_spanning_deletion_record_count": len(unresolved_spanning_deletion_records),
+        "unresolved_spanning_deletion_records": unresolved_spanning_deletion_records,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "base_modification_format_fields": sorted(base_modification_format_fields),
@@ -2129,9 +2159,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "declared_contig_md5s": contig_md5s,
         "compression": compression,
         "warning_codes": (
-            ["VCF_BGZF_EOF_MARKER_MISSING"]
-            if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
-            else []
+            (["VCF_BGZF_EOF_MARKER_MISSING"]
+             if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
+             else [])
+            + (["VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED"]
+               if unresolved_spanning_deletion_records else [])
         ),
     }
 

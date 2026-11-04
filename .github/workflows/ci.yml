@@ -29,6 +29,8 @@ jobs:
           test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
       - name: Install backend
         run: pip install -e . pytest
+      - name: Verify Redis client satisfies Kombu transport minimum
+        run: python -c "import redis; from packaging.version import Version; assert Version(redis.__version__) >= Version('6.1.0'), redis.__version__"
       - name: Backend tests
         env:
           DATABASE_URL: sqlite:///./ci.db
@@ -109,6 +111,8 @@ jobs:
           test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
       - name: Install backend
         run: pip install -e . pytest
+      - name: Verify Redis client satisfies Kombu transport minimum
+        run: python -c "import redis; from packaging.version import Version; assert Version(redis.__version__) >= Version('6.1.0'), redis.__version__"
       - name: Apply database migrations
         env:
           DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom

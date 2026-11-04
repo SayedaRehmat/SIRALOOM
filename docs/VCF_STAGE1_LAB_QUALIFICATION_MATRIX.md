@@ -73,9 +73,15 @@ A cell is **not QUALIFIED** merely because it is IMPLEMENTED or AUTOMATED.
 | Symbolic `<DUP>` | Explicit structural routing / rejection | Current structural classifier | IMPLEMENTED / UNSUPPORTED |
 | Symbolic `<INS>` | Explicit structural routing / rejection | Current structural classifier | IMPLEMENTED / UNSUPPORTED |
 | Breakend `BND` | Explicit structural routing / rejection | Current structural classifier | IMPLEMENTED / UNSUPPORTED |
-| Star allele `*` | Explicit rejection rather than silent downstream analysis | Current structural classifier | AUTOMATED / UNSUPPORTED |
+| Star allele `*` | A syntactically valid `*` record does not invalidate the whole VCF solely because its deletion context is absent from the same file. Strict validation records unresolved context with source record identity; routing preserves the entire original record and genotype in `SPANNING_DELETION_RECORDS`, records `UNRESOLVED_SPANNING_DELETION_CONTEXT` in the exclusion manifest, and excludes it from ordinary SNV/INDEL normalization. Independent eligible records continue. Same-sample deletion context is required before any future spanning-deletion interpretation. | Strict validator warning profile + production-worker routing regression for orphan `ALT=*,G; GT=1/2`; source record and genotype preserved; ordinary sequence records continue to normalization | IMPLEMENTED / AUTOMATED / NOT-EVIDENCED | Execute both official GIAB builds with retained source/checksum/run artifacts; assess full-callset completeness and analytical impact under a pre-approved lab policy. Do not infer GIAB concordance from routing tests. |
 | CNV/SV | Do not claim Phase-1 small-variant normalization | Current routing boundary | UNSUPPORTED |
 | gVCF as direct analysis input | Must not silently become ordinary VCF | Current durable blocked/review path | UNSUPPORTED |
+
+### Spanning-deletion error disposition
+
+A valid VCF containing an unresolved `*` allele is not a file-integrity failure. The validator records the unresolved source-record index, coordinates, line number, and warning code. The router retains the unchanged record in the dedicated spanning-deletion artifact and exclusion manifest. The record is not sent to SNV/INDEL normalization; independent eligible records continue. A deletion found only in another sample does not resolve the star allele for the carrier sample. If no eligible sequence-resolved records remain, the existing workflow places the case in `REQUIRES_REVIEW` rather than treating it as a negative result.
+
+This is a software disposition rule, not a claim that the spanning-deletion event has been analytically interpreted. The unresolved record must remain visible in case completeness and human review. Laboratory sign-out policy must determine whether its potential clinical impact blocks report release.
 
 ## 5. Genotype / FORMAT qualification matrix
 

@@ -425,8 +425,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
         "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10;DP=30\tGT:AD:PL\t0/0:30,0:0,40,400\n"
         "1\t11\trs1\tA\tC,<NON_REF>\t50\tPASS\tDP=24\tGT:AD:PL\t0/1:15,9,0:100,50,60,40,0,30\n"
         "1\t20\tdel1\tAT\tA\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
-        "1\t21\tstar1\tT\t*\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n"
         + f"1\t30\tsvdel1\t{'C' if reference_mismatch else 'A'}\t<DEL>\t50\tPASS\tSVTYPE=DEL;END=35\tGT:AD:PL\t0/1:10,10:0,20,200\n"
+        + "1\t50\tstar1\tA\t*,G\t50\tPASS\t.\tGT:AD:PL\t1/2:10,10,10:0,20,200,20,0,200\n"
         + "1\t1001\ttelo-after\tA\tG\t50\tPASS\t.\tGT:AD:PL\t0/1:10,10:0,20,200\n",
         encoding="utf-8",
     )
@@ -503,6 +503,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert "A\tC,<NON_REF>" in routed_text
             assert "AT\tA" in routed_text
             assert "\t*\t" not in routed_text
+            assert "\t*,G\t" not in routed_text
             assert "\t0\ttelo1\t" not in routed_text
             assert "\t1001\ttelo-after\t" not in routed_text
             assert "<NON_REF>\t.\tPASS\tEND=10" not in routed_text
@@ -606,6 +607,15 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             workflow.run_variant_analysis(analysis_id)
 
         with local_session() as db:
+            validation_step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "validate_input",
+            ))
+            assert validation_step.status == StepStatus.SUCCEEDED, (validation_step.error_code, validation_step.error_message, validation_step.metadata_json)
+            assert validation_step.metadata_json["validation"] == "PASS_WITH_WARNINGS"
+            assert validation_step.metadata_json["warning_codes"] == [
+                "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED"
+            ]
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "normalize",
@@ -656,6 +666,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 for line in store.read_bytes(exclusion_manifest.storage_uri).decode("utf-8").splitlines()
             ]
             assert [row["source_record_index"] for row in exclusion_rows] == [1, 2, 5, 6, 7]
+            star_exclusion = next(row for row in exclusion_rows if row["source_record_index"] == 6)
+            assert star_exclusion["reason_code"] == "UNRESOLVED_SPANNING_DELETION_CONTEXT"
             assert {row["routed_artifact_type"] for row in exclusion_rows} == {
                 "GVCF_REFERENCE_BLOCKS", "SPANNING_DELETION_RECORDS",
                 "STRUCTURAL_VARIANT_RECORDS", "TELOMERE_COORDINATE_RECORDS",
@@ -675,7 +687,9 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
             assert sha256(store.read_bytes(telomere_artifact.storage_uri)).hexdigest() == telomere_artifact.sha256
             assert sha256(store.read_bytes(telomere_after_artifact.storage_uri)).hexdigest() == telomere_after_artifact.sha256
             assert "END=10" in store.read_bytes(block_artifact.storage_uri).decode("utf-8")
-            assert "\t*\t" in store.read_bytes(star_artifact.storage_uri).decode("utf-8")
+            star_artifact_text = store.read_bytes(star_artifact.storage_uri).decode("utf-8")
+            assert "\t*,G\t" in star_artifact_text
+            assert "\tGT:AD:PL\t1/2:10,10,10:0,20,200,20,0,200" in star_artifact_text
             assert "<DEL>" in store.read_bytes(sv_artifact.storage_uri).decode("utf-8")
             assert "\t0\ttelo1\t" in store.read_bytes(telomere_artifact.storage_uri).decode("utf-8")
             assert "\t1001\ttelo-after\t" in store.read_bytes(telomere_after_artifact.storage_uri).decode("utf-8")

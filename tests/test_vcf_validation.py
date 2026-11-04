@@ -6,6 +6,7 @@ import pytest
 
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    _deleted_reference_interval,
     _validate_record,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
@@ -56,6 +57,20 @@ def write_vcf_with_metadata(
     )
 
 
+@pytest.mark.parametrize(
+    ("ref", "alt", "expected"),
+    [
+        ("A", "C", None),
+        ("AT", "GC", None),
+        ("A", "AT", None),
+        ("AT", "A", (11, 11)),
+        ("ATC", "A", (11, 12)),
+    ],
+)
+def test_deleted_reference_interval_only_reports_reference_shortening(ref, alt, expected):
+    assert _deleted_reference_interval(10, ref, alt) == expected
+
+
 def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     path = tmp_path / "valid.vcf"
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n")
@@ -63,6 +78,74 @@ def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
     assert profile["records"] == 1
     assert profile["reference_contig_policy"] == "EXACT_OR_EXPLICIT_ALIAS"
 
+
+
+
+def test_strict_validation_records_orphan_spanning_deletion_as_record_warning(tmp_path: Path):
+    path = tmp_path / "orphan-star.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t10\tstar\tA\t*,G\t.\tPASS\t.\tGT\t1/2\n"
+        "1\t11\tsnv\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2
+    assert profile["spanning_deletion_records"] == [{
+        "record_index": 1,
+        "line_number": 4,
+        "chrom": "1",
+        "pos": 10,
+        "called_sample_count": 1,
+    }], profile.get("spanning_deletion_records")
+    assert profile["unresolved_spanning_deletion_record_count"] == 1, profile
+    assert profile["unresolved_spanning_deletion_records"] == [{
+        "record_index": 1,
+        "line_number": 4,
+        "chrom": "1",
+        "pos": 10,
+        "reason_code": "UNRESOLVED_SPANNING_DELETION_CONTEXT",
+    }]
+    assert "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED" in profile["warning_codes"]
+
+
+
+
+def test_strict_validation_requires_spanning_deletion_context_in_same_sample(tmp_path: Path):
+    path = tmp_path / "different-sample-star.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSTAR_CARRIER\tDELETION_CARRIER\n"
+        "1\t10\tdel\tAT\tA\t.\tPASS\t.\tGT\t0/0\t0/1\n"
+        "1\t11\tstar\tT\t*\t.\tPASS\t.\tGT\t0/1\t0/0\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["unresolved_spanning_deletion_record_count"] == 1
+    assert profile["unresolved_spanning_deletion_records"][0]["record_index"] == 2
+
+def test_strict_validation_accepts_spanning_deletion_with_same_sample_context(tmp_path: Path):
+    path = tmp_path / "resolved-star.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'],
+        "1\t10\tdel\tAT\tA\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t11\tstar\tT\t*\t.\tPASS\t.\tGT\t0/1\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2
+    assert profile["unresolved_spanning_deletion_record_count"] == 0
+    assert profile["unresolved_spanning_deletion_records"] == []
+    assert "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED" not in profile["warning_codes"]
 
 def test_strict_validation_rejects_whitespace_in_chromosome_name(tmp_path: Path):
     path = tmp_path / "whitespace-contig.vcf"
@@ -816,12 +899,18 @@ def test_strict_validation_checks_breakend_type_and_mate_relationships(tmp_path,
     assert exc.value.code == code
 
 
-def test_strict_validation_requires_context_for_spanning_deletion_allele(tmp_path):
+def test_strict_validation_warns_when_spanning_deletion_context_is_absent(tmp_path):
     path = tmp_path / "orphan-star.vcf"
     write_vcf(path, "1\t11\t.\tT\t*\t.\tPASS\t.\n")
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-    assert exc.value.code == "VCF_SPANNING_DELETION_CONTEXT_MISSING"
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 1
+    assert profile["unresolved_spanning_deletion_record_count"] == 1
+    assert profile["unresolved_spanning_deletion_records"][0]["reason_code"] == (
+        "UNRESOLVED_SPANNING_DELETION_CONTEXT"
+    )
+    assert "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED" in profile["warning_codes"]
 
 
 def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_record(tmp_path):
@@ -833,9 +922,11 @@ def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_r
     )
     profile = validate_vcf_strict(path)
     assert profile["records"] == 2
+    assert profile["unresolved_spanning_deletion_record_count"] == 0
+    assert profile["unresolved_spanning_deletion_records"] == []
 
 
-def test_strict_validation_rejects_spanning_deletion_carried_by_different_sample(tmp_path):
+def test_strict_validation_marks_spanning_deletion_unresolved_without_same_sample_carrier(tmp_path):
     path = tmp_path / "wrong-sample-star.vcf"
     columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1"
     write_vcf(
@@ -844,9 +935,11 @@ def test_strict_validation_rejects_spanning_deletion_carried_by_different_sample
         "1\t11\tstar1\tT\t*\t.\tPASS\t.\tGT\t0/1\n",
         columns=columns,
     )
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-    assert exc.value.code == "VCF_SPANNING_DELETION_CONTEXT_MISSING"
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["unresolved_spanning_deletion_record_count"] == 1
+    assert profile["unresolved_spanning_deletion_records"][0]["record_index"] == 2
 
 
 def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span(tmp_path):
