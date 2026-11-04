@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import gzip
 import re
 import shutil
@@ -41,7 +42,56 @@ class ValidationResult:
 
 
 class VCFValidationUnavailable(RuntimeError):
-    """A required validation tool could not complete; the VCF is not classified."""
+    """A required validation operation could not complete; the input is not classified."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "VCF_VALIDATION_UNAVAILABLE",
+        retryable: bool = True,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.retryable = retryable
+
+
+def _storage_io_unavailable(context: str, exc: OSError) -> VCFValidationUnavailable:
+    """Classify storage I/O by errno; permission/capacity faults are not blind retries."""
+    transient_errnos = {
+        errno.EIO,
+        errno.EINTR,
+        errno.EAGAIN,
+        errno.ETIMEDOUT,
+        errno.ECONNRESET,
+        errno.ENETDOWN,
+        errno.ENETUNREACH,
+        errno.EHOSTUNREACH,
+        getattr(errno, "ESTALE", -1),
+    }
+    if exc.errno in transient_errnos:
+        return VCFValidationUnavailable(
+            f"{context}: transient storage I/O failure. The input was not classified; retry after storage recovers.",
+            code="VCF_STORAGE_IO_RETRYABLE",
+            retryable=True,
+        )
+    if exc.errno == errno.ENOSPC:
+        return VCFValidationUnavailable(
+            f"{context}: storage capacity is exhausted. The input was not classified; restore capacity before retrying.",
+            code="VCF_STORAGE_CAPACITY_BLOCKED",
+            retryable=False,
+        )
+    if exc.errno in {errno.EACCES, errno.EPERM, errno.EROFS}:
+        return VCFValidationUnavailable(
+            f"{context}: storage access is denied. The input was not classified; an operator must restore approved access.",
+            code="VCF_STORAGE_ACCESS_BLOCKED",
+            retryable=False,
+        )
+    return VCFValidationUnavailable(
+        f"{context}: storage is unavailable. The input was not classified; an operator must resolve the storage condition.",
+        code="VCF_STORAGE_UNAVAILABLE",
+        retryable=False,
+    )
 
 
 def classify_filename(filename: str) -> str:
@@ -94,10 +144,7 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
     except (gzip.BadGzipFile, EOFError, UnicodeDecodeError) as exc:
         raise VCFValidationError(f"VCF content is malformed or truncated: {exc}") from exc
     except OSError as exc:
-        raise VCFValidationUnavailable(
-            "VCF staging/storage read failed during header validation. "
-            "The input was not classified; restore storage access and retry."
-        ) from exc
+        raise _storage_io_unavailable("VCF header validation", exc) from exc
     if len(declared_builds) > 1:
         raise VCFValidationError(
             "VCF header contains conflicting reference assembly declarations: "
@@ -397,10 +444,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             exc.code if isinstance(exc, StrictVCFValidationError) else None,
         )
     except OSError as exc:
-        raise VCFValidationUnavailable(
-            "VCF staging/storage I/O failed during validation. "
-            "The input was not classified; restore storage access and retry."
-        ) from exc
+        raise _storage_io_unavailable("VCF validation", exc) from exc
 
 
 def validate_index(
@@ -481,10 +525,7 @@ def validate_index(
     except (ValueError, EOFError, gzip.BadGzipFile, StrictVCFValidationError) as exc:
         return ValidationResult("INVALID", kind, 0, [], None, [str(exc)], [])
     except OSError as exc:
-        raise VCFValidationUnavailable(
-            "VCF index or paired primary-file storage I/O failed during validation. "
-            "The index was not classified; restore storage access and retry."
-        ) from exc
+        raise _storage_io_unavailable("VCF index validation", exc) from exc
 
 
 def normalize_build(requested: str | None) -> str | None:
