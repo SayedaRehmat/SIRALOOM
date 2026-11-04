@@ -520,6 +520,34 @@ def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
     assert exc.value.code == "VCF_BOM_FORBIDDEN"
 
 
+@pytest.mark.parametrize("damage", ["invalid_header", "truncated_trailer", "corrupt_crc"])
+def test_strict_validation_rejects_corrupt_or_truncated_gzip_stream(
+    tmp_path: Path, damage: str,
+):
+    path = tmp_path / f"damaged-{damage}.vcf.gz"
+    content = (
+        b"##fileformat=VCFv4.3\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t.\n"
+    )
+    compressed = gzip.compress(content)
+    if damage == "invalid_header":
+        compressed = b"not-a-gzip-stream"
+    elif damage == "truncated_trailer":
+        compressed = compressed[:-5]
+    else:
+        corrupted = bytearray(compressed)
+        corrupted[-8] ^= 0xFF
+        compressed = bytes(corrupted)
+    path.write_bytes(compressed)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_COMPRESSION_INVALID"
+    assert "corrupt or truncated" in str(exc.value)
+
+
 @pytest.mark.parametrize("control", ["\x00", "\x08", "\x0b", "\x0c", "\x1f"])
 def test_strict_validation_rejects_vcf_forbidden_control_characters(
     tmp_path: Path, control: str,
