@@ -482,3 +482,73 @@ def test_artifact_upload_offloads_vcf_validation_from_asgi_event_loop(upload_api
 
     assert response.status_code == 201, response.text
     assert observed == [artifacts_api._validate_vcf_for_upload]
+
+
+def test_invalid_vcf_upload_is_retained_in_logical_quarantine_and_never_analysis_eligible(
+    upload_api, monkeypatch
+):
+    content = (
+        b"##fileformat=VCFv4.3\n"
+        b"#CHROM POS ID REF ALT QUAL FILTER INFO\n"
+        b"1 10 . A G . PASS .\n"
+    )
+    monkeypatch.setattr(
+        artifacts_api,
+        "_validate_vcf_for_upload",
+        lambda _path: ValidationResult(
+            status="INVALID",
+            file_kind="VCF",
+            record_count=0,
+            sample_names=[],
+            detected_build=None,
+            errors=["#CHROM header uses spaces instead of required tab delimiters."],
+            warnings=[],
+            fileformat="VCFv4.3",
+            error_code="VCF_HEADER_COLUMNS_INVALID",
+        ),
+    )
+    with upload_api["session_factory"]() as db:
+        case = db.get(Case, upload_api["case_id"])
+        case.status = "DRAFT"
+        db.commit()
+
+    response = _post_vcf(
+        upload_api["client"],
+        upload_api["case_id"],
+        content,
+        "malformed-vcf-logical-quarantine-000001",
+    )
+
+    assert response.status_code == 201, response.text
+    payload = response.json()
+    assert payload["validation_status"] == "INVALID"
+    assert payload["workflow_eligibility"] == "INELIGIBLE"
+    artifact_id = UUID(payload["artifact_id"])
+
+    with upload_api["session_factory"]() as db:
+        artifact = db.get(Artifact, artifact_id)
+        case = db.get(Case, upload_api["case_id"])
+        audit = db.scalar(
+            select(AuditEvent).where(
+                AuditEvent.case_id == upload_api["case_id"],
+                AuditEvent.event_type == "ARTIFACT_VALIDATION_FAILED",
+            )
+        )
+        assert artifact is not None
+        assert artifact.validation_status == "INVALID"
+        assert artifact.metadata_json["workflow_eligibility"] == "INELIGIBLE"
+        ingestion = artifact.metadata_json["ingestion"]
+        assert ingestion["disposition"] == "QUARANTINED"
+        assert ingestion["quarantine"]["status"] == "ACTIVE"
+        assert ingestion["quarantine"]["reason_code"] == "VCF_HEADER_COLUMNS_INVALID"
+        assert ingestion["quarantine"]["retryable"] is False
+        assert ingestion["quarantine"]["downstream_processing"] == "PROHIBITED"
+        assert case.status == "INVALID"
+        assert audit is not None
+        assert audit.payload["validation"]["error_code"] == "VCF_HEADER_COLUMNS_INVALID"
+
+    # Logical quarantine preserves the original bytes for authorized review;
+    # it does not silently delete or rewrite the rejected source.
+    download = upload_api["client"].get(f"/api/v1/artifacts/{artifact_id}/download")
+    assert download.status_code == 200, download.text
+    assert download.content == content
