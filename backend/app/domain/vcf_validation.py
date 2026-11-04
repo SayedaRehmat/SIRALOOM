@@ -48,6 +48,10 @@ def _alt_identity_key(allele: str) -> tuple[str, ...]:
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
+VCF_FLOAT_VALUE_RE = re.compile(
+    r"[-+]?(?:[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)\\Z",
+    re.IGNORECASE,
+)
 LEGACY_INFO_KEY_RE = re.compile(r"[^\s,;=<>]+\Z")
 LEGACY_FORMAT_KEY_RE = re.compile(r"[^\s,;=<>:]+\Z")
 
@@ -1510,6 +1514,11 @@ def _validate_record(
                 code="REFERENCE_CONTIG_MISMATCH",
             ) from exc
 
+    if not re.fullmatch(r"[0-9]+", pos_text):
+        raise StrictVCFValidationError(
+            f"POS must be an unsigned decimal integer at line {line_no}: {pos_text!r}",
+            code="VCF_POS_INVALID",
+        )
     try:
         pos = int(pos_text)
     except ValueError as exc:
@@ -1564,6 +1573,11 @@ def _validate_record(
         )
 
     if qual != ".":
+        if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and not VCF_FLOAT_VALUE_RE.fullmatch(qual):
+            raise StrictVCFValidationError(
+                f"QUAL does not match the VCFv4.3+ Float grammar at line {line_no}: {qual!r}",
+                code="VCF_QUAL_INVALID",
+            )
         try:
             q = float(qual)
         except ValueError as exc:

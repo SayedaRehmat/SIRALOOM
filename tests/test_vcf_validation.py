@@ -2882,3 +2882,44 @@ def test_simple_indels_reject_wrong_padding_side(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_INDEL_PADDING_INVALID"
+
+
+
+@pytest.mark.parametrize("qual", [".5", "1e3", "+INF", "NAN"])
+def test_vcf43_plus_qual_accepts_specified_float_tokens(tmp_path: Path, qual: str):
+    path = tmp_path / "valid-qual.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t{qual}\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("qual", ["1.", "1_0", "InfinityX", " 1.0"])
+def test_vcf43_plus_qual_rejects_nonconforming_float_tokens(tmp_path: Path, qual: str):
+    path = tmp_path / "invalid-qual.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t{qual}\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_QUAL_INVALID"
+
+
+@pytest.mark.parametrize("pos", ["+2", "02x", "-1", "1.0"])
+def test_vcf_position_requires_unsigned_decimal_token(tmp_path: Path, pos: str):
+    path = tmp_path / "invalid-pos-token.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{pos}\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_POS_INVALID"

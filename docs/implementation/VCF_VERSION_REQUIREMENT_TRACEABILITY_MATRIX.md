@@ -263,3 +263,13 @@ binary encoding. The earlier implementation's lower bound was therefore
 correct. The attempted full signed-range change has been reverted; boundary
 tests now accept -2147483640 and reject -2147483641, while retaining the
 upper signed-32-bit boundary.
+
+
+## Fixed-field lexical validation
+
+The VCFv4.3+ Float grammar applies to QUAL as well as declared INFO/FORMAT
+Float fields. QUAL now rejects nonconforming tokens that Python's float()
+would otherwise accept, while accepting decimal/exponent, INF/INFINITY and
+NAN forms specified by HTS. POS is now lexically constrained to unsigned
+decimal digits before integer conversion, preventing permissive acceptance of
+plus signs, decimal points or nonnumeric suffixes.
