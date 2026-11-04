@@ -2361,6 +2361,19 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         )
     if not found_header or chrom_header is None:
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
+    sample_columns = chrom_header[9:] if len(chrom_header) > 9 else []
+    sample_metadata_ids = structured_header_ids.get("SAMPLE", set())
+    if sample_metadata_ids and not sample_columns:
+        raise StrictVCFValidationError(
+            "SAMPLE metadata is present but the VCF has no sample columns",
+            code="VCF_SAMPLE_METADATA_MISMATCH",
+        )
+    undeclared_sample_metadata = sample_metadata_ids.difference(sample_columns)
+    if undeclared_sample_metadata:
+        raise StrictVCFValidationError(
+            f"SAMPLE metadata IDs do not match #CHROM sample columns: {sorted(undeclared_sample_metadata)!r}",
+            code="VCF_SAMPLE_METADATA_MISMATCH",
+        )
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
     for source_id, chrom, pos, mate_links, remote_loci, line_no in breakend_links:

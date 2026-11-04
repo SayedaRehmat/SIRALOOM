@@ -2967,3 +2967,43 @@ def test_vcf43_custom_structured_metadata_does_not_assume_description_schema(
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3", "VCFv4.5"])
+def test_sample_metadata_ids_must_match_sample_columns(tmp_path: Path, version: str):
+    valid = tmp_path / f"sample-metadata-valid-{version}.vcf"
+    valid.write_text(
+        f"##fileformat={version}\n"
+        '##SAMPLE=<ID=Blood,Description="Blood sample">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBlood\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / f"sample-metadata-mismatch-{version}.vcf"
+    invalid.write_text(
+        f"##fileformat={version}\n"
+        '##SAMPLE=<ID=OtherSample,Description="Different sample">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBlood\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_SAMPLE_METADATA_MISMATCH"
+
+
+def test_sample_metadata_is_invalid_for_sites_only_vcf(tmp_path: Path):
+    path = tmp_path / "sites-only-with-sample-metadata.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##SAMPLE=<ID=Blood,Description="Blood sample">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_SAMPLE_METADATA_MISMATCH"

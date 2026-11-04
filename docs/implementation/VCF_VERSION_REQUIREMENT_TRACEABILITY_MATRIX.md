@@ -358,3 +358,12 @@ Quoted Description remains required where the specification defines it,
 including INFO, FORMAT, FILTER and ALT. Unknown custom metadata is checked
 for the generic ID requirement only. This avoids applying INFO/FORMAT-style
 header rules to SAMPLE or custom metadata.
+
+
+## SAMPLE metadata/sample-column reconciliation
+
+SAMPLE metadata IDs identify VCF samples. The validator now requires every
+SAMPLE metadata ID to match a sample column in #CHROM and rejects SAMPLE
+metadata when the VCF is sites-only. Metadata remains optional; a file may
+contain sample columns without SAMPLE annotations. Tests cover v4.2, v4.3
+and v4.5 matching/mismatching cases.
