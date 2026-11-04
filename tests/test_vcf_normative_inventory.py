@@ -152,3 +152,34 @@ def test_public_vcf_corpus_route_categories_cover_gvcf_reference_blocks():
     runner_path = REPO_ROOT / "scripts" / "validation" / "qualify_public_vcf_version_corpus.py"
     runner_source = runner_path.read_text(encoding="utf-8")
     assert '"gvcf_reference_blocks": routing.get("gvcf_reference_blocks", 0)' in runner_source
+
+
+def test_public_vcf_corpus_separates_malformed_real_world_sources_from_positive_sources():
+    manifest = json.loads(
+        (REPO_ROOT / "backend" / "app" / "domain" / "vcf_public_version_corpus.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    positive_ids = {source["id"] for source in manifest["sources"]}
+    negative_ids = {source["id"] for source in manifest["negative_sources"]}
+
+    assert positive_ids.isdisjoint(negative_ids)
+    assert "pyvcf-example-v4.2" not in positive_ids
+    negative = next(
+        source for source in manifest["negative_sources"]
+        if source["id"] == "pyvcf-example-v4.2"
+    )
+    assert negative["expected_outcome"] == "REJECT"
+    assert negative["expected_strict_error_code"] == "VCF_HEADER_DEFINITION_INVALID"
+    assert negative["expected_bcftools_stderr_contains"] == "could not parse"
+    assert manifest["minimum_sources_per_version"]["VCFv4.2"] == 4
+    assert manifest["minimum_unique_producers_per_version"]["VCFv4.2"] == 3
+
+
+def test_public_vcf_corpus_runner_executes_negative_sources():
+    runner_source = (
+        REPO_ROOT / "scripts" / "validation" / "qualify_public_vcf_version_corpus.py"
+    ).read_text(encoding="utf-8")
+    assert "def qualify_negative_source(" in runner_source
+    assert 'manifest.get("negative_sources", [])' in runner_source
+    assert '"negative_source_results": negative_reports' in runner_source
