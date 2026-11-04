@@ -88,6 +88,20 @@ jobs:
           path: ${{ runner.temp }}/vcf40-historical-source-capture/
           if-no-files-found: ignore
           retention-days: 30
+      - name: Bootstrap-qualify historical 1000 Genomes VCFv4.0 cohort file
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python scripts/validation/qualify_vcf40_historical_cohort.py \
+            --output-dir "${RUNNER_TEMP}/siraloom-vcf40-historical-cohort"
+      - name: Preserve historical VCFv4.0 cohort qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-vcf40-historical-cohort-${{ github.sha }}
+          path: ${{ runner.temp }}/siraloom-vcf40-historical-cohort/
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Extract source-pinned VCF normative-language candidates
         run: |
           set -euo pipefail
