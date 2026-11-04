@@ -922,6 +922,8 @@ def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_r
     )
     profile = validate_vcf_strict(path)
     assert profile["records"] == 2
+    assert profile["unresolved_spanning_deletion_record_count"] == 0
+    assert profile["unresolved_spanning_deletion_records"] == []
 
 
 def test_strict_validation_marks_spanning_deletion_unresolved_without_same_sample_carrier(tmp_path):
