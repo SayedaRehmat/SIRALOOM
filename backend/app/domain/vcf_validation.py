@@ -830,6 +830,7 @@ def _structured_header_id(
     require_id: bool = True,
     required_attributes: set[str] | None = None,
     quoted_attributes: set[str] | None = None,
+    fileformat: str | None = None,
 ) -> str:
     """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
@@ -922,7 +923,7 @@ def _structured_header_id(
         )
     for attribute_name in ("Description", "Source", "Version"):
         if attribute_name in parsed_attributes and attribute_name not in quoted_keys:
-            if attribute_name == "Description" or attribute_name in {"Source", "Version"}:
+            if attribute_name == "Description" or fileformat != "VCFv4.0":
                 raise StrictVCFValidationError(
                     f"{kind} {attribute_name} must be a quoted string at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
@@ -1729,6 +1730,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         require_id=True,
                         required_attributes=required_attributes,
                         quoted_attributes=quoted_attributes,
+                        fileformat=fileformat,
                     )
                     if (
                         header_key == "contig"
