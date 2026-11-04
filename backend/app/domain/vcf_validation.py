@@ -1195,6 +1195,11 @@ def _validate_vcf45_structural_info(
 
 
 def _deleted_reference_interval(pos: int, ref: str, alt: str) -> tuple[int, int] | None:
+    # Only alleles shorter than REF can delete reference bases. Equal-length
+    # substitutions (including MNVs) and insertions must never establish the
+    # overlap context used to validate a VCF spanning-deletion "*" allele.
+    if len(ref) <= len(alt):
+        return None
     prefix = 0
     while prefix < min(len(ref), len(alt)) and ref[prefix] == alt[prefix]:
         prefix += 1
