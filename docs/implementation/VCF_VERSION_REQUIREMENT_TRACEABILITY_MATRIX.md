@@ -159,3 +159,14 @@ per source instead of aborting before the remaining version inputs are tested.
 The evidence artifact upload is non-fatal when an earlier CI step prevents the
 runner from creating its output directory. The report also asserts exactly one
 source per declared version.
+
+
+## Public-source route-disposition assertions
+
+The immutable public corpus now declares the expected SIRALOOM route category
+for each input. The 4.0–4.3 small-variant examples must produce sequence
+records; the official 4.4 SV example must produce specialized structural
+records; and the HPRC 4.5 KIV-2 file must produce repeat-expansion records.
+Each source must also reconcile every input record to exactly one exclusive
+routing disposition. This proves the parser does not silently discard these
+out-of-scope classes; it does not qualify their downstream clinical analysis.

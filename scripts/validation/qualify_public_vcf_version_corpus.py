@@ -131,12 +131,22 @@ def qualify_source(
                 reconciliation.get("balanced") is True
                 and reconciliation.get("source_records") == reconciliation.get("routed_records")
             )
+            route_category_counts = {
+                "sequence": routing.get("sequence_records", 0),
+                "structural_variants": routing.get("structural_variant_records", 0),
+                "copy_number_variants": routing.get("cnv_variant_records", 0),
+                "repeat_expansions": routing.get("repeat_expansion_records", 0),
+                "mitochondrial_variants": routing.get("mitochondrial_variant_records", 0),
+            }
+            expected_category = source.get("expected_route_category")
+            expected_category_count = route_category_counts.get(expected_category, 0)
+            route_passed = balanced and expected_category_count > 0
             result["record_routing"] = {
-                "status": "PASS" if balanced else "FAIL",
+                "status": "PASS" if route_passed else "FAIL",
+                "expected_route_category": expected_category,
+                "expected_route_category_record_count": expected_category_count,
+                "route_category_counts": route_category_counts,
                 "record_reconciliation": reconciliation,
-                "sequence_records": routing.get("sequence_records"),
-                "specialized_records": routing.get("specialized_records"),
-                "unsupported_records": routing.get("unsupported_records"),
             }
         except Exception as exc:
             result["record_routing"] = {

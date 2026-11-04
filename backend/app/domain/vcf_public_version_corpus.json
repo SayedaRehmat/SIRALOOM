@@ -11,11 +11,77 @@
     "VCFv4.5": "Current canonical HTS VCF specification target."
   },
   "sources": [
-    {"id":"pyvcf-example-v4.0","version":"VCFv4.0","source_class":"legacy_compatibility_example","repository":"jamescasbon/PyVCF","commit":"476169cd457ba0caa6b998b301a4d91e975251d9","path":"vcf/test/example-4.0.vcf","url":"https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.0.vcf","git_blob_sha1":"97fb07e91f74438f7325386d7d94ff406c10c24c","size_bytes":1605},
-    {"id":"pyvcf-example-v4.1","version":"VCFv4.1","source_class":"upstream_compatibility_example","repository":"jamescasbon/PyVCF","commit":"476169cd457ba0caa6b998b301a4d91e975251d9","path":"vcf/test/example-4.1.vcf","url":"https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.1.vcf","git_blob_sha1":"27d45004ca71905196ee23f7bee39cdec402d0b6","size_bytes":1645},
-    {"id":"pyvcf-example-v4.2","version":"VCFv4.2","source_class":"upstream_producer_example","repository":"jamescasbon/PyVCF","commit":"476169cd457ba0caa6b998b301a4d91e975251d9","path":"vcf/test/example-4.2.vcf","url":"https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.2.vcf","git_blob_sha1":"d649fc3f29a7d09e89bc1a93f161bb8770ac6f06","size_bytes":30413},
-    {"id":"hts-specs-example-v4.3","version":"VCFv4.3","source_class":"official_specification_example","repository":"samtools/hts-specs","commit":"510c107ba89aa13113818c9e4fa3071283cb7f7b","path":"examples/vcf/simple.vcf","url":"https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/examples/vcf/simple.vcf","git_blob_sha1":"90104016e4b4dc6061b2dcecf223972fa01afdc3","size_bytes":1645},
-    {"id":"hts-specs-sv-example-v4.4","version":"VCFv4.4","source_class":"official_specification_structural_variant_example","repository":"samtools/hts-specs","commit":"510c107ba89aa13113818c9e4fa3071283cb7f7b","path":"examples/vcf/sv44.vcf","url":"https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/examples/vcf/sv44.vcf","git_blob_sha1":"4d96947ed9b5e21a59ef8b00faea64ff288ca8c3","size_bytes":1977},
-    {"id":"hprc-kiv2-v4.5","version":"VCFv4.5","source_class":"public_hprc_repeat_variation_dataset","repository":"GMOD/jbrowse-components","commit":"9b86f5d9b25bc0ad23d0cc5f7913af83567699c3","path":"demos/hprc/hprc_kiv2_copies.vcf","url":"https://raw.githubusercontent.com/GMOD/jbrowse-components/9b86f5d9b25bc0ad23d0cc5f7913af83567699c3/demos/hprc/hprc_kiv2_copies.vcf","git_blob_sha1":"7f27993bd09a96bc5dffae611afcf28f5b22758e","size_bytes":102428}
+    {
+      "id": "pyvcf-example-v4.0",
+      "version": "VCFv4.0",
+      "source_class": "legacy_compatibility_example",
+      "repository": "jamescasbon/PyVCF",
+      "commit": "476169cd457ba0caa6b998b301a4d91e975251d9",
+      "path": "vcf/test/example-4.0.vcf",
+      "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.0.vcf",
+      "git_blob_sha1": "97fb07e91f74438f7325386d7d94ff406c10c24c",
+      "size_bytes": 1605,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "pyvcf-example-v4.1",
+      "version": "VCFv4.1",
+      "source_class": "upstream_compatibility_example",
+      "repository": "jamescasbon/PyVCF",
+      "commit": "476169cd457ba0caa6b998b301a4d91e975251d9",
+      "path": "vcf/test/example-4.1.vcf",
+      "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.1.vcf",
+      "git_blob_sha1": "27d45004ca71905196ee23f7bee39cdec402d0b6",
+      "size_bytes": 1645,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "pyvcf-example-v4.2",
+      "version": "VCFv4.2",
+      "source_class": "upstream_producer_example",
+      "repository": "jamescasbon/PyVCF",
+      "commit": "476169cd457ba0caa6b998b301a4d91e975251d9",
+      "path": "vcf/test/example-4.2.vcf",
+      "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.2.vcf",
+      "git_blob_sha1": "d649fc3f29a7d09e89bc1a93f161bb8770ac6f06",
+      "size_bytes": 30413,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "hts-specs-example-v4.3",
+      "version": "VCFv4.3",
+      "source_class": "official_specification_example",
+      "repository": "samtools/hts-specs",
+      "commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "path": "examples/vcf/simple.vcf",
+      "url": "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/examples/vcf/simple.vcf",
+      "git_blob_sha1": "90104016e4b4dc6061b2dcecf223972fa01afdc3",
+      "size_bytes": 1645,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "hts-specs-sv-example-v4.4",
+      "version": "VCFv4.4",
+      "source_class": "official_specification_structural_variant_example",
+      "repository": "samtools/hts-specs",
+      "commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "path": "examples/vcf/sv44.vcf",
+      "url": "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/examples/vcf/sv44.vcf",
+      "git_blob_sha1": "4d96947ed9b5e21a59ef8b00faea64ff288ca8c3",
+      "size_bytes": 1977,
+      "expected_route_category": "structural_variants"
+    },
+    {
+      "id": "hprc-kiv2-v4.5",
+      "version": "VCFv4.5",
+      "source_class": "public_hprc_repeat_variation_dataset",
+      "repository": "GMOD/jbrowse-components",
+      "commit": "9b86f5d9b25bc0ad23d0cc5f7913af83567699c3",
+      "path": "demos/hprc/hprc_kiv2_copies.vcf",
+      "url": "https://raw.githubusercontent.com/GMOD/jbrowse-components/9b86f5d9b25bc0ad23d0cc5f7913af83567699c3/demos/hprc/hprc_kiv2_copies.vcf",
+      "git_blob_sha1": "7f27993bd09a96bc5dffae611afcf28f5b22758e",
+      "size_bytes": 102428,
+      "expected_route_category": "repeat_expansions"
+    }
   ]
 }
