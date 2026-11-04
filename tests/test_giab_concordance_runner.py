@@ -349,6 +349,47 @@ def test_wes_run_requires_assay_target_bed(tmp_path: Path) -> None:
         )
 
 
+@pytest.mark.parametrize("same_path", [True, False])
+def test_concordance_rejects_truth_reused_as_query(
+    tmp_path: Path, same_path: bool
+) -> None:
+    inputs = _inputs(tmp_path)
+    if same_path:
+        query_vcf = inputs["truth_vcf"]
+    else:
+        query_vcf = inputs["query_vcf"]
+        query_vcf.write_bytes(inputs["truth_vcf"].read_bytes())
+    inputs["sample_mapping"].write_text(
+        json.dumps({
+            "schema_version": "1.0",
+            "truth_sample_name": "HG002",
+            "query_sample_name": "HG002",
+        }),
+        encoding="utf-8",
+    )
+    inputs["sample_mapping"].chmod(0o600)
+    output = tmp_path / "must-not-run"
+
+    with pytest.raises(ConcordanceError, match="content hashes are identical"):
+        run_concordance(
+            truth_vcf=inputs["truth_vcf"],
+            query_vcf=query_vcf,
+            confident_bed=inputs["confident_bed"],
+            reference_fasta=inputs["reference_fasta"],
+            reference_build="GRCh38",
+            assay="WGS",
+            caller="approved-caller",
+            caller_version="1.0",
+            sample_mapping_file=inputs["sample_mapping"],
+            truth_set_id="GIAB-HG002-GRCh38",
+            truth_set_version="4.2.1",
+            acceptance_policy_id="LAB-POLICY-001",
+            output_dir=output,
+        )
+
+    assert not output.exists()
+
+
 def test_controlled_giab_run_records_hashes_and_review_boundary(tmp_path: Path) -> None:
     inputs = _inputs(tmp_path)
     fake_happy = _fake_happy(tmp_path)

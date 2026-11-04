@@ -396,6 +396,12 @@ def run_concordance(
     validate_single_sample_vcf(inputs["truth_vcf"], "Truth VCF", truth_sample_name)
     validate_single_sample_vcf(inputs["query_vcf"], "Query VCF", query_sample_name)
 
+    truth_sha256 = sha256_file(inputs["truth_vcf"])
+    query_sha256 = sha256_file(inputs["query_vcf"])
+    if truth_sha256 == query_sha256:
+        raise ConcordanceError(
+            "Truth and query VCF content hashes are identical; the query must be an independently generated caller output."
+        )
     hashes_before = {name: sha256_file(path) for name, path in inputs.items()}
     if output_dir.is_symlink() or output_dir.exists():
         raise ConcordanceError("Output directory must not already exist; prior evidence is preserved.")
