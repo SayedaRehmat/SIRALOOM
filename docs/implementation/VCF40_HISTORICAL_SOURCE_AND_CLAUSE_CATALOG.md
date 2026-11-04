@@ -145,3 +145,13 @@ The separate end-to-end routing regression is:
 `tests/test_vcf_conformance.py::test_vcf40_supported_sequence_records_survive_unsupported_sv_cnv_routing`
 
 It validates a mixed VCFv4.0 file containing one SNV, one symbolic deletion, and one CNV; the SNV must remain in the sequence-normalization artifact, the unsupported classes must be routed to their separate artifacts, and the record-reconciliation ledger must balance. This test is committed but has not yet been executed successfully in CI.
+
+
+## CI acquisition and historical cohort execution workflow
+
+The branch CI now includes two bootstrap workflows:
+
+- **Exact historical source capture:** downloads the core and SV convention pages with redirect-following curl, preserving raw response bodies, response headers, final URL, HTTP status, content type, byte count, retrieval time, and SHA-256 in a retained artifact.
+- **Historical cohort execution:** `scripts/validation/qualify_vcf40_historical_cohort.py` downloads the identified CEU exon pilot VCF, preserves the compressed source bytes, computes SHA-256, verifies the declared version is VCFv4.0, runs SIRALOOM strict validation, runs BCFtools parsing, routes records, and checks source/routed record reconciliation. It reports `BOOTSTRAP_ONLY_UNPINNED` until the first acquired digest is reviewed and committed as a fixed source pin.
+
+These jobs are configured but have not yet produced an artifact in this session. Their presence is not evidence of a successful download or test run.
