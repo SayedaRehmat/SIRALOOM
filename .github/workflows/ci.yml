@@ -33,6 +33,61 @@ jobs:
           test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
       - name: Install backend
         run: pip install -e . pytest
+      - name: Bootstrap exact-byte VCFv4.0 historical source capture
+        id: vcf40-source-capture
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          capture_dir="${RUNNER_TEMP}/vcf40-historical-source-capture"
+          mkdir -p "${capture_dir}"
+          failures=0
+
+          capture_one() {
+            local source_id="$1"
+            local source_url="$2"
+            local body="${capture_dir}/${source_id}.html"
+            local headers="${capture_dir}/${source_id}.response-headers.txt"
+            local metadata="${capture_dir}/${source_id}.metadata.txt"
+            local started_at
+            local curl_status
+            started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            curl --fail --location --retry 4 --retry-all-errors \
+              --connect-timeout 30 --max-time 180 \
+              --dump-header "${headers}" \
+              --output "${body}" \
+              --write-out 'http_status=%{http_code}\nfinal_url=%{url_effective}\ncontent_type=%{content_type}\nsize_download=%{size_download}\n' \
+              "${source_url}" > "${metadata}"
+            curl_status="$?"
+            {
+              printf 'source_id=%s\n' "${source_id}"
+              printf 'requested_url=%s\n' "${source_url}"
+              printf 'retrieved_at_utc=%s\n' "${started_at}"
+              printf 'curl_exit_code=%s\n' "${curl_status}"
+            } >> "${metadata}"
+            if [ "${curl_status}" -ne 0 ] || [ ! -s "${body}" ]; then
+              printf 'capture_status=FAILED\n' >> "${metadata}"
+              return 1
+            fi
+            printf 'capture_status=CAPTURED\n' >> "${metadata}"
+            printf 'response_bytes=%s\n' "$(wc -c < "${body}")" >> "${metadata}"
+            printf 'response_sha256=%s\n' "$(sha256sum "${body}" | awk '{print $1}')" >> "${metadata}"
+          }
+
+          capture_one "VCFv4.0-core" \
+            "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/" || failures=$((failures + 1))
+          capture_one "VCFv4.0-1000G-SV-conventions" \
+            "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants/" || failures=$((failures + 1))
+
+          printf 'capture_failures=%s\n' "${failures}" > "${capture_dir}/capture-summary.txt"
+          exit "${failures}"
+      - name: Preserve VCFv4.0 historical source capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-vcf40-historical-source-capture-${{ github.sha }}
+          path: ${{ runner.temp }}/vcf40-historical-source-capture/
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Extract source-pinned VCF normative-language candidates
         run: |
           set -euo pipefail
