@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 from backend.app.domain.ingestion import validate_vcf
@@ -19,9 +20,27 @@ def sha256(path: Path) -> str:
             digest.update(chunk)
     return digest.hexdigest()
 
+expected_bcftools_version = os.environ.get("BCFTOOLS_VERSION", "").strip()
+expected_htslib_version = os.environ.get("HTSLIB_VERSION", "").strip()
+if not expected_bcftools_version or not expected_htslib_version:
+    raise SystemExit("BCFTOOLS_VERSION and HTSLIB_VERSION are required qualification inputs")
+
 executable = shutil.which("bcftools")
 if not executable:
     raise SystemExit("Production container has no BCFtools executable")
+version_result = subprocess.run(
+    [executable, "--version"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+version_lines = version_result.stdout.splitlines()
+if len(version_lines) < 2:
+    raise SystemExit("BCFtools did not return its expected two-line version identity")
+if version_lines[0].strip() != f"bcftools {expected_bcftools_version}":
+    raise SystemExit(f"Unexpected BCFtools identity: {version_lines[0]!r}")
+if version_lines[1].strip() != f"Using htslib {expected_htslib_version}":
+    raise SystemExit(f"Unexpected HTSlib identity: {version_lines[1]!r}")
 executable_sha256 = sha256(Path(executable))
 output_dir = Path("/qualification/output")
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -48,7 +67,7 @@ for build, source, reference, contig in cases:
         raise SystemExit(f"{build} production-container VCF intake failed: {intake.errors}")
     source_index = validate_vcf_index_concordance(
         source,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=expected_bcftools_version,
     )
     routing = route_vcf_records(
         source,
@@ -110,8 +129,8 @@ report = {
     "container_user": os.getuid(),
     "bcftools_executable": executable,
     "bcftools_executable_sha256": executable_sha256,
-    "bcftools_version": "1.25",
-    "htslib_version": "1.25",
+    "bcftools_version": expected_bcftools_version,
+    "htslib_version": expected_htslib_version,
     "assemblies": reports,
 }
 (output_dir / "container-qualification-report.json").write_text(
