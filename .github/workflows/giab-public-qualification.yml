@@ -96,7 +96,7 @@ jobs:
           ASSET_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}/assets"
           PROVENANCE="$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json"
           VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$PROVENANCE")"
-          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["reference_fasta"]["path"])' "$PROVENANCE")"
+          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"])' "$PROVENANCE")"
           mkdir -p "$RUNNER_TEMP/giab-${{ matrix.build }}/evidence"
           python scripts/validation/run_vcf_scale_benchmark.py \
             --vcf "$VCF" \
