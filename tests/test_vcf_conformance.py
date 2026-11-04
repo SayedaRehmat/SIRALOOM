@@ -25,12 +25,11 @@ def test_packaged_vcf_conformance_executes_for_each_builtin_version(version):
     # coverage; the current corpus is a regression suite, not a full spec
     # certification corpus.
     assert report["normative_coverage_sections"] == []
+    assert report["normative_coverage_status"] == "PARTIAL"
+    assert report["normative_uncovered_sections"]
     if version == "VCFv4.0":
-        assert report["normative_coverage_status"] == "NOT_APPLICABLE"
-        assert report["normative_uncovered_sections"] == []
+        assert "Original historical source response bytes and SHA-256 not yet archived" in report["normative_uncovered_sections"]
     else:
-        assert report["normative_coverage_status"] == "PARTIAL"
-        assert report["normative_uncovered_sections"]
         assert "Complete normative clause inventory with stable clause identifiers for this VCF release" in report["normative_uncovered_sections"]
     assert report["fixture_categories_exercised"]
     assert report["specification_requirements_exercised"]
