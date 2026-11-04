@@ -28,7 +28,7 @@ def test_packaged_vcf_conformance_executes_for_each_builtin_version(version):
     assert report["normative_coverage_status"] == "PARTIAL"
     assert report["normative_uncovered_sections"]
     if version == "VCFv4.0":
-        assert "Original historical source response bytes and SHA-256 not yet archived" in report["normative_uncovered_sections"]
+        assert "Raw historical source bytes and SHA-256 not yet archived" in report["normative_uncovered_sections"]
     else:
         assert "Complete normative clause inventory with stable clause identifiers for this VCF release" in report["normative_uncovered_sections"]
     assert report["fixture_categories_exercised"]
