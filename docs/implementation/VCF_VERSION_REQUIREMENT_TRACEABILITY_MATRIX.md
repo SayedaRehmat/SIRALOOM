@@ -252,3 +252,14 @@ representations and rejects a right-padded representation away from position
 1 or a left-padded representation at position 1. Complex replacements that
 retain bases on both sides are not incorrectly treated as simple indels.
 Tests cover valid and invalid examples at both coordinate boundaries.
+
+
+## Integer range source correction
+
+A direct review of the official VCFv4.3 data-type clause shows that the eight
+lowest signed 32-bit integer values (-2^31 through -2^31+7) are explicitly
+disallowed in both VCF and BCF because they cannot be represented in the
+binary encoding. The earlier implementation's lower bound was therefore
+correct. The attempted full signed-range change has been reverted; boundary
+tests now accept -2147483640 and reject -2147483641, while retaining the
+upper signed-32-bit boundary.
