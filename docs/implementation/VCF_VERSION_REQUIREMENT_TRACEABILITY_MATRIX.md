@@ -159,16 +159,22 @@ The tests are awaiting execution in the queued CI verification.
 The public corpus runner now records BCFtools timeout and process-start failures
 per source instead of aborting before the remaining version inputs are tested.
 The evidence artifact upload is non-fatal when an earlier CI step prevents the
-runner from creating its output directory. The report also asserts exactly one
-source per declared version.
+runner from creating its output directory. The report now requires at least one immutable source per declared version,
+unique source IDs, and reports source counts and producer/source classes by
+version. The corpus contains eight pinned inputs: one VCFv4.0 legacy smoke
+example; two VCFv4.1 examples (PyVCF and a FreeBayes/vcflib producer file);
+two VCFv4.2 examples (PyVCF and a GATK multi-contig gVCF); and one each for
+VCFv4.3, VCFv4.4 and VCFv4.5. The GATK source is routed as reference blocks,
+not as small variants.
 
 
 ## Public-source route-disposition assertions
 
 The immutable public corpus now declares the expected SIRALOOM route category
-for each input. The 4.0–4.3 small-variant examples must produce sequence
-records; the official 4.4 SV example must produce specialized structural
-records; and the HPRC 4.5 KIV-2 file must produce repeat-expansion records.
+for each input. The VCFv4.0–4.3 sequence examples must produce sequence
+records, the GATK VCFv4.2 example must produce gVCF reference-block records,
+the official VCFv4.4 SV example must produce specialized structural records,
+and the HPRC VCFv4.5 KIV-2 file must produce repeat-expansion records.
 Each source must also reconcile every input record to exactly one exclusive
 routing disposition. This proves the parser does not silently discard these
 out-of-scope classes; it does not qualify their downstream clinical analysis.
