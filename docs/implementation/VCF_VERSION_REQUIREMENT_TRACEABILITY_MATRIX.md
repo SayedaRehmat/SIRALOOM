@@ -375,3 +375,14 @@ SAMPLE metadata ID to match a sample column in #CHROM and rejects SAMPLE
 metadata when the VCF is sites-only. Metadata remains optional; a file may
 contain sample columns without SAMPLE annotations. Tests cover v4.2, v4.3
 and v4.5 matching/mismatching cases.
+
+## Breakend SVTYPE optionality correction
+
+The VCFv4.1 structural-variant INFO description says SVTYPE can be derived
+from REF/ALT and is useful for filtering; it is not a mandatory field. VCFv4.5
+explicitly deprecates SVTYPE because it is redundant with ALT. The validator
+therefore no longer rejects a syntactically valid breakend solely because
+INFO/SVTYPE is absent. If supplied, a breakend record must not contradict the
+ALT representation by declaring a non-BND SVTYPE. Regression tests cover
+valid reciprocal MATEID pairs without SVTYPE across VCFv4.1–4.5 and reject a
+contradictory legacy SVTYPE value.
