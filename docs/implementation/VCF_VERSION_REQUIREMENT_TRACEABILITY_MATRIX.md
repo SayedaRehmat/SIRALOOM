@@ -159,13 +159,21 @@ The tests are awaiting execution in the queued CI verification.
 The public corpus runner now records BCFtools timeout and process-start failures
 per source instead of aborting before the remaining version inputs are tested.
 The evidence artifact upload is non-fatal when an earlier CI step prevents the
-runner from creating its output directory. The report now requires at least one immutable source per declared version,
-unique source IDs, and reports source counts and producer/source classes by
-version. The corpus contains eight pinned inputs: one VCFv4.0 legacy smoke
-example; two VCFv4.1 examples (PyVCF and a FreeBayes/vcflib producer file);
-two VCFv4.2 examples (PyVCF and a GATK multi-contig gVCF); and one each for
-VCFv4.3, VCFv4.4 and VCFv4.5. The GATK source is routed as reference blocks,
-not as small variants.
+runner from creating its output directory. The report requires immutable source coverage for all six declared
+versions, unique source IDs, the configured minimum source count per version,
+and the configured minimum number of distinct producers per version. The
+positive corpus now contains 14 pinned inputs: one VCFv4.0 legacy example;
+five VCFv4.1 inputs from BCFtools, GATK, PyVCF and FreeBayes/vcflib; five
+VCFv4.2 inputs from BCFtools, DeepVariant and GATK; and one each for VCFv4.3,
+VCFv4.4 and VCFv4.5. The corpus includes both sequence and gVCF reference-block
+inputs, an official VCFv4.4 structural-variant example, and the HPRC VCFv4.5
+KIV-2 repeat-variation file.
+
+A separate negative corpus contains the independently pinned malformed PyVCF
+VCFv4.2 example. It is not counted as a positive version-coverage input. The
+runner requires SIRALOOM to reject it with the expected validation code and
+BCFtools to reject its malformed sample header. This distinguishes correct
+laboratory rejection from a positive conformance pass.
 
 
 ## Public-source route-disposition assertions
@@ -386,3 +394,27 @@ INFO/SVTYPE is absent. If supplied, a breakend record must not contradict the
 ALT representation by declaring a non-BND SVTYPE. Regression tests cover
 valid reciprocal MATEID pairs without SVTYPE across VCFv4.1–4.5 and reject a
 contradictory legacy SVTYPE value.
+
+## Real-world corpus corrections from differential execution
+
+The first complete six-version run on commit `b5f0cc4a629098f1f1ee77e304e17d2d5bb9a9fb`
+completed the backend suite successfully but failed three of six original
+positive examples. The failures exposed two over-restrictive validator rules
+and one malformed upstream example:
+
+- The VCFv4.4 structural-variant example used valid breakend ALT records without
+  INFO/SVTYPE. VCFv4.1 describes SVTYPE as derivable from REF/ALT and useful
+  for filtering; VCFv4.5 deprecates SVTYPE as redundant with ALT. The validator
+  now accepts absent SVTYPE and rejects only a contradictory supplied value.
+- The HPRC VCFv4.5 KIV-2 record repeats the symbolic ALT token
+  `<CNV:TR>` for distinct allele indexes with parallel per-allele INFO values.
+  VCFv4.5 does not prohibit repeated ALT strings. The validator no longer
+  imposes an unsupported duplicate-ALT prohibition; per-allele cardinality
+  and genotype-index checks remain in force.
+- The PyVCF VCFv4.2 example is not a valid positive input: it declares an
+  invalid INFO Flag definition and its #CHROM line uses spaces instead of
+  tabs. It has been moved to the negative corpus and must be rejected by both
+  SIRALOOM and BCFtools with preserved diagnostics.
+
+These corrections are source-backed, have regression tests, and are awaiting
+a new full CI execution on the exact latest feature-branch commit.
