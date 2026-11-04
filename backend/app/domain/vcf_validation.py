@@ -1440,7 +1440,13 @@ def _validate_simple_indel_padding(
             # Complex replacements retain bases on both sides and do not
             # require an additional padding base.
             continue
-        if pos <= 1:
+        if pos == 1:
+            # POS=1 can represent an event after the first reference base
+            # (left padding) or an event beginning at the first base (right
+            # padding). The common-end check above establishes valid padding
+            # for either representation.
+            continue
+        if pos == 0:
             padded = ref[-1] == alt[-1]
             expected = "right"
         else:
