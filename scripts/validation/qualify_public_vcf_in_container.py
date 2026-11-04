@@ -75,6 +75,14 @@ for build, source, reference, contig in cases:
     )
     if routing["record_reconciliation"]["balanced"] is not True:
         raise SystemExit(f"{build} source-record routing reconciliation failed")
+    source_record_count = intake.metadata["source_record_count"]
+    if source_record_count != routing["record_reconciliation"]["source_records"]:
+        raise SystemExit(
+            f"{build} intake and routing disagree on raw source-record count: "
+            f"{source_record_count} != {routing['record_reconciliation']['source_records']}"
+        )
+    if intake.record_count != intake.metadata["parsed_variant_record_count"]:
+        raise SystemExit(f"{build} parsed variant count is not ALT-expanded consistently")
     sequence_input = Path(routing["sequence_path"])
     output = output_dir / f"normalized-{build.lower()}.vcf.gz"
     result = normalize_vcf_with_bcftools(
@@ -100,13 +108,26 @@ for build, source, reference, contig in cases:
         "reference_fai_sha256": sha256(Path(f"{reference}.fai")),
         "input_validation": {
             "status": intake.status,
+            # Backward-compatible alias; this count is one parsed VCFRecord per ALT allele.
             "record_count": intake.record_count,
+            "record_count_semantics": (
+                "ALT-expanded parsed variant records; not original VCF data-line count."
+            ),
+            "source_record_count": source_record_count,
+            "source_record_count_semantics": (
+                "Original non-header VCF data lines before ALT expansion."
+            ),
+            "alternate_allele_count": intake.metadata["alternate_allele_count"],
+            "parsed_variant_record_count": intake.metadata["parsed_variant_record_count"],
+            "source_record_count_matches_routing": True,
             "fileformat": intake.fileformat,
             "bcftools_version": intake.metadata["bcftools_version"],
             "htslib_version": intake.metadata["htslib_version"],
         },
         "input_index_validation": source_index,
         "record_routing": {
+            "source_record_count": source_record_count,
+            "source_record_count_semantics": "Original non-header VCF data lines.",
             "record_reconciliation": routing["record_reconciliation"],
             "sequence_records": routing["sequence_records"],
             "structural_variant_records": routing["structural_variant_records"],
