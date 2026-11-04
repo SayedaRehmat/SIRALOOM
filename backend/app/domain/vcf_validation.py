@@ -2249,9 +2249,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 _validate_vcf45_structural_info(info_values, alts, line_no)
             breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
             if breakend_alts:
-                if info_values.get("SVTYPE") != "BND":
+                # SVTYPE is optional in VCFv4.1–4.4 and deprecated in VCFv4.5:
+                # the breakend ALT grammar itself identifies a breakend. When
+                # the legacy field is supplied, it must not contradict that ALT.
+                svtype_value = info_values.get("SVTYPE")
+                if svtype_value not in {None, ".", "BND"}:
                     raise StrictVCFValidationError(
-                        f"Breakend ALT requires INFO/SVTYPE=BND at line {line_no}",
+                        f"Breakend ALT conflicts with INFO/SVTYPE={svtype_value!r} at line {line_no}",
                         code="VCF_BREAKEND_SVTYPE_INVALID",
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
