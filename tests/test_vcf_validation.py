@@ -6,6 +6,7 @@ import pytest
 
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    _deleted_reference_interval,
     _validate_record,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
@@ -54,6 +55,20 @@ def write_vcf_with_metadata(
         + body,
         encoding="utf-8",
     )
+
+
+@pytest.mark.parametrize(
+    ("ref", "alt", "expected"),
+    [
+        ("A", "C", None),
+        ("AT", "GC", None),
+        ("A", "AT", None),
+        ("AT", "A", (11, 11)),
+        ("ATC", "A", (11, 12)),
+    ],
+)
+def test_deleted_reference_interval_only_reports_reference_shortening(ref, alt, expected):
+    assert _deleted_reference_interval(10, ref, alt) == expected
 
 
 def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
