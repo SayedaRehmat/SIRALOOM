@@ -1,3 +1,4 @@
+import gzip
 import struct
 from pathlib import Path
 import zlib
