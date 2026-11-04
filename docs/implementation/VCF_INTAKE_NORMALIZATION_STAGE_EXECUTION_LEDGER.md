@@ -1,0 +1,341 @@
+# SIRALOOM VCF Stage — Live Execution Ledger
+
+**Ledger ID:** SIRALOOM-VCF-LEDGER-001  
+**Contract:** [VCF Intake and Normalization Master Execution Contract](./VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md)  
+**Ledger version:** 1.1  
+**Snapshot timestamp:** 2026-11-03  
+**Status:** ACTIVE — stage not complete
+
+> This ledger is the continuity record. Update it after every meaningful task, CI run, evidence acquisition, failure or handoff. The master contract defines what must be achieved; this ledger records what has actually happened. Never convert unknown status into PASS.
+
+## 1. Current repository control point
+
+| Field | Value |
+|---|---|
+| Repository | SayedaRehmat/SIRALOOM |
+| PR | [#282](https://github.com/SayedaRehmat/SIRALOOM/pull/282) |
+| Branch | feature/vcf-normalization-capability-governance |
+| Latest recorded PR head | 0665187054353002657de1f75ab31d761d1b8635 |
+| Latest commit | docs: establish VCF stage master execution contract |
+| Previous implementation head | 7b8abebf95d07c9eb6ce1ec00c6c5fe25e31d9c8 |
+| Contract path | docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md (v1.1) |
+| Operations supplement | docs/implementation/VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md (v1.0) |
+| Ledger path | docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_LEDGER.md |
+| Merge authorization | NOT GRANTED — do not merge |
+
+The master contract and this ledger were added directly to the existing PR branch. The contract file was fetched back from GitHub after creation; the returned file content was 40,093 characters. This verifies that the file exists on the branch, not that its scientific requirements are implemented.
+
+## 2. Current CI state at ledger creation
+
+### Run #3203 — latest PR-head run
+
+- Run ID: 41629799882
+- Commit: 64009e882c7090d09fd9e89e6a270969cbda92bc
+- URL: https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41629799882
+- Status at snapshot: PENDING
+- Conclusion: NONE
+- Required action: poll all jobs and inspect all steps/logs. This run is on the current recorded PR head.
+
+### Run #3202 — previous implementation-head run
+
+- Run ID: 41627304151
+- Commit at the time: 7b8abebf95d07c9eb6ce1ec00c6c5fe25e31d9c8
+- URL: https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41627304151
+- Frontend job: COMPLETED / SUCCESS.
+- PostgreSQL integration job: COMPLETED / SUCCESS.
+- Backend job: IN PROGRESS at last observed poll.
+- Backend setup, pinned BCFtools/HTSlib verification, backend install, normative candidate extraction, GRCh38 and GRCh37 public-data acquisition, and backend tests had completed successfully.
+- Real-data BCFtools qualification step was IN PROGRESS.
+- Evidence preservation, production image build, non-root/volume checks, container BCFtools verification and real GRCh37/GRCh38 execution inside the production container were still PENDING at last observation.
+- Job log retrieval returned NOT_FOUND at the time queried; do not infer a pass or failure from this. Re-fetch workflow/job state and artifacts.
+- This run is on the previous commit, not the latest PR head. It cannot by itself validate the contract commit.
+
+### Run #3201 — previous failure context
+
+- Run ID: 41622460369.
+- Backend regression: 2,373 passed, 46 skipped.
+- Frontend and PostgreSQL/Celery worker-loss integration passed.
+- Real-data qualification failed during source build because the pinned HTSlib checkout lacked the htscodecs submodule source.
+- This was a source-build/acquisition failure; it was not evidence that normalization output was scientifically wrong.
+- Follow-up commit 7b8abeb pinned BCFtools/HTSlib source commits and initialized/verified the htscodecs submodule. The fix must be judged from actual completed CI execution, not from code inspection alone.
+
+## 3. Work verified in this session
+
+| Item | Status | Evidence |
+|---|---|---|
+| Read current PR #282 metadata and branch head | PASS | GitHub PR API; head was 7b8abeb before documentation commit |
+| Create master execution contract | PASS | Commit 64009e882c7090d09fd9e89e6a270969cbda92bc |
+| Fetch master contract back from branch | PASS | GitHub fetch_file; 40,093 characters; file URL returned |
+| Discover CI run for new head | PASS | Run #3203 / 41629799882 returned for commit 64009e... |
+| Revalidate final outcome of run #3202 | NOT COMPLETE | Backend was still in progress at last job poll; logs fetch returned NOT_FOUND |
+| Create this live ledger | IN PROGRESS AT CREATION | Must verify file after commit |
+
+No VCF implementation, real-data qualification result or stage acceptance gate is newly declared complete by the documentation work.
+
+## 4. Gate status
+
+All gates remain NOT ASSESSED until the agent maps repository implementation, tests and retained evidence to each acceptance criterion in the master contract.
+
+| Gate | Current status | Required next evidence |
+|---|---|---|
+| G0 Architecture | NOT ASSESSED | Current architecture/ADR and code-path audit |
+| G1 Intake | NOT ASSESSED | Immutable source receipt, identity, hashes and tests |
+| G2 Compression/index | NOT ASSESSED | Plain/gzip/BGZF, malformed streams, CSI/TBI evidence |
+| G3 VCF parser | NOT ASSESSED | Versioned structural/semantic validation matrix |
+| G4 Normative coverage | NOT ASSESSED | Atomic VCFv4.0–4.5 clause matrix and tests |
+| G5 Reference | NOT ASSESSED | GRCh37/38 package manifests and checksum/index coherence |
+| G6 Eligibility | NOT ASSESSED | SNV/INDEL and out-of-scope policy tests |
+| G7 Resource governance | PARTIAL / NOT ACCEPTED | Exact resource selection and lifecycle tests plus all release qualification evidence |
+| G8 Normalization | NOT ASSESSED | Scientific semantics, genotype/annotation preservation and determinism |
+| G9 Post-validation | NOT ASSESSED | Output validation, record accounting and concordance |
+| G10 Real-data qualification | IN PROGRESS / NOT ACCEPTED | Twelve passing release × assembly cells |
+| G11 Production runtime | NOT ASSESSED | Real execution and evidence inside production container |
+| G12 Reliability | PARTIAL / NOT ACCEPTED | Existing worker-loss test plus full crash/retry/replay/idempotency matrix |
+| G13 Security/tenancy | NOT ASSESSED | Input hardening, tenant/worker authorization and process safety |
+| G14 Frontend traceability | NOT ASSESSED | UI/backend state and provenance audit |
+| G15 Regression/CI | IN PROGRESS / NOT ACCEPTED | Full CI green on exact final PR head |
+| G16 Evidence/review | NOT ASSESSED | Complete evidence package and independent review |
+
+## 5. Exact next task — do not skip
+
+**Task E0/E1: re-establish repository truth and create the requirement-to-code-to-test-to-evidence gap matrix.**
+
+1. Poll run #3203 for all jobs, steps, logs and artifacts. Confirm it is attached to exact head 64009e882c7090d09fd9e89e6a270969cbda92bc.
+2. Re-fetch run #3202 and determine whether the real-data qualification and production-container stages completed. Retrieve artifact manifests and inspect actual qualification reports; do not infer from step names.
+3. Inspect PR #282 current changed files and commits. Read the actual implementation, architecture specifications, resource governance contracts, tests, workflow YAML, source acquisition scripts and evidence manifests.
+4. For every VCF-01–VCF-12 requirement and G0–G16 gate, record exact implementation paths, test paths, most recent execution evidence, status and gap.
+5. Separate existing implementation from tested behavior and tested behavior from retained evidence. These are three different claims.
+6. Identify the single highest-priority incomplete prerequisite. Do not start downstream implementation before its dependency is verified.
+7. Update this ledger with the new exact head, CI status, gap matrix and next task before beginning a large implementation change.
+
+**Acceptance for E0/E1:** another engineer can identify, from the matrix alone, which exact requirements are implemented, which have tests, which have real execution evidence, which are missing, and what must happen next. No gate may be marked PASS merely because a related test exists.
+
+## 6. Session handoff record
+
+### Latest session
+
+- Work: authored and committed the master execution contract on PR #282.
+- Commit: 64009e882c7090d09fd9e89e6a270969cbda92bc.
+- Verified file path: docs/implementation/VCF_INTAKE_NORMALIZATION_STAGE_EXECUTION_CONTRACT.md.
+- CI: new run #3203 pending at snapshot.
+- No implementation acceptance gate closed by this session.
+- Next action: E0/E1 as defined above.
+
+### Required format for future entries
+
+Append newest entries at the top. Do not erase older failures or evidence.
+
+#### Session entry template
+
+- Timestamp:
+- Agent/session:
+- PR/branch:
+- Exact starting head:
+- Exact ending head:
+- Gate/task:
+- Changes/files:
+- Commands actually run:
+- Tests actually run and results:
+- CI run/job IDs and conclusions:
+- Real inputs/resources and checksums:
+- Evidence artifacts/links:
+- Failure/root cause:
+- Remaining gaps:
+- Next task and acceptance criteria:
+
+## 7. Permanent handoff instruction
+
+Any agent continuing SIRALOOM VCF work must read the master contract and this ledger first, then revalidate live GitHub state. If an agent reaches a context or usage limit, it must update this ledger and leave the exact next task. Do not rely on chat memory, prior assistant summaries or verbal claims as the source of truth when repository evidence is available.
+
+
+## 8. Session entry — laboratory operations and performance expansion (2026-11-03)
+
+- User direction: expand the VCF intake/normalization requirements to cover global laboratory expectations, exact failure handling, troubleshooting, process speed and performance without limiting the platform to the currently implemented feature set.
+- Added mandatory companion specification: docs/implementation/VCF_INTAKE_NORMALIZATION_LAB_OPERATIONS_ERROR_PERFORMANCE_SPECIFICATION.md.
+- Companion specification commit: 44f2200000cc78c969fd2aa9226dd7163105c775.
+- Companion file was fetched back from GitHub; 34,720 characters returned. This verifies storage, not implementation.
+- Updated master execution contract to version 1.1 and added mandatory reference to the supplement plus acceptance gates G17–G23.
+- Master contract update commit: c3c0381034d728436a35d9963c1c351e948acec0.
+- Added requirements for producer/sample reconciliation; distinct file, variant-call and assay QC; versioned lab profiles; structured error codes and dispositions; bounded safe retries; phase-level performance metrics; workload-based benchmarks; resource limits; observability; operator runbooks; data lifecycle/security; backup/restore; change/incident management; and interoperability boundaries.
+- Research references added to the supplement include ISO 15189:2022, CLSI MM09, CDC/APHL NGS Quality Initiative, ACGS bioinformatics pipeline guidance, GATK ValidateVariants, GA4GH VRS, BCFtools performance guidance, HTSlib indexing documentation, VarSome input requirements and Illumina DRAGEN QC documentation.
+- Important technical distinction recorded: VCF left-normalization and GA4GH VRS fully-justified allele normalization are related but not interchangeable. VRS adoption must be a separately versioned representation layer.
+- Important QC boundary recorded: VCF-only processing cannot independently establish sequencing/assay metrics such as coverage, contamination or mapping quality; upstream QC evidence must be supplied and provenance-checked.
+- Performance policy: no arbitrary universal runtime target. Establish measured baselines on representative workload classes and the production container. Do not weaken scientific validation to improve speed.
+- Error policy: only transient infrastructure failures are retryable; malformed input, REF mismatch, unqualified resources and scientific discordance are not blindly retried.
+- Gates G17–G23 are added but remain NOT ASSESSED. No implementation gate is closed by this documentation work.
+- Current PR head at this entry: 0665187054353002657de1f75ab31d761d1b8635 (ledger update commit).
+- CI for this exact commit: no workflow run was returned by commit-run lookup at the time of this entry. Recheck GitHub Actions after ledger commit.
+- Next task remains E0/E1 repository truth audit and gap matrix. Include G17–G23 and map existing architecture before implementing them. Do not start speculative performance optimization before profiling.
+
+
+
+### CI recheck after documentation commits
+
+- Run #3205 / 41630866062 tested operations-spec commit 44f2200000cc78c969fd2aa9226dd7163105c775 and was cancelled when the next commit superseded it.
+- Run #3206 / 41630896819 tested contract commit c3c0381034d728436a35d9963c1c351e948acec0 and was cancelled when the ledger update superseded it.
+- Run #3204 / 41629885242 for commit 2ac7b090c8a1c0d4ea75b36dd99d36cf56d58054 was still in progress at the latest branch-run query; it does not validate the latest documentation commits.
+- Run #3202 / 41627304151 was cancelled; its backend qualification outcome was not established.
+- No completed CI result is claimed for the current documentation head. Recheck the branch's latest Actions run after this ledger commit.
+
+
+
+## VCF version-conformance implementation update (2026-11-04)
+
+- Re-audited the production validator, compatibility registry, versioned fixture corpus, normative section inventory and tests on PR #282.
+- Existing fixture counts: VCFv4.0=1 legacy smoke; VCFv4.1=16; VCFv4.2=15; VCFv4.3=20; VCFv4.4=19; VCFv4.5=38. The conformance runner explicitly reports VCFv4.1–4.5 as PARTIAL with no fully covered normative sections.
+- Added an immutable-source public VCF corpus for each declared version, with Git blob identity, local SHA-256, strict SIRALOOM validation, pinned BCFtools parser execution and record-routing reconciliation. v4.3/v4.4 inputs are official HTS examples; v4.5 is a public HPRC dataset; v4.0–v4.2 are upstream PyVCF examples. Provenance classes remain distinct; these are not six independent clinical validation datasets.
+- Tightened line-ending validation so universal-newline translation cannot silently convert bare-CR input into valid LF input. LF and CRLF are accepted; bare CR and embedded CR are rejected with a stable error code.
+- These changes do not close the normative clause inventory. Every version remains PARTIAL pending reviewed atomic clause-to-code-to-positive/negative-test traceability and execution evidence.
+- CI concurrency now queues the next verification instead of cancelling an active long-running qualification. Run #3212 predates these changes and is not evidence for them.
+
+
+## VCF version-conformance implementation and CI queue status (2026-11-04)
+
+Latest implementation commit at this ledger update: 48ebe5ee0f9762ffec5eac2c3b797604d875d615.
+
+Changes committed on the existing PR branch after the 7a288709 baseline:
+- Immutable public version corpus and runner for VCFv4.0–4.5; each source pinned by immutable upstream Git commit/blob identity and local SHA-256; strict SIRALOOM validation, BCFtools parser execution and source-record routing reconciliation.
+- Explicit expected routing categories for the 4.4 structural-variant example and 4.5 HPRC repeat-expansion dataset.
+- LF/CRLF acceptance and bare-CR/embedded-CR rejection.
+- Structured metadata grammar, required IDs, FILTER/ALT Description, Source/Version quoting, escape handling, version-specific PEDIGREE behavior and version-specific INFO/FORMAT tag-name rules.
+- FILTER/ALT ID constraints and VCFv4.3+ record-ID restrictions.
+- Simple indel padding checks, VCFv4.3+ QUAL lexical grammar and POS token grammar.
+- Preserved the specification-reserved signed Integer lower range (-2^31 through -2^31+7 are disallowed); tests use the correct lower bound -2147483640.
+- Compatibility registry now reports PARTIAL_FEATURE_QUALIFICATION / VERSION_AWARE_PARTIAL for v4.1–4.5 rather than simply SUPPORTED.
+
+Verification status:
+- Run #3212 / 41795132311 remains IN_PROGRESS on its original baseline SHA 7a28870969f76e811f39a61b808a433ff1958217. Its backend job is still executing the six-release real GIAB qualification step. It does not include the commits listed above.
+- The latest code verification run #41799280169 is PENDING on SHA 48ebe5ee0f9762ffec5eac2c3b797604d875d615.
+- Intermediate queued runs on earlier implementation commits were cancelled by the concurrency group and are not evidence.
+- All changes listed above are therefore IMPLEMENTED IN REPOSITORY but NOT YET CI-VERIFIED. Do not mark their tests passed until the latest SHA's run completes and reports artifacts are inspected.
+- VCFv4.0–4.5 normative conformance remains PARTIAL. The current traceability matrix is a reviewed engineering baseline, not yet a complete atomic clause-by-clause inventory.
+
+
+## Follow-on normative parser audit (2026-11-04)
+
+Latest code commit in this audit sequence: ccf561e721d2b6fafcd239cbdef4343a30b8ba4d.
+
+Additional version-specific behavior implemented after the earlier ledger entry:
+- VCFv4.1/v4.2 PEDIGREE uses its legacy relationship attributes without the later generic ID requirement; VCFv4.3–4.5 require structured-line IDs, including PEDIGREE.
+- Generic custom structured metadata ID requirements are applied from VCFv4.3 onward; known structured headers retain their version-specific parsing in VCFv4.1/v4.2.
+- INFO/FORMAT tag-name regex requirements are applied to VCFv4.3–4.5; VCFv4.1/v4.2 retain their earlier token grammar.
+- VCFv4.3+ record IDs reject whitespace, commas and angle brackets.
+- FILTER and ALT structured IDs receive their respective identifier restrictions.
+- The eight lowest signed 32-bit Integer values remain rejected as required by the VCF/BCF representation; the accepted lower boundary is -2147483640.
+- VCFv4.3+ QUAL tokens are checked against the specification Float grammar; POS is checked as an unsigned decimal token.
+- Simple insertion/deletion representations are checked for the required left-padding base, or right-padding at POS=0/1.
+- The compatibility registry exposes PARTIAL_FEATURE_QUALIFICATION / VERSION_AWARE_PARTIAL for VCFv4.1–4.5; version recognition is not presented as full normative conformance.
+
+Evidence state:
+- These changes are committed but have not yet been executed by CI.
+- Baseline run #3212 / 41795132311 remains IN_PROGRESS at the six-release real GIAB qualification step.
+- Latest code verification run #41799590317 is PENDING at ccf561e721d2b6fafcd239cbdef4343a30b8ba4d.
+- No test result from either run is attributed to the new code until the exact SHA is executed and artifacts are inspected.
+- Full atomic clause review and implementation/test traceability remain BLOCKED / INCOMPLETE. The section-level matrix and extracted candidate inventory are not a substitute for this review.
+
+
+## SAMPLE metadata conformance follow-on (2026-11-04)
+
+Latest code commit: 7aac749d2ea660a66ec1e0d4f8337d4c80841c13.
+
+- Corrected the generic structured-header parser so it does not impose a universal quoted-Description rule on SAMPLE or custom metadata. Quoted Description remains required for INFO/FORMAT/FILTER/ALT where specified; VCFv4.2 SAMPLE Description may be a semicolon-delimited list.
+- Added SAMPLE metadata ID reconciliation against #CHROM sample columns. SAMPLE metadata is optional, but if supplied its IDs must refer to declared sample columns; SAMPLE metadata without sample columns is rejected.
+- Added versioned regression coverage for matching and mismatching SAMPLE IDs and VCFv4.2 unquoted Description-list behavior.
+
+Verification:
+- Run #3212 / 41795132311 remains IN_PROGRESS on the old baseline SHA and is still at the six-release real GIAB qualification step.
+- Latest code run #41800428480 is PENDING on 7aac749d2ea660a66ec1e0d4f8337d4c80841c13.
+- New SAMPLE and header grammar tests have not yet run in CI.
+- Full sample-genome mixture cardinality, META value-domain, and PEDIGREE relationship graph validation remain PARTIAL / NOT ASSESSED.
+
+
+## VCFv4.5 reserved FORMAT definition audit (2026-11-04)
+
+Official source reviewed: samtools/hts-specs VCFv4.5 at commit
+510c107ba89aa13113818c9e4fa3071283cb7f7b, including the reserved FORMAT
+definitions for copy-number and derivative-haplotype data.
+
+Gap found and corrected in the native validator:
+- The implicit VCFv4.5 FORMAT registry omitted CN, CICN, CNQ, CNL,
+  CNP, NQ, HAP, and AHAP.
+- Added their specification-defined Number/Type pairs so omitted redundant
+  header declarations do not bypass type/cardinality validation.
+- Added the CNP [0,1] value-domain constraint.
+- Added regression coverage for every implicit field, out-of-range CNP values,
+  and attempts to override the built-in CNP definition.
+
+These records remain outside the trial SNV/small-INDEL clinical sign-out
+scope and must be routed to specialized review. This change validates their
+VCF representation; it does not qualify CNV or derivative-haplotype analysis.
+
+Verification:
+- Implementation and tests are committed to the feature branch.
+- CI execution for the exact resulting commit is required before verification
+  status can be upgraded.
+- VCFv4.5 normative conformance remains PARTIAL; this closes only the named
+  reserved-FORMAT definition gap.
+
+## CI failure analysis and correction state (2026-11-04)
+
+Observed run: GitHub Actions run 41803072861, tested commit
+`da2a133cf38d1f4601bd72b9f85bbe8862193e12`.
+
+Exact outcomes:
+- Backend: 2,452 passed, 46 skipped, 8 failed.
+- PostgreSQL/Celery integration: passed.
+- Frontend behavior, localization guard, production build and frontend container: passed.
+- Production backend image build, non-root execution, volume ownership and pinned BCFtools/HTSlib identity: passed.
+- Production-container GRCh37/GRCh38 normalization did not execute because a shell comment was embedded inside a backslash-continued `docker run` argument list. The shell treated the remaining command as a comment and Docker received no image argument.
+- The six-version public VCF corpus and six-release BCFtools qualification were skipped because the backend test step failed under the workflow's fail-fast step ordering. The existence of uploaded input artifacts is not a qualification result.
+
+Backend failure diagnosis:
+- Seven malformed-header tests used literal escaped newline/tab sequences in their fixture strings, so each generated a one-line file whose declared fileformat token included the subsequent literal text. The observed `VCF_FILEFORMAT_UNSUPPORTED` was therefore a fixture-construction defect, not evidence that VCFv4.5 was absent from the supported-version registry.
+- The multiallelic base-modification normalization fixture used a POS=1 insertion representation rejected by the then-current padding check. The current branch has changed the POS=1 rule and the fixture boundary cases; this must be demonstrated by a fresh CI execution, not assumed from the source diff.
+
+Correction state observed on the current feature branch after the failed run:
+- The malformed-header test fixture strings now contain actual LF and tab delimiters.
+- The POS=1 simple-indel handling differs from the failed run's implementation.
+- The production-container `docker run` command no longer has the intervening shell comment.
+- These source corrections are **not CI-verified** until a run on the exact current branch commit completes and its logs/artifacts are inspected.
+
+Qualification remains blocked:
+- The atomic normative clause inventory is still incomplete. The 510 extracted lines are candidates, not reviewed clauses; the section matrix remains partial.
+- The current public interoperability corpus has one independently pinned example per declared version. This is a useful smoke/interoperability layer, not broad producer/version coverage.
+- The GRCh37/GRCh38 full-container real-data qualification must run after backend tests pass.
+- No version-level normative conformance or laboratory-ready declaration is authorized by this run.
+
+
+## Real public-corpus differential run and lab disposition corrections (2026-11-04)
+
+Run `41807511542` (run number 3253) executed commit
+`b5f0cc4a629098f1f1ee77e304e17d2d5bb9a9fb`.
+
+Verified CI outcomes:
+- Backend regression suite: **2,474 passed, 46 skipped**, 2 warnings.
+- PostgreSQL and real Celery worker-loss integration: passed.
+- Frontend behavior, localization guard, production build and production frontend container: passed.
+- Public VCF version corpus: failed 3 of 6 original positive sources; the report artifact was downloaded and inspected. The three failures were not equivalent:
+  1. PyVCF VCFv4.2 was malformed (invalid INFO Flag declaration and spaces rather than tabs in #CHROM); strict validation and BCFtools both rejected it. It has been moved from positive compatibility evidence into a pinned negative corpus with an expected rejection code and parser diagnostic.
+  2. The official VCFv4.4 SV example used valid breakend ALT records without INFO/SVTYPE. VCFv4.1 states SVTYPE is derivable from REF/ALT and useful for filtering; VCFv4.5 deprecates SVTYPE as redundant. The validator now accepts absent SVTYPE and rejects a contradictory supplied value. Tests cover VCFv4.1–4.5.
+  3. The real HPRC VCFv4.5 KIV-2 record repeats the symbolic ALT token for distinct per-allele indexes and carries matching Number=A annotations. The VCFv4.5 fixed-field definition does not prohibit repeated ALT strings. The unsupported duplicate-ALT prohibition has been removed; regression tests preserve repeated ALT indexes and cardinality validation remains active.
+
+Current public corpus definition:
+- 14 positive, source-pinned inputs across VCFv4.0–4.5.
+- Minimum 4 sources and 3 distinct producers for each of VCFv4.1 and VCFv4.2; other versions have their own pinned positive sources.
+- One separate malformed real-world negative source for expected rejection by SIRALOOM and BCFtools.
+- The runner records positive source coverage, producer diversity, routing reconciliation and negative-source rejection independently. This is not clinical validation.
+
+Real-reference checks:
+- The prior run `41803072861` preserved the full chromosome-1 GRCh38 and GRCh37 reference inputs, CSI indexes and HG002 VCF slices. An independent local REF-to-FASTA scan verified 319,349/319,349 GRCh38 and 315,020/315,020 GRCh37 records with zero REF mismatches and zero out-of-reference coordinates. This is a reference-consistency check only, not normalization/index-query qualification.
+
+Production-container qualification in run `41807511542`:
+- Production image build, non-root execution, writable named-volume ownership, pinned BCFtools/HTSlib identity and runtime preflight passed.
+- The real GRCh37/GRCh38 GIAB normalization step was still running at the time of this ledger entry; its report and outputs are required before claiming success.
+
+Additional operational correction:
+- Invalid uploaded VCF/index artifacts now record `validation_outcome=REJECT` and `disposition=QUARANTINED`, retain original bytes and diagnostics, and are marked ineligible for downstream analysis.
+- Specification-governance blocks remain distinct from malformed-input quarantine.
+- Transient storage I/O is classified by errno. Transient I/O is retryable; permission, missing-path, and capacity conditions are non-retryable until operator remediation. The API returns the actual error code/retryable flag rather than hardcoding all validator failures as retryable.
+- New upload tests verify durable logical quarantine, source retention/download, case ineligibility, audit evidence, and classified storage retry behavior.
+
+All source and test changes recorded after run 3253 remain **CI-unverified** until the current branch's new workflow run completes. VCF version-level conformance and laboratory-ready status remain blocked.

@@ -314,3 +314,296 @@ def test_vep_qualification_requires_staged_resource_artifact(tmp_path):
     assert result.passed is False
     assert "VEP_RESOURCE_ARTIFACT_NOT_STAGED" in result.blockers
     assert result.checks["vep_runtime"]["status"] == "NOT_RUN"
+
+
+def _normalization_resource(tmp_path: Path, *, provider: str = "bcftools", version: str = "1.25"):
+    artifact = tmp_path / f"{provider}-{version}.tar.gz"
+    artifact.write_bytes(b"verified staged normalization release fixture")
+    executable = tmp_path / "bin" / provider
+    executable.parent.mkdir(parents=True, exist_ok=True)
+    executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    executable.chmod(0o755)
+    digest = sha256(artifact.read_bytes()).hexdigest()
+    return Resource(
+        id=uuid4(),
+        name=f"{provider} {version}",
+        provider=provider,
+        resource_type="NORMALIZATION",
+        version=version,
+        genome_build=None,
+        access_method="HTTPS",
+        license_text=None,
+        checksum=digest,
+        location=str(artifact),
+        population_definition=None,
+        organization_id=None,
+        metadata_json={
+            "source_contract": {
+                "publisher": "Samtools" if provider == "bcftools" else "Broad Institute",
+                "canonical_source_url": "https://github.com/samtools/bcftools" if provider == "bcftools" else "https://github.com/broadinstitute/gatk",
+                "artifact_url": f"https://example.org/{provider}/{version}.tar.gz",
+                "release_identity": version,
+                "access_mode": "PUBLIC",
+                "license_status": "NOT_REQUIRED",
+                "checksum_status": "PUBLISHED_AND_VERIFIED",
+                "authority_evidence_url": "https://samtools.github.io/bcftools/" if provider == "bcftools" else "https://gatk.broadinstitute.org/",
+            },
+            "execution": {
+                "provider_id": provider,
+                "provider_version": version,
+                "access_method": "HTTPS",
+                "endpoint": f"https://example.org/{provider}/{version}.tar.gz",
+                "toolchain": {
+                    "bcftools": {"executable": str(executable)}
+                } if provider == "bcftools" else {
+                    "gatk": {"executable": str(executable)}
+                },
+            },
+        },
+    )
+
+
+def test_bcftools_qualification_checks_exact_version_and_normalization_contract(monkeypatch, tmp_path):
+    resource = _normalization_resource(tmp_path)
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\nUsing htslib 1.25", stderr="")
+        output_path = Path(command[command.index("-o") + 1])
+        input_path = Path(command[-1])
+        if input_path.name == "source.vcf":
+            output_path.write_text(
+                "##fileformat=VCFv4.2\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t1\t.\tCA\tC\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tT\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tG\t.\tPASS\t.\n",
+                encoding="ascii",
+            )
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr="REF mismatch")
+
+    monkeypatch.setattr("backend.app.domain.resource_qualification.subprocess.run", fake_run)
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is True
+    assert result.checks["normalization_runtime"]["status"] == "QUALIFIED"
+    assert result.checks["normalization_runtime"]["observed_version"] == "1.25"
+    assert result.checks["normalization_runtime"]["left_alignment"] == "PASS"
+    assert result.checks["normalization_runtime"]["multiallelic_decomposition"] == "PASS"
+    assert result.checks["normalization_runtime"]["ref_mismatch_rejection"] == "PASS"
+    assert result.checks["normalization_runtime"]["executable_integrity_status"] == "MEASURED_AND_PINNED_AT_QUALIFICATION"
+    qualified_toolchain = result.checks["execution_contract"]["toolchain"]["bcftools"]
+    assert qualified_toolchain["executable"] == str(
+        Path(resource.metadata_json["execution"]["toolchain"]["bcftools"]["executable"]).resolve()
+    )
+    assert qualified_toolchain["sha256"] == result.checks["normalization_runtime"]["executable_sha256"]
+    assert len(qualified_toolchain["sha256"]) == 64
+    assert len(calls) == 4
+    assert calls[2][1:8] == ["norm", "-f", calls[2][3], "-c", "e", "-m", "-any"]
+
+
+def test_bcftools_qualification_blocks_executable_mutation_during_known_answer_run(
+    monkeypatch, tmp_path
+):
+    resource = _normalization_resource(tmp_path)
+    executable = Path(resource.metadata_json["execution"]["toolchain"]["bcftools"]["executable"])
+    calls = 0
+
+    def fake_run(command, **kwargs):
+        nonlocal calls
+        calls += 1
+        if command[-1] == "--version":
+            return SimpleNamespace(returncode=0, stdout="bcftools 1.25\nUsing htslib 1.25", stderr="")
+        if calls == 3:
+            executable.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+        output_path = Path(command[command.index("-o") + 1])
+        input_path = Path(command[-1])
+        if input_path.name == "source.vcf":
+            output_path.write_text(
+                "##fileformat=VCFv4.2\n"
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                "chr1\t1\t.\tCA\tC\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tT\t.\tPASS\t.\n"
+                "chr1\t7\t.\tC\tG\t.\tPASS\t.\n",
+                encoding="ascii",
+            )
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr="REF mismatch")
+
+    monkeypatch.setattr("backend.app.domain.resource_qualification.subprocess.run", fake_run)
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "BCFTOOLS_NORMALIZATION_CONFORMANCE_FAILED" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+
+
+def test_bcftools_qualification_blocks_releases_before_read_integrity_fix(monkeypatch, tmp_path):
+    resource = _normalization_resource(tmp_path, version="1.23.0")
+    calls = []
+    monkeypatch.setattr(
+        "backend.app.domain.resource_qualification.subprocess.run",
+        lambda command, **_kwargs: (
+            calls.append(command)
+            or SimpleNamespace(returncode=0, stdout="bcftools 1.23.0\nUsing htslib 1.23.0", stderr="")
+        ),
+    )
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "BCFTOOLS_VERSION_BELOW_SAFE_BASELINE" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+    assert result.checks["normalization_runtime"]["minimum_qualified_version"] == "1.23.1"
+    assert len(calls) == 1  # No normalization command runs on a known unsafe release.
+
+
+def test_bcftools_qualification_blocks_exact_version_mismatch(monkeypatch, tmp_path):
+    resource = _normalization_resource(tmp_path)
+    monkeypatch.setattr(
+        "backend.app.domain.resource_qualification.subprocess.run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout="bcftools 1.26\nUsing htslib 1.26", stderr=""
+        ),
+    )
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "BCFTOOLS_VERSION_MISMATCH" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+
+
+def test_gatk_is_not_qualified_through_the_bcftools_adapter(tmp_path):
+    resource = _normalization_resource(tmp_path, provider="GATK", version="4.6.0.0")
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "NORMALIZATION_PROVIDER_ADAPTER_NOT_IMPLEMENTED" in result.blockers
+    assert result.checks["normalization_runtime"]["status"] == "BLOCKED"
+
+def _vcf_specification_resource(
+    tmp_path: Path,
+    *,
+    version: str = "VCFv4.6",
+    include_conformance: bool = True,
+):
+    document = tmp_path / f"{version}.pdf"
+    document.write_bytes(b"%PDF-1.7\nSynthetic official-specification PDF fixture\n%%EOF\n")
+    document_sha256 = sha256(document.read_bytes()).hexdigest()
+    metadata = {
+        "source_contract": {
+            "publisher": "Samtools HTS Specifications maintainers",
+            "canonical_source_url": "https://github.com/samtools/hts-specs",
+            "artifact_url": f"https://samtools.github.io/hts-specs/{version}.pdf",
+            "release_identity": version,
+            "access_mode": "PUBLIC",
+            "license_status": "NOT_REQUIRED",
+            "checksum_status": "PUBLISHED_AND_VERIFIED",
+            "authority_evidence_url": "https://samtools.github.io/hts-specs/",
+        },
+        "execution": {
+            "provider_id": "HTS-Specifications",
+            "provider_version": version,
+            "access_method": "HTTPS",
+            "endpoint": f"https://samtools.github.io/hts-specs/{version}.pdf",
+        },
+        "specification_version": version,
+        "official_document_url": f"https://samtools.github.io/hts-specs/{version}.pdf",
+    }
+    if include_conformance:
+        # Deliberately spoofed claims: qualification must ignore these values
+        # and execute SIRALOOM's packaged parser conformance corpus itself.
+        metadata["specification_conformance"] = {
+            "profile_id": f"siraloom-{version}-profile-1",
+            "suite_version": "1",
+            "execution_status": "PASSED",
+            "normative_clause_ids": [f"{version}-4.2", f"{version}-5.1"],
+            "unsupported_constructs": [],
+            "unsupported_policy": "FAIL_CLOSED",
+            "test_case_count": 999999,
+            "failed_test_count": 0,
+            "report_path": "/tmp/fabricated-report.json",
+            "report_sha256": "0" * 64,
+        }
+    resource = Resource(
+        id=uuid4(),
+        name=f"VCF specification {version}",
+        provider="HTS-Specifications",
+        resource_type="VCF_SPECIFICATION",
+        version=version,
+        genome_build=None,
+        access_method="HTTPS",
+        license_text=None,
+        checksum=document_sha256,
+        location=str(document.resolve()),
+        population_definition=None,
+        organization_id=None,
+        metadata_json=metadata,
+    )
+    return resource
+
+
+def test_new_vcf_specification_cannot_qualify_from_metadata_claims_without_executable_suite(tmp_path):
+    resource = _vcf_specification_resource(tmp_path, version="VCFv4.6")
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    assert result.passed is False
+    assert "VCF_SPECIFICATION_CONFORMANCE_EXECUTION_FAILED" in result.blockers
+    assert result.checks["vcf_specification"]["status"] == "BLOCKED"
+    assert result.checks["vcf_specification"]["test_case_count"] == 0
+
+
+def test_vcf_specification_fixture_pass_does_not_claim_complete_normative_qualification(tmp_path):
+    resource = _vcf_specification_resource(tmp_path, version="VCFv4.5")
+
+    result = qualify_resource(resource, staging=_staging(resource))
+
+    # The parser fixture suite executes successfully, but the corpus does not
+    # yet establish exhaustive coverage of the official normative document.
+    # Caller-supplied normative clause IDs must not promote partial evidence.
+    assert result.passed is False
+    assert "VCF_SPECIFICATION_CONFORMANCE_SCOPE_INCOMPLETE" in result.blockers
+    evidence = result.checks["vcf_specification"]
+    assert evidence["status"] == "BLOCKED"
+    assert evidence["document_pdf_integrity"] == "PASS"
+    assert evidence["test_case_count"] > 0
+    assert evidence["failed_test_count"] == 0
+    assert evidence["execution_report"]["execution_status"] == "PASSED"
+    assert evidence["execution_report"]["target_version"] == "VCFv4.5"
+    assert evidence["execution_report"]["normative_coverage_status"] == "PARTIAL"
+    assert evidence["execution_report"]["normative_coverage_sections"] == []
+    assert evidence["execution_report"]["normative_uncovered_sections"]
+    assert "Complete normative clause inventory with stable clause identifiers for this VCF release" in evidence["execution_report"]["normative_uncovered_sections"]
+    assert evidence["execution_report_sha256"] == evidence["execution_report"]["report_sha256"]
+    assert len(evidence["execution_report"]["corpus_sha256"]) == 64
+    assert len(evidence["execution_report"]["parser_source_sha256"]) == 64
+    assert len(evidence["execution_report"]["runner_source_sha256"]) == 64
+    assert all(evidence["execution_integrity"].values())
+    assert evidence["execution_report"]["test_case_count"] != 999999
+
+
+def test_vcf_conformance_report_integrity_detects_modified_execution_results():
+    from copy import deepcopy
+
+    from backend.app.domain.resource_qualification import (
+        _verify_vcf_conformance_execution_report,
+    )
+    from backend.app.domain.vcf_conformance import execute_vcf_conformance_suite
+
+    report = execute_vcf_conformance_suite("VCFv4.5")
+    assert all(_verify_vcf_conformance_execution_report(report).values())
+
+    modified = deepcopy(report)
+    modified["results"][0]["observed"] = "FORGED_PASS"
+    integrity = _verify_vcf_conformance_execution_report(modified)
+    assert integrity["report_digest_verified"] is False
+    assert integrity["corpus_digest_verified"] is True
+    assert integrity["parser_source_digest_verified"] is True
+    assert integrity["runner_source_digest_verified"] is True

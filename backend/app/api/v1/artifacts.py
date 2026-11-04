@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
 
 from backend.app.application.entitlements import effective_max_upload_bytes
 from backend.app.auth.authorization import (
@@ -126,11 +127,121 @@ def _validate_vcf_for_upload(path: Path) -> ValidationResult:
         raise HTTPException(
             status_code=503,
             detail={
-                "code": "VCF_VALIDATION_UNAVAILABLE",
+                "code": exc.code,
                 "message": str(exc),
-                "retryable": True,
+                "retryable": exc.retryable,
             },
         ) from exc
+
+
+def _apply_vcf_specification_governance(
+    db: Session,
+    *,
+    organization_id: UUID,
+    result: ValidationResult,
+) -> ValidationResult:
+    """Apply the lab's exact-version approval gate to every non-built-in VCF.
+
+    A future format version is not a malformed VCF merely because this parser
+    build cannot yet interpret it. It is retained as a blocked intake artifact
+    with a specific governance/parser reason and cannot enter analysis.
+    """
+    version = str(result.fileformat or "").strip()
+    if not version:
+        return result
+
+    from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+    if version in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+        return result
+
+    from backend.app.domain.resources import (
+        ResourceRegistryError,
+        require_approved_vcf_specification,
+    )
+
+    try:
+        approval_snapshot = require_approved_vcf_specification(
+            db,
+            organization_id=organization_id,
+            version=version,
+        )
+    except ResourceRegistryError as exc:
+        code = getattr(exc, "code", "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED")
+        next_step = getattr(exc, "next_step", "LAB_APPROVAL_REQUIRED")
+        metadata = {
+            **(result.metadata or {}),
+            "vcf_specification_governance": {
+                "status": code,
+                "version": version,
+                "reason": str(exc),
+                "next_step": next_step,
+            },
+        }
+        return ValidationResult(
+            "BLOCKED",
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            [*result.errors, str(exc)],
+            result.warnings,
+            version,
+            metadata,
+            code,
+        )
+
+    if result.error_code == "VCF_FILEFORMAT_UNSUPPORTED":
+        code = "VCF_SPECIFICATION_PARSER_NOT_IMPLEMENTED"
+        message = (
+            f"The laboratory approved {version}, but this SIRALOOM parser build "
+            "does not implement that VCF specification."
+        )
+        metadata = {
+            **(result.metadata or {}),
+            "vcf_specification_approval": approval_snapshot,
+            "vcf_specification_governance": {
+                "status": code,
+                "version": version,
+                "reason": message,
+                "next_step": "PARSER_IMPLEMENTATION_AND_CONFORMANCE_REQUIRED",
+            },
+        }
+        return ValidationResult(
+            "BLOCKED",
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            [*result.errors, message],
+            result.warnings,
+            version,
+            metadata,
+            code,
+        )
+
+    if result.status == "VALID":
+        metadata = {
+            **(result.metadata or {}),
+            "vcf_specification_approval": approval_snapshot,
+            "vcf_specification_governance": {
+                "status": "APPROVED",
+                "version": version,
+                "next_step": "CONTINUE_VALIDATED_INTAKE",
+            },
+        }
+        return ValidationResult(
+            result.status,
+            result.file_kind,
+            result.record_count,
+            result.sample_names,
+            result.detected_build,
+            result.errors,
+            result.warnings,
+            version,
+            metadata,
+            result.error_code,
+        )
+    return result
 
 
 def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, str]:
@@ -167,6 +278,7 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
             )
             for status, metadata in vcf_rows
         ),
+        has_blocked_vcf=any(status == "BLOCKED" for status, _metadata in vcf_rows),
     )
     return case, before_status
 
@@ -329,7 +441,9 @@ async def upload_artifact(
 
         artifact_validation_status = None
         if kind == "VCF":
-            result = _validate_vcf_for_upload(staged)
+            # Strict parsing and BCFtools validation can be CPU/I/O intensive.
+            # Never execute them directly on the ASGI event-loop thread.
+            result = await run_in_threadpool(_validate_vcf_for_upload, staged)
             if result.sample_names and specimen is None:
                 result = ValidationResult(
                     "INVALID", result.file_kind, result.record_count, result.sample_names,
@@ -343,6 +457,11 @@ async def upload_artifact(
                     result,
                     (specimen.metadata_json or {}).get("vcf_sample_name"),
                 )
+            result = _apply_vcf_specification_governance(
+                db,
+                organization_id=case.organization_id,
+                result=result,
+            )
             if result.detected_build and result.detected_build != requested_build:
                 result = type(result)(
                     "INVALID",
@@ -380,6 +499,9 @@ async def upload_artifact(
             elif result.status == "VALID":
                 validation_metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
                 artifact_validation_status = "VALID"
+            elif result.status == "BLOCKED":
+                validation_metadata["workflow_eligibility"] = "SPECIFICATION_GOVERNANCE_BLOCKED"
+                artifact_validation_status = "BLOCKED"
             else:
                 validation_metadata["workflow_eligibility"] = "INELIGIBLE"
                 artifact_validation_status = result.status
@@ -428,9 +550,9 @@ async def upload_artifact(
                 raise HTTPException(
                     status_code=503,
                     detail={
-                        "code": "VCF_VALIDATION_UNAVAILABLE",
+                        "code": exc.code,
                         "message": str(exc),
-                        "retryable": True,
+                        "retryable": exc.retryable,
                     },
                 ) from exc
             artifact_type = ArtifactType.VCF_INDEX_TBI if kind == "TBI" else ArtifactType.VCF_INDEX_CSI
@@ -444,6 +566,46 @@ async def upload_artifact(
                 "ingestion": {"file_kind": kind, "paired_primary_artifact_id": str(primary.id), "capacity_preflight": capacity_preflight},
             }
             build_for_artifact = primary.genome_build
+
+        # Invalid source bytes remain immutable and inspectable, but are
+        # explicitly quarantined from every downstream analysis path. A
+        # transient validator/tool outage is handled earlier as retryable 503
+        # and never reaches this durable rejection disposition.
+        ingestion_metadata = validation_metadata.setdefault("ingestion", {})
+        if result.status == "INVALID":
+            ingestion_metadata["validation_outcome"] = "REJECT"
+            ingestion_metadata["disposition"] = "QUARANTINED"
+            ingestion_metadata["quarantine"] = {
+                "status": "ACTIVE",
+                "reason_code": result.error_code or (
+                    "VCF_INDEX_VALIDATION_FAILED" if kind in {"TBI", "CSI"}
+                    else "VCF_VALIDATION_FAILED"
+                ),
+                "reason": "; ".join(result.errors) if result.errors else "Validation failed.",
+                "retryable": False,
+                "downstream_processing": "PROHIBITED",
+                "next_action": "RESOLVE_VALIDATION_ERRORS_AND_REUPLOAD_OR_CORRECT_MAPPING",
+            }
+        elif result.status == "BLOCKED":
+            ingestion_metadata["validation_outcome"] = "BLOCK"
+            ingestion_metadata["disposition"] = "GOVERNANCE_BLOCKED"
+            ingestion_metadata["governance_block"] = {
+                "status": "ACTIVE",
+                "reason_code": result.error_code or "VCF_GOVERNANCE_BLOCKED",
+                "retryable": False,
+                "downstream_processing": "PROHIBITED",
+                "next_action": (
+                    (validation_metadata.get("validation") or {})
+                    .get("vcf_specification_governance", {})
+                    .get("next_step", "LAB_APPROVAL_OR_PARSER_QUALIFICATION_REQUIRED")
+                ),
+            }
+        elif validation_metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY":
+            ingestion_metadata["validation_outcome"] = "ACCEPT"
+            ingestion_metadata["disposition"] = "ACCEPTED_SITE_ONLY"
+        else:
+            ingestion_metadata["validation_outcome"] = "ACCEPT"
+            ingestion_metadata["disposition"] = "ACCEPTED"
 
         upload_intent = None
         request_fingerprint = None
@@ -610,16 +772,27 @@ async def upload_artifact(
                         )
                         for status, metadata in vcf_rows
                     ),
+                    has_blocked_vcf=any(status == "BLOCKED" for status, _metadata in vcf_rows),
                 )
 
             audit = AuditService(db)
             audit.record(
-                event_type="ARTIFACT_VALIDATION_COMPLETED" if result.status == "VALID" else "ARTIFACT_VALIDATION_FAILED",
+                event_type=(
+                    "ARTIFACT_VALIDATION_COMPLETED"
+                    if result.status == "VALID"
+                    else "ARTIFACT_VALIDATION_BLOCKED"
+                    if result.status == "BLOCKED"
+                    else "ARTIFACT_VALIDATION_FAILED"
+                ),
                 case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
                 subject_type="ARTIFACT", subject_id=str(artifact.id), operation="VALIDATE",
                 before_state={"case_status": before_status},
                 after_state={"case_status": case.status, "validation_status": result.status},
-                reason="Variant artifact ingestion validation",
+                reason=(
+                    "VCF specification governance blocked intake"
+                    if result.status == "BLOCKED"
+                    else "Variant artifact ingestion validation"
+                ),
                 output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
                 payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
             )

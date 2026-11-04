@@ -4,9 +4,12 @@ import zlib
 
 import pytest
 
+from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
+from backend.app.domain.vcf_spec_registry import get_vcf_specification_profile
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
     _validate_record,
+    read_vcf_fileformat,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
@@ -54,6 +57,25 @@ def write_vcf_with_metadata(
         + body,
         encoding="utf-8",
     )
+
+
+def test_read_vcf_fileformat_identifies_future_version_before_parser_validation(tmp_path: Path):
+    path = tmp_path / "future.vcf"
+    write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version="VCFv4.6")
+
+    assert read_vcf_fileformat(path) == "VCFv4.6"
+
+
+def test_read_vcf_fileformat_supports_bgzf_gzip_streams(tmp_path: Path):
+    path = tmp_path / "future.vcf.gz"
+    content = (
+        b"##fileformat=VCFv4.6\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t.\n"
+    )
+    path.write_bytes(_bgzf_block(content) + _bgzf_block(b""))
+
+    assert read_vcf_fileformat(path) == "VCFv4.6"
 
 
 def test_strict_validation_accepts_standard_vcf(tmp_path: Path):
@@ -794,7 +816,7 @@ def test_strict_validation_rejects_malformed_structural_representation(tmp_path,
 @pytest.mark.parametrize(
     ("records", "code"),
     [
-        ("1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n", "VCF_BREAKEND_SVTYPE_INVALID"),
+        ("1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=DEL;MATEID=bnd2\n", "VCF_BREAKEND_SVTYPE_INVALID"),
         (
             "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=missing\n",
             "VCF_BREAKEND_MATE_MISSING",
@@ -969,7 +991,7 @@ def test_reference_validation_rejects_vcf_contig_length_disagreement(tmp_path):
 
 
 @pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
-def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, version: str):
+def test_strict_validation_accepts_recognized_vcf_4x_versions(tmp_path: Path, version: str):
     path = tmp_path / f"{version}.vcf"
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
 
@@ -977,6 +999,15 @@ def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, ver
 
     assert profile["fileformat"] == version
     assert profile["records"] == 1
+    assert profile["format_compatibility"]["support_status"] == "PARTIAL_FEATURE_QUALIFICATION"
+    assert profile["format_compatibility"]["validation_mode"] == "VERSION_AWARE_PARTIAL"
+    assert profile["format_compatibility"]["specification_repository"] == (
+        "https://github.com/samtools/hts-specs"
+    )
+    if version == "VCFv4.5":
+        assert profile["format_compatibility"]["specification_document"] == (
+            "https://samtools.github.io/hts-specs/VCFv4.5.pdf"
+        )
 
 
 def test_vcf45_local_allele_cardinality_is_validated(tmp_path: Path):
@@ -1066,20 +1097,52 @@ def test_vcf43_rejects_vcf44_leading_gt_phase_separator(tmp_path: Path):
 
 
 
-def test_strict_validation_accepts_pedigree_metadata_without_id(tmp_path: Path):
-    path = tmp_path / "pedigree-header.vcf"
+
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2"])
+def test_vcf41_vcf42_pedigree_uses_legacy_relationship_attributes_without_id(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"pedigree-legacy-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
         "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
+    assert validate_vcf_strict(path)["records"] == 1
 
-    profile = validate_vcf_strict(path)
 
-    assert profile["records"] == 1
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_pedigree_structured_metadata_requires_id(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"pedigree-no-id-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
 
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_pedigree_structured_metadata_accepts_unique_id(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"pedigree-with-id-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        "##PEDIGREE=<ID=PROBAND,Original=MOTHER>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
 
 
 def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path: Path):
@@ -1681,17 +1744,17 @@ def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
 
 
 @pytest.mark.parametrize(
-    "alt",
-    ["C,C", "c,C", "<DEL>,<DEL>", "A]chr1:123],a]chr1:123]"],
+    ("alt", "info"),
+    [
+        ("C,C", "."),
+        ("<DEL>,<DEL>", "SVLEN=-10,-10"),
+        ("<CNV:TR>,<CNV:TR>", "SVLEN=100,100"),
+    ],
 )
-def test_duplicate_alt_values_are_rejected_with_case_aware_identity(alt: str):
-    info = "END=100" if "<" in alt else "SVTYPE=BND" if "[" in alt or "]" in alt else "."
+def test_vcf45_repeated_alt_values_preserve_distinct_allele_indexes(alt: str, info: str):
     fields = ["1", "100", ".", "A", alt, ".", "PASS", info]
 
-    with pytest.raises(StrictVCFValidationError) as exc:
-        _validate_record(fields, 1, None, "VCFv4.5")
-
-    assert exc.value.code == "VCF_ALT_DUPLICATE"
+    _validate_record(fields, 1, None, "VCFv4.5")
 
 
 @pytest.mark.parametrize("alt", ["<DEL,FOO>", "<DEL FOO>", "<<DEL>>", "A]chr 1:123]"])
@@ -1923,7 +1986,7 @@ def test_number_g_fields_without_gt_still_validate_declared_value_type(tmp_path:
 
 def test_vcf45_cipos_requires_two_offsets_per_alt_and_interval_spanning_zero(tmp_path: Path):
     valid = tmp_path / "vcf45-cipos-valid.vcf"
-    write_vcf(valid, "1\t2\t.\tA\tC,G\t.\tPASS\tCIPOS=-2,2,0,0\n", version="VCFv4.5")
+    write_vcf(valid, "1\t2\t.\tA\t<DEL>,<DUP>\t.\tPASS\tSVLEN=-4,-2;CIPOS=-2,2,0,0\n", version="VCFv4.5")
 
     profile = validate_vcf_strict(valid)
     assert profile["records"] == 1
@@ -2000,6 +2063,7 @@ def test_vcf45_meinfo_accepts_empty_string_missing_values_and_checks_cardinality
         '##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval">',
         '##INFO=<ID=MEINFO,Number=A,Type=String,Description="Mobile element information">',
         '##INFO=<ID=IMPRECISE,Number=1,Type=Flag,Description="Imprecise structural variation">',
+        '##INFO=<ID=CILEN,Number=2,Type=Integer,Description="Confidence interval for SVLEN">',
     ],
 )
 def test_vcf45_reserved_structural_info_definitions_are_enforced(tmp_path: Path, metadata: str):
@@ -2354,3 +2418,851 @@ def test_vcf45_empty_gt_value_is_not_treated_as_unknown_ploidy(tmp_path: Path):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_GENOTYPE_INVALID"
+
+
+
+def test_vcf_feature_qualification_matrix_is_explicit_and_conservative(tmp_path: Path):
+    vcf45 = tmp_path / "vcf45-feature-matrix.vcf"
+    write_vcf(vcf45, "1\t2\t.\tA\tC\t.\tPASS\t.\n", version="VCFv4.5")
+    profile = validate_vcf_strict(vcf45)
+    matrix = {
+        item["feature_id"]: item
+        for item in profile["format_compatibility"]["feature_matrix"]
+    }
+
+    assert matrix["local_allele_encoding"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["base_modification_format_fields"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["reserved_info_format_definitions"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["structured_meta_headers"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["unspecified_allele_reference_block_len"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
+    assert matrix["breakend_replacement_and_mate_links"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["genotype_ploidy_number_g_cardinality"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["symbolic_structural_variant_span"]["status"] == "NATIVE_VALIDATED"
+    assert matrix["symbolic_sv_confidence_intervals"]["status"] == "NATIVE_VALIDATED"
+    assert "CILEN" in matrix["symbolic_sv_confidence_intervals"]["implementation"]
+    # GATK gVCF is a producer dialect, not a normative VCFv4.5 feature.
+    # Its interoperability qualification is intentionally limited to the
+    # separately fixture-tested VCFv4.3 profile.
+    assert matrix["gatk_gvcf_non_ref_end_interoperability"]["status"] == "NOT_QUALIFIED"
+    assert matrix["gatk_gvcf_non_ref_end_interoperability"]["specification_scope"].startswith("GATK producer interoperability")
+
+    gatk_profile = {
+        item["feature_id"]: item
+        for item in feature_compatibility_for_version("VCFv4.3")
+    }
+    assert gatk_profile["gatk_gvcf_non_ref_end_interoperability"]["status"] == "PRODUCER_INTEROPERABILITY_VALIDATED"
+
+    older = {
+        item["feature_id"]: item
+        for item in feature_compatibility_for_version("VCFv4.4")
+    }
+    assert older["local_allele_encoding"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+    assert older["symbolic_sv_confidence_intervals"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+    assert older["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
+    assert older["gatk_gvcf_non_ref_end_interoperability"]["status"] == "NOT_QUALIFIED"
+
+    legacy = {
+        item["feature_id"]: item
+        for item in feature_compatibility_for_version("VCFv4.0")
+    }
+    assert legacy["breakend_replacement_and_mate_links"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+    assert legacy["genotype_ploidy_number_g_cardinality"]["status"] == "NOT_APPLICABLE_TO_DECLARED_VERSION"
+
+
+def test_vcf_feature_qualification_rejects_unknown_specification_versions():
+    with pytest.raises(ValueError, match="Unsupported VCF specification version"):
+        feature_compatibility_for_version("VCFv4.6")
+
+def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scope():
+    legacy = get_vcf_specification_profile("VCFv4.0")
+    assert legacy.support_status == "LEGACY_COMPATIBILITY_ONLY"
+    assert legacy.validation_mode == "LEGACY_PARSER_SMOKE_ONLY"
+    assert legacy.specification_document == (
+        "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/"
+    )
+
+    for minor in range(1, 6):
+        version = f"VCFv4.{minor}"
+        profile = get_vcf_specification_profile(version)
+        assert profile.support_status == "PARTIAL_FEATURE_QUALIFICATION"
+        assert profile.specification_document == (
+            f"https://samtools.github.io/hts-specs/{version}.pdf"
+        )
+        assert "requirement traceability matrix" in profile.notes
+
+
+def test_unknown_future_vcf_specification_does_not_get_an_implicit_profile():
+    with pytest.raises(ValueError, match="Unsupported VCF specification version"):
+        get_vcf_specification_profile("VCFv4.6")
+
+
+
+
+def test_strict_validation_accepts_crlf_line_endings(tmp_path: Path):
+    path = tmp_path / "crlf.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.5\r\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\r\n"
+        b"1\t2\t.\tA\tC\t.\tPASS\t.\r\n"
+    )
+    result = validate_vcf_strict(path)
+    assert result["fileformat"] == "VCFv4.5"
+    assert result["records"] == 1
+
+
+def test_strict_validation_rejects_bare_carriage_return_line_endings(tmp_path: Path):
+    path = tmp_path / "bare-cr.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.5\r"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\r"
+        b"1\t2\t.\tA\tC\t.\tPASS\t.\r"
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_LINE_ENDING_INVALID"
+
+
+def test_strict_validation_rejects_embedded_carriage_return(tmp_path: Path):
+    path = tmp_path / "embedded-cr.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.5\n"
+        b"##source=producer\rname\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tC\t.\tPASS\t.\n"
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_LINE_ENDING_INVALID"
+
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_structured_custom_metadata_requires_an_id_and_accepts_id_only(
+    tmp_path: Path, version: str
+):
+    valid = tmp_path / f"{version}-custom-valid.vcf"
+    valid.write_text(
+        f'##fileformat={version}\n'
+        '##CUSTOM=<ID=ProducerMetadata>\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / f"{version}-custom-no-id.vcf"
+    invalid.write_text(
+        f'##fileformat={version}\n'
+        '##CUSTOM=<Description="missing identifier">\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2"])
+def test_legacy_custom_structured_metadata_is_not_upgraded_to_v43_id_rule(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}-custom-legacy.vcf"
+    path.write_text(
+        f'##fileformat={version}\n'
+        '##CUSTOM=<Description="legacy custom value">\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("kind", ["FILTER", "ALT"])
+def test_filter_and_alt_structured_headers_require_quoted_description(
+    tmp_path: Path, kind: str
+):
+    path = tmp_path / f"missing-{kind.lower()}-description.vcf"
+    path.write_text(
+        '##fileformat=VCFv4.5\n'
+        f'##{kind}=<ID=custom>\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("metadata", ["##source", "##source=", "##=producer"])
+def test_unstructured_meta_information_must_have_nonempty_key_and_value(
+    tmp_path: Path, metadata: str
+):
+    path = tmp_path / "malformed-meta.vcf"
+    path.write_text(
+        '##fileformat=VCFv4.5\n'
+        f'{metadata}\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("attribute", ["Source=ClinVar", "Version=20260101"])
+def test_info_optional_source_and_version_attributes_must_be_quoted(
+    tmp_path: Path, attribute: str
+):
+    path = tmp_path / "unquoted-info-optional-attribute.vcf"
+    path.write_text(
+        '##fileformat=VCFv4.5\n'
+        f'##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency",{attribute}>\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\tAF=0.5\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+
+
+def test_info_description_accepts_escaped_quote_and_backslash(tmp_path: Path):
+    path = tmp_path / "escaped-description.vcf"
+    header = (
+        r'##INFO=<ID=DP,Number=1,Type=Integer,Description="depth with \"quoted\" text and \\ path">'
+        + "\n"
+    )
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        + header
+        + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t2\t.\tA\tC\t.\tPASS\tDP=10\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_custom_structured_header_accepts_escaped_quote_and_backslash(tmp_path: Path):
+    path = tmp_path / "escaped-custom-header.vcf"
+    header = (
+        r'##CUSTOM=<ID=Producer,Description="producer said \"valid\" and path \\data">'
+        + "\n"
+    )
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        + header
+        + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        r'##INFO=<ID=DP,Number=1,Type=Integer,Description="bad \q escape">',
+        r'##CUSTOM=<ID=Producer,Description="bad \q escape">',
+    ],
+)
+def test_structured_header_rejects_unsupported_escape_sequences(
+    tmp_path: Path, header: str
+):
+    path = tmp_path / "unsupported-escape.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        + header
+        + "\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    "header, expected_code",
+    [
+        ('##FILTER=<ID=bad id,Description="bad filter">', "VCF_HEADER_DEFINITION_INVALID"),
+        ('##FILTER=<ID=0,Description="reserved filter">', "VCF_HEADER_DEFINITION_INVALID"),
+        ('##ALT=<ID=bad id,Description="bad symbolic allele">', "VCF_HEADER_DEFINITION_INVALID"),
+        ('##ALT=<ID=bad<type>,Description="bad symbolic allele">', "VCF_HEADER_DEFINITION_INVALID"),
+    ],
+)
+def test_filter_and_alt_header_ids_obey_version_specific_grammar(
+    tmp_path: Path, header: str, expected_code: str
+):
+    path = tmp_path / "invalid-header-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        + header
+        + "\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == expected_code
+
+
+
+
+def test_vcf41_vcf42_preserve_legacy_info_and_format_identifier_grammar(tmp_path: Path):
+    path = tmp_path / "legacy-field-identifiers.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        '##INFO=<ID=DP-raw,Number=1,Type=Integer,Description="Raw depth">\n'
+        '##FORMAT=<ID=F-tag,Number=1,Type=Integer,Description="Custom field">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC\t.\tPASS\tDP-raw=10\tGT:F-tag\t0/1:5\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_enforces_info_and_format_tag_name_regex(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"invalid-tag-name-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=DP-raw,Number=1,Type=Integer,Description="Raw depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\tDP-raw=10\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_rejects_nonconforming_format_tag_name(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"invalid-format-tag-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##FORMAT=<ID=F-tag,Number=1,Type=Integer,Description="Custom field">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:F-tag\t0/1:5\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    "kind, identifier",
+    [
+        ("CUSTOM", "bad id"),
+        ("SAMPLE", "bad id"),
+        ("PEDIGREE", "bad id"),
+        ("META", "bad id"),
+    ],
+)
+def test_vcf43_plus_all_structured_ids_reject_whitespace(
+    tmp_path: Path, kind: str, identifier: str
+):
+    path = tmp_path / f"invalid-{kind.lower()}-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        f'##{kind}=<ID={identifier}>\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("integer_value", ["-2147483640", "2147483647"])
+def test_vcf_integer_accepts_specified_lower_and_upper_boundaries(
+    tmp_path: Path, integer_value: str
+):
+    path = tmp_path / "int32-boundary.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=X,Number=1,Type=Integer,Description="Signed integer">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t.\tPASS\tX={integer_value}\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("integer_value", ["-2147483641", "2147483648"])
+def test_vcf_integer_rejects_values_outside_specified_range(
+    tmp_path: Path, integer_value: str
+):
+    path = tmp_path / "int32-out-of-range.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=X,Number=1,Type=Integer,Description="Signed integer">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t.\tPASS\tX={integer_value}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    "pos,ref,alt",
+    [
+        (2, "A", "AT"),
+        (2, "AT", "A"),
+        (1, "AT", "T"),
+        (1, "T", "AT"),
+        (1, "A", "AT"),
+        (1, "AT", "A"),
+        (0, "A", "TA"),
+        (2, "ATC", "AC"),
+    ],
+)
+def test_simple_indels_obey_vcf_padding_rules(
+    tmp_path: Path, pos: int, ref: str, alt: str
+):
+    path = tmp_path / "valid-indel-padding.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{pos}\t.\t{ref}\t{alt}\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    "pos,ref,alt",
+    [
+        (2, "AT", "T"),
+        (0, "AT", "A"),
+    ],
+)
+def test_simple_indels_reject_wrong_padding_side(
+    tmp_path: Path, pos: int, ref: str, alt: str
+):
+    path = tmp_path / "invalid-indel-padding.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{pos}\t.\t{ref}\t{alt}\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_INDEL_PADDING_INVALID"
+
+
+
+@pytest.mark.parametrize("qual", [".5", "1e3", "+INF", "NAN"])
+def test_vcf43_plus_qual_accepts_specified_float_tokens(tmp_path: Path, qual: str):
+    path = tmp_path / "valid-qual.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t{qual}\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("qual", ["1.", "1_0", "InfinityX", " 1.0"])
+def test_vcf43_plus_qual_rejects_nonconforming_float_tokens(tmp_path: Path, qual: str):
+    path = tmp_path / "invalid-qual.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t{qual}\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_QUAL_INVALID"
+
+
+@pytest.mark.parametrize("pos", ["+2", "02x", "-1", "1.0"])
+def test_vcf_position_requires_unsigned_decimal_token(tmp_path: Path, pos: str):
+    path = tmp_path / "invalid-pos-token.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{pos}\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_POS_INVALID"
+
+
+
+@pytest.mark.parametrize("identifier", ["id,comma", "id<angle", "id>angle"])
+def test_vcf43_plus_record_ids_reject_forbidden_characters(
+    tmp_path: Path, identifier: str
+):
+    path = tmp_path / "invalid-record-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t{identifier}\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_ID_INVALID"
+
+
+def test_vcf42_record_id_preserves_legacy_comma_behavior(tmp_path: Path):
+    path = tmp_path / "legacy-comma-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\tlegacy,id\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+
+def test_vcf42_sample_metadata_preserves_unquoted_description_list(tmp_path: Path):
+    path = tmp_path / "sample-description-list.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##SAMPLE=<ID=Blood,Genomes=Germline;Tumor,Mixture=.3;.7,Description=Germline;Tumor>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBlood\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf43_custom_structured_metadata_does_not_assume_description_schema(
+    tmp_path: Path,
+):
+    path = tmp_path / "custom-unquoted-description.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##CUSTOM=<ID=Producer,Description=UnquotedExtensionValue>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3", "VCFv4.5"])
+def test_sample_metadata_ids_must_match_sample_columns(tmp_path: Path, version: str):
+    valid = tmp_path / f"sample-metadata-valid-{version}.vcf"
+    valid.write_text(
+        f"##fileformat={version}\n"
+        '##SAMPLE=<ID=Blood,Description="Blood sample">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBlood\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / f"sample-metadata-mismatch-{version}.vcf"
+    invalid.write_text(
+        f"##fileformat={version}\n"
+        '##SAMPLE=<ID=OtherSample,Description="Different sample">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBlood\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_SAMPLE_METADATA_MISMATCH"
+
+
+def test_sample_metadata_is_invalid_for_sites_only_vcf(tmp_path: Path):
+    path = tmp_path / "sites-only-with-sample-metadata.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##SAMPLE=<ID=Blood,Description="Blood sample">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_SAMPLE_METADATA_MISMATCH"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("CN", "2.0"),
+        ("CICN", "1.5,2.5"),
+        ("CNQ", "30.0"),
+        ("CNL", "-1.0,-2.0,-3.0"),
+        ("CNP", "0.2,0.3,0.5"),
+        ("NQ", "30"),
+        ("HAP", "1"),
+        ("AHAP", "1"),
+    ],
+)
+def test_vcf45_implicit_reserved_copy_number_and_haplotype_format_fields(
+    tmp_path: Path, field: str, value: str
+):
+    path = tmp_path / f"vcf45-implicit-{field.lower()}.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        f"1\t2\t.\tA\t<CNV>\t.\tPASS\tEND=10\tGT:{field}\t0/1:{value}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+
+
+def test_vcf45_implicit_reserved_cnp_values_must_be_probabilities(tmp_path: Path):
+    path = tmp_path / "vcf45-implicit-cnp-out-of-range.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t2\t.\tA\t<CNV>\t.\tPASS\tEND=10\tGT:CNP\t0/1:0.2,0.3,1.2\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_reserved_cnp_header_cannot_override_builtin_definition(tmp_path: Path):
+    path = tmp_path / "vcf45-cnp-header-override.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=CNP,Number=1,Type=Float,Description="Incorrect CNP definition">'],
+        "1\t2\t.\tA\t<CNV>\t.\tPASS\tEND=10\tGT:CNP\t0/1:0.2,0.3,0.5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def _write_vcf_with_sample_and_pedigree_metadata(
+    path: Path,
+    metadata: list[str],
+    sample_columns: list[str],
+    *,
+    version: str = "VCFv4.5",
+) -> None:
+    header = (
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t"
+        + "\t".join(sample_columns)
+    )
+    record = (
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t"
+        + "\t".join("0/1" for _ in sample_columns)
+    )
+    path.write_text(
+        "\n".join([f"##fileformat={version}", *metadata, header, record, ""]),
+        encoding="utf-8",
+    )
+
+
+def test_sample_mixture_metadata_accepts_parallel_genome_and_fraction_lists(tmp_path: Path):
+    path = tmp_path / "sample-mixture-valid.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##SAMPLE=<ID=TissueSample,Genomes=Germline;Tumor,Mixture=.3;.7,Description="Germline;Tumor">',
+        ],
+        ["TissueSample"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["sample_genome_count"] == 2
+    assert profile["sample_mixture_count"] == 1
+    assert profile["sample_genome_mapping_complete"] is True
+
+
+@pytest.mark.parametrize(
+    "sample_definition",
+    [
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;1.2>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;-.1>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;.6>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3;NAN>',
+        '##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.3; .7>',
+    ],
+)
+def test_sample_mixture_metadata_rejects_invalid_cardinality_or_proportions(
+    tmp_path: Path, sample_definition: str
+):
+    path = tmp_path / "sample-mixture-invalid.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path, [sample_definition], ["Sample1"]
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_SAMPLE_MIXTURE_INVALID"
+
+
+def test_sample_mixture_metadata_preserves_unknown_proportions(tmp_path: Path):
+    path = tmp_path / "sample-mixture-missing.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        ['##SAMPLE=<ID=Sample1,Genomes=Germline;Tumor,Mixture=.;.>'],
+        ["Sample1"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["sample_mixture_count"] == 1
+
+
+def test_pedigree_relationships_accept_family_trio_and_validate_genome_references(
+    tmp_path: Path,
+):
+    path = tmp_path / "pedigree-trio-valid.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##SAMPLE=<ID=FatherSample,Genomes=Father>',
+            '##SAMPLE=<ID=MotherSample,Genomes=Mother>',
+            '##SAMPLE=<ID=ChildSample,Genomes=Child>',
+            '##PEDIGREE=<ID=Child,Mother=Mother,Father=Father>',
+        ],
+        ["FatherSample", "MotherSample", "ChildSample"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_relationship_count"] == 2
+    assert profile["pedigree_node_count"] == 3
+    assert profile["pedigree_validation_status"] == "VALIDATED"
+
+
+def test_pedigree_relationships_reject_directed_ancestry_cycles(tmp_path: Path):
+    path = tmp_path / "pedigree-cycle.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##PEDIGREE=<ID=GenomeA,Original=GenomeB>',
+            '##PEDIGREE=<ID=GenomeB,Original=GenomeA>',
+        ],
+        ["Sample1"],
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PEDIGREE_CYCLE"
+
+
+def test_pedigree_relationships_reject_self_ancestry(tmp_path: Path):
+    path = tmp_path / "pedigree-self-reference.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        ['##PEDIGREE=<ID=GenomeA,Original=GenomeA>'],
+        ["Sample1"],
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PEDIGREE_INVALID"
+
+
+def test_pedigree_relationships_route_external_genome_references_for_review(
+    tmp_path: Path,
+):
+    path = tmp_path / "pedigree-external-genome.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##SAMPLE=<ID=ChildSample,Genomes=Child>',
+            '##SAMPLE=<ID=MotherSample,Genomes=Mother>',
+            '##PEDIGREE=<ID=Child,Mother=MissingGenome>',
+        ],
+        ["ChildSample", "MotherSample"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_validation_status"] == "REVIEW_REQUIRED"
+    assert "VCF_PEDIGREE_REFERENCE_UNRESOLVED" in profile["warning_codes"]
+
+
+def test_legacy_vcf42_pedigree_without_id_remains_compatible(tmp_path: Path):
+    path = tmp_path / "pedigree-v42-legacy.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        ["##PEDIGREE=<Name_0=Child,Name_1=Parent>"],
+        ["Sample1"],
+        version="VCFv4.2",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_validation_status"] == "PARTIAL_LEGACY"
+
+
+def test_pedigree_relationships_accept_consanguineous_ancestry_dag(tmp_path: Path):
+    path = tmp_path / "pedigree-consanguineous-dag.vcf"
+    _write_vcf_with_sample_and_pedigree_metadata(
+        path,
+        [
+            '##PEDIGREE=<ID=ParentA,Original=SharedAncestor>',
+            '##PEDIGREE=<ID=ParentB,Original=SharedAncestor>',
+            '##PEDIGREE=<ID=Child,Mother=ParentA,Father=ParentB>',
+        ],
+        ["Sample1"],
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["pedigree_relationship_count"] == 4
+    assert profile["pedigree_node_count"] == 4
+    assert profile["pedigree_validation_status"] == "VALIDATED"
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_strict_validation_accepts_breakend_mates_without_optional_svtype(tmp_path, version):
+    mate_number = "A" if version in {"VCFv4.4", "VCFv4.5"} else "."
+    path = tmp_path / f"breakend-no-svtype-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        f'##INFO=<ID=MATEID,Number={mate_number},Type=String,Description="Breakend mate ID">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2

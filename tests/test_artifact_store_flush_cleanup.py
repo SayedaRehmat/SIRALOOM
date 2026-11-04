@@ -114,7 +114,9 @@ def test_local_store_never_overwrites_existing_artifact_bytes(tmp_path):
     )
     original_bytes = store.read_bytes(original.storage_uri)
 
-    with pytest.raises(FileExistsError, match="durable database record"):
+    from backend.app.infrastructure.artifacts.store import ArtifactIdentityConflictError
+
+    with pytest.raises(ArtifactIdentityConflictError, match="different bytes or immutable metadata"):
         store.put_file(
             **{
                 **_put_arguments(changed_source),

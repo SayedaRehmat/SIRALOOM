@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import stat as stat_module
 import struct
 import subprocess
 import tempfile
@@ -493,11 +494,18 @@ SOURCE_ALT_COUNT_FORMAT_TAG = "SIRALOOM_SOURCE_ALT_COUNT"
 
 
 class VCFToolError(RuntimeError):
-    pass
+    """A deterministic VCF tool or artifact validation failure requiring review."""
+
+    def __init__(self, message: str, *, code: str = "VCF_TOOL_EXECUTION_FAILED"):
+        super().__init__(message)
+        self.code = code
 
 
 class VCFToolUnavailable(VCFToolError):
     """A required VCF tool could not execute; retry after operational recovery."""
+
+    def __init__(self, message: str, *, code: str = "VCF_TOOL_UNAVAILABLE"):
+        super().__init__(message, code=code)
 
 
 def bcftools_available() -> bool:
@@ -1230,6 +1238,42 @@ def _strip_vcf45_number_m_format_fields(
     return sorted(source_only_fields)
 
 
+def _bcftools_executable_identity(executable: str) -> dict[str, object]:
+    """Fingerprint the resolved executable and detect replacement during a run."""
+    candidate = shutil.which(executable)
+    if candidate is None and Path(executable).is_file():
+        candidate = executable
+    if candidate is None:
+        raise VCFToolUnavailable(f"Selected BCFtools executable is unavailable: {executable!r}.")
+    try:
+        resolved = Path(candidate).resolve(strict=True)
+        before = resolved.stat()
+    except OSError as exc:
+        raise VCFToolUnavailable(f"Unable to resolve selected BCFtools executable: {exc}") from exc
+    if not stat_module.S_ISREG(before.st_mode) or not os.access(resolved, os.X_OK):
+        raise VCFToolUnavailable("Selected BCFtools executable must be a regular executable file.")
+    digest = hashlib.sha256()
+    try:
+        with resolved.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        after = resolved.stat()
+    except OSError as exc:
+        raise VCFToolUnavailable(f"Unable to fingerprint selected BCFtools executable: {exc}") from exc
+    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+        after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns
+    ):
+        raise VCFToolUnavailable("Selected BCFtools executable changed while being fingerprinted.")
+    return {
+        "path": str(resolved),
+        "sha256": digest.hexdigest(),
+        "size_bytes": after.st_size,
+        "device": after.st_dev,
+        "inode": after.st_ino,
+        "mtime_ns": after.st_mtime_ns,
+    }
+
+
 def normalize_vcf_with_bcftools(
     input_path: str | Path,
     output_path: str | Path,
@@ -1240,6 +1284,7 @@ def normalize_vcf_with_bcftools(
     timeout_seconds: int = 1800,
     preserve_existing_source_mapping: bool = False,
     bcftools_executable: str = "bcftools",
+    expected_bcftools_sha256: str | None = None,
 ) -> dict:
     """Normalize, sort, and VCF-index a VCF before publishing either output.
 
@@ -1247,13 +1292,14 @@ def normalize_vcf_with_bcftools(
     filesystem. Existing output and index files remain untouched until
     normalization, sorting, and indexing have all succeeded.
     """
-    executable_available = (
-        bcftools_available()
-        if bcftools_executable == "bcftools"
-        else Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
-    )
-    if not executable_available:
-        raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
+    executable_identity_before = _bcftools_executable_identity(bcftools_executable)
+    bcftools_executable = str(executable_identity_before["path"])
+    if expected_bcftools_sha256:
+        expected_digest = str(expected_bcftools_sha256).strip().lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", expected_digest):
+            raise VCFToolError("Qualified BCFtools executable SHA-256 must contain 64 hexadecimal characters.")
+        if executable_identity_before["sha256"] != expected_digest:
+            raise VCFToolError("Selected BCFtools executable SHA-256 differs from its qualified identity.")
     input_path = Path(input_path)
     output_path = Path(output_path)
     reference_fasta = Path(reference_fasta)
@@ -1281,9 +1327,9 @@ def normalize_vcf_with_bcftools(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise VCFToolError("Timed out while checking the bcftools version.") from exc
+        raise VCFToolUnavailable("Timed out while checking the bcftools version.") from exc
     except OSError as exc:
-        raise VCFToolError(f"Unable to execute bcftools: {exc}") from exc
+        raise VCFToolUnavailable(f"Unable to execute bcftools: {exc}") from exc
     if version_result.returncode != 0:
         detail = (version_result.stderr or version_result.stdout or "unknown bcftools error").strip()
         raise VCFToolError(f"Unable to determine bcftools version: {detail}")
@@ -1319,9 +1365,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
+            raise VCFToolUnavailable(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools GVCF wildcard preparation: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools GVCF wildcard preparation: {exc}") from exc
         view_stderr = (viewed.stderr or "").strip()
         if viewed.returncode != 0:
             detail = (viewed.stderr or viewed.stdout or "unknown bcftools view error").strip()
@@ -1350,9 +1396,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
+            raise VCFToolUnavailable(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools normalization: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools normalization: {exc}") from exc
         normalized_stderr = (completed.stderr or "").strip()
         if completed.returncode != 0:
             detail = (completed.stderr or completed.stdout or "unknown bcftools normalization error").strip()
@@ -1373,9 +1419,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError(f"bcftools sorting timed out after {timeout}s.") from exc
+            raise VCFToolUnavailable(f"bcftools sorting timed out after {timeout}s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools sorting: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools sorting: {exc}") from exc
         sorted_stderr = (sorted_result.stderr or "").strip()
         if sorted_result.returncode != 0:
             detail = (sorted_result.stderr or sorted_result.stdout or "unknown bcftools sort error").strip()
@@ -1412,11 +1458,11 @@ def normalize_vcf_with_bcftools(
                     check=False,
                 )
             except subprocess.TimeoutExpired as exc:
-                raise VCFToolError(
+                raise VCFToolUnavailable(
                     f"bcftools compression of source-only FORMAT output timed out after {timeout}s."
                 ) from exc
             except OSError as exc:
-                raise VCFToolError(
+                raise VCFToolUnavailable(
                     f"Unable to execute bcftools compression of source-only FORMAT output: {exc}"
                 ) from exc
             source_only_stderr = (source_only_result.stderr or "").strip()
@@ -1440,6 +1486,11 @@ def normalize_vcf_with_bcftools(
             raise VCFToolError(
                 "Reference FASTA or index artifacts changed during normalization; staged outputs will not be published."
             )
+        executable_identity_after = _bcftools_executable_identity(bcftools_executable)
+        if executable_identity_after != executable_identity_before:
+            raise VCFToolError(
+                "Selected BCFtools executable changed during normalization; staged outputs will not be published."
+            )
 
         source_child_reconciliation = _validate_source_child_reconciliation(
             input_path, sorted_path
@@ -1455,9 +1506,9 @@ def normalize_vcf_with_bcftools(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            raise VCFToolError("bcftools VCF indexing timed out after 120s.") from exc
+            raise VCFToolUnavailable("bcftools VCF indexing timed out after 120s.") from exc
         except OSError as exc:
-            raise VCFToolError(f"Unable to execute bcftools VCF indexing: {exc}") from exc
+            raise VCFToolUnavailable(f"Unable to execute bcftools VCF indexing: {exc}") from exc
         indexed_stderr = (indexed_result.stderr or "").strip()
         if indexed_result.returncode != 0:
             detail = (indexed_result.stderr or indexed_result.stdout or "unknown bcftools index error").strip()
@@ -1470,6 +1521,21 @@ def normalize_vcf_with_bcftools(
             bcftools_executable=bcftools_executable,
             timeout_seconds=120,
         )
+
+        # Re-attest after the final BCFtools invocation (including index
+        # validation), not merely after normalization and sorting. A binary
+        # replaced while indexing must never publish output under the earlier
+        # executable identity.
+        final_executable_identity = _bcftools_executable_identity(bcftools_executable)
+        if final_executable_identity != executable_identity_before:
+            raise VCFToolError(
+                "Selected BCFtools executable changed during normalization or index validation; staged outputs will not be published."
+            )
+        final_reference_identity = _reference_artifact_identity(reference_fasta)
+        if final_reference_identity != reference_identity_before:
+            raise VCFToolError(
+                "Reference FASTA or index artifacts changed during normalization or index validation; staged outputs will not be published."
+            )
 
         # Flush staged files before publication. The private directory is on the
         # destination filesystem, so os.replace avoids cross-device partial copies.
@@ -1510,6 +1576,11 @@ def normalize_vcf_with_bcftools(
             "tool": "bcftools",
             "tool_version": version_line,
             "expected_tool_version": expected_bcftools_version,
+            "executable_identity": executable_identity_before,
+            "executable_sha256": executable_identity_before["sha256"],
+            "executable_integrity_status": (
+                "MATCHED_QUALIFIED_SHA256" if expected_bcftools_sha256 else "MEASURED_UNPINNED"
+            ),
             "operation": "reference_aware_normalization_sort_index",
             "command": " && ".join([
                 " ".join(view_command),

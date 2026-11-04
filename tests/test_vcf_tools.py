@@ -122,6 +122,9 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
     )
 
     assert result["tool_version"] == "bcftools 1.25"
+    assert result["executable_identity"]["sha256"] == result["executable_sha256"]
+    assert len(result["executable_sha256"]) == 64
+    assert result["executable_integrity_status"] == "MEASURED_UNPINNED"
     import gzip
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
@@ -129,6 +132,30 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
     assert len(normalized_records) == 1
     assert normalized_records[0].split("\t")[:5] == ["1", "4", ".", "A", "G"]
     assert Path(str(output_vcf) + ".csi").is_file()
+
+
+def test_bcftools_binary_digest_pin_rejects_mismatched_executable(tmp_path: Path):
+    fasta = make_reference(tmp_path)
+    executable = tmp_path / "qualified-bcftools"
+    executable.write_bytes(b"#!/bin/sh\necho bcftools 1.25\n")
+    executable.chmod(0o755)
+    input_vcf = tmp_path / "input.vcf"
+    output_vcf = tmp_path / "normalized.vcf.gz"
+    input_vcf.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(VCFToolError, match="SHA-256 differs from its qualified identity"):
+        normalize_vcf_with_bcftools(
+            input_vcf,
+            output_vcf,
+            reference_fasta=fasta,
+            bcftools_executable=str(executable),
+            expected_bcftools_sha256="0" * 64,
+        )
 
 
 def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path: Path):
@@ -241,6 +268,18 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
     monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+    monkeypatch.setattr(
+        vcf_tools,
+        "_bcftools_executable_identity",
+        lambda _executable: {
+            "path": "/usr/bin/bcftools",
+            "sha256": "a" * 64,
+            "size_bytes": 1,
+            "device": 1,
+            "inode": 1,
+            "mtime_ns": 1,
+        },
+    )
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
@@ -356,6 +395,18 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
     output_vcf.write_bytes(b"previous-valid-vcf")
     index_path.write_bytes(b"previous-valid-index")
     monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+    monkeypatch.setattr(
+        vcf_tools,
+        "_bcftools_executable_identity",
+        lambda _executable: {
+            "path": "/usr/bin/bcftools",
+            "sha256": "a" * 64,
+            "size_bytes": 1,
+            "device": 1,
+            "inode": 1,
+            "mtime_ns": 1,
+        },
+    )
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
@@ -1303,3 +1354,109 @@ def test_bgzf_gzi_index_rejects_truncated_or_invalid_offsets(tmp_path: Path, pay
     gzi.write_bytes(payload)
     with pytest.raises(VCFToolError):
         _validate_gzi_index(gzi, bgzf)
+
+
+
+@pytest.mark.parametrize("mutated_artifact", ["executable", "reference"])
+def test_identity_change_during_index_validation_aborts_publication(
+    monkeypatch, tmp_path: Path, mutated_artifact: str
+):
+    import gzip
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    fasta = make_reference(tmp_path)
+    source = tmp_path / "input.vcf"
+    output = tmp_path / "normalized.vcf.gz"
+    index = Path(f"{output}.csi")
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    output.write_bytes(b"previous-vcf")
+    index.write_bytes(b"previous-index")
+    monkeypatch.setattr(vcf_tools, "bcftools_available", lambda: True)
+
+    executable_calls = {"count": 0}
+    reference_calls = {"count": 0}
+    stable_executable = {
+        "path": "/usr/bin/bcftools",
+        "sha256": "a" * 64,
+        "size_bytes": 1,
+        "device": 1,
+        "inode": 1,
+        "mtime_ns": 1,
+    }
+    stable_reference = {
+        "method": "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS",
+        "artifacts": {
+            "fasta": {"path": str(fasta), "sha256": "b" * 64, "size_bytes": 1},
+            "fai": {"path": f"{fasta}.fai", "sha256": "c" * 64, "size_bytes": 1},
+        },
+    }
+
+    def executable_identity(_executable):
+        executable_calls["count"] += 1
+        identity = dict(stable_executable)
+        if mutated_artifact == "executable" and executable_calls["count"] >= 3:
+            identity["sha256"] = "d" * 64
+        return identity
+
+    def reference_identity(_reference):
+        reference_calls["count"] += 1
+        identity = json.loads(json.dumps(stable_reference))
+        if mutated_artifact == "reference" and reference_calls["count"] >= 3:
+            identity["artifacts"]["fasta"]["sha256"] = "e" * 64
+        return identity
+
+    monkeypatch.setattr(vcf_tools, "_bcftools_executable_identity", executable_identity)
+    monkeypatch.setattr(vcf_tools, "_reference_artifact_identity", reference_identity)
+    monkeypatch.setattr(
+        vcf_tools,
+        "_validate_source_child_reconciliation",
+        lambda *_args, **_kwargs: {"status": "VALIDATED", "balanced": True},
+    )
+    monkeypatch.setattr(
+        vcf_tools,
+        "_validate_vcf_index_record_counts",
+        lambda *_args, **_kwargs: {"records": 1, "indexed_query_records_verified": 1},
+    )
+
+    def fake_run(command, **_kwargs):
+        operation = command[1]
+        if operation == "--version":
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\n", stderr="")
+        if operation in {"view", "norm", "sort"}:
+            target = Path(command[command.index("-o") + 1])
+            with gzip.open(target, "wt", encoding="utf-8") as handle:
+                handle.write(
+                    "##fileformat=VCFv4.3\n"
+                    "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+                    "1\t2\t.\tA\tG\t.\tPASS\t.\n"
+                )
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        if operation == "index":
+            Path(f"{command[-1]}.csi").write_bytes(b"staged-index")
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        raise AssertionError(f"Unexpected BCFtools command: {command!r}")
+
+    monkeypatch.setattr(vcf_tools.subprocess, "run", fake_run)
+    expected_message = (
+        "Selected BCFtools executable changed"
+        if mutated_artifact == "executable"
+        else "Reference FASTA or index artifacts changed"
+    )
+    with pytest.raises(VCFToolError, match=expected_message):
+        normalize_vcf_with_bcftools(
+            source,
+            output,
+            reference_fasta=fasta,
+            expected_bcftools_version="1.25",
+        )
+
+    assert output.read_bytes() == b"previous-vcf"
+    assert index.read_bytes() == b"previous-index"
+    assert executable_calls["count"] == 3
+    if mutated_artifact == "reference":
+        assert reference_calls["count"] == 3

@@ -5,10 +5,14 @@ import hashlib
 import re
 import struct
 import zlib
-from math import comb, isnan
+from math import comb, isfinite, isnan
 from pathlib import Path
 
-SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
+from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
+from backend.app.domain.vcf_spec_registry import (
+    SUPPORTED_VCF_VERSIONS,
+    get_vcf_specification_profile,
+)
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 VCF_CONTIG_NAME_RE = re.compile(
@@ -20,30 +24,24 @@ BREAKEND_RE = re.compile(
     r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
 
-def _alt_identity_key(allele: str) -> tuple[str, ...]:
-    """Return VCF allele identity while respecting sequence and contig case rules."""
-    if DNA_RE.fullmatch(allele):
-        return ("SEQUENCE", allele.upper())
-    if BREAKEND_RE.fullmatch(allele):
-        if allele[0] in "[]":
-            bracket = allele[0]
-            closing = allele.find(bracket, 1)
-            locus = allele[1:closing]
-            contig, position = locus.rsplit(":", 1)
-            inserted_sequence = allele[closing + 1 :]
-            return ("BREAKEND", bracket, contig, position, inserted_sequence.upper())
-        opening = next(index for index, character in enumerate(allele) if character in "[]")
-        bracket = allele[opening]
-        locus = allele[opening + 1 : -1]
-        contig, position = locus.rsplit(":", 1)
-        inserted_sequence = allele[:opening]
-        return ("BREAKEND", inserted_sequence.upper(), bracket, contig, position)
-    # Symbolic allele IDs and remote contig names are case-sensitive.
-    return ("LITERAL", allele)
-
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
+VCF_FLOAT_VALUE_RE = re.compile(
+    r"[-+]?(?:[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)\Z",
+    re.IGNORECASE,
+)
+LEGACY_INFO_KEY_RE = re.compile(r"[^\s,;=<>]+\Z")
+LEGACY_FORMAT_KEY_RE = re.compile(r"[^\s,;=<>:]+\Z")
+
+
+def _field_key_is_valid(kind: str, identifier: str, fileformat: str | None) -> bool:
+    if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+        pattern = INFO_KEY_RE if kind == "INFO" else FORMAT_KEY_RE
+    else:
+        pattern = LEGACY_INFO_KEY_RE if kind == "INFO" else LEGACY_FORMAT_KEY_RE
+    return bool(pattern.fullmatch(identifier))
+
 INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
 
 NONNEGATIVE_INTEGER_FIELDS = frozenset({
@@ -58,7 +56,7 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
-PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP"), ("FORMAT", "CNP")})
 NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
@@ -105,6 +103,17 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
     # cardinality/type even when a caller omits a redundant FORMAT header line.
     reserved = {
+        # VCFv4.5 copy-number and derivative-haplotype FORMAT definitions.
+        # These fields remain parseable even though SIRALOOM routes their
+        # variant classes outside the trial SNV/small-INDEL sign-out path.
+        "AHAP": ("1", "Integer"),
+        "CICN": ("2", "Float"),
+        "CN": ("1", "Float"),
+        "CNL": ("G", "Float"),
+        "CNP": ("G", "Float"),
+        "CNQ": ("1", "Float"),
+        "HAP": ("1", "Integer"),
+        "NQ": ("1", "Integer"),
         "AD": ("R", "Integer"),
         "ADF": ("R", "Integer"),
         "ADR": ("R", "Integer"),
@@ -173,6 +182,7 @@ def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
         "SVTYPE": ("1", "String"),
         "CIPOS": (".", "Integer"),
         "CIEND": (".", "Integer"),
+        "CILEN": (".", "Integer"),
         "HOMLEN": ("A", "Integer"),
         "HOMSEQ": ("A", "String"),
         "BKPTID": ("A", "String"),
@@ -315,8 +325,31 @@ def _verify_bgzf(path: str | Path) -> dict[str, int | str | bool]:
 
 
 def _open(path: str | Path):
+    """Open a VCF without normalizing line endings before conformance checks."""
     p = Path(path)
-    return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
+    if p.name.lower().endswith((".gz", ".bgz")):
+        return gzip.open(p, "rt", encoding="utf-8", newline="")
+    return open(p, "rt", encoding="utf-8", newline="")
+
+
+def read_vcf_fileformat(path: str | Path) -> str | None:
+    """Read only the first VCF line to identify the declared specification.
+
+    This deliberately does not validate the file. It lets workflow governance
+    run before the strict parser rejects a syntactically valid but unimplemented
+    specification version.
+    """
+    try:
+        with _open(path) as handle:
+            first_line = handle.readline().rstrip("\r\n")
+    except (OSError, EOFError, UnicodeError):
+        return None
+    if not first_line.startswith("##fileformat="):
+        return None
+    version = first_line.partition("=")[2].strip()
+    if not re.fullmatch(r"VCFv[0-9]+\.[0-9]+", version):
+        return None
+    return version
 
 
 def declared_vcf_contig_md5s(path: str | Path) -> dict[str, str]:
@@ -398,7 +431,7 @@ def _validate_info(value: str, line_no: int, fileformat: str | None = None) -> N
         if "=" in item:
             key, val = item.split("=", 1)
             if (
-                not INFO_KEY_RE.fullmatch(key)
+                not _field_key_is_valid("INFO", key, fileformat)
                 or val == ""
                 or "=" in val
                 or INVALID_PERCENT_ESCAPE_RE.search(val)
@@ -408,7 +441,7 @@ def _validate_info(value: str, line_no: int, fileformat: str | None = None) -> N
                 )
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
-        elif not INFO_KEY_RE.fullmatch(item):
+        elif not _field_key_is_valid("INFO", item, fileformat):
             raise StrictVCFValidationError(f"Malformed INFO flag at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         else:
             key = item
@@ -671,6 +704,11 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     escaped = False
     for char in body:
         if escaped:
+            if char not in {'"', chr(92)}:
+                raise StrictVCFValidationError(
+                    f"Unsupported escape sequence in {kind} header value at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
             current.append(char)
             escaped = False
         elif char == chr(92) and quoted:
@@ -692,6 +730,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     attributes.append("".join(current))
 
     parsed: dict[str, str] = {}
+    quoted_attributes: set[str] = set()
     for attribute in attributes:
         key, separator, value = attribute.partition("=")
         key, value = key.strip(), value.strip()
@@ -711,6 +750,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                     f"Malformed quoted {kind} header attribute at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
                 )
+            quoted_attributes.add(key)
             value = value[1:-1]
         elif '"' in value:
             raise StrictVCFValidationError(
@@ -725,9 +765,14 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             f"{kind} header definition lacks required attributes at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    for optional_key in ("Source", "Version"):
+        if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and optional_key in parsed and optional_key not in quoted_attributes:
+            raise StrictVCFValidationError(
+                f"{kind} {optional_key} must be a quoted string at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
     identifier = parsed["ID"]
-    field_id_pattern = INFO_KEY_RE if kind == "INFO" else FORMAT_KEY_RE
-    if not field_id_pattern.fullmatch(identifier):
+    if not _field_key_is_valid(kind, identifier, fileformat):
         raise StrictVCFValidationError(
             f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
             code="VCF_HEADER_DEFINITION_INVALID",
@@ -781,7 +826,17 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
-def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: bool = True) -> str:
+def _structured_header_id(
+    line: str,
+    kind: str,
+    line_no: int,
+    *,
+    require_id: bool = True,
+    required_attributes: set[str] | None = None,
+    quoted_attributes: set[str] | None = None,
+    fileformat: str | None = None,
+    parsed_attributes_out: dict[str, str] | None = None,
+) -> str:
     """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
@@ -797,9 +852,14 @@ def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: boo
     square_bracket_depth = 0
     for char in body:
         if escaped:
+            if char not in {'"', chr(92)}:
+                raise StrictVCFValidationError(
+                    f"Unsupported escape sequence in {kind} structured header at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
             current.append(char)
             escaped = False
-        elif char == "\\\\" and quoted:
+        elif char == "\\" and quoted:
             current.append(char)
             escaped = True
         elif char == '"':
@@ -830,6 +890,8 @@ def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: boo
 
     identifiers: list[str] = []
     seen_attributes: set[str] = set()
+    parsed_attributes: dict[str, str] = {}
+    quoted_keys: set[str] = set()
     for attribute in attributes:
         key, separator, raw_value = attribute.partition("=")
         key, value = key.strip(), raw_value.strip()
@@ -845,20 +907,278 @@ def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: boo
                     f"Malformed quoted {kind} structured header attribute at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
                 )
+            quoted_keys.add(key)
             value = value[1:-1]
         elif '"' in value:
             raise StrictVCFValidationError(
                 f"Malformed quoted {kind} structured header attribute at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+        parsed_attributes[key] = value
         if key == "ID":
             identifiers.append(value)
+    required = set(required_attributes or ())
+    if require_id:
+        required.add("ID")
+    missing = required.difference(parsed_attributes)
+    if missing:
+        raise StrictVCFValidationError(
+            f"{kind} structured header lacks required attributes {sorted(missing)!r} at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    for attribute_name in ("Source", "Version"):
+        if (
+            attribute_name in parsed_attributes
+            and attribute_name not in quoted_keys
+            and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
+        ):
+            raise StrictVCFValidationError(
+                f"{kind} {attribute_name} must be a quoted string at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+    unquoted = set(quoted_attributes or ()).difference(quoted_keys)
+    if unquoted:
+        raise StrictVCFValidationError(
+            f"{kind} structured header attributes {sorted(unquoted)!r} must be quoted at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
     if (require_id and (len(identifiers) != 1 or not identifiers[0])) or len(identifiers) > 1:
         raise StrictVCFValidationError(
             f"{kind} structured header must contain exactly one non-empty ID at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    if identifiers:
+        identifier = identifiers[0]
+        if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
+            char.isspace() or char in {",", "<", ">"} for char in identifier
+        ):
+            raise StrictVCFValidationError(
+                f"Invalid VCFv4.3+ structured ID at line {line_no}: {identifier!r}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if kind == "FILTER" and (
+            identifier == "0"
+            or any(char.isspace() or char in {",", ";", "<", ">"} for char in identifier)
+        ):
+            raise StrictVCFValidationError(
+                f"Invalid or reserved FILTER ID at line {line_no}: {identifier!r}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if kind == "ALT" and any(
+            char.isspace() or char in {",", "<", ">"} for char in identifier
+        ):
+            raise StrictVCFValidationError(
+                f"Invalid ALT ID at line {line_no}: {identifier!r}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+    if parsed_attributes_out is not None:
+        parsed_attributes_out.update(parsed_attributes)
     return identifiers[0] if identifiers else ""
+
+
+def _validate_sample_mixture_metadata(
+    sample_metadata: list[tuple[int, dict[str, str]]],
+    sample_columns: list[str],
+) -> dict[str, object]:
+    """Validate optional VCF sample-to-genome and mixture annotations.
+
+    Genomes and Mixture use parallel semicolon-delimited lists in the VCF
+    sample-mixture representation. Missing mixture proportions remain missing;
+    known proportions must be finite fractions in [0, 1]. A complete numeric
+    mixture must sum to one. These checks validate metadata semantics only and
+    do not deconvolve samples or infer genotypes.
+    """
+    sample_genomes: dict[str, list[str]] = {}
+    genome_ids: set[str] = set()
+    mixture_count = 0
+
+    for line_no, attributes in sample_metadata:
+        sample_id = attributes.get("ID")
+        if not sample_id:
+            raise StrictVCFValidationError(
+                f"SAMPLE metadata has no ID at line {line_no}",
+                code="VCF_SAMPLE_METADATA_INVALID",
+            )
+
+        genomes_value = attributes.get("Genomes")
+        genomes: list[str] = []
+        if genomes_value not in {None, "."}:
+            genomes = genomes_value.split(";")
+            if any(not genome or genome == "." for genome in genomes):
+                raise StrictVCFValidationError(
+                    f"SAMPLE Genomes contains an empty or missing genome identifier at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            if len(genomes) != len(set(genomes)):
+                raise StrictVCFValidationError(
+                    f"SAMPLE Genomes contains duplicate genome identifiers at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            sample_genomes[sample_id] = genomes
+            genome_ids.update(genomes)
+
+        mixture_value = attributes.get("Mixture")
+        if mixture_value in {None, "."}:
+            continue
+        if not genomes:
+            raise StrictVCFValidationError(
+                f"SAMPLE Mixture requires a corresponding Genomes list at line {line_no}",
+                code="VCF_SAMPLE_MIXTURE_INVALID",
+            )
+
+        mixture_values = mixture_value.split(";")
+        if any(value == "" for value in mixture_values) or len(mixture_values) != len(genomes):
+            raise StrictVCFValidationError(
+                f"SAMPLE Mixture and Genomes cardinalities differ at line {line_no}",
+                code="VCF_SAMPLE_MIXTURE_INVALID",
+            )
+
+        proportions: list[float] = []
+        contains_missing = False
+        for value in mixture_values:
+            if value == ".":
+                contains_missing = True
+                continue
+            if not VCF_FLOAT_VALUE_RE.fullmatch(value):
+                raise StrictVCFValidationError(
+                    f"SAMPLE Mixture contains a nonconforming numeric token at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            try:
+                proportion = float(value)
+            except ValueError as exc:
+                raise StrictVCFValidationError(
+                    f"SAMPLE Mixture contains a non-numeric proportion at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                ) from exc
+            if not isfinite(proportion) or not 0.0 <= proportion <= 1.0:
+                raise StrictVCFValidationError(
+                    f"SAMPLE Mixture proportions must be finite values in [0, 1] at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            proportions.append(proportion)
+
+        if not contains_missing and abs(sum(proportions) - 1.0) > 1e-6:
+            raise StrictVCFValidationError(
+                f"SAMPLE Mixture proportions must sum to 1 at line {line_no}",
+                code="VCF_SAMPLE_MIXTURE_INVALID",
+            )
+        mixture_count += 1
+
+    mapping_complete = bool(sample_columns) and set(sample_genomes) == set(sample_columns)
+    return {
+        "sample_genomes": sample_genomes,
+        "genome_ids": genome_ids,
+        "mapping_complete": mapping_complete,
+        "mixture_count": mixture_count,
+    }
+
+
+def _validate_pedigree_relationships(
+    fileformat: str | None,
+    pedigree_metadata: list[tuple[int, dict[str, str]]],
+    genome_ids: set[str],
+    genome_mapping_complete: bool,
+) -> dict[str, object]:
+    """Validate VCFv4.3+ pedigree ancestry edges as an acyclic genome graph.
+
+    Legacy VCFv4.1/v4.2 PEDIGREE syntax without an ID is preserved but cannot
+    be interpreted as an explicit child-to-ancestor graph by this validator.
+    """
+    if not pedigree_metadata:
+        return {"relationship_count": 0, "validation_status": "NOT_PRESENT"}
+
+    graph: dict[str, set[str]] = {}
+    legacy_unresolved = 0
+    unresolved_reference_count = 0
+    relationship_count = 0
+    for line_no, attributes in pedigree_metadata:
+        child = attributes.get("ID")
+        if child is None and fileformat in {"VCFv4.1", "VCFv4.2"}:
+            legacy_unresolved += 1
+            continue
+        if not child:
+            raise StrictVCFValidationError(
+                f"PEDIGREE entry has no child/genome ID at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+
+        named_ancestors = sorted(
+            (
+                (int(match.group(1)), value)
+                for key, value in attributes.items()
+                if (match := re.fullmatch(r"Name_([1-9][0-9]*)", key))
+            ),
+            key=lambda item: item[0],
+        )
+        if named_ancestors and [index for index, _ in named_ancestors] != list(
+            range(1, len(named_ancestors) + 1)
+        ):
+            raise StrictVCFValidationError(
+                f"PEDIGREE Name_n ancestor fields must be consecutively numbered from Name_1 at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+
+        ancestors = [
+            value
+            for key, value in attributes.items()
+            if key in {"Mother", "Father", "Original"}
+        ] + [value for _, value in named_ancestors]
+        if not ancestors or any(not ancestor for ancestor in ancestors):
+            raise StrictVCFValidationError(
+                f"PEDIGREE entry must identify at least one ancestor at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+        if child in ancestors or len(ancestors) != len(set(ancestors)):
+            raise StrictVCFValidationError(
+                f"PEDIGREE entry contains a self-reference or duplicate ancestor at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+        if genome_mapping_complete:
+            unresolved = {child, *ancestors}.difference(genome_ids)
+            unresolved_reference_count += len(unresolved)
+        graph.setdefault(child, set()).update(ancestors)
+        relationship_count += len(ancestors)
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(genome_id: str) -> None:
+        if genome_id in visiting:
+            raise StrictVCFValidationError(
+                f"PEDIGREE ancestry relationships contain a directed cycle involving {genome_id!r}",
+                code="VCF_PEDIGREE_CYCLE",
+            )
+        if genome_id in visited:
+            return
+        visiting.add(genome_id)
+        for ancestor in graph.get(genome_id, set()):
+            visit(ancestor)
+        visiting.remove(genome_id)
+        visited.add(genome_id)
+
+    for genome_id in graph:
+        visit(genome_id)
+
+    status = (
+        "PARTIAL_LEGACY"
+        if legacy_unresolved
+        else "REVIEW_REQUIRED"
+        if unresolved_reference_count
+        else "VALIDATED"
+    )
+    return {
+        "relationship_count": relationship_count,
+        "node_count": len(visited),
+        "legacy_unresolved_record_count": legacy_unresolved,
+        "unresolved_reference_count": unresolved_reference_count,
+        "warning_codes": (
+            ["VCF_PEDIGREE_REFERENCE_UNRESOLVED"]
+            if unresolved_reference_count
+            else []
+        ),
+        "validation_status": status,
+    }
 
 
 def _expected_cardinality(
@@ -1083,6 +1403,40 @@ def _validate_declared_value(
             )
 
 
+
+
+def _validate_simple_indel_padding(
+    ref: str, alts: list[str], pos: int, line_no: int
+) -> None:
+    """Enforce the VCF padding base for simple insertion/deletion alleles."""
+    for alt in alts:
+        if not DNA_RE.fullmatch(alt) or len(ref) == len(alt):
+            continue
+        shorter, longer = (ref, alt) if len(ref) < len(alt) else (alt, ref)
+        is_simple_prefix_indel = longer.startswith(shorter)
+        is_simple_suffix_indel = longer.endswith(shorter)
+        if not (is_simple_prefix_indel or is_simple_suffix_indel):
+            # Complex replacements retain bases on both sides and do not
+            # require an additional padding base.
+            continue
+        if pos == 1:
+            # POS=1 can represent an event after the first reference base
+            # (left padding) or an event beginning at the first base (right
+            # padding). The common-end check above establishes valid padding
+            # for either representation.
+            continue
+        if pos == 0:
+            padded = ref[-1] == alt[-1]
+            expected = "right"
+        else:
+            padded = ref[0] == alt[0]
+            expected = "left"
+        if not padded:
+            raise StrictVCFValidationError(
+                f"Simple insertion/deletion must use a {expected}-padding base at line {line_no}",
+                code="VCF_INDEL_PADDING_INVALID",
+            )
+
 def _validate_structural_alt(alt: str, *, alt_index: int, alts: list[str], info: dict[str, str | None], pos: int, line_no: int) -> None:
     if alt in {"<NON_REF>", "<*>"} or alt == "*" or "[" in alt or "]" in alt:
         return
@@ -1119,6 +1473,7 @@ def _validate_vcf45_structural_info(
     line_no: int,
 ) -> None:
     """Validate VCFv4.5 reserved structural-variant INFO list semantics."""
+    imprecise_flag = "IMPRECISE" in info and info.get("IMPRECISE") is None
     for key in ("CIPOS", "CIEND"):
         raw_value = info.get(key)
         if raw_value in {None, "."}:
@@ -1139,29 +1494,63 @@ def _validate_vcf45_structural_info(
                     )
                 continue
             lower_offset, upper_offset = int(lower), int(upper)
+            symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
+            if key == "CIEND" and not symbolic_sv:
+                raise StrictVCFValidationError(
+                    f"INFO/CIEND must be missing for non-symbolic structural alleles at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+            if key == "CIPOS" and not symbolic_sv and not imprecise_flag:
+                raise StrictVCFValidationError(
+                    f"INFO/CIPOS must be missing for non-structural ALT alleles unless IMPRECISE is set at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
             if key == "CIPOS" and (lower_offset > 0 or upper_offset < 0):
                 raise StrictVCFValidationError(
                     f"INFO/CIPOS interval must span zero at line {line_no}",
                     code="VCF_SV_INFO_INTERVAL_INVALID",
                 )
-            if key == "CIEND":
-                symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
-                if not symbolic_sv:
+            if key == "CIEND" and (lower_offset > 0 or upper_offset < 0):
+                raise StrictVCFValidationError(
+                    f"INFO/CIEND interval must extend on both sides of zero at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+
+    # VCFv4.5 CILEN stores lower/upper bounds for the SVLEN confidence interval.
+    raw_cilen = info.get("CILEN")
+    if raw_cilen not in {None, "."}:
+        cilen_values = raw_cilen.split(",")
+        if len(cilen_values) != 2 * len(alts):
+            raise StrictVCFValidationError(
+                f"INFO/CILEN requires two bounds per ALT allele at line {line_no}",
+                code="VCF_SV_INFO_CARDINALITY_INVALID",
+            )
+        for alt_index, alternate in enumerate(alts):
+            lower, upper = cilen_values[2 * alt_index : 2 * alt_index + 2]
+            symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
+            if lower == "." or upper == ".":
+                if lower != upper:
                     raise StrictVCFValidationError(
-                        f"INFO/CIEND must be missing for non-symbolic structural alleles at line {line_no}",
+                        f"INFO/CILEN interval must provide both bounds or both missing values at line {line_no}",
                         code="VCF_SV_INFO_INTERVAL_INVALID",
                     )
-                if lower_offset > 0 or upper_offset < 0:
-                    raise StrictVCFValidationError(
-                        f"INFO/CIEND interval must extend on both sides of zero at line {line_no}",
-                        code="VCF_SV_INFO_INTERVAL_INVALID",
-                    )
+                continue
+            if not symbolic_sv:
+                raise StrictVCFValidationError(
+                    f"INFO/CILEN must be missing for non-symbolic ALT {alt_index + 1} at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
+            lower_bound, upper_bound = int(lower), int(upper)
+            if lower_bound > upper_bound:
+                raise StrictVCFValidationError(
+                    f"INFO/CILEN lower bound exceeds upper bound at line {line_no}",
+                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                )
 
     # VCFv4.5: when IMPRECISE is present, symbolic SV alleles may omit
     # CIPOS to indicate an unspecified confidence interval. Any precise ALT
     # allele in the same record must nevertheless carry an explicit CIPOS pair,
     # including 0,0 when its position is exact.
-    imprecise_flag = "IMPRECISE" in info and info.get("IMPRECISE") is None
     if imprecise_flag:
         cipos_value = info.get("CIPOS")
         cipos_entries = cipos_value.split(",") if cipos_value not in {None, "."} else []
@@ -1332,19 +1721,35 @@ def _validate_record(
                 code="REFERENCE_CONTIG_MISMATCH",
             ) from exc
 
+    if not re.fullmatch(r"[0-9]+", pos_text):
+        raise StrictVCFValidationError(
+            f"POS must be an unsigned decimal integer at line {line_no}: {pos_text!r}",
+            code="VCF_POS_INVALID",
+        )
     try:
         pos = int(pos_text)
     except ValueError as exc:
         raise StrictVCFValidationError(f"Invalid POS at line {line_no}: {pos_text!r}", code="VCF_POS_INVALID") from exc
-    if pos < 0:
-        raise StrictVCFValidationError(f"POS must be non-negative at line {line_no}", code="VCF_POS_INVALID")
+    if pos < 0 or (pos == 0 and fileformat == "VCFv4.0"):
+        raise StrictVCFValidationError(
+            f"POS must be a positive 1-based coordinate for {fileformat or 'this VCF profile'} at line {line_no}",
+            code="VCF_POS_INVALID",
+        )
 
     if identifier == "":
         raise StrictVCFValidationError(f"ID is empty at line {line_no}", code="VCF_ID_INVALID")
     if identifier != ".":
         record_ids = identifier.split(";")
         if (
-            any(not record_id or any(char.isspace() for char in record_id) for record_id in record_ids)
+            any(
+                not record_id
+                or any(char.isspace() for char in record_id)
+                or (
+                    fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
+                    and any(char in {",", "<", ">"} for char in record_id)
+                )
+                for record_id in record_ids
+            )
             or ("." in record_ids and record_ids != ["."])
         ):
             raise StrictVCFValidationError(f"Malformed ID at line {line_no}: {identifier!r}", code="VCF_ID_INVALID")
@@ -1376,14 +1781,14 @@ def _validate_record(
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
 
-    alt_identity_keys = [_alt_identity_key(allele) for allele in alts]
-    if fileformat == "VCFv4.5" and len(alt_identity_keys) != len(set(alt_identity_keys)):
-        raise StrictVCFValidationError(
-            f"ALT contains duplicate allele values at line {line_no}",
-            code="VCF_ALT_DUPLICATE",
-        )
+    _validate_simple_indel_padding(ref, alts, pos, line_no)
 
     if qual != ".":
+        if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and not VCF_FLOAT_VALUE_RE.fullmatch(qual):
+            raise StrictVCFValidationError(
+                f"QUAL does not match the VCFv4.3+ Float grammar at line {line_no}: {qual!r}",
+                code="VCF_QUAL_INVALID",
+            )
         try:
             q = float(qual)
         except ValueError as exc:
@@ -1393,7 +1798,10 @@ def _validate_record(
 
     if filt != ".":
         filter_ids = filt.split(";")
-        if not filt or any(not value or any(char.isspace() for char in value) for value in filter_ids):
+        if not filt or any(
+            not value or any(char.isspace() for char in value)
+            for value in filter_ids
+        ):
             raise StrictVCFValidationError(f"Malformed FILTER at line {line_no}: {filt!r}", code="VCF_FILTER_INVALID")
         if "0" in filter_ids:
             raise StrictVCFValidationError(
@@ -1434,7 +1842,9 @@ def _validate_record(
         if not fmt:
             raise StrictVCFValidationError(f"FORMAT is empty at line {line_no}", code="VCF_FORMAT_INVALID")
         keys = fmt.split(":")
-        if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
+        if len(keys) != len(set(keys)) or any(
+            not _field_key_is_valid("FORMAT", key, fileformat) for key in keys
+        ):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(
@@ -1531,12 +1941,13 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     vcf45_reference_block_sample_count = 0
     active_vcf45_reference_blocks: dict[int, tuple[str, int]] = {}
     structured_header_ids: dict[str, set[str]] = {}
+    structured_header_attributes: dict[str, list[tuple[int, dict[str, str]]]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
     spanning_deletion_records: list[tuple[str, int, int, set[int] | None]] = []
     breakend_records_by_id: dict[str, dict] = {}
-    breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
+    breakend_links: list[tuple[str, str, int, list[tuple[str, tuple[str, int] | None]], list[tuple[str, int]], int]] = []
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
     closed_chroms: set[str] = set()
@@ -1556,7 +1967,22 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF data line at line {line_no} is missing its required line separator",
                     code="VCF_RECORD_TERMINATOR_MISSING",
                 )
-            line = raw.rstrip("\n\r")
+            if raw.endswith("\r") and not raw.endswith("\r\n"):
+                raise StrictVCFValidationError(
+                    f"VCF uses a bare carriage-return line separator at line {line_no}",
+                    code="VCF_LINE_ENDING_INVALID",
+                )
+            if raw.endswith("\r\n"):
+                line = raw[:-2]
+            elif raw.endswith("\n"):
+                line = raw[:-1]
+            else:
+                line = raw
+            if "\r" in line:
+                raise StrictVCFValidationError(
+                    f"VCF contains a carriage return outside a CRLF line separator at line {line_no}",
+                    code="VCF_LINE_ENDING_INVALID",
+                )
             if line_no == 1 and line.startswith("\ufeff"):
                 raise StrictVCFValidationError(
                     "VCF files must not contain a UTF-8 byte-order mark",
@@ -1576,16 +2002,47 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_ORDER_INVALID",
                     )
                 header_key, separator, header_value = line[2:].partition("=")
-                if separator and header_value.startswith("<") and (
-                    header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
-                    or fileformat == "VCFv4.5"
+                if not separator or not header_key or not header_value:
+                    raise StrictVCFValidationError(
+                        f"Malformed VCF meta-information line at line {line_no}",
+                        code="VCF_HEADER_DEFINITION_INVALID",
+                    )
+                if header_key == "fileformat" and header_value.startswith("<"):
+                    raise StrictVCFValidationError(
+                        "The fileformat value must be an unstructured version identifier",
+                        code="VCF_HEADER_DEFINITION_INVALID",
+                    )
+                known_structured_headers = {
+                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE"
+                }
+                if fileformat in {"VCFv4.1", "VCFv4.2"}:
+                    known_structured_headers.add("PEDIGREE")
+                maintained_generic_headers = fileformat in {
+                    "VCFv4.3", "VCFv4.4", "VCFv4.5"
+                }
+                if header_value.startswith("<") and (
+                    maintained_generic_headers or header_key in known_structured_headers
                 ):
+                    required_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
+                    quoted_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
+                    require_structured_id = not (
+                        header_key == "PEDIGREE" and fileformat in {"VCFv4.1", "VCFv4.2"}
+                    )
+                    parsed_header_attributes: dict[str, str] = {}
                     identifier = _structured_header_id(
                         line,
                         header_key,
                         line_no,
-                        require_id=not (header_key == "PEDIGREE" and fileformat == "VCFv4.5"),
+                        require_id=require_structured_id,
+                        required_attributes=required_attributes,
+                        quoted_attributes=quoted_attributes,
+                        fileformat=fileformat,
+                        parsed_attributes_out=parsed_header_attributes,
                     )
+                    if header_key in {"SAMPLE", "PEDIGREE"}:
+                        structured_header_attributes.setdefault(header_key, []).append(
+                            (line_no, parsed_header_attributes)
+                        )
                     if (
                         header_key == "contig"
                         and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
@@ -1609,6 +2066,19 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     fileformat = line.split("=", 1)[1]
                 if line.startswith("##INFO="):
                     identifier, definition = _parse_field_definition(line, "INFO", line_no, fileformat)
+                    if identifier == "MATEID" and fileformat in {
+                        "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"
+                    }:
+                        expected_mateid_definition = (
+                            {"Number": "A", "Type": "String"}
+                            if fileformat in {"VCFv4.4", "VCFv4.5"}
+                            else {"Number": ".", "Type": "String"}
+                        )
+                        if definition != expected_mateid_definition:
+                            raise StrictVCFValidationError(
+                                f"{fileformat} INFO/MATEID must declare Number={expected_mateid_definition['Number']},Type=String at line {line_no}",
+                                code="VCF_HEADER_DEFINITION_INVALID",
+                            )
                     if identifier in info_definitions:
                         raise StrictVCFValidationError(
                             f"Duplicate INFO definition for {identifier!r} at line {line_no}",
@@ -1754,14 +2224,29 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 _validate_vcf45_structural_info(info_values, alts, line_no)
             breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
             if breakend_alts:
-                if info_values.get("SVTYPE") != "BND":
+                # SVTYPE is optional in VCFv4.1–4.4 and deprecated in VCFv4.5:
+                # the breakend ALT grammar itself identifies a breakend. When
+                # the legacy field is supplied, it must not contradict that ALT.
+                svtype_value = info_values.get("SVTYPE")
+                if svtype_value not in {None, ".", "BND"}:
                     raise StrictVCFValidationError(
-                        f"Breakend ALT requires INFO/SVTYPE=BND at line {line_no}",
+                        f"Breakend ALT conflicts with INFO/SVTYPE={svtype_value!r} at line {line_no}",
                         code="VCF_BREAKEND_SVTYPE_INVALID",
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
                 mate_value = info_values.get("MATEID")
-                mate_ids = set(mate_value.split(",")) if mate_value else set()
+                mate_values = mate_value.split(",") if mate_value else []
+                # VCFv4.4+ defines MATEID as Number=A: preserve its positional
+                # correspondence to the complete ALT list, including '.' for
+                # non-breakend alleles. VCFv4.1-4.3 use Number=. and do not
+                # provide this per-ALT mapping contract.
+                per_alt_mate_mapping = fileformat in {"VCFv4.4", "VCFv4.5"}
+                if per_alt_mate_mapping and mate_value is not None and len(mate_values) != len(alts):
+                    raise StrictVCFValidationError(
+                        f"VCFv4.4+ MATEID must contain one value per ALT allele at line {line_no}",
+                        code="VCF_BREAKEND_MATE_INVALID",
+                    )
+                mate_ids = {value for value in mate_values if value not in {"", "."}}
                 # The ALT grammar above already requires one complete bracket
                 # pair. Retain its remote coordinates for MATEID checks after
                 # the whole file has been read; the VCF-defined orientations
@@ -1784,20 +2269,45 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
                         code="VCF_BREAKEND_ALT_INVALID",
                     )
+                mate_links = []
                 if mate_ids:
                     if not record_ids:
                         raise StrictVCFValidationError(
                             f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    if len(mate_ids) != len(breakend_alts):
-                        raise StrictVCFValidationError(
-                            f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
-                            code="VCF_BREAKEND_MATE_INVALID",
+                    if per_alt_mate_mapping:
+                        remote_by_alt = iter(
+                            (match.group(2), int(match.group(3)))
+                            for alt in alts
+                            if "[" in alt or "]" in alt
+                            for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
+                            if match is not None
                         )
-                    breakend_links.append((
-                        fields[2], _chrom, _pos, mate_ids, remote_loci, line_no,
-                    ))
+                        for alternate, mate_id in zip(alts, mate_values):
+                            if "[" not in alternate and "]" not in alternate:
+                                if mate_id not in {"", "."}:
+                                    raise StrictVCFValidationError(
+                                        f"VCFv4.4+ MATEID for a non-breakend ALT must be missing at line {line_no}",
+                                        code="VCF_BREAKEND_MATE_INVALID",
+                                    )
+                                continue
+                            remote_locus = next(remote_by_alt)
+                            if mate_id not in {"", "."}:
+                                mate_links.append((mate_id, remote_locus))
+                    else:
+                        if len(mate_ids) != len(breakend_alts):
+                            raise StrictVCFValidationError(
+                                f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
+                                code="VCF_BREAKEND_MATE_INVALID",
+                            )
+                        # Older versions specify Number=. rather than Number=A;
+                        # retain their historical unordered multi-value behavior.
+                        mate_links = [(mate_id, None) for mate_id in mate_ids]
+                    if mate_links:
+                        breakend_links.append((
+                            fields[2], _chrom, _pos, mate_links, remote_loci, line_no,
+                        ))
                 for record_id in record_ids:
                     if record_id in breakend_records_by_id:
                         raise StrictVCFValidationError(
@@ -1809,6 +2319,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         "pos": _pos,
                         "remote_loci": remote_loci,
                         "mate_ids": mate_ids,
+                        "mate_links": mate_links,
+                        "per_alt_mate_mapping": per_alt_mate_mapping,
                         "line_no": line_no,
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
@@ -2060,35 +2572,79 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         )
     if not found_header or chrom_header is None:
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
+    sample_columns = chrom_header[9:] if len(chrom_header) > 9 else []
+    sample_metadata_ids = structured_header_ids.get("SAMPLE", set())
+    if sample_metadata_ids and not sample_columns:
+        raise StrictVCFValidationError(
+            "SAMPLE metadata is present but the VCF has no sample columns",
+            code="VCF_SAMPLE_METADATA_MISMATCH",
+        )
+    undeclared_sample_metadata = sample_metadata_ids.difference(sample_columns)
+    if undeclared_sample_metadata:
+        raise StrictVCFValidationError(
+            f"SAMPLE metadata IDs do not match #CHROM sample columns: {sorted(undeclared_sample_metadata)!r}",
+            code="VCF_SAMPLE_METADATA_MISMATCH",
+        )
+    sample_mixture_profile = _validate_sample_mixture_metadata(
+        structured_header_attributes.get("SAMPLE", []), sample_columns
+    )
+    pedigree_profile = _validate_pedigree_relationships(
+        fileformat,
+        structured_header_attributes.get("PEDIGREE", []),
+        sample_mixture_profile["genome_ids"],
+        sample_mixture_profile["mapping_complete"],
+    )
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
-    for source_id, chrom, pos, mate_ids, remote_loci, line_no in breakend_links:
+    for source_id, chrom, pos, mate_links, remote_loci, line_no in breakend_links:
         source_ids = set(source_id.split(";"))
-        for mate_id in mate_ids:
+        for mate_id, expected_remote_locus in mate_links:
             mate = breakend_records_by_id.get(mate_id)
             if mate is None:
                 raise StrictVCFValidationError(
                     f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
                     code="VCF_BREAKEND_MATE_MISSING",
                 )
-            if (mate["chrom"], mate["pos"]) not in remote_loci:
+            permitted_remote_loci = (
+                {expected_remote_locus}
+                if expected_remote_locus is not None
+                else set(remote_loci)
+            )
+            if (mate["chrom"], mate["pos"]) not in permitted_remote_loci:
                 raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not match the ALT mate coordinate at line {line_no}",
+                    f"Breakend MATEID {mate_id!r} does not match its ALT mate coordinate at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
-            if not (mate["mate_ids"] & source_ids):
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
-                )
-            if not any(
-                (remote_chrom, remote_pos) == (chrom, pos)
-                for remote_chrom, remote_pos in mate["remote_loci"]
-            ):
-                raise StrictVCFValidationError(
-                    f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
-                )
+            if mate["per_alt_mate_mapping"]:
+                reciprocal_links = [
+                    (target_mate_id, target_remote_locus)
+                    for target_mate_id, target_remote_locus in mate["mate_links"]
+                    if target_mate_id in source_ids
+                ]
+                if not reciprocal_links:
+                    raise StrictVCFValidationError(
+                        f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                        code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+                    )
+                if not any(target_remote_locus == (chrom, pos) for _, target_remote_locus in reciprocal_links):
+                    raise StrictVCFValidationError(
+                        f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} through its corresponding MATEID ALT at line {line_no}",
+                        code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                    )
+            else:
+                if not (mate["mate_ids"] & source_ids):
+                    raise StrictVCFValidationError(
+                        f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                        code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+                    )
+                if not any(
+                    (remote_chrom, remote_pos) == (chrom, pos)
+                    for remote_chrom, remote_pos in mate["remote_loci"]
+                ):
+                    raise StrictVCFValidationError(
+                        f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
+                        code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                    )
     for chrom, pos, line_no, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
@@ -2108,8 +2664,17 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 code="VCF_SPANNING_DELETION_CONTEXT_MISSING",
             )
 
+    specification_profile = get_vcf_specification_profile(fileformat)
     return {
         "fileformat": fileformat,
+        "format_compatibility": {
+            "support_status": specification_profile.support_status,
+            "validation_mode": specification_profile.validation_mode,
+            "specification_repository": specification_profile.specification_repository,
+            "specification_document": specification_profile.specification_document,
+            "notes": specification_profile.notes,
+            "feature_matrix": feature_compatibility_for_version(fileformat),
+        },
         "records": records,
         "alternate_allele_count": alternate_allele_count,
         "reference_only_records": reference_only,
@@ -2125,13 +2690,20 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "vcf45_max_reference_end": vcf45_max_reference_end,
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
+        "sample_genome_count": len(sample_mixture_profile["genome_ids"]),
+        "sample_mixture_count": sample_mixture_profile["mixture_count"],
+        "sample_genome_mapping_complete": sample_mixture_profile["mapping_complete"],
+        "pedigree_relationship_count": pedigree_profile["relationship_count"],
+        "pedigree_node_count": pedigree_profile.get("node_count", 0),
+        "pedigree_validation_status": pedigree_profile["validation_status"],
         "reference_contig_policy": "EXACT_OR_EXPLICIT_ALIAS" if reference_contigs is not None else "NOT_CHECKED",
         "declared_contig_md5s": contig_md5s,
         "compression": compression,
         "warning_codes": (
-            ["VCF_BGZF_EOF_MARKER_MISSING"]
-            if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
-            else []
+            (["VCF_BGZF_EOF_MARKER_MISSING"]
+             if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
+             else [])
+            + pedigree_profile.get("warning_codes", [])
         ),
     }
 

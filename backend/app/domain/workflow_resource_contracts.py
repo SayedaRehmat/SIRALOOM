@@ -25,6 +25,7 @@ from backend.app.domain.resource_capabilities import (
     GENE_PANEL,
     INTERNAL_LAB_EVIDENCE,
     LITERATURE_PROVIDER,
+    NORMALIZATION_ENGINE,
     PHENOTYPE_ONTOLOGY,
     POPULATION,
     POPULATION_SECONDARY,
@@ -58,8 +59,8 @@ WORKFLOW_STAGE_CONTRACTS: Final[tuple[WorkflowStageContract, ...]] = (
     WorkflowStageContract(
         "normalize", 2,
         "Produce reference-aware, deterministic variant representation.",
-        (REFERENCE_PACKAGE,), (),
-        ("validated_vcf", "reference_package"),
+        (REFERENCE_PACKAGE, NORMALIZATION_ENGINE), (),
+        ("validated_vcf", "reference_package", "normalization_engine"),
         ("normalized_vcf", "variant_identity"),
         False, False,
     ),

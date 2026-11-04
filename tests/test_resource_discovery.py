@@ -15,8 +15,12 @@ from backend.app.infrastructure.db.models import (
     Notification,
     Organization,
     OrganizationMembership,
+    OrganizationResourceBinding,
     Resource,
+    ResourceApproval,
+    ResourceApprovalAction,
     ResourceDiscovery,
+    ResourceQualification,
     ResourceStaging,
     User,
 )
@@ -228,3 +232,384 @@ def test_production_compose_runs_one_persistent_beat_scheduler():
     assert "celery" in beat_block
     assert "beat" in beat_block
     assert "${SIRALOOM_BEAT_HOST_PATH:-beat_data}:/data/siraloom/beat" in beat_block
+
+def test_qualified_normalization_release_creates_lab_decision_without_switching_binding():
+    from backend.app.domain.resources import decide_resource_approval
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[
+        Organization.__table__,
+        User.__table__,
+        OrganizationMembership.__table__,
+        Notification.__table__,
+        Resource.__table__,
+        ResourceQualification.__table__,
+        ResourceApproval.__table__,
+        ResourceApprovalAction.__table__,
+        OrganizationResourceBinding.__table__,
+        AuditEvent.__table__,
+    ])
+
+    with Session(engine) as db:
+        organization_id = uuid4()
+        user_id = uuid4()
+        db.add(Organization(
+            id=organization_id,
+            name="Normalization Lab",
+            external_identifier="normalization-lab",
+        ))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject="normalization-director",
+            email="director@example.test",
+            display_name="Lab Director",
+            role="lab_director",
+            status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(),
+            organization_id=organization_id,
+            user_id=user_id,
+            role="lab_director",
+            status="ACTIVE",
+        ))
+
+        previous = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="BCFtools",
+            provider="bcftools",
+            resource_type="NORMALIZATION",
+            version="1.24",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="a" * 64,
+            location="https://example.org/bcftools/1.24.tar.gz",
+            population_definition=None,
+            status="SUPERSEDED",
+            metadata_json={},
+        )
+        candidate = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="BCFtools",
+            provider="bcftools",
+            resource_type="NORMALIZATION",
+            version="1.25",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="b" * 64,
+            location="https://example.org/bcftools/1.25.tar.gz",
+            population_definition=None,
+            status="QUALIFIED",
+            metadata_json={},
+        )
+        qualification = ResourceQualification(
+            id=uuid4(),
+            resource_id=candidate.id,
+            qualification_version="normalization-qualification-v1",
+            status="QUALIFIED",
+            checks_json={"passed": True, "known_answer": "PASS"},
+            qualified_by=None,
+        )
+        identity_key = "BCFtools|bcftools|NORMALIZATION|UNSPECIFIED"
+        binding = OrganizationResourceBinding(
+            id=uuid4(),
+            organization_id=organization_id,
+            resource_id=previous.id,
+            resource_name=previous.name,
+            provider=previous.provider,
+            resource_type=previous.resource_type,
+            genome_build=None,
+            identity_key=identity_key,
+            bound_by=user_id,
+            reason="Existing laboratory-approved normalization release",
+            version=3,
+        )
+        db.add_all([previous, candidate, qualification, binding])
+        db.flush()
+
+        created = resource_discovery.notify_organizations_of_qualified_release(
+            db,
+            resource=candidate,
+            qualification=qualification,
+        )
+        db.commit()
+
+        assert created == 1
+        approval = db.query(ResourceApproval).one()
+        notification = db.query(Notification).one()
+        db.refresh(binding)
+        assert approval.status == "PENDING"
+        assert approval.resource_id == candidate.id
+        assert notification.notification_type == "RESOURCE_RELEASE_QUALIFIED"
+        assert notification.metadata_json["approval_id"] == str(approval.id)
+        assert notification.metadata_json["requires_lab_decision"] is True
+        assert binding.resource_id == previous.id
+
+        # Reprocessing the same qualification is idempotent and does not spam
+        # the laboratory with duplicate approval requests or notifications.
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db,
+            resource=candidate,
+            qualification=qualification,
+        ) == 0
+        assert db.query(ResourceApproval).count() == 1
+        assert db.query(Notification).count() == 1
+
+        decide_resource_approval(
+            db,
+            approval_id=approval.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="REJECTED",
+            expected_version=1,
+            reason="Laboratory retains its currently validated release",
+        )
+        db.refresh(binding)
+        assert binding.resource_id == previous.id
+        assert approval.status == "REJECTED"
+
+def test_vcf_specification_approval_is_version_specific_and_preserves_previous_approval():
+    from backend.app.domain.resources import (
+        decide_resource_approval,
+        require_approved_vcf_specification,
+    )
+
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine, tables=[
+        Organization.__table__,
+        User.__table__,
+        OrganizationMembership.__table__,
+        Notification.__table__,
+        Resource.__table__,
+        ResourceQualification.__table__,
+        ResourceApproval.__table__,
+        ResourceApprovalAction.__table__,
+        OrganizationResourceBinding.__table__,
+        AuditEvent.__table__,
+    ])
+
+    with Session(engine) as db:
+        organization_id = uuid4()
+        user_id = uuid4()
+        db.add(Organization(id=organization_id, name="VCF Lab", external_identifier="vcf-lab"))
+        db.add(User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject="vcf-director",
+            email="vcf-director@example.test",
+            display_name="VCF Lab Director",
+            role="lab_director",
+            status="ACTIVE",
+        ))
+        db.add(OrganizationMembership(
+            id=uuid4(),
+            organization_id=organization_id,
+            user_id=user_id,
+            role="lab_director",
+            status="ACTIVE",
+        ))
+
+        with pytest.raises(ValueError, match="has no registered qualified release") as undiscovered:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert undiscovered.value.code == "VCF_SPECIFICATION_RELEASE_NOT_REGISTERED"
+
+        discovered_candidate = Resource(
+            id=uuid4(),
+            organization_id=None,
+            name="VCF specification VCFv4.9",
+            provider="HTS-Specifications",
+            resource_type="VCF_SPECIFICATION",
+            version="VCFv4.9",
+            genome_build=None,
+            access_method="HTTPS",
+            license_text=None,
+            checksum="c" * 64,
+            location="https://samtools.github.io/hts-specs/VCFv4.9.pdf",
+            population_definition=None,
+            status="CANDIDATE",
+            metadata_json={},
+        )
+        db.add(discovered_candidate)
+        db.flush()
+        with pytest.raises(ValueError, match="is not qualified for laboratory use") as unqualified:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.9"
+            )
+        assert unqualified.value.code == "VCF_SPECIFICATION_QUALIFICATION_REQUIRED"
+
+        def add_qualified_spec(version):
+            resource = Resource(
+                id=uuid4(),
+                organization_id=None,
+                name=f"VCF specification {version}",
+                provider="HTS-Specifications",
+                resource_type="VCF_SPECIFICATION",
+                version=version,
+                genome_build=None,
+                access_method="HTTPS",
+                license_text=None,
+                checksum=(("a" if version == "VCFv4.6" else "b") * 64),
+                location=f"https://samtools.github.io/hts-specs/{version}.pdf",
+                population_definition=None,
+                status="QUALIFIED",
+                metadata_json={},
+            )
+            qualification = ResourceQualification(
+                id=uuid4(),
+                resource_id=resource.id,
+                qualification_version="vcf-spec-qualification-v1",
+                status="QUALIFIED",
+                checks_json={"passed": True, "conformance": "PASS"},
+                qualified_by=None,
+            )
+            db.add_all([resource, qualification])
+            db.flush()
+            return resource, qualification
+
+        v46, q46 = add_qualified_spec("VCFv4.6")
+        with pytest.raises(ValueError, match="has no explicit laboratory approval") as unapproved:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert unapproved.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED"
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v46, qualification=q46
+        ) == 1
+        approval46 = db.query(ResourceApproval).filter_by(resource_id=v46.id).one()
+        decide_resource_approval(
+            db,
+            approval_id=approval46.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Laboratory approved the validated VCFv4.6 parser profile",
+        )
+        snapshot46 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )
+        assert snapshot46["resource_id"] == str(v46.id)
+
+        # Requalifying the same immutable release creates a new qualification
+        # identity. The old approval must not authorize that new evidence set.
+        q46_v2 = ResourceQualification(
+            id=uuid4(),
+            resource_id=v46.id,
+            qualification_version="vcf-spec-qualification-v2",
+            status="QUALIFIED",
+            checks_json={"passed": True, "conformance": "PASS", "requalification": True},
+            qualified_by=None,
+        )
+        db.add(q46_v2)
+        db.flush()
+        with pytest.raises(ValueError, match="has no explicit laboratory approval") as unrequested_v2:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert unrequested_v2.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED"
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v46, qualification=q46_v2
+        ) == 1
+        approval46_v2 = db.query(ResourceApproval).filter_by(
+            resource_id=v46.id,
+            qualification_id=q46_v2.id,
+        ).one()
+        assert approval46_v2.status == "PENDING"
+        with pytest.raises(ValueError, match="awaiting an explicit laboratory approval") as pending_v2:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.6"
+            )
+        assert pending_v2.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
+        # The prior binding is retained, but it cannot authorize the new
+        # qualification until the laboratory makes a fresh decision.
+        retained_binding = db.query(OrganizationResourceBinding).filter_by(
+            organization_id=organization_id,
+            identity_key="VCF specification VCFv4.6|HTS-Specifications|VCF_SPECIFICATION|UNSPECIFIED",
+        ).one()
+        retained_binding_version = retained_binding.version
+        assert retained_binding.resource_id == v46.id
+
+        decide_resource_approval(
+            db,
+            approval_id=approval46_v2.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Laboratory approved the updated qualification evidence",
+        )
+        snapshot46_v2 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )
+        assert snapshot46_v2["qualification_id"] == str(q46_v2.id)
+        assert snapshot46_v2["resource_id"] == str(v46.id)
+        db.refresh(retained_binding)
+        assert retained_binding.version == retained_binding_version + 1
+
+        v47, q47 = add_qualified_spec("VCFv4.7")
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v47, qualification=q47
+        ) == 1
+        approval47 = db.query(ResourceApproval).filter_by(resource_id=v47.id).one()
+        assert approval47.status == "PENDING"
+
+        # A newly qualified version is not implicitly approved, and its
+        # pending request does not replace the laboratory's VCFv4.6 approval.
+        with pytest.raises(ValueError, match="awaiting an explicit laboratory approval") as pending_v47:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.7"
+            )
+        assert pending_v47.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_PENDING"
+        assert require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )["resource_id"] == str(v46.id)
+
+        decide_resource_approval(
+            db,
+            approval_id=approval47.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="REJECTED",
+            expected_version=1,
+            reason="Laboratory retains its previously approved specification",
+        )
+        with pytest.raises(ValueError, match="was rejected by this laboratory") as rejected_v47:
+            require_approved_vcf_specification(
+                db, organization_id=organization_id, version="VCFv4.7"
+            )
+        assert rejected_v47.value.code == "VCF_SPECIFICATION_LAB_APPROVAL_REJECTED"
+        assert rejected_v47.value.next_step == "PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED"
+        assert require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )["resource_id"] == str(v46.id)
+
+        v48, _q48 = add_qualified_spec("VCFv4.8")
+        assert resource_discovery.notify_organizations_of_qualified_release(
+            db, resource=v48, qualification=_q48
+        ) == 1
+        approval48 = db.query(ResourceApproval).filter_by(resource_id=v48.id).one()
+        assert approval48.status == "PENDING"
+        decide_resource_approval(
+            db,
+            approval_id=approval48.id,
+            organization_id=organization_id,
+            actor_id=user_id,
+            decision="APPROVED",
+            expected_version=1,
+            reason="Laboratory separately approved VCFv4.8",
+        )
+        snapshot48 = require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.8"
+        )
+        assert snapshot48["resource_id"] == str(v48.id)
+        assert require_approved_vcf_specification(
+            db, organization_id=organization_id, version="VCFv4.6"
+        )["resource_id"] == str(v46.id)
+

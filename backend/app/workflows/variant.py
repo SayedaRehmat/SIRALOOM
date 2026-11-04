@@ -46,6 +46,12 @@ from backend.app.config import settings
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.normalization_provider import (
+    NormalizationProviderError,
+    NormalizationProviderUnavailable,
+    normalize_with_selected_provider,
+)
+from backend.app.domain.resource_capabilities import NORMALIZATION_ENGINE
 from backend.app.domain.normalization import (
     NormalizationError,
     UnsupportedVariantError,
@@ -87,18 +93,23 @@ from backend.app.domain.variant_identity import canonical_key, normalize_build, 
 from backend.app.domain.vcf_tools import (
     MULTIALLELIC_OVERLAP_POLICY,
     VCFToolError,
+    VCFToolUnavailable,
     classify_records,
     normalize_vcf_with_bcftools,
     route_vcf_records,
 )
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    read_vcf_fileformat,
     validate_vcf_reference_alleles,
     validate_vcf_strict,
 )
 from backend.app.domain.workflow_decision import OutcomeKind, WorkflowAction, decide_step_outcome
 from backend.app.domain.workflow_decision_persistence import record_workflow_decision
-from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.infrastructure.artifacts.store import (
+    ArtifactIdentityConflictError,
+    ArtifactStore,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
@@ -1449,8 +1460,63 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             )
             db.commit()
 
-        # 1. Validate the source VCF before scientific transformation.
+        # 1. Identify the declared VCF specification before strict parsing.
+        # This makes pending/rejected future specifications an explicit lab
+        # governance block instead of misclassifying them as malformed VCFs.
         validation_step = _step(db, analysis.id, "validate_input")
+        detected_vcf_version = read_vcf_fileformat(input_path)
+        specification_approval = None
+        from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+        from backend.app.domain.resources import (
+            ResourceRegistryError,
+            require_approved_vcf_specification,
+        )
+        if detected_vcf_version and detected_vcf_version not in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+            try:
+                specification_approval = require_approved_vcf_specification(
+                    db,
+                    organization_id=case.organization_id,
+                    version=detected_vcf_version,
+                )
+            except ResourceRegistryError as exc:
+                block_code = getattr(exc, "code", "VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED")
+                next_step = getattr(exc, "next_step", "LAB_APPROVAL_REQUIRED")
+                validation_metadata = dict(validation_step.metadata_json or {})
+                validation_metadata["vcf_specification_approval"] = {
+                    "status": block_code,
+                    "version": detected_vcf_version,
+                    "reason": str(exc),
+                }
+                validation_metadata["next_step"] = next_step
+                validation_metadata["detected_vcf_version"] = detected_vcf_version
+                mark_step(
+                    db,
+                    validation_step,
+                    StepStatus.BLOCKED,
+                    error_code=block_code,
+                    error_message=str(exc),
+                    metadata=validation_metadata,
+                )
+                analysis.status = AnalysisStatus.BLOCKED
+                analysis.completed_at = None
+                db.commit()
+                audit.record(
+                    event_type="WORKFLOW_BLOCKED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="vcf-specification-governance",
+                    reason=str(exc),
+                    payload={
+                        "error_code": block_code,
+                        "vcf_version": detected_vcf_version,
+                        "next_step": next_step,
+                    },
+                )
+                db.commit()
+                return
+
+        # 2. Validate the source VCF before scientific transformation.
         if validation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, validation_step, StepStatus.RUNNING)
             try:
@@ -1476,24 +1542,53 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
             except StrictVCFValidationError as exc:
+                parser_not_implemented = (
+                    bool(detected_vcf_version)
+                    and detected_vcf_version not in BUILTIN_VCF_SPECIFICATION_VERSIONS
+                    and exc.code == "VCF_FILEFORMAT_UNSUPPORTED"
+                )
+                error_code = (
+                    "VCF_SPECIFICATION_PARSER_NOT_IMPLEMENTED"
+                    if parser_not_implemented else exc.code
+                )
+                next_step = (
+                    "PARSER_IMPLEMENTATION_AND_CONFORMANCE_REQUIRED"
+                    if parser_not_implemented else "VALID_VCF_REQUIRED"
+                )
+                failure_metadata = {
+                    "next_step": next_step,
+                    "detected_vcf_version": detected_vcf_version,
+                    "parser_support": "NOT_IMPLEMENTED" if parser_not_implemented else None,
+                    "vcf_specification_approval": specification_approval,
+                }
                 mark_step(
                     db,
                     validation_step,
                     StepStatus.BLOCKED,
-                    error_code=exc.code,
-                    error_message=str(exc),
-                    metadata={"next_step": "VALID_VCF_REQUIRED"},
+                    error_code=error_code,
+                    error_message=(
+                        f"VCF specification {detected_vcf_version} is approved by the laboratory, "
+                        "but this SIRALOOM parser build has no qualified implementation for it."
+                        if parser_not_implemented else str(exc)
+                    ),
+                    metadata=failure_metadata,
                 )
                 analysis.status = AnalysisStatus.BLOCKED
+                analysis.completed_at = None
                 db.commit()
                 audit.record(
                     event_type="WORKFLOW_BLOCKED",
                     case_id=analysis.case_id,
                     analysis_id=analysis.id,
                     actor_type="SYSTEM",
-                    actor_id="vcf-validator",
+                    actor_id="vcf-specification-parser" if parser_not_implemented else "vcf-validator",
                     reason=str(exc),
-                    payload={"error_code": exc.code, "next_step": "VALID_VCF_REQUIRED"},
+                    payload={
+                        "error_code": error_code,
+                        "next_step": next_step,
+                        "vcf_version": detected_vcf_version,
+                        "laboratory_approval": specification_approval,
+                    },
                 )
                 db.commit()
                 return
@@ -1511,6 +1606,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+
+        # Persist the exact approval snapshot alongside successful validation.
+        # Built-in versions carry an explicit built-in profile snapshot.
+        validation_metadata = dict(validation_step.metadata_json or {})
+        if specification_approval is None and detected_vcf_version:
+            specification_approval = {
+                "source": "BUILTIN_SIRALOOM_PROFILE",
+                "version": detected_vcf_version,
+                "approval_required": False,
+            }
+        validation_metadata["vcf_specification_approval"] = specification_approval
+        validation_step.metadata_json = validation_metadata
+        db.add(validation_step)
+        db.commit()
 
         # 2. Reference-aware normalization + bounded-memory variant indexing.
         # M13 never retains the complete normalized variant set in Python memory.
@@ -2075,28 +2184,86 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
+            except ReferenceError as exc:
+                persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
+                set_routed_reference_validation("NOT_RUN", exc.code)
+                if exc.code in {
+                    "ENSEMBL_TIMEOUT",
+                    "ENSEMBL_RATE_LIMITED",
+                    "ENSEMBL_SERVER_ERROR",
+                    "ENSEMBL_UNAVAILABLE",
+                }:
+                    _schedule_transient_step_retry(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        event_type="REFERENCE_RESOURCE_RETRY_SCHEDULED",
+                        actor_id="reference-provider",
+                        next_step="reference_resolution",
+                    )
+                    raise TransientWorkflowError(
+                        "The reference provider is temporarily unavailable; retrying from the durable normalization checkpoint.",
+                        countdown=10,
+                        max_retries=3,
+                        error_code="REFERENCE_PROVIDER_RETRY_EXHAUSTED",
+                    ) from exc
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="REFERENCE_RESOURCE_REQUIRES_REVIEW",
+                    actor_id="reference-provider",
+                    next_step="reference_resource_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_resource_error": True,
+                        "reference_error_code": exc.code,
+                        "reference_integrity_review_required": exc.code in {
+                            "REFERENCE_BGZF_TRUNCATED",
+                            "REFERENCE_FAI_INVALID",
+                            "REFERENCE_FASTA_INVALID",
+                            "REFERENCE_FAI_MISMATCH",
+                            "REFERENCE_PACKAGE_INVALID",
+                            "REFERENCE_GZI_MISSING",
+                            "REFERENCE_CHECKSUM_MISMATCH",
+                            "REFERENCE_CONTIG_MANIFEST_MISMATCH",
+                            "REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
+                        },
+                    },
+                )
+                return
             except ReferencePackageError as exc:
                 persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
                 set_routed_reference_validation("NOT_RUN", exc.code)
-                mark_step(
+                _route_step_to_human_review(
                     db,
-                    normalization_step,
-                    StepStatus.BLOCKED,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
                     error_code=exc.code,
                     error_message=str(exc),
+                    event_type="REFERENCE_PACKAGE_REQUIRES_REVIEW",
+                    actor_id="reference-resource",
+                    next_step="reference_package_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_package_error": True,
+                        "reference_package_error_code": exc.code,
+                        "reference_integrity_review_required": exc.code in {
+                            "REFERENCE_FAI_INVALID",
+                            "REFERENCE_FASTA_INVALID",
+                            "REFERENCE_FAI_MISMATCH",
+                            "REFERENCE_PACKAGE_INVALID",
+                            "REFERENCE_GZI_MISSING",
+                            "REFERENCE_CHECKSUM_MISMATCH",
+                            "REFERENCE_CONTIG_MANIFEST_MISMATCH",
+                            "REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
+                        },
+                    },
                 )
-                analysis.status = AnalysisStatus.BLOCKED
-                db.commit()
-                audit.record(
-                    event_type="WORKFLOW_BLOCKED",
-                    case_id=analysis.case_id,
-                    analysis_id=analysis.id,
-                    actor_type="SYSTEM",
-                    actor_id="reference-package",
-                    reason=str(exc),
-                    payload={"error_code": exc.code, "reference_build": reference_build},
-                )
-                db.commit()
                 return
             except StrictVCFValidationError as exc:
                 persist_exclusion_manifest(contig_lengths_resolved=routing_contig_lengths_resolved)
@@ -2178,6 +2345,30 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 return
 
             temp_path: Path | None = None
+            profile_runtime_normalization = None
+            normalization_provider_execution = None
+            normalization_provider_record = None
+            if profile_bound_analysis:
+                try:
+                    profile_runtime_normalization = resolve_profile_runtime_resource(
+                        db,
+                        analysis_id=analysis.id,
+                        capability=NORMALIZATION_ENGINE,
+                    )
+                    normalization_provider_execution = profile_runtime_normalization.execution
+                except ProfileRuntimeResourceError as exc:
+                    _route_step_to_human_review(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        event_type="NORMALIZATION_RESOURCE_REQUIRES_REVIEW",
+                        actor_id="normalization-resource",
+                        next_step="resource_remediation",
+                        payload={"automatic_fallback": False, "resource_gap": True},
+                    )
+                    return
             try:
                 suffix = ".vcf.gz"
                 with NamedTemporaryFile(prefix="siraloom-normalized-", suffix=suffix, delete=False) as temp:
@@ -2189,7 +2380,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "reference_fasta_sha256": reference_package["fasta_sha256"],
                     "reference_fai_sha256": reference_package["fai_sha256"],
                     "reference_gzi_sha256": reference_package.get("gzi_sha256"),
-                    "bcftools_version": settings.bcftools_version,
+                    "normalization_provider": (
+                        {
+                            "resource_id": str(profile_runtime_normalization.resource.id),
+                            "provider": profile_runtime_normalization.resource.provider,
+                            "version": profile_runtime_normalization.resource.version,
+                            "checksum": profile_runtime_normalization.resource.checksum,
+                            "execution_contract_hash": normalization_provider_execution.contract_hash,
+                        }
+                        if profile_runtime_normalization is not None else {
+                            "provider": "bcftools",
+                            "version": settings.bcftools_version,
+                            "selection_policy": "LEGACY_SETTINGS_PIN",
+                        }
+                    ),
                     "execution_contract_hash": reference_execution.contract_hash,
                     "normalization_version": "6.0",
                     "source_record_mapping_tag": "SIRALOOM_ORIG",
@@ -2221,14 +2425,55 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
 
-                try:
-                    normalization_stats = normalize_vcf_with_bcftools(
-                        routing["sequence_path"],
-                        temp_path,
-                        reference_fasta=reference_fasta_path,
-                        expected_bcftools_version=settings.bcftools_version,
-                        source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                if normalization_provider_execution is not None:
+                    normalization_provider_record = start_resource_execution(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        attempt=normalization_step.attempt,
+                        resolved=normalization_provider_execution,
+                        requested_resource_id=profile_runtime_normalization.resource.id,
+                        fallback_resource_id=None,
+                        batch_key="normalization-provider",
+                        metadata={
+                            "resource_type": NORMALIZATION_ENGINE,
+                            "provider": profile_runtime_normalization.resource.provider,
+                            "version": profile_runtime_normalization.resource.version,
+                            "checksum": profile_runtime_normalization.resource.checksum,
+                        },
                     )
+                    db.commit()
+
+                try:
+                    if profile_runtime_normalization is not None:
+                        normalization_stats, _provider_selection = normalize_with_selected_provider(
+                            profile_runtime_normalization.resource,
+                            routing["sequence_path"],
+                            temp_path,
+                            reference_fasta=reference_fasta_path,
+                            approved=True,
+                            expected_bcftools_sha256=str(
+                                dict(
+                                    dict(normalization_provider_execution.contract.toolchain or {})
+                                    .get("bcftools") or {}
+                                ).get("sha256") or ""
+                            ),
+                            qualified_bcftools_executable=str(
+                                dict(
+                                    dict(normalization_provider_execution.contract.toolchain or {})
+                                    .get("bcftools") or {}
+                                ).get("executable") or ""
+                            ),
+                            source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                        )
+                    else:
+                        normalization_stats = normalize_vcf_with_bcftools(
+                            routing["sequence_path"],
+                            temp_path,
+                            reference_fasta=reference_fasta_path,
+                            expected_bcftools_version=settings.bcftools_version,
+                            source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                        )
                     response_sha256 = sha256_file(temp_path)
                     complete_resource_execution(
                         db,
@@ -2237,6 +2482,19 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         request_fingerprint=request_fingerprint,
                         response_sha256=response_sha256,
                     )
+                    if normalization_provider_record is not None:
+                        normalization_provider_record.metadata_json = {
+                            **dict(normalization_provider_record.metadata_json or {}),
+                            "executable_identity": normalization_stats.get("executable_identity"),
+                            "executable_integrity_status": normalization_stats.get("executable_integrity_status"),
+                        }
+                        complete_resource_execution(
+                            db,
+                            normalization_provider_record,
+                            status="SUCCEEDED",
+                            request_fingerprint=request_fingerprint,
+                            response_sha256=response_sha256,
+                        )
                     db.commit()
                 except Exception as exc:
                     complete_resource_execution(
@@ -2246,6 +2504,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         error_code=getattr(exc, "code", None) or "REFERENCE_NORMALIZATION_EXECUTION_FAILED",
                         error_message=str(exc),
                     )
+                    if normalization_provider_record is not None:
+                        complete_resource_execution(
+                            db,
+                            normalization_provider_record,
+                            status="FAILED",
+                            error_code=getattr(exc, "code", None) or "NORMALIZATION_EXECUTION_FAILED",
+                            error_message=str(exc),
+                        )
                     db.commit()
                     raise
 
@@ -2281,6 +2547,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "normalization_tool": normalization_stats["tool"],
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
+                        "normalization_executable_identity": normalization_stats.get("executable_identity"),
+                        "normalization_executable_integrity_status": normalization_stats.get("executable_integrity_status"),
+                        "normalization_provider_resource_id": (
+                            str(profile_runtime_normalization.resource.id)
+                            if profile_runtime_normalization is not None else None
+                        ),
+                        "normalization_provider_resource_name": (
+                            profile_runtime_normalization.resource.name
+                            if profile_runtime_normalization is not None else None
+                        ),
+                        "normalization_provider_version": (
+                            profile_runtime_normalization.resource.version
+                            if profile_runtime_normalization is not None else settings.bcftools_version
+                        ),
+                        "normalization_provider_checksum": (
+                            profile_runtime_normalization.resource.checksum
+                            if profile_runtime_normalization is not None else None
+                        ),
                         "normalization_command": normalization_stats["command"],
                         "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
                         "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
@@ -2323,7 +2607,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     "fallback_used": resolution.used_fallback,
                     "decision_action": resolution.decision.action.value,
                 }
-                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
+                mark_step(db, normalization_step, StepStatus.SUCCEEDED, metadata={"normalization": "REFERENCE_AWARE_SEQUENCE_VARIANTS", "resource_resolution": fallback_metadata, "record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "partition_size": partition_size, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "reference_contig_policy": reference_package["contig_policy"], "reference_package_profile": package_profile, "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_expected_tool_version": normalization_stats["expected_tool_version"], "normalization_executable_identity": normalization_stats.get("executable_identity"), "normalization_executable_integrity_status": normalization_stats.get("executable_integrity_status"), "normalization_provider_resource_id": str(profile_runtime_normalization.resource.id) if profile_runtime_normalization is not None else None, "normalization_provider_version": profile_runtime_normalization.resource.version if profile_runtime_normalization is not None else settings.bcftools_version, "normalization_provider_checksum": profile_runtime_normalization.resource.checksum if profile_runtime_normalization is not None else None, "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 audit.record(event_type="NORMALIZATION_COMPLETED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", input_artifacts=[{"artifact_id": str(input_artifact.id), "sha256": input_artifact.sha256}], output_artifacts=[{"artifact_id": str(normalized_artifact.id), "sha256": normalized_artifact.sha256}, *[{"artifact_id": str(item.id), "sha256": item.sha256} for item in (*routed_artifacts, *exclusion_manifest_artifacts)]], workflow={"step": "normalize", "version": "3.0"}, payload={"record_count": routing["sequence_records"], "source_record_count": profile["records"], "routing": {key: value for key, value in routing.items() if not key.endswith("_path")}, "routed_artifact_ids": [str(item.id) for item in routed_artifacts], "exclusion_manifest_artifact_ids": [str(item.id) for item in exclusion_manifest_artifacts], "streaming": True, "reference_source": "PINNED_REFERENCE_PACKAGE", "reference_package_id": reference_package["resource_id"], "reference_package_version": reference_package["version"], "reference_package_checksum": reference_package["package_checksum"], "reference_fasta_sha256": reference_package["fasta_sha256"], "reference_fai_sha256": reference_package["fai_sha256"], "reference_gzi_sha256": reference_package.get("gzi_sha256"), "reference_contigs_sha256": reference_package["contigs_sha256"], "source_reference_allele_profile": reference_allele_profile, "normalization_tool": normalization_stats["tool"], "normalization_tool_version": normalization_stats["tool_version"], "normalization_command": normalization_stats["command"], "normalization_version": "6.0", "source_only_format_fields": normalization_stats.get("source_only_format_fields", []), "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"), "execution_contract": reference_execution.snapshot, "execution_contract_hash": reference_execution.contract_hash, "input_profile": profile})
                 db.commit()
             except UnsupportedVariantError as exc:
@@ -2348,13 +2632,181 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 db.commit()
                 return
-            except (NormalizationError, ReferenceError, ReferencePackageError, VCFToolError) as exc:
+            except (NormalizationProviderUnavailable, VCFToolUnavailable) as exc:
+                # Missing/replaced executables and process-launch/time-limit
+                # failures are operationally recoverable. Preserve the stage
+                # checkpoint and retry; do not misclassify them as bad VCF data.
+                _schedule_transient_step_retry(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=getattr(exc, "code", None) or "NORMALIZATION_TOOL_UNAVAILABLE",
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_RETRY_SCHEDULED",
+                    actor_id="siraloom-normalizer",
+                    next_step="normalize",
+                )
+                raise TransientWorkflowError(
+                    "The selected normalization executable is temporarily unavailable; retrying from the durable stage checkpoint.",
+                    countdown=10,
+                    max_retries=3,
+                    error_code="NORMALIZATION_TOOL_RETRY_EXHAUSTED",
+                ) from exc
+            except (NormalizationProviderError, ResourceConsumptionError) as exc:
+                # A stale, unqualified, unapproved, or integrity-mismatched
+                # normalization resource is a governance gap. Preserve the case
+                # for remediation and human action; never substitute another tool.
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_RESOURCE_REQUIRES_REVIEW",
+                    actor_id="normalization-resource",
+                    next_step="resource_remediation",
+                    payload={"automatic_fallback": False, "resource_gap": True},
+                )
+                return
+            except ReferenceError as exc:
+                if exc.code in {
+                    "ENSEMBL_TIMEOUT",
+                    "ENSEMBL_RATE_LIMITED",
+                    "ENSEMBL_SERVER_ERROR",
+                    "ENSEMBL_UNAVAILABLE",
+                }:
+                    _schedule_transient_step_retry(
+                        db,
+                        analysis_id=analysis.id,
+                        step_id="normalize",
+                        error_code=exc.code,
+                        error_message=str(exc),
+                        event_type="REFERENCE_RESOURCE_RETRY_SCHEDULED",
+                        actor_id="reference-provider",
+                        next_step="reference_resolution",
+                    )
+                    raise TransientWorkflowError(
+                        "The reference provider is temporarily unavailable; retrying from the durable normalization checkpoint.",
+                        countdown=10,
+                        max_retries=3,
+                        error_code="REFERENCE_PROVIDER_RETRY_EXHAUSTED",
+                    ) from exc
+                if exc.code == "ENSEMBL_INVALID_REGION":
+                    mark_step(
+                        db,
+                        normalization_step,
+                        StepStatus.FAILED,
+                        error_code=exc.code,
+                        error_message=str(exc),
+                    )
+                    analysis.status = AnalysisStatus.FAILED
+                    db.commit()
+                    audit.record(
+                        event_type="REFERENCE_INPUT_REGION_REJECTED",
+                        case_id=analysis.case_id,
+                        analysis_id=analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="siraloom-reference",
+                        reason=str(exc),
+                        payload={"error_code": exc.code, "next_step": "CORRECT_INPUT_COORDINATES"},
+                    )
+                    db.commit()
+                    return
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="REFERENCE_RESOURCE_REQUIRES_REVIEW",
+                    actor_id="reference-resource",
+                    next_step="reference_resource_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_resource_error": True,
+                        "reference_error_code": exc.code,
+                        "reference_integrity_review_required": True,
+                    },
+                )
+                return
+            except ReferencePackageError as exc:
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="REFERENCE_PACKAGE_REQUIRES_REVIEW",
+                    actor_id="reference-resource",
+                    next_step="reference_package_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "reference_package_error": True,
+                        "reference_package_error_code": exc.code,
+                        "reference_integrity_review_required": exc.code in {
+                            "REFERENCE_FAI_INVALID",
+                            "REFERENCE_FASTA_INVALID",
+                            "REFERENCE_FAI_MISMATCH",
+                            "REFERENCE_PACKAGE_INVALID",
+                            "REFERENCE_GZI_MISSING",
+                            "REFERENCE_CHECKSUM_MISMATCH",
+                            "REFERENCE_CONTIG_MANIFEST_MISMATCH",
+                            "REFERENCE_PACKAGE_CHECKSUM_MISMATCH",
+                        },
+                    },
+                )
+                return
+            except VCFToolError as exc:
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=getattr(exc, "code", None) or "VCF_TOOL_EXECUTION_FAILED",
+                    error_message=str(exc),
+                    event_type="VCF_TOOL_EXECUTION_REQUIRES_REVIEW",
+                    actor_id="normalization-resource",
+                    next_step="normalization_tool_remediation",
+                    payload={
+                        "automatic_fallback": False,
+                        "normalization_tool_error": True,
+                        "normalization_tool_error_code": getattr(exc, "code", None) or "VCF_TOOL_EXECUTION_FAILED",
+                    },
+                )
+                return
+            except NormalizationError as exc:
                 error_code = getattr(exc, "code", None) or "NORMALIZATION_FAILED"
-                mark_step(db, normalization_step, StepStatus.FAILED, error_code=error_code, error_message=str(exc))
+                mark_step(
+                    db,
+                    normalization_step,
+                    StepStatus.FAILED,
+                    error_code=error_code,
+                    error_message=str(exc),
+                )
                 analysis.status = AnalysisStatus.FAILED
                 db.commit()
-                audit.record(event_type="NORMALIZATION_FAILED", case_id=analysis.case_id, analysis_id=analysis.id, actor_type="SYSTEM", actor_id="siraloom-normalizer", reason=str(exc))
+                audit.record(
+                    event_type="NORMALIZATION_FAILED",
+                    case_id=analysis.case_id,
+                    analysis_id=analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="siraloom-normalizer",
+                    reason=str(exc),
+                    payload={"error_code": error_code, "next_step": "INPUT_OR_NORMALIZATION_CORRECTION"},
+                )
                 db.commit()
+                return
+            except ArtifactIdentityConflictError as exc:
+                _route_step_to_human_review(
+                    db,
+                    analysis_id=analysis.id,
+                    step_id="normalize",
+                    error_code=exc.code,
+                    error_message=str(exc),
+                    event_type="NORMALIZATION_ARTIFACT_IDENTITY_CONFLICT",
+                    actor_id="siraloom-normalizer",
+                    next_step="artifact_integrity_review",
+                    payload={"automatic_overwrite": False, "artifact_integrity_conflict": True},
+                )
                 return
             except (SQLAlchemyError, OSError) as exc:
                 # Database and artifact-storage failures are operationally retryable.
@@ -5916,8 +6368,9 @@ def _put_idempotent_stage_artifact(
                     "PENDING", "PASS", "FAILED", "NOT_RUN",
                     "NOT_VALIDATED_UNSUPPORTED_COORDINATE",
                 }:
-                    raise RuntimeError(
-                        f"Routed artifact {artifact_id} has invalid reference validation provenance."
+                    raise ArtifactIdentityConflictError(
+                        f"Routed artifact {artifact_id} has invalid reference validation provenance.",
+                        code="ARTIFACT_PROVENANCE_INVALID",
                     )
                 package_fields = {
                     "reference_package_id",
@@ -5926,13 +6379,15 @@ def _put_idempotent_stage_artifact(
                 }
                 present_package_fields = package_fields.intersection(existing_validation)
                 if present_package_fields and present_package_fields != package_fields:
-                    raise RuntimeError(
-                        f"Routed artifact {artifact_id} has incomplete reference package provenance."
+                    raise ArtifactIdentityConflictError(
+                        f"Routed artifact {artifact_id} has incomplete reference package provenance.",
+                        code="ARTIFACT_PROVENANCE_INCOMPLETE",
                     )
                 profile = existing_validation.get("source_reference_allele_profile")
                 if profile is not None and not isinstance(profile, dict):
-                    raise RuntimeError(
-                        f"Routed artifact {artifact_id} has invalid reference allele profile provenance."
+                    raise ArtifactIdentityConflictError(
+                        f"Routed artifact {artifact_id} has invalid reference allele profile provenance.",
+                        code="ARTIFACT_PROVENANCE_INVALID",
                     )
         if (
             existing.case_id != case_id
@@ -5945,17 +6400,20 @@ def _put_idempotent_stage_artifact(
             or existing.validation_status != validation_status
             or existing_metadata != expected_metadata
         ):
-            raise RuntimeError(
-                f"Deterministic artifact identity {artifact_id} is already bound to different workflow provenance."
+            raise ArtifactIdentityConflictError(
+                f"Deterministic artifact identity {artifact_id} is already bound to different workflow provenance.",
+                code="ARTIFACT_IDENTITY_CONFLICT",
             )
         source_sha256 = sha256_file(source)
         if existing.sha256 != source_sha256 or existing.size_bytes != source.stat().st_size:
-            raise RuntimeError(
-                f"Deterministic artifact identity {artifact_id} produced different bytes on replay."
+            raise ArtifactIdentityConflictError(
+                f"Deterministic artifact identity {artifact_id} produced different bytes on replay.",
+                code="ARTIFACT_IDENTITY_CONFLICT",
             )
         if not store.exists(existing.storage_uri):
-            raise RuntimeError(
-                f"Persisted artifact {artifact_id} is missing from its configured storage backend."
+            raise ArtifactIdentityConflictError(
+                f"Persisted artifact {artifact_id} is missing from its configured storage backend.",
+                code="ARTIFACT_STORAGE_OBJECT_MISSING",
             )
         return existing
 

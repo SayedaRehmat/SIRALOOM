@@ -1404,14 +1404,17 @@ def test_celery_redelivery_then_exhausted_transient_persists_terminal_state(monk
             AuditEvent.event_type == "ANALYSIS_RETRY_EXHAUSTED",
         )).all()
 
-        assert analysis.status == AnalysisStatus.FAILED
-        assert analysis.completed_at is not None
-        assert step.status == StepStatus.FAILED
+        assert analysis.status == AnalysisStatus.BLOCKED
+        assert analysis.completed_at is None
+        assert step.status == StepStatus.REQUIRES_REVIEW
         assert step.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
         assert step.metadata_json["retry_exhausted"] is True
-        assert partition.status == "FAILED"
+        assert step.metadata_json["resume_requires_operator_action"] is True
+        assert partition.status == "READY"
         assert partition.lease_owner is None
+        assert partition.lease_token is None
         assert partition.error_code == "ANNOTATION_PROVIDER_RETRY_EXHAUSTED"
+        assert partition.metadata_json["resume_requires_operator_action"] is True
         assert len(recovery_audit) == 1
         assert len(exhaustion_audit) == 1
 
@@ -1717,14 +1720,18 @@ def test_celery_retry_exhaustion_persists_terminal_failure(step_id, error_code):
             )
         ).all()
 
-        assert analysis.status == AnalysisStatus.FAILED
-        assert analysis.completed_at is not None
-        assert step.status == StepStatus.FAILED
+        assert analysis.status == AnalysisStatus.BLOCKED
+        assert analysis.completed_at is None
+        assert step.status == StepStatus.REQUIRES_REVIEW
         assert step.error_code == error_code
         assert step.metadata_json["retry_exhausted"] is True
+        assert step.metadata_json["resume_requires_operator_action"] is True
         if step_id == "annotate":
-            assert partition.status == "FAILED"
+            assert partition.status == "READY"
+            assert partition.lease_owner is None
+            assert partition.lease_token is None
             assert partition.error_code == error_code
+            assert partition.metadata_json["resume_requires_operator_action"] is True
         else:
             assert partition is None
         assert len(audit) == 1

@@ -20,6 +20,7 @@ from backend.app.domain.resource_capabilities import (
     GENE_DISEASE,
     INTERNAL_LAB_EVIDENCE,
     LITERATURE_PROVIDER,
+    NORMALIZATION_ENGINE,
     PHENOTYPE_ONTOLOGY,
     POPULATION,
     POPULATION_SECONDARY,
@@ -93,6 +94,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh38",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
+            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement(
@@ -113,6 +115,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh38",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
+            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement("POPULATION_SECONDARY", False, ("1000GENOMES", "TOPMED", "MIDDLE_EAST", "INTERNAL_LAB_POPULATION"), True),
@@ -128,6 +131,7 @@ ANALYSIS_RESOURCE_PROFILES: Final[dict[str, AnalysisResourceProfile]] = {
         genome_build="GRCh37",
         requirements=(
             ProfileResourceRequirement(REFERENCE_PACKAGE, True, (), True),
+            ProfileResourceRequirement(NORMALIZATION_ENGINE, True, ("bcftools",), True),
             ProfileResourceRequirement(ANNOTATION_ENGINE, True, ("VEP",), True),
             ProfileResourceRequirement(POPULATION, True, ("GNOMAD",), True),
             ProfileResourceRequirement(

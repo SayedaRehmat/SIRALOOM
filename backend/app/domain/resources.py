@@ -23,6 +23,8 @@ _SHA256_RE = re.compile(r"^[0-9a-fA-F]{64}$")
 _ALLOWED_TYPES = frozenset({
     # Legacy resource classes retained for backward compatibility.
     "REFERENCE", "REFERENCE_PACKAGE", "POPULATION", "ANNOTATION",
+    "NORMALIZATION",
+    "VCF_SPECIFICATION",
     "EVIDENCE", "ACMG_RULE",
     # Canonical workflow capability classes. These names intentionally match
     # workflow_resource_contracts and resource_profile_resolver so a resource
@@ -44,6 +46,15 @@ _APPROVABLE_RESOURCE_STATUSES = frozenset({"ACTIVE", "QUALIFIED", "SUPERSEDED"})
 
 class ResourceRegistryError(ValueError):
     pass
+
+
+class VCFSpecificationApprovalError(ResourceRegistryError):
+    """Typed, auditable VCF specification governance block."""
+
+    def __init__(self, message: str, *, code: str, next_step: str):
+        super().__init__(message)
+        self.code = code
+        self.next_step = next_step
 
 
 def _require_approvable_resource_status(resource: Resource) -> None:
@@ -557,6 +568,131 @@ def _record_resource_adoption_audit(
     )
     db.add(event)
     return event
+
+def require_approved_vcf_specification(
+    db: Session,
+    *,
+    organization_id: UUID,
+    version: str,
+) -> dict[str, object]:
+    """Require an exact qualified resource and explicit organization approval."""
+    from backend.app.domain.vcf_spec_registry import BUILTIN_VCF_SPECIFICATION_VERSIONS
+
+    requested_version = str(version or "").strip()
+    if requested_version in BUILTIN_VCF_SPECIFICATION_VERSIONS:
+        return {
+            "source": "BUILTIN_SIRALOOM_PROFILE",
+            "version": requested_version,
+            "approval_required": False,
+        }
+
+    resource = db.scalar(
+        select(Resource).where(
+            Resource.organization_id.is_(None),
+            Resource.name == f"VCF specification {requested_version}",
+            Resource.provider == "HTS-Specifications",
+            Resource.resource_type == "VCF_SPECIFICATION",
+            Resource.version == requested_version,
+            Resource.genome_build.is_(None),
+        ).limit(1)
+    )
+    if resource is None:
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} has no registered qualified release",
+            code="VCF_SPECIFICATION_RELEASE_NOT_REGISTERED",
+            next_step="OFFICIAL_SPECIFICATION_DISCOVERY_AND_QUALIFICATION_REQUIRED",
+        )
+
+    if resource.status not in {"QUALIFIED", "ACTIVE", "SUPERSEDED"}:
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} is not qualified for laboratory use",
+            code="VCF_SPECIFICATION_QUALIFICATION_REQUIRED",
+            next_step="PARSER_CONFORMANCE_QUALIFICATION_REQUIRED",
+        )
+
+    qualification = db.scalar(
+        select(ResourceQualification)
+        .where(
+            ResourceQualification.resource_id == resource.id,
+            ResourceQualification.status == "QUALIFIED",
+        )
+        .order_by(ResourceQualification.qualified_at.desc().nulls_last(), ResourceQualification.created_at.desc())
+        .limit(1)
+    )
+    if qualification is None:
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} has no successful conformance qualification",
+            code="VCF_SPECIFICATION_QUALIFICATION_REQUIRED",
+            next_step="PARSER_CONFORMANCE_QUALIFICATION_REQUIRED",
+        )
+
+    # Approval is bound to the exact qualification record, not merely the
+    # shared release resource. A new qualification must trigger a fresh lab
+    # decision even when an older qualification of this release was approved.
+    approval = db.scalar(
+        select(ResourceApproval).where(
+            ResourceApproval.organization_id == organization_id,
+            ResourceApproval.resource_id == resource.id,
+            ResourceApproval.qualification_id == qualification.id,
+        ).limit(1)
+    )
+    if approval is not None and approval.status == "PENDING":
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} qualification "
+            f"{qualification.qualification_version!r} is awaiting an explicit laboratory approval decision",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_PENDING",
+            next_step="LAB_APPROVAL_REQUIRED",
+        )
+    if approval is not None and approval.status == "REJECTED":
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} qualification "
+            f"{qualification.qualification_version!r} was rejected by this laboratory; "
+            "the previously approved specification remains in effect",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REJECTED",
+            next_step="PREVIOUSLY_APPROVED_SPECIFICATION_RETAINED",
+        )
+    if approval is None or approval.status != "APPROVED":
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} qualification "
+            f"{qualification.qualification_version!r} has no explicit laboratory approval",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            next_step="LAB_APPROVAL_REQUIRED",
+        )
+
+    identity_key = "|".join([
+        f"VCF specification {requested_version}",
+        "HTS-Specifications",
+        "VCF_SPECIFICATION",
+        "UNSPECIFIED",
+    ])
+    binding = db.scalar(
+        select(OrganizationResourceBinding).where(
+            OrganizationResourceBinding.organization_id == organization_id,
+            OrganizationResourceBinding.identity_key == identity_key,
+            OrganizationResourceBinding.resource_id == resource.id,
+        )
+    )
+    if binding is None:
+        raise VCFSpecificationApprovalError(
+            f"VCF specification {requested_version!r} has no active laboratory approval binding",
+            code="VCF_SPECIFICATION_LAB_APPROVAL_REQUIRED",
+            next_step="LAB_APPROVAL_REQUIRED",
+        )
+
+    return {
+        "source": "LAB_APPROVED_RESOURCE",
+        "version": requested_version,
+        "approval_required": True,
+        "resource_id": str(resource.id),
+        "resource_checksum": resource.checksum,
+        "qualification_id": str(qualification.id),
+        "qualification_version": qualification.qualification_version,
+        "binding_id": str(binding.id),
+        "binding_version": binding.version,
+        "approved_at": binding.bound_at.isoformat() if binding.bound_at else None,
+        "approved_by": str(binding.bound_by) if binding.bound_by else None,
+    }
+
 
 def get_active_resource_for_organization(
     db: Session, *, organization_id: UUID, name: str, provider: str,

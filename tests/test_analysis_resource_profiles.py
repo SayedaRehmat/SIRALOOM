@@ -10,6 +10,7 @@ from backend.app.domain.resource_capabilities import (
     CLINICAL_DATABASE,
     DISEASE_PHENOTYPE_ASSOCIATION,
     POPULATION,
+    NORMALIZATION_ENGINE,
     REFERENCE_PACKAGE,
 )
 from backend.app.domain.resource_profile_resolver import _provider_rank
@@ -21,11 +22,22 @@ def test_standard_wes_profile_has_nonnegotiable_core_capabilities():
     assert profile.assay_scope == "WES"
     assert profile.required_capabilities == (
         REFERENCE_PACKAGE,
+        NORMALIZATION_ENGINE,
         ANNOTATION_ENGINE,
         POPULATION,
         ACMG_RULE_SPECIFICATION,
     )
 
+
+
+def test_all_standard_profiles_require_exactly_one_normalization_engine():
+    for profile_id in (
+        "WES_GRCh38_STANDARD",
+        "WGS_GRCh38_STANDARD",
+        "WES_GRCh37_STANDARD",
+    ):
+        profile = get_analysis_resource_profile(profile_id)
+        assert profile.required_capabilities.count(NORMALIZATION_ENGINE) == 1
 
 def test_standard_profile_treats_external_evidence_as_optional():
     profile = get_analysis_resource_profile("WES_GRCh38_STANDARD")

@@ -1,0 +1,2210 @@
+{
+  "suite_id": "siraloom-vcf-native-conformance-v1",
+  "normative_source": "https://github.com/samtools/hts-specs",
+  "normative_documents": {
+    "VCFv4.1": "https://samtools.github.io/hts-specs/VCFv4.1.pdf",
+    "VCFv4.2": "https://samtools.github.io/hts-specs/VCFv4.2.pdf",
+    "VCFv4.3": "https://samtools.github.io/hts-specs/VCFv4.3.pdf",
+    "VCFv4.4": "https://samtools.github.io/hts-specs/VCFv4.4.pdf",
+    "VCFv4.5": "https://samtools.github.io/hts-specs/VCFv4.5.pdf"
+  },
+  "legacy_compatibility_note": "VCFv4.0 is a supported target format version in SIRALOOM's version registry. Its historical specification qualification is partial; this is an evidence status, not a product-level exclusion. Do not reject otherwise valid VCFv4.0 SNV/small-INDEL records because SV/CNV classes are outside the trial reportability scope.",
+  "versions": {
+    "VCFv4.1": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "reciprocal_breakend_pair_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCF breakend replacement strings with reciprocal remote loci and MATEID links",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "breakend_mate_coordinate_mismatch_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID-linked breakends must resolve to the mate's declared remote locus",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t10\tbnd2\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_valid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "Number=G cardinality is calculated from allele count and observed sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8,9"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_invalid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "A triploid genotype with three possible alleles requires ten Number=G values",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.1 reserves INFO/MATEID as Number=.,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      }
+    ],
+    "VCFv4.2": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "reciprocal_breakend_pair_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCF breakend replacement strings with reciprocal remote loci and MATEID links",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "breakend_mate_coordinate_mismatch_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID-linked breakends must resolve to the mate's declared remote locus",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t10\tbnd2\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_valid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "Number=G cardinality is calculated from allele count and observed sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8,9"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_invalid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "A triploid genotype with three possible alleles requires ten Number=G values",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      }
+    ],
+    "VCFv4.3": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "vcf44_leading_phase_separator_rejected",
+        "category": "version_specific_gate",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "Leading GT phase separator is only accepted by VCFv4.4+ implementation profile",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t|0/1"
+        ]
+      },
+      {
+        "id": "reciprocal_breakend_pair_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCF breakend replacement strings with reciprocal remote loci and MATEID links",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "breakend_mate_coordinate_mismatch_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID-linked breakends must resolve to the mate's declared remote locus",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t10\tbnd2\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_valid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "Number=G cardinality is calculated from allele count and observed sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8,9"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_invalid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "A triploid genotype with three possible alleles requires ten Number=G values",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "gatk_gvcf_nonvariant_reference_block_valid",
+        "category": "producer_interoperability",
+        "expected": "PASS",
+        "spec_basis": "GATK gVCF producer convention: <NON_REF> plus INFO/END denotes a non-variant reference-confidence block; this is interoperability qualification, not a claim that gVCF is a separate normative VCF version",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##ALT=<ID=NON_REF,Description=\"Any possible alternate allele\">",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t100\t.\tA\t<NON_REF>\t.\tPASS\tEND=124\tGT\t0/0"
+        ],
+        "qualification_scope": "producer_interoperability",
+        "producer": "GATK",
+        "producer_document": "https://gatk.broadinstitute.org/hc/en-us/articles/360035531812-GVCF-Genomic-Variant-Call-Format",
+        "normative_vcf_conformance": false
+      },
+      {
+        "id": "gatk_gvcf_nonvariant_reference_block_missing_end_invalid",
+        "category": "producer_interoperability",
+        "expected": "VCF_GVCF_BLOCK_INVALID",
+        "spec_basis": "GATK gVCF reference block requires an explicit end coordinate for this VCFv4.3 interoperability profile",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##ALT=<ID=NON_REF,Description=\"Any possible alternate allele\">",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t100\t.\tA\t<NON_REF>\t.\tPASS\t.\tGT\t0/0"
+        ],
+        "qualification_scope": "producer_interoperability",
+        "producer": "GATK",
+        "producer_document": "https://gatk.broadinstitute.org/hc/en-us/articles/360035531812-GVCF-Genomic-Variant-Call-Format",
+        "normative_vcf_conformance": false
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_legacy_mateid_unordered_mixed_alt_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.1-4.3 define MATEID as Number=.; preserve the older unordered multi-value semantics rather than requiring one value per ALT.",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.3 reserves INFO/MATEID as Number=.,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      }
+    ],
+    "VCFv4.4": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "vcf45_local_allele_encoding_rejected",
+        "category": "version_specific_gate",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.5-only local allele cardinality is not valid under VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description=\"Local allele depths\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tLAD\t20,10"
+        ]
+      },
+      {
+        "id": "leading_phase_separator_valid",
+        "category": "version_specific_vcf44",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.4+ leading GT phase separator syntax",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t|0/1"
+        ]
+      },
+      {
+        "id": "reciprocal_breakend_pair_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCF breakend replacement strings with reciprocal remote loci and MATEID links",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "breakend_mate_coordinate_mismatch_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID-linked breakends must resolve to the mate's declared remote locus",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t10\tbnd2\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_valid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "Number=G cardinality is calculated from allele count and observed sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8,9"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_invalid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "A triploid genotype with three possible alleles requires ten Number=G values",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mixed_alt_mateid_alignment_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.4 MATEID Number=A aligns with the complete ALT list; non-breakend ALT has a missing placeholder.",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,.",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.4 reserves INFO/MATEID as Number=A,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      }
+    ],
+    "VCFv4.5": [
+      {
+        "id": "minimal_snp_valid",
+        "category": "record+header",
+        "expected": "PASS",
+        "spec_basis": "Fixed fields, header and data-line syntax",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "multiallelic_genotype_valid",
+        "category": "genotype+cardinality",
+        "expected": "PASS",
+        "spec_basis": "GT allele indexes and Number=G cardinality",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t1/2:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_valid",
+        "category": "symbolic_allele",
+        "expected": "PASS",
+        "spec_basis": "Symbolic structural allele with declared reference span",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=9"
+        ]
+      },
+      {
+        "id": "duplicate_header_identifier_invalid",
+        "category": "header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Structured header identifiers are unique within a definition type",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FILTER=<ID=LowQual,Description=\"low quality\">",
+          "##FILTER=<ID=LowQual,Description=\"duplicate identifier\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "out_of_range_genotype_allele_invalid",
+        "category": "genotype",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes must identify REF or a declared ALT",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ]
+      },
+      {
+        "id": "symbolic_deletion_missing_span_invalid",
+        "category": "symbolic_allele",
+        "expected": "VCF_SV_SPAN_MISSING",
+        "spec_basis": "Symbolic structural alleles require a resolvable span",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL"
+        ]
+      },
+      {
+        "id": "local_allele_encoding_valid",
+        "category": "version_specific_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 local allele encoding (LAA)",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA\t0/2:2"
+        ]
+      },
+      {
+        "id": "base_modification_fraction_valid",
+        "category": "version_specific_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M base-modification FORMAT values",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:M5mC\t0/1:0.95"
+        ]
+      },
+      {
+        "id": "base_modification_fraction_out_of_range",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_FIELD_TYPE_INVALID",
+        "spec_basis": "VCFv4.5 base-modification fractions must be in the closed interval zero to one",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:M5mC\t0/1:1.01"
+        ]
+      },
+      {
+        "id": "reciprocal_breakend_pair_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCF breakend replacement strings with reciprocal remote loci and MATEID links",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "breakend_mate_coordinate_mismatch_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID-linked breakends must resolve to the mate's declared remote locus",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT\t0/1",
+          "2\t10\tbnd2\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_valid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "Number=G cardinality is calculated from allele count and observed sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8,9"
+        ]
+      },
+      {
+        "id": "triploid_number_g_cardinality_invalid",
+        "category": "genotype_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "A triploid genotype with three possible alleles requires ten Number=G values",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:PL\t0/1/2:0,1,2,3,4,5,6,7,8"
+        ]
+      },
+      {
+        "id": "unspecified_allele_len_reference_block_valid",
+        "category": "version_specific_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 FORMAT/LEN specifies per-sample reference block length for the <*> unspecified allele",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##contig=<ID=1,length=200>",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t100\t.\tA\t<*>\t.\tPASS\t.\tGT:LEN\t0/0:50"
+        ]
+      },
+      {
+        "id": "unspecified_allele_len_end_mismatch_invalid",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_END_MISMATCH",
+        "spec_basis": "VCFv4.5 INFO/END must agree with the maximum end implied by per-sample FORMAT/LEN",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##contig=<ID=1,length=200>",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\tSAMPLE2",
+          "1\t100\t.\tA\t<*>\t.\tPASS\tEND=123\tGT:LEN\t0/0:10\t0/0:25"
+        ]
+      },
+      {
+        "id": "symbolic_svlen_negative_deletion_valid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 INFO/SVLEN is allele-specific; negative deletion length is interpreted by absolute value",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"Deprecated end position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;END=9"
+        ]
+      },
+      {
+        "id": "symbolic_svlen_zero_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SVLEN_INVALID",
+        "spec_basis": "A symbolic structural allele must have a non-zero SVLEN",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=0"
+        ]
+      },
+      {
+        "id": "symbolic_cipos_cardinality_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_CARDINALITY_INVALID",
+        "spec_basis": "INFO/CIPOS contains two offsets per ALT allele",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;CIPOS=-2,2,0"
+        ]
+      },
+      {
+        "id": "symbolic_cipos_interval_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "Each INFO/CIPOS confidence interval must span zero",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;CIPOS=1,2"
+        ]
+      },
+      {
+        "id": "nonstructural_ciend_values_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "INFO/CIEND values for non-structural ALT alleles must be missing",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=CIEND,Number=.,Type=Integer,Description=\"Confidence interval around END\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\tC\t.\tPASS\tCIEND=-1,1"
+        ]
+      },
+      {
+        "id": "four_breakend_orientations_valid",
+        "category": "breakend_orientation",
+        "expected": "PASS",
+        "spec_basis": "The four VCF breakend replacement-string orientations: local sequence before/after remote locus and bracket direction",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\tbnd1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND",
+          "1\t10\tbnd2\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t15\tbnd3\tA\t]2:20]A\t.\tPASS\tSVTYPE=BND",
+          "1\t20\tbnd4\tA\t[2:20[A\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_id_missing_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_MISSING",
+        "spec_basis": "A declared MATEID must resolve to a record in the same VCF",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_mate_not_reciprocal_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+        "spec_basis": "MATEID links between paired breakends must be reciprocal",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "breakend_mate_without_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_INVALID",
+        "spec_basis": "A breakend record with MATEID requires a non-missing record ID",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\t.\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_duplicate_record_id_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "Duplicate record identifiers are rejected by the general VCF ID uniqueness validator before breakend mate resolution.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
+          "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "symbolic_sv_confidence_intervals_with_nonstructural_alt_valid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "PASS",
+        "spec_basis": "CIPOS and CIEND carry pairs for symbolic structural alleles and missing-value pairs for a sequence ALT; CILEN provides an SVLEN interval",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
+          "##INFO=<ID=CIEND,Number=.,Type=Integer,Description=\"Confidence interval around inferred END\">",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>,C\t.\tPASS\tSVLEN=-4,.;CIPOS=-2,2,.,.;CIEND=-1,1,.,.;CILEN=-6,-2,.,."
+        ]
+      },
+      {
+        "id": "nonstructural_cipos_values_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "Without INFO/IMPRECISE, CIPOS has no meaningful value for a sequence ALT and must use a missing-value placeholder.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\tC\t.\tPASS\tCIPOS=-1,1"
+        ]
+      },
+      {
+        "id": "symbolic_cilen_cardinality_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_CARDINALITY_INVALID",
+        "spec_basis": "CILEN consists of two bounds per ALT allele",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;CILEN=-6,-2,0"
+        ]
+      },
+      {
+        "id": "symbolic_cilen_bounds_reversed_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "CILEN bounds are ordered lower then upper",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\t<DEL>\t.\tPASS\tSVLEN=-4;CILEN=5,-5"
+        ]
+      },
+      {
+        "id": "nonstructural_cilen_values_invalid",
+        "category": "structural_variant_info_vcf45",
+        "expected": "VCF_SV_INFO_INTERVAL_INVALID",
+        "spec_basis": "CILEN must be missing for a sequence ALT with no symbolic SVLEN interval",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for SVLEN\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tA\tC\t.\tPASS\tCILEN=-2,2"
+        ]
+      },
+      {
+        "id": "symbolic_svlen_end_computed_span_valid",
+        "category": "structural_variant_span_vcf45",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 deprecated INFO/END equals the maximum of the REF end and the end position computed from symbolic SVLEN",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"Deprecated computed end position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tAT\t<DEL>\t.\tPASS\tSVLEN=-4;END=9"
+        ]
+      },
+      {
+        "id": "symbolic_svlen_end_computed_span_mismatch_invalid",
+        "category": "structural_variant_span_vcf45",
+        "expected": "VCF_END_MISMATCH",
+        "spec_basis": "VCFv4.5 INFO/END must equal the computed maximum reference span; END=8 is shorter than POS 5 plus absolute SVLEN 4",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"Deprecated computed end position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t5\t.\tAT\t<DEL>\t.\tPASS\tSVLEN=-4;END=8"
+        ]
+      },
+      {
+        "id": "breakend_mixed_alt_mateid_alignment_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 MATEID Number=A preserves per-ALT mapping and uses a missing placeholder for a sequence ALT.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,.",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "breakend_multi_alt_mateid_alignment_valid",
+        "category": "breakend_mate_relationship",
+        "expected": "PASS",
+        "spec_basis": "Each VCFv4.5 breakend ALT is paired with the MATEID value at the same ALT index.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,bnd3",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1",
+          "3\t30\tbnd3\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "breakend_multi_alt_mateid_swapped_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "MATEID values mapped to the wrong ALT indexes must fail even when the set of mate IDs and remote loci is otherwise valid.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3,bnd2",
+          "2\t20\tbnd2\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1",
+          "3\t30\tbnd3\tA\tA]1:15]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1"
+        ]
+      },
+      {
+        "id": "breakend_mixed_alt_mateid_cardinality_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 MATEID Number=A requires one entry per ALT, including missing placeholders.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20],C\t.\tPASS\tSVTYPE=BND;MATEID=bnd2"
+        ]
+      },
+      {
+        "id": "breakend_reciprocal_mateid_wrong_alt_index_invalid",
+        "category": "breakend_mate_relationship",
+        "expected": "VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+        "spec_basis": "The reciprocal MATEID must be attached to the ALT whose remote locus points back to the source breakend; set-level reciprocity is insufficient.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2",
+          "2\t20\tbnd2\tA\tA]1:15],A]3:30]\t.\tPASS\tSVTYPE=BND;MATEID=.,bnd1"
+        ]
+      },
+      {
+        "id": "mateid_reserved_header_definition_invalid",
+        "category": "header_definition",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.5 reserves INFO/MATEID as Number=A,Type=String; an alternate declaration is invalid.",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakend\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      }
+    ],
+    "VCFv4.0": [
+      {
+        "id": "legacy_minimal_snp_parser_smoke",
+        "category": "legacy_parser_smoke_only",
+        "expected": "PASS",
+        "spec_basis": "Legacy compatibility smoke only; no current HTS normative PDF is listed for VCFv4.0",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-001",
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-010",
+          "V40-CORE-012",
+          "V40-CORE-014",
+          "V40-CORE-017",
+          "V40-CORE-020",
+          "V40-CORE-021",
+          "V40-CORE-009"
+        ]
+      },
+      {
+        "id": "legacy_minimal_snp_valid",
+        "category": "legacy_fixed_fields",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core format: eight fixed fields and tab-delimited records",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-001",
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-010",
+          "V40-CORE-012",
+          "V40-CORE-014",
+          "V40-CORE-017",
+          "V40-CORE-020",
+          "V40-CORE-021",
+          "V40-CORE-009"
+        ]
+      },
+      {
+        "id": "legacy_multiallelic_genotype_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: multiallelic ALT indexing and GT encoding",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t1/2"
+        ],
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-017",
+          "V40-CORE-025",
+          "V40-CORE-030",
+          "V40-CORE-031"
+        ]
+      },
+      {
+        "id": "legacy_indel_valid",
+        "category": "legacy_indel",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: indel allele representation with preceding reference base",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tAC\tA\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-008",
+          "V40-CORE-014",
+          "V40-CORE-015",
+          "V40-CORE-016",
+          "V40-CORE-017",
+          "V40-CORE-018",
+          "V40-CORE-030",
+          "V40-CORE-031"
+        ]
+      },
+      {
+        "id": "legacy_missing_gt_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: missing genotype allele represented with dot",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t./."
+        ],
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-024",
+          "V40-CORE-025",
+          "V40-CORE-026",
+          "V40-CORE-028"
+        ]
+      },
+      {
+        "id": "legacy_phased_gt_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: pipe denotes phased genotype",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1"
+        ],
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-024",
+          "V40-CORE-025"
+        ]
+      },
+      {
+        "id": "legacy_invalid_pos_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_POS_INVALID",
+        "spec_basis": "VCFv4.0 core: POS is one-based",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t0\t.\tA\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-012"
+        ]
+      },
+      {
+        "id": "legacy_invalid_ref_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_REF_INVALID",
+        "spec_basis": "VCFv4.0 core: REF alphabet is A,C,G,T,N",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tX\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-014"
+        ]
+      },
+      {
+        "id": "legacy_duplicate_id_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_ID_DUPLICATE",
+        "spec_basis": "VCFv4.0 core: record IDs are unique",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\trs1\tA\tC\t.\tPASS\t.",
+          "1\t3\trs1\tA\tG\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-013"
+        ]
+      },
+      {
+        "id": "legacy_out_of_range_gt_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "VCFv4.0 core: GT allele index must identify REF or a listed ALT",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ],
+        "clause_ids": [
+          "V40-CORE-024",
+          "V40-CORE-025"
+        ]
+      },
+      {
+        "id": "legacy_info_flag_valid",
+        "category": "legacy_info_flag",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: key-only INFO Flag has Number=0 and no value",
+        "clause_ids": [
+          "V40-CORE-002",
+          "V40-CORE-003",
+          "V40-CORE-004",
+          "V40-CORE-022"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=DB,Number=0,Type=Flag,Description=\"dbSNP membership\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tDB"
+        ]
+      },
+      {
+        "id": "legacy_info_flag_value_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.0 core: INFO Flag must not carry a value",
+        "clause_ids": [
+          "V40-CORE-004"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=DB,Number=0,Type=Flag,Description=\"dbSNP membership\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tDB=true"
+        ]
+      },
+      {
+        "id": "legacy_flag_wrong_number_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.0 core: Flag declaration requires Number=0",
+        "clause_ids": [
+          "V40-CORE-002",
+          "V40-CORE-004"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=DB,Number=1,Type=Flag,Description=\"dbSNP membership\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "legacy_character_info_valid",
+        "category": "legacy_info_types",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: Character is a supported INFO Type",
+        "clause_ids": [
+          "V40-CORE-002",
+          "V40-CORE-003",
+          "V40-CORE-023"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=ZZ,Number=1,Type=Character,Description=\"Single character annotation\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tZZ=x"
+        ]
+      },
+      {
+        "id": "legacy_custom_format_valid",
+        "category": "legacy_format",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: FORMAT declaration defines sample subfield types and ordering with GT first",
+        "clause_ids": [
+          "V40-CORE-005",
+          "V40-CORE-024",
+          "V40-CORE-027",
+          "V40-CORE-029"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:DP\t0/1:18"
+        ]
+      },
+      {
+        "id": "legacy_gt_not_first_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_FORMAT_INVALID",
+        "spec_basis": "VCFv4.0 core: GT must be the first FORMAT subfield",
+        "clause_ids": [
+          "V40-CORE-005",
+          "V40-CORE-024"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tDP:GT\t18:0/1"
+        ]
+      },
+      {
+        "id": "legacy_sample_column_mismatch_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_RECORD_INVALID",
+        "spec_basis": "VCFv4.0 core: data columns must match header sample columns",
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT"
+        ]
+      },
+      {
+        "id": "legacy_symbolic_del_valid",
+        "category": "legacy_symbolic_alt",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: ALT permits angle-bracketed symbolic identifier strings",
+        "clause_ids": [
+          "V40-CORE-017",
+          "V40-CORE-019"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\tsv1\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=5"
+        ]
+      },
+      {
+        "id": "legacy_noncontiguous_chrom_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_CHROM_BLOCK_NONCONTIGUOUS",
+        "spec_basis": "VCFv4.0 core: records for each CHROM must form one contiguous block",
+        "clause_ids": [
+          "V40-CORE-010",
+          "V40-CORE-011"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t.",
+          "2\t2\t.\tA\tG\t.\tPASS\t.",
+          "1\t3\t.\tA\tT\t.\tPASS\t."
+        ]
+      }
+    ]
+  },
+  "normative_coverage": {
+    "VCFv4.0": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Raw historical source bytes and SHA-256 not yet archived",
+        "Complete atomic review and code/test traceability",
+        "Legacy real-file and independent producer qualification"
+      ],
+      "notes": "VCFv4.0 now has a historical clause catalog and targeted conformance vectors. This remains partial, not certification.",
+      "tested_sections": [
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "legacy_minimal_snp_valid",
+            "legacy_invalid_pos_rejected",
+            "legacy_invalid_ref_rejected"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "legacy_multiallelic_genotype_valid",
+            "legacy_missing_gt_valid",
+            "legacy_phased_gt_valid",
+            "legacy_out_of_range_gt_rejected"
+          ]
+        },
+        {
+          "section_title": "Haplotype representation",
+          "fixture_ids": [
+            "legacy_indel_valid"
+          ]
+        }
+      ]
+    },
+    "VCFv4.1": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
+    },
+    "VCFv4.2": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
+    },
+    "VCFv4.3": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid",
+            "vcf44_leading_phase_separator_rejected"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_legacy_mateid_unordered_mixed_alt_valid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
+    },
+    "VCFv4.4": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "leading_phase_separator_valid",
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid",
+            "vcf45_local_allele_encoding_rejected"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "breakend_mixed_alt_mateid_alignment_valid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
+    },
+    "VCFv4.5": {
+      "status": "PARTIAL",
+      "covered_sections": [],
+      "uncovered_sections": [
+        "Complete normative clause inventory with stable clause identifiers for this VCF release",
+        "Clause-to-production-code-to-test traceability for every normative requirement",
+        "Reviewed positive and negative conformance vectors for every normative requirement",
+        "Independent implementation differential and interoperability testing",
+        "Systematic grammar, boundary, fuzz and property-based conformance testing",
+        "Independent scientific review and approval of the complete normative coverage matrix"
+      ],
+      "notes": "The current fixture corpus is a regression subset, not exhaustive normative conformance evidence. Qualification must remain blocked until every normative clause is inventoried, mapped to production code and tests, independently reviewed, and executed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
+      "tested_sections": [
+        {
+          "section_title": "The VCF specification",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Meta-information lines",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Header line syntax",
+          "fixture_ids": [
+            "duplicate_header_identifier_invalid",
+            "mateid_reserved_header_definition_invalid",
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Data lines",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "minimal_snp_valid"
+          ]
+        },
+        {
+          "section_title": "Genotype fields",
+          "fixture_ids": [
+            "base_modification_fraction_out_of_range",
+            "base_modification_fraction_valid",
+            "local_allele_encoding_valid",
+            "multiallelic_genotype_valid",
+            "out_of_range_genotype_allele_invalid",
+            "triploid_number_g_cardinality_invalid",
+            "triploid_number_g_cardinality_valid",
+            "unspecified_allele_len_end_mismatch_invalid",
+            "unspecified_allele_len_reference_block_valid"
+          ]
+        },
+        {
+          "section_title": "INFO keys used for structural variants",
+          "fixture_ids": [
+            "nonstructural_ciend_values_invalid",
+            "nonstructural_cilen_values_invalid",
+            "nonstructural_cipos_values_invalid",
+            "symbolic_cilen_bounds_reversed_invalid",
+            "symbolic_cilen_cardinality_invalid",
+            "symbolic_cipos_cardinality_invalid",
+            "symbolic_cipos_interval_invalid",
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid",
+            "symbolic_sv_confidence_intervals_with_nonstructural_alt_valid",
+            "symbolic_svlen_end_computed_span_mismatch_invalid",
+            "symbolic_svlen_end_computed_span_valid",
+            "symbolic_svlen_negative_deletion_valid",
+            "symbolic_svlen_zero_invalid"
+          ]
+        },
+        {
+          "section_title": "Encoding Structural Variants",
+          "fixture_ids": [
+            "symbolic_deletion_missing_span_invalid",
+            "symbolic_deletion_valid",
+            "symbolic_svlen_end_computed_span_mismatch_invalid",
+            "symbolic_svlen_end_computed_span_valid"
+          ]
+        },
+        {
+          "section_title": "Data types",
+          "fixture_ids": [
+            "base_modification_fraction_out_of_range",
+            "base_modification_fraction_valid",
+            "local_allele_encoding_valid",
+            "unspecified_allele_len_end_mismatch_invalid",
+            "unspecified_allele_len_reference_block_valid"
+          ]
+        },
+        {
+          "section_title": "Specifying complex rearrangements with breakends",
+          "fixture_ids": [
+            "breakend_duplicate_record_id_invalid",
+            "breakend_mate_coordinate_mismatch_invalid",
+            "breakend_mate_id_missing_invalid",
+            "breakend_mate_not_reciprocal_invalid",
+            "breakend_mate_without_record_id_invalid",
+            "breakend_mixed_alt_mateid_alignment_valid",
+            "breakend_mixed_alt_mateid_cardinality_invalid",
+            "breakend_multi_alt_mateid_alignment_valid",
+            "breakend_multi_alt_mateid_swapped_invalid",
+            "breakend_reciprocal_mateid_wrong_alt_index_invalid",
+            "four_breakend_orientations_valid",
+            "reciprocal_breakend_pair_valid"
+          ]
+        }
+      ]
+    }
+  }
+}

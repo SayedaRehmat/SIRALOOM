@@ -750,6 +750,11 @@ def qualify_resource(
 ):
     require_role(principal, frozenset({"platform_admin", "lab_director", "bioinformatician"}))
     row = _require_resource_lifecycle_access(db.get(Resource, resource_id), principal)
+    if row.resource_type == "VCF_SPECIFICATION" and principal.role != "platform_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only a SIRALOOM platform administrator can qualify a VCF parser specification profile",
+        )
     before_status = row.status
     try:
         from backend.app.domain.resource_qualification import qualify_resource as run_qualification
@@ -779,6 +784,12 @@ def qualify_resource(
             checks=result.checks,
             qualified_by=principal.user_id,
         )
+        if result.passed:
+            from backend.app.domain.resource_discovery import notify_organizations_of_qualified_release
+
+            notify_organizations_of_qualified_release(
+                db, resource=row, qualification=qualification
+            )
     except ResourceRegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     AuditService(db).record(

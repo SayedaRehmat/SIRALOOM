@@ -16,7 +16,7 @@ dependencies = [
   "psycopg[binary]>=3.2,<4",
   "alembic>=1.13,<2",
   "celery>=5.4,<6",
-  "redis>=5.0,<6",
+  "redis>=6.1,<7",
   "httpx>=0.27,<1",
   "python-multipart>=0.0.9,<1",
   "orjson>=3.10,<4",
@@ -39,6 +39,9 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["backend*"]
 
+[tool.setuptools.package-data]
+"backend.app.domain" = ["vcf_conformance_cases.json"]
+
 [tool.ruff]
 line-length = 100
 
@@ -51,3 +54,6 @@ markers = [
 
 [project.entry-points."siraloom.resource_providers"]
 clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"
+bcftools = "backend.app.infrastructure.resource_providers.normalization_releases:BCFtoolsReleaseProvider"
+gatk = "backend.app.infrastructure.resource_providers.normalization_releases:GATKReleaseProvider"
+vcf_specifications = "backend.app.infrastructure.resource_providers.vcf_specifications:VCFSpecificationProvider"

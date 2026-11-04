@@ -31,3 +31,12 @@ def test_site_only_vcf_does_not_mark_case_ready_or_invalid():
         has_vcf=True,
         has_site_only_vcf=True,
     ) == "ARTIFACT_UPLOADED"
+
+
+def test_future_vcf_governance_block_does_not_mark_case_invalid_or_ready():
+    assert case_status_after_vcf_upload(
+        "DRAFT",
+        has_valid_vcf=False,
+        has_vcf=True,
+        has_blocked_vcf=True,
+    ) == "ARTIFACT_UPLOADED"

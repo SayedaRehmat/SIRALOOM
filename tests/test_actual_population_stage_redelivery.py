@@ -29,6 +29,7 @@ from backend.app.infrastructure.db.models import (
     ClinGenSpecification,
     Evidence,
     Organization,
+    OrganizationResourceBinding,
     PhenotypeObservation,
     PopulationObservation,
     Resource,
@@ -523,6 +524,24 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                     ("CLINGEN_VARIANT_ASSERTION", clingen_vp_resource),
                     ("CLINGEN_GENE_DISEASE_VALIDITY", clingen_gdv_resource),
                 ]
+                for _capability, selected_resource in selected_resources:
+                    db.add(OrganizationResourceBinding(
+                        id=uuid4(),
+                        organization_id=organization_id,
+                        resource_id=selected_resource.id,
+                        resource_name=selected_resource.name,
+                        provider=selected_resource.provider,
+                        resource_type=selected_resource.resource_type,
+                        genome_build=selected_resource.genome_build,
+                        identity_key="|".join([
+                            selected_resource.name,
+                            selected_resource.provider,
+                            selected_resource.resource_type,
+                            selected_resource.genome_build or "UNSPECIFIED",
+                        ]),
+                        bound_by=user_id,
+                        reason="Fixture represents the currently adopted laboratory resource.",
+                    ))
                 selected = []
                 for capability, selected_resource in selected_resources:
                     resolved = resolve_resource_execution(db, resource=selected_resource)

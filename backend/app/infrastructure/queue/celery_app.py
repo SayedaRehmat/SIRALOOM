@@ -61,9 +61,9 @@ if Celery is not None:
         analysis = db.get(Analysis, analysis_id, with_for_update=True)
         if analysis is None:
             return False
-        # Retry exhaustion is a terminal state transition. Recheck the live
-        # workflow state and dispatch generation under the row lock so a stale
-        # task cannot overwrite a newer review, retry, or terminal outcome.
+        # Retry exhaustion blocks this analysis for operator remediation. It
+        # must not convert a recoverable infrastructure outage into a failed
+        # scientific case, and stale task generations remain fenced.
         if analysis.status != AnalysisStatus.RUNNING:
             return False
         if analysis.queue_task_id != task_id:
@@ -77,11 +77,20 @@ if Celery is not None:
         ))
         for step in retrying_steps:
             metadata = dict(step.metadata_json or {})
-            metadata["retry_exhausted"] = True
-            step.status = StepStatus.FAILED
+            metadata.update(
+                {
+                    "retry_exhausted": True,
+                    "human_action_required": True,
+                    "automatic_fallback": False,
+                    "next_step": "RESOURCE_OR_INFRASTRUCTURE_REMEDIATION",
+                    "resume_requires_operator_action": True,
+                }
+            )
+            step.status = StepStatus.REQUIRES_REVIEW
             step.error_code = error_code
             step.error_message = error_message
             step.metadata_json = metadata
+            step.completed_at = None
 
         unfinished_partitions = list(db.scalars(
             select(AnalysisPartition).where(
@@ -91,14 +100,26 @@ if Celery is not None:
             )
         ))
         for partition in unfinished_partitions:
-            partition.status = "FAILED"
+            metadata = dict(partition.metadata_json or {})
+            metadata.update(
+                {
+                    "retry_exhausted": True,
+                    "resume_requires_operator_action": True,
+                    "last_error_code": error_code,
+                }
+            )
+            partition.status = "READY"
             partition.lease_owner = None
+            partition.lease_token = None
             partition.lease_expires_at = None
             partition.error_code = error_code
             partition.error_message = error_message
+            partition.metadata_json = metadata
+            partition.started_at = None
+            partition.completed_at = None
 
-        analysis.status = AnalysisStatus.FAILED
-        analysis.completed_at = datetime.now(timezone.utc)
+        analysis.status = AnalysisStatus.BLOCKED
+        analysis.completed_at = None
         AuditService(db).record(
             event_type="ANALYSIS_RETRY_EXHAUSTED",
             case_id=analysis.case_id,
@@ -106,7 +127,15 @@ if Celery is not None:
             actor_type="SYSTEM",
             actor_id="celery",
             reason=error_message,
-            payload={"error_code": error_code, "max_retries": max_retries},
+            payload={
+                "error_code": error_code,
+                "max_retries": max_retries,
+                "disposition": "BLOCKED",
+                "next_step": "RESOURCE_OR_INFRASTRUCTURE_REMEDIATION",
+                "automatic_fallback": False,
+                "resume_requires_operator_action": True,
+                "retry_exhausted": True,
+            },
         )
         db.commit()
         return True

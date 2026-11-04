@@ -13,6 +13,14 @@ from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.infrastructure.db.models import Artifact
 
 
+class ArtifactIdentityConflictError(FileExistsError):
+    """Permanent artifact-ID collision or storage identity integrity violation."""
+
+    def __init__(self, message: str, *, code: str = "ARTIFACT_IDENTITY_CONFLICT") -> None:
+        super().__init__(message)
+        self.code = code
+
+
 class ArtifactStore:
     """
     Local filesystem artifact store.
@@ -141,9 +149,44 @@ class ArtifactStore:
 
         existing_artifact = db.get(Artifact, artifact_id)
         if existing_artifact is not None:
-            raise FileExistsError(
-                f"Artifact identity {artifact_id} already has a durable database record."
+            expected_type = (
+                artifact_type.value
+                if isinstance(artifact_type, ArtifactType)
+                else str(artifact_type)
             )
+            expected_filename = self._safe_filename(filename)
+            expected_metadata = dict(metadata or {})
+            if (
+                existing_artifact.storage_uri != destination.as_uri()
+                or destination.is_symlink()
+                or not destination.is_file()
+            ):
+                raise ArtifactIdentityConflictError(
+                    f"Artifact identity {artifact_id} has no safe, matching durable storage object.",
+                    code="ARTIFACT_STORAGE_IDENTITY_INVALID",
+                )
+            source_sha256, source_size = self._sha256_and_size(source)
+            stored_sha256, stored_size = self._sha256_and_size(destination)
+            identity_matches = (
+                existing_artifact.case_id == case_id
+                and existing_artifact.analysis_id == analysis_id
+                and existing_artifact.artifact_type == expected_type
+                and existing_artifact.filename == expected_filename
+                and existing_artifact.media_type == media_type
+                and existing_artifact.genome_build == genome_build
+                and existing_artifact.specimen_id == specimen_id
+                and existing_artifact.paired_artifact_id == paired_artifact_id
+                and dict(existing_artifact.metadata_json or {}) == expected_metadata
+                and existing_artifact.sha256 == stored_sha256 == source_sha256
+                and existing_artifact.size_bytes == stored_size == source_size
+            )
+            if not identity_matches:
+                raise ArtifactIdentityConflictError(
+                    f"Artifact identity {artifact_id} already exists with different bytes or immutable metadata."
+                )
+            # A worker may have committed the artifact before losing its queue
+            # acknowledgement. Identical replay is idempotent; never rewrite it.
+            return existing_artifact
 
         created_destination = False
         temporary_path: Path | None = None
@@ -170,12 +213,13 @@ class ArtifactStore:
                 created_destination = True
             except FileExistsError:
                 if destination.is_symlink() or not destination.is_file():
-                    raise FileExistsError(
-                        f"Artifact storage identity {artifact_id} is not a regular file."
+                    raise ArtifactIdentityConflictError(
+                        f"Artifact storage identity {artifact_id} is not a regular file.",
+                        code="ARTIFACT_STORAGE_IDENTITY_INVALID",
                     )
                 existing_sha256, existing_size = self._sha256_and_size(destination)
                 if (existing_sha256, existing_size) != (staged_sha256, size_bytes):
-                    raise FileExistsError(
+                    raise ArtifactIdentityConflictError(
                         f"Artifact storage identity {artifact_id} already contains different bytes."
                     )
 

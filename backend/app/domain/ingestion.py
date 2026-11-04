@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import gzip
 import re
 import shutil
@@ -9,7 +10,12 @@ from pathlib import Path
 
 from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
-from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    _verify_bgzf,
+    read_vcf_fileformat,
+    validate_vcf_strict,
+)
 
 PRIMARY_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
 INDEX_SUFFIXES = (".tbi", ".csi")
@@ -36,7 +42,56 @@ class ValidationResult:
 
 
 class VCFValidationUnavailable(RuntimeError):
-    """A required validation tool could not complete; the VCF is not classified."""
+    """A required validation operation could not complete; the input is not classified."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "VCF_VALIDATION_UNAVAILABLE",
+        retryable: bool = True,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.retryable = retryable
+
+
+def _storage_io_unavailable(context: str, exc: OSError) -> VCFValidationUnavailable:
+    """Classify storage I/O by errno; permission/capacity faults are not blind retries."""
+    transient_errnos = {
+        errno.EIO,
+        errno.EINTR,
+        errno.EAGAIN,
+        errno.ETIMEDOUT,
+        errno.ECONNRESET,
+        errno.ENETDOWN,
+        errno.ENETUNREACH,
+        errno.EHOSTUNREACH,
+        getattr(errno, "ESTALE", -1),
+    }
+    if exc.errno in transient_errnos:
+        return VCFValidationUnavailable(
+            f"{context}: transient storage I/O failure. The input was not classified; retry after storage recovers.",
+            code="VCF_STORAGE_IO_RETRYABLE",
+            retryable=True,
+        )
+    if exc.errno == errno.ENOSPC:
+        return VCFValidationUnavailable(
+            f"{context}: storage capacity is exhausted. The input was not classified; restore capacity before retrying.",
+            code="VCF_STORAGE_CAPACITY_BLOCKED",
+            retryable=False,
+        )
+    if exc.errno in {errno.EACCES, errno.EPERM, errno.EROFS}:
+        return VCFValidationUnavailable(
+            f"{context}: storage access is denied. The input was not classified; an operator must restore approved access.",
+            code="VCF_STORAGE_ACCESS_BLOCKED",
+            retryable=False,
+        )
+    return VCFValidationUnavailable(
+        f"{context}: storage is unavailable. The input was not classified; an operator must resolve the storage condition.",
+        code="VCF_STORAGE_UNAVAILABLE",
+        retryable=False,
+    )
 
 
 def classify_filename(filename: str) -> str:
@@ -86,8 +141,10 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
                 elif line.startswith("#CHROM"):
                     headers = line.split("\t")
                     break
-    except (OSError, UnicodeDecodeError) as exc:
-        raise VCFValidationError(f"Unable to read VCF text: {exc}") from exc
+    except (gzip.BadGzipFile, EOFError, UnicodeDecodeError) as exc:
+        raise VCFValidationError(f"VCF content is malformed or truncated: {exc}") from exc
+    except OSError as exc:
+        raise _storage_io_unavailable("VCF header validation", exc) from exc
     if len(declared_builds) > 1:
         raise VCFValidationError(
             "VCF header contains conflicting reference assembly declarations: "
@@ -199,10 +256,20 @@ def validate_vcf(path: str | Path) -> ValidationResult:
     fileformat: str | None = None
     bcftools_version: str | None = None
     htslib_version: str | None = None
+    # Preserve the declared version even when the current parser does not
+    # implement it. The upload boundary uses this identity for a governance
+    # block instead of misclassifying a future specification as malformed.
+    fileformat = read_vcf_fileformat(p)
+    headers: list[str] = []
+    detected_build: str | None = None
     try:
+        # Extract specimen/build identity before strict parser dispatch so an
+        # unsupported future version can still be held with its true sample
+        # and assembly metadata instead of losing intake identity.
+        headers, detected_build, has_fileformat, header_fileformat = _header_info(p)
+        fileformat = fileformat or header_fileformat
         strict_profile = validate_vcf_strict(p)
         compression = strict_profile["compression"]
-        headers, detected_build, has_fileformat, fileformat = _header_info(p)
         if not has_fileformat:
             raise VCFValidationError(
                 "VCF is missing the required ##fileformat header. If this file looks "
@@ -354,7 +421,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             strict_profile["fileformat"],
             validation_metadata,
         )
-    except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
+    except (VCFValidationError, StrictVCFValidationError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
         failure_metadata = None
         if bcftools_version is not None:
             failure_metadata = {
@@ -365,10 +432,19 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "toolchain_validation_status": "PASS",
             }
         return ValidationResult(
-            "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
+            "INVALID",
+            "VCF",
+            0,
+            headers[9:] if len(headers) > 9 else [],
+            detected_build,
+            [str(exc)],
+            [],
+            fileformat,
             failure_metadata,
             exc.code if isinstance(exc, StrictVCFValidationError) else None,
         )
+    except OSError as exc:
+        raise _storage_io_unavailable("VCF validation", exc) from exc
 
 
 def validate_index(
@@ -400,8 +476,16 @@ def validate_index(
     try:
         with p.open("rb") as fh:
             magic = fh.read(4)
-        if kind == "CSI" and magic != b"CSI\x01":
-            raise ValueError("CSI index does not contain the CSI magic header")
+        if kind == "CSI":
+            # CSI indexes are BGZF-compressed. The on-disk bytes therefore
+            # begin with the BGZF header; the CSI\x01 signature is inside
+            # the decompressed index stream, not at byte zero of the file.
+            if magic[:2] != b"\x1f\x8b":
+                raise ValueError("CSI index does not contain a BGZF/gzip header")
+            _verify_bgzf(p)
+            with gzip.open(p, "rb") as fh:
+                if fh.read(4) != b"CSI\x01":
+                    raise ValueError("CSI index does not contain the CSI magic header")
         if kind == "TBI":
             if magic[:2] != b"\x1f\x8b":
                 raise ValueError("TBI index does not contain a BGZF/gzip header")
@@ -438,8 +522,10 @@ def validate_index(
             "VALID", kind, 0, [], None, [], [],
             metadata={"index_concordance": concordance},
         )
-    except (OSError, ValueError, EOFError, gzip.BadGzipFile) as exc:
+    except (ValueError, EOFError, gzip.BadGzipFile, StrictVCFValidationError) as exc:
         return ValidationResult("INVALID", kind, 0, [], None, [str(exc)], [])
+    except OSError as exc:
+        raise _storage_io_unavailable("VCF index validation", exc) from exc
 
 
 def normalize_build(requested: str | None) -> str | None:

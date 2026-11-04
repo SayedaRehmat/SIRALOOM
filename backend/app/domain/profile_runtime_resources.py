@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.resource_execution import (
@@ -16,7 +17,12 @@ from backend.app.domain.resource_execution import (
     ResourceExecutionError,
     resolve_resource_execution,
 )
-from backend.app.infrastructure.db.models import Analysis, Case, Resource
+from backend.app.infrastructure.db.models import (
+    Analysis,
+    Case,
+    OrganizationResourceBinding,
+    Resource,
+)
 
 
 class ProfileRuntimeResourceError(RuntimeError):
@@ -50,6 +56,34 @@ def _require_resource_tenant(resource: Resource, case: Case) -> None:
         raise ProfileRuntimeResourceError(
             "RESOURCE_TENANT_MISMATCH",
             "The preflight-selected resource is outside the analysis organization.",
+        )
+
+
+def _require_current_resource_adoption(db: Session, resource: Resource, case: Case) -> None:
+    """Reject stale profile plans after a lab unbinds, supersedes, or quarantines a resource."""
+    if str(getattr(resource, "status", "ACTIVE")).upper() != "ACTIVE":
+        raise ProfileRuntimeResourceError(
+            "RESOURCE_NOT_ACTIVE",
+            f"Preflight-selected resource {resource.id} is no longer ACTIVE.",
+        )
+    organization_id = getattr(resource, "organization_id", None)
+    if organization_id is None:
+        return
+    identity_key = "|".join([
+        str(resource.name),
+        str(resource.provider),
+        str(resource.resource_type),
+        str(resource.genome_build or "UNSPECIFIED"),
+    ])
+    binding = db.scalar(select(OrganizationResourceBinding).where(
+        OrganizationResourceBinding.organization_id == case.organization_id,
+        OrganizationResourceBinding.resource_id == resource.id,
+        OrganizationResourceBinding.identity_key == identity_key,
+    ))
+    if binding is None:
+        raise ProfileRuntimeResourceError(
+            "RESOURCE_NOT_ADOPTED",
+            f"Preflight-selected resource {resource.id} is no longer the laboratory's currently adopted resource version.",
         )
 
 
@@ -155,6 +189,7 @@ def resolve_profile_runtime_resources(
                 f"Preflight-selected resource {resource_id} no longer exists.",
             )
         _require_resource_tenant(resource, case)
+        _require_current_resource_adoption(db, resource, case)
 
         expected_execution = dict(snapshot.get("execution") or {})
         qualification_id = _pinned_qualification_id(snapshot, capability=capability)
@@ -276,6 +311,7 @@ def resolve_profile_runtime_resource(
             f"Preflight-selected resource {resource_id} no longer exists.",
         )
     _require_resource_tenant(resource, case)
+    _require_current_resource_adoption(db, resource, case)
 
     expected_execution = dict(snapshot.get("execution") or {})
     qualification_id = _pinned_qualification_id(snapshot, capability=capability)

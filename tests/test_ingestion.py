@@ -1,3 +1,4 @@
+import errno
 import gzip
 import struct
 import zlib
@@ -7,6 +8,7 @@ import pytest
 
 from backend.app.domain.ingestion import (
     ValidationResult,
+    VCFValidationUnavailable,
     classify_filename,
     validate_index,
     validate_specimen_sample_identity,
@@ -797,8 +799,32 @@ def test_index_validation_rejects_index_for_uncompressed_vcf(tmp_path: Path):
 
 def test_csi_magic_validation(tmp_path: Path):
     csi = tmp_path / "sample.vcf.bgz.csi"
+    _write_bgzf(csi, b"CSI\x01dummy")
+    result = validate_index(csi, "sample.vcf.bgz")
+    assert result.status == "VALID"
+
+
+def test_csi_magic_validation_rejects_invalid_decompressed_signature(tmp_path: Path):
+    csi = tmp_path / "sample.vcf.bgz.csi"
+    _write_bgzf(csi, b"NOT-CSI")
+    result = validate_index(csi, "sample.vcf.bgz")
+    assert result.status == "INVALID"
+    assert "CSI magic header" in result.errors[0]
+
+
+def test_csi_magic_validation_rejects_uncompressed_index(tmp_path: Path):
+    csi = tmp_path / "sample.vcf.bgz.csi"
     csi.write_bytes(b"CSI\x01dummy")
-    assert validate_index(csi, "sample.vcf.bgz").status == "VALID"
+    result = validate_index(csi, "sample.vcf.bgz")
+    assert result.status == "INVALID"
+    assert "BGZF/gzip header" in result.errors[0]
+
+def test_csi_magic_validation_rejects_malformed_bgzf_stream(tmp_path: Path):
+    csi = tmp_path / "sample.vcf.bgz.csi"
+    csi.write_bytes(b"\x1f\x8b\x08\x04" + b"\x00" * 8)
+    result = validate_index(csi, "sample.vcf.bgz")
+    assert result.status == "INVALID"
+    assert result.errors
 
 
 def test_index_alone_is_not_primary_input():
@@ -993,3 +1019,79 @@ def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failur
 
     with pytest.raises(ingestion.VCFValidationUnavailable, match="HTSlib version mismatch"):
         ingestion.validate_vcf(path)
+
+
+def test_unsupported_future_vcf_retains_declared_version_sample_and_assembly(tmp_path):
+    from backend.app.domain.ingestion import validate_vcf
+
+    path = tmp_path / "future.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.6\n"
+        "##contig=<ID=1,length=1000,assembly=GRCh38>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tPROBAND\n"
+        "1\t10\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf(path)
+
+    assert result.status == "INVALID"
+    assert result.error_code == "VCF_FILEFORMAT_UNSUPPORTED"
+    assert result.fileformat == "VCFv4.6"
+    assert result.sample_names == ["PROBAND"]
+    assert result.detected_build == "GRCh38"
+
+
+def test_vcf_validation_classifies_staging_read_errors_as_retryable_operational_failures(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "staging-read-error.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+
+    def fail_header_scan(_path):
+        raise OSError(errno.EIO, "simulated transient staging-volume read failure")
+
+    monkeypatch.setattr("backend.app.domain.ingestion._header_info", fail_header_scan)
+
+    with pytest.raises(VCFValidationUnavailable, match="transient storage I/O failure") as exc:
+        validate_vcf(path)
+    assert exc.value.code == "VCF_STORAGE_IO_RETRYABLE"
+    assert exc.value.retryable is True
+
+
+def test_index_validation_classifies_storage_read_errors_as_retryable_operational_failures(
+    tmp_path, monkeypatch
+):
+    index_path = tmp_path / "sample.vcf.gz.csi"
+    index_path.write_bytes(b"\x1f\x8b\x08\x04")
+    original_open = Path.open
+
+    def fail_index_read(path, *args, **kwargs):
+        if path == index_path:
+            raise OSError(errno.EIO, "simulated transient index-volume read failure")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_index_read)
+
+    with pytest.raises(VCFValidationUnavailable, match="transient storage I/O failure") as exc:
+        validate_index(index_path, "sample.vcf.gz")
+    assert exc.value.code == "VCF_STORAGE_IO_RETRYABLE"
+    assert exc.value.retryable is True
+
+
+def test_vcf_validation_classifies_storage_permission_denial_as_non_retryable(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "staging-permission-denied.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+
+    def deny_header_scan(_path):
+        raise PermissionError(errno.EACCES, "simulated storage permission denial")
+
+    monkeypatch.setattr("backend.app.domain.ingestion._header_info", deny_header_scan)
+
+    with pytest.raises(VCFValidationUnavailable) as exc:
+        validate_vcf(path)
+    assert exc.value.code == "VCF_STORAGE_ACCESS_BLOCKED"
+    assert exc.value.retryable is False
