@@ -1390,7 +1390,8 @@
           "V40-CORE-014",
           "V40-CORE-017",
           "V40-CORE-020",
-          "V40-CORE-021"
+          "V40-CORE-021",
+          "V40-CORE-009"
         ]
       },
       {
@@ -1413,7 +1414,8 @@
           "V40-CORE-014",
           "V40-CORE-017",
           "V40-CORE-020",
-          "V40-CORE-021"
+          "V40-CORE-021",
+          "V40-CORE-009"
         ]
       },
       {
@@ -1673,6 +1675,40 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT"
+        ]
+      },
+      {
+        "id": "legacy_symbolic_del_valid",
+        "category": "legacy_symbolic_alt",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: ALT permits angle-bracketed symbolic identifier strings",
+        "clause_ids": [
+          "V40-CORE-017",
+          "V40-CORE-019"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Structural variant type\">",
+          "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\tsv1\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=5"
+        ]
+      },
+      {
+        "id": "legacy_noncontiguous_chrom_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_CHROM_BLOCK_NONCONTIGUOUS",
+        "spec_basis": "VCFv4.0 core: records for each CHROM must form one contiguous block",
+        "clause_ids": [
+          "V40-CORE-010",
+          "V40-CORE-011"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t.",
+          "2\t2\t.\tA\tG\t.\tPASS\t.",
+          "1\t3\t.\tA\tT\t.\tPASS\t."
         ]
       }
     ]
