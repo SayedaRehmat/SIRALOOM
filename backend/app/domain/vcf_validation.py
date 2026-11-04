@@ -49,7 +49,7 @@ FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
 VCF_FLOAT_VALUE_RE = re.compile(
-    r"[-+]?(?:[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)\\Z",
+    r"[-+]?(?:[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)\Z",
     re.IGNORECASE,
 )
 LEGACY_INFO_KEY_RE = re.compile(r"[^\s,;=<>]+\Z")
