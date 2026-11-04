@@ -124,28 +124,38 @@ def test_public_vcf_corpus_has_independent_freebayes_and_gatk_sources():
     for source in manifest["sources"]:
         by_version.setdefault(source["version"], []).append(source)
 
-    assert len(by_version["VCFv4.1"]) == 2
-    assert {source["repository"] for source in by_version["VCFv4.1"]} == {
+    repositories_v41 = {source["repository"] for source in by_version["VCFv4.1"]}
+    assert len(by_version["VCFv4.1"]) >= 4
+    assert {
+        "samtools/bcftools",
+        "broadinstitute/gatk",
         "jamescasbon/PyVCF",
         "vcflib/vcflib",
-    }
+    }.issubset(repositories_v41)
     assert any(
         source["source_class"] == "upstream_freebayes_producer_regression_file"
         and source["expected_route_category"] == "sequence"
         for source in by_version["VCFv4.1"]
     )
 
-    assert len(by_version["VCFv4.2"]) == 2
-    assert {source["repository"] for source in by_version["VCFv4.2"]} == {
-        "jamescasbon/PyVCF",
+    repositories_v42 = {source["repository"] for source in by_version["VCFv4.2"]}
+    assert len(by_version["VCFv4.2"]) >= 4
+    assert {
+        "samtools/bcftools",
+        "google/deepvariant",
         "broadinstitute/gatk",
-    }
+    }.issubset(repositories_v42)
+    assert "jamescasbon/PyVCF" not in repositories_v42
     gatk_gvcf = next(
         source for source in by_version["VCFv4.2"]
-        if source["repository"] == "broadinstitute/gatk"
+        if source["id"] == "gatk-multicontig-eval-gvcf-v4.2"
     )
     assert gatk_gvcf["expected_route_category"] == "gvcf_reference_blocks"
     assert gatk_gvcf["git_blob_sha1"] == "858c09398d54d680767860c6dfbad6ca8f1ceda9"
+    assert any(
+        source["id"] == "pyvcf-example-v4.2"
+        for source in manifest["negative_sources"]
+    )
 
 
 def test_public_vcf_corpus_route_categories_cover_gvcf_reference_blocks():
