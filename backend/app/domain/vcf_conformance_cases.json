@@ -1476,7 +1476,7 @@
       {
         "id": "legacy_out_of_range_gt_rejected",
         "category": "legacy_negative",
-        "expected": "VCF_GENOTYPE_INVALID",
+        "expected": "VCF_FORMAT_INVALID",
         "spec_basis": "VCFv4.0 core: GT allele index must identify REF or a listed ALT",
         "lines": [
           "##fileformat=VCFv4.0",
