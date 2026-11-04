@@ -79,12 +79,12 @@ def test_vcf40_fixtures_have_unique_ids_atomic_clause_links_and_consistent_colum
 
         lines = fixture["lines"]
         header = next(
-            line for line in lines if line.startswith("#CHROM\\t")
+            line for line in lines if line.startswith("#CHROM\t")
         )
-        expected_columns = len(header.split("\\t"))
+        expected_columns = len(header.split("\t"))
         for line in lines:
             if line and not line.startswith("#"):
-                assert len(line.split("\\t")) == expected_columns, (
+                assert len(line.split("\t")) == expected_columns, (
                     fixture["id"],
                     line,
                     expected_columns,
