@@ -2727,3 +2727,34 @@ def test_filter_record_rejects_comma_in_filter_identifier(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_FILTER_INVALID"
+
+
+
+def test_vcf41_vcf42_preserve_legacy_info_and_format_identifier_grammar(tmp_path: Path):
+    path = tmp_path / "legacy-field-identifiers.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        '##INFO=<ID=DP-raw,Number=1,Type=Integer,Description="Raw depth">\n'
+        '##FORMAT=<ID=F-tag,Number=1,Type=Integer,Description="Custom field">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC\t.\tPASS\tDP-raw=10\tGT:F-tag\t0/1:5\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_enforces_info_and_format_tag_name_regex(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"invalid-tag-name-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=DP-raw,Number=1,Type=Integer,Description="Raw depth">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\tDP-raw=10\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

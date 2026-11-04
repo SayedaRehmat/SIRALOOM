@@ -48,6 +48,17 @@ def _alt_identity_key(allele: str) -> tuple[str, ...]:
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
+LEGACY_INFO_KEY_RE = re.compile(r"[^\s,;=<>]+\Z")
+LEGACY_FORMAT_KEY_RE = re.compile(r"[^\s,;=<>:]+\Z")
+
+
+def _field_key_is_valid(kind: str, identifier: str, fileformat: str | None) -> bool:
+    if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+        pattern = INFO_KEY_RE if kind == "INFO" else FORMAT_KEY_RE
+    else:
+        pattern = LEGACY_INFO_KEY_RE if kind == "INFO" else LEGACY_FORMAT_KEY_RE
+    return bool(pattern.fullmatch(identifier))
+
 INVALID_PERCENT_ESCAPE_RE = re.compile(r"%(?![0-9A-F]{2})")
 
 NONNEGATIVE_INTEGER_FIELDS = frozenset({
@@ -426,7 +437,7 @@ def _validate_info(value: str, line_no: int, fileformat: str | None = None) -> N
         if "=" in item:
             key, val = item.split("=", 1)
             if (
-                not INFO_KEY_RE.fullmatch(key)
+                not _field_key_is_valid("INFO", key, fileformat)
                 or val == ""
                 or "=" in val
                 or INVALID_PERCENT_ESCAPE_RE.search(val)
@@ -436,7 +447,7 @@ def _validate_info(value: str, line_no: int, fileformat: str | None = None) -> N
                 )
             ):
                 raise StrictVCFValidationError(f"Malformed INFO entry at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
-        elif not INFO_KEY_RE.fullmatch(item):
+        elif not _field_key_is_valid("INFO", item, fileformat):
             raise StrictVCFValidationError(f"Malformed INFO flag at line {line_no}: {item!r}", code="VCF_INFO_INVALID")
         else:
             key = item
@@ -767,8 +778,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
     identifier = parsed["ID"]
-    field_id_pattern = INFO_KEY_RE if kind == "INFO" else FORMAT_KEY_RE
-    if not field_id_pattern.fullmatch(identifier):
+    if not _field_key_is_valid(kind, identifier, fileformat):
         raise StrictVCFValidationError(
             f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
             code="VCF_HEADER_DEFINITION_INVALID",
@@ -1570,7 +1580,9 @@ def _validate_record(
         if not fmt:
             raise StrictVCFValidationError(f"FORMAT is empty at line {line_no}", code="VCF_FORMAT_INVALID")
         keys = fmt.split(":")
-        if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
+        if len(keys) != len(set(keys)) or any(
+            not _field_key_is_valid("FORMAT", key, fileformat) for key in keys
+        ):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(

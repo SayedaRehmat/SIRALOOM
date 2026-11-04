@@ -210,3 +210,13 @@ reserved ID 0), whitespace and delimiter characters in FILTER IDs, and
 whitespace/comma/angle-bracket characters in symbolic ALT IDs. Record FILTER
 values also reject commas, which cannot be represented as valid declared
 filter identifiers. Version-specific test cases cover these constraints.
+
+
+## INFO/FORMAT identifier grammar is versioned
+
+VCFv4.3 introduced explicit INFO and FORMAT tag-name regular expressions,
+with the legacy INFO tag 1000G exception. VCFv4.1/v4.2 do not state that same
+regular expression. The validator now applies the strict regex only to
+VCFv4.3–4.5 and preserves the older token grammar for VCFv4.0–4.2. Tests cover
+a legacy hyphenated INFO/FORMAT identifier and rejection of that identifier
+under VCFv4.3–4.5.
