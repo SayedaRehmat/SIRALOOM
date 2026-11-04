@@ -303,3 +303,39 @@ Qualification remains blocked:
 - The current public interoperability corpus has one independently pinned example per declared version. This is a useful smoke/interoperability layer, not broad producer/version coverage.
 - The GRCh37/GRCh38 full-container real-data qualification must run after backend tests pass.
 - No version-level normative conformance or laboratory-ready declaration is authorized by this run.
+
+
+## Real public-corpus differential run and lab disposition corrections (2026-11-04)
+
+Run `41807511542` (run number 3253) executed commit
+`b5f0cc4a629098f1f1ee77e304e17d2d5bb9a9fb`.
+
+Verified CI outcomes:
+- Backend regression suite: **2,474 passed, 46 skipped**, 2 warnings.
+- PostgreSQL and real Celery worker-loss integration: passed.
+- Frontend behavior, localization guard, production build and production frontend container: passed.
+- Public VCF version corpus: failed 3 of 6 original positive sources; the report artifact was downloaded and inspected. The three failures were not equivalent:
+  1. PyVCF VCFv4.2 was malformed (invalid INFO Flag declaration and spaces rather than tabs in #CHROM); strict validation and BCFtools both rejected it. It has been moved from positive compatibility evidence into a pinned negative corpus with an expected rejection code and parser diagnostic.
+  2. The official VCFv4.4 SV example used valid breakend ALT records without INFO/SVTYPE. VCFv4.1 states SVTYPE is derivable from REF/ALT and useful for filtering; VCFv4.5 deprecates SVTYPE as redundant. The validator now accepts absent SVTYPE and rejects a contradictory supplied value. Tests cover VCFv4.1–4.5.
+  3. The real HPRC VCFv4.5 KIV-2 record repeats the symbolic ALT token for distinct per-allele indexes and carries matching Number=A annotations. The VCFv4.5 fixed-field definition does not prohibit repeated ALT strings. The unsupported duplicate-ALT prohibition has been removed; regression tests preserve repeated ALT indexes and cardinality validation remains active.
+
+Current public corpus definition:
+- 14 positive, source-pinned inputs across VCFv4.0–4.5.
+- Minimum 4 sources and 3 distinct producers for each of VCFv4.1 and VCFv4.2; other versions have their own pinned positive sources.
+- One separate malformed real-world negative source for expected rejection by SIRALOOM and BCFtools.
+- The runner records positive source coverage, producer diversity, routing reconciliation and negative-source rejection independently. This is not clinical validation.
+
+Real-reference checks:
+- The prior run `41803072861` preserved the full chromosome-1 GRCh38 and GRCh37 reference inputs, CSI indexes and HG002 VCF slices. An independent local REF-to-FASTA scan verified 319,349/319,349 GRCh38 and 315,020/315,020 GRCh37 records with zero REF mismatches and zero out-of-reference coordinates. This is a reference-consistency check only, not normalization/index-query qualification.
+
+Production-container qualification in run `41807511542`:
+- Production image build, non-root execution, writable named-volume ownership, pinned BCFtools/HTSlib identity and runtime preflight passed.
+- The real GRCh37/GRCh38 GIAB normalization step was still running at the time of this ledger entry; its report and outputs are required before claiming success.
+
+Additional operational correction:
+- Invalid uploaded VCF/index artifacts now record `validation_outcome=REJECT` and `disposition=QUARANTINED`, retain original bytes and diagnostics, and are marked ineligible for downstream analysis.
+- Specification-governance blocks remain distinct from malformed-input quarantine.
+- Transient storage I/O is classified by errno. Transient I/O is retryable; permission, missing-path, and capacity conditions are non-retryable until operator remediation. The API returns the actual error code/retryable flag rather than hardcoding all validator failures as retryable.
+- New upload tests verify durable logical quarantine, source retention/download, case ineligibility, audit evidence, and classified storage retry behavior.
+
+All source and test changes recorded after run 3253 remain **CI-unverified** until the current branch's new workflow run completes. VCF version-level conformance and laboratory-ready status remain blocked.
