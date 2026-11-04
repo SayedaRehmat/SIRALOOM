@@ -2687,3 +2687,43 @@ def test_structured_header_rejects_unsupported_escape_sequences(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    "header, expected_code",
+    [
+        ('##FILTER=<ID=bad id,Description="bad filter">', "VCF_HEADER_DEFINITION_INVALID"),
+        ('##FILTER=<ID=0,Description="reserved filter">', "VCF_HEADER_DEFINITION_INVALID"),
+        ('##ALT=<ID=bad id,Description="bad symbolic allele">', "VCF_HEADER_DEFINITION_INVALID"),
+        ('##ALT=<ID=bad<type>,Description="bad symbolic allele">', "VCF_HEADER_DEFINITION_INVALID"),
+    ],
+)
+def test_filter_and_alt_header_ids_obey_version_specific_grammar(
+    tmp_path: Path, header: str, expected_code: str
+):
+    path = tmp_path / "invalid-header-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        + header
+        + "\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        + "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == expected_code
+
+
+def test_filter_record_rejects_comma_in_filter_identifier(tmp_path: Path):
+    path = tmp_path / "comma-filter-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FILTER=<ID=LowQual,Description="Low quality">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tLow,Qual\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FILTER_INVALID"

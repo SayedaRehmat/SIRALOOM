@@ -939,6 +939,23 @@ def _structured_header_id(
             f"{kind} structured header must contain exactly one non-empty ID at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    if identifiers:
+        identifier = identifiers[0]
+        if kind == "FILTER" and (
+            identifier == "0"
+            or any(char.isspace() or char in {",", ";", "<", ">"} for char in identifier)
+        ):
+            raise StrictVCFValidationError(
+                f"Invalid or reserved FILTER ID at line {line_no}: {identifier!r}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
+        if kind == "ALT" and any(
+            char.isspace() or char in {",", "<", ">"} for char in identifier
+        ):
+            raise StrictVCFValidationError(
+                f"Invalid ALT ID at line {line_no}: {identifier!r}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
     return identifiers[0] if identifiers else ""
 
 
@@ -1509,7 +1526,10 @@ def _validate_record(
 
     if filt != ".":
         filter_ids = filt.split(";")
-        if not filt or any(not value or any(char.isspace() for char in value) for value in filter_ids):
+        if not filt or any(
+            not value or any(char.isspace() or char == "," for char in value)
+            for value in filter_ids
+        ):
             raise StrictVCFValidationError(f"Malformed FILTER at line {line_no}: {filt!r}", code="VCF_FILTER_INVALID")
         if "0" in filter_ids:
             raise StrictVCFValidationError(

@@ -201,3 +201,12 @@ requiring ID for PEDIGREE and custom structured metadata in v4.3–v4.5.
 Source/Version optional-attribute quoting is likewise applied to v4.3–v4.5,
 where those attributes are standardized, rather than imposing that rule on
 older versions.
+
+
+## FILTER and ALT identifier constraints
+
+The strict validator now rejects reserved/invalid FILTER IDs (including the
+reserved ID 0), whitespace and delimiter characters in FILTER IDs, and
+whitespace/comma/angle-bracket characters in symbolic ALT IDs. Record FILTER
+values also reject commas, which cannot be represented as valid declared
+filter identifiers. Version-specific test cases cover these constraints.
