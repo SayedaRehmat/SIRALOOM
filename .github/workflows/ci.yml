@@ -423,6 +423,17 @@ jobs:
           version_output="$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version)"
           test "$(printf '%s\n' "${version_output}" | sed -n '1p')" = "bcftools 1.25"
           test "$(printf '%s\n' "${version_output}" | sed -n '2p')" = "Using htslib 1.25"
+      - name: Preflight production-container qualification runtime configuration
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e APP_ENV=qualification \
+            -e DATABASE_URL=sqlite:////tmp/siraloom-qualification.db \
+            -e REDIS_URL=redis://127.0.0.1:6379/0 \
+            -e BCFTOOLS_VERSION=1.25 \
+            -e HTSLIB_VERSION=1.25 \
+            --entrypoint python \
+            siraloom-backend:ci -c 'from backend.app.config import settings; assert settings.app_env == "qualification"'
       - name: Execute real GRCh38 and GRCh37 GIAB normalization inside production container
         run: |
           set -euo pipefail
@@ -436,6 +447,11 @@ jobs:
             --mount "type=bind,src=${GRCH37_DIR},dst=/qualification/grch37,readonly" \
             --mount "type=bind,src=${output_dir},dst=/qualification/output" \
             --mount "type=bind,src=${qualification_script},dst=/qualification/qualify.py,readonly" \
+            # These URLs satisfy Settings construction only. This isolated
+            # qualification process performs no database or Redis operations.
+            -e APP_ENV=qualification \
+            -e DATABASE_URL=sqlite:////tmp/siraloom-qualification.db \
+            -e REDIS_URL=redis://127.0.0.1:6379/0 \
             -e BCFTOOLS_VERSION=1.25 \
             -e HTSLIB_VERSION=1.25 \
             -e GRCH38_REFERENCE_FILENAME="$(basename "${GRCH38_REFERENCE}")" \
