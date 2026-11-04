@@ -761,7 +761,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     for optional_key in ("Source", "Version"):
-        if optional_key in parsed and optional_key not in quoted_attributes:
+        if fileformat != "VCFv4.0" and optional_key in parsed and optional_key not in quoted_attributes:
             raise StrictVCFValidationError(
                 f"{kind} {optional_key} must be a quoted string at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
@@ -920,6 +920,13 @@ def _structured_header_id(
             f"{kind} structured header lacks required attributes {sorted(missing)!r} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    for attribute_name in ("Description", "Source", "Version"):
+        if attribute_name in parsed_attributes and attribute_name not in quoted_keys:
+            if attribute_name == "Description" or attribute_name in {"Source", "Version"}:
+                raise StrictVCFValidationError(
+                    f"{kind} {attribute_name} must be a quoted string at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
     unquoted = set(quoted_attributes or ()).difference(quoted_keys)
     if unquoted:
         raise StrictVCFValidationError(
@@ -1709,14 +1716,17 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         "The fileformat value must be an unstructured version identifier",
                         code="VCF_HEADER_DEFINITION_INVALID",
                     )
-                if header_value.startswith("<"):
+                if header_value.startswith("<") and (
+                    fileformat != "VCFv4.0"
+                    or header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
+                ):
                     required_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
                     quoted_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
                     identifier = _structured_header_id(
                         line,
                         header_key,
                         line_no,
-                        require_id=not (header_key == "PEDIGREE" and fileformat == "VCFv4.5"),
+                        require_id=True,
                         required_attributes=required_attributes,
                         quoted_attributes=quoted_attributes,
                     )

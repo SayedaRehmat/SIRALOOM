@@ -1097,19 +1097,34 @@ def test_vcf43_rejects_vcf44_leading_gt_phase_separator(tmp_path: Path):
 
 
 
-def test_strict_validation_accepts_pedigree_metadata_without_id(tmp_path: Path):
-    path = tmp_path / "pedigree-header.vcf"
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_pedigree_structured_metadata_requires_id_for_maintained_versions(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"pedigree-header-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
         "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
-    profile = validate_vcf_strict(path)
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
 
-    assert profile["records"] == 1
+
+def test_pedigree_structured_metadata_accepts_unique_id(tmp_path: Path):
+    path = tmp_path / "pedigree-header-with-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "##PEDIGREE=<ID=PROBAND,Original=MOTHER>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
 
 
 

@@ -179,3 +179,12 @@ It now emits PARTIAL_FEATURE_QUALIFICATION and VERSION_AWARE_PARTIAL. The
 version is recognized and a tested feature subset is parsed; this does not
 mean every normative clause or optional feature is implemented. VCFv4.0
 continues to emit LEGACY_COMPATIBILITY_ONLY / LEGACY_PARSER_SMOKE_ONLY.
+
+
+## PEDIGREE structured-header correction
+
+The official VCFv4.3–4.5 text requires an ID for structured metadata lines,
+including PEDIGREE. An earlier regression incorrectly allowed a VCFv4.5
+PEDIGREE line without ID. That acceptance has been removed. Maintained-version
+tests now reject missing PEDIGREE IDs and accept a valid unique ID. The
+VCFv4.0 legacy profile retains its narrower historical parser behavior.
