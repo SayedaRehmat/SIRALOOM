@@ -28,7 +28,7 @@ BCF specification and historical change logs are excluded.
 
 **Status:** `EXTRACTED_UNREVIEWED`
 
-These 680 entries are *candidate source lines*, not 680 proven atomic normative
+These 510 entries are *candidate source lines*, not 510 proven atomic normative
 clauses. Modal-language extraction can produce false positives, miss
 requirements expressed without modal verbs, and place multiple requirements
 on one line. The output is therefore explicitly marked:
