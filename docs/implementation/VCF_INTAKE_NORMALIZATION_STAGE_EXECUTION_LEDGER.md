@@ -232,3 +232,18 @@ Evidence state:
 - Latest code verification run #41799590317 is PENDING at ccf561e721d2b6fafcd239cbdef4343a30b8ba4d.
 - No test result from either run is attributed to the new code until the exact SHA is executed and artifacts are inspected.
 - Full atomic clause review and implementation/test traceability remain BLOCKED / INCOMPLETE. The section-level matrix and extracted candidate inventory are not a substitute for this review.
+
+
+## SAMPLE metadata conformance follow-on (2026-11-04)
+
+Latest code commit: 7aac749d2ea660a66ec1e0d4f8337d4c80841c13.
+
+- Corrected the generic structured-header parser so it does not impose a universal quoted-Description rule on SAMPLE or custom metadata. Quoted Description remains required for INFO/FORMAT/FILTER/ALT where specified; VCFv4.2 SAMPLE Description may be a semicolon-delimited list.
+- Added SAMPLE metadata ID reconciliation against #CHROM sample columns. SAMPLE metadata is optional, but if supplied its IDs must refer to declared sample columns; SAMPLE metadata without sample columns is rejected.
+- Added versioned regression coverage for matching and mismatching SAMPLE IDs and VCFv4.2 unquoted Description-list behavior.
+
+Verification:
+- Run #3212 / 41795132311 remains IN_PROGRESS on the old baseline SHA and is still at the six-release real GIAB qualification step.
+- Latest code run #41800428480 is PENDING on 7aac749d2ea660a66ec1e0d4f8337d4c80841c13.
+- New SAMPLE and header grammar tests have not yet run in CI.
+- Full sample-genome mixture cardinality, META value-domain, and PEDIGREE relationship graph validation remain PARTIAL / NOT ASSESSED.
