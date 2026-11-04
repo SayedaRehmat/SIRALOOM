@@ -1111,6 +1111,7 @@ def _validate_pedigree_relationships(
 
     graph: dict[str, set[str]] = {}
     legacy_unresolved = 0
+    unresolved_reference_count = 0
     relationship_count = 0
     for line_no, attributes in pedigree_metadata:
         child = attributes.get("ID")
@@ -1156,11 +1157,7 @@ def _validate_pedigree_relationships(
             )
         if genome_mapping_complete:
             unresolved = {child, *ancestors}.difference(genome_ids)
-            if unresolved:
-                raise StrictVCFValidationError(
-                    f"PEDIGREE references genome identifiers absent from complete SAMPLE Genomes mappings at line {line_no}: {sorted(unresolved)!r}",
-                    code="VCF_PEDIGREE_REFERENCE_UNRESOLVED",
-                )
+            unresolved_reference_count += len(unresolved)
         graph.setdefault(child, set()).update(ancestors)
         relationship_count += len(ancestors)
 
@@ -1184,11 +1181,23 @@ def _validate_pedigree_relationships(
     for genome_id in graph:
         visit(genome_id)
 
-    status = "PARTIAL_LEGACY" if legacy_unresolved else "VALIDATED"
+    status = (
+        "PARTIAL_LEGACY"
+        if legacy_unresolved
+        else "REVIEW_REQUIRED"
+        if unresolved_reference_count
+        else "VALIDATED"
+    )
     return {
         "relationship_count": relationship_count,
         "node_count": len(visited),
         "legacy_unresolved_record_count": legacy_unresolved,
+        "unresolved_reference_count": unresolved_reference_count,
+        "warning_codes": (
+            ["VCF_PEDIGREE_REFERENCE_UNRESOLVED"]
+            if unresolved_reference_count
+            else []
+        ),
         "validation_status": status,
     }
 
@@ -2706,9 +2715,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "declared_contig_md5s": contig_md5s,
         "compression": compression,
         "warning_codes": (
-            ["VCF_BGZF_EOF_MARKER_MISSING"]
-            if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
-            else []
+            (["VCF_BGZF_EOF_MARKER_MISSING"]
+             if compression.get("format") == "BGZF" and not compression.get("eof_marker_present")
+             else [])
+            + pedigree_profile.get("warning_codes", [])
         ),
     }
 
