@@ -418,3 +418,85 @@ and one malformed upstream example:
 
 These corrections are source-backed, have regression tests, and are awaiting
 a new full CI execution on the exact latest feature-branch commit.
+
+
+## Atomic clause traceability closure gate (2026-11-04)
+
+The family-level rows above are audit groupings only. They do **not** satisfy
+atomic specification traceability. A version is not clause-traceable until a
+machine-readable catalog contains one record for every applicable normative
+obligation and every record has the fields below:
+
+| Field | Required meaning |
+|---|---|
+| `clause_id` | Stable ID; never derived solely from a line number |
+| `source_id` / `source_revision` | Exact source authority, immutable commit or archived-byte digest |
+| `source_locator` | Section, subsection, table/row, page/anchor, and line range where available |
+| `source_excerpt_sha256` | Hash of the reviewed source excerpt; no paraphrase-only traceability |
+| `normative_force` | MUST, SHALL, SHOULD, MAY, DEFINITION, GRAMMAR, TABLE_CONSTRAINT, or NON_NORMATIVE |
+| `atomic_requirement` | One independently verifiable obligation with qualifiers and exceptions preserved |
+| `applicability` | Explicit per-version set; include rationale for additions, removals, and N/A |
+| `requirement_class` | Header, encoding, fixed field, INFO, FORMAT, genotype, allele, structural, etc. |
+| `implementation` | Exact production module and symbol; line numbers are generated evidence, not stable identity |
+| `tests` | Exact positive, negative, and boundary test node IDs or justified N/A |
+| `evidence` | Exact CI/run/artifact identity, test result, and source revision tested |
+| `review` | Reviewer, review date, decision, and unresolved interpretation notes |
+| `disposition` | IMPLEMENTED_TESTED, PARTIAL, UNSUPPORTED_BLOCKED, NOT_APPLICABLE, or OPEN |
+
+A clause is `IMPLEMENTED_TESTED` only when its source and version applicability
+are reviewed, implementation mapping is exact, the relevant tests execute and
+pass on the same commit, and evidence is retained. A code-symbol guess, test
+name without execution, source-line candidate, or family-level mapping cannot
+pass this gate. Unsupported clauses may be safely blocked only where the
+product's supported-scope contract permits blocking; a blocked optional VCF
+feature is not equivalent to general VCF conformance.
+
+### Version-specific source authority
+
+- **VCFv4.0:** historical 1000 Genomes core format page plus its separate SV
+  conventions page. These are mutable pages without a signed immutable source
+  revision in the current repository inventory. The catalog must preserve an
+  archived byte snapshot and SHA-256 before any VCFv4.0 clause is marked
+  source-pinned. Status ceiling: `LEGACY_COMPATIBILITY_ONLY`.
+- **VCFv4.1–4.5:** the five TeX sources pinned to
+  `samtools/hts-specs@510c107ba89aa13113818c9e4fa3071283cb7f7b`, with exact
+  Git blob SHA-1 values recorded in the normative inventory. This is the
+  normative source baseline for those maintained versions.
+
+### Completion accounting (current audited state)
+
+| Version | Source basis | Atomic clauses reviewed | Clause-to-code/test links executed on one commit | Closure status |
+|---|---|---:|---:|---|
+| VCFv4.0 | Historical 1000 Genomes pages; mutable/unarchived | 0 verified | 0 verified | BLOCKED: source snapshot + review required |
+| VCFv4.1 | Pinned HTS TeX | 0 verified | 0 verified | OPEN: 38 candidate lines are not clauses |
+| VCFv4.2 | Pinned HTS TeX | 0 verified | 0 verified | OPEN: 44 candidate lines are not clauses |
+| VCFv4.3 | Pinned HTS TeX | 0 verified | 0 verified | OPEN: 82 candidate lines are not clauses |
+| VCFv4.4 | Pinned HTS TeX | 0 verified | 0 verified | OPEN: 161 candidate lines are not clauses |
+| VCFv4.5 | Pinned HTS TeX | 0 verified | 0 verified | OPEN: 185 candidate lines are not clauses |
+
+These zeroes are intentional: the repository currently has a source-line
+candidate extractor and a section/table inventory, but no completed reviewed
+atomic-clause catalog. They must not be replaced with candidate-line counts.
+The current matrix therefore remains `PARTIAL — NOT A CONFORMANCE DECLARATION`.
+
+### Required execution order
+
+1. Archive and hash the two VCFv4.0 historical sources; record their authority
+   and limitations separately from maintained HTS specifications.
+2. Build a source-complete clause candidate set for VCFv4.1–4.5, including
+   prose, grammar, normative tables, enumerated lists, definitions, footnotes,
+   and normative constraints without modal verbs.
+3. Review and atomize every candidate; assign stable IDs and per-version
+   applicability. Keep descriptive examples and non-normative recommendations
+   classified rather than silently dropping them.
+4. Map each applicable clause to production symbols and exact test IDs; add
+   missing tests or implementation only after the mapping gap is explicit.
+5. Run the clause-specific tests and full regression suite against the exact
+   feature-branch commit; retain machine-readable results and reviewer sign-off.
+6. Reconcile counts: source clauses = applicable + explicitly N/A, with no
+   unreviewed or unmapped remainder. Only then evaluate version-level closure.
+
+**Current result:** the atomic traceability deliverable is not complete. The
+source authority and review contract are now explicit; no clause-level pass is
+claimed. This is a deliberate fail-closed status, not a reason to infer
+conformance from the existing family-level matrix.
