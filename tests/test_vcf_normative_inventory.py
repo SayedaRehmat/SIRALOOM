@@ -112,3 +112,43 @@ def test_normative_candidate_extractor_rejects_unpinned_source_content(tmp_path:
 
     with pytest.raises(ValueError, match="Official source blob mismatch"):
         extract_vcf_normative_candidates(source_dir)
+
+
+def test_public_vcf_corpus_has_independent_freebayes_and_gatk_sources():
+    manifest = json.loads(
+        (REPO_ROOT / "backend" / "app" / "domain" / "vcf_public_version_corpus.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    by_version = {}
+    for source in manifest["sources"]:
+        by_version.setdefault(source["version"], []).append(source)
+
+    assert len(by_version["VCFv4.1"]) == 2
+    assert {source["repository"] for source in by_version["VCFv4.1"]} == {
+        "jamescasbon/PyVCF",
+        "vcflib/vcflib",
+    }
+    assert any(
+        source["source_class"] == "upstream_freebayes_producer_regression_file"
+        and source["expected_route_category"] == "sequence"
+        for source in by_version["VCFv4.1"]
+    )
+
+    assert len(by_version["VCFv4.2"]) == 2
+    assert {source["repository"] for source in by_version["VCFv4.2"]} == {
+        "jamescasbon/PyVCF",
+        "broadinstitute/gatk",
+    }
+    gatk_gvcf = next(
+        source for source in by_version["VCFv4.2"]
+        if source["repository"] == "broadinstitute/gatk"
+    )
+    assert gatk_gvcf["expected_route_category"] == "gvcf_reference_blocks"
+    assert gatk_gvcf["git_blob_sha1"] == "858c09398d54d680767860c6dfbad6ca8f1ceda9"
+
+
+def test_public_vcf_corpus_route_categories_cover_gvcf_reference_blocks():
+    runner_path = REPO_ROOT / "scripts" / "validation" / "qualify_public_vcf_version_corpus.py"
+    runner_source = runner_path.read_text(encoding="utf-8")
+    assert '"gvcf_reference_blocks": routing.get("gvcf_reference_blocks", 0)' in runner_source
