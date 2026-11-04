@@ -1,7 +1,7 @@
 {
-  "schema_version": 2,
-  "suite_id": "siraloom-public-vcf-version-corpus-v2",
-  "purpose": "Execute immutable public VCF inputs with their original declared versions through SIRALOOM strict validation, BCFtools parser interoperability, and source-record routing reconciliation.",
+  "schema_version": 3,
+  "suite_id": "siraloom-public-vcf-version-corpus-v3",
+  "purpose": "Qualify pinned positive VCF inputs across VCFv4.0-v4.5 through strict validation, BCFtools interoperability and exclusive record routing; separately verify deterministic rejection of pinned malformed real-world producer inputs.",
   "version_policy": {
     "VCFv4.0": "Legacy compatibility only; not a current HTS normative specification target.",
     "VCFv4.1": "Normative historical HTS specification target.",
@@ -142,17 +142,17 @@
       "producer": "GATK"
     },
     {
-      "id": "pyvcf-example-v4.2",
+      "id": "gatk-vcfbugrepro-v4.2",
       "version": "VCFv4.2",
-      "source_class": "upstream_producer_example",
-      "repository": "jamescasbon/PyVCF",
-      "commit": "476169cd457ba0caa6b998b301a4d91e975251d9",
-      "path": "vcf/test/example-4.2.vcf",
-      "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.2.vcf",
-      "git_blob_sha1": "d649fc3f29a7d09e89bc1a93f161bb8770ac6f06",
-      "size_bytes": 30413,
+      "source_class": "upstream_gatk_small_variant_regression_fixture",
+      "repository": "broadinstitute/gatk",
+      "commit": "aa9a8076c374aeb0764f445b1f746a6cb183e348",
+      "path": "src/test/resources/org/broadinstitute/hellbender/tools/funcotator/vcfBugRepro.vcf",
+      "url": "https://raw.githubusercontent.com/broadinstitute/gatk/aa9a8076c374aeb0764f445b1f746a6cb183e348/src/test/resources/org/broadinstitute/hellbender/tools/funcotator/vcfBugRepro.vcf",
+      "git_blob_sha1": "dc04f3ae5f1fa84a01961464e1d789e9e9651118",
+      "size_bytes": 92,
       "expected_route_category": "sequence",
-      "producer": "PyVCF"
+      "producer": "GATK"
     },
     {
       "id": "hts-specs-example-v4.3",
@@ -209,5 +209,23 @@
     "VCFv4.3": 1,
     "VCFv4.4": 1,
     "VCFv4.5": 1
-  }
+  },
+  "negative_sources": [
+    {
+      "id": "pyvcf-example-v4.2",
+      "version": "VCFv4.2",
+      "source_class": "upstream_malformed_producer_example",
+      "repository": "jamescasbon/PyVCF",
+      "commit": "476169cd457ba0caa6b998b301a4d91e975251d9",
+      "path": "vcf/test/example-4.2.vcf",
+      "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.2.vcf",
+      "git_blob_sha1": "d649fc3f29a7d09e89bc1a93f161bb8770ac6f06",
+      "size_bytes": 30413,
+      "expected_route_category": "sequence",
+      "producer": "PyVCF",
+      "expected_outcome": "REJECT",
+      "expected_strict_error_code": "VCF_HEADER_DEFINITION_INVALID",
+      "expected_bcftools_stderr_contains": "could not parse"
+    }
+  ]
 }
