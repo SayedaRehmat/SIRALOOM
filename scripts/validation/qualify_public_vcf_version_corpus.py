@@ -76,6 +76,7 @@ def qualify_source(
         "source_id": source["id"],
         "declared_version_expected": source["version"],
         "source_class": source["source_class"],
+        "producer": source["producer"],
         "source_url": source["url"],
         "source_commit": source["commit"],
         "source_path": source["path"],
@@ -133,11 +134,16 @@ def qualify_source(
             )
             route_category_counts = {
                 "sequence": routing.get("sequence_records", 0),
+                "reference_only": routing.get("reference_only_records", 0),
+                "gvcf_reference_blocks": routing.get("gvcf_reference_blocks", 0),
+                "gvcf_unresolved_variants": routing.get("gvcf_unresolved_variant_records", 0),
                 "structural_variants": routing.get("structural_variant_records", 0),
                 "copy_number_variants": routing.get("cnv_variant_records", 0),
                 "repeat_expansions": routing.get("repeat_expansion_records", 0),
                 "mitochondrial_variants": routing.get("mitochondrial_variant_records", 0),
-                "gvcf_reference_blocks": routing.get("gvcf_reference_blocks", 0),
+                "spanning_deletions": routing.get("spanning_deletion_records", 0),
+                "telomere_coordinates": routing.get("telomere_records", 0),
+                "after_contig_coordinates": routing.get("telomere_after_contig_records", 0),
             }
             expected_category = source.get("expected_route_category")
             expected_category_count = route_category_counts.get(expected_category, 0)
@@ -209,6 +215,20 @@ def main() -> int:
     source_ids_unique = len(source_ids) == len(set(source_ids))
     at_least_one_source_per_version = all(count >= 1 for count in source_counts_by_version.values())
     exactly_one_source_per_version = all(count == 1 for count in source_counts_by_version.values())
+    minimum_sources = manifest.get("minimum_sources_per_version", {version: 1 for version in expected})
+    minimum_producers = manifest.get("minimum_unique_producers_per_version", {version: 1 for version in expected})
+    producers_by_version = {
+        version: sorted({source["producer"] for source in manifest["sources"] if source["version"] == version})
+        for version in sorted(expected)
+    }
+    minimum_source_coverage_complete = all(
+        source_counts_by_version.get(version, 0) >= int(minimum_sources.get(version, 1))
+        for version in expected
+    )
+    producer_diversity_complete = all(
+        len(producers_by_version.get(version, [])) >= int(minimum_producers.get(version, 1))
+        for version in expected
+    )
     report = {
         "suite_id": manifest["suite_id"],
         "schema_version": manifest["schema_version"],
@@ -223,11 +243,18 @@ def main() -> int:
         "source_classes_by_version": source_classes_by_version,
         "at_least_one_source_per_version": at_least_one_source_per_version,
         "exactly_one_source_per_version": exactly_one_source_per_version,
+        "minimum_sources_per_version": minimum_sources,
+        "minimum_source_coverage_complete": minimum_source_coverage_complete,
+        "producers_by_version": producers_by_version,
+        "unique_producer_count_by_version": {version: len(producers) for version, producers in producers_by_version.items()},
+        "minimum_unique_producers_per_version": minimum_producers,
+        "producer_diversity_complete": producer_diversity_complete,
         "passed_source_count": len(reports) - len(failed),
         "failed_source_count": len(failed),
         "execution_status": (
             "PASSED"
             if not failed and sources_cover_all_versions and source_ids_unique
+            and minimum_source_coverage_complete and producer_diversity_complete
             else "FAILED"
         ),
         "clinical_validation_claim": False,
