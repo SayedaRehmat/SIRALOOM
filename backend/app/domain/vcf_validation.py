@@ -1718,8 +1718,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_DEFINITION_INVALID",
                     )
                 known_structured_headers = {
-                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "PEDIGREE"
+                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE"
                 }
+                if fileformat in {"VCFv4.1", "VCFv4.2"}:
+                    known_structured_headers.add("PEDIGREE")
                 maintained_generic_headers = fileformat in {
                     "VCFv4.3", "VCFv4.4", "VCFv4.5"
                 }
