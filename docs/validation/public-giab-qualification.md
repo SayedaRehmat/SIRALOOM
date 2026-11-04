@@ -16,7 +16,7 @@ Exact source URLs and official MD5 values are stored in `benchmarks/giab/public_
 
 ## Execute
 
-Open GitHub Actions → **GIAB HG001 reproducible input-processing benchmark**. On a pull request touching the workflow or benchmark code, both assemblies run independently. Manual dispatch can run GRCh38, GRCh37, or both. Each job has isolated input/output paths and uploads a 90-day artifact.
+Open GitHub Actions → **GIAB HG001 reproducible input-processing benchmark**. On a pull request touching the workflow or benchmark code, both assemblies run independently. Manual dispatch currently runs both GRCh37 and GRCh38 as separate matrix jobs; it does not expose a single-build selector. Each job has isolated input/output paths and uploads a 90-day artifact.
 
 ## Evidence
 
