@@ -1,3 +1,4 @@
+import errno
 import gzip
 import struct
 import zlib
@@ -1049,12 +1050,14 @@ def test_vcf_validation_classifies_staging_read_errors_as_retryable_operational_
     path.write_text(VALID_VCF, encoding="utf-8")
 
     def fail_header_scan(_path):
-        raise PermissionError("simulated transient staging-volume read failure")
+        raise OSError(errno.EIO, "simulated transient staging-volume read failure")
 
     monkeypatch.setattr("backend.app.domain.ingestion._header_info", fail_header_scan)
 
-    with pytest.raises(VCFValidationUnavailable, match="staging/storage read failed"):
+    with pytest.raises(VCFValidationUnavailable, match="transient storage I/O failure") as exc:
         validate_vcf(path)
+    assert exc.value.code == "VCF_STORAGE_IO_RETRYABLE"
+    assert exc.value.retryable is True
 
 
 def test_index_validation_classifies_storage_read_errors_as_retryable_operational_failures(
@@ -1066,10 +1069,29 @@ def test_index_validation_classifies_storage_read_errors_as_retryable_operationa
 
     def fail_index_read(path, *args, **kwargs):
         if path == index_path:
-            raise PermissionError("simulated transient index-volume read failure")
+            raise OSError(errno.EIO, "simulated transient index-volume read failure")
         return original_open(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, "open", fail_index_read)
 
-    with pytest.raises(VCFValidationUnavailable, match="index or paired primary-file storage I/O failed"):
+    with pytest.raises(VCFValidationUnavailable, match="transient storage I/O failure") as exc:
         validate_index(index_path, "sample.vcf.gz")
+    assert exc.value.code == "VCF_STORAGE_IO_RETRYABLE"
+    assert exc.value.retryable is True
+
+
+def test_vcf_validation_classifies_storage_permission_denial_as_non_retryable(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "staging-permission-denied.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+
+    def deny_header_scan(_path):
+        raise PermissionError(errno.EACCES, "simulated storage permission denial")
+
+    monkeypatch.setattr("backend.app.domain.ingestion._header_info", deny_header_scan)
+
+    with pytest.raises(VCFValidationUnavailable) as exc:
+        validate_vcf(path)
+    assert exc.value.code == "VCF_STORAGE_ACCESS_BLOCKED"
+    assert exc.value.retryable is False
