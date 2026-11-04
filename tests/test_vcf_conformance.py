@@ -95,3 +95,56 @@ def test_vcf40_fixtures_have_unique_ids_atomic_clause_links_and_consistent_colum
         and fixture["expected"] == "VCF_POS_INVALID"
         for fixture in fixtures
     )
+
+
+def test_vcf40_supported_sequence_records_survive_unsupported_sv_cnv_routing(tmp_path):
+    from backend.app.domain.vcf_tools import route_vcf_records
+    from backend.app.domain.vcf_validation import validate_vcf_strict
+
+    source = tmp_path / "mixed-vcf40.vcf"
+    source.write_text(
+        "\\n".join(
+            [
+                "##fileformat=VCFv4.0",
+                '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Structural variant type">',
+                '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">',
+                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO",
+                "1\\t100\\trsV40\\tA\\tC\\t50\\tPASS\\t.",
+                "1\\t200\\tsvV40\\tA\\t<DEL>\\t.\\tPASS\\tSVTYPE=DEL;END=210",
+                "1\\t300\\tcnvV40\\tA\\t<CNV>\\t.\\tPASS\\tSVTYPE=CNV;END=350",
+            ]
+        )
+        + "\\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(source)
+    assert profile["fileformat"] == "VCFv4.0"
+    assert profile["records"] == 3
+
+    output = tmp_path / "routed"
+    routing = route_vcf_records(source, output)
+
+    assert routing["sequence_records"] == 1
+    assert routing["structural_variant_records"] == 1
+    assert routing["cnv_variant_records"] == 1
+    assert routing["record_reconciliation"]["balanced"] is True
+    assert routing["record_reconciliation"]["source_records"] == 3
+    assert routing["record_reconciliation"]["routed_records"] == 3
+
+    sequence_text = (output / "sequence-input.vcf").read_text(encoding="utf-8")
+    structural_text = (output / "structural-variants.vcf").read_text(encoding="utf-8")
+    cnv_text = (output / "copy-number-variants.vcf").read_text(encoding="utf-8")
+    exclusions = [
+        json.loads(line)
+        for line in (output / "excluded-source-records.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+
+    assert "rsV40" in sequence_text
+    assert "svV40" not in sequence_text
+    assert "svV40" in structural_text
+    assert "cnvV40" in cnv_text
+    assert {item["reason_code"] for item in exclusions} == {
+        "STRUCTURAL_VARIANT_INTERPRETATION_UNSUPPORTED",
+        "CNV_PIPELINE_PENDING",
+    }
