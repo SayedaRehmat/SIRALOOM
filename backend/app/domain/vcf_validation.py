@@ -2131,6 +2131,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "symbolic_records": symbolic,
         "breakend_records": breakends,
         "gvcf_markers": gvcf_markers,
+        "spanning_deletion_records": [
+            {
+                "record_index": record_index,
+                "line_number": line_no,
+                "chrom": chrom,
+                "pos": pos,
+                "called_sample_count": len(star_carriers) if star_carriers is not None else None,
+            }
+            for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records
+        ],
         "unresolved_spanning_deletion_record_count": len(unresolved_spanning_deletion_records),
         "unresolved_spanning_deletion_records": unresolved_spanning_deletion_records,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
