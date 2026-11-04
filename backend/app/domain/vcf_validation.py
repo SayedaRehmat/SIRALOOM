@@ -1060,6 +1060,11 @@ def _validate_sample_mixture_metadata(
             if value == ".":
                 contains_missing = True
                 continue
+            if not VCF_FLOAT_VALUE_RE.fullmatch(value):
+                raise StrictVCFValidationError(
+                    f"SAMPLE Mixture contains a nonconforming numeric token at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
             try:
                 proportion = float(value)
             except ValueError as exc:
