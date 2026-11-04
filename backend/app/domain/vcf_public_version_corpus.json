@@ -36,6 +36,30 @@
       "expected_route_category": "sequence"
     },
     {
+      "id": "vcflib-freebayes-issue307-v4.1",
+      "version": "VCFv4.1",
+      "source_class": "upstream_freebayes_producer_regression_file",
+      "repository": "vcflib/vcflib",
+      "commit": "6f16fb86da8ddf490702772d954c66e88331ba37",
+      "path": "test/data/issue_307_vcfnulldotslashdot.vcf",
+      "url": "https://raw.githubusercontent.com/vcflib/vcflib/6f16fb86da8ddf490702772d954c66e88331ba37/test/data/issue_307_vcfnulldotslashdot.vcf",
+      "git_blob_sha1": "dcc146d4c06b31260e693998496a47b76004cf23",
+      "size_bytes": 767,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "gatk-multicontig-eval-gvcf-v4.2",
+      "version": "VCFv4.2",
+      "source_class": "upstream_gatk_gvcf_interoperability_fixture",
+      "repository": "broadinstitute/gatk",
+      "commit": "aa9a8076c374aeb0764f445b1f746a6cb183e348",
+      "path": "src/test/resources/org/broadinstitute/hellbender/tools/concordance/multiple-contigs-eval.gvcf",
+      "url": "https://raw.githubusercontent.com/broadinstitute/gatk/aa9a8076c374aeb0764f445b1f746a6cb183e348/src/test/resources/org/broadinstitute/hellbender/tools/concordance/multiple-contigs-eval.gvcf",
+      "git_blob_sha1": "858c09398d54d680767860c6dfbad6ca8f1ceda9",
+      "size_bytes": 6254,
+      "expected_route_category": "gvcf_reference_blocks"
+    },
+    {
       "id": "pyvcf-example-v4.2",
       "version": "VCFv4.2",
       "source_class": "upstream_producer_example",
