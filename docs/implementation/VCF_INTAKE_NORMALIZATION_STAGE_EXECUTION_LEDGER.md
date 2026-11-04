@@ -247,3 +247,30 @@ Verification:
 - Latest code run #41800428480 is PENDING on 7aac749d2ea660a66ec1e0d4f8337d4c80841c13.
 - New SAMPLE and header grammar tests have not yet run in CI.
 - Full sample-genome mixture cardinality, META value-domain, and PEDIGREE relationship graph validation remain PARTIAL / NOT ASSESSED.
+
+
+## VCFv4.5 reserved FORMAT definition audit (2026-11-04)
+
+Official source reviewed: samtools/hts-specs VCFv4.5 at commit
+510c107ba89aa13113818c9e4fa3071283cb7f7b, including the reserved FORMAT
+definitions for copy-number and derivative-haplotype data.
+
+Gap found and corrected in the native validator:
+- The implicit VCFv4.5 FORMAT registry omitted CN, CICN, CNQ, CNL,
+  CNP, NQ, HAP, and AHAP.
+- Added their specification-defined Number/Type pairs so omitted redundant
+  header declarations do not bypass type/cardinality validation.
+- Added the CNP [0,1] value-domain constraint.
+- Added regression coverage for every implicit field, out-of-range CNP values,
+  and attempts to override the built-in CNP definition.
+
+These records remain outside the trial SNV/small-INDEL clinical sign-out
+scope and must be routed to specialized review. This change validates their
+VCF representation; it does not qualify CNV or derivative-haplotype analysis.
+
+Verification:
+- Implementation and tests are committed to the feature branch.
+- CI execution for the exact resulting commit is required before verification
+  status can be upgraded.
+- VCFv4.5 normative conformance remains PARTIAL; this closes only the named
+  reserved-FORMAT definition gap.

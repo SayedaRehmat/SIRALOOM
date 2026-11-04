@@ -3007,3 +3007,59 @@ def test_sample_metadata_is_invalid_for_sites_only_vcf(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_SAMPLE_METADATA_MISMATCH"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("CN", "2.0"),
+        ("CICN", "1.5,2.5"),
+        ("CNQ", "30.0"),
+        ("CNL", "-1.0,-2.0,-3.0"),
+        ("CNP", "0.2,0.3,0.5"),
+        ("NQ", "30"),
+        ("HAP", "1"),
+        ("AHAP", "1"),
+    ],
+)
+def test_vcf45_implicit_reserved_copy_number_and_haplotype_format_fields(
+    tmp_path: Path, field: str, value: str
+):
+    path = tmp_path / f"vcf45-implicit-{field.lower()}.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        f"1\t2\t.\tA\t<CNV>\t.\tPASS\tEND=10\tGT:{field}\t0/1:{value}\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 1
+
+
+def test_vcf45_implicit_reserved_cnp_values_must_be_probabilities(tmp_path: Path):
+    path = tmp_path / "vcf45-implicit-cnp-out-of-range.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\t2\t.\tA\t<CNV>\t.\tPASS\tEND=10\tGT:CNP\t0/1:0.2,0.3,1.2\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+def test_vcf45_reserved_cnp_header_cannot_override_builtin_definition(tmp_path: Path):
+    path = tmp_path / "vcf45-cnp-header-override.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=CNP,Number=1,Type=Float,Description="Incorrect CNP definition">'],
+        "1\t2\t.\tA\t<CNV>\t.\tPASS\tEND=10\tGT:CNP\t0/1:0.2,0.3,0.5\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

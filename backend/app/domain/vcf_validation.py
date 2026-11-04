@@ -77,7 +77,7 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
-PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP"), ("FORMAT", "CNP")})
 NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
@@ -124,6 +124,17 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
     # cardinality/type even when a caller omits a redundant FORMAT header line.
     reserved = {
+        # VCFv4.5 copy-number and derivative-haplotype FORMAT definitions.
+        # These fields remain parseable even though SIRALOOM routes their
+        # variant classes outside the trial SNV/small-INDEL sign-out path.
+        "AHAP": ("1", "Integer"),
+        "CICN": ("2", "Float"),
+        "CN": ("1", "Float"),
+        "CNL": ("G", "Float"),
+        "CNP": ("G", "Float"),
+        "CNQ": ("1", "Float"),
+        "HAP": ("1", "Integer"),
+        "NQ": ("1", "Integer"),
         "AD": ("R", "Integer"),
         "ADF": ("R", "Integer"),
         "ADR": ("R", "Integer"),
