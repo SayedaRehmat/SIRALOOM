@@ -2802,3 +2802,36 @@ def test_vcf43_plus_all_structured_ids_reject_whitespace(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("integer_value", ["-2147483648", "2147483647"])
+def test_vcf_integer_accepts_full_signed_32_bit_boundary(
+    tmp_path: Path, integer_value: str
+):
+    path = tmp_path / "int32-boundary.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=X,Number=1,Type=Integer,Description="Signed integer">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t.\tPASS\tX={integer_value}\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("integer_value", ["-2147483649", "2147483648"])
+def test_vcf_integer_rejects_values_outside_signed_32_bit_boundary(
+    tmp_path: Path, integer_value: str
+):
+    path = tmp_path / "int32-out-of-range.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=X,Number=1,Type=Integer,Description="Signed integer">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t.\tA\tC\t.\tPASS\tX={integer_value}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"

@@ -1168,7 +1168,7 @@ def _validate_declared_value(
                 valid = False
             else:
                 integer_value = int(item)
-                valid = -(2**31) + 8 <= integer_value <= 2**31 - 1
+                valid = -(2**31) <= integer_value <= 2**31 - 1
                 if (field_scope, key) in NONNEGATIVE_INTEGER_FIELDS:
                     valid = valid and integer_value >= 0
                 if _base_modification_field_kind(key) == "depth":

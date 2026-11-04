@@ -232,3 +232,12 @@ header type, including custom metadata, SAMPLE, PEDIGREE and META identifiers:
 IDs are case-sensitive strings and cannot contain whitespace, commas or angle
 brackets. INFO/FORMAT, FILTER, ALT and contig types retain their stricter
 type-specific constraints.
+
+
+## Integer numeric range correction
+
+The VCF Integer type is a signed 32-bit integer. The prior lower bound excluded
+the eight smallest valid signed values, apparently conflating textual VCF
+integers with reserved internal BCF sentinels. The validator now accepts the
+full interval [-2^31, 2^31-1] and rejects values outside it. Both boundaries
+and both adjacent out-of-range values have regression cases.
