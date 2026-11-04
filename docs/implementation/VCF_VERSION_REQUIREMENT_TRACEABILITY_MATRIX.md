@@ -236,11 +236,11 @@ type-specific constraints.
 
 ## Integer numeric range correction
 
-The VCF Integer type is a signed 32-bit integer. The prior lower bound excluded
-the eight smallest valid signed values, apparently conflating textual VCF
-integers with reserved internal BCF sentinels. The validator now accepts the
-full interval [-2^31, 2^31-1] and rejects values outside it. Both boundaries
-and both adjacent out-of-range values have regression cases.
+The VCF Integer type uses a signed 32-bit representation, but the eight
+lowest signed values (-2^31 through -2^31+7) are reserved by the binary
+encoding and are disallowed in both VCF and BCF. The validator therefore
+accepts [-2^31+8, 2^31-1] and rejects values outside that interval. Both
+boundaries and adjacent out-of-range values have regression cases.
 
 
 ## Simple insertion/deletion padding

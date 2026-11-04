@@ -2806,7 +2806,7 @@ def test_vcf43_plus_all_structured_ids_reject_whitespace(
 
 
 @pytest.mark.parametrize("integer_value", ["-2147483640", "2147483647"])
-def test_vcf_integer_accepts_full_signed_32_bit_boundary(
+def test_vcf_integer_accepts_specified_lower_and_upper_boundaries(
     tmp_path: Path, integer_value: str
 ):
     path = tmp_path / "int32-boundary.vcf"
@@ -2821,7 +2821,7 @@ def test_vcf_integer_accepts_full_signed_32_bit_boundary(
 
 
 @pytest.mark.parametrize("integer_value", ["-2147483641", "2147483648"])
-def test_vcf_integer_rejects_values_outside_signed_32_bit_boundary(
+def test_vcf_integer_rejects_values_outside_specified_range(
     tmp_path: Path, integer_value: str
 ):
     path = tmp_path / "int32-out-of-range.vcf"
