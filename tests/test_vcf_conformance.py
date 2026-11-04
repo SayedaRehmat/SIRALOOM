@@ -54,3 +54,44 @@ def test_unknown_vcf_version_has_no_implicit_conformance_suite():
     assert report["test_case_count"] == 0
     assert report["execution_status"] == "FAILED"
     assert report["failed_test_count"] == 0
+
+
+def test_vcf40_fixtures_have_unique_ids_atomic_clause_links_and_consistent_columns():
+    manifest_path = (
+        Path(__file__).resolve().parents[1]
+        / "backend"
+        / "app"
+        / "domain"
+        / "vcf_conformance_cases.json"
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    fixtures = manifest["versions"]["VCFv4.0"]
+
+    fixture_ids = [fixture["id"] for fixture in fixtures]
+    assert len(fixture_ids) == len(set(fixture_ids))
+
+    for fixture in fixtures:
+        assert fixture.get("clause_ids"), fixture["id"]
+        assert all(
+            clause_id.startswith("V40-CORE-")
+            for clause_id in fixture["clause_ids"]
+        ), fixture["id"]
+
+        lines = fixture["lines"]
+        header = next(
+            line for line in lines if line.startswith("#CHROM\\t")
+        )
+        expected_columns = len(header.split("\\t"))
+        for line in lines:
+            if line and not line.startswith("#"):
+                assert len(line.split("\\t")) == expected_columns, (
+                    fixture["id"],
+                    line,
+                    expected_columns,
+                )
+
+    assert any(
+        fixture["id"] == "legacy_invalid_pos_rejected"
+        and fixture["expected"] == "VCF_POS_INVALID"
+        for fixture in fixtures
+    )
