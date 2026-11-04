@@ -293,3 +293,56 @@ FILTER field definition prohibits whitespace and semicolons, while semicolon
 is the actual list delimiter. Comma restrictions apply to structured header
 IDs where comma separates attributes, not as an invented extra constraint on
 the record FILTER token.
+
+
+## Specification-section coverage matrix
+
+The official source inventory contains 43 section headings for VCFv4.1, 43
+for v4.2, 47 for v4.3, and 48 each for v4.4 and v4.5. This table maps the
+complete section families across those source documents. It is a section-level
+coverage index; it does not replace the atomic clause inventory required for
+final conformance.
+
+| Specification section family | 4.1 | 4.2 | 4.3 | 4.4 | 4.5 | Implementation / tests | Status |
+|---|---|---|---|---|---|---|---|
+| Character encoding, non-printable characters and special characters | N/A | N/A | Applicable | Applicable | Applicable | vcf_validation.py encoding/control/line-ending checks; test_vcf_validation.py | PARTIAL |
+| Data types | Inline in field sections | Inline in field sections | Dedicated section | Dedicated section | Dedicated section | _validate_declared_value, integer/float/character/string checks | PARTIAL |
+| Meta-information lines and file format | Applicable | Applicable | Applicable | Applicable | Applicable | validate_vcf_strict, _structured_header_id, _parse_field_definition | PARTIAL |
+| INFO field format | Applicable | Applicable | Applicable | Applicable | Applicable | _validate_info, _validate_declared_value, _expected_cardinality | PARTIAL |
+| FILTER field format | Applicable | Applicable | Applicable | Applicable | Applicable | _validate_record FILTER handling, _structured_header_id | PARTIAL |
+| Individual FORMAT field format | Applicable | Applicable | Applicable | Applicable | Applicable | FORMAT parsing, genotype/cardinality validation | PARTIAL |
+| ALT field format | Applicable | Applicable | Applicable | Applicable | Applicable | _validate_structural_alt, ALT declaration validation | PARTIAL |
+| Assembly field format | Applicable | Applicable | Applicable | Applicable | Applicable | assembly metadata parsing and assembly eligibility | PARTIAL |
+| Contig field format | Applicable | Applicable | Applicable | Applicable | Applicable | declared_vcf_contig_lengths/md5s, VCF_CONTIG_NAME_RE | PARTIAL |
+| Sample field format | Applicable | Applicable | Applicable | Applicable | Applicable | sample/header reconciliation and sample metadata parsing | PARTIAL |
+| Pedigree field format | Applicable | Applicable | Applicable | Applicable | Applicable | version-specific PEDIGREE structured metadata parsing | PARTIAL |
+| Header line syntax | Applicable | Applicable | Applicable | Applicable | Applicable | header state machine and structured metadata parser | PARTIAL |
+| Data lines | Applicable | Applicable | Applicable | Applicable | Applicable | validate_vcf_strict and _validate_record | PARTIAL |
+| Fixed fields | Applicable | Applicable | Applicable | Applicable | Applicable | CHROM/POS/ID/REF/ALT/QUAL/FILTER/INFO validation | PARTIAL |
+| Genotype fields | Applicable | Applicable | Applicable | Applicable | Applicable | GT parser, ploidy, phase, Number=G and local allele checks | PARTIAL |
+| VCF format and haplotype representation | Applicable | Applicable | Applicable | Applicable | Applicable | genotype order, phase-set and multiallelic handling | PARTIAL |
+| VCF tag naming conventions | N/A | N/A | Applicable | Applicable | Applicable | version-specific INFO/FORMAT tag grammar | PARTIAL |
+| INFO/FORMAT keys used for structural variants | Applicable | Applicable | Applicable | Applicable | Applicable | SVLEN/END and selected reserved field checks | PARTIAL |
+| Representing variation; SNP and small-indel creation/decoding examples | Applicable | Applicable | Applicable | Applicable | Applicable | sequence allele validation, indel padding and normalization tests | PARTIAL |
+| Structural variant encoding and breakend rearrangements | Applicable | Applicable | Applicable | Applicable | Applicable | symbolic ALT and breakend parsers, MATEID validation | PARTIAL; downstream SV analysis out of trial scope |
+| Inserted sequence and large insertions | Applicable | Applicable | Applicable | Applicable | Applicable | breakend/symbolic parsing and sequence preservation | PARTIAL |
+| Multiple mates and explicit partners | Applicable | Applicable | Applicable | Applicable | Applicable | deferred breakend mate-link validation | PARTIAL |
+| Telomeres | Applicable | Applicable | Applicable | Applicable | Applicable | POS=0/N+1 parsing and boundary handling | PARTIAL |
+| Event modifiers, inversions and uncertainty around breakend location | Applicable | Applicable | Applicable | Applicable | Applicable | selected symbolic/BND checks and confidence interval checks | PARTIAL |
+| Single breakends | Applicable | Applicable | Applicable | Applicable | Applicable | breakend syntax parser | PARTIAL |
+| Sample mixtures, clonal derivation relationships and phasing adjacencies in aneuploid context | Applicable | Applicable | Applicable | Applicable | Applicable | no complete dedicated implementation/test mapping yet | NOT ASSESSED |
+| Unspecified alleles and REF-only blocks (gVCF) | N/A | N/A | Applicable | Applicable | Applicable | <NON_REF>/<*> and END/LEN checks; GATK producer fixtures | PARTIAL; no general gVCF sign-out claim |
+| Copy number variation | N/A | N/A | N/A | Applicable | Applicable | symbolic SV recognition and specialized routing | ROUTED OUT OF SCOPE; full CNV semantics not qualified |
+| Tandem repeats | N/A | N/A | N/A | Applicable | Applicable | CNV:TR recognition and repeat-expansion specialized routing | ROUTED OUT OF SCOPE; full repeat semantics not qualified |
+
+### Section-level closure interpretation
+
+- **PARTIAL** means some implementation and tests exist, but the complete
+  section's normative clauses are not all independently mapped and verified.
+- **ROUTED OUT OF SCOPE** means SIRALOOM must preserve and route the input
+  without processing it through the SNV/small-INDEL clinical path. It is not
+  a claim of complete semantic conformance for that variant class.
+- **NOT ASSESSED** means no complete implementation/test evidence has been
+  established.
+- Informative examples are used as interoperability fixtures, not counted as
+  normative requirements.
