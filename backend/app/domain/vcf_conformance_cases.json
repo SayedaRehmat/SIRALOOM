@@ -1556,6 +1556,124 @@
           "V40-CORE-024",
           "V40-CORE-025"
         ]
+      },
+      {
+        "id": "legacy_info_flag_valid",
+        "category": "legacy_info_flag",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: key-only INFO Flag has Number=0 and no value",
+        "clause_ids": [
+          "V40-CORE-002",
+          "V40-CORE-003",
+          "V40-CORE-004",
+          "V40-CORE-022"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=DB,Number=0,Type=Flag,Description=\"dbSNP membership\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tDB"
+        ]
+      },
+      {
+        "id": "legacy_info_flag_value_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.0 core: INFO Flag must not carry a value",
+        "clause_ids": [
+          "V40-CORE-004"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=DB,Number=0,Type=Flag,Description=\"dbSNP membership\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tDB=true"
+        ]
+      },
+      {
+        "id": "legacy_flag_wrong_number_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.0 core: Flag declaration requires Number=0",
+        "clause_ids": [
+          "V40-CORE-002",
+          "V40-CORE-004"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=DB,Number=1,Type=Flag,Description=\"dbSNP membership\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "legacy_character_info_valid",
+        "category": "legacy_info_types",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: Character is a supported INFO Type",
+        "clause_ids": [
+          "V40-CORE-002",
+          "V40-CORE-003",
+          "V40-CORE-023"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=ZZ,Number=1,Type=Character,Description=\"Single character annotation\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tZZ=x"
+        ]
+      },
+      {
+        "id": "legacy_custom_format_valid",
+        "category": "legacy_format",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core: FORMAT declaration defines sample subfield types and ordering with GT first",
+        "clause_ids": [
+          "V40-CORE-005",
+          "V40-CORE-024",
+          "V40-CORE-027",
+          "V40-CORE-029"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:DP\t0/1:18"
+        ]
+      },
+      {
+        "id": "legacy_gt_not_first_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_FORMAT_INVALID",
+        "spec_basis": "VCFv4.0 core: GT must be the first FORMAT subfield",
+        "clause_ids": [
+          "V40-CORE-005",
+          "V40-CORE-024"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tDP:GT\t18:0/1"
+        ]
+      },
+      {
+        "id": "legacy_sample_column_mismatch_rejected",
+        "category": "legacy_negative",
+        "expected": "VCF_RECORD_INVALID",
+        "spec_basis": "VCFv4.0 core: data columns must match header sample columns",
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007"
+        ],
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFOFORMAT\tS1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT"
+        ]
       }
     ]
   },
