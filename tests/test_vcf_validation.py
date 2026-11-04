@@ -9,6 +9,7 @@ from backend.app.domain.vcf_validation import (
     _deleted_reference_interval,
     _validate_record,
     validate_vcf_reference_alleles,
+    declared_vcf_contig_md5s,
     validate_vcf_strict,
 )
 
@@ -521,7 +522,7 @@ def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
 
 
 @pytest.mark.parametrize("damage", ["invalid_header", "truncated_trailer", "corrupt_crc"])
-def test_strict_validation_rejects_corrupt_or_truncated_gzip_stream(
+def test_vcf_header_reader_rejects_corrupt_or_truncated_gzip_stream(
     tmp_path: Path, damage: str,
 ):
     path = tmp_path / f"damaged-{damage}.vcf.gz"
@@ -542,7 +543,7 @@ def test_strict_validation_rejects_corrupt_or_truncated_gzip_stream(
     path.write_bytes(compressed)
 
     with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
+        declared_vcf_contig_md5s(path)
 
     assert exc.value.code == "VCF_COMPRESSION_INVALID"
     assert "corrupt or truncated" in str(exc.value)
