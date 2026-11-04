@@ -209,3 +209,26 @@ Verification status:
 - Intermediate queued runs on earlier implementation commits were cancelled by the concurrency group and are not evidence.
 - All changes listed above are therefore IMPLEMENTED IN REPOSITORY but NOT YET CI-VERIFIED. Do not mark their tests passed until the latest SHA's run completes and reports artifacts are inspected.
 - VCFv4.0–4.5 normative conformance remains PARTIAL. The current traceability matrix is a reviewed engineering baseline, not yet a complete atomic clause-by-clause inventory.
+
+
+## Follow-on normative parser audit (2026-11-04)
+
+Latest code commit in this audit sequence: ccf561e721d2b6fafcd239cbdef4343a30b8ba4d.
+
+Additional version-specific behavior implemented after the earlier ledger entry:
+- VCFv4.1/v4.2 PEDIGREE uses its legacy relationship attributes without the later generic ID requirement; VCFv4.3–4.5 require structured-line IDs, including PEDIGREE.
+- Generic custom structured metadata ID requirements are applied from VCFv4.3 onward; known structured headers retain their version-specific parsing in VCFv4.1/v4.2.
+- INFO/FORMAT tag-name regex requirements are applied to VCFv4.3–4.5; VCFv4.1/v4.2 retain their earlier token grammar.
+- VCFv4.3+ record IDs reject whitespace, commas and angle brackets.
+- FILTER and ALT structured IDs receive their respective identifier restrictions.
+- The eight lowest signed 32-bit Integer values remain rejected as required by the VCF/BCF representation; the accepted lower boundary is -2147483640.
+- VCFv4.3+ QUAL tokens are checked against the specification Float grammar; POS is checked as an unsigned decimal token.
+- Simple insertion/deletion representations are checked for the required left-padding base, or right-padding at POS=0/1.
+- The compatibility registry exposes PARTIAL_FEATURE_QUALIFICATION / VERSION_AWARE_PARTIAL for VCFv4.1–4.5; version recognition is not presented as full normative conformance.
+
+Evidence state:
+- These changes are committed but have not yet been executed by CI.
+- Baseline run #3212 / 41795132311 remains IN_PROGRESS at the six-release real GIAB qualification step.
+- Latest code verification run #41799590317 is PENDING at ccf561e721d2b6fafcd239cbdef4343a30b8ba4d.
+- No test result from either run is attributed to the new code until the exact SHA is executed and artifacts are inspected.
+- Full atomic clause review and implementation/test traceability remain BLOCKED / INCOMPLETE. The section-level matrix and extracted candidate inventory are not a substitute for this review.
