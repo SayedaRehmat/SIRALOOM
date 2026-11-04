@@ -611,7 +611,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "validate_input",
             ))
-            assert validation_step.status == StepStatus.SUCCEEDED
+            assert validation_step.status == StepStatus.SUCCEEDED, (validation_step.error_code, validation_step.error_message, validation_step.metadata_json)
             assert validation_step.metadata_json["validation"] == "PASS_WITH_WARNINGS"
             assert validation_step.metadata_json["warning_codes"] == [
                 "VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED"
