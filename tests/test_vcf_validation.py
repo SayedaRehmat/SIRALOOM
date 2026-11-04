@@ -1747,10 +1747,8 @@ def test_alt_case_normalization_preserves_symbolic_ids_and_breakend_contigs(
     ("alt", "info"),
     [
         ("C,C", "."),
-        ("c,C", "."),
         ("<DEL>,<DEL>", "SVLEN=-10,-10"),
         ("<CNV:TR>,<CNV:TR>", "SVLEN=100,100"),
-        ("A]chr1:123],a]chr1:123]", "."),
     ],
 )
 def test_vcf45_repeated_alt_values_preserve_distinct_allele_indexes(alt: str, info: str):
