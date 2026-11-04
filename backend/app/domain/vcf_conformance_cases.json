@@ -1380,16 +1380,38 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "legacy_minimal_snp_valid",
+        "category": "legacy_fixed_fields",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.0 core format: eight fixed fields and tab-delimited records",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
       }
     ]
   },
   "normative_coverage": {
     "VCFv4.0": {
-      "status": "NOT_APPLICABLE",
+      "status": "PARTIAL",
       "covered_sections": [],
-      "uncovered_sections": [],
-      "notes": "Legacy parser smoke only; no current normative target is claimed. Section-level fixture evidence is listed under tested_sections; this is targeted regression coverage only and must not be interpreted as full section or clause conformance.",
-      "tested_sections": []
+      "uncovered_sections": [
+        "Raw historical source bytes and SHA-256 not yet archived",
+        "Complete atomic review and code/test traceability",
+        "Legacy real-file and independent producer qualification"
+      ],
+      "notes": "VCFv4.0 now has a historical clause catalog and targeted conformance vectors. This remains partial, not certification.",
+      "tested_sections": [
+        {
+          "section_title": "Fixed fields",
+          "fixture_ids": [
+            "legacy_minimal_snp_valid"
+          ]
+        }
+      ]
     },
     "VCFv4.1": {
       "status": "PARTIAL",
