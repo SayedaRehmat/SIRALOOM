@@ -82,8 +82,14 @@ def test_vcf40_fixtures_have_unique_ids_atomic_clause_links_and_consistent_colum
             line for line in lines if line.startswith("#CHROM\t")
         )
         expected_columns = len(header.split("\t"))
-        for line in lines:
-            if line and not line.startswith("#"):
+        data_lines = [line for line in lines if line and not line.startswith("#")]
+        if fixture["expected"] == "VCF_RECORD_INVALID":
+            assert any(
+                len(line.split("\t")) != expected_columns
+                for line in data_lines
+            ), fixture["id"]
+        else:
+            for line in data_lines:
                 assert len(line.split("\t")) == expected_columns, (
                     fixture["id"],
                     line,
@@ -103,18 +109,18 @@ def test_vcf40_supported_sequence_records_survive_unsupported_sv_cnv_routing(tmp
 
     source = tmp_path / "mixed-vcf40.vcf"
     source.write_text(
-        "\\n".join(
+        "\n".join(
             [
                 "##fileformat=VCFv4.0",
                 '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Structural variant type">',
                 '##INFO=<ID=END,Number=1,Type=Integer,Description="End position">',
-                "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO",
-                "1\\t100\\trsV40\\tA\\tC\\t50\\tPASS\\t.",
-                "1\\t200\\tsvV40\\tA\\t<DEL>\\t.\\tPASS\\tSVTYPE=DEL;END=210",
-                "1\\t300\\tcnvV40\\tA\\t<CNV>\\t.\\tPASS\\tSVTYPE=CNV;END=350",
+                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+                "1\t100\trsV40\tA\tC\t50\tPASS\t.",
+                "1\t200\tsvV40\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL;END=210",
+                "1\t300\tcnvV40\tA\t<CNV>\t.\tPASS\tSVTYPE=CNV;END=350",
             ]
         )
-        + "\\n",
+        + "\n",
         encoding="utf-8",
     )
 
