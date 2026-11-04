@@ -183,3 +183,14 @@ def test_public_vcf_corpus_runner_executes_negative_sources():
     assert "def qualify_negative_source(" in runner_source
     assert 'manifest.get("negative_sources", [])' in runner_source
     assert '"negative_source_results": negative_reports' in runner_source
+
+
+def test_production_container_report_distinguishes_source_rows_and_alt_expansion():
+    script = (
+        REPO_ROOT / "scripts" / "validation" / "qualify_public_vcf_in_container.py"
+    ).read_text(encoding="utf-8")
+    assert '"source_record_count": source_record_count' in script
+    assert '"alternate_allele_count": intake.metadata["alternate_allele_count"]' in script
+    assert '"parsed_variant_record_count": intake.metadata["parsed_variant_record_count"]' in script
+    assert '"source_record_count_matches_routing": True' in script
+    assert "ALT-expanded parsed variant records" in script
