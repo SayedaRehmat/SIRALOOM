@@ -2581,3 +2581,57 @@ def test_info_optional_source_and_version_attributes_must_be_quoted(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+def test_info_description_accepts_escaped_quote_and_backslash(tmp_path: Path):
+    path = tmp_path / "escaped-description.vcf"
+    header = (
+        r'##INFO=<ID=DP,Number=1,Type=Integer,Description="depth with \"quoted\" text and \\\\ path">'
+        + "\\n"
+    )
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        + header
+        + "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        + "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tDP=10\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_custom_structured_header_accepts_escaped_quote_and_backslash(tmp_path: Path):
+    path = tmp_path / "escaped-custom-header.vcf"
+    header = (
+        r'##CUSTOM=<ID=Producer,Description="producer said \\"valid\\" and path \\\\data">'
+        + "\\n"
+    )
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        + header
+        + "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        + "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        r'##INFO=<ID=DP,Number=1,Type=Integer,Description="bad \\q escape">',
+        r'##CUSTOM=<ID=Producer,Description="bad \\q escape">',
+    ],
+)
+def test_structured_header_rejects_unsupported_escape_sequences(tmp_path: Path, header: str):
+    path = tmp_path / "unsupported-escape.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        + header
+        + "\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        + "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

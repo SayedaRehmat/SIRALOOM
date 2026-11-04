@@ -140,3 +140,13 @@ The validator was tightened accordingly:
 Regression cases cover each behavior across VCFv4.1–4.5 where applicable.
 These are implementation changes awaiting the queued CI run; they do not
 establish complete normative conformance.
+
+
+## Escaped structured-header values
+
+The parser's structured-header scanners now recognize only the VCF-defined
+escaped quote and escaped backslash sequences inside quoted values. Unsupported
+escape sequences are rejected. Regression coverage includes INFO descriptions
+and custom structured metadata. This closes a parser-state defect where an
+escaped quote could previously be interpreted as the end of a quoted value.
+The tests are awaiting execution in the queued CI verification.

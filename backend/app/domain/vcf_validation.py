@@ -699,6 +699,11 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     escaped = False
     for char in body:
         if escaped:
+            if char not in {'"', chr(92)}:
+                raise StrictVCFValidationError(
+                    f"Unsupported escape sequence in {kind} header value at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
             current.append(char)
             escaped = False
         elif char == chr(92) and quoted:
@@ -841,9 +846,14 @@ def _structured_header_id(
     square_bracket_depth = 0
     for char in body:
         if escaped:
+            if char not in {'"', "\\\\"}:
+                raise StrictVCFValidationError(
+                    f"Unsupported escape sequence in {kind} structured header at line {line_no}",
+                    code="VCF_HEADER_DEFINITION_INVALID",
+                )
             current.append(char)
             escaped = False
-        elif char == "\\\\" and quoted:
+        elif char == "\\" and quoted:
             current.append(char)
             escaped = True
         elif char == '"':
