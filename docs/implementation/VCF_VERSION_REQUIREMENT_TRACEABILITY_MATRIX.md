@@ -11,7 +11,7 @@ one column never implies PASS in another.
 
 | Version | Authority | SIRALOOM policy | Current acceptance status |
 |---|---|---|---|
-| VCFv4.0 | Historical VCF 4.0 compatibility material; not listed in the current HTS specifications index | Legacy compatibility only; no claim of current normative conformance | PARTIAL / legacy smoke |
+| VCFv4.0 | Historical VCF 4.0 format description and 1000 Genomes SV conventions | Supported version target; historical source traceability and conformance qualification remain partial | PARTIAL / historical qualification |
 | VCFv4.1 | GA4GH Large Scale Genomics HTS specification | Version-specific normative target | PARTIAL |
 | VCFv4.2 | GA4GH Large Scale Genomics HTS specification | Version-specific normative target | PARTIAL |
 | VCFv4.3 | GA4GH Large Scale Genomics HTS specification | Version-specific normative target | PARTIAL |
@@ -507,3 +507,12 @@ conformance from the existing family-level matrix.
 VCFv4.0 is **not excluded**. Its profile has been changed from `LEGACY_PARSER_SMOKE_ONLY` to `VERSION_AWARE_PARTIAL` / `PARTIAL_LEGACY_SPECIFICATION_QUALIFICATION`. A dedicated historical clause catalog is at `docs/implementation/VCF40_HISTORICAL_SOURCE_AND_CLAUSE_CATALOG.md`. The conformance manifest now contains nine version-specific VCFv4.0 core regression vectors, including valid SNP, multiallelic, indel, phased/missing genotype cases and malformed POS/REF/ID/GT cases.
 
 This is a qualification expansion, not completion. Source HTTP bytes and SHA-256 remain unarchived; atomic clause review and exact per-clause test mapping remain open; the new vector suite has not yet been verified by CI on the latest commit. VCFv4.0 must remain in the supported version registry, and unsupported SV/CNV feature handling must not reject otherwise valid SNV/small-INDEL records.
+
+
+### VCFv4.0 execution traceability update
+
+The versioned fixture manifest now contains ten VCFv4.0 cases (including the historical parser smoke case), with unique fixture IDs and atomic clause references on all cases. The runner emits `clause_ids` in each fixture result. The focused pytest integrity test checks unique fixture IDs, clause-link presence, and record/header column consistency.
+
+Current fixture-to-clause links cover 20 of the 33 first-pass core catalog entries. The remaining catalog entries are not considered tested merely because a related validator function exists. Exact positive/negative/boundary test mapping remains pending for those clauses. The public corpus workflow includes one independently pinned PyVCF VCFv4.0 compatibility fixture; a real historical 1000 Genomes cohort VCFv4.0 file is still required for producer-level interoperability evidence.
+
+The validator now rejects POS=0 as invalid because VCFv4.0 explicitly defines POS as a one-based coordinate. This is a correction to an observed implementation gap, not a relaxation of VCFv4.0 acceptance. It must be covered by the branch CI run before acceptance.
