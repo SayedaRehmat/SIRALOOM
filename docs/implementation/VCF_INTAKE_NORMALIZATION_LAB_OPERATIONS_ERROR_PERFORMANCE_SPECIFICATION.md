@@ -132,6 +132,32 @@ Never return raw stack traces, secrets, internal filesystem paths, SQL, credenti
 
 A warning does not become a pass. Warnings must be categorized and governed by a policy profile. Any warning affecting scientific interpretation or output eligibility must block or require review.
 
+#### Implemented VCF intake disposition mapping
+
+For a primary VCF or paired index that fails deterministic content validation,
+the upload API preserves the original bytes and validation evidence while
+recording two distinct dimensions:
+
+- `validation_outcome=REJECT`: the submitted representation is not eligible
+  under the validator's declared contract.
+- `disposition=QUARANTINED`: the immutable source artifact is retained for
+  authorized inspection, marked `INVALID` / `INELIGIBLE`, and prohibited
+  from downstream analysis. It is not silently repaired or released. The
+  remediation is a corrected submission or explicit specimen-mapping repair.
+
+A future or unqualified specification is instead `BLOCKED` with
+`disposition=GOVERNANCE_BLOCKED`; it is not mislabeled as malformed input.
+A validator/toolchain outage or transient storage I/O fault produces a
+structured 503 before artifact publication. The response carries a stable
+error code and an explicit `retryable` value. Access-denied and capacity
+conditions are non-retryable until an operator restores approved access or
+capacity. Deterministic malformed bytes are never retried unchanged.
+
+The idempotency contract remains separate: an identical replay returns the
+original committed artifact; a missing artifact behind a committed reservation
+enters `RECOVERY_REQUIRED` and requires administrator reconciliation rather
+than silent recreation.
+
 ### 3.3 Minimum error catalogue
 
 Implementation must map actual code paths and tests to these identifiers. Extend codes through reviewed change control.
@@ -176,6 +202,7 @@ Implementation must map actual code paths and tests to these identifiers. Extend
 | VCF-RES-003 | Execution deadline exceeded | CAPACITY | BLOCK or conditional retry | Conditional | Record phase timing/resource use; no indefinite extension |
 | VCF-IO-001 | Object storage/network transient failure | STORAGE | RETRY | Yes | Bounded retry and checksum verification |
 | VCF-IO-002 | Storage permission or tenant access denied | SECURITY | BLOCK | No blind retry | Audit and investigate authorization |
+| VCF-IO-003 | Staging/index storage read fails during validation | STORAGE | RETRY only for classified transient errno; otherwise BLOCK | Classified | Return structured unavailable response; do not persist a partial or misclassified VCF |
 | VCF-DB-001 | Database transient connection/serialization failure | DATABASE | RETRY | Yes | Retry transaction safely and idempotently |
 | VCF-DB-002 | State/unique constraint conflict or stale worker write | DATABASE | BLOCK/reconcile | Conditional | Enforce ownership; never overwrite newer state |
 | VCF-WRK-001 | Worker lost before/during/after tool execution | EXECUTION | RETRY/reconcile | Safe boundary only | Reconcile process/output; use lease and idempotency |
