@@ -105,7 +105,7 @@ def feature_compatibility_for_version(version: str) -> list[dict[str, str | None
                     status="NOT_APPLICABLE_TO_DECLARED_VERSION",
                     implementation="This feature qualification is scoped to VCFv4.1 and later.",
                     evidence="HTS specifications version registry",
-                    limitation="VCFv4.0 is retained as a legacy parser smoke profile, not a normative conformance target.",
+                    limitation="VCFv4.0 remains a supported historical format version; this later-version feature family is not part of the VCFv4.0 source specification.",
                 )
             )
         else:
