@@ -816,7 +816,7 @@ def test_strict_validation_rejects_malformed_structural_representation(tmp_path,
 @pytest.mark.parametrize(
     ("records", "code"),
     [
-        ("1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n", "VCF_BREAKEND_SVTYPE_INVALID"),
+        ("1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=DEL;MATEID=bnd2\n", "VCF_BREAKEND_SVTYPE_INVALID"),
         (
             "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=missing\n",
             "VCF_BREAKEND_MATE_MISSING",
@@ -3245,3 +3245,24 @@ def test_pedigree_relationships_accept_consanguineous_ancestry_dag(tmp_path: Pat
     assert profile["pedigree_relationship_count"] == 4
     assert profile["pedigree_node_count"] == 4
     assert profile["pedigree_validation_status"] == "VALIDATED"
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"],
+)
+def test_strict_validation_accepts_breakend_mates_without_optional_svtype(tmp_path, version):
+    mate_number = "A" if version in {"VCFv4.4", "VCFv4.5"} else "."
+    path = tmp_path / f"breakend-no-svtype-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        f'##INFO=<ID=MATEID,Number={mate_number},Type=String,Description="Breakend mate ID">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\n",
+        encoding="utf-8",
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2
