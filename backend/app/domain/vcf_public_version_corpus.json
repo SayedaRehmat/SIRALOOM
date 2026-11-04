@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "suite_id": "siraloom-public-vcf-version-corpus-v1",
+  "schema_version": 2,
+  "suite_id": "siraloom-public-vcf-version-corpus-v2",
   "purpose": "Execute immutable public VCF inputs with their original declared versions through SIRALOOM strict validation, BCFtools parser interoperability, and source-record routing reconciliation.",
   "version_policy": {
     "VCFv4.0": "Legacy compatibility only; not a current HTS normative specification target.",
@@ -21,6 +21,46 @@
       "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.0.vcf",
       "git_blob_sha1": "97fb07e91f74438f7325386d7d94ff406c10c24c",
       "size_bytes": 1605,
+      "expected_route_category": "sequence",
+      "producer": "PyVCF"
+    },
+    {
+      "id": "bcftools-v41-convert-gvcf",
+      "version": "VCFv4.1",
+      "producer": "BCFtools",
+      "source_class": "upstream_bcftools_gvcf_regression_fixture",
+      "repository": "samtools/bcftools",
+      "commit": "0b732b9682cb46582932a6872e8af64970b3c17b",
+      "path": "test/convert.gvcf.vcf",
+      "url": "https://raw.githubusercontent.com/samtools/bcftools/0b732b9682cb46582932a6872e8af64970b3c17b/test/convert.gvcf.vcf",
+      "git_blob_sha1": "7f3bb6f93ff80922cedaf967f8a61de515321533",
+      "size_bytes": 9348,
+      "expected_route_category": "reference_only"
+    },
+    {
+      "id": "bcftools-v41-filter-4",
+      "version": "VCFv4.1",
+      "producer": "BCFtools",
+      "source_class": "upstream_bcftools_filter_regression_fixture",
+      "repository": "samtools/bcftools",
+      "commit": "0b732b9682cb46582932a6872e8af64970b3c17b",
+      "path": "test/filter.4.vcf",
+      "url": "https://raw.githubusercontent.com/samtools/bcftools/0b732b9682cb46582932a6872e8af64970b3c17b/test/filter.4.vcf",
+      "git_blob_sha1": "afe0f407984f6d1153f4c1c7a8d534c3208f5fd7",
+      "size_bytes": 624,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "gatk-funcotator-v41-pik3ca",
+      "version": "VCFv4.1",
+      "producer": "GATK Funcotator",
+      "source_class": "upstream_gatk_funcotator_regression_fixture",
+      "repository": "broadinstitute/gatk",
+      "commit": "aa9a8076c374aeb0764f445b1f746a6cb183e348",
+      "path": "src/test/resources/org/broadinstitute/hellbender/tools/funcotator/PIK3CA_INDELS.oncotatorAnnotated.vcf",
+      "url": "https://raw.githubusercontent.com/broadinstitute/gatk/aa9a8076c374aeb0764f445b1f746a6cb183e348/src/test/resources/org/broadinstitute/hellbender/tools/funcotator/PIK3CA_INDELS.oncotatorAnnotated.vcf",
+      "git_blob_sha1": "8a16ce2913a718f02ebee4cff49043b5a2d6e133",
+      "size_bytes": 281124,
       "expected_route_category": "sequence"
     },
     {
@@ -33,7 +73,8 @@
       "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.1.vcf",
       "git_blob_sha1": "27d45004ca71905196ee23f7bee39cdec402d0b6",
       "size_bytes": 1645,
-      "expected_route_category": "sequence"
+      "expected_route_category": "sequence",
+      "producer": "PyVCF"
     },
     {
       "id": "vcflib-freebayes-issue307-v4.1",
@@ -45,6 +86,46 @@
       "url": "https://raw.githubusercontent.com/vcflib/vcflib/6f16fb86da8ddf490702772d954c66e88331ba37/test/data/issue_307_vcfnulldotslashdot.vcf",
       "git_blob_sha1": "dcc146d4c06b31260e693998496a47b76004cf23",
       "size_bytes": 767,
+      "expected_route_category": "sequence",
+      "producer": "FreeBayes/vcflib"
+    },
+    {
+      "id": "bcftools-v42-gvcfz-2",
+      "version": "VCFv4.2",
+      "producer": "BCFtools",
+      "source_class": "upstream_bcftools_gvcf_regression_fixture",
+      "repository": "samtools/bcftools",
+      "commit": "0b732b9682cb46582932a6872e8af64970b3c17b",
+      "path": "test/gvcfz.2.vcf",
+      "url": "https://raw.githubusercontent.com/samtools/bcftools/0b732b9682cb46582932a6872e8af64970b3c17b/test/gvcfz.2.vcf",
+      "git_blob_sha1": "edae98d9a5c719790fb69b584ae031c6eb1d1173",
+      "size_bytes": 164159,
+      "expected_route_category": "reference_only"
+    },
+    {
+      "id": "bcftools-v42-setgt-2",
+      "version": "VCFv4.2",
+      "producer": "BCFtools",
+      "source_class": "upstream_bcftools_genotype_transform_regression_fixture",
+      "repository": "samtools/bcftools",
+      "commit": "0b732b9682cb46582932a6872e8af64970b3c17b",
+      "path": "test/setGT.2.vcf",
+      "url": "https://raw.githubusercontent.com/samtools/bcftools/0b732b9682cb46582932a6872e8af64970b3c17b/test/setGT.2.vcf",
+      "git_blob_sha1": "07d16fbcc64be8d8207f09ef7126214a1d18fa5a",
+      "size_bytes": 1210,
+      "expected_route_category": "sequence"
+    },
+    {
+      "id": "deepvariant-v42-golden-postprocess",
+      "version": "VCFv4.2",
+      "producer": "DeepVariant",
+      "source_class": "upstream_deepvariant_golden_regression_fixture",
+      "repository": "google/deepvariant",
+      "commit": "45f2627504c59785ea2b88d0256a2ec347bce7b4",
+      "path": "deepvariant/testdata/golden.postprocess_single_site_output.vcf",
+      "url": "https://raw.githubusercontent.com/google/deepvariant/45f2627504c59785ea2b88d0256a2ec347bce7b4/deepvariant/testdata/golden.postprocess_single_site_output.vcf",
+      "git_blob_sha1": "7f41f633c5e07dad9276644b5c5f14fcc46d806e",
+      "size_bytes": 8204,
       "expected_route_category": "sequence"
     },
     {
@@ -57,7 +138,8 @@
       "url": "https://raw.githubusercontent.com/broadinstitute/gatk/aa9a8076c374aeb0764f445b1f746a6cb183e348/src/test/resources/org/broadinstitute/hellbender/tools/concordance/multiple-contigs-eval.gvcf",
       "git_blob_sha1": "858c09398d54d680767860c6dfbad6ca8f1ceda9",
       "size_bytes": 6254,
-      "expected_route_category": "gvcf_reference_blocks"
+      "expected_route_category": "gvcf_reference_blocks",
+      "producer": "GATK"
     },
     {
       "id": "pyvcf-example-v4.2",
@@ -69,7 +151,8 @@
       "url": "https://raw.githubusercontent.com/jamescasbon/PyVCF/476169cd457ba0caa6b998b301a4d91e975251d9/vcf/test/example-4.2.vcf",
       "git_blob_sha1": "d649fc3f29a7d09e89bc1a93f161bb8770ac6f06",
       "size_bytes": 30413,
-      "expected_route_category": "sequence"
+      "expected_route_category": "sequence",
+      "producer": "PyVCF"
     },
     {
       "id": "hts-specs-example-v4.3",
@@ -81,7 +164,8 @@
       "url": "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/examples/vcf/simple.vcf",
       "git_blob_sha1": "90104016e4b4dc6061b2dcecf223972fa01afdc3",
       "size_bytes": 1645,
-      "expected_route_category": "sequence"
+      "expected_route_category": "sequence",
+      "producer": "HTS specification example"
     },
     {
       "id": "hts-specs-sv-example-v4.4",
@@ -93,7 +177,8 @@
       "url": "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7b/examples/vcf/sv44.vcf",
       "git_blob_sha1": "4d96947ed9b5e21a59ef8b00faea64ff288ca8c3",
       "size_bytes": 1977,
-      "expected_route_category": "structural_variants"
+      "expected_route_category": "structural_variants",
+      "producer": "HTS specification example"
     },
     {
       "id": "hprc-kiv2-v4.5",
@@ -105,7 +190,24 @@
       "url": "https://raw.githubusercontent.com/GMOD/jbrowse-components/9b86f5d9b25bc0ad23d0cc5f7913af83567699c3/demos/hprc/hprc_kiv2_copies.vcf",
       "git_blob_sha1": "7f27993bd09a96bc5dffae611afcf28f5b22758e",
       "size_bytes": 102428,
-      "expected_route_category": "repeat_expansions"
+      "expected_route_category": "repeat_expansions",
+      "producer": "HPRC/JBrowse"
     }
-  ]
+  ],
+  "minimum_sources_per_version": {
+    "VCFv4.0": 1,
+    "VCFv4.1": 4,
+    "VCFv4.2": 4,
+    "VCFv4.3": 1,
+    "VCFv4.4": 1,
+    "VCFv4.5": 1
+  },
+  "minimum_unique_producers_per_version": {
+    "VCFv4.0": 1,
+    "VCFv4.1": 3,
+    "VCFv4.2": 3,
+    "VCFv4.3": 1,
+    "VCFv4.4": 1,
+    "VCFv4.5": 1
+  }
 }
