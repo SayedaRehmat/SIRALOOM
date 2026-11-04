@@ -2832,6 +2832,8 @@ def test_vcf_integer_rejects_values_outside_specified_range(
         (2, "AT", "A"),
         (1, "AT", "T"),
         (1, "T", "AT"),
+        (1, "A", "AT"),
+        (1, "AT", "A"),
         (0, "A", "TA"),
         (2, "ATC", "AC"),
     ],
@@ -2853,8 +2855,6 @@ def test_simple_indels_obey_vcf_padding_rules(
     "pos,ref,alt",
     [
         (2, "AT", "T"),
-        (1, "A", "AT"),
-        (1, "AT", "A"),
         (0, "AT", "A"),
     ],
 )
