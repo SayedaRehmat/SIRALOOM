@@ -80,3 +80,13 @@ The two URLs above were inspected through the web retrieval interface on 2026-11
 This catalog is a reviewed first-pass decomposition, not closure. Implementation symbols are candidate targets based on source inspection; they must be verified clause-by-clause against exact behavior and test nodes. Existing VCFv4.0 automated conformance was previously only one minimal parser smoke vector. The expanded executable vectors must be added to the versioned conformance manifest and run on this branch before any implementation/test status is promoted.
 
 The 1000 Genomes SV extension is not part of SIRALOOM's supported trial variant classes. It must not cause otherwise valid VCFv4.0 SNV/small-INDEL records to be rejected. Recognized unsupported SV records must follow the existing unsupported-feature/reportability disposition path.
+
+## Added executable regression vectors (2026-11-04)
+
+The versioned runner manifest now contains nine VCFv4.0 cases: minimal fixed-field record, multiallelic genotype, indel representation, phased genotype, missing genotype, nonpositive POS rejection, invalid REF rejection, duplicate record-ID rejection, and out-of-range GT allele rejection. They are executed by the existing `execute_vcf_conformance_suite("VCFv4.0")` path and the parametrized pytest node:
+
+`tests/test_vcf_conformance.py::test_packaged_vcf_conformance_executes_for_each_builtin_version[VCFv4.0]`
+
+Candidate implementation mapping is `validate_vcf_strict`, `_validate_record`, `_validate_info`, `_parse_field_definition`, and `_gt_allele_tokens`. These mappings are not yet clause-by-clause proof: the current pytest harness reports aggregate suite execution, not individual clause IDs. The vectors have been committed but this session has not obtained a successful CI execution for the latest commit. Therefore their status is `ADDED_NOT_YET_EXECUTION_VERIFIED`, not `IMPLEMENTED_TESTED`.
+
+The source capture gap remains: raw HTTP response bytes and source SHA-256 values have not been obtained. Do not treat the Git commit SHA of this catalog or its Markdown contents as a source-document hash.
