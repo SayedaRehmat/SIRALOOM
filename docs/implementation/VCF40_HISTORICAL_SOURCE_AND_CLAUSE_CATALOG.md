@@ -92,64 +92,49 @@ Candidate implementation mapping is `validate_vcf_strict`, `_validate_record`, `
 The source capture gap remains: raw HTTP response bytes and source SHA-256 values have not been obtained. Do not treat the Git commit SHA of this catalog or its Markdown contents as a source-document hash.
 
 
+
 ## Clause-to-fixture traceability ledger
 
 The executable pytest node is:
 
 `tests/test_vcf_conformance.py::test_packaged_vcf_conformance_executes_for_each_builtin_version[VCFv4.0]`
 
-The runner records each individual fixture ID and its `clause_ids` in the resulting JSON report. The focused integrity test additionally checks unique fixture IDs, non-empty clause links, and exact tab-delimited record/header column counts. The mappings below establish traceability links, not successful execution evidence.
+The runner records each fixture ID and its `clause_ids` in the per-fixture JSON result. The focused integrity test checks unique fixture IDs, clause links, and record/header column counts; the deliberately malformed sample-column case is checked for the expected mismatch. These are traceability links, not execution evidence.
 
 | Clause ID | Fixture ID(s) | Status |
 |---|---|---|
 | V40-CORE-001 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-002 | — | NOT YET MAPPED |
-| V40-CORE-003 | — | NOT YET MAPPED |
-| V40-CORE-004 | — | NOT YET MAPPED |
-| V40-CORE-005 | — | NOT YET MAPPED |
-| V40-CORE-006 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-007 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-002 | legacy_info_flag_valid, legacy_flag_wrong_number_rejected, legacy_character_info_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-003 | legacy_info_flag_valid, legacy_character_info_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-004 | legacy_info_flag_valid, legacy_info_flag_value_rejected, legacy_flag_wrong_number_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-005 | legacy_custom_format_valid, legacy_gt_not_first_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-006 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_sample_column_mismatch_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-007 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_sample_column_mismatch_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-008 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_indel_valid, legacy_missing_gt_valid, legacy_phased_gt_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-009 | — | NOT YET MAPPED |
-| V40-CORE-010 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-011 | — | NOT YET MAPPED |
+| V40-CORE-009 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-010 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_noncontiguous_chrom_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-011 | legacy_noncontiguous_chrom_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-012 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_invalid_pos_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-013 | legacy_duplicate_id_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-014 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_indel_valid, legacy_invalid_ref_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-015 | legacy_indel_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-016 | legacy_indel_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-017 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-017 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_indel_valid, legacy_symbolic_del_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-018 | legacy_indel_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-019 | — | NOT YET MAPPED |
+| V40-CORE-019 | legacy_symbolic_del_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-020 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-021 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-022 | — | NOT YET MAPPED |
-| V40-CORE-023 | — | NOT YET MAPPED |
-| V40-CORE-024 | legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_out_of_range_gt_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-022 | legacy_info_flag_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-023 | legacy_character_info_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-024 | legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_out_of_range_gt_rejected, legacy_custom_format_valid, legacy_gt_not_first_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-025 | legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_out_of_range_gt_rejected | FIXTURE_LINKED — execution pending |
 | V40-CORE-026 | legacy_missing_gt_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-027 | — | NOT YET MAPPED |
+| V40-CORE-027 | legacy_custom_format_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-028 | legacy_missing_gt_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-029 | — | NOT YET MAPPED |
+| V40-CORE-029 | legacy_custom_format_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-030 | legacy_multiallelic_genotype_valid, legacy_indel_valid | FIXTURE_LINKED — execution pending |
 | V40-CORE-031 | legacy_multiallelic_genotype_valid, legacy_indel_valid | FIXTURE_LINKED — execution pending |
-| V40-CORE-032 | — | NOT YET MAPPED |
-| V40-CORE-033 | — | NOT YET MAPPED |
+| V40-CORE-032 | — | NON_NORMATIVE — example/descriptive material |
+| V40-CORE-033 | — | NON_NORMATIVE — example/descriptive material |
 
-Mapped clauses: 20 / 33. The remaining clauses require dedicated fixtures or a documented, independently reviewed NOT_APPLICABLE disposition. All mapped fixtures remain execution-pending until the branch CI job produces a passing report.
-
-
-## Independently produced historical VCFv4.0 cohort-file target
-
-A real historical 1000 Genomes pilot cohort file has been identified for independent interoperability testing:
-
-- Candidate file: `CEU.exon.2010_03.genotypes.vcf.gz`
-- Historical location: `https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_07/exon/snps/CEU.exon.2010_03.genotypes.vcf.gz`
-- Producer/source: 1000 Genomes pilot project call set
-- Assembly context: NCBI36 / GRCh36-era pilot data
-- Published secondary-methods record describes this exact file and reports 55 chromosome-22 SNVs.
-- The 1000 Genomes July 2010 release announcement states that pilot variant-call files were distributed as VCF 4.0.
-
-This is a genuine historical cohort dataset, unlike the smaller PyVCF test fixture already pinned in `vcf_public_version_corpus.json`. It is a small exon/SNV file, so it supplements rather than replaces a larger pilot VCF containing short indels. The URL has been identified but the file has not yet been downloaded in this execution environment; byte length, SHA-256, exact header version, and parser/BCFtools outcomes remain pending. It must not be marked as tested until CI acquires the bytes, calculates hashes, checks the declared `##fileformat`, validates the complete file, and preserves the report and downloaded input as artifacts.
-
-The download environment used for this session could not resolve external hosts, so no local copy or hash was fabricated. The branch CI runner has outbound acquisition steps for other public corpora; this historical file should be added there only with a captured and subsequently pinned byte size and digest.
+Fixture-linked clauses: 31 / 33. Two catalog entries are explicitly non-normative examples/descriptive material and do not require independent conformance tests. The remaining applicable clauses require dedicated fixtures or a documented, independently reviewed NOT_APPLICABLE disposition. All fixture-linked cases remain execution-pending until the branch CI job produces a passing report.
