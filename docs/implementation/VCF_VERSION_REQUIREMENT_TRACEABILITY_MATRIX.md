@@ -188,3 +188,16 @@ including PEDIGREE. An earlier regression incorrectly allowed a VCFv4.5
 PEDIGREE line without ID. That acceptance has been removed. Maintained-version
 tests now reject missing PEDIGREE IDs and accept a valid unique ID. The
 VCFv4.0 legacy profile retains its narrower historical parser behavior.
+
+
+## Version-specific structured-header rule correction
+
+The normative source review identified a critical version distinction:
+VCFv4.1/v4.2 PEDIGREE lines use relationship attributes such as Derived and
+Original and do not carry the later generic ID field. VCFv4.3 introduced the
+rule that all structured metadata lines require a unique ID, including
+PEDIGREE. The parser and tests now preserve the v4.1/v4.2 legacy form while
+requiring ID for PEDIGREE and custom structured metadata in v4.3–v4.5.
+Source/Version optional-attribute quoting is likewise applied to v4.3–v4.5,
+where those attributes are standardized, rather than imposing that rule on
+older versions.

@@ -1097,11 +1097,12 @@ def test_vcf43_rejects_vcf44_leading_gt_phase_separator(tmp_path: Path):
 
 
 
-@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
-def test_pedigree_structured_metadata_requires_id_for_maintained_versions(
+
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2"])
+def test_vcf41_vcf42_pedigree_uses_legacy_relationship_attributes_without_id(
     tmp_path: Path, version: str
 ):
-    path = tmp_path / f"pedigree-header-{version}.vcf"
+    path = tmp_path / f"pedigree-legacy-{version}.vcf"
     path.write_text(
         f"##fileformat={version}\n"
         "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
@@ -1109,23 +1110,39 @@ def test_pedigree_structured_metadata_requires_id_for_maintained_versions(
         "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
+    assert validate_vcf_strict(path)["records"] == 1
 
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_pedigree_structured_metadata_requires_id(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"pedigree-no-id-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        "##PEDIGREE=<Derived=PROBAND,Original=MOTHER>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tG\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
 
 
-def test_pedigree_structured_metadata_accepts_unique_id(tmp_path: Path):
-    path = tmp_path / "pedigree-header-with-id.vcf"
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_pedigree_structured_metadata_accepts_unique_id(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"pedigree-with-id-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
         "##PEDIGREE=<ID=PROBAND,Original=MOTHER>\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t2\t.\tA\tG\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
-
 
 
 def test_strict_validation_rejects_format_column_without_sample_columns(tmp_path: Path):
@@ -2520,31 +2537,47 @@ def test_strict_validation_rejects_embedded_carriage_return(tmp_path: Path):
 
 
 
-@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
 def test_structured_custom_metadata_requires_an_id_and_accepts_id_only(
     tmp_path: Path, version: str
 ):
     valid = tmp_path / f"{version}-custom-valid.vcf"
     valid.write_text(
-        f'##fileformat={version}\\n'
-        '##CUSTOM=<ID=ProducerMetadata>\\n'
-        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
-        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        f'##fileformat={version}\n'
+        '##CUSTOM=<ID=ProducerMetadata>\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
         encoding="utf-8",
     )
     assert validate_vcf_strict(valid)["records"] == 1
 
     invalid = tmp_path / f"{version}-custom-no-id.vcf"
     invalid.write_text(
-        f'##fileformat={version}\\n'
-        '##CUSTOM=<Description="missing identifier">\\n'
-        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
-        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        f'##fileformat={version}\n'
+        '##CUSTOM=<Description="missing identifier">\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(invalid)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2"])
+def test_legacy_custom_structured_metadata_is_not_upgraded_to_v43_id_rule(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}-custom-legacy.vcf"
+    path.write_text(
+        f'##fileformat={version}\n'
+        '##CUSTOM=<Description="legacy custom value">\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
 
 
 @pytest.mark.parametrize("kind", ["FILTER", "ALT"])

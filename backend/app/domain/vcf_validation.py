@@ -761,7 +761,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     for optional_key in ("Source", "Version"):
-        if fileformat != "VCFv4.0" and optional_key in parsed and optional_key not in quoted_attributes:
+        if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and optional_key in parsed and optional_key not in quoted_attributes:
             raise StrictVCFValidationError(
                 f"{kind} {optional_key} must be a quoted string at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
@@ -923,7 +923,7 @@ def _structured_header_id(
         )
     for attribute_name in ("Description", "Source", "Version"):
         if attribute_name in parsed_attributes and attribute_name not in quoted_keys:
-            if attribute_name == "Description" or fileformat != "VCFv4.0":
+            if attribute_name == "Description" or fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
                 raise StrictVCFValidationError(
                     f"{kind} {attribute_name} must be a quoted string at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
@@ -1717,17 +1717,25 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         "The fileformat value must be an unstructured version identifier",
                         code="VCF_HEADER_DEFINITION_INVALID",
                     )
+                known_structured_headers = {
+                    "INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "PEDIGREE"
+                }
+                maintained_generic_headers = fileformat in {
+                    "VCFv4.3", "VCFv4.4", "VCFv4.5"
+                }
                 if header_value.startswith("<") and (
-                    fileformat != "VCFv4.0"
-                    or header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
+                    maintained_generic_headers or header_key in known_structured_headers
                 ):
                     required_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
                     quoted_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
+                    require_structured_id = not (
+                        header_key == "PEDIGREE" and fileformat in {"VCFv4.1", "VCFv4.2"}
+                    )
                     identifier = _structured_header_id(
                         line,
                         header_key,
                         line_no,
-                        require_id=True,
+                        require_id=require_structured_id,
                         required_attributes=required_attributes,
                         quoted_attributes=quoted_attributes,
                         fileformat=fileformat,
