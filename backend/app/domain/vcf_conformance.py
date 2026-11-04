@@ -66,6 +66,7 @@ def execute_vcf_conformance_suite(version: str) -> dict[str, Any]:
 
             results.append({
                 "fixture_id": fixture_id,
+                "clause_ids": list(fixture.get("clause_ids") or []),
                 "expected": expected,
                 "observed": observed,
                 "passed": observed == expected,
