@@ -999,8 +999,8 @@ def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, ver
 
     assert profile["fileformat"] == version
     assert profile["records"] == 1
-    assert profile["format_compatibility"]["support_status"] == "SUPPORTED"
-    assert profile["format_compatibility"]["validation_mode"] == "VERSION_AWARE_NATIVE"
+    assert profile["format_compatibility"]["support_status"] == "PARTIAL_FEATURE_QUALIFICATION"
+    assert profile["format_compatibility"]["validation_mode"] == "VERSION_AWARE_PARTIAL"
     assert profile["format_compatibility"]["specification_repository"] == (
         "https://github.com/samtools/hts-specs"
     )
@@ -2453,7 +2453,7 @@ def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scop
     for minor in range(1, 6):
         version = f"VCFv4.{minor}"
         profile = get_vcf_specification_profile(version)
-        assert profile.support_status == "SUPPORTED"
+        assert profile.support_status == "PARTIAL_FEATURE_QUALIFICATION"
         assert profile.specification_document == (
             f"https://samtools.github.io/hts-specs/{version}.pdf"
         )

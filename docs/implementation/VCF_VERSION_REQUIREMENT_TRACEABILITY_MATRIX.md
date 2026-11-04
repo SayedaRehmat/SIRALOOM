@@ -170,3 +170,12 @@ records; and the HPRC 4.5 KIV-2 file must produce repeat-expansion records.
 Each source must also reconcile every input record to exactly one exclusive
 routing disposition. This proves the parser does not silently discard these
 out-of-scope classes; it does not qualify their downstream clinical analysis.
+
+
+## User-visible compatibility status
+
+The compatibility registry no longer labels VCFv4.1–4.5 simply SUPPORTED.
+It now emits PARTIAL_FEATURE_QUALIFICATION and VERSION_AWARE_PARTIAL. The
+version is recognized and a tested feature subset is parsed; this does not
+mean every normative clause or optional feature is implemented. VCFv4.0
+continues to emit LEGACY_COMPATIBILITY_ONLY / LEGACY_PARSER_SMOKE_ONLY.
