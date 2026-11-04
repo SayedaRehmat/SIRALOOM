@@ -79,7 +79,7 @@ def test_strict_validation_records_orphan_spanning_deletion_as_record_warning(tm
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 2
-    assert profile["unresolved_spanning_deletion_record_count"] == 1
+    assert profile["unresolved_spanning_deletion_record_count"] == 1, profile
     assert profile["unresolved_spanning_deletion_records"] == [{
         "record_index": 1,
         "line_number": 4,
