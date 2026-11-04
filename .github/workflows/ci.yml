@@ -421,8 +421,8 @@ jobs:
         run: |
           set -euo pipefail
           version_output="$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version)"
-          test "$(printf '%s\\n' "${version_output}" | sed -n '1p')" = "bcftools 1.25"
-          test "$(printf '%s\\n' "${version_output}" | sed -n '2p')" = "Using htslib 1.25"
+          test "$(printf '%s\n' "${version_output}" | sed -n '1p')" = "bcftools 1.25"
+          test "$(printf '%s\n' "${version_output}" | sed -n '2p')" = "Using htslib 1.25"
       - name: Execute real GRCh38 and GRCh37 GIAB normalization inside production container
         run: |
           set -euo pipefail
